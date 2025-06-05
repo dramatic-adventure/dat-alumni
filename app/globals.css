@@ -1,0 +1,231 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ======================================
+   Base Reset & Kraft Background
+   ====================================== */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background-color: #fdfcf7;
+  background-image: url('/texture/kraft-paper.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+body > div {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ======================================
+   DAT Custom Story & Popup Styles
+   ====================================== */
+
+.story-page,
+.mapboxgl-popup-content {
+  width: 90%;
+  max-width: 720px;
+  margin: 3rem auto;
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  color: #111;
+  text-align: left;
+  font-family: 'DM Sans', sans-serif;
+  position: relative;
+  z-index: 1;
+}
+
+h1.popup-title {
+  font-family: 'Anton', sans-serif;
+  font-size: 2.6rem;
+  font-weight: 550;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-top: 0.1rem;
+  margin-bottom: 0rem;
+  background: #ffcc00;
+  padding: 0.2rem 0.4rem;
+  display: inline-block;
+}
+
+@media (min-width: 768px) {
+  h1.popup-title {
+    font-size: 3.2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  h1.popup-title {
+    font-size: 3.6rem;
+  }
+}
+
+.mapboxgl-popup-tip {
+  display: block;
+  margin: 0 auto;
+}
+
+.mapboxgl-popup-close-button {
+  display: none !important;
+}
+
+.popup-location {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.8rem;
+  text-align: right;
+  margin-top: 1.5rem;
+  margin-bottom: 0rem;
+}
+
+.popup-program {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem; 
+  margin-bottom: 0.75rem;
+}
+
+/* Unified Media Block */
+.popup-media {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 0rem;
+}
+
+.popup-image {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 16px;
+}
+
+.popup-video {
+  width: 100%;
+  max-height: 480px;
+}
+
+.popup-video iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  display: block;
+  border-radius: 16px;
+  border: none;
+}
+
+.popup-partners {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.7rem;
+  font-style: italic;
+  text-align: right;
+  margin: 0 0 1.2rem;
+  line-height: 1.4;
+}
+
+.popup-quote {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.4rem;
+  font-style: italic;
+  margin: 0.75rem 2rem 0.25rem;
+}
+
+.popup-quote-author {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  margin: 0.25rem 3rem 1.9rem;
+}
+
+.popup-story {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: -0.5rem 0;
+}
+
+.popup-author {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ff007f;
+  margin-bottom: 0.75rem;
+}
+
+.popup-author a {
+  color: #ff007f;
+  text-decoration: underline;
+}
+
+.popup-button {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  background: #194d56;
+  color: #fff;
+  text-decoration: none;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 0.4em;
+  border-radius: 8px;
+  text-transform: uppercase;
+  transition: background 0.3s ease;
+  margin-top: 1.5rem;
+  font-weight: 500;
+}
+
+.popup-button:hover {
+  background: #123a40;
+}
+
+/* Tags styling */
+.story-page ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.story-page li {
+  background-color: #eee;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+/* Responsive Tweaks */
+@media (min-width: 768px) {
+  .popup-quote {
+    font-size: 1.6rem;
+    margin: 1.75rem 2rem 0.25rem;
+  }
+
+  .popup-quote-author {
+    margin: 0.25rem 3rem 1.9rem;
+  }
+}
+
+/* Fonts */
+@font-face {
+  font-family: 'Gloucester';
+  src: url('/fonts/GloucesterMT-ExtraCondensed.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}

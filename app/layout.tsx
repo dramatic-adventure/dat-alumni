@@ -1,0 +1,34 @@
+// app/layout.tsx
+import "@/app/globals.css";
+import { Anton, DM_Sans, Space_Grotesk, Rock_Salt } from "next/font/google";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+
+const anton = Anton({ subsets: ["latin"], weight: "400", variable: "--font-anton", display: "swap" });
+const dmSans = DM_Sans({ subsets: ["latin"], weight: ["400", "700"], variable: "--font-dm-sans", display: "swap" });
+const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-space-grotesk", display: "swap" });
+const rockSalt = Rock_Salt({ subsets: ["latin"], weight: "400", variable: "--font-rock-salt", display: "swap" });
+
+export const metadata = {
+  title: "Dramatic Adventure Theatre – Alumni Stories",
+  description: "Immersive global storytelling from DAT artists.",
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html
+      lang="en"
+      className={`${anton.variable} ${dmSans.variable} ${spaceGrotesk.variable} ${rockSalt.variable} font-sans`}
+    >
+      <body
+  className="min-h-screen flex flex-col text-black bg-[url('/texture/kraft-paper.png')] bg-cover bg-center bg-fixed"
+>
+  <Header />
+  <main className="flex-grow w-full max-w-6xl mx-auto px-4 pt-4 sm:px-12">
+    {children}
+  </main>
+  <Footer />
+</body>
+    </html>
+  );
+}
