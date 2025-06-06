@@ -5,6 +5,10 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./lib/**/*.{js,ts,jsx,tsx,mdx}",
+    // 👇 ADD a safelist for font-gloucester to force Tailwind to always output it:
+  ],
+  safelist: [
+    "font-gloucester",
   ],
   theme: {
     extend: {
@@ -12,7 +16,7 @@ module.exports = {
         sans: ['var(--font-dm-sans)', 'sans-serif'],
         anton: ['var(--font-anton)', 'sans-serif'],
         grotesk: ['var(--font-space-grotesk)', 'sans-serif'],
-        gloucester: ['Gloucester', 'serif'],
+        gloucester: ['var(--font-gloucester)', 'Gloucester', 'serif'],
         rock: ['var(--font-rock-salt)', 'cursive'],
       },
       screens: {

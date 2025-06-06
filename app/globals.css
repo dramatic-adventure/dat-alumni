@@ -229,3 +229,8 @@ h1.popup-title {
   font-style: normal;
   font-display: swap;
 }
+
+/* TEMPORARY DEBUG OVERRIDE */
+h2 {
+  font-family: 'Gloucester', serif !important;
+}

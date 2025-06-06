@@ -3,6 +3,7 @@ import loadRows from "@/lib/loadRows";
 import StoryPage from "@/components/story/StoryPage";
 import { StoryRow } from "@/lib/types";
 import { getSocialPreviewImage } from "@/lib/getSocialPreviewImage";
+import Footer from "@/components/Footer";
 import type { Metadata, ResolvingMetadata } from "next";
 
 /**
@@ -88,7 +89,16 @@ export default async function StorySlugPage({
   if (!story) return notFound();
 
   // 🔒 Keep ALL story layout & styling intact
-  return <StoryPage story={story} />;
+  return (
+    <>
+      <StoryPage story={story} />
+
+      {/* ✅ Purple CTA Footer Section */}
+      <section className="bg-[#241123] pt-[0vh] md:pt-[0vh] pb-10">
+        <Footer />
+      </section>
+    </>
+  );
 }
 
 // ✅ Optional: For Static Generation (safe to keep if you use SSG)
