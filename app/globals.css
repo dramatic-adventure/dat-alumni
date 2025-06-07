@@ -234,3 +234,31 @@ h1.popup-title {
 h2 {
   font-family: 'Gloucester', serif !important;
 }
+
+/* ROOTS */
+:root {
+  --dat-color-bg: #241123;
+  --dat-color-accent: #F23359;
+  --dat-font-heading: Gloucester, serif;
+}
+
+/* Global link reset for white nav menus */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Optional: Keep hover underline if desired */
+a:hover {
+  text-decoration: underline;
+}
+
+/* Reset visited link color (for safety) */
+a:visited {
+  color: inherit;
+}
+
+/* ===== FORCE GROTESK FONT FOR ANY CLASS USING .force-grotesk ===== */
+.force-grotesk {
+  font-family: 'Space Grotesk', sans-serif !important;
+}

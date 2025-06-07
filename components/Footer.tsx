@@ -12,47 +12,44 @@ export default function Footer() {
   <div className="max-w-7xl mx-auto flex flex-col">
 
     {/* Headline */}
-    <div className="w-full flex justify-end">
-      <h2
-        className="font-gloucester text-[#F23359] font-[400] text-[16.12vw] md:text-[12rem] tracking-[0.01em] leading-[0.85] text-right"
-        style={{
-          marginTop: '8vh',         // Top margin control
-          marginRight: '5.9rem',
-          marginBottom: '4vh',    // Right margin control
-        }}
-      >
-        Ready to act?
-      </h2>
-    </div>
+<div className="w-full flex justify-center text-center">
+  <h2
+    className="font-gloucester text-[#F23359] font-[400] text-[16.12vw] md:text-[12rem] tracking-[0.01em] leading-[0.85]"
+    style={{
+      marginTop: '8vh',
+      marginBottom: '4vh',
+    }}
+  >
+    Ready to act?
+  </h2>
+</div>
 
-      {/* CTA Buttons */}
+{/* CTA Buttons */}
 <div
-  className="flex flex-col items-end"
+  className="flex flex-col items-center"
   style={{
-    marginTop: "0rem",         // 🟡 Top margin of the whole block
-    marginBottom: "3rem",      // 🟡 Bottom margin of the whole block
-    paddingRight: "5.9rem",    // 🟡 Aligns with headline on right
+    marginTop: "0rem",
+    marginBottom: "3rem",
   }}
 >
-  <div
-    className="w-[64vw] sm:w-[25.8rem] max-w-full"  // ✅ Mobile-first responsive width
-  >
+  <div className="w-[64vw] sm:w-[25.8rem] max-w-full">
     <a
       href="/get-involved"
       className="block text-center transition hover:opacity-80 uppercase tracking-[0.22em]"
       style={{
-        backgroundColor: "#2493A9",                // 🎨 Background color
-        color: "#241123",                          // 🎨 Text color
-        fontFamily: "'Space Grotesk', sans-serif", // 🔤 Font family override
-        fontWeight: "200",                         // 🔡 Font weight
-        fontSize: "1rem",                          // 🔡 FONT SIZE
-        paddingTop: "0.2rem",                      // 🧩 Padding (top)
-        paddingBottom: "0.2rem",                   // 🧩 Padding (bottom)
-        paddingLeft: "2.5rem",                     // 🧩 Padding (left)
-        paddingRight: "2.5rem",                    // 🧩 Padding (right)
-        borderRadius: "0.375rem",                  // 🟠 Border radius
-        marginBottom: "0.75rem",                   // 🔃 Space between buttons
-        textDecoration: "none",                    // 🚫 No underline
+        backgroundColor: "#2493A9",
+        color: "#241123",
+        fontFamily: "'Space Grotesk', sans-serif",
+        fontWeight: "200",
+        fontSize: "1rem",
+        paddingTop: "0.2rem",
+        paddingBottom: "0.2rem",
+        paddingLeft: "2.5rem",
+        paddingRight: "2.5rem",
+        borderRadius: "0.375rem",
+        marginBottom: "0.75rem",
+        textDecoration: "none",
+        width: "100%",
       }}
     >
       Get Involved
@@ -73,6 +70,7 @@ export default function Footer() {
         paddingRight: "2.5rem",
         borderRadius: "0.375rem",
         textDecoration: "none",
+        width: "100%",
       }}
     >
       Donate

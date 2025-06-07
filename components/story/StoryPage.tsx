@@ -26,30 +26,32 @@ export default function StoryPage({ story }: StoryPageProps) {
   } = story;
 
   const programLine =
-  program && (country || year)
-    ? `${program}: ${[country, year].filter(Boolean).join(" ")}`
-    : program || [country, year].filter(Boolean).join(" ");
+    program && (country || year)
+      ? `${program}: ${[country, year].filter(Boolean).join(" ")}`
+      : program || [country, year].filter(Boolean).join(" ");
 
   const storyUrl = `https://alumni.dramaticadventure.com/story/${slug}`;
 
-  console.log("🔗 moreInfoLink:", moreInfoLink);
-
   return (
     <main>
-      <div className="story-page">
+      {/* ✅ Apply offset to push content below fixed header */}
+      <div
+        className="story-page pointer-events-auto"
+        style={{ marginTop: '8rem', marginBottom: '8rem' }}
+      >
         {/* Top Bar: Back Link + Share */}
         <div className="flex justify-between items-center mb-4">
-          <Link
-  href="/"
-  style={{
-    fontFamily: 'var(--font-rock-salt), cursive',
-    fontSize: '1.15rem',
-    color: '#ff007f',
-    textDecoration: 'none',
-  }}
->
-  ← Explore More Stories
-</Link>
+          <a
+            href="https://www.dramaticadventure.com/story-map"
+            style={{
+              fontFamily: 'var(--font-rock-salt), cursive',
+              fontSize: '1.15rem',
+              color: '#ff007f',
+              textDecoration: 'none',
+            }}
+          >
+            ← Explore More Stories
+          </a>
           <ShareButton url={storyUrl} />
         </div>
 
@@ -67,10 +69,10 @@ export default function StoryPage({ story }: StoryPageProps) {
 
         {/* Partners */}
         {partners?.trim() && partners !== "-" && (
-  <p className="popup-partners">
-    Created in collaboration with {story.partners}, rooted in a shared vision.
-  </p>
-)}
+          <p className="popup-partners">
+            Created in collaboration with {partners}, rooted in a shared vision.
+          </p>
+        )}
 
         {/* Quote */}
         {quote && (
@@ -83,25 +85,21 @@ export default function StoryPage({ story }: StoryPageProps) {
         )}
 
         {/* Story Body */}
-        {shortStory && (
-          <p className="popup-story">{shortStory}</p>
-        )}
+        {shortStory && <p className="popup-story">{shortStory}</p>}
 
         {/* Author */}
         {author && authorSlug && (
           <p className="popup-author">
-            By{" "}
-            <Link href={`/alumni/${authorSlug}`}>
-              {author}
-            </Link>
+            By <Link href={`/alumni/${authorSlug}`}>{author}</Link>
           </p>
         )}
 
-        {/* CTA Button (only if link exists) */}
+        {/* CTA Button */}
         {moreInfoLink && (
           <a
             href={moreInfoLink}
             className="popup-button"
+            style={{ textDecoration: 'none' }}
             target="_blank"
             rel="noopener noreferrer"
           >

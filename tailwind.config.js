@@ -7,9 +7,7 @@ module.exports = {
     "./lib/**/*.{js,ts,jsx,tsx,mdx}",
     // 👇 ADD a safelist for font-gloucester to force Tailwind to always output it:
   ],
-  safelist: [
-    "font-gloucester",
-  ],
+  safelist: ["font-gloucester", "font-grotesk"],
   theme: {
     extend: {
       fontFamily: {
