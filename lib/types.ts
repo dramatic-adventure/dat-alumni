@@ -24,16 +24,35 @@ export type StoryRow = {
   storyUrl?: string;
 };
 
-// Optional: for future Alumni profiles
-export interface AlumniProfileRow {
+// Alumni profiles
+export type AlumniRow = {
   slug: string;
   name: string;
   role?: string;
-  photo?: string;
-  story?: string;
-  currentWork?: string;
-  datProductions?: string;
   location?: string;
-  hashtags?: string;
-  legacyProjects?: string;
-}
+  latitude?: string;
+  longitude?: string;
+  identityTags?: string[];
+  programBadges?: string[];
+  headshotUrl?: string;
+  imageUrls?: string[];
+  artistStatement?: string;
+  currentWork?: string;
+  legacyProductions?: string;
+  storyTitle?: string;
+  storyThumbnail?: string;
+  storyExcerpt?: string;
+  storyUrl?: string;
+  tags?: string[];
+  artistUrl?: string;
+  socialLinks?: string[];
+  artistEmail?: string;
+  updateLink?: string;
+  showOnProfile?: string;
+  profileId?: string;
+  profileUrl?: string;
+  fieldNotes?: string[];
+  locations?: { lat: number; lng: number; label?: string }[];
+};
+
+// Trigger Netlify cache refresh
