@@ -4,6 +4,7 @@ import { loadCsv } from "./loadCsv";
 import { normalizeStoryRow } from "./normalizeStoryRow";
 import { StoryRow } from "./types";
 
+// ✅ Define loadRows first
 const loadRows = cache(async (): Promise<StoryRow[]> => {
   try {
     const csvText = await loadCsv();
@@ -24,4 +25,10 @@ const loadRows = cache(async (): Promise<StoryRow[]> => {
   }
 });
 
+// ✅ Default export for general use
 export default loadRows;
+
+export async function getStoriesByAlumniSlug(slug: string): Promise<StoryRow[]> {
+  const rows = await loadRows();
+  return rows.filter((row) => row.authorSlug === slug);
+}

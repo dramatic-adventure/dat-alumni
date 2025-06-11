@@ -30,7 +30,7 @@ export default function StoryPage({ story }: StoryPageProps) {
       ? `${program}: ${[country, year].filter(Boolean).join(" ")}`
       : program || [country, year].filter(Boolean).join(" ");
 
-  const storyUrl = `https://alumni.dramaticadventure.com/story/${slug}`;
+  const storyUrl = `https://stories.dramaticadventure.com/story/${slug}`;
 
   return (
     <main>
@@ -42,7 +42,7 @@ export default function StoryPage({ story }: StoryPageProps) {
         {/* Top Bar: Back Link + Share */}
         <div className="flex justify-between items-center mb-4">
           <a
-            href="https://www.dramaticadventure.com/story-map"
+            href="https://dramaticadventure.com/story-map#impact"
             style={{
               fontFamily: 'var(--font-rock-salt), cursive',
               fontSize: '1.15rem',

@@ -21,12 +21,12 @@ export async function generateMetadata(
     };
   }
 
-  const siteUrl = `https://alumni.dramaticadventure.com/story/${params.slug}`;
+  const siteUrl = `https://stories.dramaticadventure.com/story/${params.slug}`;
   const imageUrl =
     story.imageUrl?.startsWith("http")
       ? story.imageUrl
       : story.imageUrl
-      ? `https://alumni.dramaticadventure.com${story.imageUrl}`
+      ? `https://stories.dramaticadventure.com${story.imageUrl}`
       : undefined;
 
   const rawText = story.quote || story.story || "";
