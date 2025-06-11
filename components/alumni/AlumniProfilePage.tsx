@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import ShareButton from "@/components/ShareButton";
-import { AlumniRow, StoryRow } from "@/lib/types";
+import { AlumniRow } from "@/lib/types";
+import { StoryRow } from "@/lib/types";
 import ProfileHeader from "./ProfileHeader";
 import * as ArtistStatementModule from "./ArtistStatement";
 const ArtistStatement = ArtistStatementModule.default;
