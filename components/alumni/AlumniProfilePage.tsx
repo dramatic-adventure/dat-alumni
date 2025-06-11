@@ -62,7 +62,7 @@ export default function AlumniProfilePage({
         {/* Top Bar: Back Link + Share */}
         <div className="flex justify-between items-center mb-4">
           <a
-            href="https://dramaticadventure.com/story-map#impact"
+            href="https://dramaticadventure.com/story-map#story"
             style={{
               fontFamily: "var(--font-rock-salt), cursive",
               fontSize: "1.15rem",

@@ -6,6 +6,7 @@ import { getSocialPreviewImage } from "@/lib/getSocialPreviewImage";
 import Footer from "@/components/Footer";
 import type { Metadata, ResolvingMetadata } from "next";
 
+
 /**
  * 🧠 PARAMS SANITY CHECK (Next.js 15 – App Router)
  *
@@ -50,12 +51,12 @@ export async function generateMetadata(
     title: story.title,
     description,
     alternates: {
-      canonical: `https://alumni.dramaticadventure.com/story/${story.slug}`,
+      canonical: `https://stories.dramaticadventure.com/story/${story.slug}`,
     },
     openGraph: {
       title: story.title,
       description,
-      url: `https://alumni.dramaticadventure.com/story/${story.slug}`,
+      url: `https://stories.dramaticadventure.com/story/${story.slug}`,
       type: "article",
       images: [
         {
