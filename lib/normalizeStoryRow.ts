@@ -1,14 +1,14 @@
-// lib/normalizeStoryRow.ts
-
 export {}; // forces the file to be treated as a module
 
 import { StoryRow } from "./types";
 
-export function normalizeStoryRow(row: Record<string, string>): StoryRow | null {
-  console.log("🧪 Normalizing row:", row);
+const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
 
+export function normalizeStoryRow(row: Record<string, string>): StoryRow | null {
   if (!row["slug"] || !row["Title"]) {
-    console.warn("⚠️ Skipping row due to missing slug or title:", row);
+    if (DEBUG) {
+      console.warn("⚠️ Skipping row due to missing slug or title:", row);
+    }
     return null;
   }
 
@@ -40,6 +40,4 @@ export function normalizeStoryRow(row: Record<string, string>): StoryRow | null 
     storyId: cleanedRow["Story ID"]?.trim(),
     storyUrl: cleanedRow["Story URL"]?.trim(),
   };
-  console.log("🔗 moreInfoLink:", row["More Info Link"]);
-
 }
