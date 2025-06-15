@@ -2,9 +2,8 @@
 export {}; // ✅ ensure ES module scope
 
 import { useState } from "react";
-import Image from "next/image";
 import StatusFlags from "@/components/alumni/StatusFlags";
-import IdentityTags from "@/components/alumni/IdentityTags"; // ✅ This is the fix!
+import IdentityTags from "@/components/alumni/IdentityTags";
 import ProgramStamps from "@/components/alumni/ProgramStamps";
 import Lightbox from "@/components/Lightbox";
 
@@ -40,28 +39,41 @@ export default function ProfileCard({
   const [isModalOpen, setModalOpen] = useState(false);
 
   return (
-    <div className="w-full bg-white overflow-hidden">
-      <div className="relative w-full flex flex-col">
+    <div className="w-full bg-white px-6 py-10">
+      <div className="flex gap-6 items-start">
+        {/* 📸 Fixed Headshot */}
         {headshotUrl && (
-          <div
-            className="absolute top-0 left-0 z-30 cursor-zoom-in"
-            onClick={() => setModalOpen(true)}
-          >
-            <Image
-              src={headshotUrl}
-              alt={name}
-              width={300}
-              height={420}
-              className="object-cover w-[300px] h-[420px]"
-            />
-          </div>
-        )}
-
+  <div
+    className="cursor-zoom-in overflow-hidden rounded"
+    style={{
+      width: "320px",
+      height: "400px",
+      boxShadow: "4px 6px 20px rgba(0, 0, 0, 0.15)", // ⬅️ Drop shadow bottom-right
+      backgroundColor: "#eee",
+    }}
+    onClick={() => setModalOpen(true)}
+  >
+    <img
+      src={headshotUrl}
+      alt={name}
+      style={{
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+        objectPosition: "top center",
+        display: "block",
+      }}
+    />
+  </div>
+)}
+        {/* 📝 Text Block */}
         <div
-          className="w-full min-h-[150px] pl-[320px] pr-6 pt-6 pb-8 relative"
+          className="flex-1 p-6 rounded-md shadow-inner"
           style={{
             backgroundColor: "#F9F4E7",
-            backgroundImage: kraftTexture ? "url('/texture/kraft-background.png')" : undefined,
+            backgroundImage: kraftTexture
+              ? "url('/texture/kraft-background.png')"
+              : undefined,
             backgroundSize: "cover",
             backgroundBlendMode: "overlay",
             color: textColor,
@@ -69,7 +81,7 @@ export default function ProfileCard({
           }}
         >
           {statusFlags.length > 0 && (
-            <div className="absolute top-4 right-4 z-40">
+            <div className="flex justify-end mb-2">
               <StatusFlags flags={statusFlags} />
             </div>
           )}
@@ -99,19 +111,9 @@ export default function ProfileCard({
             </div>
           )}
         </div>
-
-        <div className="w-full bg-[#1b8a8f] text-white px-8 py-10">
-          <p className="italic text-lg max-w-3xl">
-            “I create where place and story meet. My voice moves between riverbeds and memory,
-            always listening for the next scene.”
-          </p>
-        </div>
-
-        <div className="w-full bg-white px-6 py-10">
-          <p className="text-sm text-neutral-500 mb-6">[Story article blocks go here]</p>
-        </div>
       </div>
 
+      {/* 🔍 Lightbox */}
       {isModalOpen && headshotUrl && (
         <Lightbox images={[headshotUrl]} onClose={() => setModalOpen(false)} />
       )}
