@@ -24,16 +24,32 @@ export async function fetchStories(): Promise<StoryRow[]> {
   // 2️⃣ If no fallback, fetch from live URL
   if (!csvText) {
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
       const response = await fetch(LIVE_URL, {
         headers: { "User-Agent": "Mozilla/5.0" },
         cache: "no-store",
+        signal: controller.signal,
       });
+
+      clearTimeout(timeout);
 
       if (!response.ok) {
         throw new Error(`Fetch failed: ${response.status} ${response.statusText}`);
       }
 
       csvText = await response.text();
+
+      // Strip BOM if present
+      if (csvText.charCodeAt(0) === 0xfeff) {
+        csvText = csvText.slice(1);
+      }
+
+      // Optional schema check
+      if (!csvText.includes("Title") || !csvText.includes("Slug")) {
+        throw new Error("CSV schema mismatch: expected columns not found.");
+      }
 
       // Save to fallback
       await fs.mkdir(path.dirname(FALLBACK_PATH), { recursive: true });
@@ -61,6 +77,9 @@ export async function fetchStories(): Promise<StoryRow[]> {
     .map(normalizeStoryRow)
     .filter((row): row is StoryRow => !!row);
 
-  console.log("✅ [fetchStories] Parsed story count:", normalized.length);
+  if (process.env.NODE_ENV === "development") {
+    console.log("✅ [fetchStories] Parsed story count:", normalized.length);
+  }
+
   return normalized;
 }

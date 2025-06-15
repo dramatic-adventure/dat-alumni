@@ -1,25 +1,43 @@
+export {}; // ensures module scope
+
 import { AlumniRow } from "./types";
 
+const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
+
+// 🔧 Force HTTPS on remote URLs
+function forceHttps(url?: string): string {
+  return url?.startsWith("http://") ? url.replace("http://", "https://") : url ?? "";
+}
+
+// 🔧 Split comma-separated strings into trimmed arrays
+const cleanArray = (val?: string): string[] =>
+  typeof val === "string"
+    ? val.split(",").map((v) => v.trim()).filter(Boolean)
+    : [];
+
+// ✅ Normalize one alumni row
 export function normalizeAlumniRow(row: Record<string, string>): AlumniRow | null {
-  // 🚫 Skip empty rows with no slug or name
-  if (!row["slug"] || !row["Name"]) {
-    // No more logging here — skip silently
+  // 🧼 Trim all keys and values
+  const cleanedRow: Record<string, string> = Object.fromEntries(
+    Object.entries(row).map(([key, value]) => [
+      key.trim(),
+      value?.toString().trim() ?? "",
+    ])
+  );
+
+  // 🚫 Skip rows with no name or slug or mostly empty content
+  const isMostlyEmpty = Object.values(cleanedRow).filter(Boolean).length <= 2;
+  if (!cleanedRow["slug"] || !cleanedRow["Name"] || isMostlyEmpty) {
+    if (DEBUG) {
+      console.warn("⚠️ Skipping alumni row:", cleanedRow);
+    }
     return null;
   }
 
-  // 🧼 Clean keys and values
-  const cleanedRow: Record<string, string> = Object.fromEntries(
-    Object.entries(row).map(([key, value]) => [key.trim(), value?.trim() ?? ""])
-  );
-
-  const cleanArray = (val?: string): string[] =>
-    val?.split(",").map((v) => v.trim()).filter(Boolean) || [];
-
-  // 📍 Location handling
-  const lat = parseFloat(cleanedRow["Latitude"] || "");
-  const lng = parseFloat(cleanedRow["Longitude"] || "");
+  // 📍 Coordinates and location block
+  const lat = parseFloat(cleanedRow["Latitude"]);
+  const lng = parseFloat(cleanedRow["Longitude"]);
   const hasCoordinates = !isNaN(lat) && !isNaN(lng);
-
   const locations = hasCoordinates
     ? [{ lat, lng, label: cleanedRow["Location"] }]
     : [];
@@ -33,23 +51,23 @@ export function normalizeAlumniRow(row: Record<string, string>): AlumniRow | nul
     longitude: cleanedRow["Longitude"] || "",
     identityTags: cleanArray(cleanedRow["Identity Tags"]),
     programBadges: cleanArray(cleanedRow["Project Badges"]),
-    headshotUrl: cleanedRow["Headshot URL"] || "",
-    imageUrls: cleanArray(cleanedRow["Gallery Image URLs"]),
+    headshotUrl: forceHttps(cleanedRow["Headshot URL"]),
+    imageUrls: cleanArray(cleanedRow["Gallery Image URLs"]).map(forceHttps),
     artistStatement: cleanedRow["Artist Statement"] || "",
     currentWork: cleanedRow["Current Work"] || "",
     legacyProductions: cleanedRow["Legacy Productions"] || "",
     storyTitle: cleanedRow["Story Title"] || "",
-    storyThumbnail: cleanedRow["Story Thumbnail"] || "",
+    storyThumbnail: forceHttps(cleanedRow["Story Thumbnail"]),
     storyExcerpt: cleanedRow["Story Excerpt"] || "",
-    storyUrl: cleanedRow["Story URL"] || "",
+    storyUrl: forceHttps(cleanedRow["Story URL"]),
     tags: cleanArray(cleanedRow["Tags"]),
-    artistUrl: cleanedRow["Artist URL"] || "",
-    socialLinks: cleanArray(cleanedRow["Artist Social Links"]),
+    artistUrl: forceHttps(cleanedRow["Artist URL"]),
+    socialLinks: cleanArray(cleanedRow["Artist Social Links"]).map(forceHttps),
     artistEmail: cleanedRow["Artist Email"] || "",
     updateLink: cleanedRow["Update Link"] || "",
     showOnProfile: cleanedRow["Show on Profile?"] || "",
     profileId: cleanedRow["Profile ID"] || "",
-    profileUrl: cleanedRow["Profile URL"] || "",
+    profileUrl: forceHttps(cleanedRow["Profile URL"]),
     locations,
   };
 }
