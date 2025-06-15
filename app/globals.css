@@ -31,6 +31,23 @@ body > div {
 }
 
 /* ======================================
+   DAT Custom Alumni Profile Styles
+   ====================================== */
+
+.alumni-profile-page {
+  width: 100%;
+  max-width: 80%;
+  margin: 0rem auto;
+  padding: 0;
+  background: #fff;
+  border-radius: 0.9rem;
+  box-shadow: none;
+  position: relative;
+  z-index: 1;
+}
+
+
+/* ======================================
    DAT Custom Story & Popup Styles
    ====================================== */
 

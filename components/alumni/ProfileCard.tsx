@@ -39,41 +39,42 @@ export default function ProfileCard({
   const [isModalOpen, setModalOpen] = useState(false);
 
   return (
-    <div className="w-full bg-white px-6 py-10">
-      <div className="flex gap-6 items-start">
-        {/* 📸 Fixed Headshot */}
+    <div className="w-full bg-white m-0 p-0">
+      <div className="flex items-start m-0 p-0">
+        {/* 📸 Headshot — flush-left full-bleed 4:5 */}
         {headshotUrl && (
-  <div
-    className="cursor-zoom-in overflow-hidden rounded"
-    style={{
-      width: "320px",
-      height: "400px",
-      boxShadow: "4px 6px 20px rgba(0, 0, 0, 0.15)", // ⬅️ Drop shadow bottom-right
-      backgroundColor: "#eee",
-    }}
-    onClick={() => setModalOpen(true)}
-  >
-    <img
-      src={headshotUrl}
-      alt={name}
-      style={{
-        width: "100%",
-        height: "100%",
-        objectFit: "cover",
-        objectPosition: "top center",
-        display: "block",
-      }}
-    />
-  </div>
-)}
-        {/* 📝 Text Block */}
+          <div
+            className="cursor-zoom-in overflow-hidden rounded"
+            style={{
+              width: "260px",
+              height: "325px",
+              boxShadow: "4px 6px 20px rgba(0, 0, 0, 0.15)",
+              backgroundColor: "#eee",
+              flexShrink: 0,
+              margin: 0,
+            }}
+            onClick={() => setModalOpen(true)}
+          >
+            <img
+              src={headshotUrl}
+              alt={name}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center",
+                display: "block",
+              }}
+            />
+          </div>
+        )}
+
+        {/* 📝 Profile Text */}
         <div
-          className="flex-1 p-6 rounded-md shadow-inner"
+          className="pl-6 pr-6 pt-6 pb-8 w-full"
           style={{
             backgroundColor: "#F9F4E7",
-            backgroundImage: kraftTexture
-              ? "url('/texture/kraft-background.png')"
-              : undefined,
+            backgroundImage: kraftTexture ? "url('/texture/kraft-background.png')" : undefined,
             backgroundSize: "cover",
             backgroundBlendMode: "overlay",
             color: textColor,
@@ -81,7 +82,7 @@ export default function ProfileCard({
           }}
         >
           {statusFlags.length > 0 && (
-            <div className="flex justify-end mb-2">
+            <div className="absolute top-4 right-4 z-40">
               <StatusFlags flags={statusFlags} />
             </div>
           )}
@@ -113,7 +114,7 @@ export default function ProfileCard({
         </div>
       </div>
 
-      {/* 🔍 Lightbox */}
+      {/* 🖼️ Optional Lightbox */}
       {isModalOpen && headshotUrl && (
         <Lightbox images={[headshotUrl]} onClose={() => setModalOpen(false)} />
       )}

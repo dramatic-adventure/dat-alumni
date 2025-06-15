@@ -51,7 +51,7 @@ export default function AlumniProfilePage({
   return (
     <main>
       <div
-        className="story-page pointer-events-auto px-0"
+        className="alumni-profile-page pointer-events-auto"
         style={{ marginTop: "8rem", marginBottom: "8rem" }}
       >
         <div className="bg-white max-w-[1000px] mx-auto shadow-md rounded-none overflow-hidden relative">
