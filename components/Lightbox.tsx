@@ -18,8 +18,6 @@ export default function Lightbox({ images, startIndex = 0, onClose }: LightboxPr
     setCurrentIndex((index + images.length) % images.length);
   };
 
-  const handleNext = () => goTo(currentIndex + 1);
-
   // 🔐 ESC to close
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -39,7 +37,7 @@ export default function Lightbox({ images, startIndex = 0, onClose }: LightboxPr
   }, []);
 
   const swipeHandlers = useSwipeable({
-    onSwipedLeft: handleNext,
+    onSwipedLeft: () => goTo(currentIndex + 1),
     onSwipedRight: () => goTo(currentIndex - 1),
     preventScrollOnSwipe: true,
     trackTouch: true,
@@ -47,27 +45,27 @@ export default function Lightbox({ images, startIndex = 0, onClose }: LightboxPr
   });
 
   return (
-   <LightboxPortal>
+    <LightboxPortal>
   <div
-    className="fixed inset-0 z-[99999] w-screen h-[100dvh]"
+    className="fixed top-0 left-0 w-screen h-screen z-[99999] flex items-center justify-center"
+    onClick={onClose}
     role="dialog"
     aria-modal="true"
-    onClick={onClose}
+    style={{
+      backgroundColor: "rgba(0, 0, 0, 0.6)", // ✅ Dim
+      backdropFilter: "blur(6px)",          // ✅ Blur
+      WebkitBackdropFilter: "blur(6px)",    // ✅ Safari fallback
+    }}
   >
-    {/* ✅ Dim + Blur background */}
-    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-10" />
-
-    {/* ✅ Image on top */}
-    <div className="relative z-20 w-full h-full flex items-center justify-center">
-      <div onClick={(e) => e.stopPropagation()}>
-        <img
-          src={images[currentIndex]}
-          alt=""
-          className="h-[90vh] w-auto object-contain"
-        />
-      </div>
+    <div onClick={(e) => e.stopPropagation()}>
+      <img
+        src={images[currentIndex]}
+        alt=""
+        className="h-[90vh] w-auto object-contain"
+      />
     </div>
   </div>
 </LightboxPortal>
+
   );
 }

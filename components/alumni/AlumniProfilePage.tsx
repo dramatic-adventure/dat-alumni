@@ -1,4 +1,5 @@
 "use client";
+export {}; // ✅ ensure ES module scope
 
 import { useState } from "react";
 import ShareButton from "@/components/ShareButton";
