@@ -1,5 +1,19 @@
 // lib/types.ts
 
+// ========== Shared Utility Types ==========
+
+export type GeoLocation = {
+  lat: number;
+  lng: number;
+  label?: string;
+};
+
+export type UrlString = string;
+export type RawRow = Record<string, string>; // For raw Google Sheet parsing
+
+
+// ========== Story Map Rows ==========
+
 export type StoryRow = {
   title: string;
   slug: string;
@@ -12,19 +26,21 @@ export type StoryRow = {
   story?: string;
   quote?: string;
   quoteAuthor?: string;
-  imageUrl?: string;
+  imageUrl?: UrlString;
   author?: string;
   authorSlug?: string;
-  moreInfoLink?: string; // ✅ Ensures optional typing
+  moreInfoLink?: UrlString;
   country?: string;
   regionTag?: string;
   category?: string;
   showOnMap?: string;
   storyId?: string;
-  storyUrl?: string;
+  storyUrl?: UrlString;
 };
 
-// Alumni profiles
+
+// ========== Alumni Profile Rows ==========
+
 export type AlumniRow = {
   slug: string;
   name: string;
@@ -34,25 +50,25 @@ export type AlumniRow = {
   longitude?: string;
   identityTags?: string[];
   programBadges?: string[];
-  headshotUrl?: string;
-  imageUrls?: string[];
+  headshotUrl?: UrlString;
+  imageUrls?: UrlString[];
+  posterUrls?: string[]; // ✅ Local paths to poster images
   artistStatement?: string;
   currentWork?: string;
   legacyProductions?: string;
   storyTitle?: string;
-  storyThumbnail?: string;
+  storyThumbnail?: UrlString;
   storyExcerpt?: string;
-  storyUrl?: string;
+  storyUrl?: UrlString;
   tags?: string[];
-  artistUrl?: string;
-  socialLinks?: string[];
+  artistUrl?: UrlString;
+  socialLinks?: UrlString[];
   artistEmail?: string;
-  updateLink?: string;
+  updateLink?: UrlString;
   showOnProfile?: string;
   profileId?: string;
-  profileUrl?: string;
+  profileUrl?: UrlString;
   fieldNotes?: string[];
-  locations?: { lat: number; lng: number; label?: string }[];
+  locations?: GeoLocation[];
+  statusFlags?: string[];
 };
-
-// Trigger Netlify cache refresh

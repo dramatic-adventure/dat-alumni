@@ -1,6 +1,6 @@
 import loadRows from "@/lib/loadRows";
 import { loadSluggedStory } from "@/lib/loadSluggedStory";
-import type { Metadata, ResolvingMetadata } from "next";
+import type { Metadata } from "next";
 import { stripHtml } from "string-strip-html";
 
 type Props = {
@@ -8,8 +8,7 @@ type Props = {
 };
 
 export async function generateMetadata(
-  { params }: Props,
-  _parent: ResolvingMetadata
+  { params }: Props
 ): Promise<Metadata> {
   const rows = await loadRows();
   const story = loadSluggedStory(params.slug, rows);

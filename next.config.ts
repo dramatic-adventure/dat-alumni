@@ -2,13 +2,13 @@
 const nextConfig = {
   images: {
     remotePatterns: [
-      // ✅ Placeholder
+      // ✅ Placeholder (testing)
       {
         protocol: 'https',
         hostname: 'via.placeholder.com',
       },
 
-      // ✅ Squarespace
+      // ✅ Squarespace CDN
       {
         protocol: 'https',
         hostname: 'images.squarespace-cdn.com',
@@ -26,19 +26,23 @@ const nextConfig = {
         hostname: 'res.cloudinary.com',
       },
 
-      // ✅ Amazon S3 (common bucket pattern)
+      // ✅ Amazon S3 (specific and generic)
+      {
+        protocol: 'https',
+        hostname: 'your-bucket-name.s3.amazonaws.com', // ⛳️ Replace if needed
+      },
       {
         protocol: 'https',
         hostname: '*.s3.amazonaws.com',
       },
 
-      // ✅ imgur
+      // ✅ Imgur
       {
         protocol: 'https',
         hostname: 'i.imgur.com',
       },
 
-      // ✅ Dropbox (shared content links)
+      // ✅ Dropbox
       {
         protocol: 'https',
         hostname: 'www.dropbox.com',
@@ -48,27 +52,31 @@ const nextConfig = {
         hostname: 'dl.dropboxusercontent.com',
       },
 
-      // ✅ Google Drive preview links
+      // ✅ Google Drive preview
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
       },
 
-      // ✅ Common artist portfolio sites
+      // ✅ Wix (cleaned up)
       {
         protocol: 'https',
-        hostname: '**.wixstatic.com', // Wix CDN
-      },
-      {
-        protocol: 'https',
-        hostname: '**.webflow.io', // Webflow CDN
-      },
-      {
-        protocol: 'https',
-        hostname: '**.smugmug.com', // SmugMug
+        hostname: 'static.wixstatic.com',
       },
 
-      // ✅ Wildcard fallback (if needed, but limit this in production)
+      // ✅ Webflow (common asset domain)
+      {
+        protocol: 'https',
+        hostname: 'uploads-ssl.webflow.com',
+      },
+
+      // ✅ SmugMug
+      {
+        protocol: 'https',
+        hostname: 'photos.smugmug.com',
+      },
+
+      // ✅ Catch-all: only uncomment for dev/test
       // {
       //   protocol: 'https',
       //   hostname: '**',

@@ -4,8 +4,7 @@ import StoryPage from "@/components/story/StoryPage";
 import { StoryRow } from "@/lib/types";
 import { getSocialPreviewImage } from "@/lib/getSocialPreviewImage";
 import Footer from "@/components/Footer";
-import type { Metadata, ResolvingMetadata } from "next";
-
+import type { Metadata } from "next";
 
 /**
  * 🧠 PARAMS SANITY CHECK (Next.js 15 – App Router)
@@ -30,8 +29,7 @@ import type { Metadata, ResolvingMetadata } from "next";
 
 // ✅ Works: plain object `params`, no Promise
 export async function generateMetadata(
-  { params }: { params: { slug: string } },
-  _parent?: ResolvingMetadata
+  { params }: { params: { slug: string } }
 ): Promise<Metadata> {
   const { slug } = params;
   const all = await loadRows();

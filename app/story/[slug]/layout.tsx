@@ -1,11 +1,7 @@
-// app/story/[slug]/layout.tsx
-
+import type { ReactNode } from "react";
 import "@/app/globals.css";
 
-import type { ReactNode } from "react";
-
-export default function StorySlugLayout({ children }: { children: React.ReactNode }) {
+export default function StorySlugLayout({ children }: { children: ReactNode }) {
   console.log("✔ [slug]/layout.tsx loaded");
   return <>{children}</>;
 }
-

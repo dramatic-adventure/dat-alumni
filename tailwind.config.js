@@ -5,24 +5,52 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./lib/**/*.{js,ts,jsx,tsx,mdx}",
-    // 👇 ADD a safelist for font-gloucester to force Tailwind to always output it:
   ],
-  safelist: ["font-gloucester", "font-grotesk"],
+  safelist: [
+    "font-gloucester",
+    "font-grotesk",
+    "font-anton",
+    "font-rock",
+    "font-heading",
+    "font-display",
+    "font-handwriting",
+    "bg-black/70",
+    "bg-black/80",
+    "backdrop-blur",
+    "backdrop-blur-sm",
+    "text-xs", // helpful for badges and fine print
+  ],
   theme: {
     extend: {
       fontFamily: {
+        // Semantic font names
         sans: ['var(--font-dm-sans)', 'sans-serif'],
-        anton: ['var(--font-anton)', 'sans-serif'],
         grotesk: ['var(--font-space-grotesk)', 'sans-serif'],
+        display: ['var(--font-anton)', 'sans-serif'],
+        heading: ['var(--font-gloucester)', 'Gloucester', 'serif'],
+        handwriting: ['var(--font-rock-salt)', 'cursive'],
+
+        // Legacy aliases (still useful)
+        anton: ['var(--font-anton)', 'sans-serif'],
         gloucester: ['var(--font-gloucester)', 'Gloucester', 'serif'],
         rock: ['var(--font-rock-salt)', 'cursive'],
+      },
+      colors: {
+        white: "#ffffff",
+        'dat-yellow': '#FFCC00',
+        'dat-pink': '#FF4470',
       },
       screens: {
         xs: "400px",
       },
-      colors: {
-        'dat-yellow': '#FFCC00',
-        'dat-pink': '#FF4470',
+      animation: {
+        fadeIn: 'fadeIn 0.3s ease-out',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
       },
     },
   },

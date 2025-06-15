@@ -1,6 +1,6 @@
-// lib/loadAlumni.ts
-export {}; // ensures module scope
+export {}; // ensures ES module scope
 
+import path from "path";
 import Papa from "papaparse";
 import { cache } from "react";
 import { AlumniRow } from "./types";
@@ -34,7 +34,13 @@ function isMostlyEmpty(row: Record<string, string>): boolean {
 
 export const loadAlumni = cache(async (): Promise<AlumniRow[]> => {
   try {
-    const csvText = await loadCsv();
+    const fallbackPath = path.join(process.cwd(), "public", "fallback", "alumni.csv");
+    const csvUrl = process.env.ALUMNI_CSV_URL || fallbackPath;
+
+    if (DEBUG) console.log("📥 [loadAlumni] Using CSV source:", csvUrl);
+
+    const csvText = await loadCsv(csvUrl);
+
     const parsed = Papa.parse<Record<string, string>>(csvText, {
       header: true,
       skipEmptyLines: true,

@@ -3,6 +3,7 @@ import "@/app/globals.css";
 import { Anton, DM_Sans, Space_Grotesk, Rock_Salt } from "next/font/google";
 import localFont from "next/font/local";
 import Header from "@/components/Header";
+import type { ReactNode } from "react";
 
 const anton = Anton({
   subsets: ["latin"],
@@ -41,9 +42,10 @@ const gloucester = localFont({
 export const metadata = {
   title: "Dramatic Adventure Theatre – Alumni Stories",
   description: "Immersive global storytelling from DAT artists.",
+  metadataBase: new URL("https://stories.dramaticadventure.com"), // ✅ Use your real domain in production
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"

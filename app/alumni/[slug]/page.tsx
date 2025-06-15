@@ -21,32 +21,28 @@
  *   “Just because a function is async, doesn’t mean its props are Promises.”
  */
 
+// app/alumni/[slug]/page.tsx
+
+// app/alumni/[slug]/page.tsx
+
 import { notFound } from "next/navigation";
 import { loadVisibleAlumni, loadAlumniBySlug } from "@/lib/loadAlumni";
 import { getStoriesByAlumniSlug } from "@/lib/loadRows";
 import AlumniProfilePage from "@/components/alumni/AlumniProfilePage";
 import Footer from "@/components/Footer";
-import type { Metadata, ResolvingMetadata } from "next";
-
-console.log("🔍 AlumniProfilePage (type):", typeof AlumniProfilePage);
-console.log("🔍 AlumniProfilePage (keys):", Object.keys(AlumniProfilePage));
-
+import type { Metadata } from "next";
 
 type Params = { slug: string };
 
 /**
  * 🖼️ PAGE: Renders a full Alumni Profile based on the dynamic [slug]
- * - Pre-rendered at build time (SSG)
- * - Cross-references stories by the same artist
  */
 export default async function AlumniPage({
   params,
 }: {
   params: Params;
 }) {
-  const { slug } = params;
-
-  const alumni = await loadAlumniBySlug(slug);
+  const alumni = await loadAlumniBySlug(params.slug);
   if (!alumni) return notFound();
 
   const relatedStories = await getStoriesByAlumniSlug(alumni.slug);
@@ -54,7 +50,6 @@ export default async function AlumniPage({
   return (
     <>
       <AlumniProfilePage data={alumni} relatedStories={relatedStories} />
-
       <section className="bg-[#241123] pt-[0vh] md:pt-[0vh] pb-10">
         <Footer />
       </section>
@@ -63,7 +58,7 @@ export default async function AlumniPage({
 }
 
 /**
- * 📦 STATIC PARAMS: Used by Next.js to pre-render all eligible alumni profiles
+ * 📦 STATIC PARAMS: Pre-render all eligible alumni profiles
  */
 export async function generateStaticParams(): Promise<Params[]> {
   const alumni = await loadVisibleAlumni();
@@ -71,15 +66,14 @@ export async function generateStaticParams(): Promise<Params[]> {
 }
 
 /**
- * 🧠 METADATA: Used for Open Graph, SEO, and social previews
+ * 🧠 METADATA: For Open Graph, SEO, and social previews
  */
-export async function generateMetadata(
-  { params }: { params: Params },
-  _parent?: ResolvingMetadata
-): Promise<Metadata> {
-  const { slug } = params;
-  const alumni = await loadAlumniBySlug(slug);
-
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
+}): Promise<Metadata> {
+  const alumni = await loadAlumniBySlug(params.slug);
   if (!alumni) {
     return {
       title: "Alumni Not Found – Dramatic Adventure Theatre",
@@ -102,7 +96,7 @@ export async function generateMetadata(
       type: "profile",
       images: [
         {
-          url: "/default-og-image.jpg", // ✅ Replace with real logic later
+          url: "/default-og-image.jpg", // Replace later
           width: 1200,
           height: 630,
           alt: alumni.name,

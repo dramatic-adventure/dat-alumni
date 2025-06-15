@@ -1,3 +1,4 @@
+export {}; // ✅ ensure ES module scope
 import React from "react";
 
 interface StoryMediaProps {

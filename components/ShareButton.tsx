@@ -18,8 +18,6 @@ export default function ShareButton({ url }: { url: string }) {
   const [copied, setCopied] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const toggleDropdown = () => setOpen(prev => !prev);
-
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(url);
@@ -45,7 +43,7 @@ export default function ShareButton({ url }: { url: string }) {
         url,
       });
     } catch (err) {
-      if ((err as any).name !== "AbortError") {
+      if ((err as DOMException).name !== "AbortError") {
         console.error("Error sharing:", err);
       }
     } finally {
