@@ -1,69 +1,55 @@
 // lib/loadCsv.ts
 import fs from "fs/promises";
 import path from "path";
-import { cache } from "react";
+import axios from "axios";
+
+const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
 
 /**
- * Loads a CSV file from a given URL or local path, or uses default sources if none provided.
- * @param source Optional custom URL or file path for loading CSV.
+ * Load a CSV from a live URL or local fallback.
+ * @param sourceUrl Optional URL (from env var)
+ * @param fallbackFileName Optional fallback CSV file (e.g., "story-map.csv")
  */
-export const loadCsv = cache(async (source?: string): Promise<string> => {
-  const LIVE_URL =
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzkIPStlL2TU7AHySD3Kw9CqBFTi1q6QW7N99ivE3FpofNhHlwWejU0LXeMOmnTawtmLCT71KWMU-F/pub?gid=1202839730&single=true&output=csv";
+export async function loadCsv(sourceUrl?: string, fallbackFileName = "alumni.csv"): Promise<string> {
+  const fallbackPath = path.join(process.cwd(), "public", "fallback", fallbackFileName);
 
-  const FALLBACK_PATH = path.join(process.cwd(), "public", "fallback", "alumni.csv");
-
-  // Use defaults if no custom source is provided
-  const isCustom = !!source;
-  const target = source ?? LIVE_URL;
-  const isUrl = target.startsWith("http");
-
-  // 1️⃣ Try reading local file if not a URL
-  if (!isUrl) {
+  // 1️⃣ Try live fetch first if sourceUrl is provided
+  if (sourceUrl) {
     try {
-      console.log("📄 [loadCsv] Reading local file:", target);
-      return await fs.readFile(target, "utf-8");
-    } catch (err) {
-      console.warn("⚠️ [loadCsv] Local file read failed:", (err as Error).message);
-      throw err;
-    }
-  }
+      if (DEBUG) console.log("🌐 [loadCsv] Trying live fetch:", sourceUrl);
 
-  // 2️⃣ Try fetching from live URL
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+      const response = await axios.get(sourceUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0",
+          Accept: "text/csv",
+          Referer: "https://docs.google.com/",
+        },
+        timeout: 8000,
+      });
 
-  try {
-    console.log("🌍 [loadCsv] Fetching from URL:", target);
-    const res = await fetch(target, { signal: controller.signal });
+      let csvText: string = response.data;
 
-    if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
-
-    const csvText = await res.text();
-
-    // 3️⃣ Save fallback if using default live URL
-    if (!isCustom) {
-      await fs.mkdir(path.dirname(FALLBACK_PATH), { recursive: true });
-      await fs.writeFile(FALLBACK_PATH, csvText, "utf-8");
-      console.log("✅ [loadCsv] Saved fallback after live fetch");
-    }
-
-    return csvText;
-  } catch (err: any) {
-    console.error("❌ [loadCsv] Fetch error:", err.message);
-
-    // 4️⃣ Final fallback to local snapshot if default
-    if (!isCustom) {
-      try {
-        console.log("🔁 [loadCsv] Retrying fallback file:", FALLBACK_PATH);
-        return await fs.readFile(FALLBACK_PATH, "utf-8");
-      } catch {
-        throw new Error("❌ Could not load CSV from live or fallback.");
+      if (csvText.charCodeAt(0) === 0xfeff) {
+        csvText = csvText.slice(1); // Remove BOM if present
       }
-    }
 
-    throw err; // custom source failed — don't fallback
-  } finally {
-    clearTimeout(timeout);
+      // Save a copy to fallback
+      await fs.mkdir(path.dirname(fallbackPath), { recursive: true });
+      await fs.writeFile(fallbackPath, csvText, "utf-8");
+
+      if (DEBUG) console.log("✅ [loadCsv] Live fetch succeeded & fallback updated:", fallbackFileName);
+      return csvText;
+    } catch (err) {
+      console.error("⚠️ [loadCsv] Live fetch failed:", (err as Error).message);
+    }
   }
-});
+
+  // 2️⃣ Fallback to local file
+  try {
+    if (DEBUG) console.log("📂 [loadCsv] Using fallback:", fallbackFileName);
+    const csvText = await fs.readFile(fallbackPath, "utf-8");
+    return csvText;
+  } catch {
+    throw new Error(`❌ No CSV content found from URL or fallback: ${fallbackFileName}`);
+  }
+}
