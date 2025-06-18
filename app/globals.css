@@ -2,22 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ======================================
-   Base Reset & Kraft Background
-   ====================================== */
-
+/* ===============================
+   🧱 Base Reset & Background
+=============================== */
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
   min-height: 100vh;
-  box-sizing: border-box;
   background-color: #fdfcf7;
   background-image: url('/texture/kraft-paper.png');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
   background-attachment: fixed;
+  box-sizing: border-box;
 }
 
 *, *::before, *::after {
@@ -30,14 +29,110 @@ body > div {
   flex-direction: column;
 }
 
-/* ======================================
-   DAT Custom Alumni Profile Styles
-   ====================================== */
+/* ===============================
+   🔤 Local Font Faces
+=============================== */
+@font-face {
+  font-family: 'Anton';
+  src: url('/fonts/anton-v26-latin-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-100.woff2') format('woff2');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-100italic.woff2') format('woff2');
+  font-weight: 100;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-900italic.woff2') format('woff2');
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-300.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Rock Salt';
+  src: url('/fonts/rock-salt-v23-latin-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Gloucester';
+  src: url('/fonts/GloucesterMT-ExtraCondensed.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
+/* ===============================
+   🎨 Root Vars
+=============================== */
+:root {
+  --dat-color-bg: #241123;
+  --dat-color-accent: #F23359;
+  --dat-font-heading: Gloucester, serif;
+}
+
+/* ===============================
+   📣 Typography Tweaks
+=============================== */
+h1, h2, h3, h4 {
+  font-family: var(--dat-font-heading);
+}
+
+/* ===============================
+   🔗 Link Reset
+=============================== */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+a:visited {
+  color: inherit;
+}
+
+/* ===============================
+   ✅ Font Utility
+=============================== */
+.force-grotesk {
+  font-family: 'Space Grotesk', sans-serif !important;
+}
+
+/* ===============================
+   🧭 Alumni Layout Wrapper
+=============================== */
 .alumni-profile-page {
   width: 100%;
   max-width: 80%;
-  margin: 0rem auto;
+  margin: 0 auto;
   padding: 0;
   background: #fff;
   border-radius: 0.9rem;
@@ -46,50 +141,22 @@ body > div {
   z-index: 1;
 }
 
-
-/* ======================================
-   DAT Custom Story & Popup Styles
-   ====================================== */
-
+/* ===============================
+   🗺️ Story & Popup Shared Styles
+=============================== */
 .story-page,
 .mapboxgl-popup-content {
   width: 90%;
   max-width: 720px;
   margin: 3rem auto;
   padding: 1.5rem;
-  background: #fff;
+  background-color: #fff;
   border-radius: 24px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  color: #111;
-  text-align: left;
   font-family: 'DM Sans', sans-serif;
+  color: #111;
   position: relative;
   z-index: 1;
-}
-
-h1.popup-title {
-  font-family: 'Anton', sans-serif;
-  font-size: 2.6rem;
-  font-weight: 550;
-  text-transform: uppercase;
-  line-height: 1;
-  margin-top: 0.1rem;
-  margin-bottom: 0rem;
-  background: #ffcc00;
-  padding: 0.2rem 0.4rem;
-  display: inline-block;
-}
-
-@media (min-width: 768px) {
-  h1.popup-title {
-    font-size: 3.2rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  h1.popup-title {
-    font-size: 3.6rem;
-  }
 }
 
 .mapboxgl-popup-tip {
@@ -101,34 +168,56 @@ h1.popup-title {
   display: none !important;
 }
 
+.popup-title {
+  font-family: 'Anton', sans-serif;
+  font-size: 2.6rem;
+  font-weight: 550;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-top: 0.1rem;
+  margin-bottom: 0;
+  background: #FFCC00;
+  padding: 0.2rem 0.4rem;
+  display: inline-block;
+}
+
+@media (min-width: 768px) {
+  .popup-title {
+    font-size: 3.2rem;
+  }
+}
+@media (min-width: 1024px) {
+  .popup-title {
+    font-size: 3.6rem;
+  }
+}
+
 .popup-location {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 0.8rem;
   text-align: right;
   margin-top: 1.5rem;
-  margin-bottom: 0rem;
+  margin-bottom: 0;
 }
 
 .popup-program {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 1rem; 
+  font-size: 1rem;
   margin-bottom: 0.75rem;
 }
 
-/* Unified Media Block */
 .popup-media {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin-bottom: 0rem;
+  margin-bottom: 0;
 }
 
 .popup-image {
   width: 100%;
-  max-width: 100%;
   height: auto;
-  display: block;
   border-radius: 16px;
+  display: block;
 }
 
 .popup-video {
@@ -139,10 +228,9 @@ h1.popup-title {
 .popup-video iframe {
   width: 100%;
   aspect-ratio: 16 / 9;
-  height: auto;
-  display: block;
-  border-radius: 16px;
   border: none;
+  border-radius: 16px;
+  display: block;
 }
 
 .popup-partners {
@@ -150,7 +238,7 @@ h1.popup-title {
   font-size: 0.7rem;
   font-style: italic;
   text-align: right;
-  margin: 0 0 1.2rem;
+  margin-bottom: 1.2rem;
   line-height: 1.4;
 }
 
@@ -160,57 +248,49 @@ h1.popup-title {
   font-style: italic;
   margin: 0.75rem 2rem 0.25rem;
 }
-
 .popup-quote-author {
   font-family: 'DM Sans', sans-serif;
   font-size: 0.8rem;
   margin: 0.25rem 3rem 1.9rem;
 }
-
 .popup-story {
   font-family: 'DM Sans', sans-serif;
   font-size: 1rem;
   line-height: 1.5;
   margin: -0.5rem 0;
 }
-
 .popup-author {
   font-family: 'DM Sans', sans-serif;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #ff007f;
+  color: #FF007F;
   margin-bottom: 0.75rem;
 }
-
 .popup-author a {
-  color: #ff007f;
+  color: #FF007F;
   text-decoration: underline;
 }
 
 .popup-button {
   display: block;
   width: 100%;
-  box-sizing: border-box;
   padding: 0.75rem 1rem;
   text-align: center;
   background: #194d56;
   color: #fff;
-  text-decoration: none;
   font-family: 'Space Grotesk', sans-serif;
   font-size: 1.2rem;
+  font-weight: 500;
   letter-spacing: 0.4em;
   border-radius: 8px;
   text-transform: uppercase;
-  transition: background 0.3s ease;
+  transition: background-color 0.3s ease;
   margin-top: 1.5rem;
-  font-weight: 500;
 }
-
 .popup-button:hover {
   background: #123a40;
 }
 
-/* Tags styling */
 .story-page ul {
   list-style: none;
   padding: 0;
@@ -218,64 +298,9 @@ h1.popup-title {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-
 .story-page li {
   background-color: #eee;
   padding: 0.25rem 0.75rem;
   border-radius: 6px;
   font-size: 0.75rem;
-}
-
-/* Responsive Tweaks */
-@media (min-width: 768px) {
-  .popup-quote {
-    font-size: 1.6rem;
-    margin: 1.75rem 2rem 0.25rem;
-  }
-
-  .popup-quote-author {
-    margin: 0.25rem 3rem 1.9rem;
-  }
-}
-
-/* Fonts */
-@font-face {
-  font-family: 'Gloucester';
-  src: url('/fonts/GloucesterMT-ExtraCondensed.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* TEMPORARY DEBUG OVERRIDE */
-h2 {
-  font-family: 'Gloucester', serif !important;
-}
-
-/* ROOTS */
-:root {
-  --dat-color-bg: #241123;
-  --dat-color-accent: #F23359;
-  --dat-font-heading: Gloucester, serif;
-}
-
-/* Global link reset for white nav menus */
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-/* Optional: Keep hover underline if desired */
-a:hover {
-  text-decoration: underline;
-}
-
-/* Reset visited link color (for safety) */
-a:visited {
-  color: inherit;
-}
-
-/* ===== FORCE GROTESK FONT FOR ANY CLASS USING .force-grotesk ===== */
-.force-grotesk {
-  font-family: 'Space Grotesk', sans-serif !important;
 }

@@ -3,7 +3,7 @@
 interface PosterData {
   title: string;
   imageUrl: string;
-  url: string;
+  url: string; // internal path, like "/productions/the-bridge"
 }
 
 interface PosterStripProps {
@@ -17,31 +17,31 @@ interface PosterStripProps {
 export default function PosterStrip({
   posters,
   justify = "center",
-  heading = "Featured DAT Works",
+  heading = "FEATURED DAT WORKS",
   headingStyle = {},
   titleStyle = {},
 }: PosterStripProps) {
   if (!posters || posters.length === 0) return null;
 
+  const baseUrl = "https://www.dramaticadventure.com";
+
   return (
     <section
       className="w-full pt-10 pb-14"
-      style={{
-        paddingLeft: "15px",
-        paddingRight: "15px",
-      }}
+      style={{ paddingLeft: "15px", paddingRight: "15px" }}
     >
       {/* 🏷️ Section Heading */}
       <h2
         className="mb-10"
         style={{
-          fontFamily: "Anton, sans-serif",
-          fontSize: "2.5rem",
+          fontFamily: "Space Grotesk, sans-serif",
+          fontSize: "2.8rem",
           letterSpacing: "1px",
-          color: "#F6E4C1",
+          color: "#d9a919",
           textAlign: "center",
           margin: "0 auto",
-          ...headingStyle, // ✅ Custom overrides
+          marginBottom: "0.25rem",
+          ...headingStyle,
         }}
       >
         {heading}
@@ -59,7 +59,7 @@ export default function PosterStrip({
           style={{
             display: "flex",
             justifyContent: justify,
-            alignItems: "center",
+            alignItems: "flex-start",
             gap: "15px",
             flexWrap: "nowrap",
           }}
@@ -69,51 +69,56 @@ export default function PosterStrip({
               key={i}
               style={{
                 width: "clamp(220px, 30vw, 300px)",
-                textAlign: "center",
                 flexShrink: 0,
               }}
             >
-              <div
+              {/* 🖼️ Image Link with Hover Border Only */}
+              <a
+                href={`${baseUrl}${poster.url}`}
                 style={{
+                  display: "block",
                   width: "100%",
-                  aspectRatio: "16 / 9",
+                  height: "180px",
                   backgroundColor: "#000",
                   borderRadius: "6px",
                   overflow: "hidden",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  transition: "border 0.25s ease-in-out",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.border = "3px solid #F23359";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.border = "none";
                 }}
               >
                 <img
                   src={poster.imageUrl}
                   alt={poster.title}
                   style={{
-                    maxWidth: "100%",
-                    maxHeight: "100%",
+                    width: "100%",
+                    height: "100%",
                     objectFit: "contain",
                     display: "block",
                   }}
                 />
-              </div>
+              </a>
 
-              {/* 📝 Title Under Poster */}
+              {/* 📝 Title */}
               <div
                 style={{
-                  marginTop: "0.5rem",
-                  marginBottom: "0.5rem",
-                  backgroundColor: "#f2f2f2",
-                  color: "#000",
+                  marginTop: "0.05rem",
+                  color: "#241123",
                   fontFamily: "DM Sans, sans-serif",
-                  fontSize: "0.8rem",
-                  fontWeight: "normal",
+                  fontSize: "1rem",
+                  fontWeight: 600,
                   padding: "6px 10px",
                   borderRadius: "4px",
                   whiteSpace: "normal",
                   wordBreak: "break-word",
                   lineHeight: 1.25,
-                  boxShadow: "2px 2px 6px rgba(0,0,0,0.25)",
-                  ...titleStyle, // ✅ Custom title style
+                  textAlign: "center",
+                  boxShadow: "2px 2px 6px rgba(0,0,0,0)",
+                  ...titleStyle,
                 }}
               >
                 {poster.title}

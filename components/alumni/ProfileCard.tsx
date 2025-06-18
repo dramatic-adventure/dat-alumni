@@ -281,11 +281,11 @@ export default function ProfileCard({
         </div>
       )}
 
-      {/* 🎭 Poster Strip Section (Dark Blue Panel) */}
+      {/* 🎭 Poster Strip Section */}
 {featuredProductions.length > 0 && (
   <div
     style={{
-      backgroundColor: "#6C00AF",
+      backgroundColor: "#16697A",
       padding: "3rem 60px",
       display: "flex",
     }}
