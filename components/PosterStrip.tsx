@@ -1,51 +1,127 @@
-import PosterCard from "./alumni/PosterCard"; // ✅ DEFAULT import
+"use client";
 
 interface PosterData {
   title: string;
-  imageUrl: string;      // should point to /posters/*.jpg
+  imageUrl: string;
   url: string;
-  layout?: "landscape" | "portrait";  // default: landscape
-  titlePosition?: "bottom-left" | "bottom-center" | "top-left" | "top-right";
 }
 
 interface PosterStripProps {
   posters: PosterData[];
+  justify?: "center" | "flex-start" | "flex-end" | "space-between" | "space-around" | "space-evenly";
+  heading?: string;
+  headingStyle?: React.CSSProperties;
+  titleStyle?: React.CSSProperties;
 }
 
-export default function PosterStrip({ posters }: PosterStripProps) {
+export default function PosterStrip({
+  posters,
+  justify = "center",
+  heading = "Featured DAT Works",
+  headingStyle = {},
+  titleStyle = {},
+}: PosterStripProps) {
   if (!posters || posters.length === 0) return null;
 
-  const isSingle = posters.length === 1;
-
   return (
-    <div
-      className={`w-full mt-6 ${
-        isSingle ? "flex justify-center" : "flex gap-4 overflow-x-auto pb-2"
-      }`}
+    <section
+      className="w-full pt-10 pb-14"
+      style={{
+        paddingLeft: "15px",
+        paddingRight: "15px",
+      }}
     >
-      {posters.map((poster, i) => {
-        // Ensure path resolves correctly
-        const src = poster.imageUrl?.startsWith("/")
-          ? poster.imageUrl
-          : `/posters/${poster.imageUrl}`;
+      {/* 🏷️ Section Heading */}
+      <h2
+        className="mb-10"
+        style={{
+          fontFamily: "Anton, sans-serif",
+          fontSize: "2.5rem",
+          letterSpacing: "1px",
+          color: "#F6E4C1",
+          textAlign: "center",
+          margin: "0 auto",
+          ...headingStyle, // ✅ Custom overrides
+        }}
+      >
+        {heading}
+      </h2>
 
-        return (
-          <a
-            key={i}
-            href={poster.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`View ${poster.title}`}
-          >
-            <PosterCard
-              title={poster.title}
-              imageUrl={src}
-              layout={poster.layout ?? "landscape"}
-              titlePosition={poster.titlePosition ?? "bottom-left"}
-            />
-          </a>
-        );
-      })}
-    </div>
+      {/* 🎞️ Poster Row */}
+      <div
+        style={{
+          width: "100%",
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: justify,
+            alignItems: "center",
+            gap: "15px",
+            flexWrap: "nowrap",
+          }}
+        >
+          {posters.map((poster, i) => (
+            <div
+              key={i}
+              style={{
+                width: "clamp(220px, 30vw, 300px)",
+                textAlign: "center",
+                flexShrink: 0,
+              }}
+            >
+              <div
+                style={{
+                  width: "100%",
+                  aspectRatio: "16 / 9",
+                  backgroundColor: "#000",
+                  borderRadius: "6px",
+                  overflow: "hidden",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <img
+                  src={poster.imageUrl}
+                  alt={poster.title}
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: "100%",
+                    objectFit: "contain",
+                    display: "block",
+                  }}
+                />
+              </div>
+
+              {/* 📝 Title Under Poster */}
+              <div
+                style={{
+                  marginTop: "0.5rem",
+                  marginBottom: "0.5rem",
+                  backgroundColor: "#f2f2f2",
+                  color: "#000",
+                  fontFamily: "DM Sans, sans-serif",
+                  fontSize: "0.8rem",
+                  fontWeight: "normal",
+                  padding: "6px 10px",
+                  borderRadius: "4px",
+                  whiteSpace: "normal",
+                  wordBreak: "break-word",
+                  lineHeight: 1.25,
+                  boxShadow: "2px 2px 6px rgba(0,0,0,0.25)",
+                  ...titleStyle, // ✅ Custom title style
+                }}
+              >
+                {poster.title}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

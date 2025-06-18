@@ -1,43 +1,47 @@
-// lib/fetchStories.ts
-export {}; // ensures module scope
-
+import fs from "fs/promises";
+import path from "path";
 import Papa from "papaparse";
-import { cache } from "react";
 import { normalizeStoryRow } from "./normalizeStoryRow";
 import { StoryRow } from "./types";
 import { loadCsv } from "./loadCsv";
 
 const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
+const CSV_URL = process.env.STORY_MAP_CSV_URL;
+const FALLBACK_FILENAME = "story-map.csv";
 
-export const fetchStories = cache(async (): Promise<StoryRow[]> => {
+export async function fetchStories(): Promise<StoryRow[]> {
   try {
-    const csvSource =
-      process.env.STORY_MAP_CSV_URL ||
-      "public/fallback/story-map.csv";
+    const csvText = await loadCsv(CSV_URL, FALLBACK_FILENAME);
 
-    if (DEBUG) console.log("📥 [fetchStories] Using CSV source:", csvSource);
-
-    const csvText = await loadCsv(csvSource);
     const { data, errors } = Papa.parse<Record<string, string>>(csvText, {
       header: true,
       skipEmptyLines: true,
     });
 
+    if (DEBUG) {
+      console.log("🧪 [fetchStories] CSV source:", CSV_URL || FALLBACK_FILENAME);
+      console.log("🔍 First row of CSV:", data[0]);
+    }
+
     if (errors.length > 0) {
       console.warn("⚠️ [fetchStories] CSV parse warnings:", errors);
     }
 
-    const stories = data
+    const normalized = data
       .map(normalizeStoryRow)
       .filter((row): row is StoryRow => !!row);
 
-    if (DEBUG) {
-      console.log("✅ Parsed story count:", stories.length);
+    if (normalized.length === 0) {
+      console.warn("🚨 No stories found — check CSV or normalizeStoryRow()");
     }
 
-    return stories;
+    if (DEBUG) {
+      console.log("✅ [fetchStories] Parsed story count:", normalized.length);
+    }
+
+    return normalized;
   } catch (err) {
-    console.error("❌ [fetchStories] Failed to load story rows:", err);
+    console.error("❌ [fetchStories] Failed to load stories:", err);
     return [];
   }
-});
+}

@@ -40,7 +40,8 @@ export const productionMap: Record<string, Production> = {
       "willem-rogers": ["Actor"],
       "taylor-rekus": ["Actor"],
       "gina-mattucci": ["Actor"],
-      "clara-coslett": ["Actor"]
+      "clara-coslett": ["Actor"],
+      "isabel-martinez": ["Actor"]
     }
   },
   "miracles-are-soft-in-the-jungle": {
@@ -61,7 +62,8 @@ export const productionMap: Record<string, Production> = {
       "antonia-laché": ["Actor"],
       "karina-sindicich": ["Actor"],
       "leslie-root": ["Actor"],
-      "sam-super": ["Actor"]
+      "sam-super": ["Actor"],
+      "isabel-martinez": ["Actor"]
     }
   },
   "whispers-of-floreana": {
@@ -279,7 +281,8 @@ export const productionMap: Record<string, Production> = {
       "mikayla-oneill": ["Actor"],
       "nativa-kesecker": ["Actor"],
       "noelle-rodriguez": ["Actor"],
-      "vicki-rodriguez": ["Actor"]
+      "vicki-rodriguez": ["Actor"],
+      "isabel-martinez": ["Actor"]
     }
   },
 
