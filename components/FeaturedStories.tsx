@@ -170,7 +170,7 @@ export default function FeaturedStories({ stories }: FeaturedStoriesProps) {
                 <h4 style={{ fontFamily: "Anton, sans-serif", fontSize: "1.5rem", marginBottom: "0.25rem", color: "#241123" }}>
                   {story.title}
                 </h4>
-                <p style={{ fontSize: "0.95rem", fontFamily: '"DM Sans", sans-serif', clor: "#444", lineHeight: 1 }}>
+                <p style={{ fontSize: "0.95rem", fontFamily: '"DM Sans", sans-serif', color: "#444", lineHeight: 1 }}>
                   {story.story?.slice(0, 120)}...
                 </p>
               </Link>
