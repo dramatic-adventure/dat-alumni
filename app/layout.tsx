@@ -53,7 +53,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     >
       <body className="min-h-screen flex flex-col text-black">
         <Header />
-        <main className="z-0 flex-grow w-full max-w-6xl mx-auto px-4 pt-4 sm:px-12 bg-[url('/images/texture/kraft-paper.png')] bg-cover bg-center bg-fixed">
+        <main
+  className="min-h-screen w-full bg-[url('/images/texture/kraft-paper.png')] bg-cover bg-fixed bg-center pt-12 pb-24 px-4"
+>
           {children}
         </main>
       </body>

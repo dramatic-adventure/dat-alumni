@@ -156,9 +156,15 @@ export default function ProfileCard({
   return (
     <div className="relative w-full m-0 p-0">
       {/* 🟪 Floating Share Button */}
-      <div className="fixed z-50" style={{ top: shareButtonTop, right: shareButtonRight }}>
-        <ShareButton url={currentUrl} />
-      </div>
+      <div
+  className="absolute z-40"
+  style={{
+    top: "1.25rem",
+    right: "1.5rem",
+  }}
+>
+  <ShareButton url={currentUrl} />
+</div>
 
       {/* 📸 Floating Headshot */}
       {headshotUrl && (

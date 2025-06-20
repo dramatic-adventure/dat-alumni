@@ -68,6 +68,7 @@ export function normalizeAlumniRow(row: Record<string, string>): AlumniRow | nul
     showOnProfile: cleanedRow["Show on Profile?"] || "",
     profileId: cleanedRow["Profile ID"] || "",
     profileUrl: forceHttps(cleanedRow["Profile URL"]),
+    backgroundChoice: cleanedRow["Background Choice"] || "kraft",
     locations,
   };
 }
