@@ -2,19 +2,17 @@
 export {};
 
 import { useState } from "react";
-import ShareButton from "@/components/ShareButton";
 import { AlumniRow, StoryRow } from "@/lib/types";
-import ProfileCard from "./ProfileCard";
-import ImageCarousel from "./ImageCarousel";
-import FieldNotes from "./FieldNotes";
-import PosterStrip from "@/components/PosterStrip";
-import AlumniMapPreview from "@/components/alumni/AlumniMapPreview";
-import Lightbox from "@/components/Lightbox";
-import LightboxPortal from "@/components/LightboxPortal";
+import ProfileCard from "@/components/profile/ProfileCard";
+import FeaturedStories from "@/components/shared/FeaturedStories";
+import PosterStrip from "@/components/shared/PosterStrip";
+import ImageCarousel from "@/components/alumni/ImageCarousel";
+import FieldNotes from "@/components/alumni/FieldNotes";
+import Lightbox from "@/components/shared/LightboxPortal";
 
 interface AlumniProfileProps {
   data: AlumniRow;
-  relatedStories?: StoryRow[];
+  allStories: StoryRow[];
 }
 
 function getPosterTitleFromUrl(url: string): string {
@@ -27,25 +25,25 @@ function getPosterTitleFromUrl(url: string): string {
 
 export default function AlumniProfilePage({
   data,
-  relatedStories = [],
+  allStories,
 }: AlumniProfileProps) {
   const {
     slug,
     name,
-    role,
-    headshotUrl,
-    programBadges,
-    identityTags,
-    statusFlags,
-    artistStatement,
+    role = "",
+    headshotUrl = "",
+    programBadges = [],
+    identityTags = [],
+    statusFlags = [],
+    artistStatement = "",
     fieldNotes,
     imageUrls = [],
-    locations = [],
     posterUrls = [],
   } = data;
 
-  const profileUrl = `https://stories.dramaticadventure.com/alumni/${slug}`;
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  const authorStories = allStories.filter((story) => story.authorSlug === slug);
 
   return (
     <main>
@@ -53,12 +51,12 @@ export default function AlumniProfilePage({
         className="max-w-[1000px] mx-auto shadow-md overflow-hidden rounded-[16px] bg-white"
         style={{ marginTop: "8rem", marginBottom: "8rem" }}
       >
-        {/* 🟫 Kraft / Teal / White Profile Section */}
+        {/* 🟫 Kraft / Teal Profile Section */}
         <div
           className="rounded-t-[16px] overflow-hidden"
           style={{
             backgroundColor: "#C39B6C",
-            backgroundImage: "url('/texture/kraft-background.png')",
+            backgroundImage: "url('/images/texture/kraft-paper.png')",
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
             backgroundBlendMode: "multiply",
@@ -68,12 +66,13 @@ export default function AlumniProfilePage({
           <ProfileCard
             slug={slug}
             name={name}
-            role={role ?? ""}
-            headshotUrl={headshotUrl ?? ""}
-            programBadges={programBadges ?? []}
-            identityTags={identityTags ?? []}
-            statusFlags={statusFlags ?? []}
-            artistStatement={artistStatement ?? ""}
+            role={role}
+            headshotUrl={headshotUrl}
+            programBadges={programBadges}
+            identityTags={identityTags}
+            statusFlags={statusFlags}
+            artistStatement={artistStatement}
+            stories={authorStories}
           />
         </div>
 
@@ -103,20 +102,13 @@ export default function AlumniProfilePage({
 
         {/* 💡 Lightbox */}
         {imageUrls.length > 0 && lightboxIndex !== null && (
-          <LightboxPortal>
-            <Lightbox
-              images={imageUrls}
-              startIndex={lightboxIndex}
-              onClose={() => setLightboxIndex(null)}
+          <Lightbox>
+            <img
+              src={imageUrls[lightboxIndex]}
+              alt={`Gallery image ${lightboxIndex + 1}`}
+              style={{ width: "100%", height: "auto", objectFit: "contain" }}
             />
-          </LightboxPortal>
-        )}
-
-        {/* 🗺️ Map Preview */}
-        {locations.length > 0 && (
-          <div className="mt-6 px-6">
-            <AlumniMapPreview locations={locations} />
-          </div>
+          </Lightbox>
         )}
 
         {/* 📓 Field Notes */}
@@ -126,33 +118,10 @@ export default function AlumniProfilePage({
           </div>
         )}
 
-        {/* 📰 Related Stories */}
-        {relatedStories.length > 0 && (
-          <div className="mt-10 px-6 pb-10">
-            <h2 className="popup-title">Featured Stories</h2>
-            <div className="grid md:grid-cols-2 gap-6 mt-4">
-              {relatedStories.map((story) => (
-                <a
-                  key={story.slug}
-                  href={`/story/${story.slug}`}
-                  className="block border rounded-lg p-4 shadow-md bg-white hover:shadow-lg transition"
-                  aria-label={`View story titled ${story.title}`}
-                >
-                  <h3 className="font-bold text-lg mb-2">{story.title}</h3>
-                  {story.imageUrl && (
-                    <img
-                      src={story.imageUrl}
-                      alt={story.title}
-                      className="w-full h-48 object-cover rounded mb-2"
-                      loading="lazy"
-                    />
-                  )}
-                  <p className="text-sm text-gray-600">
-                    {story.story?.slice(0, 100)}...
-                  </p>
-                </a>
-              ))}
-            </div>
+        {/* 🌍 Featured Stories */}
+        {authorStories.length > 0 && (
+          <div className="mt-10 px-6">
+            <FeaturedStories stories={allStories} authorSlug={slug} />
           </div>
         )}
       </div>

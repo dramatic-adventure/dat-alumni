@@ -4,12 +4,12 @@ import React from "react";
 interface StoryMediaProps {
   imageUrl?: string;
   title?: string;
+  style?: React.CSSProperties;
 }
 
-export default function StoryMedia({ imageUrl, title }: StoryMediaProps) {
+export default function StoryMedia({ imageUrl, title, style }: StoryMediaProps) {
   if (!imageUrl) return null;
 
-  // Clean the URL
   const trimmedUrl = imageUrl.trim().replace(/\s+/g, "");
   const cleanUrl = (() => {
     try {
@@ -25,7 +25,6 @@ export default function StoryMedia({ imageUrl, title }: StoryMediaProps) {
     }
   })();
 
-  // Media type helpers
   const isImage = (url: string) => /\.(png|jpe?g|gif|webp|svg|heic|heif)$/i.test(url.split("?")[0]);
   const isVideoFile = (url: string) => /\.(mp4|webm|mov|ogg)$/i.test(url.split("?")[0]);
   const isAudio = (url: string) =>
@@ -71,7 +70,6 @@ export default function StoryMedia({ imageUrl, title }: StoryMediaProps) {
     }
   };
 
-  // Render media by type
   if (isAudio(cleanUrl)) {
     return (
       <div className="popup-media w-full max-w-3xl mx-auto my-4">
@@ -105,6 +103,7 @@ export default function StoryMedia({ imageUrl, title }: StoryMediaProps) {
           src={cleanUrl}
           controls
           className="w-full max-w-3xl rounded-xl shadow-md"
+          style={style}
         >
           Your browser does not support the video tag.
         </video>
@@ -120,7 +119,8 @@ export default function StoryMedia({ imageUrl, title }: StoryMediaProps) {
           alt={title || "Story Image"}
           loading="lazy"
           decoding="async"
-          className="w-full max-w-3xl rounded-xl shadow-md"
+          className="w-full max-w-3xl shadow-md"
+          style={style}
         />
       </div>
     );

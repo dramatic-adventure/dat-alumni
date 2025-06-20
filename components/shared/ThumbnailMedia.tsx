@@ -5,9 +5,10 @@ import React from "react";
 interface ThumbnailMediaProps {
   imageUrl?: string;
   title?: string;
+  style?: React.CSSProperties;
 }
 
-export default function ThumbnailMedia({ imageUrl, title }: ThumbnailMediaProps) {
+export default function ThumbnailMedia({ imageUrl, title, style }: ThumbnailMediaProps) {
   if (!imageUrl) return null;
 
   const trimmedUrl = imageUrl.trim().replace(/\s+/g, "");
@@ -25,10 +26,8 @@ export default function ThumbnailMedia({ imageUrl, title }: ThumbnailMediaProps)
     }
   })();
 
-  const isImage = (url: string) =>
-    /\.(png|jpe?g|gif|webp|svg|heic|heif)$/i.test(url.split("?")[0]);
-  const isVideoFile = (url: string) =>
-    /\.(mp4|webm|mov|ogg)$/i.test(url.split("?")[0]);
+  const isImage = (url: string) => /\.(png|jpe?g|gif|webp|svg|heic|heif)$/i.test(url.split("?")[0]);
+  const isVideoFile = (url: string) => /\.(mp4|webm|mov|ogg)$/i.test(url.split("?")[0]);
   const isAudio = (url: string) =>
     /\.(mp3|wav|ogg)$/i.test(url.split("?")[0]) || url.includes("soundcloud.com");
 
@@ -90,34 +89,23 @@ export default function ThumbnailMedia({ imageUrl, title }: ThumbnailMediaProps)
     </div>
   );
 
-  // YouTube thumbnail
+  const mergedStyle = { ...mediaStyle, borderRadius: 0, ...style };
+
   const youtubeId = getYouTubeId(cleanUrl);
   if (youtubeId) {
     const thumb = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
     return (
-      <div style={wrapperStyle}>
-        <img src={thumb} alt={title || "YouTube thumbnail"} style={mediaStyle} />
+      <div style={{ ...wrapperStyle, borderRadius: 0 }}>
+        <img src={thumb} alt={title || "YouTube thumbnail"} style={mergedStyle} />
         {playOverlay}
       </div>
     );
   }
 
-  // Vimeo fallback
   if (isVimeo(cleanUrl)) {
     return (
-      <div style={wrapperStyle}>
-        <div
-          style={{
-            ...mediaStyle,
-            backgroundColor: "#000",
-            color: "#fff",
-            fontSize: "0.7rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
-          }}
-        >
+      <div style={{ ...wrapperStyle, borderRadius: 0 }}>
+        <div style={{ ...mergedStyle, backgroundColor: "#000", color: "#fff", fontSize: "0.7rem", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
           Vimeo
         </div>
         {playOverlay}
@@ -125,22 +113,10 @@ export default function ThumbnailMedia({ imageUrl, title }: ThumbnailMediaProps)
     );
   }
 
-  // Audio fallback
   if (isAudio(cleanUrl)) {
     return (
-      <div style={wrapperStyle}>
-        <div
-          style={{
-            ...mediaStyle,
-            backgroundColor: "#f1f1f1",
-            color: "#555",
-            fontSize: "0.8rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
-          }}
-        >
+      <div style={{ ...wrapperStyle, borderRadius: 0 }}>
+        <div style={{ ...mergedStyle, backgroundColor: "#f1f1f1", color: "#555", fontSize: "0.8rem", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
           Audio
         </div>
         {playOverlay}
@@ -148,26 +124,19 @@ export default function ThumbnailMedia({ imageUrl, title }: ThumbnailMediaProps)
     );
   }
 
-  // Video file fallback
   if (isVideoFile(cleanUrl)) {
     return (
-      <div style={wrapperStyle}>
-        <div
-          style={{
-            ...mediaStyle,
-            backgroundColor: "#000",
-          }}
-        />
+      <div style={{ ...wrapperStyle, borderRadius: 0 }}>
+        <div style={{ ...mergedStyle, backgroundColor: "#000" }} />
         {playOverlay}
       </div>
     );
   }
 
-  // Static Image
   if (isImage(cleanUrl)) {
     return (
-      <div style={wrapperStyle}>
-        <img src={cleanUrl} alt={title || "Story image"} style={mediaStyle} />
+      <div style={{ ...wrapperStyle, borderRadius: 0 }}>
+        <img src={cleanUrl} alt={title || "Story image"} style={mergedStyle} />
       </div>
     );
   }
@@ -175,13 +144,12 @@ export default function ThumbnailMedia({ imageUrl, title }: ThumbnailMediaProps)
   return null;
 }
 
-// 🔧 Shared styles
 const wrapperStyle: React.CSSProperties = {
   position: "relative",
   width: "100%",
   aspectRatio: "16/9",
   overflow: "hidden",
-  borderRadius: "6px",
+  borderRadius: 0,
   backgroundColor: "#eee",
 };
 

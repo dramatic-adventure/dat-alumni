@@ -1,23 +1,23 @@
-// components/ArtistProfileHeader.jsx
-'use client';
-import React from 'react';
+// components/ArtistProfileHeader.tsx
+"use client";
 
-/**
- * ArtistProfileHeader Component
- * Props:
- * - headshotUrl: string
- * - name: string
- * - role: string
- * - badges: string[]
- * - onFieldNotesClick: () => void
- */
+import React from "react";
+
+interface ArtistProfileHeaderProps {
+  headshotUrl: string;
+  name: string;
+  role: string;
+  badges?: string[];
+  onFieldNotesClick: () => void;
+}
+
 export default function ArtistProfileHeader({
   headshotUrl,
   name,
   role,
   badges = [],
   onFieldNotesClick,
-}) {
+}: ArtistProfileHeaderProps) {
   return (
     <div className="flex w-full h-80">
       {/* Left Panel */}
@@ -38,14 +38,14 @@ export default function ArtistProfileHeader({
         <h1 className="font-anton text-5xl text-transparent bg-white bg-clip-text">
           {name}
         </h1>
-        <p className="font-spaceGrotesk text-xl absolute right-6 top-16">
+        <p className="font-space-grotesk text-xl absolute right-6 top-16">
           {role}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           {badges.map((badge, idx) => (
             <span
               key={idx}
-              className="px-3 py-1 border border-green-600 text-green-600 rounded-full text-sm font-spaceGrotesk"
+              className="px-3 py-1 border border-green-600 text-green-600 rounded-full text-sm font-space-grotesk"
             >
               {badge}
             </span>
@@ -60,7 +60,8 @@ export default function ArtistProfileHeader({
         <div className="p-4">
           <button
             onClick={onFieldNotesClick}
-            className="w-full py-2 font-spaceGrotesk text-white text-lg bg-teal hover:bg-teal/80 rounded-md transition-opacity"
+            className="w-full py-2 font-space-grotesk text-white text-lg bg-teal hover:bg-teal/80 rounded-md transition-opacity"
+            aria-label="View Field Notes"
           >
             FIELD NOTES
           </button>

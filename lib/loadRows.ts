@@ -14,3 +14,8 @@ export async function getStoriesByAlumniSlug(slug: string): Promise<StoryRow[]> 
   const rows = await loadRows();
   return rows.filter((row) => row.authorSlug === slug);
 }
+
+// ✅ NEW: Fetch all stories
+export const getAllStories = async (): Promise<StoryRow[]> => {
+  return await loadRows();
+};

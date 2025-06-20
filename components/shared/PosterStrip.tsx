@@ -1,4 +1,5 @@
 "use client";
+export {}; // ✅ Ensure ES module scope
 
 interface PosterData {
   title: string;
@@ -26,21 +27,13 @@ export default function PosterStrip({
   const baseUrl = "https://www.dramaticadventure.com";
 
   return (
-    <section
-      className="w-full pt-10 pb-14"
-      style={{ paddingLeft: "15px", paddingRight: "15px" }}
-    >
+    <section className="w-full pt-10 pb-14 px-4">
       {/* 🏷️ Section Heading */}
       <h2
-        className="mb-10"
+        className="mb-4 text-center text-[2.8rem] tracking-wide"
         style={{
           fontFamily: "Space Grotesk, sans-serif",
-          fontSize: "2.8rem",
-          letterSpacing: "1px",
           color: "#d9a919",
-          textAlign: "center",
-          margin: "0 auto",
-          marginBottom: "0.25rem",
           ...headingStyle,
         }}
       >
@@ -48,13 +41,7 @@ export default function PosterStrip({
       </h2>
 
       {/* 🎞️ Poster Row */}
-      <div
-        style={{
-          width: "100%",
-          display: "flex",
-          justifyContent: "center",
-        }}
-      >
+      <div className="flex justify-center w-full">
         <div
           style={{
             display: "flex",
@@ -72,41 +59,25 @@ export default function PosterStrip({
                 flexShrink: 0,
               }}
             >
-              {/* 🖼️ Image Link with Hover Border Only */}
+              {/* 🖼️ Image Link with Hover Border */}
               <a
                 href={`${baseUrl}${poster.url}`}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  height: "180px",
-                  backgroundColor: "#000",
-                  borderRadius: "6px",
-                  overflow: "hidden",
-                  transition: "border 0.25s ease-in-out",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.border = "3px solid #F23359";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.border = "none";
-                }}
+                aria-label={`Link to ${poster.title}`}
+                rel="noopener noreferrer"
+                target="_self"
+                className="block w-full h-[180px] bg-black rounded-md overflow-hidden transition-all hover:border-[3px] hover:border-[#F23359]"
               >
                 <img
                   src={poster.imageUrl}
                   alt={poster.title}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "contain",
-                    display: "block",
-                  }}
+                  className="w-full h-full object-contain block"
                 />
               </a>
 
               {/* 📝 Title */}
               <div
                 style={{
-                  marginTop: "0.05rem",
+                  marginTop: "0.3rem",
                   color: "#241123",
                   fontFamily: "DM Sans, sans-serif",
                   fontSize: "1rem",
@@ -117,7 +88,6 @@ export default function PosterStrip({
                   wordBreak: "break-word",
                   lineHeight: 1.25,
                   textAlign: "center",
-                  boxShadow: "2px 2px 6px rgba(0,0,0,0)",
                   ...titleStyle,
                 }}
               >

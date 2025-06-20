@@ -2,7 +2,7 @@
 import "@/app/globals.css";
 import { Anton, DM_Sans, Space_Grotesk, Rock_Salt } from "next/font/google";
 import localFont from "next/font/local";
-import Header from "@/components/Header";
+import Header from "@/components/ui/Header";
 import type { ReactNode } from "react";
 
 const anton = Anton({
@@ -53,7 +53,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     >
       <body className="min-h-screen flex flex-col text-black">
         <Header />
-        <main className="z-0 flex-grow w-full max-w-6xl mx-auto px-4 pt-4 sm:px-12 bg-[url('/texture/kraft-paper.png')] bg-cover bg-center bg-fixed">
+        <main className="z-0 flex-grow w-full max-w-6xl mx-auto px-4 pt-4 sm:px-12 bg-[url('/images/texture/kraft-paper.png')] bg-cover bg-center bg-fixed">
           {children}
         </main>
       </body>

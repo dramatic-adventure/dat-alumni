@@ -2,7 +2,7 @@
 export {}; // ✅ Ensure ES module scope
 
 import { useEffect, useState } from "react";
-import LightboxPortal from "./LightboxPortal";
+import LightboxPortal from "@/components/shared/LightboxPortal";;
 import { useSwipeable } from "react-swipeable";
 
 interface LightboxProps {

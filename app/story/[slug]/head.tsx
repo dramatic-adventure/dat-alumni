@@ -1,3 +1,5 @@
+// app/story/[slug]/head.tsx
+
 import loadRows from "@/lib/loadRows";
 import { loadSluggedStory } from "@/lib/loadSluggedStory";
 import type { Metadata } from "next";
@@ -10,8 +12,8 @@ type Props = {
 export async function generateMetadata(
   { params }: Props
 ): Promise<Metadata> {
-  const rows = await loadRows();
-  const story = loadSluggedStory(params.slug, rows);
+  const rows = await loadRows(); // ✅ Already normalized StoryRow[]
+  const story = loadSluggedStory(params.slug, rows); // ✅ Accepts StoryRow[]
 
   if (!story) {
     return {

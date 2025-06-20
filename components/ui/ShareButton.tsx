@@ -1,4 +1,5 @@
 "use client";
+export {}; // ✅ ensure ES module scope
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
@@ -58,7 +59,7 @@ export default function ShareButton({ url }: { url: string }) {
       }
     };
 
-    const handleEscape = (e: KeyboardEvent) => {
+    const handleEscape = (e: globalThis.KeyboardEvent) => {
       if (e.key === "Escape") {
         setOpen(false);
       }

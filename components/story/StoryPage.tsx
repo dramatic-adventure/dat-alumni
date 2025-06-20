@@ -1,6 +1,6 @@
 import Link from "next/link";
-import ShareButton from "@/components/ShareButton";
-import StoryMedia from "@/components/StoryMedia";
+import ShareButton from "@/components/ui/ShareButton";
+import StoryMedia from "@/components/shared/StoryMedia";
 import { StoryRow } from "@/lib/types";
 
 interface StoryPageProps {

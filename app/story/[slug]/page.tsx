@@ -3,7 +3,7 @@ import loadRows from "@/lib/loadRows";
 import StoryPage from "@/components/story/StoryPage";
 import { StoryRow } from "@/lib/types";
 import { getSocialPreviewImage } from "@/lib/getSocialPreviewImage";
-import Footer from "@/components/Footer";
+import Footer from "@/components/ui/Footer";
 import type { Metadata } from "next";
 
 /**
