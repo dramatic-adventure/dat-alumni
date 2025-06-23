@@ -1,4 +1,3 @@
-// app/layout.tsx
 import "@/app/globals.css";
 import { Anton, DM_Sans, Space_Grotesk, Rock_Salt } from "next/font/google";
 import localFont from "next/font/local";
@@ -42,7 +41,7 @@ const gloucester = localFont({
 export const metadata = {
   title: "Dramatic Adventure Theatre – Alumni Stories",
   description: "Immersive global storytelling from DAT artists.",
-  metadataBase: new URL("https://stories.dramaticadventure.com"), // ✅ Use your real domain in production
+  metadataBase: new URL("https://stories.dramaticadventure.com"),
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -53,9 +52,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     >
       <body className="min-h-screen flex flex-col text-black">
         <Header />
-        <main
-  className="min-h-screen w-full bg-[url('/images/texture/kraft-paper.png')] bg-cover bg-fixed bg-center pt-12 pb-24 px-4"
->
+        <main className="grow w-full p-0 m-0">
           {children}
         </main>
       </body>

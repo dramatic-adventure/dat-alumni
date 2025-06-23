@@ -21,14 +21,16 @@ export default function AlumniProfileBackdrop({
   const backgroundImage = backgroundMap[backgroundKey] || backgroundMap.kraft;
 
   return (
-    <div
-      className="bg-cover bg-center bg-fixed"
-      style={{
-        backgroundImage,
-        backgroundBlendMode: "multiply",
-      }}
-    >
-      {children}
-    </div>
-  );
+  <div
+    className="min-h-screen bg-cover bg-center bg-fixed flex flex-col items-start w-full"
+    style={{
+      backgroundImage,
+      backgroundAttachment: "fixed", // ✅ This is safe here
+      backgroundBlendMode: "multiply",
+    }}
+  >
+    {children}
+  </div>
+);
 }
+

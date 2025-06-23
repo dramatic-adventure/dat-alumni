@@ -12,6 +12,7 @@ import ImageCarousel from "@/components/alumni/ImageCarousel";
 import FieldNotes from "@/components/alumni/FieldNotes";
 import Lightbox from "@/components/shared/LightboxPortal";
 import AlumniProfileBackdrop from "@/components/alumni/AlumniProfileBackdrop";
+import Footer from "@/components/ui/Footer";
 
 interface AlumniProfileProps {
   data: AlumniRow;
@@ -62,7 +63,12 @@ export default function AlumniProfilePage({
 
       <main>
         <AlumniProfileBackdrop backgroundKey={backgroundChoice}>
-          <div className="w-[90vw] sm:w-[85vw] lg:w-[80vw] max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-[-2rem] mb-40 relative z-10 rounded-2xl shadow-xl bg-white overflow-hidden">
+  <div
+  className="mt-0 pt-0 w-[90vw] sm:w-[85vw] lg:w-[80vw] max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-36 relative z-10 rounded-2xl shadow-xl bg-white overflow-hidden"
+  style={{ marginTop: "-36rem" }}
+>
+
+          <div className="mt-0 pt-0 w-[90vw] sm:w-[85vw] lg:w-[80vw] max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-36 relative z-10 rounded-2xl shadow-xl bg-white overflow-hidden">
             <section className="rounded-t-2xl overflow-hidden relative">
               {bgImage && (
                 <div
@@ -115,10 +121,14 @@ export default function AlumniProfilePage({
                 <FieldNotes notes={fieldNotes} />
               </section>
             )}
-
+</div>
           </div>
+          {/* Spacer pushes footer below parallax */}
+<div className="h-[150px] sm:h-[300px] md:h-[400px]" />
+
         </AlumniProfileBackdrop>
       </main>
+      
     </>
   );
 }

@@ -1,5 +1,4 @@
 "use client";
-export {};
 
 import { useState, useLayoutEffect, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
@@ -133,13 +132,11 @@ export default function ProfileCard({
     .slice(0, 3);
 
   return (
-    <div className="relative">
-      {/* 🔗 Share Button */}
+  <div className="relative outline outline-2 outline-red-500">
       <div className="absolute z-40" style={{ top: shareButtonTop, right: shareButtonRight }}>
         <ShareButton url={currentUrl} />
       </div>
 
-      {/* 🖼️ Headshot */}
       {headshotUrl && (
         <div
           className="absolute top-0 left-[1.5rem] sm:left-4 z-40"
@@ -165,7 +162,6 @@ export default function ProfileCard({
         </div>
       )}
 
-      {/* 🟫 Name and Role */}
       <div
         style={{
           backgroundColor: "#C39B6C",
@@ -211,7 +207,6 @@ export default function ProfileCard({
         )}
       </div>
 
-      {/* 🟦 Artist Bio */}
       {hasArtistBio && (
         <div className="bg-[#006D77] py-6 m-0">
           <div className="max-w-6xl mx-auto px-4">
@@ -231,48 +226,39 @@ export default function ProfileCard({
         </div>
       )}
 
-      {/* 🎭 Featured Productions */}
-{featuredProductions.length > 0 && (
-  <div className="bg-[#19657c] py-[30px] m-0">
-    <div className="max-w-6xl mx-auto">
-      <div className="grid grid-cols-1">
-        <div className="px-[60px]">
-          <h2
-  className="text-6xl text-[#D9A919] mb-4"
-  style={{ fontFamily: '"Space Grotesk", sans-serif' }}
->
-  Featured DAT Work
-</h2>
-          <p
-            className="text-[#2493A9] text-lg max-w-3xl"
-            style={{ fontFamily: '"DM Sans", sans-serif' }}
-          >
-            Developed through cross-cultural exchange and a fearless approach to storytelling,
-            this work reflects a deep engagement with place, people, and purpose.
-          </p>
-        </div>
-
-        <div className="flex justify-end mt-[4px]">
-          <div className="pr-[60px]">
-            <PosterStrip
-              posters={featuredProductions.map((p): {
-                posterUrl: string;
-                url: string;
-                title: string;
-              } => ({
-                posterUrl: `/posters/${p.slug}-landscape.jpg`,
-                url: `https://www.dramaticadventure.com${p.url}`,
-                title: p.title,
-              }))}
-            />
+      {featuredProductions.length > 0 && (
+        <div className="bg-[#19657c] py-[30px] m-0">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1">
+              <div className="px-[60px]">
+                <h2 className="text-6xl text-[#D9A919] mb-4" style={{ fontFamily: '"Space Grotesk", sans-serif' }}>
+                  Featured DAT Work
+                </h2>
+                <p className="text-[#2493A9] text-lg max-w-3xl" style={{ fontFamily: '"DM Sans", sans-serif' }}>
+                  Developed through cross-cultural exchange and a fearless approach to storytelling, this work reflects a
+                  deep engagement with place, people, and purpose.
+                </p>
+              </div>
+              <div className="flex justify-end mt-[4px]">
+                <div className="pr-[60px]">
+                  <PosterStrip
+                    posters={featuredProductions.map((p): {
+                      posterUrl: string;
+                      url: string;
+                      title: string;
+                    } => ({
+                      posterUrl: `/posters/${p.slug}-landscape.jpg`,
+                      url: `https://www.dramaticadventure.com${p.url}`,
+                      title: p.title,
+                    }))}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-)}
+      )}
 
-      {/* 💚 Badges */}
       {hasBadges && (
         <div className="bg-[#9BC53D] py-6 m-0">
           <div className="max-w-6xl mx-auto px-4">
@@ -281,16 +267,14 @@ export default function ProfileCard({
         </div>
       )}
 
-      {/* ⚪ Stories */}
       {hasStories && (
-        <section className="bg-[#f2f2f2] m-0 px-4">
-          <div className="max-w-6xl mx-auto px-4 py-10">
-            <FeaturedStories stories={stories} authorSlug={slug} />
-          </div>
-        </section>
-      )}
+  <section className="bg-[#f2f2f2] rounded-xl px-[60px] py-[60px] mt-[0px]">
+    <FeaturedStories stories={stories} authorSlug={slug} />
+  </section>
+)}
 
-      {/* 🔍 Lightbox */}
+
+
       {isModalOpen && headshotUrl && (
         <Lightbox images={[headshotUrl]} onClose={() => setModalOpen(false)} />
       )}

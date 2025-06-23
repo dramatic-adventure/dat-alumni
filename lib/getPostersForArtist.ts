@@ -29,8 +29,8 @@ export function getPostersForArtist(slug: string) {
       return {
         title: production.title,
         slug: production.slug,
-        url: production.url ?? `https://www.dramaticadventure.com/${production.slug}`,
-        posterUrl: `/posters/${production.slug}-landscape.jpg`,
+        url: `https://www.dramaticadventure.com/${production.slug}`, // ✅ CORRECT full link
+        posterUrl: `/posters/${production.slug}-${layout}.jpg`,            // ✅ matches image asset path
         layout,
         titlePosition,
       };
