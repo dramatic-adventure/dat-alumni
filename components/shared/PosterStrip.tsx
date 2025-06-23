@@ -4,41 +4,42 @@ import { PosterData } from "@/lib/types";
 
 interface PosterStripProps {
   posters: PosterData[];
-  heading?: string;
 }
 
-export default function PosterStrip({ posters, heading }: PosterStripProps) {
+export default function PosterStrip({ posters }: PosterStripProps) {
   if (!posters?.length) return null;
 
   return (
-    <section className="w-full pr-2">
-      <div className="flex overflow-x-auto gap-8 md:gap-10 snap-x snap-mandatory justify-end">
-        {posters.map((poster, index) => (
+    <div className="flex overflow-x-auto gap-8 md:gap-10 snap-x snap-mandatory justify-end">
+      {posters.map((poster, index) => (
+        <div
+          key={index}
+          className="flex-shrink-0 snap-start w-[300px] box-border"
+        >
           <a
-            key={index}
             href={poster.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="block w-[300px] flex-shrink-0 snap-start"
+            className="group block border-4 border-transparent hover:border-[#F23359] transition-all duration-300 overflow-hidden"
+            style={{ lineHeight: 0 }} // eliminates any extra spacing
           >
-            <div className="overflow-hidden border-4 border-transparent hover:border-[#F23359] transition-transform transform hover:scale-105 box-border">
-              <img
-                src={poster.posterUrl}
-                alt={poster.title}
-                className="w-full block align-middle"
-              />
-            </div>
-            <div className="text-white leading-tight mt-0 text-center">
-              <div
-                className="font-semibold text-base underline underline-offset-2"
-                style={{ fontFamily: '"DM Sans", sans-serif' }}
-              >
-                {poster.title}
-              </div>
-            </div>
+            <img
+              src={poster.posterUrl}
+              alt={poster.title}
+              className="w-full h-auto block"
+            />
           </a>
-        ))}
-      </div>
-    </section>
+
+          <div className="text-center mt-3 pt-1">
+  <div
+    className="text-[#D9A919] font-bold text-lg"
+    style={{ fontFamily: '"Space Grotesk", sans-serif' }}
+  >
+    {poster.title}
+  </div>
+</div>
+        </div>
+      ))}
+    </div>
   );
 }
