@@ -61,9 +61,6 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
         maxWidth: "100%",
       }}
     >
-      <p style={{ fontSize: "1.2rem", color: "green" }}>
-        ✅ FeaturedStories mounted
-      </p>
 
       <h2
         style={{

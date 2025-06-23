@@ -62,7 +62,7 @@ export default function AlumniProfilePage({
 
       <main>
         <AlumniProfileBackdrop backgroundKey={backgroundChoice}>
-          <div className="w-[90vw] sm:w-[85vw] lg:w-[80vw] max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-[-2rem] mb-24 relative z-10 rounded-2xl shadow-xl bg-white overflow-hidden">
+          <div className="w-[90vw] sm:w-[85vw] lg:w-[80vw] max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-[-2rem] mb-40 relative z-10 rounded-2xl shadow-xl bg-white overflow-hidden">
             <section className="rounded-t-2xl overflow-hidden relative">
               {bgImage && (
                 <div
@@ -91,14 +91,6 @@ export default function AlumniProfilePage({
               </div>
             </section>
 
-            {posters.length > 0 && (
-  <section className="max-w-6xl mx-auto">
-    <div className="flex justify-end px-4 sm:px-6 lg:px-8">
-      <PosterStrip posters={posters} />
-    </div>
-  </section>
-)}
-
             {imageUrls.length > 0 && (
               <section className="mt-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 <ImageCarousel
@@ -124,11 +116,6 @@ export default function AlumniProfilePage({
               </section>
             )}
 
-            {authorStories.length > 0 && (
-              <section className="mt-10 pb-12 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <FeaturedStories stories={allStories} authorSlug={slug} />
-              </section>
-            )}
           </div>
         </AlumniProfileBackdrop>
       </main>

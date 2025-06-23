@@ -233,7 +233,7 @@ export default function ProfileCard({
 
       {/* 🎭 Featured Productions */}
 {featuredProductions.length > 0 && (
-  <div className="bg-[#19657c] py-[60px] m-0">
+  <div className="bg-[#19657c] py-[30px] m-0">
     <div className="max-w-6xl mx-auto">
       <div className="grid grid-cols-1">
         <div className="px-[60px]">
@@ -241,10 +241,10 @@ export default function ProfileCard({
   className="text-6xl text-[#D9A919] mb-4"
   style={{ fontFamily: '"Space Grotesk", sans-serif' }}
 >
-  Featured DAT Works
+  Featured DAT Work
 </h2>
           <p
-            className="text-[#F2F2F2] text-lg max-w-3xl"
+            className="text-[#2493A9] text-lg max-w-3xl"
             style={{ fontFamily: '"DM Sans", sans-serif' }}
           >
             Developed through cross-cultural exchange and a fearless approach to storytelling,
@@ -252,7 +252,7 @@ export default function ProfileCard({
           </p>
         </div>
 
-        <div className="flex justify-end mt-[30px]">
+        <div className="flex justify-end mt-[4px]">
           <div className="pr-[60px]">
             <PosterStrip
               posters={featuredProductions.map((p): {
