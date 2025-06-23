@@ -21,7 +21,7 @@ export default function PosterStrip({ posters }: PosterStripProps) {
             target="_blank"
             rel="noopener noreferrer"
             className="group block border-4 border-transparent hover:border-[#F23359] transition-all duration-300 overflow-hidden"
-            style={{ lineHeight: 0 }} // eliminates any extra spacing
+            style={{ lineHeight: 0 }}
           >
             <img
               src={poster.posterUrl}
@@ -30,14 +30,20 @@ export default function PosterStrip({ posters }: PosterStripProps) {
             />
           </a>
 
-          <div className="text-center mt-3 pt-1">
-  <div
-    className="text-[#D9A919] font-bold text-lg"
-    style={{ fontFamily: '"Space Grotesk", sans-serif' }}
-  >
-    {poster.title}
-  </div>
-</div>
+          <div className="text-center mt-6">
+            <div
+              className="text-[#D9A919] text-xl font-extrabold tracking-tight"
+              style={{
+                fontFamily: '"Space Grotesk", sans-serif',
+                paddingTop: "0.5rem",
+                maxWidth: "260px", // 👈 triggers earlier wraparound
+                margin: "0 auto", // centers the constrained text
+                lineHeight: "1.3",
+              }}
+            >
+              {poster.title}
+            </div>
+          </div>
         </div>
       ))}
     </div>
