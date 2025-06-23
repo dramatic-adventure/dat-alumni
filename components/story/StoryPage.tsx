@@ -37,7 +37,7 @@ export default function StoryPage({ story }: StoryPageProps) {
       {/* ✅ Apply offset to push content below fixed header */}
       <div
         className="story-page pointer-events-auto"
-        style={{ marginTop: '8rem', marginBottom: '8rem' }}
+        style={{ marginTop: '-36rem', marginBottom: '8rem' }}
       >
         {/* Top Bar: Back Link + Share */}
         <div className="flex justify-between items-center mb-4">
@@ -95,18 +95,23 @@ export default function StoryPage({ story }: StoryPageProps) {
         )}
 
         {/* CTA Button */}
-        {moreInfoLink && (
-          <a
-            href={moreInfoLink}
-            className="popup-button"
-            style={{ textDecoration: 'none' }}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            STEP INTO THE STORY
-          </a>
-        )}
-      </div>
+{moreInfoLink && (
+  <a
+    href={moreInfoLink}
+    className="popup-button"
+    style={{
+      textDecoration: 'none',
+      color: '#f2f2f2',
+      WebkitTextFillColor: '#f2f2f2',
+    }}
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    STEP INTO THE STORY
+  </a>
+)}
+</div>
+
     </main>
   );
 }
