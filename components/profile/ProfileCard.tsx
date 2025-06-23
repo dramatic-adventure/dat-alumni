@@ -2,20 +2,19 @@
 export {};
 
 import { useState, useLayoutEffect, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 
 import NameStack from "@/components/shared/NameStack";
 import ArtistBio from "./ArtistBio";
+import PosterStrip from "@/components/shared/PosterStrip";
 import AffiliationBlock from "@/components/profile/AffiliationBlock";
-import FeaturedProductionsSection from "./FeaturedProductionsSection"; // ✅ default import
-import dynamic from "next/dynamic";
-const FeaturedStories = dynamic(() => import("@/components/shared/FeaturedStories"), {
-  ssr: false,
-});
+import FeaturedProductionsSection from "./FeaturedProductionsSection";
 import ShareButton from "@/components/ui/ShareButton";
 import Lightbox from "@/components/shared/Lightbox";
-
-import { StoryRow } from "@/lib/types";
+import { StoryRow, Production } from "@/lib/types";
 import { productionMap } from "@/lib/productionMap";
+
+const FeaturedStories = dynamic(() => import("@/components/shared/FeaturedStories"), { ssr: false });
 
 interface ProfileCardProps {
   name: string;
@@ -39,7 +38,6 @@ interface ProfileCardProps {
   headshotShadow?: string;
   textAlign?: "left" | "center" | "right";
   textTransform?: "uppercase" | "lowercase" | "capitalize" | "none";
-  kraftTexture?: boolean;
   maxNameWidth?: number;
   shareButtonTop?: string;
   shareButtonRight?: string;
@@ -75,7 +73,6 @@ export default function ProfileCard({
   headshotShadow = "6px 8px 20px rgba(0,0,0,0.25)",
   textAlign = "left",
   textTransform = "uppercase",
-  kraftTexture = true,
   maxNameWidth = 360,
   shareButtonTop = "1rem",
   shareButtonRight = "1.5rem",
@@ -126,50 +123,26 @@ export default function ProfileCard({
     }
   }, [name, hasMeasured, maxNameWidth]);
 
-  const safeIdentityTags = Array.isArray(identityTags) ? identityTags : [];
-  const safeProgramBadges = Array.isArray(programBadges) ? programBadges : [];
-  const safeStatusFlags = Array.isArray(statusFlags) ? statusFlags : [];
+  const hasArtistBio = !!artistStatement?.trim() || identityTags.length > 0;
+  const hasBadges = programBadges.length > 0 || statusFlags.length > 0;
+  const hasStories = stories?.length > 0;
 
-  const showTealPanel = !!artistStatement || safeIdentityTags.length > 0;
-  const showGreenPanel = safeProgramBadges.length > 0 || safeStatusFlags.length > 0;
-
-  let featuredProductions: any[] = [];
-
-  try {
-    if (productionMap && typeof productionMap === "object") {
-      featuredProductions = Object.values(productionMap)
-        .filter(
-          (p) =>
-            p?.artists &&
-            typeof p.artists === "object" &&
-            Object.keys(p.artists).includes(slug)
-        )
-        .sort((a, b) => b.year - a.year)
-        .slice(0, 3);
-    } else {
-      console.warn("⚠️ productionMap is invalid");
-    }
-  } catch (err) {
-    console.error("❌ Error in featuredProductions logic:", err);
-  }
+  const featuredProductions: Production[] = Object.values(productionMap)
+    .filter((p) => p?.artists?.[slug])
+    .sort((a, b) => b.year - a.year)
+    .slice(0, 3);
 
   return (
-    <div className="relative w-full m-0 p-0">
-      {/* 🟪 Floating Share Button */}
-      <div
-  className="absolute z-40"
-  style={{
-    top: "1.25rem",
-    right: "1.5rem",
-  }}
->
-  <ShareButton url={currentUrl} />
-</div>
+    <div className="relative">
+      {/* 🔗 Share Button */}
+      <div className="absolute z-40" style={{ top: shareButtonTop, right: shareButtonRight }}>
+        <ShareButton url={currentUrl} />
+      </div>
 
-      {/* 📸 Floating Headshot */}
+      {/* 🖼️ Headshot */}
       {headshotUrl && (
         <div
-          className="absolute top-0 left-[1.5rem] z-40"
+          className="absolute top-0 left-[1.5rem] sm:left-4 z-40"
           style={{
             width: "260px",
             height: "325px",
@@ -187,21 +160,15 @@ export default function ProfileCard({
               height: "100%",
               objectFit: "cover",
               objectPosition: "center",
-              display: "block",
             }}
           />
         </div>
       )}
 
-      {/* 🟫 Kraft Panel */}
+      {/* 🟫 Name and Role */}
       <div
         style={{
           backgroundColor: "#C39B6C",
-          backgroundImage: kraftTexture ? "url('/images/texture/kraft-paper.png')" : undefined,
-          backgroundSize: "cover",
-          backgroundRepeat: "no-repeat",
-          backgroundBlendMode: "multiply",
-          backgroundPosition: "center",
           color: nameColor,
           textAlign,
           paddingLeft: "320px",
@@ -210,23 +177,20 @@ export default function ProfileCard({
         }}
       >
         <NameStack
-  firstName={firstName}
-  lastName={lastName}
-  firstNameRef={firstNameRef}
-  lastNameRef={lastNameRef}
-  firstScale={firstScale}
-  lastScale={lastScale}
-  hasMeasured={hasMeasured}
-  nameFontFamily={nameFontFamily}
-  nameFontSize={nameFontSize}
-  nameColor={nameColor}
-  letterSpacing={nameLetterSpacing}
-  textTransform={textTransform}
-  textAlign="left"
-/>
-
-/
-  
+          firstName={firstName}
+          lastName={lastName}
+          firstNameRef={firstNameRef}
+          lastNameRef={lastNameRef}
+          firstScale={firstScale}
+          lastScale={lastScale}
+          hasMeasured={hasMeasured}
+          nameFontFamily={nameFontFamily}
+          nameFontSize={nameFontSize}
+          nameColor={nameColor}
+          letterSpacing={nameLetterSpacing}
+          textTransform={textTransform}
+          textAlign={textAlign}
+        />
         {role && (
           <p
             style={{
@@ -248,36 +212,75 @@ export default function ProfileCard({
       </div>
 
       {/* 🟦 Artist Bio */}
-      {showTealPanel && (
-        <ArtistBio
-          identityTags={safeIdentityTags}
-          artistStatement={artistStatement}
-          fontFamily={artistFontFamily}
-          fontSize={artistFontSize}
-          color={artistColor}
-          fontStyle={artistFontStyle}
-          fontWeight={artistFontWeight}
-          letterSpacing={artistLetterSpacing}
-        />
+      {hasArtistBio && (
+        <div className="bg-[#006D77] py-6 m-0">
+          <div className="max-w-6xl mx-auto px-4">
+            <ArtistBio
+              identityTags={identityTags}
+              artistStatement={artistStatement}
+              fontFamily={artistFontFamily}
+              fontSize={artistFontSize}
+              color={artistColor}
+              fontStyle={artistFontStyle}
+              fontWeight={artistFontWeight}
+              letterSpacing={artistLetterSpacing}
+              identityTagStyle={{ marginLeft: "250px" }}
+              bioStyle={{ marginTop: "1rem", marginBottom: "2rem" }}
+            />
+          </div>
+        </div>
       )}
 
-      {/* 🟦 Featured DAT Works */}
+      {/* 🎭 Featured Productions */}
       {featuredProductions.length > 0 && (
-        <FeaturedProductionsSection productions={featuredProductions} />
+        <div className="bg-white py-10 m-0 px-4">
+          <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="md:w-1/2">
+              <h2 className="font-heading text-2xl text-[#241123] mb-2">Featured Productions</h2>
+              <p className="text-[#241123] text-lg">
+                Discover a curated selection of standout productions this artist has contributed to.
+              </p>
+            </div>
+
+            <div className="md:w-1/2">
+              <PosterStrip
+  posters={featuredProductions.map((p): {
+    posterUrl: string;
+    url: string;
+    title: string;
+  } => ({
+    posterUrl: `/posters/${p.slug}-landscape.jpg`,
+    url: `https://www.dramaticadventure.com${p.url}`,
+    title: p.title,
+  }))}
+/>
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* 📰 Featured Stories */}
-{stories.length > 0 && <FeaturedStories stories={stories} authorSlug={slug} />}
+      {/* 💚 Badges */}
+      {hasBadges && (
+        <div className="bg-[#9BC53D] py-6 m-0">
+          <div className="max-w-6xl mx-auto px-4">
+            <AffiliationBlock programBadges={programBadges} statusFlags={statusFlags} />
+          </div>
+        </div>
+      )}
 
-{/* 💚 Artist Badges */}
-{showGreenPanel && (
-  <AffiliationBlock programBadges={safeProgramBadges} statusFlags={safeStatusFlags} />
-)}
+      {/* ⚪ Stories */}
+      {hasStories && (
+        <section className="bg-[#f2f2f2] m-0 px-4">
+          <div className="max-w-6xl mx-auto px-4 py-10">
+            <FeaturedStories stories={stories} authorSlug={slug} />
+          </div>
+        </section>
+      )}
 
-{/* 🔍 Lightbox */}
-{isModalOpen && headshotUrl && (
-  <Lightbox images={[headshotUrl]} onClose={() => setModalOpen(false)} />
-)}
+      {/* 🔍 Lightbox */}
+      {isModalOpen && headshotUrl && (
+        <Lightbox images={[headshotUrl]} onClose={() => setModalOpen(false)} />
+      )}
     </div>
   );
 }
