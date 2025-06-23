@@ -232,32 +232,45 @@ export default function ProfileCard({
       )}
 
       {/* 🎭 Featured Productions */}
-      {featuredProductions.length > 0 && (
-        <div className="bg-white py-10 m-0 px-4">
-          <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div className="md:w-1/2">
-              <h2 className="font-heading text-2xl text-[#241123] mb-2">Featured Productions</h2>
-              <p className="text-[#241123] text-lg">
-                Discover a curated selection of standout productions this artist has contributed to.
-              </p>
-            </div>
+{featuredProductions.length > 0 && (
+  <div className="bg-[#19657c] py-[60px] m-0">
+    <div className="max-w-6xl mx-auto">
+      <div className="grid grid-cols-1">
+        <div className="px-[60px]">
+          <h2
+  className="text-6xl text-[#D9A919] mb-4"
+  style={{ fontFamily: '"Space Grotesk", sans-serif' }}
+>
+  Featured DAT Works
+</h2>
+          <p
+            className="text-[#F2F2F2] text-lg max-w-3xl"
+            style={{ fontFamily: '"DM Sans", sans-serif' }}
+          >
+            Developed through cross-cultural exchange and a fearless approach to storytelling,
+            this work reflects a deep engagement with place, people, and purpose.
+          </p>
+        </div>
 
-            <div className="md:w-1/2">
-              <PosterStrip
-  posters={featuredProductions.map((p): {
-    posterUrl: string;
-    url: string;
-    title: string;
-  } => ({
-    posterUrl: `/posters/${p.slug}-landscape.jpg`,
-    url: `https://www.dramaticadventure.com${p.url}`,
-    title: p.title,
-  }))}
-/>
-            </div>
+        <div className="flex justify-end mt-[30px]">
+          <div className="pr-[60px]">
+            <PosterStrip
+              posters={featuredProductions.map((p): {
+                posterUrl: string;
+                url: string;
+                title: string;
+              } => ({
+                posterUrl: `/posters/${p.slug}-landscape.jpg`,
+                url: `https://www.dramaticadventure.com${p.url}`,
+                title: p.title,
+              }))}
+            />
           </div>
         </div>
-      )}
+      </div>
+    </div>
+  </div>
+)}
 
       {/* 💚 Badges */}
       {hasBadges && (

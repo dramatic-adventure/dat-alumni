@@ -1,5 +1,3 @@
-// lib/types.ts
-
 // ========== Shared Utility Types ==========
 
 export type GeoLocation = {
@@ -10,7 +8,6 @@ export type GeoLocation = {
 
 export type UrlString = string;
 export type RawRow = Record<string, string>; // For raw Google Sheet parsing
-
 
 // ========== Story Map Rows ==========
 
@@ -37,7 +34,6 @@ export type StoryRow = {
   storyId?: string;
   storyUrl?: UrlString;
 };
-
 
 // ========== Alumni Profile Rows ==========
 
@@ -71,4 +67,29 @@ export type AlumniRow = {
   fieldNotes?: string[];
   locations?: GeoLocation[];
   statusFlags?: string[];
+  backgroundChoice?: string;
+};
+
+// ========== Poster / Production Types ==========
+
+export type PosterData = {
+  title: string;
+  posterUrl: string; // path to image
+  url: string;       // slug for the production (used in link)
+};
+
+export type Layout = "landscape" | "portrait";
+export type TitlePosition = "bottom-left" | "bottom-center";
+
+export type Production = {
+  title: string;
+  slug: string;
+  year: number;
+  location: string;
+  festival: string;
+  url: UrlString;            // rarely used directly, but defined
+  posterUrl: UrlString;      // optional if needed outside poster component
+  artists: Record<string, string[]>;
+  layout?: Layout;
+  titlePosition?: TitlePosition;
 };

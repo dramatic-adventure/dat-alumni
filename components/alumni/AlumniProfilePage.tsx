@@ -1,8 +1,10 @@
 "use client";
 export {};
 
-import { useState } from "react";
+import Head from "next/head";
+import { useState, useMemo } from "react";
 import { AlumniRow, StoryRow } from "@/lib/types";
+import { getPostersForArtist } from "@/lib/getPostersForArtist";
 import ProfileCard from "@/components/profile/ProfileCard";
 import FeaturedStories from "@/components/shared/FeaturedStories";
 import PosterStrip from "@/components/shared/PosterStrip";
@@ -14,14 +16,6 @@ import AlumniProfileBackdrop from "@/components/alumni/AlumniProfileBackdrop";
 interface AlumniProfileProps {
   data: AlumniRow;
   allStories: StoryRow[];
-}
-
-function getPosterTitleFromUrl(url: string): string {
-  const filename = url.split("/").pop() || "";
-  return filename
-    .replace(/-portrait\.jpg|-landscape\.jpg/i, "")
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export default function AlumniProfilePage({
@@ -39,96 +33,105 @@ export default function AlumniProfilePage({
     artistStatement = "",
     fieldNotes,
     imageUrls = [],
-    posterUrls = [],
     backgroundChoice = "kraft",
   } = data;
 
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const authorStories = allStories.filter((story) => story.authorSlug === slug);
+
+  const authorStories = useMemo(
+    () => allStories.filter((story) => story.authorSlug === slug),
+    [allStories, slug]
+  );
+
+  const posters = useMemo(() => getPostersForArtist(slug), [slug]);
+
+  const backgroundStyles: Record<string, string> = {
+    kraft: "url('/images/texture/kraft-paper.png')",
+    coral: "url('/images/texture/coral-paper.png')",
+    grape: "url('/images/texture/grape-fiber.png')",
+  };
+
+  const bgImage = backgroundStyles[backgroundChoice];
 
   return (
-    <main>
-      <AlumniProfileBackdrop backgroundKey={backgroundChoice}>
-        {/* 🧱 Floating White Card Container */}
-        <div className="max-w-4xl mx-auto mt-[-2rem] mb-24 px-6 sm:px-10 relative z-10 rounded-2xl shadow-xl bg-white overflow-hidden">
-          {/* 🟫 Kraft / Teal Profile Section */}
-          <div
-            className="rounded-t-2xl overflow-hidden"
-            style={{
-              backgroundColor: "#C39B6C",
-              backgroundImage: "url('/images/texture/kraft-paper.png')",
-              backgroundSize: "cover",
-              backgroundRepeat: "no-repeat",
-              backgroundBlendMode: "multiply",
-              backgroundPosition: "center",
-            }}
-          >
-            <ProfileCard
-              slug={slug}
-              name={name}
-              role={role}
-              headshotUrl={headshotUrl}
-              programBadges={programBadges}
-              identityTags={identityTags}
-              statusFlags={statusFlags}
-              artistStatement={artistStatement}
-              stories={authorStories}
-            />
+    <>
+      <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>{name} | DAT Alumni</title>
+      </Head>
+
+      <main>
+        <AlumniProfileBackdrop backgroundKey={backgroundChoice}>
+          <div className="w-[90vw] sm:w-[85vw] lg:w-[80vw] max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-[-2rem] mb-24 relative z-10 rounded-2xl shadow-xl bg-white overflow-hidden">
+            <section className="rounded-t-2xl overflow-hidden relative">
+              {bgImage && (
+                <div
+                  className="w-full h-full absolute inset-0 z-0"
+                  style={{
+                    backgroundImage: bgImage,
+                    backgroundSize: "cover",
+                    backgroundRepeat: "no-repeat",
+                    backgroundBlendMode: "multiply",
+                    backgroundPosition: "center",
+                  }}
+                />
+              )}
+              <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <ProfileCard
+                  slug={slug}
+                  name={name}
+                  role={role}
+                  headshotUrl={headshotUrl}
+                  programBadges={programBadges}
+                  identityTags={identityTags}
+                  statusFlags={statusFlags}
+                  artistStatement={artistStatement}
+                  stories={authorStories}
+                />
+              </div>
+            </section>
+
+            {posters.length > 0 && (
+  <section className="max-w-6xl mx-auto">
+    <div className="flex justify-end px-4 sm:px-6 lg:px-8">
+      <PosterStrip posters={posters} />
+    </div>
+  </section>
+)}
+
+            {imageUrls.length > 0 && (
+              <section className="mt-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <ImageCarousel
+                  images={imageUrls}
+                  onImageClick={setLightboxIndex}
+                />
+              </section>
+            )}
+
+            {imageUrls.length > 0 && lightboxIndex !== null && (
+              <Lightbox>
+                <img
+                  src={imageUrls[lightboxIndex]}
+                  alt={`Gallery image ${lightboxIndex + 1}`}
+                  style={{ width: "100%", height: "auto", objectFit: "contain" }}
+                />
+              </Lightbox>
+            )}
+
+            {fieldNotes && fieldNotes.length > 0 && (
+              <section className="mt-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <FieldNotes notes={fieldNotes} />
+              </section>
+            )}
+
+            {authorStories.length > 0 && (
+              <section className="mt-10 pb-12 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <FeaturedStories stories={allStories} authorSlug={slug} />
+              </section>
+            )}
           </div>
-
-          {/* 🎭 Featured Posters */}
-          {posterUrls.length > 0 && (
-            <section className="mt-10">
-              <h2 className="text-xl font-semibold tracking-wide uppercase mb-3 text-[#241123]">
-                Featured DAT Works
-              </h2>
-              <PosterStrip
-                posters={posterUrls.map((url) => ({
-                  imageUrl: url,
-                  url,
-                  title: getPosterTitleFromUrl(url),
-                  layout: "landscape",
-                }))}
-              />
-            </section>
-          )}
-
-          {/* 📷 Image Gallery */}
-          {imageUrls.length > 0 && (
-            <section className="mt-10">
-              <ImageCarousel
-                images={imageUrls}
-                onImageClick={setLightboxIndex}
-              />
-            </section>
-          )}
-
-          {/* 💡 Lightbox */}
-          {imageUrls.length > 0 && lightboxIndex !== null && (
-            <Lightbox>
-              <img
-                src={imageUrls[lightboxIndex]}
-                alt={`Gallery image ${lightboxIndex + 1}`}
-                style={{ width: "100%", height: "auto", objectFit: "contain" }}
-              />
-            </Lightbox>
-          )}
-
-          {/* 📓 Field Notes */}
-          {fieldNotes && fieldNotes.length > 0 && (
-            <section className="mt-10">
-              <FieldNotes notes={fieldNotes} />
-            </section>
-          )}
-
-          {/* 🌍 Featured Stories */}
-          {authorStories.length > 0 && (
-            <section className="mt-10">
-              <FeaturedStories stories={allStories} authorSlug={slug} />
-            </section>
-          )}
-        </div>
-      </AlumniProfileBackdrop>
-    </main>
+        </AlumniProfileBackdrop>
+      </main>
+    </>
   );
 }

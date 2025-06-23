@@ -10,6 +10,8 @@ interface ArtistBioProps {
   fontStyle?: "normal" | "italic";
   fontWeight?: number | string;
   letterSpacing?: string;
+  identityTagStyle?: React.CSSProperties;
+  bioStyle?: React.CSSProperties;
 }
 
 export default function ArtistBio({
@@ -21,13 +23,15 @@ export default function ArtistBio({
   fontStyle = "normal",
   fontWeight = 200,
   letterSpacing = "normal",
+  identityTagStyle = {},
+  bioStyle = {},
 }: ArtistBioProps) {
   if (!artistStatement && identityTags.length === 0) return null;
 
   return (
     <section style={{ backgroundColor: "#2493A9", color: "#fff", padding: "1.2rem 60px 3rem" }}>
       {identityTags.length > 0 && (
-        <div className="flex flex-wrap gap-2 justify-end">
+        <div className="flex flex-wrap gap-2 justify-end" style={identityTagStyle}>
           <IdentityTags tags={identityTags} />
         </div>
       )}
@@ -40,6 +44,7 @@ export default function ArtistBio({
             fontStyle,
             fontWeight,
             letterSpacing,
+            ...bioStyle,
           }}
         >
           {artistStatement}

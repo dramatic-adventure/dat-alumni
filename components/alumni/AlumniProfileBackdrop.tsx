@@ -25,7 +25,6 @@ export default function AlumniProfileBackdrop({
       className="bg-cover bg-center bg-fixed"
       style={{
         backgroundImage,
-        backgroundColor: "#C39B6C",
         backgroundBlendMode: "multiply",
       }}
     >

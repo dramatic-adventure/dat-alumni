@@ -19,6 +19,17 @@ module.exports = {
     "backdrop-blur",
     "backdrop-blur-sm",
     "text-xs", // helpful for badges and fine print
+
+    // ✅ Add grid-related classes here:
+    "aspect-[2/3]",
+    "aspect-[16/10]",
+    "group-hover:ring-4",
+    "ring-[#F23359]",
+    "aspect-[16/10]",
+    "grid",
+    "grid-cols-1",
+    "sm:grid-cols-2",
+    "lg:grid-cols-3",
   ],
   theme: {
     extend: {
