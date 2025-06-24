@@ -22,10 +22,9 @@ export default function AlumniProfileBackdrop({
 
   return (
   <div
-    className="min-h-screen bg-cover bg-center bg-fixed flex flex-col items-start w-full"
+    className="bg-cover bg-center bg-fixed flex flex-col items-start w-full"
     style={{
       backgroundImage,
-      backgroundAttachment: "fixed", // ✅ This is safe here
       backgroundBlendMode: "multiply",
     }}
   >

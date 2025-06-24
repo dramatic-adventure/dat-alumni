@@ -24,18 +24,21 @@ export default function AlumniProfilePage({
   allStories,
 }: AlumniProfileProps) {
   const {
-    slug,
-    name,
-    role = "",
-    headshotUrl = "",
-    programBadges = [],
-    identityTags = [],
-    statusFlags = [],
-    artistStatement = "",
-    fieldNotes,
-    imageUrls = [],
-    backgroundChoice = "kraft",
-  } = data;
+  slug,
+  name,
+  role = "",
+  headshotUrl = "",
+  programBadges = [],
+  identityTags = [],
+  statusFlags = [],
+  artistStatement = "",
+  fieldNotes,
+  imageUrls = [],
+  backgroundChoice = "kraft",
+  location, // grab raw field here
+} = data;
+
+const locationName = location || "";
 
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
@@ -63,72 +66,64 @@ export default function AlumniProfilePage({
 
       <main>
         <AlumniProfileBackdrop backgroundKey={backgroundChoice}>
-  <div
-  className="mt-0 pt-0 w-[90vw] sm:w-[85vw] lg:w-[80vw] max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-36 relative z-10 rounded-2xl shadow-xl bg-white overflow-hidden"
-  style={{ marginTop: "-36rem" }}
->
-
-          <div className="mt-0 pt-0 w-[90vw] sm:w-[85vw] lg:w-[80vw] max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-36 relative z-10 rounded-2xl shadow-xl bg-white overflow-hidden">
-            <section className="rounded-t-2xl overflow-hidden relative">
-              {bgImage && (
-                <div
-                  className="w-full h-full absolute inset-0 z-0"
-                  style={{
-                    backgroundImage: bgImage,
-                    backgroundSize: "cover",
-                    backgroundRepeat: "no-repeat",
-                    backgroundBlendMode: "multiply",
-                    backgroundPosition: "center",
-                  }}
-                />
-              )}
-              <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <ProfileCard
-                  slug={slug}
-                  name={name}
-                  role={role}
-                  headshotUrl={headshotUrl}
-                  programBadges={programBadges}
-                  identityTags={identityTags}
-                  statusFlags={statusFlags}
-                  artistStatement={artistStatement}
-                  stories={authorStories}
-                />
-              </div>
-            </section>
-
-            {imageUrls.length > 0 && (
-              <section className="mt-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <ImageCarousel
-                  images={imageUrls}
-                  onImageClick={setLightboxIndex}
-                />
-              </section>
+          <div
+            className="mt-0 pt-0 w-[90vw] sm:w-[85vw] lg:w-[80vw] max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-36 relative z-10 shadow-xl bg-white overflow-hidden"
+            style={{ marginTop: "-36rem" }}
+          >
+            {bgImage && (
+              <div
+                className="absolute inset-0 z-0"
+                style={{
+                  backgroundImage: bgImage,
+                  backgroundSize: "cover",
+                  backgroundRepeat: "no-repeat",
+                  backgroundBlendMode: "multiply",
+                  backgroundPosition: "center",
+                }}
+              />
             )}
 
-            {imageUrls.length > 0 && lightboxIndex !== null && (
-              <Lightbox>
-                <img
-                  src={imageUrls[lightboxIndex]}
-                  alt={`Gallery image ${lightboxIndex + 1}`}
-                  style={{ width: "100%", height: "auto", objectFit: "contain" }}
-                />
-              </Lightbox>
-            )}
-
-            {fieldNotes && fieldNotes.length > 0 && (
-              <section className="mt-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <FieldNotes notes={fieldNotes} />
-              </section>
-            )}
-</div>
+            <div className="relative z-10">
+              <ProfileCard
+                slug={slug}
+                name={name}
+                role={role}
+                headshotUrl={headshotUrl}
+                locationName={locationName}
+                programBadges={programBadges}
+                identityTags={identityTags}
+                statusFlags={statusFlags}
+                artistStatement={artistStatement}
+                stories={authorStories}
+              />
+            </div>
           </div>
-          {/* Spacer pushes footer below parallax */}
-<div className="h-[150px] sm:h-[300px] md:h-[400px]" />
 
+          {imageUrls.length > 0 && (
+            <section className="mt-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+              <ImageCarousel images={imageUrls} onImageClick={setLightboxIndex} />
+            </section>
+          )}
+
+          {imageUrls.length > 0 && lightboxIndex !== null && (
+            <Lightbox>
+              <img
+                src={imageUrls[lightboxIndex]}
+                alt={`Gallery image ${lightboxIndex + 1}`}
+                style={{ width: "100%", height: "auto", objectFit: "contain" }}
+              />
+            </Lightbox>
+          )}
+
+          {fieldNotes && fieldNotes.length > 0 && (
+            <section className="mt-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+              <FieldNotes notes={fieldNotes} />
+            </section>
+          )}
+
+          <div className="h-[150px] sm:h-[300px] md:h-[400px]" />
         </AlumniProfileBackdrop>
       </main>
-      
     </>
   );
 }

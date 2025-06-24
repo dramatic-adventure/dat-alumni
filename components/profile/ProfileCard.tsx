@@ -10,6 +10,7 @@ import AffiliationBlock from "@/components/profile/AffiliationBlock";
 import FeaturedProductionsSection from "./FeaturedProductionsSection";
 import ShareButton from "@/components/ui/ShareButton";
 import Lightbox from "@/components/shared/Lightbox";
+import LocationBadge from "@/components/shared/LocationBadge";
 import { StoryRow, Production } from "@/lib/types";
 import { productionMap } from "@/lib/productionMap";
 
@@ -19,7 +20,8 @@ interface ProfileCardProps {
   name: string;
   slug: string;
   role: string;
-  headshotUrl: string;
+  headshotUrl?: string;
+  locationName: string;
   identityTags?: string[];
   statusFlags?: string[];
   programBadges?: string[];
@@ -55,6 +57,7 @@ export default function ProfileCard({
   slug,
   role,
   headshotUrl,
+  locationName,
   identityTags = [],
   statusFlags = [],
   programBadges = [],
@@ -90,6 +93,9 @@ export default function ProfileCard({
       setCurrentUrl(window.location.href);
     }
   }, []);
+
+  const fallbackImage = "/images/default-headshot.png";
+  headshotUrl = headshotUrl || fallbackImage;
 
   const nameParts = name.trim().split(" ");
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
@@ -132,42 +138,40 @@ export default function ProfileCard({
     .slice(0, 3);
 
   return (
-  <div className="relative outline outline-2 outline-red-500">
+    <div className="relative">
       <div className="absolute z-40" style={{ top: shareButtonTop, right: shareButtonRight }}>
         <ShareButton url={currentUrl} />
       </div>
 
-      {headshotUrl && (
-        <div
-          className="absolute top-0 left-[1.5rem] sm:left-4 z-40"
+      <div
+        className="absolute top-0 left-[1.5rem] sm:left-4 z-40"
+        style={{
+          width: "280px",
+          height: "350px",
+          boxShadow: headshotShadow,
+          backgroundColor: "#241123",
+        }}
+        onClick={() => setModalOpen(true)}
+      >
+        <img
+          src={headshotUrl}
+          alt={headshotUrl === fallbackImage ? `${name} (default headshot)` : `${name}'s headshot`}
+          loading="lazy"
           style={{
-            width: "260px",
-            height: "325px",
-            boxShadow: headshotShadow,
-            backgroundColor: "#241123",
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "center",
           }}
-          onClick={() => setModalOpen(true)}
-        >
-          <img
-            src={headshotUrl}
-            alt={name}
-            loading="lazy"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "center",
-            }}
-          />
-        </div>
-      )}
+        />
+      </div>
 
       <div
         style={{
           backgroundColor: "#C39B6C",
           color: nameColor,
           textAlign,
-          paddingLeft: "320px",
+          paddingLeft: "340px",
           paddingTop: "0.25rem",
           paddingBottom: "2rem",
         }}
@@ -187,23 +191,30 @@ export default function ProfileCard({
           textTransform={textTransform}
           textAlign={textAlign}
         />
-        {role && (
-          <p
-            style={{
-              fontFamily: roleFontFamily,
-              fontSize: roleFontSize,
-              color: roleColor,
-              textTransform,
-              letterSpacing: roleLetterSpacing,
-              fontWeight: 700,
-              opacity: 0.85,
-              marginTop: roleMarginTop,
-              marginBottom: "0.5rem",
-              textAlign,
-            }}
+
+        {(role || locationName) && (
+          <div
+            className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4"
+            style={{ marginTop: roleMarginTop, marginBottom: "0.5rem", textAlign }}
           >
-            {role}
-          </p>
+            {role && (
+              <p
+                style={{
+                  fontFamily: roleFontFamily,
+                  fontSize: roleFontSize,
+                  color: roleColor,
+                  textTransform,
+                  letterSpacing: roleLetterSpacing,
+                  fontWeight: 700,
+                  opacity: 0.85,
+                  margin: 0,
+                }}
+              >
+                {role}
+              </p>
+            )}
+            {locationName && <LocationBadge location={locationName} />}
+          </div>
         )}
       </div>
 
@@ -239,20 +250,14 @@ export default function ProfileCard({
                   deep engagement with place, people, and purpose.
                 </p>
               </div>
-              <div className="flex justify-end mt-[4px]">
-                <div className="pr-[60px]">
-                  <PosterStrip
-                    posters={featuredProductions.map((p): {
-                      posterUrl: string;
-                      url: string;
-                      title: string;
-                    } => ({
-                      posterUrl: `/posters/${p.slug}-landscape.jpg`,
-                      url: `https://www.dramaticadventure.com${p.url}`,
-                      title: p.title,
-                    }))}
-                  />
-                </div>
+              <div className="flex justify-end mt-[4px] pr-[60px]">
+                <PosterStrip
+                  posters={featuredProductions.map((p) => ({
+                    posterUrl: `/posters/${p.slug}-landscape.jpg`,
+                    url: `https://www.dramaticadventure.com${p.url}`,
+                    title: p.title,
+                  }))}
+                />
               </div>
             </div>
           </div>
@@ -268,15 +273,16 @@ export default function ProfileCard({
       )}
 
       {hasStories && (
-  <section className="bg-[#f2f2f2] rounded-xl px-[60px] py-[60px] mt-[0px]">
-    <FeaturedStories stories={stories} authorSlug={slug} />
-  </section>
-)}
+        <section className="bg-[#f2f2f2] rounded-xl px-[60px] py-[60px] mt-[0px]">
+          <FeaturedStories stories={stories} authorSlug={slug} />
+        </section>
+      )}
 
-
-
-      {isModalOpen && headshotUrl && (
-        <Lightbox images={[headshotUrl]} onClose={() => setModalOpen(false)} />
+      {isModalOpen && (
+        <Lightbox
+          images={[headshotUrl]}
+          onClose={() => setModalOpen(false)}
+        />
       )}
     </div>
   );
