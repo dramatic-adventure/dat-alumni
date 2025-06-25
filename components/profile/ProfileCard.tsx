@@ -173,47 +173,71 @@ console.log("📍 ProfileCard location:", location);
         />
 
 <div
-  className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4"
-  style={{ marginTop: "0.5rem", marginBottom: "0.5rem", textAlign: "left" }}
+  className="flex flex-row items-center flex-wrap gap-x-3 gap-y-2"
+  style={{
+    marginTop: "0.5rem",
+    marginBottom: "0.5rem",
+    textAlign: "left",
+  }}
 >
   {role && (
-    <p
+    <Link
+  href={`/role/${role.toLowerCase().replace(/\s+/g, "-")}`}
+  className="transition-all duration-200"
+  style={{
+    fontFamily: "Space Grotesk, sans-serif",
+    fontSize: "1.7rem",
+    color: "#241123",
+    textTransform: "uppercase",
+    letterSpacing: "2px",
+    fontWeight: 700,
+    opacity: 0.85,
+    margin: 0,
+    textDecoration: "none",
+    display: "inline-block",
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.transform = "scaleX(1.05)";
+    e.currentTarget.style.color = "#6C00AF";
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.transform = "scaleX(1)";
+    e.currentTarget.style.color = "#241123";
+  }}
+>
+  {role}
+</Link>
+  )}
+
+  {role && location && (
+    <span
       style={{
-        fontFamily: "Space Grotesk, sans-serif",
-        fontSize: "1.7rem",
+        fontSize: "1.2rem",
         color: "#241123",
-        textTransform: "uppercase",
-        letterSpacing: "2px",
-        fontWeight: 700,
-        opacity: 0.85,
-        margin: 0,
+        padding: "0 14px",
+        opacity: 0.5,
       }}
     >
-      <Link
-        href={`/role/${role.toLowerCase().replace(/\s+/g, "-")}`}
-        className="hover:underline transition-colors duration-150 cursor-pointer"
-      >
-        {role}
-      </Link>
-    </p>
+      •
+    </span>
   )}
 
   {location && (
-    <div
-      style={{
-        fontFamily: "Space Grotesk, sans-serif",
-        fontSize: "1.7rem",
-        textTransform: "uppercase",
-        letterSpacing: "2px",
-        fontWeight: 700,
-        opacity: 0.85,
-      }}
-    >
-      <LocationBadge location={location} className="text-[#241123]" />
-    </div>
+    <LocationBadge
+      location={location}
+      fontFamily="DM Sans, sans serif"
+      fontSize="1.2rem"
+      fontWeight={900}
+      letterSpacing="2px"
+      textTransform="none" // this affects only wrapper text, not NEW YORK CITY span
+      opacity={0.5}
+      margin="0"
+      className="hover:text-[#6C00AF]"
+    />
   )}
 </div>
-      </div>
+
+</div>
 
       {/* Artist Bio */}
       {hasArtistBio && (
