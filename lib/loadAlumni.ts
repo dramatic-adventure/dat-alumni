@@ -13,6 +13,7 @@ function isMostlyEmpty(row: Record<string, string>): boolean {
   const relevantFields = [
     "Name",
     "Role",
+    "Location",
     "Headshot URL",
     "Identity Tags",
     "Project Badges",

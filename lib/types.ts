@@ -42,6 +42,7 @@ export type AlumniRow = {
   name: string;
   role?: string;
   location?: string;
+  locations?: { lat: number; lng: number; label?: string }[];
   latitude?: string;
   longitude?: string;
   identityTags?: string[];
@@ -65,7 +66,6 @@ export type AlumniRow = {
   profileId?: string;
   profileUrl?: UrlString;
   fieldNotes?: string[];
-  locations?: GeoLocation[];
   statusFlags?: string[];
   backgroundChoice?: string;
 };

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { loadVisibleAlumni, loadAlumniBySlug } from "@/lib/loadAlumni";
-import { getAllStories } from "@/lib/loadRows"; // ✅ New import
+import { getAllStories } from "@/lib/loadRows";
 import AlumniProfilePage from "@/components/alumni/AlumniProfilePage";
 import Footer from "@/components/ui/Footer";
 import type { Metadata } from "next";
@@ -11,7 +11,7 @@ export default async function AlumniPage({ params }: { params: Params }) {
   const alumni = await loadAlumniBySlug(params.slug);
   if (!alumni) return notFound();
 
-  const allStories = await getAllStories(); // ✅ Full unfiltered story list
+  const allStories = await getAllStories();
 
   return (
     <>
@@ -21,6 +21,7 @@ export default async function AlumniPage({ params }: { params: Params }) {
           name: alumni.name,
           role: alumni.role ?? "",
           headshotUrl: alumni.headshotUrl ?? "",
+          location: alumni.location ?? "", // ✅ ← added this line only
           identityTags: alumni.identityTags ?? [],
           statusFlags: alumni.statusFlags ?? [],
           programBadges: alumni.programBadges ?? [],
@@ -29,7 +30,7 @@ export default async function AlumniPage({ params }: { params: Params }) {
           imageUrls: alumni.imageUrls ?? [],
           posterUrls: alumni.posterUrls ?? [],
         }}
-        allStories={allStories} // ✅ Pass to filter later in ProfileCard
+        allStories={allStories}
       />
       <section className="bg-[#241123] pt-0 pb-10">
         <Footer />

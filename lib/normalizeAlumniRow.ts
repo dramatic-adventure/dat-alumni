@@ -17,58 +17,67 @@ const cleanArray = (val?: string): string[] =>
 
 // ✅ Normalize one alumni row
 export function normalizeAlumniRow(row: Record<string, string>): AlumniRow | null {
-  // 🧼 Trim all keys and values
+  // 🧼 Trim all keys and values, force lowercase keys
   const cleanedRow: Record<string, string> = Object.fromEntries(
     Object.entries(row).map(([key, value]) => [
-      key.trim(),
+      key.trim().toLowerCase(),
       value?.toString().trim() ?? "",
     ])
   );
 
-  // 🚫 Skip rows with no name or slug or mostly empty content
-  const isMostlyEmpty = Object.values(cleanedRow).filter(Boolean).length <= 2;
-  if (!cleanedRow["slug"] || !cleanedRow["Name"] || isMostlyEmpty) {
-    if (DEBUG) {
+  // 🧪 DEBUG: Show key/value pair if this is a watched profile
+  if (cleanedRow["slug"] === "isabel-martinez") {
+    console.log("🧪 Cleaned row for Isabel:", cleanedRow);
+    console.log("📍 Cleaned location:", cleanedRow["location"]);
+  }
+
+  // 🚫 Skip rows with missing or mostly empty essential fields
+  const essentialFields = ["name", "slug", "headshot url", "location"];
+  const isMostlyEmpty = essentialFields.filter((key) => cleanedRow[key])?.length < 2;
+
+  if (!cleanedRow["slug"] || !cleanedRow["name"] || isMostlyEmpty) {
+    if (DEBUG || cleanedRow["slug"] === "isabel-martinez") {
       console.warn("⚠️ Skipping alumni row:", cleanedRow);
     }
     return null;
   }
 
-  // 📍 Coordinates and location block
-  const lat = parseFloat(cleanedRow["Latitude"]);
-  const lng = parseFloat(cleanedRow["Longitude"]);
+  // 📍 Coordinates and location label
+  const lat = parseFloat(cleanedRow["latitude"]);
+  const lng = parseFloat(cleanedRow["longitude"]);
   const hasCoordinates = !isNaN(lat) && !isNaN(lng);
   const locations = hasCoordinates
-    ? [{ lat, lng, label: cleanedRow["Location"] }]
+    ? [{ lat, lng, label: cleanedRow["location"] }]
     : [];
 
+  // ✅ Final normalized row
   return {
-    slug: cleanedRow["slug"] || "",
-    name: cleanedRow["Name"] || "",
-    role: cleanedRow["Role"] || "",
-    location: cleanedRow["Location"] || "",
-    latitude: cleanedRow["Latitude"] || "",
-    longitude: cleanedRow["Longitude"] || "",
-    identityTags: cleanArray(cleanedRow["Identity Tags"]),
-    programBadges: cleanArray(cleanedRow["Project Badges"]),
-    headshotUrl: forceHttps(cleanedRow["Headshot URL"]),
-    imageUrls: cleanArray(cleanedRow["Gallery Image URLs"]).map(forceHttps),
-    artistStatement: cleanedRow["Artist Statement"] || "",
-    currentWork: cleanedRow["Current Work"] || "",
-    legacyProductions: cleanedRow["Legacy Productions"] || "",
-    storyTitle: cleanedRow["Story Title"] || "",
-    storyThumbnail: forceHttps(cleanedRow["Story Thumbnail"]),
-    storyExcerpt: cleanedRow["Story Excerpt"] || "",
-    storyUrl: forceHttps(cleanedRow["Story URL"]),
-    tags: cleanArray(cleanedRow["Tags"]),
-    artistUrl: forceHttps(cleanedRow["Artist URL"]),
-    socialLinks: cleanArray(cleanedRow["Artist Social Links"]).map(forceHttps),
-    artistEmail: cleanedRow["Artist Email"] || "",
-    updateLink: cleanedRow["Update Link"] || "",
-    showOnProfile: cleanedRow["Show on Profile?"] || "",
-    profileId: cleanedRow["Profile ID"] || "",
-    profileUrl: forceHttps(cleanedRow["Profile URL"]),
-    backgroundChoice: cleanedRow["Background Choice"] || "kraft",
+    slug: cleanedRow["slug"],
+    name: cleanedRow["name"],
+    role: cleanedRow["role"] || "",
+    location: cleanedRow["location"],
     locations,
+    latitude: cleanedRow["latitude"] || "",
+    longitude: cleanedRow["longitude"] || "",
+    identityTags: cleanArray(cleanedRow["identity tags"]),
+    programBadges: cleanArray(cleanedRow["project badges"]),
+    headshotUrl: forceHttps(cleanedRow["headshot url"]),
+    imageUrls: cleanArray(cleanedRow["gallery image urls"]).map(forceHttps),
+    artistStatement: cleanedRow["artist statement"] || "",
+    currentWork: cleanedRow["current work"] || "",
+    legacyProductions: cleanedRow["legacy productions"] || "",
+    storyTitle: cleanedRow["story title"] || "",
+    storyThumbnail: forceHttps(cleanedRow["story thumbnail"]),
+    storyExcerpt: cleanedRow["story excerpt"] || "",
+    storyUrl: forceHttps(cleanedRow["story url"]),
+    tags: cleanArray(cleanedRow["tags"]),
+    artistUrl: forceHttps(cleanedRow["artist url"]),
+    socialLinks: cleanArray(cleanedRow["artist social links"]).map(forceHttps),
+    artistEmail: cleanedRow["artist email"] || "",
+    updateLink: cleanedRow["update link"] || "",
+    showOnProfile: cleanedRow["show on profile?"] || "",
+    profileId: cleanedRow["profile id"] || "",
+    profileUrl: forceHttps(cleanedRow["profile url"]),
+    backgroundChoice: cleanedRow["background choice"] || "kraft",
   };
 }

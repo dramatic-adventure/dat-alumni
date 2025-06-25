@@ -24,21 +24,25 @@ export default function AlumniProfilePage({
   allStories,
 }: AlumniProfileProps) {
   const {
-  slug,
-  name,
-  role = "",
-  headshotUrl = "",
-  programBadges = [],
-  identityTags = [],
-  statusFlags = [],
-  artistStatement = "",
-  fieldNotes,
-  imageUrls = [],
-  backgroundChoice = "kraft",
-  location, // grab raw field here
-} = data;
+    slug,
+    name,
+    role = "",
+    headshotUrl = "",
+    programBadges = [],
+    identityTags = [],
+    statusFlags = [],
+    artistStatement = "",
+    fieldNotes,
+    imageUrls = [],
+    backgroundChoice = "kraft",
+    location = "",
+  } = data;
 
-const locationName = location || "";
+  // 🧪 DEBUGGING: Check why location is empty
+  if (slug === "isabel-martinez") {
+    console.log("🧪 Isabel data check:", data);
+    console.log("📍 Location field:", data.location);
+  }
 
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
@@ -89,7 +93,7 @@ const locationName = location || "";
                 name={name}
                 role={role}
                 headshotUrl={headshotUrl}
-                locationName={locationName}
+                location={location}
                 programBadges={programBadges}
                 identityTags={identityTags}
                 statusFlags={statusFlags}
