@@ -1,6 +1,18 @@
-// components/alumni/StatusFlags.tsx
+"use client";
 
-const flagStyles: Record<string, string> = {
+import * as React from "react";
+import Link from "next/link";
+
+type FlagLabel =
+  | "Founding Member"
+  | "Staff"
+  | "Board Member"
+  | "Artist-in-Residence"
+  | "Fellow"
+  | "Intern"
+  | "Volunteer";
+
+const flagStyles: Record<FlagLabel, string> = {
   "Founding Member": "#FFD700",
   "Staff": "#000000",
   "Board Member": "#FFCC00",
@@ -10,31 +22,87 @@ const flagStyles: Record<string, string> = {
   "Volunteer": "#4DAA57",
 };
 
-const icons: Record<string, string> = {
-  "Founding Member": "⭐",
-  "Staff": "💼",
+const iconMap: Record<FlagLabel, string> = {
+  "Founding Member": "⭐️",
+  "Staff": "🛠️",
   "Board Member": "🛡️",
   "Artist-in-Residence": "🏠",
-  "Fellow": "🎓",
+  "Fellow": "✨",
   "Intern": "🌱",
   "Volunteer": "🤝",
 };
 
-export default function StatusFlags({ flags }: { flags: string[] }) {
+interface StatusFlagsProps {
+  flags: string[];
+  fontSize?: string;
+  fontFamily?: string;
+  textColor?: string;
+  borderRadius?: string;
+}
+
+export default function StatusFlags({
+  flags,
+  fontSize = "2rem",
+  fontFamily = '"DM Sans", sans-serif',
+  textColor = "#241123",
+  borderRadius = "8px",
+}: StatusFlagsProps) {
+  if (!flags || flags.length === 0) return null;
+
   return (
-    <div className="flex flex-wrap gap-2 justify-end">
-      {flags.map((flag) => (
-        <div
-          key={flag}
-          className="w-7 h-7 md:w-6 md:h-6 rounded-sm flex items-center justify-center text-white text-sm font-bold shadow-md"
-          style={{
-            backgroundColor: flagStyles[flag] || "#999",
-          }}
-          title={flag}
-        >
-          {icons[flag] || "🏅"}
-        </div>
-      ))}
+    <div className="flex items-center gap-2">
+      {flags.map((flag) => {
+        const normalizedFlag = flag.trim() as FlagLabel;
+        const icon = iconMap[normalizedFlag] ?? "🏅";
+        const bgColor = flagStyles[normalizedFlag] ?? "#999";
+        const slug = normalizedFlag.toLowerCase().replace(/\s+/g, "-");
+
+        return (
+          <Link
+            key={normalizedFlag}
+            href={`/status/${slug}`}
+            className="group relative flex flex-col items-center text-center"
+            style={{ textDecoration: "none" }}
+            aria-label={normalizedFlag}
+          >
+            <div
+              className="relative flex flex-col items-center justify-end overflow-hidden"
+              style={{
+                backgroundColor: bgColor,
+                padding: "2.4rem 0.75rem 0.75rem",
+                fontSize,
+                fontFamily,
+                color: "#F6E4C1",
+                borderTopLeftRadius: "0px",
+                borderTopRightRadius: "0px",
+                borderBottomLeftRadius: borderRadius,
+                borderBottomRightRadius: borderRadius,
+                boxShadow: "3px 4px 10px rgba(0, 0, 0, 0.15)",
+              }}
+            >
+              {/* Top Hover Title Bar (inside flag) */}
+              <div
+                className="absolute top-0 left-0 w-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
+                style={{
+                  backgroundColor: "rgba(36, 17, 35, 0.5)",
+                  color: "#F2F2F2",
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  padding: "2px 4px",
+                  fontFamily,
+                  textAlign: "center",
+                  whiteSpace: "normal",
+                }}
+              >
+                {normalizedFlag}
+              </div>
+
+              {/* Emoji Icon */}
+              {icon}
+            </div>
+          </Link>
+        );
+      })}
     </div>
   );
 }
