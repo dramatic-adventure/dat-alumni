@@ -29,7 +29,7 @@ const iconMap: Record<FlagLabel, string> = {
   "Artist-in-Residence": "🛖",
   "Fellow": "✨",
   "Intern": "🌱",
-  "Volunteer": "🤝",
+  "Volunteer": "🫶",
 };
 
 interface StatusFlagsProps {
