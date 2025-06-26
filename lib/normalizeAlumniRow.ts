@@ -61,6 +61,7 @@ export function normalizeAlumniRow(row: Record<string, string>): AlumniRow | nul
     longitude: cleanedRow["longitude"] || "",
     identityTags: cleanArray(cleanedRow["identity tags"]),
     programBadges: cleanArray(cleanedRow["project badges"]),
+    statusFlags: cleanArray(cleanedRow["status signifier"]),
     headshotUrl: forceHttps(cleanedRow["headshot url"]),
     imageUrls: cleanArray(cleanedRow["gallery image urls"]).map(forceHttps),
     artistStatement: cleanedRow["artist statement"] || "",

@@ -13,20 +13,20 @@ type FlagLabel =
   | "Volunteer";
 
 const flagStyles: Record<FlagLabel, string> = {
-  "Founding Member": "#FFD700",
-  "Staff": "#000000",
-  "Board Member": "#FFCC00",
-  "Artist-in-Residence": "#6C00AF",
+  "Founding Member": "#3E3A36",
+  "Staff": "#E6B24A",
+  "Board Member": "#A15C40",
+  "Artist-in-Residence": "#4C8C86",
   "Fellow": "#F25C4D",
-  "Intern": "#2AB0A7",
-  "Volunteer": "#4DAA57",
+  "Intern": "#924E75",
+  "Volunteer": "#659157",
 };
 
 const iconMap: Record<FlagLabel, string> = {
   "Founding Member": "⭐️",
   "Staff": "🛠️",
-  "Board Member": "🛡️",
-  "Artist-in-Residence": "🏠",
+  "Board Member": "🧭",
+  "Artist-in-Residence": "🛖",
   "Fellow": "✨",
   "Intern": "🌱",
   "Volunteer": "🤝",
@@ -42,7 +42,7 @@ interface StatusFlagsProps {
 
 export default function StatusFlags({
   flags,
-  fontSize = "2rem",
+  fontSize = "clamp(1.5rem, 4vw, 2rem)",
   fontFamily = '"DM Sans", sans-serif',
   textColor = "#241123",
   borderRadius = "8px",
@@ -50,26 +50,33 @@ export default function StatusFlags({
   if (!flags || flags.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" role="list">
       {flags.map((flag) => {
         const normalizedFlag = flag.trim() as FlagLabel;
-        const icon = iconMap[normalizedFlag] ?? "🏅";
-        const bgColor = flagStyles[normalizedFlag] ?? "#999";
+
+        if (!(normalizedFlag in iconMap && normalizedFlag in flagStyles)) {
+          return null;
+        }
+
+        const icon = iconMap[normalizedFlag];
+        const bgColor = flagStyles[normalizedFlag];
         const slug = normalizedFlag.toLowerCase().replace(/\s+/g, "-");
 
         return (
           <Link
             key={normalizedFlag}
             href={`/status/${slug}`}
-            className="group relative flex flex-col items-center text-center"
-            style={{ textDecoration: "none" }}
+            title={normalizedFlag} // ✅ This gives us the native tooltip
             aria-label={normalizedFlag}
+            role="listitem"
+            className="group relative flex flex-col items-center text-center no-underline focus:outline-none"
+            style={{ textDecoration: "none" }}
           >
             <div
-              className="relative flex flex-col items-center justify-end overflow-hidden"
+              className="flex items-center justify-center transition-transform duration-200 ease-in-out group-hover:scale-105 group-hover:shadow-[0_6px_20px_rgba(0,0,0,0.35)]"
               style={{
                 backgroundColor: bgColor,
-                padding: "2.4rem 0.75rem 0.75rem",
+                padding: "2.2rem 0.65rem 0.65rem",
                 fontSize,
                 fontFamily,
                 color: "#F6E4C1",
@@ -77,27 +84,8 @@ export default function StatusFlags({
                 borderTopRightRadius: "0px",
                 borderBottomLeftRadius: borderRadius,
                 borderBottomRightRadius: borderRadius,
-                boxShadow: "3px 4px 10px rgba(0, 0, 0, 0.15)",
               }}
             >
-              {/* Top Hover Title Bar (inside flag) */}
-              <div
-                className="absolute top-0 left-0 w-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
-                style={{
-                  backgroundColor: "rgba(36, 17, 35, 0.5)",
-                  color: "#F2F2F2",
-                  fontSize: "0.75rem",
-                  fontWeight: 600,
-                  padding: "2px 4px",
-                  fontFamily,
-                  textAlign: "center",
-                  whiteSpace: "normal",
-                }}
-              >
-                {normalizedFlag}
-              </div>
-
-              {/* Emoji Icon */}
               {icon}
             </div>
           </Link>

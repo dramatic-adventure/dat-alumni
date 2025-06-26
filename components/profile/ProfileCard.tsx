@@ -14,6 +14,7 @@ import Lightbox from "@/components/shared/Lightbox";
 import LocationBadge from "@/components/shared/LocationBadge";
 import { StoryRow, Production } from "@/lib/types";
 import { productionMap } from "@/lib/productionMap";
+import StatusFlags from "@/components/alumni/StatusFlags";
 
 const FeaturedStories = dynamic(() => import("@/components/shared/FeaturedStories"), {
   ssr: false,
@@ -112,14 +113,37 @@ console.log("📍 Raw location:", location);
 console.log("🎯 typeof location:", typeof location);
 console.log("🧪 location.length:", location?.length);
 console.log("📍 ProfileCard location:", location);
+console.log("✅ Status flags received:", statusFlags);
 
 
   return (
-    <div className="relative">
-      {/* Share Button */}
-      <div className="absolute z-40" style={{ top: "1rem", right: "1.5rem" }}>
-        <ShareButton url={currentUrl} />
-      </div>
+  <div className="relative">
+
+    {/* 🎖️ Status Flags (Top Right, LEFT of Share button) */}
+{statusFlags?.length > 0 && (
+  <div
+    className="absolute z-40 flex items-center gap-2"
+    style={{ top: "0rem", right: "4.5rem" }}
+  >
+    <StatusFlags
+      flags={statusFlags}
+      fontSize="1.75rem"
+      fontFamily='"DM Sans", sans-serif'
+      textColor="#F6E4C1"
+      borderRadius="33px" // ✅ will apply only to bottom corners
+    />
+  </div>
+)}
+
+
+    {/* 🔗 Share Button (Top Right, pinned) */}
+    <div
+      className="absolute z-40"
+      style={{ top: "1rem", right: "1rem" }}
+    >
+      <ShareButton url={currentUrl} />
+    </div>
+
 
       {/* Headshot Card */}
       <div
@@ -191,7 +215,7 @@ console.log("📍 ProfileCard location:", location);
     textTransform: "uppercase",
     letterSpacing: "2px",
     fontWeight: 700,
-    opacity: 0.85,
+    opacity: 0.9,
     margin: 0,
     textDecoration: "none",
     display: "inline-block",
