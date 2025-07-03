@@ -17,14 +17,29 @@ export default function StampShape({
   year,
   color,
 }: StampShapeProps) {
-  const shapes = [
+  const allShapes = [
     "circle",
+    "multi-edge-circle",
+    "rectangle",
+    "rounded-rectangle",
     "square",
     "rounded-square",
     "hexagon",
-    "multi-edge-circle",
+    "rounded-hexagon",
+    "pentagon",
+    "rounded-pentagon",
   ];
-  const shape = randomFromArray(shapes);
+
+  // dummy lines estimate to choose shape
+  const estimateLines = program.split(" ").length + location.split(" ").length + 1;
+
+  let shapePool = allShapes;
+  if (estimateLines >= 4) {
+    shapePool = ["rectangle", "rounded-rectangle", "square", "rounded-square"];
+  }
+
+  const shape = randomFromArray(shapePool);
+
   const rotation = randomInt(-45, 45);
   const top = randomInt(0, 300);
   const left = randomInt(0, 800);
@@ -35,7 +50,7 @@ export default function StampShape({
   const [programLines, setProgramLines] = useState<string[]>([]);
   const [locationLines, setLocationLines] = useState<string[]>([]);
   const [shapeScale, setShapeScale] = useState(1);
-  const [blockPadding, setBlockPadding] = useState(10);
+  const [blockGap, setBlockGap] = useState(10);
 
   useEffect(() => {
     if (!measureRef.current) return;
@@ -62,15 +77,24 @@ export default function StampShape({
       return lines;
     };
 
-    let currentScale = 1.0;
-    let currentBlockPadding = 10;
+    let currentScale = 1.2;
+    let currentBlockGap = 6;
     const lineGap = 14;
-    const safeZoneByShape: Record<string, number> = {
-      circle: 80,
-      square: 80,
-      "rounded-square": 80,
-      hexagon: 70,
-      "multi-edge-circle": 65,
+    const sideBuffer = 10;
+    const topBuffer = 6;
+    const bottomBuffer = 12;
+
+    const safeZoneByShape: Record<string, { width: number; height: number }> = {
+      circle: { width: 80, height: 80 },
+      "multi-edge-circle": { width: 70, height: 70 },
+      square: { width: 80, height: 80 },
+      "rounded-square": { width: 80, height: 80 },
+      rectangle: { width: 85, height: 60 },
+      "rounded-rectangle": { width: 85, height: 60 },
+      hexagon: { width: 70, height: 70 },
+      "rounded-hexagon": { width: 70, height: 70 },
+      pentagon: { width: 70, height: 70 },
+      "rounded-pentagon": { width: 70, height: 70 },
     };
     const safeZone = safeZoneByShape[shape];
 
@@ -78,21 +102,39 @@ export default function StampShape({
     let chunkedLocation: string[] = [];
     let blockHeight = 0;
 
-    for (let attempt = 0; attempt < 15; attempt++) {
-      chunkedProgram = chunkWords(program.toUpperCase().split(" "), safeZone * currentScale);
-      chunkedLocation = chunkWords(location.split(" "), safeZone * currentScale);
+    for (let attempt = 0; attempt < 20; attempt++) {
+      chunkedProgram = chunkWords(
+  program.toUpperCase().split(" "),
+  safeZone.width * currentScale - sideBuffer * 2
+);
+chunkedLocation = chunkWords(
+  location.split(" "),
+  safeZone.width * currentScale - sideBuffer * 2
+);
 
-      const totalLines = chunkedProgram.length + locationLines.length + 1;
+      const totalLines = chunkedProgram.length + chunkedLocation.length + 1;
       blockHeight =
-        totalLines * lineGap + 2 * currentBlockPadding;
+        totalLines * lineGap +
+        currentBlockGap * 2 +
+        topBuffer +
+        bottomBuffer;
 
-      if (blockHeight > safeZone * currentScale) {
-        if (currentBlockPadding > 2) {
-          currentBlockPadding -= 2;
-        } else if (currentScale < 3.0) {
+      const widestLine = Math.max(
+        ...chunkedProgram.map(l => measureTextWidth(l)),
+        ...chunkedLocation.map(l => measureTextWidth(l)),
+        measureTextWidth(year.toString())
+      );
+
+      if (
+        blockHeight > safeZone.height * currentScale ||
+        widestLine > safeZone.width * currentScale
+      ) {
+        if (attempt % 2 === 0 && currentBlockGap > 2) {
+          currentBlockGap -= 2;
+        } else if (currentScale < 4.0) {
           currentScale += 0.1;
         } else {
-          console.warn("Could not fit text even after maximum shape scaling and padding shrinkage.");
+          console.warn("Could not fit text after max attempts");
           break;
         }
       } else {
@@ -103,13 +145,15 @@ export default function StampShape({
     setProgramLines(chunkedProgram);
     setLocationLines(chunkedLocation);
     setShapeScale(currentScale);
-    setBlockPadding(currentBlockPadding);
+    setBlockGap(currentBlockGap);
   }, [program, location, shape]);
 
   const lineGap = 14;
+  const topBuffer = 6;
+  const bottomBuffer = 12;
   const totalLines = programLines.length + locationLines.length + 1;
-  const blockHeight = totalLines * lineGap + 2 * blockPadding;
-  const startY = 50 - blockHeight / 2 + lineGap;
+  const blockHeight = totalLines * lineGap + blockGap * 2 + topBuffer + bottomBuffer;
+  const startY = 50 - blockHeight / 2 + lineGap + topBuffer;
 
   return (
     <svg
@@ -124,7 +168,6 @@ export default function StampShape({
         zIndex: randomInt(1, 10),
       }}
     >
-      {/* hidden measure element */}
       <text
         ref={measureRef}
         style={{ visibility: "hidden" }}
@@ -139,7 +182,7 @@ export default function StampShape({
           <ShapePath shape={shape} color={color} />
         </g>
 
-        {/* Program text */}
+        {/* Program */}
         <text
           x="50"
           y={startY}
@@ -156,10 +199,10 @@ export default function StampShape({
           ))}
         </text>
 
-        {/* Location text */}
+        {/* Location */}
         <text
           x="50"
-          y={startY + programLines.length * lineGap + blockPadding}
+          y={startY + programLines.length * lineGap + blockGap}
           fontFamily={font}
           fontSize="12px"
           fontStyle="italic"
@@ -179,9 +222,9 @@ export default function StampShape({
           y={
             startY +
             programLines.length * lineGap +
-            blockPadding +
+            blockGap +
             locationLines.length * lineGap +
-            blockPadding
+            blockGap
           }
           fontFamily={font}
           fontSize="12px"
