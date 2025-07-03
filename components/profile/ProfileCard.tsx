@@ -7,7 +7,7 @@ import Link from "next/link";
 import NameStack from "@/components/shared/NameStack";
 import ArtistBio from "./ArtistBio";
 import PosterStrip from "@/components/shared/PosterStrip";
-import AffiliationBlock from "@/components/profile/AffiliationBlock";
+import ProgramStamps from "@/components/alumni/ProgramStamps";
 import FeaturedProductionsSection from "./FeaturedProductionsSection";
 import ShareButton from "@/components/ui/ShareButton";
 import Lightbox from "@/components/shared/Lightbox";
@@ -311,14 +311,28 @@ console.log("✅ Status flags received:", statusFlags);
         </div>
       )}
 
-      {/* Affiliation Block */}
-      {hasBadges && (
-        <div className="bg-[#9BC53D] py-6 m-0">
-          <div className="max-w-6xl mx-auto px-4">
-            <AffiliationBlock programBadges={programBadges} statusFlags={statusFlags} />
-          </div>
-        </div>
-      )}
+      {/* Program Stamps */}
+{hasBadges && (
+  <div
+    className="
+      relative
+      bg-[#F6E4C1]
+      py-6
+      m-0
+      overflow-hidden
+      h-[50vh]
+      min-h-[300px]
+      max-h-[600px]
+    "
+    style={{ zIndex: 50 }}
+  >
+    <div className="max-w-6xl mx-auto px-4 relative h-full">
+      <ProgramStamps artistSlug={slug} panelHeight={600} />
+    </div>
+  </div>
+)}
+
+
 
       {/* Featured Stories */}
       {hasStories && (

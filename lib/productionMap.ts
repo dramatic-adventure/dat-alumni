@@ -5,6 +5,7 @@ export interface Production {
   title: string;
   slug: string;
   year: number;
+  season: number;
   location: string;
   festival: string;
   url: string;
@@ -20,8 +21,9 @@ export const productionMap: Record<string, Production> = {
     title: "Blackfish",
     slug: "blackfish",
     year: 2018,
+    season: 12,
     location: "Towson, MD",
-    festival: "Spinal: MFA New Works in Theatre",
+    festival: "Spinal: MFA New Works in Theatre -- Towson Unversity",
     url: "/blackfish-workshop",
     posterUrl: "/posters/blackfish.jpg",
     artists: {
@@ -44,12 +46,14 @@ export const productionMap: Record<string, Production> = {
       "isabel-martinez": ["Actor"]
     }
   },
+
   "miracles-are-soft-in-the-jungle": {
     title: "Miracles are Soft in the Jungle",
     slug: "miracles-are-soft-in-the-jungle",
     year: 2017,
+    season: 11,
     location: "NYC",
-    festival: "ACTion Fest 2017: Juntos, Mano a Mano: Hand in Hand",
+    festival: "ACTion Fest 2017: Juntos, Mano a Mano / Hand in Hand -- IATI Theatre",
     url: "/miracles-are-soft-in-the-jungle",
     posterUrl: "/posters/miracles.jpg",
     artists: {
@@ -66,12 +70,14 @@ export const productionMap: Record<string, Production> = {
       "isabel-martinez": ["Actor"]
     }
   },
+
   "whispers-of-floreana": {
     title: "Whispers of Floreana",
     slug: "whispers-of-floreana",
     year: 2017,
+    season: 11,
     location: "NYC",
-    festival: "ACTion Fest 2017: Juntos, Mano a Mano: Hand in Hand",
+    festival: "ACTion Fest 2017: Juntos, Mano a Mano / Hand in Hand -- IATI Theatre",
     url: "/whispers-of-floreana",
     posterUrl: "/posters/whispers.jpg",
     artists: {
@@ -89,12 +95,14 @@ export const productionMap: Record<string, Production> = {
       "willa-mcwhorter": ["Actor"]
     }
   },
+
   "tembo": {
     title: "Tembo!",
     slug: "tembo",
     year: 2016,
+    season: 10,
     location: "NYC",
-    festival: "ACTion Fest 2016: Shangaa: Shock and Awe",
+    festival: "ACTion Fest 2016: Shangaa / Shock and Awe -- IATI Theatre",
     url: "/tembo",
     posterUrl: "/posters/tembo.jpg",
     artists: {
@@ -111,12 +119,14 @@ export const productionMap: Record<string, Production> = {
       "tsebiyah-mishael": ["Actor"]
     }
   },
+
   "travelogues": {
     title: "Travelogues",
     slug: "travelogues",
     year: 2016,
+    season: 10,
     location: "NYC",
-    festival: "ACTion Fest 2016: Shangaa: Shock and Awe",
+    festival: "ACTion Fest 2016: Shangaa / Shock and Awe -- IATI Theatre",
     url: "/action-travelogues",
     posterUrl: "/posters/travelogues.jpg",
     artists: {
@@ -141,8 +151,9 @@ export const productionMap: Record<string, Production> = {
     title: "Ubinadamu",
     slug: "ubinadamu",
     year: 2016,
+    season: 10,
     location: "NYC",
-    festival: "ACTion Fest 2016: Shangaa: Shock and Awe",
+    festival: "ACTion Fest 2016: Shangaa / Shock and Awe -- IATI Theatre",
     url: "/ubinadamu",
     posterUrl: "/posters/ubinadamu.jpg",
     artists: {
@@ -166,8 +177,9 @@ export const productionMap: Record<string, Production> = {
     title: "Nisikilize",
     slug: "nisikilize",
     year: 2016,
+    season: 10,
     location: "NYC",
-    festival: "ACTion Fest 2016: Shangaa: Shock and Awe",
+    festival: "ACTion Fest 2016: Shangaa / Shock and Awe -- IATI Theatre",
     url: "/nisikilize",
     posterUrl: "/posters/nisikilize.jpg",
     artists: {
@@ -185,12 +197,14 @@ export const productionMap: Record<string, Production> = {
       "sophia-pervilhac": ["Actor"]
     }
   },
+
   "the-rebel-bird": {
     title: "The Rebel Bird",
     slug: "the-rebel-bird",
     year: 2015,
+    season: 9,
     location: "Nitra, Slovakia",
-    festival: "Workshop Production 2015 – Divadlo Andreja Bagara",
+    festival: "Workshop Production 2015 -- Divadlo Andreja Bagara",
     url: "/rebel-bird-workshop",
     posterUrl: "/posters/rebel-bird.jpg",
     artists: {
@@ -213,8 +227,9 @@ export const productionMap: Record<string, Production> = {
     title: "Stop. Stay. Leave.",
     slug: "stop-stay-leave",
     year: 2015,
+    season: 9,
     location: "NYC",
-    festival: "ACTion Fest 2015: Tu a Teraz: Here and Now",
+    festival: "ACTion Fest 2015: Tu a Teraz / Here and Now -- IATI Theatre",
     url: "/stop-stay-leave",
     posterUrl: "/posters/stop-stay-leave.jpg",
     artists: {
@@ -237,8 +252,9 @@ export const productionMap: Record<string, Production> = {
     title: "Porajmos: The Devouring",
     slug: "porajmos-the-devouring",
     year: 2015,
+    season: 9,
     location: "NYC",
-    festival: "ACTion Fest 2015: Tu a Teraz: Here and Now",
+    festival: "ACTion Fest 2015: Tu a Teraz / Here and Now -- IATI Theatre",
     url: "/porajmos",
     posterUrl: "/posters/porajmos.jpg",
     artists: {
@@ -259,12 +275,14 @@ export const productionMap: Record<string, Production> = {
       "willa-mcwhorter": ["Actor"]
     }
   },
+
   "sunflower": {
     title: "The Town at the Edge of the Sunflower Field",
     slug: "sunflower",
     year: 2015,
+    season: 9,
     location: "NYC",
-    festival: "ACTion Fest 2015: Tu a Teraz: Here and Now",
+    festival: "ACTion Fest 2015: Tu a Teraz / Here and Now -- IATI Theatre",
     url: "/sunflower",
     posterUrl: "/posters/sunflower.jpg",
     artists: {
@@ -290,8 +308,9 @@ export const productionMap: Record<string, Production> = {
     title: "Little Light",
     slug: "little-light",
     year: 2015,
+    season: 9,
     location: "NYC",
-    festival: "ACTion Fest 2015: Tu a Teraz: Here and Now",
+    festival: "ACTion Fest 2015: Tu a Teraz / Here and Now -- IATI Theatre",
     url: "/little-light",
     posterUrl: "/posters/little-light.jpg",
     artists: {
@@ -309,12 +328,13 @@ export const productionMap: Record<string, Production> = {
     }
   },
 
-  "a-girl": {
+  "a-girl-without-wings": {
     title: "A Girl Without Wings",
-    slug: "a-girl",
+    slug: "a-girl-without-wings",
     year: 2013,
+    season: 8,
     location: "NYC",
-    festival: "Off-Off-Broadway Production 2013 – IATI Theater",
+    festival: "Off-Off-Broadway Production 2013 -- IATI Theater",
     url: "/a-girl",
     posterUrl: "/posters/a-girl.jpg",
     artists: {
@@ -328,7 +348,7 @@ export const productionMap: Record<string, Production> = {
       "angela-harner": ["Costume Design"],
       "the-puppet-kitchen": ["Puppetry Advisor"],
       "christen-madrazo": ["Dramaturg", "Actor"],
-      "thomas-burns-scully": ["Music"],
+      "thomas-burns-scully": ["Musician"],
       "janice-amaya": ["Actor"],
       "mike-axelrod": ["Actor"],
       "andrew-clarke": ["Actor"],
@@ -337,12 +357,172 @@ export const productionMap: Record<string, Production> = {
       "matt-stannah": ["Actor"]
     }
   },
-    "a-girl-reading": {
+
+       // Season 7 entry: 
+ "the-cleaver-and-the-wall-an-almost-fairytale": {
+    title: "The Cleaver and the Wall: An Almost Fairytale",
+    slug: "the-cleaver-and-the-wall",
+    year: 2013,
+    season: 7,
+    location: "NYC",
+    festival: "ACTion Fest 2013: Hearts of Europe -- Abingdon Theatre",
+    url: "",
+    posterUrl: "",
+    artists: {
+      "jason-williamson": ["Director"],
+      "": ["Set Designer"],
+      "": ["Lighting Designer"],
+      "": ["Sound Designer"],
+      "petra-slovakova": ["Road Manager"],
+      "katherine-a-uyeda": ["Actor"],
+      "claudio-silva": ["Actor"],
+      "brooke-hutchins": ["Actor"],
+      "ashley-james": ["Actor"],
+      "anna-deblassio": ["Actor"],
+      "amber-finn": ["Actor"]
+    }
+  },
+       
+  "ako-david": {
+    title: "Ako David",
+    slug: "ako-david",
+    year: 2013,
+    season: 7,
+    location: "NYC",
+    festival: "ACTion Fest 2013: Hearts of Europe -- Abingdon Theatre",
+    url: "",
+    posterUrl: "",
+    artists: {
+      "tom-costello": ["Director"],
+      "": ["Set Designer"],
+      "": ["Lighting Designer"],
+      "": ["Sound Designer"],
+      "richard-sipos": ["Road Manager"],
+      "nicholas-linnehan": ["Actor"],
+      "janice-amaya": ["Actor"],
+      "ivano-pulito": ["Actor"],
+      "gabriel-kadian": ["Actor"],
+      "anna-cherkezishvili": ["Actor"],
+      "abbey-glasure": ["Actor"]
+    }
+  },
+
+  "flakes": {
+    title: "Flakes",
+    slug: "flakes",
+    year: 2013,
+    season: 7,
+    location: "NYC",
+    festival: "ACTion Fest 2013: Hearts of Europe -- Abingdon Theatre",
+    url: "",
+    posterUrl: "",
+    artists: {
+      "kathleen-amshoff": ["Director"],
+      "": ["Set Designer"],
+      "": ["Lighting Designer"],
+      "": ["Sound Designer"],
+      "dominika-siroka": ["Road Manager"],
+      "michael-axelrod": ["Actor"],
+      "lacy-allen": ["Actor"],
+      "claire-edmonds": ["Actor"],
+      "benjamin-ridge": ["Actor"],
+      "alexis-floyd": ["Actor"]
+    }
+  },
+
+  "a-girl-without-wings-workshop-production": {
+  title: "A Girl without Wings, Workshop Production 2012",
+  slug: "a-girl-without-wings-workshop-production",
+  location: "NYC",
+  year: 2012,
+  season: 7,
+  festival: "",
+  url: "",
+  posterUrl: "",
+  artists: {
+    "paul-huelo": ["Actor"],
+    "elisha-lawson": ["Actor"],
+    "carmen-cabrera": ["Actor"],
+    "carlo-alban": ["Actor"],
+    "katey-parker": ["Actor"],
+    "jason-williamson": ["Resident Playwright"],
+    "christen-madrazo": ["Dramaturg", "Actor"],
+    "kathleen-amshoff": ["Director"],
+    "mary-k-baxter": ["Executive Director"],
+    "jesse-baxter": ["Artistic Director"]
+  }
+},
+
+"travelogue-season-two": {
+  title: "Travelogue Season Two",
+  slug: "travelogue-season-two",
+  location: "Jimmys No. 43, East Village, NYC",
+  year: 2012-2013,
+  season: 7,
+  festival: "",
+  url: "",
+  posterUrl: "",
+  artists: {
+    "jason-williamson": ["Producer"],
+    "christen-madrazo": ["Producer"],
+    "kathleen-amshoff": ["Producer"],
+    "mary-k-baxter": ["Producer"],
+    "jesse-baxter": ["Host"]
+   }
+},    
+
+       // Season 6 entry:    
+"travelogue-season-one": {
+  title: "Travelogue Season One",
+  slug: "travelogue-season-one",
+  location: "Jimmys No. 43, East Village, NYC",
+  year: 2011-2012,
+  season: 6,
+  festival: "",
+  url: "",
+  posterUrl: "",
+  artists: {
+    "jason-williamson": ["Producer"],
+    "christen-madrazo": ["Producer"],
+    "kathleen-amshoff": ["Producer"],
+    "mary-k-baxter": ["Producer"],
+    "jesse-baxter": ["Host"]
+   }
+},    
+
+       // Season 5 entry:  
+"a-girl-without-wings-party": {
+  title: "A Girl without Wings, Staged Reading 2011 (5 Year Anniversary Party)",
+  slug: "a-girl-without-wings-party",
+  year: 2011,
+  season: 5,
+  location: "Hells Kitchen, NYC",
+  festival: "5 Year Anniversary Party",
+  url: "",
+  posterUrl: "",
+  artists: {
+    "jaime-carillo": ["Actor"],
+    "masha-mendieta": ["Actor"],
+    "november-christine": ["Actor"],
+    "katarina-hughes": ["Actor"],
+    "bryant-vance": ["Actor"],
+    "katey-parker": ["Actor"],
+    "drew-ernst": ["Actor"],
+    "jason-williamson": ["Resident Playwright"],
+    "christen-madrazo": ["Actor"],
+    "kathleen-amshoff": ["Assoc. Artistic Director", "Director"],
+    "mary-k-baxter": ["Executive Director"],
+    "jesse-baxter": ["Artistic Director"]
+  }
+},
+
+    "a-girl-without-wings-reading": {
     title: "A Girl Without Wings (Staged Reading)",
-    slug: "a-girl-reading",
+    slug: "a-girl-without-wings-reading",
     year: 2010,
+    season: 5,
     location: "Washington, DC",
-    festival: "Page-to-Stage Festival – Kennedy Center",
+    festival: "Page-to-Stage Festival -- Kennedy Center",
     url: "/a-girl-kennedy-center",
     posterUrl: "/posters/a-girl-reading.jpg",
     artists: {
@@ -352,7 +532,7 @@ export const productionMap: Record<string, Production> = {
       "david-d-mitchell": ["Artistic Director (RotM)"],
       "mary-k-baxter": ["Executive Director", "Actor"],
       "christen-madrazo": ["Dramaturg", "Actor"],
-      "jon-kevin-lazarus": ["Narrator"],
+      "jon-kevin-lazarus": ["Actor"],
       "kareem-carpenter": ["Actor"],
       "david-kellam": ["Actor"],
       "anne-letscher": ["Actor"],
@@ -361,19 +541,69 @@ export const productionMap: Record<string, Production> = {
     }
   },
 
-  "esperanza": {
+       // Season 4 entry:  
+  "enchanted-islands": {
+    title: "Enchanted Islands",
+    slug: "enchanted-islands",
+    year: 2010,
+    season: 4,
+    location: "NYC",
+    festival: "ACTion Fest 2010: Poco a Poco / Little by Little -- Gene Frankel Theatre",
+    url: "",
+    posterUrl: "",
+    artists: {
+      "jesse-baxter": ["Director"],
+      "brittany-vasta": ["Set Designer"],
+      "drew-florida": ["Lighting Designer"],
+      "drew-ernst": ["Sound Designer"],
+      "gustavo-redín": ["Road Manager"],
+      "tamara-easton": ["Actor"],
+      "natalie-hirsch": ["Actor"],
+      "lauren-ullrich": ["Actor"],
+      "jennifer-rodriguez": ["Actor"],
+      "jamie-blanek": ["Actor"],
+      "garrett-bales": ["Actor"],
+      "adam-griffith": ["Actor"]
+    }
+  },
+
+  "esmeraldas-dumbshow": {
+    title: "Esmeraldas Dumbshow",
+    slug: "esmeraldas-dumbshow",
+    year: 2010,
+    season: 4,
+    location: "NYC",
+    festival: "ACTion Fest 2010: Poco a Poco / Little by Little -- Gene Frankel Theatre",
+    url: "",
+    posterUrl: "",
+    artists: {
+      "kathleen-amshoff": ["Director"],
+      "brittany-vasta": ["Set Designer"],
+      "drew-florida": ["Lighting Designer"],
+      "drew-ernst": ["Sound Designer"],
+      "": ["Road Manager"],
+      "kaitlin-hernandez": ["Actor"],
+      "jnelle-bobb-semple": ["Actor"],
+      "heather-ichihashi": ["Actor"],
+      "hanniel-sindelar": ["Actor"],
+      "courtney-dusenberry": ["Actor"]
+    }
+  },
+
+    "esperanza": {
     title: "Esperanza",
     slug: "esperanza",
     year: 2010,
+    season: 4,
     location: "NYC",
-    festival: "ACTion Fest 2010 – Poco a Poco",
+    festival: "ACTion Fest 2010: Poco a Poco / Little by Little -- Gene Frankel Theatre",
     url: "/esperanza",
     posterUrl: "/posters/esperanza.jpg",
     artists: {
-      "jesse-baxter": ["Director", "Props & Costume Design"],
-      "brittany-vasta": ["Set Design"],
-      "drew-florida": ["Lighting Design"],
-      "drew-ernst": ["Sound Design"],
+      "jesse-baxter": ["Director"],
+      "brittany-vasta": ["Set Designer"],
+      "drew-florida": ["Lighting Designer"],
+      "drew-ernst": ["Sound Designer"],
       "gustavo-redín": ["Road Manager"],
       "alena-acker": ["Actor"],
       "dianna-beshara": ["Actor"],
@@ -384,42 +614,244 @@ export const productionMap: Record<string, Production> = {
     }
   },
 
+      // Season 3 entry:
+  "backpack-musical": {
+    title: "Backpack Musical",
+    slug: "backpack-musical",
+    year: 2009,
+    season: 3,
+    location: "NYC",
+    festival: "Performing Arts Marathon 2009 -- IATI Theatre; ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador -- Richmond Shepard Theatre",
+    url: "",
+    posterUrl: "",
+    artists: {
+      "jim-knipple": ["Director"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "drew-florida": ["Lighting Designer"],
+      "kim-braun": ["Production Stage Manager"],
+      "kaitlin-kauffman": ["Assistant Stage Manager"],
+      "": ["Road Manager"]
+    }
+  },
+
+  "flight-of-the-condors": {
+    title: "Flight of the Condors",
+    slug: "flight-of-the-condors",
+    year: 2009,
+    season: 3,
+    location: "NYC",
+    festival: "Performing Arts Marathon 2009 -- IATI Theatre; ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador -- Richmond Shepard Theatre",
+    url: "",
+    posterUrl: "",
+    artists: {
+      "rachel-martsolf": ["Director"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "drew-florida": ["Lighting Designer"],
+      "kim-braun": ["Production Stage Manager"],
+      "kaitlin-kauffman": ["Assistant Stage Manager"],
+      "": ["Road Manager"]
+    }
+  },
+
   "hotel-millionaire": {
     title: "Hotel Millionaire",
     slug: "hotel-millionaire",
-    year: 2008,
+    year: 2009,
+    season: 3,
     location: "NYC",
-    festival: "Performing Arts Marathon",
+    festival: "Performing Arts Marathon 2009 -- IATI Theatre; ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador -- Richmond Shepard Theatre",
     url: "/hotel-millionaire",
     posterUrl: "/posters/hotel-millionaire.jpg",
     artists: {
-      "kathleen-amshoff": ["Playwright", "Director", "Props, Costume and Sound Design"],
-      "rachael-palmer-jones": ["Playwright", "Actor"],
-      "heather-massie": ["Playwright", "Actor"],
-      "katey-parker": ["Playwright", "Actor"],
-      "jennifer-robideau": ["Playwright", "Actor"],
-      "drew-florida": ["Lighting Design"],
+      "kathleen-amshoff": ["Assoc. Artistic Director", "Director"],
+      "rachael-palmer-jones": ["Actor"],
+      "heather-massie": ["Actor"],
+      "katey-parker": ["Actor"],
+      "jennifer-robideau": ["Actor"],
+      "drew-florida": ["Lighting Designer"],
+      "kim-braun": ["Production Stage Manager"],
+      "kaitlin-kauffman": ["Assistant Stage Manager"],
       "mary-k-baxter": ["Road Manager"]
     }
   },
 
+  "miente-de-nino": {
+    title: "Miente de Niño",
+    slug: "miente-de-nino",
+    year: 2009,
+    season: 3,
+    location: "NYC",
+    festival: "Performing Arts Marathon 2009 -- IATI Theatre; ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador -- Richmond Shepard Theatre",
+    url: "",
+    posterUrl: "",
+    artists: {
+      "drew-ernst": ["Director"],
+      "jon-kevin-lazarus": ["Actor"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "drew-florida": ["Lighting Designer"],
+      "kim-braun": ["Production Stage Manager"],
+      "kaitlin-kauffman": ["Assistant Stage Manager"],
+      "": ["Road Manager"]
+    }
+  },
+
+  "piranhas": {
+    title: "Piranhas",
+    slug: "piranhas",
+    year: 2009,
+    season: 3,
+    location: "NYC",
+    festival: "Performing Arts Marathon 2009 -- IATI Theatre; ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador -- Richmond Shepard Theatre",
+    url: "",
+    posterUrl: "",
+    artists: {
+      "michael-rau": ["Director"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "drew-florida": ["Lighting Designer"],
+      "kim-braun": ["Production Stage Manager"],
+      "kaitlin-kauffman": ["Assistant Stage Manager"],
+      "": ["Road Manager"]
+    }
+  },
+
+  "preaching-oil": {
+    title: "Preaching Oil",
+    slug: "preaching-oil",
+    year: 2009,
+    season: 3,
+    location: "NYC",
+    festival: "Performing Arts Marathon 2009 -- IATI Theatre; ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador -- Richmond Shepard Theatre",
+    url: "",
+    posterUrl: "",
+    artists: {
+      "Jamil Mangan": ["Assoc. Artistic Director, Director"],
+      "amy-witting": ["Actor"],
+      "janel-miley": ["Actor"],
+      "jacob-hellman": ["Actor"],
+      "tiffany-may": ["Actor"],
+      "drew-florida": ["Lighting Designer"],
+      "kim-braun": ["Production Stage Manager"],
+      "kaitlin-kauffman": ["Assistant Stage Manager"],
+      "": ["Road Manager"]
+    }
+  },
+
+  "set-in-clay": {
+    title: "Set in Clay",
+    slug: "set-in-clay",
+    year: 2009,
+    season: 3,
+    location: "NYC",
+    festival: "Performing Arts Marathon 2009 -- IATI Theatre; ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador -- Richmond Shepard Theatre",
+    url: "",
+    posterUrl: "",
+    artists: {
+      "jason-williamson": ["Resident Playwright, Director"],
+      "natalie-benally": ["Actor"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "drew-florida": ["Lighting Designer"],
+      "kim-braun": ["Production Stage Manager"],
+      "kaitlin-kauffman": ["Assistant Stage Manager"],
+      "": ["Road Manager"]
+    }
+  },
+
+  "to-the-universe": {
+    title: "To the Universe",
+    slug: "to-the-universe",
+    year: 2009,
+    season: 3,
+    location: "NYC",
+    festival: "Performing Arts Marathon 2009 -- IATI Theatre; ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador -- Richmond Shepard Theatre",
+    url: "",
+    posterUrl: "",
+    artists: {
+      "jamil-mangan": ["Director"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "drew-florida": ["Lighting Designer"],
+      "kim-braun": ["Production Stage Manager"],
+      "kaitlin-kauffman": ["Assistant Stage Manager"],
+      "": ["Road Manager"]
+    }
+  },
+
+  "wet-paint": {
+    title: "Wet Paint",
+    slug: "wet-paint",
+    year: 2009,
+    season: 3,
+    location: "NYC",
+    festival: "Performing Arts Marathon 2009 -- IATI Theatre; ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador -- Richmond Shepard Theatre",
+    url: "",
+    posterUrl: "",
+    artists: {
+      "erin-mcbride-africa": ["Director"],
+      "rob-salas": ["Director"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "": ["Actor"],
+      "drew-florida": ["Lighting Designer"],
+      "kim-braun": ["Production Stage Manager"],
+      "kaitlin-kauffman": ["Assistant Stage Manager"],
+      "": ["Road Manager"]
+    }
+  },
+
+        // Season 2 entry:
   "flight-360": {
     title: "Flight 360",
     slug: "flight-360",
     year: 2008,
+    season: 2,
     location: "NYC",
-    festival: "Performing Arts Marathon",
+    festival: "Off-Off-Broadway Production 2008 -- Red Room Theater; Performing Arts Marathon 2008 -- IATI Theatre", 
     url: "/flight-360",
     posterUrl: "/posters/flight-360.jpg",
     artists: {
       "leslie-fields": ["Playwright"],
-      "jesse-baxter": ["Director", "Props & Costume Design"],
-      "vincent-eaton": ["Lighting & Sound Design"],
+      "jesse-baxter": ["Director"],
+      "vincent-eaton": ["Lighting Designer", "Sound Designer"],
       "santi-baxter": ["Road Manager"],
       "mary-k-baxter": ["Actor"],
       "jeremy-feldman": ["Actor"],
       "rachel-martsolf": ["Actor"],
       "lydia-perez-carpenter": ["Actor"]
+    }
+  },
+
+          // Season 1 entry:
+"voices-from-zimbabwe": {
+    title: "Voices from Zimbabwe",
+    slug: "voices-from-zimbabwe",
+    year: 2007,
+    season: 1,
+    location: "Baltimore, Pittsburgh, Rochester",
+    festival: "North East US Tour",
+    url: "",
+    posterUrl: "",
+    artists: {
+      "oscar-manzini": ["Road Manager"],
+      "lisa-bearpark": ["Actor"],
+      "kathleen-amshoff": ["Assoc. Artistic Director", "Director"],
+      "mary-k-baxter": ["Executive Director", "Actor"],
+      "jesse-baxter": ["Artistic Director", "Actor"]
     }
   }
 };

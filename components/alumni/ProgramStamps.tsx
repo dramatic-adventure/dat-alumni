@@ -5,20 +5,26 @@ import StampShape from "./StampShape";
 
 type ProgramStampsProps = {
   artistSlug: string;
+  panelHeight: number; 
 };
 
 export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
   const programs = Object.values(programMap).filter((p) => p.artists[artistSlug]);
   if (!programs.length) return null;
 
+  // make height responsive:
+  const panelHeight = 600;  // for passing down if needed
+
   return (
     <div
       style={{
         position: "relative",
         width: "100%",
-        height: "600px",
-        backgroundColor: "#d2b48c", // parchment
-        overflow: "visible",
+        height: "50vh",           // responsive height
+        minHeight: "300px",       // reasonable minimum
+        maxHeight: "600px",       // cap
+        backgroundColor: "#F6E4C1",
+        overflow: "hidden",       // prevent covering the next section
       }}
     >
       {programs.map((program, i) => (
@@ -28,6 +34,7 @@ export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
           location={program.location}
           year={program.year}
           color={getProgramColor(program.program)}
+          panelHeight={panelHeight}
         />
       ))}
     </div>

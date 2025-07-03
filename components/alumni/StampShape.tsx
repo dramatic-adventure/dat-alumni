@@ -1,14 +1,20 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import ShapePath from "./ShapePath";
 import { randomInt, randomFromArray, getRandomFont } from "@/utils/random";
+import { programMap } from "@/lib/programMap";
+
+// store positions in module scope
+const usedPositions: { top: number; left: number }[] = [];
 
 type StampShapeProps = {
   program: string;
   location: string;
   year: number;
   color: string;
+  panelHeight: number;
 };
 
 export default function StampShape({
@@ -16,6 +22,7 @@ export default function StampShape({
   location,
   year,
   color,
+  panelHeight,
 }: StampShapeProps) {
   const allShapes = [
     "circle",
@@ -30,27 +37,67 @@ export default function StampShape({
     "rounded-pentagon",
   ];
 
-  // dummy lines estimate to choose shape
-  const estimateLines = program.split(" ").length + location.split(" ").length + 1;
-
+  const estimateLines =
+    program.split(" ").length + location.split(" ").length + 1;
   let shapePool = allShapes;
   if (estimateLines >= 4) {
     shapePool = ["rectangle", "rounded-rectangle", "square", "rounded-square"];
   }
 
   const shape = randomFromArray(shapePool);
-
   const rotation = randomInt(-45, 45);
-  const top = randomInt(0, 300);
-  const left = randomInt(0, 800);
-  const font = getRandomFont();
 
+  // measure panel width instead of window
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelWidth, setPanelWidth] = useState(800);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      if (panelRef.current) {
+        setPanelWidth(panelRef.current.offsetWidth);
+      }
+    };
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
+  }, []);
+
+  // position logic with minimal overlap
+  function getPositionWithMinimalOverlap() {
+    let tries = 0;
+    while (tries < 30) {
+      const topTry = randomInt(10, panelHeight - 120);
+      const leftTry = randomInt(10, panelWidth - 120);
+      const tooClose = usedPositions.some(
+        (pos) =>
+          Math.abs(pos.top - topTry) < 80 && Math.abs(pos.left - leftTry) < 80
+      );
+      if (!tooClose) {
+        usedPositions.push({ top: topTry, left: leftTry });
+        return { top: topTry, left: leftTry };
+      }
+      tries++;
+    }
+    return { top: randomInt(10, 100), left: randomInt(10, panelWidth - 120) };
+  }
+
+  const { top, left } = getPositionWithMinimalOverlap();
+
+  const font = getRandomFont();
   const measureRef = useRef<SVGTextElement>(null);
 
   const [programLines, setProgramLines] = useState<string[]>([]);
   const [locationLines, setLocationLines] = useState<string[]>([]);
   const [shapeScale, setShapeScale] = useState(1);
   const [blockGap, setBlockGap] = useState(10);
+
+  const matchedProgram = Object.values(programMap).find(
+    (p) =>
+      p.program.toLowerCase() === program.toLowerCase() &&
+      p.location.toLowerCase() === location.toLowerCase() &&
+      p.year === year
+  );
+  const programSlug = matchedProgram?.slug ?? "";
 
   useEffect(() => {
     if (!measureRef.current) return;
@@ -104,13 +151,13 @@ export default function StampShape({
 
     for (let attempt = 0; attempt < 20; attempt++) {
       chunkedProgram = chunkWords(
-  program.toUpperCase().split(" "),
-  safeZone.width * currentScale - sideBuffer * 2
-);
-chunkedLocation = chunkWords(
-  location.split(" "),
-  safeZone.width * currentScale - sideBuffer * 2
-);
+        program.toUpperCase().split(" "),
+        safeZone.width * currentScale - sideBuffer * 2
+      );
+      chunkedLocation = chunkWords(
+        location.split(" "),
+        safeZone.width * currentScale - sideBuffer * 2
+      );
 
       const totalLines = chunkedProgram.length + chunkedLocation.length + 1;
       blockHeight =
@@ -120,8 +167,8 @@ chunkedLocation = chunkWords(
         bottomBuffer;
 
       const widestLine = Math.max(
-        ...chunkedProgram.map(l => measureTextWidth(l)),
-        ...chunkedLocation.map(l => measureTextWidth(l)),
+        ...chunkedProgram.map((l) => measureTextWidth(l)),
+        ...chunkedLocation.map((l) => measureTextWidth(l)),
         measureTextWidth(year.toString())
       );
 
@@ -146,95 +193,103 @@ chunkedLocation = chunkWords(
     setLocationLines(chunkedLocation);
     setShapeScale(currentScale);
     setBlockGap(currentBlockGap);
-  }, [program, location, shape]);
+  }, [program, location, year, shape]);
 
   const lineGap = 14;
   const topBuffer = 6;
   const bottomBuffer = 12;
   const totalLines = programLines.length + locationLines.length + 1;
-  const blockHeight = totalLines * lineGap + blockGap * 2 + topBuffer + bottomBuffer;
+  const blockHeight =
+    totalLines * lineGap + blockGap * 2 + topBuffer + bottomBuffer;
   const startY = 50 - blockHeight / 2 + lineGap + topBuffer;
 
   return (
-    <svg
-      width={150}
-      height={150}
-      viewBox="0 0 100 100"
-      style={{
-        position: "absolute",
-        top,
-        left,
-        overflow: "visible",
-        zIndex: randomInt(1, 10),
-      }}
-    >
-      <text
-        ref={measureRef}
-        style={{ visibility: "hidden" }}
-        fontFamily={font}
-        fontSize="14px"
-      >
-        measure
-      </text>
-
-      <g transform={`rotate(${rotation},50,50)`}>
-        <g transform={`translate(50 50) scale(${shapeScale}) translate(-50 -50)`}>
-          <ShapePath shape={shape} color={color} />
-        </g>
-
-        {/* Program */}
-        <text
-          x="50"
-          y={startY}
-          fontFamily={font}
-          fontSize="14px"
-          fontWeight="bold"
-          fill={color}
-          textAnchor="middle"
+    <div className="stamp-wrapper" ref={panelRef}>
+      <Link href={programSlug ? `/programs/${programSlug}` : "#"} passHref>
+        <svg
+          width="20vw"
+          height="20vw"
+          viewBox="0 0 100 100"
+          style={{
+            maxWidth: "100px",
+            maxHeight: "100px",
+            position: "absolute",
+            top,
+            left,
+            overflow: "visible",
+            zIndex: randomInt(1, 10),
+            cursor: programSlug ? "pointer" : "default",
+            transition: "all 0.3s ease",
+          }}
         >
-          {programLines.map((line, idx) => (
-            <tspan x="50" dy={idx === 0 ? 0 : lineGap} key={`prog-${idx}`}>
-              {line}
-            </tspan>
-          ))}
-        </text>
+          <text
+            ref={measureRef}
+            style={{ visibility: "hidden" }}
+            fontFamily={font}
+            fontSize="14px"
+          >
+            measure
+          </text>
 
-        {/* Location */}
-        <text
-          x="50"
-          y={startY + programLines.length * lineGap + blockGap}
-          fontFamily={font}
-          fontSize="12px"
-          fontStyle="italic"
-          fill={color}
-          textAnchor="middle"
-        >
-          {locationLines.map((line, idx) => (
-            <tspan x="50" dy={idx === 0 ? 0 : lineGap} key={`loc-${idx}`}>
-              {line}
-            </tspan>
-          ))}
-        </text>
+          <g transform={`rotate(${rotation},50,50)`}>
+            <g
+              transform={`translate(50 50) scale(${shapeScale}) translate(-50 -50)`}
+            >
+              <ShapePath shape={shape} color={color} />
+            </g>
 
-        {/* Year */}
-        <text
-          x="50"
-          y={
-            startY +
-            programLines.length * lineGap +
-            blockGap +
-            locationLines.length * lineGap +
-            blockGap
-          }
-          fontFamily={font}
-          fontSize="12px"
-          fontWeight="bold"
-          fill={color}
-          textAnchor="middle"
-        >
-          {year}
-        </text>
-      </g>
-    </svg>
+            <text
+              x="50"
+              y={startY}
+              fontFamily={font}
+              fontSize="14px"
+              fontWeight="bold"
+              fill={color}
+              textAnchor="middle"
+            >
+              {programLines.map((line, idx) => (
+                <tspan x="50" dy={idx === 0 ? 0 : lineGap} key={`prog-${idx}`}>
+                  {line}
+                </tspan>
+              ))}
+            </text>
+
+            <text
+              x="50"
+              y={startY + programLines.length * lineGap + blockGap}
+              fontFamily={font}
+              fontSize="12px"
+              fontStyle="italic"
+              fill={color}
+              textAnchor="middle"
+            >
+              {locationLines.map((line, idx) => (
+                <tspan x="50" dy={idx === 0 ? 0 : lineGap} key={`loc-${idx}`}>
+                  {line}
+                </tspan>
+              ))}
+            </text>
+
+            <text
+              x="50"
+              y={
+                startY +
+                programLines.length * lineGap +
+                blockGap +
+                locationLines.length * lineGap +
+                blockGap
+              }
+              fontFamily={font}
+              fontSize="12px"
+              fontWeight="bold"
+              fill={color}
+              textAnchor="middle"
+            >
+              {year}
+            </text>
+          </g>
+        </svg>
+      </Link>
+    </div>
   );
 }

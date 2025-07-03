@@ -304,3 +304,22 @@ a:visited {
   border-radius: 6px;
   font-size: 0.75rem;
 }
+
+/* Program Stamps */
+.clip-hexagon {
+  clip-path: polygon(
+    25% 0%,
+    75% 0%,
+    100% 50%,
+    75% 100%,
+    25% 100%,
+    0% 50%
+  );
+}
+
+.stamp-wrapper:hover svg {
+  transform: scale(1.05);
+  filter: brightness(0.75);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
