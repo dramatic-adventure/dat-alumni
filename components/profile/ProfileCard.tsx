@@ -327,7 +327,7 @@ console.log("✅ Status flags received:", statusFlags);
     style={{ zIndex: 50 }}
   >
     <div className="max-w-6xl mx-auto px-4 relative h-full">
-      <ProgramStamps artistSlug={slug} panelHeight={600} />
+      <ProgramStamps artistSlug={slug} panelHeight={120} />
     </div>
   </div>
 )}

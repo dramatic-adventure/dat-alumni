@@ -13,16 +13,16 @@ export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
   if (!programs.length) return null;
 
   // make height responsive:
-  const panelHeight = 600;  // for passing down if needed
+  const panelHeight = 250;  // for passing down if needed
 
   return (
     <div
       style={{
         position: "relative",
         width: "100%",
-        height: "50vh",           // responsive height
-        minHeight: "300px",       // reasonable minimum
-        maxHeight: "600px",       // cap
+        height: "100vh",           // responsive height
+        minHeight: "250px",       // reasonable minimum
+        maxHeight: "500px",       // cap
         backgroundColor: "#F6E4C1",
         overflow: "hidden",       // prevent covering the next section
       }}

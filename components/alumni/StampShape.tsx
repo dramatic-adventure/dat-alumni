@@ -66,8 +66,8 @@ export default function StampShape({
   function getPositionWithMinimalOverlap() {
     let tries = 0;
     while (tries < 30) {
-      const topTry = randomInt(10, panelHeight - 120);
-      const leftTry = randomInt(10, panelWidth - 120);
+      const topTry = randomInt(10, panelHeight - 250);
+      const leftTry = randomInt(10, panelWidth - 250);
       const tooClose = usedPositions.some(
         (pos) =>
           Math.abs(pos.top - topTry) < 80 && Math.abs(pos.left - leftTry) < 80
@@ -211,8 +211,8 @@ export default function StampShape({
           height="20vw"
           viewBox="0 0 100 100"
           style={{
-            maxWidth: "100px",
-            maxHeight: "100px",
+            maxWidth: "175px",
+            maxHeight: "135px",
             position: "absolute",
             top,
             left,
