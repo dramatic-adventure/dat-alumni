@@ -72,7 +72,7 @@ export default function AlumniProfilePage({
         <AlumniProfileBackdrop backgroundKey={backgroundChoice}>
           <div
             className="mt-0 pt-0 w-[90vw] sm:w-[85vw] lg:w-[80vw] max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-36 relative z-10 shadow-xl bg-white overflow-hidden"
-            style={{ marginTop: "-36rem" }}
+            style={{ marginTop: "-33rem" }}
           >
             {bgImage && (
               <div

@@ -1,33 +1,35 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { programMap } from "@/lib/programMap";
 import StampShape from "./StampShape";
 
 type ProgramStampsProps = {
   artistSlug: string;
-  panelHeight: number; 
+  panelHeight: number;
 };
 
 export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
   const programs = Object.values(programMap).filter((p) => p.artists[artistSlug]);
   if (!programs.length) return null;
 
-  // make height responsive:
-  const panelHeight = 250;  // for passing down if needed
+  const panelHeight = 250;
+
+  // ✅ new: track hovered
+  const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
 
   return (
     <div
       style={{
         position: "relative",
         width: "100%",
-        height: "100vh",           // responsive height
-        minHeight: "250px",       // reasonable minimum
-        maxHeight: "500px",       // cap
+        height: "100vh",
+        minHeight: "250px",
+        maxHeight: "500px",
         backgroundColor: "#F6E4C1",
-        overflow: "hidden",       // prevent covering the next section
+        overflow: "hidden",
       }}
     >
-      {programs.map((program, i) => (
+      {programs.map((program) => (
         <StampShape
           key={program.slug}
           program={program.program}
@@ -35,6 +37,9 @@ export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
           year={program.year}
           color={getProgramColor(program.program)}
           panelHeight={panelHeight}
+          hoveredSlug={hoveredSlug}            // ✅ pass down
+          setHoveredSlug={setHoveredSlug}      // ✅ pass down
+          mySlug={program.slug}                // ✅ identify itself
         />
       ))}
     </div>
