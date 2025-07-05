@@ -1,24 +1,34 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { programMap } from "@/lib/programMap";
 import StampShape from "./StampShape";
 
 type ProgramStampsProps = {
   artistSlug: string;
-  panelHeight: number;
 };
 
 export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
   const programs = Object.values(programMap).filter((p) => p.artists[artistSlug]);
   if (!programs.length) return null;
 
-  const panelHeight = 250;
+  // stable measured height
+  const [panelHeight, setPanelHeight] = useState(600);
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  // ✅ new: track hovered
+  useEffect(() => {
+    if (panelRef.current) {
+      setPanelHeight(panelRef.current.offsetHeight);
+    }
+  }, []);
+
+  // usedPositions in a ref
+  const usedPositions = useRef<{ top: number; left: number }[]>([]);
+
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
 
   return (
     <div
+      ref={panelRef}
       style={{
         position: "relative",
         width: "100%",
@@ -36,10 +46,10 @@ export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
           location={program.location}
           year={program.year}
           color={getProgramColor(program.program)}
-          panelHeight={panelHeight}
-          hoveredSlug={hoveredSlug}            // ✅ pass down
-          setHoveredSlug={setHoveredSlug}      // ✅ pass down
-          mySlug={program.slug}                // ✅ identify itself
+          panelHeight={panelHeight}           // now measured consistently
+          hoveredSlug={hoveredSlug}
+          setHoveredSlug={setHoveredSlug}
+          mySlug={program.slug}
         />
       ))}
     </div>

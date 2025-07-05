@@ -6,9 +6,6 @@ import ShapePath from "./ShapePath";
 import { randomInt, randomFromArray, getRandomFont } from "@/utils/random";
 import { programMap } from "@/lib/programMap";
 
-// store positions in module scope to reduce overlap
-const usedPositions: { top: number; left: number }[] = [];
-
 type StampShapeProps = {
   program: string;
   location: string;
@@ -43,23 +40,24 @@ export default function StampShape({
     "rounded-pentagon",
   ];
 
-  const estimateLines =
-    program.split(" ").length + location.split(" ").length + 1;
-
+  const estimateLines = program.split(" ").length + location.split(" ").length + 1;
   let shapePool = allShapes;
+
   if (estimateLines >= 5) {
-  shapePool = ["square", "rounded-square", "circle", "multi-edge-circle"];
-} else if (estimateLines >= 4) {
-  shapePool = ["rectangle", "rounded-rectangle", "square", "rounded-square"];
-}
+    shapePool = ["square", "rounded-square", "circle", "multi-edge-circle"];
+  } else if (estimateLines >= 4) {
+    shapePool = ["rectangle", "rounded-rectangle", "square", "rounded-square"];
+  }
 
   const [shape] = useState(() => randomFromArray(shapePool));
   const [rotation] = useState(() => randomInt(-45, 45));
   const [font] = useState(() => getRandomFont());
 
-  // measure panel width
   const panelRef = useRef<HTMLDivElement>(null);
   const [panelWidth, setPanelWidth] = useState(800);
+
+  // ✅ place usedPositions here so it is global for this component but resets on page load
+  const usedPositions = useRef<{ top: number; left: number }[]>([]);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -72,7 +70,6 @@ export default function StampShape({
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
-  // position logic that updates on resize
   const [position, setPosition] = useState<{ top: number; left: number; zIndex: number } | null>(null);
 
   useEffect(() => {
@@ -82,14 +79,14 @@ export default function StampShape({
     let finalZ = randomInt(1, 10);
 
     while (tries < 30) {
-      topTry = randomInt(-7, panelHeight - -7);
-      leftTry = randomInt(10, panelWidth - 120);
-      const tooClose = usedPositions.some(
+      topTry = randomInt(0, panelHeight - 243);
+      leftTry = randomInt(-30, panelWidth - 100);
+      const tooClose = usedPositions.current.some(
         (pos) =>
           Math.abs(pos.top - topTry) < 50 && Math.abs(pos.left - leftTry) < 50
       );
       if (!tooClose) {
-        usedPositions.push({ top: topTry, left: leftTry });
+        usedPositions.current.push({ top: topTry, left: leftTry });
         setPosition({ top: topTry, left: leftTry, zIndex: finalZ });
         return;
       }
@@ -97,8 +94,8 @@ export default function StampShape({
     }
     // fallback
     setPosition({
-      top: randomInt(10, 100),
-      left: randomInt(10, panelWidth - 120),
+      top: Math.max(0, Math.min(panelHeight - 120, randomInt(0, panelHeight - 120))),
+      left: Math.max(0, Math.min(panelWidth - 120, randomInt(0, panelWidth - 120))),
       zIndex: finalZ,
     });
   }, [panelWidth, panelHeight]);
@@ -244,10 +241,7 @@ export default function StampShape({
             cursor: programSlug ? "pointer" : "default",
             transition: "all 0.3s ease",
             opacity: hoveredSlug && hoveredSlug !== mySlug ? 0.33 : 1,
-            transform:
-              hoveredSlug === mySlug
-                ? "scale(1.1)"
-                : "scale(1)",
+            transform: hoveredSlug === mySlug ? "scale(1.1)" : "scale(1)",
           }}
         >
           <text
@@ -260,9 +254,7 @@ export default function StampShape({
           </text>
 
           <g transform={`rotate(${rotation},50,50)`}>
-            <g
-              transform={`translate(50 50) scale(${shapeScale}) translate(-50 -50)`}
-            >
+            <g transform={`translate(50 50) scale(${shapeScale}) translate(-50 -50)`}>
               <ShapePath shape={shape} color={color} />
             </g>
 

@@ -283,7 +283,7 @@ export default function ProfileCard({
       {programBadges.length > 0 && (
         <div className="relative bg-[#F6E4C1] py-6 m-0 overflow-hidden h-[50vh] min-h-[300px] max-h-[600px]" style={{ zIndex: 50 }}>
           <div className="max-w-6xl mx-auto px-4 relative h-full">
-            <ProgramStamps artistSlug={slug} panelHeight={120} />
+            <ProgramStamps artistSlug={slug} />
           </div>
         </div>
       )}
