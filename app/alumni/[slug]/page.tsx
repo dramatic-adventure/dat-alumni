@@ -3,12 +3,16 @@ import { loadVisibleAlumni, loadAlumniBySlug } from "@/lib/loadAlumni";
 import { getAllStories } from "@/lib/loadRows";
 import AlumniProfilePage from "@/components/alumni/AlumniProfilePage";
 import Footer from "@/components/ui/Footer";
-import type { Metadata } from "next";
 
 type Params = { slug: string };
 
-export default async function AlumniPage({ params }: { params: Params }) {
-  const alumni = await loadAlumniBySlug(params.slug);
+export default async function AlumniPage({
+  params,
+}: {
+  params: Promise<Params>;
+}) {
+  const { slug } = await params;
+  const alumni = await loadAlumniBySlug(slug);
   if (!alumni) return notFound();
 
   const allStories = await getAllStories();
@@ -21,7 +25,7 @@ export default async function AlumniPage({ params }: { params: Params }) {
           name: alumni.name,
           role: alumni.role ?? "",
           headshotUrl: alumni.headshotUrl ?? "",
-          location: alumni.location ?? "", // ✅ ← added this line only
+          location: alumni.location ?? "",
           identityTags: alumni.identityTags ?? [],
           statusFlags: alumni.statusFlags ?? [],
           programBadges: alumni.programBadges ?? [],
@@ -29,6 +33,9 @@ export default async function AlumniPage({ params }: { params: Params }) {
           fieldNotes: alumni.fieldNotes ?? [],
           imageUrls: alumni.imageUrls ?? [],
           posterUrls: alumni.posterUrls ?? [],
+          email: alumni.email ?? "",
+          website: alumni.website ?? "",
+          socials: alumni.socials ?? [],
         }}
         allStories={allStories}
       />
@@ -41,49 +48,6 @@ export default async function AlumniPage({ params }: { params: Params }) {
 
 export async function generateStaticParams(): Promise<Params[]> {
   const alumni = await loadVisibleAlumni();
+  console.log("🧪 Static Slugs:", alumni.map((a) => a.slug)); // ← Add this
   return alumni.map((a) => ({ slug: a.slug }));
-}
-
-export async function generateMetadata({
-  params,
-}: {
-  params: Params;
-}): Promise<Metadata> {
-  const alumni = await loadAlumniBySlug(params.slug);
-  if (!alumni) {
-    return {
-      title: "Alumni Not Found – Dramatic Adventure Theatre",
-      description: "This alumni profile could not be found.",
-    };
-  }
-
-  const description = `Meet ${alumni.name} — a featured alumni from Dramatic Adventure Theatre.`;
-
-  return {
-    title: alumni.name,
-    description,
-    alternates: {
-      canonical: `https://alumni.dramaticadventure.com/alumni/${alumni.slug}`,
-    },
-    openGraph: {
-      title: alumni.name,
-      description,
-      url: `https://alumni.dramaticadventure.com/alumni/${alumni.slug}`,
-      type: "profile",
-      images: [
-        {
-          url: "/default-og-image.jpg",
-          width: 1200,
-          height: 630,
-          alt: alumni.name,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: alumni.name,
-      description,
-      images: ["/default-og-image.jpg"],
-    },
-  };
 }

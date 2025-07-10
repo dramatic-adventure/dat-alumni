@@ -1,17 +1,15 @@
-// components/alumni/AlumniProfileBackdrop.tsx
-
 "use client";
-
 import React from "react";
 
 interface AlumniProfileBackdropProps {
-  backgroundKey?: string; // can be undefined
+  backgroundKey?: string;
   children: React.ReactNode;
 }
 
 const backgroundMap: Record<string, string> = {
-  kraft: "url('/images/texture/kraft-paper.png')",
-  // other options to be added here later
+  kraft: "url('/texture/kraft-paper.png')",
+  coral: "url('/texture/coral-paper.png')",
+  grape: "url('/texture/grape-fiber.png')",
 };
 
 export default function AlumniProfileBackdrop({
@@ -21,15 +19,17 @@ export default function AlumniProfileBackdrop({
   const backgroundImage = backgroundMap[backgroundKey] || backgroundMap.kraft;
 
   return (
-  <div
-    className="bg-cover bg-center bg-fixed flex flex-col items-start w-full"
-    style={{
-      backgroundImage,
-      backgroundBlendMode: "multiply",
-    }}
-  >
-    {children}
-  </div>
-);
+    <div className="relative w-full overflow-visible" style={{ zIndex: 0 }}>
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          zIndex: -1,
+          backgroundImage,
+          backgroundBlendMode: "multiply",
+          pointerEvents: "none", // ensure clicks pass through
+        }}
+      />
+      <div className="relative z-10">{children}</div>
+    </div>
+  );
 }
-

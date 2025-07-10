@@ -13,8 +13,8 @@ type FlagLabel =
   | "Volunteer";
 
 const flagStyles: Record<FlagLabel, string> = {
-  "Founding Member": "#3E3A36",
-  "Staff": "#E6B24A",
+  "Founding Member": "#E6B24A",
+  "Staff": "#3E3A36",
   "Board Member": "#A15C40",
   "Artist-in-Residence": "#4C8C86",
   "Fellow": "#F25C4D",
@@ -23,8 +23,8 @@ const flagStyles: Record<FlagLabel, string> = {
 };
 
 const iconMap: Record<FlagLabel, string> = {
-  "Founding Member": "⭐️",
-  "Staff": "🛠️",
+  "Staff": "⭐️",
+  "Founding Member": "🛠️",
   "Board Member": "🧭",
   "Artist-in-Residence": "🛖",
   "Fellow": "✨",

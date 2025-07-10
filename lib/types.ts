@@ -58,9 +58,9 @@ export type AlumniRow = {
   storyExcerpt?: string;
   storyUrl?: UrlString;
   tags?: string[];
-  artistUrl?: UrlString;
-  socialLinks?: UrlString[];
-  artistEmail?: string;
+  artistUrl?: string;         
+  artistEmail?: string;     
+  socialLinks?: string[];  
   updateLink?: UrlString;
   showOnProfile?: string;
   profileId?: string;
@@ -68,6 +68,10 @@ export type AlumniRow = {
   fieldNotes?: string[];
   statusFlags?: string[];
   backgroundChoice?: string;
+  email?: string;
+  website?: string;
+  socials?: string[];
+  hasContactInfo?: boolean;
 };
 
 // ========== Poster / Production Types ==========

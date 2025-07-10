@@ -1,4 +1,3 @@
-// lib/loadAlumni.ts
 export {}; // ensures ES module scope
 
 import Papa from "papaparse";
@@ -11,12 +10,12 @@ const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
 
 function isMostlyEmpty(row: Record<string, string>): boolean {
   const relevantFields = [
-    "Name",
-    "Role",
-    "Location",
-    "Headshot URL",
-    "Identity Tags",
-    "Project Badges",
+    "name",
+    "role",
+    "location",
+    "headshot url",
+    "identity tags",
+    "project badges",
     "slug",
   ];
 
@@ -26,6 +25,11 @@ function isMostlyEmpty(row: Record<string, string>): boolean {
 export const loadAlumni = cache(async (): Promise<AlumniRow[]> => {
   try {
     const csvText = await loadCsv(process.env.ALUMNI_CSV_URL, "alumni.csv");
+
+    if (DEBUG) {
+      console.log("📄 Raw CSV Text Preview:\n", csvText.slice(0, 1000));
+    }
+
     const parsed = Papa.parse<Record<string, string>>(csvText, {
       header: true,
       skipEmptyLines: true,
@@ -35,16 +39,28 @@ export const loadAlumni = cache(async (): Promise<AlumniRow[]> => {
     let skipped = 0;
 
     for (const raw of parsed.data) {
-      const name = raw["Name"]?.trim();
-      const slug = raw["slug"]?.trim();
-      const show = raw["Show on Profile?"]?.trim().toLowerCase();
+      // Normalize keys and trim early for filtering
+      const normalizedKeys: Record<string, string> = Object.fromEntries(
+        Object.entries(raw).map(([key, value]) => [
+          key.trim().toLowerCase(),
+          value?.toString().trim() ?? "",
+        ])
+      );
 
-      if (show !== "yes" || (!slug && !name) || isMostlyEmpty(raw)) {
+      if (DEBUG || true) {
+        console.log("🧾 Parsed Rows:", parsed.data.map((r) => r["Name"]), parsed.data.length);
+      }
+
+      const show = normalizedKeys["show on profile?"]?.toLowerCase();
+      const name = normalizedKeys["name"];
+      const slug = normalizedKeys["slug"];
+
+      if (!["yes", "y", "✓"].includes(show) || (!slug && !name) || isMostlyEmpty(normalizedKeys)) {
         skipped++;
         continue;
       }
 
-      const normalized = normalizeAlumniRow(raw);
+      const normalized = normalizeAlumniRow(normalizedKeys);
       if (normalized) rows.push(normalized);
       else skipped++;
     }
@@ -67,8 +83,8 @@ export async function loadVisibleAlumni(): Promise<AlumniRow[]> {
     (a) => a.showOnProfile?.toLowerCase().trim() === "yes" && !!a.name?.trim()
   );
 
-  if (DEBUG) {
-    console.log("👀 [loadVisibleAlumni] Visible alumni:", visible.map((a) => a.slug));
+  if (DEBUG || true) {
+    console.log("👀 [loadVisibleAlumni] Visible slugs:", visible.map((a) => a.slug));
   }
 
   return visible;

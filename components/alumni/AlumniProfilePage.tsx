@@ -1,18 +1,16 @@
 "use client";
-export {};
 
 import Head from "next/head";
 import { useState, useMemo } from "react";
 import { AlumniRow, StoryRow } from "@/lib/types";
 import { getPostersForArtist } from "@/lib/getPostersForArtist";
 import ProfileCard from "@/components/profile/ProfileCard";
-import FeaturedStories from "@/components/shared/FeaturedStories";
-import PosterStrip from "@/components/shared/PosterStrip";
 import ImageCarousel from "@/components/alumni/ImageCarousel";
 import FieldNotes from "@/components/alumni/FieldNotes";
 import Lightbox from "@/components/shared/LightboxPortal";
 import AlumniProfileBackdrop from "@/components/alumni/AlumniProfileBackdrop";
-import Footer from "@/components/ui/Footer";
+import ContactWidget from "@/components/shared/ContactWidget";
+import ContactOverlay from "@/components/shared/ContactOverlay"; // ✅ NEW
 
 interface AlumniProfileProps {
   data: AlumniRow;
@@ -36,14 +34,12 @@ export default function AlumniProfilePage({
     imageUrls = [],
     backgroundChoice = "kraft",
     location = "",
-  } = data;
+    email = "",
+    website = "",
+    socials = [],
+  } = data || {};
 
-  // 🧪 DEBUGGING: Check why location is empty
-  if (slug === "isabel-martinez") {
-    console.log("🧪 Isabel data check:", data);
-    console.log("📍 Location field:", data.location);
-  }
-
+  const hasContactInfo = !!(email || website || (socials && socials.length > 0));
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const authorStories = useMemo(
@@ -53,14 +49,6 @@ export default function AlumniProfilePage({
 
   const posters = useMemo(() => getPostersForArtist(slug), [slug]);
 
-  const backgroundStyles: Record<string, string> = {
-    kraft: "url('/images/texture/kraft-paper.png')",
-    coral: "url('/images/texture/coral-paper.png')",
-    grape: "url('/images/texture/grape-fiber.png')",
-  };
-
-  const bgImage = backgroundStyles[backgroundChoice];
-
   return (
     <>
       <Head>
@@ -68,26 +56,16 @@ export default function AlumniProfilePage({
         <title>{name} | DAT Alumni</title>
       </Head>
 
+      {/* ✅ Vertical "Contact" tab (link triggers #contact) */}
+      <ContactWidget email={email} website={website} socials={socials} />
+
       <main>
         <AlumniProfileBackdrop backgroundKey={backgroundChoice}>
           <div
-            className="mt-0 pt-0 w-[90vw] sm:w-[85vw] lg:w-[80vw] max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-36 relative z-10 shadow-xl bg-white overflow-hidden"
-            style={{ marginTop: "-33rem" }}
+            className="relative w-[90vw] sm:w-[85vw] lg:w-[80vw] max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-36 z-10 shadow-[0_8px_24px_rgba(0,0,0,0.25)] bg-white"
+            style={{ marginTop: "-33rem", overflow: "visible" }}
           >
-            {bgImage && (
-              <div
-                className="absolute inset-0 z-0"
-                style={{
-                  backgroundImage: bgImage,
-                  backgroundSize: "cover",
-                  backgroundRepeat: "no-repeat",
-                  backgroundBlendMode: "multiply",
-                  backgroundPosition: "center",
-                }}
-              />
-            )}
-
-            <div className="relative z-10">
+            <div className="relative z-10" style={{ overflow: "visible" }}>
               <ProfileCard
                 slug={slug}
                 name={name}
@@ -99,13 +77,19 @@ export default function AlumniProfilePage({
                 statusFlags={statusFlags}
                 artistStatement={artistStatement}
                 stories={authorStories}
+                email={email}
+                website={website}
+                socials={socials}
               />
             </div>
           </div>
 
           {imageUrls.length > 0 && (
             <section className="mt-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-              <ImageCarousel images={imageUrls} onImageClick={setLightboxIndex} />
+              <ImageCarousel
+                images={imageUrls}
+                onImageClick={setLightboxIndex}
+              />
             </section>
           )}
 
@@ -128,6 +112,9 @@ export default function AlumniProfilePage({
           <div className="h-[150px] sm:h-[300px] md:h-[400px]" />
         </AlumniProfileBackdrop>
       </main>
+
+      {/* ✅ New lightweight overlay modal */}
+      <ContactOverlay email={email} website={website} socials={socials} />
     </>
   );
 }

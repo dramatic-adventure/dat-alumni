@@ -1,3 +1,5 @@
+// components/alumni/ProfileCard.tsx
+
 "use client";
 
 import { useState, useLayoutEffect, useEffect, useRef } from "react";
@@ -12,6 +14,7 @@ import FeaturedProductionsSection from "./FeaturedProductionsSection";
 import ShareButton from "@/components/ui/ShareButton";
 import Lightbox from "@/components/shared/Lightbox";
 import LocationBadge from "@/components/shared/LocationBadge";
+import ContactTab from "@/components/alumni/ContactTab";
 import { StoryRow, Production } from "@/lib/types";
 import { productionMap } from "@/lib/productionMap";
 import StatusFlags from "@/components/alumni/StatusFlags";
@@ -31,6 +34,9 @@ interface ProfileCardProps {
   programBadges?: string[];
   artistStatement?: string;
   stories?: StoryRow[];
+  email?: string;
+  website?: string;
+  socials?: string[];
 }
 
 const scaleCache = new Map<string, { first: number; last: number }>();
@@ -46,6 +52,9 @@ export default function ProfileCard({
   programBadges = [],
   artistStatement,
   stories = [],
+  email,
+  website,
+  socials,
 }: ProfileCardProps) {
   const [isModalOpen, setModalOpen] = useState(false);
   const [currentUrl, setCurrentUrl] = useState("");
@@ -97,11 +106,17 @@ export default function ProfileCard({
 
   const fallbackImage = "/images/default-headshot.png";
 
+  const hasContactInfo = !!(email || website || (socials && socials.length > 0));
+
   return (
     <div className="relative">
+
+{/* ❌ Duplicate contact tab — actual panel controlled by parent component */}
+{/* <ContactTab onClick={() => alert("📬 Contact tab clicked!")} /> */}
+
       {statusFlags?.length > 0 && (
         <div
-          className="absolute z-40 flex items-center gap-2"
+          className="absolute z-40 flex items-center gap-2 overflow-visible"
           style={{ top: "0rem", right: "4.5rem" }}
         >
           <StatusFlags
@@ -118,7 +133,6 @@ export default function ProfileCard({
         <ShareButton url={currentUrl} />
       </div>
 
-      {/* Headshot (skip if no headshotUrl and fallbackImage) */}
       {headshotUrl || fallbackImage ? (
         <div
           className="absolute top-0 left-[1.5rem] sm:left-4 z-40"
@@ -258,12 +272,19 @@ export default function ProfileCard({
           <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-1">
               <div className="px-[60px]">
-                <h2 className="text-6xl text-[#D9A919] mb-4" style={{ fontFamily: '"Space Grotesk", sans-serif' }}>
+                <h2
+                  className="text-6xl text-[#D9A919] mb-4"
+                  style={{ fontFamily: '"Space Grotesk", sans-serif' }}
+                >
                   Featured DAT Work
                 </h2>
-                <p className="text-[#2493A9] text-lg max-w-3xl" style={{ fontFamily: '"DM Sans", sans-serif' }}>
-                  Developed through cross-cultural exchange and a fearless approach to storytelling, this work reflects a
-                  deep engagement with place, people, and purpose.
+                <p
+                  className="text-[#2493A9] text-lg max-w-3xl"
+                  style={{ fontFamily: '"DM Sans", sans-serif' }}
+                >
+                  Developed through cross-cultural exchange and a fearless approach to
+                  storytelling, this work reflects a deep engagement with place, people, and
+                  purpose.
                 </p>
               </div>
               <div className="flex justify-end mt-[4px] pr-[60px]">
@@ -281,7 +302,10 @@ export default function ProfileCard({
       )}
 
       {programBadges.length > 0 && (
-        <div className="relative bg-[#F6E4C1] py-6 m-0 overflow-hidden h-[50vh] min-h-[300px] max-h-[600px]" style={{ zIndex: 50 }}>
+        <div
+          className="relative bg-[#F6E4C1] py-6 m-0 overflow-hidden h-[50vh] min-h-[300px] max-h-[600px]"
+          style={{ zIndex: 50 }}
+        >
           <div className="max-w-6xl mx-auto px-4 relative h-full">
             <ProgramStamps artistSlug={slug} />
           </div>
