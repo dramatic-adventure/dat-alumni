@@ -1,17 +1,21 @@
+// components/alumni/ContactTab.tsx
+
 "use client";
 
 import React from "react";
 
-interface ContactTabProps {
+export interface ContactTabProps {
   email?: string;
   website?: string;
   socials?: string[];
+  onClick?: () => void; // ✅ Added click handler prop
 }
 
 export default function ContactTab({
   email,
   website,
   socials = [],
+  onClick,
 }: ContactTabProps) {
   const hasContactInfo = Boolean(email || website || socials.length > 0);
   if (!hasContactInfo) return null;
@@ -21,6 +25,13 @@ export default function ContactTab({
       role="button"
       aria-label="Toggle contact panel"
       tabIndex={0}
+      onClick={onClick} // ✅ Attach click handler
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.();
+        }
+      }}
       className="text-white font-bold select-none"
       style={{
         writingMode: "vertical-lr",

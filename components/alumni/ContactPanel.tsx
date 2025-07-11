@@ -1,3 +1,5 @@
+// components/alumni/ContactPanel.tsx
+
 interface ContactPanelProps {
   email?: string;
   website?: string;
@@ -9,46 +11,54 @@ export default function ContactPanel({
   website,
   socials = [],
 }: ContactPanelProps) {
+  const linkClasses =
+    "block text-black transition-all duration-200 no-underline hover:tracking-[0.025em] hover:text-[#6C00AF] visited:text-black";
+
+  const linkStyle = {
+    textDecoration: "none",
+    marginBottom: "0.4rem",
+    fontWeight: 600 as const,
+  };
+
   return (
     <div
-      className="text-sm space-y-2 text-black"
-      style={{ fontFamily: "'DM Sans', sans-serif" }}
+      className="text-sm"
+      style={{
+        fontFamily: "'DM Sans', sans-serif",
+        wordBreak: "break-word",
+        width: "100%",
+      }}
     >
       {email && (
-        <div>
-          <a href={`mailto:${email}`} className="text-blue-600 underline">
-            {email}
-          </a>
-        </div>
+        <a href={`mailto:${email}`} className={linkClasses} style={linkStyle}>
+          {email}
+        </a>
       )}
+
       {website && (
-        <div>
-          <a
-            href={website}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 underline"
-          >
-            {website}
-          </a>
-        </div>
+        <a
+          href={website}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={linkClasses}
+          style={linkStyle}
+        >
+          {website}
+        </a>
       )}
-      {socials.length > 0 && (
-        <ul className="ml-0 space-y-1 list-none">
-          {socials.map((social, i) => (
-            <li key={i}>
-              <a
-                href={social}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline"
-              >
-                {social}
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
+
+      {socials.map((social, i) => (
+        <a
+          key={i}
+          href={social}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={linkClasses}
+          style={linkStyle}
+        >
+          {social}
+        </a>
+      ))}
     </div>
   );
 }

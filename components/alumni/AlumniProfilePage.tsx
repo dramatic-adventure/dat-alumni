@@ -10,7 +10,7 @@ import FieldNotes from "@/components/alumni/FieldNotes";
 import Lightbox from "@/components/shared/LightboxPortal";
 import AlumniProfileBackdrop from "@/components/alumni/AlumniProfileBackdrop";
 import ContactWidget from "@/components/shared/ContactWidget";
-import ContactOverlay from "@/components/shared/ContactOverlay"; // ✅ NEW
+import ContactOverlay from "@/components/shared/ContactOverlay";
 
 interface AlumniProfileProps {
   data: AlumniRow;
@@ -56,34 +56,56 @@ export default function AlumniProfilePage({
         <title>{name} | DAT Alumni</title>
       </Head>
 
-      {/* ✅ Vertical "Contact" tab (link triggers #contact) */}
-      <ContactWidget email={email} website={website} socials={socials} />
-
       <main>
         <AlumniProfileBackdrop backgroundKey={backgroundChoice}>
-          <div
-            className="relative w-[90vw] sm:w-[85vw] lg:w-[80vw] max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-36 z-10 shadow-[0_8px_24px_rgba(0,0,0,0.25)] bg-white"
-            style={{ marginTop: "-33rem", overflow: "visible" }}
-          >
-            <div className="relative z-10" style={{ overflow: "visible" }}>
-              <ProfileCard
-                slug={slug}
-                name={name}
-                role={role}
-                headshotUrl={headshotUrl}
-                location={location}
-                programBadges={programBadges}
-                identityTags={identityTags}
-                statusFlags={statusFlags}
-                artistStatement={artistStatement}
-                stories={authorStories}
-                email={email}
-                website={website}
-                socials={socials}
-              />
-            </div>
-          </div>
+{/* 💠 Outer wrapper: Full width with % buffers preserved on mobile */}
+<div className="w-full px-[5vw] sm:px-[5vw] md:px-[7vw] lg:px-[7vw] overflow-hidden" style={{ marginTop: "-36rem" }}>
+  <div className="flex flex-row w-full gap-4">
+    {/* LEFT COLUMN: ProfileCard takes remaining width minus fixed ContactWidget */}
+    <div className="flex-grow flex justify-end bg-white shadow-[0_8px_24px_rgba(0,0,0,0.25)]">
+      <ProfileCard
+        slug={slug}
+        name={name}
+        role={role}
+        headshotUrl={headshotUrl}
+        location={location}
+        programBadges={programBadges}
+        identityTags={identityTags}
+        statusFlags={statusFlags}
+        artistStatement={artistStatement}
+        stories={authorStories}
+        email={email}
+        website={website}
+        socials={socials}
+      />
+    </div>
 
+    {/* RIGHT COLUMN: ContactWidget fixed width */}
+    {hasContactInfo && (
+      <div className="w-[90px] flex items-start justify-start">
+        <ContactWidget
+          email={email}
+          website={website}
+          socials={socials}
+        />
+      </div>
+    )}
+
+    {/* RIGHT COLUMN: ContactWidget flush left */}
+    {hasContactInfo && (
+      <div className="w-[90px] flex items-start justify-start text-left pl-0 ml-0">
+        <ContactWidget
+          email={email}
+          website={website}
+          socials={socials}
+        />
+      </div>
+    )}
+  </div>
+</div>
+
+
+          {/* Optional: Image gallery */}
           {imageUrls.length > 0 && (
             <section className="mt-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
               <ImageCarousel
@@ -93,6 +115,7 @@ export default function AlumniProfilePage({
             </section>
           )}
 
+          {/* Optional: Lightbox view */}
           {imageUrls.length > 0 && lightboxIndex !== null && (
             <Lightbox>
               <img
@@ -103,6 +126,7 @@ export default function AlumniProfilePage({
             </Lightbox>
           )}
 
+          {/* Optional: Field Notes */}
           {fieldNotes && fieldNotes.length > 0 && (
             <section className="mt-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
               <FieldNotes notes={fieldNotes} />
@@ -113,7 +137,6 @@ export default function AlumniProfilePage({
         </AlumniProfileBackdrop>
       </main>
 
-      {/* ✅ New lightweight overlay modal */}
       <ContactOverlay email={email} website={website} socials={socials} />
     </>
   );

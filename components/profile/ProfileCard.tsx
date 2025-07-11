@@ -15,6 +15,8 @@ import ShareButton from "@/components/ui/ShareButton";
 import Lightbox from "@/components/shared/Lightbox";
 import LocationBadge from "@/components/shared/LocationBadge";
 import ContactTab from "@/components/alumni/ContactTab";
+import ContactPanel from "@/components/alumni/ContactPanel";
+import ContactWidget from "@/components/shared/ContactWidget";
 import { StoryRow, Production } from "@/lib/types";
 import { productionMap } from "@/lib/productionMap";
 import StatusFlags from "@/components/alumni/StatusFlags";
@@ -99,6 +101,7 @@ export default function ProfileCard({
   const hasBadges = programBadges.length > 0 || statusFlags.length > 0;
   const hasStories = stories?.length > 0;
 
+
   const featuredProductions: Production[] = Object.values(productionMap)
     .filter((p) => p?.artists?.[slug])
     .sort((a, b) => b.year - a.year)
@@ -108,11 +111,106 @@ export default function ProfileCard({
 
   const hasContactInfo = !!(email || website || (socials && socials.length > 0));
 
-  return (
-    <div className="relative">
+const [showContact, setShowContact] = useState(false);
+const contactRef = useRef<HTMLDivElement>(null);
+const contactTabRef = useRef<HTMLDivElement>(null);
 
-{/* ❌ Duplicate contact tab — actual panel controlled by parent component */}
-{/* <ContactTab onClick={() => alert("📬 Contact tab clicked!")} /> */}
+const handleContactClick = () => {
+  setShowContact((prev) => !prev);
+};
+
+useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      contactRef.current &&
+      !contactRef.current.contains(event.target as Node) &&
+      contactTabRef.current &&
+      !contactTabRef.current.contains(event.target as Node)
+    ) {
+      setShowContact(false);
+    }
+  };
+
+  const handleEscape = (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      setShowContact(false);
+    }
+  };
+
+  if (showContact) {
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+  }
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+    document.removeEventListener("keydown", handleEscape);
+  };
+}, [showContact]);
+
+
+  return (
+  <div className="relative">
+    {/* ✅ ContactWidget anchored to the right edge of the ProfileCard */}
+    {hasContactInfo && (
+  <>
+    {/* ✅ Floating ContactTab — stays pinned to the right */}
+    <div
+  className="absolute"
+  style={{
+    top: "120px",
+    right: -48,
+    zIndex: 60,
+    pointerEvents: "auto",
+  }}
+  ref={contactTabRef}
+>
+  <button
+    aria-expanded={showContact}
+    aria-controls="contact-panel"
+    onClick={handleContactClick}
+    style={{
+      background: "none",
+      border: "none",
+      padding: 0,
+      margin: 0,
+    }}
+  >
+    <ContactTab email={email} website={website} socials={socials} />
+  </button>
+</div>
+
+
+    {/* ✅ Floating ContactPanel — appears left of tab */}
+    {showContact && (
+  <div
+    ref={contactRef}
+    id="contact-panel"
+    className="absolute"
+    style={{
+      top: "120px",
+      right: "calc(66px + -66px)",
+      zIndex: 59,
+      width: "320px",
+      height: "160px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#E2725B",
+      padding: "0.5rem 1rem",
+      borderTopLeftRadius: "0.5rem",
+      borderBottomLeftRadius: "0.5rem",
+      boxShadow: "1px 2px 4px rgba(0,0,0,0.15)",
+      color: "#21223",
+      whiteSpace: "nowrap",
+    }}
+  >
+    <ContactPanel email={email} website={website} socials={socials} />
+  </div>
+)}
+  </>
+)}
+
 
       {statusFlags?.length > 0 && (
         <div
@@ -248,24 +346,28 @@ export default function ProfileCard({
         )}
       </div>
 
-      {hasArtistBio && (
-        <div className="bg-[#006D77] py-6 m-0">
-          <div className="max-w-6xl mx-auto px-4">
-            <ArtistBio
-              identityTags={identityTags}
-              artistStatement={artistStatement}
-              fontFamily='"DM Sans", sans-serif'
-              fontSize="1.15rem"
-              color="#ffffff"
-              fontStyle="normal"
-              fontWeight={200}
-              letterSpacing="normal"
-              identityTagStyle={{ marginLeft: "250px" }}
-              bioStyle={{ marginTop: "1rem", marginBottom: "2rem" }}
-            />
-          </div>
-        </div>
-      )}
+{hasArtistBio && (
+  <div className="bg-[#006D77] py-6 m-0">
+    <div className="max-w-6xl mx-auto px-4">
+      <ArtistBio
+        identityTags={identityTags}
+        artistStatement={artistStatement}
+        fontFamily='"DM Sans", sans-serif'
+        fontSize="1.15rem"
+        color="#ffffff"
+        fontStyle="normal"
+        fontWeight={200}
+        letterSpacing="normal"
+        identityTagStyle={{ marginLeft: "250px" }}
+        bioStyle={{ marginTop: "1rem", marginBottom: "2rem" }}
+      />
+    </div>
+  </div>
+)}
+
+
+
+
 
       {featuredProductions.length > 0 && (
         <div className="bg-[#19657c] py-[30px] m-0">
