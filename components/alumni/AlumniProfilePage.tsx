@@ -1,7 +1,7 @@
 "use client";
 
 import Head from "next/head";
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AlumniRow, StoryRow } from "@/lib/types";
 import { getPostersForArtist } from "@/lib/getPostersForArtist";
 import ProfileCard from "@/components/profile/ProfileCard";
@@ -9,8 +9,6 @@ import ImageCarousel from "@/components/alumni/ImageCarousel";
 import FieldNotes from "@/components/alumni/FieldNotes";
 import Lightbox from "@/components/shared/LightboxPortal";
 import AlumniProfileBackdrop from "@/components/alumni/AlumniProfileBackdrop";
-import ContactWidget from "@/components/shared/ContactWidget";
-import ContactOverlay from "@/components/shared/ContactOverlay";
 
 interface AlumniProfileProps {
   data: AlumniRow;
@@ -39,8 +37,8 @@ export default function AlumniProfilePage({
     socials = [],
   } = data || {};
 
-  const hasContactInfo = !!(email || website || (socials && socials.length > 0));
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [showContact, setShowContact] = useState(false);
 
   const authorStories = useMemo(
     () => allStories.filter((story) => story.authorSlug === slug),
@@ -58,86 +56,64 @@ export default function AlumniProfilePage({
 
       <main>
         <AlumniProfileBackdrop backgroundKey={backgroundChoice}>
-{/* 💠 Outer wrapper: Full width with % buffers preserved on mobile */}
-<div className="w-full px-[5vw] sm:px-[5vw] md:px-[7vw] lg:px-[7vw] overflow-hidden" style={{ marginTop: "-36rem" }}>
-  <div className="flex flex-row w-full gap-4">
-    {/* LEFT COLUMN: ProfileCard takes remaining width minus fixed ContactWidget */}
-    <div className="flex-grow flex justify-end bg-white shadow-[0_8px_24px_rgba(0,0,0,0.25)]">
-      <ProfileCard
-        slug={slug}
-        name={name}
-        role={role}
-        headshotUrl={headshotUrl}
-        location={location}
-        programBadges={programBadges}
-        identityTags={identityTags}
-        statusFlags={statusFlags}
-        artistStatement={artistStatement}
-        stories={authorStories}
-        email={email}
-        website={website}
-        socials={socials}
-      />
-    </div>
+          <div
+            className="w-full px-[5vw] sm:px-[5vw] md:px-[7vw] lg:px-[7vw] overflow-hidden"
+            style={{ marginTop: "-36rem" }}
+          >
+            <div className="flex flex-row w-full gap-4">
+              {/* LEFT COLUMN */}
+              <div className="flex-grow flex justify-end bg-white shadow-[0_8px_24px_rgba(0,0,0,0.25)] relative">
+                <ProfileCard
+                  slug={slug}
+                  name={name}
+                  role={role}
+                  headshotUrl={headshotUrl}
+                  location={location}
+                  programBadges={programBadges}
+                  identityTags={identityTags}
+                  statusFlags={statusFlags}
+                  artistStatement={artistStatement}
+                  stories={authorStories}
+                  email={email}
+                  website={website}
+                  socials={socials}
+                />
+              </div>
+            </div>
 
-    {/* RIGHT COLUMN: ContactWidget fixed width */}
-    {hasContactInfo && (
-      <div className="w-[90px] flex items-start justify-start">
-        <ContactWidget
-          email={email}
-          website={website}
-          socials={socials}
-        />
-      </div>
-    )}
+            {/* Optional: Image gallery */}
+            {imageUrls.length > 0 && (
+              <section className="mt-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <ImageCarousel
+                  images={imageUrls}
+                  onImageClick={setLightboxIndex}
+                />
+              </section>
+            )}
 
-    {/* RIGHT COLUMN: ContactWidget flush left */}
-    {hasContactInfo && (
-      <div className="w-[90px] flex items-start justify-start text-left pl-0 ml-0">
-        <ContactWidget
-          email={email}
-          website={website}
-          socials={socials}
-        />
-      </div>
-    )}
-  </div>
-</div>
+            {/* Optional: Lightbox view */}
+            {imageUrls.length > 0 && lightboxIndex !== null && (
+              <Lightbox>
+                <img
+                  src={imageUrls[lightboxIndex]}
+                  alt={`Gallery image ${lightboxIndex + 1}`}
+                  style={{ width: "100%", height: "auto", objectFit: "contain" }}
+                />
+              </Lightbox>
+            )}
 
+            {/* Optional: Field Notes */}
+            {fieldNotes && fieldNotes.length > 0 && (
+              <section className="mt-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <FieldNotes notes={fieldNotes} />
+              </section>
+            )}
 
-          {/* Optional: Image gallery */}
-          {imageUrls.length > 0 && (
-            <section className="mt-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-              <ImageCarousel
-                images={imageUrls}
-                onImageClick={setLightboxIndex}
-              />
-            </section>
-          )}
+            <div className="h-[150px] sm:h-[300px] md:h-[400px]" />
+          </div>
 
-          {/* Optional: Lightbox view */}
-          {imageUrls.length > 0 && lightboxIndex !== null && (
-            <Lightbox>
-              <img
-                src={imageUrls[lightboxIndex]}
-                alt={`Gallery image ${lightboxIndex + 1}`}
-                style={{ width: "100%", height: "auto", objectFit: "contain" }}
-              />
-            </Lightbox>
-          )}
-
-          {/* Optional: Field Notes */}
-          {fieldNotes && fieldNotes.length > 0 && (
-            <section className="mt-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-              <FieldNotes notes={fieldNotes} />
-            </section>
-          )}
-
-          <div className="h-[150px] sm:h-[300px] md:h-[400px]" />
         </AlumniProfileBackdrop>
       </main>
-
-      <ContactOverlay email={email} website={website} socials={socials} />
     </>
   );
 }

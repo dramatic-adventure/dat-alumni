@@ -115,101 +115,109 @@ const [showContact, setShowContact] = useState(false);
 const contactRef = useRef<HTMLDivElement>(null);
 const contactTabRef = useRef<HTMLDivElement>(null);
 
-const handleContactClick = () => {
-  setShowContact((prev) => !prev);
+const justOpenedRef = useRef(false);
+
+const handleContactClick = (e: React.MouseEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  setShowContact((prev) => {
+    const next = !prev;
+    console.log("Toggling panel:", next);
+    if (next) {
+      justOpenedRef.current = true;
+      setTimeout(() => {
+        justOpenedRef.current = false;
+      }, 200); // 👈 longer buffer avoids outside click conflict
+    }
+    return next;
+  });
+};
+
+
+const handleEscape = (event: KeyboardEvent) => {
+  if (event.key === "Escape") {
+    setShowContact(false);
+  }
 };
 
 useEffect(() => {
-  const handleClickOutside = (event: MouseEvent) => {
-    if (
+  const handleInteraction = (event: MouseEvent | TouchEvent | KeyboardEvent) => {
+    const target = event.target as Node;
+    const clickedOutside =
       contactRef.current &&
-      !contactRef.current.contains(event.target as Node) &&
+      !contactRef.current.contains(target) &&
       contactTabRef.current &&
-      !contactTabRef.current.contains(event.target as Node)
+      !contactTabRef.current.contains(target);
+
+    if (
+      (event instanceof KeyboardEvent && event.key === "Escape") ||
+      (event instanceof MouseEvent && clickedOutside)
     ) {
+      if (justOpenedRef.current) return;
       setShowContact(false);
     }
   };
 
-  const handleEscape = (event: KeyboardEvent) => {
-    if (event.key === "Escape") {
-      setShowContact(false);
-    }
-  };
-
-  if (showContact) {
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-  }
+  document.addEventListener("mousedown", handleInteraction);
+  document.addEventListener("keydown", handleInteraction);
 
   return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-    document.removeEventListener("keydown", handleEscape);
+    document.removeEventListener("mousedown", handleInteraction);
+    document.removeEventListener("keydown", handleInteraction);
   };
-}, [showContact]);
+}, []);
+
+
 
 
   return (
-  <div className="relative">
-    {/* ✅ ContactWidget anchored to the right edge of the ProfileCard */}
-    {hasContactInfo && (
-  <>
-    {/* ✅ Floating ContactTab — stays pinned to the right */}
-    <div
+    <div className="relative">
+      {/* ContactTab */}
+      {hasContactInfo && (
+        <>
+<div
   className="absolute"
   style={{
     top: "120px",
     right: -48,
-    zIndex: 60,
+    zIndex: 80,
     pointerEvents: "auto",
   }}
   ref={contactTabRef}
 >
-  <button
-    aria-expanded={showContact}
-    aria-controls="contact-panel"
-    onClick={handleContactClick}
-    style={{
-      background: "none",
-      border: "none",
-      padding: 0,
-      margin: 0,
-    }}
-  >
-    <ContactTab email={email} website={website} socials={socials} />
-  </button>
+  <ContactTab
+  tabIndex={-1} 
+  email={email}
+  website={website}
+  socials={socials}
+  isOpen={showContact}
+  onClick={handleContactClick}
+  />
 </div>
 
+{/* ContactPanel */}
+<div
+  ref={contactRef}
+  className="absolute"
+  style={{
+    top: "120px",
+    right: "48px",
+    width: "272px",
+    zIndex: 70,
+    display: showContact ? "block" : "none",
+  }}
+>
+  <ContactPanel
+    email={email}
+    website={website}
+    socials={socials}
+    onClose={() => setShowContact(false)}
+  />
+</div>
+        </>
+      )}
 
-    {/* ✅ Floating ContactPanel — appears left of tab */}
-    {showContact && (
-  <div
-    ref={contactRef}
-    id="contact-panel"
-    className="absolute"
-    style={{
-      top: "120px",
-      right: "calc(66px + -66px)",
-      zIndex: 59,
-      width: "320px",
-      height: "160px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: "#E2725B",
-      padding: "0.5rem 1rem",
-      borderTopLeftRadius: "0.5rem",
-      borderBottomLeftRadius: "0.5rem",
-      boxShadow: "1px 2px 4px rgba(0,0,0,0.15)",
-      color: "#21223",
-      whiteSpace: "nowrap",
-    }}
-  >
-    <ContactPanel email={email} website={website} socials={socials} />
-  </div>
-)}
-  </>
-)}
 
 
       {statusFlags?.length > 0 && (
@@ -420,12 +428,12 @@ useEffect(() => {
         </section>
       )}
 
-      {isModalOpen && (
+    {isModalOpen && (
         <Lightbox
           images={[headshotUrl || fallbackImage]}
           onClose={() => setModalOpen(false)}
         />
       )}
-    </div>
+    </div> // ✅ closes the main <div className="relative">
   );
 }

@@ -27,6 +27,10 @@ export default function StampShape({
   setHoveredSlug,
   mySlug,
 }: StampShapeProps) {
+    const [shape, setShape] = useState<string | null>(null);
+  const [rotation, setRotation] = useState<number | null>(null);
+  const [font, setFont] = useState<string | null>(null);
+
   const allShapes = [
     "circle",
     "multi-edge-circle",
@@ -49,15 +53,21 @@ export default function StampShape({
     shapePool = ["rectangle", "rounded-rectangle", "square", "rounded-square"];
   }
 
-  const [shape] = useState(() => randomFromArray(shapePool));
-  const [rotation] = useState(() => randomInt(-45, 45));
-  const [font] = useState(() => getRandomFont());
+// 👇 This runs only once on mount
+useEffect(() => {
+  setShape(randomFromArray(shapePool));
+  setRotation(randomInt(-45, 45));
+  setFont(getRandomFont());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
+
+  const fontStack = font ?? "'DM Sans', sans-serif";
 
   const panelRef = useRef<HTMLDivElement>(null);
   const [panelWidth, setPanelWidth] = useState(800);
-
-  // ✅ place usedPositions here so it is global for this component but resets on page load
   const usedPositions = useRef<{ top: number; left: number }[]>([]);
+
+  const isReady = shape && rotation !== null && font;
 
   useEffect(() => {
     const updateWidth = () => {
@@ -92,7 +102,7 @@ export default function StampShape({
       }
       tries++;
     }
-    // fallback
+
     setPosition({
       top: Math.max(0, Math.min(panelHeight - 120, randomInt(0, panelHeight - 120))),
       left: Math.max(0, Math.min(panelWidth - 120, randomInt(0, panelWidth - 120))),
@@ -158,64 +168,45 @@ export default function StampShape({
       pentagon: { width: 70, height: 70 },
       "rounded-pentagon": { width: 70, height: 70 },
     };
-    const safeZone = safeZoneByShape[shape];
 
-    let chunkedProgram: string[] = [];
-    let chunkedLocation: string[] = [];
-    let blockHeight = 0;
+    const safeZone = shape ? safeZoneByShape[shape] : { width: 80, height: 80 };
 
     for (let attempt = 0; attempt < 20; attempt++) {
-      chunkedProgram = chunkWords(
-        program.toUpperCase().split(" "),
-        safeZone.width * currentScale - sideBuffer * 2
-      );
-      chunkedLocation = chunkWords(
-        location.split(" "),
-        safeZone.width * currentScale - sideBuffer * 2
-      );
+      const prog = chunkWords(program.toUpperCase().split(" "), safeZone.width * currentScale - sideBuffer * 2);
+      const loc = chunkWords(location.split(" "), safeZone.width * currentScale - sideBuffer * 2);
 
-      const totalLines = chunkedProgram.length + chunkedLocation.length + 1;
-      blockHeight =
-        totalLines * lineGap +
-        currentBlockGap * 2 +
-        topBuffer +
-        bottomBuffer;
+      const totalLines = prog.length + loc.length + 1;
+      const blockHeight = totalLines * lineGap + currentBlockGap * 2 + topBuffer + bottomBuffer;
 
       const widestLine = Math.max(
-        ...chunkedProgram.map((l) => measureTextWidth(l)),
-        ...chunkedLocation.map((l) => measureTextWidth(l)),
+        ...prog.map((l) => measureTextWidth(l)),
+        ...loc.map((l) => measureTextWidth(l)),
         measureTextWidth(year.toString())
       );
 
-      if (
-        blockHeight > safeZone.height * currentScale ||
-        widestLine > safeZone.width * currentScale
-      ) {
+      if (blockHeight > safeZone.height * currentScale || widestLine > safeZone.width * currentScale) {
         if (attempt % 2 === 0 && currentBlockGap > 2) {
           currentBlockGap -= 2;
         } else if (currentScale < 4.0) {
           currentScale += 0.1;
         } else {
-          console.warn("Could not fit text after max attempts");
           break;
         }
       } else {
+        setProgramLines(prog);
+        setLocationLines(loc);
+        setShapeScale(currentScale);
+        setBlockGap(currentBlockGap);
         break;
       }
     }
-
-    setProgramLines(chunkedProgram);
-    setLocationLines(chunkedLocation);
-    setShapeScale(currentScale);
-    setBlockGap(currentBlockGap);
   }, [program, location, year, shape]);
 
   const lineGap = 14;
   const topBuffer = 6;
   const bottomBuffer = 12;
   const totalLines = programLines.length + locationLines.length + 1;
-  const blockHeight =
-    totalLines * lineGap + blockGap * 2 + topBuffer + bottomBuffer;
+  const blockHeight = totalLines * lineGap + blockGap * 2 + topBuffer + bottomBuffer;
   const startY = 50 - blockHeight / 2 + lineGap + topBuffer;
 
   return (
@@ -225,6 +216,7 @@ export default function StampShape({
       onMouseEnter={() => setHoveredSlug(mySlug)}
       onMouseLeave={() => setHoveredSlug(null)}
     >
+      {isReady && (
       <Link href={programSlug ? `/programs/${programSlug}` : "#"} passHref>
         <svg
           width="20vw"
@@ -247,7 +239,7 @@ export default function StampShape({
           <text
             ref={measureRef}
             style={{ visibility: "hidden" }}
-            fontFamily={font}
+            fontFamily={fontStack}
             fontSize="14px"
           >
             measure
@@ -261,7 +253,7 @@ export default function StampShape({
             <text
               x="50"
               y={startY}
-              fontFamily={font}
+              fontFamily={fontStack}
               fontSize="14px"
               fontWeight="bold"
               fill={color}
@@ -277,7 +269,7 @@ export default function StampShape({
             <text
               x="50"
               y={startY + programLines.length * lineGap + blockGap}
-              fontFamily={font}
+              fontFamily={fontStack}
               fontSize="12px"
               fontStyle="italic"
               fill={color}
@@ -299,7 +291,7 @@ export default function StampShape({
                 locationLines.length * lineGap +
                 blockGap
               }
-              fontFamily={font}
+              fontFamily={fontStack}
               fontSize="12px"
               fontWeight="bold"
               fill={color}
@@ -309,7 +301,7 @@ export default function StampShape({
             </text>
           </g>
         </svg>
-      </Link>
+      </Link>)}
     </div>
   );
 }
