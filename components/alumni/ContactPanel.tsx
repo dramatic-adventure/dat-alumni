@@ -1,5 +1,3 @@
-// components/alumni/ContactPanel.tsx
-
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -53,17 +51,14 @@ export default function ContactPanel({
   return (
     <div
       ref={panelRef}
-      className="fixed z-[9999]"
+      className="flex flex-col justify-center"
       style={{
-        top: "120px",
-        right: "48px", // aligns with the ContactTab's width
-        width: "320px",
+        height: "100%",
+        padding: "1rem 1.5rem",
+        fontFamily: "'DM Sans', sans-serif",
+        backgroundColor: "#E2725B",
         borderTopLeftRadius: "12px",
         borderBottomLeftRadius: "12px",
-        backgroundColor: "#E06B4F",
-        fontFamily: "'DM Sans', sans-serif",
-        padding: "1rem 1.5rem",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.07)",
         color: "#21223",
         wordBreak: "break-word",
       }}
@@ -79,13 +74,13 @@ export default function ContactPanel({
               letterSpacing: "0.1em",
               textTransform: "uppercase",
               color: "#241123",
-              margin: 0,
+              marginBottom: "0.5rem",
             }}
           >
             Let’s Connect
           </div>
 
-          <div className="flex flex-col gap-1 mt-2">
+          <div className="flex flex-col gap-1">
             {email && (
               <a
                 href={`mailto:${email}`}

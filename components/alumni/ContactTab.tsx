@@ -48,8 +48,10 @@ export default function ContactTab({
         alignItems: "center",
         justifyContent: "center",
         boxShadow: isOpen
-          ? "4px 0 8px rgba(0, 0, 0, 0.25), 0 4px 6px rgba(0, 0, 0, 0.15)"
-          : "2px 0 6px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1), inset 6px 0 6px -6px rgba(0, 0, 0, 0.25)",
+  ? "4px 6px 8px rgba(0, 0, 0, 0.3), 0 2px 1px rgba(0, 0, 0, 0.2)"
+  : "4px 6px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1), inset 6px 0 6px -6px rgba(0, 0, 0, 0.25)"
+
+
       }}
     >
       CONTACT

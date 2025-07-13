@@ -14,7 +14,7 @@ import FeaturedProductionsSection from "./FeaturedProductionsSection";
 import ShareButton from "@/components/ui/ShareButton";
 import Lightbox from "@/components/shared/Lightbox";
 import LocationBadge from "@/components/shared/LocationBadge";
-import ContactOverlay from "@/components/shared/ContactOverlay"; // adjust path if needed
+import ContactOverlay from "@/components/shared/ContactOverlay";
 import ContactWidget from "@/components/shared/ContactWidget";
 import { StoryRow, Production } from "@/lib/types";
 import { productionMap } from "@/lib/productionMap";
@@ -100,20 +100,24 @@ export default function ProfileCard({
   const hasBadges = programBadges.length > 0 || statusFlags.length > 0;
   const hasStories = stories?.length > 0;
 
-
   const featuredProductions: Production[] = Object.values(productionMap)
     .filter((p) => p?.artists?.[slug])
     .sort((a, b) => b.year - a.year)
     .slice(0, 3);
 
   const fallbackImage = "/images/default-headshot.png";
-
+  const profileCardRef = useRef<HTMLDivElement>(null);
   const hasContactInfo = !!(email || website || (socials && socials.length > 0));
 
+
   return (
-    <div className="relative">
-      {/* ContactTab */}
-      <ContactOverlay email={email} website={website} socials={socials} />
+    <div ref={profileCardRef} style={{ position: "relative" }}>
+      <ContactOverlay
+        email={email}
+        website={website}
+        socials={socials}
+        profileCardRef={profileCardRef}
+      />
 
 
       {statusFlags?.length > 0 && (
