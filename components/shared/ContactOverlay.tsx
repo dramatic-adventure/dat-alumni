@@ -1,7 +1,9 @@
 "use client";
 
+
 import { useEffect, useRef, useState } from "react";
 import ContactTab from "../alumni/ContactTab";
+import ContactPanel from "../alumni/ContactPanel";
 
 interface ContactOverlayProps {
   email?: string;
@@ -9,52 +11,70 @@ interface ContactOverlayProps {
   socials?: string[];
 }
 
-export default function ContactOverlay({ email, website, socials = [] }: ContactOverlayProps) {
+export default function ContactOverlay({
+  email,
+  website,
+  socials = [],
+}: ContactOverlayProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const overlayRef = useRef<HTMLDivElement>(null);
+  const tabRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const justOpenedRef = useRef(false);
+
   const hasContactInfo = !!(email || website || socials.length > 0);
 
-  // ✅ Open overlay if URL has #contact
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const checkHash = () => setIsOpen(window.location.hash === "#contact");
-      checkHash();
-      window.addEventListener("hashchange", checkHash);
-      return () => window.removeEventListener("hashchange", checkHash);
-    }
-  }, []);
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        justOpenedRef.current = true;
+        setTimeout(() => {
+          justOpenedRef.current = false;
+        }, 200);
+      }
+      return next;
+    });
+  };
 
-  // ✅ Close overlay on Escape key
+  // Escape and outside click
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+    const handleInteraction = (event: MouseEvent | KeyboardEvent) => {
+      const target = event.target as Node;
+      const clickedOutside =
+        panelRef.current &&
+        !panelRef.current.contains(target) &&
+        tabRef.current &&
+        !tabRef.current.contains(target);
+
+      const pressedEscape = event instanceof KeyboardEvent && event.key === "Escape";
+
+      if ((pressedEscape || clickedOutside) && !justOpenedRef.current) {
         setIsOpen(false);
-        window.history.replaceState(null, "", window.location.pathname);
       }
     };
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, []);
 
-  // ✅ Close when clicking outside modal content
-  const handleClickOutside = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === overlayRef.current) {
-      setIsOpen(false);
-      window.history.replaceState(null, "", window.location.pathname);
-    }
-  };
+    document.addEventListener("mousedown", handleInteraction);
+    document.addEventListener("keydown", handleInteraction);
+    return () => {
+      document.removeEventListener("mousedown", handleInteraction);
+      document.removeEventListener("keydown", handleInteraction);
+    };
+  }, []);
 
   if (!hasContactInfo) return null;
 
   return (
     <>
-      {/* ✅ Floating Tab */}
+      {/* Floating Tab */}
       <div
+        ref={tabRef}
+        className="absolute"
         style={{
-          position: "fixed",
           top: "120px",
-          right: 0,
-          zIndex: 9999,
+          right: -48,
+          zIndex: 80,
           pointerEvents: "auto",
         }}
       >
@@ -63,66 +83,46 @@ export default function ContactOverlay({ email, website, socials = [] }: Contact
           website={website}
           socials={socials}
           isOpen={isOpen}
-          onClick={() => {
-            setIsOpen(!isOpen);
-            if (!isOpen) {
-              window.location.hash = "#contact";
-            } else {
-              window.history.replaceState(null, "", window.location.pathname);
-            }
-          }}
+          onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => {
+  e.preventDefault();
+  e.stopPropagation();
+
+  setIsOpen((prev) => {
+    const next = !prev;
+
+    if (next) {
+      justOpenedRef.current = true;
+      setTimeout(() => {
+        justOpenedRef.current = false;
+      }, 200);
+    }
+
+    return next;
+  });
+}}
+
         />
       </div>
 
-      {/* ✅ Contact Panel */}
-      {isOpen && (
-        <div
-          ref={overlayRef}
-          onClick={handleClickOutside}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999]"
-        >
-          <div className="bg-white p-6 rounded-2xl shadow-lg max-w-md w-full text-center">
-            <h2 className="text-xl font-semibold mb-4">Contact</h2>
-
-            {email && (
-              <p className="mb-2">
-                <a href={`mailto:${email}`} className="text-blue-600 underline">
-                  {email}
-                </a>
-              </p>
-            )}
-
-            {website && (
-              <p className="mb-2">
-                <a
-                  href={website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 underline"
-                >
-                  {website}
-                </a>
-              </p>
-            )}
-
-            {socials.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-3 mt-4">
-                {socials.map((url, idx) => (
-                  <a
-                    key={idx}
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 underline"
-                  >
-                    {url.replace(/^https?:\/\//, "")}
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Floating Panel */}
+      <div
+        ref={panelRef}
+        className="absolute"
+        style={{
+          top: "120px",
+          right: "48px",
+          width: "272px",
+          zIndex: 70,
+          display: isOpen ? "block" : "none",
+        }}
+      >
+        <ContactPanel
+          email={email}
+          website={website}
+          socials={socials}
+          onClose={() => setIsOpen(false)}
+        />
+      </div>
     </>
   );
 }

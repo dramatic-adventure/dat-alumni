@@ -9,6 +9,7 @@ export interface ContactTabProps {
   website?: string;
   socials?: string[];
   onClick?: React.MouseEventHandler;
+  onMouseDown?: React.MouseEventHandler; // ✅ Add this line
   isOpen?: boolean;
 }
 
@@ -17,16 +18,17 @@ export default function ContactTab({
   website,
   socials = [],
   onClick,
+  onMouseDown, // ✅ Add this here too
   isOpen = false,
 }: ContactTabProps) {
-  const hasContactInfo = Boolean(email || website || socials.length > 0);
-  if (!hasContactInfo) return null;
+
 
   return (
     <button
-      onClick={onClick}
-      aria-label="Open or close contact panel"
-      className="select-none"
+  onClick={onClick}
+  onMouseDown={onMouseDown} // ✅ Add this
+  aria-label="Open or close contact panel"
+  className="select-none"
       style={{
         color: "#7c312f",
         fontWeight: 600,

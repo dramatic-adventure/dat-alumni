@@ -14,8 +14,7 @@ import FeaturedProductionsSection from "./FeaturedProductionsSection";
 import ShareButton from "@/components/ui/ShareButton";
 import Lightbox from "@/components/shared/Lightbox";
 import LocationBadge from "@/components/shared/LocationBadge";
-import ContactTab from "@/components/alumni/ContactTab";
-import ContactPanel from "@/components/alumni/ContactPanel";
+import ContactOverlay from "@/components/shared/ContactOverlay"; // adjust path if needed
 import ContactWidget from "@/components/shared/ContactWidget";
 import { StoryRow, Production } from "@/lib/types";
 import { productionMap } from "@/lib/productionMap";
@@ -111,113 +110,10 @@ export default function ProfileCard({
 
   const hasContactInfo = !!(email || website || (socials && socials.length > 0));
 
-const [showContact, setShowContact] = useState(false);
-const contactRef = useRef<HTMLDivElement>(null);
-const contactTabRef = useRef<HTMLDivElement>(null);
-
-const justOpenedRef = useRef(false);
-
-const handleContactClick = (e: React.MouseEvent) => {
-  e.preventDefault();
-  e.stopPropagation();
-
-  setShowContact((prev) => {
-    const next = !prev;
-    console.log("Toggling panel:", next);
-    if (next) {
-      justOpenedRef.current = true;
-      setTimeout(() => {
-        justOpenedRef.current = false;
-      }, 200); // 👈 longer buffer avoids outside click conflict
-    }
-    return next;
-  });
-};
-
-
-const handleEscape = (event: KeyboardEvent) => {
-  if (event.key === "Escape") {
-    setShowContact(false);
-  }
-};
-
-useEffect(() => {
-  const handleInteraction = (event: MouseEvent | TouchEvent | KeyboardEvent) => {
-    const target = event.target as Node;
-    const clickedOutside =
-      contactRef.current &&
-      !contactRef.current.contains(target) &&
-      contactTabRef.current &&
-      !contactTabRef.current.contains(target);
-
-    if (
-      (event instanceof KeyboardEvent && event.key === "Escape") ||
-      (event instanceof MouseEvent && clickedOutside)
-    ) {
-      if (justOpenedRef.current) return;
-      setShowContact(false);
-    }
-  };
-
-  document.addEventListener("mousedown", handleInteraction);
-  document.addEventListener("keydown", handleInteraction);
-
-  return () => {
-    document.removeEventListener("mousedown", handleInteraction);
-    document.removeEventListener("keydown", handleInteraction);
-  };
-}, []);
-
-
-
-
   return (
     <div className="relative">
       {/* ContactTab */}
-      {hasContactInfo && (
-        <>
-<div
-  className="absolute"
-  style={{
-    top: "120px",
-    right: -48,
-    zIndex: 80,
-    pointerEvents: "auto",
-  }}
-  ref={contactTabRef}
->
-  <ContactTab
-  tabIndex={-1} 
-  email={email}
-  website={website}
-  socials={socials}
-  isOpen={showContact}
-  onClick={handleContactClick}
-  />
-</div>
-
-{/* ContactPanel */}
-<div
-  ref={contactRef}
-  className="absolute"
-  style={{
-    top: "120px",
-    right: "48px",
-    width: "272px",
-    zIndex: 70,
-    display: showContact ? "block" : "none",
-  }}
->
-  <ContactPanel
-    email={email}
-    website={website}
-    socials={socials}
-    onClose={() => setShowContact(false)}
-  />
-</div>
-        </>
-      )}
-
+      <ContactOverlay email={email} website={website} socials={socials} />
 
 
       {statusFlags?.length > 0 && (
