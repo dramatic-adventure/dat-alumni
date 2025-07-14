@@ -1,3 +1,5 @@
+// components/shared/PosterStrip.tsx
+
 "use client";
 
 import { PosterData } from "@/lib/types";
@@ -10,11 +12,12 @@ export default function PosterStrip({ posters }: PosterStripProps) {
   if (!posters?.length) return null;
 
   return (
-    <div className="flex overflow-x-auto gap-8 md:gap-10 snap-x snap-mandatory justify-end">
+    <div className="flex flex-wrap justify-center gap-6 px-4 md:px-[60px]">
       {posters.map((poster, index) => (
         <div
           key={index}
-          className="flex-shrink-0 snap-start w-[300px] box-border"
+          className="flex-grow max-w-[calc(33.333%-1.5rem)] min-w-[300px]"
+          style={{ flexBasis: "calc(33.333% - 1.5rem)" }}
         >
           <a
             href={poster.url}
@@ -27,17 +30,18 @@ export default function PosterStrip({ posters }: PosterStripProps) {
               src={poster.posterUrl}
               alt={poster.title}
               className="w-full h-auto block"
+              style={{
+                aspectRatio: "16/9",
+                objectFit: "cover",
+              }}
             />
           </a>
 
-          <div className="text-center mt-6">
+          <div className="text-center mt-4 px-2">
             <div
-              className="text-[#D9A919] text-xl font-extrabold tracking-tight"
+              className="text-[#D9A919] text-lg font-extrabold tracking-tight"
               style={{
                 fontFamily: '"Space Grotesk", sans-serif',
-                paddingTop: "0.5rem",
-                maxWidth: "260px", // 👈 triggers earlier wraparound
-                margin: "0 auto", // centers the constrained text
                 lineHeight: "1.3",
               }}
             >

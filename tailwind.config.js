@@ -52,7 +52,12 @@ module.exports = {
         'dat-pink': '#FF4470',
       },
       screens: {
-        xs: "400px",
+        // ✅ SMART 3-TIER RESPONSIVE STRUCTURE
+        mobile: { max: "767px" }, 
+        tablet: "768px",                             
+        md: "1024px",  // Desktop and up
+        lg: "1280px",
+        xl: "1536px",
       },
       animation: {
         fadeIn: 'fadeIn 0.3s ease-out',
@@ -72,3 +77,4 @@ module.exports = {
     require('tailwind-scrollbar-hide'),
   ],
 };
+

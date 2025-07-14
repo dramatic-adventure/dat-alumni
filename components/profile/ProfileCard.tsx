@@ -1,5 +1,3 @@
-// components/alumni/ProfileCard.tsx
-
 "use client";
 
 import { useState, useLayoutEffect, useEffect, useRef } from "react";
@@ -19,6 +17,10 @@ import ContactWidget from "@/components/shared/ContactWidget";
 import { StoryRow, Production } from "@/lib/types";
 import { productionMap } from "@/lib/productionMap";
 import StatusFlags from "@/components/alumni/StatusFlags";
+
+import MobileProfileHeader from "@/components/alumni/MobileProfileHeader";
+import DesktopProfileHeader from "@/components/alumni/DesktopProfileHeader";
+import useIsMobile from "@/hooks/useIsMobile";
 
 const FeaturedStories = dynamic(() => import("@/components/shared/FeaturedStories"), {
   ssr: false,
@@ -78,6 +80,8 @@ export default function ProfileCard({
   const [lastScale, setLastScale] = useState(cached?.last ?? 0.95);
   const [hasMeasured, setHasMeasured] = useState(!!cached);
 
+  const isMobile = useIsMobile();
+
   useLayoutEffect(() => {
     if (hasMeasured) return;
     const first = firstNameRef.current;
@@ -109,36 +113,41 @@ export default function ProfileCard({
   const profileCardRef = useRef<HTMLDivElement>(null);
   const hasContactInfo = !!(email || website || (socials && socials.length > 0));
 
-
   return (
     <div ref={profileCardRef} style={{ position: "relative" }}>
-      <ContactOverlay
+      {/* <ContactOverlay
         email={email}
         website={website}
         socials={socials}
         profileCardRef={profileCardRef}
-      />
+      /> */}
 
-
-      {statusFlags?.length > 0 && (
-        <div
-          className="absolute z-40 flex items-center gap-2 overflow-visible"
-          style={{ top: "0rem", right: "4.5rem" }}
-        >
-          <StatusFlags
-            flags={statusFlags}
-            fontSize="1.75rem"
-            fontFamily='"DM Sans", sans-serif'
-            textColor="#F6E4C1"
-            borderRadius="33px"
-          />
-        </div>
+      {isMobile ? (
+        <MobileProfileHeader
+          name={name}
+          role={role}
+          location={location}
+          headshotUrl={headshotUrl}
+          email={email}
+          website={website}
+          socials={socials}
+          statusFlags={statusFlags}
+        />
+      ) : (
+        <DesktopProfileHeader
+          name={name}
+          role={role}
+          location={location}
+          headshotUrl={headshotUrl}
+          email={email}
+          website={website}
+          socials={socials}
+          statusFlags={statusFlags}
+        />
       )}
 
-      <div className="absolute z-40" style={{ top: "1rem", right: "1rem" }}>
-        <ShareButton url={currentUrl} />
-      </div>
-
+      {/* 👇 COMMENTED OUT: moved to DesktopProfileHeader */}
+      {/*
       {headshotUrl || fallbackImage ? (
         <div
           className="absolute top-0 left-[1.5rem] sm:left-4 z-40"
@@ -191,14 +200,10 @@ export default function ProfileCard({
         />
 
         {(role || location) && (
-          <div
-            className="flex flex-row items-center flex-wrap gap-x-3 gap-y-2"
-            style={{ marginTop: "0.5rem", marginBottom: "0.5rem", textAlign: "left" }}
-          >
+          <div className="flex flex-row items-center flex-wrap gap-x-3 gap-y-2" style={{ marginTop: "0.5rem", marginBottom: "0.5rem", textAlign: "left" }}>
             {role && (
               <Link
                 href={`/role/${role.toLowerCase().replace(/\s+/g, "-")}`}
-                className="transition-all duration-200"
                 style={{
                   fontFamily: "Space Grotesk, sans-serif",
                   fontSize: "1.7rem",
@@ -207,36 +212,15 @@ export default function ProfileCard({
                   letterSpacing: "2px",
                   fontWeight: 700,
                   opacity: 0.9,
-                  margin: 0,
                   textDecoration: "none",
-                  display: "inline-block",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "scaleX(1.05)";
-                  e.currentTarget.style.color = "#6C00AF";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "scaleX(1)";
-                  e.currentTarget.style.color = "#241123";
                 }}
               >
                 {role}
               </Link>
             )}
-
             {role && location && (
-              <span
-                style={{
-                  fontSize: "1.2rem",
-                  color: "#241123",
-                  padding: "0 14px",
-                  opacity: 0.5,
-                }}
-              >
-                •
-              </span>
+              <span style={{ fontSize: "1.2rem", color: "#241123", padding: "0 14px", opacity: 0.5 }}>•</span>
             )}
-
             {location && (
               <LocationBadge
                 location={location}
@@ -246,36 +230,43 @@ export default function ProfileCard({
                 letterSpacing="2px"
                 textTransform="none"
                 opacity={0.5}
-                margin="0"
-                className="hover:text-[#6C00AF]"
               />
             )}
           </div>
         )}
       </div>
+      */}
 
-{hasArtistBio && (
-  <div className="bg-[#006D77] py-6 m-0">
-    <div className="max-w-6xl mx-auto px-4">
-      <ArtistBio
-        identityTags={identityTags}
-        artistStatement={artistStatement}
+      {/* <StatusFlags
+        flags={statusFlags}
+        fontSize="1.75rem"
         fontFamily='"DM Sans", sans-serif'
-        fontSize="1.15rem"
-        color="#ffffff"
-        fontStyle="normal"
-        fontWeight={200}
-        letterSpacing="normal"
-        identityTagStyle={{ marginLeft: "250px" }}
-        bioStyle={{ marginTop: "1rem", marginBottom: "2rem" }}
-      />
-    </div>
-  </div>
-)}
+        textColor="#F6E4C1"
+        borderRadius="33px"
+      /> */}
 
+      {/* <div className="absolute z-40" style={{ top: "1rem", right: "1rem" }}>
+        <ShareButton url={currentUrl} />
+      </div> */}
 
-
-
+      {hasArtistBio && (
+        <div className="bg-[#006D77] py-6 m-0">
+          <div className="max-w-6xl mx-auto px-4">
+            <ArtistBio
+              identityTags={identityTags}
+              artistStatement={artistStatement}
+              fontFamily='"DM Sans", sans-serif'
+              fontSize="1.15rem"
+              color="#ffffff"
+              fontStyle="normal"
+              fontWeight={200}
+              letterSpacing="normal"
+              identityTagStyle={{ marginTop: "1.5rem", marginLeft: "310px" }}
+              bioStyle={{ marginTop: "2.2rem", marginBottom: "1.25rem" }}
+            />
+          </div>
+        </div>
+      )}
 
       {featuredProductions.length > 0 && (
         <div className="bg-[#19657c] py-[30px] m-0">
@@ -297,15 +288,15 @@ export default function ProfileCard({
                   purpose.
                 </p>
               </div>
-              <div className="flex justify-end mt-[4px] pr-[60px]">
-                <PosterStrip
-                  posters={featuredProductions.map((p) => ({
-                    posterUrl: `/posters/${p.slug}-landscape.jpg`,
-                    url: `https://www.dramaticadventure.com${p.url}`,
-                    title: p.title,
-                  }))}
-                />
-              </div>
+              <div className="flex justify-center mt-1 w-full">
+  <PosterStrip
+    posters={featuredProductions.map((p) => ({
+      posterUrl: `/posters/${p.slug}-landscape.jpg`,
+      url: `https://www.dramaticadventure.com${p.url}`,
+      title: p.title,
+    }))}
+  />
+</div>
             </div>
           </div>
         </div>
@@ -328,12 +319,12 @@ export default function ProfileCard({
         </section>
       )}
 
-    {isModalOpen && (
+      {isModalOpen && (
         <Lightbox
           images={[headshotUrl || fallbackImage]}
           onClose={() => setModalOpen(false)}
         />
       )}
-    </div> // ✅ closes the main <div className="relative">
+    </div>
   );
 }

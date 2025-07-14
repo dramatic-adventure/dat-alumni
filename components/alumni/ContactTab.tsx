@@ -9,7 +9,7 @@ export interface ContactTabProps {
   website?: string;
   socials?: string[];
   onClick?: React.MouseEventHandler;
-  onMouseDown?: React.MouseEventHandler; // ✅ Add this line
+  onMouseDown?: React.MouseEventHandler;
   isOpen?: boolean;
 }
 
@@ -18,17 +18,15 @@ export default function ContactTab({
   website,
   socials = [],
   onClick,
-  onMouseDown, // ✅ Add this here too
+  onMouseDown,
   isOpen = false,
 }: ContactTabProps) {
-
-
   return (
     <button
-  onClick={onClick}
-  onMouseDown={onMouseDown} // ✅ Add this
-  aria-label="Open or close contact panel"
-  className="select-none"
+      onClick={onClick}
+      onMouseDown={onMouseDown}
+      aria-label="Open or close contact panel"
+      className="select-none transition-opacity duration-200 hover:opacity-80"
       style={{
         color: "#7c312f",
         fontWeight: 600,
@@ -48,10 +46,8 @@ export default function ContactTab({
         alignItems: "center",
         justifyContent: "center",
         boxShadow: isOpen
-  ? "4px 6px 8px rgba(0, 0, 0, 0.3), 0 2px 1px rgba(0, 0, 0, 0.2)"
-  : "4px 6px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1), inset 6px 0 6px -6px rgba(0, 0, 0, 0.25)"
-
-
+          ? "4px 6px 8px rgba(0, 0, 0, 0.3), 0 2px 1px rgba(0, 0, 0, 0.2)"
+          : "4px 6px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1), inset 6px 0 6px -6px rgba(0, 0, 0, 0.25)",
       }}
     >
       CONTACT

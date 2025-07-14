@@ -57,28 +57,25 @@ export default function AlumniProfilePage({
       <main>
         <AlumniProfileBackdrop backgroundKey={backgroundChoice}>
           <div
-            className="w-full px-[5vw] sm:px-[5vw] md:px-[7vw] lg:px-[7vw] overflow-hidden"
+            className="w-full overflow-hidden"
             style={{ marginTop: "-36rem" }}
           >
-            <div className="flex flex-row w-full gap-4">
-              {/* LEFT COLUMN */}
-              <div className="flex-grow flex justify-end bg-white shadow-[0_8px_24px_rgba(0,0,0,0.25)] relative">
-                <ProfileCard
-                  slug={slug}
-                  name={name}
-                  role={role}
-                  headshotUrl={headshotUrl}
-                  location={location}
-                  programBadges={programBadges}
-                  identityTags={identityTags}
-                  statusFlags={statusFlags}
-                  artistStatement={artistStatement}
-                  stories={authorStories}
-                  email={email}
-                  website={website}
-                  socials={socials}
-                />
-              </div>
+            <div className="w-[80%] mx-auto">
+              <ProfileCard
+                slug={slug}
+                name={name}
+                role={role}
+                headshotUrl={headshotUrl}
+                location={location}
+                programBadges={programBadges}
+                identityTags={identityTags}
+                statusFlags={statusFlags}
+                artistStatement={artistStatement}
+                stories={authorStories}
+                email={email}
+                website={website}
+                socials={socials}
+              />
             </div>
 
             {/* Optional: Image gallery */}
@@ -111,7 +108,6 @@ export default function AlumniProfilePage({
 
             <div className="h-[150px] sm:h-[300px] md:h-[400px]" />
           </div>
-
         </AlumniProfileBackdrop>
       </main>
     </>

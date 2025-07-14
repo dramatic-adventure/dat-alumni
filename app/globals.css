@@ -323,3 +323,11 @@ a:visited {
   transition: transform 0.2s ease, filter 0.2s ease;
 }
 
+/* ===============================
+   Cursor
+=============================== */
+
+a, button, [role="link"], [role="button"] {
+  cursor: pointer !important;
+}
+
