@@ -610,7 +610,8 @@ export const productionMap: Record<string, Production> = {
       "katarina-hughes": ["Actor"],
       "maggie-thompson": ["Actor"],
       "lauren-ullrich": ["Actor"],
-      "bryant-vance": ["Actor"]
+      "bryant-vance": ["Actor"],
+      "isabel-martinez": ["Actor"]
     }
   },
 
@@ -832,7 +833,8 @@ export const productionMap: Record<string, Production> = {
       "mary-k-baxter": ["Actor"],
       "jeremy-feldman": ["Actor"],
       "rachel-martsolf": ["Actor"],
-      "lydia-perez-carpenter": ["Actor"]
+      "lydia-perez-carpenter": ["Actor"],
+      "isabel-martinez": ["Actor"]
     }
   },
 

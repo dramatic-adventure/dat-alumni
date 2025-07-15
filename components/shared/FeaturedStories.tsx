@@ -1,5 +1,4 @@
 "use client";
-export {};
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -9,7 +8,7 @@ import ThumbnailMedia from "./ThumbnailMedia";
 
 interface FeaturedStoriesProps {
   stories: StoryRow[];
-  authorSlug?: string; // ✅ optional prop added
+  authorSlug?: string;
 }
 
 export default function FeaturedStories({ stories, authorSlug }: FeaturedStoriesProps) {
@@ -17,7 +16,6 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
 
   if (!stories || stories.length === 0) return null;
 
-  // ✅ Optional filter by authorSlug
   const validStories = stories.filter(
     (s) =>
       s &&
@@ -50,7 +48,7 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
       !sidebarStories.some((side) => side.slug === s.slug)
   );
 
-  const hasExtraStories = validStories.length >= 5;
+  const hasExtraStories = validStories.length > 4;
 
   return (
     <section
@@ -61,7 +59,6 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
         maxWidth: "100%",
       }}
     >
-
       <h2
         style={{
           backgroundColor: "#F23359",
@@ -97,14 +94,10 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
             flex: "1 1 45%",
             textDecoration: "none",
             color: "inherit",
-            minWidth: "320px",
+            minWidth: "300px",
           }}
         >
-          <StoryMedia
-            imageUrl={coverStory.imageUrl}
-            title={coverStory.title}
-            style={{ borderRadius: 0 }}
-          />
+          <StoryMedia imageUrl={coverStory.imageUrl} title={coverStory.title} style={{ borderRadius: 0 }} />
           <h3
             style={{
               fontSize: "2.6rem",
@@ -131,21 +124,27 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
             {coverStory.story?.slice(0, 160)}...
           </p>
           <span
-            style={{
-              fontFamily: '"DM Sans", sans-serif',
-              fontWeight: "bold",
-              color: "#F23359",
-            }}
-          >
-            Read full story →
-          </span>
+  style={{
+    fontFamily: '"DM Sans", sans-serif',
+    fontWeight: "bold",
+    color: "#F23359",
+    transition: "opacity 0.2s ease-in-out",
+    cursor: "pointer",
+    opacity: 1,
+  }}
+  onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+  onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+>
+  Read full story →
+</span>
+
         </Link>
 
         {/* Sidebar */}
         {sidebarStories.length > 0 && (
           <div
             style={{
-              flex: "1 1 35%",
+              flex: "0.5 1 35%",
               display: "flex",
               flexDirection: "column",
               gap: "3rem",
@@ -164,18 +163,8 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
                     color: "inherit",
                   }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      gap: "1rem",
-                    }}
-                  >
-                    <ThumbnailMedia
-                      imageUrl={story.imageUrl}
-                      title={story.title}
-                      style={{ borderRadius: 0 }}
-                    />
+                  <div style={{ display: "flex", flexDirection: "row", gap: "1rem" }}>
+                    <ThumbnailMedia imageUrl={story.imageUrl} title={story.title} style={{ borderRadius: 0 }} />
                     <div>
                       <h4
                         style={{
@@ -185,7 +174,7 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
                           textTransform: "uppercase",
                           fontWeight: 400,
                           display: "inline-block",
-                          marginBottom: "-0.8rem",
+                          marginBottom: "-0.2rem",
                           color: "#241123",
                         }}
                       >
@@ -202,14 +191,20 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
                         {story.story?.slice(0, 100)}...
                       </p>
                       <span
-                        style={{
-                          fontFamily: '"DM Sans", sans-serif',
-                          fontWeight: "bold",
-                          color: "#F23359",
-                        }}
-                      >
-                        Read full story →
-                      </span>
+  style={{
+    fontFamily: '"DM Sans", sans-serif',
+    fontWeight: "bold",
+    color: "#F23359",
+    transition: "opacity 0.2s ease-in-out",
+    cursor: "pointer",
+    opacity: 1,
+  }}
+  onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+  onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+>
+  Read full story →
+</span>
+
                     </div>
                   </div>
                 </Link>
@@ -219,112 +214,104 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
         )}
       </div>
 
-      {/* View All Button */}
-      {hasExtraStories && !showAll && (
-        <div style={{ marginTop: "1.5rem" }}>
-          <button
-            onClick={() => setShowAll(true)}
-            style={{
-              fontFamily: '"DM Sans", sans-serif',
-              fontSize: "1.2rem",
-              fontWeight: 600,
-              color: "#241123",
-              textDecoration: "underline",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            View All Stories →
-          </button>
+      {/* Expanded Grid */}
+      {showAll && additionalStories.length > 0 && (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: "1rem",
+            marginTop: "2rem",
+          }}
+        >
+          {additionalStories.map((story) =>
+            story?.slug ? (
+              <Link
+                key={story.slug}
+                href={`/story/${story.slug}`}
+                style={{
+                  display: "block",
+                  cursor: "pointer",
+                  textDecoration: "none",
+                  color: "inherit",
+                }}
+              >
+                <ThumbnailMedia imageUrl={story.imageUrl} title={story.title} style={{ borderRadius: 0 }} />
+                <h4
+                  style={{
+                    fontFamily: "Anton, sans-serif",
+                    fontSize: "1.5rem",
+                    backgroundColor: "#FFCC00",
+                    textTransform: "uppercase",
+                    fontWeight: 400,
+                    display: "inline-block",
+                    marginBottom: "-0.2rem",
+                    color: "#241123",
+                  }}
+                >
+                  {story.title}
+                </h4>
+                <p
+                  style={{
+                    fontSize: "0.95rem",
+                    fontFamily: '"DM Sans", sans-serif',
+                    color: "#444",
+                    lineHeight: 1,
+                  }}
+                >
+                  {story.story?.slice(0, 120)}...
+                </p>
+                <span
+  style={{
+    fontFamily: '"DM Sans", sans-serif',
+    fontWeight: "bold",
+    color: "#F23359",
+    transition: "opacity 0.2s ease-in-out",
+    cursor: "pointer",
+    opacity: 1,
+  }}
+  onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+  onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+>
+  Read full story →
+</span>
+
+              </Link>
+            ) : null
+          )}
         </div>
       )}
 
-      {/* Grid of Additional Stories */}
-      {showAll && additionalStories.length > 0 && (
-        <>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-              gap: "1rem",
-              marginTop: "1rem",
-            }}
-          >
-            {additionalStories.map((story) =>
-              story?.slug ? (
-                <Link
-                  key={story.slug}
-                  href={`/story/${story.slug}`}
-                  style={{
-                    display: "block",
-                    cursor: "pointer",
-                    textDecoration: "none",
-                    color: "inherit",
-                  }}
-                >
-                  <ThumbnailMedia
-                    imageUrl={story.imageUrl}
-                    title={story.title}
-                    style={{ borderRadius: 0 }}
-                  />
-                  <h4
-                    style={{
-                      fontFamily: "Anton, sans-serif",
-                      fontSize: "1.5rem",
-                      backgroundColor: "#FFCC00",
-                      textTransform: "uppercase",
-                      fontWeight: 400,
-                      display: "inline-block",
-                      marginBottom: "-0.8rem",
-                      color: "#241123",
-                    }}
-                  >
-                    {story.title}
-                  </h4>
-                  <p
-                    style={{
-                      fontSize: "0.95rem",
-                      fontFamily: '"DM Sans", sans-serif',
-                      color: "#444",
-                      lineHeight: 1,
-                    }}
-                  >
-                    {story.story?.slice(0, 120)}...
-                  </p>
-                  <span
-                    style={{
-                      fontFamily: '"DM Sans", sans-serif',
-                      fontWeight: "bold",
-                      color: "#F23359",
-                    }}
-                  >
-                    Read full story →
-                  </span>
-                </Link>
-              ) : null
-            )}
-          </div>
+      
+    {/* Button */}
+{hasExtraStories && (
+  <div style={{ marginTop: "2rem", textAlign: "right" }}>
+    <button
+  onClick={() => setShowAll(!showAll)}
+  style={{
+    fontFamily: '"Space Grotesk", sans-serif',
+    fontWeight: 500,
+    textTransform: "uppercase",
+    letterSpacing: "0.4em",
+    fontSize: "1.2rem",
+    color: "#f2f2f2",
+    backgroundColor: "#f23359", // DAT Purple
+    padding: "18px 40px",
+    border: "none",
+    borderRadius: "12px",
+    cursor: "pointer",
+    transition: "opacity 0.2s ease-in-out",
+    opacity: 1,
+  }}
+  onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+  onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+>
+  {showAll ? "View Less" : "View All Stories"}
+</button>
 
-          <div style={{ marginTop: "1.5rem" }}>
-            <button
-              onClick={() => setShowAll(false)}
-              style={{
-                fontFamily: '"DM Sans", sans-serif',
-                fontSize: "1.2rem",
-                fontWeight: 600,
-                color: "#241123",
-                textDecoration: "underline",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-              }}
-            >
-              Show Less ↑
-            </button>
-          </div>
-        </>
-      )}
+  </div>
+)}
+
     </section>
   );
 }

@@ -105,9 +105,9 @@ export default function ProfileCard({
   const hasStories = stories?.length > 0;
 
   const featuredProductions: Production[] = Object.values(productionMap)
-    .filter((p) => p?.artists?.[slug])
-    .sort((a, b) => b.year - a.year)
-    .slice(0, 3);
+  .filter((p) => p?.artists?.[slug])
+  .sort((a, b) => b.year - a.year); // ✅ Show all, most recent first
+
 
   const fallbackImage = "/images/default-headshot.png";
   const profileCardRef = useRef<HTMLDivElement>(null);
@@ -250,45 +250,57 @@ export default function ProfileCard({
       </div> */}
 
       {hasArtistBio && (
-        <div className="bg-[#006D77] py-6 m-0">
-          <div className="max-w-6xl mx-auto px-4">
-            <ArtistBio
-              identityTags={identityTags}
-              artistStatement={artistStatement}
-              fontFamily='"DM Sans", sans-serif'
-              fontSize="1.15rem"
-              color="#ffffff"
-              fontStyle="normal"
-              fontWeight={200}
-              letterSpacing="normal"
-              identityTagStyle={{ marginTop: "1.5rem", marginLeft: "310px" }}
-              bioStyle={{ marginTop: "2.2rem", marginBottom: "1.25rem" }}
-            />
-          </div>
-        </div>
-      )}
+  <div
+    style={{
+      backgroundColor: "#2493A9",
+      paddingTop: "2rem", // container padding
+      paddingBottom: "2rem",
+    }}
+  >
+    <ArtistBio
+      identityTags={identityTags}
+      artistStatement={artistStatement}
+      fontFamily='"DM Sans", sans-serif'
+      fontSize="1.15rem"
+      color="#0C2D37"
+      fontStyle="normal"
+      fontWeight={400}
+      letterSpacing="normal"
+      identityTagStyle={{
+        marginTop: "0rem",     // ✅ equal top margin
+        marginBottom: "1.85rem",  // ✅ equal bottom margin
+        marginLeft: isMobile ? "30px" : "310px",
+        marginRight: "30px",
+      }}
+      bioStyle={{
+        marginLeft: "30px",
+        marginRight: "30px",
+        marginTop: "1rem",     // ✅ match identity tag bottom
+        marginBottom: "1rem",  // ✅ even spacing
+        maxWidth: "calc(100% - 60px)",
+      }}
+    />
+  </div>
+)}
+
 
       {featuredProductions.length > 0 && (
-        <div className="bg-[#19657c] py-[30px] m-0">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1">
-              <div className="px-[60px]">
-                <h2
-                  className="text-6xl text-[#D9A919] mb-4"
-                  style={{ fontFamily: '"Space Grotesk", sans-serif' }}
-                >
-                  Featured DAT Work
-                </h2>
-                <p
-                  className="text-[#2493A9] text-lg max-w-3xl"
-                  style={{ fontFamily: '"DM Sans", sans-serif' }}
-                >
-                  Developed through cross-cultural exchange and a fearless approach to
-                  storytelling, this work reflects a deep engagement with place, people, and
-                  purpose.
-                </p>
-              </div>
-              <div className="flex justify-center mt-1 w-full">
+        <div className="bg-[#19657c] py-[30px] px-[30px]">
+  <h2
+    className="text-6xl text-[#D9A919] mb-4"
+    style={{ fontFamily: '"Space Grotesk", sans-serif' }}
+  >
+    Featured DAT Work
+  </h2>
+  <p
+    className="text-[#5BBFD3] text-lg max-w-3xl mb-8"
+    style={{ fontFamily: '"DM Sans", sans-serif' }}
+  >
+    Developed through cross-cultural exchange and a fearless approach to
+    storytelling, this work reflects a deep engagement with place, people, and
+    purpose.
+  </p>
+
   <PosterStrip
     posters={featuredProductions.map((p) => ({
       posterUrl: `/posters/${p.slug}-landscape.jpg`,
@@ -297,9 +309,7 @@ export default function ProfileCard({
     }))}
   />
 </div>
-            </div>
-          </div>
-        </div>
+
       )}
 
       {programBadges.length > 0 && (
@@ -314,7 +324,7 @@ export default function ProfileCard({
       )}
 
       {hasStories && (
-        <section className="bg-[#f2f2f2] rounded-xl px-[60px] py-[60px] mt-[0px]">
+        <section className="bg-[#f2f2f2] rounded-xl px-[30px] py-[30px] mt-[0px]">
           <FeaturedStories stories={stories} authorSlug={slug} />
         </section>
       )}

@@ -11,7 +11,6 @@ export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
   const programs = Object.values(programMap).filter((p) => p.artists[artistSlug]);
   if (!programs.length) return null;
 
-  // stable measured height
   const [panelHeight, setPanelHeight] = useState(600);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -20,9 +19,6 @@ export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
       setPanelHeight(panelRef.current.offsetHeight);
     }
   }, []);
-
-  // usedPositions in a ref
-  const usedPositions = useRef<{ top: number; left: number }[]>([]);
 
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
 
@@ -35,23 +31,57 @@ export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
         height: "100vh",
         minHeight: "250px",
         maxHeight: "500px",
-        backgroundColor: "#F6E4C1",
         overflow: "hidden",
+        backgroundColor: "#F6E4C1", // Base color
       }}
     >
-      {programs.map((program) => (
-        <StampShape
-          key={program.slug}
-          program={program.program}
-          location={program.location}
-          year={program.year}
-          color={getProgramColor(program.program)}
-          panelHeight={panelHeight}           // now measured consistently
-          hoveredSlug={hoveredSlug}
-          setHoveredSlug={setHoveredSlug}
-          mySlug={program.slug}
-        />
-      ))}
+      {/* ✅ Background Texture */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          backgroundImage: "url('/texture/passportpage.png')",
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          opacity: 1, // Texture opacity
+          zIndex: 1,
+        }}
+      />
+
+      {/* ✅ Overlay */}
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          backgroundColor: "#F799A8",
+          opacity: 0.3, // Adjust for strength of overlay
+          zIndex: 2,
+        }}
+      />
+
+      {/* ✅ Stamps */}
+      <div style={{ position: "relative", zIndex: 3 }}>
+        {programs.map((program) => (
+          <StampShape
+            key={program.slug}
+            program={program.program}
+            location={program.location}
+            year={program.year}
+            color={getProgramColor(program.program)}
+            panelHeight={panelHeight}
+            hoveredSlug={hoveredSlug}
+            setHoveredSlug={setHoveredSlug}
+            mySlug={program.slug}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -59,21 +89,21 @@ export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
 function getProgramColor(program: string) {
   switch (program.toUpperCase()) {
     case "RAW":
-      return "#006D77";
+      return "#00454B";
     case "CASTAWAY":
-      return "#6C00AF";
+      return "#3E0066";
     case "ACTION":
-      return "#E63946";
+      return "#8C1E24";
     case "TRAVELOGUE":
-      return "#F4A261";
+      return "#8B531F";
     case "SITE-LINES":
-      return "#8E44AD";
+      return "#532664";
     case "TEACHING ARTIST RESIDENCY":
-      return "#0096C7";
+      return "#005B7A";
     case "COMPANY RETREAT":
-      return "#F4A300";
+      return "#8B5D00";
     case "CREATIVE TREK":
-      return "#B22222";
+      return "#661414";
     default:
       return "#333333";
   }

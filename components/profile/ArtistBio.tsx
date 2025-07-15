@@ -12,6 +12,7 @@ interface ArtistBioProps {
   letterSpacing?: string;
   identityTagStyle?: React.CSSProperties;
   bioStyle?: React.CSSProperties;
+  sectionStyle?: React.CSSProperties; // ✅ NEW
 }
 
 export default function ArtistBio({
@@ -25,11 +26,18 @@ export default function ArtistBio({
   letterSpacing = "normal",
   identityTagStyle = {},
   bioStyle = {},
+  sectionStyle = {},
 }: ArtistBioProps) {
   if (!artistStatement && identityTags.length === 0) return null;
 
   return (
-    <section style={{ backgroundColor: "#2493A9", color: "#fff", padding: "1.2rem 60px 3rem" }}>
+    <section
+      style={{
+        backgroundColor: "#2493A9",
+        color: "#fff",
+        ...sectionStyle, // ✅ Apply external styles here
+      }}
+    >
       {identityTags.length > 0 && (
         <div className="flex flex-wrap gap-2 justify-end" style={identityTagStyle}>
           <IdentityTags tags={identityTags} />

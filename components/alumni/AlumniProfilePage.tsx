@@ -60,7 +60,7 @@ export default function AlumniProfilePage({
             className="w-full overflow-hidden"
             style={{ marginTop: "-36rem" }}
           >
-            <div className="w-[80%] mx-auto">
+            <div className="w-[79%] mx-auto">
               <ProfileCard
                 slug={slug}
                 name={name}

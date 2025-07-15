@@ -38,6 +38,8 @@ interface StatusFlagsProps {
   fontFamily?: string;
   textColor?: string;
   borderRadius?: string;
+  className?: string;
+  padding?: string;
 }
 
 export default function StatusFlags({
@@ -46,11 +48,14 @@ export default function StatusFlags({
   fontFamily = '"DM Sans", sans-serif',
   textColor = "#241123",
   borderRadius = "8px",
+  className = "",
 }: StatusFlagsProps) {
+
   if (!flags || flags.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-2" role="list">
+  <div className={`flex items-center ${className ?? ""}`} role="list">
+
       {flags.map((flag) => {
         const normalizedFlag = flag.trim() as FlagLabel;
 
