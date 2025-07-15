@@ -63,9 +63,11 @@ export default function AlumniProfilePage({
             <div
   className="w-[79%] mx-auto"
   style={{
-    boxShadow: "3px 8px 20px rgba(0,0,0,0.25)",
-    backgroundColor: "#fff", // or keep transparent if ProfileCard handles background
-    borderRadius: "12px",
+    backgroundColor: "transparent",
+    position: "relative",
+    borderRadius: "18px",
+    boxShadow: "0 12px 30px rgba(0, 0, 0, 0.15)", // ✅ Strong but soft shadow
+    overflow: "hidden", // ✅ Makes edges look clean
   }}
 >
   <ProfileCard
