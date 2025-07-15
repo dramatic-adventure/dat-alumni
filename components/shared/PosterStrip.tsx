@@ -67,7 +67,7 @@ export default function PosterStrip({ posters }: PosterStripProps) {
                 style={{
                   fontFamily: '"Space Grotesk", sans-serif',
                   fontWeight: 500, // ✅ Increased font weight
-                  fontSize: "1.05rem",
+                  fontSize: "1.15rem",
                   wordWrap: "break-word",
                 }}
               >

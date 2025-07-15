@@ -60,23 +60,31 @@ export default function AlumniProfilePage({
             className="w-full overflow-hidden"
             style={{ marginTop: "-36rem" }}
           >
-            <div className="w-[79%] mx-auto">
-              <ProfileCard
-                slug={slug}
-                name={name}
-                role={role}
-                headshotUrl={headshotUrl}
-                location={location}
-                programBadges={programBadges}
-                identityTags={identityTags}
-                statusFlags={statusFlags}
-                artistStatement={artistStatement}
-                stories={authorStories}
-                email={email}
-                website={website}
-                socials={socials}
-              />
-            </div>
+            <div
+  className="w-[79%] mx-auto"
+  style={{
+    boxShadow: "3px 8px 20px rgba(0,0,0,0.25)",
+    backgroundColor: "#fff", // or keep transparent if ProfileCard handles background
+    borderRadius: "12px",
+  }}
+>
+  <ProfileCard
+    slug={slug}
+    name={name}
+    role={role}
+    headshotUrl={headshotUrl}
+    location={location}
+    programBadges={programBadges}
+    identityTags={identityTags}
+    statusFlags={statusFlags}
+    artistStatement={artistStatement}
+    stories={authorStories}
+    email={email}
+    website={website}
+    socials={socials}
+  />
+</div>
+
 
             {/* Optional: Image gallery */}
             {imageUrls.length > 0 && (
