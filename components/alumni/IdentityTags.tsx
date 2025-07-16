@@ -31,7 +31,7 @@ export default function IdentityTags({
             backgroundColor: "#16697A",
             fontFamily: '"Space Grotesk", sans-serif',
             letterSpacing: "0.2rem",
-            padding: "1rem",
+            padding: "1.25rem",
             lineHeight: "1.2",
             minHeight: "3.6rem",
             border: "none",

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import React from "react";
 
 interface LocationBadgeProps {
   location?: string;
@@ -13,6 +14,7 @@ interface LocationBadgeProps {
   textTransform?: React.CSSProperties["textTransform"];
   opacity?: number;
   margin?: string;
+  style?: React.CSSProperties; // ✅ Already added
 }
 
 export default function LocationBadge({
@@ -26,6 +28,7 @@ export default function LocationBadge({
   textTransform = "none",
   opacity = 0.85,
   margin = "0",
+  style, // ✅ Destructure style
 }: LocationBadgeProps) {
   const trimmedLocation = location?.trim();
   if (!trimmedLocation) return null;
@@ -47,8 +50,9 @@ export default function LocationBadge({
         opacity,
         margin,
         textDecoration: "none",
-        display: "inline-block",         // 🔥 Needed for transform to work
-        transformOrigin: "left",         // 🔥 Ensures it scales to the right
+        display: "inline-block",
+        transformOrigin: "left",
+        ...style, // ✅ Merge custom inline styles here
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "scaleX(1.05)";

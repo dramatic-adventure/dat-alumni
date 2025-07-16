@@ -253,8 +253,8 @@ export default function ProfileCard({
   <div
     style={{
       backgroundColor: "#2493A9",
-      paddingTop: "2rem", // container padding
-      paddingBottom: "2rem",
+      paddingTop: "3rem", // container padding
+      paddingBottom: "2.5rem",
     }}
   >
     <ArtistBio
@@ -268,7 +268,7 @@ export default function ProfileCard({
       letterSpacing="normal"
       identityTagStyle={{
         marginTop: "0rem",     // ✅ equal top margin
-        marginBottom: "1.85rem",  // ✅ equal bottom margin
+        marginBottom: "2.5rem",  // ✅ equal bottom margin
         marginLeft: isMobile ? "30px" : "310px",
         marginRight: "30px",
       }}
@@ -314,7 +314,7 @@ export default function ProfileCard({
 
       {programBadges.length > 0 && (
         <div
-          className="relative bg-[#F6E4C1] py-6 m-0 overflow-hidden h-[50vh] min-h-[300px] max-h-[600px]"
+          className="relative bg-[#F6E4C1] py-6 m-0 overflow-hidden h-[50vh] min-h-[350px] max-h-[600px]"
           style={{ zIndex: 50 }}
         >
           <div className="max-w-6xl mx-auto px-4 relative h-full">

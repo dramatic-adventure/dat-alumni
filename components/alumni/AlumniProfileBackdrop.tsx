@@ -19,16 +19,19 @@ export default function AlumniProfileBackdrop({
   const backgroundImage = backgroundMap[backgroundKey] || backgroundMap.kraft;
 
   return (
-    <div className="relative w-full overflow-visible" style={{ zIndex: 0 }}>
+    <div className="relative w-full" style={{ zIndex: 0 }}>
+      {/* ✅ Fixed parallax background */}
       <div
-        className="absolute inset-0 bg-cover bg-center"
+        className="fixed inset-0 bg-cover bg-center"
         style={{
-          zIndex: -1,
           backgroundImage,
-          backgroundBlendMode: "multiply",
-          pointerEvents: "none", // ensure clicks pass through
+          backgroundAttachment: "fixed",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          zIndex: -1,
         }}
       />
+      {/* ✅ Normal flow content */}
       <div className="relative z-10">{children}</div>
     </div>
   );

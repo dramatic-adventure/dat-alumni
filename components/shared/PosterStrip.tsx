@@ -13,8 +13,8 @@ export default function PosterStrip({ posters }: PosterStripProps) {
   if (!posters?.length) return null;
 
   // Show first 4 posters initially
-  const visiblePosters = expanded ? posters : posters.slice(0, 4);
-  const hasExtra = posters.length > 4;
+  const visiblePosters = expanded ? posters : posters.slice(0, 3);
+  const hasExtra = posters.length > 3;
 
   return (
     <div>
@@ -59,7 +59,7 @@ export default function PosterStrip({ posters }: PosterStripProps) {
               className="text-center mt-4"
               style={{
                 width: "60%",
-                paddingBottom: "1.2rem",
+                paddingBottom: "2rem",
               }}
             >
               <div
@@ -97,6 +97,7 @@ export default function PosterStrip({ posters }: PosterStripProps) {
     cursor: "pointer",
     transition: "opacity 0.3s ease-in-out",
     opacity: 1,
+    marginBottom: "0.5rem"
   }}
   onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
   onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}

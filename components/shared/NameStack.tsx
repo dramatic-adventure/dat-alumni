@@ -1,6 +1,4 @@
 "use client";
-export {}; // ✅ ensure ES module scope
-
 import React, { RefObject } from "react";
 
 type TextTransform = "uppercase" | "lowercase" | "capitalize" | "none";
@@ -19,6 +17,7 @@ export interface NameStackProps {
   textTransform?: TextTransform;
   letterSpacing?: string;
   textAlign?: "left" | "center" | "right";
+  style?: React.CSSProperties; // ✅ Safe external style
 }
 
 export default function NameStack({
@@ -35,6 +34,7 @@ export default function NameStack({
   textTransform = "uppercase",
   letterSpacing = "5px",
   textAlign = "left",
+  style, // ✅ Now merged properly
 }: NameStackProps) {
   const baseTextStyle: React.CSSProperties = {
     fontFamily: nameFontFamily,
@@ -58,10 +58,11 @@ export default function NameStack({
   return (
     <div
       style={{
+        ...style, // ✅ Applies external width/margin here
         ...baseTextStyle,
         display: "inline-flex",
         flexDirection: "column",
-        alignItems: "flex-start",
+        alignItems: textAlign === "center" ? "center" : "flex-start",
       }}
     >
       {/* Hidden measuring divs */}
@@ -76,7 +77,7 @@ export default function NameStack({
       <div
         style={{
           transform: `scale(${firstScale})`,
-          transformOrigin: "left",
+          transformOrigin: textAlign === "center" ? "center" : "left",
           whiteSpace: "nowrap",
           marginTop: "0.5em",
           visibility: hasMeasured ? "visible" : "hidden",
@@ -87,7 +88,7 @@ export default function NameStack({
       <div
         style={{
           transform: `scale(${lastScale})`,
-          transformOrigin: "left",
+          transformOrigin: textAlign === "center" ? "center" : "left",
           whiteSpace: "nowrap",
           marginTop: "0.15em",
           visibility: hasMeasured ? "visible" : "hidden",

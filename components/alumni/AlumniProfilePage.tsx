@@ -1,23 +1,27 @@
 "use client";
 
 import Head from "next/head";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { AlumniRow, StoryRow } from "@/lib/types";
-import { getPostersForArtist } from "@/lib/getPostersForArtist";
 import ProfileCard from "@/components/profile/ProfileCard";
-import ImageCarousel from "@/components/alumni/ImageCarousel";
-import FieldNotes from "@/components/alumni/FieldNotes";
-import Lightbox from "@/components/shared/LightboxPortal";
 import AlumniProfileBackdrop from "@/components/alumni/AlumniProfileBackdrop";
 
 interface AlumniProfileProps {
   data: AlumniRow;
   allStories: StoryRow[];
+  offsetTop?: string;        // Additional offset for fine-tuning (e.g., "-2rem")
+  offsetBottom?: string;     // Space below section (e.g., "-6rem")
+  minSectionHeight?: string; // Ensures parallax coverage (e.g., "140vh")
 }
+
+const HEADER_HEIGHT = "84px"; // ✅ Adjust if your header height changes
 
 export default function AlumniProfilePage({
   data,
   allStories,
+  offsetTop = "-40rem",
+  offsetBottom = "-25rem",
+  minSectionHeight = "100vh",
 }: AlumniProfileProps) {
   const {
     slug,
@@ -28,8 +32,6 @@ export default function AlumniProfilePage({
     identityTags = [],
     statusFlags = [],
     artistStatement = "",
-    fieldNotes,
-    imageUrls = [],
     backgroundChoice = "kraft",
     location = "",
     email = "",
@@ -37,15 +39,19 @@ export default function AlumniProfilePage({
     socials = [],
   } = data || {};
 
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [showContact, setShowContact] = useState(false);
-
   const authorStories = useMemo(
     () => allStories.filter((story) => story.authorSlug === slug),
     [allStories, slug]
   );
 
-  const posters = useMemo(() => getPostersForArtist(slug), [slug]);
+  // ✅ Detect mobile viewport
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkScreen = () => setIsMobile(window.innerWidth < 768);
+    checkScreen();
+    window.addEventListener("resize", checkScreen);
+    return () => window.removeEventListener("resize", checkScreen);
+  }, []);
 
   return (
     <>
@@ -54,70 +60,51 @@ export default function AlumniProfilePage({
         <title>{name} | DAT Alumni</title>
       </Head>
 
-      <main>
+      <main style={{ margin: 0, padding: 0, width: "100%", display: "block" }}>
         <AlumniProfileBackdrop backgroundKey={backgroundChoice}>
-          <div
-            className="w-full overflow-hidden"
-            style={{ marginTop: "-36rem" }}
+          <section
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "flex-start",
+              width: "100%",
+              position: "relative",
+              minHeight: minSectionHeight,
+              paddingTop: 0,
+              marginBottom: offsetBottom,
+            }}
           >
             <div
-  className="w-[79%] mx-auto"
-  style={{
-    backgroundColor: "transparent",
-    position: "relative",
-    borderRadius: "18px",
-    boxShadow: "0 12px 30px rgba(0, 0, 0, 0.15)", // ✅ Strong but soft shadow
-    overflow: "hidden", // ✅ Makes edges look clean
-  }}
->
-  <ProfileCard
-    slug={slug}
-    name={name}
-    role={role}
-    headshotUrl={headshotUrl}
-    location={location}
-    programBadges={programBadges}
-    identityTags={identityTags}
-    statusFlags={statusFlags}
-    artistStatement={artistStatement}
-    stories={authorStories}
-    email={email}
-    website={website}
-    socials={socials}
-  />
-</div>
-
-
-            {/* Optional: Image gallery */}
-            {imageUrls.length > 0 && (
-              <section className="mt-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <ImageCarousel
-                  images={imageUrls}
-                  onImageClick={setLightboxIndex}
-                />
-              </section>
-            )}
-
-            {/* Optional: Lightbox view */}
-            {imageUrls.length > 0 && lightboxIndex !== null && (
-              <Lightbox>
-                <img
-                  src={imageUrls[lightboxIndex]}
-                  alt={`Gallery image ${lightboxIndex + 1}`}
-                  style={{ width: "100%", height: "auto", objectFit: "contain" }}
-                />
-              </Lightbox>
-            )}
-
-            {/* Optional: Field Notes */}
-            {fieldNotes && fieldNotes.length > 0 && (
-              <section className="mt-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <FieldNotes notes={fieldNotes} />
-              </section>
-            )}
-
-            <div className="h-[150px] sm:h-[300px] md:h-[400px]" />
-          </div>
+              style={{
+                width: isMobile ? "100%" : "85%", // ✅ Mobile full width, desktop narrower
+                maxWidth: "1200px",
+                margin: isMobile ? "0" : "0 auto", // ✅ Center on desktop
+                marginLeft: isMobile ? "3%" : "auto", // ✅ Mobile unique left margin
+                marginRight: isMobile ? "10%" : "auto", // ✅ Mobile unique right margin
+                position: "relative",
+                overflow: "visible", // ✅ Contact tab remains visible
+                borderRadius: "18px",
+                top: `calc(${HEADER_HEIGHT} + ${offsetTop})`, // ✅ Accounts for header height
+                transition: "top 0.3s ease-in-out", // ✅ Smooth position change
+              }}
+            >
+              <ProfileCard
+                slug={slug}
+                name={name}
+                role={role}
+                headshotUrl={headshotUrl}
+                location={location}
+                programBadges={programBadges}
+                identityTags={identityTags}
+                statusFlags={statusFlags}
+                artistStatement={artistStatement}
+                stories={authorStories}
+                email={email}
+                website={website}
+                socials={socials}
+              />
+            </div>
+          </section>
         </AlumniProfileBackdrop>
       </main>
     </>
