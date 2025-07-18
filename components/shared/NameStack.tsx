@@ -1,101 +1,138 @@
 "use client";
-import React, { RefObject } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
-type TextTransform = "uppercase" | "lowercase" | "capitalize" | "none";
-
-export interface NameStackProps {
+interface ScaledNameProps {
   firstName: string;
   lastName: string;
-  firstNameRef: RefObject<HTMLDivElement | null>;
-  lastNameRef: RefObject<HTMLDivElement | null>;
-  firstScale: number;
-  lastScale: number;
-  hasMeasured: boolean;
-  nameFontFamily?: string;
-  nameFontSize?: string;
-  nameColor?: string;
-  textTransform?: TextTransform;
-  letterSpacing?: string;
-  textAlign?: "left" | "center" | "right";
-  style?: React.CSSProperties; // ✅ Safe external style
+  containerWidth?: number; // default 290
+  gap?: string; // default 0.4rem
 }
 
-export default function NameStack({
+export default function ScaledName({
   firstName,
   lastName,
-  firstNameRef,
-  lastNameRef,
-  firstScale,
-  lastScale,
-  hasMeasured,
-  nameFontFamily = "Anton, sans-serif",
-  nameFontSize = "4.5rem",
-  nameColor = "#F6E4C1",
-  textTransform = "uppercase",
-  letterSpacing = "5px",
-  textAlign = "left",
-  style, // ✅ Now merged properly
-}: NameStackProps) {
-  const baseTextStyle: React.CSSProperties = {
-    fontFamily: nameFontFamily,
-    fontSize: nameFontSize,
-    color: nameColor,
-    textTransform,
-    lineHeight: 1.1,
-    textAlign,
-    marginBottom: 0,
-    letterSpacing,
-    fontWeight: 500,
+  containerWidth = 290,
+  gap = "0.4rem",
+}: ScaledNameProps) {
+  const firstRef = useRef<HTMLDivElement>(null);
+  const lastRef = useRef<HTMLDivElement>(null);
+  const [firstFontSize, setFirstFontSize] = useState("4.5rem");
+  const [lastFontSize, setLastFontSize] = useState("4.5rem");
+  const [isReady, setIsReady] = useState(false);
+
+  const calculateSizes = () => {
+    if (firstRef.current && lastRef.current) {
+      const firstWidth = firstRef.current.scrollWidth;
+      const lastWidth = lastRef.current.scrollWidth;
+
+      const baseFontSize = 72;
+      const firstRatio = containerWidth / firstWidth;
+      const lastRatio = containerWidth / lastWidth;
+
+      setFirstFontSize(`${baseFontSize * firstRatio}px`);
+      setLastFontSize(`${baseFontSize * lastRatio}px`);
+    }
   };
 
-  const hiddenStyle: React.CSSProperties = {
-    position: "absolute",
-    visibility: "hidden",
+  const verifySizes = () => {
+    if (firstRef.current && lastRef.current) {
+      const firstWidth = Math.round(firstRef.current.getBoundingClientRect().width);
+      const lastWidth = Math.round(lastRef.current.getBoundingClientRect().width);
+
+      if (Math.abs(firstWidth - containerWidth) > 2 || Math.abs(lastWidth - containerWidth) > 2) {
+        calculateSizes();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const runChecks = () => {
+      calculateSizes();
+      setIsReady(true);
+
+      setTimeout(() => verifySizes(), 150);
+      setTimeout(() => verifySizes(), 500);
+    };
+
+    if (document.fonts) {
+      document.fonts.ready.then(runChecks); // ✅ Wait until fonts are loaded
+    } else {
+      runChecks();
+    }
+  }, [firstName, lastName, containerWidth]);
+
+  const baseStyle: React.CSSProperties = {
+    fontFamily: "Anton, sans-serif",
+    textTransform: "uppercase",
     whiteSpace: "nowrap",
-    pointerEvents: "none",
+    color: "#F6E4C1",
+    lineHeight: 1,
+    margin: 0,
+  };
+
+  const containerStyle: React.CSSProperties = {
+    width: `${containerWidth}px`,
+    display: "flex",
+    justifyContent: "flex-start",
+    overflow: "visible",
   };
 
   return (
-    <div
-      style={{
-        ...style, // ✅ Applies external width/margin here
-        ...baseTextStyle,
-        display: "inline-flex",
-        flexDirection: "column",
-        alignItems: textAlign === "center" ? "center" : "flex-start",
-      }}
-    >
-      {/* Hidden measuring divs */}
-      <div ref={firstNameRef} style={hiddenStyle} aria-hidden="true">
-        {firstName}
-      </div>
-      <div ref={lastNameRef} style={hiddenStyle} aria-hidden="true">
-        {lastName}
-      </div>
+    <>
+      <style>{`
+        @media (max-width: 1024px) {
+          .scaled-name-outer {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin: 0 auto;
+          }
+          .scaled-name-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+        }
+      `}</style>
 
-      {/* Visible scaled names */}
       <div
+        className="scaled-name-outer"
         style={{
-          transform: `scale(${firstScale})`,
-          transformOrigin: textAlign === "center" ? "center" : "left",
-          whiteSpace: "nowrap",
-          marginTop: "0.5em",
-          visibility: hasMeasured ? "visible" : "hidden",
+          opacity: isReady ? 1 : 0,
+          transition: "opacity 0.15s ease",
         }}
       >
-        {firstName}
+        <div className="scaled-name-inner">
+          {/* First Name */}
+          <div style={{ ...containerStyle, alignItems: "flex-end" }}>
+            <div
+              ref={firstRef}
+              style={{
+                ...baseStyle,
+                fontSize: firstFontSize,
+              }}
+            >
+              {firstName}
+            </div>
+          </div>
+
+          {/* Gap */}
+          <div style={{ height: gap }} />
+
+          {/* Last Name */}
+          <div style={{ ...containerStyle, alignItems: "flex-start" }}>
+            <div
+              ref={lastRef}
+              style={{
+                ...baseStyle,
+                fontSize: lastFontSize,
+              }}
+            >
+              {lastName}
+            </div>
+          </div>
+        </div>
       </div>
-      <div
-        style={{
-          transform: `scale(${lastScale})`,
-          transformOrigin: textAlign === "center" ? "center" : "left",
-          whiteSpace: "nowrap",
-          marginTop: "0.15em",
-          visibility: hasMeasured ? "visible" : "hidden",
-        }}
-      >
-        {lastName}
-      </div>
-    </div>
+    </>
   );
 }
