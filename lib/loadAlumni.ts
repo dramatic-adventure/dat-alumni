@@ -1,4 +1,4 @@
-export {}; // ensures ES module scope
+export {}; // Ensures ES module scope
 
 import Papa from "papaparse";
 import { cache } from "react";
@@ -7,6 +7,16 @@ import { normalizeAlumniRow } from "./normalizeAlumniRow";
 import { loadCsv } from "./loadCsv";
 
 const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
+
+// ✅ Pick correct env variable
+const csvUrl =
+  process.env.ALUMNI_CSV_URL || process.env.NEXT_PUBLIC_ALUMNI_CSV_URL;
+
+if (DEBUG) {
+  console.log("🔍 ALUMNI_CSV_URL in process.env:", process.env.ALUMNI_CSV_URL);
+  console.log("🔍 NEXT_PUBLIC_ALUMNI_CSV_URL in process.env:", process.env.NEXT_PUBLIC_ALUMNI_CSV_URL);
+  console.log("✅ Using CSV URL:", csvUrl || "❌ NONE FOUND");
+}
 
 function isMostlyEmpty(row: Record<string, string>): boolean {
   const relevantFields = [
@@ -18,17 +28,30 @@ function isMostlyEmpty(row: Record<string, string>): boolean {
     "project badges",
     "slug",
   ];
-
   return relevantFields.filter((field) => row[field]?.trim()).length < 2;
 }
 
-export const loadAlumni = cache(async (): Promise<AlumniRow[]> => {
-  try {
-    const csvText = await loadCsv(process.env.ALUMNI_CSV_URL, "alumni.csv");
+let alumniCache: AlumniRow[] = []; // ✅ Local in-memory cache
 
-    if (DEBUG) {
-      console.log("📄 Raw CSV Text Preview:\n", csvText.slice(0, 1000));
-    }
+/**
+ * ✅ Loads and normalizes all alumni from CSV
+ */
+export const loadAlumni = cache(async (): Promise<AlumniRow[]> => {
+  if (alumniCache.length) {
+    if (DEBUG) console.log("⚡ Returning cached alumni:", alumniCache.length);
+    return alumniCache;
+  }
+
+  if (!csvUrl) {
+    console.error("❌ [loadAlumni] Missing ALUMNI_CSV_URL or NEXT_PUBLIC_ALUMNI_CSV_URL in env");
+    return [];
+  }
+
+  try {
+    if (DEBUG) console.log("🌐 [loadCsv] Fetching:", csvUrl);
+    const csvText = await loadCsv(csvUrl, "alumni.csv");
+
+    if (DEBUG) console.log("📄 [loadAlumni] Raw CSV snippet:", csvText.slice(0, 300));
 
     const parsed = Papa.parse<Record<string, string>>(csvText, {
       header: true,
@@ -39,17 +62,12 @@ export const loadAlumni = cache(async (): Promise<AlumniRow[]> => {
     let skipped = 0;
 
     for (const raw of parsed.data) {
-      // Normalize keys and trim early for filtering
-      const normalizedKeys: Record<string, string> = Object.fromEntries(
+      const normalizedKeys = Object.fromEntries(
         Object.entries(raw).map(([key, value]) => [
           key.trim().toLowerCase(),
           value?.toString().trim() ?? "",
         ])
       );
-
-      if (DEBUG || true) {
-        console.log("🧾 Parsed Rows:", parsed.data.map((r) => r["Name"]), parsed.data.length);
-      }
 
       const show = normalizedKeys["show on profile?"]?.toLowerCase();
       const name = normalizedKeys["name"];
@@ -65,32 +83,42 @@ export const loadAlumni = cache(async (): Promise<AlumniRow[]> => {
       else skipped++;
     }
 
+    alumniCache = rows;
+
     if (DEBUG) {
-      console.log(`✅ [loadAlumni] Loaded ${rows.length} alumni`);
-      console.log(`⚠️ [loadAlumni] Skipped ${skipped} incomplete rows`);
+      console.log(`✅ [loadAlumni] Loaded ${rows.length} alumni, skipped ${skipped}`);
     }
 
     return rows;
   } catch (err) {
-    console.error("❌ [loadAlumni] Error loading alumni rows:", err);
+    console.error("❌ [loadAlumni] Failed to load alumni:", err);
     return [];
   }
 });
 
-export async function loadVisibleAlumni(): Promise<AlumniRow[]> {
+/**
+ * ✅ Returns only alumni flagged for display
+ */
+export const loadVisibleAlumni = cache(async (): Promise<AlumniRow[]> => {
   const all = await loadAlumni();
-  const visible = all.filter(
-    (a) => a.showOnProfile?.toLowerCase().trim() === "yes" && !!a.name?.trim()
-  );
+  return all.filter((a) => a.showOnProfile?.toLowerCase().trim() === "yes" && !!a.name?.trim());
+});
 
-  if (DEBUG || true) {
-    console.log("👀 [loadVisibleAlumni] Visible slugs:", visible.map((a) => a.slug));
-  }
-
-  return visible;
-}
-
+/**
+ * ✅ Returns a single alumni by slug
+ */
 export const loadAlumniBySlug = cache(async (slug: string): Promise<AlumniRow | null> => {
   const all = await loadAlumni();
   return all.find((a) => a.slug?.toLowerCase() === slug.toLowerCase()) || null;
+});
+
+/**
+ * ✅ Returns alumni for a specific season
+ */
+export const loadAlumniBySeason = cache(async (season: number): Promise<AlumniRow[]> => {
+  const all = await loadAlumni();
+  return all.filter((a) => {
+    const badges = a.programBadges || [];
+    return badges.some((badge) => badge.toLowerCase().includes(`season ${season}`));
+  });
 });

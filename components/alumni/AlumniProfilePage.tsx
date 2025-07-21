@@ -26,7 +26,8 @@ export default function AlumniProfilePage({
   const {
     slug,
     name,
-    role = "",
+    roles = [],
+    role = "", // legacy fallback
     headshotUrl = "",
     programBadges = [],
     identityTags = [],
@@ -38,6 +39,9 @@ export default function AlumniProfilePage({
     website = "",
     socials = [],
   } = data || {};
+
+  // ✅ Prefer roles[] if available, otherwise fallback to role
+  const displayRole = roles.length > 0 ? roles.join(", ") : role;
 
   const authorStories = useMemo(
     () => allStories.filter((story) => story.authorSlug === slug),
@@ -84,6 +88,7 @@ export default function AlumniProfilePage({
                 position: "relative",
                 overflow: "visible", // ✅ Contact tab remains visible
                 borderRadius: "18px",
+                boxShadow: "6px 12px 20px rgba(0, 0, 0, 0.2)", // ✅ Shadow restored
                 top: `calc(${HEADER_HEIGHT} + ${offsetTop})`, // ✅ Accounts for header height
                 transition: "top 0.3s ease-in-out", // ✅ Smooth position change
               }}
@@ -91,7 +96,7 @@ export default function AlumniProfilePage({
               <ProfileCard
                 slug={slug}
                 name={name}
-                role={role}
+                role={displayRole} // ✅ Show combined roles
                 headshotUrl={headshotUrl}
                 location={location}
                 programBadges={programBadges}

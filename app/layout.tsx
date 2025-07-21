@@ -2,6 +2,7 @@ import "@/app/globals.css";
 import { Anton, DM_Sans, Space_Grotesk, Rock_Salt, VT323, Special_Elite, Share_Tech_Mono, Cutive_Mono, Anonymous_Pro, Syne_Mono, Major_Mono_Display, Zilla_Slab, Redacted_Script } from "next/font/google";
 import localFont from "next/font/local";
 import Header from "@/components/ui/Header";
+import Footer from "@/components/ui/Footer";
 import type { ReactNode } from "react";
 
 // DAT Core Fonts
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <main className="grow w-full p-0 m-0">
           {children}
         </main>
+        <Footer /> {/* ✅ Global Footer here */}
       </body>
     </html>
   );

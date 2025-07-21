@@ -34,11 +34,6 @@ export default function HomePage() {
           View Featured Stories
         </Link>
       </div>
-
-      {/* Optional Footer Text */}
-      <p className="mt-16 text-sm text-white/50">
-        Dramatic Adventure Theatre · EST. 2006
-      </p>
     </main>
   );
 }

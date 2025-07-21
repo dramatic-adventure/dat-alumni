@@ -87,10 +87,10 @@ export default function PosterStrip({ posters }: PosterStripProps) {
     fontFamily: '"Space Grotesk", sans-serif',
     fontWeight: 500,
     textTransform: "uppercase",
-    letterSpacing: "0.4em",
+    letterSpacing: "0.35rem",
     fontSize: "1.2rem",
     color: "#241123",
-    backgroundColor: "#2493A9", // DAT Purple
+    backgroundColor: "#3FA9BE", 
     padding: "18px 40px", // FAT padding
     border: "none",
     borderRadius: "12px",
@@ -102,7 +102,7 @@ export default function PosterStrip({ posters }: PosterStripProps) {
   onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
   onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
 >
-  {expanded ? "See Less" : "See More"}
+  {expanded ? "Show Less Productions" : "Show All My Productions"}
 </button>
 
   </div>

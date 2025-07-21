@@ -172,23 +172,9 @@ export default function MobileProfileHeader({
           <NameStack
   firstName={firstName}
   lastName={lastName}
-  firstNameRef={firstNameRef}
-  lastNameRef={lastNameRef}
-  firstScale={firstScale}
-  lastScale={lastScale}
-  hasMeasured={hasMeasured}
-  nameFontFamily="Anton, sans-serif"
-  nameFontSize="clamp(3.8rem, calc(3rem + 4vw), 6.5rem)"
-  nameColor="#F6E4C1"
-  letterSpacing="5px"
-  textTransform="uppercase"
-  textAlign="center"
-            style={{
-              width: "100%", // ✅ Matches container
-              maxWidth: "100%",
-              margin: "0 auto",
-            }}
-          />
+  containerWidth={320} // ✅ Ideal width for mobile
+  gap="0.6rem"
+/>
         </div>
 
         {/* Role & Location */}

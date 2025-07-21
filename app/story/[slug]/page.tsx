@@ -3,7 +3,6 @@ import loadRows from "@/lib/loadRows";
 import StoryPage from "@/components/story/StoryPage";
 import { StoryRow } from "@/lib/types";
 import { getSocialPreviewImage } from "@/lib/getSocialPreviewImage";
-import Footer from "@/components/ui/Footer";
 import type { Metadata } from "next";
 
 /**
@@ -92,10 +91,7 @@ export default async function StorySlugPage({
     <>
       <StoryPage story={story} />
 
-      {/* ✅ Purple CTA Footer Section */}
-      <section className="bg-[#241123] pt-[0vh] md:pt-[0vh] pb-10">
-        <Footer />
-      </section>
+      
     </>
   );
 }

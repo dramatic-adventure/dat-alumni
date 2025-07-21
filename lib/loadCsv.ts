@@ -1,6 +1,5 @@
-// lib/loadCsv.ts
-import fs from "fs/promises";
-import path from "path";
+"use server";
+
 import axios from "axios";
 
 const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
@@ -8,9 +7,13 @@ const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
 /**
  * Load a CSV from a live URL or local fallback.
  * @param sourceUrl Optional URL (from env var)
- * @param fallbackFileName Optional fallback CSV file (e.g., "story-map.csv")
+ * @param fallbackFileName Optional fallback CSV file (e.g., "alumni.csv")
  */
 export async function loadCsv(sourceUrl?: string, fallbackFileName = "alumni.csv"): Promise<string> {
+  // ✅ Dynamically import fs & path ONLY when needed
+  const fs = await import("fs/promises");
+  const path = await import("path");
+
   const fallbackPath = path.join(process.cwd(), "public", "fallback", fallbackFileName);
 
   // 1️⃣ Try live fetch first if sourceUrl is provided
@@ -29,11 +32,12 @@ export async function loadCsv(sourceUrl?: string, fallbackFileName = "alumni.csv
 
       let csvText: string = response.data;
 
+      // Remove BOM if present
       if (csvText.charCodeAt(0) === 0xfeff) {
-        csvText = csvText.slice(1); // Remove BOM if present
+        csvText = csvText.slice(1);
       }
 
-      // Save a copy to fallback
+      // ✅ Save fallback copy
       await fs.mkdir(path.dirname(fallbackPath), { recursive: true });
       await fs.writeFile(fallbackPath, csvText, "utf-8");
 

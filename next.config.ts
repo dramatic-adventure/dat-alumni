@@ -2,7 +2,7 @@
 const nextConfig = {
   images: {
     remotePatterns: [
-      // ✅ Placeholder (testing)
+      // ✅ Placeholder for testing/demo
       {
         protocol: 'https',
         hostname: 'via.placeholder.com',
@@ -26,14 +26,10 @@ const nextConfig = {
         hostname: 'res.cloudinary.com',
       },
 
-      // ✅ Amazon S3 (specific and generic)
+      // ✅ Amazon S3 (specific & wildcard for any bucket)
       {
         protocol: 'https',
-        hostname: 'your-bucket-name.s3.amazonaws.com', // ⛳️ Replace if needed
-      },
-      {
-        protocol: 'https',
-        hostname: '*.s3.amazonaws.com',
+        hostname: '**.s3.amazonaws.com',
       },
 
       // ✅ Imgur
@@ -52,19 +48,19 @@ const nextConfig = {
         hostname: 'dl.dropboxusercontent.com',
       },
 
-      // ✅ Google Drive preview
+      // ✅ Google Drive
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
       },
 
-      // ✅ Wix (cleaned up)
+      // ✅ Wix
       {
         protocol: 'https',
         hostname: 'static.wixstatic.com',
       },
 
-      // ✅ Webflow (common asset domain)
+      // ✅ Webflow
       {
         protocol: 'https',
         hostname: 'uploads-ssl.webflow.com',
@@ -76,12 +72,20 @@ const nextConfig = {
         hostname: 'photos.smugmug.com',
       },
 
-      // ✅ Catch-all: only uncomment for dev/test
+      // ✅ Unsplash
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+
+      // ✅ [Optional Catch-All for Dev ONLY]
       // {
       //   protocol: 'https',
       //   hostname: '**',
       // },
     ],
+    // ✅ Enable AVIF & WebP for faster loads
+    formats: ['image/avif', 'image/webp'],
   },
 };
 

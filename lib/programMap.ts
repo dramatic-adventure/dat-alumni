@@ -12,6 +12,7 @@ export interface ProgramData {
   location: string;
   year: number;
   season: number;
+  url?: string;
   artists: {
     [slug: string]: string[]
   };
@@ -44,6 +45,7 @@ export const programMap: Record<string, ProgramData> = {
   location: "Heart of Europe",
   year: 2013,
   season: 7,
+  url: "/action",
   artists: {
     "tom-costello": ["Director"],
     "nicholas-linnehan": ["Actor"],
@@ -82,6 +84,7 @@ export const programMap: Record<string, ProgramData> = {
   location: "Slovakia",
   year: 2012,
   season: 6,
+  url: "/creative-trek",
   artists: {
     "richard-sipos": ["Road Manager"],
     "lisa-kramer": ["Writer"],
@@ -101,6 +104,7 @@ export const programMap: Record<string, ProgramData> = {
   location: "Queens, NY",
   year: 2011,
   season: 6,
+  url: "",
   artists: {
     "bryant-vance": ["Actor"],
     "jason-williamson": ["Resident Playwright", "Director", "Teaching Artist"],
@@ -119,6 +123,7 @@ export const programMap: Record<string, ProgramData> = {
   location: "Esmeraldas, Ecuador",
   year: 2011,
   season: 5,
+  url: "/residencies",
   artists: {
     "isabel-martinez": ["Actor"],
     "dionne-audain": ["Teaching Artist"],
@@ -137,6 +142,7 @@ export const programMap: Record<string, ProgramData> = {
   location: "Space on Ryder Farms",
   year: 2010,
   season: 5,
+  url: "",
   artists: {
     "mady-spiegel": ["Actor"],
     "bryant-vance": ["Actor"],
@@ -160,6 +166,7 @@ export const programMap: Record<string, ProgramData> = {
   location: "Ecuador",
   year: 2010,
   season: 4,
+  url: "/action",
   artists: {
     "katarina-hughes": ["Actor"],
     "tamara-easton": ["Actor"],
@@ -195,6 +202,7 @@ export const programMap: Record<string, ProgramData> = {
   location: "Space on Ryder Farms",
   year: 2009,
   season: 4,
+  url: "",
   artists: {
     "isabel-martinez": ["Actor"],
     "mady-spiegel": ["Actor"],
@@ -219,6 +227,7 @@ export const programMap: Record<string, ProgramData> = {
   location: "Ecuador",
   year: 2009,
   season: 3,
+  url: "/action",
   artists: {
     "isabel-martinez": ["Actor"],
     "zoe-reiniger": ["Actor"],
@@ -304,6 +313,7 @@ export const programMap: Record<string, ProgramData> = {
   location: "Ecuador",
   year: 2008,
   season: 2,
+  url: "/creative-trek",
   artists: {
     "rachel-wiese": ["Actor"],
     "lydia-perez-feldman": ["Actor"],
@@ -323,6 +333,7 @@ export const programMap: Record<string, ProgramData> = {
   location: "Zimbabwe",
   year: 2007,
   season: 1,
+  url: "/creative-trek",
   artists: {
     "isabel-martinez": ["Actor"],
     "oscar-manzini": ["Road Manager"],

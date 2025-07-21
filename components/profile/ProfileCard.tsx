@@ -22,6 +22,9 @@ import MobileProfileHeader from "@/components/alumni/MobileProfileHeader";
 import DesktopProfileHeader from "@/components/alumni/DesktopProfileHeader";
 import useIsMobile from "@/hooks/useIsMobile";
 
+import MyJourney from "@/components/alumni/MyJourney";
+
+
 const FeaturedStories = dynamic(() => import("@/components/shared/FeaturedStories"), {
   ssr: false,
 });
@@ -283,6 +286,10 @@ export default function ProfileCard({
   </div>
 )}
 
+{/* ✅ Inserted MyJourney Section */}
+{/*<div className="bg-[#f5f1eb] py-12 px-4 md:px-12">
+  <MyJourney />
+</div> */}
 
       {featuredProductions.length > 0 && (
         <div className="bg-[#19657c] py-[30px] px-[30px]">
@@ -312,16 +319,17 @@ export default function ProfileCard({
 
       )}
 
-      {programBadges.length > 0 && (
-        <div
-          className="relative bg-[#F6E4C1] py-6 m-0 overflow-hidden h-[50vh] min-h-[350px] max-h-[600px]"
-          style={{ zIndex: 50 }}
-        >
-          <div className="max-w-6xl mx-auto px-4 relative h-full">
-            <ProgramStamps artistSlug={slug} />
-          </div>
-        </div>
-      )}
+{programBadges.length > 0 && (
+  <div
+    className="relative py-6 m-0 animate-fadeIn"
+    style={{ zIndex: 50 }}
+  >
+    <div className="max-w-6xl mx-auto px-4">
+      <ProgramStamps artistSlug={slug} />
+    </div>
+  </div>
+)}
+
 
       {hasStories && (
         <section className="bg-[#f2f2f2] rounded-xl px-[30px] py-[30px] mt-[0px]">

@@ -283,34 +283,60 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
       )}
 
       
-    {/* Button */}
-{hasExtraStories && (
-  <div style={{ marginTop: "2rem", textAlign: "right" }}>
-    <button
-  onClick={() => setShowAll(!showAll)}
+    {/* Button + Link Wrapper */}
+<div
   style={{
-    fontFamily: '"Space Grotesk", sans-serif',
-    fontWeight: 500,
-    textTransform: "uppercase",
-    letterSpacing: "0.4em",
-    fontSize: "1.2rem",
-    color: "#f2f2f2",
-    backgroundColor: "#f23359", // DAT Purple
-    padding: "18px 40px",
-    border: "none",
-    borderRadius: "12px",
-    cursor: "pointer",
-    transition: "opacity 0.2s ease-in-out",
-    opacity: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end", // ✅ Button stays right-aligned
+    marginTop: "2rem",
   }}
-  onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
-  onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
 >
-  {showAll ? "View Less" : "View All Stories"}
-</button>
+  {/* Button */}
+  <button
+    onClick={() => setShowAll(!showAll)}
+    style={{
+      fontFamily: '"Space Grotesk", sans-serif',
+      fontWeight: 500,
+      textTransform: "uppercase",
+      letterSpacing: "0.35rem",
+      fontSize: "1.2rem",
+      color: "#f2f2f2",
+      backgroundColor: "#F23359", // DAT Pink
+      padding: "18px 40px",
+      border: "none",
+      borderRadius: "12px",
+      cursor: "pointer",
+      transition: "opacity 0.2s ease-in-out",
+    }}
+    onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+    onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+  >
+    {showAll ? "Show Fewer Stories" : "Show All My Stories"}
+  </button>
 
-  </div>
-)}
+  {/* Explore the Story Map Link */}
+  <Link
+    href="https://dramaticadventure.com/story-map#story"
+    style={{
+      marginTop: "0.6rem",
+      textAlign: "right", // ✅ Center text relative to button width
+      width: "100%", // ✅ Force link container to match button width
+      fontFamily: "'Rock Salt', cursive",
+      fontSize: "1rem",
+      color: "#F23359", // DAT Pink
+      textDecoration: "none",
+      transition: "color 0.2s ease-in-out",
+    }}
+    onMouseEnter={(e) => (e.currentTarget.style.color = "#6C00AF")} // DAT Purple
+    onMouseLeave={(e) => (e.currentTarget.style.color = "#F23359")}
+  >
+    ← Explore the Story Map&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </Link>
+</div>
+
+
+
 
     </section>
   );
