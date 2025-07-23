@@ -106,7 +106,7 @@ export const productionMap: Record<string, Production> = {
     url: "/tembo",
     posterUrl: "/posters/tembo.jpg",
     artists: {
-      "candis-c-jones": ["Director", "Actor"],
+      "candis-c-jones": ["Director"],
       "erin-jones": ["Lighting Design"],
       "elle-kunnos-de-voss": ["Set Design"],
       "francisco-rondon": ["Set Design"],

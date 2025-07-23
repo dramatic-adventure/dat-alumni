@@ -9,18 +9,23 @@ export default function SeasonsGrid() {
       <h2
         className="text-center mb-10"
         style={{
-          fontFamily: "'Space Grotesk', sans-serif",
-          color: "#f2f2f2",
-          fontSize: "2.5rem",
+          fontFamily: "'Anton', Sans Serif",
+          backgroundColor: "transparent",
+          fontWeight: 400,
+          marginTop: "0.5rem",
+          marginBottom: "1.5rem",
+          color: "#f23359",
+          fontSize: "5rem",
         }}
       >
-        Explore Our Seasons
+        EXPLORE OUR SEASONS
       </h2>
 
       <div
         className="grid"
         style={{
           display: "grid",
+          backgroundColor: "#transparent",
           gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", // ✅ Fluid columns
           gap: "clamp(30px, 4vw, 60px)", // ✅ Responsive gap between cards
           maxWidth: "1400px", // ✅ Keeps grid from getting too wide

@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import MiniProfileCard from "@/components/profile/MiniProfileCard";
+import Image from "next/image";
+import Link from "next/link";
 
 interface FeaturedAlumniProps {
   highlights: {
@@ -18,64 +19,129 @@ export default function FeaturedAlumni({ highlights }: FeaturedAlumniProps) {
   const stableHighlights = useMemo(() => highlights, []);
 
   return (
-    <section style={{ margin: "0 auto", padding: "0 20px", marginBottom: "2rem" }}>
-      <h2
-        style={{
-          fontFamily: "'Space Grotesk', sans-serif",
-          color: "#241123",
-          fontSize: "2rem",
-          marginBottom: "1.5rem",
-          textAlign: "left",
-        }}
-      >
-        Featured Alumni
-      </h2>
+    <section style={{ margin: "0 auto", padding: "0 10px", marginBottom: "4rem" }}>
+      <div className="featured-alumni-grid">
+        {stableHighlights.map((alum, index) => {
+          const imgSrc = alum.headshotUrl
+            ? alum.headshotUrl.replace(/^http:\/\//, "https://")
+            : "/images/default-headshot.png";
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: "40px",
-          justifyItems: "center",
-        }}
-      >
-        {stableHighlights.map((alum, index) => (
-          <div
-            key={index}
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              transform: "scale(1.25)", // ✅ Default size (desktop)
-              transformOrigin: "center",
-            }}
-            className="featured-alum-card"
-          >
-            <MiniProfileCard
-              name={alum.name}
-              role={alum.roles?.join(", ") || ""}
-              slug={alum.slug}
-              headshotUrl={alum.headshotUrl}
-            />
-          </div>
-        ))}
+          return (
+            <Link
+              key={index}
+              href={`/alumni/${alum.slug}`}
+              style={{
+                textDecoration: "none",
+                color: "inherit",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <div
+                className="featured-alum-card"
+                style={{
+                  backgroundColor: "#f2f2f2",
+                  borderRadius: "8px",
+                  boxShadow: "4px 8px 16px rgba(0,0,0,0.25)",
+                  overflow: "hidden",
+                  width: "260px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  padding: "0.75rem",
+                  transition: "transform 0.35s ease, box-shadow 0.35s ease",
+                  transformOrigin: "center",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  const randomTilt = Math.random() * 6 - 3;
+                  el.style.transform = `translateY(-12px) rotate(${randomTilt}deg) scale(1.08)`;
+                  el.style.boxShadow = `0 20px 40px rgba(0,0,0,0.35)`;
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.transform = `translateY(0) rotate(0deg) scale(1)`;
+                  el.style.boxShadow = `4px 8px 16px rgba(0,0,0,0.25)`;
+                }}
+              >
+                {/* ✅ Image */}
+                <div
+                  style={{
+                    width: "100%",
+                    aspectRatio: "4 / 5",
+                    overflow: "hidden",
+                    position: "relative",
+                    borderRadius: "4px",
+                    marginBottom: "0.75rem",
+                  }}
+                >
+                  <Image src={imgSrc} alt={alum.name} fill className="object-cover" />
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background:
+                        "radial-gradient(ellipse at center, rgba(0,0,0,0) 70%, rgba(0,0,0,0.35) 100%)",
+                      pointerEvents: "none",
+                    }}
+                  />
+                </div>
+
+                {/* ✅ Name & Role */}
+                <h3
+                  style={{
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    fontSize: "1.3rem",
+                    fontWeight: 600,
+                    color: "#241123",
+                    margin: 0,
+                  }}
+                >
+                  {alum.name}
+                </h3>
+                <p
+                  style={{
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: "0.9rem",
+                    color: "#6C00AF",
+                    margin: 0,
+                    opacity: 0.8,
+                  }}
+                >
+                  {(alum.roles && alum.roles.join(", ")) || "Artist"}
+                </p>
+              </div>
+            </Link>
+          );
+        })}
       </div>
 
-      {/* ✅ Responsive scaling with inline <style> */}
-      <style>
-        {`
-          @media (max-width: 1024px) {
-            .featured-alum-card {
-              transform: scale(1.15); /* Tablet */
-            }
-          }
+      {/* ✅ Responsive CSS */}
+      <style jsx>{`
+  .featured-alumni-grid {
+    display: grid;
+    gap: 70px;
+    justify-items: center;
+    grid-template-columns: repeat(2, 1fr); /* ✅ Large screens: 4 per row */
+  }
 
-          @media (max-width: 640px) {
-            .featured-alum-card {
-              transform: scale(1.05); /* Mobile - still bigger than normal */
-            }
-          }
-        `}
-      </style>
+  @media (max-width: 1200px) {
+    .featured-alumni-grid {
+      grid-template-columns: repeat(2, 1fr); /* ✅ Medium screens: 2 per row */
+    }
+  }
+
+  @media (max-width: 600px) {
+    .featured-alumni-grid {
+      grid-template-columns: 1fr; /* ✅ Small screens: 1 per row */
+    }
+  }
+`}</style>
+
     </section>
   );
 }

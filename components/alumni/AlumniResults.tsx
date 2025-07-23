@@ -32,7 +32,7 @@ export default function AlumniResults({ results }: AlumniResultsProps) {
 
   return (
     <>
-      <h2 className="text-left mb-4 font-semibold">
+      <h2 className="text-center mb-4 font-semibold">
         Results ({results.length})
       </h2>
       <div
