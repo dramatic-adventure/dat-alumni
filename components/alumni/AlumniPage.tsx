@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import SeasonsGrid from "@/components/alumni/SeasonsGrid";
+import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import FeaturedAlumni from "@/components/alumni/FeaturedAlumni";
 import AlumniResults from "@/components/alumni/AlumniResults";
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
@@ -193,12 +193,21 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
           </div>
         </div>
 
-        {/* ✅ Seasons Grid */}
-        <section style={{ width: "100%", backgroundColor: "#6C00AF", boxShadow:"0px 0px 33px rgba(0.8,0.8,0.8,0.8)", padding: "4rem 0", marginTop: "4rem" }}>
-          <div style={{ width: "80%", margin: "0 auto" }}>
-            <SeasonsGrid />
-          </div>
-        </section>
+        {/* ✅ Seasons Carousel */}
+<section
+  style={{
+    width: "100%",
+    backgroundColor: "#6C00AF",
+    boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)",
+    padding: "4rem 0",
+    marginTop: "4rem",
+  }}
+>
+  <div style={{ width: "100%", margin: "0 auto" }}>
+    <SeasonsCarouselAlt />
+  </div>
+</section>
+
 
         {/* ✅ Responsive Grid CSS */}
         <style jsx>{`
