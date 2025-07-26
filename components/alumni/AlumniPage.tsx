@@ -5,7 +5,8 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import FeaturedAlumni from "@/components/alumni/FeaturedAlumni";
-import AlumniResults from "@/components/alumni/AlumniResults";
+import AlumniSearch from "@/components/alumni/AlumniSearch";
+import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
 import { getRecentUpdates } from "@/lib/getRecentUpdates";
 
@@ -27,8 +28,8 @@ interface UpdateItem {
 export default function AlumniPage({ highlights }: AlumniPageProps) {
   const [updates, setUpdates] = useState<UpdateItem[]>([]);
   const [alumniData, setAlumniData] = useState<any[]>([]);
-  const [results, setResults] = useState<any[]>([]);
-  const [query, setQuery] = useState("");
+  const [primaryResults, setPrimaryResults] = useState<any[]>([]);
+  const [secondaryResults, setSecondaryResults] = useState<any[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -57,7 +58,15 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
   return (
     <div style={{ marginTop: "-750px" }}>
       {/* ✅ HERO */}
-      <section style={{ position: "relative", width: "100%", height: "55vh", boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)", zIndex: 1 }}>
+      <section
+        style={{
+          position: "relative",
+          width: "100%",
+          height: "55vh",
+          boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)",
+          zIndex: 1,
+        }}
+      >
         <Image
           src="/images/alumni hero.jpg"
           alt="Alumni Hero"
@@ -111,77 +120,107 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
             continue to inspire.
           </p>
 
-          {/* ✅ Search Bar */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              width: "100%",
-              backgroundColor: "#F6E4C1",
-              padding: "0.5rem",
-              borderRadius: "6px",
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="2.5"
-              stroke="#241123"
-              style={{ width: "35px", height: "35px", marginRight: "0.25rem" }}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search alumni by name, program, location..."
-              value={query}
-              onChange={(e) => {
-                const value = e.target.value;
-                setQuery(value);
-                if (!value.trim()) return setResults([]);
-                const lowerQuery = value.toLowerCase();
-                const filtered = alumniData.filter(
-                  (item) =>
-                    (item.name && item.name.toLowerCase().includes(lowerQuery)) ||
-                    (item.roles || []).some((role: string) => role.toLowerCase().includes(lowerQuery))
-                );
-                setResults(filtered);
-              }}
+          {/* ✅ Alumni Search + Directory Button */}
+          <div style={{ display: "flex", gap: "1rem", alignItems: "stretch" }}>
+  <div style={{ flex: 1, height: "47px" }}>
+  <AlumniSearch
+    alumniData={alumniData}
+    onResults={(primary, secondary) => {
+      setPrimaryResults(primary);
+      setSecondaryResults(secondary);
+    }}
+  />
+</div>
+
+            <a
+              href="/directory"
               style={{
-                flex: 1,
-                padding: "0.25rem 0.5rem",
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: "1.2rem",
-                backgroundColor: "#F6E4C1",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "47px",
+                fontFamily: "Space Grotesk",
+                fontWeight: 600,
+                backgroundColor: "#6C00AF",
+                color: "#f2f2f2",
+                padding: "0 1rem",
                 border: "none",
+                borderRadius: "6px",
+                textDecoration: "none",
+                fontSize: "1rem",
+                letterSpacing: "0.1rem",
+                whiteSpace: "nowrap",
+                transition: "opacity 0.3s ease",
               }}
-            />
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            >
+              DIVE DEEPER IN THE DIRECTORY
+            </a>
           </div>
         </section>
 
-        {/* ✅ Search Results */}
-        {results.length > 0 && (
-          <section style={{ width: "90%", margin: "0 auto" }}>
-            <AlumniResults results={results} />
+        {/* ✅ Primary Results Carousel */}
+        {primaryResults.length > 0 && (
+          <section style={{ width: "100%", paddingLeft: "1rem", margin: "1rem auto", overflowX: "auto" }}>
+            <div style={{ display: "flex", gap: "1rem", padding: "0.5rem 0" }}>
+              {primaryResults.map((alum, idx) => (
+                <div key={idx} style={{ flex: "0 0 auto", width: "160px" }}>
+                  <MiniProfileCard
+                    name={alum.name}
+                    role={alum.roles?.join(", ")}
+                    slug={alum.slug}
+                    headshotUrl={alum.headshotUrl}
+                  />
+                </div>
+              ))}
+            </div>
           </section>
         )}
 
-{/* ✅ Headline Row */}
-<section style={{ width: "100%", textAlign: "center", margin: "2rem 0" }}>
-  <h2
-    style={{
-      fontFamily: "Anton, sans-serif",
-      fontSize: "clamp(2rem, 6vw, 8rem)",
-      textTransform: "uppercase",
-      color: "#241123",
-      margin: 0,
-    }}
-  >
-    Highlights from the DAT Family
-  </h2>
-</section>
+        {/* ✅ Secondary Matches */}
+        {secondaryResults.length > 0 && (
+          <section style={{ width: "100%", margin: "2rem auto", paddingLeft: "1rem" }}>
+            <h4
+              style={{
+                fontFamily: "Space Grotesk",
+                color: "#F6E4C1",
+                marginBottom: "1rem",
+                fontSize: "1.3rem",
+                paddingLeft: "0.5rem",
+              }}
+            >
+              We found some additional matches that might interest you:
+            </h4>
+            <div style={{ display: "flex", gap: "1rem", overflowX: "auto", padding: "0.5rem 0" }}>
+              {secondaryResults.map((alum, idx) => (
+                <div key={`extra-${idx}`} style={{ flex: "0 0 auto", width: "160px" }}>
+                  <MiniProfileCard
+                    name={alum.name}
+                    role={alum.roles?.join(", ")}
+                    slug={alum.slug}
+                    headshotUrl={alum.headshotUrl}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
+        {/* ✅ Headline Row */}
+        <section style={{ width: "100%", textAlign: "center", margin: "2rem 0" }}>
+          <h2
+            style={{
+              fontFamily: "Anton, sans-serif",
+              fontSize: "clamp(2rem, 6vw, 8rem)",
+              textTransform: "uppercase",
+              color: "#241123",
+              margin: 0,
+            }}
+          >
+            Highlights from the DAT Family
+          </h2>
+        </section>
 
         {/* ✅ Two-Column Layout */}
         <div className="alumni-grid">
@@ -194,20 +233,19 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
         </div>
 
         {/* ✅ Seasons Carousel */}
-<section
-  style={{
-    width: "100%",
-    backgroundColor: "#6C00AF",
-    boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)",
-    padding: "4rem 0",
-    marginTop: "4rem",
-  }}
->
-  <div style={{ width: "100%", margin: "0 auto" }}>
-    <SeasonsCarouselAlt />
-  </div>
-</section>
-
+        <section
+          style={{
+            width: "100%",
+            backgroundColor: "#6C00AF",
+            boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)",
+            padding: "4rem 0",
+            marginTop: "4rem",
+          }}
+        >
+          <div style={{ width: "100%", margin: "0 auto" }}>
+            <SeasonsCarouselAlt />
+          </div>
+        </section>
 
         {/* ✅ Responsive Grid CSS */}
         <style jsx>{`

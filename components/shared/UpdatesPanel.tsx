@@ -189,61 +189,56 @@ function weightedRandomSelection<T extends { weight: number }>(
   return result;
 }
 
-const renderText = (text: string, doodleMap: Record<number, DoodleType>) => {
+const renderText = (
+  text: string,
+  doodleMap: Record<number, { type: DoodleType; rotation: number; opacity: number; strokeWidth?: number; dashArray?: string }>
+) => {
   const words = text.split(" ");
-  return words.map((word, i) => (
+  return words.map((word, i) => {
+    const doodle = doodleMap[i];
+    return (
+      <span key={i} style={{ position: "relative", display: "inline-block", padding: "0 2px" }}>
+        {word}
+        {doodle && (
+  doodle.type === "underline" ? (
     <span
-      key={i}
-      style={{ position: "relative", display: "inline-block", padding: "0 2px" }}
+      style={{
+        position: "absolute",
+        bottom: "-3px",
+        left: 0,
+        width: "100%",
+        height: "3px",
+        backgroundColor: "#F23359",
+        transform: `rotate(${doodle.rotation}deg)`,
+        opacity: doodle.opacity,
+      }}
+    />
+  ) : (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      style={{
+        position: "absolute",
+        width: "140%",
+        height: "170%",
+        top: "-30%",
+        left: "-20%",
+        transform: `rotate(${doodle.rotation}deg)`,
+        opacity: doodle.opacity,
+      }}
+      stroke="#F23359"
+      strokeWidth={doodle.strokeWidth} // ✅ Stable now
+      fill="none"
+      strokeDasharray={doodle.dashArray} // ✅ Stable now
     >
-      {word}
-      {doodleMap[i] && renderDoodle(doodleMap[i])}
-    </span>
-  ));
+      <ellipse cx="50%" cy="50%" rx="48%" ry="40%" />
+    </svg>
+  )
+)}
+      </span>
+    );
+  });
 };
 
-function renderDoodle(type: DoodleType): React.ReactNode {
-  const opacity = (Math.random() * 0.2 + 0.8).toFixed(2);
-  const rotation = randomInt(-10, 10);
-  switch (type) {
-    case "underline":
-      return (
-        <span
-          style={{
-            position: "absolute",
-            bottom: "-3px",
-            left: 0,
-            width: "100%",
-            height: "3px",
-            backgroundColor: "#F23359",
-            transform: `rotate(${rotation}deg)`,
-            opacity,
-          }}
-        />
-      );
-    case "circle":
-      return (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          style={{
-            position: "absolute",
-            width: "140%",
-            height: "170%",
-            top: "-30%",
-            left: "-20%",
-            transform: `rotate(${rotation}deg)`,
-            opacity,
-          }}
-          stroke="#F23359"
-          strokeWidth={randomInt(2, 4)}
-          fill="none"
-          strokeDasharray={`${randomInt(140, 160)}, ${randomInt(15, 25)}`}
-        >
-          <ellipse cx="50%" cy="50%" rx="48%" ry="40%" />
-        </svg>
-      );
-  }
-}
 
 function selectUniqueRandomIndexes(max: number, count: number): number[] {
   const indexes: number[] = [];
@@ -264,6 +259,8 @@ function computePhraseStyle(
   strictness: number,
   verticalOffset: string
 ) {
+  
+  
   const innerWidth = containerWidth - paddingLeft - paddingRight;
   let leftValue =
     paddingLeft + innerWidth / 2 + innerWidth * (horizontalPercent / 100);
@@ -299,6 +296,16 @@ export default function UpdatesPanel({
 }: UpdatesPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const phraseRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const [phraseWidths, setPhraseWidths] = useState<number[]>([]);
+
+useEffect(() => {
+  if (phraseRefs.current.length > 0) {
+    const widths = phraseRefs.current.map((el) => el?.offsetWidth || 0);
+    setPhraseWidths(widths);
+  }
+}, []);
+
+
   const [containerSize, setContainerSize] = useState({
     width: 600,
     paddingLeft: 0,
@@ -333,72 +340,80 @@ export default function UpdatesPanel({
       : fallbackUpdates;
 
   const [stableData] = useState(() => {
-    const shuffledPhrases = shuffleArray([...ROCK_SALT_PHRASES]);
-    const phraseIndexes = selectUniqueRandomIndexes(baseUpdates.length, 2);
+  const shuffledPhrases = shuffleArray([...ROCK_SALT_PHRASES]);
+  const phraseIndexes = selectUniqueRandomIndexes(baseUpdates.length, 2);
 
-    const totalDoodles = randomInt(
-      Math.ceil(baseUpdates.length * 0.66),
-      Math.ceil(baseUpdates.length * 1.0)
-    );
+  const totalDoodles = randomInt(
+    Math.ceil(baseUpdates.length * 0.66),
+    Math.ceil(baseUpdates.length * 1.0)
+  );
 
-    const allCandidates: { updateIndex: number; start: number; weight: number }[] = [];
-    baseUpdates.forEach((u, i) => {
-      const words = u.text.split(" ");
-      words.forEach((word, idx) => {
-        const lower = word.replace(/[^a-zA-Z]/g, "").toLowerCase();
-        if (!lower || STOPWORDS.includes(lower) || lower.length <= 3) return;
+  const allCandidates: { updateIndex: number; start: number; weight: number }[] = [];
+  baseUpdates.forEach((u, i) => {
+    const words = u.text.split(" ");
+    words.forEach((word, idx) => {
+      const lower = word.replace(/[^a-zA-Z]/g, "").toLowerCase();
+      if (!lower || STOPWORDS.includes(lower) || lower.length <= 3) return;
 
-        let weight = 1;
-        if (LOCATION_WORDS.includes(lower)) weight += 10;
-        if (/^[A-Z]{2,}$/.test(word)) weight += 8;
-        if (/^".+"$/.test(word)) weight += 8;
-        if (idx >= words.length - 3) weight += 6;
-        if (/^[A-Z]/.test(word) && lower !== "i") weight += 4;
+      let weight = 1;
+      if (LOCATION_WORDS.includes(lower)) weight += 10;
+      if (/^[A-Z]{2,}$/.test(word)) weight += 8;
+      if (/^".+"$/.test(word)) weight += 8;
+      if (idx >= words.length - 3) weight += 6;
+      if (/^[A-Z]/.test(word) && lower !== "i") weight += 4;
 
-        allCandidates.push({ updateIndex: i, start: idx, weight });
-      });
+      allCandidates.push({ updateIndex: i, start: idx, weight });
     });
-
-    const selectedDoodles = weightedRandomSelection(allCandidates, totalDoodles);
-    const doodleMapByUpdate: Record<number, Record<number, DoodleType>> = {};
-    selectedDoodles.forEach((cand) => {
-      if (!doodleMapByUpdate[cand.updateIndex]) doodleMapByUpdate[cand.updateIndex] = {};
-      doodleMapByUpdate[cand.updateIndex][cand.start] = randomFromArray(DOODLES);
-    });
-
-    // ✅ Stage directions: 0.33–0.66 per update, no duplicates
-    const numDirections = randomInt(
-      Math.ceil(baseUpdates.length * 0.33),
-      Math.ceil(baseUpdates.length * 0.66)
-    );
-    const directionIndexes = selectUniqueRandomIndexes(baseUpdates.length, numDirections);
-    const shuffledDirections = shuffleArray([...STAGE_DIRECTIONS]);
-
-    // ✅ Ensure Rock Salt uniqueness by popping from shuffledPhrases
-    return {
-      updates: baseUpdates.map((u, i) => {
-        const positionType = i === 0 ? "near" : "far";
-        const horizontalPercent =
-          positionType === "near"
-            ? randomInt(5, 12) * (Math.random() > 0.5 ? 1 : -1)
-            : randomInt(18, 24) * (Math.random() > 0.5 ? 1 : -1);
-
-        const rotation = randomInt(-8, 8);
-
-        return {
-          ...u,
-          direction: directionIndexes.includes(i) ? shuffledDirections.pop() || null : null,
-          rockSaltPhrase: phraseIndexes.includes(i) && shuffledPhrases.length > 0 ? shuffledPhrases.pop()! : null,
-          horizontalPercent,
-          rotation,
-          doodleMap: doodleMapByUpdate[i] || {},
-        };
-      }),
-      randomAct: randomInt(1, 3),
-      randomScene: randomInt(1, 10),
-      randomSceneDescription: randomFromArray(SCENE_DESCRIPTIONS),
-    };
   });
+
+  const selectedDoodles = weightedRandomSelection(allCandidates, totalDoodles);
+  const doodleMapByUpdate: Record<
+  number,
+  Record<number, { type: DoodleType; rotation: number; opacity: number; strokeWidth?: number; dashArray?: string }>
+> = {};
+
+  selectedDoodles.forEach((cand) => {
+    if (!doodleMapByUpdate[cand.updateIndex]) doodleMapByUpdate[cand.updateIndex] = {};
+    doodleMapByUpdate[cand.updateIndex][cand.start] = {
+  type: randomFromArray(DOODLES),
+  rotation: randomInt(-10, 10),
+  opacity: parseFloat((Math.random() * 0.2 + 0.8).toFixed(2)),
+  strokeWidth: randomInt(2, 4), // ✅ NEW
+  dashArray: `${randomInt(140, 160)}, ${randomInt(15, 25)}`, // ✅ NEW
+};
+  });
+
+  const numDirections = randomInt(
+    Math.ceil(baseUpdates.length * 0.33),
+    Math.ceil(baseUpdates.length * 0.66)
+  );
+  const directionIndexes = selectUniqueRandomIndexes(baseUpdates.length, numDirections);
+  const shuffledDirections = shuffleArray([...STAGE_DIRECTIONS]);
+
+  return {
+    updates: baseUpdates.map((u, i) => {
+      const positionType = i === 0 ? "near" : "far";
+      const horizontalPercent =
+        positionType === "near"
+          ? randomInt(5, 12) * (Math.random() > 0.5 ? 1 : -1)
+          : randomInt(18, 24) * (Math.random() > 0.5 ? 1 : -1);
+
+      return {
+        ...u,
+        direction: directionIndexes.includes(i) ? shuffledDirections.pop() || null : null,
+        rockSaltPhrase: phraseIndexes.includes(i) && shuffledPhrases.length > 0 ? shuffledPhrases.pop()! : null,
+        horizontalPercent,
+        rotation: randomInt(-8, 8),
+        doodleMap: doodleMapByUpdate[i] || {},
+        fontSize: randomInt(14, 24),
+      };
+    }),
+    randomAct: randomInt(1, 3),
+    randomScene: randomInt(1, 10),
+    randomSceneDescription: randomFromArray(SCENE_DESCRIPTIONS),
+  };
+});
+
 
   return (
     <section
@@ -466,14 +481,12 @@ export default function UpdatesPanel({
       {/* Updates */}
       <div style={{ display: "flex", flexDirection: "column", gap: "2.6rem" }}>
         {stableData.updates.map((update, index) => {
-          let fontSize = randomInt(14, 24);
-          let phraseWidth = phraseRefs.current[index]?.offsetWidth || 0;
+        const fontSize = update.fontSize; // ✅ Stable now
+        const phraseWidth = phraseRefs.current[index]?.offsetWidth || 0;
+
           const maxWidth = containerSize.width - containerSize.paddingLeft - containerSize.paddingRight;
 
-          while (phraseWidth > maxWidth && fontSize > 14) {
-            fontSize -= 1;
-            phraseWidth = phraseWidth * (fontSize / (fontSize + 1));
-          }
+       
 
           return (
             <Link key={index} href={update.link || "#"} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
@@ -584,15 +597,23 @@ export default function UpdatesPanel({
 
 function handleHover(e: React.MouseEvent<HTMLDivElement>, isHover: boolean) {
   const nameEl = e.currentTarget.querySelector(".update-name") as HTMLElement;
-  const dialogueEl = e.currentTarget.querySelector(".update-dialogue") as HTMLElement;
+  const dialogueSpans = e.currentTarget.querySelectorAll(".update-dialogue span");
 
   if (isHover) {
     nameEl.style.backgroundColor = "rgba(242, 51, 89, 0.85)";
     nameEl.style.color = "#241123";
-    dialogueEl.style.backgroundColor = "#FFCC00";
+
+    dialogueSpans.forEach((span) => {
+      (span as HTMLElement).style.backgroundColor = "#FFCC00";
+      (span as HTMLElement).style.display = "inline"; // ensures no extra block area
+    });
   } else {
     nameEl.style.backgroundColor = "transparent";
     nameEl.style.color = "#241123";
-    dialogueEl.style.backgroundColor = "transparent";
+
+    dialogueSpans.forEach((span) => {
+      (span as HTMLElement).style.backgroundColor = "transparent";
+    });
   }
 }
+

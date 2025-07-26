@@ -2,39 +2,44 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
+import AlumniSearch from "@/components/alumni/AlumniSearch";
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
 
 export default function DirectoryPage() {
   const [alumniData, setAlumniData] = useState<any[]>([]);
-  const [filteredAlumni, setFilteredAlumni] = useState<any[]>([]);
-  const [query, setQuery] = useState("");
+  const [primaryResults, setPrimaryResults] = useState<any[]>([]);
+  const [secondaryResults, setSecondaryResults] = useState<any[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [sortOption, setSortOption] = useState("last");
+
   const [filters, setFilters] = useState({
     program: "",
     season: "",
     location: "",
     role: "",
+    statusFlag: "",
+    identityTag: "",
+    language: "",
     updatedOnly: false,
   });
 
-  // ✅ Load alumni on mount
+  /** ✅ Load Alumni */
   useEffect(() => {
     async function fetchData() {
       const alumni = await loadVisibleAlumni();
       setAlumniData(alumni);
-      setFilteredAlumni(alumni);
     }
     fetchData();
   }, []);
 
-  // ✅ Build dynamic filter options
+  /** ✅ Dropdown options */
   const programs = useMemo(() => {
     const set = new Set<string>();
     alumniData.forEach((a) => a.programs?.forEach((p: string) => set.add(p)));
-    return Array.from(set);
+    return Array.from(set).sort();
   }, [alumniData]);
 
   const seasons = useMemo(() => {
@@ -55,50 +60,79 @@ export default function DirectoryPage() {
     return Array.from(set).sort();
   }, [alumniData]);
 
-  // ✅ Filter Logic
-  useEffect(() => {
-    let result = [...alumniData];
+  /** ✅ Apply advanced filters + sort to combined results */
+  const applyFiltersAndSort = (list: any[]) => {
+    let result = [...list];
 
-    // Keyword
-    if (query.trim()) {
-      const lower = query.toLowerCase();
-      result = result.filter(
-        (a) =>
-          a.name?.toLowerCase().includes(lower) ||
-          a.roles?.some((r: string) => r.toLowerCase().includes(lower))
-      );
-    }
+    if (filters.program) result = result.filter((a) => a.programs?.includes(filters.program));
+    if (filters.season) result = result.filter((a) => a.seasons?.includes(filters.season));
+    if (filters.location) result = result.filter((a) => a.location === filters.location);
+    if (filters.role) result = result.filter((a) => a.roles?.includes(filters.role));
+    if (filters.statusFlag) result = result.filter((a) => a.statusFlags?.includes(filters.statusFlag));
+    if (filters.identityTag) result = result.filter((a) => a.identityTags?.includes(filters.identityTag));
+    if (filters.language) result = result.filter((a) => a.languages?.includes(filters.language));
+    if (filters.updatedOnly) result = result.filter((a) => a.updatedRecently);
 
-    // Advanced filters
-    if (filters.program) {
-      result = result.filter((a) => a.programs?.includes(filters.program));
-    }
-    if (filters.season) {
-      result = result.filter((a) => a.seasons?.includes(filters.season));
-    }
-    if (filters.location) {
-      result = result.filter((a) => a.location === filters.location);
-    }
-    if (filters.role) {
-      result = result.filter((a) => a.roles?.includes(filters.role));
-    }
-    if (filters.updatedOnly) {
-      result = result.filter((a) => a.updatedRecently); // Assuming boolean flag
-    }
+    result.sort((a, b) => {
+      const nameA = a.name || "";
+      const nameB = b.name || "";
+      const firstA = nameA.split(" ")[0];
+      const firstB = nameB.split(" ")[0];
+      const lastA = nameA.split(" ").slice(-1)[0];
+      const lastB = nameB.split(" ").slice(-1)[0];
 
-    setFilteredAlumni(result);
-  }, [query, filters, alumniData]);
+      if (sortOption === "recent") return (b.updatedAt || 0) - (a.updatedAt || 0);
+      if (sortOption === "first") return firstA.localeCompare(firstB);
+      if (lastA === lastB) return firstA.localeCompare(firstB);
+      return lastA.localeCompare(lastB);
+    });
 
+    return result;
+  };
+
+  /** ✅ Clear Filters */
   const clearFilters = () => {
     setFilters({
       program: "",
       season: "",
       location: "",
       role: "",
+      statusFlag: "",
+      identityTag: "",
+      language: "",
       updatedOnly: false,
     });
-    setQuery("");
   };
+
+  const filterOptions = [
+    { name: "program", label: "PROGRAM", options: programs },
+    { name: "season", label: "SEASON", options: seasons },
+    { name: "location", label: "LOCATION", options: locations },
+    { name: "role", label: "ROLE", options: roles },
+    { name: "statusFlag", label: "INVOLVEMENT", options: ["Resident Artist", "Fellow", "Board Member"] },
+    { name: "identityTag", label: "TAGS", options: ["Indigenous", "LGBTQIA+", "POC"] },
+    { name: "language", label: "LANGUAGE", options: ["English", "Spanish", "French", "Portuguese"] },
+  ];
+
+  /** ✅ Dropdown Style */
+  const dropdownStyle = (isActive: boolean) => ({
+    padding: "0.4rem",
+    fontSize: "0.85rem",
+    borderRadius: "6px",
+    fontFamily: "Space Grotesk",
+    border: "0px solid #ccc",
+    cursor: "pointer",
+    backgroundColor: isActive ? "#F23359" : "#e5d2bd",
+    color: isActive ? "#f2f2f2" : "#241123",
+    opacity: 0.9,
+    fontWeight: 500,
+    letterSpacing: "0.04rem",
+    transition: "opacity 0.3s ease",
+  });
+
+  // After fetching alumniData
+const mainResults = applyFiltersAndSort(primaryResults.length ? primaryResults : alumniData);
+const extraResults = applyFiltersAndSort(secondaryResults);
 
   return (
     <div style={{ marginTop: "-750px" }}>
@@ -109,7 +143,6 @@ export default function DirectoryPage() {
           width: "100%",
           height: "55vh",
           boxShadow: "0px 0px 33px rgba(0,0,0,0.5)",
-          zIndex: 1,
         }}
       >
         <Image
@@ -136,168 +169,126 @@ export default function DirectoryPage() {
       </section>
 
       {/* ✅ MAIN */}
-      <main
-        style={{
-          marginTop: "55vh",
-          backgroundImage: "url('/images/kraft-texture.png')",
-          backgroundSize: "cover",
-          padding: "2rem 0",
-        }}
-      >
-        {/* ✅ Intro & Search */}
+      <main style={{ marginTop: "55vh", backgroundImage: "url('/images/kraft-texture.png')", backgroundSize: "cover", padding: "2rem 0" }}>
         <section style={{ width: "90%", maxWidth: "1200px", margin: "0 auto" }}>
-          <h2
-            style={{
-              fontFamily: "Space Grotesk, sans-serif",
-              color: "#6C00AF",
-              fontSize: "clamp(2.8rem, 5vw, 3.25rem)",
-              fontWeight: 700,
-              marginBottom: "1rem",
-            }}
-          >
+          <h2 style={{ fontFamily: "Space Grotesk", color: "#6C00AF", fontSize: "clamp(2.8rem, 5vw, 3.25rem)", fontWeight: 500, marginBottom: "1rem" }}>
             Explore our global community.
           </h2>
 
-          {/* ✅ Search Bar & Advanced Toggle */}
-          <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
-            <div
-              style={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                backgroundColor: "#F6E4C1",
-                padding: "0.5rem",
-                borderRadius: "6px",
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="2.5"
-                stroke="#241123"
-                style={{ width: "30px", height: "30px", marginRight: "0.25rem" }}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search alumni by keyword..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                style={{
-                  flex: 1,
-                  padding: "0.25rem 0.5rem",
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontSize: "1.2rem",
-                  backgroundColor: "#F6E4C1",
-                  border: "none",
-                }}
-              />
-            </div>
+          {/* ✅ Search + Sort */}
+          <div style={{ display: "flex", gap: "1rem", alignItems: "stretch" }}>
+  <div style={{ flex: 1, height: "47px" }}>
+    <AlumniSearch
+      alumniData={alumniData}
+      filters={filters} // Directory only
+      onResults={(primary, secondary) => {
+        setPrimaryResults(primary);
+        setSecondaryResults(secondary);
+      }}
+    />
+  </div>
+
             <button
               onClick={() => setAdvancedOpen(!advancedOpen)}
               style={{
+                height: "47px",
                 fontFamily: "Space Grotesk",
                 fontWeight: 600,
                 backgroundColor: "#6C00AF",
                 color: "#f2f2f2",
-                padding: "0.75rem 1.25rem",
+                padding: "0 1rem",
                 border: "none",
                 borderRadius: "6px",
                 cursor: "pointer",
                 fontSize: "1rem",
+                letterSpacing: "0.1rem",
+                transition: "opacity 0.3s ease",
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
             >
-              Advanced Search
+              ADVANCED SEARCH
             </button>
+
+            {/* Sort */}
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <span style={{ fontFamily: "Space Grotesk", fontWeight: 600, color: "#F6E4C1" }}>Sort by:</span>
+              {["last", "first", "recent"].map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => setSortOption(opt)}
+                  style={{
+                    backgroundColor: sortOption === opt ? "#6C00AF" : "#F6E4C1",
+                    color: sortOption === opt ? "#f2f2f2" : "#241123",
+                    padding: "0.4rem 0.8rem",
+                    border: "none",
+                    borderRadius: "6px",
+                    fontFamily: "Space Grotesk",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    transition: "opacity 0.3s ease",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+                  onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                >
+                  {opt === "last" ? "Last Name" : opt === "first" ? "First Name" : "Recently Updated"}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* ✅ Advanced Search Panel */}
+          {/* Advanced Filters */}
           <AnimatePresence>
             {advancedOpen && (
               <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.35 }}
-                style={{
-                  backgroundColor: "rgba(36, 17, 35, 0.2)",
-                  padding: "1rem",
-                  borderRadius: "8px",
-                  marginBottom: "1rem",
-                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                style={{ backgroundColor: "rgba(36,17,35,0.3)", padding: "1rem", borderRadius: "8px", marginBottom: "1rem" }}
               >
-                {/* Filters */}
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                    gap: "1rem",
-                  }}
-                >
-                  <input
-                    type="text"
-                    placeholder="Keyword"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    style={{ padding: "0.5rem" }}
-                  />
-                  <select
-                    value={filters.program}
-                    onChange={(e) => setFilters({ ...filters, program: e.target.value })}
-                  >
-                    <option value="">Program</option>
-                    {programs.map((p) => (
-                      <option key={p} value={p}>{p}</option>
-                    ))}
-                  </select>
-                  <select
-                    value={filters.season}
-                    onChange={(e) => setFilters({ ...filters, season: e.target.value })}
-                  >
-                    <option value="">Season</option>
-                    {seasons.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                  <select
-                    value={filters.location}
-                    onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-                  >
-                    <option value="">Location</option>
-                    {locations.map((loc) => (
-                      <option key={loc} value={loc}>{loc}</option>
-                    ))}
-                  </select>
-                  <select
-                    value={filters.role}
-                    onChange={(e) => setFilters({ ...filters, role: e.target.value })}
-                  >
-                    <option value="">Role</option>
-                    {roles.map((r) => (
-                      <option key={r} value={r}>{r}</option>
-                    ))}
-                  </select>
-                  <label>
+                <div style={{ display: "grid", gap: "0.5rem", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))" }}>
+                  {filterOptions.map((filter) => (
+                    <select
+                      key={filter.name}
+                      value={(filters[filter.name as keyof typeof filters] as string) || ""}
+                      onChange={(e) => setFilters({ ...filters, [filter.name as keyof typeof filters]: e.target.value })}
+                      style={dropdownStyle(Boolean(filters[filter.name as keyof typeof filters]))}
+                      onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+                      onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                    >
+                      <option value="">{filter.label}</option>
+                      {filter.options.map((opt) => (
+                        <option key={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  ))}
+                  <label style={{ fontFamily: "Space Grotesk", color: "#F6E4C1", fontWeight: 500, fontSize: "0.85rem" }}>
                     <input
                       type="checkbox"
                       checked={filters.updatedOnly}
                       onChange={(e) => setFilters({ ...filters, updatedOnly: e.target.checked })}
-                    /> Recently Updated
+                    />{" "}
+                    Recently Updated
                   </label>
                 </div>
-                <div style={{ marginTop: "1rem" }}>
+                <div style={{ textAlign: "right", marginTop: "0.5rem" }}>
                   <button
                     onClick={clearFilters}
                     style={{
                       backgroundColor: "#F23359",
-                      color: "#fff",
-                      padding: "0.5rem 1rem",
+                      color: "#f2f2f2",
+                      padding: "0.4rem 0.8rem",
                       border: "none",
                       borderRadius: "6px",
+                      fontFamily: "Space Grotesk",
+                      fontWeight: 500,
                       cursor: "pointer",
+                      letterSpacing: "0rem",
+                      transition: "opacity 0.3s ease",
                     }}
+                    onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+                    onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                   >
                     Reset Filters
                   </button>
@@ -307,40 +298,43 @@ export default function DirectoryPage() {
           </AnimatePresence>
         </section>
 
-        {/* ✅ Active Filters */}
-        {Object.values(filters).some((val) => val) && (
-          <div style={{ width: "90%", margin: "1rem auto", color: "#f2f2f2" }}>
-            Active Filters:
-            {Object.entries(filters).map(
-              ([key, val]) => val && (
-                <span key={key} style={{ marginLeft: "0.5rem", backgroundColor: "#6C00AF", padding: "0.25rem 0.5rem", borderRadius: "4px" }}>
-                  {key}: {val}
-                </span>
-              )
-            )}
-          </div>
-        )}
+        {/* ✅ Result Count */}
+        <div
+          style={{
+            textAlign: "center",
+            fontFamily: "Space Grotesk, sans-serif",
+            fontWeight: 450,
+            fontSize: "1.4rem",
+            color: "#F6E4C1",
+            opacity: 0.9,
+            margin: "1.5rem 0rem",
+          }}
+        >
+          {mainResults.length + extraResults.length} alumni found
+        </div>
 
-        {/* ✅ Alumni Grid */}
-        <section style={{ width: "90%", margin: "0 auto" }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-              gap: "1.5rem",
-            }}
-          >
-            {filteredAlumni.map((alum, index) => (
-              <MiniProfileCard
-                key={index}
-                name={alum.name}
-                role={alum.roles?.join(", ")}
-                slug={alum.slug}
-                headshotUrl={alum.headshotUrl}
-              />
+        {/* Main Alumni Grid */}
+        <section style={{ width: "90%", maxWidth: "1200px", margin: "1.75rem auto" }}>
+          <div style={{ display: "grid", justifyContent: "center", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: "1.5rem" }}>
+            {mainResults.map((alum, idx) => (
+              <MiniProfileCard key={idx} name={alum.name} role={alum.roles?.join(", ")} slug={alum.slug} headshotUrl={alum.headshotUrl} />
             ))}
           </div>
         </section>
+
+        {/* ✅ Secondary Matches */}
+        {extraResults.length > 0 && (
+          <section style={{ width: "90%", maxWidth: "1200px", margin: "2rem auto" }}>
+            <h4 style={{ fontFamily: "Space Grotesk", color: "#F6E4C1", marginBottom: "1rem", fontSize: "1.3rem" }}>
+              We found some additional matches that might interest you:
+            </h4>
+            <div style={{ display: "grid", justifyContent: "center", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: "1.5rem" }}>
+              {extraResults.map((alum, idx) => (
+                <MiniProfileCard key={`extra-${idx}`} name={alum.name} role={alum.roles?.join(", ")} slug={alum.slug} headshotUrl={alum.headshotUrl} />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ✅ Seasons Carousel */}
         <section
