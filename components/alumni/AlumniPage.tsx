@@ -189,7 +189,7 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
             <FeaturedAlumni highlights={highlights} />
           </div>
           <div className="updates-col">
-            <UpdatesPanel updates={updates} linkText="Explore All Alumni" linkUrl="/alumni" />
+            <UpdatesPanel updates={updates} linkText="Explore All Alumni" linkUrl="/directory" />
           </div>
         </div>
 

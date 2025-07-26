@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -14,14 +14,44 @@ interface FeaturedAlumniProps {
 }
 
 export default function FeaturedAlumni({ highlights }: FeaturedAlumniProps) {
-  if (!highlights || highlights.length === 0) return null;
+  const [displayHighlights, setDisplayHighlights] = useState(highlights);
+  const isInitialized = useRef(false);
 
-  const stableHighlights = useMemo(() => highlights, []);
+  useEffect(() => {
+    if (isInitialized.current) return; // ✅ Prevent re-run
+    isInitialized.current = true;
+
+    const savedData = sessionStorage.getItem("featuredHighlightsData");
+    const parsed = savedData ? JSON.parse(savedData) : null;
+
+    if (parsed && parsed.refreshCount < 3) {
+      // ✅ Use previous random order
+      setDisplayHighlights(parsed.order);
+      parsed.refreshCount += 1;
+      sessionStorage.setItem("featuredHighlightsData", JSON.stringify(parsed));
+    } else {
+      // ✅ Shuffle new order
+      const shuffled = [...highlights];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+
+      // ✅ Save and reset
+      setDisplayHighlights(shuffled);
+      sessionStorage.setItem(
+        "featuredHighlightsData",
+        JSON.stringify({ order: shuffled, refreshCount: 1 })
+      );
+    }
+  }, [highlights]);
+
+  if (!displayHighlights || displayHighlights.length === 0) return null;
 
   return (
     <section style={{ margin: "0 auto", padding: "0 10px", marginBottom: "4rem" }}>
       <div className="featured-alumni-grid">
-        {stableHighlights.map((alum, index) => {
+        {displayHighlights.map((alum, index) => {
           const imgSrc = alum.headshotUrl
             ? alum.headshotUrl.replace(/^http:\/\//, "https://")
             : "/images/default-headshot.png";
@@ -122,26 +152,25 @@ export default function FeaturedAlumni({ highlights }: FeaturedAlumniProps) {
 
       {/* ✅ Responsive CSS */}
       <style jsx>{`
-  .featured-alumni-grid {
-    display: grid;
-    gap: 70px;
-    justify-items: center;
-    grid-template-columns: repeat(2, 1fr); /* ✅ Large screens: 4 per row */
-  }
+        .featured-alumni-grid {
+          display: grid;
+          gap: 70px;
+          justify-items: center;
+          grid-template-columns: repeat(2, 1fr);
+        }
 
-  @media (max-width: 1200px) {
-    .featured-alumni-grid {
-      grid-template-columns: repeat(2, 1fr); /* ✅ Medium screens: 2 per row */
-    }
-  }
+        @media (max-width: 1200px) {
+          .featured-alumni-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
 
-  @media (max-width: 600px) {
-    .featured-alumni-grid {
-      grid-template-columns: 1fr; /* ✅ Small screens: 1 per row */
-    }
-  }
-`}</style>
-
+        @media (max-width: 600px) {
+          .featured-alumni-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
     </section>
   );
 }

@@ -466,3 +466,17 @@ main {
   }
 }
 
+/* Remove underlines for all links */
+a {
+  text-decoration: none;
+}
+
+/* If link has empty href or just #, make it look non-clickable */
+a[href=""],
+a[href="#"],
+a:not([href]) {
+  pointer-events: none;
+  cursor: default;
+  color: inherit; /* Keeps text color consistent */
+}
+

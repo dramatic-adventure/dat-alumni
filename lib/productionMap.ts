@@ -209,17 +209,20 @@ export const productionMap: Record<string, Production> = {
     posterUrl: "/posters/rebel-bird.jpg",
     artists: {
       "kathleen-amshoff": ["Director"],
+      "jason-williamson": ["Resident Playwright"],
       "jesse-baxter": ["Artistic Director"],
       "mary-k-baxter": ["Executive Director"],
       "tom-costello": ["Producer"],
       "christen-madrazo": ["Dramaturg", "Narrator"],
-      "petra-slováková": ["Interpreter"],
-      "lukáš-hudák": ["Actor"],
-      "milan-hudák": ["Actor"],
-      "ján-koky": ["Actor"],
+      "dominika-siroka": ["Dramaturg"],
+      "petra-slovakova": ["Interpreter"],
+      "lukas-hudak": ["Actor, Musician"],
+      "milan-hudak": ["Actor, Musician"],
+      "jan-koky": ["Actor, Musician"],
+      "igor-hudak": ["Actor"],
       "jonathan-david": ["Actor"],
       "nick-lehane": ["Actor"],
-      "lucia-šipošová": ["Actor"]
+      "lucia-siposova": ["Actor"]
     }
   },
 

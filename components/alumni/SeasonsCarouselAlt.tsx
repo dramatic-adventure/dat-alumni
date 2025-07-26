@@ -73,6 +73,7 @@ export default function SeasonsCarouselAlt() {
           fontSize: "clamp(2.5rem, 6.5vw, 6rem)",
           fontWeight: 400,
           color: "#F23359",
+          opacity: 0.92,
           textAlign: "center",
           marginTop: "0rem",
           marginBottom: "1.5rem",

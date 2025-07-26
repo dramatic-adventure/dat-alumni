@@ -5,7 +5,7 @@ import { programMap } from "@/lib/programMap";
 import { loadAlumni } from "@/lib/loadAlumni";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import Collapsible from "@/components/ui/Collapsible";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import { seasons } from "@/lib/seasonData";
 
 export const revalidate = 3600;
@@ -21,20 +21,15 @@ export default async function SeasonPage({ params }: { params: { season: string 
     return <div className="p-10 text-center text-gray-500">Season not found</div>;
   }
 
-  const maxSeason = seasons.length;
-
-  // ✅ Filter programs & productions for this season
   const programs = Object.values(programMap).filter((p) => p.season === seasonNumber);
   const productions = Object.values(productionMap).filter((p) => p.season === seasonNumber);
 
-  // ✅ Load alumni
   const alumni = await loadAlumni();
   const alumniMap = alumni.reduce((acc: Record<string, any>, alum) => {
     acc[alum.slug] = alum;
     return acc;
   }, {});
 
-  // ✅ Group productions by festival
   const productionsByFestival: Record<string, typeof productions> = {};
   productions.forEach((prod) => {
     const key = prod.festival || "Other Productions";
@@ -43,167 +38,235 @@ export default async function SeasonPage({ params }: { params: { season: string 
   });
 
   const heroImagePath = `/seasons/season-${seasonNumber}.jpg`;
-  const prevSeason = seasonNumber > 1 ? seasonNumber - 1 : null;
-  const nextSeason = seasonNumber < maxSeason ? seasonNumber + 1 : null;
 
   return (
-    <main
-      className="px-6 py-10 max-w-7xl mx-auto"
-      style={{
-        backgroundImage: "url('/images/kraft-texture.png')",
-        backgroundSize: "cover",
-        backgroundRepeat: "repeat",
-        minHeight: "100vh",
-      }}
-    >
-      {/* Hero */}
-      <div className="mb-6">
+    <div>
+      {/* ✅ HERO SECTION */}
+      <section
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "95vh",
+          boxShadow: "0px 0px 33px rgba(0,0,0,0.5)",
+          zIndex: 0,
+        }}
+      >
         <Image
           src={heroImagePath}
           alt={`${seasonInfo.seasonTitle} Hero`}
-          width={1600}
-          height={600}
-          className="w-full h-96 object-cover rounded-lg shadow-lg"
+          fill
+          priority
+          className="object-cover object-center"
         />
-      </div>
+        <div style={{ position: "absolute", bottom: "1rem", right: "5%" }}>
+          <h1
+            style={{
+              fontFamily: "Anton, sans-serif",
+              fontSize: "clamp(3rem, 7vw, 8rem)",
+              color: "#FFCC00",
+              textTransform: "uppercase",
+              textShadow: "0 8px 20px rgba(0,0,0,0.8)",
+              margin: 0,
+            }}
+          >
+            {seasonInfo.seasonTitle}
+          </h1>
+          <p
+            style={{
+              fontFamily: "'Space Grotesk', sans-serif",
+              fontSize: "1.8rem",
+              color: "#F23359",
+              margin: 0,
+            }}
+          >
+            {seasonInfo.years}
+          </p>
+        </div>
+      </section>
 
-      {/* Back to All Seasons */}
-      <div className="mb-6 text-center">
-        <Link
-          href="/seasons"
-          className="inline-block px-5 py-2 bg-[#FFCC00] text-[#241123] rounded-sm text-lg font-bold hover:scale-105 transition-transform"
-          style={{ fontFamily: "'Rock Salt', cursive", textDecoration: "none" }}
-        >
-          ← Back to All Seasons
-        </Link>
-      </div>
-
-      {/* Header */}
-      <h1
-        className="text-6xl text-[#241123] uppercase tracking-wider mb-2 text-center"
-        style={{ fontFamily: "Anton" }}
+      {/* ✅ MAIN CONTENT */}
+      <main
+        style={{
+          marginTop: "-750px", // parallax effect
+          backgroundImage: "url('/images/kraft-texture.png')",
+          backgroundSize: "cover",
+          backgroundRepeat: "repeat",
+          padding: "2rem 0",
+          position: "relative",
+          zIndex: 10,
+        }}
       >
-        {seasonInfo.seasonTitle}
-      </h1>
-      <h3
-        className="text-2xl text-[#6C00AF] mb-8 text-center"
-        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-      >
-        {seasonInfo.years}
-      </h3>
+        <div style={{ width: "90%", maxWidth: "1200px", margin: "0 auto" }}>
+          {/* Explore More Alumni Button */}
+          <div style={{ textAlign: "right", marginBottom: "2rem" }}>
+            <Link href="/alumni" className="explore-alumni-btn">
+              ← Explore More Alumni
+            </Link>
+          </div>
 
-      {/* PROGRAMS */}
-      <Collapsible title="Programs" defaultOpen>
-        {programs.length > 0 ? (
-          programs.map((program) => (
-            <div key={program.slug} className="mb-8">
-              <Link
-                href={program.url || "#"}
-                className="text-2xl font-semibold text-[#6C00AF] hover:text-[#F23359] transition-colors"
-                style={{ textDecoration: "none" }}
-              >
-                {program.title}
-              </Link>
-              <div
-                className="grid gap-6 mt-4"
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-                }}
-              >
-                {Object.keys(program.artists).map((slug) => {
-                  const alum = alumniMap[slug];
-                  return alum ? (
-                    <MiniProfileCard
-                      key={slug}
-                      name={alum.name}
-                      role={program.artists[slug].join(", ")}
-                      slug={alum.slug}
-                      headshotUrl={alum.headshotUrl}
-                    />
-                  ) : null;
-                })}
-              </div>
-            </div>
-          ))
-        ) : (
-          <p className="text-gray-500">No programs for this season.</p>
-        )}
-      </Collapsible>
-
-      {/* PRODUCTIONS */}
-      <Collapsible title="Productions" defaultOpen>
-        {Object.keys(productionsByFestival).map((festival) => (
-          <Collapsible key={festival} title={festival} defaultOpen level={3}>
-            {productionsByFestival[festival].map((prod) => (
-              <div key={prod.slug} className="mb-6">
-                <Link
-                  href={prod.url || "#"}
-                  className="text-lg font-semibold text-[#FFCC00] hover:text-[#F23359] transition-colors"
-                  style={{ textDecoration: "none" }}
-                >
-                  {prod.title}
-                </Link>
+          {/* ✅ PROGRAMS */}
+          {programs.length > 0 && (
+            <Collapsible title="Programs" defaultOpen={false}>
+              {programs.map((program) => (
                 <div
-                  className="grid gap-6 mt-3"
+                  key={program.slug}
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+                    textAlign: "left",
+                    marginBottom: "3rem",
+                    background: "rgba(36, 17, 35, 0.2)", // DAT Dark Purple @ 20%
+                    borderRadius: "8px",
+                    padding: "1.5rem",
                   }}
                 >
-                  {Object.keys(prod.artists).map((slug) => {
-                    const alum = alumniMap[slug];
-                    return alum ? (
-                      <MiniProfileCard
-                        key={slug}
-                        name={alum.name}
-                        role={prod.artists[slug].join(", ")}
-                        slug={alum.slug}
-                        headshotUrl={alum.headshotUrl}
-                      />
-                    ) : null;
-                  })}
+                  {program.url ? (
+  <Link href={program.url} className="program-link">
+    {program.title}
+  </Link>
+) : (
+  <span className="program-link">{program.title}</span>
+)}
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                      gap: "1rem",
+                      justifyItems: "center",
+                      marginTop: "1rem",
+                    }}
+                  >
+                    {Object.keys(program.artists).map((slug) => {
+                      const alum = alumniMap[slug];
+                      return alum ? (
+                        <MiniProfileCard
+                          key={slug}
+                          name={alum.name}
+                          role={program.artists[slug].join(", ")}
+                          slug={alum.slug}
+                          headshotUrl={alum.headshotUrl}
+                        />
+                      ) : null;
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </Collapsible>
-        ))}
-      </Collapsible>
+              ))}
+            </Collapsible>
+          )}
 
-      {/* Bottom Navigation */}
-      <div className="flex justify-between items-center mt-12">
-        {prevSeason ? (
-          <Link
-            href={`/season/${prevSeason}`}
-            className="flex items-center gap-2 px-4 py-2 text-lg font-bold text-[#241123] hover:text-[#F23359] transition-colors"
-            style={{ fontFamily: "'Rock Salt', cursive", textDecoration: "none" }}
-          >
-            <ChevronLeft size={24} />
-            Season {prevSeason}
-          </Link>
-        ) : (
-          <div />
-        )}
+          {/* ✅ PRODUCTIONS */}
+          {Object.keys(productionsByFestival).length > 0 && (
+            <Collapsible title="Productions" defaultOpen={false}>
+              {Object.keys(productionsByFestival).map((festival) => (
+                <Collapsible key={festival} title={festival} defaultOpen={false} level={3}>
+                  {productionsByFestival[festival].map((prod) => (
+                    <div
+                      key={prod.slug}
+                      style={{
+                        textAlign: "left",
+                        marginBottom: "3rem",
+                        background: "rgba(36, 17, 35, 0.2)", // DAT Dark Purple @ 20%
+                        borderRadius: "8px",
+                        padding: "1.5rem",
+                      }}
+                    >
+                      {prod.url ? (
+  <Link href={prod.url} className="production-link">
+    {prod.title}
+  </Link>
+) : (
+  <span className="production-link">{prod.title}</span>
+)}
 
-        {nextSeason ? (
-          <Link
-            href={`/season/${nextSeason}`}
-            className="flex items-center gap-2 px-4 py-2 text-lg font-bold text-[#241123] hover:text-[#F23359] transition-colors"
-            style={{ fontFamily: "'Rock Salt', cursive", textDecoration: "none" }}
-          >
-            Season {nextSeason}
-            <ChevronRight size={24} />
-          </Link>
-        ) : (
-          <div />
-        )}
-      </div>
-    </main>
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                          gap: "1rem",
+                          justifyItems: "center",
+                          marginTop: "1rem",
+                        }}
+                      >
+                        {Object.keys(prod.artists).map((slug) => {
+                          const alum = alumniMap[slug];
+                          return alum ? (
+                            <MiniProfileCard
+                              key={slug}
+                              name={alum.name}
+                              role={prod.artists[slug].join(", ")}
+                              slug={alum.slug}
+                              headshotUrl={alum.headshotUrl}
+                            />
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </Collapsible>
+              ))}
+            </Collapsible>
+          )}
+        </div>
+
+        {/* ✅ SEASONS CAROUSEL */}
+        <section
+          style={{
+            width: "100vw",
+            backgroundColor: "#6C00AF",
+            boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)",
+            padding: "4rem 0",
+            marginTop: "4rem",
+          }}
+        >
+          <SeasonsCarouselAlt />
+        </section>
+      </main>
+
+      {/* ✅ STYLES */}
+      <style>{`
+        a { text-decoration: none; }
+
+        .explore-alumni-btn {
+          font-family: 'Rock Salt', cursive;
+          font-size: 1.8rem;
+          color: #241123 !important;
+          opacity: 0.9;
+          transition: color 0.3s ease;
+          text-decoration: none !important;
+        }
+        .explore-alumni-btn:hover { color: #FFCC00 !important; opacity: 0.9}
+
+        .program-link {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 2.2rem;
+          font-weight: 600;
+          color: #D9A919 !important;
+          display: inline-block;
+          margin: 0 0 1rem;
+          transition: letter-spacing 0.3s ease, color 0.3s ease;
+          text-decoration: none !important;
+        }
+        .program-link:hover { color: #6C00AF !important; letter-spacing: 2px; }
+
+        .production-link {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 1.9rem;
+          font-weight: 500;
+          color: #D9A919 !important;
+          display: inline-block;
+          margin: 0 0 1rem;
+          transition: letter-spacing 0.3s ease, color 0.3s ease;
+          text-decoration: none !important;
+        }
+        .production-link:hover { color: #6C00AF !important; letter-spacing: 2px; }
+
+        h3 { color: #FFCC00; }
+      `}</style>
+    </div>
   );
 }
 
 export async function generateStaticParams() {
-  return Array.from({ length: seasons.length }, (_, i) => ({
-    season: `${i + 1}`,
-  }));
+  return seasons.map((_, i) => ({ season: `${i + 1}` }));
 }
