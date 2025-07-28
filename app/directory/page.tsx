@@ -5,15 +5,33 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
-import AlumniSearch from "@/components/alumni/AlumniSearch";
+import AlumniSearch from "@/components/alumni/AlumniSearch/AlumniSearch";
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
 
+interface AlumniItem {
+  name: string;
+  slug: string;
+  roles?: string[];
+  location?: string;
+  programs?: string[];
+  seasons?: string[];
+  statusFlags?: string[];
+  identityTags?: string[];
+  languages?: string[];
+  updatedRecently?: boolean;
+  updatedAt?: number;
+  headshotUrl?: string;
+}
+
+type SortOption = "last" | "first" | "recent";
+
 export default function DirectoryPage() {
-  const [alumniData, setAlumniData] = useState<any[]>([]);
-  const [primaryResults, setPrimaryResults] = useState<any[]>([]);
-  const [secondaryResults, setSecondaryResults] = useState<any[]>([]);
+  const [alumniData, setAlumniData] = useState<AlumniItem[]>([]);
+  const [primaryResults, setPrimaryResults] = useState<AlumniItem[]>([]);
+  const [secondaryResults, setSecondaryResults] = useState<AlumniItem[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [sortOption, setSortOption] = useState("last");
+  const [sortOption, setSortOption] = useState<SortOption>("last");
+  const [query, setQuery] = useState<string>("");
 
   const [filters, setFilters] = useState({
     program: "",
@@ -26,7 +44,7 @@ export default function DirectoryPage() {
     updatedOnly: false,
   });
 
-  /** ✅ Load Alumni */
+  /** ✅ Load alumni */
   useEffect(() => {
     async function fetchData() {
       const alumni = await loadVisibleAlumni();
@@ -38,13 +56,13 @@ export default function DirectoryPage() {
   /** ✅ Dropdown options */
   const programs = useMemo(() => {
     const set = new Set<string>();
-    alumniData.forEach((a) => a.programs?.forEach((p: string) => set.add(p)));
+    alumniData.forEach((a) => a.programs?.forEach((p) => set.add(p)));
     return Array.from(set).sort();
   }, [alumniData]);
 
   const seasons = useMemo(() => {
     const set = new Set<string>();
-    alumniData.forEach((a) => a.seasons?.forEach((s: string) => set.add(s)));
+    alumniData.forEach((a) => a.seasons?.forEach((s) => set.add(s)));
     return Array.from(set).sort();
   }, [alumniData]);
 
@@ -56,12 +74,12 @@ export default function DirectoryPage() {
 
   const roles = useMemo(() => {
     const set = new Set<string>();
-    alumniData.forEach((a) => a.roles?.forEach((r: string) => set.add(r)));
+    alumniData.forEach((a) => a.roles?.forEach((r) => set.add(r)));
     return Array.from(set).sort();
   }, [alumniData]);
 
-  /** ✅ Apply advanced filters + sort to combined results */
-  const applyFiltersAndSort = (list: any[]) => {
+  /** ✅ Apply filters and sort (alphabetical or recent only when no query) */
+  const applyFiltersAndSort = (list: AlumniItem[]): AlumniItem[] => {
     let result = [...list];
 
     if (filters.program) result = result.filter((a) => a.programs?.includes(filters.program));
@@ -73,24 +91,27 @@ export default function DirectoryPage() {
     if (filters.language) result = result.filter((a) => a.languages?.includes(filters.language));
     if (filters.updatedOnly) result = result.filter((a) => a.updatedRecently);
 
-    result.sort((a, b) => {
-      const nameA = a.name || "";
-      const nameB = b.name || "";
-      const firstA = nameA.split(" ")[0];
-      const firstB = nameB.split(" ")[0];
-      const lastA = nameA.split(" ").slice(-1)[0];
-      const lastB = nameB.split(" ").slice(-1)[0];
+    // ✅ If query exists, preserve relevance order (skip alphabetical sort)
+    if (!query) {
+      result.sort((a, b) => {
+        const nameA = a.name || "";
+        const nameB = b.name || "";
+        const firstA = nameA.split(" ")[0];
+        const firstB = nameB.split(" ")[0];
+        const lastA = nameA.split(" ").slice(-1)[0];
+        const lastB = nameB.split(" ").slice(-1)[0];
 
-      if (sortOption === "recent") return (b.updatedAt || 0) - (a.updatedAt || 0);
-      if (sortOption === "first") return firstA.localeCompare(firstB);
-      if (lastA === lastB) return firstA.localeCompare(firstB);
-      return lastA.localeCompare(lastB);
-    });
+        if (sortOption === "recent") return (b.updatedAt || 0) - (a.updatedAt || 0);
+        if (sortOption === "first") return firstA.localeCompare(firstB);
+        if (lastA === lastB) return firstA.localeCompare(firstB);
+        return lastA.localeCompare(lastB);
+      });
+    }
 
     return result;
   };
 
-  /** ✅ Clear Filters */
+  /** ✅ Clear filters */
   const clearFilters = () => {
     setFilters({
       program: "",
@@ -114,25 +135,9 @@ export default function DirectoryPage() {
     { name: "language", label: "LANGUAGE", options: ["English", "Spanish", "French", "Portuguese"] },
   ];
 
-  /** ✅ Dropdown Style */
-  const dropdownStyle = (isActive: boolean) => ({
-    padding: "0.4rem",
-    fontSize: "0.85rem",
-    borderRadius: "6px",
-    fontFamily: "Space Grotesk",
-    border: "0px solid #ccc",
-    cursor: "pointer",
-    backgroundColor: isActive ? "#F23359" : "#e5d2bd",
-    color: isActive ? "#f2f2f2" : "#241123",
-    opacity: 0.9,
-    fontWeight: 500,
-    letterSpacing: "0.04rem",
-    transition: "opacity 0.3s ease",
-  });
-
-  // After fetching alumniData
-const mainResults = applyFiltersAndSort(primaryResults.length ? primaryResults : alumniData);
-const extraResults = applyFiltersAndSort(secondaryResults);
+  /** ✅ Which data to display */
+  const mainResults = applyFiltersAndSort(query ? primaryResults : alumniData);
+  const extraResults = query ? applyFiltersAndSort(secondaryResults) : [];
 
   return (
     <div style={{ marginTop: "-750px" }}>
@@ -169,73 +174,100 @@ const extraResults = applyFiltersAndSort(secondaryResults);
       </section>
 
       {/* ✅ MAIN */}
-      <main style={{ marginTop: "55vh", backgroundImage: "url('/images/kraft-texture.png')", backgroundSize: "cover", padding: "2rem 0" }}>
+      <main
+        style={{
+          marginTop: "55vh",
+          backgroundImage: "url('/images/kraft-texture.png')",
+          backgroundSize: "cover",
+          padding: "2rem 0",
+        }}
+      >
         <section style={{ width: "90%", maxWidth: "1200px", margin: "0 auto" }}>
-          <h2 style={{ fontFamily: "Space Grotesk", color: "#6C00AF", fontSize: "clamp(2.8rem, 5vw, 3.25rem)", fontWeight: 500, marginBottom: "1rem" }}>
+          <h2
+            style={{
+              fontFamily: "Space Grotesk",
+              color: "#6C00AF",
+              fontSize: "clamp(2.8rem, 5vw, 3.25rem)",
+              fontWeight: 500,
+              marginBottom: "3rem",
+            }}
+          >
             Explore our global community.
           </h2>
 
           {/* ✅ Search + Sort */}
-          <div style={{ display: "flex", gap: "1rem", alignItems: "stretch" }}>
+<div style={{ display: "flex", gap: "1rem", alignItems: "stretch" }}>
   <div style={{ flex: 1, height: "47px" }}>
     <AlumniSearch
       alumniData={alumniData}
-      filters={filters} // Directory only
-      onResults={(primary, secondary) => {
+      filters={filters}
+      onResults={(primary, secondary, q) => {
         setPrimaryResults(primary);
         setSecondaryResults(secondary);
+        setQuery(q); // ✅ track query to control sort & UI
       }}
+      showAllIfEmpty={true}
+      debug={false} // ✅ keep false for production
     />
   </div>
 
-            <button
-              onClick={() => setAdvancedOpen(!advancedOpen)}
-              style={{
-                height: "47px",
-                fontFamily: "Space Grotesk",
-                fontWeight: 600,
-                backgroundColor: "#6C00AF",
-                color: "#f2f2f2",
-                padding: "0 1rem",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "1rem",
-                letterSpacing: "0.1rem",
-                transition: "opacity 0.3s ease",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-            >
-              ADVANCED SEARCH
-            </button>
+  <button
+    onClick={() => setAdvancedOpen(!advancedOpen)}
+    style={{
+      height: "47px",
+      fontFamily: "Space Grotesk",
+      fontWeight: 600,
+      backgroundColor: "#6C00AF",
+      color: "#f2f2f2",
+      padding: "0 1rem",
+      border: "none",
+      borderRadius: "6px",
+      cursor: "pointer",
+      fontSize: "1rem",
+      letterSpacing: "0.1rem",
+      transition: "opacity 0.3s ease",
+    }}
+    onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+    onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+  >
+    ADVANCED SEARCH
+  </button>
 
-            {/* Sort */}
-            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-              <span style={{ fontFamily: "Space Grotesk", fontWeight: 600, color: "#F6E4C1" }}>Sort by:</span>
-              {["last", "first", "recent"].map((opt) => (
-                <button
-                  key={opt}
-                  onClick={() => setSortOption(opt)}
-                  style={{
-                    backgroundColor: sortOption === opt ? "#6C00AF" : "#F6E4C1",
-                    color: sortOption === opt ? "#f2f2f2" : "#241123",
-                    padding: "0.4rem 0.8rem",
-                    border: "none",
-                    borderRadius: "6px",
-                    fontFamily: "Space Grotesk",
-                    fontWeight: 500,
-                    cursor: "pointer",
-                    transition: "opacity 0.3s ease",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
-                  onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-                >
-                  {opt === "last" ? "Last Name" : opt === "first" ? "First Name" : "Recently Updated"}
-                </button>
-              ))}
-            </div>
-          </div>
+  {/* ✅ Hide sort buttons if query exists */}
+  {!query && (
+    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+      <span style={{ fontFamily: "Space Grotesk", fontWeight: 600, color: "#F6E4C1" }}>
+        Sort by:
+      </span>
+      {(["last", "first", "recent"] as const).map((opt) => (
+        <button
+          key={opt}
+          onClick={() => setSortOption(opt)}
+          style={{
+            backgroundColor: sortOption === opt ? "#6C00AF" : "#F6E4C1",
+            color: sortOption === opt ? "#f2f2f2" : "#241123",
+            padding: "0.4rem 0.8rem",
+            border: "none",
+            borderRadius: "6px",
+            fontFamily: "Space Grotesk",
+            fontWeight: 500,
+            cursor: "pointer",
+            transition: "opacity 0.3s ease",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+        >
+          {opt === "last"
+            ? "Last Name"
+            : opt === "first"
+            ? "First Name"
+            : "Recently Updated"}
+        </button>
+      ))}
+    </div>
+  )}
+</div>
+
 
           {/* Advanced Filters */}
           <AnimatePresence>
@@ -245,17 +277,45 @@ const extraResults = applyFiltersAndSort(secondaryResults);
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                style={{ backgroundColor: "rgba(36,17,35,0.3)", padding: "1rem", borderRadius: "8px", marginBottom: "1rem" }}
+                style={{
+                  backgroundColor: "rgba(36,17,35,0.3)",
+                  padding: "1rem",
+                  borderRadius: "8px",
+                  margin: "1rem",
+                }}
               >
-                <div style={{ display: "grid", gap: "0.5rem", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gap: "0.5rem",
+                    gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
+                  }}
+                >
                   {filterOptions.map((filter) => (
                     <select
                       key={filter.name}
                       value={(filters[filter.name as keyof typeof filters] as string) || ""}
-                      onChange={(e) => setFilters({ ...filters, [filter.name as keyof typeof filters]: e.target.value })}
-                      style={dropdownStyle(Boolean(filters[filter.name as keyof typeof filters]))}
-                      onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
-                      onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                      onChange={(e) =>
+                        setFilters({ ...filters, [filter.name as keyof typeof filters]: e.target.value })
+                      }
+                      style={{
+                        padding: "0.4rem",
+                        fontSize: "0.85rem",
+                        borderRadius: "6px",
+                        fontFamily: "Space Grotesk",
+                        border: "0px solid #ccc",
+                        cursor: "pointer",
+                        backgroundColor: filters[filter.name as keyof typeof filters]
+                          ? "#F23359"
+                          : "#e5d2bd",
+                        color: filters[filter.name as keyof typeof filters] ? "#f2f2f2" : "#241123",
+                        opacity: 0.9,
+                        fontWeight: 500,
+                        letterSpacing: "0.04rem",
+                        transition: "opacity 0.3s ease",
+                      }}
+                    onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+                    onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                     >
                       <option value="">{filter.label}</option>
                       {filter.options.map((opt) => (
@@ -263,11 +323,20 @@ const extraResults = applyFiltersAndSort(secondaryResults);
                       ))}
                     </select>
                   ))}
-                  <label style={{ fontFamily: "Space Grotesk", color: "#F6E4C1", fontWeight: 500, fontSize: "0.85rem" }}>
+                  <label
+                    style={{
+                      fontFamily: "Space Grotesk",
+                      color: "#F6E4C1",
+                      fontWeight: 500,
+                      fontSize: "0.85rem",
+                    }}
+                  >
                     <input
                       type="checkbox"
                       checked={filters.updatedOnly}
-                      onChange={(e) => setFilters({ ...filters, updatedOnly: e.target.checked })}
+                      onChange={(e) =>
+                        setFilters({ ...filters, updatedOnly: e.target.checked })
+                      }
                     />{" "}
                     Recently Updated
                   </label>
@@ -313,24 +382,69 @@ const extraResults = applyFiltersAndSort(secondaryResults);
           {mainResults.length + extraResults.length} alumni found
         </div>
 
-        {/* Main Alumni Grid */}
-        <section style={{ width: "90%", maxWidth: "1200px", margin: "1.75rem auto" }}>
-          <div style={{ display: "grid", justifyContent: "center", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: "1.5rem" }}>
+        {/* ✅ Primary (or all if no query) */}
+        <section
+          style={{
+            width: "90%",
+            maxWidth: "1200px",
+            margin: "1.75rem auto",
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              justifyContent: "center",
+              gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))",
+              gap: "1.5rem",
+            }}
+          >
             {mainResults.map((alum, idx) => (
-              <MiniProfileCard key={idx} name={alum.name} role={alum.roles?.join(", ")} slug={alum.slug} headshotUrl={alum.headshotUrl} />
+              <MiniProfileCard
+                key={idx}
+                name={alum.name}
+                role={alum.roles?.join(", ") ?? ""}
+                slug={alum.slug}
+                headshotUrl={alum.headshotUrl}
+              />
             ))}
           </div>
         </section>
 
-        {/* ✅ Secondary Matches */}
+        {/* ✅ Secondary matches */}
         {extraResults.length > 0 && (
-          <section style={{ width: "90%", maxWidth: "1200px", margin: "2rem auto" }}>
-            <h4 style={{ fontFamily: "Space Grotesk", color: "#F6E4C1", marginBottom: "1rem", fontSize: "1.3rem" }}>
-              We found some additional matches that might interest you:
+          <section
+            style={{
+              width: "90%",
+              maxWidth: "1200px",
+              margin: "2rem auto",
+            }}
+          >
+            <h4
+              style={{
+                fontFamily: "Space Grotesk",
+                color: "#F6E4C1",
+                marginBottom: "1rem",
+                fontSize: "1.3rem",
+              }}
+            >
+              Additional Matches You Might Like:
             </h4>
-            <div style={{ display: "grid", justifyContent: "center", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: "1.5rem" }}>
+            <div
+              style={{
+                display: "grid",
+                justifyContent: "center",
+                gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))",
+                gap: "1.5rem",
+              }}
+            >
               {extraResults.map((alum, idx) => (
-                <MiniProfileCard key={`extra-${idx}`} name={alum.name} role={alum.roles?.join(", ")} slug={alum.slug} headshotUrl={alum.headshotUrl} />
+                <MiniProfileCard
+                  key={`extra-${idx}`}
+                  name={alum.name}
+                  role={alum.roles?.join(", ") ?? ""}
+                  slug={alum.slug}
+                  headshotUrl={alum.headshotUrl}
+                />
               ))}
             </div>
           </section>
@@ -341,7 +455,7 @@ const extraResults = applyFiltersAndSort(secondaryResults);
           style={{
             width: "100%",
             backgroundColor: "#6C00AF",
-            boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)",
+            boxShadow: "0px 0px 33px rgba(0,0,0,0.8)",
             padding: "4rem 0",
             marginTop: "4rem",
           }}

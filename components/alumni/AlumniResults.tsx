@@ -14,7 +14,7 @@ export default function AlumniResults({ results, compact = false }: AlumniResult
   const [page, setPage] = useState(1);
   const { ref, inView } = useInView({ threshold: 0.5 });
 
-  /** ✅ Reset on new results */
+  /** ✅ Reset when results change */
   useEffect(() => {
     setVisibleResults(results.slice(0, 20));
     setPage(1);
@@ -29,6 +29,7 @@ export default function AlumniResults({ results, compact = false }: AlumniResult
     }
   }, [inView, results, visibleResults, page, compact]);
 
+  /** ✅ Empty state */
   if (results.length === 0) {
     return (
       <p
@@ -36,7 +37,7 @@ export default function AlumniResults({ results, compact = false }: AlumniResult
           marginTop: "1rem",
           fontFamily: "Space Grotesk",
           fontSize: "1.3rem",
-          color: "#F6E4C1", // Cream color
+          color: "#F6E4C1",
           fontWeight: 600,
           textAlign: "center",
         }}
@@ -48,7 +49,7 @@ export default function AlumniResults({ results, compact = false }: AlumniResult
 
   return (
     <>
-      {/* ✅ Show results count only in full mode (not in compact carousel mode) */}
+      {/* ✅ Show results count only when not compact */}
       {!compact && (
         <h2
           style={{
@@ -64,25 +65,27 @@ export default function AlumniResults({ results, compact = false }: AlumniResult
         </h2>
       )}
 
+      {/* ✅ Main container */}
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: compact
-            ? "auto / auto-flow" // For horizontal scroll
-            : "repeat(auto-fit, minmax(160px, 1fr))",
-          gap: compact ? "1rem" : "20px",
+          display: compact ? "flex" : "grid",
+          flexDirection: compact ? "row" : undefined,
           overflowX: compact ? "auto" : "visible",
-          whiteSpace: compact ? "nowrap" : "normal",
-          paddingBottom: compact ? "1rem" : "0",
+          gap: compact ? "1rem" : "20px",
+          paddingBottom: compact ? "1rem" : 0,
+          paddingLeft: compact ? "2rem" : 0, // ✅ NEW: Left padding for scrollable carousels
+          scrollSnapType: compact ? "x mandatory" : undefined,
+          scrollPaddingLeft: compact ? "2rem" : undefined, // ✅ Helps maintain snap offset
+          WebkitOverflowScrolling: compact ? "touch" : undefined,
         }}
       >
         {visibleResults.map((alum, index) => (
           <div
             key={index}
             style={{
-              display: "inline-block",
+              flex: compact ? "0 0 auto" : undefined,
               width: compact ? "180px" : "auto",
-              flexShrink: compact ? 0 : undefined,
+              scrollSnapAlign: compact ? "start" : undefined,
             }}
           >
             <MiniProfileCard
@@ -95,8 +98,8 @@ export default function AlumniResults({ results, compact = false }: AlumniResult
         ))}
       </div>
 
-      {/* ✅ Only show infinite scroll trigger if NOT compact */}
-      {!compact && <div ref={ref} className="h-10"></div>}
+      {/* ✅ Infinite scroll trigger for full mode */}
+      {!compact && <div ref={ref} className="h-10" />}
     </>
   );
 }

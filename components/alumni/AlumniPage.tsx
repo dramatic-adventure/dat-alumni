@@ -5,15 +5,40 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import FeaturedAlumni from "@/components/alumni/FeaturedAlumni";
-import AlumniSearch from "@/components/alumni/AlumniSearch";
+import AlumniSearch from "@/components/alumni/AlumniSearch/AlumniSearch";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
 import { getRecentUpdates } from "@/lib/getRecentUpdates";
 
 const UpdatesPanel = dynamic(() => import("@/components/shared/UpdatesPanel"), {
   ssr: false,
-  loading: () => <div className="text-center py-8 text-[#6C00AF]">Loading updates...</div>,
+  loading: () => (
+    <div
+      className="updates-placeholder"
+      style={{
+        minHeight: "450px",
+        background: "rgba(108, 0, 175, 0.05)",
+        borderRadius: "8px",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        fontFamily: "Space Grotesk",
+        fontWeight: 600,
+        color: "#f2f2f2",
+        opacity: 0.8,
+      }}
+    >
+      Loading updates...
+    </div>
+  ),
 });
+
+interface AlumniItem {
+  name: string;
+  slug: string;
+  roles?: string[];
+  headshotUrl?: string;
+}
 
 interface AlumniPageProps {
   highlights: { name: string; roles?: string[]; slug: string; headshotUrl?: string }[];
@@ -27,33 +52,61 @@ interface UpdateItem {
 
 export default function AlumniPage({ highlights }: AlumniPageProps) {
   const [updates, setUpdates] = useState<UpdateItem[]>([]);
-  const [alumniData, setAlumniData] = useState<any[]>([]);
-  const [primaryResults, setPrimaryResults] = useState<any[]>([]);
-  const [secondaryResults, setSecondaryResults] = useState<any[]>([]);
+  const [alumniData, setAlumniData] = useState<AlumniItem[]>([]);
+  const [primaryResults, setPrimaryResults] = useState<AlumniItem[]>([]);
+  const [secondaryResults, setSecondaryResults] = useState<AlumniItem[]>([]);
+  const [query, setQuery] = useState<string>(""); // For View All Matches button
+  const [usedFallback, setUsedFallback] = useState(true);
 
+  /** ✅ Fetch alumni & updates */
   useEffect(() => {
+    let isMounted = true;
+
+    const fallbackUpdates: UpdateItem[] = [
+      { text: "Just joined a new Broadway cast!", author: "ALEX", link: "/alumni/alex" },
+      { text: "Launched a theatre program in Ecuador.", author: "JAMIE", link: "/alumni/jamie" },
+      { text: "Published a play about climate change.", author: "PRIYA", link: "/alumni/priya" },
+    ];
+
+    setUpdates(fallbackUpdates);
+    setUsedFallback(true);
+
     async function fetchData() {
-      const alumni = await loadVisibleAlumni();
-      setAlumniData(alumni);
+      try {
+        const alumni = await loadVisibleAlumni();
+        if (!isMounted) return;
 
-      const recent = getRecentUpdates(alumni).map((u: any) => ({
-        text: u.message || "Update coming soon...",
-        link: `/alumni/${u.slug}`,
-        author: u.name || "ALUM",
-      }));
+        setAlumniData(alumni);
 
-      setUpdates(
-        recent.length > 0
-          ? [...recent].sort(() => Math.random() - 0.5).slice(0, 5)
-          : [
-              { text: "Just joined a new Broadway cast!", author: "ALEX", link: "/alumni/alex" },
-              { text: "Launched a theatre program in Ecuador.", author: "JAMIE", link: "/alumni/jamie" },
-              { text: "Published a play about climate change.", author: "PRIYA", link: "/alumni/priya" },
-            ]
-      );
+        if (alumni.length > 0) {
+          const recent = getRecentUpdates(alumni).map((u: any) => ({
+            text: u.message || "Update coming soon...",
+            link: `/alumni/${u.slug}`,
+            author: u.name || "ALUM",
+          }));
+
+          if (recent.length > 0) {
+            setUpdates(recent.sort(() => Math.random() - 0.5).slice(0, 5));
+            setUsedFallback(false);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch updates:", err);
+      }
     }
+
     fetchData();
-  }, []);
+
+    /** ✅ Retry if fallback still in use after 3s */
+    const retryTimeout = setTimeout(() => {
+      if (usedFallback) fetchData();
+    }, 3000);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(retryTimeout);
+    };
+  }, [usedFallback]);
 
   return (
     <div style={{ marginTop: "-750px" }}>
@@ -63,7 +116,7 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
           position: "relative",
           width: "100%",
           height: "55vh",
-          boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)",
+          boxShadow: "0px 0px 33px rgba(0,0,0,0.5)",
           zIndex: 1,
         }}
       >
@@ -120,17 +173,20 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
             continue to inspire.
           </p>
 
-          {/* ✅ Alumni Search + Directory Button */}
+          {/* ✅ Search */}
           <div style={{ display: "flex", gap: "1rem", alignItems: "stretch" }}>
-  <div style={{ flex: 1, height: "47px" }}>
-  <AlumniSearch
-    alumniData={alumniData}
-    onResults={(primary, secondary) => {
-      setPrimaryResults(primary);
-      setSecondaryResults(secondary);
-    }}
-  />
-</div>
+            <div style={{ flex: 1, height: "47px" }}>
+              <AlumniSearch
+  alumniData={alumniData}
+  onResults={(primary, secondary, q) => {
+    setPrimaryResults(primary);
+    setSecondaryResults(secondary);
+    setQuery(q);
+  }}
+  showAllIfEmpty={false}
+/>
+
+            </div>
 
             <a
               href="/directory"
@@ -160,54 +216,113 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
           </div>
         </section>
 
-        {/* ✅ Primary Results Carousel */}
-        {primaryResults.length > 0 && (
-          <section style={{ width: "100%", paddingLeft: "1rem", margin: "1rem auto", overflowX: "auto" }}>
-            <div style={{ display: "flex", gap: "1rem", padding: "0.5rem 0" }}>
-              {primaryResults.map((alum, idx) => (
-                <div key={idx} style={{ flex: "0 0 auto", width: "160px" }}>
-                  <MiniProfileCard
-                    name={alum.name}
-                    role={alum.roles?.join(", ")}
-                    slug={alum.slug}
-                    headshotUrl={alum.headshotUrl}
-                  />
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ✅ Secondary Matches */}
-        {secondaryResults.length > 0 && (
-          <section style={{ width: "100%", margin: "2rem auto", paddingLeft: "1rem" }}>
-            <h4
+        {/* ✅ Show results only after search */}
+        {query && primaryResults.length > 0 && (
+          <section style={{ width: "100%", margin: "1.5rem auto" }}>
+            <h3
               style={{
-                fontFamily: "Space Grotesk",
-                color: "#F6E4C1",
-                marginBottom: "1rem",
-                fontSize: "1.3rem",
-                paddingLeft: "0.5rem",
+                fontFamily: "DM Sans, sans-serif",
+                color: "#241123",
+                fontSize: "1.4rem",
+                margin: "0 0 0.5rem 1rem",
               }}
             >
-              We found some additional matches that might interest you:
-            </h4>
-            <div style={{ display: "flex", gap: "1rem", overflowX: "auto", padding: "0.5rem 0" }}>
-              {secondaryResults.map((alum, idx) => (
-                <div key={`extra-${idx}`} style={{ flex: "0 0 auto", width: "160px" }}>
-                  <MiniProfileCard
-                    name={alum.name}
-                    role={alum.roles?.join(", ")}
-                    slug={alum.slug}
-                    headshotUrl={alum.headshotUrl}
-                  />
-                </div>
-              ))}
-            </div>
+              Top Matches
+            </h3>
+           <div
+  style={{
+    display: "flex",
+    gap: "1rem",
+    overflowX: "auto",
+    padding: "1rem 2rem", // ✅ Keep same breathing room as secondary
+    scrollSnapType: "x mandatory",
+    scrollPaddingLeft: "2rem",
+    scrollBehavior: "smooth",
+    WebkitOverflowScrolling: "touch",
+  }}
+>
+  {primaryResults.map((alum, idx) => (
+
+    <div key={`primary-${idx}`} style={{ flex: "0 0 auto", width: "150px", scrollSnapAlign: "start" }}>
+      <MiniProfileCard
+        name={alum.name}
+        role={alum.roles?.join(", ") ?? ""}
+        slug={alum.slug}
+        headshotUrl={alum.headshotUrl}
+      />
+    </div>
+  ))}
+  <div style={{ flex: "0 0 2rem" }} /> {/* ✅ Spacer after last */}
+</div>
           </section>
         )}
 
-        {/* ✅ Headline Row */}
+        {query && secondaryResults.length > 0 && (
+          <section style={{ width: "100%", margin: "2rem auto", textAlign: "center" }}>
+            <h4
+              style={{
+                fontFamily: "DM Sans, sans-serif",
+                color: "#241123",
+                fontSize: "1.3rem",
+                margin: "0 0 0.5rem 1rem",
+                textAlign: "left",
+              }}
+            >
+              More Matches You Might Like
+            </h4>
+            <div
+  style={{
+    display: "flex",
+    gap: "1rem",
+    overflowX: "auto",
+    padding: "1rem 2rem", // ✅ Padding adds breathing room
+    scrollSnapType: "x mandatory",
+    scrollPaddingLeft: "2rem", // ✅ Ensures snap respects padding
+    scrollBehavior: "smooth",
+    WebkitOverflowScrolling: "touch",
+  }}
+>
+
+  <div style={{ flex: "0 0 2rem" }} /> {/* ✅ Spacer before first */}
+  {secondaryResults.map((alum, idx) => (
+    <div key={`secondary-${idx}`} style={{ flex: "0 0 auto", width: "150px", scrollSnapAlign: "start" }}>
+      <MiniProfileCard
+        name={alum.name}
+        role={alum.roles?.join(", ") ?? ""}
+        slug={alum.slug}
+        headshotUrl={alum.headshotUrl}
+      />
+    </div>
+  ))}
+  <div style={{ flex: "0 0 2rem" }} /> {/* ✅ Spacer after last */}
+</div>
+
+            <a
+              href={`/directory?q=${encodeURIComponent(query)}`}
+              style={{
+                display: "inline-block",
+                marginTop: "1.5rem",
+                backgroundColor: "#6C00AF",
+                color: "#fff",
+                padding: "0.8rem 1.5rem",
+                borderRadius: "6px",
+                fontFamily: "Space Grotesk, sans-serif",
+                fontWeight: 500,
+                fontSize: "0.95rem",
+                letterSpacing: "1.2px",
+                textTransform: "uppercase",
+                textDecoration: "none",
+                transition: "opacity 0.3s ease",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.6")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            >
+              View All Matches
+            </a>
+          </section>
+        )}
+
+        {/* ✅ Highlights & Updates */}
         <section style={{ width: "100%", textAlign: "center", margin: "2rem 0" }}>
           <h2
             style={{
@@ -222,7 +337,6 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
           </h2>
         </section>
 
-        {/* ✅ Two-Column Layout */}
         <div className="alumni-grid">
           <div className="featured-col">
             <FeaturedAlumni highlights={highlights} />
@@ -232,12 +346,11 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
           </div>
         </div>
 
-        {/* ✅ Seasons Carousel */}
         <section
           style={{
             width: "100%",
             backgroundColor: "#6C00AF",
-            boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)",
+            boxShadow: "0px 0px 33px rgba(0,0,0,0.8)",
             padding: "4rem 0",
             marginTop: "4rem",
           }}
@@ -247,7 +360,6 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
           </div>
         </section>
 
-        {/* ✅ Responsive Grid CSS */}
         <style jsx>{`
           .alumni-grid {
             display: grid;
@@ -257,6 +369,10 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
             max-width: 1200px;
             margin: 0 auto;
             align-items: start;
+          }
+
+          .updates-col {
+            min-width: 350px;
           }
 
           @media (max-width: 1100px) {

@@ -480,3 +480,28 @@ a:not([href]) {
   color: inherit; /* Keeps text color consistent */
 }
 
+/* Kraft Paper Background */
+html,
+body {
+  background-color: #f6e4c1;
+  background-image: url("/texture/kraft-paper.jpg");
+  background-position: center;
+  background-size: cover; /* Prevent tiling */
+  background-repeat: no-repeat;
+  background-attachment: fixed; /* Parallax-like effect */
+  position: relative;
+  min-height: 100%; /* Ensures full viewport coverage */
+  font-family: 'DM Sans', sans-serif; /* Keep your base font if needed */
+}
+
+html::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(246, 228, 193, 0.5); /* Soft kraft tint overlay */
+  pointer-events: none; /* Prevent interaction blocking */
+  z-index: -1; /* Keep it behind content */
+}
