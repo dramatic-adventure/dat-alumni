@@ -38,7 +38,10 @@ export default function AlumniProfilePage({
     email = "",
     website = "",
     socials = [],
+    updates = [], 
   } = data || {};
+
+console.log("🧪 updates passed to ProfileCard:", updates);
 
   // ✅ Prefer roles[] if available, otherwise fallback to role
   const displayRole = roles.length > 0 ? roles.join(", ") : role;
@@ -107,7 +110,8 @@ export default function AlumniProfilePage({
                 email={email}
                 website={website}
                 socials={socials}
-              />
+                updates={updates}
+/>
             </div>
           </section>
         </AlumniProfileBackdrop>

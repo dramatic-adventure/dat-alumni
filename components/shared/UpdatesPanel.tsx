@@ -297,20 +297,18 @@ export default function UpdatesPanel({
   const containerRef = useRef<HTMLDivElement>(null);
   const phraseRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const [phraseWidths, setPhraseWidths] = useState<number[]>([]);
-
-useEffect(() => {
-  if (phraseRefs.current.length > 0) {
-    const widths = phraseRefs.current.map((el) => el?.offsetWidth || 0);
-    setPhraseWidths(widths);
-  }
-}, []);
-
-
   const [containerSize, setContainerSize] = useState({
     width: 600,
     paddingLeft: 0,
     paddingRight: 0,
   });
+
+  useEffect(() => {
+    if (phraseRefs.current.length > 0) {
+      const widths = phraseRefs.current.map((el) => el?.offsetWidth || 0);
+      setPhraseWidths(widths);
+    }
+  }, []);
 
   useEffect(() => {
     if (containerRef.current) {
@@ -323,10 +321,13 @@ useEffect(() => {
           setContainerSize({ width, paddingLeft, paddingRight });
         }
       });
+
       resizeObserver.observe(containerRef.current);
+
       return () => resizeObserver.disconnect();
     }
   }, []);
+
 
   const fallbackUpdates: UpdateItem[] = [
     { author: "ALEX", text: "I just joined a new Broadway cast!", link: "/alumni/alex" },

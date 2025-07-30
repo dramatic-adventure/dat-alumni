@@ -37,6 +37,7 @@ export default async function AlumniPage({ params }: { params: Params }) {
     email: alumni.email || "",
     website: alumni.website || "",
     socials: alumni.socials || [],
+    updates: alumni.updates || [],
   }}
   allStories={allStories}
       />

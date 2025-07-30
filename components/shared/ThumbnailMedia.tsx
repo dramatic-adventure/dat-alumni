@@ -6,9 +6,10 @@ interface ThumbnailMediaProps {
   imageUrl?: string;
   title?: string;
   style?: React.CSSProperties;
+  onClick?: () => void; // ✅ New optional prop
 }
 
-export default function ThumbnailMedia({ imageUrl, title, style }: ThumbnailMediaProps) {
+export default function ThumbnailMedia({ imageUrl, title, style, onClick }: ThumbnailMediaProps) {
   if (!imageUrl) return null;
 
   const trimmedUrl = imageUrl.trim().replace(/\s+/g, "");
@@ -75,6 +76,7 @@ export default function ThumbnailMedia({ imageUrl, title, style }: ThumbnailMedi
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        pointerEvents: "none",
       }}
     >
       <svg
@@ -90,54 +92,87 @@ export default function ThumbnailMedia({ imageUrl, title, style }: ThumbnailMedi
   );
 
   const mergedStyle = { ...mediaStyle, borderRadius: 0, ...style };
+  const wrapperStyles = {
+    ...wrapperStyle,
+    cursor: onClick ? "pointer" : "default", // ✅ Show pointer cursor only when clickable
+  };
+
+  const renderWrapper = (children: React.ReactNode) =>
+    onClick ? (
+      <div style={wrapperStyles} onClick={onClick}>
+        {children}
+      </div>
+    ) : (
+      <div style={wrapperStyles}>{children}</div>
+    );
 
   const youtubeId = getYouTubeId(cleanUrl);
   if (youtubeId) {
     const thumb = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
-    return (
-      <div style={{ ...wrapperStyle, borderRadius: 0 }}>
+    return renderWrapper(
+      <>
         <img src={thumb} alt={title || "YouTube thumbnail"} style={mergedStyle} />
         {playOverlay}
-      </div>
+      </>
     );
   }
 
   if (isVimeo(cleanUrl)) {
-    return (
-      <div style={{ ...wrapperStyle, borderRadius: 0 }}>
-        <div style={{ ...mergedStyle, backgroundColor: "#000", color: "#fff", fontSize: "0.7rem", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+    return renderWrapper(
+      <>
+        <div
+          style={{
+            ...mergedStyle,
+            backgroundColor: "#000",
+            color: "#fff",
+            fontSize: "0.7rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+          }}
+        >
           Vimeo
         </div>
         {playOverlay}
-      </div>
+      </>
     );
   }
 
   if (isAudio(cleanUrl)) {
-    return (
-      <div style={{ ...wrapperStyle, borderRadius: 0 }}>
-        <div style={{ ...mergedStyle, backgroundColor: "#f1f1f1", color: "#555", fontSize: "0.8rem", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+    return renderWrapper(
+      <>
+        <div
+          style={{
+            ...mergedStyle,
+            backgroundColor: "#f1f1f1",
+            color: "#555",
+            fontSize: "0.8rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            textAlign: "center",
+          }}
+        >
           Audio
         </div>
         {playOverlay}
-      </div>
+      </>
     );
   }
 
   if (isVideoFile(cleanUrl)) {
-    return (
-      <div style={{ ...wrapperStyle, borderRadius: 0 }}>
+    return renderWrapper(
+      <>
         <div style={{ ...mergedStyle, backgroundColor: "#000" }} />
         {playOverlay}
-      </div>
+      </>
     );
   }
 
   if (isImage(cleanUrl)) {
-    return (
-      <div style={{ ...wrapperStyle, borderRadius: 0 }}>
-        <img src={cleanUrl} alt={title || "Story image"} style={mergedStyle} />
-      </div>
+    return renderWrapper(
+      <img src={cleanUrl} alt={title || "Story image"} style={mergedStyle} />
     );
   }
 

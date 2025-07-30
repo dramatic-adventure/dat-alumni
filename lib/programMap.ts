@@ -23,9 +23,100 @@ export interface ProgramData {
 
 export const programMap: Record<string, ProgramData> = {
        // Season 20 entry: 
-       // Season 19 entry: 
-       // Season 18 entry: 
+
+       // Season 19 entry:
+"creative-trek-ecuador-2025": {
+  title: "Creative Trek: Ecuador (refresh) 2025",
+  slug: "creative-trek-ecuador-2025",
+  program: "Creative Trek",
+  location: "Ecuador",
+  year: 2025,
+  season: 19,
+  url: "/creative-trek",
+  artists: {
+    "jesse-baxter": ["Artistic Director"]
+  }
+},
+
+       // Season 18 entry:
+"teaching-artist-residency-slovakia-2024": {
+  title: "Teaching Artist Residency: Slovakia 2024",
+  slug: "teaching-artist-residency-slovakia-2024",
+  program: "Teaching Artist Residency",
+  location: "Slovakia",
+  year: 2024,
+  season: 18,
+  url: "/residencies",
+  artists: {
+    "christen-madrazo": ["Director of Creative Learning, Teaching Artist"],
+    "jason-williamson": ["Resident Playwright, Teaching Artist"],
+    "asa-williamson": ["Artist Apprentice"],
+    "vida-williamson": ["Artist Apprentice"],
+  }
+},    
+
+  "dat-retreat-2023": {
+  title: "DAT Retreat 2023",
+  slug: "dat-retreat-2023",
+  program: "Company Retreat",
+  location: "Berkshires",
+  year: 2023,
+  season: 18,
+  url: "",
+  artists: {
+    "jason-williamson": ["Resident Playwright", "Director", "Teaching Artist"],
+    "christen-madrazo": ["Director of Creative Learning", "Teaching Artist"],
+    "kathleen-amshoff": ["Assoc. Artistic Director"],
+    "mary-k-baxter": ["Executive Director"],
+    "jesse-baxter": ["Artistic Director"],
+    "asa-williamson": ["Artist Apprentice"],
+    "vida-williamson": ["Artist Apprentice"],
+    "lucille-baxter": ["Artist Apprentice"],
+    "seamus-baxter": ["Artist Apprentice"],
+    "greta-amshoff-brenner": ["Artist Apprentice"],
+    "isaiah-amshoff-brenner": ["Artist Apprentice"]
+   }
+},    
+
+"micro-adventure-hudson-valley-derive-2023": {
+  title: "Micro-Adventure: Hudson Valley Dérive 2023",
+  slug: "micro-adventure-2023",
+  program: "Micro-Adventure",
+  location: "Hudson Valley",
+  year: 2023,
+  season: 18,
+  url: "",
+  artists: {
+    "claudia-toth": ["Artist"],
+    "christen-madrazo": ["Artist"],
+    "jason-williamson": ["Artist"],
+    "mary-k-baxter": ["Artist"],
+    "jesse-baxter": ["Artist"],
+    "asa-williamson": ["Artist Apprentice"],
+    "vida-williamson": ["Artist Apprentice"],
+    "lucille-baxter": ["Artist Apprentice"],
+    "seamus-baxter": ["Artist Apprentice"]
+  }
+},
+
        // Season 17 entry: 
+"creative-trek-slovakia-2023": {
+  title: "Creative Trek: Slovakia (refresh) 2023",
+  slug: "creative-trek-slovakia-2023",
+  program: "Creative Trek",
+  location: "Slovakia",
+  year: 2023,
+  season: 17,
+  url: "/creative-trek",
+  artists: {
+    "jason-williamson": ["Resident Playwright"],
+    "christen-madrazo": ["Director of Creative Learning"],
+    "jesse-baxter": ["Artistic Director"],
+    "asa-williamson": ["Artist Apprentice"],
+    "vida-williamson": ["Artist Apprentice"]
+  }
+},
+
        // Season 16 entry: 
        // Season 15 entry: 
        // Season 14 entry: 
@@ -101,7 +192,7 @@ export const programMap: Record<string, ProgramData> = {
   title: "DAT Retreat 2011",
   slug: "dat-retreat-2011",
   program: "Company Retreat",
-  location: "Queens, NY",
+  location: "Queens",
   year: 2011,
   season: 6,
   url: "",

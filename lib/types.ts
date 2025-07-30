@@ -84,12 +84,27 @@ export interface AlumniRow {
   profileUrl?: string;
   fieldNotes?: string[];
   backgroundChoice?: string;
+  updates?: SpotlightUpdate[];
+
 
   email?: string;
   website?: string;
   socials?: string[];
   hasContactInfo?: boolean;
 }
+
+
+// ========== Updates ==========
+export type SpotlightUpdate = {
+  tag?: string;
+  headline: string;
+  subheadlineTitle?: string;
+  subheadlineDescription?: string;
+  body: string;
+  ctaLink?: string;
+  mediaUrl?: string;
+  evergreen?: boolean;
+};
 
 
 // ========== Posters & Productions ==========

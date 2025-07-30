@@ -24,6 +24,12 @@ import useIsMobile from "@/hooks/useIsMobile";
 
 import MyJourney from "@/components/alumni/MyJourney";
 
+import SpotlightPanel from "@/components/alumni/SpotlightPanel";
+import { SpotlightUpdate } from "../../lib/types";
+
+
+
+
 
 const FeaturedStories = dynamic(() => import("@/components/shared/FeaturedStories"), {
   ssr: false,
@@ -43,6 +49,7 @@ interface ProfileCardProps {
   email?: string;
   website?: string;
   socials?: string[];
+  updates?: SpotlightUpdate[];
 }
 
 const scaleCache = new Map<string, { first: number; last: number }>();
@@ -61,6 +68,7 @@ export default function ProfileCard({
   email,
   website,
   socials,
+  updates = [],
 }: ProfileCardProps) {
   const [isModalOpen, setModalOpen] = useState(false);
   const [currentUrl, setCurrentUrl] = useState("");
@@ -283,8 +291,16 @@ export default function ProfileCard({
         maxWidth: "calc(100% - 60px)",
       }}
     />
+
+    {/* ✅ Moved SpotlightPanel here to share container and background */}
+    {updates && updates.length > 0 && (
+      <div style={{ margin: "2rem 30px 2.5rem 30px" }}>
+        <SpotlightPanel updates={updates} />
+      </div>
+    )}
   </div>
 )}
+
 
 {/* ✅ Inserted MyJourney Section */}
 {/*<div className="bg-[#f5f1eb] py-12 px-4 md:px-12">

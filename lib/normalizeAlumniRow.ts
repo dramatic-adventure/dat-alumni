@@ -1,6 +1,31 @@
 // normalizeAlumniRow.ts
 import { AlumniRow } from "./types";
 
+function normalizeSingleUpdate(row: Record<string, string>) {
+  const hasMeaningfulData =
+    row["update headline"] || row["update body"] || row["update media url"];
+
+  if (!hasMeaningfulData) return null;
+
+  const title = row["update date"]?.trim() || "";
+  const desc = row["update location"]?.trim() || "";
+
+  const subheadline = [title, desc].filter(Boolean).join(" — "); // only add separator if both exist
+
+  return {
+    tag: row["update tag"]?.trim() || "DAT Spotlight",
+    headline: row["update headline"]?.trim() || row["update body"]?.slice(0, 60) || "Spotlight Update",
+    subheadline,
+    subheadlineTitle: title,
+    subheadlineDescription: desc,
+    body: row["update body"]?.trim() || "",
+    mediaUrl: row["update media url"]?.trim() || "",
+    ctaLink: row["update cta link"]?.trim() || "",
+    evergreen: (row["update evergreen"] || "").toLowerCase().startsWith("y"),
+  };
+}
+
+
 export function normalizeAlumniRow(row: Record<string, string>): AlumniRow | null {
   const name = row["name"]?.trim();
   const slug = row["slug"]?.trim()?.toLowerCase();
@@ -24,6 +49,8 @@ export function normalizeAlumniRow(row: Record<string, string>): AlumniRow | nul
       .filter(n => !isNaN(n));
     programSeasons.push(...seasonNums);
   }
+
+  const update = normalizeSingleUpdate(row); // ✅ Ensure not null in array
 
   return {
     slug,
@@ -50,6 +77,7 @@ export function normalizeAlumniRow(row: Record<string, string>): AlumniRow | nul
     showOnProfile: row["show on profile?"] || "",
     fieldNotes: [],
     imageUrls: [],
-    posterUrls: []
+    posterUrls: [],
+    updates: update ? [update] : [],
   };
 }

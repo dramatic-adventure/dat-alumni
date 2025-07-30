@@ -22,7 +22,11 @@ export const seasons: SeasonInfo[] = [
     slug: "season-18",
     seasonTitle: "Season 18",
     years: "2023 / 2024",
-    projects: ["Teaching Artist Residency: Slovakia"]
+    projects: [
+      "Teaching Artist Residency: Slovakia",
+      "DAT Retreat: Berkshires",
+      "Micro-Adventure: Hudson Valley Dérive"
+    ]
   },
   {
     slug: "season-17",
@@ -34,33 +38,46 @@ export const seasons: SeasonInfo[] = [
     slug: "season-16",
     seasonTitle: "Season 16",
     years: "2021 / 2022",
-    projects: ["Covid-19 Hiatus", "SITE-LINES: The Amazon"]
+    projects: [
+      "Covid-19 Hiatus", 
+      "SITE-LINES: The Amazon"
+    ]
   },
   {
     slug: "season-15",
     seasonTitle: "Season 15",
     years: "2020 / 2021",
-    projects: ["Covid-19 Hiatus", "Travelogue (Season 8) — on Clubhouse"]
+    projects: [
+      "Covid-19 Hiatus", 
+      "Travelogue (Season 8) — on Clubhouse"]
   },
   {
     slug: "season-14",
     seasonTitle: "Season 14",
     years: "2019 / 2020",
-    projects: ["Covid-19 Hiatus", "Virtual Teaching Artist Residency: Slovakia"]
+    projects: [
+      "Covid-19 Hiatus", 
+      "Virtual Teaching Artist Residency: Slovakia",
+      "DAT Retreat: Baltimore"  
+    ]
   },
   {
     slug: "season-13",
     seasonTitle: "Season 13",
     years: "2018 / 2019",
-    projects: ["The Rebel Bird Writing Workshop & Reading"]
+    projects: [
+      "The Rebel Bird Writing Workshop & Reading",
+      "DAT Retreat: Monticello"  
+    ]
   },
   {
     slug: "season-12",
     seasonTitle: "Season 12",
     years: "2017 / 2018",
     projects: [
-      "Blackfish, Workshop Production (Towson University)",
-      "Teaching Artist Residency: Slovakia"
+      "Blackfish, Workshop Production (Towson University's New Works in Theatre Festival)",
+      "Teaching Artist Residency: Slovakia",
+      "DAT Retreat: Baltimore"  
     ]
   },
   {
@@ -70,7 +87,8 @@ export const seasons: SeasonInfo[] = [
     projects: [
       "Travelogue (Season 7)",
       "ACTion: Ecuador",
-      "ACTion Fest VII, Juntos, Mano a Mano: Hand in Hand"
+      "ACTion Fest VII, Juntos, Mano a Mano: Hand in Hand",
+      "DAT Retreat: Baltimore"  
     ]
   },
   {
@@ -83,7 +101,8 @@ export const seasons: SeasonInfo[] = [
       "Teaching Artist Residency: Galápagos",
       "Creative Trek: Ecuador (refresh)",
       "ACTion: Tanzania",
-      "ACTion Fest VI, Shangaa: Shock and Awe"
+      "ACTion Fest VI, Shangaa: Shock and Awe",
+      "DAT Retreat: Berkshires"  
     ]
   },
   {
@@ -95,7 +114,8 @@ export const seasons: SeasonInfo[] = [
       "Creative Trek: Tanzania",
       "The Rebel Bird, Workshop Production (Divadlo Andreja Bagara in Nitra, Slovakia)",
       "ACTion: Heart of Europe",
-      "ACTion Fest V, Tu a Teraz: Here and Now"
+      "ACTion Fest V, Tu a Teraz: Here and Now",
+      "DAT Retreat: Berkshires"  
     ]
   },
   {
@@ -107,7 +127,8 @@ export const seasons: SeasonInfo[] = [
       "Travelogue (Season 4)",
       "Teaching Artist Residency: Moldava nad Bodvou, Slovakia",
       "ACTion: Ecuador",
-      "ACTion Fest IV, Mitad del Mundo: Middle of the World"
+      "ACTion Fest IV, Mitad del Mundo: Middle of the World",
+      "DAT Retreat: Berkshires"  
     ]
   },
   {
@@ -118,7 +139,8 @@ export const seasons: SeasonInfo[] = [
       "A Girl without Wings, Workshop Production",
       "Travelogue (Season 3)",
       "ACTion: Heart of Europe",
-      "ACTion Fest III, Hearts of Europe"
+      "ACTion Fest III, Hearts of Europe",
+      "DAT Retreat: New Jersey"  
     ]
   },
   {
@@ -127,7 +149,8 @@ export const seasons: SeasonInfo[] = [
     years: "2011 / 2012",
     projects: [
       "Travelogue (Season 2)",
-      "Creative Trek: Slovakia"
+      "Creative Trek: Slovakia",
+      "DAT Retreat: NYC"
     ]
   },
   {
@@ -135,10 +158,11 @@ export const seasons: SeasonInfo[] = [
     seasonTitle: "Season 5",
     years: "2010 / 2011",
     projects: [
+      "Teaching Artist Residency: Esmeraldas, Ecuador",
       "A Girl without Wings, Staged Reading (Kennedy Center)",
       "Travelogue (Season 1)",
       "A Girl without Wings, Staged Reading (5 Year Anniversary Party)",
-      "Teaching Artist Residency: Esmeraldas, Ecuador"
+      "DAT Retreat: Space on Ryder Farms"  
     ]
   },
   {
@@ -147,7 +171,8 @@ export const seasons: SeasonInfo[] = [
     years: "2009 / 2010",
     projects: [
       "ACTion: Ecuador",
-      "ACTion Fest II, Poco a Poco: Bit by Bit"
+      "ACTion Fest II, Poco a Poco: Bit by Bit",
+      "DAT Retreat: Space on Ryder Farms (honored to be the first company invited to Space on Ryder Farm)"  
     ]
   },
   {
@@ -165,7 +190,7 @@ export const seasons: SeasonInfo[] = [
     years: "2007 / 2008",
     projects: [
       "Creative Trek: Ecuador",
-      "Flight 360: The Ecuador Project"
+      "'Flight 360: The Ecuador Projct' (IATI Theater's Performing Arts Marathon, International Performing Arts Festival)"
     ]
   },
   {
@@ -173,9 +198,9 @@ export const seasons: SeasonInfo[] = [
     seasonTitle: "Season 1",
     years: "2006 / 2007",
     projects: [
-      "Founding Year",
       "Creative Trek: Zimbabwe",
-      "Voices from Zimbabwe"
+      "North East US Tour of 'Voices from Zimbabwe'",
+      "Founding Year"
     ]
   }
 ];

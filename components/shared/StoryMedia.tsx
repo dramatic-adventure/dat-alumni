@@ -5,9 +5,10 @@ interface StoryMediaProps {
   imageUrl?: string;
   title?: string;
   style?: React.CSSProperties;
+  mode?: "default" | "lightbox"; // 🔄 new prop
 }
 
-export default function StoryMedia({ imageUrl, title, style }: StoryMediaProps) {
+export default function StoryMedia({ imageUrl, title, style, mode = "default" }: StoryMediaProps) {
   if (!imageUrl) return null;
 
   const trimmedUrl = imageUrl.trim().replace(/\s+/g, "");
@@ -70,9 +71,23 @@ export default function StoryMedia({ imageUrl, title, style }: StoryMediaProps) 
     }
   };
 
+  const requestFullscreen = (element: HTMLElement | null) => {
+    if (!element) return;
+    if (element.requestFullscreen) element.requestFullscreen();
+    else if ((element as any).webkitRequestFullscreen) (element as any).webkitRequestFullscreen();
+    else if ((element as any).mozRequestFullScreen) (element as any).mozRequestFullScreen();
+    else if ((element as any).msRequestFullscreen) (element as any).msRequestFullscreen();
+  };
+
+  const containerClass = mode === "lightbox" ? "popup-media text-center" : "popup-media w-full max-w-3xl mx-auto my-4";
+  const sharedStyle: React.CSSProperties = {
+    maxHeight: "90vh",
+    ...style,
+  };
+
   if (isAudio(cleanUrl)) {
     return (
-      <div className="popup-media w-full max-w-3xl mx-auto my-4">
+      <div className={containerClass}>
         <audio controls className="w-full rounded-xl shadow-md">
           <source src={cleanUrl} />
           Your browser does not support the audio element.
@@ -84,47 +99,61 @@ export default function StoryMedia({ imageUrl, title, style }: StoryMediaProps) 
   const embedUrl = getEmbedUrl(cleanUrl);
   if (embedUrl) {
     return (
-      <div className="popup-media">
+      <div className={containerClass}>
         <iframe
-          title={title || "Embedded Video"}
-          src={embedUrl}
-          allowFullScreen
-          loading="lazy"
-          className="w-full max-w-3xl aspect-video min-h-[300px] sm:min-h-[400px] lg:min-h-[480px] rounded-xl shadow-md"
-        />
+  title={title || "Embedded Video"}
+  src={embedUrl}
+  allowFullScreen
+  loading="lazy"
+  className={`rounded-xl shadow-md ${
+    mode === "lightbox"
+      ? "w-full max-w-[96vw] h-auto aspect-video"
+      : "w-full aspect-video min-h-[300px] sm:min-h-[400px] lg:min-h-[480px]"
+  }`}
+/>
+
+
       </div>
     );
   }
 
   if (isVideoFile(cleanUrl)) {
-    return (
-      <div className="popup-media">
-        <video
-          src={cleanUrl}
-          controls
-          className="w-full max-w-3xl rounded-xl shadow-md"
-          style={style}
-        >
-          Your browser does not support the video tag.
-        </video>
-      </div>
-    );
-  }
+  return (
+    <div className={containerClass}>
+      <video
+        src={cleanUrl}
+        controls
+        autoPlay={mode === "lightbox"} // ✅ only autoplay in lightbox
+        className={`w-full ${mode === "lightbox" ? "object-contain" : ""} shadow-md cursor-pointer`}
+        style={{ ...sharedStyle, backgroundColor: "#000" }}
+        onClick={(e) => requestFullscreen(e.currentTarget)}
+      >
+        Your browser does not support the video tag.
+      </video>
+    </div>
+  );
+}
+
 
   if (isImage(cleanUrl)) {
-    return (
-      <div className="popup-media">
-        <img
-          src={cleanUrl}
-          alt={title || "Story Image"}
-          loading="lazy"
-          decoding="async"
-          className="w-full max-w-3xl shadow-md"
-          style={style}
-        />
-      </div>
-    );
-  }
+  return (
+    <div className={containerClass}>
+      <img
+        src={cleanUrl}
+        alt={title || "Story Image"}
+        loading="lazy"
+        decoding="async"
+        className={`w-full ${mode === "lightbox" ? "object-contain" : ""} shadow-md`}
+        style={sharedStyle}
+        // ⛔️ no onClick in lightbox mode
+        onClick={
+          mode === "lightbox" ? undefined : (e) => requestFullscreen(e.currentTarget)
+        }
+      />
+    </div>
+  );
+}
+
 
   return null;
 }
