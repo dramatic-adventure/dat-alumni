@@ -42,6 +42,7 @@ interface AlumniItem {
 
 interface AlumniPageProps {
   highlights: { name: string; roles?: string[]; slug: string; headshotUrl?: string }[];
+  
 }
 
 interface UpdateItem {

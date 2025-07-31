@@ -10,8 +10,9 @@ html, body {
   padding: 0;
   width: 100%;
   min-height: 100vh;
-  background-color: #fdfcf7;
-  background-image: url('/texture/kraft-paper.png');
+  font-family: 'DM Sans', sans-serif;
+  background-color: #f6e4c1;
+  background-image: url('/texture/kraft-paper.jpg');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -23,10 +24,29 @@ html, body {
   box-sizing: inherit;
 }
 
-body > div {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+/* Optional adjustable hero offset */
+html,
+body,
+#__next,
+main {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Force hero flush with header overlay */
+main,
+body {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+
+/* Alumni-specific main reset */
+main.alumni-profile-reset {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  display: block;
+  line-height: normal;
 }
 
 /* ===============================
@@ -90,12 +110,25 @@ body > div {
 }
 
 /* ===============================
-   🎨 Root Vars
+   🎨 Root Vars & Hero Height
 =============================== */
 :root {
   --dat-color-bg: #241123;
   --dat-color-accent: #F23359;
   --dat-font-heading: Gloucester, serif;
+  --hero-offset: 0px;
+  --hero-height: 80vh;
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --hero-height: 55vh;
+  }
+}
+@media (max-width: 767px) {
+  :root {
+    --hero-height: 45vh;
+  }
 }
 
 /* ===============================
@@ -106,7 +139,7 @@ h1, h2, h3, h4 {
 }
 
 /* ===============================
-   🔗 Link Reset
+   🔗 Link Reset & Cursor
 =============================== */
 a {
   color: inherit;
@@ -117,6 +150,16 @@ a:hover {
 }
 a:visited {
   color: inherit;
+}
+a[href=""],
+a[href="#"],
+a:not([href]) {
+  pointer-events: none;
+  cursor: default;
+  color: inherit;
+}
+a, button, [role="link"], [role="button"] {
+  cursor: pointer !important;
 }
 
 /* ===============================
@@ -141,8 +184,73 @@ a:visited {
   z-index: 1;
 }
 
+.alumni-profile-section {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  padding-top: 0rem;
+}
+
+.profile-card-wrapper {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  background-color: #C39B6C;
+  text-align: center;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.profile-card-image {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  background-color: #241123;
+  overflow: hidden;
+  cursor: pointer;
+}
+.profile-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-card-content {
+  padding: 1.5rem 1rem 2rem;
+}
+
+.profile-card-meta {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.meta-role {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(1rem, 4vw, 1.35rem);
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #241123;
+}
+.meta-location {
+  font-family: "DM Sans", sans-serif;
+  font-size: clamp(0.85rem, 3vw, 1rem);
+  font-weight: 700;
+  opacity: 0.7;
+  letter-spacing: 2px;
+}
+.meta-dot {
+  color: #241123;
+  opacity: 0.5;
+}
+
 /* ===============================
-   🗺️ Story & Popup Shared Styles
+   🗺️ Story Page & Popup Styles
 =============================== */
 .story-page,
 .mapboxgl-popup-content {
@@ -163,7 +271,6 @@ a:visited {
   display: block;
   margin: 0 auto;
 }
-
 .mapboxgl-popup-close-button {
   display: none !important;
 }
@@ -180,16 +287,11 @@ a:visited {
   padding: 0.2rem 0.4rem;
   display: inline-block;
 }
-
 @media (min-width: 768px) {
-  .popup-title {
-    font-size: 3.2rem;
-  }
+  .popup-title { font-size: 3.2rem; }
 }
 @media (min-width: 1024px) {
-  .popup-title {
-    font-size: 3.6rem;
-  }
+  .popup-title { font-size: 3.6rem; }
 }
 
 .popup-location {
@@ -199,32 +301,27 @@ a:visited {
   margin-top: 1.5rem;
   margin-bottom: 0;
 }
-
 .popup-program {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 1rem;
   margin-bottom: 0.75rem;
 }
-
 .popup-media {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   margin-bottom: 0;
 }
-
 .popup-image {
   width: 100%;
   height: auto;
   border-radius: 16px;
   display: block;
 }
-
 .popup-video {
   width: 100%;
   max-height: 480px;
 }
-
 .popup-video iframe {
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -232,7 +329,6 @@ a:visited {
   border-radius: 16px;
   display: block;
 }
-
 .popup-partners {
   font-family: 'DM Sans', sans-serif;
   font-size: 0.7rem;
@@ -241,7 +337,6 @@ a:visited {
   margin-bottom: 1.2rem;
   line-height: 1.4;
 }
-
 .popup-quote {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 1.4rem;
@@ -270,7 +365,6 @@ a:visited {
   color: #FF007F;
   text-decoration: underline;
 }
-
 .popup-button {
   display: block;
   width: 100%;
@@ -290,7 +384,6 @@ a:visited {
 .popup-button:hover {
   background: #123a40;
 }
-
 .story-page ul {
   list-style: none;
   padding: 0;
@@ -305,7 +398,9 @@ a:visited {
   font-size: 0.75rem;
 }
 
-/* Program Stamps */
+/* ===============================
+   🪧 Program Stamps
+=============================== */
 .clip-hexagon {
   clip-path: polygon(
     25% 0%,
@@ -321,187 +416,4 @@ a:visited {
   transform: scale(1.05);
   filter: brightness(0.75);
   transition: transform 0.2s ease, filter 0.2s ease;
-}
-
-/* ===============================
-   Cursor
-=============================== */
-
-a, button, [role="link"], [role="button"] {
-  cursor: pointer !important;
-}
-
-
-/* ===============================
-   Alumni Profile Page FIX
-=============================== */
-
-/* Reset ONLY the necessary container, avoid nuking everything */
-main.alumni-profile-reset {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100%;
-  display: block;
-  line-height: normal;
-}
-
-/* Main wrapper for the card section */
-.alumni-profile-section {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start; /* ✅ Forces top alignment */
-  width: 100%;
-  padding-top: 0rem; /* ✅ Adjustable (set to 0 for flush) */
-}
-
-/* Profile Card Container */
-.profile-card-wrapper {
-  width: 100%;
-  max-width: 360px;
-  margin: 0 auto;
-  background-color: #C39B6C;
-  text-align: center;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-/* Profile Image */
-.profile-card-image {
-  width: 100%;
-  aspect-ratio: 4 / 5;
-  background-color: #241123;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.profile-card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* Card Content */
-.profile-card-content {
-  padding: 1.5rem 1rem 2rem;
-}
-
-/* Role & Location Section */
-.profile-card-meta {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.meta-role {
-  font-family: "Space Grotesk", sans-serif;
-  font-size: clamp(1rem, 4vw, 1.35rem);
-  font-weight: 800;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: #241123;
-}
-
-.meta-location {
-  font-family: "DM Sans", sans-serif;
-  font-size: clamp(0.85rem, 3vw, 1rem);
-  font-weight: 700;
-  opacity: 0.7;
-  letter-spacing: 2px;
-}
-
-.meta-dot {
-  color: #241123;
-  opacity: 0.5;
-}
-
-/* Force hero flush with header overlay */
-main,
-body {
-  padding-top: 0 !important;
-  margin-top: 0 !important;
-}
-
-/* Alumni-specific main reset */
-main.alumni-profile-reset {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100%;
-  display: block;
-  line-height: normal;
-}
-
-/* Optional adjustable hero offset */
-:root {
-  --hero-offset: 0px; /* Increase if you want to push hero down slightly */
-}
-
-html,
-body,
-#__next,
-main {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-
-/* Hero Height & Responsiveness */
-:root {
-  --hero-height: 80vh; /* Default for desktop */
-}
-
-@media (max-width: 1024px) {
-  :root {
-    --hero-height: 55vh; /* Tablets */
-  }
-}
-
-@media (max-width: 767px) {
-  :root {
-    --hero-height: 45vh; /* Mobile */
-  }
-}
-
-/* Remove underlines for all links */
-a {
-  text-decoration: none;
-}
-
-/* If link has empty href or just #, make it look non-clickable */
-a[href=""],
-a[href="#"],
-a:not([href]) {
-  pointer-events: none;
-  cursor: default;
-  color: inherit; /* Keeps text color consistent */
-}
-
-/* Kraft Paper Background */
-html,
-body {
-  background-color: #f6e4c1;
-  background-image: url("/texture/kraft-paper.jpg");
-  background-position: center;
-  background-size: cover; /* Prevent tiling */
-  background-repeat: no-repeat;
-  background-attachment: fixed; /* Parallax-like effect */
-  position: relative;
-  min-height: 100%; /* Ensures full viewport coverage */
-  font-family: 'DM Sans', sans-serif; /* Keep your base font if needed */
-}
-
-html::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(246, 228, 193, 0.5); /* Soft kraft tint overlay */
-  pointer-events: none; /* Prevent interaction blocking */
-  z-index: -1; /* Keep it behind content */
 }

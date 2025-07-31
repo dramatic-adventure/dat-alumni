@@ -37,7 +37,7 @@ export default function StoryPage({ story }: StoryPageProps) {
       {/* ✅ Apply offset to push content below fixed header */}
       <div
         className="story-page pointer-events-auto"
-        style={{ marginTop: '-36rem', marginBottom: '8rem' }}
+        style={{ marginTop: '8rem', marginBottom: '8rem' }}
       >
         {/* Top Bar: Back Link + Share */}
         <div className="flex justify-between items-center mb-4">

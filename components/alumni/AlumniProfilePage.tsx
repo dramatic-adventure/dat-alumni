@@ -19,8 +19,8 @@ const HEADER_HEIGHT = "84px"; // ✅ Adjust if your header height changes
 export default function AlumniProfilePage({
   data,
   allStories,
-  offsetTop = "-40rem",
-  offsetBottom = "-25rem",
+  offsetTop = "2rem",
+  offsetBottom = "15rem",
   minSectionHeight = "100vh",
 }: AlumniProfileProps) {
   const {
