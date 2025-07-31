@@ -4,8 +4,8 @@ import { productionMap } from "@/lib/productionMap";
 import { programMap } from "@/lib/programMap";
 import { loadAlumni } from "@/lib/loadAlumni";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
-import Collapsible from "@/components/ui/Collapsible";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
+import Collapsible from "@/components/ui/Collapsible";
 import { seasons } from "@/lib/seasonData";
 
 export const revalidate = 3600;
@@ -37,20 +37,25 @@ export default async function SeasonPage({ params }: { params: { season: string 
     productionsByFestival[key].push(prod);
   });
 
+  const programsByGroup: Record<string, typeof programs> = {};
+  programs.forEach((program) => {
+    const key = `${program.program ?? "Other"}: ${program.location ?? "Unknown"} ${program.year ?? "Unknown"}`;
+    if (!programsByGroup[key]) programsByGroup[key] = [];
+    programsByGroup[key].push(program);
+  });
+
   const heroImagePath = `/seasons/season-${seasonNumber}.jpg`;
 
   return (
     <div>
-      {/* ✅ HERO SECTION */}
-      <section
+      {/* ✅ HERO */}
+      <div
         style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
+          position: "relative",
           height: "95vh",
-          boxShadow: "0px 0px 33px rgba(0,0,0,0.5)",
+          overflow: "hidden",
           zIndex: 0,
+          boxShadow: "0 0 33px rgba(0, 0, 0, 0.5)",
         }}
       >
         <Image
@@ -59,13 +64,14 @@ export default async function SeasonPage({ params }: { params: { season: string 
           fill
           priority
           className="object-cover object-center"
+          style={{ zIndex: -1 }}
         />
         <div style={{ position: "absolute", bottom: "1rem", right: "5%" }}>
           <h1
             style={{
               fontFamily: "Anton, sans-serif",
               fontSize: "clamp(3rem, 7vw, 8rem)",
-              color: "#FFCC00",
+              color: "#f2f2f2",
               textTransform: "uppercase",
               textShadow: "0 8px 20px rgba(0,0,0,0.8)",
               margin: 0,
@@ -77,107 +83,128 @@ export default async function SeasonPage({ params }: { params: { season: string 
             style={{
               fontFamily: "'Space Grotesk', sans-serif",
               fontSize: "1.8rem",
-              color: "#F23359",
+              color: "#f2f2f2",
+              opacity: 0.7,
               margin: 0,
+              textShadow: "0 4px 12px rgba(0,0,0,0.9)",
+              textAlign: "right",
             }}
           >
             {seasonInfo.years}
           </p>
         </div>
-      </section>
+      </div>
 
       {/* ✅ MAIN CONTENT */}
       <main
         style={{
-          marginTop: "-750px", // parallax effect
+          marginTop: "-5rem",
           backgroundImage: "url('/images/kraft-texture.png')",
           backgroundSize: "cover",
           backgroundRepeat: "repeat",
-          padding: "2rem 0",
+          padding: "4rem 0 2rem",
           position: "relative",
+          opacity: 0.9,
           zIndex: 10,
         }}
       >
-        <div style={{ width: "90%", maxWidth: "1200px", margin: "0 auto" }}>
-          {/* Explore More Alumni Button */}
-          <div style={{ textAlign: "right", marginBottom: "2rem" }}>
-            <Link href="/alumni" className="explore-alumni-btn">
-              ← Explore More Alumni
-            </Link>
-          </div>
-
+        <div style={{ width: "90%", margin: "0 auto" }}>
           {/* ✅ PROGRAMS */}
           {programs.length > 0 && (
             <Collapsible title="Programs" defaultOpen={false}>
-              {programs.map((program) => (
-                <div
-                  key={program.slug}
-                  style={{
-                    textAlign: "left",
-                    marginBottom: "3rem",
-                    background: "rgba(36, 17, 35, 0.2)", // DAT Dark Purple @ 20%
-                    borderRadius: "8px",
-                    padding: "1.5rem",
-                  }}
-                >
-                  {program.url ? (
-  <Link href={program.url} className="program-link">
-    {program.title}
-  </Link>
-) : (
-  <span className="program-link">{program.title}</span>
-)}
+              {Object.entries(programsByGroup).map(([label, group]) => (
+                <div key={label}>
+                  <h3 style={{ margin: "3rem 0 1rem" }}>
+                    {group[0].url ? (
+                      <Link href={group[0].url} className="program-link">
+                        {label}
+                      </Link>
+                    ) : (
+                      <span className="program-link">{label}</span>
+                    )}
+                  </h3>
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-                      gap: "1rem",
-                      justifyItems: "center",
-                      marginTop: "1rem",
-                    }}
-                  >
-                    {Object.keys(program.artists).map((slug) => {
-                      const alum = alumniMap[slug];
-                      return alum ? (
-                        <MiniProfileCard
-                          key={slug}
-                          name={alum.name}
-                          role={program.artists[slug].join(", ")}
-                          slug={alum.slug}
-                          headshotUrl={alum.headshotUrl}
-                        />
-                      ) : null;
-                    })}
-                  </div>
+                  {group.map((program) => (
+                    <div
+                      key={program.slug}
+                      style={{
+                        textAlign: "left",
+                        marginBottom: "3rem",
+                        background: "rgba(36, 17, 35, 0.2)",
+                        borderRadius: "8px",
+                        padding: "2rem",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                          gap: "1rem",
+                          justifyItems: "center",
+                          marginTop: "1rem",
+                        }}
+                      >
+                        {Object.keys(program.artists).map((slug) => {
+                          const alum = alumniMap[slug];
+                          return alum ? (
+                            <MiniProfileCard
+                              key={slug}
+                              name={alum.name}
+                              role={program.artists[slug].join(", ")}
+                              slug={alum.slug}
+                              headshotUrl={alum.headshotUrl}
+                            />
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ))}
             </Collapsible>
           )}
 
           {/* ✅ PRODUCTIONS */}
-          {Object.keys(productionsByFestival).length > 0 && (
+          {productions.length > 0 && (
             <Collapsible title="Productions" defaultOpen={false}>
               {Object.keys(productionsByFestival).map((festival) => (
-                <Collapsible key={festival} title={festival} defaultOpen={false} level={3}>
+                <div key={festival}>
+                  <h3
+                    style={{
+                      fontFamily: "Anton, sans-serif",
+                      fontSize: "2.4rem",
+                      margin: "2.5rem 0rem 1rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.2rem",
+                      color: "#241123",
+                      backgroundColor: "#FFCC00",
+                      opacity: 0.6,
+                      padding: "0.1em 0.5em",
+                      borderRadius: "0.3em",
+                      display: "inline-block",
+                    }}
+                  >
+                    {festival}
+                  </h3>
+
                   {productionsByFestival[festival].map((prod) => (
                     <div
                       key={prod.slug}
                       style={{
                         textAlign: "left",
                         marginBottom: "3rem",
-                        background: "rgba(36, 17, 35, 0.2)", // DAT Dark Purple @ 20%
+                        background: "rgba(36, 17, 35, 0.2)",
                         borderRadius: "8px",
-                        padding: "1.5rem",
+                        padding: "2rem",
                       }}
                     >
                       {prod.url ? (
-  <Link href={prod.url} className="production-link">
-    {prod.title}
-  </Link>
-) : (
-  <span className="production-link">{prod.title}</span>
-)}
+                        <Link href={prod.url} className="production-link">
+                          {prod.title}
+                        </Link>
+                      ) : (
+                        <span className="production-link">{prod.title}</span>
+                      )}
 
                       <div
                         style={{
@@ -203,13 +230,13 @@ export default async function SeasonPage({ params }: { params: { season: string 
                       </div>
                     </div>
                   ))}
-                </Collapsible>
+                </div>
               ))}
             </Collapsible>
           )}
         </div>
 
-        {/* ✅ SEASONS CAROUSEL */}
+        {/* ✅ SEASON NAV */}
         <section
           style={{
             width: "100vw",
@@ -235,19 +262,36 @@ export default async function SeasonPage({ params }: { params: { season: string 
           transition: color 0.3s ease;
           text-decoration: none !important;
         }
-        .explore-alumni-btn:hover { color: #FFCC00 !important; opacity: 0.9}
+
+        .program-link, .production-link {
+  cursor: pointer;
+  text-decoration: none !important;
+}
+
+
+        .explore-alumni-btn:hover { color: #FFCC00 !important; opacity: 0.9 }
 
         .program-link {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: 2.2rem;
-          font-weight: 600;
-          color: #D9A919 !important;
-          display: inline-block;
-          margin: 0 0 1rem;
-          transition: letter-spacing 0.3s ease, color 0.3s ease;
-          text-decoration: none !important;
-        }
-        .program-link:hover { color: #6C00AF !important; letter-spacing: 2px; }
+  font-family: "Anton", sans-serif;
+  font-size: 2.4rem;
+  text-transform: uppercase;
+  color: #241123;
+  display: inline-block;
+  margin: 0rem 0rem 0.15rem;
+  letter-spacing: 0.2rem;
+  background-color: #FFCC00;
+  opacity: 0.6;
+  padding: 0.1em 0.5em;
+  border-radius: 0.3em;
+  transition: color 0.3s ease, letter-spacing 0.3s ease;
+  text-decoration: none !important;
+}
+
+.program-link:hover {
+  color: #6C00AF !important;
+  letter-spacing: 0.4rem;
+}
+
 
         .production-link {
           font-family: "Space Grotesk", sans-serif;
@@ -258,8 +302,12 @@ export default async function SeasonPage({ params }: { params: { season: string 
           margin: 0 0 1rem;
           transition: letter-spacing 0.3s ease, color 0.3s ease;
           text-decoration: none !important;
+            background-color: #241123;
+  opacity: 0.6;
+  padding: 0.1em 0.5em;
+  border-radius: 0.3em;
         }
-        .production-link:hover { color: #6C00AF !important; letter-spacing: 2px; }
+        .production-link:hover { color: #FFCC00 !important; letter-spacing: 2px; }
 
         h3 { color: #FFCC00; }
       `}</style>

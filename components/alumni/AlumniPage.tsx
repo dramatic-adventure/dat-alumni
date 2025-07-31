@@ -42,7 +42,6 @@ interface AlumniItem {
 
 interface AlumniPageProps {
   highlights: { name: string; roles?: string[]; slug: string; headshotUrl?: string }[];
-  
 }
 
 interface UpdateItem {
@@ -56,10 +55,9 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
   const [alumniData, setAlumniData] = useState<AlumniItem[]>([]);
   const [primaryResults, setPrimaryResults] = useState<AlumniItem[]>([]);
   const [secondaryResults, setSecondaryResults] = useState<AlumniItem[]>([]);
-  const [query, setQuery] = useState<string>(""); // For View All Matches button
+  const [query, setQuery] = useState<string>("");
   const [usedFallback, setUsedFallback] = useState(true);
 
-  /** ✅ Fetch alumni & updates */
   useEffect(() => {
     let isMounted = true;
 
@@ -98,7 +96,6 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
 
     fetchData();
 
-    /** ✅ Retry if fallback still in use after 3s */
     const retryTimeout = setTimeout(() => {
       if (usedFallback) fetchData();
     }, 3000);
@@ -110,7 +107,7 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
   }, [usedFallback]);
 
   return (
-    <div style={{ marginTop: "-750px" }}>
+    <div>
       {/* ✅ HERO */}
       <section
         style={{
@@ -144,13 +141,14 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
         </div>
       </section>
 
-      <main style={{ marginTop: "55vh", padding: "2rem 0" }}>
+      <main style={{ padding: "4rem 0 0" }}>
         {/* ✅ Intro Section */}
         <section style={{ width: "70%", maxWidth: "1200px", margin: "0 auto", marginBottom: "3rem" }}>
           <h2
             style={{
               fontFamily: "Space Grotesk, sans-serif",
               color: "#6C00AF",
+              opacity: "0.9",
               fontSize: "clamp(2.8rem, 5vw, 3.25rem)",
               fontWeight: 700,
               marginBottom: "1rem",
@@ -162,31 +160,30 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
             style={{
               fontFamily: "DM Sans, sans-serif",
               color: "#f2f2f2",
-              opacity: "0.55",
+              opacity: "0.6",
               fontSize: "clamp(1.4rem, 1.5vw, 1.8rem)",
               lineHeight: "1.6",
               marginBottom: "2rem",
             }}
           >
             Each season brings together bold creators who take the journey and stand alongside our
-            neighbors—collaborating to craft new stories rooted in real experiences and honest,
-            human connection. Explore alumni, revisit past projects, and see how these journeys
-            continue to inspire.
+            neighbors — collaborating to craft new stories rooted in real experiences and honest,
+            human connection.  Explore our alumni, revisit past projects, and see how each artist's journey
+            continues to inspire.
           </p>
 
           {/* ✅ Search */}
           <div style={{ display: "flex", gap: "1rem", alignItems: "stretch" }}>
             <div style={{ flex: 1, height: "47px" }}>
               <AlumniSearch
-  alumniData={alumniData}
-  onResults={(primary, secondary, q) => {
-    setPrimaryResults(primary);
-    setSecondaryResults(secondary);
-    setQuery(q);
-  }}
-  showAllIfEmpty={false}
-/>
-
+                alumniData={alumniData}
+                onResults={(primary, secondary, q) => {
+                  setPrimaryResults(primary);
+                  setSecondaryResults(secondary);
+                  setQuery(q);
+                }}
+                showAllIfEmpty={false}
+              />
             </div>
 
             <a
@@ -217,44 +214,49 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
           </div>
         </section>
 
-        {/* ✅ Show results only after search */}
+        {/* ✅ Results */}
         {query && primaryResults.length > 0 && (
           <section style={{ width: "100%", margin: "1.5rem auto" }}>
             <h3
               style={{
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "Space Grotesk, sans-serif",
+                textAlign: "left",
+                margin: "0 0 0.25rem 2rem",
+                fontWeight: 1000,
+                letterSpacing: 0.1,
                 color: "#241123",
-                fontSize: "1.4rem",
-                margin: "0 0 0.5rem 1rem",
+                opacity: 0.8,
+                marginBottom: "1rem",
+                fontSize: "1.5rem",
               }}
             >
-              Top Matches
+              Top matches:
             </h3>
-           <div
-  style={{
-    display: "flex",
-    gap: "1rem",
-    overflowX: "auto",
-    padding: "1rem 2rem", // ✅ Keep same breathing room as secondary
-    scrollSnapType: "x mandatory",
-    scrollPaddingLeft: "2rem",
-    scrollBehavior: "smooth",
-    WebkitOverflowScrolling: "touch",
-  }}
->
-  {primaryResults.map((alum, idx) => (
-
-    <div key={`primary-${idx}`} style={{ flex: "0 0 auto", width: "150px", scrollSnapAlign: "start" }}>
-      <MiniProfileCard
-        name={alum.name}
-        role={alum.roles?.join(", ") ?? ""}
-        slug={alum.slug}
-        headshotUrl={alum.headshotUrl}
-      />
-    </div>
-  ))}
-  <div style={{ flex: "0 0 2rem" }} /> {/* ✅ Spacer after last */}
-</div>
+            <div
+              style={{
+                display: "flex",
+                gap: "1rem",
+                overflowX: "auto",
+                padding: "2rem 2rem",
+                scrollSnapType: "x mandatory",
+                scrollPaddingLeft: "2rem",
+                scrollBehavior: "smooth",
+                WebkitOverflowScrolling: "touch",
+                                        background: "rgba(36, 17, 35, 0.2)",
+              }}
+            >
+              {primaryResults.map((alum, idx) => (
+                <div key={`primary-${idx}`} style={{ flex: "0 0 auto", width: "150px", scrollSnapAlign: "start" }}>
+                  <MiniProfileCard
+                    name={alum.name}
+                    role={alum.roles?.join(", ") ?? ""}
+                    slug={alum.slug}
+                    headshotUrl={alum.headshotUrl}
+                  />
+                </div>
+              ))}
+              <div style={{ flex: "0 0 2rem" }} />
+            </div>
           </section>
         )}
 
@@ -262,41 +264,45 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
           <section style={{ width: "100%", margin: "2rem auto", textAlign: "center" }}>
             <h4
               style={{
-                fontFamily: "DM Sans, sans-serif",
-                color: "#241123",
-                fontSize: "1.3rem",
-                margin: "0 0 0.5rem 1rem",
+                fontFamily: "Space Grotesk, sans-serif",
+                margin: "0 0 0.25rem 2rem",
                 textAlign: "left",
+                fontWeight: 1000,
+                letterSpacing: 0.1,
+                color: "#241123",
+                opacity: 0.8,
+                marginBottom: "1rem",
+                fontSize: "1.5rem",
               }}
             >
-              More Matches You Might Like
+              More matches you might like:
             </h4>
             <div
-  style={{
-    display: "flex",
-    gap: "1rem",
-    overflowX: "auto",
-    padding: "1rem 2rem", // ✅ Padding adds breathing room
-    scrollSnapType: "x mandatory",
-    scrollPaddingLeft: "2rem", // ✅ Ensures snap respects padding
-    scrollBehavior: "smooth",
-    WebkitOverflowScrolling: "touch",
-  }}
->
-
-  <div style={{ flex: "0 0 2rem" }} /> {/* ✅ Spacer before first */}
-  {secondaryResults.map((alum, idx) => (
-    <div key={`secondary-${idx}`} style={{ flex: "0 0 auto", width: "150px", scrollSnapAlign: "start" }}>
-      <MiniProfileCard
-        name={alum.name}
-        role={alum.roles?.join(", ") ?? ""}
-        slug={alum.slug}
-        headshotUrl={alum.headshotUrl}
-      />
-    </div>
-  ))}
-  <div style={{ flex: "0 0 2rem" }} /> {/* ✅ Spacer after last */}
-</div>
+              style={{
+                display: "flex",
+                gap: "1rem",
+                overflowX: "auto",
+                padding: "2rem 2rem",
+                scrollSnapType: "x mandatory",
+                scrollPaddingLeft: "2rem",
+                scrollBehavior: "smooth",
+                WebkitOverflowScrolling: "touch",
+                                        background: "rgba(36, 17, 35, 0.2)",
+              }}
+            >
+              <div style={{ flex: "0 0 2rem" }} />
+              {secondaryResults.map((alum, idx) => (
+                <div key={`secondary-${idx}`} style={{ flex: "0 0 auto", width: "150px", scrollSnapAlign: "start" }}>
+                  <MiniProfileCard
+                    name={alum.name}
+                    role={alum.roles?.join(", ") ?? ""}
+                    slug={alum.slug}
+                    headshotUrl={alum.headshotUrl}
+                  />
+                </div>
+              ))}
+              <div style={{ flex: "0 0 2rem" }} />
+            </div>
 
             <a
               href={`/directory?q=${encodeURIComponent(query)}`}
@@ -331,6 +337,7 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
               fontSize: "clamp(2rem, 6vw, 8rem)",
               textTransform: "uppercase",
               color: "#241123",
+              opacity: 0.95,
               margin: 0,
             }}
           >
@@ -373,8 +380,10 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
           }
 
           .updates-col {
-            min-width: 350px;
-          }
+  min-width: 350px;
+  min-height: 450px; 
+}
+
 
           @media (max-width: 1100px) {
             .alumni-grid {

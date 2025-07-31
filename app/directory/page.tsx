@@ -140,7 +140,7 @@ export default function DirectoryPage() {
   const extraResults = query ? applyFiltersAndSort(secondaryResults) : [];
 
   return (
-    <div style={{ marginTop: "-750px" }}>
+    <div>
       {/* ✅ HERO */}
       <section
         style={{
@@ -176,7 +176,7 @@ export default function DirectoryPage() {
       {/* ✅ MAIN */}
       <main
         style={{
-          marginTop: "55vh",
+          marginTop: "0vh",
           backgroundImage: "url('/images/kraft-texture.png')",
           backgroundSize: "cover",
           padding: "2rem 0",
@@ -187,6 +187,7 @@ export default function DirectoryPage() {
             style={{
               fontFamily: "Space Grotesk",
               color: "#6C00AF",
+              opacity: 0.9,
               fontSize: "clamp(2.8rem, 5vw, 3.25rem)",
               fontWeight: 500,
               marginBottom: "3rem",
@@ -278,7 +279,7 @@ export default function DirectoryPage() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
                 style={{
-                  backgroundColor: "rgba(36,17,35,0.3)",
+                  backgroundColor: "rgba(36,17,35,0.4)",
                   padding: "1rem",
                   borderRadius: "8px",
                   margin: "1rem",
@@ -373,9 +374,9 @@ export default function DirectoryPage() {
             textAlign: "center",
             fontFamily: "Space Grotesk, sans-serif",
             fontWeight: 450,
-            fontSize: "1.4rem",
+            fontSize: "1.2rem",
             color: "#F6E4C1",
-            opacity: 0.9,
+            opacity: 0.8,
             margin: "1.5rem 0rem",
           }}
         >
@@ -390,12 +391,28 @@ export default function DirectoryPage() {
             margin: "1.75rem auto",
           }}
         >
+          <h4
+              style={{
+                fontFamily: "Space Grotesk, sans-serif",
+                fontWeight: 1000,
+                letterSpacing: 0.1,
+                color: "#F6E4C1",
+                opacity: 0.8,
+                marginBottom: "1rem",
+                fontSize: "1.5rem",
+              }}
+            >
+              Top matches:
+            </h4>
           <div
             style={{
               display: "grid",
               justifyContent: "center",
               gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))",
               gap: "1.5rem",
+                        background: "rgba(36, 17, 35, 0.2)",
+                        borderRadius: "8px",
+                        padding: "2rem",
             }}
           >
             {mainResults.map((alum, idx) => (
@@ -421,13 +438,16 @@ export default function DirectoryPage() {
           >
             <h4
               style={{
-                fontFamily: "Space Grotesk",
+                fontFamily: "Space Grotesk, sans-serif",
+                fontWeight: 1000,
+                letterSpacing: 0.1,
                 color: "#F6E4C1",
+                opacity: 0.8,
                 marginBottom: "1rem",
-                fontSize: "1.3rem",
+                fontSize: "1.5rem",
               }}
             >
-              Additional Matches You Might Like:
+              More matches you might like:
             </h4>
             <div
               style={{
@@ -435,6 +455,9 @@ export default function DirectoryPage() {
                 justifyContent: "center",
                 gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))",
                 gap: "1.5rem",
+                        background: "rgba(36, 17, 35, 0.2)",
+                        borderRadius: "8px",
+                        padding: "2rem",
               }}
             >
               {extraResults.map((alum, idx) => (

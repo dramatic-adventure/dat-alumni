@@ -52,7 +52,7 @@ export default function MiniProfileCard({
             alt={name}
             fill
             className="object-cover transition-all duration-300"
-            sizes="180px"
+            sizes="100px"
             loading="lazy"
             placeholder="blur"
             blurDataURL={defaultImage}
@@ -64,8 +64,9 @@ export default function MiniProfileCard({
           className="uppercase leading-snug text-[#f2f2f2] group-hover:text-[#FFCC00] transition-colors duration-300"
           style={{
             fontFamily: "Space Grotesk",
-            fontWeight: 425,
-            fontSize: nameFontSize || 15,
+            fontWeight: 500,
+            letterSpacing: "0.05rem",
+            fontSize: nameFontSize || 16,
             margin: "15px 0 0 0",
             textAlign: "left",
           }}

@@ -106,7 +106,7 @@ export default function AlumniSearch({
         {/* ✅ Search Input */}
         <input
           type="text"
-          placeholder="Search alumni by name, program, or alias..."
+          placeholder="Search alumni by name, location, program, keyword, year, or..."
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -114,7 +114,7 @@ export default function AlumniSearch({
           }}
           style={{
             flex: 1,
-            fontSize: "1.2rem",
+            fontSize: "1.1rem",
             backgroundColor: "#F6E4C1",
             border: "none",
             outline: "none"
