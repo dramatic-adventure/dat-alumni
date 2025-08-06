@@ -165,10 +165,10 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
               lineHeight: "1.6",
               marginBottom: "2rem",
             }}
-          >
+           >
             Each season brings together bold creators who take the journey and stand alongside our
             neighbors — collaborating to craft new stories rooted in real experiences and honest,
-            human connection.  Explore our alumni, revisit past projects, and see how each artist's journey
+            human connection.  Explore our alumni, revisit past projects, and see how each artist&apos;s journey
             continues to inspire.
           </p>
 

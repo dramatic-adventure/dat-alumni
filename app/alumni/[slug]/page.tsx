@@ -11,9 +11,11 @@ export default async function AlumniPage({ params }: { params: Params }) {
   console.log("🛠 SLUG from params:", slug);
 
   const alumni = await loadAlumniBySlug(slug);
-  console.log("🔍 Alumni lookup result:", alumni);
+  
 
   if (!alumni) return notFound();
+
+  console.log("🔍 Alumni lookup result:", alumni);
 
   const allStories = await getAllStories();
 
@@ -23,6 +25,7 @@ export default async function AlumniPage({ params }: { params: Params }) {
   data={{
     slug: alumni.slug,
     name: alumni.name,
+    role: alumni.roles?.[0] || "",
     roles: alumni.roles || [],
     location: alumni.location || "",
     headshotUrl: alumni.headshotUrl || "",

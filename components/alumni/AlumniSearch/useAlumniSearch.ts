@@ -52,7 +52,7 @@ export function useAlumniSearch(
   );
 
   useEffect(() => {
-    const handler = setTimeout(() => {
+  const handler = setTimeout(() => {
       const cleanedQuery = cleanQuery(query);
       if (!cleanedQuery) {
         onResults(showAllIfEmpty ? [] : [], showAllIfEmpty ? alumniData : [], "");
@@ -212,7 +212,18 @@ export function useAlumniSearch(
     }, 250);
 
     return () => clearTimeout(handler);
-  }, [query, filters, enrichedData, fuse]);
+}, [
+  query,
+  filters,
+  enrichedData,
+  alumniData,
+  fuse,
+  onResults,
+  showAllIfEmpty,
+  debug,
+  aliasIndex,
+  maxSecondary,
+]);
 
   return { query, setQuery };
 }

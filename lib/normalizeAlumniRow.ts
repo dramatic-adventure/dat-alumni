@@ -1,4 +1,5 @@
 // normalizeAlumniRow.ts
+import { Space } from "lucide-react";
 import { AlumniRow } from "./types";
 
 function normalizeSingleUpdate(row: Record<string, string>) {
@@ -7,10 +8,12 @@ function normalizeSingleUpdate(row: Record<string, string>) {
 
   if (!hasMeaningfulData) return null;
 
-  const title = row["update date"]?.trim() || "";
   const desc = row["update location"]?.trim() || "";
+  const title = row["update date"]?.trim() || "";
 
-  const subheadline = [title, desc].filter(Boolean).join(" — "); // only add separator if both exist
+  const subheadline = [desc, title].filter(Boolean).join("   |   "); // only add separator if both exist
+
+
 
   return {
     tag: row["update tag"]?.trim() || "DAT Spotlight",

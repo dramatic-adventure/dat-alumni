@@ -82,20 +82,25 @@ console.log("🧪 updates passed to ProfileCard:", updates);
             }}
           >
             <div
-              style={{
-                width: isMobile ? "100%" : "85%", // ✅ Mobile full width, desktop narrower
-                maxWidth: "1200px",
-                margin: isMobile ? "0" : "0 auto", // ✅ Center on desktop
-                marginLeft: isMobile ? "3%" : "auto", // ✅ Mobile unique left margin
-                marginRight: isMobile ? "10%" : "auto", // ✅ Mobile unique right margin
-                position: "relative",
-                overflow: "visible", // ✅ Contact tab remains visible
-                borderRadius: "18px",
-                boxShadow: "6px 12px 20px rgba(0, 0, 0, 0.2)", // ✅ Shadow restored
-                top: `calc(${HEADER_HEIGHT} + ${offsetTop})`, // ✅ Accounts for header height
-                transition: "top 0.3s ease-in-out", // ✅ Smooth position change
-              }}
-            >
+  style={{
+    width: "85%", // ✅ Base width on all screens
+    maxWidth: "1200px",
+    margin: isMobile ? "0" : "0 auto", // ✅ Desktop: center with auto margins
+
+    // ✅ MOBILE Layout Tweaks
+    ...(isMobile && {
+      marginLeft: "5%",   // ✅ Adjustable left margin for mobile
+      marginRight: "10%", // ✅ Adjustable right margin for mobile
+    }),
+
+    position: "relative",
+    overflow: "visible",
+    borderRadius: "18px",
+    boxShadow: "6px 12px 20px rgba(0, 0, 0, 0.2)",
+    top: `calc(${HEADER_HEIGHT} + ${offsetTop})`,
+    transition: "top 0.3s ease-in-out",
+  }}
+>
               <ProfileCard
                 slug={slug}
                 name={name}

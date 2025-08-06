@@ -14,7 +14,15 @@ import Lightbox from "@/components/shared/Lightbox";
 import LocationBadge from "@/components/shared/LocationBadge";
 import ContactOverlay from "@/components/shared/ContactOverlay";
 import ContactWidget from "@/components/shared/ContactWidget";
-import { StoryRow, Production } from "@/lib/types";
+import {
+  StoryRow,
+  Production,
+  SpotlightUpdate,
+  HighlightCard,
+  HighlightCategory,
+  CreativeWorkUpdate, 
+} from "@/lib/types";
+
 import { productionMap } from "@/lib/productionMap";
 import StatusFlags from "@/components/alumni/StatusFlags";
 
@@ -23,11 +31,12 @@ import DesktopProfileHeader from "@/components/alumni/DesktopProfileHeader";
 import useIsMobile from "@/hooks/useIsMobile";
 
 import MyJourney from "@/components/alumni/MyJourney";
-
 import SpotlightPanel from "@/components/alumni/SpotlightPanel";
-import { SpotlightUpdate } from "../../lib/types";
+import HighlightPanel from "@/components/alumni/HighlightPanel";
 
+import ProfileShowcaseSection from "@/components/profile/ProfileShowcaseSection";
 
+import CreativeWorkPanel from "@/components/alumni/CreativeWorkPanel";
 
 
 
@@ -124,241 +133,165 @@ export default function ProfileCard({
   const profileCardRef = useRef<HTMLDivElement>(null);
   const hasContactInfo = !!(email || website || (socials && socials.length > 0));
 
+const highlightUpdates: HighlightCard[] = (updates || [])
+  .filter((u) => u.tag === "Highlight")
+  .map((u) => ({
+    headline: u.headline || "",
+    title: u.headline || "",
+    excerpt: u.body || "",
+    date: (u as any).dateAdded || "",
+    location: (u as any).location || "",
+    imageUrl: u.mediaUrl || "",
+    ctaUrl: u.ctaLink || "",
+    evergreen: u.evergreen ?? false,
+    mediaUrl: u.mediaUrl || "",
+    category: "Highlight" as HighlightCategory,
+  }));
+
+const spotlightUpdates = (updates || []).filter((u) => u.tag === "DAT Spotlight");
+
+const hasSpotlight = spotlightUpdates.length > 0;
+const hasHighlight = highlightUpdates.length > 0;
+
+const creativeWorkUpdates = (updates || []).filter((u) => u.tag === "Creative Work");
+
+
+
+
+const hasCreativeWork = creativeWorkUpdates.length > 0;
+
+const hasAnyPanel = hasSpotlight || hasHighlight || hasCreativeWork;
+
+
+console.log("✅ creativeWorkUpdates", creativeWorkUpdates);
+
+
   return (
-    <div ref={profileCardRef} style={{ position: "relative" }}>
-      {/* <ContactOverlay
+  <div ref={profileCardRef} style={{ position: "relative" }}>
+    {/* 🔹 Header */}
+    {isMobile ? (
+      <MobileProfileHeader
+        name={name}
+        role={role}
+        location={location}
+        headshotUrl={headshotUrl}
         email={email}
         website={website}
         socials={socials}
-        profileCardRef={profileCardRef}
-      /> */}
+        statusFlags={statusFlags}
+      />
+    ) : (
+      <DesktopProfileHeader
+        name={name}
+        role={role}
+        location={location}
+        headshotUrl={headshotUrl}
+        email={email}
+        website={website}
+        socials={socials}
+        statusFlags={statusFlags}
+      />
+    )}
 
-      {isMobile ? (
-        <MobileProfileHeader
-          name={name}
-          role={role}
-          location={location}
-          headshotUrl={headshotUrl}
-          email={email}
-          website={website}
-          socials={socials}
-          statusFlags={statusFlags}
-        />
-      ) : (
-        <DesktopProfileHeader
-          name={name}
-          role={role}
-          location={location}
-          headshotUrl={headshotUrl}
-          email={email}
-          website={website}
-          socials={socials}
-          statusFlags={statusFlags}
-        />
-      )}
-
-      {/* 👇 COMMENTED OUT: moved to DesktopProfileHeader */}
-      {/*
-      {headshotUrl || fallbackImage ? (
-        <div
-          className="absolute top-0 left-[1.5rem] sm:left-4 z-40"
-          style={{
-            width: "280px",
-            height: "350px",
-            boxShadow: "6px 8px 20px rgba(0,0,0,0.25)",
-            backgroundColor: "#241123",
-          }}
-          onClick={() => setModalOpen(true)}
-        >
-          <img
-            src={headshotUrl || fallbackImage}
-            alt={`${name}'s headshot`}
-            loading="lazy"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "center",
-            }}
-          />
-        </div>
-      ) : null}
-
+    {/* 🔷 Blue background: Only shown if ArtistBio or Panels exist */}
+    {(hasArtistBio || hasAnyPanel) && (
       <div
         style={{
-          backgroundColor: "#C39B6C",
-          color: "#F6E4C1",
-          textAlign: "left",
-          paddingLeft: "340px",
-          paddingTop: "0.25rem",
-          paddingBottom: "2rem",
+          backgroundColor: "#2493A9",
+          paddingTop: hasArtistBio ? "3rem" : "2rem",
+          paddingBottom: "2.5rem",
         }}
       >
-        <NameStack
-          firstName={firstName}
-          lastName={lastName}
-          firstNameRef={firstNameRef}
-          lastNameRef={lastNameRef}
-          firstScale={firstScale}
-          lastScale={lastScale}
-          hasMeasured={hasMeasured}
-          nameFontFamily="Anton, sans-serif"
-          nameFontSize="4.5rem"
-          nameColor="#F6E4C1"
-          letterSpacing="5px"
-          textTransform="uppercase"
-          textAlign="left"
-        />
-
-        {(role || location) && (
-          <div className="flex flex-row items-center flex-wrap gap-x-3 gap-y-2" style={{ marginTop: "0.5rem", marginBottom: "0.5rem", textAlign: "left" }}>
-            {role && (
-              <Link
-                href={`/role/${role.toLowerCase().replace(/\s+/g, "-")}`}
-                style={{
-                  fontFamily: "Space Grotesk, sans-serif",
-                  fontSize: "1.7rem",
-                  color: "#241123",
-                  textTransform: "uppercase",
-                  letterSpacing: "2px",
-                  fontWeight: 700,
-                  opacity: 0.9,
-                  textDecoration: "none",
-                }}
-              >
-                {role}
-              </Link>
-            )}
-            {role && location && (
-              <span style={{ fontSize: "1.2rem", color: "#241123", padding: "0 14px", opacity: 0.5 }}>•</span>
-            )}
-            {location && (
-              <LocationBadge
-                location={location}
-                fontFamily="DM Sans, sans serif"
-                fontSize="1.2rem"
-                fontWeight={900}
-                letterSpacing="2px"
-                textTransform="none"
-                opacity={0.5}
-              />
-            )}
-          </div>
+        {hasArtistBio && (
+          <ArtistBio
+            identityTags={identityTags}
+            artistStatement={artistStatement}
+            fontFamily='"DM Sans", sans-serif'
+            fontSize="1.15rem"
+            color="#0C2D37"
+            fontStyle="normal"
+            fontWeight={400}
+            letterSpacing="normal"
+            identityTagStyle={{
+              marginTop: "0rem",
+              marginBottom: "2.5rem",
+              marginLeft: isMobile ? "30px" : "310px",
+              marginRight: "30px",
+            }}
+            bioStyle={{
+              marginLeft: "30px",
+              marginRight: "30px",
+              marginTop: "1rem",
+              marginBottom: "3rem",
+              maxWidth: "calc(100% - 60px)",
+            }}
+          />
         )}
-      </div>
-      */}
 
-      {/* <StatusFlags
-        flags={statusFlags}
-        fontSize="1.75rem"
-        fontFamily='"DM Sans", sans-serif'
-        textColor="#F6E4C1"
-        borderRadius="33px"
-      /> */}
+        {hasAnyPanel && (
+  <div style={{ margin: "2rem 30px 2.5rem 30px" }}>
+    <ProfileShowcaseSection>
+      {hasSpotlight && <SpotlightPanel updates={spotlightUpdates} />}
+      {hasHighlight && <HighlightPanel cards={highlightUpdates} />}
+      {hasCreativeWork && <CreativeWorkPanel updates={creativeWorkUpdates} />}
+      <MyJourney />
+    </ProfileShowcaseSection>
+  </div>
+)}
 
-      {/* <div className="absolute z-40" style={{ top: "1rem", right: "1rem" }}>
-        <ShareButton url={currentUrl} />
-      </div> */}
-
-      {hasArtistBio && (
-  <div
-    style={{
-      backgroundColor: "#2493A9",
-      paddingTop: "3rem", // container padding
-      paddingBottom: "2.5rem",
-    }}
-  >
-    <ArtistBio
-      identityTags={identityTags}
-      artistStatement={artistStatement}
-      fontFamily='"DM Sans", sans-serif'
-      fontSize="1.15rem"
-      color="#0C2D37"
-      fontStyle="normal"
-      fontWeight={400}
-      letterSpacing="normal"
-      identityTagStyle={{
-        marginTop: "0rem",     // ✅ equal top margin
-        marginBottom: "2.5rem",  // ✅ equal bottom margin
-        marginLeft: isMobile ? "30px" : "310px",
-        marginRight: "30px",
-      }}
-      bioStyle={{
-        marginLeft: "30px",
-        marginRight: "30px",
-        marginTop: "1rem",     // ✅ match identity tag bottom
-        marginBottom: "1rem",  // ✅ even spacing
-        maxWidth: "calc(100% - 60px)",
-      }}
-    />
-
-    {/* ✅ Moved SpotlightPanel here to share container and background */}
-    {updates && updates.length > 0 && (
-      <div style={{ margin: "2rem 30px 2.5rem 30px" }}>
-        <SpotlightPanel updates={updates} />
       </div>
     )}
-  </div>
-)}
 
-
-{/* ✅ Inserted MyJourney Section */}
-{/*<div className="bg-[#f5f1eb] py-12 px-4 md:px-12">
-  <MyJourney />
-</div> */}
-
-      {featuredProductions.length > 0 && (
-        <div className="bg-[#19657c] py-[30px] px-[30px]">
-  <h2
-    className="text-6xl text-[#D9A919] mb-4"
-    style={{ fontFamily: '"Space Grotesk", sans-serif' }}
-  >
-    Featured DAT Work
-  </h2>
-  <p
-    className="text-[#5BBFD3] text-lg max-w-3xl mb-8"
-    style={{ fontFamily: '"DM Sans", sans-serif' }}
-  >
-    Developed through cross-cultural exchange and a fearless approach to
-    storytelling, this work reflects a deep engagement with place, people, and
-    purpose.
-  </p>
-
-  <PosterStrip
-    posters={featuredProductions.map((p) => ({
-      posterUrl: `/posters/${p.slug}-landscape.jpg`,
-      url: `https://www.dramaticadventure.com${p.url}`,
-      title: p.title,
-    }))}
-  />
-</div>
-
-      )}
-
-{programBadges.length > 0 && (
-  <div
-    className="relative py-6 m-0 animate-fadeIn"
-    style={{ zIndex: 50 }}
-  >
-    <div className="max-w-6xl mx-auto px-4">
-      <ProgramStamps artistSlug={slug} />
-    </div>
-  </div>
-)}
-
-
-      {hasStories && (
-        <section className="bg-[#f2f2f2] rounded-xl px-[30px] py-[30px] mt-[0px]">
-          <FeaturedStories stories={stories} authorSlug={slug} />
-        </section>
-      )}
-
-      {isModalOpen && (
-        <Lightbox
-          images={[headshotUrl || fallbackImage]}
-          onClose={() => setModalOpen(false)}
+    {/* 💛 Featured Productions Section */}
+    {featuredProductions.length > 0 && (
+      <div className="bg-[#19657c] py-[30px] px-[30px]">
+        <h2
+          className="text-6xl text-[#D9A919] mb-4"
+          style={{ fontFamily: '"Space Grotesk", sans-serif' }}
+        >
+          Featured DAT Work
+        </h2>
+        <p
+          className="text-[#5BBFD3] text-lg max-w-3xl mb-8"
+          style={{ fontFamily: '"DM Sans", sans-serif' }}
+        >
+          Developed through cross-cultural exchange and a fearless approach to
+          storytelling, this work reflects a deep engagement with place, people,
+          and purpose.
+        </p>
+        <PosterStrip
+          posters={featuredProductions.map((p) => ({
+            posterUrl: `/posters/${p.slug}-landscape.jpg`,
+            url: `https://www.dramaticadventure.com${p.url}`,
+            title: p.title,
+          }))}
         />
-      )}
-    </div>
-  );
+      </div>
+    )}
+
+    {/* 🟣 Program Badges */}
+    {programBadges.length > 0 && (
+      <div className="relative py-6 m-0 animate-fadeIn" style={{ zIndex: 50 }}>
+        <div className="max-w-6xl mx-auto px-4">
+          <ProgramStamps artistSlug={slug} />
+        </div>
+      </div>
+    )}
+
+    {/* 📰 Featured Stories */}
+    {hasStories && (
+      <section className="bg-[#f2f2f2] rounded-xl px-[30px] py-[30px] mt-[0px]">
+        <FeaturedStories stories={stories} authorSlug={slug} />
+      </section>
+    )}
+
+    {/* 💡 Headshot Modal Lightbox */}
+    {isModalOpen && (
+      <Lightbox
+        images={[headshotUrl || fallbackImage]}
+        onClose={() => setModalOpen(false)}
+      />
+    )}
+  </div>
+);
 }

@@ -20,20 +20,19 @@ export default function Lightbox({
   const total = images.length;
   const multiple = total > 1;
 
-  // 🧠 Defensive guard for empty image list
-  if (total === 0) return null;
+  const goTo = useCallback((index: number) => {
+  setCurrentIndex((index + total) % total);
+}, [total]);
 
-  const goTo = (index: number) => {
-    setCurrentIndex((index + total) % total);
-  };
 
   const handleNext = useCallback(() => {
-    if (multiple) goTo(currentIndex + 1);
-  }, [currentIndex, multiple]);
+  if (multiple) goTo(currentIndex + 1);
+}, [currentIndex, multiple, goTo]);
 
-  const handlePrev = useCallback(() => {
-    if (multiple) goTo(currentIndex - 1);
-  }, [currentIndex, multiple]);
+const handlePrev = useCallback(() => {
+  if (multiple) goTo(currentIndex - 1);
+}, [currentIndex, multiple, goTo]);
+
 
   const handleKey = useCallback(
     (e: KeyboardEvent) => {
@@ -67,10 +66,12 @@ export default function Lightbox({
 
   const currentUrl = images[currentIndex] ?? "";
 
+  // ✅ Moved AFTER hooks to prevent rules-of-hooks violation
+  if (total === 0) return null;
+
   return (
     <LightboxPortal>
       <div className="fixed inset-0 z-[99999] grid grid-cols-3 w-screen h-screen">
-
         {/* Left Panel */}
         <div
           className="w-full h-full z-0"
@@ -103,29 +104,28 @@ export default function Lightbox({
             {...swipeHandlers}
           >
             <StoryMedia
-  imageUrl={currentUrl}
-  title={`Media ${currentIndex + 1}`}
-  mode="lightbox"
-/>
+              imageUrl={currentUrl}
+              title={`Media ${currentIndex + 1}`}
+              mode="lightbox"
+            />
 
-{/* Navigation Dots */}
-{multiple && (
-  <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex gap-2">
-    {images.map((_, i) => (
-      <button
-        key={i}
-        onClick={() => setCurrentIndex(i)}
-        className={`w-3 h-3 rounded-full transition-all duration-200 ${
-          i === currentIndex
-            ? "bg-[#FFCC00] scale-125 shadow-md"
-            : "bg-[#FFCC00]/40 hover:bg-[#FFCC00]/70"
-        }`}
-        aria-label={`Go to image ${i + 1}`}
-      />
-    ))}
-  </div>
-)}
-            
+            {/* Navigation Dots */}
+            {multiple && (
+              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex gap-2">
+                {images.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentIndex(i)}
+                    className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                      i === currentIndex
+                        ? "bg-[#FFCC00] scale-125 shadow-md"
+                        : "bg-[#FFCC00]/40 hover:bg-[#FFCC00]/70"
+                    }`}
+                    aria-label={`Go to image ${i + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

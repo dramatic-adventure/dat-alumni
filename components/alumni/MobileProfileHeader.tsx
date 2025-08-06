@@ -7,6 +7,7 @@ import StatusFlags from "@/components/alumni/StatusFlags";
 import ShareButton from "@/components/ui/ShareButton";
 import ContactOverlay from "@/components/shared/ContactOverlay";
 import Lightbox from "@/components/shared/Lightbox";
+import Image from "next/image";
 
 const scaleCache = new Map<string, { first: number; last: number }>();
 
@@ -133,32 +134,33 @@ export default function MobileProfileHeader({
       >
         {/* Headshot */}
         <div
-          className="cursor-pointer"
-          style={{
-            aspectRatio: "4 / 5",
-            boxShadow: "6px 8px 20px rgba(0,0,0,0.25)",
-            backgroundColor: "#241123",
-            margin: "0 auto",
-            width: "100%",
-          }}
-          onClick={() => setModalOpen(true)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") setModalOpen(true);
-          }}
+  className="relative cursor-pointer"
+  style={{
+    aspectRatio: "4 / 5",
+    boxShadow: "6px 8px 20px rgba(0,0,0,0.25)",
+    backgroundColor: "#241123",
+    margin: "0 auto",
+    width: "100%",
+  }}
+  onClick={() => setModalOpen(true)}
+  role="button"
+  tabIndex={0}
+  onKeyDown={(e) => {
+    if (e.key === "Enter" || e.key === " ") setModalOpen(true);
+  }}
         >
-          <img
-            src={headshotUrl || fallbackImage}
-            alt={`${name}'s headshot`}
-            loading="lazy"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              display: "block",
-            }}
-          />
+          <Image
+  src={headshotUrl || fallbackImage}
+  alt={`${name}'s headshot`}
+  fill
+  placeholder="blur"
+  blurDataURL={fallbackImage}
+  loading="lazy"
+  style={{
+    objectFit: "cover",
+    objectPosition: "top center",
+  }}
+/>
         </div>
 
         {/* NameStack */}

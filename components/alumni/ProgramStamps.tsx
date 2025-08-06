@@ -9,7 +9,6 @@ type ProgramStampsProps = {
 
 export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
   const programs = Object.values(programMap).filter((p) => p.artists[artistSlug]);
-  if (!programs.length) return null;
 
   const [panelHeight, setPanelHeight] = useState(600);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -22,6 +21,8 @@ export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
 
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
 
+  if (!programs.length) return null; // ✅ moved after hooks
+
   return (
     <div
       ref={panelRef}
@@ -32,7 +33,7 @@ export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
         minHeight: "250px",
         maxHeight: "500px",
         overflow: "hidden",
-        backgroundColor: "#F6E4C1", // Base color
+        backgroundColor: "#F6E4C1",
       }}
     >
       {/* ✅ Background Texture */}
@@ -47,7 +48,7 @@ export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center",
-          opacity: 1, // Texture opacity
+          opacity: 1,
           zIndex: 1,
         }}
       />
@@ -61,7 +62,7 @@ export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
           width: "100%",
           height: "100%",
           backgroundColor: "#F799A8",
-          opacity: 0.3, // Adjust for strength of overlay
+          opacity: 0.3,
           zIndex: 2,
         }}
       />

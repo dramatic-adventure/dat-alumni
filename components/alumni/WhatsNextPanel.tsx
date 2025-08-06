@@ -5,7 +5,7 @@ import { useSwipeable } from "react-swipeable";
 import Lightbox from "@/components/shared/Lightbox";
 import ThumbnailMedia from "@/components/shared/ThumbnailMedia";
 
-export type SpotlightUpdate = {
+export type WhatsNextUpdate = {
   tag?: string;
   headline: string;
   subheadline?: string;
@@ -13,10 +13,9 @@ export type SpotlightUpdate = {
   ctaLink?: string;
   mediaUrl?: string;
   evergreen?: boolean;
-  highlighted?: boolean;
 };
 
-export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpdate[] }) {
+export default function WhatsNextPanel({ updates = [] }: { updates: WhatsNextUpdate[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
@@ -49,7 +48,6 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
   });
 
   useEffect(() => {
-    if (carouselUpdates.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % carouselUpdates.length);
     }, 8000);
@@ -61,8 +59,8 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
       <div
         {...handlers}
         style={{
-          backgroundColor: "#B7E4EA",
-          opacity: 0.9,
+          backgroundColor: "#F3F1EF",
+          opacity: 0.95,
           margin: "0rem auto",
           padding: "1.5rem 1.5rem",
           maxWidth: "1120px",
@@ -84,7 +82,7 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
             position: "absolute",
             top: "0.5rem",
             left: "0.5rem",
-            backgroundColor: "#241123",
+            backgroundColor: "#6C00AF",
             color: "#FFCC00",
             fontSize: "0.9rem",
             padding: "0.4rem 0.85rem 0.4rem 0.6rem",
@@ -100,31 +98,7 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
             zIndex: 30,
           }}
         >
-          <div
-            style={{
-              width: "16px",
-              height: "16px",
-              borderRadius: "50%",
-              backgroundColor: "#FFCC00",
-              boxShadow: "inset 3px 3px 3px rgba(0, 0, 0, 0.25)",
-              flexShrink: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <div
-              style={{
-                width: "15.5px",
-                height: "14.5px",
-                borderRadius: "50%",
-                backgroundColor: "#2493A9",
-                boxShadow: "inset 1px 1px 2px rgba(0, 0, 0, 0.35)",
-                border: "1px solid rgba(0,0,0,0.1)",
-              }}
-            />
-          </div>
-          DAT Spotlight
+          What's Next
         </div>
 
         <div style={{ marginTop: "1.55rem", marginBottom: "1.9rem" }}>
@@ -140,11 +114,7 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
 
         {current?.mediaUrl && (
           <div style={{ marginBottom: "1rem", border: "1px solid rgba(0,0,0,0.1)" }}>
-            <ThumbnailMedia
-              imageUrl={current.mediaUrl}
-              title={current.headline}
-              onClick={() => setLightboxOpen(true)}
-            />
+            <ThumbnailMedia imageUrl={current.mediaUrl} title={current.headline} onClick={() => setLightboxOpen(true)} />
           </div>
         )}
 
@@ -223,8 +193,8 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
                 rel="noopener noreferrer"
                 style={{
                   display: "inline-block",
-                  backgroundColor: "#241123",
-                  color: "#74C1CF",
+                  backgroundColor: "#6C00AF",
+                  color: "#FFCC00",
                   padding: "0.5rem 0.8rem",
                   textTransform: "uppercase",
                   textAlign: "center",
@@ -245,130 +215,61 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
           </div>
         )}
 
-        {multiple && (
-          <div style={{ display: "flex", justifyContent: "center", margin: "1rem 0" }}>
-            {carouselUpdates.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentIndex(i)}
-                style={{
-                  width: "10px",
-                  height: "10px",
-                  borderRadius: "50%",
-                  margin: "0 5px",
-                  backgroundColor: i === currentIndex ? "#241123" : "#F2DFA2",
-                  transition: "all 0.2s ease-in-out",
-                }}
-              />
-            ))}
-          </div>
-        )}
-
-        {pastUpdates.length > 0 && (
-          <div style={{ textAlign: "center", marginBottom: "0.5rem" }}>
-            <label style={{ fontFamily: "Space Grotesk", fontSize: "0.85rem", color: "#241123" }}>
-              <input
-                type="checkbox"
-                checked={includeArchiveInCarousel}
-                onChange={() => setIncludeArchiveInCarousel(!includeArchiveInCarousel)}
-                style={{ marginRight: "0.4rem" }}
-              />
-              Show archive in carousel
-            </label>
-          </div>
-        )}
-
-        {pastUpdates.length > 0 && (
+        <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
           <button
-            onClick={() => setShowArchive(!showArchive)}
+            onClick={() => setShowArchive((prev) => !prev)}
             style={{
-              fontFamily: "Rock Salt, cursive",
-              fontSize: "0.9rem",
-              color: "#241123",
-              marginTop: "0.75rem",
               background: "none",
               border: "none",
+              color: "#6C00AF",
+              fontFamily: "Rock Salt, cursive",
+              fontSize: "1rem",
+              textDecoration: "underline",
               cursor: "pointer",
-              padding: 0,
-              display: "block",
-              marginLeft: "auto",
-              marginRight: "auto",
+              marginTop: "1rem",
             }}
           >
-            {showArchive ? "hide updates ←" : "see all updates →"}
+            {showArchive ? "hide past updates ↑" : "see all updates →"}
           </button>
-        )}
+        </div>
 
-        {showArchive && pastUpdates.length > 0 && (
-          <div style={{ borderTop: "1px solid #ccc", paddingTop: "1rem", marginTop: "1rem" }}>
-            {pastUpdates.map((update, index) => (
+        {showArchive && (
+          <div
+            style={{
+              backgroundColor: "#F9F8F7",
+              borderTop: "1px solid rgba(0,0,0,0.1)",
+              marginTop: "1rem",
+              paddingTop: "1rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: "1rem",
+              maxHeight: "300px",
+              overflowY: "auto",
+            }}
+          >
+            {pastUpdates.map((update, i) => (
               <div
-                key={index}
-                onClick={() => {
-                  setCurrentIndex(update.index);
-                  setShowArchive(false);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
+                key={i}
                 style={{
-                  display: "flex",
-                  gap: "1rem",
-                  alignItems: "flex-start",
-                  marginBottom: "1rem",
-                  borderBottom: "1px solid #e5e5e5",
-                  paddingBottom: "1rem",
-                  cursor: "pointer",
+                  backgroundColor: "#FFFFFF",
+                  padding: "0.75rem 1rem",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(0,0,0,0.07)",
+                  boxShadow: "0px 0px 4px rgba(0,0,0,0.04)",
                 }}
               >
-                <div style={{ width: "100px", flexShrink: 0 }}>
-                  <ThumbnailMedia imageUrl={update.mediaUrl} title={update.headline} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <h3
-                    style={{
-                      fontFamily: "Anton, sans-serif",
-                      fontSize: "1.1rem",
-                      color: "#241123",
-                    }}
-                  >
-                    {update.headline}
-                  </h3>
-                  {update.subheadline && (
-                    <p
-                      style={{
-                        fontFamily: "DM Sans, sans-serif",
-                        fontSize: "0.9rem",
-                        color: "#4B3A50",
-                      }}
-                    >
-                      {update.subheadline}
-                    </p>
-                  )}
-                  <p
-                    style={{
-                      fontFamily: "Space Grotesk, sans-serif",
-                      fontSize: "0.9rem",
-                      color: "#241123",
-                      marginTop: "0.5rem",
-                    }}
-                  >
-                    {update.body}
-                  </p>
-                  {update.ctaLink && (
-                    <a
-                      href={update.ctaLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: "inline-block",
-                        fontSize: "0.8rem",
-                        marginTop: "0.25rem",
-                        color: "#241123",
-                        textDecoration: "underline",
-                      }}
-                    >
-                      More Details
-                    </a>
-                  )}
+                <strong style={{ fontFamily: "Anton, sans-serif" }}>{update.headline}</strong>
+                {update.subheadline && <div style={{ fontSize: "0.75rem", opacity: 0.65 }}>{update.subheadline}</div>}
+                <div
+                  style={{
+                    fontFamily: "Rock Salt, cursive",
+                    fontSize: "0.95rem",
+                    color: "#241123",
+                    marginTop: "0.5rem",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {update.body}
                 </div>
               </div>
             ))}
@@ -376,9 +277,7 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
         )}
       </div>
 
-      {lightboxOpen && current?.mediaUrl && (
-        <Lightbox images={[current.mediaUrl]} onClose={() => setLightboxOpen(false)} />
-      )}
+      {lightboxOpen && current?.mediaUrl && <Lightbox images={[current.mediaUrl]} onClose={() => setLightboxOpen(false)} />}
     </>
   );
 }

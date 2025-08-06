@@ -8,6 +8,7 @@ import ShareButton from "@/components/ui/ShareButton";
 import Lightbox from "@/components/shared/Lightbox";
 import ContactOverlay from "@/components/shared/ContactOverlay";
 import StatusFlags from "@/components/alumni/StatusFlags";
+import Image from "next/image";
 
 interface DesktopProfileHeaderProps {
   name: string;
@@ -111,27 +112,23 @@ export default function DesktopProfileHeader({
       </div>
 
       <div
-        className="absolute top-0 left-[1.5rem] sm:left-4 z-40"
-        style={{
-          width: "360px",
-          height: "450px",
-          boxShadow: "6px 8px 20px rgba(0,0,0,0.25)",
-          backgroundColor: "#241123",
-          cursor: "pointer",
-        }}
-        onClick={() => setModalOpen(true)}
-      >
-        <img
-          src={headshotUrl || fallbackImage}
-          alt={`${name}'s headshot`}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            objectPosition: "center",
-          }}
-        />
-      </div>
+  className="absolute top-0 left-[1.5rem] sm:left-4 z-40 w-[360px] h-[450px] overflow-hidden bg-[#241123] shadow-[6px_8px_20px_rgba(0,0,0,0.25)] cursor-pointer"
+  onClick={() => setModalOpen(true)}
+>
+  <Image
+    src={headshotUrl || fallbackImage}
+    alt={`${name}'s headshot`}
+    fill
+    placeholder="blur"
+    blurDataURL={fallbackImage}
+    priority
+    style={{
+      objectFit: "cover",
+      objectPosition: "top center",
+    }}
+  />
+</div>
+
 
       <div
         style={{
@@ -203,7 +200,7 @@ export default function DesktopProfileHeader({
                 href={`/location/${location.toLowerCase().replace(/\s+/g, "-")}`}
                 className="no-underline hover:no-underline transition-all duration-200"
                 style={{
-                  fontFamily: "DM Sans, sans serif",
+                  fontFamily: "DM Sans, sans-serif",
                   fontSize: "1.2rem",
                   color: "#241123",
                   fontWeight: 900,

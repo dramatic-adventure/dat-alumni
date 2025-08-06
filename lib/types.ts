@@ -39,7 +39,7 @@ export interface AlumniRow {
   name: string;
 
   // Legacy + new fields
-  role?: string;        
+  role: string;        
   roles: string[];      
 
   // Core fields
@@ -128,4 +128,33 @@ export type Production = {
   artists: Record<string, string[]>;
   layout?: Layout;
   titlePosition?: TitlePosition;
+};
+
+
+// ========== Journey Cards ==========
+export type HighlightCategory = "DAT Memory" | "Creative Work" | "What I’m Up To" | "What’s Next";
+
+export type HighlightCard = {
+  title: string;
+  headline: string; // ✅ Required by HighlightPanel
+  mediaUrl: string;
+  category: HighlightCategory;
+  expirationDate?: string;
+  fallbackCategory?: HighlightCategory;
+  evergreen?: boolean;
+  story?: string;
+  location?: string;
+  programName?: string;
+  dateAdded?: string;
+};
+
+export type CreativeWorkUpdate = {
+  tag: "Creative Work";
+  headline: string;
+  body: string;
+  ctaLink?: string;
+  mediaUrl?: string;
+  evergreen?: boolean;
+  dateAdded?: string;
+  location?: string;
 };

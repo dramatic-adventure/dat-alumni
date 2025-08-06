@@ -1,0 +1,110 @@
+{
+  "slug": "antonia-lache-mccain",
+  "name": "Antonia LaChe McCain",
+  "role": "Performer",
+  "roles": ["Performer"],
+  "location": "New York City, NY",
+  "headshotUrl": "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613936607702-F761Q990IMD6WVFFLC16/Antonia%2BLaChe%2BMcCain.jpg",
+  "programBadges": ["RAW", "CASTAWAY"],
+  "productions": ["RAW Slovakia 2025", "CASTAWAY Ecuador 2025"],
+  "festival": "Edinburgh Fringe",
+  "identityTags": ["Black Artist"],
+  "statusFlags": ["Fellow"],
+  "programSeasons": [2025],
+  "storyTitle": "RAW Slovakia Showcase",
+  "storyExcerpt": "Honoring stories from the Roma community on stage.",
+  "storyUrl": "https://example.com/story/raw-slovakia",
+  "storyThumbnail": "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613936607702-F761Q990IMD6WVFFLC16/Antonia%2BLaChe%2BMcCain.jpg",
+  "backgroundChoice": "parallax",
+  "hasContactInfo": false,
+  "socials": [],
+  "fieldNotes": [],
+
+ "updates": [
+  {
+    "tag": "Creative Work",
+    "headline": "My Experimental Short Film",
+    "body": "Shot it in Cuenca with a local crew!",
+    "mediaUrl": "https://youtu.be/fakeurl123",
+    "evergreen": true,
+    "dateAdded": "2025-08-01",
+    "location": "Cuenca, Ecuador"
+  }
+],
+
+  "highlightCards": [
+    {
+      "title": "Booked National Tour",
+      "headline": "Booked National Tour",
+      "mediaUrl": "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613936607702-F761Q990IMD6WVFFLC16/Antonia%2BLaChe%2BMcCain.jpg",
+      "expirationDate": "2025-09-18",
+      "category": "What’s Next"
+    },
+    {
+      "title": "Won Directing Fellowship",
+      "headline": "Directing Fellowship at New York Theatre Workshop",
+      "mediaUrl": "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613936607702-F761Q990IMD6WVFFLC16/Antonia%2BLaChe%2BMcCain.jpg",
+      "expirationDate": "2025-10-03",
+      "category": "What’s Next"
+    },
+    {
+      "title": "Old News",
+      "headline": "Old Booking",
+      "mediaUrl": "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613936607702-F761Q990IMD6WVFFLC16/Antonia%2BLaChe%2BMcCain.jpg",
+      "expirationDate": "2025-07-15",
+      "category": "What’s Next"
+    }
+  ],
+  "spotlightUpdates": [
+    {
+      "tag": "DAT Premiere",
+      "headline": "CASTAWAY Ecuador 2025",
+      "body": "A bold new take on a classic, told where the story was born.",
+      "mediaUrl": "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613936607702-F761Q990IMD6WVFFLC16/Antonia%2BLaChe%2BMcCain.jpg",
+      "evergreen": false
+    },
+    {
+      "tag": "Festival Feature",
+      "headline": "RAW Slovakia Showcase",
+      "body": "Honoring stories from the Roma community on stage.",
+      "mediaUrl": "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613936607702-F761Q990IMD6WVFFLC16/Antonia%2BLaChe%2BMcCain.jpg",
+      "evergreen": true
+    },
+    {
+      "tag": "Expired Show",
+      "headline": "Past Residency Highlights",
+      "body": "A look back at our first-ever residency cohort.",
+      "mediaUrl": "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613936607702-F761Q990IMD6WVFFLC16/Antonia%2BLaChe%2BMcCain.jpg",
+      "evergreen": false
+    }
+  ],
+  "journeyCards": [
+    {
+      "slug": "dat-memory-1",
+      "title": "DAT Memory 1",
+      "mediaUrl": "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613936607702-F761Q990IMD6WVFFLC16/Antonia%2BLaChe%2BMcCain.jpg",
+      "category": "DAT Memory"
+    },
+    {
+      "slug": "creative-work-1",
+      "title": "Creative Work 1",
+      "mediaUrl": "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613936607702-F761Q990IMD6WVFFLC16/Antonia%2BLaChe%2BMcCain.jpg",
+      "category": "Creative Work"
+    },
+    {
+      "slug": "up-to-1",
+      "title": "What I’m Up To 1",
+      "mediaUrl": "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613936607702-F761Q990IMD6WVFFLC16/Antonia%2BLaChe%2BMcCain.jpg",
+      "category": "What I’m Up To"
+    },
+    {
+      "slug": "next-1",
+      "title": "What’s Next 1",
+      "mediaUrl": "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613936607702-F761Q990IMD6WVFFLC16/Antonia%2BLaChe%2BMcCain.jpg",
+      "category": "What’s Next",
+      "expirationDate": "2025-08-24",
+      "fallbackCategory": "Creative Work",
+      "evergreen": false
+    }
+  ]
+}
