@@ -65,7 +65,7 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
           opacity: 0.9,
           margin: "0rem auto",
           padding: "1.5rem 1.5rem",
-          maxWidth: "1120px",
+          maxWidth: "600px",
           width: "100%",
           borderRadius: "20px",
           boxShadow: "0px 0px 25px rgba(0, 0, 0, 0.15)",

@@ -1,5 +1,7 @@
 "use client";
 
+
+
 import { useState, useLayoutEffect, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -14,15 +16,7 @@ import Lightbox from "@/components/shared/Lightbox";
 import LocationBadge from "@/components/shared/LocationBadge";
 import ContactOverlay from "@/components/shared/ContactOverlay";
 import ContactWidget from "@/components/shared/ContactWidget";
-import {
-  StoryRow,
-  Production,
-  SpotlightUpdate,
-  HighlightCard,
-  HighlightCategory,
-  CreativeWorkUpdate, 
-} from "@/lib/types";
-
+import { StoryRow, Production, SpotlightUpdate, HighlightCard, HighlightCategory, Update } from "@/lib/types";
 import { productionMap } from "@/lib/productionMap";
 import StatusFlags from "@/components/alumni/StatusFlags";
 
@@ -37,6 +31,14 @@ import HighlightPanel from "@/components/alumni/HighlightPanel";
 import ProfileShowcaseSection from "@/components/profile/ProfileShowcaseSection";
 
 import CreativeWorkPanel from "@/components/alumni/CreativeWorkPanel";
+
+import CategoryScroller from "@/components/alumni/CategoryScroller";
+
+import { mapSpotlightUpdateToUpdate } from "@/lib/mapSpotlightUpdateToUpdate";
+
+import JourneyMiniCard from "@/components/alumni/JourneyMiniCard";
+
+import { loadAllUpdates } from "@/lib/loadUpdates";
 
 
 
@@ -153,18 +155,30 @@ const spotlightUpdates = (updates || []).filter((u) => u.tag === "DAT Spotlight"
 const hasSpotlight = spotlightUpdates.length > 0;
 const hasHighlight = highlightUpdates.length > 0;
 
-const creativeWorkUpdates = (updates || []).filter((u) => u.tag === "Creative Work");
+const [lightboxOpen, setLightboxOpen] = useState(false);
+const [lightboxUrls, setLightboxUrls] = useState<string[]>([]);
 
+const spotlightSection = hasSpotlight ? <SpotlightPanel updates={spotlightUpdates} /> : null;
+const highlightSection = hasHighlight ? <HighlightPanel cards={highlightUpdates} /> : null;
 
+const categorizedUpdatesMap = new Map<string, Update[]>();
 
+updates
+  ?.filter((u) => u.tag !== "Highlight" && u.tag !== "DAT Spotlight")
+  .forEach((rawUpdate) => {
+    const update = mapSpotlightUpdateToUpdate(rawUpdate);
+    const category = update.tag || "Other";
+    if (!categorizedUpdatesMap.has(category)) categorizedUpdatesMap.set(category, []);
+    categorizedUpdatesMap.get(category)!.push(update);
+  });
 
-const hasCreativeWork = creativeWorkUpdates.length > 0;
+console.log("🛠 updates passed into ProfileCard:", updates);
 
-const hasAnyPanel = hasSpotlight || hasHighlight || hasCreativeWork;
+const categorizedJourneyUpdates = Array.from(categorizedUpdatesMap.entries()).map(
+  ([category, updates]) => ({ category, updates })
+);
 
-
-console.log("✅ creativeWorkUpdates", creativeWorkUpdates);
-
+console.log("🚀 categorizedJourneyUpdates", categorizedJourneyUpdates);
 
   return (
   <div ref={profileCardRef} style={{ position: "relative" }}>
@@ -194,7 +208,7 @@ console.log("✅ creativeWorkUpdates", creativeWorkUpdates);
     )}
 
     {/* 🔷 Blue background: Only shown if ArtistBio or Panels exist */}
-    {(hasArtistBio || hasAnyPanel) && (
+    {(hasArtistBio || hasSpotlight || hasHighlight) && (
       <div
         style={{
           backgroundColor: "#2493A9",
@@ -227,20 +241,79 @@ console.log("✅ creativeWorkUpdates", creativeWorkUpdates);
             }}
           />
         )}
-
-        {hasAnyPanel && (
+</div>
+)}
+       {/* 🎬 Spotlight + Highlights + My Journey */}
+{(hasSpotlight || hasHighlight) && (
   <div style={{ margin: "2rem 30px 2.5rem 30px" }}>
     <ProfileShowcaseSection>
-      {hasSpotlight && <SpotlightPanel updates={spotlightUpdates} />}
-      {hasHighlight && <HighlightPanel cards={highlightUpdates} />}
-      {hasCreativeWork && <CreativeWorkPanel updates={creativeWorkUpdates} />}
-      <MyJourney />
+      {spotlightSection}
+      {highlightSection}
     </ProfileShowcaseSection>
   </div>
 )}
 
-      </div>
-    )}
+{/* 🗂️ Category Scroller */}
+<CategoryScroller
+  categories={categorizedJourneyUpdates}
+  onCardClick={(category) => {
+    const el = document.getElementById(`journey-category-${category}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }}
+/>
+
+
+{/* 🗂️ Categorized Journey Updates */}
+{categorizedJourneyUpdates.length > 0 && (
+  <div style={{ margin: "2rem 30px 3rem 30px" }}>
+    <ProfileShowcaseSection>
+      {categorizedJourneyUpdates.map(({ category, updates }) => (
+        <div key={category} id={`journey-category-${category}`} style={{ marginBottom: "2rem" }}>
+          <h3
+            style={{
+              fontFamily: '"Space Grotesk", sans-serif',
+              fontSize: "2rem",
+              marginBottom: "1rem",
+              color: "#241123",
+            }}
+          >
+            {category}
+          </h3>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
+            {updates.map((update, index) => (
+              <JourneyMiniCard
+                key={index}
+                update={update}
+                onClick={() => {
+                  const link = update.ctaLink?.trim();
+                  const media =
+                    update.mediaUrls?.split(",").map((url) => url.trim()).filter(Boolean) || [];
+
+                  if (link?.startsWith("http")) {
+                    window.open(link, "_blank");
+                  } else if (media.length > 0) {
+                    setLightboxUrls(media);
+                    setLightboxOpen(true);
+                  } else {
+                    alert(
+                      "This update has no link or media. Here's the content:\n\n" +
+                        (update.body || "No content")
+                    );
+                  }
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </ProfileShowcaseSection>
+  </div>
+)}
+
+
+
 
     {/* 💛 Featured Productions Section */}
     {featuredProductions.length > 0 && (
@@ -292,6 +365,14 @@ console.log("✅ creativeWorkUpdates", creativeWorkUpdates);
         onClose={() => setModalOpen(false)}
       />
     )}
+
+    {/* 💡 Journey Update Lightbox */}
+{lightboxOpen && (
+  <Lightbox
+    images={lightboxUrls}
+    onClose={() => setLightboxOpen(false)}
+  />
+)}
   </div>
 );
 }

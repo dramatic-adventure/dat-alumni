@@ -104,6 +104,10 @@ export type SpotlightUpdate = {
   ctaLink?: string;
   mediaUrl?: string;
   evergreen?: boolean;
+  ctaText?: string;
+  eventDate?: string;
+  sortDate?: string;
+  location?: string;
 };
 
 
@@ -158,3 +162,110 @@ export type CreativeWorkUpdate = {
   dateAdded?: string;
   location?: string;
 };
+
+export interface Update {
+  profileSlug: string;
+  category: string;
+  title: string;
+  subtitle: string;
+  location: string;
+  eventDate: string;
+  bodyNote: string;
+  mediaUrls: string;
+  mediaType: string;
+  ctaText: string;
+  ctaUrl?: string;
+  tags: string[];
+  evergreen: boolean;
+  expirationDate: string;
+  featured: boolean;
+  sortDate: string;
+  updateId: string;
+  lastModified: Date | null;
+  body?: string;
+  ctaLink?: string;
+  tag?: string;
+
+  // Optional fields
+  program?: string;
+  year?: string;
+  collaborator?: string;
+  partner?: string;
+  hidden?: boolean;
+  institution?: string;
+  externalLink?: string;
+  additionalMediaUrls?: string;
+  notes?: string;
+  timestamp?: number;
+
+  // Story Map fields
+  storyMapEligible: boolean;
+  storyMapTitle: string;
+  storyMapProgram: string;
+  storyMapProgramYear: string;
+  storyMapLocationName: string;
+  storyMapPartners: string;
+  storyMapQuote: string;
+  storyMapQuoteAuthor: string;
+  storyMapShortStory: string;
+  storyMapImageMedia?: string;
+  storyMapUrl?: string;
+  storyMapAuthor: string;
+  storyMapAuthorSlug: string;
+  storyMapMoreInfoLink?: string;
+  storyMapCountry: string;
+}
+
+
+
+
+/**
+ * Maps a SpotlightUpdate (used in profiles) to a full Update object.
+ * This allows Spotlight updates to be reused in components expecting full Update shape.
+ */
+export function mapSpotlightUpdateToUpdate(source: SpotlightUpdate, profileSlug = "unknown"): Update {
+  return {
+    updateId: crypto.randomUUID(),
+    profileSlug,
+    category: "What I’m Up To",
+    title: source.headline || "Untitled",
+    subtitle: source.subheadlineTitle || "",
+    location: source.location || "",
+    eventDate: "",
+
+    bodyNote: source.body || "",
+    body: source.body || "",
+    mediaUrls: source.mediaUrl || "",
+    mediaType: "image",
+
+    ctaText: "Learn More",
+    ctaUrl: source.ctaLink,
+    ctaLink: source.ctaLink,
+
+    tags: source.tag ? [source.tag] : [],
+    tag: source.tag,
+    evergreen: source.evergreen ?? false,
+    expirationDate: "",
+
+    featured: false,
+    sortDate: new Date().toISOString().split("T")[0],
+    lastModified: new Date(),
+
+    // Story Map fields - defaults or empty
+    storyMapEligible: false,
+    storyMapTitle: "",
+    storyMapProgram: "",
+    storyMapProgramYear: "",
+    storyMapLocationName: "",
+    storyMapPartners: "",
+    storyMapQuote: "",
+    storyMapQuoteAuthor: "",
+    storyMapShortStory: "",
+    storyMapImageMedia: "",
+    storyMapUrl: "",
+    storyMapAuthor: "",
+    storyMapAuthorSlug: "",
+    storyMapMoreInfoLink: "",
+    storyMapCountry: "",
+  };
+}
