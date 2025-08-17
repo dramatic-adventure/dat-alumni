@@ -8,6 +8,8 @@ import ShareButton from "@/components/ui/ShareButton";
 import ContactOverlay from "@/components/shared/ContactOverlay";
 import Lightbox from "@/components/shared/Lightbox";
 import Image from "next/image";
+// ✅ NEW: use your titles helpers
+import { splitTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
 
 const scaleCache = new Map<string, { first: number; last: number }>();
 
@@ -73,6 +75,48 @@ export default function MobileProfileHeader({
 
   const hasContactInfo = !!(email || website || (socials && socials.length > 0));
 
+  // ✅ NEW: compute smart bucket hrefs for each title (hyphen-separated)
+  const allRoles = splitTitles(role).map((r) => r.trim()).filter(Boolean);
+
+  function hrefForTitleToken(token: string): string | null {
+    const keys = bucketsForTitleToken(token); // TitleBucketKey[]
+    if (!keys.length) return null;
+
+    const preference = [
+      "playwrights",
+      "travel-writers",
+      "designers",
+      "stage-managers",
+      "teaching-artists",
+      "special-event-hosts",
+      "managers-community-partnerships",
+      "partners",
+      "executive-directors",
+    ];
+
+    const asStrings = keys.map(String);
+    let chosen = asStrings.find((k) => preference.includes(k));
+    if (!chosen) chosen = asStrings.find((k) => k.startsWith("title:"));
+    if (!chosen) chosen = asStrings[0];
+
+    const slug = chosen.startsWith("title:")
+      ? slugifyTitle(chosen.slice("title:".length))
+      : chosen;
+
+    return `/title/${slug}`;
+  }
+
+  const titleLinks = Array.from(
+    new Map(
+      allRoles
+        .map((label) => {
+          const href = hrefForTitleToken(label);
+          return href ? [href, { label, href }] : null;
+        })
+        .filter(Boolean) as Array<[string, { label: string; href: string }]>
+    ).values()
+  );
+
   return (
     <div ref={headerRef} style={{ backgroundColor: "#C39B6C" }}>
       {/* Contact Overlay */}
@@ -86,24 +130,25 @@ export default function MobileProfileHeader({
       )}
 
       {/* Mobile Status Flags */}
-{statusFlags.length > 0 && (
-  <div
-    className="absolute top-1 right-[4rem] z-50"
-    style={{
-      clipPath: "inset(0px -9999px -9999px -9999px)", // ✅ Hide top overflow only
-    }}
-  >
-    <StatusFlags
-      flags={statusFlags}
-      fontSize="1.15rem"
-      fontFamily='"DM Sans", sans-serif'
-      textColor="#F6E4C1"
-      borderRadius="20px"
-      className="gap-1"
-      padding="1.6rem 0.5rem 0.5rem"
-    />
-  </div>
-)}
+      {statusFlags.length > 0 && (
+        <div
+          className="absolute top-1 right-[4rem] z-50"
+          style={{
+            clipPath: "inset(0px -9999px -9999px -9999px)",
+          }}
+        >
+          <StatusFlags
+            flags={statusFlags}
+            fontSize="1.15rem"
+            fontFamily='"DM Sans", sans-serif'
+            textColor="#F6E4C1"
+            borderRadius="20px"
+            className="gap-1"
+            /* leaving your padding prop as-is */
+            padding="1.6rem 0.5rem 0.5rem"
+          />
+        </div>
+      )}
 
       {/* Share Button */}
       <div
@@ -127,40 +172,40 @@ export default function MobileProfileHeader({
       <div
         style={{
           width: "90%",
-          maxWidth: "360px", // ✅ Strict container
+          maxWidth: "360px",
           margin: "0 auto",
-          overflow: "hidden", // ✅ Prevents overflow
+          overflow: "hidden",
         }}
       >
         {/* Headshot */}
         <div
-  className="relative cursor-pointer"
-  style={{
-    aspectRatio: "4 / 5",
-    boxShadow: "6px 8px 20px rgba(0,0,0,0.25)",
-    backgroundColor: "#241123",
-    margin: "0 auto",
-    width: "100%",
-  }}
-  onClick={() => setModalOpen(true)}
-  role="button"
-  tabIndex={0}
-  onKeyDown={(e) => {
-    if (e.key === "Enter" || e.key === " ") setModalOpen(true);
-  }}
+          className="relative cursor-pointer"
+          style={{
+            aspectRatio: "4 / 5",
+            boxShadow: "6px 8px 20px rgba(0,0,0,0.25)",
+            backgroundColor: "#241123",
+            margin: "0 auto",
+            width: "100%",
+          }}
+          onClick={() => setModalOpen(true)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") setModalOpen(true);
+          }}
         >
           <Image
-  src={headshotUrl || fallbackImage}
-  alt={`${name}'s headshot`}
-  fill
-  placeholder="blur"
-  blurDataURL={fallbackImage}
-  loading="lazy"
-  style={{
-    objectFit: "cover",
-    objectPosition: "top center",
-  }}
-/>
+            src={headshotUrl || fallbackImage}
+            alt={`${name}'s headshot`}
+            fill
+            placeholder="blur"
+            blurDataURL={fallbackImage}
+            loading="lazy"
+            style={{
+              objectFit: "cover",
+              objectPosition: "top center",
+            }}
+          />
         </div>
 
         {/* NameStack */}
@@ -172,100 +217,119 @@ export default function MobileProfileHeader({
           }}
         >
           <NameStack
-  firstName={firstName}
-  lastName={lastName}
-  containerWidth={320} // ✅ Ideal width for mobile
-  gap="0.6rem"
-/>
+            firstName={firstName}
+            lastName={lastName}
+            containerWidth={320}
+            gap="0.6rem"
+          />
         </div>
 
         {/* Role & Location */}
-{(role || location) && (
-  <div
-    className="flex flex-wrap justify-center items-center gap-x-3 mt-2"
-    style={{
-      marginBottom: "2rem",
-      textAlign: "center",
-      wordBreak: "break-word",
-    }}
-  >
-    {/* ROLE */}
-    {role && (
-      <Link
-        href={`/role/${role.toLowerCase().replace(/\s+/g, "-")}`}
-        className="no-underline hover:no-underline transition-all duration-200"
-        style={{
-          fontFamily: "Space Grotesk, sans-serif",
-          fontSize: "clamp(1rem, 4vw, 1.35rem)",
-          color: "#241123",
-          textTransform: "uppercase",
-          letterSpacing: "2px",
-          fontWeight: 800,
-          opacity: 0.95,
-          whiteSpace: "nowrap",
-          display: "inline-block",
-          transition: "transform 0.2s ease, color 0.2s ease",
-          cursor: "pointer",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = "scaleX(1.05)";
-          e.currentTarget.style.color = "#6C00AF";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = "scaleX(1)";
-          e.currentTarget.style.color = "#241123";
-        }}
-      >
-        {role}
-      </Link>
-    )}
+        {(role || location) && (
+          <div
+            className="flex flex-wrap justify-center items-center gap-x-3 mt-2"
+            style={{
+              marginBottom: "2rem",
+              textAlign: "center",
+              wordBreak: "break-word",
+            }}
+          >
+            {/* ✅ TITLES: hyphen-separated, smart bucket links (keep your hover effect) */}
+            {titleLinks.length > 0 && (
+              <span className="flex items-center flex-wrap justify-center">
+                {titleLinks.map(({ label, href }, idx) => (
+                  <span key={`${href}-${label}`} className="flex items-center">
+                    <Link
+                      href={href}
+                      className="no-underline hover:no-underline transition-all duration-200 inline-block"
+                      style={{
+                        fontFamily: "Space Grotesk, sans-serif",
+                        fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                        color: "#241123",
+                        textTransform: "uppercase",
+                        letterSpacing: "2px",
+                        fontWeight: 800,
+                        opacity: 0.95,
+                        whiteSpace: "nowrap",
+                        transformOrigin: "left center",
+                        transition: "transform 0.2s ease, color 0.2s ease",
+                        cursor: "pointer",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "scaleX(1.05)";
+                        e.currentTarget.style.color = "#6C00AF";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "scaleX(1)";
+                        e.currentTarget.style.color = "#241123";
+                      }}
+                    >
+                      {label}
+                    </Link>
+                    {idx < titleLinks.length - 1 && (
+                      <span
+                        style={{
+                          fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                          color: "#241123",
+                          opacity: 0.7,
+                          margin: "0 0.5rem",
+                          fontWeight: 400,
+                        }}
+                      >
+                        –{/* en-dash separator */}
+                      </span>
+                    )}
+                  </span>
+                ))}
+              </span>
+            )}
 
-    {/* DOT */}
-    {role && location && (
-      <span
-        style={{
-          fontSize: "1rem",
-          color: "#241123",
-          padding: "0 10px",
-          opacity: 0.5,
-        }}
-      >
-        •
-      </span>
-    )}
+            {/* DOT between titles and location (unchanged) */}
+            {titleLinks.length > 0 && location && (
+              <span
+                style={{
+                  fontSize: "1rem",
+                  color: "#241123",
+                  padding: "0 10px",
+                  opacity: 0.5,
+                }}
+              >
+                •
+              </span>
+            )}
 
-    {/* LOCATION */}
-    {location && (
-      <span
-        style={{
-          fontFamily: "DM Sans, sans-serif",
-          fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
-          fontWeight: 900,
-          letterSpacing: "2px",
-          opacity: 0.5,
-          display: "inline-block",
-          cursor: "pointer",
-          transformOrigin: "left center", // ✅ Expands to the right
-          transition:
-            "transform 0.2s ease, color 0.2s ease, opacity 0.2s ease",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = "scaleX(1.05)";
-          e.currentTarget.style.color = "#6C00AF";
-          e.currentTarget.style.opacity = "1";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = "scaleX(1)";
-          e.currentTarget.style.color = "#241123";
-          e.currentTarget.style.opacity = "0.5";
-        }}
-      >
-        Based in {location.toUpperCase()}
-      </span>
-    )}
-  </div>
-)}
-  </div>
+            {/* LOCATION (unchanged) */}
+            {location && (
+              <span
+                style={{
+                  fontFamily: "DM Sans, sans-serif",
+                  fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
+                  fontWeight: 900,
+                  letterSpacing: "2px",
+                  opacity: 0.5,
+                  display: "inline-block",
+                  cursor: "pointer",
+                  transformOrigin: "left center",
+                  transition:
+                    "transform 0.2s ease, color 0.2s ease, opacity 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scaleX(1.05)";
+                  e.currentTarget.style.color = "#6C00AF";
+                  e.currentTarget.style.opacity = "1";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scaleX(1)";
+                  e.currentTarget.style.color = "#241123";
+                  e.currentTarget.style.opacity = "0.5";
+                }}
+              >
+                Based in {location.toUpperCase()}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Lightbox */}
       {isModalOpen && (

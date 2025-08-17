@@ -14,6 +14,12 @@ const nextConfig = {
         hostname: 'images.squarespace-cdn.com',
       },
 
+      // ✅ Squarespace CDN (http)
+{
+  protocol: 'http',
+  hostname: 'images.squarespace-cdn.com',
+},
+
       // ✅ Flickr
       {
         protocol: 'https',
