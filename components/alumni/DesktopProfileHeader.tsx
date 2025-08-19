@@ -1,22 +1,21 @@
 "use client";
 
-import { useState, useLayoutEffect, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import NameStack from "@/components/shared/NameStack";
+import { getLocationHrefForToken } from "@/lib/locations";
+import ScaledName from "@/components/shared/NameStack"; // still lives in NameStack.tsx
 import LocationBadge from "@/components/shared/LocationBadge";
 import ShareButton from "@/components/ui/ShareButton";
 import Lightbox from "@/components/shared/Lightbox";
 import ContactOverlay from "@/components/shared/ContactOverlay";
 import StatusFlags from "@/components/alumni/StatusFlags";
 import Image from "next/image";
-
-// ✅ import your helpers to split titles and route to the correct bucket
 import { splitTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
 
 interface DesktopProfileHeaderProps {
   name: string;
-  role: string;          // keep single for backwards compatibility
-  roles?: string[];      // optional multi-role support (uses splitTitles(role) if not provided)
+  role: string;
+  roles?: string[];
   location?: string;
   headshotUrl?: string;
   statusFlags?: string[];
@@ -24,8 +23,6 @@ interface DesktopProfileHeaderProps {
   website?: string;
   socials?: string[];
 }
-
-const scaleCache = new Map<string, { first: number; last: number }>();
 
 export default function DesktopProfileHeader({
   name,
@@ -45,14 +42,6 @@ export default function DesktopProfileHeader({
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
   const lastName = nameParts.slice(-1).join(" ") || "";
 
-  const firstNameRef = useRef<HTMLDivElement>(null);
-  const lastNameRef = useRef<HTMLDivElement>(null);
-
-  const cached = scaleCache.get(name);
-  const [firstScale, setFirstScale] = useState(cached?.first ?? 0.95);
-  const [lastScale, setLastScale] = useState(cached?.last ?? 0.95);
-  const [hasMeasured, setHasMeasured] = useState(!!cached);
-
   const fallbackImage = "/images/default-headshot.png";
   const profileCardRef = useRef<HTMLDivElement>(null);
   const hasContactInfo = !!(email || website || (socials && socials.length > 0));
@@ -63,35 +52,14 @@ export default function DesktopProfileHeader({
     }
   }, []);
 
-  useLayoutEffect(() => {
-    if (hasMeasured) return;
-    const first = firstNameRef.current;
-    const last = lastNameRef.current;
-    if (first && last) {
-      const firstWidth = first.scrollWidth;
-      const lastWidth = last.scrollWidth;
-      const widest = Math.max(firstWidth, lastWidth);
-      const targetWidth = widest > 360 ? 360 : widest;
-      const newFirstScale = targetWidth / firstWidth;
-      const newLastScale = targetWidth / lastWidth;
-      scaleCache.set(name, { first: newFirstScale, last: newLastScale });
-      setFirstScale(newFirstScale);
-      setLastScale(newLastScale);
-      setHasMeasured(true);
-    }
-  }, [name, hasMeasured]);
-
-  // ✅ Normalize roles: use `roles` prop if present, else split the single `role`
   const allRoles = (roles && roles.length > 0 ? roles : splitTitles(role))
     .map((r) => r.trim())
     .filter(Boolean);
 
-  // ✅ Map a single raw title token to its “smart” bucket slug (pluralized/fixed)
   function hrefForTitleToken(token: string): string | null {
-    const keys = bucketsForTitleToken(token); // TitleBucketKey[]
+    const keys = bucketsForTitleToken(token);
     if (!keys.length) return null;
 
-    // prefer more specific buckets over aggregators when multiple match
     const preference = [
       "playwrights",
       "travel-writers",
@@ -104,14 +72,9 @@ export default function DesktopProfileHeader({
       "executive-directors",
     ];
 
-    // pick preferred fixed bucket if present
     const asStrings = keys.map(String);
     let chosen = asStrings.find((k) => preference.includes(k));
-
-    // else pick first dynamic "title:*" (e.g., title:actors → /title/actors)
     if (!chosen) chosen = asStrings.find((k) => k.startsWith("title:"));
-
-    // else fall back to the first key
     if (!chosen) chosen = asStrings[0];
 
     const slug = chosen.startsWith("title:")
@@ -121,7 +84,6 @@ export default function DesktopProfileHeader({
     return `/title/${slug}`;
   }
 
-  // ✅ Build comma-separated title links (deduped by href)
   const titleLinks = Array.from(
     new Map(
       allRoles
@@ -132,6 +94,8 @@ export default function DesktopProfileHeader({
         .filter(Boolean) as Array<[string, { label: string; href: string }]>
     ).values()
   );
+
+  const locationHref = location ? getLocationHrefForToken(location) : null;
 
   return (
     <div ref={profileCardRef} style={{ position: "relative" }}>
@@ -196,7 +160,7 @@ export default function DesktopProfileHeader({
           paddingBottom: "2rem",
         }}
       >
-        <NameStack
+        <ScaledName
           firstName={firstName}
           lastName={lastName}
           containerWidth={360}
@@ -208,55 +172,52 @@ export default function DesktopProfileHeader({
             className="flex flex-row items-center flex-wrap gap-y-2"
             style={{ marginTop: "0.5rem", marginBottom: "0.5rem" }}
           >
-            {/* ✅ Titles: hyphen-separated, smart bucket links, with hover scale */}
-{titleLinks.length > 0 && (
-  <span className="flex items-center flex-wrap">
-    {titleLinks.map(({ label, href }, idx) => (
-      <span key={`${href}-${label}`} className="flex items-center">
-        <Link
-          href={href}
-          className="no-underline hover:no-underline transition-all duration-200 inline-block"
-          style={{
-            fontFamily: "Space Grotesk, sans-serif",
-            fontSize: "1.7rem",
-            color: "#241123",
-            textTransform: "uppercase",
-            letterSpacing: "2px",
-            fontWeight: 700,
-            opacity: 0.9,
-            transformOrigin: "left",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "scaleX(1.05)";
-            e.currentTarget.style.color = "#6C00AF";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "scaleX(1)";
-            e.currentTarget.style.color = "#241123";
-          }}
-        >
-          {label}
-        </Link>
-        {idx < titleLinks.length - 1 && (
-          <span
-            style={{
-              fontSize: "1.7rem",
-              color: "#241123",
-              opacity: 0.7,
-              margin: "0 0.6rem",
-              fontWeight: 400,
-            }}
-          >
-            –{/* en-dash separator */}
-          </span>
-        )}
-      </span>
-    ))}
-  </span>
-)}
+            {titleLinks.length > 0 && (
+              <span className="flex items-center flex-wrap">
+                {titleLinks.map(({ label, href }, idx) => (
+                  <span key={`${href}-${label}`} className="flex items-center">
+                    <Link
+                      href={href}
+                      className="no-underline hover:no-underline transition-all duration-200 inline-block"
+                      style={{
+                        fontFamily: "Space Grotesk, sans-serif",
+                        fontSize: "1.7rem",
+                        color: "#241123",
+                        textTransform: "uppercase",
+                        letterSpacing: "2px",
+                        fontWeight: 700,
+                        opacity: 0.9,
+                        transformOrigin: "left",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "scaleX(1.05)";
+                        e.currentTarget.style.color = "#6C00AF";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "scaleX(1)";
+                        e.currentTarget.style.color = "#241123";
+                      }}
+                    >
+                      {label}
+                    </Link>
+                    {idx < titleLinks.length - 1 && (
+                      <span
+                        style={{
+                          fontSize: "1.7rem",
+                          color: "#241123",
+                          opacity: 0.7,
+                          margin: "0 0.6rem",
+                          fontWeight: 400,
+                        }}
+                      >
+                        –
+                      </span>
+                    )}
+                  </span>
+                ))}
+              </span>
+            )}
 
-
-            {/* ✅ Dot between titles and location (restored) */}
             {titleLinks.length > 0 && location && (
               <span
                 style={{
@@ -270,39 +231,73 @@ export default function DesktopProfileHeader({
               </span>
             )}
 
-            {/* Location (unchanged) */}
             {location && (
-              <Link
-                href={`/location/${location.toLowerCase().replace(/\s+/g, "-")}`}
-                className="no-underline hover:no-underline transition-all duration-200"
-                style={{
-                  fontFamily: "DM Sans, sans-serif",
-                  fontSize: "1.2rem",
-                  color: "#241123",
-                  fontWeight: 900,
-                  letterSpacing: "2px",
-                  opacity: 0.5,
-                  display: "inline-block",
-                  paddingRight: "2rem",
-                }}
-              >
-                <span
-                  className="inline-block transition-transform duration-200"
-                  style={{ transformOrigin: "left" }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "scaleX(1.05)";
-                    e.currentTarget.parentElement!.style.color = "#6C00AF";
-                    e.currentTarget.parentElement!.style.opacity = "1";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "scaleX(1)";
-                    e.currentTarget.parentElement!.style.color = "#241123";
-                    e.currentTarget.parentElement!.style.opacity = "0.5";
-                  }}
-                >
-                  Based in <span style={{ textTransform: "uppercase" }}>{location}</span>
-                </span>
-              </Link>
+              <>
+                {locationHref ? (
+                  <Link
+                    href={locationHref}
+                    className="no-underline hover:no-underline transition-all duration-200"
+                    style={{
+                      fontFamily: "DM Sans, sans-serif",
+                      fontSize: "1.2rem",
+                      color: "#241123",
+                      fontWeight: 900,
+                      letterSpacing: "2px",
+                      opacity: 0.5,
+                      display: "inline-block",
+                      paddingRight: "2rem",
+                    }}
+                  >
+                    <span
+                      className="inline-block transition-transform duration-200"
+                      style={{ transformOrigin: "left" }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "scaleX(1.05)";
+                        e.currentTarget.parentElement!.style.color = "#6C00AF";
+                        e.currentTarget.parentElement!.style.opacity = "1";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "scaleX(1)";
+                        e.currentTarget.parentElement!.style.color = "#241123";
+                        e.currentTarget.parentElement!.style.opacity = "0.5";
+                      }}
+                    >
+                      Based in <span style={{ textTransform: "uppercase" }}>{location}</span>
+                    </span>
+                  </Link>
+                ) : (
+                  <span
+                    className="no-underline hover:no-underline transition-all duration-200"
+                    style={{
+                      fontFamily: "DM Sans, sans-serif",
+                      fontSize: "1.2rem",
+                      color: "#241123",
+                      fontWeight: 900,
+                      letterSpacing: "2px",
+                      opacity: 0.5,
+                      display: "inline-block",
+                      paddingRight: "2rem",
+                    }}
+                  >
+                    <span
+                      className="inline-block transition-transform duration-200"
+                      style={{ transformOrigin: "left" }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "scaleX(1.05)";
+                        (e.currentTarget.parentElement as HTMLElement).style.color = "#6C00AF";
+                        (e.currentTarget.parentElement as HTMLElement).style.opacity = "1";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "scaleX(1)";
+                        (e.currentTarget.parentElement as HTMLElement).style.color = "#241123";
+                        (e.currentTarget.parentElement as HTMLElement).style.opacity = "0.5";
+                      }}
+                    >
+                      Based in <span style={{ textTransform: "uppercase" }}>{location}</span>
+                    </span>
+                  </span>
+                )}
+              </>
             )}
           </div>
         )}

@@ -2,14 +2,16 @@
 
 import { useRef, useLayoutEffect, useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import NameStack from "@/components/shared/NameStack";
 import StatusFlags from "@/components/alumni/StatusFlags";
 import ShareButton from "@/components/ui/ShareButton";
 import ContactOverlay from "@/components/shared/ContactOverlay";
 import Lightbox from "@/components/shared/Lightbox";
-import Image from "next/image";
-// ✅ NEW: use your titles helpers
+
+// ✅ Helpers
 import { splitTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
+import { getLocationHrefForToken } from "@/lib/locations"; // ✅ ADDED
 
 const scaleCache = new Map<string, { first: number; last: number }>();
 
@@ -75,11 +77,10 @@ export default function MobileProfileHeader({
 
   const hasContactInfo = !!(email || website || (socials && socials.length > 0));
 
-  // ✅ NEW: compute smart bucket hrefs for each title (hyphen-separated)
   const allRoles = splitTitles(role).map((r) => r.trim()).filter(Boolean);
 
   function hrefForTitleToken(token: string): string | null {
-    const keys = bucketsForTitleToken(token); // TitleBucketKey[]
+    const keys = bucketsForTitleToken(token);
     if (!keys.length) return null;
 
     const preference = [
@@ -117,9 +118,10 @@ export default function MobileProfileHeader({
     ).values()
   );
 
+  const locationHref = location ? getLocationHrefForToken(location) : null; // ✅ ADDED
+
   return (
     <div ref={headerRef} style={{ backgroundColor: "#C39B6C" }}>
-      {/* Contact Overlay */}
       {hasContactInfo && (
         <ContactOverlay
           email={email}
@@ -129,7 +131,6 @@ export default function MobileProfileHeader({
         />
       )}
 
-      {/* Mobile Status Flags */}
       {statusFlags.length > 0 && (
         <div
           className="absolute top-1 right-[4rem] z-50"
@@ -144,13 +145,11 @@ export default function MobileProfileHeader({
             textColor="#F6E4C1"
             borderRadius="20px"
             className="gap-1"
-            /* leaving your padding prop as-is */
             padding="1.6rem 0.5rem 0.5rem"
           />
         </div>
       )}
 
-      {/* Share Button */}
       <div
         role="share-button-wrapper"
         className="absolute z-40"
@@ -168,7 +167,6 @@ export default function MobileProfileHeader({
         <ShareButton url={currentUrl} />
       </div>
 
-      {/* Profile Content */}
       <div
         style={{
           width: "90%",
@@ -177,7 +175,6 @@ export default function MobileProfileHeader({
           overflow: "hidden",
         }}
       >
-        {/* Headshot */}
         <div
           className="relative cursor-pointer"
           style={{
@@ -208,7 +205,6 @@ export default function MobileProfileHeader({
           />
         </div>
 
-        {/* NameStack */}
         <div
           style={{
             marginTop: "1.5rem",
@@ -224,7 +220,6 @@ export default function MobileProfileHeader({
           />
         </div>
 
-        {/* Role & Location */}
         {(role || location) && (
           <div
             className="flex flex-wrap justify-center items-center gap-x-3 mt-2"
@@ -234,7 +229,6 @@ export default function MobileProfileHeader({
               wordBreak: "break-word",
             }}
           >
-            {/* ✅ TITLES: hyphen-separated, smart bucket links (keep your hover effect) */}
             {titleLinks.length > 0 && (
               <span className="flex items-center flex-wrap justify-center">
                 {titleLinks.map(({ label, href }, idx) => (
@@ -276,7 +270,7 @@ export default function MobileProfileHeader({
                           fontWeight: 400,
                         }}
                       >
-                        –{/* en-dash separator */}
+                        –
                       </span>
                     )}
                   </span>
@@ -284,7 +278,6 @@ export default function MobileProfileHeader({
               </span>
             )}
 
-            {/* DOT between titles and location (unchanged) */}
             {titleLinks.length > 0 && location && (
               <span
                 style={{
@@ -298,40 +291,71 @@ export default function MobileProfileHeader({
               </span>
             )}
 
-            {/* LOCATION (unchanged) */}
             {location && (
-              <span
-                style={{
-                  fontFamily: "DM Sans, sans-serif",
-                  fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
-                  fontWeight: 900,
-                  letterSpacing: "2px",
-                  opacity: 0.5,
-                  display: "inline-block",
-                  cursor: "pointer",
-                  transformOrigin: "left center",
-                  transition:
-                    "transform 0.2s ease, color 0.2s ease, opacity 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "scaleX(1.05)";
-                  e.currentTarget.style.color = "#6C00AF";
-                  e.currentTarget.style.opacity = "1";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "scaleX(1)";
-                  e.currentTarget.style.color = "#241123";
-                  e.currentTarget.style.opacity = "0.5";
-                }}
-              >
-                Based in {location.toUpperCase()}
-              </span>
+              locationHref ? (
+                <Link
+                  href={locationHref}
+                  className="no-underline hover:no-underline transition-all duration-200"
+                  style={{
+                    fontFamily: "DM Sans, sans-serif",
+                    fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
+                    fontWeight: 900,
+                    letterSpacing: "2px",
+                    opacity: 0.5,
+                    display: "inline-block",
+                    cursor: "pointer",
+                    transformOrigin: "left center",
+                    transition: "transform 0.2s ease, color 0.2s ease, opacity 0.2s ease",
+                  }}
+                >
+                  <span
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "scaleX(1.05)";
+                      e.currentTarget.parentElement!.style.color = "#6C00AF";
+                      e.currentTarget.parentElement!.style.opacity = "1";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "scaleX(1)";
+                      e.currentTarget.parentElement!.style.color = "#241123";
+                      e.currentTarget.parentElement!.style.opacity = "0.5";
+                    }}
+                    style={{ display: "inline-block" }}
+                  >
+                    Based in {location.toUpperCase()}
+                  </span>
+                </Link>
+              ) : (
+                <span
+                  style={{
+                    fontFamily: "DM Sans, sans-serif",
+                    fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
+                    fontWeight: 900,
+                    letterSpacing: "2px",
+                    opacity: 0.5,
+                    display: "inline-block",
+                    cursor: "pointer",
+                    transformOrigin: "left center",
+                    transition: "transform 0.2s ease, color 0.2s ease, opacity 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "scaleX(1.05)";
+                    e.currentTarget.style.color = "#6C00AF";
+                    e.currentTarget.style.opacity = "1";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "scaleX(1)";
+                    e.currentTarget.style.color = "#241123";
+                    e.currentTarget.style.opacity = "0.5";
+                  }}
+                >
+                  Based in {location.toUpperCase()}
+                </span>
+              )
             )}
           </div>
         )}
       </div>
 
-      {/* Lightbox */}
       {isModalOpen && (
         <Lightbox
           images={[headshotUrl || fallbackImage]}

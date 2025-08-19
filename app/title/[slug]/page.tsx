@@ -187,19 +187,21 @@ export default async function TitlePage({ params }: { params: { slug: string } }
                   <section key={group.title}>
                     <h4
   style={{
-    fontFamily: "Anton, sans-serif",
-    fontSize: "1.6rem",
-    textTransform: "uppercase",
-    letterSpacing: "0.1rem",
-    color: "#FFCC00",            // yellow text
-    margin: "0 0 1rem",
-    backgroundColor: "#241123",  // dark purple background
-    padding: "0.1em 0.5em",
-    borderRadius: "0.3em",
-    display: "inline-block",
-  }}
+  fontFamily: "Space Grotesk, sans-serif",
+  fontSize: "1.9rem",
+  fontWeight: 500,
+  color: "#D9A919",
+  margin: "0 0 1rem",
+  backgroundColor: "#241123", // dark purple with 60% opacity
+  opacity: 0.6,
+  padding: "0.1em 0.5em",
+  borderRadius: "0.3em",
+  display: "inline-block",
+}}
 >
-  {group.title} Designers ({group.people.length})
+
+
+  {group.title} Designers 
 </h4>
 
                     <div
