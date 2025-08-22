@@ -140,7 +140,8 @@ const nearby = centerPoint
               textAlign: "right",
             }}
           >
-            Artists based in {displayLabel.toLowerCase()}
+            Artists based in and around {displayLabel.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())}
+
           </p>
         </div>
       </div>

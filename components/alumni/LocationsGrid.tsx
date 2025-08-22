@@ -61,7 +61,7 @@ export default function LocationsGrid({ alumni, limit }: LocationsGridProps) {
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
         gap: "0.75rem",
         alignItems: "stretch",
       }}
@@ -75,26 +75,30 @@ export default function LocationsGrid({ alumni, limit }: LocationsGridProps) {
             alignItems: "center",
             justifyContent: "space-between",
             padding: "0.75rem 1rem",
-            borderRadius: "999px",
+            borderRadius: "15px",
             backgroundColor: "#241123", // dark purple
             color: "#FFCC00",            // DAT yellow
-            textTransform: "uppercase",
+            opacity: 0.7,
             letterSpacing: "0.06em",
-            fontFamily: "Anton, sans-serif",
-            fontSize: "0.95rem",
+            fontFamily: "Space Grotesk, sans-serif",
+            fontWeight: 600,
+            fontSize: "1rem",
             boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
             transform: "translateZ(0)",
+            textDecoration: "none",
             transition: "transform 120ms ease, box-shadow 120ms ease",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.03)";
+            (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.05)";
             (e.currentTarget as HTMLAnchorElement).style.boxShadow =
               "0 8px 22px rgba(0,0,0,0.28)";
+            (e.currentTarget as HTMLAnchorElement).style.opacity = "0.9";
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.0)";
             (e.currentTarget as HTMLAnchorElement).style.boxShadow =
               "0 4px 14px rgba(0,0,0,0.2)";
+            (e.currentTarget as HTMLAnchorElement).style.opacity = "0.7";
           }}
         >
           <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>

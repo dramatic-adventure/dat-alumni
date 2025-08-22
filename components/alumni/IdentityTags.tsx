@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { slugifyTag } from "@/lib/tags";
 
 export default function IdentityTags({
   tags,
@@ -16,16 +17,14 @@ export default function IdentityTags({
       style={{
         display: "flex",
         flexWrap: "wrap",
-        justifyContent: "flex-emd",
+        justifyContent: "flex-end",
         gap: buttonSpacing,
       }}
     >
       {tags.map((tag, i) => (
         <button
           key={i}
-          onClick={() =>
-            router.push(`/directory?identity=${encodeURIComponent(tag)}`)
-          }
+          onClick={() => router.push(`/tag/${slugifyTag(tag)}`)} // ✅ NEW route
           className="px-5 py-3 rounded-full text-[#F2F2F2] text-sm font-bold uppercase tracking-wider text-center transition-colors duration-150"
           style={{
             backgroundColor: "#16697A",
@@ -37,12 +36,12 @@ export default function IdentityTags({
             border: "none",
             boxShadow: "none",
           }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#0f4f5c")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#16697A")
-          }
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "#0f4f5c";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "#16697A";
+          }}
         >
           {tag}
         </button>
