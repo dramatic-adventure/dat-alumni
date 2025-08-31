@@ -1,0 +1,70 @@
+.titlesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1.5rem;
+}
+
+.titleLink {
+  display: block;
+  text-decoration: none !important;
+}
+
+.iconBox {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  will-change: transform, box-shadow;
+  transform-origin: center;
+}
+
+.iconBg {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  opacity: 0.8;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.icon {
+  position: relative;
+  z-index: 1;
+  font-size: 2rem;
+  color: #f6e4c1;
+  opacity: 1;
+}
+
+.titleLink:hover .iconBox,
+.titleLink:focus-visible .iconBox {
+  transform: scale(1.08);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.titleLink:hover .iconBg,
+.titleLink:focus-visible .iconBg {
+  opacity: 1;
+}
+
+.titleLabel {
+  margin-top: 0.5rem;
+  display: block;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  color: #f2f2f2;
+  text-align: left;
+  line-height: 1.15;
+  transition: color 200ms ease;
+}
+.titleLink:hover .titleLabel,
+.titleLink:focus-visible .titleLabel {
+  color: #ffcc00;
+}
