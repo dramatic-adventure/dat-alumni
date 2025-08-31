@@ -3,55 +3,40 @@
 @tailwind utilities;
 
 /* ===============================
-   🧱 Base Reset & Background
+   🧱 Base Reset & Background (final)
 =============================== */
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
   min-height: 100vh;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
   font-family: 'DM Sans', sans-serif;
   background-color: #f6e4c1;
   background-image: url('/texture/kraft-paper.jpg');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
-  background-attachment: fixed;
-  box-sizing: border-box;
+  background-attachment: fixed;   /* desktop/laptop */
 }
 
-*, *::before, *::after {
-  box-sizing: inherit;
+/* Touch/pen devices: avoid fixed background jank */
+@media (any-pointer: coarse) {
+  body { background-attachment: scroll !important; }
 }
 
-/* Optional adjustable hero offset */
-html,
-body,
-#__next,
-main {
-  margin: 0 !important;
-  padding: 0 !important;
-}
 
-/* Force hero flush with header overlay */
-main,
-body {
-  padding-top: 0 !important;
-  margin-top: 0 !important;
-}
 
-/* Alumni-specific main reset */
-main.alumni-profile-reset {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100%;
-  display: block;
-  line-height: normal;
-}
 
 /* ===============================
    🔤 Local Font Faces
 =============================== */
+
 @font-face {
   font-family: 'Anton';
   src: url('/fonts/anton-v26-latin-regular.woff2') format('woff2');
@@ -59,19 +44,124 @@ main.alumni-profile-reset {
   font-style: normal;
   font-display: swap;
 }
+
+/* DM Sans — stabilized (apply to each weight/italic block) */
 @font-face {
   font-family: 'DM Sans';
-  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-100.woff2') format('woff2');
-  font-weight: 100;
+  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-regular.woff2') format('woff2');
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
+
+  /* 👇 Prevent paragraph/button shift during swap */
+  size-adjust: 100%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
 @font-face {
   font-family: 'DM Sans';
-  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-100italic.woff2') format('woff2');
-  font-weight: 100;
+  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-italic.woff2') format('woff2');
+  font-weight: 400;
   font-style: italic;
   font-display: swap;
+
+  /* 👇 Prevent paragraph/button shift during swap */
+  size-adjust: 100%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+
+  /* 👇 Prevent paragraph/button shift during swap */
+  size-adjust: 100%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-500italic.woff2') format('woff2');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+
+  /* 👇 Prevent paragraph/button shift during swap */
+  size-adjust: 100%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+
+  /* 👇 Prevent paragraph/button shift during swap */
+  size-adjust: 100%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-600italic.woff2') format('woff2');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+
+  /* 👇 Prevent paragraph/button shift during swap */
+  size-adjust: 100%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+
+  /* 👇 Prevent paragraph/button shift during swap */
+  size-adjust: 100%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-700italic.woff2') format('woff2');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+
+  /* 👇 Prevent paragraph/button shift during swap */
+  size-adjust: 100%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-900.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+
+  /* 👇 Prevent paragraph/button shift during swap */
+  size-adjust: 100%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
 @font-face {
   font-family: 'DM Sans';
@@ -79,13 +169,58 @@ main.alumni-profile-reset {
   font-weight: 900;
   font-style: italic;
   font-display: swap;
+
+  /* 👇 Prevent paragraph/button shift during swap */
+  size-adjust: 100%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
+
+/* Space Grotesk — stabilized metrics */
 @font-face {
   font-family: 'Space Grotesk';
   src: url('/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-300.woff2') format('woff2');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
+  size-adjust: 100%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 100%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 100%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 100%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
 @font-face {
   font-family: 'Space Grotesk';
@@ -93,7 +228,14 @@ main.alumni-profile-reset {
   font-weight: 700;
   font-style: normal;
   font-display: swap;
+  size-adjust: 100%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
 }
+
+
+/* Rock Salt */
 @font-face {
   font-family: 'Rock Salt';
   src: url('/fonts/rock-salt-v23-latin-regular.woff2') format('woff2');
@@ -101,12 +243,146 @@ main.alumni-profile-reset {
   font-style: normal;
   font-display: swap;
 }
+
+/* Gloucester MT Extra Condensed — stabilized */
 @font-face {
   font-family: 'Gloucester';
   src: url('/fonts/GloucesterMT-ExtraCondensed.woff2') format('woff2');
-  font-weight: normal;
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
+
+  /* 👇 Prevent headline jump during font swap */
+  size-adjust: 100%;
+  ascent-override: 88%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+}
+
+/* VT323 */
+@font-face {
+  font-family: 'VT323';
+  src: url('/fonts/vt323-v17-latin-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Special Elite */
+@font-face {
+  font-family: 'Special Elite';
+  src: url('/fonts/special-elite-v19-latin-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Share Tech Mono */
+@font-face {
+  font-family: 'Share Tech Mono';
+  src: url('/fonts/share-tech-mono-v15-latin-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Cutive Mono */
+@font-face {
+  font-family: 'Cutive Mono';
+  src: url('/fonts/cutive-mono-v22-latin-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Anonymous Pro */
+@font-face {
+  font-family: 'Anonymous Pro';
+  src: url('/fonts/anonymous-pro-v21-latin/anonymous-pro-v21-latin-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Anonymous Pro';
+  src: url('/fonts/anonymous-pro-v21-latin/anonymous-pro-v21-latin-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Syne Mono */
+@font-face {
+  font-family: 'Syne Mono';
+  src: url('/fonts/syne-mono-v15-latin-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Zilla Slab (weights) */
+@font-face {
+  font-family: 'Zilla Slab';
+  src: url('/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-300.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Zilla Slab';
+  src: url('/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Zilla Slab';
+  src: url('/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Zilla Slab';
+  src: url('/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Zilla Slab';
+  src: url('/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Major Mono Display */
+@font-face {
+  font-family: 'Major Mono Display';
+  src: url('/fonts/major-mono-display-v17-latin-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ===============================
+   🔗 CSS Font Variables
+=============================== */
+:root {
+  --font-vt323: "VT323";
+  --font-special-elite: "Special Elite";
+  --font-share-tech: "Share Tech Mono";
+  --font-cutive-mono: "Cutive Mono";
+  --font-anonymous-pro: "Anonymous Pro";
+  --font-syne-mono: "Syne Mono";
+  --font-zilla-slab: "Zilla Slab";
+  --font-dm-sans: "DM Sans";
+  --font-space-grotesk: "Space Grotesk";
+  --font-anton: "Anton";
+  --font-rock-salt: "Rock Salt";
+  --font-gloucester: "Gloucester";
+  --font-major-mono: "Major Mono Display";
 }
 
 /* ===============================
@@ -125,6 +401,7 @@ main.alumni-profile-reset {
     --hero-height: 55vh;
   }
 }
+
 @media (max-width: 767px) {
   :root {
     --hero-height: 45vh;
@@ -231,11 +508,17 @@ a, button, [role="link"], [role="button"] {
 }
 .meta-role {
   font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;                     /* was 800 (synthetic) */
   font-size: clamp(1rem, 4vw, 1.35rem);
-  font-weight: 800;
-  letter-spacing: 2px;
+  /* Small size bump keeps the “heft” without fake bolding */
+  font-size: calc(clamp(1rem, 4vw, 1.35rem) * 1.04);
+
+  letter-spacing: 2px;                  /* keep your look */
   text-transform: uppercase;
   color: #241123;
+  font-synthesis-weight: none;          /* prevent fake bold */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 .meta-location {
   font-family: "DM Sans", sans-serif;
@@ -278,7 +561,7 @@ a, button, [role="link"], [role="button"] {
 .popup-title {
   font-family: 'Anton', sans-serif;
   font-size: 2.6rem;
-  font-weight: 550;
+  font-weight: 400;
   text-transform: uppercase;
   line-height: 1;
   margin-top: 0.1rem;
@@ -417,3 +700,118 @@ a, button, [role="link"], [role="button"] {
   filter: brightness(0.75);
   transition: transform 0.2s ease, filter 0.2s ease;
 }
+
+/* ===============================
+   Jitter Fixes
+=============================== */
+
+/* 1) Keep the page width stable so 1vw doesn’t change when the scrollbar appears/disappears */
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;        /* fallback */
+  scrollbar-gutter: stable both-edges;
+}
+
+
+/* 2) Headline: prevent wrap + reserve one-line height (matches leading 0.85) */
+footer h2.font-gloucester {
+  white-space: nowrap;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+
+/* 3) Social icons: lock each anchor’s box so hover/focus can’t nudge siblings */
+footer .flex.items-center.justify-center > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  box-sizing: content-box;
+  will-change: opacity, transform;
+  transform: translateZ(0);
+}
+
+/* 4) (Optional but helpful) stop synthetic font bolding from altering glyph widths */
+body {
+  font-synthesis-weight: none;
+}
+
+/* ===============================
+   🔒 Button Text Jitter Fix
+=============================== */
+
+/* Button text stabilization without fighting inline weights */
+footer .footer-cta a {
+  font-size-adjust: from-font;
+  line-height: 1;
+}
+
+
+
+/* ===============================
+   Footer
+=============================== */
+
+/* The h2 itself shouldn’t add spacing */
+footer h2.font-gloucester { margin-bottom: 0; }
+
+/* Default feel everywhere (what looked best for you) */
+footer .headline-gap { margin-bottom: 0.55vh; }     /* under the headline */
+footer .first-cta-offset { margin-top: 0.75rem; }/* above the first button */
+
+/* iPad-ish widths: lock to exact pixels so it doesn't drift */
+@media (min-width: 768px) and (max-width: 1024px) {
+  footer .headline-gap { margin-bottom: 12px; }   /* tweak 10–14px to taste */
+  footer .first-cta-offset { margin-top: 8px; }   /* tweak 6–10px to match eye */
+}
+
+/* Desktop+: tiny internal descender guard for the headline
+   Prevents letters like y/g/j from dipping into the CTA gap */
+@media (min-width: 1024px) {
+  footer h2.font-gloucester::after {
+    content: "";
+    display: block;
+    height: 0.05em;  /* ~6–7px at 12rem; adjust 0.02–0.05em to taste */
+  }
+}
+
+
+/* ===============================
+   NOTE: Footer gap tuning
+   If you ever want the headline ↔ “Get Involved” gap tighter/looser,
+   tweak ONLY these three places:
+
+   1) Global feel (all sizes)
+      footer .headline-gap { margin-bottom: 1vh; }
+
+   2) iPad-ish lock (768–1024px)
+      footer .headline-gap     { margin-bottom: 12px; }
+      footer .first-cta-offset { margin-top: 8px; }
+
+   3) Desktop descender guard (>=1024px)
+      footer h2.font-gloucester::after { height: 0.05em; }
+
+   Avoid adding other margins/padding between the headline and CTA;
+   these values are the single source of truth for the gap.
+=============================== */
+
+
+/* Headline + CTA widths: 90vw <768px, 62.25vw ≥768px */
+footer .headline-box,
+footer .footer-cta {
+  width: 88vw;
+  max-width: 88vw;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 768px) {
+  footer .headline-box,
+  footer .footer-cta {
+    width: 62.25vw !important;
+    max-width: none;
+  }
+}
+
