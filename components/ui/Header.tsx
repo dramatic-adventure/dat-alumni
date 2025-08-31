@@ -120,6 +120,20 @@ export default function Header() {
       (document.body.style as any).touchAction = prevTouch;
     };
   }, [isOpen]);
+  }, [lastScrollY, isOpen]);
+
+  // ✅ Lock body scroll while menu is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    const prevTouch = (document.body.style as any).touchAction;
+    document.body.style.overflow = 'hidden';
+    (document.body.style as any).touchAction = 'none';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      (document.body.style as any).touchAction = prevTouch;
+    };
+  }, [isOpen]);
 
   return (
     <div
