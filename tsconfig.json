@@ -32,13 +32,16 @@
     ]
   },
   "include": [
-    "app",
-    "components",
-    "lib",
-    "next-env.d.ts",
-    "types",
-    ".next/types/**/*.ts"
-  ],
+  "app",
+  "components",
+  "lib",
+  "types",
+  "utils",
+  "data",
+  "mappers",
+  "next-env.d.ts",
+  ".next/types/**/*.ts"
+],
   "exclude": [
     "node_modules",
     ".next"

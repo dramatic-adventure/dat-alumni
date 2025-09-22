@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSwipeable } from "react-swipeable";
 import JourneyCard from "@/components/alumni/JourneyCard";
 import Lightbox from "@/components/shared/Lightbox";
-import type { JourneyCard as JourneyCardType } from "@/components/hooks/useFilteredJourneyCards";
+import type { JourneyCardType } from "@/lib/types";
 
 interface CategoryBlock {
   category: string;
@@ -49,11 +49,13 @@ export default function JourneyCategoryCarousel({ categories }: JourneyCategoryC
     trackMouse: true,
   });
 
-  const handleCardClick = () => {
-    const url = allCards[currentIndex].mediaUrl;
+ const handleCardClick = () => {
+  const url = allCards[currentIndex].mediaUrl;
+  if (url) {
     setMediaUrls([url]);
     setLightboxOpen(true);
-  };
+  }
+};
 
   if (allCards.length === 0) return null;
 

@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import type { JourneyCard as JourneyCardType } from "@/components/hooks/useFilteredJourneyCards";
+import type { JourneyCardType } from "@/lib/types";
 
 interface JourneyCardProps {
-  card: JourneyCardType;
+  card: JourneyCardType; // or just JourneyCard
   index: number;
   onClick?: (index: number) => void;
 }

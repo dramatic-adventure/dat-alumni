@@ -746,7 +746,7 @@ export default function AlumniAdminApp() {
             <div>
               <SectionHeader title="Programs (Enums)" hint="These power dropdowns and validation in the Sheet." color={pastel.yellow} />
               <ChipInput label="Programs" value={programs} onChange={setPrograms} placeholder="RAW, ACTion, CASTAWAY…" />
-              <div className="text-xs text-slate-500 mt-2">Add lines here → copy into the Google Sheet's <strong>Enums!Programs</strong> column.</div>
+              <div className="text-xs text-slate-500 mt-2">Add lines here → copy into the Google Sheet&apos;s <strong>Enums!Programs</strong> column.</div>
             </div>
             <div>
               <SectionHeader title="Categories (Enums)" hint="Journey Update categories." color={pastel.lavender} />

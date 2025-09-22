@@ -98,7 +98,7 @@ export default function WhatsNextPanel({ updates = [] }: { updates: WhatsNextUpd
             zIndex: 30,
           }}
         >
-          What's Next
+          What&apos;s Next
         </div>
 
         <div style={{ marginTop: "1.55rem", marginBottom: "1.9rem" }}>

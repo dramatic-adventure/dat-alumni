@@ -92,7 +92,7 @@ export default function WhatImUpToPanel({ updates = [] }: { updates: WhatImUpToU
               boxShadow: "inset 3px 3px 3px rgba(0, 0, 0, 0.25)",
             }}
           />
-          What I'm Up To
+          What I&apos;m Up To
         </div>
 
         {/* Divider */}
