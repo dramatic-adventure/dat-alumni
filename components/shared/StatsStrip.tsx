@@ -113,7 +113,7 @@ export default function StatsStrip({
   stats = DEFAULT_STATS,
   background = "transparent",
   accentColor = "#D9A919",
-  textColor = "#241123",
+  textColor = "#f2f2f2",
   maxWidth = "1200px",
   id = "stats-map-section",
   boxed = true,

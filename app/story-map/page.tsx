@@ -2,6 +2,8 @@
 import Image from "next/image";
 import StoryMapClient from "@/components/map/StoryMapClient";
 import StatsStrip from "@/components/shared/StatsStrip";
+import JoinTheJourneyPanel from "@/components/shared/JoinTheJourneyPanel";
+
 
 export const metadata = { title: "Story Map | Dramatic Adventure Theatre" };
 
@@ -125,6 +127,8 @@ export default function StoryMapPage() {
 
       {/* ✅ STATS under the StoryMap */}
       <StatsStrip />
+
+<JoinTheJourneyPanel />
 
       {/* Footer */}
       <footer className="w-full text-white" style={{ backgroundColor: "#0b0b0b" }} />
