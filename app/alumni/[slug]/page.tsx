@@ -5,14 +5,20 @@ import AlumniProfilePage from "@/components/alumni/AlumniProfilePage";
 
 type Params = { slug: string };
 
-export default async function AlumniPage({ params }: { params: Params }) {
-  const { slug } = params;
+// Optional: keep page warm & fast; safe to remove if undesired
+export const revalidate = 60;
+
+export default async function AlumniPage({
+  params,
+}: {
+  params: Promise<Params>;
+}) {
+  // ✅ Next.js 15: params is a Promise — await it
+  const { slug } = await params;
 
   console.log("🛠 SLUG from params:", slug);
 
   const alumni = await loadAlumniBySlug(slug);
-  
-
   if (!alumni) return notFound();
 
   console.log("🔍 Alumni lookup result:", alumni);
@@ -22,30 +28,29 @@ export default async function AlumniPage({ params }: { params: Params }) {
   return (
     <>
       <AlumniProfilePage
-  data={{
-    slug: alumni.slug,
-    name: alumni.name,
-    role: alumni.roles?.[0] || "",
-    roles: alumni.roles || [],
-    location: alumni.location || "",
-    headshotUrl: alumni.headshotUrl || "",
-    identityTags: alumni.identityTags || [],
-    statusFlags: alumni.statusFlags || [],
-    programBadges: alumni.programBadges || [],
-    programSeasons: alumni.programSeasons || [],
-    artistStatement: alumni.artistStatement || "",
-    fieldNotes: alumni.fieldNotes || [],
-    imageUrls: alumni.imageUrls || [],
-    posterUrls: alumni.posterUrls || [],
-    email: alumni.email || "",
-    website: alumni.website || "",
-    socials: alumni.socials || [],
-    updates: alumni.updates || [],
-  }}
-  allStories={allStories}
+        data={{
+          slug: alumni.slug,
+          name: alumni.name,
+          role: alumni.roles?.[0] || "",
+          roles: alumni.roles || [],
+          location: alumni.location || "",
+          headshotUrl: alumni.headshotUrl || "",
+          identityTags: alumni.identityTags || [],
+          statusFlags: alumni.statusFlags || [],
+          programBadges: alumni.programBadges || [],
+          programSeasons: alumni.programSeasons || [],
+          artistStatement: alumni.artistStatement || "",
+          fieldNotes: alumni.fieldNotes || [],
+          imageUrls: alumni.imageUrls || [],
+          posterUrls: alumni.posterUrls || [],
+          email: alumni.email || "",
+          website: alumni.website || "",
+          socials: alumni.socials || [],
+          updates: alumni.updates || [],
+        }}
+        allStories={allStories}
       />
-      <section className="bg-[#241123] pt-0 pb-10">
-      </section>
+      <section className="bg-[#241123] pt-0 pb-10" />
     </>
   );
 }

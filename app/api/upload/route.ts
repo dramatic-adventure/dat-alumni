@@ -2,6 +2,14 @@
 import { NextResponse } from "next/server";
 import { driveClient, sheetsClient } from "@/lib/googleClients";
 import { getFolderIdForKind, MediaKind } from "@/lib/profileFolders";
+import { PassThrough } from "stream";
+
+function bufferToStream(buf: Buffer) {
+  const s = new PassThrough();
+  s.end(buf);
+  return s;
+}
+
 
 
 type UploadPayload = {
@@ -88,10 +96,11 @@ export async function POST(req: Request) {
     const parentFolderId = getFolderIdForKind(kind);
     const drive = driveClient();
     const createRes = await drive.files.create({
-      requestBody: { name, parents: [parentFolderId] },
-      media: { mimeType, body: buffer as any },
-      fields: "id",
-    });
+  requestBody: { name, parents: [parentFolderId] },
+  media: { mimeType, body: bufferToStream(buffer) },
+  fields: "id",
+  supportsAllDrives: true, 
+});
     const fileId = createRes.data.id!;
     const nowIso = new Date().toISOString();
 
