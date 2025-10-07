@@ -18,13 +18,13 @@ export default function FeaturedProductionsSection({ slug }: { slug: string }) {
           <div className="px-[60px]">
             <h2
               className="text-6xl text-[#D9A919] mb-4"
-              style={{ fontFamily: '"Space Grotesk", sans-serif' }}
+              style={{ fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif' }}
             >
               Featured DAT Work
             </h2>
             <p
               className="text-[#2493A9] text-lg max-w-3xl"
-              style={{ fontFamily: '"DM Sans", sans-serif' }}
+              style={{ fontFamily: 'var(--font-dm-sans), system-ui, sans-serif' }}
             >
               Developed through cross-cultural exchange and a fearless approach to storytelling,
               this work reflects a deep engagement with place, people, and purpose.

@@ -1,18 +1,13 @@
 // app/location/[slug]/page.tsx
 
 /**
- * 📍 NOTE: This page is powered by normalized location tokens, not a single `location` field.
- *
- * Even though this route lives under `/location/[slug]`, it filters artists using
- * canonicalized location labels gathered from multiple fields (e.g., `location_primary`,
- * `location`, `locations_other`). Aliases are merged and boroughs roll up to NYC.
- *
- * It also surfaces an “Other Nearby Artists (≤ 2 hours)” section using a simple radius
- * around the parent city (e.g., Brooklyn centers on New York City).
+ * 📍 This page is powered by normalized location tokens, not a single `location` field.
+ * Params are plain objects in Next 15 — do NOT type them as Promises.
  */
 
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
 import type { AlumniRow } from "@/lib/types";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
@@ -23,11 +18,11 @@ import {
   slugifyLocation,
   getParentFor,
   resolveNearbyCenter,
-  findNearbyAlumniByPoint,   // ✅ new
+  findNearbyAlumniByPoint,
   getLocationLinksForAlumni,
   unslugToCanonical,
   isKnownLocationSlug,
-  getCenterForLabel,         // ✅ new
+  getCenterForLabel,
 } from "@/lib/locations";
 
 export const revalidate = 3600;
@@ -46,7 +41,39 @@ export async function generateStaticParams() {
   return Array.from(slugs).map((slug) => ({ slug }));
 }
 
-export default async function LocationPage({ params }: { params: { slug: string } }) {
+// ✅ Helpful metadata
+export async function generateMetadata(
+  { params }: { params: { slug: string } }
+): Promise<Metadata> {
+  const { slug } = params;
+  const canonical = unslugToCanonical(slug);
+  const parent = getParentFor(canonical);
+  const mainLabel = parent?.label ?? canonical;
+
+  const title = `${mainLabel} — DAT Locations`;
+  const description = `Artists based in and around ${mainLabel}.`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: `/location/${slug}` },
+    openGraph: {
+      title,
+      description,
+      url: `/location/${slug}`,
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
+  };
+}
+
+export default async function LocationPage(
+  { params }: { params: { slug: string } }
+) {
   const { slug } = params;
   const alumni: AlumniRow[] = await loadVisibleAlumni();
 
@@ -56,37 +83,35 @@ export default async function LocationPage({ params }: { params: { slug: string 
   const mainSlug = slugifyLocation(mainLabel);
 
   // Main bucket (deduped via canonicalized links) — include boroughs when viewing NYC
-const artistsInLocation = alumni.filter((artist) =>
-  getLocationLinksForAlumni(artist).some((l: { label: string; href: string }) => {
-    return (
-      slugifyLocation(l.label) === mainSlug || // exact label match
-      getParentFor(l.label)?.label === mainLabel // borough → NYC (or other parent schemes)
-    );
-  })
-);
-
+  const artistsInLocation = alumni.filter((artist) =>
+    getLocationLinksForAlumni(artist).some((l: { label: string; href: string }) => {
+      return (
+        slugifyLocation(l.label) === mainSlug || // exact label match
+        getParentFor(l.label)?.label === mainLabel // borough → NYC (or other parent schemes)
+      );
+    })
+  );
 
   // Nearby (≤ 2 hours), center on parent if borough; exclude main bucket
-const centerLabel = resolveNearbyCenter(canonical);
-const excludeSlugs = new Set<string>();
-if (mainLabel === "New York City") {
-  ["new-york-city", "brooklyn-nyc", "queens-nyc", "bronx-nyc", "staten-island-nyc"].forEach(
-    (s) => excludeSlugs.add(s)
-  );
-} else {
-  excludeSlugs.add(mainSlug);
-}
+  const centerLabel = resolveNearbyCenter(canonical);
+  const excludeSlugs = new Set<string>();
+  if (mainLabel === "New York City") {
+    ["new-york-city", "brooklyn-nyc", "queens-nyc", "bronx-nyc", "staten-island-nyc"].forEach(
+      (s) => excludeSlugs.add(s)
+    );
+  } else {
+    excludeSlugs.add(mainSlug);
+  }
 
-// ✅ Use CSV lat/lng where available, or bucket centroid if not in LOCATION_COORDS
-const centerPoint = getCenterForLabel(centerLabel, alumni);
-const nearby = centerPoint
-  ? findNearbyAlumniByPoint(centerPoint, alumni, {
-      hours: 2,
-      avgMph: 50,
-      excludeSlugs,
-    })
-  : [];
-
+  // ✅ Use CSV lat/lng where available, or bucket centroid if not in LOCATION_COORDS
+  const centerPoint = getCenterForLabel(centerLabel, alumni);
+  const nearby = centerPoint
+    ? findNearbyAlumniByPoint(centerPoint, alumni, {
+        hours: 2,
+        avgMph: 50,
+        excludeSlugs,
+      })
+    : [];
 
   // If the slug isn't recognized and we have no results at all, 404
   if (!isKnownLocationSlug(slug) && artistsInLocation.length === 0 && nearby.length === 0) {
@@ -108,7 +133,7 @@ const nearby = centerPoint
         }}
       >
         <Image
-          src="/images/alumni hero.jpg"
+          src="/images/alumni-hero.jpg"
           alt={`${displayLabel} Hero`}
           fill
           priority
@@ -117,7 +142,7 @@ const nearby = centerPoint
         <div style={{ position: "absolute", bottom: "1rem", right: "5%" }}>
           <h1
             style={{
-              fontFamily: "Anton, sans-serif",
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
               fontSize: "clamp(3.6rem, 9vw, 8rem)",
               color: "#f2f2f2",
               textTransform: "uppercase",
@@ -130,7 +155,7 @@ const nearby = centerPoint
           </h1>
           <p
             style={{
-              fontFamily: "'Space Grotesk', sans-serif",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
               fontSize: "1.5rem",
               color: "#f2f2f2",
               opacity: 0.7,
@@ -140,8 +165,8 @@ const nearby = centerPoint
               textAlign: "right",
             }}
           >
-            Artists based in and around {displayLabel.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())}
-
+            Artists based in and around{" "}
+            {displayLabel.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())}
           </p>
         </div>
       </div>
@@ -150,9 +175,6 @@ const nearby = centerPoint
       <main
         style={{
           marginTop: "-5rem",
-          backgroundImage: "url('/images/kraft-texture.png')",
-          backgroundSize: "cover",
-          backgroundRepeat: "repeat",
           padding: "8rem 0 2rem",
           position: "relative",
           opacity: 0.9,
@@ -162,7 +184,7 @@ const nearby = centerPoint
         <div style={{ width: "90%", margin: "0 auto" }}>
           <h3
             style={{
-              fontFamily: "Anton, sans-serif",
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
               fontSize: "2.4rem",
               margin: "3.5rem 0 1.1rem",
               textTransform: "uppercase",
@@ -181,7 +203,7 @@ const nearby = centerPoint
           {parent && (
             <p
               style={{
-                fontFamily: "'Space Grotesk', sans-serif",
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                 margin: "0 0 1rem",
                 opacity: 0.8,
               }}
@@ -227,7 +249,7 @@ const nearby = centerPoint
           <section style={{ width: "90%", margin: "4rem auto 0" }}>
             <h3
               style={{
-                fontFamily: "Anton, sans-serif",
+                fontFamily: "var(--font-anton), system-ui, sans-serif",
                 fontSize: "2.4rem",
                 margin: "0rem 0 1.1rem",
                 textTransform: "uppercase",
@@ -276,7 +298,7 @@ const nearby = centerPoint
         <section style={{ width: "90%", margin: "4rem auto 0" }}>
           <h3
             style={{
-              fontFamily: "Anton, sans-serif",
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
               fontSize: "2.4rem",
               margin: "0rem 0 1.1rem",
               textTransform: "uppercase",

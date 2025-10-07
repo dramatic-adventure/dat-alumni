@@ -55,7 +55,7 @@ export default function ContactPanel({
       style={{
         height: "100%",
         padding: "1rem 1.5rem",
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
         backgroundColor: "#E2725B",
         borderTopLeftRadius: "12px",
         borderBottomLeftRadius: "12px",
@@ -67,7 +67,7 @@ export default function ContactPanel({
         <>
           <div
             style={{
-              fontFamily: "'Space Grotesk', sans-serif",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
               fontWeight: 700,
               fontSize: "1.8rem",
               lineHeight: "2.2rem",

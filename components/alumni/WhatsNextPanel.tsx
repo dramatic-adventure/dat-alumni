@@ -74,7 +74,7 @@ export default function WhatsNextPanel({ updates = [] }: { updates: WhatsNextUpd
           overflowY: "auto",
           display: "flex",
           flexDirection: "column",
-          fontFamily: "DM Sans",
+          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
         }}
       >
         <div
@@ -87,7 +87,7 @@ export default function WhatsNextPanel({ updates = [] }: { updates: WhatsNextUpd
             fontSize: "0.9rem",
             padding: "0.4rem 0.85rem 0.4rem 0.6rem",
             borderRadius: "999px",
-            fontFamily: "Space Grotesk, sans-serif",
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
             fontWeight: 600,
             letterSpacing: "0.04em",
             textTransform: "uppercase",
@@ -121,7 +121,7 @@ export default function WhatsNextPanel({ updates = [] }: { updates: WhatsNextUpd
         {current?.headline && (
           <h2
             style={{
-              fontFamily: "Anton, sans-serif",
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
               fontSize: "2rem",
               color: "#241123",
               marginTop: "0.5rem",
@@ -138,7 +138,7 @@ export default function WhatsNextPanel({ updates = [] }: { updates: WhatsNextUpd
         {current?.subheadline && (
           <p
             style={{
-              fontFamily: "Space Grotesk, sans-serif",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
               fontSize: "0.8rem",
               color: "#241123",
               marginTop: "0.5rem",
@@ -174,7 +174,7 @@ export default function WhatsNextPanel({ updates = [] }: { updates: WhatsNextUpd
             >
               <p
                 style={{
-                  fontFamily: "Rock Salt, cursive",
+                  fontFamily: "var(--font-rock-salt), system-ui, sans-serif",
                   fontSize: "1.25rem",
                   color: "#241123",
                   lineHeight: "1.4",
@@ -201,7 +201,7 @@ export default function WhatsNextPanel({ updates = [] }: { updates: WhatsNextUpd
                   letterSpacing: "0.4em",
                   fontSize: "1rem",
                   borderRadius: "0.5rem",
-                  fontFamily: "Space Grotesk, sans-serif",
+                  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                   textDecoration: "none",
                   width: "100%",
                   opacity: "0.9",
@@ -222,7 +222,7 @@ export default function WhatsNextPanel({ updates = [] }: { updates: WhatsNextUpd
               background: "none",
               border: "none",
               color: "#6C00AF",
-              fontFamily: "Rock Salt, cursive",
+              fontFamily: "var(--font-rock-salt), system-ui, sans-serif",
               fontSize: "1rem",
               textDecoration: "underline",
               cursor: "pointer",
@@ -258,11 +258,11 @@ export default function WhatsNextPanel({ updates = [] }: { updates: WhatsNextUpd
                   boxShadow: "0px 0px 4px rgba(0,0,0,0.04)",
                 }}
               >
-                <strong style={{ fontFamily: "Anton, sans-serif" }}>{update.headline}</strong>
+                <strong style={{ fontFamily: "var(--font-anton), system-ui, sans-serif" }}>{update.headline}</strong>
                 {update.subheadline && <div style={{ fontSize: "0.75rem", opacity: 0.65 }}>{update.subheadline}</div>}
                 <div
                   style={{
-                    fontFamily: "Rock Salt, cursive",
+                    fontFamily: "var(--font-rock-salt), system-ui, sans-serif",
                     fontSize: "0.95rem",
                     color: "#241123",
                     marginTop: "0.5rem",

@@ -6,7 +6,7 @@ export default function TestAuth() {
   const { data: session, status } = useSession();
 
   return (
-    <main style={{ padding: 24, fontFamily: "Space Grotesk, sans-serif" }}>
+    <main style={{ padding: 24, fontFamily: "var(--font-space-grotesk), system-ui, sans-serif" }}>
       <h1 style={{ marginBottom: 12 }}>Auth Test</h1>
       <p>Status: {status}</p>
       <pre style={{ background: "#f5f5f5", padding: 12 }}>

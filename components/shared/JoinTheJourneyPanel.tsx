@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Lightbox from "@/components/shared/Lightbox";
 
 const IMAGE_URLS = [
@@ -38,7 +39,7 @@ export default function JoinTheJourneyPanel() {
 
   // Centered container, clamped at 70vw; overflow allowed for the fanned edges.
   const containerStyles: React.CSSProperties = {
-    margin: "2rem auto 2.75rem", // spacing above/below the pile
+    margin: "2rem auto 2.75rem",
     width: "min(70vw, 1100px)",
     height: isMobile ? "clamp(300px, 70vw, 560px)" : "clamp(240px, 50vw, 560px)",
     overflow: "visible",
@@ -48,12 +49,7 @@ export default function JoinTheJourneyPanel() {
   return (
     <section
       className="relative text-center px-6 py-16 md:py-20"
-      style={{
-        backgroundImage: "url('/images/kraft-texture.png')",
-        backgroundSize: "cover",
-        backgroundRepeat: "repeat",
-        overflow: "visible",
-      }}
+      style={{ overflow: "visible" }}
     >
       <div className="mx-auto max-w-6xl" style={{ overflow: "visible" }}>
         {/* Centered fan container (70vw cap) */}
@@ -106,24 +102,21 @@ export default function JoinTheJourneyPanel() {
                     height: "100%",
                     boxShadow: "0 18px 48px rgba(0,0,0,0.38)",
                     background: "#111",
-                    borderRadius: 0, // crisp photo edges
+                    borderRadius: 0,
+                    maxHeight: `${MAX_CARD_HEIGHT}px`,
                   }}
                 >
-                  <img
+                  {/* Optimized photo */}
+                  <Image
                     src={src}
                     alt="DAT program still"
+                    fill
+                    sizes="(max-width: 768px) 70vw, 50vw"
+                    className="object-cover select-none pointer-events-none"
+                    priority={false}
                     draggable={false}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                      display: "block",
-                      userSelect: "none",
-                      pointerEvents: "none",
-                      borderRadius: 0,
-                      maxHeight: `${MAX_CARD_HEIGHT}px`,
-                    }}
                   />
+
                   {/* Sheen pinned perfectly to each photo */}
                   <div
                     className="sheen"
@@ -148,40 +141,40 @@ export default function JoinTheJourneyPanel() {
         <h2
           className="leading-[0.95] text-black"
           style={{
-            fontFamily: "Anton, sans-serif",
+            fontFamily: "var(--font-anton), system-ui, sans-serif",
             textTransform: "uppercase",
             fontWeight: 800,
             letterSpacing: "0.02em",
             color: "#241123",
-            opacity: 0.9, 
+            opacity: 0.9,
             fontSize: "clamp(2.25rem, 6vw, 6rem)",
             padding: "1rem 0.5rem",
-            marginBottom: 0, // ← no spacing under headline
+            marginBottom: 0,
           }}
         >
           Join the Journey
         </h2>
 
-        {/* Subtext — Space Grotesk (kept tight) */}
+        {/* Subtext — Space Grotesk */}
         <p
           className="mx-auto max-w-3xl text-base md:text-xl text-white/85"
-          style={{ fontFamily: "Space Grotesk, sans-serif", color: "#f2f2f2", opacity: 0.8, marginTop: "0.25rem", marginBottom: "1.25rem" }}
+          style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", color: "#f2f2f2", opacity: 0.8, marginTop: "0.25rem", marginBottom: "1.25rem" }}
         >
           Ready to create the next story? Join us on the road, perform with us, or help inspire a child.
         </p>
 
-        {/* Buttons — DAT Purple with your formatting; add spacing under last button */}
+        {/* Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5" style={{ marginBottom: "2.5rem" }}>
           <a
             href="/submit-your-story"
             style={{
-              fontFamily: '"Space Grotesk", sans-serif',
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
               fontWeight: 500,
               textTransform: "uppercase",
               letterSpacing: "0.35rem",
               fontSize: "1.1rem",
               color: "#f2f2f2",
-              backgroundColor: "#6c00af", // DAT Purple
+              backgroundColor: "#6c00af",
               padding: "12px 30px",
               border: "none",
               borderRadius: "12px",
@@ -201,13 +194,13 @@ export default function JoinTheJourneyPanel() {
           <a
             href="/get-involved"
             style={{
-              fontFamily: '"Space Grotesk", sans-serif',
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
               fontWeight: 500,
               textTransform: "uppercase",
               letterSpacing: "0.35rem",
               fontSize: "1.1rem",
               color: "#f2f2f2",
-              backgroundColor: "#6c00af", // DAT Purple
+              backgroundColor: "#6c00af",
               padding: "12px 30px",
               border: "none",
               borderRadius: "12px",

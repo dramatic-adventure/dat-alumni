@@ -1,3 +1,20 @@
 {
-  "extends": "next"
+  "extends": ["next", "next/core-web-vitals"],
+  "overrides": [
+    {
+      "files": ["lib/**/*", "app/**/route.ts", "pages/api/**/*", "server/**/*"],
+      "rules": {
+        "no-console": ["warn", { "allow": ["error", "warn", "time", "timeEnd"] }]
+      }
+    },
+    {
+      "files": ["app/**/*", "components/**/*"],
+      "rules": {
+        "no-console": "error"
+      }
+    }
+  ],
+  "rules": {
+    "react/no-unknown-property": ["error", { "ignore": ["jsx", "global"] }]
+  }
 }

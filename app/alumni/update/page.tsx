@@ -1,24 +1,30 @@
 import { getServerSession } from "next-auth";
-import Link from "next/link";
 import UpdateForm from "./update-form";
 
 export const revalidate = 0;
 
 export default async function UpdatePage() {
   const session = await getServerSession();
+
   if (!session) {
+    const callback = encodeURIComponent("/alumni/update");
     return (
       <div className="max-w-2xl mx-auto px-6 py-16 text-center">
-        <h1 className="text-3xl font-bold mb-4" style={{ fontFamily: "Anton, sans-serif", textTransform: "uppercase" }}>
+        <h1
+          className="text-3xl font-bold mb-4"
+          style={{ fontFamily: "var(--font-anton), system-ui, sans-serif", textTransform: "uppercase" }}
+        >
           Update Your Alumni Profile
         </h1>
-        <p className="mb-6" style={{ fontFamily: "Space Grotesk, sans-serif" }}>
+        <p className="mb-6" style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif" }}>
           Please sign in with Google to continue.
         </p>
+
+        {/* ✅ ensure we return to this page after Google auth */}
         <a
-          href="/api/auth/signin"
+          href={`/api/auth/signin?callbackUrl=${callback}`}
           style={{
-            fontFamily: '"Space Grotesk", sans-serif',
+            fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
             fontWeight: 500,
             textTransform: "uppercase",
             letterSpacing: "0.35rem",

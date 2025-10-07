@@ -60,7 +60,7 @@ export default function JourneyPanel({ cards = [], onCardClick }: JourneyPanelPr
         borderRadius: "20px",
         boxShadow: "0px 0px 25px rgba(0, 0, 0, 0.15)",
         border: "1px solid rgba(0,0,0,0.1)",
-        fontFamily: '"DM Sans", sans-serif',
+        fontFamily: 'var(--font-dm-sans), system-ui, sans-serif',
         width: "100%",
       }}
     >
@@ -75,7 +75,7 @@ export default function JourneyPanel({ cards = [], onCardClick }: JourneyPanelPr
           fontSize: "0.9rem",
           padding: "0.4rem 0.85rem 0.4rem 0.6rem",
           borderRadius: "999px",
-          fontFamily: "Space Grotesk, sans-serif",
+          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
           fontWeight: 900,
           letterSpacing: "0.04em",
           textTransform: "uppercase",
@@ -162,7 +162,7 @@ export default function JourneyPanel({ cards = [], onCardClick }: JourneyPanelPr
               display: "inline-block",
               backgroundColor: categoryStyles[current.category?.toUpperCase() || ""].bg,
               color: categoryStyles[current.category?.toUpperCase() || ""].color,
-              fontFamily: "Space Grotesk, sans-serif",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
               fontSize: "0.75rem",
               padding: "0.3rem 0.75rem",
               borderRadius: "999px",
@@ -180,7 +180,7 @@ export default function JourneyPanel({ cards = [], onCardClick }: JourneyPanelPr
         {/* Title */}
         <h2
           style={{
-            fontFamily: "Anton, sans-serif",
+            fontFamily: "var(--font-anton), system-ui, sans-serif",
             fontSize: "2rem",
             color: "#241123",
             marginBottom: "0.5rem",
@@ -196,7 +196,7 @@ export default function JourneyPanel({ cards = [], onCardClick }: JourneyPanelPr
         {current?.story && (
           <p
             style={{
-              fontFamily: "Rock Salt, cursive",
+              fontFamily: "var(--font-rock-salt), system-ui, sans-serif",
               fontSize: "1.2rem",
               color: "#241123",
               lineHeight: "1.4",
@@ -232,7 +232,7 @@ export default function JourneyPanel({ cards = [], onCardClick }: JourneyPanelPr
             <button
               onClick={() => setShowArchive(!showArchive)}
               style={{
-                fontFamily: "Rock Salt, cursive",
+                fontFamily: "var(--font-rock-salt), system-ui, sans-serif",
                 fontSize: "0.9rem",
                 color: "#241123",
                 background: "none",
@@ -282,7 +282,7 @@ export default function JourneyPanel({ cards = [], onCardClick }: JourneyPanelPr
                         display: "inline-block",
                         backgroundColor: categoryStyles[card.category?.toUpperCase() || ""].bg,
                         color: categoryStyles[card.category?.toUpperCase() || ""].color,
-                        fontFamily: "Space Grotesk, sans-serif",
+                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                         fontSize: "0.7rem",
                         padding: "0.25rem 0.6rem",
                         borderRadius: "999px",
@@ -298,7 +298,7 @@ export default function JourneyPanel({ cards = [], onCardClick }: JourneyPanelPr
 
                   <h3
                     style={{
-                      fontFamily: "Anton, sans-serif",
+                      fontFamily: "var(--font-anton), system-ui, sans-serif",
                       fontSize: "1.1rem",
                       color: "#241123",
                       margin: "0.2rem 0",
@@ -309,7 +309,7 @@ export default function JourneyPanel({ cards = [], onCardClick }: JourneyPanelPr
                   {card.story && (
                     <p
                       style={{
-                        fontFamily: "Space Grotesk, sans-serif",
+                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                         fontSize: "0.9rem",
                         color: "#241123",
                       }}

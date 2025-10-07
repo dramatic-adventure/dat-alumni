@@ -4,6 +4,7 @@ import Papa from "papaparse";
 import { normalizeStoryRow } from "./normalizeStoryRow";
 import { StoryRow } from "./types";
 import { loadCsv } from "./loadCsv";
+import { serverDebug, serverInfo, serverWarn, serverError } from "@/lib/serverDebug";
 
 const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
 const CSV_URL = process.env.STORY_MAP_CSV_URL;
@@ -19,12 +20,12 @@ export async function fetchStories(): Promise<StoryRow[]> {
     });
 
     if (DEBUG) {
-      console.log("🧪 [fetchStories] CSV source:", CSV_URL || FALLBACK_FILENAME);
-      console.log("🔍 First row of CSV:", data[0]);
+      serverDebug("🧪 [fetchStories] CSV source:", CSV_URL || FALLBACK_FILENAME);
+      serverDebug("🔍 First row of CSV:", data[0]);
     }
 
     if (errors.length > 0) {
-      console.warn("⚠️ [fetchStories] CSV parse warnings:", errors);
+      serverWarn("⚠️ [fetchStories] CSV parse warnings:", errors);
     }
 
     const normalized = data
@@ -32,16 +33,16 @@ export async function fetchStories(): Promise<StoryRow[]> {
       .filter((row): row is StoryRow => !!row);
 
     if (normalized.length === 0) {
-      console.warn("🚨 No stories found — check CSV or normalizeStoryRow()");
+      serverWarn("🚨 No stories found — check CSV or normalizeStoryRow()");
     }
 
     if (DEBUG) {
-      console.log("✅ [fetchStories] Parsed story count:", normalized.length);
+      serverDebug("✅ [fetchStories] Parsed story count:", normalized.length);
     }
 
     return normalized;
   } catch (err) {
-    console.error("❌ [fetchStories] Failed to load stories:", err);
+    serverError("❌ [fetchStories] Failed to load stories:", err);
     return [];
   }
 }

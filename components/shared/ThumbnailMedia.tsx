@@ -1,6 +1,8 @@
+// components/shared/ThumbnailMedia.tsx
 "use client";
 
 import React from "react";
+import Image from "next/image";
 
 interface ThumbnailMediaProps {
   imageUrl?: string;
@@ -9,13 +11,19 @@ interface ThumbnailMediaProps {
   onClick?: () => void;
 }
 
-export default function ThumbnailMedia({ imageUrl, title, style, onClick }: ThumbnailMediaProps) {
+export default function ThumbnailMedia({
+  imageUrl,
+  title,
+  style,
+  onClick,
+}: ThumbnailMediaProps) {
   if (!imageUrl) return null;
 
   const trimmedUrl = imageUrl.trim().replace(/\s+/g, "");
   const cleanUrl = (() => {
     try {
       const parsed = new URL(trimmedUrl);
+      // strip tracking params
       parsed.searchParams.forEach((_, key) => {
         if (key.toLowerCase().startsWith("utm") || key === "fbclid") {
           parsed.searchParams.delete(key);
@@ -27,52 +35,58 @@ export default function ThumbnailMedia({ imageUrl, title, style, onClick }: Thum
     }
   })();
 
-  const isImage = (url: string) => /\.(png|jpe?g|gif|webp|svg|heic|heif)$/i.test(url.split("?")[0]);
-  const isVideoFile = (url: string) => /\.(mp4|webm|mov|ogg)$/i.test(url.split("?")[0]);
-  const isAudio = (url: string) =>
-    /\.(mp3|wav|ogg)$/i.test(url.split("?")[0]) || url.includes("soundcloud.com");
-  const isYouTube = (url: string) => url.includes("youtube.com") || url.includes("youtu.be");
-  const isVimeo = (url: string) => url.includes("vimeo.com");
+  const base = cleanUrl.split("?")[0];
+  const isImage = /\.(png|jpe?g|gif|webp|svg|heic|heif)$/i.test(base);
+  const isVideoFile = /\.(mp4|webm|mov|ogg)$/i.test(base);
+  const isAudio = /\.(mp3|wav|ogg)$/i.test(base) || cleanUrl.includes("soundcloud.com");
+  const isYouTube = cleanUrl.includes("youtube.com") || cleanUrl.includes("youtu.be");
+  const isVimeo = cleanUrl.includes("vimeo.com");
 
   const getYouTubeId = (url: string): string | null => {
     try {
-      const parsed = new URL(url);
-      if (parsed.hostname === "youtu.be") return parsed.pathname.slice(1);
-      if (parsed.hostname.includes("youtube.com")) {
-        const id = parsed.searchParams.get("v");
-        if (id) return id;
-        const parts = parsed.pathname.split("/");
-        const shortId = parts.includes("shorts") ? parts[parts.indexOf("shorts") + 1] : null;
-        if (shortId) return shortId;
+      const u = new URL(url);
+      if (u.hostname === "youtu.be") return u.pathname.slice(1);
+      if (u.hostname.includes("youtube.com")) {
+        const v = u.searchParams.get("v");
+        if (v) return v;
+        const parts = u.pathname.split("/");
+        const i = parts.indexOf("shorts");
+        if (i !== -1 && parts[i + 1]) return parts[i + 1];
       }
     } catch {}
     return null;
   };
 
   const isVideoOrAudio =
-    isVideoFile(cleanUrl) || isAudio(cleanUrl) || isYouTube(cleanUrl) || isVimeo(cleanUrl);
+    isVideoFile || isAudio || isYouTube || isVimeo;
+
   const aspectRatio = isVideoOrAudio ? "16 / 9" : "1 / 1";
 
   const playOverlay = (
     <div
+      aria-hidden
       style={{
         position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        width: "38px",
-        height: "38px",
-        borderRadius: "0%",
-        backgroundColor: "rgba(0,0,0,0.6)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
+        inset: 0,
+        display: "grid",
+        placeItems: "center",
         pointerEvents: "none",
       }}
     >
-      <svg viewBox="0 0 24 24" fill="white" width="20" height="20" style={{ marginLeft: "2px" }}>
-        <path d="M8 5v14l11-7z" />
-      </svg>
+      <div
+        style={{
+          width: 42,
+          height: 42,
+          borderRadius: 8,
+          backgroundColor: "rgba(0,0,0,0.55)",
+          display: "grid",
+          placeItems: "center",
+        }}
+      >
+        <svg viewBox="0 0 24 24" fill="white" width="20" height="20" style={{ marginLeft: 2 }}>
+          <path d="M8 5v14l11-7z" />
+        </svg>
+      </div>
     </div>
   );
 
@@ -83,49 +97,58 @@ export default function ThumbnailMedia({ imageUrl, title, style, onClick }: Thum
     overflow: "hidden",
     backgroundColor: "#eee",
     cursor: onClick ? "pointer" : "default",
-  };
-
-  const mediaStyle: React.CSSProperties = {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    display: "block",
     ...style,
   };
 
-  const renderWrapper = (children: React.ReactNode) =>
+  const renderWrapper = (children: React.ReactNode, labelledBy?: string) =>
     onClick ? (
-      <div style={wrapperStyle} onClick={onClick}>
+      <div style={wrapperStyle} onClick={onClick} aria-labelledby={labelledBy}>
         {children}
       </div>
     ) : (
-      <div style={wrapperStyle}>{children}</div>
+      <div style={wrapperStyle} aria-labelledby={labelledBy}>
+        {children}
+      </div>
     );
 
+  // YouTube → use thumb via next/image (requires i.ytimg.com in next.config)
   const youtubeId = getYouTubeId(cleanUrl);
   if (youtubeId) {
     const thumb = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+    const labelId = `yt-thumb-${youtubeId}`;
     return renderWrapper(
       <>
-        <img src={thumb} alt={title || "YouTube thumbnail"} style={mediaStyle} />
+        <Image
+          src={thumb}
+          alt={title || "YouTube thumbnail"}
+          fill
+          className="object-cover"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          priority={false}
+        />
         {playOverlay}
-      </>
+        {/* hidden label target for a11y */}
+        <span id={labelId} className="sr-only">
+          {title || "YouTube video"}
+        </span>
+      </>,
+      `yt-thumb-${youtubeId}`
     );
   }
 
-  if (isVimeo(cleanUrl)) {
+  // Vimeo placeholder (no public thumb without API)
+  if (isVimeo) {
     return renderWrapper(
       <>
         <div
           style={{
-            ...mediaStyle,
-            backgroundColor: "#000",
+            position: "absolute",
+            inset: 0,
+            display: "grid",
+            placeItems: "center",
+            background: "#000",
             color: "#fff",
-            fontSize: "0.7rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
+            fontSize: "0.8rem",
           }}
         >
           Vimeo
@@ -135,19 +158,19 @@ export default function ThumbnailMedia({ imageUrl, title, style, onClick }: Thum
     );
   }
 
-  if (isAudio(cleanUrl)) {
+  // Audio placeholder
+  if (isAudio) {
     return renderWrapper(
       <>
         <div
           style={{
-            ...mediaStyle,
-            backgroundColor: "#f1f1f1",
+            position: "absolute",
+            inset: 0,
+            display: "grid",
+            placeItems: "center",
+            background: "#f1f1f1",
             color: "#555",
-            fontSize: "0.8rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            textAlign: "center",
+            fontSize: "0.85rem",
           }}
         >
           Audio
@@ -157,18 +180,27 @@ export default function ThumbnailMedia({ imageUrl, title, style, onClick }: Thum
     );
   }
 
-  if (isVideoFile(cleanUrl)) {
+  // Raw video file placeholder
+  if (isVideoFile) {
     return renderWrapper(
       <>
-        <div style={{ ...mediaStyle, backgroundColor: "#000" }} />
+        <div style={{ position: "absolute", inset: 0, background: "#000" }} />
         {playOverlay}
       </>
     );
   }
 
-  if (isImage(cleanUrl)) {
+  // Static image → next/image
+  if (isImage) {
     return renderWrapper(
-      <img src={cleanUrl} alt={title || "Story image"} style={mediaStyle} />
+      <Image
+        src={cleanUrl}
+        alt={title || "Story image"}
+        fill
+        className="object-cover"
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        priority={false}
+      />
     );
   }
 

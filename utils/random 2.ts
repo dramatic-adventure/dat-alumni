@@ -31,7 +31,7 @@ export const fontVars = [
 
 export function getRandomFont(): string {
   const font = randomFromArray(fontVars);
-  const fallback = "'Space Grotesk', 'DM Sans', sans-serif";
+  const fallback = "var(--font-space-grotesk), var(--font-dm-sans), system-ui, sans-serif";
   return `${font}, ${fallback}`;
 }
 

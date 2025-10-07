@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import Papa from "papaparse";
 import Supercluster from "supercluster";
+import { clientDebug, clientWarn } from "@/lib/clientDebug";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
 
@@ -214,10 +215,10 @@ function buildFeatures(rows: string[][]): Feature[] {
     return acc;
   }, []);
 
-  if (DEBUG) {
-    console.log("[StoryMap] Headers:", rawHeaders);
-    console.log("[StoryMap] Features parsed:", feats.length);
-  }
+  // debug (client-side gated)
+  clientDebug("[StoryMap] Headers:", rawHeaders);
+  clientDebug("[StoryMap] Features parsed:", feats.length);
+
   return feats;
 }
 
@@ -375,7 +376,7 @@ export default function StoryMap({
       }
 
       .popup-location { font-family:var(--font-space-grotesk),system-ui,sans-serif; font-size:.75rem; text-align:right; margin-bottom:.4rem; }
-      .popup-title { font-family:'Anton',sans-serif; font-size:2.1rem; font-weight:580; text-transform:uppercase; line-height:1; margin-bottom:.4rem; background:#FFCC00; padding:.2rem .4rem; display:inline-block; }
+      .popup-title { font-family: var(--font-anton), system-ui, sans-serif; font-size:2.1rem; font-weight:580; text-transform:uppercase; line-height:1; margin-bottom:.4rem; background:#FFCC00; padding:.2rem .4rem; display:inline-block; }
       .popup-program { font-family:var(--font-space-grotesk),system-ui,sans-serif; font-size:1rem; margin-bottom:.75rem; }
       .popup-video { width:100%; height:200px; margin-bottom:.75rem; }
       .popup-video iframe { width:100%; height:100%; border:none; border-radius:16px; }
@@ -676,9 +677,9 @@ export default function StoryMap({
         m.on("moveend", onZoomOrMove);
         m.on("zoomend", onZoomOrMove);
 
-        if (DEBUG) console.log("[StoryMap] Loaded features:", feats.length);
+        clientDebug("[StoryMap] Loaded features:", feats.length);
       } catch (err) {
-        if (DEBUG) console.error("[StoryMap] CSV load failed:", err);
+        clientWarn("[StoryMap] CSV load failed:", err);
       }
     };
 

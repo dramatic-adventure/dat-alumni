@@ -289,7 +289,7 @@ export default function StatsStrip({
         .stat-number {
           margin: 0 0 -0.15rem;
           min-height: 1em;
-          font-family: var(--font-space-grotesk, "Space Grotesk"), system-ui, sans-serif;
+          font-family: var(--font-space-grotesk, var(--font-space-grotesk)), system-ui, sans-serif;
           font-weight: 700;
           letter-spacing: -0.02em;
           color: ${accentColor};
@@ -311,7 +311,7 @@ export default function StatsStrip({
 
         .stat-label {
           margin: 0;
-          font-family: var(--font-space-grotesk, "Space Grotesk"), system-ui, sans-serif;
+          font-family: var(--font-space-grotesk, var(--font-space-grotesk)), system-ui, sans-serif;
           font-weight: 500;
           font-size: clamp(0.9rem, 3.2vw, 1rem);
         }

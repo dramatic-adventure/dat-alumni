@@ -10,9 +10,9 @@ html, body {
   padding: 0;
   width: 100%;
   min-height: 100vh;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
   background-color: #f6e4c1;
-  background-image: url('/texture/kraft-paper.jpg');
+  background-image: url('/texture/kraft-paper.png');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -50,72 +50,12 @@ main.alumni-profile-reset {
 }
 
 /* ===============================
-   🔤 Local Font Faces
-=============================== */
-@font-face {
-  font-family: 'Anton';
-  src: url('/fonts/anton-v26-latin-regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'DM Sans';
-  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-100.woff2') format('woff2');
-  font-weight: 100;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'DM Sans';
-  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-100italic.woff2') format('woff2');
-  font-weight: 100;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'DM Sans';
-  src: url('/fonts/dm-sans-v16-latin/dm-sans-v16-latin-900italic.woff2') format('woff2');
-  font-weight: 900;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Space Grotesk';
-  src: url('/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-300.woff2') format('woff2');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Space Grotesk';
-  src: url('/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-700.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Rock Salt';
-  src: url('/fonts/rock-salt-v23-latin-regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Gloucester';
-  src: url('/fonts/GloucesterMT-ExtraCondensed.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* ===============================
    🎨 Root Vars & Hero Height
 =============================== */
 :root {
   --dat-color-bg: #241123;
   --dat-color-accent: #F23359;
-  --dat-font-heading: Gloucester, serif;
+  --dat-font-heading: var(--font-gloucester), serif;
   --hero-offset: 0px;
   --hero-height: 80vh;
 }
@@ -166,7 +106,7 @@ a, button, [role="link"], [role="button"] {
    ✅ Font Utility
 =============================== */
 .force-grotesk {
-  font-family: 'Space Grotesk', sans-serif !important;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif !important;
 }
 
 /* ===============================
@@ -230,7 +170,7 @@ a, button, [role="link"], [role="button"] {
   margin-top: 1rem;
 }
 .meta-role {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
   font-size: clamp(1rem, 4vw, 1.35rem);
   font-weight: 800;
   letter-spacing: 2px;
@@ -238,7 +178,7 @@ a, button, [role="link"], [role="button"] {
   color: #241123;
 }
 .meta-location {
-  font-family: "DM Sans", sans-serif;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: clamp(0.85rem, 3vw, 1rem);
   font-weight: 700;
   opacity: 0.7;
@@ -261,7 +201,7 @@ a, button, [role="link"], [role="button"] {
   background-color: #fff;
   border-radius: 24px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
   color: #111;
   position: relative;
   z-index: 1;
@@ -276,7 +216,7 @@ a, button, [role="link"], [role="button"] {
 }
 
 .popup-title {
-  font-family: 'Anton', sans-serif;
+  font-family: var(--font-anton), system-ui, sans-serif;
   font-size: 2.6rem;
   font-weight: 550;
   text-transform: uppercase;
@@ -295,14 +235,14 @@ a, button, [role="link"], [role="button"] {
 }
 
 .popup-location {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
   font-size: 0.8rem;
   text-align: right;
   margin-top: 1.5rem;
   margin-bottom: 0;
 }
 .popup-program {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
   font-size: 1rem;
   margin-bottom: 0.75rem;
 }
@@ -330,7 +270,7 @@ a, button, [role="link"], [role="button"] {
   display: block;
 }
 .popup-partners {
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: 0.7rem;
   font-style: italic;
   text-align: right;
@@ -338,24 +278,24 @@ a, button, [role="link"], [role="button"] {
   line-height: 1.4;
 }
 .popup-quote {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
   font-size: 1.4rem;
   font-style: italic;
   margin: 0.75rem 2rem 0.25rem;
 }
 .popup-quote-author {
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: 0.8rem;
   margin: 0.25rem 3rem 1.9rem;
 }
 .popup-story {
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: 1rem;
   line-height: 1.5;
   margin: -0.5rem 0;
 }
 .popup-author {
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: 0.75rem;
   font-weight: 600;
   color: #FF007F;
@@ -372,7 +312,7 @@ a, button, [role="link"], [role="button"] {
   text-align: center;
   background: #194d56;
   color: #fff;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
   font-size: 1.2rem;
   font-weight: 500;
   letter-spacing: 0.4em;

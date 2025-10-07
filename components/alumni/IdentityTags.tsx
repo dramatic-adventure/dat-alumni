@@ -28,7 +28,7 @@ export default function IdentityTags({
           className="px-5 py-3 rounded-full text-[#F2F2F2] text-sm font-bold uppercase tracking-wider text-center transition-colors duration-150"
           style={{
             backgroundColor: "#16697A",
-            fontFamily: '"Space Grotesk", sans-serif',
+            fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
             letterSpacing: "0.2rem",
             padding: "1.25rem",
             lineHeight: "1.2",

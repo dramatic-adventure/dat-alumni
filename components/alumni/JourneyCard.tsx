@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
+import Image from "next/image";
 import type { JourneyCardType } from "@/lib/types";
 
 interface JourneyCardProps {
-  card: JourneyCardType; // or just JourneyCard
+  card: JourneyCardType;
   index: number;
   onClick?: (index: number) => void;
 }
@@ -19,11 +20,12 @@ const categoryStyles: Record<string, { bg: string; color: string; dot?: string }
 };
 
 export default function JourneyCard({ card, index, onClick }: JourneyCardProps) {
-  const { mediaUrl, title, category = "", story } = card;
+  const { mediaUrl = "", title, category = "", story } = card;
+
   const isVideo =
-    mediaUrl?.endsWith(".mp4") ||
-    mediaUrl?.includes("youtube") ||
-    mediaUrl?.includes("vimeo");
+    mediaUrl.endsWith(".mp4") ||
+    mediaUrl.includes("youtube") ||
+    mediaUrl.includes("vimeo");
 
   const categoryStyle = categoryStyles[category.toUpperCase()] || categoryStyles[""];
   const cardRef = useRef<HTMLDivElement>(null);
@@ -31,20 +33,25 @@ export default function JourneyCard({ card, index, onClick }: JourneyCardProps) 
 
   useEffect(() => {
     const observer = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        const width = entry.contentRect.width;
-        setIsWide(width > 500);
+      for (const entry of entries) {
+        setIsWide(entry.contentRect.width > 500);
       }
     });
-
     if (cardRef.current) observer.observe(cardRef.current);
     return () => observer.disconnect();
   }, []);
 
+  const handleActivate = () => onClick?.(index);
+
+  // Small alt helper if title is empty
+  const alt = title?.trim() || "Journey media";
+
+  // Helpful sizes hint: square ~200px when wide layout, full width on stacked
+  const imageSizes = isWide ? "200px" : "(min-width:768px) 600px, 100vw";
+
   return (
     <div
       ref={cardRef}
-      onClick={() => onClick?.(index)}
       className="cursor-pointer transition-transform"
       style={{
         position: "relative",
@@ -53,13 +60,23 @@ export default function JourneyCard({ card, index, onClick }: JourneyCardProps) 
         boxShadow: "0px 0px 25px rgba(0, 0, 0, 0.15)",
         overflow: "hidden",
         border: "1px solid rgba(0, 0, 0, 0.05)",
-        fontFamily: "DM Sans, sans-serif",
+        fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
         display: "flex",
         flexDirection: "column",
         width: "100%",
         maxWidth: "100%",
         minWidth: 0,
         boxSizing: "border-box",
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={title ? `Open: ${title}` : "Open card"}
+      onClick={handleActivate}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleActivate();
+        }
       }}
     >
       {/* Badge */}
@@ -74,7 +91,7 @@ export default function JourneyCard({ card, index, onClick }: JourneyCardProps) 
             fontSize: "0.9rem",
             padding: "0.4rem 0.85rem 0.4rem 0.6rem",
             borderRadius: "999px",
-            fontFamily: "Space Grotesk, sans-serif",
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
             fontWeight: 600,
             letterSpacing: "0.04em",
             textTransform: "uppercase",
@@ -161,23 +178,17 @@ export default function JourneyCard({ card, index, onClick }: JourneyCardProps) 
               playsInline
               loop
               preload="metadata"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                display: "block",
-              }}
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
             />
           ) : (
-            <img
+            <Image
               src={mediaUrl}
-              alt={title}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                display: "block",
-              }}
+              alt={alt}
+              fill
+              sizes={imageSizes}
+              className="object-cover"
+              loading="lazy"
+              decoding="async"
             />
           )}
         </div>
@@ -197,7 +208,7 @@ export default function JourneyCard({ card, index, onClick }: JourneyCardProps) 
         >
           <h3
             style={{
-              fontFamily: "Space Grotesk, sans-serif",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
               fontSize: "1.1rem",
               fontWeight: 700,
               color: "#241123",
@@ -207,10 +218,10 @@ export default function JourneyCard({ card, index, onClick }: JourneyCardProps) 
             {title}
           </h3>
 
-          {story && (
+          {!!story && (
             <p
               style={{
-                fontFamily: "DM Sans, sans-serif",
+                fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                 fontSize: "0.95rem",
                 color: "#333",
                 lineHeight: "1.5",
@@ -222,12 +233,13 @@ export default function JourneyCard({ card, index, onClick }: JourneyCardProps) 
           )}
 
           <button
+            type="button"
             style={{
               backgroundColor: "#6C00AF",
               color: "#FFEFE3",
               padding: "0.5rem 1rem",
               borderRadius: "0.5rem",
-              fontFamily: "Space Grotesk, sans-serif",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
               letterSpacing: "0.4em",
               fontSize: "0.8rem",
               textTransform: "uppercase",

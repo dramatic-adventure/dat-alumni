@@ -1,19 +1,16 @@
 "use client";
 
-import { useRef, useLayoutEffect, useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import NameStack from "@/components/shared/NameStack";
-import StatusFlags from "@/components/alumni/StatusFlags";
 import ShareButton from "@/components/ui/ShareButton";
 import ContactOverlay from "@/components/shared/ContactOverlay";
 import Lightbox from "@/components/shared/Lightbox";
+import StatusFlags from "@/components/alumni/StatusFlags";
 
-// ✅ Helpers
+import NameStack from "@/components/shared/NameStack"; // a.k.a. ScaledName
 import { splitTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
-import { getLocationHrefForToken } from "@/lib/locations"; // ✅ ADDED
-
-const scaleCache = new Map<string, { first: number; last: number }>();
+import { getLocationHrefForToken } from "@/lib/locations";
 
 interface MobileProfileHeaderProps {
   name: string;
@@ -37,46 +34,26 @@ export default function MobileProfileHeader({
   socials,
 }: MobileProfileHeaderProps) {
   const fallbackImage = "/images/default-headshot.png";
+  const imageSrc = useMemo(
+    () => (headshotUrl ? headshotUrl.replace(/^http:\/\//i, "https://") : fallbackImage),
+    [headshotUrl]
+  );
+
   const headerRef = useRef<HTMLDivElement>(null);
   const [isModalOpen, setModalOpen] = useState(false);
   const [currentUrl, setCurrentUrl] = useState("");
-
-  const nameParts = name.trim().split(" ");
-  const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
-  const lastName = nameParts.slice(-1).join(" ") || "";
-
-  const firstNameRef = useRef<HTMLDivElement>(null);
-  const lastNameRef = useRef<HTMLDivElement>(null);
-
-  const cached = scaleCache.get(name);
-  const [firstScale, setFirstScale] = useState(cached?.first ?? 0.95);
-  const [lastScale, setLastScale] = useState(cached?.last ?? 0.95);
-  const [hasMeasured, setHasMeasured] = useState(!!cached);
 
   useEffect(() => {
     setCurrentUrl(window.location.href);
   }, []);
 
-  useLayoutEffect(() => {
-    if (hasMeasured) return;
-    const first = firstNameRef.current;
-    const last = lastNameRef.current;
-    if (first && last) {
-      const firstWidth = first.scrollWidth;
-      const lastWidth = last.scrollWidth;
-      const widest = Math.max(firstWidth, lastWidth);
-      const targetWidth = widest > 360 ? 360 : widest;
-      const newFirstScale = targetWidth / firstWidth;
-      const newLastScale = targetWidth / lastWidth;
-      scaleCache.set(name, { first: newFirstScale, last: newLastScale });
-      setFirstScale(newFirstScale);
-      setLastScale(newLastScale);
-      setHasMeasured(true);
-    }
-  }, [name, hasMeasured]);
+  const nameParts = name.trim().split(" ");
+  const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
+  const lastName = nameParts.slice(-1).join(" ") || "";
 
   const hasContactInfo = !!(email || website || (socials && socials.length > 0));
 
+  // Build title links
   const allRoles = splitTitles(role).map((r) => r.trim()).filter(Boolean);
 
   function hrefForTitleToken(token: string): string | null {
@@ -118,7 +95,7 @@ export default function MobileProfileHeader({
     ).values()
   );
 
-  const locationHref = location ? getLocationHrefForToken(location) : null; // ✅ ADDED
+  const locationHref = location ? getLocationHrefForToken(location) : null;
 
   return (
     <div ref={headerRef} style={{ backgroundColor: "#C39B6C" }}>
@@ -134,14 +111,12 @@ export default function MobileProfileHeader({
       {statusFlags.length > 0 && (
         <div
           className="absolute top-1 right-[4rem] z-50"
-          style={{
-            clipPath: "inset(0px -9999px -9999px -9999px)",
-          }}
+          style={{ clipPath: "inset(0px -9999px -9999px -9999px)" }}
         >
           <StatusFlags
             flags={statusFlags}
             fontSize="1.15rem"
-            fontFamily='"DM Sans", sans-serif'
+            fontFamily='var(--font-dm-sans), system-ui, sans-serif'
             textColor="#F6E4C1"
             borderRadius="20px"
             className="gap-1"
@@ -167,77 +142,63 @@ export default function MobileProfileHeader({
         <ShareButton url={currentUrl} />
       </div>
 
+      {/* Headshot */}
+      <div
+        className="relative cursor-pointer"
+        style={{
+          aspectRatio: "4 / 5",
+          boxShadow: "6px 8px 20px rgba(0,0,0,0.25)",
+          backgroundColor: "#241123",
+          margin: "0 auto",
+          width: "90%",
+          maxWidth: "360px",
+        }}
+        onClick={() => setModalOpen(true)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") setModalOpen(true);
+        }}
+        aria-label="Open headshot"
+      >
+        <Image
+          src={imageSrc}
+          alt={`${name}'s headshot`}
+          fill
+          placeholder="blur"
+          blurDataURL={fallbackImage}
+          loading="lazy"
+          style={{ objectFit: "cover", objectPosition: "top center" }}
+        />
+      </div>
+
+      {/* Name + meta */}
       <div
         style={{
           width: "90%",
           maxWidth: "360px",
-          margin: "0 auto",
+          margin: "1.5rem auto 0",
           overflow: "hidden",
         }}
       >
-        <div
-          className="relative cursor-pointer"
-          style={{
-            aspectRatio: "4 / 5",
-            boxShadow: "6px 8px 20px rgba(0,0,0,0.25)",
-            backgroundColor: "#241123",
-            margin: "0 auto",
-            width: "100%",
-          }}
-          onClick={() => setModalOpen(true)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") setModalOpen(true);
-          }}
-        >
-          <Image
-            src={headshotUrl || fallbackImage}
-            alt={`${name}'s headshot`}
-            fill
-            placeholder="blur"
-            blurDataURL={fallbackImage}
-            loading="lazy"
-            style={{
-              objectFit: "cover",
-              objectPosition: "top center",
-            }}
-          />
-        </div>
+        <NameStack firstName={firstName} lastName={lastName} containerWidth={320} gap="0.6rem" />
 
-        <div
-          style={{
-            marginTop: "1.5rem",
-            width: "100%",
-            overflow: "hidden",
-          }}
-        >
-          <NameStack
-            firstName={firstName}
-            lastName={lastName}
-            containerWidth={320}
-            gap="0.6rem"
-          />
-        </div>
-
-        {(role || location) && (
+        {(allRoles.length > 0 || location) && (
           <div
             className="flex flex-wrap justify-center items-center gap-x-3 mt-2"
-            style={{
-              marginBottom: "2rem",
-              textAlign: "center",
-              wordBreak: "break-word",
-            }}
+            style={{ marginBottom: "2rem", textAlign: "center", wordBreak: "break-word" }}
           >
+            {/* Titles */}
             {titleLinks.length > 0 && (
               <span className="flex items-center flex-wrap justify-center">
                 {titleLinks.map(({ label, href }, idx) => (
                   <span key={`${href}-${label}`} className="flex items-center">
                     <Link
                       href={href}
+                      prefetch
                       className="no-underline hover:no-underline transition-all duration-200 inline-block"
                       style={{
-                        fontFamily: "Space Grotesk, sans-serif",
+                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                         fontSize: "clamp(1rem, 4vw, 1.35rem)",
                         color: "#241123",
                         textTransform: "uppercase",
@@ -257,6 +218,7 @@ export default function MobileProfileHeader({
                         e.currentTarget.style.transform = "scaleX(1)";
                         e.currentTarget.style.color = "#241123";
                       }}
+                      aria-label={`View ${label}`}
                     >
                       {label}
                     </Link>
@@ -269,6 +231,7 @@ export default function MobileProfileHeader({
                           margin: "0 0.5rem",
                           fontWeight: 400,
                         }}
+                        aria-hidden="true"
                       >
                         –
                       </span>
@@ -286,18 +249,21 @@ export default function MobileProfileHeader({
                   padding: "0 10px",
                   opacity: 0.5,
                 }}
+                aria-hidden="true"
               >
                 •
               </span>
             )}
 
-            {location && (
-              locationHref ? (
+            {/* Location */}
+            {location &&
+              (locationHref ? (
                 <Link
                   href={locationHref}
+                  prefetch
                   className="no-underline hover:no-underline transition-all duration-200"
                   style={{
-                    fontFamily: "DM Sans, sans-serif",
+                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                     fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
                     fontWeight: 900,
                     letterSpacing: "2px",
@@ -306,18 +272,20 @@ export default function MobileProfileHeader({
                     cursor: "pointer",
                     transformOrigin: "left center",
                     transition: "transform 0.2s ease, color 0.2s ease, opacity 0.2s ease",
+                    color: "#241123",
                   }}
+                  aria-label={`View artists based in ${location}`}
                 >
                   <span
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "scaleX(1.05)";
-                      e.currentTarget.parentElement!.style.color = "#6C00AF";
-                      e.currentTarget.parentElement!.style.opacity = "1";
+                      (e.currentTarget.parentElement as HTMLElement).style.color = "#6C00AF";
+                      (e.currentTarget.parentElement as HTMLElement).style.opacity = "1";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = "scaleX(1)";
-                      e.currentTarget.parentElement!.style.color = "#241123";
-                      e.currentTarget.parentElement!.style.opacity = "0.5";
+                      (e.currentTarget.parentElement as HTMLElement).style.color = "#241123";
+                      (e.currentTarget.parentElement as HTMLElement).style.opacity = "0.5";
                     }}
                     style={{ display: "inline-block" }}
                   >
@@ -327,7 +295,7 @@ export default function MobileProfileHeader({
               ) : (
                 <span
                   style={{
-                    fontFamily: "DM Sans, sans-serif",
+                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                     fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
                     fontWeight: 900,
                     letterSpacing: "2px",
@@ -336,6 +304,7 @@ export default function MobileProfileHeader({
                     cursor: "pointer",
                     transformOrigin: "left center",
                     transition: "transform 0.2s ease, color 0.2s ease, opacity 0.2s ease",
+                    color: "#241123",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = "scaleX(1.05)";
@@ -350,15 +319,14 @@ export default function MobileProfileHeader({
                 >
                   Based in {location.toUpperCase()}
                 </span>
-              )
-            )}
+              ))}
           </div>
         )}
       </div>
 
       {isModalOpen && (
         <Lightbox
-          images={[headshotUrl || fallbackImage]}
+          images={[imageSrc]}
           onClose={() => setModalOpen(false)}
         />
       )}

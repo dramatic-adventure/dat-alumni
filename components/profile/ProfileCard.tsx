@@ -288,30 +288,36 @@ export default function ProfileCard({
           }}
         >
           {hasArtistBio && (
-            <ArtistBio
-              identityTags={identityTags}
-              artistStatement={artistStatement}
-              fontFamily='"DM Sans", sans-serif'
-              fontSize="1.15rem"
-              color="#0C2D37"
-              fontStyle="normal"
-              fontWeight={400}
-              letterSpacing="normal"
-              identityTagStyle={{
-                marginTop: "0rem",
-                marginBottom: "2.5rem",
-                marginLeft: isMobile ? "30px" : "310px",
-                marginRight: "30px",
-              }}
-              bioStyle={{
-                marginLeft: "30px",
-                marginRight: "30px",
-                marginTop: "1rem",
-                marginBottom: "3rem",
-                maxWidth: "calc(100% - 60px)",
-              }}
-            />
-          )}
+  <ArtistBio
+    identityTags={identityTags}
+    artistStatement={artistStatement}
+    fontFamily='var(--font-dm-sans), system-ui, sans-serif'
+    fontSize="1.15rem"
+    color="#0C2D37"
+    fontStyle="normal"
+    fontWeight={400}
+    letterSpacing="normal"
+    identityTagStyle={{
+      marginTop: "0rem",
+      marginBottom: "2.5rem",
+      marginLeft: isMobile ? "30px" : "310px",
+      marginRight: "30px",
+    }}
+    bioStyle={{
+      marginLeft: "30px",
+      marginRight: "30px",
+      marginTop: "1rem",
+      marginBottom: "3rem",
+      maxWidth: "calc(100% - 60px)",
+
+      // 🆕 keep prose readable & contained
+      whiteSpace: "pre-wrap",
+      wordBreak: "break-word",
+      overflowWrap: "anywhere",
+    }}
+  />
+)}
+
         </div>
       )}
 
@@ -344,7 +350,7 @@ export default function ProfileCard({
               <div key={category} id={`journey-category-${category}`} style={{ marginBottom: "2rem" }}>
                 <h3
                   style={{
-                    fontFamily: '"Space Grotesk", sans-serif',
+                    fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
                     fontSize: "2rem",
                     marginBottom: "1rem",
                     color: "#241123",
@@ -389,13 +395,13 @@ export default function ProfileCard({
         <div className="bg-[#19657c] py-[30px] px-[30px]">
           <h2
             className="text-6xl text-[#D9A919] mb-4"
-            style={{ fontFamily: '"Space Grotesk", sans-serif' }}
+            style={{ fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif' }}
           >
             Featured DAT Work
           </h2>
           <p
             className="text-[#5BBFD3] text-lg max-w-3xl mb-8"
-            style={{ fontFamily: '"DM Sans", sans-serif' }}
+            style={{ fontFamily: 'var(--font-dm-sans), system-ui, sans-serif' }}
           >
             Developed through cross-cultural exchange and a fearless approach to
             storytelling, this work reflects a deep engagement with place, people,

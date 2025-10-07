@@ -43,7 +43,7 @@ export default function StoryMapPage() {
         <div style={{ position: "absolute", bottom: "4vw", right: "5%" }}>
           <h1
             style={{
-              fontFamily: "Anton, sans-serif",
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
               margin: 0,
               lineHeight: 1.0,
               textTransform: "uppercase",
@@ -76,7 +76,7 @@ export default function StoryMapPage() {
 
           <h4
             style={{
-              fontFamily: "Space Grotesk, sans-serif",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
               margin: 0,
               lineHeight: 1.2,
               textShadow: "0 3px 9px rgba(0,0,0,1.8)",
@@ -106,7 +106,7 @@ export default function StoryMapPage() {
           <div className="impact-underlay-inner">
             <h2
               style={{
-                fontFamily: "Anton, sans-serif",
+                fontFamily: "var(--font-anton), system-ui, sans-serif",
                 fontSize: "clamp(2rem, 7.5vw, 8rem)",
                 opacity: 0.75,
                 textTransform: "uppercase",

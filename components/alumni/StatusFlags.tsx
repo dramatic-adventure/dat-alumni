@@ -25,7 +25,7 @@ interface StatusFlagsProps {
 export default function StatusFlags({
   flags,
   fontSize = "clamp(1.5rem, 4vw, 2rem)",
-  fontFamily = '"DM Sans", sans-serif',
+  fontFamily = 'var(--font-dm-sans), system-ui, sans-serif',
   textColor = "#241123",
   borderRadius = "8px",
   className = "",

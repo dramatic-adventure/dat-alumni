@@ -3,15 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx"
-  },
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+
+  "lint": "next lint",
+  "lint:fix": "next lint --fix",
+
+  "eslint:all": "eslint . --ext .js,.jsx,.ts,.tsx",
+  "eslint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+
+  "typecheck": "tsc --noEmit"},
   "dependencies": {
     "@headlessui/react": "^2.2.4",
     "@heroicons/react": "^2.2.0",
-    "@next/font": "^14.2.15",
     "@tailwindcss/aspect-ratio": "^0.4.2",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.16",
@@ -40,6 +45,7 @@
     "tailwind-scrollbar-hide": "^4.0.0"
   },
   "devDependencies": {
+    "@netlify/plugin-nextjs": "^5.13.3",
     "@tailwindcss/postcss": "^4.1.8",
     "@types/mapbox-gl": "^3.4.1",
     "@types/node": "^20.19.1",

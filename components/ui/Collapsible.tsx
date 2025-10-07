@@ -37,7 +37,7 @@ export default function Collapsible({
       >
         <HeadingTag
           style={{
-            fontFamily: "Anton, sans-serif",
+            fontFamily: "var(--font-anton), system-ui, sans-serif",
             fontSize: level === 2 ? "3.75rem" : "2.75rem",
             fontWeight: 700,
             color: "#241123",

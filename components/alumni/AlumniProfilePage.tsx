@@ -5,6 +5,7 @@ import { useMemo, useState, useEffect } from "react";
 import { AlumniRow, StoryRow } from "@/lib/types";
 import ProfileCard from "@/components/profile/ProfileCard";
 import AlumniProfileBackdrop from "@/components/alumni/AlumniProfileBackdrop";
+import { clientDebug } from "@/lib/clientDebug";
 
 interface AlumniProfileProps {
   data: AlumniRow;
@@ -41,7 +42,7 @@ export default function AlumniProfilePage({
     updates = [], 
   } = data || {};
 
-console.log("🧪 updates passed to ProfileCard:", updates);
+  clientDebug("🧪 updates passed to ProfileCard:", updates);
 
   // ✅ Prefer roles[] if available, otherwise fallback to role
   const displayRole = roles.length > 0 ? roles.join(", ") : role;
@@ -82,25 +83,25 @@ console.log("🧪 updates passed to ProfileCard:", updates);
             }}
           >
             <div
-  style={{
-    width: "85%", // ✅ Base width on all screens
-    maxWidth: "1200px",
-    margin: isMobile ? "0" : "0 auto", // ✅ Desktop: center with auto margins
+              style={{
+                width: "85%", // ✅ Base width on all screens
+                maxWidth: "1200px",
+                margin: isMobile ? "0" : "0 auto", // ✅ Desktop: center with auto margins
 
-    // ✅ MOBILE Layout Tweaks
-    ...(isMobile && {
-      marginLeft: "5%",   // ✅ Adjustable left margin for mobile
-      marginRight: "10%", // ✅ Adjustable right margin for mobile
-    }),
+                // ✅ MOBILE Layout Tweaks
+                ...(isMobile && {
+                  marginLeft: "5%",   // ✅ Adjustable left margin for mobile
+                  marginRight: "10%", // ✅ Adjustable right margin for mobile
+                }),
 
-    position: "relative",
-    overflow: "visible",
-    borderRadius: "18px",
-    boxShadow: "6px 12px 20px rgba(0, 0, 0, 0.2)",
-    top: `calc(${HEADER_HEIGHT} + ${offsetTop})`,
-    transition: "top 0.3s ease-in-out",
-  }}
->
+                position: "relative",
+                overflow: "visible",
+                borderRadius: "18px",
+                boxShadow: "6px 12px 20px rgba(0, 0, 0, 0.2)",
+                top: `calc(${HEADER_HEIGHT} + ${offsetTop})`,
+                transition: "top 0.3s ease-in-out",
+              }}
+            >
               <ProfileCard
                 slug={slug}
                 name={name}
@@ -116,7 +117,7 @@ console.log("🧪 updates passed to ProfileCard:", updates);
                 website={website}
                 socials={socials}
                 updates={updates}
-/>
+              />
             </div>
           </section>
         </AlumniProfileBackdrop>

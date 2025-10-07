@@ -1,3 +1,4 @@
+import { serverDebug, serverInfo, serverWarn, serverError } from "@/lib/serverDebug";
 // lib/loaders/loadMapStories.ts
 import { loadCsv } from "./loadCsv";
 import { parseMapCsv } from "./parseMapCsv"; // ✅ keep your parser
@@ -12,23 +13,23 @@ export async function loadMapStories() {
     const livePoints = parseMapCsv(liveText);
 
     if (livePoints?.length > 0) {
-      console.log(`[loadMapStories] ✅ LIVE CSV → ${livePoints.length} points`);
+      serverDebug(`[loadMapStories] ✅ LIVE CSV → ${livePoints.length} points`);
       return livePoints;
     } else {
-      console.warn("[loadMapStories] ⚠️ LIVE parsed but 0 points → falling back to /fallback/story-map.csv");
+      serverWarn("[loadMapStories] ⚠️ LIVE parsed but 0 points → falling back to /fallback/story-map.csv");
     }
   } catch (err: any) {
-    console.warn("[loadMapStories] ⚠️ LIVE fetch failed → fallback:", err?.message || err);
+    serverWarn("[loadMapStories] ⚠️ LIVE fetch failed → fallback:", err?.message || err);
   }
 
   // 2) Fallback to a local CSV served from /public
   try {
     const fbText = await loadCsv("/fallback/story-map.csv", "map.csv");
     const fbPoints = parseMapCsv(fbText);
-    console.log(`[loadMapStories] ✅ FALLBACK CSV → ${fbPoints.length} points`);
+    serverDebug(`[loadMapStories] ✅ FALLBACK CSV → ${fbPoints.length} points`);
     return fbPoints;
   } catch (err: any) {
-    console.error("[loadMapStories] ❌ Fallback CSV failed:", err?.message || err);
+    serverError("[loadMapStories] ❌ Fallback CSV failed:", err?.message || err);
     return [];
   }
 }

@@ -63,7 +63,7 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
         style={{
           backgroundColor: "#F23359",
           color: "#000",
-          fontFamily: "Space Grotesk, sans-serif",
+          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
           fontSize: "3.5rem",
           letterSpacing: "0.2rem",
           fontWeight: 400,
@@ -106,7 +106,7 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
               fontWeight: 400,
               display: "inline-block",
               padding: "0rem 0.4rem",
-              fontFamily: "Anton, sans-serif",
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
               marginBottom: "-0.8rem",
               color: "#241123",
             }}
@@ -115,7 +115,7 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
           </h3>
           <p
             style={{
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: 'var(--font-dm-sans), system-ui, sans-serif',
               fontSize: "1rem",
               color: "#333",
               lineHeight: 1,
@@ -125,7 +125,7 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
           </p>
           <span
   style={{
-    fontFamily: '"DM Sans", sans-serif',
+    fontFamily: 'var(--font-dm-sans), system-ui, sans-serif',
     fontWeight: "bold",
     color: "#F23359",
     transition: "opacity 0.2s ease-in-out",
@@ -168,7 +168,7 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
                     <div>
                       <h4
                         style={{
-                          fontFamily: "Anton, sans-serif",
+                          fontFamily: "var(--font-anton), system-ui, sans-serif",
                           fontSize: "1.5rem",
                           backgroundColor: "#FFCC00",
                           textTransform: "uppercase",
@@ -183,7 +183,7 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
                       <p
                         style={{
                           fontSize: "0.9rem",
-                          fontFamily: '"DM Sans", sans-serif',
+                          fontFamily: 'var(--font-dm-sans), system-ui, sans-serif',
                           color: "#444",
                           lineHeight: 1,
                         }}
@@ -192,7 +192,7 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
                       </p>
                       <span
   style={{
-    fontFamily: '"DM Sans", sans-serif',
+    fontFamily: 'var(--font-dm-sans), system-ui, sans-serif',
     fontWeight: "bold",
     color: "#F23359",
     transition: "opacity 0.2s ease-in-out",
@@ -239,7 +239,7 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
                 <ThumbnailMedia imageUrl={story.imageUrl} title={story.title} style={{ borderRadius: 0 }} />
                 <h4
                   style={{
-                    fontFamily: "Anton, sans-serif",
+                    fontFamily: "var(--font-anton), system-ui, sans-serif",
                     fontSize: "1.5rem",
                     backgroundColor: "#FFCC00",
                     textTransform: "uppercase",
@@ -254,7 +254,7 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
                 <p
                   style={{
                     fontSize: "0.95rem",
-                    fontFamily: '"DM Sans", sans-serif',
+                    fontFamily: 'var(--font-dm-sans), system-ui, sans-serif',
                     color: "#444",
                     lineHeight: 1,
                   }}
@@ -263,7 +263,7 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
                 </p>
                 <span
   style={{
-    fontFamily: '"DM Sans", sans-serif',
+    fontFamily: 'var(--font-dm-sans), system-ui, sans-serif',
     fontWeight: "bold",
     color: "#F23359",
     transition: "opacity 0.2s ease-in-out",
@@ -296,7 +296,7 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
   <button
     onClick={() => setShowAll(!showAll)}
     style={{
-      fontFamily: '"Space Grotesk", sans-serif',
+      fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
       fontWeight: 500,
       textTransform: "uppercase",
       letterSpacing: "0.35rem",
@@ -322,7 +322,7 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
       marginTop: "0.6rem",
       textAlign: "right", // ✅ Center text relative to button width
       width: "100%", // ✅ Force link container to match button width
-      fontFamily: "'Rock Salt', cursive",
+      fontFamily: "var(--font-rock-salt), cursive",
       fontSize: "1rem",
       color: "#F23359", // DAT Pink
       textDecoration: "none",

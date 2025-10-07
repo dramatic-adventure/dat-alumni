@@ -18,7 +18,7 @@ interface ArtistBioProps {
 export default function ArtistBio({
   identityTags = [],
   artistStatement,
-  fontFamily = '"DM Sans", sans-serif',
+  fontFamily = 'var(--font-dm-sans), system-ui, sans-serif',
   fontSize = "1.15rem",
   color = "#ffffff",
   fontStyle = "normal",

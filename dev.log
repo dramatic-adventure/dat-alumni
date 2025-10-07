@@ -1,12 +1,289 @@
 
-> dat-alumni@0.1.0 dev /Users/jessebaxter/Documents/dat-alumni
+> dat-alumni@0.1.0 dev
 > next dev
 
    ▲ Next.js 15.3.4
    - Local:        http://localhost:3000
-   - Network:      http://192.168.1.224:3000
+   - Network:      http://192.168.1.223:3000
    - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 1427ms
-[?25h
+ ✓ Ready in 1142ms
+ ○ Compiling /api/admin/forward-slug ...
+ ✓ Compiled /api/admin/forward-slug in 1831ms (1754 modules)
+🔍 ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 NEXT_PUBLIC_ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+✅ Using Alumni CSV URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 NEXT_PUBLIC_SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 ALUMNI_SHEET_ID: <set>
+🔧 AUTO_CANONICALIZE_SLUGS: true
+🗂️  ALUMNI_TAB: Profile-Data
+🗂️  SLUGS_TAB: Profile-Slugs
+ POST /api/admin/forward-slug 200 in 4668ms
+ ✓ Compiled in 121ms
+ ✓ Compiled /api/admin/forward-slug in 431ms (1475 modules)
+🔍 ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 NEXT_PUBLIC_ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+✅ Using Alumni CSV URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 NEXT_PUBLIC_SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 ALUMNI_SHEET_ID: <set>
+🔧 AUTO_CANONICALIZE_SLUGS: true
+🗂️  ALUMNI_TAB: Profile-Data
+🗂️  SLUGS_TAB: Profile-Slugs
+ POST /api/admin/forward-slug 200 in 2400ms
+ ✓ Compiled /middleware in 216ms (108 modules)
+🌐 [loadCsv] Trying live fetch: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+✅ [loadCsv] Live fetch succeeded & fallback updated: slug-map.csv
+🔁 [slug-map] Loaded 3 mappings from CSV
+🌐 [loadCsv] Fetching: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🌐 [loadCsv] Trying live fetch: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+ GET /api/admin/forward-slug?slug=old-real-slug 200 in 1119ms
+ ✓ Compiled /api/admin/auto-canon in 321ms (1756 modules)
+🔍 ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 NEXT_PUBLIC_ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+✅ Using Alumni CSV URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 NEXT_PUBLIC_SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 ALUMNI_SHEET_ID: <set>
+🔧 AUTO_CANONICALIZE_SLUGS: true
+🗂️  ALUMNI_TAB: Profile-Data
+🗂️  SLUGS_TAB: Profile-Slugs
+🌐 [loadCsv] Fetching: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🌐 [loadCsv] Trying live fetch: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+✅ [loadCsv] Live fetch succeeded & fallback updated: alumni.csv
+📄 [loadAlumni] Raw CSV snippet: Name,Role,Location,Latitude,Longitude,Identity Tags,Project Badges,Headshot URL,Gallery Image URLs,Artist Statement,Current Work,Legacy Productions,Story Title,Story Thumbnail,Story Excerpt,Story URL,Tags,Artist URL,Artist Social Links,Artist Email,Background Image,Update Link,Show on Profile?,Statu
+✅ [loadAlumni] Loaded 263 alumni, skipped 0
+ GET /api/admin/auto-canon?old=old-real-slug&next=new-real-slug 200 in 1500ms
+✅ [loadCsv] Live fetch succeeded & fallback updated: alumni.csv
+📄 [loadAlumni] Raw CSV snippet: Name,Role,Location,Latitude,Longitude,Identity Tags,Project Badges,Headshot URL,Gallery Image URLs,Artist Statement,Current Work,Legacy Productions,Story Title,Story Thumbnail,Story Excerpt,Story URL,Tags,Artist URL,Artist Social Links,Artist Email,Background Image,Update Link,Show on Profile?,Statu
+✅ [loadAlumni] Loaded 263 alumni, skipped 0
+🌐 [loadCsv] Trying live fetch: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+✅ [loadCsv] Live fetch succeeded & fallback updated: slug-map.csv
+🔁 [slug-map] Loaded 3 mappings from CSV
+ GET /api/admin/forward-slug?slug=new-real-slug 200 in 738ms
+ ○ Compiling /alumni/[slug] ...
+ ✓ Compiled /alumni/[slug] in 2.1s (2476 modules)
+🔍 ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 NEXT_PUBLIC_ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+✅ Using Alumni CSV URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 NEXT_PUBLIC_SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 ALUMNI_SHEET_ID: <set>
+🔧 AUTO_CANONICALIZE_SLUGS: true
+🗂️  ALUMNI_TAB: Profile-Data
+🗂️  SLUGS_TAB: Profile-Slugs
+🌐 [loadCsv] Fetching: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🌐 [loadCsv] Trying live fetch: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+✅ [loadCsv] Live fetch succeeded & fallback updated: alumni.csv
+📄 [loadAlumni] Raw CSV snippet: Name,Role,Location,Latitude,Longitude,Identity Tags,Project Badges,Headshot URL,Gallery Image URLs,Artist Statement,Current Work,Legacy Productions,Story Title,Story Thumbnail,Story Excerpt,Story URL,Tags,Artist URL,Artist Social Links,Artist Email,Background Image,Update Link,Show on Profile?,Statu
+✅ [loadAlumni] Loaded 263 alumni, skipped 0
+🔍 ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 NEXT_PUBLIC_ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+✅ Using Alumni CSV URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 NEXT_PUBLIC_SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 ALUMNI_SHEET_ID: <set>
+🔧 AUTO_CANONICALIZE_SLUGS: true
+🗂️  ALUMNI_TAB: Profile-Data
+🗂️  SLUGS_TAB: Profile-Slugs
+Error: Route "/alumni/[slug]" used `params.slug`. `params` should be awaited before using its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at AlumniPage (app/alumni/[slug]/page.tsx:18:35)
+  16 |
+  17 | export default async function AlumniPage({ params }: PageProps) {
+> 18 |   const raw = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+     |                                   ^
+  19 |   const incoming = decodeURIComponent(raw ?? "").trim().toLowerCase();
+  20 |   if (!incoming) return notFound();
+  21 |
+Error: Route "/alumni/[slug]" used `params.slug`. `params` should be awaited before using its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at AlumniPage (app/alumni/[slug]/page.tsx:18:67)
+  16 |
+  17 | export default async function AlumniPage({ params }: PageProps) {
+> 18 |   const raw = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+     |                                                                   ^
+  19 |   const incoming = decodeURIComponent(raw ?? "").trim().toLowerCase();
+  20 |   if (!incoming) return notFound();
+  21 |
+🌐 [loadCsv] Trying live fetch: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+ ✓ Compiled in 1937ms (490 modules)
+✅ [loadCsv] Live fetch succeeded & fallback updated: slug-map.csv
+🔁 [slug-map] Loaded 3 mappings from CSV
+🌐 [loadCsv] Fetching: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🌐 [loadCsv] Trying live fetch: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+ ✓ Compiled in 122ms (490 modules)
+✅ [loadCsv] Live fetch succeeded & fallback updated: alumni.csv
+📄 [loadAlumni] Raw CSV snippet: Name,Role,Location,Latitude,Longitude,Identity Tags,Project Badges,Headshot URL,Gallery Image URLs,Artist Statement,Current Work,Legacy Productions,Story Title,Story Thumbnail,Story Excerpt,Story URL,Tags,Artist URL,Artist Social Links,Artist Email,Background Image,Update Link,Show on Profile?,Statu
+✅ [loadAlumni] Loaded 263 alumni, skipped 0
+ HEAD /alumni/new-real-slug 404 in 9204ms
+ ✓ Compiled in 125ms (490 modules)
+ GET /api/admin/forward-slug?slug=new-real-slug 200 in 68ms
+Error: Route "/alumni/[slug]" used `params.slug`. `params` should be awaited before using its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at AlumniPage (app/alumni/[slug]/page.tsx:18:35)
+  16 |
+  17 | export default async function AlumniPage({ params }: PageProps) {
+> 18 |   const raw = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+     |                                   ^
+  19 |   const incoming = decodeURIComponent(raw ?? "").trim().toLowerCase();
+  20 |   if (!incoming) return notFound();
+  21 |
+Error: Route "/alumni/[slug]" used `params.slug`. `params` should be awaited before using its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at AlumniPage (app/alumni/[slug]/page.tsx:18:67)
+  16 |
+  17 | export default async function AlumniPage({ params }: PageProps) {
+> 18 |   const raw = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+     |                                                                   ^
+  19 |   const incoming = decodeURIComponent(raw ?? "").trim().toLowerCase();
+  20 |   if (!incoming) return notFound();
+  21 |
+⚡ Returning cached alumni: 263
+ HEAD /alumni/new-real-slug 404 in 44ms
+🔍 ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 NEXT_PUBLIC_ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+✅ Using Alumni CSV URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 NEXT_PUBLIC_SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 ALUMNI_SHEET_ID: <set>
+🔧 AUTO_CANONICALIZE_SLUGS: true
+🗂️  ALUMNI_TAB: Profile-Data
+🗂️  SLUGS_TAB: Profile-Slugs
+🌐 [loadCsv] Fetching: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🌐 [loadCsv] Trying live fetch: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+✅ [loadCsv] Live fetch succeeded & fallback updated: alumni.csv
+📄 [loadAlumni] Raw CSV snippet: Name,Role,Location,Latitude,Longitude,Identity Tags,Project Badges,Headshot URL,Gallery Image URLs,Artist Statement,Current Work,Legacy Productions,Story Title,Story Thumbnail,Story Excerpt,Story URL,Tags,Artist URL,Artist Social Links,Artist Email,Background Image,Update Link,Show on Profile?,Statu
+✅ [loadAlumni] Loaded 263 alumni, skipped 0
+ ✓ Compiled in 263ms (490 modules)
+ ○ Compiling /api/admin/invalidate ...
+ ✓ Compiled /api/admin/invalidate in 657ms (1730 modules)
+🔍 ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 NEXT_PUBLIC_ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+✅ Using Alumni CSV URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 NEXT_PUBLIC_SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 ALUMNI_SHEET_ID: <set>
+🔧 AUTO_CANONICALIZE_SLUGS: true
+🗂️  ALUMNI_TAB: Profile-Data
+🗂️  SLUGS_TAB: Profile-Slugs
+🧹 Cleared alumni + slug-forward caches
+ GET /api/admin/invalidate 200 in 1777ms
+ ✓ Compiled /api/admin/slug-health in 411ms (1732 modules)
+🔍 ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 NEXT_PUBLIC_ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+✅ Using Alumni CSV URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 NEXT_PUBLIC_SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 ALUMNI_SHEET_ID: <set>
+🔧 AUTO_CANONICALIZE_SLUGS: true
+🗂️  ALUMNI_TAB: Profile-Data
+🗂️  SLUGS_TAB: Profile-Slugs
+🌐 [loadCsv] Trying live fetch: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+✅ [loadCsv] Live fetch succeeded & fallback updated: slug-map.csv
+🔁 [slug-map] Loaded 3 mappings from CSV
+🌐 [loadCsv] Fetching: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🌐 [loadCsv] Trying live fetch: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+ ✓ Compiled in 148ms (490 modules)
+✅ [loadCsv] Live fetch succeeded & fallback updated: alumni.csv
+📄 [loadAlumni] Raw CSV snippet: Name,Role,Location,Latitude,Longitude,Identity Tags,Project Badges,Headshot URL,Gallery Image URLs,Artist Statement,Current Work,Legacy Productions,Story Title,Story Thumbnail,Story Excerpt,Story URL,Tags,Artist URL,Artist Social Links,Artist Email,Background Image,Update Link,Show on Profile?,Statu
+✅ [loadAlumni] Loaded 263 alumni, skipped 0
+⚡ Returning cached alumni: 263
+ GET /api/admin/slug-health?slug=new-real-slug 200 in 3139ms
+ ✓ Compiled in 99ms (490 modules)
+ ✓ Compiled /api/admin/forward-slug in 253ms (1477 modules)
+🔍 ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 NEXT_PUBLIC_ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+✅ Using Alumni CSV URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 NEXT_PUBLIC_SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 ALUMNI_SHEET_ID: <set>
+🔧 AUTO_CANONICALIZE_SLUGS: true
+🗂️  ALUMNI_TAB: Profile-Data
+🗂️  SLUGS_TAB: Profile-Slugs
+🌐 [loadCsv] Trying live fetch: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+ GET /api/admin/forward-slug?slug=new-real-slug 200 in 1498ms
+ ✓ Compiled /alumni/[slug] in 184ms (1988 modules)
+🔍 ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 NEXT_PUBLIC_ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+✅ Using Alumni CSV URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 NEXT_PUBLIC_SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 ALUMNI_SHEET_ID: <set>
+🔧 AUTO_CANONICALIZE_SLUGS: true
+🗂️  ALUMNI_TAB: Profile-Data
+🗂️  SLUGS_TAB: Profile-Slugs
+Error: Route "/alumni/[slug]" used `params.slug`. `params` should be awaited before using its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at AlumniPage (app/alumni/[slug]/page.tsx:18:35)
+  16 |
+  17 | export default async function AlumniPage({ params }: PageProps) {
+> 18 |   const raw = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+     |                                   ^
+  19 |   const incoming = decodeURIComponent(raw ?? "").trim().toLowerCase();
+  20 |   if (!incoming) return notFound();
+  21 |
+Error: Route "/alumni/[slug]" used `params.slug`. `params` should be awaited before using its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+    at AlumniPage (app/alumni/[slug]/page.tsx:18:67)
+  16 |
+  17 | export default async function AlumniPage({ params }: PageProps) {
+> 18 |   const raw = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+     |                                                                   ^
+  19 |   const incoming = decodeURIComponent(raw ?? "").trim().toLowerCase();
+  20 |   if (!incoming) return notFound();
+  21 |
+🌐 [loadCsv] Trying live fetch: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+✅ [loadCsv] Live fetch succeeded & fallback updated: slug-map.csv
+🔁 [slug-map] Loaded 3 mappings from CSV
+ ✓ Compiled in 113ms (490 modules)
+✅ [loadCsv] Live fetch succeeded & fallback updated: slug-map.csv
+🔁 [slug-map] Loaded 3 mappings from CSV
+🌐 [loadCsv] Fetching: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🌐 [loadCsv] Trying live fetch: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+ ✓ Compiled in 109ms (490 modules)
+🔍 ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 NEXT_PUBLIC_ALUMNI_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+✅ Using Alumni CSV URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🔍 SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 NEXT_PUBLIC_SLUGS_CSV_URL: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=2159235
+🔍 ALUMNI_SHEET_ID: <set>
+🔧 AUTO_CANONICALIZE_SLUGS: true
+🗂️  ALUMNI_TAB: Profile-Data
+🗂️  SLUGS_TAB: Profile-Slugs
+🌐 [loadCsv] Fetching: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+🌐 [loadCsv] Trying live fetch: https://docs.google.com/spreadsheets/d/1cWmSuuRv8165i6njtAgm12BGGrqb64dM_DDIKYQkQGU/export?format=csv&gid=1202839730
+✅ [loadCsv] Live fetch succeeded & fallback updated: alumni.csv
+📄 [loadAlumni] Raw CSV snippet: Name,Role,Location,Latitude,Longitude,Identity Tags,Project Badges,Headshot URL,Gallery Image URLs,Artist Statement,Current Work,Legacy Productions,Story Title,Story Thumbnail,Story Excerpt,Story URL,Tags,Artist URL,Artist Social Links,Artist Email,Background Image,Update Link,Show on Profile?,Statu
+✅ [loadAlumni] Loaded 263 alumni, skipped 0
+📂 [loadCsv] Using fallback: story-map.csv
+🧪 [fetchStories] CSV source: story-map.csv
+🔍 First row of CSV: {
+  Title: 'Journey to Mars',
+  Program: 'RAW',
+  'Location Name': 'Quito, Ecuador',
+  Latitude: '-0.1807',
+  Longitude: '-78.4678',
+  'Year(s)': '2008–2024',
+  Partners: 'Teatro Sucre, Fundación Cedenma',
+  'Short Story': 'Created site-specific theatre in collaboration with indigenous youth.',
+  Quote: '',
+  'Quote Author': '',
+  'Image URL': 'https://via.placeholder.com/150',
+  Author: 'Isabel Martinez',
+  authorSlug: 'isabel-martinez',
+  'More Info Link': 'https://datwebsite.org/quito-ecuador',
+  Country: 'Ecuador',
+  'Region Tag': 'South America',
+  Category: 'hub',
+  'Show on Map?': 'YES',
+  'Story ID': '',
+  'Story URL': 'https://stories.dramaticadventure.com/story/journey-to-mars',
+  slug: 'journey-to-mars'
+}
+✅ [fetchStories] Parsed story count: 8
+🧪 updates passed to ProfileCard: []
+ HEAD /alumni/new-real-slug 200 in 2561ms
+ ✓ Compiled in 100ms (490 modules)
+✅ [loadCsv] Live fetch succeeded & fallback updated: alumni.csv
+📄 [loadAlumni] Raw CSV snippet: Name,Role,Location,Latitude,Longitude,Identity Tags,Project Badges,Headshot URL,Gallery Image URLs,Artist Statement,Current Work,Legacy Productions,Story Title,Story Thumbnail,Story Excerpt,Story URL,Tags,Artist URL,Artist Social Links,Artist Email,Background Image,Update Link,Show on Profile?,Statu
+✅ [loadAlumni] Loaded 263 alumni, skipped 0
+ ✓ Compiled in 106ms (490 modules)
+ GET /api/admin/forward-slug?slug=new-real-slug 200 in 70ms
+ ✓ Compiled in 702ms (490 modules)

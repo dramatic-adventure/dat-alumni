@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
+import Image from "next/image";
 
 const LOGOS = {
   src: '/images/dat-mobile-logo.png',
@@ -140,13 +141,17 @@ export default function Header() {
           }}
         >
           <Link href="/" className="shrink-0 pl-[2rem]">
-            <img
-              src={LOGOS.src}
-              alt={LOGOS.alt}
-              style={{ height: LOGOS.height }}
-              className="w-auto"
-            />
-          </Link>
+  <Image
+    src="/images/dat-mobile-logo.png"   // in /public → no domain config needed
+    alt="Dramatic Adventure Theatre Logo"
+    width={252}                         // pick width that matches ~84px height ratio
+    height={84}                         // your current visual height
+    priority                             // same as fetchPriority="high"
+    className="w-auto"
+    style={{ height: 84 }}              // keep your exact header height
+    draggable={false}
+  />
+</Link>
           <button
             onClick={() => {
               setIsOpen(true);
@@ -171,7 +176,7 @@ export default function Header() {
       maxWidth: '100vw',
       height: '100dvh',
       backgroundColor: COLORS.overlay,
-      fontFamily: 'var(--font-space-grotesk), sans-serif',
+      fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
       fontWeight: 700,
       textTransform: FONT.transform as React.CSSProperties['textTransform'],
       letterSpacing: FONT.tracking,
@@ -188,13 +193,17 @@ export default function Header() {
       }}
     >
       <Link href="/" className="shrink-0 pl-[2rem]">
-        <img
-          src={LOGOS.src}
-          alt={LOGOS.alt}
-          style={{ height: LOGOS.height }}
-          className="w-auto"
-        />
-      </Link>
+  <Image
+    src="/images/dat-mobile-logo.png"   // in /public → no domain config needed
+    alt="Dramatic Adventure Theatre Logo"
+    width={252}                         // pick width that matches ~84px height ratio
+    height={84}                         // your current visual height
+    priority                             // same as fetchPriority="high"
+    className="w-auto"
+    style={{ height: 84 }}              // keep your exact header height
+    draggable={false}
+  />
+</Link>
       <button
         onClick={() => {
           setIsOpen(false);
@@ -257,7 +266,7 @@ export default function Header() {
                 }`}
                 onClick={() => setShowSubmenu(item.label)}
                 style={{
-                  fontFamily: 'var(--font-space-grotesk), sans-serif',
+                  fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
                   fontWeight: '700',
                   color: '#ffffff',
                   background: 'none',
@@ -278,7 +287,7 @@ export default function Header() {
                 <button
                   className="force-grotesk w-full flex items-center justify-between ml-[3rem] pr-[2rem] text-white text-[2.1525rem] uppercase font-bold tracking-[0.05em] hover:opacity-80 transition"
                   style={{
-                    fontFamily: 'var(--font-space-grotesk), sans-serif',
+                    fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
                     fontWeight: '700',
                     color: '#ffffff',
                     background: 'none',
