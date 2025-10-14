@@ -1,80 +1,102 @@
+// app/ChunkErrorReload.tsx
 "use client";
 
 import { useEffect } from "react";
 
 export default function ChunkErrorReload() {
   useEffect(() => {
-    const RELOAD_COOLDOWN_MS = 10_000;
+    const COOLDOWN_MS = 10_000;        // min gap between reloads
+    const MAX_RELOADS = 3;             // per-tab/session cap
+    const KEY_LAST = "chunk_reload_last_ts";
+    const KEY_COUNT = "chunk_reload_count";
 
-    const reloadNow = () => {
-      // Avoid reload loops
+    // Broad matcher: JS chunks, CSS chunks, dynamic imports, RSC transport
+    const isChunkishError = (err: unknown) => {
+      const s = String(
+        // @ts-ignore
+        err?.reason?.stack || err?.reason?.message || err?.reason?.name ||
+        // @ts-ignore
+        err?.error?.stack  || err?.error?.message  || err?.error?.name  ||
+        // @ts-ignore
+        err?.message || err || ""
+      );
+      return (
+        /ChunkLoadError/i.test(s) ||                              // webpack JS chunk
+        /Loading chunk .* failed/i.test(s) ||                     // generic JS chunk text
+        /CSS_CHUNK_LOAD_FAILED/i.test(s) ||                       // CSS chunk
+        /Failed to fetch dynamically imported module/i.test(s) || // dynamic import()
+        /react-server-dom-webpack/i.test(s) ||                    // RSC transport hiccup
+        /Loading CSS chunk .* failed/i.test(s)
+      );
+    };
+
+    const withinCooldown = () => {
       try {
-        const key = "chunk_reload_cooldown";
-        const last = Number(sessionStorage.getItem(key) || "0");
-        const now = Date.now();
-        if (now - last < RELOAD_COOLDOWN_MS) return;
-        sessionStorage.setItem(key, String(now));
-      } catch {
-        // ignore
-      }
+        const last = Number(sessionStorage.getItem(KEY_LAST) || "0");
+        return Date.now() - last < COOLDOWN_MS;
+      } catch { return false; }
+    };
 
-      // Try to purge caches (helps with PWAs/stale chunks), then reload
-      const g = globalThis as unknown as Window & typeof globalThis;
-      if ("caches" in g && g.caches?.keys) {
-        g.caches
-          .keys()
-          .then((keys) => Promise.all(keys.map((k) => g.caches.delete(k))))
-          .finally(() => g.location.reload());
-      } else {
-        g.location.reload();
-      }
+    const overMaxReloads = () => {
+      try {
+        const n = Number(sessionStorage.getItem(KEY_COUNT) || "0");
+        return n >= MAX_RELOADS;
+      } catch { return false; }
+    };
+
+    const bumpCounters = () => {
+      try {
+        sessionStorage.setItem(KEY_LAST, String(Date.now()));
+        const n = Number(sessionStorage.getItem(KEY_COUNT) || "0");
+        sessionStorage.setItem(KEY_COUNT, String(Math.min(MAX_RELOADS, n + 1)));
+      } catch { /* ignore */ }
+    };
+
+    const reloadNow = async () => {
+      if (withinCooldown() || overMaxReloads()) return;
+      bumpCounters();
+
+      // Try to ensure updated SW/chunks if you use a service worker.
+      try {
+        const reg = await navigator.serviceWorker?.getRegistration();
+        await reg?.update();
+        // Ask any waiting SW to activate immediately (your SW must listen for this)
+        reg?.waiting?.postMessage?.({ type: "SKIP_WAITING" });
+      } catch { /* ignore */ }
+
+      // Simple, low-risk reload
+      window.location.reload();
     };
 
     const onError = (e: ErrorEvent) => {
-      const name = (e?.error as any)?.name || "";
-      const msg = e?.message || "";
-      if (name === "ChunkLoadError" || msg.includes("ChunkLoadError") || msg.includes("Loading chunk")) {
-        reloadNow();
-      }
+      if (isChunkishError(e)) reloadNow();
     };
-
     const onRejection = (e: PromiseRejectionEvent) => {
-      const reason = String(e?.reason ?? "");
-      if (reason.includes("ChunkLoadError") || reason.includes("Loading chunk")) {
-        reloadNow();
-      }
+      if (isChunkishError(e)) reloadNow();
     };
 
-    window.addEventListener("error", onError);
+    window.addEventListener("error", onError, true);
     window.addEventListener("unhandledrejection", onRejection);
 
-    // OPTIONAL: also hook Webpack’s own chunk error handler
+    // Optional: patch webpack’s loader error hook (older patterns)
     try {
-      const w = window as any;
+      const w: any = window as any;
       if (!w.__chunkReloadHookInstalled) {
         w.__chunkReloadHookInstalled = true;
-        const wpReq =
-          w.__webpack_require__ ||
-          (w.webpackJsonp?.webpack?.require ?? null);
-
+        const wpReq = w.__webpack_require__ || (w.webpackJsonp?.webpack?.require ?? null);
         if (wpReq && typeof wpReq === "function") {
           const prev = wpReq.oe;
           wpReq.oe = (err: any) => {
-            const msg = String(err?.message || err || "");
-            if (msg.includes("ChunkLoadError") || msg.includes("Loading chunk")) {
-              reloadNow();
-            }
+            if (isChunkishError(err)) reloadNow();
             if (typeof prev === "function") return prev(err);
             throw err;
           };
         }
       }
-    } catch {
-      // ignore if not available
-    }
+    } catch { /* ignore */ }
 
     return () => {
-      window.removeEventListener("error", onError);
+      window.removeEventListener("error", onError, true);
       window.removeEventListener("unhandledrejection", onRejection);
     };
   }, []);

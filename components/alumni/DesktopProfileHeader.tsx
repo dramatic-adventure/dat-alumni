@@ -216,7 +216,7 @@ export default function DesktopProfileHeader({
           firstName={firstName}
           lastName={lastName}
           containerWidth={360}
-          gap="0.6rem"
+          gapRem={0.6}
         />
 
         {(titleLinks.length > 0 || location) && (

@@ -1,6 +1,7 @@
 // app/layout.tsx
 import "@/app/globals.css";
 import type { ReactNode } from "react";
+import WarmNameStackHints from "@/components/WarmNameStackHints";
 import Providers from "./providers";
 import ChunkErrorReload from "./ChunkErrorReload";
 
@@ -16,38 +17,31 @@ import Footer from "@/components/ui/Footer";
 const anton = localFont({
   variable: "--font-anton",
   display: "swap",
-  src: [{ path: "../public/fonts/anton-v26-latin-regular.woff2", weight: "400", style: "normal" }],
+  preload: true,
+  src: [{ path: "../public/fonts/anton-v27-latin_latin-ext_vietnamese-regular.woff2", weight: "400", style: "normal" }],
 });
 
-// DM Sans (all weights/italics you listed)
+// DM Sans (all weights/italics)
 const dmSans = localFont({
   variable: "--font-dm-sans",
   display: "swap",
   src: [
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-100.woff2", weight: "100", style: "normal" },
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-100italic.woff2", weight: "100", style: "italic" },
-
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-200.woff2", weight: "200", style: "normal" },
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-200italic.woff2", weight: "200", style: "italic" },
-
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-300.woff2", weight: "300", style: "normal" },
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-300italic.woff2", weight: "300", style: "italic" },
-
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-regular.woff2", weight: "400", style: "normal" },
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-italic.woff2", weight: "400", style: "italic" },
-
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-500.woff2", weight: "500", style: "normal" },
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-500italic.woff2", weight: "500", style: "italic" },
-
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-600.woff2", weight: "600", style: "normal" },
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-600italic.woff2", weight: "600", style: "italic" },
-
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-700.woff2", weight: "700", style: "normal" },
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-700italic.woff2", weight: "700", style: "italic" },
-
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-800.woff2", weight: "800", style: "normal" },
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-800italic.woff2", weight: "800", style: "italic" },
-
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-900.woff2", weight: "900", style: "normal" },
     { path: "../public/fonts/dm-sans-v16-latin/dm-sans-v16-latin-900italic.woff2", weight: "900", style: "italic" },
   ],
@@ -168,6 +162,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <meta name="theme-color" content="#241123" />
       </head>
       <body className="min-h-screen flex flex-col text-black">
+        {/* Warm NameStack hints into localStorage once per session */}
+        <WarmNameStackHints />
+
         <ChunkErrorReload />
         <Providers>
           <Header />

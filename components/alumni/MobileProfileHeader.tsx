@@ -181,7 +181,7 @@ export default function MobileProfileHeader({
           overflow: "hidden",
         }}
       >
-        <NameStack firstName={firstName} lastName={lastName} containerWidth={320} gap="0.6rem" />
+        <NameStack firstName={firstName} lastName={lastName} containerWidth={320} gapRem={0.6} />
 
         {(allRoles.length > 0 || location) && (
           <div

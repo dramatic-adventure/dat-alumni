@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Plus, Pencil, Trash2, Filter, Search, Sparkles, Upload, Download, ListFilter, Stars, Tag, Calendar, MapPin, User, Image as ImageIcon, CheckCircle2, XCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

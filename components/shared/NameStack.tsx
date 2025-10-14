@@ -1,190 +1,295 @@
+// components/NameStack.tsx
 "use client";
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { getHintSync, getHintAsync, setHint, type NameStackHint } from "@/lib/nameStackCache";
 
 interface NameStackProps {
   firstName: string;
   lastName: string;
-  containerWidth?: number; // default 290
-  gap?: string; // default 0.4rem
+  /** "auto" = responsive to parent; or pass a fixed px width */
+  containerWidth?: number | "auto";
+  gapRem?: number;
+  fill?: string;
+  /** micro-correct via SVG measured widths */
+  correctSvgWidth?: boolean;
+  /** clamps for responsive mode */
+  minWidth?: number;
+  maxWidth?: number; // cap the visual box
 }
+
+type LayoutState = {
+  fSize: number; lSize: number; y1: number; y2: number; svgH: number;
+  stage: "fallback" | "final";
+};
+
+type Metrics = { w: number; asc: number; desc: number };
+const measureCache = new Map<string, Metrics>();
 
 export default function NameStack({
   firstName,
   lastName,
-  containerWidth = 290,
-  gap = "0.4rem",
+  containerWidth = "auto",
+  gapRem = 0.6,
+  fill = "#F6E4C1",
+  correctSvgWidth = true,
+  minWidth = 0,
+  maxWidth = 360,           // ⬅️ cap at 360 (not 290)
 }: NameStackProps) {
-  const firstRef = useRef<HTMLDivElement>(null);
-  const lastRef = useRef<HTMLDivElement>(null);
-  const [firstFontSize, setFirstFontSize] = useState("4.5rem");
-  const [lastFontSize, setLastFontSize] = useState("4.5rem");
-  const [isReady, setIsReady] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const firstRef = useRef<SVGTextElement>(null);
+  const lastRef  = useRef<SVGTextElement>(null);
 
-  // --- HARD RELOAD FAILSAFE ---
-  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const deadlineTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const POLL_MS = 120;
-  const DEADLINE_MS = 3000;         // reload if still not correct after 3s
-  const RELOAD_COOLDOWN_MS = 10000; // avoid reload loops
+  const upFirst = (firstName && firstName.trim() ? firstName : "\u00A0").toUpperCase();
+  const upLast  = (lastName  && lastName.trim()  ? lastName  : "\u00A0").toUpperCase();
 
-  const safeReload = () => {
-    try {
-      const key = "namestack_last_reload";
-      const last = Number(sessionStorage.getItem(key) || "0");
-      const now = Date.now();
-      if (now - last < RELOAD_COOLDOWN_MS) return; // avoid loop
-      sessionStorage.setItem(key, String(now));
-    } catch {
-      /* no-op */
-    }
-    (globalThis as unknown as Window).location.reload();
-  };
+  // Measured container width in px (clamped to min/max)
+  const [cw, setCw] = useState<number>(() =>
+    typeof containerWidth === "number" ? containerWidth : maxWidth
+  );
 
-  const calculateSizes = useCallback(() => {
-    const firstEl = firstRef.current;
-    const lastEl = lastRef.current;
-    if (!firstEl || !lastEl) return;
-
-    const firstWidth = firstEl.scrollWidth;
-    const lastWidth = lastEl.scrollWidth;
-
-    // If either width is 0 (fonts/layout not ready yet), retry next frame
-    if (firstWidth === 0 || lastWidth === 0) {
-      requestAnimationFrame(calculateSizes);
+  useLayoutEffect(() => {
+    if (typeof containerWidth === "number") {
+      setCw(Math.max(minWidth, Math.min(maxWidth, containerWidth)));
       return;
     }
+    const el = wrapperRef.current;
+    if (!el) return;
 
-    const baseFontSize = 72;
-    const firstRatio = containerWidth / firstWidth;
-    const lastRatio = containerWidth / lastWidth;
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      const box = (Array.isArray(entry.contentBoxSize)
+        ? entry.contentBoxSize[0]
+        : (entry.contentBoxSize as any)) as { inlineSize?: number } | undefined;
+      const width = (box?.inlineSize ?? el.clientWidth) || el.clientWidth;
+      const clamped = Math.max(minWidth, Math.min(maxWidth, Math.round(width)));
+      setCw(clamped);
+    });
 
-    setFirstFontSize(`${baseFontSize * firstRatio}px`);
-    setLastFontSize(`${baseFontSize * lastRatio}px`);
-  }, [containerWidth]);
+    ro.observe(el);
+    const initial = Math.max(minWidth, Math.min(maxWidth, Math.round(el.clientWidth)));
+    setCw(initial);
 
-  const verifySizes = useCallback(() => {
-    const firstEl = firstRef.current;
-    const lastEl = lastRef.current;
-    if (!firstEl || !lastEl) return false;
+    return () => ro.disconnect();
+  }, [containerWidth, minWidth, maxWidth]);
 
-    const fw = Math.round(firstEl.getBoundingClientRect().width);
-    const lw = Math.round(lastEl.getBoundingClientRect().width);
+  const fontVersion = "anton-v27";
+  const platform =
+    typeof navigator !== "undefined"
+      ? (navigator as any).userAgentData?.platform || (navigator as any).platform || "unknown"
+      : "ssr";
 
-    if (fw === 0 || lw === 0) return false;
+  const hintKey = useMemo(
+    () => `NS|${fontVersion}|${platform}|${cw}|${gapRem}|${upFirst}|${upLast}`,
+    [fontVersion, platform, cw, gapRem, upFirst, upLast]
+  );
 
-    const tol = 2;
-    const okFirst = Math.abs(fw - containerWidth) <= tol;
-    const okLast = Math.abs(lw - containerWidth) <= tol;
-    return okFirst && okLast;
-  }, [containerWidth]);
+  // fallback state (prevents blank flash)
+  const [s, setS] = useState<LayoutState>(() => {
+    const approx = Math.max(1, Math.round(cw * 0.38));
+    const asc    = Math.round(approx * 0.9);
+    const gapPx  = remToPxSafe(gapRem);
+    return { fSize: approx, lSize: approx, y1: asc, y2: asc * 2 + gapPx, svgH: Math.max(2, asc * 2 + gapPx), stage: "fallback" };
+  });
 
   useEffect(() => {
-    // cleanup
-    if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
-    if (deadlineTimerRef.current) clearTimeout(deadlineTimerRef.current);
-    setIsReady(false);
+    const approx = Math.max(1, Math.round(cw * 0.38));
+    const asc    = Math.round(approx * 0.9);
+    const gapPx  = remToPxSafe(gapRem);
+    setS({ fSize: approx, lSize: approx, y1: asc, y2: asc * 2 + gapPx, svgH: Math.max(2, asc * 2 + gapPx), stage: "fallback" });
+  }, [cw, gapRem]);
 
-    const tick = () => {
-      calculateSizes();
-
-      // allow one paint then verify
-      requestAnimationFrame(() => {
-        const ok = verifySizes();
-        if (ok) {
-          setIsReady(true);
-          return; // stop polling; deadline will no-op
-        }
-        // keep polling
-        pollTimerRef.current = setTimeout(tick, POLL_MS);
-      });
-    };
-
-    const start = () => {
-      // your original delayed verifies
-      setTimeout(() => verifySizes() || calculateSizes(), 150);
-      setTimeout(() => verifySizes() || calculateSizes(), 500);
-
-      // start polling loop
-      tick();
-
-      // final deadline: if still not OK, reload
-      deadlineTimerRef.current = setTimeout(() => {
-        if (!verifySizes()) safeReload();
-      }, DEADLINE_MS);
-    };
-
-    if ((document as any).fonts?.ready) {
-      (document as any).fonts.ready.then(start);
-    } else {
-      start();
+  // hints
+  useEffect(() => {
+    const local = getHintSync(hintKey);
+    if (local) {
+      const { fSize, lSize, y1, y2, svgH } = local;
+      setS({ fSize, lSize, y1, y2, svgH, stage: "fallback" });
     }
+  }, [hintKey]);
 
-    return () => {
-      if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
-      if (deadlineTimerRef.current) clearTimeout(deadlineTimerRef.current);
+  useLayoutEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const hit = await getHintAsync(hintKey);
+      if (!cancelled && hit) {
+        const { fSize, lSize, y1, y2, svgH } = hit;
+        setS({ fSize, lSize, y1, y2, svgH, stage: "fallback" });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [hintKey]);
+
+  // measurement canvas
+  const canvas = useMemo(() => {
+    if (typeof document === "undefined") return null;
+    const c = document.createElement("canvas");
+    c.width = c.height = 1;
+    return c;
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!canvas) return;
+    let cancelled = false;
+
+    const BASE = 100;
+    const FONT_FAMILY = `"Anton", system-ui, sans-serif`;
+    const GAP_PX = remToPx(gapRem);
+
+    const measureAt = (text: string, px: number): Metrics => {
+      const ck = `${text}::${px}::${FONT_FAMILY}`;
+      const cached = measureCache.get(ck);
+      if (cached) return cached;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        const approx = { w: Math.max(1, text.length * px * 0.6), asc: 0.8 * px, desc: 0.2 * px };
+        measureCache.set(ck, approx);
+        return approx;
+      }
+      ctx.font = `${px}px ${FONT_FAMILY}`;
+      ctx.textBaseline = "alphabetic";
+      const m = ctx.measureText(text);
+      const res = {
+        w: Math.max(1, m.width),
+        asc: Math.max(0, m.actualBoundingBoxAscent ?? 0.8 * px),
+        desc: Math.max(0, m.actualBoundingBoxDescent ?? 0.2 * px),
+      };
+      measureCache.set(ck, res);
+      return res;
     };
-  }, [firstName, lastName, containerWidth, calculateSizes, verifySizes]);
 
-  const baseStyle: React.CSSProperties = {
-    fontFamily: "var(--font-anton), system-ui, sans-serif",
-    textTransform: "uppercase",
-    whiteSpace: "nowrap",
-    color: "#F6E4C1",
-    lineHeight: 1,
-    margin: 0,
-  };
+    let tries = 0;
+    const MAX_TRIES = 6;
 
-  const containerStyle: React.CSSProperties = {
-    width: `${containerWidth}px`,
-    display: "flex",
-    justifyContent: "flex-start",
-    overflow: "visible",
+    const compute = () => {
+      if (cancelled) return;
+
+      const f = measureAt(upFirst, BASE);
+      const l = measureAt(upLast,  BASE);
+      if ((f.w < 1 || l.w < 1) && tries < MAX_TRIES) {
+        tries++;
+        requestAnimationFrame(compute);
+        return;
+      }
+
+      const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+
+      // Aim ink width at the actual box width (cw). No factor > 1, so no clipping.
+      const TARGET = cw;
+
+      const fScale = clamp(TARGET / f.w, 0.05, 100);
+      const lScale = clamp(TARGET / l.w, 0.05, 100);
+
+      let fSize = Math.round(BASE * fScale);
+      let lSize = Math.round(BASE * lScale);
+      let fAsc  = Math.round(f.asc * fScale);
+      let fDesc = Math.round(f.desc * fScale);
+      let lAsc  = Math.round(l.asc * lScale);
+      let lDesc = Math.round(l.desc * lScale);
+
+      let y1   = fAsc;
+      let y2   = fAsc + fDesc + Math.round(GAP_PX) + lAsc;
+      let svgH = Math.ceil(Math.max(1, fAsc + fDesc + Math.round(GAP_PX) + lAsc + lDesc));
+
+      const finalize = () => {
+        if (cancelled) return;
+        const finalState: LayoutState = { fSize, lSize, y1, y2, svgH, stage: "final" };
+        setS(finalState);
+        setHint(hintKey, finalState as NameStackHint);
+      };
+
+      const correctIfNeeded = () => {
+        const fe = firstRef.current, le = lastRef.current;
+        if (!fe || !le) return finalize();
+
+        const fLen = fe.getComputedTextLength();
+        const lLen = le.getComputedTextLength();
+        if (!(fLen > 0 && lLen > 0)) return finalize();
+
+        const NEED = 0.5;
+        const off = Math.abs(TARGET - fLen) > NEED || Math.abs(TARGET - lLen) > NEED;
+        if (!off || !correctSvgWidth) return finalize();
+
+        const fCorr = TARGET / fLen;
+        const lCorr = TARGET / lLen;
+        const clampCorr = (x: number) => Math.max(0.98, Math.min(1.02, x));
+
+        const fC = clampCorr(fCorr), lC = clampCorr(lCorr);
+        fSize = Math.round(fSize * fC);
+        lSize = Math.round(lSize * lC);
+
+        const sF = fC, sL = lC;
+        fAsc  = Math.round(fAsc  * sF);
+        fDesc = Math.round(fDesc * sF);
+        lAsc  = Math.round(lAsc  * sL);
+        lDesc = Math.round(lDesc * sL);
+
+        y1   = fAsc;
+        y2   = fAsc + fDesc + Math.round(GAP_PX) + lAsc;
+        svgH = Math.ceil(Math.max(1, fAsc + fDesc + Math.round(GAP_PX) + lAsc + lDesc));
+
+        finalize();
+      };
+
+      setS({ fSize, lSize, y1, y2, svgH, stage: "fallback" });
+      requestAnimationFrame(correctIfNeeded);
+    };
+
+    const start = async () => {
+      try {
+        // @ts-ignore
+        if (document.fonts?.load) await document.fonts.load(`${BASE}px "Anton"`);
+        // @ts-ignore
+        if (document.fonts?.ready) await document.fonts.ready;
+      } catch {}
+      requestAnimationFrame(() => requestAnimationFrame(compute));
+    };
+
+    start();
+    return () => { cancelled = true; };
+  }, [hintKey, upFirst, upLast, cw, gapRem, correctSvgWidth, canvas]);
+
+  const common: React.SVGProps<SVGTextElement> = {
+    x: 0,
+    dominantBaseline: "alphabetic",
+    fill,
+    style: { fontFamily: "var(--font-anton), system-ui, sans-serif" },
   };
 
   return (
-    <>
-      <style>{`
-        @media (max-width: 1024px) {
-          .scaled-name-outer {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            margin: 0 auto;
-          }
-          .scaled-name-inner {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-          }
-        }
-      `}</style>
-
-      <div
-        className="scaled-name-outer"
-        style={{
-          opacity: isReady ? 1 : 0,
-          transition: "opacity 0.15s ease",
-        }}
+    <div
+      ref={wrapperRef}
+      style={{
+        width: "100%",
+        maxWidth,     // ⬅️ responsive up to 360px
+        display: "block",
+        minWidth: 0,  // important in flex/grid parents
+      }}
+    >
+      <svg
+        viewBox={`0 0 ${cw} ${s.svgH}`}
+        role="img"
+        aria-label={`${firstName} ${lastName}`}
+        style={{ width: "100%", height: "auto", display: "block" }}
+        preserveAspectRatio="xMinYMin meet"
       >
-        <div className="scaled-name-inner">
-          {/* First Name */}
-          <div style={{ ...containerStyle, alignItems: "flex-end" }}>
-            <div ref={firstRef} style={{ ...baseStyle, fontSize: firstFontSize }}>
-              {firstName}
-            </div>
-          </div>
-
-          {/* Gap */}
-          <div style={{ height: gap }} />
-
-          {/* Last Name */}
-          <div style={{ ...containerStyle, alignItems: "flex-start" }}>
-            <div ref={lastRef} style={{ ...baseStyle, fontSize: lastFontSize }}>
-              {lastName}
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+        <text ref={firstRef} y={s.y1} fontSize={s.fSize} {...common}>
+          {upFirst}
+        </text>
+        <text ref={lastRef} y={s.y2} fontSize={s.lSize} {...common}>
+          {upLast}
+        </text>
+      </svg>
+    </div>
   );
+}
+
+/* helpers */
+function remToPxSafe(rem: number) {
+  if (typeof document === "undefined") return Math.round(rem * 16);
+  const root = parseFloat(getComputedStyle(document.documentElement).fontSize || "16");
+  return Math.round(rem * root);
+}
+function remToPx(rem: number) {
+  const root = parseFloat(getComputedStyle(document.documentElement).fontSize || "16");
+  return rem * root;
 }
