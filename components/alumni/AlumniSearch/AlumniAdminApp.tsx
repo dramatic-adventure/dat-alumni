@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Plus, Pencil, Trash2, Filter, Search, Sparkles, Upload, Download, ListFilter, Stars, Tag, Calendar, MapPin, User, Image as ImageIcon, CheckCircle2, XCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Button from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+
 
 // ---------------------------------------------
 // Types aligned to Google Sheet schema
@@ -746,7 +747,7 @@ export default function AlumniAdminApp() {
             <div>
               <SectionHeader title="Programs (Enums)" hint="These power dropdowns and validation in the Sheet." color={pastel.yellow} />
               <ChipInput label="Programs" value={programs} onChange={setPrograms} placeholder="RAW, ACTion, CASTAWAY…" />
-              <div className="text-xs text-slate-500 mt-2">Add lines here → copy into the Google Sheet's <strong>Enums!Programs</strong> column.</div>
+              <div className="text-xs text-slate-500 mt-2">Add lines here → copy into the Google Sheet&apos;s <strong>Enums!Programs</strong> column.</div>
             </div>
             <div>
               <SectionHeader title="Categories (Enums)" hint="Journey Update categories." color={pastel.lavender} />

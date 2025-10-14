@@ -9,6 +9,7 @@ import {
 } from "./searchUtils";
 import { enrichAlumniData } from "./tokenUtils";
 import { AlumniItem, Filters, EnrichedAlumniItem } from "@/types/alumni";
+import { clientDebug } from "@/lib/clientDebug";
 
 interface UseAlumniSearchResult {
   query: string;
@@ -52,7 +53,7 @@ export function useAlumniSearch(
   );
 
   useEffect(() => {
-  const handler = setTimeout(() => {
+    const handler = setTimeout(() => {
       const cleanedQuery = cleanQuery(query);
       if (!cleanedQuery) {
         onResults(showAllIfEmpty ? [] : [], showAllIfEmpty ? alumniData : [], "");
@@ -201,29 +202,31 @@ export function useAlumniSearch(
       });
 
       if (debug) {
-        console.group(`🔍 Search Debug: "${cleanedQuery}"`);
+        clientDebug(`🔍 Search Debug: "${cleanedQuery}"`);
         scoredResults.forEach(r =>
-          console.log(`✅ ${r.item.name} → Score: ${r.score}, Coverage: ${(r.coverage * 100).toFixed(0)}%`, r.reasons)
+          clientDebug(
+            `✅ ${r.item.name} → Score: ${r.score}, Coverage: ${(r.coverage * 100).toFixed(0)}%`,
+            r.reasons
+          )
         );
-        console.groupEnd();
       }
 
       onResults(primary, secondary.slice(0, maxSecondary), cleanedQuery);
     }, 250);
 
     return () => clearTimeout(handler);
-}, [
-  query,
-  filters,
-  enrichedData,
-  alumniData,
-  fuse,
-  onResults,
-  showAllIfEmpty,
-  debug,
-  aliasIndex,
-  maxSecondary,
-]);
+  }, [
+    query,
+    filters,
+    enrichedData,
+    alumniData,
+    fuse,
+    onResults,
+    showAllIfEmpty,
+    debug,
+    aliasIndex,
+    maxSecondary,
+  ]);
 
   return { query, setQuery };
 }

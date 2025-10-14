@@ -39,8 +39,8 @@ export interface AlumniRow {
   name: string;
 
   // Legacy + new fields
-  role: string;        
-  roles: string[];      
+  role: string;
+  roles: string[];
 
   // Core fields
   location: string;
@@ -55,7 +55,7 @@ export interface AlumniRow {
   statusFlags: string[];
   programSeasons: number[];
 
-  // ✅ Add these two for updates feature
+  // For updates feature
   lastModifiedRaw?: string;
   lastModified?: Date | null;
 
@@ -84,32 +84,50 @@ export interface AlumniRow {
   profileUrl?: string;
   fieldNotes?: string[];
   backgroundChoice?: string;
+
+  // Spotlight updates shown on profile / feeds
   updates?: SpotlightUpdate[];
 
-
+  // Optional contact
   email?: string;
   website?: string;
   socials?: string[];
   hasContactInfo?: boolean;
 }
 
-
 // ========== Updates ==========
+/**
+ * SpotlightUpdate: the lightweight shape your UI consumes directly,
+ * and the shape you’re aggregating in loadJourneyFeed/loadJourneyUpdates.
+ * Note: dates are ISO strings (YYYY-MM-DD).
+ */
 export type SpotlightUpdate = {
+  // Identification / dedupe
+  id?: string;          // unique ID for the update (optional)
+  slug?: string;        // artist/profile slug (REQUIRED for dedupe if present)
+  artistId?: string;    // useful to avoid adjacent repeats in carousels
+
+  // Content
   tag?: string;
   headline: string;
   subheadlineTitle?: string;
   subheadlineDescription?: string;
   body: string;
-  ctaLink?: string;
-  mediaUrl?: string;
-  evergreen?: boolean;
-  ctaText?: string;
-  eventDate?: string;
-  sortDate?: string;
-  location?: string;
-};
 
+  // Media & CTA
+  mediaUrl?: string;
+  ctaText?: string;
+  ctaLink?: string;
+
+  // Meta
+  evergreen?: boolean;
+  eventDate?: string;   // ISO date string
+  sortDate?: string;    // ISO date string used for sorting
+  location?: string;
+
+  // Optional category for display classification
+  category?: HighlightCategory;
+};
 
 // ========== Posters & Productions ==========
 export type PosterData = {
@@ -127,30 +145,67 @@ export type Production = {
   year: number;
   location: string;
   festival: string;
-  url: UrlString; // rarely used directly, but defined
-  posterUrl: UrlString; // optional if needed outside poster component
+  url: UrlString;
+  posterUrl: UrlString;
   artists: Record<string, string[]>;
   layout?: Layout;
   titlePosition?: TitlePosition;
 };
 
-
 // ========== Journey Cards ==========
-export type HighlightCategory = "DAT Memory" | "Creative Work" | "What I’m Up To" | "What’s Next";
+export type HighlightCategory =
+  | "DAT Memory"
+  | "Creative Work"
+  | "What I’m Up To"
+  | "What’s Next";
+
+/**
+ * JourneyCardType: the shape JourneyCard/JourneyFeed render.
+ * Align this with SpotlightUpdate where possible.
+ */
+export interface JourneyCardType {
+  id: string;
+  artistId: string;
+  headline: string;
+  body: string;
+
+  mediaUrl?: string;
+  title?: string;
+
+  // Keep category aligned with union to prevent typos
+  category?: HighlightCategory;
+
+  story?: string;
+
+  // CTA naming unified with SpotlightUpdate
+  ctaText?: string;
+  ctaUrl?: string;
+
+  // Sorting
+  sortDate?: string; // ISO date
+}
 
 export type HighlightCard = {
-  title: string;
-  headline: string; // ✅ Required by HighlightPanel
-  mediaUrl: string;
-  category: HighlightCategory;
-  expirationDate?: string;
-  fallbackCategory?: HighlightCategory;
+  headline: string;              // required by HighlightPanel
+  mediaUrl?: string;             // make optional (panel handles no media)
+  subheadline?: string;          // panel supports it
+  body?: string;                 // panel supports it
+  ctaLink?: string;              // panel supports it
   evergreen?: boolean;
+  expirationDate?: string;
+
+  // If you want categorization, keep it but make it optional
+  category?: HighlightCategory;
+
+  // legacy/extra fields are fine to keep optional
+  title?: string;                // if you still use it elsewhere
+  fallbackCategory?: HighlightCategory;
   story?: string;
   location?: string;
   programName?: string;
   dateAdded?: string;
 };
+
 
 export type CreativeWorkUpdate = {
   tag: "Creative Work";
@@ -163,6 +218,7 @@ export type CreativeWorkUpdate = {
   location?: string;
 };
 
+// Full Update object used by some legacy flows / admin / exports
 export interface Update {
   profileSlug: string;
   category: string;
@@ -216,29 +272,43 @@ export interface Update {
   storyMapCountry: string;
 }
 
-
-
+// ID helper with runtime safety across environments
+const makeId = (): string => {
+  try {
+    // Browser / modern Node
+    // @ts-ignore-next-line - crypto may be global
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      // @ts-ignore
+      return crypto.randomUUID();
+    }
+  } catch {}
+  // Fallback
+  return `upd_${Math.random().toString(36).slice(2)}${Date.now()}`;
+};
 
 /**
  * Maps a SpotlightUpdate (used in profiles) to a full Update object.
  * This allows Spotlight updates to be reused in components expecting full Update shape.
  */
-export function mapSpotlightUpdateToUpdate(source: SpotlightUpdate, profileSlug = "unknown"): Update {
+export function mapSpotlightUpdateToUpdate(
+  source: SpotlightUpdate,
+  profileSlug = "unknown"
+): Update {
   return {
-    updateId: crypto.randomUUID(),
+    updateId: makeId(),
     profileSlug,
-    category: "What I’m Up To",
+    category: source.category ?? "What I’m Up To",
     title: source.headline || "Untitled",
     subtitle: source.subheadlineTitle || "",
     location: source.location || "",
-    eventDate: "",
+    eventDate: source.eventDate || "",
 
     bodyNote: source.body || "",
     body: source.body || "",
     mediaUrls: source.mediaUrl || "",
     mediaType: "image",
 
-    ctaText: "Learn More",
+    ctaText: source.ctaText ?? "Learn More",
     ctaUrl: source.ctaLink,
     ctaLink: source.ctaLink,
 
@@ -248,7 +318,7 @@ export function mapSpotlightUpdateToUpdate(source: SpotlightUpdate, profileSlug 
     expirationDate: "",
 
     featured: false,
-    sortDate: new Date().toISOString().split("T")[0],
+    sortDate: source.sortDate || new Date().toISOString().split("T")[0],
     lastModified: new Date(),
 
     // Story Map fields - defaults or empty

@@ -61,7 +61,7 @@ useEffect(() => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, []);
 
-  const fontStack = font ?? "'DM Sans', sans-serif";
+  const fontStack = font ?? "var(--font-dm-sans), system-ui, sans-serif";
 
   const panelRef = useRef<HTMLDivElement>(null);
   const [panelWidth, setPanelWidth] = useState(800);

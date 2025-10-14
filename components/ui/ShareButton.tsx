@@ -11,6 +11,7 @@ import {
   Check,
   MessageCircle,
 } from "lucide-react";
+import { clientWarn } from "@/lib/clientDebug";
 
 let isSharing = false;
 
@@ -25,7 +26,7 @@ export default function ShareButton({ url }: { url: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Clipboard error:", err);
+      clientWarn("Clipboard error:", err);
     }
   };
 
@@ -45,7 +46,7 @@ export default function ShareButton({ url }: { url: string }) {
       });
     } catch (err) {
       if ((err as DOMException).name !== "AbortError") {
-        console.error("Error sharing:", err);
+        clientWarn("Error sharing:", err);
       }
     } finally {
       isSharing = false;

@@ -18,14 +18,11 @@ module.exports = {
     "bg-black/80",
     "backdrop-blur",
     "backdrop-blur-sm",
-    "text-xs", // helpful for badges and fine print
-
-    // ✅ Add grid-related classes here:
+    "text-xs",
     "aspect-[2/3]",
     "aspect-[16/10]",
     "group-hover:ring-4",
     "ring-[#F23359]",
-    "aspect-[16/10]",
     "grid",
     "grid-cols-1",
     "sm:grid-cols-2",
@@ -34,30 +31,30 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        // Semantic font names
-        sans: ['var(--font-dm-sans)', 'sans-serif'],
-        grotesk: ['var(--font-space-grotesk)', 'sans-serif'],
-        display: ['var(--font-anton)', 'sans-serif'],
-        heading: ['var(--font-gloucester)', 'Gloucester', 'serif'],
-        handwriting: ['var(--font-rock-salt)', 'cursive'],
+        // Semantic stacks (map to next/font/local CSS vars)
+        sans: ['var(--font-dm-sans)', 'system-ui', 'sans-serif'],
+        grotesk: ['var(--font-space-grotesk)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-anton)', 'system-ui', 'sans-serif'],
+        heading: ['var(--font-gloucester)', 'serif'],
+        handwriting: ['var(--font-rock-salt)', 'system-ui', 'sans-serif'],
 
-        // Legacy aliases (still useful)
-        anton: ['var(--font-anton)', 'sans-serif'],
-        gloucester: ['var(--font-gloucester)', 'Gloucester', 'serif'],
-        rock: ['var(--font-rock-salt)', 'cursive'],
+        // Aliases (optional)
+        anton: ['var(--font-anton)', 'system-ui', 'sans-serif'],
+        gloucester: ['var(--font-gloucester)', 'serif'],
+        rock: ['var(--font-rock-salt)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-anonymous-pro)', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        serif: ['var(--font-zilla-slab)', 'serif'],
       },
       colors: {
         white: "#ffffff",
         'dat-yellow': '#FFCC00',
         'dat-pink': '#FF4470',
       },
+      // Keep default Tailwind breakpoints; add your aliases
       screens: {
-        // ✅ SMART 3-TIER RESPONSIVE STRUCTURE
-        mobile: { max: "767px" }, 
-        tablet: "768px",                             
-        md: "1024px",  // Desktop and up
-        lg: "1280px",
-        xl: "1536px",
+        mobile: { max: "767px" },   // up to <768px
+        tablet: "768px",            // ≥768px (parallel to default md)
+        // (leave md/lg/xl/2xl as Tailwind defaults)
       },
       animation: {
         fadeIn: 'fadeIn 0.3s ease-out',
@@ -74,7 +71,6 @@ module.exports = {
     require("@tailwindcss/forms"),
     require("@tailwindcss/typography"),
     require("@tailwindcss/aspect-ratio"),
-    require('tailwind-scrollbar-hide'),
+    require("tailwind-scrollbar-hide"),
   ],
 };
-

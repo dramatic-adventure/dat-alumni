@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect, useMemo } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { AlumniItem, Filters } from "@/types/alumni"; // ✅ Shared type file
 import { useAlumniSearch } from "./useAlumniSearch";
 
@@ -33,8 +33,13 @@ export default function AlumniSearch({
   debug = true
 }: AlumniSearchProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const initialQuery = searchParams.get("q") || "";
+
+  // ✅ Guard against possibly-null searchParams in some TS versions
+  const initialQuery = useMemo(() => {
+    return (searchParams?.get("q") ?? "").toString();
+  }, [searchParams]);
 
   /** ✅ Custom hook handles all search logic */
   const { query, setQuery } = useAlumniSearch(
@@ -46,26 +51,27 @@ export default function AlumniSearch({
     debug
   );
 
-  /** ✅ Sync initial query from URL when component mounts */
+  /** ✅ Sync initial query from URL when component mounts or changes */
   useEffect(() => {
     setQuery(initialQuery);
   }, [initialQuery, setQuery]);
 
   /** ✅ Update URL query parameters */
   const updateURL = (q: string) => {
-    const params = new URLSearchParams(window.location.search);
+    // use current params safely
+    const current = new URLSearchParams(searchParams?.toString() ?? "");
 
     if (q.trim()) {
-      params.set("q", q);
+      current.set("q", q);
     } else {
-      params.delete("q");
+      current.delete("q");
     }
 
     Object.entries(filters).forEach(([k, v]) =>
-      v ? params.set(k, String(v)) : params.delete(k)
+      v ? current.set(k, String(v)) : current.delete(k)
     );
 
-    router.replace(`?${params.toString()}`, { scroll: false });
+    router.replace(`${pathname}?${current.toString()}`, { scroll: false });
   };
 
   /** ✅ Clear search input and reset URL */
@@ -132,6 +138,7 @@ export default function AlumniSearch({
               cursor: "pointer",
               color: "#241123"
             }}
+            aria-label="Clear search"
           >
             ×
           </button>

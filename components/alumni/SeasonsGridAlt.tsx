@@ -10,7 +10,7 @@ export default function SeasonsGridAlt() {
       <h2
         className="text-center mb-10"
         style={{
-          fontFamily: "'Anton', Sans Serif",
+          fontFamily: "var(--font-anton), Sans Serif",
           backgroundColor: "transparent",
           fontWeight: 400,
           marginTop: "0.5rem",

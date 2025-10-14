@@ -56,7 +56,7 @@ export default function SeasonCard({
       >
         <h3
           style={{
-            fontFamily: "'Space Grotesk', sans-serif",
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
             fontSize: "3rem",
             fontWeight: 400,
             color: "#f2f2f2",
@@ -67,7 +67,7 @@ export default function SeasonCard({
         </h3>
         <p
           style={{
-            fontFamily: "'Space Grotesk', sans-serif",
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
             fontSize: "2rem",
             color: "#F23359",
             margin: "0 0 0.5rem 0", // ✅ Tighten gap before projects
@@ -90,7 +90,7 @@ export default function SeasonCard({
               <li
                 key={i}
                 style={{
-                  fontFamily: "'DM Sans', sans-serif",
+                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                   fontSize: "0.9rem",
                   paddingTop: 4,
                   paddingBottom: 4,

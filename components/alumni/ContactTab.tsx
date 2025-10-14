@@ -38,7 +38,7 @@ export default function ContactTab({
         border: "none",
         borderTopRightRadius: "12px",
         borderBottomRightRadius: "12px",
-        fontFamily: "Space Grotesk, sans-serif",
+        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
         fontSize: "1.1rem",
         letterSpacing: "0.125rem",
         cursor: "pointer",

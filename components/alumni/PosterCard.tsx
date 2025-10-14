@@ -46,7 +46,7 @@ export default function PosterCard({
       />
       <div
         className={`absolute ${positionClass} bg-[#F9F4E7]/90 px-0 py-0 rounded text-sm font-semibold tracking-wide text-[#241123] pointer-events-none`}
-        style={{ fontFamily: "Space Grotesk, sans-serif" }}
+        style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif" }}
       >
         {title}
       </div>

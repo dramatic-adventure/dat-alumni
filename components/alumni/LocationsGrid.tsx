@@ -66,56 +66,62 @@ export default function LocationsGrid({ alumni, limit }: LocationsGridProps) {
         alignItems: "stretch",
       }}
     >
-      {buckets.map(({ label, slug, count }) => (
-        <Link
-          key={slug}
-          href={getLocationHrefForLabel(label)} // boroughs link to NYC
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "0.75rem 1rem",
-            borderRadius: "15px",
-            backgroundColor: "#241123", // dark purple
-            color: "#FFCC00",            // DAT yellow
-            opacity: 0.7,
-            letterSpacing: "0.06em",
-            fontFamily: "Space Grotesk, sans-serif",
-            fontWeight: 600,
-            fontSize: "1rem",
-            boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
-            transform: "translateZ(0)",
-            textDecoration: "none",
-            transition: "transform 120ms ease, box-shadow 120ms ease",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.05)";
-            (e.currentTarget as HTMLAnchorElement).style.boxShadow =
-              "0 8px 22px rgba(0,0,0,0.28)";
-            (e.currentTarget as HTMLAnchorElement).style.opacity = "0.9";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.0)";
-            (e.currentTarget as HTMLAnchorElement).style.boxShadow =
-              "0 4px 14px rgba(0,0,0,0.2)";
-            (e.currentTarget as HTMLAnchorElement).style.opacity = "0.7";
-          }}
-        >
-          <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {label}
-          </span>
-          <span
+      {buckets.map(({ label, slug, count }) => {
+        const href = getLocationHrefForLabel(label); // boroughs route to NYC parent
+        return (
+          <Link
+            key={slug}
+            href={href}
+            prefetch
+            className="group"
+            aria-label={`Browse artists in ${label}`}
             style={{
-              marginLeft: "0.75rem",
-              fontFamily: "'Space Grotesk', sans-serif",
-              fontSize: "0.85rem",
-              opacity: 0.85,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "0.75rem 1rem",
+              borderRadius: "15px",
+              backgroundColor: "#241123", // dark purple
+              color: "#FFCC00",            // DAT yellow
+              opacity: 0.7,
+              letterSpacing: "0.06em",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+              fontWeight: 600,
+              fontSize: "1rem",
+              boxShadow: "0 4px 14px rgba(0,0,0,0.2)",
+              transform: "translateZ(0)",
+              textDecoration: "none",
+              transition: "transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease",
+            }}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget as HTMLAnchorElement;
+              el.style.transform = "scale(1.05)";
+              el.style.boxShadow = "0 8px 22px rgba(0,0,0,0.28)";
+              el.style.opacity = "0.9";
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget as HTMLAnchorElement;
+              el.style.transform = "scale(1.0)";
+              el.style.boxShadow = "0 4px 14px rgba(0,0,0,0.2)";
+              el.style.opacity = "0.7";
             }}
           >
-            {count}
-          </span>
-        </Link>
-      ))}
+            <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {label}
+            </span>
+            <span
+              style={{
+                marginLeft: "0.75rem",
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                fontSize: "0.85rem",
+                opacity: 0.85,
+              }}
+            >
+              {count}
+            </span>
+          </Link>
+        );
+      })}
     </div>
   );
 }

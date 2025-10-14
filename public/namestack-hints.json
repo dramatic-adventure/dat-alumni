@@ -1,0 +1,921 @@
+{
+  "TESTKEY": {
+    "fSize": 100,
+    "lSize": 100,
+    "y1": 90,
+    "y2": 210,
+    "svgH": 240
+  },
+  "NS|anton-v27|macOS|360|0.6|HEATHER|MASSIE": {
+    "fSize": 114,
+    "lSize": 129,
+    "y1": 98,
+    "y2": 220,
+    "svgH": 221,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|JESSE|BAXTER": {
+    "fSize": 163,
+    "lSize": 132,
+    "y1": 141,
+    "y2": 265,
+    "svgH": 265,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|JASON|WILLIAMSON": {
+    "fSize": 150,
+    "lSize": 78,
+    "y1": 130,
+    "y2": 208,
+    "svgH": 209,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|LUCIA|ŠIPOŠOVÁ": {
+    "fSize": 175,
+    "lSize": 102,
+    "y1": 152,
+    "y2": 275,
+    "svgH": 276,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|PETER|PETKOVŠEK": {
+    "fSize": 166,
+    "lSize": 89,
+    "y1": 143,
+    "y2": 251,
+    "svgH": 252,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|CANDIS C.|JONES": {
+    "fSize": 101,
+    "lSize": 155,
+    "y1": 87,
+    "y2": 232,
+    "svgH": 233,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|KATHLEEN|AMSHOFF": {
+    "fSize": 101,
+    "lSize": 104,
+    "y1": 87,
+    "y2": 187,
+    "svgH": 188,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|CHRISTEN|MADRAZO": {
+    "fSize": 105,
+    "lSize": 100,
+    "y1": 91,
+    "y2": 189,
+    "svgH": 190,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|MARY K.|BAXTER": {
+    "fSize": 117,
+    "lSize": 132,
+    "y1": 100,
+    "y2": 223,
+    "svgH": 223,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|NATALIE|BENALLY": {
+    "fSize": 125,
+    "lSize": 117,
+    "y1": 108,
+    "y2": 218,
+    "svgH": 218,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ALEXIS|FLOYD": {
+    "fSize": 146,
+    "lSize": 162,
+    "y1": 127,
+    "y2": 278,
+    "svgH": 279,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|BARBARA|HERUCOVÁ": {
+    "fSize": 107,
+    "lSize": 96,
+    "y1": 92,
+    "y2": 208,
+    "svgH": 209,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ANNA|CHERKEZISHVILI": {
+    "fSize": 183,
+    "lSize": 64,
+    "y1": 157,
+    "y2": 222,
+    "svgH": 222,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ANNA|DEBLASSIO": {
+    "fSize": 183,
+    "lSize": 92,
+    "y1": 157,
+    "y2": 247,
+    "svgH": 248,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|HANNIEL|SINDELAR": {
+    "fSize": 119,
+    "lSize": 104,
+    "y1": 103,
+    "y2": 203,
+    "svgH": 204,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|GARETH|TIDBALL": {
+    "fSize": 131,
+    "lSize": 125,
+    "y1": 113,
+    "y2": 232,
+    "svgH": 232,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|GIULIA|MARTINELLI": {
+    "fSize": 157,
+    "lSize": 84,
+    "y1": 136,
+    "y2": 220,
+    "svgH": 220,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|GUSTAVO|REDÍN": {
+    "fSize": 112,
+    "lSize": 171,
+    "y1": 97,
+    "y2": 296,
+    "svgH": 296,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|FRANCISCO|CERVANTES": {
+    "fSize": 90,
+    "lSize": 89,
+    "y1": 78,
+    "y2": 166,
+    "svgH": 167,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ELIZABETH|IRWIN": {
+    "fSize": 97,
+    "lSize": 168,
+    "y1": 83,
+    "y2": 238,
+    "svgH": 238,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ELI|SIBLEY": {
+    "fSize": 348,
+    "lSize": 149,
+    "y1": 299,
+    "y2": 438,
+    "svgH": 439,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ELIZABETH|MCKINNEY": {
+    "fSize": 97,
+    "lSize": 95,
+    "y1": 83,
+    "y2": 176,
+    "svgH": 177,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ERIN MCBRIDE|AFRICA": {
+    "fSize": 70,
+    "lSize": 141,
+    "y1": 61,
+    "y2": 195,
+    "svgH": 196,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|EVAN|BRENNER": {
+    "fSize": 195,
+    "lSize": 111,
+    "y1": 168,
+    "y2": 273,
+    "svgH": 273,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|MELISSA|DUNHAM": {
+    "fSize": 113,
+    "lSize": 113,
+    "y1": 98,
+    "y2": 206,
+    "svgH": 207,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|NATALIE|HIRSCH": {
+    "fSize": 125,
+    "lSize": 137,
+    "y1": 108,
+    "y2": 236,
+    "svgH": 237,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ZOË|REINIGER": {
+    "fSize": 275,
+    "lSize": 112,
+    "y1": 290,
+    "y2": 399,
+    "svgH": 400,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|BRYANT|VANCE": {
+    "fSize": 131,
+    "lSize": 155,
+    "y1": 112,
+    "y2": 257,
+    "svgH": 258,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|VINCE|EATON": {
+    "fSize": 173,
+    "lSize": 159,
+    "y1": 150,
+    "y2": 299,
+    "svgH": 300,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|SOLIA|MARTINEZ-JACOBS": {
+    "fSize": 175,
+    "lSize": 53,
+    "y1": 152,
+    "y2": 209,
+    "svgH": 209,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|MICHAEL|AXELROD": {
+    "fSize": 111,
+    "lSize": 111,
+    "y1": 96,
+    "y2": 204,
+    "svgH": 205,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|RACHEL|GROSS": {
+    "fSize": 131,
+    "lSize": 152,
+    "y1": 114,
+    "y2": 257,
+    "svgH": 258,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ALENA|ACKER": {
+    "fSize": 158,
+    "lSize": 155,
+    "y1": 136,
+    "y2": 281,
+    "svgH": 282,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|KARA|WANG": {
+    "fSize": 188,
+    "lSize": 166,
+    "y1": 161,
+    "y2": 315,
+    "svgH": 316,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|NEMUNA|CEESAY": {
+    "fSize": 116,
+    "lSize": 135,
+    "y1": 99,
+    "y2": 227,
+    "svgH": 228,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|SARAH GRACE|SANDERS": {
+    "fSize": 72,
+    "lSize": 110,
+    "y1": 63,
+    "y2": 169,
+    "svgH": 170,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|320|0.6|SARAH GRACE|SANDERS": {
+    "fSize": 64,
+    "lSize": 97,
+    "y1": 56,
+    "y2": 151,
+    "svgH": 152,
+    "stage": "final"
+  },
+  "NS|anton-v27|Android|320|0.6|JESSE|BAXTER": {
+    "fSize": 145,
+    "lSize": 117,
+    "y1": 125,
+    "y2": 237,
+    "svgH": 237,
+    "stage": "final"
+  },
+  "NS|anton-v27|Android|320|0.6|SARAH GRACE|SANDERS": {
+    "fSize": 64,
+    "lSize": 97,
+    "y1": 56,
+    "y2": 151,
+    "svgH": 152,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|MADISON|TRICE": {
+    "fSize": 106,
+    "lSize": 181,
+    "y1": 92,
+    "y2": 260,
+    "svgH": 261,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|CLAIRE|EDMONDS": {
+    "fSize": 146,
+    "lSize": 100,
+    "y1": 126,
+    "y2": 224,
+    "svgH": 225,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|MAI REINA|GOLD": {
+    "fSize": 95,
+    "lSize": 193,
+    "y1": 82,
+    "y2": 260,
+    "svgH": 262,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ANDREW|CLARKE": {
+    "fSize": 117,
+    "lSize": 132,
+    "y1": 101,
+    "y2": 226,
+    "svgH": 227,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|DIONNE|AUDAIN": {
+    "fSize": 138,
+    "lSize": 135,
+    "y1": 119,
+    "y2": 246,
+    "svgH": 247,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|CARLO|ALBAN": {
+    "fSize": 155,
+    "lSize": 154,
+    "y1": 135,
+    "y2": 278,
+    "svgH": 278,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|LACY|ALLEN": {
+    "fSize": 200,
+    "lSize": 164,
+    "y1": 173,
+    "y2": 326,
+    "svgH": 326,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|JANICE|AMAYA": {
+    "fSize": 141,
+    "lSize": 138,
+    "y1": 122,
+    "y2": 252,
+    "svgH": 252,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|GARRETT|BALES": {
+    "fSize": 115,
+    "lSize": 161,
+    "y1": 100,
+    "y2": 251,
+    "svgH": 252,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|LAURA|BERNAS": {
+    "fSize": 155,
+    "lSize": 128,
+    "y1": 133,
+    "y2": 255,
+    "svgH": 256,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|GODFREY|BETETSE": {
+    "fSize": 113,
+    "lSize": 121,
+    "y1": 98,
+    "y2": 214,
+    "svgH": 215,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|JAMIE|BLANEK": {
+    "fSize": 154,
+    "lSize": 131,
+    "y1": 132,
+    "y2": 256,
+    "svgH": 256,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|J'NELLE|BOBB-SEMPLE": {
+    "fSize": 129,
+    "lSize": 70,
+    "y1": 111,
+    "y2": 183,
+    "svgH": 184,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|DARYL PARIS|BRIGHT": {
+    "fSize": 78,
+    "lSize": 141,
+    "y1": 67,
+    "y2": 200,
+    "svgH": 201,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|BRYCE|BRITTON": {
+    "fSize": 157,
+    "lSize": 122,
+    "y1": 136,
+    "y2": 253,
+    "svgH": 254,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|CARMEN|CABRERA": {
+    "fSize": 116,
+    "lSize": 109,
+    "y1": 101,
+    "y2": 207,
+    "svgH": 208,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|MARLA JANE|CARAM": {
+    "fSize": 77,
+    "lSize": 135,
+    "y1": 66,
+    "y2": 194,
+    "svgH": 195,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|JAIME|CARILLO": {
+    "fSize": 154,
+    "lSize": 122,
+    "y1": 132,
+    "y2": 249,
+    "svgH": 250,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|MEGHAN|CASHEL": {
+    "fSize": 115,
+    "lSize": 132,
+    "y1": 100,
+    "y2": 225,
+    "svgH": 226,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|NOVEMBER|CHRISTINE": {
+    "fSize": 90,
+    "lSize": 98,
+    "y1": 78,
+    "y2": 174,
+    "svgH": 175,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|KATIE|CLARK": {
+    "fSize": 182,
+    "lSize": 156,
+    "y1": 156,
+    "y2": 301,
+    "svgH": 302,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|DANIELLE|CLICK": {
+    "fSize": 108,
+    "lSize": 176,
+    "y1": 93,
+    "y2": 256,
+    "svgH": 257,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|CLARA|COSLETT": {
+    "fSize": 155,
+    "lSize": 119,
+    "y1": 135,
+    "y2": 249,
+    "svgH": 250,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|SARAH|CRONK": {
+    "fSize": 150,
+    "lSize": 150,
+    "y1": 130,
+    "y2": 271,
+    "svgH": 272,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|JONATHAN|DAVID": {
+    "fSize": 95,
+    "lSize": 168,
+    "y1": 82,
+    "y2": 237,
+    "svgH": 237,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|SEAN|DEVARE": {
+    "fSize": 194,
+    "lSize": 132,
+    "y1": 168,
+    "y2": 294,
+    "svgH": 294,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|CORI|DIOQUINO": {
+    "fSize": 216,
+    "lSize": 106,
+    "y1": 188,
+    "y2": 292,
+    "svgH": 302,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ASHLEY|DOWDEN": {
+    "fSize": 133,
+    "lSize": 116,
+    "y1": 116,
+    "y2": 228,
+    "svgH": 229,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|JILLIAN|FERRY": {
+    "fSize": 133,
+    "lSize": 163,
+    "y1": 115,
+    "y2": 266,
+    "svgH": 266,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ANNIE|HARTKEMEYER": {
+    "fSize": 170,
+    "lSize": 69,
+    "y1": 146,
+    "y2": 215,
+    "svgH": 215,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|DREW|ERNST": {
+    "fSize": 172,
+    "lSize": 160,
+    "y1": 148,
+    "y2": 297,
+    "svgH": 298,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|DANIELA|GARZÓN-SILVA": {
+    "fSize": 120,
+    "lSize": 70,
+    "y1": 103,
+    "y2": 190,
+    "svgH": 191,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|GLENNA|GRANT": {
+    "fSize": 130,
+    "lSize": 154,
+    "y1": 112,
+    "y2": 256,
+    "svgH": 257,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ADAM|GRIFFITH": {
+    "fSize": 163,
+    "lSize": 116,
+    "y1": 140,
+    "y2": 250,
+    "svgH": 251,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|KAITLIN|HERNANDEZ": {
+    "fSize": 133,
+    "lSize": 86,
+    "y1": 115,
+    "y2": 199,
+    "svgH": 199,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|JACQUELINE|KAPHIPA": {
+    "fSize": 83,
+    "lSize": 116,
+    "y1": 72,
+    "y2": 190,
+    "svgH": 190,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|JIM|KNIPPLE": {
+    "fSize": 250,
+    "lSize": 122,
+    "y1": 215,
+    "y2": 332,
+    "svgH": 332,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|IGOR|HUDÁK": {
+    "fSize": 215,
+    "lSize": 149,
+    "y1": 186,
+    "y2": 361,
+    "svgH": 362,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|LIZZIE|HARLESS": {
+    "fSize": 173,
+    "lSize": 113,
+    "y1": 149,
+    "y2": 257,
+    "svgH": 258,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|NAIRA AGVANI|ZAKARYAN": {
+    "fSize": 71,
+    "lSize": 96,
+    "y1": 62,
+    "y2": 156,
+    "svgH": 156,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|TZENA|NICOLE": {
+    "fSize": 164,
+    "lSize": 144,
+    "y1": 141,
+    "y2": 276,
+    "svgH": 277,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|SIAN|YOUNGERMAN": {
+    "fSize": 215,
+    "lSize": 72,
+    "y1": 187,
+    "y2": 261,
+    "svgH": 262,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|DOMINIKA|ŠIROKÁ": {
+    "fSize": 99,
+    "lSize": 138,
+    "y1": 86,
+    "y2": 249,
+    "svgH": 250,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|MATT|STANNAH": {
+    "fSize": 179,
+    "lSize": 109,
+    "y1": 154,
+    "y2": 258,
+    "svgH": 259,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|LIZ|NELSON": {
+    "fSize": 348,
+    "lSize": 131,
+    "y1": 299,
+    "y2": 422,
+    "svgH": 423,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|C.J.|LASSITER": {
+    "fSize": 258,
+    "lSize": 109,
+    "y1": 223,
+    "y2": 329,
+    "svgH": 330,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|JON KEVIN|LAZARUS": {
+    "fSize": 96,
+    "lSize": 113,
+    "y1": 83,
+    "y2": 192,
+    "svgH": 193,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ELISHA|LAWSON": {
+    "fSize": 145,
+    "lSize": 119,
+    "y1": 126,
+    "y2": 240,
+    "svgH": 241,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|CAITLIN|MILEON": {
+    "fSize": 133,
+    "lSize": 130,
+    "y1": 115,
+    "y2": 239,
+    "svgH": 240,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|JAVIER|SPIVEY": {
+    "fSize": 143,
+    "lSize": 145,
+    "y1": 123,
+    "y2": 260,
+    "svgH": 261,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|NICK|LEHANE": {
+    "fSize": 215,
+    "lSize": 133,
+    "y1": 187,
+    "y2": 313,
+    "svgH": 313,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|JOHN|KISH": {
+    "fSize": 185,
+    "lSize": 217,
+    "y1": 160,
+    "y2": 359,
+    "svgH": 361,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|VANESSA|FRANK": {
+    "fSize": 111,
+    "lSize": 154,
+    "y1": 96,
+    "y2": 240,
+    "svgH": 240,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|AMNA|MEHMOOD": {
+    "fSize": 163,
+    "lSize": 93,
+    "y1": 140,
+    "y2": 231,
+    "svgH": 232,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|KASIE|LERNER": {
+    "fSize": 175,
+    "lSize": 135,
+    "y1": 152,
+    "y2": 279,
+    "svgH": 279,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|DEBORAH|KATZ": {
+    "fSize": 108,
+    "lSize": 206,
+    "y1": 94,
+    "y2": 282,
+    "svgH": 282,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|TAYLOR|REKUS": {
+    "fSize": 136,
+    "lSize": 157,
+    "y1": 118,
+    "y2": 265,
+    "svgH": 266,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|TSEBIYAH|MISHAEL": {
+    "fSize": 106,
+    "lSize": 112,
+    "y1": 92,
+    "y2": 200,
+    "svgH": 201,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|NICHOLAS|LINNEHAN": {
+    "fSize": 102,
+    "lSize": 102,
+    "y1": 88,
+    "y2": 187,
+    "svgH": 187,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|JOSEPH DALE|HARRIS": {
+    "fSize": 75,
+    "lSize": 137,
+    "y1": 65,
+    "y2": 195,
+    "svgH": 196,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|JAMIL A.C.|MANGAN": {
+    "fSize": 91,
+    "lSize": 113,
+    "y1": 79,
+    "y2": 188,
+    "svgH": 189,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ANTONIA|LACHE": {
+    "fSize": 117,
+    "lSize": 159,
+    "y1": 102,
+    "y2": 251,
+    "svgH": 252,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|RACHEL|PADELL": {
+    "fSize": 131,
+    "lSize": 136,
+    "y1": 114,
+    "y2": 242,
+    "svgH": 242,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|KATEY|PARKER": {
+    "fSize": 164,
+    "lSize": 130,
+    "y1": 141,
+    "y2": 262,
+    "svgH": 262,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ADRIENNE|WHEELER": {
+    "fSize": 103,
+    "lSize": 108,
+    "y1": 88,
+    "y2": 191,
+    "svgH": 191,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|VALERIA|SORGATO": {
+    "fSize": 123,
+    "lSize": 110,
+    "y1": 106,
+    "y2": 212,
+    "svgH": 213,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|DANYA|TAYMOR": {
+    "fSize": 151,
+    "lSize": 120,
+    "y1": 130,
+    "y2": 244,
+    "svgH": 245,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|KATHY|YAMAMOTO": {
+    "fSize": 158,
+    "lSize": 85,
+    "y1": 135,
+    "y2": 218,
+    "svgH": 219,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|ANIKKE|FOX": {
+    "fSize": 140,
+    "lSize": 263,
+    "y1": 121,
+    "y2": 359,
+    "svgH": 361,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|DAVID D.|MITCHELL": {
+    "fSize": 116,
+    "lSize": 101,
+    "y1": 100,
+    "y2": 198,
+    "svgH": 199,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|RYAN|WHINNEM": {
+    "fSize": 191,
+    "lSize": 100,
+    "y1": 164,
+    "y2": 260,
+    "svgH": 260,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|EUGENE MICHAEL|SANTIAGO": {
+    "fSize": 58,
+    "lSize": 102,
+    "y1": 51,
+    "y2": 150,
+    "svgH": 151,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|GABRIEL|KADIAN": {
+    "fSize": 122,
+    "lSize": 135,
+    "y1": 105,
+    "y2": 232,
+    "svgH": 232,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|JOSIMAR|TULLOCH": {
+    "fSize": 108,
+    "lSize": 115,
+    "y1": 93,
+    "y2": 204,
+    "svgH": 205,
+    "stage": "final"
+  },
+  "NS|anton-v27|macOS|360|0.6|BLAINE|PATAGOC": {
+    "fSize": 144,
+    "lSize": 111,
+    "y1": 124,
+    "y2": 230,
+    "svgH": 231,
+    "stage": "final"
+  }
+}

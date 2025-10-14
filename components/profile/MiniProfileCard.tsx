@@ -2,15 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { CSSProperties } from "react";
 
 interface MiniProfileCardProps {
   name: string;
   role: string;
   slug: string;
   headshotUrl?: string;
-  customStyle?: React.CSSProperties;
+  customStyle?: CSSProperties;
   nameFontSize?: number;
   roleFontSize?: number;
+  /** Set true for cards above the fold so the image + RSC get fetched ASAP */
+  priority?: boolean;
 }
 
 export default function MiniProfileCard({
@@ -21,25 +24,26 @@ export default function MiniProfileCard({
   customStyle,
   nameFontSize,
   roleFontSize,
+  priority = false,
 }: MiniProfileCardProps) {
   const defaultImage = "/images/default-headshot.png";
-  const imageSrc = headshotUrl
-    ? headshotUrl.replace(/^http:\/\//i, "https://")
-    : defaultImage;
+  const imageSrc = (headshotUrl || defaultImage).replace(/^http:\/\//i, "https://");
 
   return (
     <Link
       href={`/alumni/${slug}`}
+      prefetch
       className="block group"
       style={{ textDecoration: "none" }}
+      aria-label={`${name} profile`}
     >
       <div
         className="flex flex-col items-start"
         style={{ width: "144px", ...customStyle }}
       >
-        {/* Headshot */}
+        {/* Headshot (4:5, stable box to avoid CLS) */}
         <div
-          className="relative w-full transition-all duration-300 group-hover:scale-111 group-hover:brightness-105 filter"
+          className="relative w-full transition-all duration-300 group-hover:scale-[1.11] group-hover:brightness-105"
           style={{
             aspectRatio: "4 / 5",
             overflow: "hidden",
@@ -49,13 +53,13 @@ export default function MiniProfileCard({
         >
           <Image
             src={imageSrc}
-            alt={name}
+            alt={`${name}${role ? ` — ${role}` : ""}`}
             fill
             className="object-cover transition-all duration-300"
-            sizes="100px"
-            loading="lazy"
-            placeholder="blur"
-            blurDataURL={defaultImage}
+            sizes="144px"
+            loading={priority ? "eager" : "lazy"}
+            fetchPriority={priority ? "high" : "auto"}
+            draggable={false}
           />
         </div>
 
@@ -63,8 +67,8 @@ export default function MiniProfileCard({
         <h3
           className="uppercase leading-snug text-[#f2f2f2] group-hover:text-[#FFCC00] transition-colors duration-300"
           style={{
-            fontFamily: "Space Grotesk",
-            fontWeight: 500,
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+            fontWeight: 600,
             letterSpacing: "0.05rem",
             fontSize: nameFontSize || 16,
             margin: "15px 0 0 0",
@@ -78,7 +82,7 @@ export default function MiniProfileCard({
         <p
           className="text-[#f2f2f2]"
           style={{
-            fontFamily: "DM Sans",
+            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
             fontWeight: 400,
             opacity: 0.6,
             fontSize: roleFontSize || 14,
@@ -92,7 +96,7 @@ export default function MiniProfileCard({
 
       <style>{`
         .group:hover div.relative {
-          box-shadow: 0 12px 28px rgba(36,17,35,0.6); /* Bigger shadow on hover */
+          box-shadow: 0 12px 28px rgba(36,17,35,0.6);
         }
       `}</style>
     </Link>

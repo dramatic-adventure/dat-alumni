@@ -1,24 +1,71 @@
 // lib/loadUpdates.ts
 import { parse } from "csv-parse/sync";
-import fetch from "node-fetch";
 import type { Update } from "./types";
 
-/**
- * Loads all journey updates from the public CSV.
- */
-export async function loadAllUpdates(): Promise<Update[]> {
-  const CSV_URL =
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzkIPStlL2TU7AHySD3Kw9CqBFTi1q6QW7N99ivE3FpofNhHlwWejU0LXeMOmnTawtmLCT71KWMU-F/pub?gid=1903489342&single=true&output=csv";
-
-  const res = await fetch(CSV_URL);
-  if (!res.ok) throw new Error("Failed to fetch updates CSV");
-
-  const text = await res.text();
-  const rows: Update[] = parse(text, {
+/** Parse CSV text into typed rows. */
+function parseCsv<T = any>(text: string): T[] {
+  return parse(text, {
     columns: true,
     skip_empty_lines: true,
     trim: true,
-  });
+  }) as T[];
+}
 
-  return rows;
+/**
+ * Try a remote Google Sheet first; fall back to a public file (e.g. /fallback/*.csv).
+ * Note: fallbackPath must live under /public so it's fetchable on the client.
+ */
+async function fetchCsvOrFallback(
+  remoteUrl: string | undefined,
+  fallbackPath: string
+): Promise<string> {
+  try {
+    if (!remoteUrl) throw new Error("No remote URL");
+    const res = await fetch(remoteUrl, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Bad status: ${res.status}`);
+    return await res.text();
+  } catch {
+    const res = await fetch(fallbackPath, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Fallback not found at ${fallbackPath}`);
+    return await res.text();
+  }
+}
+
+/** 🟡 Spotlights & Highlights (single tab that includes both) */
+export async function loadSpotlightsHighlights(): Promise<Update[]> {
+  const text = await fetchCsvOrFallback(
+    process.env.SPOTLIGHTS_CSV_URL,
+    "/fallback/spotlights-highlights.csv"
+  );
+  return parseCsv<Update>(text);
+}
+
+/** 🔴 Promos */
+export async function loadPromos(): Promise<Update[]> {
+  const text = await fetchCsvOrFallback(
+    process.env.PROMOS_CSV_URL,
+    "/fallback/promos.csv"
+  );
+  return parseCsv<Update>(text);
+}
+
+/** 🟢 Journey Albums */
+export async function loadJourneyAlbums(): Promise<Update[]> {
+  const text = await fetchCsvOrFallback(
+    process.env.JOURNEY_ALBUMS_CSV_URL,
+    "/fallback/journey-albums.csv"
+  );
+  return parseCsv<Update>(text);
+}
+
+/**
+ * 🧰 Aggregate: pulls the combined tab with everything (if you keep it).
+ * Use this when you need a single stream of all updates.
+ */
+export async function loadAllUpdates(): Promise<Update[]> {
+  const text = await fetchCsvOrFallback(
+    process.env.ALUMNI_UPDATES_CSV_URL,
+    "/fallback/alumni-updates.csv"
+  );
+  return parseCsv<Update>(text);
 }

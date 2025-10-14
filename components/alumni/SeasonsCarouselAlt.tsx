@@ -69,7 +69,7 @@ export default function SeasonsCarouselAlt() {
       {/* ✅ Title */}
       <h2
         style={{
-          fontFamily: "'Anton', sans-serif",
+          fontFamily: "var(--font-anton), system-ui, sans-serif",
           fontSize: "clamp(2.5rem, 6.5vw, 6rem)",
           fontWeight: 400,
           color: "#F23359",

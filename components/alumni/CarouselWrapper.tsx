@@ -2,7 +2,7 @@
 
 import React from "react";
 import JourneyCard from "./JourneyCard"; // adjust the import path if needed
-import type { JourneyCard as JourneyCardType } from "@/components/hooks/useFilteredJourneyCards";
+import type { JourneyCardType } from "@/lib/types";
 
 interface Props {
   cards: JourneyCardType[];
@@ -23,7 +23,7 @@ export default function CarouselWrapper({ cards, onCardClick }: Props) {
     >
       {cards.map((card, index) => (
         <div
-          key={index}
+          key={card.id ?? index}
           style={{
             flex: "0 0 auto",
             scrollSnapAlign: "start",

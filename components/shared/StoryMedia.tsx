@@ -1,7 +1,8 @@
-export {}; // ✅ Ensure ES module scope
+// components/shared/StoryMedia.tsx
+"use client";
 
 import React from "react";
-import ResponsiveVideoEmbed from "@/components/shared/ResponsiveVideoEmbed";
+import Image from "next/image";
 
 interface StoryMediaProps {
   imageUrl?: string;
@@ -22,6 +23,7 @@ export default function StoryMedia({
   const cleanUrl = (() => {
     try {
       const parsed = new URL(trimmedUrl);
+      // strip tracking params
       parsed.searchParams.forEach((_, key) => {
         if (key.toLowerCase().startsWith("utm") || key === "fbclid") {
           parsed.searchParams.delete(key);
@@ -29,6 +31,7 @@ export default function StoryMedia({
       });
       return parsed.toString();
     } catch {
+      // relative URL, etc.
       return trimmedUrl;
     }
   })();
@@ -37,7 +40,8 @@ export default function StoryMedia({
 
   const isImage = /\.(png|jpe?g|gif|webp|svg|heic|heif)$/i.test(baseUrl);
   const isVideoFile = /\.(mp4|webm|mov|ogg)$/i.test(baseUrl);
-  const isAudio = /\.(mp3|wav|ogg)$/i.test(baseUrl) || cleanUrl.includes("soundcloud.com");
+  const isAudio =
+    /\.(mp3|wav|ogg)$/i.test(baseUrl) || cleanUrl.includes("soundcloud.com");
 
   const getEmbedUrl = (url: string): string | null => {
     try {
@@ -48,7 +52,6 @@ export default function StoryMedia({
         const id = parsed.pathname.slice(1);
         return `https://www.youtube.com/embed/${id}`;
       }
-
       if (host.includes("youtube.com")) {
         const id = parsed.searchParams.get("v");
         if (id) return `https://www.youtube.com/embed/${id}`;
@@ -58,23 +61,19 @@ export default function StoryMedia({
           : null;
         if (shortId) return `https://www.youtube.com/embed/${shortId}`;
       }
-
       if (host.includes("vimeo.com")) {
         const id = parsed.pathname.split("/")[1];
         return `https://player.vimeo.com/video/${id}`;
       }
-
       if (host.includes("drive.google.com")) {
         const match = parsed.pathname.match(/\/d\/(.+?)\//);
         if (match?.[1]) return `https://drive.google.com/file/d/${match[1]}/preview`;
       }
-
       if (host.includes("dropbox.com")) {
         return url
           .replace("www.dropbox.com", "dl.dropboxusercontent.com")
           .replace("?dl=0", "");
       }
-
       return null;
     } catch {
       return null;
@@ -151,20 +150,19 @@ export default function StoryMedia({
           </div>
         </div>
       );
-    } else {
-      return (
-        <div className={containerClass}>
-          <iframe
-            title={title || "Embedded Video"}
-            src={embedUrl}
-            allowFullScreen
-            loading="lazy"
-            className="w-full aspect-video rounded-xl shadow-md min-h-[300px] sm:min-h-[400px] lg:min-h-[480px]"
-            aria-label={title || "Embedded video"}
-          />
-        </div>
-      );
     }
+    return (
+      <div className={containerClass}>
+        <iframe
+          title={title || "Embedded Video"}
+          src={embedUrl}
+          allowFullScreen
+          loading="lazy"
+          className="w-full aspect-video rounded-xl shadow-md min-h-[300px] sm:min-h-[400px] lg:min-h-[480px]"
+          aria-label={title || "Embedded video"}
+        />
+      </div>
+    );
   }
 
   // 🎬 Raw Video Files (MP4, MOV, etc.)
@@ -200,31 +198,57 @@ export default function StoryMedia({
     );
   }
 
-  // 🖼 Static Images (natural size, constrained to 90% of viewport)
-if (isImage) {
-  return (
-    <div className="w-full h-full flex items-center justify-center touch-none">
-      <div className="overflow-hidden">
-        <img
-          src={cleanUrl}
-          alt={title || "Image"}
-          role="img"
-          aria-label={title || "Image"}
-          className="object-contain"
-          style={{
-            maxWidth: "90vw",
-            maxHeight: "90vh",
-            width: "auto",
-            height: "auto",
-            display: "block",
-            margin: "0 auto",
-            pointerEvents: "auto",
-          }}
-        />
+  // 🖼 Static Images → next/image
+  if (isImage) {
+    if (mode === "lightbox") {
+      return (
+        <div className="w-full h-full flex items-center justify-center touch-none">
+          <div
+            className="relative"
+            style={{
+              width: "90vw",
+              height: "90vh",
+              maxWidth: "1600px",
+              maxHeight: "90vh",
+            }}
+          >
+            <Image
+              src={cleanUrl}
+              alt={title || "Image"}
+              fill
+              className="object-contain"
+              sizes="(max-width: 1024px) 90vw, 90vw"
+              priority
+            />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={containerClass}>
+        <div className="w-full flex items-center justify-center">
+          <div
+            className="relative"
+            style={{
+              width: "100%",
+              maxWidth: "min(90vw, 1200px)",
+              height: "min(70vh, 65vw)",
+            }}
+          >
+            <Image
+              src={cleanUrl}
+              alt={title || "Image"}
+              fill
+              className="object-contain rounded-xl shadow-md"
+              sizes="(max-width: 640px) 90vw, (max-width: 1024px) 80vw, 60vw"
+              priority={false}
+            />
+          </div>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   // 🚫 Fallback
   return null;

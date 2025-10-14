@@ -124,7 +124,7 @@ export default function FeaturedAlumni({ highlights }: FeaturedAlumniProps) {
                 {/* ✅ Name & Role */}
                 <h3
                   style={{
-                    fontFamily: "'Space Grotesk', sans-serif",
+                    fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                     fontSize: "1.3rem",
                     fontWeight: 600,
                     color: "#241123",
@@ -135,7 +135,7 @@ export default function FeaturedAlumni({ highlights }: FeaturedAlumniProps) {
                 </h3>
                 <p
                   style={{
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                     fontSize: "0.9rem",
                     color: "#6C00AF",
                     margin: 0,

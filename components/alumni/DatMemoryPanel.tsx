@@ -63,7 +63,7 @@ export default function DatMemoryPanel({ memories = [] }: { memories: MemoryEntr
           overflowY: "auto",
           display: "flex",
           flexDirection: "column",
-          fontFamily: "DM Sans",
+          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
         }}
       >
         <div
@@ -76,7 +76,7 @@ export default function DatMemoryPanel({ memories = [] }: { memories: MemoryEntr
             fontSize: "0.9rem",
             padding: "0.4rem 0.85rem 0.4rem 0.6rem",
             borderRadius: "999px",
-            fontFamily: "Space Grotesk, sans-serif",
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
             fontWeight: 600,
             letterSpacing: "0.04em",
             textTransform: "uppercase",
@@ -132,7 +132,7 @@ export default function DatMemoryPanel({ memories = [] }: { memories: MemoryEntr
         {current?.headline && (
           <h2
             style={{
-              fontFamily: "Anton, sans-serif",
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
               fontSize: "2rem",
               marginTop: "0.5rem",
               marginBottom: "0.25rem",
@@ -148,7 +148,7 @@ export default function DatMemoryPanel({ memories = [] }: { memories: MemoryEntr
         {current?.subheadline && (
           <p
             style={{
-              fontFamily: "Space Grotesk, sans-serif",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
               fontSize: "0.8rem",
               marginBottom: "1.5rem",
               textTransform: "uppercase",
@@ -180,7 +180,7 @@ export default function DatMemoryPanel({ memories = [] }: { memories: MemoryEntr
           >
             <p
               style={{
-                fontFamily: "Rock Salt, cursive",
+                fontFamily: "var(--font-rock-salt), system-ui, sans-serif",
                 fontSize: "1.25rem",
                 color: current?.body ? "#241123" : "#888",
                 lineHeight: "1.4",
@@ -207,7 +207,7 @@ export default function DatMemoryPanel({ memories = [] }: { memories: MemoryEntr
                 letterSpacing: "0.4em",
                 fontSize: "1rem",
                 borderRadius: "0.5rem",
-                fontFamily: "Space Grotesk, sans-serif",
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                 textDecoration: "none",
                 width: "100%",
                 opacity: "0.9",

@@ -424,7 +424,7 @@ export default function UpdatesPanel({
         boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
         borderRadius: "8px",
         padding: "0.5rem",
-        fontFamily: "'Space Grotesk', sans-serif",
+        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
         position: "relative",
         overflow: "hidden",
       }}
@@ -433,7 +433,7 @@ export default function UpdatesPanel({
       <div style={{ textAlign: "center", marginBottom: "2rem" }}>
         <h2
           style={{
-            fontFamily: "'Space Grotesk', sans-serif",
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
             fontSize: "2rem",
             fontWeight: 700,
             textTransform: "uppercase",
@@ -450,7 +450,7 @@ export default function UpdatesPanel({
         <h3
           style={{
             marginTop: "0.75rem",
-            fontFamily: "'Space Grotesk', sans-serif",
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
             fontSize: "1.15rem",
             fontWeight: 600,
             borderBottom: "2px solid #241123",
@@ -512,7 +512,7 @@ export default function UpdatesPanel({
                         strictness,
                         verticalOffset
                       ),
-                      fontFamily: "'Rock Salt', cursive",
+                      fontFamily: "var(--font-rock-salt), cursive",
                       fontSize: `${fontSize}px`,
                       color: "#F23359",
                       whiteSpace: "nowrap",

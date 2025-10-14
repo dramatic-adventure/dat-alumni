@@ -58,7 +58,7 @@ export default function CreativeWorkPanel({ updates = [] }: { updates: CreativeW
           position: "relative",
           height: "700px",
           overflowY: "auto",
-          fontFamily: "DM Sans",
+          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
           display: "flex",
           flexDirection: "column",
         }}
@@ -74,7 +74,7 @@ export default function CreativeWorkPanel({ updates = [] }: { updates: CreativeW
             fontSize: "0.9rem",
             padding: "0.4rem 0.85rem",
             borderRadius: "999px",
-            fontFamily: "Space Grotesk, sans-serif",
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
             fontWeight: 600,
             letterSpacing: "0.04em",
             textTransform: "uppercase",
@@ -119,7 +119,7 @@ export default function CreativeWorkPanel({ updates = [] }: { updates: CreativeW
         {current?.headline && (
           <h2
             style={{
-              fontFamily: "Anton, sans-serif",
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
               fontSize: "2rem",
               margin: "0.5rem 0 0.25rem",
               lineHeight: "1.3",
@@ -135,7 +135,7 @@ export default function CreativeWorkPanel({ updates = [] }: { updates: CreativeW
         {current?.subheadline && (
           <p
             style={{
-              fontFamily: "Space Grotesk, sans-serif",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
               fontSize: "0.8rem",
               marginBottom: "1.25rem",
               textTransform: "uppercase",
@@ -150,7 +150,7 @@ export default function CreativeWorkPanel({ updates = [] }: { updates: CreativeW
         {current?.body && (
           <p
             style={{
-              fontFamily: "Rock Salt, cursive",
+              fontFamily: "var(--font-rock-salt), system-ui, sans-serif",
               fontSize: "1.2rem",
               lineHeight: "1.4",
               transform: "rotate(-1deg)",
@@ -177,7 +177,7 @@ export default function CreativeWorkPanel({ updates = [] }: { updates: CreativeW
               textDecoration: "none",
               textAlign: "center",
               width: "100%",
-              fontFamily: "Space Grotesk, sans-serif",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
               letterSpacing: "0.4em",
               fontSize: "1rem",
               textTransform: "uppercase",
@@ -218,7 +218,7 @@ export default function CreativeWorkPanel({ updates = [] }: { updates: CreativeW
             <button
               onClick={() => setArchiveMode(true)}
               style={{
-                fontFamily: "Rock Salt, cursive",
+                fontFamily: "var(--font-rock-salt), system-ui, sans-serif",
                 background: "none",
                 border: "none",
                 fontSize: "0.85rem",
@@ -237,7 +237,7 @@ export default function CreativeWorkPanel({ updates = [] }: { updates: CreativeW
                 setSelectedArchivedIndex(null);
               }}
               style={{
-                fontFamily: "Rock Salt, cursive",
+                fontFamily: "var(--font-rock-salt), system-ui, sans-serif",
                 background: "none",
                 border: "none",
                 fontSize: "0.85rem",
@@ -266,7 +266,7 @@ export default function CreativeWorkPanel({ updates = [] }: { updates: CreativeW
                   marginBottom: "0.5rem",
                   cursor: "pointer",
                   fontSize: "0.9rem",
-                  fontFamily: "DM Sans",
+                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                   color: "#241123",
                   boxShadow: "0px 1px 4px rgba(0,0,0,0.05)",
                 }}

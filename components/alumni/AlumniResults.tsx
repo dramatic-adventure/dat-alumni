@@ -35,7 +35,7 @@ export default function AlumniResults({ results, compact = false }: AlumniResult
       <p
         style={{
           marginTop: "1rem",
-          fontFamily: "Space Grotesk",
+          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
           fontSize: "1.3rem",
           color: "#F6E4C1",
           fontWeight: 600,
@@ -55,7 +55,7 @@ export default function AlumniResults({ results, compact = false }: AlumniResult
           style={{
             textAlign: "center",
             marginBottom: "1rem",
-            fontFamily: "Space Grotesk",
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
             fontWeight: 600,
             fontSize: "1.3rem",
             color: "#F6E4C1",

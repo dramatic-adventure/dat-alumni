@@ -359,7 +359,7 @@ export const programMap: Record<string, ProgramData> = {
     "jessica-emerson": ["Actor"],
     "jennifer-robideau": ["Actor"],
     "jeanne-lauren-smith": ["Actor"],
-    "janel-miley-knipple": ["Actor"],
+    "janel-miley": ["Actor"],
     "jamil-mangan": ["Director"],
     "jacob-hellman": ["Actor"],
     "hilary-white": ["Actor"],
@@ -374,7 +374,7 @@ export const programMap: Record<string, ProgramData> = {
     "claire-harkey": ["Actor"],
     "carla-neuss": ["Actor"],
     "caitlin-green": ["Actor"],
-    "c-j-lassiter": ["Actor"],
+    "cj-lassiter": ["Actor"],
     "byron-arreola": ["Actor"],
     "blaine-patagoc": ["Actor"],
     "amy-e-witting": ["Actor"],
@@ -384,15 +384,15 @@ export const programMap: Record<string, ProgramData> = {
     "sarah-chien": ["Road Manager"],
     "george-adams": ["Road Manager"],
     "maria-isabel-rojas": ["Road Manager"],
-    "gustavo-redin": ["Road Manager", "Teaching Artist"],
-    "jason-williamson": ["Director", "Teaching Artist"],
-    "christen-madrazo": ["Teaching Artist"],
+    "gustavo-redin": ["Road Manager"],
+    "jason-williamson": ["Director"],
+    "christen-madrazo": ["Teaching Artist in Residence"],
     "vince-eaton": ["Actor"],
     "rachel-wiese": ["Director"],
-    "tim-santi-baxter": ["Road Manager"],
-    "kathleen-amshoff": ["Director", "Teaching Artist"],
-    "mary-k-baxter": ["Executive Director", "Teaching Artist"],
-    "jesse-baxter": ["Artistic Director", "Teaching Artist"]
+    "santi-baxter": ["Road Manager"],
+    "kathleen-amshoff": ["Director"],
+    "mary-k-baxter": ["Executive Director"],
+    "jesse-baxter": ["Artistic Director"],
   }
 },
 
@@ -407,12 +407,12 @@ export const programMap: Record<string, ProgramData> = {
   url: "/creative-trek",
   artists: {
     "rachel-wiese": ["Actor"],
-    "lydia-perez-feldman": ["Actor"],
+    "lydia-feldez": ["Actor"],
     "leslie-fields": ["Playwright"],
-    "jeremy-feldman": ["Actor"],
-    "tim-santi-baxter": ["Road Manager"],
-    "mary-k-baxter": ["Executive Director", "Actor", "Teaching Artist"],
-    "jesse-baxter": ["Artistic Director", "Director", "Teaching Artist"]
+    "jeremy-feldez": ["Actor"],
+    "santi-baxter": ["Road Manager"],
+    "mary-k-baxter": ["Executive Director", "Actor"],
+    "jesse-baxter": ["Artistic Director", "Director"],
   }
 },
 
@@ -429,8 +429,8 @@ export const programMap: Record<string, ProgramData> = {
     "isabel-martinez": ["Actor"],
     "oscar-manzini": ["Road Manager"],
     "lisa-bearpark": ["Actor"],
-    "kathleen-amshoff": ["Assoc. Artistic Director", "Director", "Teaching Artist"],
-    "mary-k-baxter": ["Executive Director", "Actor", "Teaching Artist"],
-    "jesse-baxter": ["Artistic Director", "Actor", "Teaching Artist"]
+    "kathleen-amshoff": ["Assoc. Artistic Director", "Director"],
+    "mary-k-baxter": ["Executive Director", "Actor"],
+    "jesse-baxter": ["Artistic Director", "Actor"],
   }
 }};

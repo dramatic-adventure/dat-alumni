@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import FeaturedAlumni from "@/components/alumni/FeaturedAlumni";
 import AlumniSearch from "@/components/alumni/AlumniSearch/AlumniSearch";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
-import { loadVisibleAlumni } from "@/lib/loadAlumni";
-import { getRecentUpdates } from "@/lib/getRecentUpdates";
 
 const UpdatesPanel = dynamic(() => import("@/components/shared/UpdatesPanel"), {
   ssr: false,
@@ -22,7 +21,7 @@ const UpdatesPanel = dynamic(() => import("@/components/shared/UpdatesPanel"), {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        fontFamily: "Space Grotesk",
+        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
         fontWeight: 600,
         color: "#f2f2f2",
         opacity: 0.8,
@@ -33,82 +32,32 @@ const UpdatesPanel = dynamic(() => import("@/components/shared/UpdatesPanel"), {
   ),
 });
 
-interface AlumniItem {
-  name: string;
-  slug: string;
-  roles?: string[];
-  headshotUrl?: string;
-}
+type AlumniItem = { name: string; slug: string; roles?: string[]; headshotUrl?: string };
+type UpdateItem = { text: string; link?: string; author?: string };
 
-interface AlumniPageProps {
+export default function AlumniPage({
+  highlights,
+  alumniData,
+  initialUpdates,
+}: {
   highlights: { name: string; roles?: string[]; slug: string; headshotUrl?: string }[];
-}
-
-interface UpdateItem {
-  text: string;
-  link?: string;
-  author?: string;
-}
-
-export default function AlumniPage({ highlights }: AlumniPageProps) {
-  const [updates, setUpdates] = useState<UpdateItem[]>([]);
-  const [alumniData, setAlumniData] = useState<AlumniItem[]>([]);
+  alumniData: AlumniItem[];
+  initialUpdates: UpdateItem[];
+}) {
+  const [updates, setUpdates] = useState<UpdateItem[]>(initialUpdates || []);
+  const [data, setData] = useState<AlumniItem[]>(alumniData || []);
   const [primaryResults, setPrimaryResults] = useState<AlumniItem[]>([]);
   const [secondaryResults, setSecondaryResults] = useState<AlumniItem[]>([]);
   const [query, setQuery] = useState<string>("");
-  const [usedFallback, setUsedFallback] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fallbackUpdates: UpdateItem[] = [
-      { text: "Just joined a new Broadway cast!", author: "ALEX", link: "/alumni/alex" },
-      { text: "Launched a theatre program in Ecuador.", author: "JAMIE", link: "/alumni/jamie" },
-      { text: "Published a play about climate change.", author: "PRIYA", link: "/alumni/priya" },
-    ];
-
-    setUpdates(fallbackUpdates);
-    setUsedFallback(true);
-
-    async function fetchData() {
-      try {
-        const alumni = await loadVisibleAlumni();
-        if (!isMounted) return;
-
-        setAlumniData(alumni);
-
-        if (alumni.length > 0) {
-          const recent = getRecentUpdates(alumni).map((u: any) => ({
-            text: u.message || "Update coming soon...",
-            link: `/alumni/${u.slug}`,
-            author: u.name || "ALUM",
-          }));
-
-          if (recent.length > 0) {
-            setUpdates(recent.sort(() => Math.random() - 0.5).slice(0, 5));
-            setUsedFallback(false);
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch updates:", err);
-      }
-    }
-
-    fetchData();
-
-    const retryTimeout = setTimeout(() => {
-      if (usedFallback) fetchData();
-    }, 3000);
-
-    return () => {
-      isMounted = false;
-      clearTimeout(retryTimeout);
-    };
-  }, [usedFallback]);
+    setData(alumniData || []);
+    setUpdates(initialUpdates || []);
+  }, [alumniData, initialUpdates]);
 
   return (
     <div>
-      {/* ✅ HERO */}
+      {/* HERO */}
       <section
         style={{
           position: "relative",
@@ -119,16 +68,17 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
         }}
       >
         <Image
-          src="/images/alumni hero.jpg"
+          src="/images/alumni-hero.jpg"
           alt="Alumni Hero"
           fill
           priority
+          sizes="100vw"
           className="object-cover object-center"
         />
         <div style={{ position: "absolute", bottom: "1rem", right: "5%" }}>
           <h1
             style={{
-              fontFamily: "Anton, sans-serif",
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
               fontSize: "clamp(4rem, 9vw, 10rem)",
               color: "#f2f2f2",
               textTransform: "uppercase",
@@ -142,11 +92,11 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
       </section>
 
       <main style={{ padding: "4rem 0 0" }}>
-        {/* ✅ Intro Section */}
+        {/* Intro + Search */}
         <section style={{ width: "70%", maxWidth: "1200px", margin: "0 auto", marginBottom: "3rem" }}>
           <h2
             style={{
-              fontFamily: "Space Grotesk, sans-serif",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
               color: "#6C00AF",
               opacity: "0.9",
               fontSize: "clamp(2.8rem, 5vw, 3.25rem)",
@@ -158,25 +108,24 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
           </h2>
           <p
             style={{
-              fontFamily: "DM Sans, sans-serif",
+              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
               color: "#f2f2f2",
               opacity: "0.6",
               fontSize: "clamp(1.4rem, 1.5vw, 1.8rem)",
               lineHeight: "1.6",
               marginBottom: "2rem",
             }}
-           >
+          >
             Each season brings together bold creators who take the journey and stand alongside our
             neighbors — collaborating to craft new stories rooted in real experiences and honest,
-            human connection.  Explore our alumni, revisit past projects, and see how each artist&apos;s journey
+            human connection. Explore our alumni, revisit past projects, and see how each artist&apos;s journey
             continues to inspire.
           </p>
 
-          {/* ✅ Search */}
           <div style={{ display: "flex", gap: "1rem", alignItems: "stretch" }}>
             <div style={{ flex: 1, height: "47px" }}>
               <AlumniSearch
-                alumniData={alumniData}
+                alumniData={data}
                 onResults={(primary, secondary, q) => {
                   setPrimaryResults(primary);
                   setSecondaryResults(secondary);
@@ -186,14 +135,16 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
               />
             </div>
 
-            <a
+            {/* Convert to Link with prefetch */}
+            <Link
               href="/directory"
+              prefetch
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 height: "47px",
-                fontFamily: "Space Grotesk",
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                 fontWeight: 600,
                 backgroundColor: "#6C00AF",
                 color: "#f2f2f2",
@@ -210,16 +161,16 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
               onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
             >
               DIVE DEEPER IN THE DIRECTORY
-            </a>
+            </Link>
           </div>
         </section>
 
-        {/* ✅ Results */}
+        {/* Results */}
         {query && primaryResults.length > 0 && (
           <section style={{ width: "100%", margin: "1.5rem auto" }}>
             <h3
               style={{
-                fontFamily: "Space Grotesk, sans-serif",
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                 textAlign: "left",
                 margin: "0 0 0.25rem 2rem",
                 fontWeight: 1000,
@@ -242,16 +193,18 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
                 scrollPaddingLeft: "2rem",
                 scrollBehavior: "smooth",
                 WebkitOverflowScrolling: "touch",
-                                        background: "rgba(36, 17, 35, 0.2)",
+                background: "rgba(36, 17, 35, 0.2)",
               }}
             >
               {primaryResults.map((alum, idx) => (
                 <div key={`primary-${idx}`} style={{ flex: "0 0 auto", width: "150px", scrollSnapAlign: "start" }}>
+                  {/* MiniProfileCard already renders a Link with prefetch */}
                   <MiniProfileCard
                     name={alum.name}
                     role={alum.roles?.join(", ") ?? ""}
                     slug={alum.slug}
                     headshotUrl={alum.headshotUrl}
+                    priority={idx < 6} // eagerly fetch first row for instant clicks
                   />
                 </div>
               ))}
@@ -264,7 +217,7 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
           <section style={{ width: "100%", margin: "2rem auto", textAlign: "center" }}>
             <h4
               style={{
-                fontFamily: "Space Grotesk, sans-serif",
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                 margin: "0 0 0.25rem 2rem",
                 textAlign: "left",
                 fontWeight: 1000,
@@ -287,7 +240,7 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
                 scrollPaddingLeft: "2rem",
                 scrollBehavior: "smooth",
                 WebkitOverflowScrolling: "touch",
-                                        background: "rgba(36, 17, 35, 0.2)",
+                background: "rgba(36, 17, 35, 0.2)",
               }}
             >
               <div style={{ flex: "0 0 2rem" }} />
@@ -298,14 +251,16 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
                     role={alum.roles?.join(", ") ?? ""}
                     slug={alum.slug}
                     headshotUrl={alum.headshotUrl}
+                    priority={idx < 6}
                   />
                 </div>
               ))}
               <div style={{ flex: "0 0 2rem" }} />
             </div>
 
-            <a
+            <Link
               href={`/directory?q=${encodeURIComponent(query)}`}
+              prefetch
               style={{
                 display: "inline-block",
                 marginTop: "1.5rem",
@@ -313,7 +268,7 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
                 color: "#fff",
                 padding: "0.8rem 1.5rem",
                 borderRadius: "6px",
-                fontFamily: "Space Grotesk, sans-serif",
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                 fontWeight: 500,
                 fontSize: "0.95rem",
                 letterSpacing: "1.2px",
@@ -325,15 +280,15 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
               onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
             >
               View All Matches
-            </a>
+            </Link>
           </section>
         )}
 
-        {/* ✅ Highlights & Updates */}
+        {/* Highlights & Updates */}
         <section style={{ width: "100%", textAlign: "center", margin: "2rem 0" }}>
           <h2
             style={{
-              fontFamily: "Anton, sans-serif",
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
               fontSize: "clamp(2rem, 6vw, 8rem)",
               textTransform: "uppercase",
               color: "#241123",
@@ -347,6 +302,7 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
 
         <div className="alumni-grid">
           <div className="featured-col">
+            {/* FeaturedAlumni should use next/link internally for each tile */}
             <FeaturedAlumni highlights={highlights} />
           </div>
           <div className="updates-col">
@@ -378,17 +334,12 @@ export default function AlumniPage({ highlights }: AlumniPageProps) {
             margin: 0 auto;
             align-items: start;
           }
-
           .updates-col {
-  min-width: 350px;
-  min-height: 450px; 
-}
-
-
+            min-width: 350px;
+            min-height: 450px;
+          }
           @media (max-width: 1100px) {
-            .alumni-grid {
-              grid-template-columns: 1fr;
-            }
+            .alumni-grid { grid-template-columns: 1fr; }
           }
         `}</style>
       </main>

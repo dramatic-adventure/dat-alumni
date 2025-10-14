@@ -41,7 +41,7 @@ export default function TagsGrid({ alumni }: { alumni: AlumniRow[] }) {
             color: "#FFCC00",
             opacity: 0.8,
             letterSpacing: "0.06em",
-            fontFamily: "Space Grotesk, sans-serif",
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
             fontWeight: 600,
             fontSize: "1rem",
             boxShadow: "0 4px 14px rgba(0,0,0,0.2)",

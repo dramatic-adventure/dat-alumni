@@ -8,7 +8,7 @@ export default function HomePage() {
       {/* Heading */}
       <h1
         className="text-[3rem] sm:text-[4.5rem] leading-[1.1] font-[400] tracking-tight mb-6 text-[var(--dat-color-accent)]"
-        style={{ fontFamily: 'Gloucester, serif' }}
+        style={{ fontFamily: 'var(--font-gloucester), serif' }}
       >
         DAT Alumni Stories
       </h1>

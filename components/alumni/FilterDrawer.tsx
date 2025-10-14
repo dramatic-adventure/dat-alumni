@@ -37,7 +37,7 @@ export default function FilterDrawer({
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
-        <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.8rem" }}>Filters</h2>
+        <h2 style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "1.8rem" }}>Filters</h2>
         <button onClick={onClose} style={{ fontSize: "1.5rem" }}>
           ✕
         </button>
@@ -45,7 +45,7 @@ export default function FilterDrawer({
 
       {filterConfig.map((filter) => (
         <div key={filter.id} style={{ marginBottom: "1.5rem" }}>
-          <h3 style={{ fontFamily: "'DM Sans'", marginBottom: "0.5rem" }}>{filter.label}</h3>
+          <h3 style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", marginBottom: "0.5rem" }}>{filter.label}</h3>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
             {filter.options.map((option) => {
               const isSelected = selectedFilters[filter.id]?.includes(option.value);

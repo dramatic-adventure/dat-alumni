@@ -4,6 +4,7 @@ import { parse } from "csv-parse/sync";
 import { normalizeUpdateRow } from "./normalizeUpdateRow";
 import { Update } from "./types";
 import { loadCsv } from "./loadCsv";
+import { serverDebug, serverInfo, serverWarn, serverError } from "@/lib/serverDebug";
 
 const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
 const CSV_URL = process.env.JOURNEY_UPDATES_CSV_URL;
@@ -14,9 +15,8 @@ export async function fetchUpdates(): Promise<Update[]> {
     const csvText = await loadCsv(CSV_URL, FALLBACK_FILENAME);
 
     if (DEBUG) {
-  console.log("📄 CSV TEXT (first 500 chars):", csvText.slice(0, 500));
-}
-
+      serverDebug("📄 CSV TEXT (first 500 chars):", csvText.slice(0, 500));
+    }
 
     const rawRecords = parse(csvText, {
       columns: true,
@@ -30,14 +30,14 @@ export async function fetchUpdates(): Promise<Update[]> {
     updates.sort((a, b) => b.sortDate.localeCompare(a.sortDate));
 
     if (DEBUG) {
-      console.log("🧪 [fetchUpdates] CSV source:", CSV_URL || FALLBACK_FILENAME);
-      console.log("🔍 First update row:", updates[0]);
-      console.log("✅ [fetchUpdates] Parsed update count:", updates.length);
+      serverDebug("🧪 [fetchUpdates] CSV source:", CSV_URL || FALLBACK_FILENAME);
+      serverDebug("🔍 First update row:", updates[0]);
+      serverDebug("✅ [fetchUpdates] Parsed update count:", updates.length);
     }
 
     return updates;
   } catch (err) {
-    console.error("❌ [fetchUpdates] Failed to load journey updates:", err);
+    serverError("❌ [fetchUpdates] Failed to load journey updates:", err);
     return [];
   }
 }

@@ -50,7 +50,7 @@ export default function Footer() {
       style={{
         backgroundColor: "#2493A9",
         color: "#241123",
-        fontFamily: "'Space Grotesk', sans-serif",
+        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
         fontWeight: 400,
         fontSize: "0.885rem",
         paddingTop: "0.33em",
@@ -74,7 +74,7 @@ export default function Footer() {
       style={{
         backgroundColor: "#2493A9",
         color: "#241123",
-        fontFamily: "'Space Grotesk', sans-serif",
+        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
         fontWeight: 400,
         fontSize: "0.885rem",
         paddingTop: "0.33em",
@@ -121,7 +121,7 @@ export default function Footer() {
         <p
           className="text-center font-grotesk mx-auto w-[88vw] md:w-auto whitespace-nowrap"
           style={{
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
             color: "#A7A9BE",
             fontSize: "clamp(0.539rem, 1.4vw, 0.75rem)",
             marginBottom: "4.5em",

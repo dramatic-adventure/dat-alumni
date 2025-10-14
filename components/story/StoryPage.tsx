@@ -1,7 +1,10 @@
+// components/story/StoryPage.tsx
+"use client";
+
 import Link from "next/link";
 import ShareButton from "@/components/ui/ShareButton";
 import StoryMedia from "@/components/shared/StoryMedia";
-import { StoryRow } from "@/lib/types";
+import type { StoryRow } from "@/lib/types";
 
 interface StoryPageProps {
   story: StoryRow;
@@ -34,20 +37,19 @@ export default function StoryPage({ story }: StoryPageProps) {
 
   return (
     <main>
-      {/* ✅ Apply offset to push content below fixed header */}
       <div
         className="story-page pointer-events-auto"
-        style={{ marginTop: '8rem', marginBottom: '8rem' }}
+        style={{ marginTop: "8rem", marginBottom: "8rem" }}
       >
         {/* Top Bar: Back Link + Share */}
         <div className="flex justify-between items-center mb-4">
           <a
             href="https://dramaticadventure.com/story-map#story"
             style={{
-              fontFamily: 'var(--font-rock-salt), cursive',
-              fontSize: '1.15rem',
-              color: '#ff007f',
-              textDecoration: 'none',
+              fontFamily: "var(--font-rock-salt), cursive",
+              fontSize: "1.15rem",
+              color: "#ff007f",
+              textDecoration: "none",
             }}
           >
             ← Explore More Stories
@@ -95,25 +97,22 @@ export default function StoryPage({ story }: StoryPageProps) {
         )}
 
         {/* CTA Button */}
-{moreInfoLink && (
-  <a
-    href={moreInfoLink}
-    className="popup-button"
-    style={{
-      textDecoration: 'none',
-      color: '#f2f2f2',
-      WebkitTextFillColor: '#f2f2f2',
-    }}
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    STEP INTO THE STORY
-  </a>
-)}
-</div>
-
+        {moreInfoLink && (
+          <a
+            href={moreInfoLink}
+            className="popup-button"
+            style={{
+              textDecoration: "none",
+              color: "#f2f2f2",
+              WebkitTextFillColor: "#f2f2f2",
+            }}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            STEP INTO THE STORY
+          </a>
+        )}
+      </div>
     </main>
   );
 }
-
-// Trigger Netlify cache refresh

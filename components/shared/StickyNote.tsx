@@ -27,7 +27,7 @@ export default function StickyNote({
       className={`relative bg-[#FFCC00] p-6 w-64 shadow-xl rounded-sm ${customClass}`}
       style={{
         transform: "rotate(-2deg)",
-        fontFamily: "'Rock Salt', cursive",
+        fontFamily: "var(--font-rock-salt), cursive",
       }}
     >
       {/* Optional Tape Accent */}

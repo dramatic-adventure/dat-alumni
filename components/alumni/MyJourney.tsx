@@ -91,7 +91,7 @@ export default function MyJourney() {
         height: "100%",
         minHeight: "650px",
         width: "100%",
-        fontFamily: '"DM Sans", sans-serif',
+        fontFamily: 'var(--font-dm-sans), system-ui, sans-serif',
       }}
     >
       <div

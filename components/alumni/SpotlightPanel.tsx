@@ -76,7 +76,7 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
           overflowY: "auto",
           display: "flex",
           flexDirection: "column",
-          fontFamily: "DM Sans",
+          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
         }}
       >
         <div
@@ -89,7 +89,7 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
             fontSize: "0.9rem",
             padding: "0.4rem 0.85rem 0.4rem 0.6rem",
             borderRadius: "999px",
-            fontFamily: "Space Grotesk, sans-serif",
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
             fontWeight: 600,
             letterSpacing: "0.04em",
             textTransform: "uppercase",
@@ -151,7 +151,7 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
         {current?.headline && (
           <h2
             style={{
-              fontFamily: "Anton, sans-serif",
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
               fontSize: "2rem",
               color: "#241123",
               marginTop: "0.5rem",
@@ -168,7 +168,7 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
         {current?.subheadline && (
           <p
             style={{
-              fontFamily: "Space Grotesk, sans-serif",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
               fontSize: "0.8rem",
               color: "#241123",
               marginTop: "0.5rem",
@@ -204,7 +204,7 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
             >
               <p
                 style={{
-                  fontFamily: "Rock Salt, cursive",
+                  fontFamily: "var(--font-rock-salt), system-ui, sans-serif",
                   fontSize: "1.25rem",
                   color: "#241123",
                   lineHeight: "1.4",
@@ -231,7 +231,7 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
                   letterSpacing: "0.4em",
                   fontSize: "1rem",
                   borderRadius: "0.5rem",
-                  fontFamily: "Space Grotesk, sans-serif",
+                  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                   textDecoration: "none",
                   width: "100%",
                   opacity: "0.9",
@@ -266,7 +266,7 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
 
         {pastUpdates.length > 0 && (
           <div style={{ textAlign: "center", marginBottom: "0.5rem" }}>
-            <label style={{ fontFamily: "Space Grotesk", fontSize: "0.85rem", color: "#241123" }}>
+            <label style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "0.85rem", color: "#241123" }}>
               <input
                 type="checkbox"
                 checked={includeArchiveInCarousel}
@@ -282,7 +282,7 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
           <button
             onClick={() => setShowArchive(!showArchive)}
             style={{
-              fontFamily: "Rock Salt, cursive",
+              fontFamily: "var(--font-rock-salt), system-ui, sans-serif",
               fontSize: "0.9rem",
               color: "#241123",
               marginTop: "0.75rem",
@@ -325,7 +325,7 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
                 <div style={{ flex: 1 }}>
                   <h3
                     style={{
-                      fontFamily: "Anton, sans-serif",
+                      fontFamily: "var(--font-anton), system-ui, sans-serif",
                       fontSize: "1.1rem",
                       color: "#241123",
                     }}
@@ -335,7 +335,7 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
                   {update.subheadline && (
                     <p
                       style={{
-                        fontFamily: "DM Sans, sans-serif",
+                        fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                         fontSize: "0.9rem",
                         color: "#4B3A50",
                       }}
@@ -345,7 +345,7 @@ export default function SpotlightPanel({ updates = [] }: { updates: SpotlightUpd
                   )}
                   <p
                     style={{
-                      fontFamily: "Space Grotesk, sans-serif",
+                      fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                       fontSize: "0.9rem",
                       color: "#241123",
                       marginTop: "0.5rem",

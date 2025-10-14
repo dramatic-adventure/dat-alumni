@@ -5,6 +5,7 @@
  */
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
 import type { AlumniRow } from "@/lib/types";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
@@ -12,6 +13,7 @@ import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import TitlesGrid from "@/components/alumni/TitlesGrid";
 import { buildTitleBuckets, slugifyTitle } from "@/lib/titles";
 
+// Use ISR instead of force-dynamic
 export const revalidate = 3600;
 
 function humanizeSlug(slug: string) {
@@ -35,14 +37,14 @@ export async function generateStaticParams() {
   const seen = new Set<string>();
   const out: { slug: string }[] = [];
   for (const b of valid) {
-    const keySlug = String(b.meta.key);            // fixed buckets: use the key (e.g., "playwrights", "travel-writers")
+    const keySlug = String(b.meta.key);            // fixed buckets: use key (e.g., "playwrights")
     const labelSlug = slugifyTitle(b.meta.label);  // dynamic buckets: use label
     const canonical = keySlug.startsWith("title:") ? labelSlug : keySlug;
     if (!seen.has(canonical)) {
       out.push({ slug: canonical });
       seen.add(canonical);
     }
-    // also allow labelSlug for fixed buckets, just in case
+    // also allow labelSlug for fixed buckets
     if (!keySlug.startsWith("title:") && !seen.has(labelSlug)) {
       out.push({ slug: labelSlug });
       seen.add(labelSlug);
@@ -51,7 +53,31 @@ export async function generateStaticParams() {
   return out;
 }
 
-export default async function TitlePage({ params }: { params: { slug: string } }) {
+export async function generateMetadata(
+  { params }: { params: { slug: string } }
+): Promise<Metadata> {
+  const { slug } = params;
+  const alumni: AlumniRow[] = await loadVisibleAlumni();
+  const buckets = buildTitleBuckets(alumni);
+  const target = slug.toLowerCase();
+
+  const entry = Array.from(buckets.values()).find((b) => {
+    const keySlug = String(b.meta.key);
+    const labelSlug = slugifyTitle(b.meta.label);
+    const canonical = keySlug.startsWith("title:") ? labelSlug : keySlug;
+    return canonical === target || labelSlug === target;
+  });
+
+  const label = entry?.meta.label ?? humanizeSlug(slug);
+  const title = `${label} — DAT Alumni`;
+  const description = `Explore ${label.toLowerCase()} in the DAT alumni community.`;
+
+  return { title, description };
+}
+
+export default async function TitlePage(
+  { params }: { params: { slug: string } }
+) {
   const { slug } = params;
   const target = slug.toLowerCase();
   const alumni: AlumniRow[] = await loadVisibleAlumni();
@@ -59,7 +85,7 @@ export default async function TitlePage({ params }: { params: { slug: string } }
 
   // Find target bucket by either key or label slug
   const entry = Array.from(buckets.values()).find((b) => {
-    const keySlug = String(b.meta.key);          // e.g., "playwrights", "travel-writers", "designers", or "title:actors"
+    const keySlug = String(b.meta.key);           // e.g., "designers" or "title:actors"
     const labelSlug = slugifyTitle(b.meta.label); // e.g., "actors"
     const canonical = keySlug.startsWith("title:") ? labelSlug : keySlug;
     return canonical === target || labelSlug === target;
@@ -69,14 +95,16 @@ export default async function TitlePage({ params }: { params: { slug: string } }
 
   const displayLabel = entry.meta.label;
 
-  // Build a quick lookup for slug -> AlumniRow
+  // Quick lookup for slug -> AlumniRow
   const bySlug = new Map(alumni.map((a) => [a.slug, a]));
 
   // Only Designers has subcategories; everyone else is a flat grid
   const isDesigners = entry.meta.key === "designers";
 
   const flatSelected = !isDesigners
-    ? alumni.filter((a) => entry.people.has(a.slug))
+    ? alumni
+        .filter((a) => entry.people.has(a.slug))
+        .sort((a, b) => a.name.localeCompare(b.name))
     : [];
 
   const designerGroups =
@@ -86,7 +114,8 @@ export default async function TitlePage({ params }: { params: { slug: string } }
             const title = titleCase(lcSubcat);
             const people = Array.from(slugs)
               .map((s) => bySlug.get(s))
-              .filter(Boolean) as AlumniRow[];
+              .filter(Boolean)
+              .sort((a, b) => (a!.name || "").localeCompare(b!.name || "")) as AlumniRow[];
             return { title, people };
           })
           .sort((a, b) => a.title.localeCompare(b.title))
@@ -105,7 +134,7 @@ export default async function TitlePage({ params }: { params: { slug: string } }
         }}
       >
         <Image
-          src="/images/alumni hero.jpg"
+          src="/images/alumni-hero.jpg"
           alt={`${displayLabel} Hero`}
           fill
           priority
@@ -114,7 +143,7 @@ export default async function TitlePage({ params }: { params: { slug: string } }
         <div style={{ position: "absolute", bottom: "1rem", right: "5%" }}>
           <h1
             style={{
-              fontFamily: "Anton, sans-serif",
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
               fontSize: "clamp(4rem, 9vw, 8rem)",
               color: "#f2f2f2",
               textTransform: "uppercase",
@@ -127,7 +156,7 @@ export default async function TitlePage({ params }: { params: { slug: string } }
           </h1>
           <p
             style={{
-              fontFamily: "'Space Grotesk', sans-serif",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
               fontSize: "1.5rem",
               color: "#f2f2f2",
               opacity: 0.7,
@@ -146,9 +175,6 @@ export default async function TitlePage({ params }: { params: { slug: string } }
       <main
         style={{
           marginTop: "-5rem",
-          backgroundImage: "url('/images/kraft-texture.png')",
-          backgroundSize: "cover",
-          backgroundRepeat: "repeat",
           padding: "8rem 0 2rem",
           position: "relative",
           opacity: 0.9,
@@ -158,7 +184,7 @@ export default async function TitlePage({ params }: { params: { slug: string } }
         <div style={{ width: "90%", margin: "0 auto" }}>
           <h3
             style={{
-              fontFamily: "Anton, sans-serif",
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
               fontSize: "2.4rem",
               margin: "3.5rem 0 1.1rem",
               textTransform: "uppercase",
@@ -186,23 +212,21 @@ export default async function TitlePage({ params }: { params: { slug: string } }
                 {designerGroups.map((group) => (
                   <section key={group.title}>
                     <h4
-  style={{
-  fontFamily: "Space Grotesk, sans-serif",
-  fontSize: "1.9rem",
-  fontWeight: 500,
-  color: "#D9A919",
-  margin: "0 0 1rem",
-  backgroundColor: "#241123", // dark purple with 60% opacity
-  opacity: 0.6,
-  padding: "0.1em 0.5em",
-  borderRadius: "0.3em",
-  display: "inline-block",
-}}
->
-
-
-  {group.title} Designers 
-</h4>
+                      style={{
+                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                        fontSize: "1.9rem",
+                        fontWeight: 500,
+                        color: "#D9A919",
+                        margin: "0 0 1rem",
+                        backgroundColor: "#241123",
+                        opacity: 0.6,
+                        padding: "0.1em 0.5em",
+                        borderRadius: "0.3em",
+                        display: "inline-block",
+                      }}
+                    >
+                      {group.title} Designers
+                    </h4>
 
                     <div
                       style={{
@@ -252,7 +276,7 @@ export default async function TitlePage({ params }: { params: { slug: string } }
         <section style={{ width: "90%", margin: "4rem auto 0" }}>
           <h3
             style={{
-              fontFamily: "Anton, sans-serif",
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
               fontSize: "2.4rem",
               margin: "0rem 0 1.1rem",
               textTransform: "uppercase",

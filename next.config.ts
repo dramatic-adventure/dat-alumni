@@ -1,97 +1,61 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+// next.config.ts
+import type { NextConfig } from "next";
+
+const isCanaryPPR = process.env.NEXT_CANARY_PPR === "1";
+
+const nextConfig: NextConfig = {
+  ...(isCanaryPPR ? { experimental: { ppr: true } } : {}),
+
   images: {
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 60,
     remotePatterns: [
-      // ✅ Placeholder for testing/demo
-      {
-        protocol: 'https',
-        hostname: 'via.placeholder.com',
-      },
+      // Placeholder
+      { protocol: "https", hostname: "via.placeholder.com", pathname: "**" },
 
-      // ✅ Squarespace CDN
-      {
-        protocol: 'https',
-        hostname: 'images.squarespace-cdn.com',
-      },
+      // Squarespace
+      { protocol: "https", hostname: "images.squarespace-cdn.com", pathname: "**" },
+      { protocol: "http",  hostname: "images.squarespace-cdn.com", pathname: "**" },
 
-      // ✅ Squarespace CDN (http)
-{
-  protocol: 'http',
-  hostname: 'images.squarespace-cdn.com',
-},
+      // Flickr
+      { protocol: "https", hostname: "live.staticflickr.com", pathname: "**" },
 
-      // ✅ Flickr
-      {
-        protocol: 'https',
-        hostname: 'live.staticflickr.com',
-      },
+      // Cloudinary
+      { protocol: "https", hostname: "res.cloudinary.com", pathname: "**" },
 
-      // ✅ Cloudinary
-      {
-        protocol: 'https',
-        hostname: 'res.cloudinary.com',
-      },
+      // S3 (any bucket)
+      { protocol: "https", hostname: "**.s3.amazonaws.com", pathname: "**" },
 
-      // ✅ Amazon S3 (specific & wildcard for any bucket)
-      {
-        protocol: 'https',
-        hostname: '**.s3.amazonaws.com',
-      },
+      // Imgur
+      { protocol: "https", hostname: "i.imgur.com", pathname: "**" },
 
-      // ✅ Imgur
-      {
-        protocol: 'https',
-        hostname: 'i.imgur.com',
-      },
+      // Dropbox
+      { protocol: "https", hostname: "www.dropbox.com", pathname: "**" },
+      { protocol: "https", hostname: "dl.dropboxusercontent.com", pathname: "**" },
 
-      // ✅ Dropbox
-      {
-        protocol: 'https',
-        hostname: 'www.dropbox.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'dl.dropboxusercontent.com',
-      },
+      // Google Drive / googleusercontent (lh3, lh5, etc.)
+      { protocol: "https", hostname: "drive.google.com", pathname: "**" },
+      { protocol: "https", hostname: "**.googleusercontent.com", pathname: "**" },
 
-      // ✅ Google Drive
-      {
-        protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
-      },
+      // Wix
+      { protocol: "https", hostname: "static.wixstatic.com", pathname: "**" },
 
-      // ✅ Wix
-      {
-        protocol: 'https',
-        hostname: 'static.wixstatic.com',
-      },
+      // Webflow
+      { protocol: "https", hostname: "uploads-ssl.webflow.com", pathname: "**" },
 
-      // ✅ Webflow
-      {
-        protocol: 'https',
-        hostname: 'uploads-ssl.webflow.com',
-      },
+      // SmugMug
+      { protocol: "https", hostname: "photos.smugmug.com", pathname: "**" },
 
-      // ✅ SmugMug
-      {
-        protocol: 'https',
-        hostname: 'photos.smugmug.com',
-      },
+      // Unsplash
+      { protocol: "https", hostname: "images.unsplash.com", pathname: "**" },
 
-      // ✅ Unsplash
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
+      // YouTube thumbnails
+      { protocol: "https", hostname: "i.ytimg.com", pathname: "**" },
+      { protocol: "https", hostname: "img.youtube.com", pathname: "**" },
 
-      // ✅ [Optional Catch-All for Dev ONLY]
-      // {
-      //   protocol: 'https',
-      //   hostname: '**',
-      // },
+      // LinkedIn (bios)
+      { protocol: "https", hostname: "media.licdn.com", pathname: "**" },
     ],
-    // ✅ Enable AVIF & WebP for faster loads
-    formats: ['image/avif', 'image/webp'],
   },
 };
 
