@@ -4,27 +4,53 @@ export type TitlePosition = "bottom-left" | "bottom-center";
 export interface Production {
   title: string;
   slug: string;
-  year: number;
+  year: number | string;
   season: number;
   location: string;
   festival: string;
-  url: string;
-  posterUrl: string;
+  url?: string;     // 👈 optional override
+  posterUrl?: string;
   artists: Record<string, string[]>;
   layout?: Layout;
   titlePosition?: TitlePosition;
 }
 
+export function getSortYear(prod: Production): number {
+  const y = prod.year;
+
+  if (typeof y === "number") return y;
+
+  const matches = String(y).match(/\d{4}/g);
+  if (!matches || matches.length === 0) return 0;
+
+  // last year in the string
+  return Number(matches[matches.length - 1]);
+}
+
 // ✅ Add explicit typing here 👇
 export const productionMap: Record<string, Production> = {
+  "the-rainbow-of-san-luis": {
+    title: "The Rainbow of San Luis",
+    slug: "the-rainbow-of-san-luis",
+    year: 2022,
+    season: 16,
+    location: "Gualaquiza, Ecuador",
+    festival: "",
+    url: "",
+    posterUrl: "",
+    artists: {
+      "jesse-baxter": ["Artistic Director"],
+    }
+  },
+  
   "blackfish": {
-    title: "Blackfish",
+    title: "Blackfish -- Workshop Production",
     slug: "blackfish",
     year: 2018,
     season: 12,
     location: "Towson, MD",
-    festival: "Spinal: MFA New Works in Theatre -- Towson Unversity",
-    url: "/blackfish-workshop",
+    festival: "Spinal: MFA New Works in Theatre -- Towson University",
+    url: "",
     posterUrl: "/posters/blackfish.jpg",
     artists: {
       "jesse-baxter": ["Director"],
@@ -54,16 +80,16 @@ export const productionMap: Record<string, Production> = {
     season: 11,
     location: "NYC",
     festival: "ACTion Fest 2017: Juntos, Mano a Mano / Hand in Hand -- IATI Theatre",
-    url: "/miracles-are-soft-in-the-jungle",
-    posterUrl: "/posters/miracles.jpg",
+    url: "",
+    posterUrl: "/posters/miracles-are-soft-in-the-jungle.jpg",
     artists: {
-      "peter-petkovšek": ["Director", "Actor"],
+      "peter-petkovsek": ["Director", "Actor"],
       "erin-jones": ["Lighting Design"],
       "brendan-boston": ["Set Design"],
       "claudia-toth": ["Stage Manager"],
       "ana-arellano": ["Road Manager"],
-      "gustavo-redín": ["Road Manager"],
-      "antonia-laché": ["Actor"],
+      "gustavo-redin": ["Road Manager"],
+      "antonia-lache": ["Actor"],
       "karina-sindicich": ["Actor"],
       "leslie-root": ["Actor"],
       "sam-super": ["Actor"],
@@ -78,8 +104,8 @@ export const productionMap: Record<string, Production> = {
     season: 11,
     location: "NYC",
     festival: "ACTion Fest 2017: Juntos, Mano a Mano / Hand in Hand -- IATI Theatre",
-    url: "/whispers-of-floreana",
-    posterUrl: "/posters/whispers.jpg",
+    url: "",
+    posterUrl: "/posters/whispers-of-floreana.jpg",
     artists: {
       "amy-e-witting": ["Director", "Actor"],
       "erin-jones": ["Lighting Design"],
@@ -103,7 +129,7 @@ export const productionMap: Record<string, Production> = {
     season: 10,
     location: "NYC",
     festival: "ACTion Fest 2016: Shangaa / Shock and Awe -- IATI Theatre",
-    url: "/tembo",
+    url: "",
     posterUrl: "/posters/tembo.jpg",
     artists: {
       "candis-c-jones": ["Director"],
@@ -120,14 +146,14 @@ export const productionMap: Record<string, Production> = {
     }
   },
 
-  "travelogues": {
+  "action-travelogues": {
     title: "Travelogues",
-    slug: "travelogues",
+    slug: "action-travelogues",
     year: 2016,
     season: 10,
     location: "NYC",
     festival: "ACTion Fest 2016: Shangaa / Shock and Awe -- IATI Theatre",
-    url: "/action-travelogues",
+    url: "",
     posterUrl: "/posters/travelogues.jpg",
     artists: {
       "christen-madrazo": ["Director"],
@@ -154,7 +180,7 @@ export const productionMap: Record<string, Production> = {
     season: 10,
     location: "NYC",
     festival: "ACTion Fest 2016: Shangaa / Shock and Awe -- IATI Theatre",
-    url: "/ubinadamu",
+    url: "",
     posterUrl: "/posters/ubinadamu.jpg",
     artists: {
       "michael-herman": ["Director"],
@@ -180,7 +206,7 @@ export const productionMap: Record<string, Production> = {
     season: 10,
     location: "NYC",
     festival: "ACTion Fest 2016: Shangaa / Shock and Awe -- IATI Theatre",
-    url: "/nisikilize",
+    url: "",
     posterUrl: "/posters/nisikilize.jpg",
     artists: {
       "jason-williamson": ["Director"],
@@ -199,14 +225,14 @@ export const productionMap: Record<string, Production> = {
   },
 
   "the-rebel-bird": {
-    title: "The Rebel Bird",
+    title: "The Rebel Bird -- Workshop Production",
     slug: "the-rebel-bird",
     year: 2015,
     season: 9,
     location: "Nitra, Slovakia",
     festival: "Workshop Production 2015 -- Divadlo Andreja Bagara",
-    url: "/rebel-bird-workshop",
-    posterUrl: "/posters/rebel-bird.jpg",
+    url: "",
+    posterUrl: "/posters/the-rebel-bird.jpg",
     artists: {
       "kathleen-amshoff": ["Director"],
       "jason-williamson": ["Resident Playwright"],
@@ -233,7 +259,7 @@ export const productionMap: Record<string, Production> = {
     season: 9,
     location: "NYC",
     festival: "ACTion Fest 2015: Tu a Teraz / Here and Now -- IATI Theatre",
-    url: "/stop-stay-leave",
+    url: "",
     posterUrl: "/posters/stop-stay-leave.jpg",
     artists: {
       "danya-taymor": ["Director"],
@@ -241,7 +267,7 @@ export const productionMap: Record<string, Production> = {
       "elle-kunnos-de-voss": ["Set Design"],
       "claudia-toth": ["Stage Manager"],
       "amber-steffey": ["Assistant Stage Manager"],
-      "tamara-ďuračková": ["Road Manager"],
+      "tamara-durackova": ["Road Manager"],
       "alex-wanebo": ["Actor"],
       "anna-kendall": ["Actor"],
       "cheyenne-shupp": ["Actor"],
@@ -258,8 +284,8 @@ export const productionMap: Record<string, Production> = {
     season: 9,
     location: "NYC",
     festival: "ACTion Fest 2015: Tu a Teraz / Here and Now -- IATI Theatre",
-    url: "/porajmos",
-    posterUrl: "/posters/porajmos.jpg",
+    url: "",
+    posterUrl: "/posters/porajmos-the-devouring.jpg",
     artists: {
       "bryce-britton": ["Director"],
       "erin-jones": ["Lighting Design"],
@@ -268,7 +294,7 @@ export const productionMap: Record<string, Production> = {
       "eli-sibley": ["Movement Coordinator"],
       "claudia-toth": ["Stage Manager"],
       "amber-steffey": ["Stage Manager"],
-      "barbara-herucová": ["Road Manager"],
+      "barbara-herucova": ["Road Manager"],
       "amna-mehmood": ["Actor"],
       "daryl-bright": ["Actor"],
       "gareth-tidball": ["Actor"],
@@ -279,14 +305,14 @@ export const productionMap: Record<string, Production> = {
     }
   },
 
-  "sunflower": {
+  "the-town-at-the-edge-of-the-sunflower-field": {
     title: "The Town at the Edge of the Sunflower Field",
-    slug: "sunflower",
+    slug: "the-town-at-the-edge-of-the-sunflower-field",
     year: 2015,
     season: 9,
     location: "NYC",
     festival: "ACTion Fest 2015: Tu a Teraz / Here and Now -- IATI Theatre",
-    url: "/sunflower",
+    url: "",
     posterUrl: "/posters/sunflower.jpg",
     artists: {
       "ryan-whinnem": ["Director"],
@@ -295,7 +321,7 @@ export const productionMap: Record<string, Production> = {
       "eli-sibley": ["Movement Coordinator"],
       "claudia-toth": ["Stage Manager"],
       "amber-steffey": ["Assistant Stage Manager"],
-      "dorota-smiešková": ["Road Manager"],
+      "dorota-smieskova": ["Road Manager"],
       "annie-hartkemeyer": ["Actor"],
       "max-gould": ["Actor"],
       "megan-peters": ["Actor"],
@@ -314,7 +340,7 @@ export const productionMap: Record<string, Production> = {
     season: 9,
     location: "NYC",
     festival: "ACTion Fest 2015: Tu a Teraz / Here and Now -- IATI Theatre",
-    url: "/little-light",
+    url: "",
     posterUrl: "/posters/little-light.jpg",
     artists: {
       "tom-costello": ["Director"],
@@ -322,7 +348,7 @@ export const productionMap: Record<string, Production> = {
       "elle-kunnos-de-voss": ["Set Design"],
       "claudia-toth": ["Stage Manager"],
       "amber-steffey": ["Assistant Stage Manager"],
-      "petra-slováková": ["Road Manager"],
+      "petra-slovakova": ["Road Manager"],
       "daryl-bright": ["Actor"],
       "katelynn-burns": ["Actor"],
       "lily-lipman": ["Actor"],
@@ -338,8 +364,8 @@ export const productionMap: Record<string, Production> = {
     season: 8,
     location: "NYC",
     festival: "Off-Off-Broadway Production 2013 -- IATI Theater",
-    url: "/a-girl",
-    posterUrl: "/posters/a-girl.jpg",
+    url: "",
+    posterUrl: "/posters/a-girl-without-wings.jpg",
     artists: {
       "jason-williamson": ["Playwright"],
       "kathleen-amshoff": ["Director"],
@@ -362,7 +388,7 @@ export const productionMap: Record<string, Production> = {
   },
 
        // Season 7 entry: 
- "the-cleaver-and-the-wall-an-almost-fairytale": {
+ "the-cleaver-and-the-wall": {
     title: "The Cleaver and the Wall: An Almost Fairytale",
     slug: "the-cleaver-and-the-wall",
     year: 2013,
@@ -373,9 +399,9 @@ export const productionMap: Record<string, Production> = {
     posterUrl: "",
     artists: {
       "jason-williamson": ["Director"],
-      "": ["Set Designer"],
-      "": ["Lighting Designer"],
-      "": ["Sound Designer"],
+  "[todo-set-designer]": ["Set Designer"],
+  "[todo-lighting-designer]": ["Lighting Designer"],
+  "[todo-sound-designer]": ["Sound Designer"],
       "petra-slovakova": ["Road Manager"],
       "katherine-a-uyeda": ["Actor"],
       "claudio-silva": ["Actor"],
@@ -397,9 +423,9 @@ export const productionMap: Record<string, Production> = {
     posterUrl: "",
     artists: {
       "tom-costello": ["Director"],
-      "": ["Set Designer"],
-      "": ["Lighting Designer"],
-      "": ["Sound Designer"],
+  "[todo-set-designer]": ["Set Designer"],
+  "[todo-lighting-designer]": ["Lighting Designer"],
+  "[todo-sound-designer]": ["Sound Designer"],
       "richard-sipos": ["Road Manager"],
       "nicholas-linnehan": ["Actor"],
       "janice-amaya": ["Actor"],
@@ -421,9 +447,9 @@ export const productionMap: Record<string, Production> = {
     posterUrl: "",
     artists: {
       "kathleen-amshoff": ["Director"],
-      "": ["Set Designer"],
-      "": ["Lighting Designer"],
-      "": ["Sound Designer"],
+  "[todo-set-designer]": ["Set Designer"],
+  "[todo-lighting-designer]": ["Lighting Designer"],
+  "[todo-sound-designer]": ["Sound Designer"],
       "dominika-siroka": ["Road Manager"],
       "michael-axelrod": ["Actor"],
       "lacy-allen": ["Actor"],
@@ -434,7 +460,7 @@ export const productionMap: Record<string, Production> = {
   },
 
   "a-girl-without-wings-workshop-production": {
-  title: "A Girl without Wings, Workshop Production 2012",
+  title: "A Girl without Wings -- Workshop Production",
   slug: "a-girl-without-wings-workshop-production",
   location: "NYC",
   year: 2012,
@@ -460,7 +486,7 @@ export const productionMap: Record<string, Production> = {
   title: "Travelogue Season Two",
   slug: "travelogue-season-two",
   location: "Jimmys No. 43, East Village, NYC",
-  year: 2012-2013,
+  year: "2012-2013",
   season: 7,
   festival: "",
   url: "",
@@ -479,7 +505,7 @@ export const productionMap: Record<string, Production> = {
   title: "Travelogue Season One",
   slug: "travelogue-season-one",
   location: "Jimmys No. 43, East Village, NYC",
-  year: 2011-2012,
+  year: "2011-2012",
   season: 6,
   festival: "",
   url: "",
@@ -495,7 +521,7 @@ export const productionMap: Record<string, Production> = {
 
        // Season 5 entry:  
 "a-girl-without-wings-party": {
-  title: "A Girl without Wings, Staged Reading 2011 (5 Year Anniversary Party)",
+  title: "A Girl without Wings -- Staged Reading (5 Year Anniversary Party)",
   slug: "a-girl-without-wings-party",
   year: 2011,
   season: 5,
@@ -520,14 +546,14 @@ export const productionMap: Record<string, Production> = {
 },
 
     "a-girl-without-wings-reading": {
-    title: "A Girl Without Wings (Staged Reading)",
+    title: "A Girl Without Wings -- Staged Reading (Kennedy Center)",
     slug: "a-girl-without-wings-reading",
     year: 2010,
     season: 5,
     location: "Washington, DC",
     festival: "Page-to-Stage Festival -- Kennedy Center",
-    url: "/a-girl-kennedy-center",
-    posterUrl: "/posters/a-girl-reading.jpg",
+    url: "",
+    posterUrl: "/posters/a-girl-without-wings-reading-landscape.jpg",
     artists: {
       "jason-williamson": ["Playwright"],
       "kathleen-amshoff": ["Director"],
@@ -559,7 +585,7 @@ export const productionMap: Record<string, Production> = {
       "brittany-vasta": ["Set Designer"],
       "drew-florida": ["Lighting Designer"],
       "drew-ernst": ["Sound Designer"],
-      "gustavo-redín": ["Road Manager"],
+      "gustavo-redin": ["Road Manager"],
       "tamara-easton": ["Actor"],
       "natalie-hirsch": ["Actor"],
       "lauren-ullrich": ["Actor"],
@@ -584,7 +610,7 @@ export const productionMap: Record<string, Production> = {
       "brittany-vasta": ["Set Designer"],
       "drew-florida": ["Lighting Designer"],
       "drew-ernst": ["Sound Designer"],
-      "": ["Road Manager"],
+      "[todo-road-manager]": ["Road Manager"],
       "kaitlin-hernandez": ["Actor"],
       "jnelle-bobb-semple": ["Actor"],
       "heather-ichihashi": ["Actor"],
@@ -600,14 +626,14 @@ export const productionMap: Record<string, Production> = {
     season: 4,
     location: "NYC",
     festival: "ACTion Fest 2010: Poco a Poco / Little by Little -- Gene Frankel Theatre",
-    url: "/esperanza",
+    url: "",
     posterUrl: "/posters/esperanza.jpg",
     artists: {
       "jesse-baxter": ["Director"],
       "brittany-vasta": ["Set Designer"],
       "drew-florida": ["Lighting Designer"],
       "drew-ernst": ["Sound Designer"],
-      "gustavo-redín": ["Road Manager"],
+      "gustavo-redin": ["Road Manager"],
       "alena-acker": ["Actor"],
       "dianna-beshara": ["Actor"],
       "katarina-hughes": ["Actor"],
@@ -642,7 +668,7 @@ export const productionMap: Record<string, Production> = {
       "drew-florida": ["Lighting Designer"],
       "kim-braun": ["Production Stage Manager"],
       "kaitlin-kauffman": ["Assistant Stage Manager"],
-      "": ["Road Manager"]
+      "[todo-road-manager]": ["Road Manager"],
     }
   },
 
@@ -674,7 +700,7 @@ export const productionMap: Record<string, Production> = {
     season: 3,
     location: "NYC",
     festival: "Performing Arts Marathon 2009 -- IATI Theatre; ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador -- Richmond Shepard Theatre",
-    url: "/hotel-millionaire",
+    url: "",
     posterUrl: "/posters/hotel-millionaire.jpg",
     artists: {
       "kathleen-amshoff": ["Assoc. Artistic Director", "Director"],
@@ -730,7 +756,7 @@ export const productionMap: Record<string, Production> = {
       "drew-florida": ["Lighting Designer"],
       "kim-braun": ["Production Stage Manager"],
       "kaitlin-kauffman": ["Assistant Stage Manager"],
-      "": ["Road Manager"]
+      "[todo-road-manager]": ["Road Manager"],
     }
   },
 
@@ -755,7 +781,7 @@ export const productionMap: Record<string, Production> = {
       "drew-florida": ["Lighting Designer"],
       "kim-braun": ["Production Stage Manager"],
       "kaitlin-kauffman": ["Assistant Stage Manager"],
-      "": ["Road Manager"]
+      "[todo-road-manager]": ["Road Manager"],
     }
   },
 
@@ -779,7 +805,7 @@ export const productionMap: Record<string, Production> = {
       "drew-florida": ["Lighting Designer"],
       "kim-braun": ["Production Stage Manager"],
       "kaitlin-kauffman": ["Assistant Stage Manager"],
-      "": ["Road Manager"]
+      "[todo-road-manager]": ["Road Manager"],
     }
   },
 
@@ -804,7 +830,7 @@ export const productionMap: Record<string, Production> = {
       "drew-florida": ["Lighting Designer"],
       "kim-braun": ["Production Stage Manager"],
       "kaitlin-kauffman": ["Assistant Stage Manager"],
-      "": ["Road Manager"]
+      "[todo-road-manager]": ["Road Manager"],
     }
   },
 
@@ -833,7 +859,7 @@ export const productionMap: Record<string, Production> = {
       "drew-florida": ["Lighting Designer"],
       "kim-braun": ["Production Stage Manager"],
       "kaitlin-kauffman": ["Assistant Stage Manager"],
-      "": ["Road Manager"]
+      "[todo-road-manager]": ["Road Manager"],
     }
   },
 
@@ -845,7 +871,7 @@ export const productionMap: Record<string, Production> = {
     season: 2,
     location: "NYC",
     festival: "Off-Off-Broadway Production 2008 -- Red Room Theater; Performing Arts Marathon 2008 -- IATI Theatre", 
-    url: "/flight-360",
+    url: "",
     posterUrl: "/posters/flight-360.jpg",
     artists: {
       "leslie-fields": ["Playwright"],
@@ -879,3 +905,30 @@ export const productionMap: Record<string, Production> = {
     }
   }
 };
+
+if (process.env.NODE_ENV !== "production") {
+  for (const [key, prod] of Object.entries(productionMap)) {
+    if (key !== prod.slug) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `⚠️ Map key "${key}" does not match prod.slug "${prod.slug}"`,
+      );
+    }
+
+    if (/[^a-z0-9-]/.test(prod.slug)) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `⚠️ Non-ASCII in slug for production key "${key}": "${prod.slug}"`,
+      );
+    }
+
+    for (const artistSlug of Object.keys(prod.artists)) {
+      if (/[^a-z0-9\-\[\]]/.test(artistSlug)) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `⚠️ Non-ASCII in artist key "${artistSlug}" in production "${key}"`,
+        );
+      }
+    }
+  }
+}

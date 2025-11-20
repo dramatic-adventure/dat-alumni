@@ -1,38 +1,58 @@
 // lib/getPostersForArtist.ts
 import {
   productionMap,
-  Layout,
-  TitlePosition,
-  Production,
+  type Layout,
+  type TitlePosition,
+  type Production,
 } from "@/lib/productionMap";
+import { getProductionPath } from "@/lib/getProductionPath";
 
 const validLayouts: Layout[] = ["landscape", "portrait"];
 const validTitlePositions: TitlePosition[] = ["bottom-left", "bottom-center"];
 
-export function getPostersForArtist(slug: string) {
+export interface ArtistPoster {
+  title: string;
+  slug: string;
+  url: string;
+  posterUrl: string;
+  layout: Layout;
+  titlePosition: TitlePosition;
+}
+
+export function getPostersForArtist(slug: string): ArtistPoster[] {
   return Object.values(productionMap)
     .filter(
       (production): production is Production =>
-        !!production.artists && slug in production.artists
+        !!production.artists && slug in production.artists,
     )
     .map((production) => {
-      const layout: Layout = validLayouts.includes(production.layout as Layout)
-        ? (production.layout as Layout)
-        : "landscape";
+      const layout: Layout =
+        production.layout && validLayouts.includes(production.layout)
+          ? production.layout
+          : "landscape";
 
-      const titlePosition: TitlePosition = validTitlePositions.includes(
-        production.titlePosition as TitlePosition
-      )
-        ? (production.titlePosition as TitlePosition)
-        : "bottom-left";
+      const titlePosition: TitlePosition =
+        production.titlePosition &&
+        validTitlePositions.includes(production.titlePosition)
+          ? production.titlePosition
+          : "bottom-left";
+
+      // 👇 This is now your link target
+      const url = getProductionPath(production);
+
+      const posterUrl =
+        production.posterUrl && production.posterUrl.trim().length > 0
+          ? production.posterUrl
+          : `/posters/${production.slug}-${layout}.jpg`;
 
       return {
         title: production.title,
         slug: production.slug,
-        url: `https://www.dramaticadventure.com/${production.slug}`, // ✅ CORRECT full link
-        posterUrl: `/posters/${production.slug}-${layout}.jpg`,            // ✅ matches image asset path
+        url,
+        posterUrl,
         layout,
         titlePosition,
       };
     });
 }
+

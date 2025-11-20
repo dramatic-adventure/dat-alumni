@@ -4,6 +4,7 @@
 import { serverDebug, serverInfo, serverWarn } from "@/lib/serverDebug";
 
 const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
+const SA_FALLBACK_DISABLED = process.env.DISABLE_SA_FALLBACK === "1";
 
 type LoadCsvOptions = {
   /** Seconds for ISR (default 60). Set to 0 for no-store. */
@@ -19,6 +20,7 @@ type LoadCsvOptions = {
  * - Defaults to ISR (revalidate: 60) so static prerendering works
  * - Only uses no-store + cache-buster when `noStore: true`
  * - Falls back to Google Sheets API with Service Account on 401/403 for /spreadsheets/d/<fileId> URLs
+ * - SA fallback is gated by DISABLE_SA_FALLBACK=1 and bounded retries with backoff
  */
 export async function loadCsv(
   sourceUrl?: string,
@@ -102,7 +104,7 @@ export async function loadCsv(
 
     // Only force no-store when requested; otherwise let ISR do its job
     if (useNoStore) {
-      fetchInit.cache = "no-store";
+      (fetchInit as any).cache = "no-store";
     }
 
     const res = await fetch(finalUrl, fetchInit).finally(() => clearTimeout(t));
@@ -117,8 +119,11 @@ export async function loadCsv(
     return stripBOM(body);
   };
 
-  // ---------------- Service Account fallback (Sheets API only) ----------------
-  const tryServiceAccountSheets = async (url: string) => {
+  // ---------------- Service Account fallback (Sheets API only, bounded) ----------------
+  const tryServiceAccountSheetsBounded = async (url: string) => {
+    if (SA_FALLBACK_DISABLED) {
+      throw new Error("SA fallback disabled via DISABLE_SA_FALLBACK=1");
+    }
     if (!process.env.GCP_SA_JSON) {
       throw new Error("GCP_SA_JSON missing; cannot use Service Account fallback");
     }
@@ -151,41 +156,74 @@ export async function loadCsv(
       serverDebug("🔐 [loadCsv] SA Sheets fallback:", { spreadsheetId, wantGid, wantTitle });
     }
 
-    // 1) get sheet list
-    const meta = await sheets.spreadsheets.get({
-      spreadsheetId,
-      fields: "sheets(properties(sheetId,title))",
-      includeGridData: false,
-    });
+    // Helper to do one SA request
+    const saOnce = async () => {
+      // 1) get sheet list
+      const meta = await sheets.spreadsheets.get({
+        spreadsheetId,
+        fields: "sheets(properties(sheetId,title))",
+        includeGridData: false,
+      });
 
-    const props = (meta.data.sheets || []).map((s) => s.properties!).filter(Boolean);
-    if (!props.length) throw new Error("Spreadsheet has no sheets");
+      const props = (meta.data.sheets || []).map((s) => s.properties!).filter(Boolean);
+      if (!props.length) throw new Error("Spreadsheet has no sheets");
 
-    // 2) resolve sheet
-    let title: string | undefined;
-    if (wantGid) {
-      const gid = Number(wantGid);
-      const hit = props.find((p) => p.sheetId === gid);
-      if (!hit?.title) throw new Error(`No sheet with gid=${wantGid}`);
-      title = hit.title;
-    } else if (wantTitle) {
-      const hit = props.find((p) => (p.title || "").toLowerCase() === wantTitle.toLowerCase());
-      if (!hit?.title) throw new Error(`No sheet with title='${wantTitle}'`);
-      title = hit.title;
-    } else {
-      title = props[0]!.title!;
+      // 2) resolve sheet
+      let title: string | undefined;
+      if (wantGid) {
+        const gid = Number(wantGid);
+        const hit = props.find((p) => p.sheetId === gid);
+        if (!hit?.title) throw new Error(`No sheet with gid=${wantGid}`);
+        title = hit.title;
+      } else if (wantTitle) {
+        const hit = props.find((p) => (p.title || "").toLowerCase() === wantTitle.toLowerCase());
+        if (!hit?.title) throw new Error(`No sheet with title='${wantTitle}'`);
+        title = hit.title;
+      } else {
+        title = props[0]!.title!;
+      }
+
+      // 3) pull values
+      const vals = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `'${title}'`,
+        valueRenderOption: "UNFORMATTED_VALUE",
+        dateTimeRenderOption: "FORMATTED_STRING",
+      });
+
+      // 4) to CSV
+      return toCsv(vals.data.values || []);
+    };
+
+    // Bounded retries with backoff
+    const maxRetries = 3;
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        const csv = await saOnce();
+        return csv;
+      } catch (err: any) {
+        const msg = String(err?.message || err);
+        // Early exit on non-retryable conditions
+        if (
+          msg.includes("Requested entity was not found") || // permissions / not shared with SA
+          msg.toLowerCase().includes("quota exceeded") ||   // rate limit — don't keep hammering
+          msg.includes("No sheet with gid=") ||
+          msg.includes("No sheet with title=")
+        ) {
+          serverWarn("⚠️ [loadCsv] SA fallback non-retryable:", msg);
+          break;
+        }
+        if (i < maxRetries - 1) {
+          const delayMs = (i + 1) * 500; // 0.5s, 1.0s
+          if (DEBUG) serverDebug(`⏳ [loadCsv] SA retry in ${delayMs}ms (${i + 1}/${maxRetries - 1})`);
+          await new Promise((r) => setTimeout(r, delayMs));
+          continue;
+        }
+        serverWarn("⚠️ [loadCsv] SA fallback failed after retries:", msg);
+        break;
+      }
     }
-
-    // 3) pull values
-    const vals = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: `'${title}'`,
-      valueRenderOption: "UNFORMATTED_VALUE",
-      dateTimeRenderOption: "FORMATTED_STRING",
-    });
-
-    // 4) to CSV
-    return toCsv(vals.data.values || []);
+    throw new Error("SA fallback did not succeed");
   };
 
   // ---------------- main flow ----------------
@@ -202,7 +240,7 @@ export async function loadCsv(
 
       if (authError && isDocsHost(sourceUrl) && isSheetsFileUrl(sourceUrl)) {
         try {
-          const csv = stripBOM(await tryServiceAccountSheets(sourceUrl));
+          const csv = stripBOM(await tryServiceAccountSheetsBounded(sourceUrl));
           await fs.mkdir(path.dirname(fallbackPath), { recursive: true });
           await fs.writeFile(fallbackPath, csv, "utf-8");
           if (DEBUG) serverDebug("✅ [loadCsv] SA Sheets fallback ok; fallback updated:", fallbackFileName);

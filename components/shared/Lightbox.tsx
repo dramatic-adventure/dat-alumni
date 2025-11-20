@@ -21,18 +21,16 @@ export default function Lightbox({
   const multiple = total > 1;
 
   const goTo = useCallback((index: number) => {
-  setCurrentIndex((index + total) % total);
-}, [total]);
-
+    setCurrentIndex((index + total) % total);
+  }, [total]);
 
   const handleNext = useCallback(() => {
-  if (multiple) goTo(currentIndex + 1);
-}, [currentIndex, multiple, goTo]);
+    if (multiple) goTo(currentIndex + 1);
+  }, [currentIndex, multiple, goTo]);
 
-const handlePrev = useCallback(() => {
-  if (multiple) goTo(currentIndex - 1);
-}, [currentIndex, multiple, goTo]);
-
+  const handlePrev = useCallback(() => {
+    if (multiple) goTo(currentIndex - 1);
+  }, [currentIndex, multiple, goTo]);
 
   const handleKey = useCallback(
     (e: KeyboardEvent) => {
@@ -65,41 +63,59 @@ const handlePrev = useCallback(() => {
   });
 
   const currentUrl = images[currentIndex] ?? "";
-
-  // ✅ Moved AFTER hooks to prevent rules-of-hooks violation
   if (total === 0) return null;
+
+  // a11y helper for side-panels
+  const onSidePanelKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onClose();
+    }
+  };
 
   return (
     <LightboxPortal>
       <div className="fixed inset-0 z-[99999] grid grid-cols-3 w-screen h-screen">
-        {/* Left Panel */}
+        {/* Left Panel (click/keyboard to close; below image stack) */}
         <div
-          className="w-full h-full z-0"
+          className="w-full h-full"
           onClick={onClose}
+          onKeyDown={onSidePanelKeyDown}
+          role="button"
+          aria-label="Close lightbox"
+          tabIndex={0}
           style={{
+            position: "relative",
+            zIndex: 30,
             backgroundColor: "transparent",
             backdropFilter: "blur(0px)",
             WebkitBackdropFilter: "blur(0px)",
+            pointerEvents: "auto",
+            cursor: "pointer",
           }}
         />
 
-        {/* Center Panel */}
+        {/* Center Panel (dim backdrop; image sits above this panel) */}
         <div
-          className="flex items-center justify-center col-start-2 z-20"
+          className="flex items-center justify-center col-start-2"
           style={{
-            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            position: "relative",
+            zIndex: 20,
+            backgroundColor: "rgba(0, 0, 0, 0.75)", // 0.70 OK too
             backdropFilter: "blur(6px)",
             WebkitBackdropFilter: "blur(6px)",
             marginLeft: "calc(-100vw)",
             marginRight: "calc(-100vw)",
+            cursor: "pointer",
           }}
           onClick={onClose}
           role="dialog"
           aria-modal="true"
         >
+          {/* IMAGE STACK — sits ABOVE side panels and backdrop; clicking image does NOT close */}
           <div
-            className="relative z-20 max-w-[95vw] max-h-[95vh]"
-            style={{ pointerEvents: "auto" }}
+            className="relative max-w-[95vw] max-h-[95vh]"
+            style={{ pointerEvents: "auto", zIndex: 50 }}
             onClick={(e) => e.stopPropagation()}
             {...swipeHandlers}
           >
@@ -109,9 +125,8 @@ const handlePrev = useCallback(() => {
               mode="lightbox"
             />
 
-            {/* Navigation Dots */}
             {multiple && (
-              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex gap-2">
+              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-50 flex gap-2">
                 {images.map((_, i) => (
                   <button
                     key={i}
@@ -129,17 +144,33 @@ const handlePrev = useCallback(() => {
           </div>
         </div>
 
-        {/* Right Panel */}
+        {/* Right Panel (click/keyboard to close; below image stack) */}
         <div
-          className="w-full h-full z-0"
+          className="w-full h-full"
           onClick={onClose}
+          onKeyDown={onSidePanelKeyDown}
+          role="button"
+          aria-label="Close lightbox"
+          tabIndex={0}
           style={{
+            position: "relative",
+            zIndex: 30,
             backgroundColor: "transparent",
             backdropFilter: "blur(0px)",
             WebkitBackdropFilter: "blur(0px)",
+            pointerEvents: "auto",
+            cursor: "pointer",
           }}
         />
       </div>
+
+      {/* Global tweak: kill zoom/magnifier cursor and stray inline gaps on images inside the dialog */}
+      <style jsx global>{`
+        .col-start-2[role="dialog"] img {
+          cursor: default !important;
+          display: block;
+        }
+      `}</style>
     </LightboxPortal>
   );
 }

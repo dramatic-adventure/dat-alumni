@@ -40,7 +40,8 @@ export const seasons: SeasonInfo[] = [
     years: "2021 / 2022",
     projects: [
       "Covid-19 Hiatus", 
-      "SITE-LINES: The Amazon"
+      "SITE-LINES: The Amazon",
+      "The Rainbow of San Luis"
     ]
   },
   {

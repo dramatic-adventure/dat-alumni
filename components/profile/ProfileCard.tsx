@@ -119,6 +119,19 @@ const FeaturedStories = dynamic(() => import("@/components/shared/FeaturedStorie
   ssr: false,
 });
 
+/* -----------------------------------------------------------
+ * Minimal local helper to normalize mixed string|number years
+ * without touching shared types or other modules.
+ * ----------------------------------------------------------*/
+type WithMaybeYear = { year?: string | number };
+const normalizeProductionYear = <T extends WithMaybeYear>(p: T) => ({
+  ...p,
+  year:
+    typeof p.year === "string"
+      ? parseInt(p.year, 10) || 0
+      : (p.year ?? 0),
+});
+
 interface ProfileCardProps {
   name: string;
   slug: string;
@@ -200,9 +213,13 @@ export default function ProfileCard({
   const hasBadges = programBadges.length > 0 || statusFlags.length > 0;
   const hasStories = stories?.length > 0;
 
-  const featuredProductions: Production[] = Object.values(productionMap)
+  // 🔧 Normalize year before typing/sorting to satisfy lib/types.Production
+  const featuredProductions = (
+    Object.values(productionMap) as Array<WithMaybeYear & Record<string, any>>
+  )
     .filter((p) => p?.artists?.[slug])
-    .sort((a, b) => b.year - a.year); // ✅ Show all, most recent first
+    .map(normalizeProductionYear)
+    .sort((a, b) => Number(b.year) - Number(a.year)) as unknown as Production[]; // keep downstream typings intact
 
   const fallbackImage = "/images/default-headshot.png";
   const profileCardRef = useRef<HTMLDivElement>(null);
@@ -407,13 +424,17 @@ export default function ProfileCard({
             storytelling, this work reflects a deep engagement with place, people,
             and purpose.
           </p>
-          <PosterStrip
-            posters={featuredProductions.map((p) => ({
-              posterUrl: `/posters/${p.slug}-landscape.jpg`,
-              url: `https://www.dramaticadventure.com${p.url}`,
-              title: p.title,
-            }))}
-          />
+         <PosterStrip
+  posters={featuredProductions.map((p) => ({
+    title: p.title,
+    slug: p.slug, // used for keys + /theatre/[slug]
+    posterUrl: `/posters/${p.slug}-landscape.jpg`,
+    url: `/theatre/${p.slug}`, // relative, stays inside your app
+  }))}
+/>
+
+
+
         </div>
       )}
 
