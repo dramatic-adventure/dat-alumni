@@ -4,11 +4,22 @@ import localFont from "next/font/local";
    Core Fonts
 =============================== */
 export const anton = localFont({
-  src: "../public/fonts/anton-v26-latin-regular.woff2",
+  src: [
+    {
+      path: "../public/fonts/anton-v27-latin_latin-ext_vietnamese-regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/anton-v26-latin-regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+  ],
   variable: "--font-anton",
-  weight: "400",
   display: "swap",
 });
+
 
 export const dmSans = localFont({
   src: [
@@ -37,11 +48,11 @@ export const dmSans = localFont({
 
 export const spaceGrotesk = localFont({
   src: [
-    { path: "../public/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-300.woff2", weight: "300" },
-    { path: "../public/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-regular.woff2", weight: "400" },
-    { path: "../public/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-500.woff2", weight: "500" },
-    { path: "../public/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-600.woff2", weight: "600" },
-    { path: "../public/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-700.woff2", weight: "700" },
+    { path: "../public/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-300.woff2", weight: "300", style: "normal" },
+    { path: "../public/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-regular.woff2", weight: "400", style: "normal" },
+    { path: "../public/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-500.woff2", weight: "500", style: "normal" },
+    { path: "../public/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-600.woff2", weight: "600", style: "normal" },
+    { path: "../public/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-700.woff2", weight: "700", style: "normal" },
   ],
   variable: "--font-space-grotesk",
   display: "swap",
@@ -94,8 +105,8 @@ export const cutiveMono = localFont({
 
 export const anonymousPro = localFont({
   src: [
-    { path: "../public/fonts/anonymous-pro-v21-latin/anonymous-pro-v21-latin-regular.woff2", weight: "400" },
-    { path: "../public/fonts/anonymous-pro-v21-latin/anonymous-pro-v21-latin-700.woff2", weight: "700" },
+    { path: "../public/fonts/anonymous-pro-v21-latin/anonymous-pro-v21-latin-regular.woff2", weight: "400", style: "normal" },
+    { path: "../public/fonts/anonymous-pro-v21-latin/anonymous-pro-v21-latin-700.woff2", weight: "700", style: "normal" },
   ],
   variable: "--font-anonymous-pro",
   display: "swap",
@@ -110,11 +121,11 @@ export const syneMono = localFont({
 
 export const zillaSlab = localFont({
   src: [
-    { path: "../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-300.woff2", weight: "300" },
-    { path: "../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-regular.woff2", weight: "400" },
-    { path: "../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-500.woff2", weight: "500" },
-    { path: "../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-600.woff2", weight: "600" },
-    { path: "../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-700.woff2", weight: "700" },
+    { path: "../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-300.woff2", weight: "300", style: "normal" },
+    { path: "../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-regular.woff2", weight: "400", style: "normal" },
+    { path: "../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-500.woff2", weight: "500", style: "normal" },
+    { path: "../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-600.woff2", weight: "600", style: "normal" },
+    { path: "../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-700.woff2", weight: "700", style: "normal" },
   ],
   variable: "--font-zilla-slab",
   display: "swap",

@@ -11,20 +11,16 @@ const slugify = (s: string) =>
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/&/g, "and")
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/^-+|-+$/g, "-");
 
 export type GalleryImage = { src: string; alt: string };
 
 type ProductionGalleryProps = {
   images: GalleryImage[];
   title?: string;
-  /** e.g. "Jane Doe" */
   photographer?: string | null;
-  /** Optional override: link directly to a custom URL instead of alumni slug */
   photographerHref?: string;
-  /** Full Flickr (or other) album URL */
   albumHref?: string | null;
-  /** Optional override copy for the album tile */
   albumLabel?: string;
 };
 
@@ -52,10 +48,10 @@ export default function ProductionGallery({
 
   return (
     <>
-      {/* Single hairline ABOVE header; no extra section-block here to avoid double line */}
+      {/* Single hairline ABOVE header; no extra section-block here */}
       <div className="row rowFull gallery-row">
         <section className="pg-wrapper" aria-label="Production gallery">
-          {/* Header: title + dynamic photographer credit */}
+          {/* Header */}
           <div className="pg-header">
             <h2 className="pg-heading">
               {isFieldGallery ? "From the Field" : "Production Gallery"}
@@ -64,11 +60,10 @@ export default function ProductionGallery({
               {photographer ? (
                 <p className="pg-credit">
                   <span className="pg-credit-label">
-                    Production Photography by</span>
+                    Production Photography by
+                  </span>
                   <a
-                    href={
-                      photographerHref || `/alumni/${slugify(photographer)}`
-                    }
+                    href={photographerHref || `/alumni/${slugify(photographer)}`}
                     className="pg-credit-link"
                   >
                     <span className="pg-credit-name">{photographer}</span>
@@ -77,7 +72,7 @@ export default function ProductionGallery({
               ) : (
                 baseTitle && (
                   <p className="pg-credit pg-credit-muted">
-                    The journey of {" "}
+                    The journey of{" "}
                     <span className="pg-credit-name-static">{baseTitle}</span>
                   </p>
                 )
@@ -85,8 +80,8 @@ export default function ProductionGallery({
             </div>
           </div>
 
-          {/* Strip of square tiles (smaller) */}
-          <div className="pg-strip">
+          {/* ✅ iMessage-style swipeable photo pile */}
+          <div className="pg-strip" role="list">
             {images.map((img, idx) => (
               <button
                 key={img.src}
@@ -94,39 +89,31 @@ export default function ProductionGallery({
                 className="pg-card"
                 onClick={() => openLightbox(idx)}
                 aria-label={`Open image ${idx + 1} in gallery`}
+                role="listitem"
               >
-                <div
-  className="pg-card-inner"
-  style={{
-    position: "relative",      // makes the fill image stay inside this card
-    width: "100%",
-    paddingBottom: "100%",     // square ratio even before CSS loads
-  }}
->
-  <Image
-    src={img.src}
-    alt={img.alt}
-    fill
-    className="pg-img"
-    sizes="(min-width: 1024px) 240px, (min-width: 640px) 33vw, 80vw"
-    priority={idx < 2}
-    style={{
-      objectFit: "cover",
-      objectPosition: "center",
-    }}
-  />
-  <span className="pg-sheen" />
-</div>
+                <div className="pg-card-inner">
+                  <Image
+                    src={img.src}
+                    alt={img.alt}
+                    fill
+                    className="pg-img"
+                    sizes="(min-width: 1024px) 240px, (min-width: 640px) 33vw, 80vw"
+                    priority={idx < 2}
+                    style={{ objectFit: "cover", objectPosition: "center" }}
+                  />
+                  <span className="pg-sheen" />
+                </div>
               </button>
             ))}
 
-            {/* Album tile at the end (only if albumHref provided) */}
+            {/* Album tile (no overlap) */}
             {hasAlbumLink && (
               <a
                 href={albumHref!}
                 className="pg-card pg-card-album"
                 target="_blank"
                 rel="noreferrer"
+                role="listitem"
               >
                 <div className="pg-card-inner pg-card-inner-album">
                   <p className="pg-album-text">
@@ -163,16 +150,10 @@ export default function ProductionGallery({
           width: 100%;
           margin-top: 0.2rem;
           overflow: visible;
-
-          /* Single divider line above this block */
           border-top: 1px solid #2411231f;
           padding-top: 14px;
-
-          /* No horizontal padding – align with white card edges */
           padding-left: 0;
           padding-right: 0;
-
-          /* Keep a bit of vertical breathing room */
           padding-bottom: 1.6rem;
         }
 
@@ -219,7 +200,6 @@ export default function ProductionGallery({
           margin-left: 0.35em;
         }
 
-        /* LINKED name (photographer) – purple */
         .pg-credit-name {
           display: inline-block;
           padding-inline: 2px;
@@ -229,95 +209,132 @@ export default function ProductionGallery({
           font-weight: 700;
         }
 
-        /* STATIC name (Moments from TITLE) – neutral, not a link */
         .pg-credit-name-static {
           display: inline-block;
           padding-inline: 2px;
-          transform-origin: center center;
-          transition: color 160ms ease, opacity 160ms ease;
           color: #241123cc;
           font-weight: 700;
         }
 
-        /* Hover for linked photographer only */
         .pg-credit-link:hover .pg-credit-name {
           color: #f23359;
           transform: scale(1.03);
           opacity: 0.97;
         }
 
-        /* Smaller squares */
+        /* =========================
+           ✅ PHOTO PILE SWIPE TRACK
+           ========================= */
         .pg-strip {
-  margin-top: 1.3rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1.1rem;
-  overflow: visible;
-  justify-content: flex-start; /* NEW: keep cards from stretching weirdly */
-}
+          --tile: 170px;              /* keep SAME square dimension */
+          margin-top: 1.1rem;
+          display: flex;
+          gap: 0;                     /* overlap handles spacing */
+          overflow-x: auto;
+          overflow-y: visible;
+          padding: 10px 0 8px 6px;    /* tiny left offset like iMessage */
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+        }
 
-.pg-card {
-  position: relative;
-  border: none;
-  padding: 0;
-  background: transparent;
-  cursor: pointer;
-  border-radius: 20px;
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.26);
-  overflow: visible;
-  transition: transform 220ms ease, box-shadow 220ms ease;
+        .pg-strip::-webkit-scrollbar {
+          height: 8px;
+        }
+        .pg-strip::-webkit-scrollbar-thumb {
+          background: #24112333;
+          border-radius: 999px;
+        }
 
-  max-width: 260px;         /* NEW: cap card width so it can't fill the white card */
-  width: 100%;
-  justify-self: flex-start; /* NEW: align each tile to the left within its grid cell */
-}
+        .pg-card {
+          flex: 0 0 auto;
+          width: var(--tile);
+          height: var(--tile);
+          border: none;
+          padding: 0;
+          background: transparent;
+          cursor: pointer;
+          border-radius: 20px;
+          position: relative;
+          overflow: visible;
+          scroll-snap-align: start;
+          transition: transform 220ms ease;
+        }
 
+        /* overlap stack */
+        .pg-card:not(:first-child) {
+          margin-left: -54px; /* controls pile overlap */
+        }
+
+        /* stagger + slight rotations for “pile” */
+        .pg-card:nth-child(3n + 1) {
+          transform: translateY(2px) rotate(-1.2deg);
+          z-index: 1;
+        }
+        .pg-card:nth-child(3n + 2) {
+          transform: translateY(-4px) rotate(1deg);
+          z-index: 2;
+        }
+        .pg-card:nth-child(3n) {
+          transform: translateY(4px) rotate(-0.6deg);
+          z-index: 1;
+        }
 
         .pg-card-inner {
           position: relative;
-          aspect-ratio: 1 / 1;
+          width: 100%;
+          height: 100%;
           border-radius: 18px;
-          overflow: hidden; /* crop inside, but allow outer lift */
+          overflow: hidden; /* crop inside */
           background: #050308;
+          box-shadow: 0 8px 18px rgba(36, 17, 35, 0.18);
           transform-origin: center center;
-          transition: transform 260ms ease, box-shadow 260ms ease;
-          cursor: pointer;
+          transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
         }
 
+        /* ✅ ORIGINAL hover vibe: lift + slight scale + front */
+        .pg-card:hover {
+          z-index: 10;
+        }
         .pg-card:hover .pg-card-inner {
-          transform: translateY(-3px) scale(1.02);
-          box-shadow: 0 16px 34px rgba(0, 0, 0, 0.32);
+          transform: translateY(-6px) scale(1.04);
+          box-shadow: 0 14px 28px rgba(36, 17, 35, 0.26);
+          filter: saturate(1.03);
         }
 
         .pg-img {
           display: block;
         }
 
-        /* Sheen: a bit faster + natural */
+        /* ✅ ORIGINAL sheen sweep (not the current fade style) */
         .pg-sheen {
           pointer-events: none;
           position: absolute;
-          inset: -25%;
+          inset: 0;
           background: linear-gradient(
             120deg,
-            rgba(255, 255, 255, 0) 15%,
-            rgba(255, 255, 255, 0.26) 40%,
-            rgba(255, 255, 255, 0) 70%
+            transparent 0%,
+            rgba(255, 255, 255, 0) 35%,
+            rgba(255, 255, 255, 0.35) 50%,
+            rgba(255, 255, 255, 0) 65%,
+            transparent 100%
           );
+          transform: translateX(-120%);
+          transition: transform 480ms ease;
           mix-blend-mode: screen;
-          opacity: 0;
-          transform: translateX(-120%) rotate(2deg);
-          transition: transform 650ms ease, opacity 360ms ease;
         }
         .pg-card:hover .pg-sheen {
-          opacity: 0.6;
-          transform: translateX(0%) rotate(2deg);
+          transform: translateX(120%);
         }
 
-        /* Album tile – whole square is the pill/button */
+        /* =========================
+           Album tile (no overlap / no rotation)
+           ========================= */
         .pg-card-album {
           text-decoration: none;
           cursor: pointer;
+          margin-left: 14px !important;
+          transform: none !important;
+          z-index: 0 !important;
         }
         .pg-card-inner-album {
           display: flex;
@@ -325,15 +342,17 @@ export default function ProductionGallery({
           align-items: center;
           justify-content: center;
           gap: 0.55rem;
-          min-height: 150px;
+          width: 100%;
+          height: 100%;
           border-radius: 18px;
           background: #fdf4dd;
           border: 1px solid #c9a96a;
           box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+          transition: transform 180ms ease, box-shadow 180ms ease;
         }
 
         .pg-card-album:hover .pg-card-inner-album {
-          transform: translateY(-3px) scale(1.02);
+          transform: translateY(-6px) scale(1.04);
           box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2),
             inset 0 0 0 1px rgba(255, 255, 255, 0.8);
         }
@@ -349,6 +368,7 @@ export default function ProductionGallery({
           display: inline-flex;
           align-items: center;
           gap: 0.3rem;
+          text-align: center;
         }
         .pg-album-arrow {
           font-size: 0.9rem;
@@ -371,6 +391,14 @@ export default function ProductionGallery({
           }
           .pg-meta {
             text-align: left;
+          }
+
+          .pg-strip {
+            --tile: 150px;          /* same idea, slightly smaller on phones */
+            padding-left: 2px;
+          }
+          .pg-card:not(:first-child) {
+            margin-left: -46px;     /* maintain overlap feeling */
           }
         }
       `}</style>

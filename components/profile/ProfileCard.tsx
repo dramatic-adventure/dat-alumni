@@ -1,19 +1,14 @@
+// components/profile/ProfileCard.tsx
 "use client";
 
 import { useState, useLayoutEffect, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 
-import NameStack from "@/components/shared/NameStack";
 import ArtistBio from "./ArtistBio";
 import PosterStrip from "@/components/shared/PosterStrip";
 import ProgramStamps from "@/components/alumni/ProgramStamps";
-import FeaturedProductionsSection from "./FeaturedProductionsSection";
-import ShareButton from "@/components/ui/ShareButton";
 import Lightbox from "@/components/shared/Lightbox";
-import LocationBadge from "@/components/shared/LocationBadge";
-import ContactOverlay from "@/components/shared/ContactOverlay";
-import ContactWidget from "@/components/shared/ContactWidget";
+
 import {
   StoryRow,
   Production,
@@ -21,20 +16,16 @@ import {
   Update,
 } from "@/lib/types";
 import { productionMap } from "@/lib/productionMap";
-import StatusFlags from "@/components/alumni/StatusFlags";
 
 import MobileProfileHeader from "@/components/alumni/MobileProfileHeader";
 import DesktopProfileHeader from "@/components/alumni/DesktopProfileHeader";
 import useIsMobile from "@/hooks/useIsMobile";
 
-import MyJourney from "@/components/alumni/MyJourney";
 import SpotlightPanel from "@/components/alumni/SpotlightPanel";
 import HighlightPanel from "@/components/alumni/HighlightPanel";
 import type { HighlightCard as UIHighlightCard } from "@/components/alumni/HighlightPanel";
 
 import ProfileShowcaseSection from "@/components/profile/ProfileShowcaseSection";
-
-import CreativeWorkPanel from "@/components/alumni/CreativeWorkPanel";
 
 import CategoryScroller from "@/components/alumni/CategoryScroller";
 
@@ -168,14 +159,7 @@ export default function ProfileCard({
   socials,
   updates = [],
 }: ProfileCardProps) {
-  const [isModalOpen, setModalOpen] = useState(false);
-  const [currentUrl, setCurrentUrl] = useState("");
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setCurrentUrl(window.location.href);
-    }
-  }, []);
+  const profileCardRef = useRef<HTMLDivElement>(null);
 
   const nameParts = name.trim().split(" ");
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
@@ -221,8 +205,6 @@ export default function ProfileCard({
     .map(normalizeProductionYear)
     .sort((a, b) => Number(b.year) - Number(a.year)) as unknown as Production[]; // keep downstream typings intact
 
-  const fallbackImage = "/images/default-headshot.png";
-  const profileCardRef = useRef<HTMLDivElement>(null);
   const hasContactInfo = !!(email || website || (socials && socials.length > 0));
 
   /* ---------- MAP RAW ROWS → PANEL PROPS (for this profile) ---------- */
@@ -305,36 +287,35 @@ export default function ProfileCard({
           }}
         >
           {hasArtistBio && (
-  <ArtistBio
-    identityTags={identityTags}
-    artistStatement={artistStatement}
-    fontFamily='var(--font-dm-sans), system-ui, sans-serif'
-    fontSize="1.15rem"
-    color="#0C2D37"
-    fontStyle="normal"
-    fontWeight={400}
-    letterSpacing="normal"
-    identityTagStyle={{
-      marginTop: "0rem",
-      marginBottom: "2.5rem",
-      marginLeft: isMobile ? "30px" : "310px",
-      marginRight: "30px",
-    }}
-    bioStyle={{
-      marginLeft: "30px",
-      marginRight: "30px",
-      marginTop: "1rem",
-      marginBottom: "3rem",
-      maxWidth: "calc(100% - 60px)",
+            <ArtistBio
+              identityTags={identityTags}
+              artistStatement={artistStatement}
+              fontFamily='var(--font-dm-sans), system-ui, sans-serif'
+              fontSize="1.15rem"
+              color="#0C2D37"
+              fontStyle="normal"
+              fontWeight={400}
+              letterSpacing="normal"
+              identityTagStyle={{
+                marginTop: "0rem",
+                marginBottom: "2.5rem",
+                marginLeft: isMobile ? "30px" : "310px",
+                marginRight: "30px",
+              }}
+              bioStyle={{
+                marginLeft: "30px",
+                marginRight: "30px",
+                marginTop: "1rem",
+                marginBottom: "3rem",
+                maxWidth: "calc(100% - 60px)",
 
-      // 🆕 keep prose readable & contained
-      whiteSpace: "pre-wrap",
-      wordBreak: "break-word",
-      overflowWrap: "anywhere",
-    }}
-  />
-)}
-
+                // 🆕 keep prose readable & contained
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+                overflowWrap: "anywhere",
+              }}
+            />
+          )}
         </div>
       )}
 
@@ -424,17 +405,14 @@ export default function ProfileCard({
             storytelling, this work reflects a deep engagement with place, people,
             and purpose.
           </p>
-         <PosterStrip
-  posters={featuredProductions.map((p) => ({
-    title: p.title,
-    slug: p.slug, // used for keys + /theatre/[slug]
-    posterUrl: `/posters/${p.slug}-landscape.jpg`,
-    url: `/theatre/${p.slug}`, // relative, stays inside your app
-  }))}
-/>
-
-
-
+          <PosterStrip
+            posters={featuredProductions.map((p) => ({
+              title: p.title,
+              slug: p.slug, // used for keys + /theatre/[slug]
+              posterUrl: `/posters/${p.slug}-landscape.jpg`,
+              url: `/theatre/${p.slug}`, // relative, stays inside your app
+            }))}
+          />
         </div>
       )}
 
@@ -452,11 +430,6 @@ export default function ProfileCard({
         <section className="bg-[#f2f2f2] rounded-xl px-[30px] py-[30px] mt-[0px]">
           <FeaturedStories stories={stories} authorSlug={slug} />
         </section>
-      )}
-
-      {/* 💡 Headshot Modal Lightbox */}
-      {isModalOpen && (
-        <Lightbox images={[headshotUrl || "/images/default-headshot.png"]} onClose={() => setModalOpen(false)} />
       )}
 
       {/* 💡 Journey Update Lightbox */}

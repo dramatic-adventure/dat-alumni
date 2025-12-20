@@ -40,8 +40,8 @@ function animateFlipCount(
     duration = 2600,
     steps = 22,
     delay = 0,
-    pulseCutoff = 0.88,       // <-- no pulses after 88% progress
-    pulseWindowMs = 70,       // subtle + short pulse window
+    pulseCutoff = 0.88, // <-- no pulses after 88% progress
+    pulseWindowMs = 70, // subtle + short pulse window
   }: {
     duration?: number;
     steps?: number;
@@ -74,9 +74,7 @@ function animateFlipCount(
       // Chunk rounding for a “tick” feel on bigger numbers
       const raw = Math.max(0, Math.round(target * eased));
       const chunk =
-        target >= 2000 ? 25 :
-        target >= 500  ? 10 :
-        target >= 100  ? 5  : 1;
+        target >= 2000 ? 25 : target >= 500 ? 10 : target >= 100 ? 5 : 1;
       const val = Math.min(target, Math.round(raw / chunk) * chunk);
 
       // Only pulse on earlier ticks (before cutoff) and never on the final value
@@ -128,7 +126,9 @@ export default function StatsStrip({
     const grid = gridRef.current;
     if (!section || !grid) return;
 
-    const nums = Array.from(section.querySelectorAll<HTMLElement>("[data-target]"));
+    const nums = Array.from(
+      section.querySelectorAll<HTMLElement>("[data-target]")
+    );
 
     const prefersReducedMotion =
       typeof window !== "undefined" &&
@@ -167,27 +167,28 @@ export default function StatsStrip({
           duration,
           steps,
           delay: cascadeDelay,
-          pulseCutoff: 0.86,   // a hair earlier cutoff to quiet the finish
-          pulseWindowMs: 60,   // slightly softer pulse
+          pulseCutoff: 0.86, // a hair earlier cutoff to quiet the finish
+          pulseWindowMs: 60, // slightly softer pulse
         });
       });
     };
 
     // Start just before the section arrives so you never see zeros
-    const io = "IntersectionObserver" in window
-      ? new IntersectionObserver(
-          (entries) => {
-            for (const e of entries) {
-              if (e.isIntersecting) {
-                run();
-                io!.disconnect();
-                break;
+    const io =
+      "IntersectionObserver" in window
+        ? new IntersectionObserver(
+            (entries) => {
+              for (const e of entries) {
+                if (e.isIntersecting) {
+                  run();
+                  io!.disconnect();
+                  break;
+                }
               }
-            }
-          },
-          { threshold: 0, rootMargin: "220px 0px -5% 0px" }
-        )
-      : null;
+            },
+            { threshold: 0, rootMargin: "220px 0px -5% 0px" }
+          )
+        : null;
 
     if (io) io.observe(section);
     else run();
@@ -253,8 +254,16 @@ export default function StatsStrip({
           padding: 1.25rem;
           border: 1px solid rgba(36, 17, 35, 0.12);
         }
-        @media (min-width: 640px) { .card { padding: 1.75rem; } }
-        @media (min-width: 1024px) { .card { padding: 2rem; } }
+        @media (min-width: 640px) {
+          .card {
+            padding: 1.75rem;
+          }
+        }
+        @media (min-width: 1024px) {
+          .card {
+            padding: 2rem;
+          }
+        }
 
         .stats-container {
           display: grid;
@@ -289,40 +298,66 @@ export default function StatsStrip({
         .stat-number {
           margin: 0 0 -0.15rem;
           min-height: 1em;
-          font-family: var(--font-space-grotesk, var(--font-space-grotesk)), system-ui, sans-serif;
+          font-family: var(
+            --font-space-grotesk,
+            var(--font-space-grotesk)
+          ),
+            system-ui, sans-serif;
           font-weight: 700;
           letter-spacing: -0.02em;
           color: ${accentColor};
           font-size: clamp(2rem, 10vw, 2.75rem);
-          text-shadow: 0 2px 8px rgba(0,0,0,0.12);
+          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
           opacity: 0;
           transition: opacity 80ms linear, transform 60ms ease-out;
           will-change: transform;
         }
-        .ready .stat-number { opacity: 1; }
+        .ready .stat-number {
+          opacity: 1;
+        }
 
         /* Subtle tick: tiny translate/scale, no blur for a cleaner finish */
         .stat-number.tick {
           transform: translateY(-0.5px) scale(1.004);
         }
 
-        @media (min-width: 640px) { .stat-number { font-size: clamp(2.25rem, 6.5vw, 3.25rem); } }
-        @media (min-width: 1024px) { .stat-number { font-size: clamp(2.75rem, 4.5vw, 4.5rem); } }
+        @media (min-width: 640px) {
+          .stat-number {
+            font-size: clamp(2.25rem, 6.5vw, 3.25rem);
+          }
+        }
+        @media (min-width: 1024px) {
+          .stat-number {
+            font-size: clamp(2.75rem, 4.5vw, 4.5rem);
+          }
+        }
 
         .stat-label {
           margin: 0;
-          font-family: var(--font-space-grotesk, var(--font-space-grotesk)), system-ui, sans-serif;
+          font-family: var(
+            --font-space-grotesk,
+            var(--font-space-grotesk)
+          ),
+            system-ui, sans-serif;
           font-weight: 500;
           font-size: clamp(0.9rem, 3.2vw, 1rem);
         }
         .stat-label .sub {
           display: inline-block;
-          opacity: 0.85;
+          opacity: 0.6; /* 60% opacity for subline */
           line-height: 1.2;
           font-size: 0.85em;
         }
-        @media (min-width: 640px) { .stat-label { font-size: clamp(1rem, 2.2vw, 1.15rem); } }
-        @media (min-width: 1024px) { .stat-label { font-size: clamp(1.05rem, 1.6vw, 1.25rem); } }
+        @media (min-width: 640px) {
+          .stat-label {
+            font-size: clamp(1rem, 2.2vw, 1.15rem);
+          }
+        }
+        @media (min-width: 1024px) {
+          .stat-label {
+            font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+          }
+        }
 
         .sr-only {
           position: absolute;

@@ -11,10 +11,27 @@ interface PosterStripProps {
 }
 
 // Make sure this file actually exists at public/posters/fallback-16x9.jpg
-// For debugging you can temporarily set this to "/images/default-headshot.png"
 const FALLBACK_POSTER_URL = "/posters/fallback-16x9.jpg";
 
 type LayoutMode = "mobile" | "tablet" | "desktop";
+
+function normalizePosterSrc(raw?: string | null): string {
+  if (!raw) return FALLBACK_POSTER_URL;
+
+  let src = raw.trim();
+
+  // Strip accidental "public/" prefix
+  if (src.startsWith("public/")) {
+    src = src.slice("public/".length);
+  }
+
+  // Ensure root-relative for local static assets
+  if (!src.startsWith("/") && !src.startsWith("http")) {
+    src = `/${src}`;
+  }
+
+  return src || FALLBACK_POSTER_URL;
+}
 
 export default function PosterStrip({ posters }: PosterStripProps) {
   const [expanded, setExpanded] = useState(false);
@@ -58,16 +75,13 @@ export default function PosterStrip({ posters }: PosterStripProps) {
             // Responsive 3 / 2 / 1 layout
             let basis: string;
             if (layout === "mobile") {
-              // Always single column
               basis = "100%";
             } else if (layout === "tablet") {
-              // iPad: 1 poster -> full; 2+ -> 2-up
               basis =
                 itemCount === 1
                   ? "100%"
                   : "calc((100% - 2.5rem) / 2)"; // 2.5rem = gap-x-10
             } else {
-              // Desktop
               basis =
                 itemCount === 1
                   ? "100%"
@@ -78,17 +92,20 @@ export default function PosterStrip({ posters }: PosterStripProps) {
 
             const key = `${(poster as any).slug ?? poster.url ?? "poster"}-${index}`;
 
-            // Decide which src to use: original or fallback
             const hasValidPosterUrl =
               typeof poster.posterUrl === "string" &&
               poster.posterUrl.trim().length > 0;
 
             const shouldUseFallback = errorMap[index] || !hasValidPosterUrl;
+            const rawPosterSrc = hasValidPosterUrl ? poster.posterUrl!.trim() : undefined;
+
             const posterSrc = shouldUseFallback
               ? FALLBACK_POSTER_URL
-              : poster.posterUrl!.trim();
+              : normalizePosterSrc(rawPosterSrc);
 
-            const isExternal = poster.url?.startsWith("http");
+            // Normalize href so we never pass undefined into <Link>
+            const href = poster.url?.trim();
+            const isExternal = href?.startsWith("http") ?? false;
 
             const PosterInner = (
               <div
@@ -104,7 +121,6 @@ export default function PosterStrip({ posters }: PosterStripProps) {
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   priority={false}
                   onError={() => {
-                    // If the original fails, mark this index as errored
                     setErrorMap((prev) =>
                       prev[index] ? prev : { ...prev, [index]: true }
                     );
@@ -122,24 +138,28 @@ export default function PosterStrip({ posters }: PosterStripProps) {
                 className="flex-1 max-w-full flex flex-col items-center"
                 style={{
                   flexBasis: basis,
-                  paddingInline: "1.25rem", // breathing room around each poster
+                  paddingInline: "1.25rem",
                   paddingBlock: "0.5rem",
                 }}
               >
                 <div className="poster-card group relative w-full" style={{ lineHeight: 0 }}>
-                  {isExternal ? (
-                    <a
-                      href={poster.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block w-full"
-                    >
-                      {PosterInner}
-                    </a>
+                  {href ? (
+                    isExternal ? (
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full"
+                      >
+                        {PosterInner}
+                      </a>
+                    ) : (
+                      <Link href={href} prefetch={false} className="block w-full">
+                        {PosterInner}
+                      </Link>
+                    )
                   ) : (
-                    <Link href={poster.url} prefetch={false} className="block w-full">
-                      {PosterInner}
-                    </Link>
+                    PosterInner
                   )}
                 </div>
 

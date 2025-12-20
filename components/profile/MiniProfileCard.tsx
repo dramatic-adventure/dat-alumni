@@ -12,8 +12,12 @@ interface MiniProfileCardProps {
   customStyle?: CSSProperties;
   nameFontSize?: number;
   roleFontSize?: number;
-  /** Set true for cards above the fold so the image + RSC get fetched ASAP */
   priority?: boolean;
+
+  /** NEW */
+  variant?: "dark" | "light";
+  /** NEW: override link destination if needed */
+  href?: string;
 }
 
 export default function MiniProfileCard({
@@ -25,13 +29,25 @@ export default function MiniProfileCard({
   nameFontSize,
   roleFontSize,
   priority = false,
+
+  variant = "dark",
+  href,
 }: MiniProfileCardProps) {
   const defaultImage = "/images/default-headshot.png";
   const imageSrc = (headshotUrl || defaultImage).replace(/^http:\/\//i, "https://");
 
+  const isLight = variant === "light";
+
+  const nameColor = isLight ? "#241123" : "#f2f2f2";
+  const nameHover = isLight ? "#6c00af" : "#FFCC00";
+  const roleColor = isLight ? "#241123" : "#f2f2f2";
+  const roleOpacity = isLight ? 0.72 : 0.6;
+
+  const linkHref = href ?? `/alumni/${slug}`;
+
   return (
     <Link
-      href={`/alumni/${slug}`}
+      href={linkHref}
       prefetch
       className="block group"
       style={{ textDecoration: "none" }}
@@ -49,6 +65,7 @@ export default function MiniProfileCard({
             overflow: "hidden",
             boxShadow: "2px 3px 4px rgba(36,17,35,0.5)",
             transformOrigin: "center center",
+            borderRadius: 0, // keep as-is; set to 12 if you want rounded
           }}
         >
           <Image
@@ -65,7 +82,7 @@ export default function MiniProfileCard({
 
         {/* Name */}
         <h3
-          className="uppercase leading-snug text-[#f2f2f2] group-hover:text-[#FFCC00] transition-colors duration-300"
+          className="uppercase leading-snug transition-colors duration-300"
           style={{
             fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
             fontWeight: 600,
@@ -73,21 +90,22 @@ export default function MiniProfileCard({
             fontSize: nameFontSize || 16,
             margin: "15px 0 0 0",
             textAlign: "left",
+            color: nameColor,
           }}
         >
-          {name}
+          <span className="mp-name">{name}</span>
         </h3>
 
         {/* Role */}
         <p
-          className="text-[#f2f2f2]"
           style={{
             fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
             fontWeight: 400,
-            opacity: 0.6,
+            opacity: roleOpacity,
             fontSize: roleFontSize || 14,
             margin: 0,
             textAlign: "left",
+            color: roleColor,
           }}
         >
           {role}
@@ -97,6 +115,9 @@ export default function MiniProfileCard({
       <style>{`
         .group:hover div.relative {
           box-shadow: 0 12px 28px rgba(36,17,35,0.6);
+        }
+        .group:hover .mp-name {
+          color: ${nameHover};
         }
       `}</style>
     </Link>

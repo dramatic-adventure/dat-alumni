@@ -1,8 +1,9 @@
+// components/ui/DATButton.tsx
 "use client";
 
 import * as React from "react";
 
-type Variant = "ink" | "yellow" | "teal";
+type Variant = "ink" | "yellow" | "teal" | "pink";
 type Size = "sm" | "md" | "lg";
 
 type Shared = {
@@ -20,16 +21,23 @@ type Shared = {
   disabled?: boolean;
 };
 
-const PALETTE: Record<Variant, { base: string; hover: string; text: string }> = {
-  ink:   { base: "#241123", hover: "#1C0D1B", text: "#F2F2F2" },
-  yellow:{ base: "#FFCC00", hover: "#E6B800", text: "#241123" },
-  teal:  { base: "#2493A9", hover: "#1F7F92", text: "#F2F2F2" },
+const PALETTE: Record<
+  Variant,
+  { base: string; hover: string; text: string }
+> = {
+  ink: { base: "#241123", hover: "#1C0D1B", text: "#F2F2F2" },
+  yellow: { base: "#FFCC00", hover: "#E6B800", text: "#241123" },
+  teal: { base: "#2493A9", hover: "#1F7F92", text: "#F2F2F2" },
+  pink: { base: "#F23359", hover: "#d52a4c", text: "#FDF9F1" },
 };
 
-const SIZES: Record<Size, { px: string; radius: number; fs: string; lh: number }> = {
+const SIZES: Record<
+  Size,
+  { px: string; radius: number; fs: string; lh: number }
+> = {
   sm: { px: "0.55rem 0.85rem", radius: 12, fs: "0.72rem", lh: 1.15 },
   md: { px: "0.85rem 1.15rem", radius: 14, fs: "0.78rem", lh: 1.15 },
-  lg: { px: "1rem 1.35rem",    radius: 16, fs: "0.86rem", lh: 1.15 },
+  lg: { px: "1rem 1.35rem", radius: 16, fs: "0.86rem", lh: 1.15 },
 };
 
 function baseStyles({
@@ -48,7 +56,9 @@ function baseStyles({
     width: fullWidth ? "100%" : undefined,
     padding: sz.px,
     borderRadius: sz.radius,
-    fontFamily: fontFamily ?? 'var(--font-dm-sans), "DM Sans", system-ui, sans-serif',
+    fontFamily:
+      fontFamily ??
+      'var(--font-dm-sans), "DM Sans", system-ui, sans-serif',
     fontSize: sz.fs,
     lineHeight: sz.lh,
     fontWeight: 800,
@@ -60,7 +70,8 @@ function baseStyles({
     backgroundColor: pal.base,
     color: pal.text,
     WebkitTextFillColor: pal.text,
-    transition: "background-color 150ms ease, opacity 120ms ease, transform 120ms ease",
+    transition:
+      "background-color 150ms ease, opacity 120ms ease, transform 120ms ease",
     cursor: "pointer",
     boxShadow: "none", // flat
   };
@@ -89,8 +100,12 @@ export function DATButtonLink({
       rel={rel}
       className={className}
       style={{ ...styles, ...style, textDecoration: "none" }}
-      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = pal.hover; }}
-      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = pal.base; }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = pal.hover;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = pal.base;
+      }}
     >
       {children}
     </a>
@@ -109,7 +124,10 @@ export function DATButton({
   disabled,
   onClick,
   type = "button",
-}: Shared & { onClick?: React.MouseEventHandler<HTMLButtonElement>; type?: "button" | "submit" | "reset" }) {
+}: Shared & {
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  type?: "button" | "submit" | "reset";
+}) {
   const { styles, pal } = baseStyles({ fullWidth, fontFamily, size, variant });
   return (
     <button
@@ -117,7 +135,11 @@ export function DATButton({
       disabled={disabled}
       onClick={onClick}
       className={className}
-      style={{ ...styles, ...style, ...(disabled ? { opacity: 0.5, cursor: "not-allowed" } : null) }}
+      style={{
+        ...styles,
+        ...style,
+        ...(disabled ? { opacity: 0.5, cursor: "not-allowed" } : null),
+      }}
       onMouseEnter={(e) => {
         if (!disabled) e.currentTarget.style.backgroundColor = pal.hover;
       }}

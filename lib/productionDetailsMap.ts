@@ -4,6 +4,11 @@ import type {
   GalleryImage,
 } from "@/components/productions/ProductionPageTemplate";
 
+import type {
+  DramaClubCauseCategory,
+  DramaClubCauseSubcategory,
+} from "@/lib/causes";
+
 /** Link + optional logo for partners */
 export type PartnerLink = {
   name: string;
@@ -16,10 +21,23 @@ export type PartnerLink = {
 
 /** Generic causes the production supports (with optional icon + link) */
 export type CauseItem = {
-  label: string;    // e.g., "Indigenous Rights", "Environmental Conservation"
+  /** Human-facing label (can stay poetic / funder friendly) */
+  label: string; // e.g., "Indigenous Rights", "Environmental Conservation"
+
+  /** Canonical taxonomy hooks (for /cause/[slug] pages & filters) */
+  category?: DramaClubCauseCategory;
+  subcategory?: DramaClubCauseSubcategory;
+
+  /** Optional icon + alt (UI sugar only) */
   iconSrc?: string; // optional icon path under /public
   iconAlt?: string;
-  href?: string;    // optional link to DAT cause page
+
+  /**
+   * Optional override; if omitted, UI will:
+   * - prefer `subcategory` slug (canonical)
+   * - otherwise slugify(label) → /cause/[slug]
+   */
+  href?: string;
 };
 
 /** Per-show extras that keep the page generic and data-driven */
@@ -39,14 +57,14 @@ export interface ProductionExtra {
   creditPeople?: { name: string; href?: string }[]; // supports multiple names
 
   /** Meta (all optional; page assembles what's provided) */
-  dates?: string;               // freeform range, e.g., "Sept 14 – Oct 8, 2013"
-  festival?: string;            // e.g., "Edinburgh Fringe"
-  festivalHref?: string;        // link if available
-  venue?: string;               // e.g., "IATI Theater"
-  venueHref?: string;           // link if available
-  city?: string;                // e.g., "NYC" or "Quito, Ecuador"
-  runtime?: string;             // e.g., "95 minutes"
-  ageRecommendation?: string;   // e.g., "Ages 12+"
+  dates?: string; // freeform range, e.g., "Sept 14 – Oct 8, 2013"
+  festival?: string; // e.g., "Edinburgh Fringe"
+  festivalHref?: string; // link if available
+  venue?: string; // e.g., "IATI Theater"
+  venueHref?: string; // link if available
+  city?: string; // e.g., "NYC" or "Quito, Ecuador"
+  runtime?: string; // e.g., "95 minutes"
+  ageRecommendation?: string; // e.g., "Ages 12+"
 
   /** About */
   synopsis?: string | string[]; // allow multi-paragraph content
@@ -93,14 +111,14 @@ export interface ProductionExtra {
   fieldAlbumLabel?: string | null;
 
   /** Production Gallery credit + “Go to album” tile */
-  productionPhotographer?: string;   // e.g., "María López"
-  productionAlbumHref?: string;      // e.g., Flickr album URL
-  productionAlbumLabel?: string;     // e.g., "Full photo album"
+  productionPhotographer?: string; // e.g., "María López"
+  productionAlbumHref?: string; // e.g., Flickr album URL
+  productionAlbumLabel?: string; // e.g., "Full photo album"
 
   /** Links section (replaces 'pressQuotes' with a general-purpose list) */
   resources?: Array<{
-    label: string;   // text shown in the RESOURCES list
-    href: string;    // absolute or relative URL
+    label: string; // text shown in the RESOURCES list
+    href: string; // absolute or relative URL
   }>;
 
   /**
@@ -123,11 +141,11 @@ export interface ProductionExtra {
 
   /** Optional upcoming ticketed performances for this production */
   upcomingShows?: {
-    datetimeISO: string;                 // e.g. "2026-07-12T19:30:00-05:00"
-    venue?: string;                      // e.g. "Teatro Bolívar"
-    city?: string;                       // e.g. "Quito"
-    note?: string;                       // e.g. "ASL-interpreted performance"
-    ticketsUrl?: string;                 // purchase link
+    datetimeISO: string; // e.g. "2026-07-12T19:30:00-05:00"
+    venue?: string; // e.g. "Teatro Bolívar"
+    city?: string; // e.g. "Quito"
+    note?: string; // e.g. "ASL-interpreted performance"
+    ticketsUrl?: string; // purchase link
     status?: "on-sale" | "sold-out" | "limited";
   }[];
 
@@ -137,10 +155,10 @@ export interface ProductionExtra {
 
   /** Manual override for past run summary */
   pastRunOverride?: {
-    dateRange?: string;   // "Sept 14–Oct 8, 2019"
-    city?: string;        // "Quito, Ecuador"
-    venue?: string;       // "Teatro Nacional Sucre"
-    festival?: string;    // "Manta Festival"
+    dateRange?: string; // "Sept 14–Oct 8, 2019"
+    city?: string; // "Quito, Ecuador"
+    venue?: string; // "Teatro Nacional Sucre"
+    festival?: string; // "Manta Festival"
   };
 
   /** Optional richer history for mini timelines or archives */
@@ -157,10 +175,24 @@ export interface ProductionExtra {
   /** “Now Playing” pointer for promoting a different live show */
   nowPlaying?: {
     title: string;
-    slug: string;         // link target: /theatre/[slug]
+    slug: string; // link target: /theatre/[slug]
     dateRange?: string;
     city?: string;
   };
+
+  // -------------------------------
+  // RELATED PLAYS / PROJECTS
+  // -------------------------------
+
+  /** Optional override for the Related header (default: "Related Plays & Projects") */
+  relatedTitle?: string;
+
+  /**
+   * Optional base title used by buildRelated (e.g. "A Girl Without Wings")
+   * when you want to group variants like
+   * "A Girl Without Wings — Workshop Production", etc.
+   */
+  relatedBaseTitle?: string;
 }
 
 /** Per-slug details. Keep show-specific content here—page remains generic. */
@@ -227,20 +259,28 @@ export const productionDetailsMap: Record<string, ProductionExtra> = {
     causes: [
       {
         label: "Environmental Conservation",
+        // Climate Justice, Biodiversity & Environmental Protection
+        category: "climate-justice-biodiversity-environmental-protection",
+        subcategory: "natural-resource-stewardship",
         iconSrc: "/icons/cause-environment.svg",
         iconAlt: "Environmental Conservation",
-        href: "/impact/environmental-conservation",
+        // no href → /cause/natural-resource-stewardship (canonical)
       },
       {
         label: "Indigenous Rights",
+        // Indigenous Sovereignty & Rights
+        category: "indigenous-sovereignty-rights",
+        subcategory: "indigenous-cultural-preservation-traditional-knowledge",
         iconSrc: "/icons/cause-indigenous.svg",
         iconAlt: "Indigenous Rights",
-        href: "/impact/indigenous-rights",
+        // no href → /cause/indigenous-cultural-preservation-traditional-knowledge
       },
       {
-        // Tests a cause with no icon
         label: "Arts Education Access",
-        href: "/impact/arts-education",
+        // Education Access, Equity & Opportunity
+        category: "education-access-equity-opportunity",
+        subcategory: "arts-education-access",
+        // no icon / href → tests text-only cause chip + taxonomy slug
       },
     ],
 
@@ -431,6 +471,218 @@ export const productionDetailsMap: Record<string, ProductionExtra> = {
       dateRange: "July 2026",
       city: "Quito & NYC",
     },
+
+    /** Related config (optional – used by buildRelated/page.tsx) */
+    relatedBaseTitle: "A Girl Without Wings",
+    // relatedTitle: "More from the Girl Without Wings cycle",
+  },
+
+  
+  "voices-from-zimbabwe": {
+    /** Hero image for the theatre page (adjust the path if needed) */
+    heroImageUrl: "posters/voices-from-zimbabwe-landscape.jpg",
+
+    subtitle:
+      "",
+
+    // Flexible credit line (preferred)
+    creditPrefix: "",
+    creditPeople: [
+      { name: "", href: "" },
+    ],
+
+    // Legacy playwright fields (kept to ensure both paths still behave)
+    playwright: "",
+    playwrightHref: "",
+
+    useCustomAboutLayout: true,
+
+    // Meta
+    dates: "Original Production • 2007",
+    festival: "",
+    festivalHref: "",
+    venue: "",
+    venueHref: "",
+    city: "",
+    runtime: "",
+    ageRecommendation: "",
+
+    // About (multi-paragraph supported)
+    synopsis: [
+      "",
+      "",
+    ],
+    themes: [
+      "",
+      "",
+    ],
+    pullQuote: {
+      quote:
+        "",
+      attribution: "",
+      attributionHref: "", // example
+    },
+    quoteImageUrl: "",
+
+    /** Community / causes / partners */
+    // you can optionally add dramaClubSlug here if you create one in dramaClubs
+    dramaClubName: "Bulawayo Young Company",
+    dramaClubLocation: "Bulawayo, Zimbabwe",
+    dramaClubLink:
+      "https://dramaticadventuretheatre.org/drama-clubs/bulawayo-young-company",
+
+    causes: [
+      {
+        label: "Arts Education Access",
+        // Education Access, Equity & Opportunity
+        category: "education-access-equity-opportunity",
+        subcategory: "arts-education-access",
+        // no icon / href → tests text-only cause chip + taxonomy slug
+      },
+    ],
+
+    partners: [
+      {
+        name: "Amakhosi Cultural Centre",
+        href: "https://www.facebook.com/profile.php?id=61566556743917",
+        type: "community",
+        logoSrc: "/images/partners/amakhosi.jpg",
+        logoAlt: "Amakhosi Cultural Centre",
+      },
+      {
+        name: "Forgotten Voices International",
+        href: "https://www.forgottenvoices.org/",
+        type: "impact",
+        logoSrc: "/partners/forgotten-voices.png",
+        logoAlt: "Forgotten Voices International",
+      },
+    ],
+
+    /** CTAs */
+    getInvolvedLink: "https://dramaticadventure.com/get-involved",
+    donateLink: "https://dramaticadventure.com/donate",
+    ticketsLink: "https://dramaticadventure.com/tickets",
+
+    /** Media — Production Gallery (main) */
+    galleryImages: [
+      {
+        src: "",
+        alt: "",
+      },
+      {
+        src: "",
+        alt: "",
+      },
+      {
+        src: "",
+        alt: "",
+      },
+    ],
+
+    /** SECOND GALLERY — BTS / From the Field */
+    fieldGalleryImages: [
+      {
+        src: "",
+        alt: "",
+      },
+      {
+        src: "",
+        alt: "",
+      },
+      {
+        src: "",
+        alt: "",
+      },
+    ],
+    fieldGalleryTitle: "Voices from Zimbabwe — From the Field",
+    // fieldAlbumHref / fieldAlbumLabel are optional; can be added later per show
+
+    /** Production Gallery credit + album tile */
+    productionPhotographer: "",
+    productionAlbumHref:
+      "",
+    productionAlbumLabel: "See full photo album",
+
+    /** Resources (links-only list; quotes may be used as labels) */
+    resources: [
+      {
+        label: "",
+        href: "",
+      },
+      {
+        label: "",
+        href: "",
+      },
+      {
+        label: "",
+        href: "",
+      },
+      {
+        label: "",
+        href: "",
+      },
+    ],
+
+    /** Process (community-focused; image OR video supported) */
+    // processSections: [
+//   {
+//     heading: "",
+//     body: [
+//       "",
+//       "",
+//     ],
+//     videoUrl: "",
+//     videoTitle: "",
+//     videoPoster: "",
+//     quote: {
+//       text: "",
+//       attribution: "",
+//     },
+//   },
+//   {
+//     heading: "",
+//     body: "",
+//     image: {
+//       src: "",
+//       alt: "",
+//     },
+//   },
+// ],
+
+
+    
+    // Optional “Get Updates” CTA when not on sale
+    notifyMeUrl: "https://dramaticadventuretheatre.org/subscribe",
+
+    /** Past run override + history timeline */
+    pastRunOverride: {
+      dateRange: "",
+      city: "",
+      venue: "",
+      festival: "",
+    },
+    historyRuns: [
+      {
+        dateRange: "2007",
+        city: "Baltimore, MD",
+        venue: "Load of Fun Theatre",
+        festival: "",
+      },
+      {
+        dateRange: "2007",
+        city: "Pittsburgh, PA",
+        venue: "Bricolage Production Co.",
+      },
+    ],
+
+    /** “Now Playing” pointer to a different live show */
+    nowPlaying: {
+      title: "",
+      slug: "",
+      dateRange: "",
+      city: "",
+    },
+
   },
 
   // ...add other productions here

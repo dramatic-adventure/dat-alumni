@@ -11,7 +11,7 @@ export type DramaClub = {
 };
 
 export const dramaClubs: DramaClub[] = [
-  // TODO: replace with real data
+  // TEMP SEED DATA — replace / extend with real clubs as needed
   {
     slug: "example-club",
     name: "Example Drama Club",

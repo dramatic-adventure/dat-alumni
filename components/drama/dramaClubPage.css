@@ -1,0 +1,2426 @@
+@font-face {
+  font-family: "DAT-Anton-Extended";
+  src:
+    url("/fonts/anton-v27-latin_latin-ext_vietnamese-regular.woff2") format("woff2"),
+    url("/fonts/Anton-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Font helpers */
+.font-sans {
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.font-display,
+.dc-hero-title,
+.dc-impact-title,
+.dc-quote-block blockquote,
+.dc-hero-metric-value,
+.dc-impact-metric-value {
+  font-family: "DAT-Anton-Extended", var(--font-anton, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-clickable-img {
+  cursor: zoom-in;
+}
+
+.dc-page-shell {
+  color: #241123;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+
+  /* Prevent tiny 100vw overflow causing horizontal drift */
+  overflow-x: clip; /* use hidden if Safari gives you grief */
+  background-position: center top; /* helps the kraft feel "centered" */
+}
+
+/* ────────────────────────────────────────────── */
+/* HERO                                          */
+/* ────────────────────────────────────────────── */
+
+.dc-hero {
+  position: relative;
+  width: 100%;
+  height: 68vh;
+  max-height: 640px;
+  box-shadow: 0 0 33px rgba(0, 0, 0, 0.65);
+  overflow: hidden;
+}
+
+.dc-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.35)),
+    linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+}
+
+/* ✅ HERO: pin content low + align left/right baselines */
+.dc-hero-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+
+  justify-content: flex-end; /* sit low on the image */
+  padding: 0 6vw 4.5vh; /* bottom safety */
+}
+
+.dc-back-row {
+  margin-bottom: 0.75rem;
+}
+
+.dc-hero-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: clamp(18px, 4vw, 42px);
+
+  align-items: flex-end; /* baseline align with CTA block */
+}
+
+@media (max-width: 900px) {
+  .dc-hero-main {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: flex-start;
+  }
+}
+
+.dc-hero-left {
+  max-width: 640px;
+}
+
+.dc-eyebrow {
+  margin: 0 0 0.35rem;
+  opacity: 0.9;
+  font-size: 0.7rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(242, 242, 242, 0.78);
+  text-shadow: 0 3px 9px rgba(0, 0, 0, 0.9);
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-hero-title {
+  margin: 0;
+  font-size: clamp(2.8rem, 5.5vw, 4.6rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f2f2f2;
+  opacity: 1;
+  text-shadow: 0 8px 20px rgba(0, 0, 0, 0.9);
+  line-height: 1;
+}
+
+.dc-hero-title span {
+  display: block;
+}
+
+/* Tighten: title ↔ local line, but keep some air before location */
+.dc-local-name {
+  margin: 0.18rem 0 0.65rem;
+  padding-right: 4rem;
+  font-size: 0.95rem;
+  color: #ffe478;
+  opacity: 0.9;
+  text-shadow: 0 3px 8px rgba(0, 0, 0, 0.95);
+  text-align: right;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-local-label {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.68rem;
+  opacity: 0.7;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-local-text {
+  font-weight: 600;
+}
+
+.dc-hero-location {
+  margin: 0;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: rgba(242, 242, 242, 0.8);
+  text-shadow: 0 3px 8px rgba(0, 0, 0, 1);
+  opacity: 1;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-hero-location + .dc-hero-location {
+  margin-top: 0.35rem;
+}
+
+.dc-hero-status-row {
+  margin-top: 0.65rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.8rem;
+  align-items: center;
+}
+
+.dc-hero-tagline {
+  font-size: 0.7rem;
+  letter-spacing: 0.19em;
+  padding-bottom: 30px;
+  opacity: 0.9;
+  text-transform: uppercase;
+  color: rgba(242, 242, 242, 0.85);
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-hero-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+@media (max-width: 900px) {
+  .dc-hero-right {
+    align-items: flex-start;
+  }
+}
+
+.dc-badge-shell {
+  filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.85));
+}
+
+/* Stats (optional) */
+.dc-hero-metrics {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.45rem;
+  width: 100%;
+  max-width: 260px;
+}
+
+.dc-hero-metric {
+  padding: 0.4rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(4px);
+}
+
+.dc-hero-metric-label {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(242, 242, 242, 0.78);
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-hero-metric-value {
+  display: block;
+  font-size: 1.35rem;
+  letter-spacing: 0.05em;
+  color: #ffcc00;
+}
+
+/* ✅ Buffer under CTA */
+.dc-hero-cta-row {
+  margin-top: 0.3rem;
+  padding-bottom: 22px; /* was 18px */
+}
+
+.dc-hero-cta {
+  background-color: #f23359 !important;
+  border-color: #f23359 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(242, 51, 89, 0.35);
+}
+
+.dc-hero-cta:hover {
+  background-color: #d62c4f !important;
+  border-color: #d62c4f !important;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(242, 51, 89, 0.45);
+}
+
+/* ✅ MOBILE: truly bottom-anchor + bring back eyebrow + IN SHUAR label */
+@media (max-width: 900px) {
+  .dc-hero {
+    height: 74vh;
+    max-height: none;
+  }
+
+  .dc-hero-content {
+    inset: auto 0 0 0 !important;
+    top: auto !important;
+    bottom: 0 !important;
+    justify-content: flex-end !important;
+    padding: 0 6vw 44px !important;
+  }
+
+  .dc-back-row {
+    display: block !important;
+  }
+  .dc-eyebrow {
+    display: block !important;
+  }
+  .dc-local-label {
+    display: inline !important;
+  }
+
+  .dc-hero-main {
+    align-items: flex-end;
+    gap: 14px;
+  }
+
+  /* OPTIONAL: hide stats on mobile for clarity */
+  .dc-hero-metrics {
+    display: none !important;
+  }
+}
+
+/* OPTIONAL: if you want stats gone everywhere, uncomment this */
+/* .dc-hero-metrics { display: none !important; } */
+
+/* ────────────────────────────────────────────── */
+/* CARD WRAPPER                                  */
+/* ────────────────────────────────────────────── */
+
+.dc-card-shell {
+  display: grid;
+  place-items: center;
+  padding: 2.5rem 0 4rem;
+}
+
+.dc-card {
+  width: 90vw;
+  max-width: 1200px;
+  background: rgba(255, 255, 255, 0.62);
+  border-radius: 18px;
+  box-shadow: 0 18px 48px rgba(36, 17, 35, 0.12);
+  backdrop-filter: saturate(1.05);
+  padding: clamp(1.3rem, 3vw, 2.4rem);
+  border: 1px solid rgba(36, 17, 35, 0.08);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+/* Legacy variants – kept for backwards-compat */
+.dc-card--new {
+  border-color: rgba(242, 51, 89, 0.55);
+  box-shadow: 0 20px 52px rgba(242, 51, 89, 0.18);
+}
+.dc-card--ongoing {
+  border-color: rgba(255, 204, 0, 0.7);
+  box-shadow: 0 20px 52px rgba(255, 204, 0, 0.18);
+}
+.dc-card--legacy {
+  border-color: rgba(108, 0, 175, 0.6);
+  box-shadow: 0 20px 52px rgba(108, 0, 175, 0.22);
+  background: rgba(250, 247, 255, 0.86);
+}
+
+/* ────────────────────────────────────────────── */
+/* STATUS PILL                                   */
+/* ────────────────────────────────────────────── */
+
+.dc-status-pill {
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 700;
+  border: 1px solid transparent; /* actual color comes from inline style */
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  backdrop-filter: blur(3px);
+  pointer-events: none;
+}
+
+/* Positioning on top of the image, like the micro card */
+.dc-status-pill--card {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+/* Right-side status pill variant (no shadow) */
+.dc-status-pill--snapshot {
+  box-shadow: none;
+  backdrop-filter: none;
+  pointer-events: none;
+}
+
+/* Per-status colors – legacy contexts */
+.dc-status-pill--new {
+  background: rgba(242, 51, 89, 0.15);
+  border-color: rgba(242, 51, 89, 0.55);
+  color: #f23359;
+}
+.dc-status-pill--ongoing {
+  background: rgba(255, 204, 0, 0.18);
+  border-color: #8a6400;
+  color: #8a6400;
+}
+.dc-status-pill--legacy {
+  background: rgba(108, 0, 175, 0.22);
+  border-color: rgba(108, 0, 175, 0.7);
+  color: #3b1d59;
+}
+
+/* ────────────────────────────────────────────── */
+/* SNAPSHOT HEADER PILL (Club snapshot + status) */
+/* ────────────────────────────────────────────── */
+
+.dc-snapshot-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+
+.dc-snapshot-strip-label {
+  margin: 0;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  color: #24112399;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-snapshot-strip-status {
+  margin: 0;
+  margin-left: auto;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+/* Optional ombre presets */
+.dc-snapshot-pill--new {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.97) 0%,
+    rgba(255, 255, 255, 0.97) 42%,
+    rgba(242, 51, 89, 0.18) 100%
+  );
+  border-color: rgba(242, 51, 89, 0.55);
+}
+.dc-snapshot-pill--new .dc-snapshot-strip-status {
+  color: #f23359;
+}
+
+.dc-snapshot-pill--ongoing {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.97) 0%,
+    rgba(255, 255, 255, 0.97) 42%,
+    rgba(255, 204, 0, 0.24) 100%
+  );
+  border-color: rgba(255, 204, 0, 0.7);
+}
+.dc-snapshot-pill--ongoing .dc-snapshot-strip-status {
+  color: #8a6400;
+}
+
+.dc-snapshot-pill--legacy {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.97) 0%,
+    rgba(255, 255, 255, 0.97) 42%,
+    rgba(108, 0, 175, 0.22) 100%
+  );
+  border-color: rgba(108, 0, 175, 0.7);
+}
+.dc-snapshot-pill--legacy .dc-snapshot-strip-status {
+  color: #3b1d59;
+}
+
+.dc-microcard-shell .dc-snapshot-pill {
+  margin-bottom: 0.35rem;
+}
+
+@media (max-width: 640px) {
+  .dc-snapshot-pill {
+    flex-wrap: wrap;
+    white-space: normal;
+    row-gap: 0.2rem;
+  }
+
+  .dc-snapshot-pill .dc-snapshot-strip-status {
+    margin-left: 0;
+    text-align: left;
+  }
+}
+
+/* ────────────────────────────────────────────── */
+/* SNAPSHOT / PASSPORT PANEL – BASE              */
+/* ────────────────────────────────────────────── */
+
+.dc-snapshot-panel {
+  position: relative;
+  border-radius: 16px;
+  background: radial-gradient(circle at top left, #fffaf2 0, #f8f7f4 52%, #f4f1ea 100%);
+  border: 1px solid rgba(36, 17, 35, 0.12);
+  padding: 0.9rem 1.2rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.55rem;
+  box-sizing: border-box;
+}
+
+.dc-snapshot-panel--new {
+  border-color: rgba(242, 51, 89, 0.55);
+  box-shadow: 0 16px 32px rgba(242, 51, 89, 0.18);
+}
+.dc-snapshot-panel--ongoing {
+  border-color: rgba(255, 204, 0, 0.7);
+  box-shadow: 0 16px 32px rgba(255, 204, 0, 0.18);
+}
+.dc-snapshot-panel--legacy {
+  border-color: rgba(108, 0, 175, 0.6);
+  box-shadow: 0 16px 32px rgba(108, 0, 175, 0.2);
+}
+
+/* v1 “who band” + fact grid (kept for backwards compatibility) */
+.dc-snapshot-who {
+  margin-top: 0.5rem;
+  padding: 0.55rem 0.75rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px dashed rgba(36, 17, 35, 0.12);
+}
+
+.dc-snapshot-who-eyebrow {
+  margin: 0 0 0.18rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #24112399;
+  font-weight: 600;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-snapshot-who-value {
+  margin: 0;
+  font-size: 1.28rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #241123e6;
+}
+
+.dc-fact-grid {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.65rem 0.75rem;
+}
+
+.dc-fact-grid--snapshot {
+  margin-top: 0.55rem;
+}
+
+@media (min-width: 720px) {
+  .dc-fact-grid--snapshot {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.dc-fact-item {
+  padding: 0.5rem 0.55rem 0.55rem;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(36, 17, 35, 0.06);
+}
+
+.dc-fact-item dt {
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #24112399;
+  margin: 0 0 0.14rem;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-fact-item dd {
+  margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.5;
+  color: #241123e6;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+/* Bottom block (older: roomtone / donor) */
+.dc-snapshot-bottom-block {
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed rgba(36, 17, 35, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.dc-snapshot-roomtone-label,
+.dc-snapshot-donor-label {
+  margin: 0 0 0.12rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #24112399;
+  font-weight: 600;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-snapshot-roomtone-text {
+  margin: 0;
+  font-size: 0.94rem;
+  line-height: 1.5;
+  color: #241123de;
+}
+
+.dc-snapshot-donor-text {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #6c00af;
+}
+
+/* ────────────────────────────────────────────── */
+/* SNAPSHOT / PASSPORT PANEL – STRIPS / STAMPS   */
+/* ────────────────────────────────────────────── */
+
+.dc-snapshot-strip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.18rem;
+}
+
+.dc-snapshot-strip-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+/* WHO strip container */
+.dc-snapshot-strip-who {
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.8rem 0.7rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px dashed rgba(36, 17, 35, 0.12);
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dc-snapshot-who-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.dc-snapshot-who-eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #24112399;
+  font-weight: 600;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-snapshot-who-main {
+  margin: 0 0 0.25rem;
+  font-size: 1.35rem;
+  line-height: 1.28;
+  color: #241123e6;
+  letter-spacing: 0.01em;
+}
+
+.dc-snapshot-who-lowbrow {
+  margin: 0;
+  font-size: 0.65rem;
+  color: #6f5a72;
+  opacity: 0.75;
+  text-transform: uppercase;
+}
+
+/* Tiny age range box on the right */
+.dc-snapshot-who-age-card {
+  flex-shrink: 0;
+  align-self: flex-start;
+  min-width: 80px;
+
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(154, 136, 156, 0.35);
+  background: rgba(255, 255, 255, 0.96);
+
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dc-snapshot-who-age-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #a392a6;
+}
+
+.dc-snapshot-who-age-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #241123;
+}
+
+/* legacy age pill */
+.dc-snapshot-who-age-pill,
+.dc-snapshot-who-age {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(36, 17, 35, 0.16);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.96);
+  color: #6c00af;
+}
+
+@media (max-width: 720px) {
+  .dc-snapshot-strip-who {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dc-snapshot-who-main {
+    font-size: 1.15rem;
+  }
+
+  .dc-snapshot-who-age-card,
+  .dc-age-card {
+    align-self: flex-start;
+  }
+}
+
+.dc-snapshot-strip-cause {
+  margin-top: 0.7rem;
+}
+
+.dc-snapshot-strip-cause-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dc-snapshot-cause-row {
+  margin-top: 0.3rem;
+}
+
+/* Slight tightening inside the microcard shell */
+.dc-microcard-shell .dc-snapshot-strip-who {
+  padding: 0.45rem 0.65rem 0.5rem;
+}
+.dc-microcard-shell .dc-snapshot-who-text {
+  font-size: 1.15rem;
+}
+
+/* Fact stamps grid */
+.dc-snapshot-stamps {
+  margin: 0.55rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.65rem 0.75rem;
+}
+
+@media (min-width: 720px) {
+  .dc-snapshot-stamps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .dc-snapshot-stamps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .dc-snapshot-stamp--span2 {
+    grid-column: 1 / -1;
+  }
+}
+
+.dc-snapshot-stamp {
+  padding: 0.5rem 0.55rem 0.55rem;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(36, 17, 35, 0.06);
+}
+
+.dc-snapshot-stamp--meta {
+  background: rgba(255, 255, 255, 0.96);
+  border-style: dashed;
+}
+
+.dc-snapshot-stamp--span2 {
+  grid-column: 1 / -1;
+}
+
+.dc-snapshot-stamp dt {
+  margin: 0 0 0.14rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #24112399;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-snapshot-stamp dd {
+  margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.5;
+  color: #241123e6;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-snapshot-stamp--primary {
+  background: rgba(255, 204, 0, 0.08);
+  border-color: rgba(255, 204, 0, 0.7);
+}
+.dc-snapshot-stamp--primary dt {
+  color: #8a6400;
+}
+.dc-snapshot-stamp--primary dd {
+  font-weight: 600;
+}
+
+.dc-snapshot-stamp--meta dd {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Footer: Story map link + donor copy */
+.dc-snapshot-footer {
+  margin-top: 0.7rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed rgba(36, 17, 35, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.dc-snapshot-footer-link {
+  align-self: flex-end;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f23359;
+  text-decoration: none;
+  font-family: var(--font-rock-salt, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", cursive);
+}
+
+.dc-snapshot-footer-link:hover {
+  color: #6c00af;
+}
+
+.dc-snapshot-footer-donor {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #241123e6;
+}
+
+/* Core Focus + Local Challenge block */
+.dc-snapshot-focus-wrap {
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed rgba(36, 17, 35, 0.16);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 720px) {
+  .dc-snapshot-focus-wrap {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+  }
+}
+
+.dc-snapshot-focus,
+.dc-snapshot-local {
+  padding: 0.55rem 0.65rem 0.6rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px dashed rgba(36, 17, 35, 0.12);
+}
+
+.dc-snapshot-focus-label,
+.dc-snapshot-local-label {
+  margin: 0 0 0.2rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #24112399;
+  font-weight: 600;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-snapshot-focus-text,
+.dc-snapshot-local-text {
+  margin: 0;
+  font-size: 0.94rem;
+  line-height: 1.5;
+  color: #241123e6;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-snapshot-all-causes {
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #ce7eff;
+  white-space: nowrap;
+}
+
+.dc-snapshot-all-causes:hover {
+  color: #ffcc00;
+}
+
+/* ────────────────────────────────────────────── */
+/* BODY / LAYOUT                                 */
+/* ────────────────────────────────────────────── */
+
+.dc-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.9fr);
+  gap: clamp(20px, 3.8vw, 40px);
+  align-items: flex-start;
+}
+
+@media (max-width: 960px) {
+  .dc-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.dc-layout + .dc-layout {
+  margin-top: clamp(28px, 3.6vw, 36px);
+}
+
+.dc-section {
+  border-top: 1px solid rgba(36, 17, 35, 0.12);
+  padding-top: 12px;
+}
+
+.dc-section--right {
+  padding-left: clamp(0px, 1vw, 6px);
+}
+
+.dc-section-head {
+  margin: 0 0 10px;
+  font-size: 0.86rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 300;
+  color: #241123b3;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-body {
+  margin: 0 0 0.9rem;
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: #241123e6;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-body--placeholder {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+/* Cultural exchange */
+.dc-exchange-block {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: rgba(36, 17, 35, 0.04);
+}
+
+.dc-exchange-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #2493a9;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-exchange-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.dc-exchange-col {
+  min-width: 0;
+}
+
+.dc-exchange-subhead {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #0f3440;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-exchange-body {
+  margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.6;
+  color: #0f3440;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-inline-cta {
+  margin-top: 1rem;
+}
+
+/* Quotes */
+.dc-quote-block {
+  margin: 1.3rem 0 0;
+  padding: 0.9rem 1rem 1rem;
+  border-radius: 14px;
+  background: #0f0a10;
+  color: #f2f2f2;
+}
+
+.dc-quote-block blockquote {
+  margin: 0;
+  font-size: 1.4rem;
+  line-height: 1.2;
+}
+
+.dc-quote-block figcaption {
+  margin-top: 0.45rem;
+  font-size: 0.8rem;
+  opacity: 0.8;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-quote-block--alumni {
+  margin-top: 0.9rem;
+  background: #f2e6ff;
+  color: #241123;
+}
+
+.dc-alumni-quote-role {
+  font-size: 0.78rem;
+  opacity: 0.85;
+}
+
+.dc-layout--community {
+  align-items: stretch;
+}
+
+/* Gallery */
+.dc-gallery-item {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #24112312;
+}
+
+.dc-gallery-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+/* Needs / community card */
+.dc-mini-label {
+  margin: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #24112399;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-needs-list {
+  margin: 0.45rem 0 0;
+  padding-left: 1.15rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #241123de;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-community-card {
+  border-radius: 16px;
+  border: 1px solid rgba(36, 17, 35, 0.12);
+  background: rgba(248, 247, 244, 0.85);
+  padding: 1.1rem 1.3rem 1.3rem;
+}
+
+.dc-partner-list {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dc-partner-link {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.dc-partner-logo-shell {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 5px;
+  background: #24112312;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.dc-partner-logo {
+  max-width: 46px;
+  max-height: 46px;
+  object-fit: contain;
+}
+
+.dc-partner-text {
+  min-width: 0;
+}
+
+.dc-partner-name {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #241123e6;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-partner-kind {
+  display: block;
+  font-size: 0.75rem;
+  color: #24112399;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+/* ────────────────────────────────────────────── */
+/* ELDER QUOTE PHOTO BLOCK                       */
+/* ────────────────────────────────────────────── */
+
+.elder-quote-block {
+  margin-top: 24px;
+}
+
+.elder-quote-shell {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  border-radius: 18px;
+  overflow: hidden;
+  min-height: 444px;
+  background: radial-gradient(circle at top left, rgba(108, 0, 175, 0.18), rgba(36, 17, 35, 0.85));
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+}
+
+.elder-quote-shell--has-image {
+  cursor: zoom-in;
+}
+
+.elder-quote-shell--has-image .elder-quote-bg {
+  opacity: 1;
+}
+
+.elder-quote-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(1.1) contrast(1.05);
+  transform: scale(1.03);
+}
+
+.elder-quote-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.95) 0%,
+      rgba(0, 0, 0, 0.82) 0%,
+      rgba(0, 0, 0, 0.45) 32%,
+      rgba(0, 0, 0, 0.12) 65%,
+      rgba(0, 0, 0, 0) 100%
+    ),
+    radial-gradient(
+      circle at 20% 82%,
+      rgba(0, 0, 0, 0.95) 0%,
+      rgba(0, 0, 0, 0.75) 0%,
+      rgba(0, 0, 0, 0) 65%
+    ),
+    radial-gradient(circle at 88% 12%, rgba(108, 0, 175, 0.35), transparent 55%);
+}
+
+.elder-quote-content {
+  position: relative;
+  padding: 1.2rem 1.3rem 1.4rem;
+  color: #f5f2ff;
+  max-width: 90%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .elder-quote-content {
+    padding: 1rem 1rem 1.1rem;
+    max-width: 100%;
+  }
+}
+
+.elder-quote-label {
+  margin: 0 0 0.3rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.elder-quote-text {
+  margin: 0;
+  font-size: 1.6rem;
+  line-height: 1.55;
+  text-shadow: 0 5px 16px rgba(0, 0, 0, 0.9);
+}
+
+.elder-quote-meta {
+  margin-top: 0.45rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.92;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.elder-name {
+  font-weight: 600;
+}
+
+.elder-role {
+  font-weight: 400;
+}
+
+/* ────────────────────────────────────────────── */
+/* CAUSES / CHIPS                                */
+/* ────────────────────────────────────────────── */
+
+.dc-cause-block {
+  margin-top: 1rem;
+}
+
+.dc-cause-block--snapshot {
+  margin-top: 0.9rem;
+}
+
+.dc-cause-chips {
+  margin-top: 0.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.dc-cause-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(36, 17, 35, 0.16);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  background: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  color: #241123;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 130ms ease,
+    box-shadow 130ms ease,
+    border-color 130ms ease,
+    opacity 130ms ease;
+}
+
+.dc-cause-chip:hover {
+  background-color: #ffcc00;
+  border-color: #ffcc00;
+  color: #241123;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
+  opacity: 0.97;
+}
+
+/* ────────────────────────────────────────────── */
+/* ARTIST PATHWAYS                               */
+/* ────────────────────────────────────────────── */
+
+.dc-artist-section {
+  margin-top: clamp(30px, 3.8vw, 40px);
+  border-top: 1px solid rgba(36, 17, 35, 0.12);
+  padding-top: 16px;
+}
+
+.dc-artist-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.9fr);
+  gap: clamp(18px, 3.4vw, 34px);
+  align-items: flex-start;
+}
+
+@media (max-width: 960px) {
+  .dc-artist-inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.dc-artist-right {
+  border-radius: 16px;
+  background: rgba(248, 247, 244, 0.92);
+  border: 1px solid rgba(36, 17, 35, 0.12);
+  padding: 1rem 1.2rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.dc-avatar-row {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.dc-avatar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dc-avatar-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: #24112312;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.dc-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dc-avatar-initial {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #241123cc;
+}
+
+.dc-avatar-name {
+  font-size: 0.78rem;
+  text-align: center;
+  max-width: 80px;
+  color: #241123de;
+}
+
+.dc-alumni-chips {
+  margin-top: 0.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.dc-alumni-chip {
+  display: inline-flex;
+  flex-direction: column;
+  padding: 0.3rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid rgba(108, 0, 175, 0.24);
+  text-decoration: none;
+  background: #f7f0ff;
+}
+
+.dc-alumni-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #241123;
+}
+
+.dc-alumni-role {
+  font-size: 0.72rem;
+  color: #6c00af;
+}
+
+/* ────────────────────────────────────────────── */
+/* IMPACT SECTION                                */
+/* ────────────────────────────────────────────── */
+
+.dc-impact-section {
+  margin-top: clamp(30px, 4vw, 40px);
+  padding: 2.4rem 2rem 2.9rem;
+  border-radius: 18px;
+  background-color: #2493a9;
+}
+
+@media (max-width: 720px) {
+  .dc-impact-section {
+    padding: 1.9rem 1.4rem 2.4rem;
+  }
+}
+
+.dc-impact-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.95fr);
+  gap: clamp(20px, 3.8vw, 40px);
+  align-items: flex-start;
+}
+
+@media (max-width: 960px) {
+  .dc-impact-inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.dc-impact-left {
+  max-width: 620px;
+}
+
+.dc-impact-eyebrow {
+  color: rgba(253, 249, 241, 0.82);
+}
+
+.dc-impact-title {
+  margin: 0.35rem 0 0;
+  font-size: clamp(2.1rem, 4.6vw, 3.3rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #002129ff;
+  opacity: 0.92;
+}
+
+.dc-impact-body {
+  margin: 0.9rem 0 0;
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: #eaf7fa;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-impact-cta-row {
+  margin-top: 1.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.dc-cta {
+  --dc-cta-bg: #00313bff;
+  --dc-cta-bg-hover: #00313baf;
+  --dc-cta-text: #f2f2f2;
+
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.85rem 1.15rem;
+  border-radius: 14px;
+  background-color: var(--dc-cta-bg);
+  color: var(--dc-cta-text);
+  border: none;
+  text-decoration: none;
+  font-size: 0.78rem;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  box-shadow: 0 0px 44px rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 120ms ease,
+    opacity 120ms ease;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-cta:hover {
+  background-color: var(--dc-cta-bg-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 0px 44px rgba(255, 255, 255, 1);
+  opacity: 0.98;
+}
+
+.dc-impact-card {
+  max-width: 580px;
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid rgba(192, 236, 248, 0.35);
+  background-color: #003e4bff;
+  opacity: 0.95;
+  padding: 1.3rem 1.7rem 1.6rem;
+}
+
+.dc-impact-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.85rem;
+}
+
+.dc-impact-metric-item {
+  padding: 0.65rem 0.7rem;
+  border-radius: 12px;
+  background-color: #032c34ff;
+  color: #c4f3ff;
+}
+
+.dc-impact-metric-value {
+  display: block;
+  font-size: 1.5rem;
+  letter-spacing: 0.05em;
+  color: #ffcc00;
+}
+
+.dc-impact-metric-label {
+  display: block;
+  margin-top: 0.12rem;
+  font-size: 0.76rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-impact-metric-helper {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.75rem;
+  color: #9eddea;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-impact-resources {
+  margin-top: 1rem;
+}
+
+.dc-impact-resources ul {
+  margin: 0.4rem 0 0.2rem;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: #9eddea;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-resource-link {
+  color: #c4f3ff;
+  text-decoration: none;
+}
+
+.dc-resource-link:hover {
+  color: #ffcc00;
+}
+
+/* Links */
+.dc-link,
+.dc-link:visited {
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transform-origin: left center;
+  transition:
+    color 150ms ease-out,
+    opacity 150ms ease-out,
+    transform 130ms ease-out,
+    letter-spacing 130ms ease-out;
+}
+
+.dc-link--back {
+  color: #f2f2f2;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.19em;
+  opacity: 0.9;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+.dc-link--back:hover {
+  color: #ffcc00;
+  letter-spacing: 0.22em;
+}
+
+.dc-link--purple {
+  color: #6c00af;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+.dc-link--purple:hover {
+  color: #ffcc00;
+  letter-spacing: 0.19em;
+}
+
+.dc-link--light {
+  color: #6c00af;
+  opacity: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+.dc-link--light:hover {
+  color: #ffcc00;
+  letter-spacing: 0.19em;
+  opacity: 1;
+}
+
+.dc-link--teal {
+  display: inline-flex;
+  margin-top: 1rem;
+  color: #ce7effff;
+  opacity: 1;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+.dc-link--teal:hover {
+  color: #ffcc00;
+  letter-spacing: 0.21em;
+}
+
+/* Alumni link helpers */
+.namecell {
+  display: inline-block;
+  color: inherit;
+}
+.no-underline {
+  text-decoration: none;
+}
+.no-underline:hover {
+  text-decoration: underline;
+}
+
+/* ────────────────────────────────────────────── */
+/* SUPER-SIZED MICRO CARD (v2)                   */
+/* ────────────────────────────────────────────── */
+
+.dc-microcard-shell {
+  margin: clamp(22px, 2.4vw, 30px) auto clamp(26px, 3vw, 34px);
+  max-width: min(1100px, 100%);
+  border-radius: 26px;
+  border: 1px solid rgba(36, 17, 35, 0.22);
+  box-shadow: none;
+  background-color: rgba(253, 249, 241, 1);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: clamp(16px, 2.4vw, 24px);
+  padding: 16px;
+  box-sizing: border-box;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .dc-microcard-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Status-driven border colors (legacy) */
+.dc-microcard-shell--new {
+  border-color: rgba(242, 51, 89, 0.65);
+}
+.dc-microcard-shell--ongoing {
+  border-color: rgba(255, 204, 0, 0.85);
+}
+.dc-microcard-shell--legacy {
+  border-color: rgba(108, 0, 175, 0.62);
+}
+
+.dc-microcard-inner {
+  display: contents;
+}
+
+.dc-microcard-shell .dc-card-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: clamp(16px, 2.4vw, 24px);
+  box-sizing: border-box;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .dc-microcard-shell .dc-card-top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.dc-microcard-media {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+}
+
+.dc-microcard-media-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #24112312;
+}
+
+.dc-microcard-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Older class names still supported */
+.dc-microcard-shell .dc-club-hero {
+  margin: 0;
+  padding: 0;
+  border-radius: 18px;
+  box-shadow: none;
+  display: flex;
+  height: 100%;
+}
+
+.dc-microcard-shell .dc-club-hero-media {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 18px;
+  background-color: #24112312;
+  box-shadow: none;
+}
+
+.dc-microcard-shell .dc-club-hero-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Status pill – on image */
+.dc-microcard-shell .dc-status-pill--card {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 4px 11px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  border-radius: 999px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+/* Right column – snapshot rides on same card surface */
+.dc-microcard-shell .dc-snapshot-panel {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 4px 4px 6px 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* MICROCARD SNAPSHOT TIGHTENING */
+.dc-microcard-shell .dc-snapshot-stamps {
+  margin-top: 0.4rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 10px;
+}
+
+.dc-microcard-shell .dc-snapshot-stamp {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(230, 219, 198, 0.95);
+}
+
+.dc-microcard-shell .dc-snapshot-footer {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(196, 178, 149, 0.65);
+}
+
+.dc-microcard-shell .dc-snapshot-panel--new,
+.dc-microcard-shell .dc-snapshot-panel--ongoing,
+.dc-microcard-shell .dc-snapshot-panel--legacy {
+  border-color: rgba(36, 17, 35, 0.12) !important;
+  box-shadow: none !important;
+}
+
+/* GLOBAL WRAPPING FIXES */
+.dc-fact-item dd,
+.dc-snapshot-stamp dd {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  -webkit-line-clamp: initial;
+  line-clamp: initial;
+  -webkit-box-orient: initial;
+  display: block !important;
+}
+
+/* Room tone caption */
+.dc-roomtone-caption {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #241123e6;
+}
+
+.dc-roomtone-label {
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #24112399;
+  font-weight: 600;
+  margin-right: 0.35rem;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-roomtone-text {
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+/* ============ COMMUNITY & IMPACT LAYOUT ============ */
+
+.dc-community-row {
+  margin-top: clamp(40px, 4vw, 56px);
+  padding-top: clamp(16px, 2vw, 24px);
+  border-top: 1px solid rgba(36, 17, 35, 0.16);
+
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1.1fr);
+  gap: clamp(24px, 3vw, 40px);
+  align-items: flex-start;
+}
+
+.dc-community-main {
+  min-width: 0;
+}
+
+.dc-community-main > .dc-section {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.dc-impact-col {
+  min-width: 0;
+}
+
+@media (max-width: 960px) {
+  .dc-community-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dc-impact-col {
+    margin-top: clamp(20px, 3vw, 28px);
+  }
+}
+
+/* ============ IMPACT PARTNERS CARD ============ */
+
+.support-eyebrow-tight {
+  margin: 12px 0 8px;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #24112399;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.partner-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.partner-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 3px;
+  background: #f2f2f2;
+  border: 1px solid rgba(36, 17, 35, 0.08);
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.partner-bar:hover {
+  background: #ffcc00;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.partner-no-logo {
+  padding-left: 16px;
+}
+
+/* Logo sizing: stop the gigantic images */
+.partner-logo-shell {
+  flex: 0 0 80px;
+  width: 80px;
+  height: 80px;
+  border: 0px solid #706a50;
+  border-radius: 3px;
+  background: #f2f2f2;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.partner-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.partner-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.partner-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #241123;
+}
+
+.partner-kind {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(36, 17, 35, 0.64);
+}
+
+/* COMMUNITY + ARTIST SECTIONS */
+.dc-community-row,
+.dc-artist-section {
+  margin-top: 2rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(36, 17, 35, 0.12);
+}
+
+.dc-community-row .dc-section,
+.dc-artist-section .dc-section {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* ✅ Make “Shared Community Needs” match Cultural Exchange styling */
+.dc-needs-block {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: rgba(36, 17, 35, 0.04);
+}
+
+.dc-needs-block .dc-mini-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #2493a9;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-needs-block .dc-needs-list {
+  margin: 0.35rem 0 0;
+  font-size: 0.96rem;
+  line-height: 1.6;
+  color: #0f3440;
+}
+
+/* ────────────────────────────────────────────── */
+/* KRAFT NAVIGATION (top + footer)                */
+/* ────────────────────────────────────────────── */
+
+/* Match the card’s left/right edges: 90vw / max 1200 */
+.dc-kraft-topnav {
+  width: 90vw;
+  max-width: 1200px;
+  margin: 22px auto 10px;
+
+  /* more space above, less below */
+  padding-top: 26px;
+  padding-bottom: 0;
+}
+
+/* ✅ Top “All Drama Clubs” link — base #ffcc00, hover #6c00af */
+.dc-page-shell .dc-kraft-backlink {
+  color: #ffcc00 !important;
+  text-decoration: none;
+  font-size: clamp(1.1rem, 1.75vw, 1.75rem);
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  letter-spacing: 0.1rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  opacity: 0.85 !important;
+  text-shadow: 0px 0px 30px rgba(255, 245, 214, 0.5) !important;
+  display: inline-block;
+  line-height: 1.1;
+  transition:
+    color 0.3s ease,
+    letter-spacing 0.3s ease,
+    transform 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.dc-page-shell .dc-kraft-backlink:hover {
+  color: #6c00af !important;
+  letter-spacing: 0.18rem;
+  transform: translateY(-1px);
+}
+
+/* Footer nav BELOW the card (full-bleed band, centered like Seasons) */
+.dc-kraft-footer-nav {
+  position: relative;
+  width: 100%;
+  margin-top: 0rem; /* less space above */
+  padding: 0 0 2rem; /* more space below */
+}
+
+.dc-kraft-footer-nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  left: 50%;
+  width: 100vw; /* full bleed */
+  transform: translateX(-50%); /* centered */
+
+  /* subtle shaded band */
+  background: linear-gradient(
+    to bottom,
+    rgba(36, 17, 35, 0) 0%,
+    rgba(36, 17, 35, 0.08) 30%,
+    rgba(36, 17, 35, 0.1) 100%
+  );
+
+  pointer-events: none; /* ✅ don’t block links */
+  z-index: 0;
+}
+
+.dc-kraft-footer-inner {
+  position: relative;
+  z-index: 1;
+  width: min(92%, 1200px);
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: clamp(0rem, 0vw, 2rem);
+  align-items: center;
+}
+
+/* Left / right items */
+.dc-kraft-nav-item {
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dc-kraft-nav-item--prev {
+  justify-self: start;
+  text-align: left;
+}
+
+.dc-kraft-nav-item--next {
+  justify-self: end;
+  text-align: right;
+}
+
+/* “Play title link” vibe */
+.dc-kraft-nav-pill {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  letter-spacing: 0.05rem;
+  font-size: clamp(1rem, 2.5vw, 2rem);
+  font-weight: 500;
+
+  color: #ffcc00;
+  opacity: 0.9; /* ✅ visible by default */
+  background: rgba(36, 17, 35, 0.9);
+  padding: 0.12em 0.55em;
+  border-radius: 0.45em;
+  display: inline-block;
+  max-width: 100%;
+
+  transition:
+    color 0.3s ease,
+    letter-spacing 0.3s ease,
+    transform 0.3s ease,
+    opacity 0.3s ease,
+    background-color 0.3s ease;
+}
+
+.dc-kraft-nav-item:hover .dc-kraft-nav-pill {
+  color: #241123;
+  background: #ffcc00;
+  opacity: 1;
+  letter-spacing: 0.05rem;
+  transform: translateY(0);
+}
+
+.dc-kraft-nav-geo {
+  font-size: clamp(0.5rem, 1.5vw, 1.5rem);
+  color: transparent;
+  opacity: 0;
+  text-shadow: 0 0px 0px rgba(0, 0, 0, 0.45);
+  text-align: center;
+  transition: opacity 0.25s ease, color 0.25s ease, font-size 0.25s ease;
+}
+
+.dc-kraft-nav-item:hover .dc-kraft-nav-geo {
+  font-size: clamp(0.9rem, 1.5vw, 1.5rem);
+  color: #f2f2f2;
+  opacity: 0.55;
+}
+
+/* Center “All Drama Clubs” (footer index) */
+.dc-kraft-nav-index {
+  justify-self: center;
+  text-decoration: none;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  letter-spacing: 0.1rem;
+  font-size: clamp(0.9rem, 2vw, 2.25rem);
+  font-weight: 650;
+  text-transform: uppercase;
+
+  color: #480075 !important;
+  opacity: 0.68 !important;
+  text-shadow: 0px 0px 30px rgba(255, 245, 214, 0.5) !important;
+  transition: color 0.3s ease, letter-spacing 0.3s ease, opacity 0.3s ease;
+}
+
+.dc-kraft-nav-index:hover {
+  color: #ffcc00 !important;
+  opacity: 0.78 !important;
+  letter-spacing: 0.18rem;
+}
+
+/* Legacy footer grid (kept if you still have old markup somewhere) */
+.dc-kraft-footer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 920px) {
+  .dc-kraft-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+/* ────────────────────────────────────────────── */
+/* LEAD TEAM (current + legacy)                   */
+/* ────────────────────────────────────────────── */
+
+/* ✅ Current wrapper used by your TSX: NO SCROLL, shrink before wrap */
+.dc-lead-mini-wrap {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  align-items: stretch;
+}
+
+/* Make children shrink before wrapping (works for Links / div wrappers) */
+.dc-lead-mini-wrap > * {
+  flex: 1 1 240px; /* shrink first */
+  min-width: 210px;
+  max-width: 340px;
+}
+
+/* Legacy: framed cards */
+.dc-lead-grid {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .dc-lead-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dc-lead-frameLink {
+  text-decoration: none;
+  color: inherit;
+  display: inline-flex;
+}
+
+.dc-lead-frameCard {
+  width: 220px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  box-shadow: 4px 8px 16px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+  border: 1px solid rgba(36, 17, 35, 0.12);
+}
+
+.dc-lead-frameImg {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  position: relative;
+  overflow: hidden;
+}
+
+.dc-lead-frameMeta {
+  padding: 12px 12px 14px 12px;
+}
+
+.dc-lead-frameName {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: #241123;
+  margin: 0;
+  line-height: 1.15;
+}
+
+.dc-lead-frameRole {
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 0.92rem;
+  color: #6c00af;
+  margin: 6px 0 0 0;
+  opacity: 0.8;
+  line-height: 1.2;
+}
+
+.dc-lead-frameLink:hover .dc-lead-frameCard {
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+  transform: translateY(-3px);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Legacy: mini grid */
+.dc-lead-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .dc-lead-mini-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Legacy: horizontal scroll row (keep only if you ever re-enable it) */
+.dc-lead-mini-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 6px;
+}
+
+.dc-lead-mini-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 260px;
+  gap: 28px;
+  align-items: start;
+}
+
+@media (min-width: 640px) {
+  .dc-lead-mini-row {
+    grid-auto-columns: 280px;
+    gap: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .dc-lead-mini-row {
+    grid-auto-columns: 300px;
+    gap: 40px;
+  }
+}
+/* =========================================================
+   SAFE PATCH — no 100vw pseudo-element band, no global overflow
+   Fixes: weird overlay + click/enlarge weirdness + keeps hero low
+   Paste at VERY END
+   ========================================================= */
+
+/* Keep your page from tiny horizontal drift without breaking modals/lightbox */
+.dc-page-shell {
+  overflow-x: hidden; /* safer than clip */
+}
+
+/* --------------------------
+   FOOTER: full-bleed band
+   (NO ::before, NO 100vw hacks)
+   -------------------------- */
+
+/* Kill the old full-bleed pseudo element if it still exists anywhere */
+.dc-kraft-footer-nav::before {
+  content: none !important;
+  display: none !important;
+}
+
+/* Make the footer band full-width the normal way */
+.dc-kraft-footer-nav {
+  width: 100%;
+  margin: 0;                 /* avoids weird left “band” artifacts */
+  padding: 18px 0 28px;      /* adjust to taste */
+  background: rgba(36, 17, 35, 0.08);
+}
+
+/* Keep your inner grid centered like Seasons */
+.dc-kraft-footer-inner {
+  width: min(92%, 1200px);
+  margin: 0 auto;
+}
+
+/* Also: your old CSS had pointer-events: true (invalid).
+   If anything similar remains, force pseudo layers to never eat clicks. */
+.dc-kraft-footer-nav::before,
+.dc-kraft-footer-nav::after {
+  pointer-events: none !important;
+}
+
+/* --------------------------
+   HERO: stay low on tablet/mobile
+   (NO inset:auto hacks, no dvh/env stuff)
+   -------------------------- */
+
+.dc-hero-content {
+  justify-content: flex-end !important;
+  padding: 0 6vw 4.5vh !important;  /* low, with bottom safety */
+}
+
+.dc-hero-main {
+  align-items: flex-end !important; /* align left block with CTA block */
+}
+
+/* Tighten title ↔ local name spacing */
+.dc-local-name {
+  margin: 0.18rem 0 0.65rem !important;
+}
+
+/* Buffer under CTA */
+.dc-hero-cta-row {
+  padding-bottom: 22px !important; /* slight bump */
+}
+
+/* Tablet/mobile: give hero a bit more height so “bottom” actually feels bottom */
+@media (max-width: 1100px) {
+  .dc-hero {
+    height: 76vh;
+    max-height: none;
+  }
+
+  .dc-hero-main {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    align-items: flex-end !important;
+  }
+
+  .dc-hero-right {
+    align-items: flex-start !important;
+  }
+
+  /* Optional (recommended): stats tend to push everything upward */
+  .dc-hero-metrics {
+    display: none !important;
+  }
+}
+
+/* Ensure eyebrow + “IN SHUAR:” label never disappear */
+.dc-back-row,
+.dc-eyebrow {
+  display: block !important;
+}
+.dc-local-label {
+  display: inline !important;
+}
+
+/* ===== NO bottom overlay / band at all ===== */
+.dc-kraft-footer-nav {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 22px auto 24px !important; /* or whatever spacing you want */
+}
+
+.dc-kraft-footer-nav::before,
+.dc-kraft-footer-nav::after {
+  content: none !important;
+  display: none !important;
+}

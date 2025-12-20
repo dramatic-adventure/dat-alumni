@@ -1,5 +1,6 @@
-// components/shared/StoryMedia.tsx
 "use client";
+
+/* eslint-disable @next/next/no-img-element */
 
 import React from "react";
 import Image from "next/image";
@@ -20,23 +21,23 @@ export default function StoryMedia({
   if (!imageUrl) return null;
 
   const trimmedUrl = imageUrl.trim().replace(/\s+/g, "");
+
   const cleanUrl = (() => {
     try {
       const parsed = new URL(trimmedUrl);
       // strip tracking params
       parsed.searchParams.forEach((_, key) => {
-        if (key.toLowerCase().startsWith("utm") || key === "fbclid") {
-          parsed.searchParams.delete(key);
-        }
+        const k = key.toLowerCase();
+        if (k.startsWith("utm") || k === "fbclid") parsed.searchParams.delete(key);
       });
       return parsed.toString();
     } catch {
-      // relative URL, etc.
       return trimmedUrl;
     }
   })();
 
   const baseUrl = cleanUrl.split("?")[0];
+  const isRemote = /^https?:\/\//i.test(cleanUrl);
 
   const isImage = /\.(png|jpe?g|gif|webp|svg|heic|heif)$/i.test(baseUrl);
   const isVideoFile = /\.(mp4|webm|mov|ogg)$/i.test(baseUrl);
@@ -94,12 +95,37 @@ export default function StoryMedia({
   const containerClass =
     mode === "lightbox"
       ? "popup-media text-center"
-      : "popup-media w-full max-w-3xl mx-auto my-4";
+      : "popup-media w-full mx-auto my-4";
 
-  const sharedStyle: React.CSSProperties = {
-    maxHeight: "90vh",
+  // HARD clamp to prevent “oversized” layout explosions
+  const defaultBoxStyle: React.CSSProperties =
+    mode === "lightbox"
+      ? {
+          width: "90vw",
+          height: "90vh",
+          maxWidth: "1600px",
+          maxHeight: "90vh",
+          margin: "0 auto",
+        }
+      : {
+          width: "100%",
+          maxWidth: "min(92vw, 1100px)",
+          height: "clamp(260px, 55vh, 620px)",
+          margin: "0 auto",
+        };
+
+  const boxStyle: React.CSSProperties = {
+    ...defaultBoxStyle,
     ...style,
+    position: "relative",
+    overflow: "hidden",
   };
+
+  // 🔥 KEY: remote images go through proxy so we never download the original
+  const proxyWidth = mode === "lightbox" ? 2200 : 1300;
+  const imgSrc = isRemote
+    ? `/api/img?url=${encodeURIComponent(cleanUrl)}&w=${proxyWidth}&q=74`
+    : cleanUrl;
 
   // 🎧 Audio
   if (isAudio) {
@@ -118,7 +144,7 @@ export default function StoryMedia({
     );
   }
 
-  // ▶️ Embedded Videos (YouTube, Vimeo, etc.)
+  // ▶️ Embedded Videos
   const embedUrl = getEmbedUrl(cleanUrl);
   if (embedUrl) {
     if (mode === "lightbox") {
@@ -151,6 +177,7 @@ export default function StoryMedia({
         </div>
       );
     }
+
     return (
       <div className={containerClass}>
         <iframe
@@ -165,7 +192,7 @@ export default function StoryMedia({
     );
   }
 
-  // 🎬 Raw Video Files (MP4, MOV, etc.)
+  // 🎬 Raw video files
   if (isVideoFile) {
     return mode === "lightbox" ? (
       <div className="flex justify-center items-center w-full h-full">
@@ -190,7 +217,7 @@ export default function StoryMedia({
           src={cleanUrl}
           controls
           className="w-full shadow-md rounded-lg"
-          style={sharedStyle}
+          style={{ maxHeight: "90vh", ...style }}
           onClick={(e) => requestFullscreen(e.currentTarget)}
           title={title}
         />
@@ -198,58 +225,50 @@ export default function StoryMedia({
     );
   }
 
-  // 🖼 Static Images → next/image
+  // 🖼 Images
   if (isImage) {
-    if (mode === "lightbox") {
+    // Local assets can stay with next/image
+    if (!isRemote) {
       return (
-        <div className="w-full h-full flex items-center justify-center touch-none">
-          <div
-            className="relative"
-            style={{
-              width: "90vw",
-              height: "90vh",
-              maxWidth: "1600px",
-              maxHeight: "90vh",
-            }}
-          >
+        <div className={containerClass}>
+          <div style={boxStyle}>
             <Image
-              src={cleanUrl}
+              src={imgSrc}
               alt={title || "Image"}
               fill
-              className="object-contain"
-              sizes="(max-width: 1024px) 90vw, 90vw"
-              priority
+              className={mode === "lightbox" ? "object-contain" : "object-contain rounded-xl shadow-md"}
+              sizes={
+                mode === "lightbox"
+                  ? "90vw"
+                  : "(max-width: 640px) 92vw, (max-width: 1024px) 85vw, 1100px"
+              }
+              priority={false}
             />
           </div>
         </div>
       );
     }
 
+    // Remote images: use <img> (now pointing at our resized proxy)
     return (
       <div className={containerClass}>
-        <div className="w-full flex items-center justify-center">
-          <div
-            className="relative"
+        <div style={boxStyle}>
+          <img
+            src={imgSrc}
+            alt={title || "Image"}
+            loading={mode === "lightbox" ? "eager" : "lazy"}
+            decoding="async"
             style={{
               width: "100%",
-              maxWidth: "min(90vw, 1200px)",
-              height: "min(70vh, 65vw)",
+              height: "100%",
+              objectFit: "contain",
+              borderRadius: mode === "lightbox" ? 0 : 16,
             }}
-          >
-            <Image
-              src={cleanUrl}
-              alt={title || "Image"}
-              fill
-              className="object-contain rounded-xl shadow-md"
-              sizes="(max-width: 640px) 90vw, (max-width: 1024px) 80vw, 60vw"
-              priority={false}
-            />
-          </div>
+          />
         </div>
       </div>
     );
   }
 
-  // 🚫 Fallback
   return null;
 }

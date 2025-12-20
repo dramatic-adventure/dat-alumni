@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useSwipeable } from "react-swipeable";
-import LightboxPortal from "@/components/shared/LightboxPortal";
+import LightboxPortal from "./LightboxPortal";
 import StoryMedia from "@/components/shared/StoryMedia";
 
 interface LightboxProps {

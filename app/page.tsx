@@ -320,6 +320,13 @@ export default function Page() {
 
       {/* ===== STYLES ===== */}
       <style jsx>{`
+@font-face {
+  font-family: "Anton";
+  src: url("/fonts/anton-v27-latin_latin-ext_vietnamese-regular.woff2")
+    format("woff2");
+  font-display: swap;
+}
+
   /* Kill link underlines globally in this page scope */
   :global(main a),
   :global(main a:visited),

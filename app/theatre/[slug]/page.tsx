@@ -10,8 +10,10 @@ import ProductionPageTemplate, {
   PersonRole,
   GalleryImage,
 } from "@/components/productions/ProductionPageTemplate";
+import { buildRelated } from "@/lib/buildRelated";
 
-type PageProps = { params: { slug: string } };
+// NOTE: params is now a Promise in Next 15 for some routes
+type PageProps = { params: Promise<{ slug: string }> };
 
 // Match the partners shape expected by ProductionPageTemplate
 type PartnerForTemplate = {
@@ -20,14 +22,6 @@ type PartnerForTemplate = {
   type: "community" | "artistic" | "impact" | "primary";
   logoSrc?: string;
   logoAlt?: string;
-};
-
-// Local, forgiving type for items we care about from dramaClubs
-type DramaClubForPage = {
-  slug: string;
-  name: string;
-  location?: string;
-  [key: string]: unknown;
 };
 
 function slugToName(slug: string): string {
@@ -84,9 +78,7 @@ function normalizeImagePath(input?: string | null): string | undefined {
   if (!raw) return undefined;
 
   // Remote URL (CDN, WP, etc.)
-  if (/^https?:\/\//i.test(raw)) {
-    return raw;
-  }
+  if (/^https?:\/\//i.test(raw)) return raw;
 
   // Strip accidental "public/" prefix (e.g. "public/posters/foo-landscape.jpg")
   if (raw.startsWith("public/")) {
@@ -95,9 +87,7 @@ function normalizeImagePath(input?: string | null): string | undefined {
   }
 
   // Already root-relative
-  if (raw.startsWith("/")) {
-    return raw;
-  }
+  if (raw.startsWith("/")) return raw;
 
   // Treat as relative to /public root
   return `/${raw.replace(/^\/+/, "")}`;
@@ -106,20 +96,12 @@ function normalizeImagePath(input?: string | null): string | undefined {
 /**
  * Resolve the hero image URL for a production, matching your actual
  * /public/posters naming convention (everything is -landscape or -portrait).
- *
- * Priority:
- *   1) extra.heroImageUrl                 (explicit hero, if configured)
- *   2) /posters/[slug]-landscape.jpg      (primary DAT hero convention)
- *   3) /posters/[slug]-portrait.jpg       (backup if only portrait exists)
- *   4) base.posterUrl (ONLY if it already includes -landscape/-portrait)
- *   5) /posters/fallback-16x9.jpg         (global ultimate fallback)
  */
 function getHeroImageUrl(
   slug: string,
   base: Production,
   extra?: ProductionExtra
-): string | undefined {
-  // Only trust base.posterUrl if it already matches the new naming scheme
+): string {
   const normalizedPosterUrl =
     base.posterUrl &&
     (base.posterUrl.includes("-landscape") ||
@@ -132,7 +114,7 @@ function getHeroImageUrl(
     `/posters/${slug}-landscape.jpg`,
     `/posters/${slug}-portrait.jpg`,
     normalizedPosterUrl,
-    "/posters/fallback-16x9.jpg", // lives at public/posters/fallback-16x9.jpg
+    "/posters/fallback-16x9.jpg",
   ];
 
   for (const raw of candidates) {
@@ -140,16 +122,19 @@ function getHeroImageUrl(
     if (normalized) return normalized;
   }
 
-  return undefined;
+  // Absolute last resort
+  return "/posters/fallback-16x9.jpg";
 }
 
 /* ---------- Page component ---------- */
 
-export default function TheatreProductionPage({ params }: PageProps) {
-  const base = productionMap[params.slug];
+export default async function TheatreProductionPage({ params }: PageProps) {
+  const { slug } = await params;
+
+  const base = productionMap[slug];
   if (!base) notFound();
 
-  const extra = productionDetailsMap[params.slug];
+  const extra = productionDetailsMap[slug];
 
   const { creativeTeam, cast } = extra?.creativeTeamOverride
     ? {
@@ -158,11 +143,7 @@ export default function TheatreProductionPage({ params }: PageProps) {
       }
     : splitArtists(base.artists);
 
-  const heroImageUrl = getHeroImageUrl(
-    params.slug,
-    base as Production,
-    extra
-  );
+  const heroImageUrl = getHeroImageUrl(slug, base as Production, extra);
 
   // Legacy/fallback playwright
   const playwrightName = derivePlaywright(base as Production, extra);
@@ -176,29 +157,15 @@ export default function TheatreProductionPage({ params }: PageProps) {
     : undefined;
 
   // Derive drama club from shared map (using dramaClubSlug), then allow overrides
-  const club =
-    extra?.dramaClubSlug
-      ? dramaClubs.find(
-          (c): c is DramaClubForPage =>
-            typeof c === "object" &&
-            c !== null &&
-            "slug" in c &&
-            (c as any).slug === extra.dramaClubSlug
-        )
-      : undefined;
+  const club = extra?.dramaClubSlug
+    ? dramaClubs.find((c) => c.slug === extra.dramaClubSlug)
+    : undefined;
 
-  const dramaClubName =
-    extra?.dramaClubName ?? club?.name ?? undefined;
+  const dramaClubName = extra?.dramaClubName ?? club?.name ?? undefined;
+  const dramaClubLocation = extra?.dramaClubLocation ?? club?.location ?? undefined;
 
-  const dramaClubLocation =
-    extra?.dramaClubLocation ?? club?.location ?? undefined;
-
-  // If you have a dedicated route like /drama-clubs/[slug],
-  // this gives you a default internal link:
   const defaultClubHref = club ? `/drama-clubs/${club.slug}` : undefined;
-
-  const dramaClubLink =
-    extra?.dramaClubLink ?? defaultClubHref;
+  const dramaClubLink = extra?.dramaClubLink ?? defaultClubHref;
 
   // Flexible credit line
   const creditPrefix = extra?.creditPrefix;
@@ -214,7 +181,6 @@ export default function TheatreProductionPage({ params }: PageProps) {
     extra?.partners?.map((p): PartnerForTemplate => ({
       name: p.name,
       href: p.href,
-      // keep known types; anything else falls back to "community"
       type:
         p.type === "artistic" ||
         p.type === "impact" ||
@@ -229,7 +195,6 @@ export default function TheatreProductionPage({ params }: PageProps) {
   // Map extra.processSections → template's ProcessSlice[]
   const processSectionsForTemplate =
     extra?.processSections?.map((section) => {
-      // Normalize or fallback the image
       const normalizedImageSrc = normalizeImagePath(section.image?.src);
       const image: GalleryImage = {
         src: normalizedImageSrc ?? "/images/teaching-amazon.jpg",
@@ -240,31 +205,30 @@ export default function TheatreProductionPage({ params }: PageProps) {
         heading: section.heading,
         body: section.body,
         image,
-        // align is optional and can be added later if you want to control left/right
         quote: section.quote
-          ? {
-              text: section.quote.text,
-              attribution: section.quote.attribution,
-            }
+          ? { text: section.quote.text, attribution: section.quote.attribution }
           : undefined,
       };
     }) ?? undefined;
 
+  // --- Related productions/projects (dynamic) ---
+  const related = buildRelated(slug, 8);
+  const relatedItems = Array.isArray(related.items) ? related.items : [];
+
+  // Allow per-show override for the header label only
+  const relatedTitle = extra?.relatedTitle?.trim() || "Related Plays & Projects";
+
   return (
     <ProductionPageTemplate
       title={base.title}
-      seasonLabel={
-        base.season ? `Season ${base.season} • ${base.year}` : String(base.year)
-      }
+      seasonLabel={base.season ? `Season ${base.season} • ${base.year}` : String(base.year)}
       seasonHref={base.season ? `/season/${base.season}` : undefined}
-      subtitle={extra?.subtitle} // tagline (used inline if match in synopsis)
-
+      subtitle={extra?.subtitle}
       /* Credits */
       creditPrefix={creditPrefix}
       creditPeople={creditPeople}
       playwright={playwrightName}
       playwrightHref={playwrightHref}
-
       /* Meta */
       dates={extra?.dates || base.festival || String(base.year)}
       festival={extra?.festival ?? base.festival}
@@ -275,50 +239,44 @@ export default function TheatreProductionPage({ params }: PageProps) {
       location={base.location}
       runtime={extra?.runtime}
       ageRecommendation={extra?.ageRecommendation}
-
       /* Hero / Quote image */
       heroImageUrl={heroImageUrl}
       heroImageAlt={base.title}
       quoteImageUrl={extra?.quoteImageUrl}
-
       /* About */
       synopsis={extra?.synopsis}
       themes={extra?.themes}
       pullQuote={extra?.pullQuote}
-
-      /* Community / Impact – wired to shared dramaClubs map with overrides */
+      /* Community / Impact */
       dramaClubName={dramaClubName}
       dramaClubLocation={dramaClubLocation}
       dramaClubLink={dramaClubLink}
       causes={extra?.causes}
       partners={normalizedPartners}
-
       /* CTAs */
       getInvolvedLink={extra?.getInvolvedLink}
       donateLink={extra?.donateLink}
       ticketsLink={extra?.ticketsLink}
-
       /* Rosters */
       creativeTeam={creativeTeam}
       cast={cast}
-
       /* Links section */
       resources={extra?.resources}
-
       /* Gallery */
       galleryImages={extra?.galleryImages}
       productionPhotographer={extra?.productionPhotographer}
       productionAlbumHref={extra?.productionAlbumHref}
       productionAlbumLabel={extra?.productionAlbumLabel}
-
       /* Field / BTS gallery */
       fieldGalleryImages={extra?.fieldGalleryImages}
       fieldGalleryTitle={extra?.fieldGalleryTitle}
       fieldAlbumHref={extra?.fieldAlbumHref ?? null}
       fieldAlbumLabel={extra?.fieldAlbumLabel ?? null}
-
       /* Process band */
       processSections={processSectionsForTemplate}
+      /* Related plays/projects row */
+      relatedItems={relatedItems}
+      relatedTitle={relatedTitle}
     />
   );
 }

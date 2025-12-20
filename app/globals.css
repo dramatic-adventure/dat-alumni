@@ -473,4 +473,196 @@ footer .footer-cta {
   }
 }
 
+/* ===============================
+   Vertical Poster Cards — Matte Theatre One-Sheet
+=============================== */
+
+.poster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 220px));
+  gap: clamp(14px, 2vw, 22px);
+  justify-content: flex-start;
+}
+
+/* Card shell */
+.poster-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0 0 18px 18px;
+  overflow: hidden;
+
+  /* darker / kraftier + more transparent at rest */
+  background: rgba(240, 225, 203, 0.55);
+  opacity: 0.9;
+
+  border: 0;
+  box-shadow:
+    0 14px 30px rgba(0, 0, 0, 0.32),
+    0 3px 8px rgba(0, 0, 0, 0.22);
+  transition:
+    transform 200ms ease,
+    box-shadow 220ms ease,
+    background-color 200ms ease,
+    opacity 200ms ease;
+  width: 100%;
+  max-width: 220px;
+}
+
+/* subtle paper/mat overlay */
+.poster-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 0 0, rgba(255,255,255,0.16), transparent 55%),
+    radial-gradient(circle at 100% 0, rgba(255,255,255,0.08), transparent 55%),
+    linear-gradient(135deg, rgba(0,0,0,0.03), rgba(255,255,255,0.02));
+  mix-blend-mode: soft-light;
+
+  /* 🔹 much lighter overlay at rest */
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+.poster-card:hover::before {
+  /* 🔹 strengthens on hover to help the brighten effect */
+  opacity: 0.55;
+}
+
+.poster-card:hover {
+  transform: translateY(-5px) scale(1.02);
+
+  box-shadow:
+    0 26px 60px rgba(0, 0, 0, 0.40),
+    0 10px 20px rgba(0, 0, 0, 0.28);
+
+  /* bright, near-white on hover */
+  background: rgba(255, 253, 248, 0.98);
+  opacity: 1;
+}
+
+/* Keep mobile nice & full-width */
+@media (max-width: 640px) {
+  .poster-grid {
+    grid-template-columns: 1fr;
+    justify-content: stretch;
+  }
+
+  .poster-card {
+    max-width: none;
+  }
+}
+
+/* 🎭 Standard theatre one-sheet: 27x40 */
+.poster-image-shell {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 27 / 40;
+  background: #24112312;
+  overflow: hidden;
+}
+
+/* Sheen — soft, cinematic sweep across the poster */
+.poster-image-shell::after {
+  content: "";
+  position: absolute;
+  top: -30%;
+  left: -70%;
+  width: 160%;
+  height: 160%;
+
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.02) 35%,
+    rgba(255, 255, 255, 0.14) 46%,
+    rgba(255, 255, 255, 0.26) 50%,
+    rgba(255, 255, 255, 0.14) 54%,
+    rgba(255, 255, 255, 0.02) 65%,
+    rgba(255, 255, 255, 0) 100%
+  );
+
+  opacity: 0;
+  transform: translateX(-18%);
+  filter: blur(18px);
+  mix-blend-mode: screen;
+  pointer-events: none;
+
+  transition:
+    opacity 520ms ease-out,
+    transform 1450ms ease-out;
+}
+
+.poster-card:hover .poster-image-shell::after {
+  opacity: 0.55;
+  transform: translateX(44%);
+}
+
+/* Meta strip */
+.poster-meta {
+  padding: 9px 12px 11px;
+  background: linear-gradient(
+    to bottom,
+    rgba(240, 225, 203, 0.9),
+    rgba(228, 207, 180, 0.85)
+  );
+  transition: background 200ms ease;
+}
+
+.poster-card:hover .poster-meta {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 253, 248, 0.98),
+    rgba(250, 244, 234, 0.95)
+  );
+}
+
+.poster-eyebrow {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #24112399;
+  margin-bottom: 2px;
+}
+
+.poster-title {
+  margin: 0;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.075em;
+  font-size: 0.98rem;
+  color: #241123;
+  line-height: 1;
+}
+
+.poster-subtitle {
+  margin: 2px 0 4px 0;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #24112380;
+}
+
+
+
+/* ===============================
+   NO UNDERLINES ON LINKS
+=============================== */
+
+/* === Global link reset === */
+a,
+a:visited {
+  text-decoration: none;
+  color: inherit;        /* so links don't randomly go browser-blue */
+}
+
+/* Keep it underline-free on hover/focus too */
+a:hover,
+a:focus-visible {
+  text-decoration: none;
+}
 
