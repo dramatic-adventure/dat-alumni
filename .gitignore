@@ -47,3 +47,10 @@ next-env.d.tspackage-lock.json
 .env.local
 
 /generated/prisma
+
+# Local sqlite (dev only)
+/dev.db
+*.db
+*.db-journal
+*.db-wal
+*.db-shm

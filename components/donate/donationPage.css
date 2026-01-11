@@ -1,0 +1,3269 @@
+/* components/donate/donationPage.css */
+
+.donatePage {
+  --dat-yellow: #ffcc00;
+  --dat-purple: #6c00af;
+  --dat-deep: #241123;
+  --paper: #f7f2e9;
+  --paper-card: #fbf7f1;
+  --ink: rgba(36, 17, 35, 0.92);
+  
+
+  min-height: 100vh;
+  background-color: var(--paper);
+  color: var(--ink);
+
+  background-image: url("/texture/kraft-paper.png");
+  background-size: cover;
+  background-attachment: fixed;
+  background-repeat: repeat;
+}
+
+/* ========================= HERO ========================= */
+
+.donateHero {
+  position: relative;
+  width: 100%;
+}
+
+.donateHeroFrame {
+  position: relative;
+  width: 100%;
+  height: clamp(320px, 44vw, 540px);
+  overflow: hidden;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.42);
+}
+
+.donateHeroFrame::after {
+  content: "";
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  bottom: -26px;
+  height: 44px;
+  background: rgba(0, 0, 0, 0.60);
+  filter: blur(26px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.donateHeroImg {
+  object-fit: cover;
+  object-position: center;
+}
+
+.donateHeroOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.82) 0%,
+      rgba(0, 0, 0, 0.55) 58%,
+      rgba(0, 0, 0, 0.12) 100%
+    ),
+    linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.52) 0%,
+      rgba(0, 0, 0, 0.10) 62%,
+      rgba(0, 0, 0, 0.00) 100%
+    );
+  opacity: 0.55;
+}
+
+.donateHeroStack{
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: clamp(1.5rem, 5vw, 3rem);
+  z-index: 2;
+
+  /* this is your “minus left/right margins” */
+  padding-inline: clamp(1.25rem, 7vw, 7%);
+
+  /* optional: keep it aligned with your page column width */
+  max-width: 1120px;
+  margin-inline: auto;
+}
+
+
+.donateHeroEyebrow {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.76);
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.82), 0 8px 24px rgba(0, 0, 0, 0.90);
+}
+
+.donateHeroTitle {
+  font-family: "DAT-Anton-Extended", var(--font-anton, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  font-weight: 400;
+  text-transform: uppercase;
+  margin-top: 1.1rem;
+  font-size: clamp(3rem, 8vw, 8rem);
+  line-height: 0.98;
+  color: rgba(255, 255, 255, 0.96);
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.82), 0 8px 24px rgba(0, 0, 0, 0.90);
+}
+
+.donateHeroBody {
+  margin-top: 0.1rem;
+  max-width: 40rem;
+  font-size: 1.02rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.80);
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.82), 0 8px 24px rgba(0, 0, 0, 0.90);
+}
+
+@media (max-width: 640px) {
+  .donateHeroBody {
+    display: none;
+  }
+}
+
+/* ========================= BODY LAYOUT ========================= */
+
+.donateBody {
+  padding: clamp(1.25rem, 3vw, 2.25rem) 16px clamp(3.2rem, 7vw, 5.2rem);
+}
+
+.donateColumn {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+}
+
+/* ========================= PURPLE BOX (dynamic headline + description) ========================= */
+
+.donatePurpleBox {
+  border-radius: 16px;
+  padding: 18px 18px 16px;
+  background: rgba(108, 0, 175, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+}
+
+@media (min-width: 640px) {
+  .donatePurpleBox {
+    padding: 22px 22px 18px;
+  }
+}
+
+.donatePurpleHeader {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.donatePurpleTitle {
+  font-size: clamp(1.9rem, 3.6vw, 3rem);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1.05;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.donatePurpleDesc {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.82);
+  max-width: 70ch;
+}
+
+/* ========================= DASH BOX ========================= */
+
+.donateDash {
+  background: rgba(36, 17, 35, 0.16);
+  border: 1px solid rgba(36, 17, 35, 0.12);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .donateDash {
+    padding: 1.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .donateDash {
+    padding: 2rem;
+  }
+}
+
+.donateDashTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.donateDashLeadChip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 14px;
+  border: 1px solid rgba(36, 17, 35, 0.85);
+  background: rgba(255, 204, 0, 0.92);
+  color: #241123;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  white-space: nowrap;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.35);
+}
+
+.donateDashBottomRow {
+  margin-top: 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-start;
+}
+
+/* ========================= SECTION LABELS ========================= */
+
+.donateSectionLabel {
+  font-size: 0.72rem;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: rgba(246, 228, 193, 0.86);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.donateSectionLabelInk {
+  color: rgba(36, 17, 35, 0.72);
+  margin-bottom: 0;
+}
+
+/* ========================= Summary pills ========================= */
+
+.donateSummaryPill {
+  border-radius: 999px;
+  border: 1px solid rgba(123, 95, 53, 0.32);
+  background-color: rgba(255, 200, 89, 0.25);
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #241123;
+  white-space: nowrap;
+}
+
+.donateSummaryPillSoft {
+  border-style: dashed;
+  opacity: 0.92;
+}
+
+/* Focus ring */
+
+.donateFocusRing:focus-visible {
+  outline: 3px solid rgba(255, 204, 0, 0.55);
+  outline-offset: 3px;
+  border-radius: inherit;
+}
+
+/* ========================= MODE ROW (Sponsor: + colored pills) ========================= */
+
+.donateModeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.donateModeLabel {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(246, 228, 193, 0.85);
+  white-space: nowrap;
+}
+
+.donateChipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+/* base */
+
+.donateChip {
+  --chip-bg: rgba(246, 228, 193, 0.12);
+  --chip-border: rgba(246, 228, 193, 0.28);
+  --chip-text: rgba(246, 228, 193, 0.92);
+  --chip-active-bg: rgba(255, 204, 0, 0.92);
+  --chip-active-border: rgba(36, 17, 35, 0.85);
+  --chip-active-text: #241123;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 7px 14px;
+  border: 1px solid var(--chip-border);
+  background: var(--chip-bg);
+  color: var(--chip-text);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease-out,
+    border-color 140ms ease-out,
+    box-shadow 140ms ease-out,
+    transform 120ms ease-out,
+    color 120ms ease-out;
+  white-space: nowrap;
+}
+
+.donateChip:hover {
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.28);
+  transform: translateY(-1px);
+}
+
+.donateChip[data-active="true"] {
+  background: var(--chip-active-bg);
+  border-color: var(--chip-active-border);
+  color: var(--chip-active-text);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.40);
+}
+
+/* mode colors (inspired by your “NEW / ONGOING / LEGACY” idea) */
+
+.donateChip[data-mode="drama-club"] {
+  --chip-active-bg: rgba(255, 204, 0, 0.92);
+  --chip-active-border: rgba(36, 17, 35, 0.85);
+  --chip-active-text: #241123;
+}
+
+.donateChip[data-mode="artist"] {
+  --chip-active-bg: rgba(108, 0, 175, 0.92);
+  --chip-active-border: rgba(255, 255, 255, 0.22);
+  --chip-active-text: rgba(255, 255, 255, 0.96);
+}
+
+.donateChip[data-mode="new-work"] {
+  --chip-active-bg: rgba(255, 122, 0, 0.92);
+  --chip-active-border: rgba(36, 17, 35, 0.85);
+  --chip-active-text: #241123;
+}
+
+.donateChip[data-mode="special-project"] {
+  --chip-active-bg: rgba(0, 195, 137, 0.92);
+  --chip-active-border: rgba(36, 17, 35, 0.85);
+  --chip-active-text: #241123;
+}
+
+.donateChip[data-mode="cause"] {
+  --chip-active-bg: rgba(77, 163, 255, 0.92);
+  --chip-active-border: rgba(36, 17, 35, 0.85);
+  --chip-active-text: #241123;
+}
+
+.donateChip[data-mode="general"] {
+  --chip-active-bg: rgba(36, 17, 35, 0.92);
+  --chip-active-border: rgba(255, 255, 255, 0.20);
+  --chip-active-text: rgba(246, 228, 193, 0.95);
+}
+
+.donateChipLabel {
+  font-weight: 800;
+}
+
+/* ========================= REFINE BLOCKS ========================= */
+
+.donateRefineBlock {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.donateRefineTopRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+/* top outline tag like “ALL CAUSES WE CHAMPION” */
+
+.donateOutlineTag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 8px 14px;
+  border: 1px solid rgba(246, 228, 193, 0.40);
+  background: rgba(246, 228, 193, 0.08);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 204, 0, 0.95);
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.donateOutlineTag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.20);
+  background: rgba(246, 228, 193, 0.12);
+}
+
+/* inline search */
+
+.donateSearchInline {
+  flex: 1;
+  min-width: 220px;
+  border-radius: 999px;
+  border: 1px solid rgba(246, 228, 193, 0.22);
+  background: rgba(246, 228, 193, 0.10);
+  padding: 10px 12px;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.donateSearchInline::placeholder {
+  color: rgba(246, 228, 193, 0.55);
+}
+
+/* ========================= LIST ACCORDION (matches screenshots) ========================= */
+
+.donateList {
+  margin-top: 2px;
+  border-top: 1px dashed rgba(246, 228, 193, 0.22);
+}
+
+.donateListItem {
+  border-bottom: 1px dashed rgba(246, 228, 193, 0.22);
+}
+
+.donateListRow {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 14px 6px;
+  background: transparent;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.donateListRowLabel {
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(246, 228, 193, 0.80);
+}
+
+.donateListRowIcon {
+  font-size: 1.5rem;
+  line-height: 1;
+  color: rgba(246, 228, 193, 0.88);
+  transform: translateY(-1px);
+}
+
+/* expanded body */
+
+.donateListBody {
+  padding: 0 6px 16px;
+}
+
+/* pills (subcategory / club / production / project) */
+
+.donatePillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.donatePillRowDense {
+  gap: 0.55rem;
+}
+
+.donatePill {
+  border-radius: 999px;
+  padding: 6px 14px;
+  border: 1px solid rgba(246, 228, 193, 0.38);
+  background: rgba(246, 228, 193, 0.08);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 204, 0, 0.95);
+  cursor: pointer;
+  transition:
+    background-color 140ms ease-out,
+    border-color 140ms ease-out,
+    transform 120ms ease-out,
+    box-shadow 140ms ease-out,
+    color 120ms ease-out;
+}
+
+.donatePill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.18);
+  background: rgba(246, 228, 193, 0.12);
+}
+
+.donatePill[data-selected="true"] {
+  background: rgba(255, 204, 0, 0.92);
+  color: #241123;
+  border-color: rgba(36, 17, 35, 0.85);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.28);
+}
+
+/* ========================= MICRO NOTE ========================= */
+
+.donateMicroNote {
+  margin-top: 8px;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: rgba(246, 228, 193, 0.72);
+}
+
+/* ========================= FREQUENCY SEGMENTED (tiers header, upper-right) ========================= */
+
+.donateSeg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(36, 17, 35, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.donateSegOnPaper {
+  background: rgba(36, 17, 35, 0.82);
+}
+
+.donateSegBtn {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  background: transparent;
+  color: rgba(246, 228, 193, 0.90);
+  cursor: pointer;
+  transition: background-color 140ms ease-out, color 140ms ease-out, transform 120ms ease-out;
+}
+
+.donateSegBtn[data-active="true"] {
+  background-color: rgba(255, 204, 0, 0.92);
+  color: #241123;
+  transform: translateY(-0.5px);
+}
+
+/* ========================= TIERS (white tiles) ========================= */
+
+.donateTierSection {
+  margin-top: 2px;
+}
+
+.donateTierHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.donateTierHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.donateTierGrid {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .donateTierGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .donateTierGrid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.donateTierCard {
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: var(--paper-card);
+  padding: 16px;
+  text-align: left;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.10);
+}
+
+.donateTierCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.14);
+}
+
+.donateTierCard[data-selected="true"] {
+  border-color: rgba(108, 0, 175, 0.55);
+  background: rgba(108, 0, 175, 0.06);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+}
+
+.donateTierTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.donateTierTitle {
+  font-weight: 900;
+  font-size: 1.02rem;
+  color: rgba(36, 17, 35, 0.92);
+}
+
+.donateTierEyebrow {
+  margin-top: 6px;
+  font-size: 0.94rem;
+  line-height: 1.45;
+  color: rgba(36, 17, 35, 0.68);
+}
+
+.donateTierRight {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.donateTierAmount {
+  font-size: 1.12rem;
+  color: rgba(36, 17, 35, 0.92);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.donateTierTag {
+  margin-top: 6px;
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(108, 0, 175, 0.25);
+  background: rgba(108, 0, 175, 0.08);
+  color: rgba(108, 0, 175, 0.92);
+}
+
+.donateTierBullets {
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+  font-size: 0.92rem;
+  color: rgba(36, 17, 35, 0.70);
+}
+
+/* ========================= CTA ========================= */
+
+.donateCtaSection {
+  margin-top: 6px;
+}
+
+.donateAlert {
+  border-radius: 12px;
+  border: 1px solid rgba(220, 38, 38, 0.30);
+  background: rgba(220, 38, 38, 0.08);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.donateAlertTitle {
+  font-weight: 900;
+  font-size: 0.95rem;
+  color: rgba(175, 20, 20, 0.96);
+  letter-spacing: 0.02em;
+}
+
+.donateAlertBody {
+  margin-top: 6px;
+  font-size: 0.95rem;
+  color: rgba(175, 20, 20, 0.86);
+}
+
+.donateAlertHint {
+  margin-top: 8px;
+  font-size: 0.82rem;
+  color: rgba(175, 20, 20, 0.68);
+}
+
+.donateCtaBtn {
+  width: 100%;
+  border-radius: 14px;
+  padding: 14px 14px;
+  font-weight: 950;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  background: var(--dat-yellow);
+  color: #241123;
+  border: 1px solid rgba(36, 17, 35, 0.55);
+  transition: transform 140ms ease, opacity 140ms ease;
+}
+
+.donateCtaBtn:hover {
+  transform: translateY(-1px);
+  opacity: 0.98;
+}
+
+.donateCtaBtn[data-disabled="true"] {
+  background: rgba(36, 17, 35, 0.10);
+  color: rgba(36, 17, 35, 0.42);
+  border-color: rgba(36, 17, 35, 0.14);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.donateCtaMicro {
+  margin-top: 10px;
+  font-size: 0.90rem;
+  color: rgba(36, 17, 35, 0.70);
+}
+
+.donateDebug {
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: rgba(36, 17, 35, 0.55);
+  min-height: 1.1em;
+}
+
+.donateLinks {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.donateTextLink {
+  border-radius: 999px;
+  padding: 8px 10px;
+  border: 1px solid rgba(36, 17, 35, 0.16);
+  background: rgba(251, 247, 241, 0.92);
+  color: rgba(36, 17, 35, 0.78);
+  font-size: 0.92rem;
+  text-decoration: none;
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.06);
+}
+
+.donateTextLink:hover {
+  transform: translateY(-1px);
+  border-color: rgba(36, 17, 35, 0.22);
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.08);
+}
+
+/* ===== Checkout status card (after hero) ===== */
+
+.donateStatusCard {
+  margin-top: 18px;
+  background: #fbf7f1;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 18px;
+  box-shadow: 0 18px 50px rgba(36, 17, 35, 0.10);
+  overflow: hidden;
+}
+
+.donateStatusTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  background: rgba(108, 0, 175, 0.07);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.10);
+}
+
+.donateStatusTopLeft {
+  min-width: 0;
+}
+
+.donateStatusKicker {
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.donateStatusTitle {
+  margin-top: 6px;
+  font-size: 1.35rem;
+  line-height: 1.15;
+  color: #241123;
+}
+
+.donateStatusBody {
+  margin-top: 8px;
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
+.donateStatusClose {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: rgba(255, 255, 255, 0.55);
+  font-size: 22px;
+  line-height: 0;
+  cursor: pointer;
+}
+
+.donateStatusClose:hover {
+  background: rgba(255, 255, 255, 0.80);
+}
+
+.donateStatusDetails {
+  padding: 16px 18px 18px;
+}
+
+.donateStatusGrid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 720px) {
+  .donateStatusGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.donateStatusRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.donateStatusRowFull {
+  grid-column: 1 / -1;
+}
+
+.donateStatusLabel {
+  font-size: 0.85rem;
+  opacity: 0.65;
+}
+
+.donateStatusValue {
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0.9;
+  word-break: break-word;
+  text-align: right;
+}
+
+.donateStatusRight {
+  text-align: right;
+}
+
+.donateStatusActions {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.donateStatusLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.55);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.donateStatusLink:hover {
+  background: rgba(255, 255, 255, 0.80);
+}
+
+.donateStatusPrimary {
+  padding: 11px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: #6C00AF;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.donateStatusPrimary:hover {
+  opacity: 0.95;
+}
+
+.donateStatusSecondary {
+  padding: 11px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: rgba(255, 255, 255, 0.55);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.donateStatusSecondary:hover {
+  background: rgba(255, 255, 255, 0.80);
+}
+
+.donateStatusError {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(196, 42, 42, 0.25);
+  background: rgba(255, 240, 240, 0.70);
+  color: #7b0f0f;
+  font-size: 0.9rem;
+}
+
+/* ========================= RETURN CARD (success/cancel) ========================= */
+
+.donateReturnWrap {
+  margin-top: 14px;
+  margin-bottom: 18px;
+}
+
+.donateReturnCard {
+  border-radius: 18px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: #fbf7f1;
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+}
+
+.donateReturnCard[data-kind="success"] {
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.16);
+}
+
+.donateReturnCard[data-kind="cancel"] {
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.14);
+  opacity: 0.98;
+}
+
+.donateReturnTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: rgba(36, 17, 35, 0.06);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.donateReturnKicker {
+  letter-spacing: 0.10em;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  opacity: 0.82;
+}
+
+.donateReturnClose {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 22px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.donateReturnContent {
+  padding: 16px;
+}
+
+.donateReturnTitle {
+  margin: 0;
+  font-size: 1.35rem;
+  color: #241123;
+}
+
+.donateReturnDesc {
+  margin-top: 8px;
+  margin-bottom: 14px;
+  opacity: 0.85;
+  line-height: 1.35;
+}
+
+.donateReturnMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: rgba(255, 255, 255, 0.55);
+  margin-top: 10px;
+}
+
+.donateReturnMetaLabel {
+  font-size: 0.9rem;
+  opacity: 0.70;
+}
+
+.donateReturnMetaValue {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  max-width: 52%;
+  text-align: right;
+  word-break: break-all;
+}
+
+.donateReturnAlert {
+  margin-top: 10px;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(230, 80, 80, 0.35);
+  background: rgba(230, 80, 80, 0.10);
+}
+
+.donateReturnGrid {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.donateReturnKV {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: baseline;
+}
+
+.donateReturnKV .k {
+  opacity: 0.62;
+  font-size: 0.9rem;
+}
+
+.donateReturnKV .v {
+  font-weight: 600;
+  font-size: 0.92rem;
+  text-align: right;
+  word-break: break-word;
+}
+
+.donateReturnLinks {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.donateReturnLink {
+  border-radius: 999px;
+  border: 1px solid rgba(0,  0, 0, 0.14);
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.donateReturnActions {
+  margin-top: 12px;
+}
+
+.donateReturnPrimary {
+  border-radius: 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: rgba(108, 0, 175, 0.10);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* =========================================================
+   Checkout Return Card (Success / Canceled)
+   ========================================================= */
+
+.donateReturnCard {
+  border-radius: 18px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: rgba(251, 247, 241, 0.94);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  margin: 18px 0 18px;
+}
+
+.donateReturnTopbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: linear-gradient(
+    180deg,
+    rgba(36, 17, 35, 0.08),
+    rgba(36, 17, 35, 0.04)
+  );
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.donateReturnKicker {
+  letter-spacing: 0.10em;
+  font-size: 0.82rem;
+  opacity: 0.75;
+  text-transform: uppercase;
+}
+
+.donateReturnClose {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: rgba(255, 255, 255, 0.55);
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.donateReturnBody {
+  padding: 18px 18px 16px;
+}
+
+.donateReturnTitle {
+  font-size: 1.7rem;
+  margin: 2px 0 4px;
+  color: #241123;
+}
+
+.donateReturnSub {
+  margin: 0 0 14px;
+  opacity: 0.8;
+}
+
+.donateReturnRefRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: rgba(255, 255, 255, 0.55);
+  margin: 10px 0 14px;
+}
+
+.donateReturnRefLabel {
+  opacity: 0.65;
+}
+
+.donateReturnRefValue {
+  opacity: 0.9;
+  word-break: break-all;
+  text-align: right;
+}
+
+.donateReturnAlert {
+  margin: 10px 0 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 0, 0, 0.25);
+  background: rgba(255, 0, 0, 0.06);
+}
+
+.donateReturnAlertActions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.donateReturnGrid {
+  margin-top: 6px;
+  border-top: 1px solid rgba(0, 0, 0, 0.10);
+  padding-top: 12px;
+}
+
+.donateReturnRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 6px 0;
+}
+
+.donateReturnKey {
+  opacity: 0.6;
+}
+
+.donateReturnVal {
+  font-weight: 600;
+  text-align: right;
+  word-break: break-word;
+  color: #241123;
+}
+
+.donateReturnActions {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.donateReturnBtn {
+  border-radius: 14px;
+  padding: 10px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  background: rgba(108, 0, 175, 0.12);
+  color: #241123;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donateReturnBtn[data-variant="ghost"] {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.donateReturnTitle {
+  font-family: "DAT-Anton-Extended", var(--font-anton, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: 1.7rem;
+  margin: 2px 0 4px;
+  color: #241123;
+}
+
+/* New helper to reduce space between headline and body */
+
+.donateHeroTitleTight {
+  margin-bottom: 0.35rem;
+}
+
+/* ========================= Donation dashboard — DAT chip system (override)
+   Append to bottom of donationPage.css
+   ========================= */
+
+.donateDash {
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+/* Make the toggle feel separate from the detail area */
+
+.donateModeRow {
+  padding: 18px 18px 14px 18px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Small, light, DAT yellow label */
+
+.donateModeLabel,
+.donateMicroNote,
+.donateListRowLabel,
+.donateClubCountryName,
+.donateChipLabel {
+  color: #ffcc00;
+  font-weight: 500;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Generic chip baseline (transparent) */
+
+.donateChip,
+.donatePill,
+.donateClubPill,
+.donateOutlineTag {
+  background: transparent;
+  color: #ffcc00;
+  border: 1px solid rgba(255, 204, 0, 0.55);
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+.donateChip:hover,
+.donatePill:hover,
+.donateClubPill:hover,
+.donateOutlineTag:hover {
+  border-color: rgba(255, 204, 0, 0.9);
+  transform: translateY(-1px);
+}
+
+/* ✅ Selected = solid DAT yellow + ink text */
+
+.donateChip[data-active="true"],
+.donatePill[data-selected="true"],
+.donateClubPill[data-selected="true"],
+.donateListRow[data-selected="true"] {
+  background: #ffcc00;
+  border-color: #ffcc00;
+  color: #241123;
+}
+
+/* List rows: keep them chip-like and consistent */
+
+.donateListRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 204, 0, 0.35);
+  background: transparent;
+  color: #ffcc00;
+}
+
+/* Make the chevron also follow system */
+
+.donateListRowIcon,
+.donateClubCountryChevron {
+  color: inherit;
+  opacity: 0.85;
+}
+
+/* Club pills: label + city (city stays readable) */
+
+.donateClubPill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 16px;
+}
+
+.donateClubLabel {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-size: 0.975rem;
+  color: inherit;
+}
+
+.donateClubMeta {
+  font-weight: 500;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  opacity: 0.7;
+  color: inherit;
+}
+
+/* Bottom transparent chips (ONLY two) — corners */
+
+.donateDashBottomRow {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.donateSummaryPill {
+  background: transparent;
+  border: 1px solid rgba(255, 204, 0, 0.45);
+  color: #ffcc00;
+  border-radius: 999px;
+  padding: 10px 12px;
+  font-weight: 600;
+  font-size: 0.74rem;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+.donateSummaryPillSoft {
+  opacity: 0.85;
+}
+
+/* ✅ Buttons: no color-coding — everything is DAT yellow system */
+
+.donateCtaBtn,
+.donateReturnBtn,
+.donateSegBtn[data-active="true"] {
+  background: #ffcc00 !important;
+  color: #241123 !important;
+  border: 1px solid #ffcc00 !important;
+}
+
+.donateSegBtn {
+  background: transparent;
+  color: #ffcc00;
+  border: 1px solid rgba(255, 204, 0, 0.55);
+}
+
+/* Disabled still reads as system */
+
+.donateCtaBtn[data-disabled="true"],
+.donateCtaBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Tier selection highlight uses yellow instead of “coded” accents */
+
+.donateTierCard[data-selected="true"] {
+  border-color: #ffcc00 !important;
+  box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.22);
+}
+
+/* =========================================================
+   Donation page — ALIGN TO DRAMA CLUB "ledger" vibe
+   Paste at VERY BOTTOM of donationPage.css
+   ========================================================= */
+
+.donateDash {
+  background: rgba(36, 17, 35, 0.20);
+  border: 1px solid rgba(36, 17, 35, 0.12);
+  border-radius: 12px;
+  overflow: visible;
+}
+
+/* --- Chips (match dc-chip baseline) --- */
+
+.donateModeLabel {
+  color: #f2f2f2e5;
+  font-weight: 700;
+  font-size: 0.92rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.donateChip {
+  background-color: rgba(246, 228, 193, 0.18);
+  border: 1px solid rgba(246, 228, 193, 0.35);
+  color: rgba(255, 221, 0, 1);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+}
+
+.donateChip:hover {
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
+  transform: translateY(-1px);
+}
+
+.donateChip[data-active="true"] {
+  background-color: rgba(255, 204, 0, 0.92);
+  color: #241123;
+  border-color: rgba(36, 17, 35, 0.85);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55);
+}
+
+/* Kill any “mode color-coding” so Sponsor chips behave like Country chips */
+
+.donateChip[data-mode] {
+  --chip-active-bg: rgba(255, 204, 0, 0.92);
+  --chip-active-border: rgba(36, 17, 35, 0.85);
+  --chip-active-text: #241123;
+}
+
+/* --- Accordion list (match dc “dashed ledger” rows) --- */
+
+.donateList {
+  margin-top: 6px;
+  border-top: 1px dashed rgba(246, 228, 193, 0.18);
+}
+
+.donateListItem {
+  border-bottom: 1px dashed rgba(246, 228, 193, 0.18);
+}
+
+/* IMPORTANT: remove the big rounded outlined boxes */
+
+.donateListRow {
+  padding: 14px 0;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.donateListRowLabel {
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: rgba(246, 228, 193, 0.80);
+}
+
+/* hover + open state highlights like Drama Club */
+
+.donateListRow:hover .donateListRowLabel {
+  color: rgba(255, 204, 0, 0.95);
+}
+
+.donateListRow[aria-expanded="true"] .donateListRowLabel,
+.donateListRow[data-expanded="true"] .donateListRowLabel {
+  color: rgba(255, 204, 0, 0.95);
+}
+
+.donateListRowIcon {
+  color: rgba(246, 228, 193, 0.98);
+  font-size: 1.5rem;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+/* --- Subcategory pills (already close; tighten to dc feel) --- */
+
+.donatePill {
+  border: 1px solid rgba(246, 228, 193, 0.38);
+  background: rgba(246, 228, 193, 0.08);
+  color: rgba(255, 204, 0, 0.95);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.donatePill:hover {
+  background: rgba(246, 228, 193, 0.12);
+}
+
+.donatePill[data-selected="true"] {
+  background: rgba(255, 204, 0, 0.92);
+  color: #241123;
+  border-color: rgba(36, 17, 35, 0.85);
+}
+
+/* --- Bottom summary pills should be the “soft gold” chips (NOT yellow-outline text) --- */
+
+.donateDashBottomRow {
+  justify-content: space-between;
+}
+
+.donateSummaryPill {
+  border-radius: 999px;
+  border: 1px solid rgba(123, 95, 53, 0.32);
+  background-color: rgba(255, 200, 89, 0.25);
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #241123;
+}
+
+.donateSummaryPillSoft {
+  border-style: dashed;
+  opacity: 0.9;
+}
+
+/* =========================================================
+   Sponsor mode chips — ONLY active is solid DAT yellow
+   (drop-in patch; place at the very bottom of donationPage.css)
+   ========================================================= */
+
+.donateModeRow .donateChip {
+  background: transparent;
+  border: 1px solid rgba(255, 204, 0, 0.55);
+  color: #ffcc00;
+}
+
+/* Active/selected states (covers common attribute patterns) */
+
+.donateModeRow .donateChip[data-active="true"],
+.donateModeRow .donateChip[data-selected="true"],
+.donateModeRow .donateChip[aria-pressed="true"],
+.donateModeRow .donateChip[aria-current="true"] {
+  background: #ffcc00 !important;
+  border-color: #ffcc00 !important;
+  color: #241123 !important;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.45);
+}
+
+/* CRITICAL: stop nested spans from forcing yellow when active */
+
+.donateModeRow .donateChip[data-active="true"] *,
+.donateModeRow .donateChip[data-selected="true"] *,
+.donateModeRow .donateChip[aria-pressed="true"] *,
+.donateModeRow .donateChip[aria-current="true"] * {
+  color: inherit !important;
+}
+
+/* Keep children inheriting from parent in all states */
+
+.donateModeRow .donateChip * {
+  color: inherit;
+}
+
+/* Shared type for headings + sub-items (causes subcats, club rows, etc.) */
+
+.donatePickText {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Accordion layout helpers */
+
+.donateAccordion {
+  display: grid;
+  gap: 10px;
+}
+
+.donateAccordionItem {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.45);
+  overflow: hidden;
+}
+
+.donateAccordionSummary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+}
+
+.donateAccordionSummary::-webkit-details-marker {
+  display: none;
+}
+
+.donateAccordionCount {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.donateAccordionBody {
+  padding: 6px 8px 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.donateAccordionRow {
+  width: 100%;
+  text-align: left;
+  border-radius: 14px;
+  padding: 10px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: rgba(255, 255, 255, 0.55);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.donateAccordionRow.isSelected {
+  border-color: rgba(108, 0, 175, 0.55);
+  box-shadow: 0 0 0 2px rgba(108, 0, 175, 0.18) inset;
+}
+
+.donateAccordionMeta {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.65;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   FINAL OVERRIDES (per spec)
+   Append at the very bottom of donationPage.css
+   ========================================================= */
+
+/* 1) Hero body: sit tight under the title (no extra gap) */
+
+.donateHeroBody {
+  margin-top: 0;
+}
+
+/* 2) Dynamic heading block (kraft-paper headline above dashboard) */
+
+.donateDynamicHeading {
+  margin-top: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.donateDashHeadline {
+  font-family: "DAT-Anton-Extended", var(--font-anton, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  color: rgba(36, 17, 35, 0.96);
+}
+
+.donateDashSub {
+  margin-top: 0.25rem;
+  max-width: 52rem;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: #f2f2f2;
+}
+
+/* 3) Micro-notes: grey + italic (no active / steward copy) */
+
+.donateMicroNote {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: #fff7d67a;
+  font-style: italic;
+}
+
+/* 4) Drama-club & cause accordions: dashes + bucket labels + +/- colors */
+
+.donateList {
+  margin-top: 6px;
+  border-top: 1px dashed #f2f2f2;
+}
+
+.donateListItem {
+  border-bottom: 1px dashed #f2f2f2;
+}
+
+/* Country / category label + +/- icon default state */
+
+.donateClubCountryName,
+.donateClubCountryChevron,
+.donateListRowIcon {
+  color: #f2f2f2;
+}
+
+/* When a bucket is selected OR open, flip to DAT yellow */
+
+.donateListRow[data-selected="true"] .donateClubCountryName,
+.donateListRow[data-selected="true"] .donateClubCountryChevron,
+.donateListRow[data-selected="true"] .donateListRowIcon,
+.donateListRow[aria-expanded="true"] .donateClubCountryName,
+.donateListRow[aria-expanded="true"] .donateClubCountryChevron,
+.donateListRow[aria-expanded="true"] .donateListRowIcon {
+  color: #ffcc00;
+}
+
+/* 5) Neutral base for all chips / pills / outline tags / seg buttons
+   Inactive = soft grey; active = solid DAT yellow */
+
+.donateChip,
+.donatePill,
+.donateClubPill,
+.donateOutlineTag,
+.donateSegBtn {
+  border-color: #fff7d77d !important;
+  background-color: rgba(242, 242, 242, 0.12) !important;
+  color: #f2f2f2 !important;
+}
+
+/* Active / selected states → solid DAT yellow */
+
+.donateChip[data-active="true"],
+.donateChip[data-selected="true"],
+.donateChip[aria-pressed="true"],
+.donateChip[aria-current="true"],
+.donatePill[data-selected="true"],
+.donateClubPill[data-selected="true"],
+.donateOutlineTag[data-active="true"],
+.donateOutlineTag[data-selected="true"],
+.donateSegBtn[data-selected="true"],
+.donateSegBtn[data-active="true"] {
+  border-color: #ffcc00 !important;
+  background-color: #ffcc00 !important;
+  color: #241123 !important;
+}
+
+/* Make sure nested spans/icons inherit the parent color */
+
+.donateChip *,
+.donatePill *,
+.donateClubPill *,
+.donateOutlineTag *,
+.donateSegBtn * {
+  color: inherit !important;
+}
+
+/* === PATCH: hero title/body tight === */
+.donateHeroTitle { margin-bottom: 0 !important; }
+.donateHeroBody  { margin-top: 0 !important; margin-bottom: 0 !important; }
+
+/* === PATCH: kraft-paper heading centered above dashboard === */
+.donateDynamicHeading{
+  text-align: center;
+  max-width: 900px;
+  margin: 0rem auto 0rem;
+}
+
+.donateDashHeadline{
+  text-align: center; /* redundant, but explicit */
+  margin-bottom: 0;
+}
+
+.donateDashSub{
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  color: #f2f2f2;
+  opacity: 0.95;
+}
+
+/* === PATCH: slightly larger kraft headline === */
+.donateDashHeadline{
+  font-size: clamp(1.6rem, 3.3vw, 4rem);
+}
+
+/* === PATCH: dashboard chip text = DAT yellow + lighter weight (text only) === */
+/* Scope to the dashboard so we don't touch hero / kraft / other pages */
+.donateDash :is(.donateChip, .donatePill, .donateClubPill, .donateOutlineTag, .donateSegBtn) {
+  color: #ffcc00 !important;     /* text */
+  font-weight: 500 !important;   /* lighter than the heavy 800/900 */
+}
+
+/* If any chip label spans are overriding weight/color (common in accordion/cause labels) */
+.donateDash :is(.donateChip, .donatePill, .donateClubPill, .donateOutlineTag, .donateSegBtn) * {
+  color: inherit !important;
+  font-weight: inherit !important;
+}
+
+/* Keep active/selected chips readable: yellow text stays (you asked text-only) */
+.donateDash :is(.donateChip[data-active="true"],
+                .donateChip[data-selected="true"],
+                .donatePill[data-selected="true"],
+                .donateClubPill[data-selected="true"],
+                .donateOutlineTag[data-active="true"],
+                .donateOutlineTag[data-selected="true"],
+                .donateSegBtn[data-active="true"],
+                .donateSegBtn[data-selected="true"]) {
+  color: #ffcc00 !important;
+}
+
+/* === PATCH: dashboard selected chip text = ink (#241123) + lighter weight (text only) === */
+.donateDash :is(.donateChip, .donatePill, .donateClubPill, .donateOutlineTag, .donateSegBtn)
+:is([data-active="true"], [data-selected="true"], [aria-pressed="true"], [aria-current="true"]) {
+  color: #241123 !important;
+  font-weight: 500 !important;
+}
+
+/* Ensure nested label spans/icons don’t override selected state */
+.donateDash :is(.donateChip, .donatePill, .donateClubPill, .donateOutlineTag, .donateSegBtn)
+:is([data-active="true"], [data-selected="true"], [aria-pressed="true"], [aria-current="true"]) * {
+  color: inherit !important;
+  font-weight: inherit !important;
+}
+
+/* =========================================================
+   DASHBOARD CHIP TEXT FIX (font color + lighter weight only)
+   Paste at VERY BOTTOM of donationPage.css
+   ========================================================= */
+
+/* Inactive chips: DAT yellow text, lighter weight */
+.donateDash .donateChip,
+.donateDash .donatePill,
+.donateDash .donateClubPill,
+.donateDash .donateOutlineTag,
+.donateDash .donateSegBtn {
+  color: #ffcc00 !important;
+  font-weight: 500 !important;
+}
+
+/* Also force all children (spans/icons) to match */
+.donateDash .donateChip *,
+.donateDash .donatePill *,
+.donateDash .donateClubPill *,
+.donateDash .donateOutlineTag *,
+.donateDash .donateSegBtn * {
+  color: #ffcc00 !important;
+  font-weight: 500 !important;
+}
+
+/* Selected chips: ink text, lighter weight (covers common selected patterns) */
+.donateDash .donateChip[data-active="true"],
+.donateDash .donateChip[data-selected="true"],
+.donateDash .donateChip[aria-pressed="true"],
+.donateDash .donateChip[aria-current="true"],
+.donateDash .donatePill[data-selected="true"],
+.donateDash .donateClubPill[data-selected="true"],
+.donateDash .donateOutlineTag[data-active="true"],
+.donateDash .donateOutlineTag[data-selected="true"],
+.donateDash .donateSegBtn[data-active="true"],
+.donateDash .donateSegBtn[data-selected="true"] {
+  color: #241123 !important;
+  font-weight: 500 !important;
+}
+
+/* Selected chips: ensure inner label text follows ink color too */
+.donateDash .donateChip[data-active="true"] *,
+.donateDash .donateChip[data-selected="true"] *,
+.donateDash .donateChip[aria-pressed="true"] *,
+.donateDash .donateChip[aria-current="true"] *,
+.donateDash .donatePill[data-selected="true"] *,
+.donateDash .donateClubPill[data-selected="true"] *,
+.donateDash .donateOutlineTag[data-active="true"] *,
+.donateDash .donateOutlineTag[data-selected="true"] *,
+.donateDash .donateSegBtn[data-active="true"] *,
+.donateDash .donateSegBtn[data-selected="true"] * {
+  color: #241123 !important;
+  font-weight: 500 !important;
+}
+
+/* =========================================================
+   ACCORDION: tighter dashed lines + softer opacity + bigger +/-
+   Paste at VERY BOTTOM of donationPage.css
+   ========================================================= */
+
+/* 1) Put dashed lines directly under each bucket (kill extra gap) */
+.donateDash .donateList {
+  margin-top: 0 !important;
+}
+
+/* If any extra padding/margin is creating space inside items, tighten it */
+.donateDash .donateListItem {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* 2) Reduce opacity of dashed lines (top + bottom separators) */
+.donateDash .donateList {
+  border-top-color: rgba(242, 242, 242, 0.45) !important;
+}
+
+.donateDash .donateListItem {
+  border-bottom-color: rgba(242, 242, 242, 0.45) !important;
+}
+
+/* 3) Make ONLY the +/- bigger, but keep it light */
+.donateDash .donateListRowIcon {
+  font-size: 1.9rem !important;   /* was ~1.5rem */
+  font-weight: 400 !important;    /* keep it light */
+  line-height: 1 !important;
+}
+
+/* =========================================================
+   Accordion: dash directly under bucket + softer dashes + bigger +/-
+   Paste at VERY BOTTOM of donationPage.css
+   ========================================================= */
+
+/* Kill the old dashed lines that sit "outside" the padded row */
+.donateDash .donateList {
+  border-top: none !important;
+  margin-top: 0 !important;
+}
+
+.donateDash .donateListItem {
+  border-bottom: none !important;
+}
+
+/* Put the dashed line directly under each bucket row */
+.donateDash .donateListRow {
+  /* keep your existing look, just control spacing + add divider */
+  padding-bottom: 6px !important; /* pulls dash up under the label */
+  margin-bottom: 0 !important;
+
+  border-bottom: 1px dashed rgba(242, 242, 242, 0.25) !important; /* softer */
+}
+
+/* If your row had big vertical padding, this keeps it tight under the label
+   without killing the touch target on top */
+.donateDash .donateListRow {
+  padding-top: 12px !important;  /* adjust if you want */
+}
+
+/* If the expanded body pushes the divider away, tighten the top of the body */
+.donateDash .donateListBody {
+  padding-top: 8px !important;
+}
+
+/* =========================================================
+   Accordion buckets: slightly lower opacity + force +/- sizing
+   Paste at VERY BOTTOM of donationPage.css
+   ========================================================= */
+
+/* 1) Slightly reduce opacity of collapsed bucket rows (label + +/- only) */
+.donateDash .donateListRow:not([aria-expanded="true"]):not([data-selected="true"]) .donateListRowLabel,
+.donateDash .donateListRow:not([aria-expanded="true"]):not([data-selected="true"]) .donateListRowIcon,
+.donateDash .donateListRow:not([aria-expanded="true"]):not([data-selected="true"]) .donateClubCountryChevron,
+.donateDash .donateListRow:not([aria-expanded="true"]):not([data-selected="true"]) .donateClubCountryName {
+  opacity: 0.75 !important;
+  color: #fff7d8;
+}
+
+/* Keep open/selected buckets fully readable */
+.donateDash .donateListRow[aria-expanded="true"] .donateListRowLabel,
+.donateDash .donateListRow[data-selected="true"] .donateListRowLabel,
+.donateDash .donateListRow[aria-expanded="true"] .donateListRowIcon,
+.donateDash .donateListRow[data-selected="true"] .donateListRowIcon,
+.donateDash .donateListRow[aria-expanded="true"] .donateClubCountryChevron,
+.donateDash .donateListRow[data-selected="true"] .donateClubCountryChevron {
+  opacity: 1 !important;
+}
+
+/* 2) FORCE the +/- to get bigger (covers multiple possible DOM shapes) */
+.donateDash .donateListRowIcon,
+.donateDash .donateClubCountryChevron,
+.donateDash .donateListRow > :last-child {
+  font-size: 1.1rem !important;   /* increase +/- size */
+  font-weight: 500 !important;  /* keep it light */
+  line-height: 1 !important;
+}
+
+/* If the +/- is an SVG (sometimes chevrons are), scale it too */
+.donateDash .donateListRowIcon svg,
+.donateDash .donateClubCountryChevron svg,
+.donateDash .donateListRow > :last-child svg {
+  width: 1.35em !important;
+  height: 1.35em !important;
+}
+
+/* =========================
+   Donate Dash headline (Tailwind equivalent)
+   ========================= */
+
+.donateDashHeadline{
+  font-size: clamp(1.8rem, 5vw, 5rem) !important;
+  text-transform: uppercase !important;
+  line-height: 1.05 !important;
+  color: #241123 !important;
+  opacity: 0.9 !important;
+  letter-spacing: 0.02em;
+}
+
+/* =========================================================
+   HERO — MATCH PRODUCTION PAGE BEHAVIOR (16:9 + inset stack)
+   Paste at VERY BOTTOM of donationPage.css
+   ========================================================= */
+
+/* 1) The hero frame behaves like Production: 16/9 responsive box */
+.donateHeroFrame {
+  height: auto !important;              /* kill clamp-height layout */
+  aspect-ratio: 16 / 9 !important;      /* production uses 16:9 */
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 18px 38px rgba(0,0,0,0.18) !important; /* match production */
+}
+
+/* Donation had an extra fake shadow strip — production doesn’t */
+.donateHeroFrame::after {
+  content: none !important;
+}
+
+/* 2) Match production overlay gradients + opacity */
+.donateHeroOverlay {
+  opacity: 0.5 !important; /* production builds opacity into gradients */
+  background: none !important;
+}
+
+.donateHeroOverlay::before,
+.donateHeroOverlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.donateHeroOverlay::before {
+  /* bg-gradient-to-r from-black/85 via-black/70 to-black/35 */
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.85),
+    rgba(0, 0, 0, 0.70),
+    rgba(0, 0, 0, 0.35)
+  );
+}
+
+.donateHeroOverlay::after {
+  /* bg-gradient-to-t from-black/65 via-transparent to-transparent */
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.65),
+    rgba(0, 0, 0, 0.00) 60%,
+    rgba(0, 0, 0, 0.00)
+  );
+}
+
+/* 3) Stack position + inset behaves like production (no max-width centering) */
+.donateHeroStack {
+  position: absolute !important;
+  bottom: clamp(1.5rem, 5vw, 3rem) !important;
+  left: clamp(1.25rem, 7vw, 7%) !important;
+  right: clamp(1.25rem, 7vw, 7%) !important;
+  z-index: 2;
+
+  /* kill donation-only “column alignment” constraints */
+  padding-inline: 0 !important;
+  max-width: none !important;
+  margin-inline: 0 !important;
+
+  text-align: left !important;
+}
+
+/* Remove any earlier negative-margin hack */
+.donateHeroStack {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* 4) Ensure the Next/Image fill behaves the same */
+.donateHeroImg {
+  object-fit: cover;
+  object-position: center;
+}
+
+/* 5) Typography spacing like production */
+.donateHeroTitle {
+  margin-bottom: 0 !important;
+  letter-spacing: 0.025em;
+  opacity: 0.85;
+}
+
+.donateHeroBody {
+  margin-top: 3px !important;
+  margin-bottom: 0 !important;
+  display: block !important; /* production doesn’t hide the subcopy */
+}
+
+/* If you still want to hide on mobile, delete this rule */
+@media (max-width: 640px) {
+  .donateHeroBody {
+    display: block !important;
+  }
+}
+
+/* =========================================================
+   CANONICAL GUTTER (single source of truth)
+   Paste at VERY BOTTOM of donationPage.css
+   ========================================================= */
+
+.donatePage {
+  --page-gutter: clamp(16px, 4vw, 32px);
+}
+
+/* Body: uses the gutter once */
+.donateBody {
+  padding: clamp(1.25rem, 3vw, 2.25rem) var(--page-gutter)
+           clamp(3.2rem, 7vw, 5.2rem) !important;
+}
+
+/* Column: centers + controls max width (no extra side padding here) */
+.donateColumn {
+  width: 100% !important;
+  max-width: 1120px !important;
+  margin: 0 auto !important;
+}
+
+/* =========================================================
+   CANONICAL LAYOUT SYSTEM (hero + body share the same rails)
+   Paste at VERY BOTTOM of donationPage.css
+   ========================================================= */
+
+.donatePage{
+  --page-max: 1240px;
+  --page-gutter: clamp(18px, 4.5vw, 48px);
+}
+
+@media (min-width: 1400px){
+  .donatePage{
+    --page-max: 1440px;
+    --page-gutter: clamp(22px, 4.5vw, 64px);
+  }
+}
+
+
+/* 1) Make the BODY stop owning horizontal padding.
+      (This is the main “double padding” culprit.) */
+.donateBody {
+  padding-inline: 0 !important;
+  /* keep your vertical padding */
+  padding-top: clamp(1.25rem, 3vw, 2.25rem) !important;
+  padding-bottom: clamp(3.2rem, 7vw, 5.2rem) !important;
+}
+
+/* 2) Make the COLUMN be the single source of horizontal padding + max width */
+.donateColumn {
+  max-width: var(--page-max) !important;
+  margin-inline: auto !important;
+  padding-inline: var(--page-gutter) !important;
+  width: 100% !important;
+}
+
+/* 3) Put the HERO TEXT on the exact same rails as the body column */
+.donateHeroStack {
+  left: 0 !important;
+  right: 0 !important;
+  padding-inline: var(--page-gutter) !important;
+
+  max-width: var(--page-max) !important;
+  margin-inline: auto !important;
+
+  /* keep your vertical positioning */
+  bottom: clamp(1.5rem, 5vw, 3rem) !important;
+}
+
+/* If any earlier rules try to re-add “7%” gutters, kill them */
+.donateHeroStack {
+  /* neutralize these if they exist above */
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* =========================================================
+   Dashboard heading: match the column rails (fix doubled L/R inset)
+   Paste at VERY BOTTOM of donationPage.css
+   ========================================================= */
+
+/* The column is the single source of horizontal padding */
+.donateColumn {
+  padding-inline: var(--page-gutter) !important;
+}
+
+/* Heading block should NOT add its own rails */
+.donateDynamicHeading {
+  max-width: none !important;
+  padding-inline: 0 !important;
+  margin-inline: 0 !important;   /* <- key: no extra left/right inset */
+  text-align: left !important;   /* optional: aligns with dashboard */
+}
+
+/* If you still want the text centered, do it without changing rails */
+.donateDynamicHeading.isCentered {
+  text-align: center !important;
+}
+.donateDynamicHeading.isCentered .donateDashSub {
+  margin-inline: auto !important; /* centers paragraph without extra padding */
+}
+
+.donateHeroAccent {
+  font-style: italic;
+  font-size: 1.0em;
+  color: #ffcc00;
+  opacity: 0.9;
+}
+
+/* Dark matte bar behind SPONSOR + mode pills */
+.donateModeWrapper {
+  background: rgba(0,0,0,0.12); /* subtle darkening */
+  padding: 14px 20px;
+  border-radius: 32px;
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Ensure mode row centers inside */
+.donateModeWrapper .donateModeRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Remove any outer margins that push it off-center */
+.donateDashToggleBand {
+  display: flex;
+  justify-content: center;
+}
+
+/* Row: center everything */
+.donateExploreRow {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+/* Hover: slight lighten */
+.donateExplorePill:hover {
+  background: #2fa9c3;
+}
+
+/* Row: center everything under the CTA */
+.donateExploreRow {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+/* DAT Blue Pill Buttons */
+.donateExplorePill {
+  background: #2493A9; /* DAT Blue */
+  color: #f2f2f2 !important;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.18s ease-out, transform 0.15s ease-out;
+}
+
+/* Soft hover effect */
+.donateExplorePill:hover {
+  background: #2FA9C3; /* slightly lighter blue */
+  color: #f2f2f2;
+}
+
+/* Soft, centered micro text under CTA */
+.donateCtaMicroSoft {
+  text-align: center;
+  color: #241123;
+  opacity: 0.4;     /* low-opacity */
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* =========================================================
+   TIERS — "TICKET" TILE SYSTEM (tier cards only)
+   Paste at VERY BOTTOM of donationPage.css
+   ========================================================= */
+
+/* Grid rhythm */
+.donateTierGrid{
+  gap: 12px;
+}
+@media (min-width: 768px){
+  .donateTierGrid{ gap: 14px; }
+}
+
+/* Ticket tile */
+.donateTierCard{
+  position: relative;
+  border-radius: 16px;
+  padding: 16px 16px 14px;
+  background: rgba(251, 247, 241, 0.94);                 /* paper-card */
+  border: 1px solid rgba(36, 17, 35, 0.14);              /* ink line */
+  box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+/* Subtle ticket sheen */
+.donateTierCard::before{
+  content:"";
+  position:absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events:none;
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.55) 0%,
+    rgba(255,255,255,0.18) 22%,
+    rgba(255,255,255,0.00) 55%
+  );
+  opacity: 0.75;
+}
+
+/* Perforation notch vibe (very subtle) */
+.donateTierCard::after{
+  content:"";
+  position:absolute;
+  left: 14px;
+  right: 14px;
+  top: 52px;                                             /* under the top row */
+  height: 0;
+  border-top: 1px dashed rgba(36, 17, 35, 0.14);
+  pointer-events:none;
+}
+
+.donateTierCard:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(0,0,0,0.14);
+  border-color: rgba(36, 17, 35, 0.20);
+}
+
+/* Selected = DAT yellow ring + slightly warmer paper */
+.donateTierCard[data-selected="true"]{
+  border-color: rgba(255, 204, 0, 0.95) !important;
+  box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.32), 0 18px 40px rgba(0,0,0,0.16) !important;
+  background: rgba(255, 204, 0, 0.06) !important;
+}
+
+/* Top row layout */
+.donateTierTop{
+  align-items: flex-start;
+  gap: 14px;
+}
+
+/* Left side typography */
+.donateTierTitle{
+  font-weight: 900;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+  color: rgba(36, 17, 35, 0.94);
+}
+
+.donateTierEyebrow{
+  margin-top: 8px;                                       /* clear the perforation line */
+  font-size: 0.94rem;
+  line-height: 1.45;
+  color: rgba(36, 17, 35, 0.68);
+  max-width: 46ch;
+}
+
+/* Right side amount */
+.donateTierRight{ text-align: right; }
+
+.donateTierAmount{
+  font-weight: 900;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+  color: rgba(36, 17, 35, 0.94);
+}
+
+/* Little tag pill (e.g., "Most Popular") */
+.donateTierTag{
+  margin-top: 8px;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(36, 17, 35, 0.18);
+  background: rgba(36, 17, 35, 0.06);
+  color: rgba(36, 17, 35, 0.78);
+}
+
+/* Bullets */
+.donateTierBullets{
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+  font-size: 0.92rem;
+  color: rgba(36, 17, 35, 0.74);
+}
+
+/* Optional: tighten on small screens */
+@media (max-width: 420px){
+  .donateTierCard{ padding: 14px 14px 12px; }
+  .donateTierCard::after{ left: 12px; right: 12px; top: 50px; }
+}
+
+/* Accessibility: focus ring if tiers are buttons */
+.donateTierCard:focus-visible{
+  outline: 3px solid rgba(255, 204, 0, 0.55);
+  outline-offset: 3px;
+}
+
+/* =========================================================
+   DONATION TIERS — PASS / TICKET LAYOUT (FINAL)
+   Governs ONLY .donateTierPass*
+   ========================================================= */
+
+.donateTierPass {
+  padding: 0;
+  text-align: left;
+}
+
+/* --- Grid layout --- */
+.donateTierPassGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  border-radius: 16px;
+  background: rgba(251, 247, 241, 0.96);
+  border: 1px solid rgba(36, 17, 35, 0.14);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.10);
+  overflow: hidden;
+}
+
+/* Desktop: two-panel object */
+@media (min-width: 860px) {
+  .donateTierPassGrid {
+    grid-template-columns: 1fr 24px 220px;
+  }
+}
+
+/* --- Main panel --- */
+.donateTierPassMain {
+  padding: 18px;
+}
+
+/* Header: amount + title */
+.donateTierPassHeader {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: baseline;
+}
+
+.donateTierPassAmount {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.donateTierTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.donateTierEyebrow {
+  margin-top: 4px;
+  font-size: 0.95rem;
+  opacity: 0.7;
+}
+
+/* Bullets */
+.donateTierBullets {
+  margin-top: 12px;
+  font-size: 0.95rem;
+  opacity: 0.8;
+}
+
+/* --- Mobile meta strip --- */
+.donateTierPassMetaStrip {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(36,17,35,0.08);
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* Hide mobile strip on desktop */
+@media (min-width: 860px) {
+  .donateTierPassMetaStrip {
+    display: none;
+  }
+}
+
+/* --- Divider column --- */
+.donateTierPassDivider {
+  display: none;
+}
+
+@media (min-width: 860px) {
+  .donateTierPassDivider {
+    display: block;
+    position: relative;
+  }
+
+  .donateTierPassDivider::before {
+    content: "";
+    position: absolute;
+    top: 14px;
+    bottom: 14px;
+    left: 50%;
+    width: 1px;
+    transform: translateX(-50%);
+    background-image: repeating-linear-gradient(
+      to bottom,
+      rgba(36,17,35,0.25) 0px,
+      rgba(36,17,35,0.25) 2px,
+      transparent 2px,
+      transparent 9px
+    );
+    opacity: 0.35;
+  }
+}
+
+/* --- Side panel --- */
+.donateTierPassSide {
+  display: none;
+}
+
+@media (min-width: 860px) {
+  .donateTierPassSide {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 16px 14px;
+  }
+}
+
+.donateTierPassSideKicker {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.donateTierPassSideRef {
+  margin-top: 6px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.donateTierPassSideMeta {
+  margin-top: 12px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.donateTierPassSideNote {
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.75;
+  line-height: 1.4;
+}
+
+/* Featured tag */
+.donateTierPassSideTag {
+  margin-top: 10px;
+  align-self: flex-start;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(36,17,35,0.18);
+  background: rgba(36,17,35,0.05);
+}
+
+/* =========================================================
+   TIER TILES — “TICKET” LOOK (drop-in)
+   Uses existing classes: donateTierCard, donateTierTop, etc.
+   ========================================================= */
+
+.donateTierGrid {
+  /* prevents grid children from forcing overflow */
+  min-width: 0;
+}
+
+.donateTierGrid > * {
+  min-width: 0;
+}
+
+.donateTierCard {
+  /* overflow fix (desktop “off-page” culprit) */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+
+  /* ticket layout */
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 0.44fr; /* main + stub */
+  gap: 0;
+
+  padding: 0; /* ticket owns internal padding */
+  background: rgba(251, 247, 241, 0.94);
+  border: 1px solid rgba(36, 17, 35, 0.18);
+  border-radius: 18px;
+  overflow: hidden;
+
+  /* soft depth */
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.65) inset;
+}
+
+/* Inner “double border” / card rim */
+.donateTierCard::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(36, 17, 35, 0.14);
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+/* Perforation line between main and stub */
+.donateTierCard::after {
+  content: "";
+  position: absolute;
+  top: 16px;
+  bottom: 16px;
+  left: calc(100% * (1 / (1 + 0.44))); /* aligns with grid split */
+  width: 0;
+  border-left: 2px dotted rgba(36, 17, 35, 0.20);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+/* “Punch holes” */
+.donateTierCard .ticketHole {
+  display: none; /* in case you ever add real nodes */
+}
+
+
+/* =========================================================
+   MAIN SIDE (left)
+   ========================================================= */
+
+.donateTierTop {
+  grid-column: 1 / 2;
+  padding: 18px 18px 14px;
+  min-width: 0;
+
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 14px;
+  row-gap: 8px;
+  align-items: start;
+  border-bottom: 1px dashed rgba(36, 17, 35, 0.18);
+}
+
+/* amount (top-left big) */
+.donateTierAmount {
+  font-size: clamp(1.45rem, 2.2vw, 1.9rem);
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  color: rgba(36, 17, 35, 0.78);
+}
+
+/* title */
+.donateTierTitle {
+  font-family: var(--font-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  font-weight: 900;
+  font-size: clamp(1.15rem, 1.55vw, 1.35rem);
+  line-height: 1.05;
+  color: rgba(36, 17, 35, 0.92);
+  margin: 0;
+}
+
+/* description (center / below title) */
+.donateTierEyebrow {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  font-size: 1.02rem;
+  line-height: 1.55;
+  color: rgba(36, 17, 35, 0.55);
+  max-width: 56ch;
+}
+
+/* bullets */
+.donateTierBullets {
+  grid-column: 1 / 2;
+  padding: 12px 18px 18px;
+  margin: 0;
+  min-width: 0;
+
+  display: grid;
+  gap: 7px;
+  font-size: 0.95rem;
+  color: rgba(36, 17, 35, 0.62);
+}
+
+/* small tag (Featured etc.) */
+.donateTierTag {
+  justify-self: end;
+  margin-top: 2px;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+
+  border: 1px solid rgba(36, 17, 35, 0.14);
+  background: rgba(36, 17, 35, 0.04);
+  color: rgba(36, 17, 35, 0.72);
+}
+
+/* Selected state = subtle yellow glow (ticket highlight) */
+.donateTierCard[data-selected="true"] {
+  border-color: rgba(255, 204, 0, 0.65);
+  box-shadow:
+    0 18px 46px rgba(0, 0, 0, 0.14),
+    0 0 0 3px rgba(255, 204, 0, 0.22);
+}
+
+/* =========================================================
+   STUB SIDE (right)
+   This uses whatever is already in your "right" area.
+   If you currently render tierId + renews text somewhere,
+   just wrap that block in an element with class "donateTierRight".
+   ========================================================= */
+
+.donateTierRight {
+  grid-column: 2 / 3;
+  padding: 18px 18px 18px 16px;
+  min-width: 0;
+
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.donateTierRight {
+  /* faint paper variation on the stub */
+  background: linear-gradient(
+    180deg,
+    rgba(36, 17, 35, 0.02),
+    rgba(36, 17, 35, 0.00)
+  );
+}
+
+/* if you have “REFERENCE” label + code */
+.donateTierRight .refLabel {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(36, 17, 35, 0.55);
+  font-weight: 800;
+}
+
+.donateTierRight .refValue {
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(36, 17, 35, 0.72);
+}
+
+/* if you show “Renews monthly. Cancel anytime.” */
+.donateTierRight .stubKicker {
+  margin-top: auto;
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(36, 17, 35, 0.58);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+/* =========================================================
+   MOBILE: collapse to single-column “ticket”
+   amount/title stay top, stub text becomes bottom bar
+   ========================================================= */
+
+@media (max-width: 720px) {
+  .donateTierCard {
+    grid-template-columns: 1fr;
+  }
+
+  .donateTierCard::after {
+    /* vertical perforation becomes a horizontal dash */
+    left: 16px;
+    right: 16px;
+    top: auto;
+    bottom: 64px;
+    width: auto;
+    height: 0;
+    border-left: none;
+    border-top: 2px dotted rgba(36, 17, 35, 0.18);
+  }
+
+  .donateTierRight {
+    grid-column: 1 / -1;
+    padding: 14px 18px 16px;
+    border-top: 1px solid rgba(36, 17, 35, 0.10);
+    background: rgba(36, 17, 35, 0.02);
+  }
+
+  .donateTierTop {
+    grid-column: 1 / -1;
+  }
+}
+
+/* =========================================================
+   OPTIONAL: if your tier card is a <button>, normalize it
+   ========================================================= */
+
+button.donateTierCard {
+  appearance: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+button.donateTierCard:focus-visible {
+  outline: 3px solid rgba(255, 204, 0, 0.55);
+  outline-offset: 3px;
+  border-radius: 18px;
+}
+
+/* =========================================================
+   TIERS — “TICKET / PASS” tiles (matches your JSX)
+   Works with:
+   .donateTierCard.donateTierPass
+   .donateTierPassGrid / Main / Divider / Side
+   ========================================================= */
+
+/* Prevent grid overflow pushing tiles off-page */
+.donateTierGrid,
+.donateTierGrid > * {
+  min-width: 0;
+}
+
+button.donateTierCard.donateTierPass {
+  /* reset button-y defaults */
+  appearance: none;
+  text-align: left;
+  cursor: pointer;
+
+  /* contain width on desktop (fix “off-page”) */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+
+  /* ticket shell */
+  padding: 0;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(36, 17, 35, 0.18);
+  background: rgba(251, 247, 241, 0.94);
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.65) inset;
+
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+button.donateTierCard.donateTierPass:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 22px 52px rgba(0, 0, 0, 0.14),
+    0 1px 0 rgba(255, 255, 255, 0.65) inset;
+}
+
+/* Selected state */
+button.donateTierCard.donateTierPass[data-selected="true"] {
+  border-width: 3px;
+  border-color: rgba(255, 204, 0, 0.70);
+  box-shadow:
+    0 22px 52px rgba(0, 0, 0, 0.14),
+    0 0 0 3px rgba(255, 204, 0, 0.22);
+}
+
+/* Inner rim */
+button.donateTierCard.donateTierPass::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(36, 17, 35, 0.14);
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+/* =========================================================
+   Grid: main | perforation | side
+   ========================================================= */
+
+.donateTierPassGrid {
+  display: grid;
+  grid-template-columns: 1fr 24px 0.46fr; /* main | divider | side */
+  align-items: stretch;
+  min-width: 0;
+}
+
+/* LEFT */
+.donateTierPassMain {
+  min-width: 0;
+  padding: 18px 18px 16px;
+}
+
+/* header row: amount + title block */
+.donateTierPassHeader {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 16px;
+  row-gap: 8px;
+  align-items: start;
+
+  padding-bottom: 12px;
+  border-bottom: 1px dashed rgba(36, 17, 35, 0.18);
+}
+
+.donateTierPassAmount {
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  font-size: clamp(1.45rem, 2.2vw, 1.95rem);
+  line-height: 1;
+  color: rgba(36, 17, 35, 0.76);
+  white-space: nowrap;
+}
+
+.donateTierPassTitleBlock {
+  min-width: 0;
+}
+
+.donateTierTitle {
+  font-weight: 900;
+  font-size: clamp(1.12rem, 1.55vw, 1.35rem);
+  line-height: 1.05;
+  color: rgba(36, 17, 35, 0.92);
+
+  /* stop ugly wraps */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.donateTierEyebrow {
+  margin-top: 6px;
+  font-size: 1.02rem;
+  line-height: 1.55;
+  color: rgba(36, 17, 35, 0.55);
+  max-width: 58ch;
+}
+
+/* bullets: clean + tight */
+.donateTierBulletsTight {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 7px;
+  color: rgba(36, 17, 35, 0.62);
+  font-size: 0.95rem;
+}
+
+.donateTierBulletsTight li {
+  margin: 0;
+}
+
+/* Mobile-only strip (hidden on desktop) */
+.donateTierPassMetaStrip {
+  display: none;
+}
+
+/* =========================================================
+   Divider perforation lane
+   ========================================================= */
+
+.donateTierPassDivider {
+  position: relative;
+  background: transparent;
+}
+
+.donateTierPassDivider::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  border-left: 2px dotted rgba(36, 17, 35, 0.20);
+  opacity: 0.9;
+}
+
+/* Punch “notches” */
+.donateTierPassDivider::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  pointer-events: none;
+
+  background:
+    radial-gradient(circle at 50% 0%, var(--paper, #f7f2e9) 0 16px, transparent 17px),
+    radial-gradient(circle at 50% 100%, var(--paper, #f7f2e9) 0 16px, transparent 17px);
+}
+
+/* =========================================================
+   RIGHT legitimacy panel
+   ========================================================= */
+
+.donateTierPassSide {
+  min-width: 0;
+  padding: 18px 18px 16px 16px;
+
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+
+  background: linear-gradient(
+    180deg,
+    rgba(36, 17, 35, 0.02),
+    rgba(36, 17, 35, 0.00)
+  );
+}
+
+/* top */
+.donateTierPassSideKicker {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(36, 17, 35, 0.55);
+}
+
+.donateTierPassSideRef {
+  margin-top: 8px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(36, 17, 35, 0.72);
+
+  /* don’t overflow */
+  overflow-wrap: anywhere;
+}
+
+/* bottom */
+.donateTierPassSideBottom {
+  display: grid;
+  align-content: end;
+  gap: 10px;
+}
+
+.donateTierPassSideMeta {
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(36, 17, 35, 0.58);
+  line-height: 1.25;
+}
+
+.donateTierPassSideNote {
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: rgba(36, 17, 35, 0.60);
+}
+
+.donateTierPassSideTag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 8px 12px;
+
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+
+  border: 1px solid rgba(36, 17, 35, 0.16);
+  background: rgba(36, 17, 35, 0.04);
+  color: rgba(36, 17, 35, 0.75);
+}
+
+/* =========================================================
+   RESPONSIVE: collapse to single column on mobile
+   and show the micro strip instead of right panel
+   ========================================================= */
+
+@media (max-width: 720px) {
+  .donateTierPassGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .donateTierPassDivider {
+    display: none;
+  }
+
+  .donateTierPassSide {
+    display: none;
+  }
+
+  .donateTierPassMain {
+    padding: 16px 16px 14px;
+  }
+
+  .donateTierPassHeader {
+    grid-template-columns: auto 1fr;
+  }
+
+  /* show “ref + meta” strip on mobile (like your screenshot) */
+  .donateTierPassMetaStrip {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(36, 17, 35, 0.10);
+
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: baseline;
+
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(36, 17, 35, 0.62);
+  }
+
+  .donateTierPassRef {
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: rgba(36, 17, 35, 0.70);
+    white-space: nowrap;
+  }
+
+  .donateTierPassMeta {
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: rgba(36, 17, 35, 0.58);
+    text-align: right;
+  }
+}
+
+/* =========================================================
+   Small safeguard: never let long strings break layout
+   ========================================================= */
+
+.donateTierPassMain,
+.donateTierPassSide,
+.donateTierPassSideRef,
+.donateTierTitle,
+.donateTierEyebrow {
+  min-width: 0;
+}
+
+/* =========================================================
+   TIER PASS — HARD FIX (overlay + containment)
+   Paste at VERY BOTTOM of donationPage.css
+   ========================================================= */
+
+/* Critical: pseudo-elements must be contained to the button */
+button.donateTierCard.donateTierPass {
+  position: relative;     /* fixes “haunted overlay” */
+  isolation: isolate;     /* prevents blending/stack weirdness */
+}
+
+/* Ensure the inner rim cannot spill or cover other tiles */
+button.donateTierCard.donateTierPass::before {
+  pointer-events: none;
+}
+
+/* Desktop columns: avoid cramped right panel */
+@media (min-width: 860px) {
+  .donateTierPassGrid {
+    grid-template-columns: 1fr 24px minmax(200px, 240px);
+  }
+}
+
+/* Extra safety: long refs never force layout overflow */
+.donateTierPassSideRef {
+  overflow-wrap: anywhere;
+}

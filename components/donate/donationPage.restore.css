@@ -1,0 +1,2095 @@
+/* =========================================================
+    /components/donate/donationPage.restore.css   
+
+   donationPage.overrides.css
+   (wins-last fixes: rails + heading + tier pass tiles)
+   ========================================================= */
+
+/* ---------- 1) ONE RAIL SYSTEM (fix margins) ---------- */
+
+.donatePage{
+  --page-max: 1400px;
+
+  /* Mobile: a little flexibility is fine */
+  --page-gutter: clamp(14px, 4vw, 18px);
+}
+
+/* Tablet and up: LOCK to 1rem */
+@media (min-width: 768px){
+  .donatePage{
+    --page-gutter: 3.5rem;
+  }
+}
+
+/* Optional: slightly wider max on big desktop */
+@media (min-width: 1100px){
+  .donatePage{
+    --page-max: 1400px;
+  }
+}
+
+/* Body owns vertical rhythm only */
+.donateBody{
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Column owns max-width + gutters */
+.donateColumn{
+  max-width: var(--page-max) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: var(--page-gutter) !important;
+  padding-right: var(--page-gutter) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Hero text sits on the same rails */
+.donateHeroStack{
+  left: 0 !important;
+  right: 0 !important;
+  max-width: var(--page-max) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: var(--page-gutter) !important;
+  padding-right: var(--page-gutter) !important;
+  box-sizing: border-box !important;
+}
+
+/* Prevent any subtle horizontal overflow from long content */
+.donatePage,
+.donateBody,
+.donateColumn{
+  overflow-x: clip;
+}
+
+/* ---------- 2) DYNAMIC HEADING: no extra inset, optional center ---------- */
+
+.donateDynamicHeading{
+  /* no extra rails — the column already pads */
+  margin: 18px 0 16px !important;
+  padding: 0 !important;
+  max-width: none !important;
+  text-align: left !important;
+}
+
+.donateDashHeadline{
+  margin: 0 !important;
+}
+
+.donateDashSub{
+  margin: 6px 0 0 !important;
+  max-width: 70ch;
+}
+
+/* If you want it centered, do it via a class on the <section> */
+.donateDynamicHeading.isCentered{
+  text-align: center !important;
+}
+.donateDynamicHeading.isCentered .donateDashSub{
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* ---------- 3) KILL THE OLD “TICKET SPLIT” WHEN USING PASS TILES ---------- */
+/* You currently have rules that turn .donateTierCard into a 2-col ticket.
+   For PASS tiles, we force it back to a simple shell. */
+
+button.donateTierCard.donateTierPass{
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+
+  /* contain pseudo-elements / overlays */
+  position: relative !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+
+  /* remove any grid template applied to generic donateTierCard */
+  grid-template-columns: none !important;
+}
+
+/* If an older rule added the vertical perforation to .donateTierCard::after,
+   we neutralize it for PASS tiles */
+button.donateTierCard.donateTierPass::after{
+  content: none !important;
+}
+
+/* Also neutralize any “inner rim” that was defined for the ticket system */
+button.donateTierCard.donateTierPass::before{
+  content: none !important;
+}
+
+/* The PASS grid should be the only layout engine */
+.donateTierPassGrid{
+  display: grid !important;
+  grid-template-columns: 1fr 24px minmax(200px, 240px) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+
+/* Prevent long strings from pushing tiles “off page” */
+.donateTierPassMain,
+.donateTierPassSide,
+.donateTierPassSideRef,
+.donateTierTitle,
+.donateTierEyebrow{
+  min-width: 0 !important;
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   Tier tiles — “PASS” vibe (subtle, premium, not a ticket)
+   Paste at VERY BOTTOM of donationPage.restore.css
+   ========================================================= */
+
+.donateTierCard.donateTierPass {
+  position: relative;
+  padding: 0; /* the grid panels handle padding */
+  border-radius: 16px;
+  border: 1px solid rgba(36, 17, 35, 0.14);
+  background: rgba(251, 247, 241, 0.96);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.10);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.donateTierCard.donateTierPass:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.14);
+}
+
+.donateTierCard.donateTierPass[data-selected="true"] {
+  border-color: rgba(99, 76, 113, 0.42);
+  background: rgba(108, 0, 175, 0.05);
+  box-shadow:
+    0 18px 44px rgba(0, 0, 0, 0.16),
+    0 0 0 3px rgba(255, 204, 0, 0.18);
+}
+
+/* Subtle “admission print” texture band (NOT a barcode, not scannable) */
+.donateTierCard.donateTierPass::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 160px;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.18;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(36, 17, 35, 0.60) 0px,
+      rgba(36, 17, 35, 0.60) 1px,
+      transparent 1px,
+      transparent 6px
+    );
+  mask-image: linear-gradient(
+    to left,
+    rgba(0, 0, 0, 0.9),
+    rgba(0, 0, 0, 0.0)
+  );
+}
+
+
+
+/* Main panel */
+.donateTierPassMain {
+  padding: 18px 18px 10px;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.donateTierPassHeader {
+  display: grid;
+  gap: 10px;
+}
+
+.donateTierPassAmount {
+  font-size: 1.25rem;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  color: rgba(36, 17, 35, 0.92);
+}
+
+.donateTierPassTitleBlock {
+  display: grid;
+  gap: 4px;
+}
+
+.donateTierTitle {
+  font-weight: 900;
+  font-size: 1.3rem;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  color: #241123e8;
+}
+
+.donateTierEyebrow {
+  font-size: 0.94rem;
+  line-height: 1.45;
+  color: rgba(36, 17, 35, 0.70);
+}
+
+/* Bullets stay calm + editorial */
+.donateTierBullets.donateTierBulletsTight {
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: rgba(36, 17, 35, 0.72);
+}
+
+/* Divider: “perforation hint” without looking like a ticket stub */
+.donateTierPassDivider {
+  position: relative;
+  width: 14px;
+  display: grid;
+  place-items: center;
+}
+
+.donateTierPassDivider::before {
+  content: "";
+  width: 1px;
+  height: calc(100% - 18px);
+  opacity: 0.55;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(36, 17, 35, 0.38) 0px,
+      rgba(36, 17, 35, 0.38) 2px,
+      transparent 2px,
+      transparent 7px
+    );
+  border-radius: 999px;
+}
+
+/* Side panel */
+.donateTierPassSide {
+  padding: 18px 18px 10px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+  border-left: 1px solid rgba(36, 17, 35, 0.08);
+  background: #f2f2f269;
+}
+
+.donateTierPassSideTop {
+  display: grid;
+  gap: 4px;
+}
+
+.donateTierPassSideKicker {
+  font-size: 0.44rem;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  color: rgba(36, 17, 35, 0.50);
+  font-weight: 800;
+  margin-bottom: 0;
+}
+
+.donateTierPassSideRef {
+  font-size: 0.63rem;
+  letter-spacing: 0.044em;
+  color: rgba(36, 17, 35, 0.72);
+  font-weight: 700;
+  word-break: break-word;
+  margin-top: 0;
+}
+
+.donateTierPassSideBottom {
+  display: grid;
+  gap: 8px;
+  align-content: end;
+}
+
+.donateTierPassSideMeta {
+  font-size: 0.76rem;
+  line-height: 1.35;
+  letter-spacing: 0.1em;
+  color: #6c00afc4
+}
+
+.donateTierPassSideNote {
+  font-size: 0.46rem;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  color: rgba(36, 17, 35, 0.62);
+}
+
+/* “Featured” stays tiny + legit (not badge-y) */
+.donateTierPassSideTag {
+  justify-self: start;
+  margin-top: 0px;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  font-size: 0.92rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border-radius: 2px;
+  border: 0.5px solid #24112335;
+  background: #ffcc00d7;
+  color: #241b11;
+  font-weight: 800;
+}
+
+/* Mobile legitimacy strip (you already render it) */
+.donateTierPassMetaStrip {
+  margin-top: 2px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(36, 17, 35, 0.10);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.donateTierPassRef {
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(36, 17, 35, 0.70);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.donateTierPassMeta {
+  font-size: 0.84rem;
+  color: rgba(36, 17, 35, 0.72);
+  text-align: right;
+}
+
+
+
+/* ===== Desktop tier layout: stop the madness ===== */
+
+/* 1) Make the tier list a real responsive grid on desktop */
+@media (min-width: 900px) {
+  .tierGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 18px;
+    align-items: start;
+  }
+
+  /* If you had horizontal scrolling / snap on desktop, kill it */
+  .tierGrid {
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+}
+
+/* 2) Never allow tiles to be forced tall */
+.tierCard {
+  height: auto !important;
+  min-height: 0 !important;
+  aspect-ratio: auto !important;
+  align-self: start;
+}
+
+/* 3) Titles/text must NEVER go vertical or break per-letter */
+.tierTitle,
+.tierSubtitle,
+.tierBody,
+.tierFooter {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto;
+}
+
+/* 4) If you *intentionally* have a vertical “REFERENCE” label,
+      scope vertical writing ONLY to that element (example) */
+.tierRefLabel {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+}
+
+/* ===============================
+   Desktop Tier Grid / Ticket Pass FIX
+   Paste at END of donationPage.css
+=============================== */
+
+/* Make the tier area a real grid on desktop (not a horizontal scroll carousel) */
+.donateTierGrid{
+  display: grid;
+  gap: 16px;
+  overflow: visible;
+}
+
+/* 2-column desktop grid, 3-column on wide screens */
+@media (min-width: 900px){
+  .donateTierGrid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1200px){
+  .donateTierGrid{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Cards should size to content, not viewport height */
+.donateTierCard{
+  height: auto;
+  min-height: 0;
+  align-self: start;
+}
+
+/* The “ticket pass” internal grid must actually fill the card */
+.donateTierPassGrid{
+  width: 100%;
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 1px 240px;
+  align-items: stretch;
+}
+
+/* Divider should be visible but not force weird layout */
+.donateTierPassDivider{
+  width: 1px;
+  min-width: 1px;
+}
+
+/* MOBILE: keep the ticket 2-column (side never becomes bottom) */
+@media (max-width: 899px){
+  .donateTierPassGrid{
+    grid-template-columns: 64% 36%;
+  }
+
+  /* no vertical dotted divider anymore */
+  .donateTierPassDivider{
+    display: none;
+  }
+
+  /* keep the side panel visible */
+  .donateTierPassSide{
+    display: flex;
+  }
+
+  /* meta strip no longer needed */
+  .donateTierPassMetaStrip{
+    display: none;
+  }
+}
+
+
+/* DESKTOP: show the side panel; hide the meta strip */
+@media (min-width: 900px){
+  .donateTierPassSide{
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .donateTierPassMetaStrip{
+    display: none;
+  }
+}
+
+/* Prevent the “one-letter-per-line” catastrophe */
+.donateTierPassMain,
+.donateTierPassSide{
+  min-width: 0;
+}
+
+.donateTierPassSide,
+.donateTierPassSide *{
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: normal;
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+}
+
+/* Keep the reference on one line */
+.donateTierPassSideRef{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* Prevent “one-letter-per-line” failures */
+.donateTierPassMain,
+.donateTierPassSide {
+  min-width: 0;
+}
+
+.donateTierPassSide,
+.donateTierPassSide * {
+  word-break: normal;
+  overflow-wrap: normal;
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+}
+
+/* Keep reference on one line (it’s a code) */
+.donateTierPassSideRef {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.donateTierGrid{
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+}
+
+/* ===============================
+   TIER PASSES — restore overrides
+   Goal:
+   - Keep the "ticket pass" look at all desktop widths
+   - Remove the vertical dotted divider
+   - Stack amount -> title -> description
+================================ */
+
+/* 1) Stop the tier grid from creating narrow cards (the source of the atrocious desktop) */
+.donateTierGrid {
+  display: grid;
+  grid-template-columns: 1fr;          /* single column = always wide passes */
+  gap: 16px;
+  max-width: 1120px;                  /* tune if you want wider/narrower */
+  margin-inline: auto;
+}
+
+/* Optional: allow 2 columns only on truly wide screens */
+@media (min-width: 1500px) {
+  .donateTierGrid {
+    grid-template-columns: repeat(2, minmax(620px, 1fr));
+    max-width: 1500px;
+  }
+}
+
+/* 2) Enable container queries so the card can self-adapt cleanly */
+.donateTierCard.donateTierPass {
+  container-type: inline-size;
+}
+
+/* 3) Keep the "pass" two-panel layout when there’s room */
+.donateTierPassGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px; /* left content + fixed-ish right panel */
+  gap: 0;
+}
+
+/* 4) Lose the vertical dotted line entirely */
+.donateTierPassDivider,
+.donateTierPassDivider::before,
+.donateTierPassDivider::after {
+  display: none !important;
+  background: none !important;
+  border: 0 !important;
+}
+
+/* Replace with a subtle clean separation (not dotted) */
+.donateTierPassSide {
+  border-left: 1px solid rgba(0, 0, 0, 0.07);
+  padding-left: 28px;
+}
+
+/* 5) Stack: amount → title → description */
+.donateTierPassHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.donateTierPassAmount {
+  line-height: 1;
+}
+
+.donateTierPassTitleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.donateTierTitle {
+  line-height: 1.1;
+}
+
+.donateTierEyebrow {
+  max-width: 58ch; /* keeps the description from becoming a long unreadable line */
+}
+
+/* Keep ticket 2-column even when the card/container gets narrow */
+@container (max-width: 760px) {
+  .donateTierPassGrid {
+    grid-template-columns: 2fr 1fr; /* ~67/33 */
+  }
+
+  .donateTierPassSide {
+    display: flex;
+  }
+
+  .donateTierPassMetaStrip {
+    display: none;
+  }
+}
+
+
+/* And when it’s wide enough, hide the mobile meta strip (since the right panel covers it) */
+@container (min-width: 761px) {
+  .donateTierPassMetaStrip {
+    display: none;
+  }
+}
+
+/* ===============================
+   Ticket Tier Cards (Desktop/Tablet)
+   Goal:
+   - Keep 2-column "ticket" until true mobile
+   - Remove vertical dotted line
+   - Stack amount → title → description
+   - Prevent the right panel from collapsing (the “vertical letters” issue)
+   - Reduce excess right padding/margin feel
+=============================== */
+
+/* Keep a stable 2-column grid with a clamped right panel width */
+.donateTierPassGrid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) clamp(220px, 26vw, 320px) !important;
+  align-items: stretch;
+}
+
+/* Prevent weird shrink/wrap behavior */
+.donateTierPassMain {
+  min-width: 0;
+}
+.donateTierPassSide {
+  min-width: 220px;
+}
+
+/* Lose the vertical dotted line */
+.donateTierPassDivider {
+  display: none !important;
+}
+
+/* Keep separation with a subtle solid rule instead */
+.donateTierPassSide {
+  border-left: 1px solid rgba(0, 0, 0, 0.07);
+  padding: 22px 20px; /* tighten right-side padding */
+}
+
+/* Amount on top, title + eyebrow beneath it */
+.donateTierPassHeader {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+}
+
+/* If any old styles are forcing awkward widths/wrapping */
+.donateTierPassSideRef {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Only break to 1-column on mobile */
+@media (max-width: 640px) {
+  .donateTierPassGrid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .donateTierPassSide {
+    min-width: 0;
+    border-left: none;
+    border-top: 1px solid rgba(0, 0, 0, 0.07);
+    padding: 18px 18px;
+  }
+}
+
+/* =========================================================
+   FORCE "ticket with right compartment" on tablet + desktop
+   Only collapse to bottom compartment on true mobile
+========================================================= */
+
+/* ✅ Tablet + desktop: keep the right-side compartment */
+@media (min-width: 641px) {
+  .donateTierPassGrid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) clamp(240px, 24vw, 320px) !important;
+    align-items: stretch !important;
+  }
+
+  /* show the side panel */
+  .donateTierPassSide {
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 240px;
+    border-left: 1px solid rgba(0, 0, 0, 0.07);
+    padding: 22px 18px !important; /* tighter = less “right margin” feel */
+  }
+
+  /* hide the mobile-only strip */
+  .donateTierPassMetaStrip {
+    display: none !important;
+  }
+
+  /* lose the vertical dotted line for all non-mobile widths */
+  .donateTierPassDivider {
+    display: none !important;
+  }
+
+  /* keep amount → title → description stacked */
+  .donateTierPassHeader {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+}
+
+
+
+/* =========================================================
+   TIERS-ONLY 2-COLUMN LAYOUT
+   Left column = your content
+   Right column = tiers rail (mobile-capped)
+========================================================= */
+
+:root{
+  --tiersRailMax: 460px;   /* largest-phone-ish */
+  --tiersRailMin: 360px;
+  --tiersGap: 36px;
+}
+
+.donateTierTwoCol{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+}
+
+.donateTierTwoColLeft{
+  min-width: 0;
+}
+
+.donateTierTwoColRight{
+  min-width: 0;
+}
+
+/* Desktop+: two columns */
+@media (min-width: 1024px){
+  .donateTierTwoCol{
+    grid-template-columns: minmax(0, 1fr) minmax(var(--tiersRailMin), var(--tiersRailMax));
+    gap: var(--tiersGap);
+    align-items: start;
+  }
+
+  /* Optional: sticky tiers rail */
+  .donateTierTwoColRight{
+    position: sticky;
+    top: 24px;
+  }
+}
+
+/* Keep the rail “mobile width” even on wide screens */
+.donateTierTwoColRight .donateTierSection,
+.donateTierTwoColRight .donateCtaSection{
+  width: 100%;
+  max-width: var(--tiersRailMax);
+}
+
+/* When stacked (tablet/mobile), center the rail */
+@media (max-width: 1023px){
+  .donateTierTwoColRight{
+    display: grid;
+    justify-items: center;
+  }
+}
+
+/* Ticket split: 64% main, 36% side */
+.donateTierPassGrid{
+  display: grid;
+  grid-template-columns: 2.56fr 1.44fr; /* ~64 / 36 */
+  align-items: stretch;
+}
+
+.donateTierPassMain,
+.donateTierPassSide{
+  min-width: 0; /* prevents overflow with long text */
+}
+
+/* =========================================================
+   TIER SECTION HEADERS — decorative rule only on headings
+
+/* parent is already your 2-col grid */
+.donateTierTwoCol{
+  display: grid;
+  grid-template-columns: 1fr 440px;
+  gap: 28px;
+}
+
+/* Header row defaults to the RIGHT column on desktop */
+.donateTierHeaderRow{
+  grid-column: 2 / 3;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Tablet + mobile: header spans full card width */
+@media (max-width: 1100px){
+  .donateTierTwoCol{
+    grid-template-columns: 1fr;
+  }
+
+  .donateTierHeaderRow{
+    grid-column: 1 / -1;
+  }
+
+  .donateTierTwoColLeft,
+  .donateTierTwoColRight{
+    grid-column: 1 / -1;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
+  .donateTierSection{
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* IMPORTANT: do NOT force a second decorative rule line here */
+  /* (remove any .donateTierHeaderRule width rules elsewhere) */
+}
+
+.donateSectionLabel{ position: relative; }
+
+/* Only headings get the decorative rule */
+h1.donateSectionLabel::before,
+h2.donateSectionLabel::before,
+h3.donateSectionLabel::before,
+h4.donateSectionLabel::before,
+h5.donateSectionLabel::before,
+h6.donateSectionLabel::before{
+  content:"";
+  display:block;
+  height: 2px;
+  background: rgba(36,17,35,.22);
+  margin-bottom: 10px;
+  border-radius: 999px;
+}
+
+/* If donateSectionLabel is on any non-heading wrapper, force it OFF */
+.donateSectionLabel:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6)::before{
+  content: none !important;
+  display: none !important;
+}
+
+.donateTierTile{
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+/* Make the CTA area span the full tier card width + center its contents */
+.donateCtaSection{
+  grid-column: 1 / -1;          /* ✅ spans both columns when the layout is 2-col */
+  display: flex;
+  flex-direction: column;
+  align-items: center;          /* ✅ centers button + microcopy */
+}
+
+/* Keep the button a nice centered width */
+.donateCtaSection .donateCtaBtn{
+  width: min(100%, 720px);      /* adjust max width as you like */
+  margin-inline: auto;
+}
+
+/* Center the Stripe line under it */
+.donateCtaSection .donateCtaMicro{
+  text-align: center;
+}
+
+
+
+/* =========================================================
+   FREQUENCY TOGGLE — smaller, cleaner, “dashboard” aligned
+   (Overrides the previous sliding-thumb version)
+========================================================= */
+
+/* kill the slider thumb if you added it earlier */
+.donateSeg::before { content: none !important; display: none !important; }
+
+.donateSeg{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(0,0,0,0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    0 8px 18px rgba(0,0,0,0.14);
+  backdrop-filter: blur(6px);
+}
+
+.donateSegBtn{
+  appearance: none;
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+
+  padding: 8px 14px;              /* ✅ smaller */
+  font-size: 11px;                /* ✅ smaller */
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+
+  color: rgba(30,18,40,0.78);
+  transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.donateSegBtn:hover{ transform: translateY(-1px); }
+
+.donateSegBtn[data-active="true"]{
+  background: #FFCC00;            /* DAT yellow */
+  color: rgba(20,12,28,0.92);
+  box-shadow:
+    0 10px 16px rgba(0,0,0,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.35);
+}
+
+.donateSegBtn[data-active="false"]{
+  background: rgba(0,0,0,0.06);
+  color: rgba(20,12,28,0.72);
+}
+
+
+/* =========================================================
+   TIER TICKET — enforce 67% / 33% and prevent overlap
+========================================================= */
+
+.donateTierPassGrid{
+  display: grid !important;
+  grid-template-columns: 64% 36% !important; /* ✅ hard lock */
+  gap: 0 !important;
+  align-items: stretch;
+
+  /* stops any child overflow from visually bleeding */
+  overflow: hidden;
+}
+
+.donateTierPassMain,
+.donateTierPassSide{
+  min-width: 0; /* ✅ critical for grid children */
+}
+
+/* optional: if your right panel needs a clearer “ticket split” */
+.donateTierPassSide{
+  border-left: 1px solid rgba(0,0,0,0.08);
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+
+/* =========================================================
+   AMOUNT — slightly smaller + spacing, and never overflow
+========================================================= */
+
+.donateTierPassAmount{
+  font-size: clamp(28px, 2.5vw, 44px); /* ✅ smaller than before */
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-family: var(--font-impact, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  color: #6c00afda;
+
+  /* ✅ prevents the amount from bleeding into the right column */
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  margin: 0 0 10px 0; /* ✅ more space under amount */
+}
+
+/* if your header wrapper is doing something weird, force safe stacking */
+.donateTierPassHeader{
+  display: block;
+}
+
+.donateTierPassTitleBlock{
+  margin-top: 6px;
+}
+
+/* =========================================
+   TIER TICKETS — keep 2-column even on mobile
+   ========================================= */
+
+/* Force a stable 67/33 split at all widths */
+.donateTierPassGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); /* ~67/33 */
+  align-items: stretch;
+}
+
+/* Prevent overlap / weird shrinking */
+.donateTierPassMain,
+.donateTierPassSide {
+  min-width: 0;
+}
+
+/* Keep the side panel always visible */
+.donateTierPassSide {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* If you had a “mobile-only” strip, hide it (redundant now) */
+.donateTierPassMetaStrip {
+  display: none !important;
+}
+
+/* Optional: tighten padding a bit on small screens without stacking */
+@media (max-width: 520px) {
+  .donateTierPassGrid {
+    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.2fr); /* slight help on cramped phones */
+  }
+
+  .donateTierPassMain {
+    padding-right: 12px; /* if you’re using padding inside */
+  }
+
+  .donateTierPassSide {
+    padding-left: 10px;
+  }
+
+  /* If the side text feels too big on phones, you can softly scale it */
+  .donateTierPassSideMeta {
+    font-size: 0.95em;
+  }
+}
+
+.donateTierPassGrid{
+  display: grid;
+  align-items: stretch;
+}
+
+/* Prevent grid children from overflowing and “overlapping” */
+.donateTierPassMain,
+.donateTierPassSide{
+  min-width: 0;
+}
+
+/* Long reference strings should wrap instead of forcing overlap */
+.donateTierPassSideRef{
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* =========================================
+   Ticket pass: ALWAYS 2-column (67/33), no divider
+========================================= */
+
+.donateTierCard{
+  container-type: inline-size;
+  container-name: tiercard;
+}
+
+/* DEFAULT = your desired layout everywhere */
+.donateTierPassGrid{
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* ~67/33 */
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Remove divider entirely */
+.donateTierPassDivider{
+  display: none !important;
+}
+
+/* Keep side panel visible always */
+.donateTierPassSide{
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Prevent overlap from long text */
+.donateTierPassMain,
+.donateTierPassSide{
+  min-width: 0;
+}
+
+.donateTierPassSideRef{
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* No mobile meta strip if side is always present */
+.donateTierPassMetaStrip{
+  display: none !important;
+}
+
+/* Optional: when the card gets VERY narrow, bias a touch more space left */
+@container tiercard (max-width: 420px){
+  .donateTierPassGrid{
+    grid-template-columns: 1.8fr 1.2fr !important;
+  }
+}
+
+.donateTierPassMain{
+  background: #f9efffed;
+}
+
+.donateTierPassAmount{
+  display: flex;
+  align-items: baseline;
+  gap: 0.10em;
+  line-height: 1;
+}
+
+.donateTierPassAmountMain{
+  font-size: clamp(34px, 3vw, 48px);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.donateTierPassAmountSuffix{
+  font-size: 0.48em;          /* ✅ smaller /mo */
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  opacity: 0.72;
+  transform: translateY(-0.02em);
+}
+
+/* Amount suffix: only "/mo" smaller */
+.donateTierPassAmount{
+  display:flex;
+  align-items:baseline;
+  gap:.12em;
+  line-height:1;
+}
+.donateTierPassAmountMain{
+  font-variant-numeric: tabular-nums;
+}
+.donateTierPassAmountSuffix{
+  font-size: .48em;
+  font-weight: 800;
+  opacity: .72;
+  transform: translateY(-0.03em);
+}
+
+/* Featured tier: unmistakable but still premium */
+button.donateTierCard.donateTierPass[data-featured="true"]{
+  border-width: 3px;
+  border-color: rgba(255, 204, 0, 0.55);
+  box-shadow:
+    0 8px 52px rgba(0,0,0,0.76),
+    0 0 0 2px rgba(255,204,0,0.78);
+}
+
+/* If featured is ALSO selected, selection should win */
+button.donateTierCard.donateTierPass[data-featured="true"][data-selected="true"]{
+  border-color: rgba(108, 0, 175, 0.55);
+  box-shadow:
+    0 20px 56px rgba(0,0,0,0.18),
+    0 0 0 3px rgba(255,204,0,0.22);
+}
+
+/* Smaller “reason” text inside the DAT PICK tag */
+.donateTierPassSideTag .donateTierPickReason{
+  font-size: 0.62em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: none;  /* keep it human */
+  opacity: 0.82;
+  margin-left: 10px;
+}
+
+/* =========================================================
+   UPDATED: Featured (“DAT PICK”) should NOT compete with Selected
+   - Featured: internal recommendation only (no perimeter border, no mega shadow)
+   - Selected: the ONLY full-outline state
+   - DAT PICK pill: perfectly centered
+   Paste this at the VERY BOTTOM of donationPage.restore.css
+========================================================= */
+
+/* --- 1) DAT PICK pill: truly centered --- */
+.donateTierPassSideTag{
+  display: inline-flex;           /* ✅ */
+  align-items: center;            /* ✅ vertical centering */
+  justify-content: center;        /* ✅ horizontal centering */
+  text-align: center;             /* ✅ */
+  width: 100%;                    /* ✅ makes centering unambiguous */
+  box-sizing: border-box;
+  line-height: 1;                 /* ✅ avoids optical drop */
+  padding: 10px 10px;             /* tweak to taste */
+}
+
+/* Optional: if you want the “DAT PICK” pill not full-width, comment out width:100%
+   and add a min-width so it still looks intentional:
+   .donateTierPassSideTag{ width:auto; min-width: 180px; }
+*/
+
+/* --- 2) FEATURED state: remove perimeter border + glow/shadow drama --- */
+button.donateTierCard.donateTierPass[data-featured="true"]{
+  border-width: 1px !important;                 /* ✅ same as normal */
+  border-color: rgba(36, 17, 35, 0.14) !important;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.10) !important; /* ✅ same as normal */
+
+  /* ✅ subtle “editor’s recommendation” warmth, NOT a spotlight */
+  background: linear-gradient(
+    0deg,
+    rgba(255, 204, 0, 0.035),
+    rgba(255, 204, 0, 0.035)
+  ), rgba(251, 247, 241, 0.96) !important;
+}
+
+/* Keep the right panel just slightly warmer on featured */
+button.donateTierCard.donateTierPass[data-featured="true"] .donateTierPassSide{
+  background: rgba(255, 204, 0, 0.045) !important;
+}
+
+/* --- 3) SELECTED state: the ONLY full-outline winner --- */
+button.donateTierCard.donateTierPass[data-selected="true"]{
+  border: 3px solid #6c00af !important;
+  box-shadow:
+    0 22px 56px rgba(0,0,0,0.18),
+    0 10px 24px rgba(0,0,0,0.12) !important;
+}
+
+/* --- 4) If selected + featured: selected wins (no yellow halo) --- */
+button.donateTierCard.donateTierPass[data-featured="true"][data-selected="true"]{
+  border: 3px solid #6c00af !important;
+  box-shadow:
+    0 24px 60px rgba(0,0,0,0.20),
+    0 10px 24px rgba(0,0,0,0.12) !important;
+
+  /* Optional: keep the mild warmth, but don’t add outlines */
+  background: linear-gradient(
+    0deg,
+    rgba(255, 204, 0, 0.025),
+    rgba(255, 204, 0, 0.025)
+  ), rgba(251, 247, 241, 0.96) !important;
+}
+
+
+/* Center DAT PICK inside the side panel */
+.donateTierPassSideTag{
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+
+  /* keep it from looking like it’s hugging the left edge */
+  box-sizing: border-box;
+}
+
+.donateSectionLabel{
+  color: #241123;
+}
+
+/* =========================================
+   SPACING: between tier cards + above checkout CTA
+   Paste at VERY BOTTOM (wins last)
+========================================= */
+
+/* 1) More space BETWEEN tier cards */
+.donateTierGrid{
+  gap: 22px !important;          /* was ~16–18 in places */
+}
+
+@media (min-width: 900px){
+  .donateTierGrid{
+    gap: 26px !important;        /* desktop breath */
+  }
+}
+
+/* 2) More space BETWEEN tiers and the checkout button section */
+.donateCtaSection{
+  margin-top: 22px !important;   /* space after the grid */
+}
+
+@media (min-width: 900px){
+  .donateCtaSection{
+    margin-top: 28px !important;
+  }
+}
+
+/* If the button itself is crammed inside its wrapper, add padding too */
+.donateCtaSection .donateCtaCard{
+  padding-top: 18px !important;
+}
+
+/* ---------- Tier bullets (force-visible markers) ---------- */
+.donateTierBullets {
+  list-style: none;
+  margin: 0.65rem 0 0;
+  padding: 0;
+}
+
+.donateTierBullets > li {
+  position: relative;
+  padding-left: 1.05rem;
+  line-height: 1.35;
+}
+
+.donateTierBullets > li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  top: 0.1em; /* tweak: aligns better with text baseline */
+}
+
+.donateCustomAmountInput{
+  height: 44px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  line-height: 1;
+
+  background-color: #fff !important;   /* ✅ restore white fill */
+  border: 1px solid rgba(0,0,0,0.14);
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background-clip: padding-box;
+}
+
+.donateCustomAmountInput:focus,
+.donateCustomAmountInput:focus-visible {
+  border-color: rgba(108,0,175,0.55);
+  outline: 2px solid rgba(108,0,175,0.35);
+  outline-offset: 2px;
+
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+}
+
+/* Placeholder sizing */
+.donateCustomAmountInput::placeholder {
+  font-size: 1.05rem;   /* adjust: 1rem–1.1rem */
+  line-height: 1;
+  opacity: 0.55;        /* keep it “placeholder-y” */
+}
+
+.donateCustomAmountInput::-webkit-input-placeholder {
+  font-size: 1.05rem;
+  line-height: 1;
+  opacity: 0.55;
+}
+
+.donateCustomAmountInput::-moz-placeholder {
+  font-size: 1.05rem;
+  line-height: 1;
+  opacity: 0.55;
+}
+
+.donateCustomAmountInput:-ms-input-placeholder {
+  font-size: 1.05rem;
+  line-height: 1;
+  opacity: 0.55;
+}
+
+/* Typed text */
+.donateCustomAmountInput{
+  font-size: 1.05rem;     /* adjust: 1rem–1.15rem */
+  font-weight: 400;       /* optional */
+}
+
+/* Placeholder (match or slightly smaller) */
+.donateCustomAmountInput::placeholder{
+  font-size: 1.05rem;     /* or 1rem */
+  opacity: 0.55;
+}
+
+.donateLeftCol { width: min(420px, 100%); }
+.donateLeftInner { display: flex; flex-direction: column; gap: 10px; }
+
+.donateLeftImageWrap{
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: #fff;
+}
+
+.donateLeftImage{
+  width: 100%;
+  height: 210px;
+  object-fit: cover;
+  display: block;
+}
+
+.donateLeftTitle{
+  margin: 6px 0 0;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.donateLeftDesc{
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  opacity: 0.85;
+}
+
+.donateLeftRule{
+  border: 0;
+  border-top: 1px solid rgba(0,0,0,0.10);
+  margin: 8px 0;
+}
+
+.donateLeftH{
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.donateLeftP{
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+.donateLeftList{
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 6px;
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.donateLeftNote{
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  opacity: 0.8;
+}
+
+.donateLeftModeLinks{
+  display: grid;
+  gap: 6px;
+}
+
+.donateLeftModeLink{
+  appearance: none;
+  background: transparent;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.donateLeftModeLink:hover{
+  border-color: rgba(0,0,0,0.20);
+}
+
+.donateLeftInner { display: flex; flex-direction: column; gap: 10px; }
+.donateLeftImageWrap{ border-radius: 16px; overflow: hidden; border: 1px solid rgba(0,0,0,0.10); background: #fff; }
+.donateLeftImage{ width: 100%; height: 210px; object-fit: cover; display: block; }
+
+.donateLeftTitle{ margin: 6px 0 0; font-size: 18px; line-height: 1.2; }
+.donateLeftDesc{ margin: 0; font-size: 14.5px; line-height: 1.55; opacity: 0.85; }
+
+.donateLeftRule{ border: 0; border-top: 1px solid rgba(0,0,0,0.10); margin: 8px 0; }
+
+.donateLeftH{ margin: 0; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.8; }
+.donateLeftP{ margin: 0; font-size: 14.5px; line-height: 1.6; }
+.donateLeftList{ margin: 0; padding-left: 1.1rem; display: grid; gap: 6px; font-size: 14.5px; line-height: 1.55; }
+
+.donateLeftNote{ margin: 4px 0 0; font-size: 13.5px; line-height: 1.55; opacity: 0.8; }
+
+.donateLeftModeLinks{ display: grid; gap: 6px; margin-top: 4px; }
+.donateLeftModeLink{ background: transparent; border: 1px solid rgba(0,0,0,0.12); border-radius: 12px; padding: 10px 12px; text-align: left; cursor: pointer; }
+.donateLeftModeLink:hover{ border-color: rgba(0,0,0,0.20); }
+
+/* ===============================
+   Production-page style utilities
+   (donation page only)
+=============================== */
+
+.donatePage .section-block {
+  width: 100%;
+  border-radius: 22px;
+  background: rgba(251, 247, 241, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10px 44px hsla(0, 0%, 0%, 0.3);
+  padding: 22px;
+}
+
+@media (min-width: 900px) {
+  .donatePage .section-block {
+    padding: 26px;
+  }
+}
+
+.donatePage .section-block + .section-block {
+  margin-top: 18px;
+}
+
+.donatePage .section-head {
+  font-family: var(--font-anton), var(--font-dm-sans), system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 14px;
+  line-height: 1.2;
+  margin: 0 0 12px 0;
+  color: rgba(0, 0, 0, 0.82);
+}
+
+.donatePage .meta-link {
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.72);
+  text-decoration: none;
+}
+
+.donatePage .meta-link:hover {
+  color: rgba(0, 0, 0, 0.9);
+  text-decoration: none;
+}
+
+.donatePage .glare-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.donatePage .glare-sheen::after {
+  content: "";
+  position: absolute;
+  inset: -40% -60%;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 35%,
+    rgba(255, 255, 255, 0.35) 50%,
+    rgba(255, 255, 255, 0) 65%
+  );
+  transform: translateX(-30%);
+  opacity: 0;
+  transition: opacity 200ms ease, transform 700ms ease;
+  pointer-events: none;
+}
+
+.donatePage .glare-sheen:hover::after {
+  opacity: 1;
+  transform: translateX(30%);
+}
+
+/* ===== Frequency toggle: reference-style (ONLY active pill) ===== */
+
+.donateSegOnPaper.donateSegLightTabs{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+  border-radius: 999px;
+
+  /* track on LIGHT background */
+  background: #3e00655f;        /* #241123 very low opacity */
+  border: 1px solid rgba(36, 17, 35, 0.42);
+}
+
+/* base button = TEXT ONLY (no pill) */
+.donateSegOnPaper.donateSegLightTabs .donateSegBtn{
+  border: none !important;
+  border-radius: 999px;
+  padding: 4px 8px;
+
+  background: transparent !important;        /* <- kills inactive “pill” */
+  box-shadow: none !important;               /* <- kills ghost/shadow */
+  transform: none !important;                /* <- kills hover movement */
+
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+
+  color: rgba(36, 17, 35, 0.78);
+  cursor: pointer;
+
+  transition: background-color 140ms ease-out, color 140ms ease-out;
+}
+
+/* kill any hover movement/pill effects globally for this control */
+.donateSegOnPaper.donateSegLightTabs .donateSegBtn:hover,
+.donateSegOnPaper.donateSegLightTabs .donateSegBtn:focus-visible{
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ONLY active becomes a filled pill */
+.donateSegOnPaper.donateSegLightTabs .donateSegBtn[data-active="true"]{
+  background-color: rgba(255, 204, 0, 0.92) !important;
+  color: #241123 !important;
+}
+
+/* ✅ Kill shadow on the TRACK itself (wrapper) */
+.donateSegOnPaper.donateSegLightTabs{
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* ✅ If donateFocusRing adds a glow/shadow, nuke it for this control */
+.donateSegOnPaper.donateSegLightTabs.donateFocusRing,
+.donateSegOnPaper.donateSegLightTabs.donateFocusRing:focus-within{
+  box-shadow: none !important;
+  filter: none !important;
+  outline: none !important;
+}
+
+/* ✅ If some global rule adds shadow to ALL buttons on focus */
+.donateSegOnPaper.donateSegLightTabs .donateSegBtn:focus,
+.donateSegOnPaper.donateSegLightTabs .donateSegBtn:focus-visible{
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* ===== LEFT COLUMN TYPOGRAPHY (force correct fonts) ===== */
+
+.donateTierArea .donateLeftDesc,
+.donateTierArea .donateLeftP,
+.donateTierArea .donateLeftList,
+.donateTierArea .donateLeftNote{
+  font-family: var(--font-space-grotesk, system-ui, sans-serif) !important;
+  font-size: 1.05rem;
+  line-height: 1.66;
+  color: #241123E6;
+  font-weight: 400;
+  letter-spacing: .005em;
+}
+
+/* ✅ This is the fix: headings cannot be Anton, even if parent/global rules try */
+.donateTierArea .donateLeftSectionHead{
+  font-family: var(--font-dm-sans, system-ui, sans-serif) !important;
+  font-size: .86rem;
+  text-transform: uppercase;
+  letter-spacing: .22em;
+  color: #241123B3;
+  font-weight: 300;
+  margin: 0 0 12px 0;
+}
+
+/* Optional: make sure no “display” class sneaks in */
+.donateTierArea .font-display{
+  font-family: inherit !important;
+}
+
+/* ===============================
+   LEFT COLUMN SPACING SYSTEM
+=============================== */
+
+.donateTierArea .donateLeftInner{
+  /* optional: gives you one knob to tune everything later */
+  --donate-h-gap: 5px;     /* heading -> content */
+  --donate-p-gap: 32px;     /* paragraph -> paragraph */
+  --donate-rule-gap: 0px;  /* content <-> rule */
+}
+
+/* --- Headings --- */
+.donateTierArea .donateLeftSectionHead{
+  margin: 0 0 var(--donate-h-gap) 0 !important; /* heading -> content */
+}
+
+/* --- Paragraphs (desc + body + notes) --- */
+.donateTierArea .donateLeftDesc,
+.donateTierArea .donateLeftP,
+.donateTierArea .donateLeftNote{
+  margin: 0 0 var(--donate-p-gap) 2.75rem; /* paragraph rhythm */
+}
+
+/* Don’t add extra space at the very end of a block */
+.donateTierArea .donateLeftDesc:last-child,
+.donateTierArea .donateLeftP:last-child,
+.donateTierArea .donateLeftNote:last-child{
+  margin-bottom: 0;
+}
+
+/* --- Horizontal rules --- */
+.donateTierArea .donateLeftRule{
+  border: none;
+  border-top: 1px solid rgba(36,17,35,0.18);
+  margin: var(--donate-rule-gap) 0; /* content -> line and line -> next heading */
+}
+
+/* --- Lists --- */
+.donateTierArea .donateLeftList{
+  margin: 0 0 var(--donate-p-gap) 0;
+  padding-left: 4rem; /* keeps bullets aligned like your production page */
+}
+
+.donateTierArea .donateLeftList li{
+  margin: 0 0 5px 0; /* spacing between bullets */
+}
+
+.donateTierArea .donateLeftList li:last-child{
+  margin-bottom: 0;
+}
+
+/* --- Mode links row (if present) --- */
+.donateTierArea .donateLeftModeLinks{
+  margin-top: 0px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Make sure nothing sneaky reintroduces margins */
+.donateTierArea .donateLeftInner h3,
+.donateTierArea .donateLeftInner h4,
+.donateTierArea .donateLeftInner p,
+.donateTierArea .donateLeftInner ul{
+  scroll-margin-top: 45px; /* optional quality-of-life when anchored */
+}
+
+/* ===============================
+   GLOBAL VERTICAL BREATHING ROOM
+   (above white card + below dashboard)
+=============================== */
+
+/* Space ABOVE the white card (below hero) */
+.donation-page .donation-page__inner{
+  padding-top: 18px; /* tweak: 12–28px */
+}
+
+/* If you want the card itself to sit lower instead of padding the whole inner */
+.donation-page .donation-page__card{
+  margin-top: 18px; /* tweak: 12–28px */
+}
+
+/* Space BELOW the dashboard (before tiers area) */
+.donation-page .donateDash{
+  margin-bottom: 18px; /* tweak: 14–26px */
+}
+
+/* Optional: if you want the spacing to be tied to the tiers area instead */
+.donation-page .donateTierArea{
+  margin-top: 10px; /* tweak: 8–18px */
+}
+
+
+.donateTierCustom[role="button"] { cursor: pointer; }
+.donateTierCustom[role="button"]:focus { outline: none; } /* if you’re using donateFocusRing */
+
+/* Ensure "$" and "Any amount" are the same font across browsers */
+.donateTierPassAmount .donateTierPassAmountMain,
+.donateTierPassAmount .donateTierPassAnyAmount{
+  font-family: var(--font-anton), system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+/* If you want "Any amount" smaller, do it explicitly */
+.donateTierPassAmount .donateTierPassAnyAmount{
+  font-size: 0.46em; /* tweak */
+  text-transform: uppercase;
+  opacity: 0.98;
+  margin-left: 10px;
+}
+
+/* Make numerals/glyph rendering more consistent */
+.donateTierPassAmount{
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
+}
+
+/* Make both $ and “Any amount” share the same font across browsers */
+.donateTierPassAmount,
+.donateTierPassAmountMain,
+.donateTierPassAnyAmount{
+  font-family: var(--font-anton, var(--font-space-grotesk, system-ui, sans-serif));
+  font-kerning: normal;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+.donateTierPassAnyAmount{
+  font-family: var(--font-anton, var(--font-space-grotesk, system-ui, sans-serif));
+  margin-left: 12px;
+  font-size: 1.15em;
+  font-weight: 400;
+  opacity: 0.98;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.donateTierPassAmount,
+.donateTierPassAnyAmount{
+  font-family: var(--font-anton), system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+/* Force Anton for all tier “amount” typography */
+.donateTierCard .donateTierPassAmount,
+.donateTierCard .donateTierPassAmount *{
+  font-family: var(--font-anton), Anton, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+
+/* ===============================
+   AMOUNT LINE — isolate sizes
+   (Fixes: /mo scaling + Any Amount spacing)
+=============================== */
+
+/* Parent sets layout only, NOT font-size */
+.donateTierPassAmount{
+  display: flex;
+  align-items: baseline;
+  gap: 0.28em;               /* <-- single source of spacing */
+  line-height: 1;
+  font-size: inherit !important;   /* <-- critical: stop parent scaling children */
+}
+
+/* Main number/$ controls the actual size */
+.donateTierPassAmountMain{
+  font-size: clamp(34px, 3vw, 48px);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Any Amount sized independently */
+.donateTierPassAnyAmount{
+  font-size: clamp(28px, 3vw, 48px) !important;        /* tweak */
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-left: 0 !important; /* kill all old margin-left rules */
+  opacity: 0.98;
+}
+
+/* /mo sized independently (won’t grow when Any Amount changes) */
+.donateTierPassAmountSuffix{
+  font-size: 1.75em;
+  font-weight: 400;
+  opacity: 0.72;
+  transform: translateY(-0.03em);
+}
+
+/* ===============================
+   PASS GRID — hard lock 2 columns + explicit placement
+   (Fixes donateTierPassMain spilling into right panel)
+=============================== */
+
+.donateTierPassGrid{
+  display: grid !important;
+  grid-template-columns: minmax(1.8fr, 1.2fr) minmax(240px, 320px) !important;
+  gap: 0 !important;
+  align-items: stretch !important;
+}
+
+/* If divider exists in DOM, kill it so it can’t steal/shift columns */
+.donateTierPassDivider{
+  display: none !important;
+}
+
+/* ✅ Explicitly confine each panel to its column */
+.donateTierPassMain{
+  grid-column: 1 / 2 !important;
+  min-width: 0 !important;
+}
+
+.donateTierPassSide{
+  grid-column: 2 / 3 !important;
+  min-width: 0 !important;
+}
+
+/* FINAL, keep this at the VERY BOTTOM (wins last) */
+button.donateTierCard.donateTierPass .donateTierPassGrid{
+  display: grid !important;
+  grid-template-columns: 1.8fr 1.2fr !important; /* your ratio */
+  gap: 0 !important;
+  align-items: stretch !important;
+}
+
+button.donateTierCard.donateTierPass .donateTierPassMain{
+  grid-column: 1 !important;
+  min-width: 0 !important;
+}
+
+button.donateTierCard.donateTierPass .donateTierPassSide{
+  grid-column: 2 !important;
+  min-width: 0 !important;
+}
+
+.donateCustomAmountInput{
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* ===============================
+   "Sponsorship amount" = section header style
+   + divider line above
+   + toggle on next row (right)
+=============================== */
+
+.donateTierHeaderRow{
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;              /* ✅ allows 2-row layout */
+}
+
+/* Row 1: label goes full width */
+.donateTierHeaderLeft{
+  flex: 0 0 100%;
+  min-width: 0;
+  position: relative;
+  padding-top: 14px;            /* space under the line */
+  margin-bottom: 6px;
+}
+
+/* the thin line above (like your "LOOKING FOR..." block) */
+.donateTierHeaderLeft::before{
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: rgba(36, 17, 35, 0.18);   /* subtle DAT ink */
+}
+
+/* make it look like "LOOKING FOR SOMETHING MORE SPECIFIC?" */
+.donateTierHeaderLeft .donateSectionLabel{
+  display: inline-block;
+  font-family: var(--font-space-grotesk, system-ui, sans-serif);
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: rgba(36, 17, 35, 0.72);
+  line-height: 1.2;
+  white-space: normal;
+}
+
+/* Row 2: toggle sits right */
+.donateTierHeaderRow .donateSeg{
+  order: 2;
+  margin-left: auto;            /* ✅ pins to right */
+  flex: 0 0 auto;               /* keep desktop width */
+}
+
+.donateTierHeaderLeft .donateSectionLabel{
+  font: inherit;
+}
+.donateTierHeaderLeft{
+  font-family: var(--font-space-grotesk, system-ui, sans-serif);
+  text-transform: uppercase;
+  letter-spacing: 0.26em;
+  font-weight: 300;
+  font-size: 0.85rem;
+  color: rgba(36, 17, 35, 0.68);
+}
+.donateTierHeaderLeft{
+  position: relative;
+  padding-top: 10px;            /* space under the line */
+  margin-bottom: 10px;          /* more space under header */
+}
+
+
+
+.donateCtaSection{ margin-inline: auto !important; }
+
+/* CTA microcopy: clean 2-line stack */
+.donateCtaMicroStack{
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;                 /* vertical rhythm between lines */
+  text-align: center;
+  font-size: 0.92rem;
+  line-height: 1;
+  color: rgba(36, 17, 35, 0.76);
+}
+
+.donateCtaMicroLine{
+  margin: 0;
+}
+
+/* ===============================
+   Helper text + link styles
+   (below frequency toggle + in microcopy)
+/* Helper line under frequency toggle */
+.donateHelperText{
+  /* force it to behave like a full-width block between header + grid */
+  display: block;
+  text-align: right;
+  width: 100%;
+  padding-top: 2px;
+  padding-bottom: 14px; /* ✅ this creates reliable space before tier tiles */
+
+  /* keep it discreet */
+  font-size: 0.72rem;
+  color: #24112368;
+
+  /* ✅ undo inherited “ALL CAPS” + tracking */
+  text-transform: none !important;
+  letter-spacing: normal !important;
+
+  /* you said italics are fine — keep it */
+  font-style: italic;
+  line-height: 1.35;
+}
+
+.donateLink{
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-weight: 800 !important;
+  color: #6c00afa1;
+
+  /* make hover tracking actually animate */
+  display: inline-block;            /* ✅ needed for letter-spacing animation to feel clean */
+  letter-spacing: 0.02em;
+
+  transition: letter-spacing 160ms ease, opacity 160ms ease;
+}
+
+.donateLink:hover{
+  letter-spacing: 0.14em;           /* ✅ “expand to the right” vibe */
+  color: #f23359e6;
+}
+
+/* Only for the receipt help line */
+.donateReceiptHelp{
+  font-style: italic;
+  font-size: smaller;
+  opacity: 1;
+  margin-top: 10px;   /* gives breathing room */
+  text-transform: none;
+}
+
+.donateReceiptHelpLink{
+  font-weight: 800;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  color: #6c00afee;
+  transition: letter-spacing 160ms ease, opacity 160ms ease;
+}
+
+.donateReceiptHelpLink:hover{
+  letter-spacing: 0.06em;
+  color: #f23359;
+}
+
+.donateSubActive{
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: larger;
+  font-weight: 800; /* try 800 if you want it louder */
+}
+
