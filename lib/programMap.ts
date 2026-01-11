@@ -1,34 +1,95 @@
 // lib/programMap.ts
 
-export interface ProgramArtist {
-  slug: string;
-  role: string;
-}
+/**
+ * Canonical artist model:
+ * - keys are alumni slugs (preferred)
+ * - values are role lines (0+ strings)
+ */
+export type ProgramArtistsBySlug = Record<string, string[]>;
+
+export type ProgramFootprint = {
+  // Where did this project take place (for matching)?
+  country: string; // REQUIRED for each footprint
+  region?: string; // OPTIONAL (e.g. "Amazon" | "Andes" | "Galápagos")
+  city?: string; // OPTIONAL (only when truly city-specific)
+
+  /**
+   * OPTIONAL: If only some artists went to this specific footprint,
+   * list the subset here using the SAME model as ProgramData.artists.
+   *
+   * If omitted, we assume ALL program artists apply to this footprint.
+   */
+  artists?: ProgramArtistsBySlug;
+};
 
 export interface ProgramData {
-  title: string; // ✅ ADD THIS
+  title: string;
   slug: string;
   program: string;
+
+  /**
+   * Back-compat / display string (existing UI uses this).
+   * For matching, we prefer structured geo fields + footprints.
+   */
   location: string;
+
+  // Simple case convenience (optional)
+  country?: string;
+  region?: string;
+  city?: string;
+
+  // Complex case (optional)
+  footprints?: ProgramFootprint[];
+
   year: number;
   season: number;
   url?: string;
-  artists: {
-    [slug: string]: string[];
-  };
+
+  artists: ProgramArtistsBySlug;
+
   color?: string;
   stampIcon?: string;
 }
 
-export const programMap: Record<string, ProgramData> = {
-  // Season 20 entry:
+/**
+ * ============================================================
+ * TEMPLATE (COMMENT ONLY — DO NOT ADD AS A REAL ENTRY)
+ * ============================================================
+ *
+ * // "SEASON-20-SLUG-GOES-HERE": {
+ * //   title: "ACTion: Ecuador 2026",
+ * //   slug: "action-ecuador-2026",
+ * //   program: "ACTion",
+ * //   location: "Ecuador",
+ * //   country: "Ecuador",
+ * //   region: "Amazon",
+ * //   city: "Gualaquiza",
+ * //   footprints: [
+ * //     { country: "Ecuador", region: "Amazon", city: "Gualaquiza" },
+ * //     { country: "Ecuador", region: "Andes", city: "Quito" },
+ * //     {
+ * //       country: "Ecuador",
+ * //       region: "Galápagos",
+ * //       artists: { "artist-slug": ["Role 1"] },
+ * //     },
+ * //   ],
+ * //   year: 2026,
+ * //   season: 20,
+ * //   url: "/action",
+ * //   artists: { "jesse-baxter": ["Artistic Director"] },
+ * // },
+ *
+ * ============================================================
+ */
 
+export const programMap: Record<string, ProgramData> = {
   // Season 19 entry:
   "creative-trek-ecuador-2025": {
     title: "Creative Trek: Ecuador (refresh) 2025",
     slug: "creative-trek-ecuador-2025",
     program: "Creative Trek",
     location: "Ecuador",
+    country: "Ecuador",
     year: 2025,
     season: 19,
     url: "/creative-trek",
@@ -86,7 +147,7 @@ export const programMap: Record<string, ProgramData> = {
 
   "micro-adventure-hudson-valley-derive-2023": {
     title: "Micro-Adventure: Hudson Valley Dérive 2023",
-    slug: "micro-adventure-2023",
+    slug: "micro-adventure-hudson-valley-derive-2023",
     program: "Micro-Adventure",
     location: "Hudson Valley",
     year: 2023,
@@ -457,6 +518,7 @@ export const programMap: Record<string, ProgramData> = {
     slug: "creative-trek-ecuador-2008",
     program: "Creative Trek",
     location: "Ecuador",
+    country: "Ecuador",
     year: 2008,
     season: 2,
     url: "/creative-trek",

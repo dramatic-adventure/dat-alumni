@@ -13,6 +13,7 @@ type GalleryImage = {
 type DramaClubMomentsGalleryProps = {
   images: GalleryImage[];
   clubName: string;
+  headline?: string;
 };
 
 const t = (v?: string | null) => (v ?? "").trim();
@@ -27,10 +28,13 @@ const isLocalPath = (src: string) => {
 export default function DramaClubMomentsGallery({
   images,
   clubName,
+  headline,
 }: DramaClubMomentsGalleryProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [rowCapacity, setRowCapacity] = useState<number>(3);
+  const title =
+    (headline || "").trim() || `Moments from the ${clubName} Drama Club`;
 
   // Track broken image srcs so we can drop them cleanly.
   const [brokenSrcs, setBrokenSrcs] = useState<Set<string>>(() => new Set());
@@ -100,11 +104,8 @@ export default function DramaClubMomentsGallery({
         aria-label="Moments from this club"
       >
         <header className="dc-moments-header">
-          <h2 className="dc-section-head font-sans">Moments from this club</h2>
-          <p className="dc-moments-subhead">
-            Glimpses from <span className="dc-moments-club">{clubName}</span>
-          </p>
-        </header>
+  <h2 className="dc-section-head font-sans">{title}</h2>
+</header>
 
         <div
           className="dc-moments-track"
@@ -128,7 +129,9 @@ export default function DramaClubMomentsGallery({
                 aria-label={`Open photo ${i + 1} from ${clubName}`}
                 role="listitem"
               >
-                <div className="dc-moments-img-shell">
+                <div
+  className="dc-moments-img-shell"
+>
                   {isLocalPath(img.src) ? (
                     <Image
                       src={img.src}
@@ -183,165 +186,7 @@ export default function DramaClubMomentsGallery({
         />
       )}
 
-      <style jsx>{`
-        .dc-moments-section {
-          margin-top: clamp(20px, 3vw, 28px);
-          border-top: 1px solid rgba(36, 17, 35, 0.12);
-          padding-top: 12px;
-          padding-bottom: 1.8rem;
-        }
-
-        .dc-moments-header {
-          display: flex;
-          align-items: baseline;
-          justify-content: space-between;
-          gap: 0.75rem;
-        }
-
-        .dc-moments-subhead {
-          margin: 0;
-          font-family: var(
-            --font-space-grotesk,
-            system-ui,
-            -apple-system,
-            BlinkMacSystemFont,
-            "Segoe UI",
-            sans-serif
-          );
-          font-size: 0.78rem;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: #24112380;
-          text-align: right;
-          white-space: nowrap;
-        }
-
-        .dc-moments-club {
-          font-weight: 700;
-          color: #241123cc;
-        }
-
-        .dc-moments-track {
-          margin-top: 12px;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-        }
-
-        .dc-moments-card {
-          border: none;
-          background: transparent;
-          padding: 0;
-          cursor: pointer;
-          flex: 1 1 calc(30% - 10px);
-          max-width: 220px;
-        }
-
-        .dc-moments-img-shell {
-          position: relative;
-          width: 100%;
-          aspect-ratio: 1 / 1;
-          border-radius: 14px;
-          overflow: hidden;
-          background: #fdfaf7;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
-          transition: transform 160ms ease, box-shadow 160ms ease;
-        }
-
-        .dc-moments-img-shell::after {
-          content: "";
-          position: absolute;
-          inset: -40%;
-          background: linear-gradient(
-            120deg,
-            transparent 45%,
-            rgba(255, 255, 255, 0.1) 50%,
-            transparent 55%
-          );
-          transform: translateX(-60%) rotate(8deg);
-          opacity: 0;
-          transition: transform 500ms ease, opacity 300ms ease;
-          pointer-events: none;
-        }
-
-        /* For the <img> fallback only */
-        .dc-moments-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          object-position: center;
-          display: block;
-        }
-
-        .dc-moments-card:hover .dc-moments-img-shell {
-          transform: translateY(-3px) scale(1.03);
-          box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18), 0 3px 8px rgba(0, 0, 0, 0.12);
-        }
-
-        .dc-moments-card:hover .dc-moments-img-shell::after {
-          opacity: 0.6;
-          transform: translateX(60%) rotate(8deg);
-        }
-
-        .dc-moments-footer {
-          margin-top: 8px;
-          display: flex;
-          justify-content: flex-end;
-          align-items: center;
-          gap: 10px;
-          flex-wrap: wrap;
-          font-family: var(--font-space-grotesk, system-ui, sans-serif);
-          font-size: 0.74rem;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          font-weight: 700;
-          color: #24112399;
-        }
-
-        .dc-moments-toggle {
-          background: none;
-          border: none;
-          padding: 0;
-          cursor: pointer;
-          text-transform: inherit;
-          letter-spacing: inherit;
-          font: inherit;
-          color: #6c00af;
-          transition: color 150ms ease, transform 150ms ease, letter-spacing 150ms ease,
-            opacity 150ms ease;
-        }
-
-        .dc-moments-toggle:hover {
-          color: #f23359;
-          transform: translateY(-1px);
-          letter-spacing: 0.14em;
-          opacity: 0.96;
-        }
-
-        @media (max-width: 900px) {
-          .dc-moments-card {
-            flex: 1 1 calc(50% - 10px);
-            max-width: 200px;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .dc-moments-header {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-
-          .dc-moments-subhead {
-            text-align: left;
-            white-space: normal;
-          }
-
-          .dc-moments-card {
-            flex: 1 1 100%;
-            max-width: 100%;
-          }
-        }
-      `}</style>
+      
     </>
   );
 }

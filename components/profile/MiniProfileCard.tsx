@@ -14,10 +14,12 @@ interface MiniProfileCardProps {
   roleFontSize?: number;
   priority?: boolean;
 
-  /** NEW */
   variant?: "dark" | "light";
-  /** NEW: override link destination if needed */
   href?: string;
+
+  /** NEW */
+  badgeLabel?: string;          // e.g. "LOCAL MASTER"
+  highlightFrame?: boolean;     // subtle honor treatment
 }
 
 export default function MiniProfileCard({
@@ -32,6 +34,9 @@ export default function MiniProfileCard({
 
   variant = "dark",
   href,
+
+  badgeLabel,
+  highlightFrame = false,
 }: MiniProfileCardProps) {
   const defaultImage = "/images/default-headshot.png";
   const imageSrc = (headshotUrl || defaultImage).replace(/^http:\/\//i, "https://");
@@ -53,11 +58,8 @@ export default function MiniProfileCard({
       style={{ textDecoration: "none" }}
       aria-label={`${name} profile`}
     >
-      <div
-        className="flex flex-col items-start"
-        style={{ width: "144px", ...customStyle }}
-      >
-        {/* Headshot (4:5, stable box to avoid CLS) */}
+      <div className="flex flex-col items-start" style={{ width: "144px", ...customStyle }}>
+        {/* Headshot */}
         <div
           className="relative w-full transition-all duration-300 group-hover:scale-[1.11] group-hover:brightness-105"
           style={{
@@ -65,9 +67,33 @@ export default function MiniProfileCard({
             overflow: "hidden",
             boxShadow: "2px 3px 4px rgba(36,17,35,0.5)",
             transformOrigin: "center center",
-            borderRadius: 0, // keep as-is; set to 12 if you want rounded
+            borderRadius: 0,
+
+            // ✅ subtle “honor” frame (square is fine; matches your poster vibe)
+            outline: highlightFrame ? "3px solid rgba(255, 204, 0, 0.95)" : undefined,
+            outlineOffset: highlightFrame ? "6px" : undefined,
           }}
         >
+          {badgeLabel ? (
+            <span
+              style={{
+                position: "absolute",
+                top: 10,
+                left: 10,
+                zIndex: 2,
+                padding: "6px 8px",
+                fontSize: 11,
+                letterSpacing: "0.12em",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                background: "rgba(36,17,35,0.92)",
+                color: "#FFCC00",
+              }}
+            >
+              {badgeLabel}
+            </span>
+          ) : null}
+
           <Image
             src={imageSrc}
             alt={`${name}${role ? ` — ${role}` : ""}`}

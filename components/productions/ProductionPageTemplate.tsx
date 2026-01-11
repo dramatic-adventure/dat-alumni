@@ -810,11 +810,11 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
   const hasProcess = hasRenderableProcess(safeProcessSections);
 
   const safeResources = (resources ?? []).flatMap((r) => {
-    const label = cleanStr(r?.label);
-    const href = cleanHref(r?.href);
-    if (!label || !href) return [];
-    return [{ label, href }];
-  });
+  const label = cleanStr(r?.label);
+  if (!label) return [];
+  const href = cleanHref(r?.href);
+  return [{ label, href }]; // ✅ keep label regardless
+});
   const hasResources = safeResources.length > 0;
 
   const safeCauses = (causes ?? []).flatMap((c) => {
@@ -825,22 +825,25 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
   });
   const hasCauses = safeCauses.length > 0;
 
-  const safePartners = (partners ?? []).flatMap((p) => {
+    const safePartners = (partners ?? []).flatMap((p) => {
     const name = cleanStr(p?.name);
-    const href = cleanHref(p?.href);
-    if (!name || !href) return [];
+    if (!name) return [];
+
+    const href = cleanHref(p?.href); // ✅ optional
     const logoSrc = cleanStr(p?.logoSrc);
     const logoAlt = cleanStr(p?.logoAlt);
+
     return [
       {
         name,
-        href,
+        ...(href ? { href } : {}),
         ...(logoSrc ? { logoSrc } : {}),
         ...(logoAlt ? { logoAlt } : {}),
       },
     ];
   });
   const hasPartners = safePartners.length > 0;
+
 
   const relatedList: RelatedItem[] = (relatedItems ?? relatedProductions ?? []).filter(
     (ri) => !!ri && !!ri.slug && !!ri.title
@@ -934,49 +937,71 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
     });
   })();
 
-  const venueCity = [venueText, cityText || locationText].filter(Boolean).join(", ");
+  const cityLabel = cityText ?? locationText;
 
-  const metaValues: Array<{ value: ReactNode; hero?: boolean }> = [];
-  if (datesText) metaValues.push({ value: datesText, hero: true });
+const metaValues: Array<{ value: ReactNode; hero?: boolean }> = [];
+const seenMeta = new Set<string>();
 
-  if (festivalText) {
-    const href = festivalHrefText;
-    const node = href ? (
-      isExternal(href) ? (
-        <a className="meta-link" href={href} target="_blank" rel="noreferrer">
-          {festivalText}
-        </a>
-      ) : (
-        <Link className="meta-link" href={href}>
-          {festivalText}
-        </Link>
-      )
+const pushMeta = (rawLabel: string | undefined, node: ReactNode, hero = true) => {
+  const key = rawLabel ? normalize(stripHtml(rawLabel)) : "";
+  if (!key || seenMeta.has(key)) return;
+  seenMeta.add(key);
+  metaValues.push({ value: node, hero });
+};
+
+if (datesText) pushMeta(datesText, datesText, true);
+
+// Festival
+if (festivalText) {
+  const href = festivalHrefText;
+  const node = href ? (
+    isExternal(href) ? (
+      <a className="meta-link" href={href} target="_blank" rel="noreferrer">
+        {festivalText}
+      </a>
     ) : (
-      festivalText
-    );
-    metaValues.push({ value: node, hero: true });
-  }
+      <Link className="meta-link" href={href}>
+        {festivalText}
+      </Link>
+    )
+  ) : (
+    festivalText
+  );
 
-  if (venueCity) {
-    const href = venueHrefText;
-    const node = href ? (
-      isExternal(href) ? (
-        <a className="meta-link" href={href} target="_blank" rel="noreferrer">
-          {venueCity}
-        </a>
-      ) : (
-        <Link className="meta-link" href={href}>
-          {venueCity}
-        </Link>
-      )
+  pushMeta(festivalText, node, true);
+}
+
+// Venue
+if (venueText) {
+  const href = venueHrefText;
+  const node = href ? (
+    isExternal(href) ? (
+      <a className="meta-link" href={href} target="_blank" rel="noreferrer">
+        {venueText}
+      </a>
     ) : (
-      venueCity
-    );
-    metaValues.push({ value: node, hero: true });
-  }
+      <Link className="meta-link" href={href}>
+        {venueText}
+      </Link>
+    )
+  ) : (
+    venueText
+  );
 
-  if (runtimeText) metaValues.push({ value: runtimeText });
-  if (ageRecText) metaValues.push({ value: ageRecText });
+  pushMeta(venueText, node, true);
+}
+
+// City (or location fallback) — skip if it’s already embedded in venue text
+if (cityLabel) {
+  const cityNorm = normalize(stripHtml(cityLabel));
+  const venueNorm = venueText ? normalize(stripHtml(venueText)) : "";
+  if (!venueNorm || !venueNorm.includes(cityNorm)) {
+    pushMeta(cityLabel, cityLabel, true);
+  }
+}
+
+if (runtimeText) metaValues.push({ value: runtimeText });
+if (ageRecText) metaValues.push({ value: ageRecText });
 
   const safeCreditPeople = (creditPeople ?? []).flatMap((p) => {
     const name = cleanStr(p?.name);
@@ -1288,23 +1313,20 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
 
                         {hasResources && (
                           <ul className="resources-list">
-                            {safeResources.map((item, idx) => {
-                              const external = isExternal(item.href);
-                              return (
-                                <li key={idx} className="resource-item">
-                                  {external ? (
-                                    <a href={item.href} className="resource-link" target="_blank" rel="noreferrer">
-                                      {item.label}
-                                    </a>
-                                  ) : (
-                                    <Link href={item.href} className="resource-link">
-                                      {item.label}
-                                    </Link>
-                                  )}
-                                </li>
-                              );
-                            })}
-                          </ul>
+  {safeResources.map((item, idx) => (
+    <li key={idx} className="resource-item">
+      {item.href ? (
+        <SmartLink href={item.href} className="resource-link" newTabIfExternal>
+          {item.label}
+        </SmartLink>
+      ) : (
+        <span className="resource-link" style={{ color: "#241123CC" }}>
+          {item.label}
+        </span>
+      )}
+    </li>
+  ))}
+</ul>
                         )}
                       </section>
                     )}
@@ -1453,39 +1475,45 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
 
                       <div className="partner-list">
                         {safePartners.map((p) => {
-                          const hasLogo = !!p.logoSrc;
-                          const external = isExternal(p.href);
+  const hasLogo = !!p.logoSrc;
+  const href = cleanHref(p.href); // ✅ might be undefined
+  const className = `partner-bar ${hasLogo ? "" : "partner-no-logo"}`;
 
-                          if (!external) {
-                            return (
-                              <Link
-                                key={p.name}
-                                href={p.href}
-                                className={`partner-bar ${hasLogo ? "" : "partner-no-logo"}`}
-                              >
-                                {hasLogo && <PartnerLogoShell src={p.logoSrc} alt={p.logoAlt ?? p.name} />}
-                                <div className="partner-text">
-                                  <span className="partner-name">{p.name}</span>
-                                </div>
-                              </Link>
-                            );
-                          }
+  // No link → render as plain row (keep text + optional logo)
+  if (!href) {
+    return (
+      <div key={p.name} className={className}>
+        {hasLogo && <PartnerLogoShell src={p.logoSrc} alt={p.logoAlt ?? p.name} />}
+        <div className="partner-text">
+          <span className="partner-name">{p.name}</span>
+        </div>
+      </div>
+    );
+  }
 
-                          return (
-                            <a
-                              key={p.name}
-                              href={p.href}
-                              className={`partner-bar ${hasLogo ? "" : "partner-no-logo"}`}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              {hasLogo && <PartnerLogoShell src={p.logoSrc} alt={p.logoAlt ?? p.name} />}
-                              <div className="partner-text">
-                                <span className="partner-name">{p.name}</span>
-                              </div>
-                            </a>
-                          );
-                        })}
+  const external = isExternal(href);
+
+  if (!external) {
+    return (
+      <Link key={p.name} href={href} className={className}>
+        {hasLogo && <PartnerLogoShell src={p.logoSrc} alt={p.logoAlt ?? p.name} />}
+        <div className="partner-text">
+          <span className="partner-name">{p.name}</span>
+        </div>
+      </Link>
+    );
+  }
+
+  return (
+    <a key={p.name} href={href} className={className} target="_blank" rel="noreferrer">
+      {hasLogo && <PartnerLogoShell src={p.logoSrc} alt={p.logoAlt ?? p.name} />}
+      <div className="partner-text">
+        <span className="partner-name">{p.name}</span>
+      </div>
+    </a>
+  );
+})}
+
                       </div>
                     </div>
                   )}

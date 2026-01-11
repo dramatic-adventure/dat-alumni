@@ -45,3 +45,5 @@ next-env.d.tspackage-lock.json
 .env
 .env.*
 .env.local
+
+/generated/prisma

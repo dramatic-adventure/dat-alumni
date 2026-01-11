@@ -18,7 +18,7 @@ type PageProps = { params: Promise<{ slug: string }> };
 // Match the partners shape expected by ProductionPageTemplate
 type PartnerForTemplate = {
   name: string;
-  href: string;
+  href?: string; // ✅ optional (so missing/empty href doesn't drop the partner)
   type: "community" | "artistic" | "impact" | "primary";
   logoSrc?: string;
   logoAlt?: string;
@@ -33,7 +33,7 @@ function slugToName(slug: string): string {
 }
 
 function splitArtists(
-  artists: Record<string, string[]>
+  artists: Record<string, string[]>,
 ): { creativeTeam: PersonRole[]; cast: PersonRole[] } {
   const creativeTeam: PersonRole[] = [];
   const cast: PersonRole[] = [];
@@ -57,16 +57,28 @@ function splitArtists(
 
 function derivePlaywright(
   p: Production,
-  extra?: ProductionExtra
+  extra?: ProductionExtra,
 ): string | undefined {
   if (extra?.playwright) return extra.playwright;
 
   const hit = Object.entries(p.artists).find(([, roles]) =>
-    roles.some((r) => r.toLowerCase().includes("playwright"))
+    roles.some((r) => r.toLowerCase().includes("playwright")),
   );
   if (!hit) return undefined;
 
   return slugToName(hit[0]);
+}
+
+/* ---------- Meta link helpers ---------- */
+
+function cleanStr(input?: string | null): string | undefined {
+  if (typeof input !== "string") return undefined;
+  const s = input.trim();
+  return s ? s : undefined;
+}
+
+function makeSearchHref(q: string): string {
+  return `https://www.google.com/search?q=${encodeURIComponent(q.trim())}`;
 }
 
 /* ---------- Image helpers ---------- */
@@ -100,7 +112,7 @@ function normalizeImagePath(input?: string | null): string | undefined {
 function getHeroImageUrl(
   slug: string,
   base: Production,
-  extra?: ProductionExtra
+  extra?: ProductionExtra,
 ): string {
   const normalizedPosterUrl =
     base.posterUrl &&
@@ -162,7 +174,8 @@ export default async function TheatreProductionPage({ params }: PageProps) {
     : undefined;
 
   const dramaClubName = extra?.dramaClubName ?? club?.name ?? undefined;
-  const dramaClubLocation = extra?.dramaClubLocation ?? club?.location ?? undefined;
+  const dramaClubLocation =
+    extra?.dramaClubLocation ?? club?.location ?? undefined;
 
   const defaultClubHref = club ? `/drama-clubs/${club.slug}` : undefined;
   const dramaClubLink = extra?.dramaClubLink ?? defaultClubHref;
@@ -173,38 +186,75 @@ export default async function TheatreProductionPage({ params }: PageProps) {
     extra?.creditPeople && extra.creditPeople.length > 0
       ? extra.creditPeople
       : creditPrefix && playwrightName
-      ? [{ name: playwrightName, href: playwrightHref }]
-      : undefined;
+        ? [{ name: playwrightName, href: playwrightHref }]
+        : undefined;
 
-  // Normalize partners to the template's expected shape
+  // ✅ Festival + link (explicit href wins; else generate an external search link)
+  const festivalText = cleanStr(extra?.festival ?? base.festival);
+  const festivalHref =
+    cleanStr(extra?.festivalHref) ??
+    (festivalText ? makeSearchHref(festivalText) : undefined);
+
+  // ✅ Venue fallback: prefer extra.venue, then productionMap venue
+  // ✅ Venue link: explicit href wins; else generate an external search link
+  const venueText = cleanStr(extra?.venue ?? base.venue);
+  const venueHref =
+    cleanStr(extra?.venueHref) ??
+    (venueText ? makeSearchHref(`${venueText} ${base.location}`) : undefined);
+
+  // ✅ Normalize partners but DO NOT drop partner text if href is missing/empty
   const normalizedPartners: PartnerForTemplate[] | undefined =
-    extra?.partners?.map((p): PartnerForTemplate => ({
-      name: p.name,
-      href: p.href,
-      type:
+    extra?.partners?.flatMap((p): PartnerForTemplate[] => {
+      const name = cleanStr(p?.name);
+      if (!name) return [];
+
+      const href = cleanStr(p?.href); // empty string -> undefined
+      const logoSrc = cleanStr(p?.logoSrc);
+      const logoAlt = cleanStr(p?.logoAlt);
+
+      const type: PartnerForTemplate["type"] =
         p.type === "artistic" ||
         p.type === "impact" ||
         p.type === "community" ||
         p.type === "primary"
           ? p.type
-          : "community",
-      logoSrc: p.logoSrc,
-      logoAlt: p.logoAlt,
-    })) ?? undefined;
+          : "community";
+
+      return [
+        {
+          name,
+          ...(href ? { href } : {}),
+          type,
+          ...(logoSrc ? { logoSrc } : {}),
+          ...(logoAlt ? { logoAlt } : {}),
+        },
+      ];
+    }) ?? undefined;
 
   // Map extra.processSections → template's ProcessSlice[]
+  // IMPORTANT: do not invent fallback images here; let the template drop empty slides.
+  // If videoUrl exists, it takes precedence and we omit image.
   const processSectionsForTemplate =
     extra?.processSections?.map((section) => {
+      const videoUrl = cleanStr(section.videoUrl);
+      const videoPoster = normalizeImagePath(section.videoPoster ?? undefined);
+
       const normalizedImageSrc = normalizeImagePath(section.image?.src);
-      const image: GalleryImage = {
-        src: normalizedImageSrc ?? "/images/teaching-amazon.jpg",
-        alt: section.image?.alt ?? "",
-      };
+      const image: GalleryImage | undefined =
+        !videoUrl && normalizedImageSrc
+          ? {
+              src: normalizedImageSrc,
+              alt: section.image?.alt ?? "",
+            }
+          : undefined;
 
       return {
         heading: section.heading,
         body: section.body,
         image,
+        videoUrl,
+        videoTitle: cleanStr(section.videoTitle),
+        videoPoster,
         quote: section.quote
           ? { text: section.quote.text, attribution: section.quote.attribution }
           : undefined,
@@ -221,7 +271,9 @@ export default async function TheatreProductionPage({ params }: PageProps) {
   return (
     <ProductionPageTemplate
       title={base.title}
-      seasonLabel={base.season ? `Season ${base.season} • ${base.year}` : String(base.year)}
+      seasonLabel={
+        base.season ? `Season ${base.season} • ${base.year}` : String(base.year)
+      }
       seasonHref={base.season ? `/season/${base.season}` : undefined}
       subtitle={extra?.subtitle}
       /* Credits */
@@ -231,10 +283,10 @@ export default async function TheatreProductionPage({ params }: PageProps) {
       playwrightHref={playwrightHref}
       /* Meta */
       dates={extra?.dates || base.festival || String(base.year)}
-      festival={extra?.festival ?? base.festival}
-      festivalHref={extra?.festivalHref}
-      venue={extra?.venue}
-      venueHref={extra?.venueHref}
+      festival={festivalText}
+      festivalHref={festivalHref}
+      venue={venueText}
+      venueHref={venueHref}
       city={extra?.city}
       location={base.location}
       runtime={extra?.runtime}

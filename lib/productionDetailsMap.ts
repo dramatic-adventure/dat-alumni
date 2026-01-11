@@ -12,7 +12,7 @@ import type {
 /** Link + optional logo for partners */
 export type PartnerLink = {
   name: string;
-  href: string;
+  href?: string; // ✅ optional
   /** page.tsx will normalize to the template’s union */
   type: "community" | "artistic" | "impact" | "primary";
   logoSrc?: string;
@@ -118,7 +118,7 @@ export interface ProductionExtra {
   /** Links section (replaces 'pressQuotes' with a general-purpose list) */
   resources?: Array<{
     label: string; // text shown in the RESOURCES list
-    href: string; // absolute or relative URL
+    href?: string; // ✅ optional // absolute or relative URL
   }>;
 
   /**
@@ -486,24 +486,23 @@ export const productionDetailsMap: Record<string, ProductionExtra> = {
       "",
 
     // Flexible credit line (preferred)
-    creditPrefix: "",
-    creditPeople: [
-      { name: "", href: "" },
-    ],
-
-    // Legacy playwright fields (kept to ensure both paths still behave)
-    playwright: "",
-    playwrightHref: "",
+    creditPrefix: "CONCEIVED & DEVISED BY",
+creditPeople: [
+  { name: "Kathleen Amshoff", href: "/alumni/kathleen-amshoff" },
+  { name: "Lisa Bearpark", href: "/alumni/lisa-bearpark" },
+  { name: "Jesse Baxter", href: "/alumni/jesse-baxter" },
+  { name: "Mary K. Baxter", href: "/alumni/mary-k-baxter" },
+  { name: "Oscar Manzini", href: "/alumni/oscar-manzini" },
+],
 
     useCustomAboutLayout: true,
 
     // Meta
     dates: "Original Production • 2007",
-    festival: "",
-    festivalHref: "",
-    venue: "",
-    venueHref: "",
-    city: "",
+    festival: "North East US Tour",
+    venue: "Load of Fun, Bricolage Production Co., and more",
+    venueHref: "https://www.bricolagepgh.org/",
+    city: "Baltimore, Pittsburg, and Rochester",
     runtime: "",
     ageRecommendation: "",
 
@@ -529,7 +528,7 @@ export const productionDetailsMap: Record<string, ProductionExtra> = {
     dramaClubName: "Bulawayo Young Company",
     dramaClubLocation: "Bulawayo, Zimbabwe",
     dramaClubLink:
-      "https://dramaticadventuretheatre.org/drama-clubs/bulawayo-young-company",
+      "/drama-club/bulawayo-young-company",
 
     causes: [
       {
