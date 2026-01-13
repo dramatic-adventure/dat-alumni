@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     } catch (e: any) {
       const msg = String(e?.message || e);
       // If the fileId isn't present yet, create a minimal row and retry
-      if (/fileId not found for this alumni\/kind/i.test(msg)) {
+      if (/fileid not found for this alumni\/kind/i.test(msg)) {
         await withRetry(
           () =>
             sheets.spreadsheets.values.append({
@@ -77,18 +77,18 @@ export async function POST(req: Request) {
               requestBody: {
                 values: [
                   [
-                    alumniId,        // alumniId
-                    kind,            // kind
-                    "",              // collectionId
-                    "",              // collectionTitle
-                    fileId,          // fileId
-                    "",              // externalUrl
-                    auth.email || "",// uploadedByEmail (best guess)
-                    nowIso,          // uploadedAt
-                    "",              // isCurrent (set by flip)
-                    "",              // isFeatured (set by flip)
-                    "",              // sortIndex
-                    "stub from /api/media/feature", // note
+                    alumniId, // A: alumniId
+                    kind, // B: kind
+                    "", // C: collectionId
+                    "", // D: collectionTitle
+                    fileId, // E: fileId
+                    "", // F: externalUrl
+                    auth.email || "", // G: uploadedByEmail (best guess)
+                    nowIso, // H: uploadedAt
+                    "", // I: isCurrent (set by flip)
+                    "", // J: isFeatured (set by flip)
+                    "", // K: sortIndex
+                    "stub from /api/media/feature", // L: note
                   ],
                 ],
               },
@@ -102,13 +102,13 @@ export async function POST(req: Request) {
       }
     }
 
-    // 2) Update Live pointer + pending + lastChangeType="media"
+    // 2) Update Live pointer + needs_review + lastChangeType="media"
     const updatedCol = await setLivePointer(spreadsheetId, alumniId, kind, fileId, nowIso);
 
     return NextResponse.json({
       ok: true,
       updated: { [updatedCol]: fileId },
-      status: "pending",
+      status: "needs_review",
       at: nowIso,
     });
   } catch (e: any) {

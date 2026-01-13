@@ -1,6 +1,29 @@
-// normalizeAlumniRow.ts
-import { Space } from "lucide-react";
-import { AlumniRow } from "./types";
+// lib/normalizeAlumniRow.ts
+import type { AlumniRow } from "./types";
+
+function getFirst(row: Record<string, string>, keys: string[]): string {
+  for (const k of keys) {
+    const v = row[k];
+    if (v != null && String(v).trim()) return String(v).trim();
+  }
+  return "";
+}
+
+function getLower(row: Record<string, string>, keys: string[]): string {
+  return getFirst(row, keys).toLowerCase();
+}
+
+function splitCsvish(raw: string): string[] {
+  return (raw || "")
+    .split(/[,;\n|]/g)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function truthy(raw: string): boolean {
+  const v = (raw || "").trim().toLowerCase();
+  return v === "true" || v === "yes" || v === "y" || v === "1" || v === "✓" || v === "checked";
+}
 
 function normalizeSingleUpdate(row: Record<string, string>) {
   const hasMeaningfulData =
@@ -10,14 +33,14 @@ function normalizeSingleUpdate(row: Record<string, string>) {
 
   const desc = row["update location"]?.trim() || "";
   const title = row["update date"]?.trim() || "";
-
-  const subheadline = [desc, title].filter(Boolean).join("   |   "); // only add separator if both exist
-
-
+  const subheadline = [desc, title].filter(Boolean).join("   |   ");
 
   return {
     tag: row["update tag"]?.trim() || "DAT Spotlight",
-    headline: row["update headline"]?.trim() || row["update body"]?.slice(0, 60) || "Spotlight Update",
+    headline:
+      row["update headline"]?.trim() ||
+      row["update body"]?.slice(0, 60) ||
+      "Spotlight Update",
     subheadline,
     subheadlineTitle: title,
     subheadlineDescription: desc,
@@ -28,59 +51,133 @@ function normalizeSingleUpdate(row: Record<string, string>) {
   };
 }
 
-
+/**
+ * Supports BOTH:
+ * - legacy Profile-Data CSV headers (lowercased by loadAlumni.ts)
+ * - new Profile-Live snapshot headers (we can choose either style)
+ */
 export function normalizeAlumniRow(row: Record<string, string>): AlumniRow | null {
-  const name = row["name"]?.trim();
-  const slug = row["slug"]?.trim()?.toLowerCase();
+  const name = getFirst(row, ["name"]);
+  const slugRaw = getFirst(row, ["slug", "canonicalslug", "profile slug", "profile-slug"]);
+  const slug = slugRaw.trim().toLowerCase();
+
   if (!name || !slug) return null;
 
-  const roles = row["role"]
-    ? row["role"].split(",").map(r => r.trim()).filter(Boolean)
-    : [];
-  const role = roles.join(", "); // Legacy support
+  // Roles: accept legacy "role" or new "roles"
+  const rolesRaw = getFirst(row, ["roles", "role"]);
+  const roles = rolesRaw ? splitCsvish(rolesRaw) : [];
+  const role = roles.join(", "); // legacy support
 
-  const identityTags = (row["identity tags"] || "").split(",").map(t => t.trim()).filter(Boolean);
-  const statusFlags = (row["status signifier"] || "").split(",").map(s => s.trim()).filter(Boolean);
-  const programBadges = (row["project badges"] || "").split(",").map(p => p.trim()).filter(Boolean);
-  const socials = (row["artist social links"] || "").split(",").map(s => s.trim()).filter(Boolean);
+  // Location + headshot: accept either world
+  const location = getFirst(row, ["location"]);
+  const headshotUrl = getFirst(row, [
+    "currentheadshoturl",
+    "current headshot url",
+    "headshot url",
+    "headshoturl",
+  ]);
 
+  // Bios: legacy "artist statement" maps to bioLong in Live world
+  const bioLong = getFirst(row, ["biolong", "bio long", "artist statement"]);
+  // bioShort is evergreen-ish summary; DO NOT map Current Work into this
+  const bioShort = getFirst(row, ["bioshort", "bio short"]);
+
+  // Current Work: tweet-like update field
+  const currentWork = getFirst(row, ["currentwork", "current work"]);
+
+  // Website: keep canonical field as website, but accept legacy "artist url"
+  const website = getFirst(row, ["website", "artist url", "profile url"]);
+
+  // Flags: DAT involvement chips (Founding Member, Staff, etc.)
+  // Accept either legacy "status signifier" or new "flags"
+  const flagsRaw = getFirst(row, ["flags", "status signifier", "status flags"]);
+  const statusFlags = flagsRaw ? splitCsvish(flagsRaw) : [];
+
+  // Legacy filter/tag fields (still supported if present)
+  const identityTagsRaw = getFirst(row, ["identity tags"]);
+  const identityTags = identityTagsRaw ? splitCsvish(identityTagsRaw) : [];
+
+  const programBadgesRaw = getFirst(row, ["project badges"]);
+  const programBadges = programBadgesRaw ? splitCsvish(programBadgesRaw) : [];
+
+  const socialsRaw = getFirst(row, ["artist social links", "social links", "socials"]);
+  const socials = socialsRaw ? splitCsvish(socialsRaw) : [];
+
+  // Seasons
   const programSeasons: number[] = [];
-  if (row["season"]) {
-    const seasonNums = row["season"]
+  const seasonRaw = getFirst(row, ["season"]);
+  if (seasonRaw) {
+    const seasonNums = seasonRaw
       .split(",")
-      .map(s => parseInt(s.trim(), 10))
-      .filter(n => !isNaN(n));
+      .map((s) => parseInt(s.trim(), 10))
+      .filter((n) => !isNaN(n));
     programSeasons.push(...seasonNums);
   }
 
-  const update = normalizeSingleUpdate(row); // ✅ Ensure not null in array
+  // Visibility: accept legacy "show on profile?" OR live "isPublic"
+  const showOnProfileRaw = getFirst(row, ["show on profile?", "ispublic", "is public"]);
+  // Keep the original string if it's legacy; but normalize if we’re in live-world
+  const showOnProfile = showOnProfileRaw
+    ? truthy(showOnProfileRaw)
+      ? "Yes"
+      : "No"
+    : "";
+
+  // Email: accept legacy OR live (note: public snapshot should omit, but normalize supports it)
+  const email = getFirst(row, ["email", "artist email"]).trim();
+
+  // lastModified: accept legacy lastmodified OR live updatedAt
+  const lastModifiedRaw = getFirst(row, ["lastmodified", "updatedat", "updated at"]);
+  const lastModified = lastModifiedRaw ? new Date(lastModifiedRaw) : null;
+
+  // Productions: legacy
+  const productionsRaw = getFirst(row, ["productions"]);
+  const productions = productionsRaw ? splitCsvish(productionsRaw) : [];
+
+  const festival = getFirst(row, ["festival"]);
+
+  // Updates feature (unchanged)
+  const update = normalizeSingleUpdate(row);
 
   return {
     slug,
     name,
     role,
     roles,
-    location: row["location"] || "",
-    headshotUrl: row["headshot url"] || "",
-    artistStatement: row["artist statement"] || "",
+
+    location,
+    headshotUrl,
+
+    // keep legacy field name in type, but fill from bioLong
+    artistStatement: bioLong || "",
+
     programBadges,
-    productions: row["productions"]?.split(",").map(p => p.trim()) || [],
-    festival: row["festival"] || "",
+    productions,
+    festival,
+
     identityTags,
     statusFlags,
     programSeasons,
 
     // ✅ New fields
-    lastModifiedRaw: row["lastmodified"] || "",
-    lastModified: row["lastmodified"] ? new Date(row["lastmodified"]) : null,
+    currentWork: currentWork || "",
 
-    email: row["artist email"]?.trim() || "",
-    website: row["artist url"]?.trim() || "",
+    // ✅ timestamps
+    lastModifiedRaw: lastModifiedRaw || "",
+    lastModified,
+
+    // contact-ish
+    email: email || "",
+    website: website || "",
     socials,
-    showOnProfile: row["show on profile?"] || "",
+
+    // visibility
+    showOnProfile,
+
     fieldNotes: [],
     imageUrls: [],
     posterUrls: [],
+
     updates: update ? [update] : [],
   };
 }

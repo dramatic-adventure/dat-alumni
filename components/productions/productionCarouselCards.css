@@ -1,0 +1,48 @@
+/* Shared carousel card styling (used on Production page + Alumni profiles) */
+
+.related-card{
+  flex: 0 0 auto;
+  width: min(340px, 78vw);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border-radius: 10px;
+  overflow: visible;
+  background: rgba(255,255,255,0.75);
+  border: 1px solid #2411231A;
+  transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+  scroll-snap-align: start;
+}
+.related-card:hover{
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 14px 28px rgba(36,17,35,0.16);
+  background: rgba(255,255,255,0.9);
+}
+
+.related-image-shell{
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #24112312;
+  overflow: hidden;
+}
+
+.related-meta{ padding: 8px 10px 10px; }
+
+.related-title{
+  font-family: var(--font-space-grotesk, system-ui, sans-serif);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .075em;
+  font-size: .86rem;
+  color: #241123;
+  line-height: 1.2;
+}
+.related-sub{
+  margin-top: 4px;
+  font-family: var(--font-space-grotesk, system-ui, sans-serif);
+  text-transform: uppercase;
+  letter-spacing: .11em;
+  font-size: .66rem;
+  font-weight: 600;
+  color: #24112380;
+}

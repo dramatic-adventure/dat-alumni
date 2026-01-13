@@ -1,5 +1,5 @@
-import { serverDebug, serverInfo, serverWarn, serverError } from "@/lib/serverDebug";
 // /lib/loadAlumni.ts
+import { serverDebug, serverInfo, serverWarn, serverError } from "@/lib/serverDebug";
 import "server-only";
 // (note: `export {}` at top isn't needed; TS treats this file as a module already)
 
@@ -16,10 +16,18 @@ const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
  * Env
  * ────────────────────────────────────────────────────────── */
 
+// ✅ Default to internal API exports (Profile-Live source of truth)
+// Env overrides still supported for emergency.
 const csvUrl =
-  process.env.ALUMNI_CSV_URL || process.env.NEXT_PUBLIC_ALUMNI_CSV_URL;
+  process.env.ALUMNI_CSV_URL ||
+  process.env.NEXT_PUBLIC_ALUMNI_CSV_URL ||
+  "/api/alumni/lookup?export=alumni.csv";
+
 const slugCsvUrl =
-  process.env.SLUGS_CSV_URL || process.env.NEXT_PUBLIC_SLUGS_CSV_URL;
+  process.env.SLUGS_CSV_URL ||
+  process.env.NEXT_PUBLIC_SLUGS_CSV_URL ||
+  "/api/alumni/lookup?export=slug-map.csv";
+
 const spreadsheetId = process.env.ALUMNI_SHEET_ID || "";
 const AUTO_CANON =
   (process.env.AUTO_CANONICALIZE_SLUGS ?? "true").toLowerCase() === "true";
@@ -36,6 +44,7 @@ if (DEBUG) {
   serverDebug("✅ Using Alumni CSV URL:", csvUrl || "❌ NONE FOUND");
   serverDebug("🔍 SLUGS_CSV_URL:", process.env.SLUGS_CSV_URL);
   serverDebug("🔍 NEXT_PUBLIC_SLUGS_CSV_URL:", process.env.NEXT_PUBLIC_SLUGS_CSV_URL);
+  serverDebug("✅ Using Slug CSV URL:", slugCsvUrl || "❌ NONE FOUND");
   serverDebug("🔍 ALUMNI_SHEET_ID:", spreadsheetId ? "<set>" : "<missing>");
   serverDebug("🔧 AUTO_CANONICALIZE_SLUGS:", AUTO_CANON);
   serverDebug("🔧 AUTO_CANON_CREATE_ON_MISS:", AUTO_CANON_CREATE_ON_MISS);

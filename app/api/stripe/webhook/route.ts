@@ -287,54 +287,47 @@ async function safeCreateOrUpdateDonationPayment(
 
     // Backfill the existing row (avoid leaving an “early/blank” record forever)
     if (where.stripeInvoiceId) {
-  await tx.donationPayment.updateMany({
-    where: { stripeInvoiceId: where.stripeInvoiceId },
-    data: {
-      // ---- donor snapshot ----
-      donorKey: (data as any).donorKey ?? undefined,
-      donorEmail: (data as any).donorEmail ?? undefined,
-      donorName: (data as any).donorName ?? undefined,
-      billingCountry: (data as any).billingCountry ?? undefined,
+      await tx.donationPayment.updateMany({
+        where: { stripeInvoiceId: where.stripeInvoiceId },
+        data: {
+          donorKey: (data as any).donorKey ?? undefined,
+          donorEmail: (data as any).donorEmail ?? undefined,
+          donorName: (data as any).donorName ?? undefined,
+          billingCountry: (data as any).billingCountry ?? undefined,
 
-      // ---- amounts + currency (important backfill) ----
-      amountMinor: (data as any).amountMinor,
-      currency: (data as any).currency,
+          amountMinor: (data as any).amountMinor,
+          currency: (data as any).currency,
 
-      // ---- Stripe linkage (important backfill) ----
-      stripeCustomerId: (data as any).stripeCustomerId ?? undefined,
-      stripePaymentIntentId: (data as any).stripePaymentIntentId ?? undefined,
-      stripeSubscriptionId: (data as any).stripeSubscriptionId ?? undefined,
-      periodStart: (data as any).periodStart ?? undefined,
-      periodEnd: (data as any).periodEnd ?? undefined,
+          stripeSessionId: (data as any).stripeSessionId ?? undefined,
+          stripeCustomerId: (data as any).stripeCustomerId ?? undefined,
+          stripePaymentIntentId: (data as any).stripePaymentIntentId ?? undefined,
+          stripeSubscriptionId: (data as any).stripeSubscriptionId ?? undefined,
+          periodStart: (data as any).periodStart ?? undefined,
+          periodEnd: (data as any).periodEnd ?? undefined,
 
-      // ---- attribution (required + snapshots) ----
-      campaignSlug: (data as any).campaignSlug,
-      contextType: (data as any).contextType,
-      contextId: (data as any).contextId,
+          campaignSlug: (data as any).campaignSlug,
+          contextType: (data as any).contextType,
+          contextId: (data as any).contextId,
 
-      contextLabel: (data as any).contextLabel ?? undefined,
-      tierId: (data as any).tierId ?? undefined,
-      tierLabel: (data as any).tierLabel ?? undefined,
-      amountType: (data as any).amountType,
+          contextLabel: (data as any).contextLabel ?? undefined,
+          tierId: (data as any).tierId ?? undefined,
+          tierLabel: (data as any).tierLabel ?? undefined,
+          amountType: (data as any).amountType,
 
-      // ---- attribution (optional but valuable) ----
-      utmSource: (data as any).utmSource ?? undefined,
-      utmMedium: (data as any).utmMedium ?? undefined,
-      utmCampaign: (data as any).utmCampaign ?? undefined,
-      utmContent: (data as any).utmContent ?? undefined,
-      utmTerm: (data as any).utmTerm ?? undefined,
-      referrer: (data as any).referrer ?? undefined,
-      landingPath: (data as any).landingPath ?? undefined,
+          utmSource: (data as any).utmSource ?? undefined,
+          utmMedium: (data as any).utmMedium ?? undefined,
+          utmCampaign: (data as any).utmCampaign ?? undefined,
+          utmContent: (data as any).utmContent ?? undefined,
+          utmTerm: (data as any).utmTerm ?? undefined,
+          referrer: (data as any).referrer ?? undefined,
+          landingPath: (data as any).landingPath ?? undefined,
 
-      // ---- status + idempotency stamp ----
-      status: (data as any).status,
-      stripeEventId: (data as any).stripeEventId,
-    },
-  });
-  return;
-}
-
-
+          status: (data as any).status,
+          stripeEventId: (data as any).stripeEventId,
+        },
+      });
+      return;
+    }
 
     if (where.stripePaymentIntentId) {
       await tx.donationPayment.updateMany({

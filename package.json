@@ -11,7 +11,9 @@
     "lint:fix": "next lint --fix",
     "eslint:all": "eslint . --ext .js,.jsx,.ts,.tsx",
     "eslint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "migrate:profiles": "tsx scripts/migrateProfileDataToLive.ts",
+    "migrate:profiles:dry": "DRY_RUN=1 tsx scripts/migrateProfileDataToLive.ts"
   },
   "dependencies": {
     "@fontsource/space-grotesk": "^5.2.10",

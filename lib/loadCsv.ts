@@ -1,4 +1,4 @@
-// lib/loadCsv.ts
+// /lib/loadCsv.ts
 "use server";
 
 import { serverDebug, serverInfo, serverWarn } from "@/lib/serverDebug";
@@ -21,6 +21,10 @@ type LoadCsvOptions = {
  * - Only uses no-store + cache-buster when `noStore: true`
  * - Falls back to Google Sheets API with Service Account on 401/403 for /spreadsheets/d/<fileId> URLs
  * - SA fallback is gated by DISABLE_SA_FALLBACK=1 and bounded retries with backoff
+ *
+ * NOTE:
+ * - On many production hosts (e.g. Vercel), the filesystem is read-only at runtime.
+ *   Fallback writes are therefore best-effort and should never break the request.
  */
 export async function loadCsv(
   sourceUrl?: string,
@@ -230,9 +234,16 @@ export async function loadCsv(
   if (sourceUrl) {
     try {
       const csv = await tryHttpFetch(sourceUrl);
-      await fs.mkdir(path.dirname(fallbackPath), { recursive: true });
-      await fs.writeFile(fallbackPath, csv, "utf-8");
-      if (DEBUG) serverDebug("✅ [loadCsv] HTTP fetch ok; fallback updated:", fallbackFileName);
+
+      // Best-effort fallback write (never break runtime if FS is read-only)
+      try {
+        await fs.mkdir(path.dirname(fallbackPath), { recursive: true });
+        await fs.writeFile(fallbackPath, csv, "utf-8");
+        if (DEBUG) serverDebug("✅ [loadCsv] HTTP fetch ok; fallback updated:", fallbackFileName);
+      } catch (e) {
+        if (DEBUG) serverWarn("⚠️ [loadCsv] Could not write fallback (likely read-only FS):", String(e));
+      }
+
       return csv;
     } catch (err: any) {
       const status = err?.status;
@@ -241,9 +252,16 @@ export async function loadCsv(
       if (authError && isDocsHost(sourceUrl) && isSheetsFileUrl(sourceUrl)) {
         try {
           const csv = stripBOM(await tryServiceAccountSheetsBounded(sourceUrl));
-          await fs.mkdir(path.dirname(fallbackPath), { recursive: true });
-          await fs.writeFile(fallbackPath, csv, "utf-8");
-          if (DEBUG) serverDebug("✅ [loadCsv] SA Sheets fallback ok; fallback updated:", fallbackFileName);
+
+          // Best-effort fallback write (never break runtime)
+          try {
+            await fs.mkdir(path.dirname(fallbackPath), { recursive: true });
+            await fs.writeFile(fallbackPath, csv, "utf-8");
+            if (DEBUG) serverDebug("✅ [loadCsv] SA Sheets fallback ok; fallback updated:", fallbackFileName);
+          } catch (e) {
+            if (DEBUG) serverWarn("⚠️ [loadCsv] Could not write fallback (likely read-only FS):", String(e));
+          }
+
           return csv;
         } catch (saErr: any) {
           serverWarn("⚠️ [loadCsv] SA fallback failed:", saErr?.message || String(saErr));

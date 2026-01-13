@@ -13,15 +13,12 @@ import {
 } from "@/lib/loadAlumni";
 import { getAllStories } from "@/lib/loadRows";
 import AlumniProfilePage from "@/components/alumni/AlumniProfilePage";
-import {
-  getSlugAliases,
-  normSlug,
-  resolveCanonicalSlug,
-} from "@/lib/slugAliases";
+import { getSlugAliases, normSlug, resolveCanonicalSlug } from "@/lib/slugAliases";
 import { filterRowsByAliases } from "@/lib/rowsByAliases";
 import { loadCsv } from "@/lib/loadCsv";
 import { normalizeEmbeddedRefs } from "@/lib/normalizeEmbeddedRefs";
 import { rateLog, logOnce } from "@/lib/logHelpers";
+import { CanonicalSlugGate } from "@/components/alumni/CanonicalSlugGate";
 
 type PageProps = {
   params: { slug: string | string[] };
@@ -93,31 +90,48 @@ type Row = Record<string, string>;
 
 function parseCsv(text: string): Row[] {
   const rows: string[][] = [];
-  let cell = "", row: string[] = [], inQ = false;
+  let cell = "",
+    row: string[] = [],
+    inQ = false;
+
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
     if (inQ) {
       if (ch === '"') {
-        if (text[i + 1] === '"') { cell += '"'; i++; }
-        else inQ = false;
+        if (text[i + 1] === '"') {
+          cell += '"';
+          i++;
+        } else inQ = false;
       } else cell += ch;
     } else {
       if (ch === '"') inQ = true;
-      else if (ch === ",") { row.push(cell); cell = ""; }
-      else if (ch === "\n") { row.push(cell); rows.push(row); row = []; cell = ""; }
-      else if (ch !== "\r") cell += ch;
+      else if (ch === ",") {
+        row.push(cell);
+        cell = "";
+      } else if (ch === "\n") {
+        row.push(cell);
+        rows.push(row);
+        row = [];
+        cell = "";
+      } else if (ch !== "\r") cell += ch;
     }
   }
-  row.push(cell); rows.push(row);
+  row.push(cell);
+  rows.push(row);
+
   if (!rows.length) return [];
-  const header = rows[0].map(h =>
+  const header = rows[0].map((h) =>
     (h || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")
   );
+
   const out: Row[] = [];
   for (let r = 1; r < rows.length; r++) {
-    const cells = rows[r]; if (!cells || cells.every(c => c === "")) continue;
+    const cells = rows[r];
+    if (!cells || cells.every((c) => c === "")) continue;
     const obj: Row = {};
-    for (let c = 0; c < header.length; c++) obj[header[c] || `col-${c}`] = (cells[c] ?? "").trim();
+    for (let c = 0; c < header.length; c++) {
+      obj[header[c] || `col-${c}`] = (cells[c] ?? "").trim();
+    }
     out.push(obj);
   }
   return out;
@@ -151,7 +165,7 @@ async function listDriveFiles(folderId: string, max = 40) {
       orderBy: "createdTime desc",
     });
 
-    const files = (data.files || []);
+    const files = data.files || [];
     return files.map((f) => {
       const id = f.id!;
       const view = f.webViewLink || `https://drive.google.com/file/d/${id}/view`;
@@ -200,7 +214,7 @@ async function readCollectionsViaSheetsApi(): Promise<string> {
         const s = String(cell ?? "");
         return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
       })
-      .join(","),
+      .join(",")
   );
   return rows.join("\n");
 }
@@ -219,8 +233,7 @@ async function loadCollectionsFor({
 
   if (process.env.NEXT_PUBLIC_COLLECTIONS_CSV_URL)
     candidates.push(process.env.NEXT_PUBLIC_COLLECTIONS_CSV_URL);
-  if (process.env.COLLECTIONS_CSV_URL)
-    candidates.push(process.env.COLLECTIONS_CSV_URL);
+  if (process.env.COLLECTIONS_CSV_URL) candidates.push(process.env.COLLECTIONS_CSV_URL);
 
   const result = { imageUrls: [] as string[], posterUrls: [] as string[] };
   let csvText = "";
@@ -243,7 +256,11 @@ async function loadCollectionsFor({
 
   if (!csvText) {
     try {
-      logOnce("collections-try-sheets", undefined, "📦 [collections] trying Sheets API fallback…");
+      logOnce(
+        "collections-try-sheets",
+        undefined,
+        "📦 [collections] trying Sheets API fallback…"
+      );
       csvText = await readCollectionsViaSheetsApi();
     } catch (e) {
       rateLog(
@@ -317,16 +334,13 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
 
   const suffix = qsFrom(searchParams);
 
-  // 1) Resolve any alias → latest (canonical) for the URL
+  // 1) Resolve any alias → latest (canonical) for the URL (server redirect)
   const canonical = await resolveCanonicalSlug(incoming);
   if (canonical && canonical !== incoming) {
-    rateLog(
-      "slug-forward-redirect",
-      undefined,
-      60_000,
-      "[slug] forward-redirect",
-      { incoming, canonical }
-    );
+    rateLog("slug-forward-redirect", undefined, 60_000, "[slug] forward-redirect", {
+      incoming,
+      canonical,
+    });
     // Best-effort write-through (harmless if disabled)
     ensureCanonicalAlumniSlug(incoming, canonical).catch(() => {});
     redirect(`/alumni/${encodeURIComponent(canonical)}${suffix}`);
@@ -341,23 +355,15 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
 
   // 4) STORIES
   const allStories = await getAllStories();
-  const storiesForThisAlum = filterRowsByAliases(
-    allStories,
-    aliases,
-    alumni.name,
-    {
-      slugFields: ["slug", "alumniSlug", "profileSlug", "authorSlug"],
-      nameFields: ["name", "alumniName", "author", "authorName"],
-      akaFields: ["aka", "aliases", "previousNames", "formerNames"],
-    }
-  );
+  const storiesForThisAlum = filterRowsByAliases(allStories, aliases, alumni.name, {
+    slugFields: ["slug", "alumniSlug", "profileSlug", "authorSlug"],
+    nameFields: ["name", "alumniName", "author", "authorName"],
+    akaFields: ["aka", "aliases", "previousNames", "formerNames"],
+  });
 
   // 5) COLLECTIONS
   const alumniId =
-    (alumni as any).alumniId ||
-    (alumni as any).id ||
-    (alumni as any).recordId ||
-    "";
+    (alumni as any).alumniId || (alumni as any).id || (alumni as any).recordId || "";
   const coll = await loadCollectionsFor({
     aliases,
     alumniId: String(alumniId || ""),
@@ -384,44 +390,47 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
   pushNameAliases((alumni as any).aliases);
 
   const normalizedAlumni = normalizeEmbeddedRefs(alumni, {
-    canonicalSlug: alumni.slug || canonical || incoming,
+    canonicalSlug: (alumni as any).slug || canonical || incoming,
     aliases,
     alsoNormalizeNames: true,
     nameAliases,
-    canonicalName: alumni.name,
+    canonicalName: (alumni as any).name,
   });
 
   // Ensure artistStatement is a proper string (avoid comma-joined arrays)
   const safeArtistStatement =
-    typeof normalizedAlumni.artistStatement === "string"
-      ? normalizedAlumni.artistStatement
-      : Array.isArray(normalizedAlumni.artistStatement)
-        ? (normalizedAlumni.artistStatement as string[]).filter(Boolean).join("\n\n")
+    typeof (normalizedAlumni as any).artistStatement === "string"
+      ? (normalizedAlumni as any).artistStatement
+      : Array.isArray((normalizedAlumni as any).artistStatement)
+        ? ((normalizedAlumni as any).artistStatement as string[]).filter(Boolean).join("\n\n")
         : "";
 
   // 7) Render
   return (
     <>
+      {/* Client-side self-heal fallback (uses /api/alumni/lookup) */}
+      <CanonicalSlugGate slug={incoming} basePath="/alumni" />
+
       <AlumniProfilePage
         data={{
-          slug: normalizedAlumni.slug,
-          name: normalizedAlumni.name,
-          role: normalizedAlumni.roles?.[0] || "",
-          roles: normalizedAlumni.roles || [],
-          location: normalizedAlumni.location || "",
-          headshotUrl: normalizedAlumni.headshotUrl || "",
-          identityTags: normalizedAlumni.identityTags || [],
-          statusFlags: normalizedAlumni.statusFlags || [],
-          programBadges: normalizedAlumni.programBadges || [],
-          programSeasons: normalizedAlumni.programSeasons || [],
+          slug: (normalizedAlumni as any).slug,
+          name: (normalizedAlumni as any).name,
+          role: (normalizedAlumni as any).roles?.[0] || "",
+          roles: (normalizedAlumni as any).roles || [],
+          location: (normalizedAlumni as any).location || "",
+          headshotUrl: (normalizedAlumni as any).headshotUrl || "",
+          identityTags: (normalizedAlumni as any).identityTags || [],
+          statusFlags: (normalizedAlumni as any).statusFlags || [],
+          programBadges: (normalizedAlumni as any).programBadges || [],
+          programSeasons: (normalizedAlumni as any).programSeasons || [],
           artistStatement: safeArtistStatement,
-          fieldNotes: normalizedAlumni.fieldNotes || [],
+          fieldNotes: (normalizedAlumni as any).fieldNotes || [],
           imageUrls: mergedImageUrls,
           posterUrls: mergedPosterUrls,
-          email: normalizedAlumni.email || "",
-          website: normalizedAlumni.website || "",
-          socials: normalizedAlumni.socials || [],
-          updates: normalizedAlumni.updates || [],
+          email: (normalizedAlumni as any).email || "",
+          website: (normalizedAlumni as any).website || "",
+          socials: (normalizedAlumni as any).socials || [],
+          updates: (normalizedAlumni as any).updates || [],
         }}
         allStories={storiesForThisAlum}
       />

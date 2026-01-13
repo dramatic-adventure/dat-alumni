@@ -1,3 +1,4 @@
+// /app/api/alumni/upload/route.ts
 import { NextResponse } from "next/server";
 import { driveClient, sheetsClient } from "@/lib/googleClients";
 import { getFolderIdForKind, MediaKind } from "@/lib/profileFolders";
@@ -11,7 +12,9 @@ export const runtime = "nodejs";
 /* Small types so TS is happy (we don't import full Google types)            */
 /* ────────────────────────────────────────────────────────────────────────── */
 type DriveCreateResp = { data: { id?: string } };
-type DriveListResp = { data: { files?: Array<{ id: string; name: string }>; nextPageToken?: string } };
+type DriveListResp = {
+  data: { files?: Array<{ id: string; name: string }>; nextPageToken?: string };
+};
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /* Utils                                                                     */
@@ -64,7 +67,12 @@ function safeExtFromMime(mime: string, fallback = ""): string {
   return fallback;
 }
 
-async function withRetry<T>(fn: () => Promise<T>, label: string, tries = 3, baseDelayMs = 250): Promise<T> {
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  label: string,
+  tries = 3,
+  baseDelayMs = 250
+): Promise<T> {
   let lastErr: any;
   for (let attempt = 1; attempt <= tries; attempt++) {
     try {
@@ -73,7 +81,9 @@ async function withRetry<T>(fn: () => Promise<T>, label: string, tries = 3, base
       lastErr = e;
       const msg = String(e?.message || e);
       if (
-        /ECONNRESET|ENOTFOUND|ETIMEDOUT|EPIPE|socket hang up|rateLimitExceeded|backendError|internalError/i.test(msg) &&
+        /ECONNRESET|ENOTFOUND|ETIMEDOUT|EPIPE|socket hang up|rateLimitExceeded|backendError|internalError/i.test(
+          msg
+        ) &&
         attempt < tries
       ) {
         const delay = baseDelayMs * Math.pow(2, attempt - 1);
@@ -95,6 +105,10 @@ function idxOf(header: string[], candidates: string[]) {
   return -1;
 }
 
+function normId(x: unknown) {
+  return String(x ?? "").trim().toLowerCase();
+}
+
 /* ────────────────────────────────────────────────────────────────────────── */
 /* Request parsing                                                           */
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -106,7 +120,7 @@ type UploadPayload = {
   buffer: Buffer;
   collectionId?: string;
   collectionTitle?: string; // aka albumName
-  isFeatured?: string;      // "TRUE"/"FALSE"
+  isFeatured?: string; // "TRUE"/"FALSE"
   sortIndex?: string;
   note?: string;
   uploadedByEmail?: string;
@@ -136,25 +150,26 @@ async function readUploadPayload(req: Request): Promise<UploadPayload> {
       note: String(form.get("note") || ""),
       uploadedByEmail: String(form.get("uploadedByEmail") || ""),
     };
-  } else {
-    const body = (await req.json()) as any;
-    if (!body?.data) throw new Error("Missing 'data' (base64) in JSON body");
-    const base64: string = String(body.data).split(",").pop()!;
-    const buffer = Buffer.from(base64, "base64");
-    return {
-      alumniId: String(body.alumniId || "").trim(),
-      kind: String(body.kind || "").trim() as MediaKind,
-      name: String(body.name || "upload"),
-      mimeType: String(body.mimeType || "application/octet-stream"),
-      buffer,
-      collectionId: String(body.collectionId || ""),
-      collectionTitle: String(body.collectionTitle || body.albumName || ""),
-      isFeatured: String(body.isFeatured || ""),
-      sortIndex: String(body.sortIndex || ""),
-      note: String(body.note || ""),
-      uploadedByEmail: String(body.uploadedByEmail || ""),
-    };
   }
+
+  const body = (await req.json()) as any;
+  if (!body?.data) throw new Error("Missing 'data' (base64) in JSON body");
+  const base64: string = String(body.data).split(",").pop()!;
+  const buffer = Buffer.from(base64, "base64");
+
+  return {
+    alumniId: String(body.alumniId || "").trim(),
+    kind: String(body.kind || "").trim() as MediaKind,
+    name: String(body.name || "upload"),
+    mimeType: String(body.mimeType || "application/octet-stream"),
+    buffer,
+    collectionId: String(body.collectionId || ""),
+    collectionTitle: String(body.collectionTitle || body.albumName || ""),
+    isFeatured: String(body.isFeatured || ""),
+    sortIndex: String(body.sortIndex || ""),
+    note: String(body.note || ""),
+    uploadedByEmail: String(body.uploadedByEmail || ""),
+  };
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -167,7 +182,7 @@ const LIVE_ASSET_COL: Record<MediaKind, string> = {
   event: "featuredEventId",
 };
 
-async function markLivePending(
+async function markLiveNeedsReview(
   sheets: ReturnType<typeof sheetsClient>,
   spreadsheetId: string,
   alumniId: string,
@@ -178,20 +193,25 @@ async function markLivePending(
     "Sheets get Profile-Live"
   );
   const rows = live.data.values ?? [];
+  if (!rows.length) throw new Error("Profile-Live has no header row");
+
   const header = rows[0] ?? [];
-  const idIdx = idxOf(header, ["alumniid", "slug", "alumni id"]);
+  const idIdx = idxOf(header, ["alumniid", "slug", "alumni id", "id"]);
   if (idIdx === -1) throw new Error(`Profile-Live missing "alumniId" header`);
+
   const statusIdx = idxOf(header, ["status"]);
   const updatedIdx = idxOf(header, ["updatedat", "updated at"]);
   const lastChangeIdx = idxOf(header, ["lastchangetype"]);
 
-  let rowIndex = rows.findIndex((r, i) => i > 0 && String(r[idIdx] || "") === alumniId);
+  let rowIndex = rows.findIndex(
+    (r, i) => i > 0 && normId((r as any[])[idIdx]) === normId(alumniId)
+  );
 
   if (rowIndex === -1) {
     rowIndex = rows.length;
     const newRow: string[] = Array(header.length).fill("");
-    newRow[idIdx] = alumniId;
-    if (statusIdx !== -1) newRow[statusIdx] = "pending";
+    newRow[idIdx] = normId(alumniId);
+    if (statusIdx !== -1) newRow[statusIdx] = "needs_review";
     if (updatedIdx !== -1) newRow[updatedIdx] = nowIso;
     if (lastChangeIdx !== -1) newRow[lastChangeIdx] = "media";
 
@@ -206,8 +226,10 @@ async function markLivePending(
       "Sheets update Profile-Live (create row)"
     );
   } else {
-    const row = rows[rowIndex] as string[];
-    if (statusIdx !== -1) row[statusIdx] = "pending";
+    const row = [...(rows[rowIndex] ?? [])] as string[];
+    if (row.length < header.length) row.length = header.length;
+
+    if (statusIdx !== -1) row[statusIdx] = "needs_review";
     if (updatedIdx !== -1) row[updatedIdx] = nowIso;
     if (lastChangeIdx !== -1) row[lastChangeIdx] = "media";
 
@@ -219,7 +241,7 @@ async function markLivePending(
           valueInputOption: "RAW",
           requestBody: { values: [row] },
         }),
-      "Sheets update Profile-Live (mark pending)"
+      "Sheets update Profile-Live (mark needs_review)"
     );
   }
 }
@@ -237,23 +259,29 @@ async function setLivePointerIfFeatured(
     "Sheets get Profile-Live"
   );
   const rows = live.data.values ?? [];
+  if (!rows.length) throw new Error("Profile-Live has no header row");
+
   const header = rows[0] ?? [];
-  const idIdx = idxOf(header, ["alumniid", "slug", "alumni id"]);
+  const idIdx = idxOf(header, ["alumniid", "slug", "alumni id", "id"]);
   if (idIdx === -1) throw new Error(`Profile-Live missing "alumniId" header`);
+
   const statusIdx = idxOf(header, ["status"]);
   const updatedIdx = idxOf(header, ["updatedat", "updated at"]);
   const lastChangeIdx = idxOf(header, ["lastchangetype"]);
+
   const assetCol = LIVE_ASSET_COL[kind];
   const assetIdx = idxOf(header, [assetCol]);
 
-  let rowIndex = rows.findIndex((r, i) => i > 0 && String(r[idIdx] || "") === alumniId);
+  let rowIndex = rows.findIndex(
+    (r, i) => i > 0 && normId((r as any[])[idIdx]) === normId(alumniId)
+  );
 
   if (rowIndex === -1) {
     rowIndex = rows.length;
     const newRow: string[] = Array(header.length).fill("");
-    newRow[idIdx] = alumniId;
+    newRow[idIdx] = normId(alumniId);
     if (assetIdx !== -1) newRow[assetIdx] = fileId;
-    if (statusIdx !== -1) newRow[statusIdx] = "pending";
+    if (statusIdx !== -1) newRow[statusIdx] = "needs_review";
     if (updatedIdx !== -1) newRow[updatedIdx] = nowIso;
     if (lastChangeIdx !== -1) newRow[lastChangeIdx] = "media";
 
@@ -268,9 +296,11 @@ async function setLivePointerIfFeatured(
       "Sheets update Profile-Live (create & set pointer)"
     );
   } else {
-    const row = rows[rowIndex] as string[];
+    const row = [...(rows[rowIndex] ?? [])] as string[];
+    if (row.length < header.length) row.length = header.length;
+
     if (assetIdx !== -1) row[assetIdx] = fileId;
-    if (statusIdx !== -1) row[statusIdx] = "pending";
+    if (statusIdx !== -1) row[statusIdx] = "needs_review";
     if (updatedIdx !== -1) row[updatedIdx] = nowIso;
     if (lastChangeIdx !== -1) row[lastChangeIdx] = "media";
 
@@ -295,30 +325,31 @@ async function getDisplayNameSlug(
   spreadsheetId: string,
   alumniId: string
 ): Promise<string> {
-  // Try Profile-Live for a usable name column
   const res = await withRetry(
     () => sheets.spreadsheets.values.get({ spreadsheetId, range: "Profile-Live!A:ZZ" }),
     "Sheets get Profile-Live (for name)"
   );
   const rows = res.data.values ?? [];
   const header = rows[0] ?? [];
-  const idIdx = idxOf(header, ["alumniid", "slug", "alumni id"]);
+  const idIdx = idxOf(header, ["alumniid", "slug", "alumni id", "id"]);
   const nameIdx =
     idxOf(header, ["name"]) !== -1
       ? idxOf(header, ["name"])
       : idxOf(header, ["displayname", "display name", "preferredname", "preferred name"]);
 
   if (idIdx !== -1 && nameIdx !== -1) {
-    const row = rows.find((r, i) => i > 0 && String(r[idIdx] || "") === alumniId) as string[] | undefined;
+    const row = rows.find(
+      (r, i) => i > 0 && normId((r as any[])[idIdx]) === normId(alumniId)
+    ) as string[] | undefined;
+
     const val = row?.[nameIdx];
-    if (val && val.trim()) return slugify(val);
+    if (val && String(val).trim()) return slugify(val);
   }
-  // fallback to alumniId slug
   return slugify(alumniId);
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
-/* NEW: Collections + folders                                                 */
+/* NEW: Collections + folders                                                */
 /* ────────────────────────────────────────────────────────────────────────── */
 function genCollectionId() {
   return `C-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -329,8 +360,11 @@ async function findOrCreateFolder(
   parentId: string,
   name: string
 ): Promise<string> {
-  const q =
-    `'${parentId}' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder' and name = '${name.replace(/'/g, "\\'")}'`;
+  const q = `'${parentId}' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder' and name = '${name.replace(
+    /'/g,
+    "\\'"
+  )}'`;
+
   const list = (await withRetry(
     () => (drive.files.list as any)({ q, fields: "files(id,name)" }),
     "Drive list folder"
@@ -393,7 +427,7 @@ async function ensureCollection(
     );
   }
 
-  const iAid = idxOf(header, ["alumniid", "slug", "alumni id"]);
+  const iAid = idxOf(header, ["alumniid", "alumni id", "id", "slug"]);
   const iDrive = idxOf(header, ["drivefolderid", "drive folder id"]);
   const iCid = idxOf(header, ["collectionid", "collection id"]);
   const iKind = idxOf(header, ["kind"]);
@@ -408,18 +442,17 @@ async function ensureCollection(
   const matchIndex = values.findIndex(
     (r, i) =>
       i > 0 &&
-      String(r[iAid] || "") === alumniId &&
+      normId(r[iAid]) === normId(alumniId) &&
       String(r[iKind] || "") === kind &&
       String(r[iTitle] || "") === title
   );
 
   // Ensure Drive folders exist
-  const artistFolderId = await findOrCreateFolder(drive, albumsRootId, alumniId);
+  const artistFolderId = await findOrCreateFolder(drive, albumsRootId, normId(alumniId));
   const albumFolderId = await findOrCreateFolder(drive, artistFolderId, title);
 
   if (matchIndex !== -1) {
     const row = values[matchIndex] as string[];
-    // update driveFolderId if blank
     if (!row[iDrive]) {
       row[iDrive] = albumFolderId;
       await withRetry(
@@ -438,8 +471,9 @@ async function ensureCollection(
 
   const collectionId = genCollectionId();
   const nowIso = new Date().toISOString();
+
   const newRow: string[] = [];
-  newRow[iAid] = alumniId;
+  newRow[iAid] = normId(alumniId);
   newRow[iDrive] = albumFolderId;
   newRow[iCid] = collectionId;
   newRow[iKind] = kind;
@@ -472,9 +506,11 @@ async function nextSequenceName(
   base: string,
   ext: string
 ): Promise<string> {
-  // Find existing files in this folder whose name starts with `${base}-`
-  const q =
-    `'${parentFolderId}' in parents and trashed = false and name contains '${base.replace(/'/g, "\\'")}-'`;
+  const q = `'${parentFolderId}' in parents and trashed = false and name contains '${base.replace(
+    /'/g,
+    "\\'"
+  )}-'`;
+
   let pageToken: string | undefined;
   let maxN = 0;
 
@@ -485,7 +521,8 @@ async function nextSequenceName(
     )) as DriveListResp;
 
     for (const f of resp.data.files || []) {
-      const m = f.name.match(new RegExp(`^${base.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}-([0-9]{3})`, "i"));
+      const escaped = base.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+      const m = f.name.match(new RegExp(`^${escaped}-([0-9]{3})`, "i"));
       if (m) {
         const n = parseInt(m[1], 10);
         if (!Number.isNaN(n) && n > maxN) maxN = n;
@@ -518,11 +555,13 @@ async function setFeaturedInMediaBatch(
   const [mh, ...rows] = mRows;
   if (!mh) return;
 
-  const idxAid = mh.indexOf("alumniId");
-  const idxKind = mh.indexOf("kind");
-  const idxFile = mh.indexOf("fileId");
-  const idxIsCur = mh.indexOf("isCurrent");
-  const idxIsFeat = mh.indexOf("isFeatured");
+  // robust to casing
+  const mhLower = mh.map((h) => String(h || "").trim().toLowerCase());
+  const idxAid = mhLower.indexOf("alumniid");
+  const idxKind = mhLower.indexOf("kind");
+  const idxFile = mhLower.indexOf("fileid");
+  const idxIsCur = mhLower.indexOf("iscurrent");
+  const idxIsFeat = mhLower.indexOf("isfeatured");
   if (idxAid === -1 || idxKind === -1 || idxFile === -1) return;
 
   const flagColIdx = kind === "headshot" ? idxIsCur : idxIsFeat;
@@ -530,20 +569,25 @@ async function setFeaturedInMediaBatch(
 
   const targetRowIndices: number[] = [];
   let newRowIndex: number | null = null;
+
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i] as string[];
-    if (r[idxAid] === alumniId && r[idxKind] === kind) {
+    if (normId(r[idxAid]) === normId(alumniId) && String(r[idxKind] || "") === kind) {
       targetRowIndices.push(i);
-      if (r[idxFile] === fileIdJustAppended) newRowIndex = i;
+      if (String(r[idxFile] || "") === fileIdJustAppended) newRowIndex = i;
     }
   }
   if (newRowIndex == null) return;
 
   const updates: ValueRange[] = [];
+
   const newRow = rows[newRowIndex] as string[];
   while (newRow.length < mh.length) newRow.push("");
   newRow[flagColIdx] = "TRUE";
-  updates.push({ range: `Profile-Media!A${newRowIndex + 2}:L${newRowIndex + 2}`, values: [newRow] });
+  updates.push({
+    range: `Profile-Media!A${newRowIndex + 2}:L${newRowIndex + 2}`,
+    values: [newRow],
+  });
 
   for (const i of targetRowIndices) {
     if (i === newRowIndex) continue;
@@ -582,7 +626,7 @@ export async function POST(req: Request) {
     const auth = await requireAuth(req);
     if (!auth.ok) return auth.response;
 
-    const spreadsheetId = process.env.ALUMNI_SHEET_ID!;
+    const spreadsheetId = process.env.ALUMNI_SHEET_ID;
     if (!spreadsheetId) {
       return NextResponse.json({ error: "Missing ALUMNI_SHEET_ID" }, { status: 500 });
     }
@@ -602,10 +646,14 @@ export async function POST(req: Request) {
       uploadedByEmail,
     } = payload;
 
-    const alumniId = String(slugRaw || "").trim().toLowerCase();
+    const alumniId = normId(slugRaw);
     if (!alumniId) return NextResponse.json({ error: "alumniId is required" }, { status: 400 });
-    if (!["headshot", "album", "reel", "event"].includes(kind))
-      return NextResponse.json({ error: "kind must be one of headshot|album|reel|event" }, { status: 400 });
+    if (!["headshot", "album", "reel", "event"].includes(kind)) {
+      return NextResponse.json(
+        { error: "kind must be one of headshot|album|reel|event" },
+        { status: 400 }
+      );
+    }
 
     const uploaderEmail = String(uploadedByEmail || auth.email || "");
 
@@ -614,9 +662,16 @@ export async function POST(req: Request) {
     if (buffer.byteLength > MAX_BYTES) {
       return NextResponse.json({ error: "File too large" }, { status: 413 });
     }
+
     const allowed = new Set([
-      "image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif",
-      "video/mp4", "video/quicktime",
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "image/heic",
+      "image/heif",
+      "video/mp4",
+      "video/quicktime",
       "application/pdf",
       "application/octet-stream",
     ]);
@@ -634,21 +689,26 @@ export async function POST(req: Request) {
     // ensure per-artist subfolder under kind root
     const artistFolderId = await findOrCreateFolder(drive, kindRootFolderId, alumniId);
 
-    // For albums, also ensure a collection row + album folder under /albums/<alumniId>/<title>
+    // For albums, ensure collection row + album folder under /albums/<alumniId>/<title>
     let parentForUpload = artistFolderId;
     if (kind === "album") {
       const title = String(collectionTitle || "").trim();
       if (title) {
         try {
           const ensured = await ensureCollection(
-            sheets, drive, spreadsheetId, kindRootFolderId, alumniId, kind, title
+            sheets,
+            drive,
+            spreadsheetId,
+            kindRootFolderId,
+            alumniId,
+            kind,
+            title
           );
           collectionId = collectionId || ensured.collectionId;
           collectionTitle = title;
-          parentForUpload = ensured.driveFolderId; // upload directly into album folder
+          parentForUpload = ensured.driveFolderId;
         } catch (err: any) {
           console.warn("Collection ensure failed:", err?.message || err);
-          // fall back to artist folder under /albums
           parentForUpload = artistFolderId;
         }
       }
@@ -658,7 +718,6 @@ export async function POST(req: Request) {
     const nameSlug = await getDisplayNameSlug(sheets, spreadsheetId, alumniId);
     const albumSlug = kind === "album" ? slugify(String(collectionTitle || "")) : "";
 
-    // original base (no ext), slugified & trimmed; keep if actually descriptive
     const origBaseSlugFull = slugify(stripExt(name));
     const origBaseSlug = origBaseSlugFull.slice(0, 40);
 
@@ -693,7 +752,9 @@ export async function POST(req: Request) {
         }),
       "Drive upload"
     )) as DriveCreateResp;
+
     const fileId = createRes.data.id!;
+    if (!fileId) throw new Error("Drive upload returned no file id");
 
     // 2) Append to Profile-Media
     await withRetry(
@@ -705,18 +766,18 @@ export async function POST(req: Request) {
           requestBody: {
             values: [
               [
-                alumniId,                 // A: alumniId
-                kind,                     // B: kind
-                collectionId ?? "",       // C: collectionId
-                collectionTitle ?? "",    // D: collectionTitle
-                fileId,                   // E: fileId
-                "",                       // F: externalUrl
-                uploaderEmail,            // G: uploadedByEmail
-                nowIso,                   // H: uploadedAt
-                "",                       // I: isCurrent (set in batch for headshot)
-                "",                       // J: isFeatured (set in batch)
-                sortIndex ?? "",          // K: sortIndex
-                note ?? "",               // L: note
+                alumniId, // A: alumniId
+                kind, // B: kind
+                collectionId ?? "", // C: collectionId
+                collectionTitle ?? "", // D: collectionTitle
+                fileId, // E: fileId
+                "", // F: externalUrl
+                uploaderEmail, // G: uploadedByEmail
+                nowIso, // H: uploadedAt
+                "", // I: isCurrent (set in batch for headshot)
+                "", // J: isFeatured (set in batch)
+                sortIndex ?? "", // K: sortIndex
+                note ?? "", // L: note
               ],
             ],
           },
@@ -724,12 +785,13 @@ export async function POST(req: Request) {
       "Sheets append Profile-Media"
     );
 
-    // 3) mark Profile-Live pending
-    await markLivePending(sheets, spreadsheetId, alumniId, nowIso);
+    // 3) mark Profile-Live needs_review
+    await markLiveNeedsReview(sheets, spreadsheetId, alumniId, nowIso);
 
     // 4) feature logic (default TRUE unless explicitly "FALSE")
     const shouldFeature = (isFeatured ? String(isFeatured).toUpperCase() : "TRUE") === "TRUE";
     let liveUpdatedCol: string | undefined;
+
     if (shouldFeature) {
       await setFeaturedInMediaBatch(sheets, spreadsheetId, kind, alumniId, fileId);
       await setLivePointerIfFeatured(sheets, spreadsheetId, alumniId, kind, fileId, nowIso);
@@ -740,7 +802,7 @@ export async function POST(req: Request) {
       ok: true,
       fileId,
       fileName: autoName,
-      status: "pending",
+      status: "needs_review",
       collectionId: collectionId || "",
       collectionTitle: collectionTitle || "",
       ...(liveUpdatedCol ? { updated: { [liveUpdatedCol]: fileId } } : {}),

@@ -1,5 +1,5 @@
 // /lib/slugAliases.ts
-import { loadCsv } from "@/lib/loadCsv";
+import { loadSlugMap } from "@/lib/loadSlugMap";
 
 /** Normalize strings like 'Slug Name ' to 'slug-name' for matching and URLs. */
 export function normSlug(v: string | null | undefined): string {
@@ -17,8 +17,8 @@ let cache:
   | {
       stamp: number;
       forwards: Forward[];
-      byFrom: Map<string, string>;     // from -> to
-      byTo: Map<string, Set<string>>;  // to -> set(from)
+      byFrom: Map<string, string>; // from -> to
+      byTo: Map<string, Set<string>>; // to -> set(from)
       all: Set<string>;
     }
   | null = null;
@@ -31,92 +31,28 @@ function debugLog(...args: any[]) {
 }
 
 /**
- * Load the slug forwards CSV and return a normalized Map(from -> to).
- * Accepts either:
- *  - SLUGS_CSV_URL, or
- *  - ALUMNI_SHEET_ID + SLUGS_TAB (defaults to "Profile-Slugs")
+ * Load the slug map and return a normalized Map(from -> to).
+ *
+ * Source of truth:
+ * - loadSlugMap() should ultimately read Profile-Slugs (or SLUGS_CSV_URL) and
+ *   write/update the local fallback slug-map.csv on success.
  */
 export async function loadSlugForwardsMap(): Promise<Map<string, string>> {
   try {
-    const url =
-      process.env.SLUGS_CSV_URL ||
-      (process.env.ALUMNI_SHEET_ID &&
-        `https://docs.google.com/spreadsheets/d/${process.env.ALUMNI_SHEET_ID}/export?format=csv&sheet=${encodeURIComponent(
-          process.env.SLUGS_TAB || "Profile-Slugs"
-        )}`) ||
-      "";
+    const map = await loadSlugMap();
 
-    if (!url) {
-      debugLog("SLUGS_CSV_URL not configured; returning empty map");
-      return new Map();
+    if (!(map instanceof Map) || map.size === 0) {
+      // Not an error; just helps debugging if someone expects rows.
+      debugLog("loadSlugMap returned empty map");
+      return map instanceof Map ? map : new Map();
     }
 
-    // Uses loadCsv which updates a local fallback only on success.
-    const csv = await loadCsv(url, "slug-forwards");
-    if (!csv || typeof csv !== "string") {
-      debugLog("loadCsv returned empty/invalid content; returning empty map");
-      return new Map();
-    }
-
-    // Basic parsing is fine because slugs won’t contain commas.
-    const lines = csv
-      .replace(/^\uFEFF/, "") // strip BOM if present
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0);
-
-    if (lines.length < 2) {
-      // Either no header or no data
-      debugLog("CSV has no data rows; returning empty map");
-      return new Map();
-    }
-
-    // Parse header
-    const headerLine = lines[0];
-    const headers = headerLine
-      .split(",")
-      .map((h) => h.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-"));
-
-    // Accept several possible header names
-    const fromKeys = ["fromslug", "from", "old", "alias", "alias-slug"];
-    const toKeys = ["toslug", "to", "canonical", "target", "canonical-slug"];
-
-    let iFrom = headers.findIndex((h) => fromKeys.includes(h));
-    let iTo = headers.findIndex((h) => toKeys.includes(h));
-
-    // Back-compat: allow “from,to” by position if exactly two columns and unknown headings
-    if ((iFrom < 0 || iTo < 0) && headers.length === 2) {
-      iFrom = 0;
-      iTo = 1;
-    }
-
-    if (iFrom < 0 || iTo < 0) {
-      debugLog("CSV missing recognizable headers; returning empty map", { headers });
-      return new Map();
-    }
-
-    const out = new Map<string, string>();
-
-    // Start after the header row. We’re assuming slugs have no commas.
-    for (let li = 1; li < lines.length; li++) {
-      const row = lines[li];
-      if (!row) continue;
-      const cells = row.split(",");
-      const rawFrom = cells[iFrom] ?? "";
-      const rawTo = cells[iTo] ?? "";
-
-      const from = normSlug(rawFrom);
-      const to = normSlug(rawTo);
-
-      if (!from || !to || from === to) continue;
-
-      // Later rows win (allows fixing mistakes in sheet without clearing cache)
-      out.set(from, to);
-    }
-
-    return out;
+    return map;
   } catch (err) {
-    debugLog("loadSlugForwardsMap failed, returning empty map:", (err as Error)?.message || err);
+    debugLog(
+      "loadSlugForwardsMap failed, returning empty map:",
+      (err as Error)?.message || err
+    );
     return new Map();
   }
 }
@@ -134,11 +70,17 @@ async function ensureIndex(): Promise<void> {
     const byTo = new Map<string, Set<string>>();
     const all = new Set<string>();
 
-    for (const [from, to] of fwdMap.entries()) {
+    for (const [fromRaw, toRaw] of fwdMap.entries()) {
+      const from = normSlug(fromRaw);
+      const to = normSlug(toRaw);
+      if (!from || !to || from === to) continue;
+
       forwards.push({ from, to });
       byFrom.set(from, to);
+
       if (!byTo.has(to)) byTo.set(to, new Set());
       byTo.get(to)!.add(from);
+
       all.add(from);
       all.add(to);
     }
@@ -151,7 +93,10 @@ async function ensureIndex(): Promise<void> {
     });
   } catch (err) {
     // If anything fails, keep cache null so callers get safe fallbacks downstream.
-    debugLog("ensureIndex failed; leaving cache empty:", (err as Error)?.message || err);
+    debugLog(
+      "ensureIndex failed; leaving cache empty:",
+      (err as Error)?.message || err
+    );
     cache = null;
   }
 }
@@ -186,7 +131,9 @@ export async function resolveCanonicalSlug(incoming: string): Promise<string> {
  *
  * Robust to accidental chains in the sheet; will “grow” the set until stable.
  */
-export async function getSlugAliases(canonicalOrAlias: string): Promise<Set<string>> {
+export async function getSlugAliases(
+  canonicalOrAlias: string
+): Promise<Set<string>> {
   await ensureIndex();
 
   // Always resolve to canonical first (works even if caller passed an alias).
@@ -228,7 +175,9 @@ export async function getReverseSlugSources(target: string): Promise<string[]> {
  * Use case: someone navigates to /alumni/<new-target> before Profile-Data is updated —
  * we can fetch using a current Profile-Data row (the "from") so the page never 404s.
  */
-export async function getReverseSlugSource(target: string): Promise<string | null> {
+export async function getReverseSlugSource(
+  target: string
+): Promise<string | null> {
   const all = await getReverseSlugSources(target);
   if (!all.length) return null;
   // Prefer a deterministic choice (alphabetical). You could prefer the most recent instead.
