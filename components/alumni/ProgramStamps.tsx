@@ -1,15 +1,17 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { programMap } from "@/lib/programMap";
 import StampShape from "./StampShape";
 
 type ProgramStampsProps = {
   artistSlug: string;
+  slugAliases?: string[];
 };
 
-export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
-  const programs = Object.values(programMap).filter((p) => p.artists[artistSlug]);
+const normSlugish = (raw: unknown) => String(raw ?? "").trim().toLowerCase();
 
+export default function ProgramStamps({ artistSlug, slugAliases = [] }: ProgramStampsProps) {
   const [panelHeight, setPanelHeight] = useState(600);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -21,7 +23,26 @@ export default function ProgramStamps({ artistSlug }: ProgramStampsProps) {
 
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
 
-  if (!programs.length) return null; // ✅ moved after hooks
+  // ✅ Alias-aware slug set
+  const slugSet = useMemo(() => {
+    const s = new Set<string>();
+    s.add(normSlugish(artistSlug));
+    for (const a of slugAliases) s.add(normSlugish(a));
+    return s;
+  }, [artistSlug, slugAliases]);
+
+  // ✅ Alias-aware matching against programMap artists keys
+  const programs = useMemo(() => {
+    return Object.values(programMap).filter((p) => {
+      if (!p?.artists) return false;
+      for (const key of Object.keys(p.artists)) {
+        if (slugSet.has(normSlugish(key))) return true;
+      }
+      return false;
+    });
+  }, [slugSet]);
+
+  if (!programs.length) return null; // ✅ after hooks
 
   return (
     <div

@@ -1,10 +1,8 @@
-import fs from "fs/promises";
-import path from "path";
 import Papa from "papaparse";
 import { normalizeStoryRow } from "./normalizeStoryRow";
 import { StoryRow } from "./types";
 import { loadCsv } from "./loadCsv";
-import { serverDebug, serverInfo, serverWarn, serverError } from "@/lib/serverDebug";
+import { serverDebug, serverWarn, serverError } from "@/lib/serverDebug";
 
 const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
 const CSV_URL = process.env.STORY_MAP_CSV_URL;
@@ -21,23 +19,32 @@ export async function fetchStories(): Promise<StoryRow[]> {
 
     if (DEBUG) {
       serverDebug("🧪 [fetchStories] CSV source:", CSV_URL || FALLBACK_FILENAME);
-      serverDebug("🔍 First row of CSV:", data[0]);
+      serverDebug("🔍 [fetchStories] First row of CSV:", data?.[0]);
     }
 
-    if (errors.length > 0) {
+    if (errors?.length) {
       serverWarn("⚠️ [fetchStories] CSV parse warnings:", errors);
     }
 
-    const normalized = data
-      .map(normalizeStoryRow)
-      .filter((row): row is StoryRow => !!row);
+    // ✅ CRITICAL: normalizeStoryRow is async now
+    const normalizedAll = await Promise.all(
+      (data || []).map((row) => normalizeStoryRow(row)),
+    );
+
+    const normalized = normalizedAll.filter(
+      (row): row is StoryRow => !!row,
+    );
 
     if (normalized.length === 0) {
-      serverWarn("🚨 No stories found — check CSV or normalizeStoryRow()");
+      serverWarn("🚨 [fetchStories] No stories found — check CSV or normalizeStoryRow()");
     }
 
     if (DEBUG) {
       serverDebug("✅ [fetchStories] Parsed story count:", normalized.length);
+      serverDebug(
+        "🧪 [fetchStories] authorSlug sample:",
+        normalized.slice(0, 8).map((r: any) => r?.authorSlug),
+      );
     }
 
     return normalized;

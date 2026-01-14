@@ -27,6 +27,14 @@ module.exports = {
     "grid-cols-1",
     "sm:grid-cols-2",
     "lg:grid-cols-3",
+    // ✅ 12-col + responsive spans used by spanClassForIndex()
+  "grid-cols-12",
+  "col-span-12",
+  "md:col-span-6",
+  "md:col-span-12",
+  "lg:col-span-4",
+  "lg:col-span-6",
+  "lg:col-span-12",
   ],
   theme: {
     extend: {

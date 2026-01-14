@@ -11,12 +11,77 @@ import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import Collapsible from "@/components/ui/Collapsible";
 import { seasons } from "@/lib/seasonData";
 
-// Node runtime is required because we use fs/path
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 import { promises as fs } from "fs";
 import path from "path";
+
+/** local helper: normalize for slug keys */
+function normSlugKey(s: string) {
+  return (s || "").trim().toLowerCase();
+}
+
+/** Build alias->canonical map from alumni list */
+function buildAliasToCanonical(alumni: AlumniRow[]) {
+  const map = new Map<string, string>();
+
+  const add = (alias: unknown, canonical: string) => {
+    const a = normSlugKey(String(alias || ""));
+    if (!a) return;
+    map.set(a, canonical);
+  };
+
+  for (const alum of alumni) {
+    const canonical = normSlugKey(alum.slug);
+    if (!canonical) continue;
+
+    add(alum.slug, canonical);
+
+    const slugAliases =
+      (alum as any).slugAliases ||
+      (alum as any).aliasSlugs ||
+      (alum as any).aliases ||
+      [];
+
+    if (Array.isArray(slugAliases)) {
+      for (const a of slugAliases) add(a, canonical);
+    }
+  }
+
+  return map;
+}
+
+/**
+ * Given a Record<artistSlug, roles[]>, return a deduped list by canonical slug.
+ * - resolves legacy/alias slugs to canonical
+ * - merges roles from multiple alias keys
+ */
+function resolveArtists(
+  artists: Record<string, string[]> | undefined,
+  aliasToCanonical: Map<string, string>
+) {
+  const out = new Map<string, { keySlug: string; roles: Set<string> }>();
+  if (!artists) return out;
+
+  for (const rawSlug of Object.keys(artists)) {
+    const key = normSlugKey(rawSlug);
+    const canonical = aliasToCanonical.get(key) || key;
+
+    if (!out.has(canonical)) {
+      out.set(canonical, { keySlug: canonical, roles: new Set<string>() });
+    }
+
+    const roles = artists[rawSlug] || [];
+    const bucket = out.get(canonical)!;
+    roles.forEach((r) => {
+      const v = (r || "").trim();
+      if (v) bucket.roles.add(v);
+    });
+  }
+
+  return out;
+}
 
 // Pre-generate all season pages (/season/1, /season/2, ...)
 export async function generateStaticParams() {
@@ -59,10 +124,15 @@ export default async function SeasonPage(
 
   // Visible alumni only
   const alumni = (await loadVisibleAlumni()) as AlumniRow[];
+
+  // Canonical alumni map
   const alumniMap = alumni.reduce<Record<string, AlumniRow>>((acc, alum) => {
-    acc[alum.slug] = alum;
+    acc[normSlugKey(alum.slug)] = alum;
     return acc;
   }, {});
+
+  // Alias -> Canonical slug
+  const aliasToCanonical = buildAliasToCanonical(alumni);
 
   // Festivals -> productions
   const productionsByFestival: Record<string, typeof productions> = {};
@@ -159,7 +229,10 @@ export default async function SeasonPage(
                   </h3>
 
                   {group.map((program) => {
-                    const artistSlugs = Object.keys(program.artists || {}).sort();
+                    // ✅ Resolve + dedupe artists via alias map
+                    const resolved = resolveArtists(program.artists, aliasToCanonical);
+                    const canonicalSlugs = Array.from(resolved.keys()).sort();
+
                     return (
                       <div
                         key={program.slug}
@@ -180,16 +253,18 @@ export default async function SeasonPage(
                             marginTop: "1rem",
                           }}
                         >
-                          {artistSlugs.map((slug) => {
-                            const alum = alumniMap[slug];
+                          {canonicalSlugs.map((canon) => {
+                            const alum = alumniMap[canon];
                             if (!alum) return null;
-                            const roles = program.artists[slug]?.join(", ") ?? "";
+
+                            const roles = Array.from(resolved.get(canon)!.roles).join(", ");
+
                             return (
                               <MiniProfileCard
-                                key={slug}
+                                key={canon}
                                 name={alum.name}
                                 role={roles}
-                                slug={alum.slug}
+                                slug={alum.slug} // ✅ canonical
                                 headshotUrl={alum.headshotUrl}
                               />
                             );
@@ -232,7 +307,9 @@ export default async function SeasonPage(
                       .slice()
                       .sort((a, b) => a.title.localeCompare(b.title))
                       .map((prod) => {
-                        const artistSlugs = Object.keys(prod.artists || {}).sort();
+                        const resolved = resolveArtists(prod.artists, aliasToCanonical);
+                        const canonicalSlugs = Array.from(resolved.keys()).sort();
+
                         return (
                           <div
                             key={prod.slug}
@@ -255,16 +332,18 @@ export default async function SeasonPage(
                                 marginTop: "1rem",
                               }}
                             >
-                              {artistSlugs.map((slug) => {
-                                const alum = alumniMap[slug];
+                              {canonicalSlugs.map((canon) => {
+                                const alum = alumniMap[canon];
                                 if (!alum) return null;
-                                const roles = prod.artists[slug]?.join(", ") ?? "";
+
+                                const roles = Array.from(resolved.get(canon)!.roles).join(", ");
+
                                 return (
                                   <MiniProfileCard
-                                    key={slug}
+                                    key={canon}
                                     name={alum.name}
                                     role={roles}
-                                    slug={alum.slug}
+                                    slug={alum.slug} // ✅ canonical
                                     headshotUrl={alum.headshotUrl}
                                   />
                                 );

@@ -1,15 +1,17 @@
 // app/layout.tsx
 import "@/app/globals.css";
 import type { ReactNode } from "react";
+
 import WarmNameStackHints from "@/components/WarmNameStackHints";
 import Providers from "./providers";
+
+// ✅ Keep it imported, but only render in production (see below)
 import ChunkErrorReload from "./ChunkErrorReload";
 
 import localFont from "next/font/local";
 import Header from "@/components/ui/Header";
 import Footer from "@/components/ui/Footer";
 
-// Import shared fonts from app/fonts.ts
 import {
   anton,
   dmSans,
@@ -25,10 +27,6 @@ import {
   zillaSlab,
 } from "./fonts";
 
-// =============================
-// Local-only font (not in fonts.ts)
-// =============================
-
 // Major Mono Display (400)
 const majorMono = localFont({
   variable: "--font-major-mono",
@@ -42,8 +40,6 @@ const majorMono = localFont({
   ],
 });
 
-// =============================
-
 export const metadata = {
   title: "Dramatic Adventure Theatre – Alumni Stories",
   description: "Immersive global storytelling from DAT artists.",
@@ -51,13 +47,29 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  // ✅ Server-side guard: never allow reload-loop helpers during local dev
+  const enableChunkRecovery = process.env.NODE_ENV === "production";
+
   return (
     <html
       lang="en"
-      className={`${anton.variable} ${dmSans.variable} ${spaceGrotesk.variable} ${rockSalt.variable} ${gloucester.variable}
-                  ${vt323.variable} ${specialElite.variable} ${shareTechMono.variable} ${cutiveMono.variable}
-                  ${anonymousPro.variable} ${syneMono.variable} ${majorMono.variable} ${zillaSlab.variable}
-                  font-sans`}
+      className={[
+        anton.variable,
+        dmSans.variable,
+        spaceGrotesk.variable,
+        rockSalt.variable,
+        gloucester.variable,
+        vt323.variable,
+        specialElite.variable,
+        shareTechMono.variable,
+        cutiveMono.variable,
+        anonymousPro.variable,
+        syneMono.variable,
+        majorMono.variable,
+        zillaSlab.variable,
+        "font-sans",
+      ].join(" ")}
+      suppressHydrationWarning
     >
       <head>
         <link rel="preload" as="image" href="/texture/kraft-paper.png" />
@@ -66,7 +78,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
       <body className="min-h-screen flex flex-col text-black">
         <WarmNameStackHints />
-        <ChunkErrorReload />
+
+        {/* ✅ Only run in prod so dev can never get stuck */}
+        {enableChunkRecovery ? <ChunkErrorReload /> : null}
 
         <Providers>
           <Header />

@@ -1,9 +1,10 @@
 // app/story/[slug]/layout.tsx
 import type { ReactNode } from "react";
 import "@/app/globals.css";
-import { clientDebug } from "@/lib/clientDebug";
+import { serverDebug } from "@/lib/serverDebug";
 
 export default function StorySlugLayout({ children }: { children: ReactNode }) {
-  clientDebug("✔ [slug]/layout.tsx loaded");
+  // ✅ Server Component by default — use serverDebug here, NOT clientDebug
+  serverDebug("✔ [story]/[slug]/layout.tsx loaded");
   return <>{children}</>;
 }

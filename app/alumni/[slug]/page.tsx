@@ -2,14 +2,16 @@
 
 /**
  * ✅ Next.js 15 App Router
- * `params` and `searchParams` are plain objects (not Promises).
+ * In Next 15.5.x, `params` / `searchParams` are treated as sync-dynamic APIs and
+ * must be awaited in some configurations. We accept Promises here and await them
+ * to silence the `sync-dynamic-apis` error spam.
  */
 
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import {
   ensureCanonicalAlumniSlug,
-  loadAlumniByAliases, // ← find the Profile-Data row by any alias
+  loadAlumniByAliases, // ← find the profile row by any alias
 } from "@/lib/loadAlumni";
 import { getAllStories } from "@/lib/loadRows";
 import AlumniProfilePage from "@/components/alumni/AlumniProfilePage";
@@ -21,8 +23,8 @@ import { rateLog, logOnce } from "@/lib/logHelpers";
 import { CanonicalSlugGate } from "@/components/alumni/CanonicalSlugGate";
 
 type PageProps = {
-  params: { slug: string | string[] };
-  searchParams?: Record<string, string | string[] | undefined>;
+  params: Promise<{ slug: string | string[] }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 // Revalidate server-rendered page data periodically
@@ -31,10 +33,14 @@ export const revalidate = 60;
 /* -----------------------------------------------------------
  * Page-level metadata (recommended in Next 15)
  * ----------------------------------------------------------*/
-export async function generateMetadata(
-  { params }: { params: { slug: string | string[] } }
-): Promise<Metadata> {
-  const raw = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string | string[] }>;
+}): Promise<Metadata> {
+  const p = await params;
+
+  const raw = Array.isArray(p.slug) ? p.slug[0] : p.slug;
   const incoming = normSlug(decodeURIComponent(raw || ""));
   if (!incoming) {
     return {
@@ -50,13 +56,12 @@ export async function generateMetadata(
   let name = "";
   try {
     const aliases = await getSlugAliases(canonical);
-    const alum = await loadAlumniByAliases(aliases);
-    name = alum?.name || "";
+    const alum = await loadAlumniByAliases(aliases as any);
+    name = (alum as any)?.name || "";
   } catch {
     // ignore
   }
 
-  // Fallback prettified slug if no name yet
   const pretty =
     name ||
     canonical
@@ -121,7 +126,7 @@ function parseCsv(text: string): Row[] {
 
   if (!rows.length) return [];
   const header = rows[0].map((h) =>
-    (h || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")
+    (h || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-"),
   );
 
   const out: Row[] = [];
@@ -179,7 +184,7 @@ async function listDriveFiles(folderId: string, max = 40) {
       undefined,
       60_000,
       "⚠️ [drive] list failed:",
-      (e as Error)?.message || String(e)
+      (e as Error)?.message || String(e),
     );
     return [];
   }
@@ -214,7 +219,7 @@ async function readCollectionsViaSheetsApi(): Promise<string> {
         const s = String(cell ?? "");
         return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
       })
-      .join(",")
+      .join(","),
   );
   return rows.join("\n");
 }
@@ -249,7 +254,7 @@ async function loadCollectionsFor({
         undefined,
         60_000,
         "⚠️ [collections] failed:",
-        (e as Error)?.message || String(e)
+        (e as Error)?.message || String(e),
       );
     }
   }
@@ -259,7 +264,7 @@ async function loadCollectionsFor({
       logOnce(
         "collections-try-sheets",
         undefined,
-        "📦 [collections] trying Sheets API fallback…"
+        "📦 [collections] trying Sheets API fallback…",
       );
       csvText = await readCollectionsViaSheetsApi();
     } catch (e) {
@@ -268,7 +273,7 @@ async function loadCollectionsFor({
         undefined,
         60_000,
         "⚠️ [collections] Sheets API fallback failed:",
-        (e as Error)?.message || String(e)
+        (e as Error)?.message || String(e),
       );
     }
   }
@@ -324,17 +329,22 @@ async function loadCollectionsFor({
   return result;
 }
 
+
+
 /* -----------------------------------------------------------
  * Page
  * ----------------------------------------------------------*/
 export default async function AlumniPage({ params, searchParams }: PageProps) {
-  const raw = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+  const p = await params;
+  const sp = searchParams ? await searchParams : undefined;
+
+  const raw = Array.isArray(p.slug) ? p.slug[0] : p.slug;
   const incoming = normSlug(decodeURIComponent(raw || ""));
   if (!incoming) return notFound();
 
-  const suffix = qsFrom(searchParams);
+  const suffix = qsFrom(sp);
 
-  // 1) Resolve any alias → latest (canonical) for the URL (server redirect)
+  // 1) Resolve any alias → canonical for the URL (server redirect)
   const canonical = await resolveCanonicalSlug(incoming);
   if (canonical && canonical !== incoming) {
     rateLog("slug-forward-redirect", undefined, 60_000, "[slug] forward-redirect", {
@@ -346,16 +356,18 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
     redirect(`/alumni/${encodeURIComponent(canonical)}${suffix}`);
   }
 
-  // 2) Build the full alias set from the latest slug (includes original Profile-Data slug)
-  const aliases = await getSlugAliases(canonical || incoming);
+  const canonicalOrIncoming = canonical || incoming;
 
-  // 3) Load the Profile-Data row by ANY alias so we don't rely on its slug changing
-  const alumni = await loadAlumniByAliases(aliases);
+  // 2) Build the full alias set (includes canonical)
+  const aliases = await getSlugAliases(canonicalOrIncoming);
+
+  // 3) Load the profile row by ANY alias so we don't rely on its slug changing
+  const alumni = await loadAlumniByAliases(aliases as any);
   if (!alumni) return notFound();
 
   // 4) STORIES
   const allStories = await getAllStories();
-  const storiesForThisAlum = filterRowsByAliases(allStories, aliases, alumni.name, {
+  const storiesForThisAlum = filterRowsByAliases(allStories, aliases, (alumni as any).name, {
     slugFields: ["slug", "alumniSlug", "profileSlug", "authorSlug"],
     nameFields: ["name", "alumniName", "author", "authorName"],
     akaFields: ["aka", "aliases", "previousNames", "formerNames"],
@@ -390,19 +402,20 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
   pushNameAliases((alumni as any).aliases);
 
   const normalizedAlumni = normalizeEmbeddedRefs(alumni, {
-    canonicalSlug: (alumni as any).slug || canonical || incoming,
+    canonicalSlug: canonicalOrIncoming || (alumni as any).slug,
     aliases,
     alsoNormalizeNames: true,
     nameAliases,
     canonicalName: (alumni as any).name,
   });
 
-  // Ensure artistStatement is a proper string (avoid comma-joined arrays)
   const safeArtistStatement =
     typeof (normalizedAlumni as any).artistStatement === "string"
       ? (normalizedAlumni as any).artistStatement
       : Array.isArray((normalizedAlumni as any).artistStatement)
-        ? ((normalizedAlumni as any).artistStatement as string[]).filter(Boolean).join("\n\n")
+        ? ((normalizedAlumni as any).artistStatement as string[])
+            .filter(Boolean)
+            .join("\n\n")
         : "";
 
   // 7) Render
@@ -413,7 +426,7 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
 
       <AlumniProfilePage
         data={{
-          slug: (normalizedAlumni as any).slug,
+          slug: canonicalOrIncoming || (normalizedAlumni as any).slug || incoming,
           name: (normalizedAlumni as any).name,
           role: (normalizedAlumni as any).roles?.[0] || "",
           roles: (normalizedAlumni as any).roles || [],
@@ -433,7 +446,10 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
           updates: (normalizedAlumni as any).updates || [],
         }}
         allStories={storiesForThisAlum}
+        // ✅ NEW: component can match productions/credits/stories against any known slug
+        slugAliases={Array.from(aliases)}
       />
+
       <section className="bg-[#241123] pt-0 pb-10" />
     </>
   );

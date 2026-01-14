@@ -639,7 +639,7 @@ export const productionMap: Record<string, Production> = {
       "drew-ernst": ["Sound Designer"],
       "mary-k-baxter": ["Road Manager"],
       "kaitlin-hernandez": ["Actor"],
-      "j'nelle-bobb-semple": ["Actor"],
+      "jnelle-bobb-semple": ["Actor"],
       "heather-ichihashi": ["Actor"],
       "hanniel-sindelar": ["Actor"],
       "courtney-dusenberry": ["Actor"]
@@ -935,7 +935,7 @@ export const productionMap: Record<string, Production> = {
     venue: "Load of Fun (Baltimore), Bricolage Production Co. (Pittsburgh), and more",
     festival: "North East US Tour",
     url: "",
-    posterUrl: "posters/voices-from-zimbabwe.jpg",
+    posterUrl: "/posters/voices-from-zimbabwe.jpg",
     artists: {
       "oscar-manzini": ["Road Manager", "Local Dramaturg"],
       "lisa-bearpark": ["Actor"],
