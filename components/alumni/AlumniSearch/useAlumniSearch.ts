@@ -1,5 +1,7 @@
 "use client";
 
+// /components/alumni/AlumniSearch/useAlumniSearch.ts
+
 import { useEffect, useMemo, useState } from "react";
 import Fuse from "fuse.js";
 import {
@@ -13,14 +15,31 @@ import {
 import type {
   EnrichedProfileLiveRow,
   ProfileLiveRow,
-} from "./enrichAlumniData.server"; // type-only is fine
-import { clientDebug } from "@/lib/clientDebug";
+} from "./enrichAlumniData.server"; // type-only OK
 
+import { clientDebug } from "@/lib/clientDebug";
 import type { Filters } from "@/types/alumni";
 
 interface UseAlumniSearchResult {
   query: string;
   setQuery: (value: string) => void;
+}
+
+/** Small helper: safe includes for optional arrays */
+function hasToken(arr: string[] | undefined, token: string) {
+  if (!arr?.length) return false;
+  return arr.includes(token);
+}
+
+/** Small helper: match filter values against a token bucket */
+function passesTokenFilter(
+  filterValue: string | undefined,
+  tokens: string[] | undefined
+): boolean {
+  const v = (filterValue || "").trim();
+  if (!v) return true; // no filter → pass
+  const n = normalizeText(v);
+  return hasToken(tokens, n);
 }
 
 export function useAlumniSearch(
@@ -51,7 +70,7 @@ export function useAlumniSearch(
         keys: [
           { name: "name", weight: 0.6 },
 
-          // ✅ The big one: slug aliases, name aliases, socials, story, etc (server-generated)
+          // ✅ Catch-all: slug aliases, name aliases, socials, story, etc (server-generated)
           { name: "aliasTokens", weight: 0.7 },
 
           // Buckets for stronger intent
@@ -63,6 +82,10 @@ export function useAlumniSearch(
           { name: "bioTokens", weight: 0.2 },
           { name: "identityTokens", weight: 0.22 },
           { name: "statusTokens", weight: 0.18 },
+
+          // ✅ NEW
+          { name: "languageTokens", weight: 0.22 },
+          { name: "seasonTokens", weight: 0.22 },
         ],
       }),
     [enrichedData]
@@ -72,8 +95,29 @@ export function useAlumniSearch(
     const handler = setTimeout(() => {
       const cleanedQuery = cleanQuery(query);
 
+      // --------------------------------------------
+      // 0) Optional filters (hard gate)
+      // --------------------------------------------
+      // If filters are set, we gate results against token buckets.
+      // This keeps your scoring logic unchanged while honoring filters.
+      const gated = enrichedData.filter((item) => {
+        // NOTE: these match against normalized token arrays produced on server.
+        if (!passesTokenFilter(filters.program, item.programTokens)) return false;
+        if (!passesTokenFilter(filters.role, item.roleTokens)) return false;
+        if (!passesTokenFilter(filters.location, item.locationTokens)) return false;
+        if (!passesTokenFilter(filters.statusFlag, item.statusTokens)) return false;
+        if (!passesTokenFilter(filters.identityTag, item.identityTokens)) return false;
+
+        // ✅ NEW
+        if (!passesTokenFilter(filters.language, item.languageTokens)) return false;
+        if (!passesTokenFilter(filters.season, item.seasonTokens)) return false;
+
+        return true;
+      });
+
+      // If empty query:
       if (!cleanedQuery) {
-        const all = enrichedData as unknown as ProfileLiveRow[];
+        const all = gated as unknown as ProfileLiveRow[];
         onResults(showAllIfEmpty ? [] : [], showAllIfEmpty ? all : [], "");
         return;
       }
@@ -93,20 +137,34 @@ export function useAlumniSearch(
 
       const seen = new Set<string>();
 
-      enrichedData.forEach((item) => {
+      gated.forEach((item) => {
         let score = 0;
         const reasons: string[] = [];
 
         const nameNorm = normalizeText(item.name || "");
         const nameParts = nameNorm.split(" ").filter(Boolean);
 
-        const locationNorm = normalizeText(item.location || "");
-
         const aliasSet = new Set<string>(item.aliasTokens || []);
 
+        // convenience refs
+        const roleTokens = item.roleTokens || [];
+        const locationTokens = item.locationTokens || [];
+        const programTokens = item.programTokens || [];
+        const productionTokens = item.productionTokens || [];
+        const festivalTokens = item.festivalTokens || [];
+        const bioTokens = item.bioTokens || [];
+        const identityTokens = item.identityTokens || [];
+        const statusTokens = item.statusTokens || [];
+
+        // ✅ NEW
+        const languageTokens = item.languageTokens || [];
+        const seasonTokens = item.seasonTokens || [];
+
         /** ✅ Alias Index Match (program/prod aliases) */
-        // NOTE: aliasIndex stores slugs; your enriched item has both slug + canonicalSlug
-        if (aliasIndex[qLower]?.includes(item.slug) || aliasIndex[qLower]?.includes(item.canonicalSlug)) {
+        if (
+          aliasIndex[qLower]?.includes(item.slug) ||
+          (item.canonicalSlug && aliasIndex[qLower]?.includes(item.canonicalSlug))
+        ) {
           score += 180;
           reasons.push("Alias Index Match");
         }
@@ -127,34 +185,49 @@ export function useAlumniSearch(
         if (
           quoted &&
           (nameNorm.includes(quoted) ||
-            item.roleTokens.includes(quoted) ||
-            item.bioTokens.includes(quoted) ||
-            item.programTokens.includes(quoted) ||
-            item.productionTokens.includes(quoted) ||
-            item.festivalTokens.includes(quoted) ||
-            item.locationTokens.includes(quoted) ||
+            roleTokens.includes(quoted) ||
+            bioTokens.includes(quoted) ||
+            programTokens.includes(quoted) ||
+            productionTokens.includes(quoted) ||
+            festivalTokens.includes(quoted) ||
+            locationTokens.includes(quoted) ||
+            identityTokens.includes(quoted) ||
+            statusTokens.includes(quoted) ||
+            languageTokens.includes(quoted) ||
+            seasonTokens.includes(quoted) ||
             aliasSet.has(quoted))
         ) {
           score += 170;
           reasons.push("Quoted Phrase Match");
         }
 
-        /** ✅ Exact Program/Production matches (strong intent) */
-        if (item.programTokens.includes(qLower)) {
+        /** ✅ Exact strong-intent matches */
+        if (programTokens.includes(qLower)) {
           score += 160;
           reasons.push("Exact Program Match");
         }
-        if (item.productionTokens.includes(qLower)) {
+        if (productionTokens.includes(qLower)) {
           score += 160;
           reasons.push("Exact Production Match");
+        }
+
+        // ✅ NEW
+        if (languageTokens.includes(qLower)) {
+          score += 150;
+          reasons.push("Exact Language Match");
+        }
+        if (seasonTokens.includes(qLower)) {
+          score += 150;
+          reasons.push("Exact Season Match");
         }
 
         /** ✅ Name + Location Combo */
         const hasNameTerm = queryTerms.some(
           (term) => nameParts.includes(term) || aliasSet.has(term)
         );
-        const hasLocationTerm =
-          !!locationNorm && (queryTerms.includes(locationNorm) || aliasSet.has(locationNorm));
+        const hasLocationTerm = queryTerms.some(
+          (term) => locationTokens.includes(term) || aliasSet.has(term)
+        );
 
         if (hasNameTerm && hasLocationTerm) {
           score += 260;
@@ -173,39 +246,50 @@ export function useAlumniSearch(
             reasons.push(`Alias Token Match (${term})`);
           }
 
-          if (item.roleTokens.includes(term)) {
+          if (roleTokens.includes(term)) {
             score += 120;
             reasons.push(`Role Match (${term})`);
           }
 
-          if (item.programTokens.includes(term) || item.productionTokens.includes(term)) {
+          if (programTokens.includes(term) || productionTokens.includes(term)) {
             score += 90;
             reasons.push(`Program/Production Match (${term})`);
           }
 
-          if (item.festivalTokens.includes(term)) {
+          if (festivalTokens.includes(term)) {
             score += 70;
             reasons.push(`Festival Match (${term})`);
           }
 
-          if (item.bioTokens.includes(term)) {
+          if (bioTokens.includes(term)) {
             score += 50;
             reasons.push(`Bio Match (${term})`);
           }
 
-          if (item.identityTokens.includes(term)) {
+          if (identityTokens.includes(term)) {
             score += 80;
             reasons.push(`Tag Match (${term})`);
           }
 
-          if (item.statusTokens.includes(term)) {
+          if (statusTokens.includes(term)) {
             score += 75;
             reasons.push(`Status Match (${term})`);
           }
 
-          if (item.locationTokens.includes(term)) {
+          if (locationTokens.includes(term)) {
             score += 100;
             reasons.push(`Location Token Match (${term})`);
+          }
+
+          // ✅ NEW
+          if (languageTokens.includes(term)) {
+            score += 90;
+            reasons.push(`Language Match (${term})`);
+          }
+
+          if (seasonTokens.includes(term)) {
+            score += 90;
+            reasons.push(`Season Match (${term})`);
           }
         });
 
@@ -213,14 +297,16 @@ export function useAlumniSearch(
         const tokensMatched = queryTerms.filter((term) =>
           nameParts.includes(term) ||
           aliasSet.has(term) ||
-          item.roleTokens.includes(term) ||
-          item.programTokens.includes(term) ||
-          item.productionTokens.includes(term) ||
-          item.festivalTokens.includes(term) ||
-          item.bioTokens.includes(term) ||
-          item.identityTokens.includes(term) ||
-          item.statusTokens.includes(term) ||
-          item.locationTokens.includes(term)
+          roleTokens.includes(term) ||
+          programTokens.includes(term) ||
+          productionTokens.includes(term) ||
+          festivalTokens.includes(term) ||
+          bioTokens.includes(term) ||
+          identityTokens.includes(term) ||
+          statusTokens.includes(term) ||
+          locationTokens.includes(term) ||
+          languageTokens.includes(term) ||
+          seasonTokens.includes(term)
         ).length;
 
         const coverage =
@@ -261,6 +347,21 @@ export function useAlumniSearch(
       const secondary: ProfileLiveRow[] = [];
       fuse.search(cleanedQuery).forEach((result) => {
         const it = result.item as EnrichedProfileLiveRow;
+
+        // apply same filters to fuse results
+        // (Fuse searched whole dataset, so we gate)
+        if (
+          !passesTokenFilter(filters.program, it.programTokens) ||
+          !passesTokenFilter(filters.role, it.roleTokens) ||
+          !passesTokenFilter(filters.location, it.locationTokens) ||
+          !passesTokenFilter(filters.statusFlag, it.statusTokens) ||
+          !passesTokenFilter(filters.identityTag, it.identityTokens) ||
+          !passesTokenFilter(filters.language, it.languageTokens) ||
+          !passesTokenFilter(filters.season, it.seasonTokens)
+        ) {
+          return;
+        }
+
         const k = keyOf(it);
         if (!seen.has(k)) {
           secondary.push(result.item as unknown as ProfileLiveRow);

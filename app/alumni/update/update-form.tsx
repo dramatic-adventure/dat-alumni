@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
+
 import MediaPickerModal from "@/components/media/MediaPickerModal";
 import {
   normalizeProfile,
@@ -19,12 +21,7 @@ import FieldRenderer from "@/components/alumni/FieldRenderer";
 import MediaHub from "@/components/media/MediaHub";
 import BackgroundSwatches from "@/components/alumni/update/BackgroundSwatches";
 
-import {
-  createUploader,
-  type UploadKind,
-  type UploadTask,
-} from "@/lib/uploader";
-
+import { createUploader, type UploadKind, type UploadTask } from "@/lib/uploader";
 import { useDraft } from "@/lib/useDraft";
 
 /* ====== Aesthetic constants ====== */
@@ -37,7 +34,7 @@ const COLOR = {
   snow: "#F2F2F2",
 };
 
-const subheadChipStyle: React.CSSProperties = {
+const subheadChipStyle: CSSProperties = {
   fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
   fontSize: "2rem",
   fontWeight: 600,
@@ -52,7 +49,7 @@ const subheadChipStyle: React.CSSProperties = {
   textDecoration: "none",
 };
 
-const explainStyle: React.CSSProperties = {
+const explainStyle: CSSProperties = {
   fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
   fontSize: 15,
   lineHeight: 1.55,
@@ -61,7 +58,16 @@ const explainStyle: React.CSSProperties = {
   margin: "0 0 14px",
 };
 
-const inputStyle: React.CSSProperties = {
+const labelStyle: CSSProperties = {
+  display: "block",
+  marginBottom: 8,
+  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+  fontSize: 13,
+  color: COLOR.snow,
+  opacity: 0.9,
+};
+
+const inputStyle: CSSProperties = {
   width: "100%",
   borderRadius: 10,
   padding: "12px 14px",
@@ -72,7 +78,13 @@ const inputStyle: React.CSSProperties = {
   boxShadow: "0 6px 18px rgba(0,0,0,0.12)",
 };
 
-const datButton: React.CSSProperties = {
+const inputLockedStyle: CSSProperties = {
+  ...inputStyle,
+  opacity: 0.65,
+  cursor: "not-allowed",
+};
+
+const datButton: CSSProperties = {
   borderRadius: 14,
   padding: "12px 16px",
   fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
@@ -86,7 +98,8 @@ const datButton: React.CSSProperties = {
   cursor: "pointer",
   transform: "translateZ(0)",
 };
-const datButtonGhost: React.CSSProperties = {
+
+const datButtonGhost: CSSProperties = {
   borderRadius: 14,
   padding: "10px 14px",
   fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
@@ -107,29 +120,29 @@ type PointerAssets = {
   featuredEventId?: string;
 };
 
-const POINTER_MAP: Record<
-  "headshot" | "album" | "reel" | "event",
-  keyof PointerAssets
-> = {
-  headshot: "currentHeadshotId",
-  album: "featuredAlbumId",
-  reel: "featuredReelId",
-  event: "featuredEventId",
-};
+const POINTER_MAP: Record<"headshot" | "album" | "reel" | "event", keyof PointerAssets> =
+  {
+    headshot: "currentHeadshotId",
+    album: "featuredAlbumId",
+    reel: "featuredReelId",
+    event: "featuredEventId",
+  };
 
-// turn “Isabel Martínez” -> “isabel-martinez”
+// “Isabel Martínez” -> “isabel-martinez”
 function slugify(s: string) {
   return (s || "")
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
+    .replace(/(^-+|-+$)/g, "");
 }
+
 function fileExtension(name: string) {
   const m = /\.[A-Za-z0-9]+$/.exec(name);
   return m ? m[0] : "";
 }
+
 function renameForKind(
   file: File,
   kind: UploadKind,
@@ -160,7 +173,7 @@ function renameForKind(
   }
 }
 
-function Section({ children }: { children: React.ReactNode }) {
+function Section({ children }: { children: ReactNode }) {
   return (
     <div
       style={{
@@ -202,84 +215,108 @@ function ProgressBar({ value }: { value: number }) {
   );
 }
 
-/* ---------- component ---------- */
-export default function UpdateForm({ email }: { email: string }) {
-  /* identity/basic state */
-  const [alumniId, setAlumniId] = useState("");
-  const [originalSlug, setOriginalSlug] = useState<string>(""); // NEW
+export default function UpdateForm({
+  email,
+  isAdmin = false,
+}: {
+  email: string;
+  isAdmin?: boolean;
+}) {
+  /** Stable identity state */
+  const [stableAlumniId, setStableAlumniId] = useState(""); // never changes
+  const [currentSlug, setCurrentSlug] = useState(""); // current canonical slug
+  const [originalSlug, setOriginalSlug] = useState(""); // previous slug for forward mapping
   const [autoDetected, setAutoDetected] = useState(false);
 
+  /** ✅ Baseline snapshot from Profile-Live (used for diff) */
+  const [liveBaseline, setLiveBaseline] = useState<any>(null);
+
+  /** Name lock */
+  const [nameLocked, setNameLocked] = useState(true);
+
+  /** Basic fields */
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
 
-  const [profile, setProfile] = useState<Partial<AlumniProfile>>({
-    slug: "",
+  /** Profile object (Profile-Live-ish keys) */
+  const [profile, setProfile] = useState<any>({
     name: "",
+    slug: "",
+    location: "",
+    isBiCoastal: false,
+    secondLocation: "",
+    backgroundStyle: "kraft",
+
+    bioShort: "",
+    bioLong: "",
+
     website: "",
     instagram: "",
+    youtube: "",
+    vimeo: "",
+    imdb: "",
+    facebook: "",
+    linktree: "",
+    publicEmail: "",
+
+    roles: "",
+    pronouns: "",
+    currentWork: "",
+    programs: "",
+    tags: "",
+    statusFlags: "",
+    spotlight: "",
+
+    currentHeadshotUrl: "",
+
     x: "",
     tiktok: "",
     threads: "",
     bluesky: "",
     linkedin: "",
-    youtube: "",
-    vimeo: "",
-    facebook: "",
-    linktree: "",
-    publicEmail: "",
-    artistStatement: "",
-    headshotUrl: "",
-    backgroundStyle: "kraft",
-    datRoles: [],
-    currentRole: "",
-    isBiCoastal: false,
-    secondLocation: "",
-    identityTags: [],
+    primarySocial: "instagram",
+
     currentUpdateText: "",
     currentUpdateLink: "",
     currentUpdateExpiresAt: "",
-    // Upcoming Event (+ description)
-    ...( {
-      upcomingEventTitle: "",
-      upcomingEventLink: "",
-      upcomingEventDate: "",
-      upcomingEventExpiresAt: "",
-      upcomingEventDescription: "",
-    } as any ),
-    story: {
-      title: "",
-      program: "",
-      programCountry: "",
-      years: "",
-      location: "",
-      partners: "",
-      mediaUrl: "",
-      shortStory: "",
-      url: "",
-      quote: "",
-      quoteAuthor: "",
-    },
-    support: { bug: "", feature: "", assistance: "" },
+
+    upcomingEventTitle: "",
+    upcomingEventLink: "",
+    upcomingEventDate: "",
+    upcomingEventExpiresAt: "",
+    upcomingEventDescription: "",
+
+    storyTitle: "",
+    storyProgram: "",
+    storyLocationName: "",
+    storyYears: "",
+    storyPartners: "",
+    storyShortStory: "",
+    storyQuote: "",
+    storyQuoteAuthor: "",
+    storyMediaUrl: "",
+    storyMoreInfoUrl: "",
+    storyCountry: "",
+    showOnMap: "",
   });
 
   /* drafts */
   const basicsDraft = useDraft({
-    key: alumniId ? `draft:${alumniId}:basics` : "draft:__none__:basics",
+    key: stableAlumniId ? `draft:${stableAlumniId}:basics` : "draft:__none__:basics",
     initial: {
       name,
       location,
-      artistStatement: profile.artistStatement ?? "",
-      headshotUrl: profile.headshotUrl ?? "",
+      bioLong: profile.bioLong ?? "",
+      currentHeadshotUrl: profile.currentHeadshotUrl ?? "",
       backgroundStyle: profile.backgroundStyle ?? "kraft",
-      identityTags: profile.identityTags ?? [],
       isBiCoastal: profile.isBiCoastal ?? false,
       secondLocation: profile.secondLocation ?? "",
     },
-    enabled: !!alumniId,
+    enabled: !!stableAlumniId,
   });
 
   const contactDraft = useDraft({
-    key: alumniId ? `draft:${alumniId}:contact` : "draft:__none__:contact",
+    key: stableAlumniId ? `draft:${stableAlumniId}:contact` : "draft:__none__:contact",
     initial: {
       website: "",
       instagram: "",
@@ -290,11 +327,13 @@ export default function UpdateForm({ email }: { email: string }) {
       linkedin: "",
       youtube: "",
       vimeo: "",
+      imdb: "",
       facebook: "",
       linktree: "",
       publicEmail: "",
+      primarySocial: "instagram",
     },
-    enabled: !!alumniId,
+    enabled: !!stableAlumniId,
   });
 
   /* media selections */
@@ -302,7 +341,7 @@ export default function UpdateForm({ email }: { email: string }) {
   const [albumFiles, setAlbumFiles] = useState<File[]>([]);
   const [reelFiles, setReelFiles] = useState<File[]>([]);
   const [eventFiles, setEventFiles] = useState<File[]>([]);
-  const [albumName, setAlbumName] = useState<string>(""); // NEW
+  const [albumName, setAlbumName] = useState<string>("");
 
   /* progress + failures */
   const [progress, setProgress] = useState<{
@@ -326,26 +365,28 @@ export default function UpdateForm({ email }: { email: string }) {
 
   /* picker / status */
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerKind, setPickerKind] =
-    useState<"headshot" | "album" | "reel" | "event">("headshot");
+  const [pickerKind, setPickerKind] = useState<"headshot" | "album" | "reel" | "event">(
+    "headshot"
+  );
 
   const [status, setStatus] = useState<string>("");
   const [assets, setAssets] = useState<PointerAssets>({});
 
   /* UX */
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] =
-    useState<{ msg: string; type: "success" | "error" } | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(
+    null
+  );
   const saveBtnRef = useRef<HTMLButtonElement | null>(null);
 
   /* uploader */
   const uploaderRef = useRef<ReturnType<typeof createUploader> | null>(null);
   const queueEmptyResolver = useRef<(() => void) | null>(null);
 
-  /* MEDIA HUB: make whole dashed zone clickable */
+  /* MEDIA HUB click */
   const hubRef = useRef<HTMLDivElement | null>(null);
 
-  /* socials: choose visible + primary */
+  /* socials (UI only) */
   const ALL_SOCIALS = [
     "instagram",
     "x",
@@ -357,6 +398,7 @@ export default function UpdateForm({ email }: { email: string }) {
     "vimeo",
     "facebook",
   ] as const;
+
   const [visibleSocials, setVisibleSocials] = useState<string[]>([
     "instagram",
     "x",
@@ -370,52 +412,209 @@ export default function UpdateForm({ email }: { email: string }) {
   };
 
   const openPicker = (kind: "headshot" | "album" | "reel" | "event") => {
-    if (!alumniId) {
-      showToast("Please enter your profile slug (alumniId) first.", "error");
+    if (!stableAlumniId) {
+      showToast("Profile not loaded yet.", "error");
       return;
     }
     setPickerKind(kind);
     setPickerOpen(true);
   };
 
-  /* effects */
+  /** Baseline in Profile-Live key space (for diff). */
+  function baselineFromLookup(j: any, slug: string, nm: string, loc: string) {
+    return {
+      slug: String(slug || "").trim().toLowerCase(),
+      name: String(nm || "").trim(),
+      location: String(loc || "").trim(),
+
+      isBiCoastal:
+        String(j?.isBiCoastal || "").toLowerCase() === "true" || j?.isBiCoastal === true,
+      secondLocation: String(j?.secondLocation || ""),
+      backgroundStyle: String(j?.backgroundStyle || "kraft"),
+
+      pronouns: String(j?.pronouns || ""),
+      roles: String(j?.roles || ""),
+      currentWork: String(j?.currentWork || ""),
+
+      bioShort: String(j?.bioShort || ""),
+      bioLong: String(j?.bioLong || ""),
+
+      website: String(j?.website || ""),
+      instagram: String(j?.instagram || ""),
+      x: String(j?.x || ""),
+      tiktok: String(j?.tiktok || ""),
+      threads: String(j?.threads || ""),
+      bluesky: String(j?.bluesky || ""),
+      linkedin: String(j?.linkedin || ""),
+      primarySocial: String(j?.primarySocial || ""),
+
+      youtube: String(j?.youtube || ""),
+      vimeo: String(j?.vimeo || ""),
+      imdb: String(j?.imdb || ""),
+      facebook: String(j?.facebook || ""),
+      linktree: String(j?.linktree || ""),
+      publicEmail: String(j?.publicEmail || ""),
+
+      spotlight: String(j?.spotlight || ""),
+      programs: String(j?.programs || ""),
+      tags: String(j?.tags || ""),
+      statusFlags: String(j?.statusFlags || ""),
+
+      currentUpdateText: String(j?.currentUpdateText || ""),
+      currentUpdateLink: String(j?.currentUpdateLink || ""),
+      currentUpdateExpiresAt: String(j?.currentUpdateExpiresAt || ""),
+
+      upcomingEventTitle: String(j?.upcomingEventTitle || ""),
+      upcomingEventLink: String(j?.upcomingEventLink || ""),
+      upcomingEventDate: String(j?.upcomingEventDate || ""),
+      upcomingEventExpiresAt: String(j?.upcomingEventExpiresAt || ""),
+      upcomingEventDescription: String(j?.upcomingEventDescription || ""),
+
+      currentHeadshotUrl: String(j?.currentHeadshotUrl || ""),
+
+      storyTitle: String(j?.storyTitle || ""),
+      storyProgram: String(j?.storyProgram || ""),
+      storyLocationName: String(j?.storyLocationName || ""),
+      storyYears: String(j?.storyYears || ""),
+      storyPartners: String(j?.storyPartners || ""),
+      storyShortStory: String(j?.storyShortStory || ""),
+      storyQuote: String(j?.storyQuote || ""),
+      storyQuoteAuthor: String(j?.storyQuoteAuthor || ""),
+      storyMediaUrl: String(j?.storyMediaUrl || ""),
+      storyMoreInfoUrl: String(j?.storyMoreInfoUrl || ""),
+      storyCountry: String(j?.storyCountry || ""),
+      showOnMap: String(j?.showOnMap || ""),
+    };
+  }
+
+  /* ---------- LOAD: hydrate from lookup(email) ---------- */
   useEffect(() => {
     const run = async () => {
       try {
-        const res = await fetch(
-          `/api/alumni/lookup?email=${encodeURIComponent(email)}`,
-          { cache: "no-store" }
-        );
+        const res = await fetch(`/api/alumni/lookup?email=${encodeURIComponent(email)}`, {
+          cache: "no-store",
+        });
         if (!res.ok) return;
+
         const j = await res.json();
-        if (j?.alumniId) {
-          setAlumniId(j.alumniId);
-          setOriginalSlug(j.alumniId); // NEW
-          setProfile((p) => ({ ...p, slug: j.alumniId }));
+
+        if (j?.alumniId) setStableAlumniId(String(j.alumniId));
+
+        const slug = String(j?.canonicalSlug || j?.slug || "").trim();
+        if (slug) {
+          setCurrentSlug(slug);
+          setOriginalSlug(slug);
           setAutoDetected(true);
         }
+
+        const nm = String(j?.name || "").trim();
+        if (nm) setName(nm);
+
+        const loc = String(j?.location || "").trim();
+        if (loc) setLocation(loc);
+
         if (j?.status) setStatus(String(j.status));
+
+        setLiveBaseline(baselineFromLookup(j, slug, nm, loc));
+
+        setProfile((p: any) => {
+          const next = {
+            ...p,
+            name: nm || p.name,
+            slug: slug || p.slug,
+            location: loc || p.location,
+
+            pronouns: String(j?.pronouns || p.pronouns || ""),
+            roles: String(j?.roles || p.roles || ""),
+            currentWork: String(j?.currentWork || p.currentWork || ""),
+
+            bioShort: String(j?.bioShort || p.bioShort || ""),
+            bioLong: String(j?.bioLong || p.bioLong || ""),
+
+            website: String(j?.website || p.website || ""),
+            instagram: String(j?.instagram || p.instagram || ""),
+            x: String(j?.x || p.x || ""),
+            tiktok: String(j?.tiktok || p.tiktok || ""),
+            threads: String(j?.threads || p.threads || ""),
+            bluesky: String(j?.bluesky || p.bluesky || ""),
+            linkedin: String(j?.linkedin || p.linkedin || ""),
+            primarySocial: String(j?.primarySocial || p.primarySocial || "instagram"),
+
+            youtube: String(j?.youtube || p.youtube || ""),
+            vimeo: String(j?.vimeo || p.vimeo || ""),
+            imdb: String(j?.imdb || p.imdb || ""),
+            facebook: String(j?.facebook || p.facebook || ""),
+            linktree: String(j?.linktree || p.linktree || ""),
+            publicEmail: String(j?.publicEmail || p.publicEmail || ""),
+
+            programs: String(j?.programs || p.programs || ""),
+            tags: String(j?.tags || p.tags || ""),
+            statusFlags: String(j?.statusFlags || p.statusFlags || ""),
+            spotlight: String(j?.spotlight || p.spotlight || ""),
+
+            currentUpdateText: String(j?.currentUpdateText || p.currentUpdateText || ""),
+            currentUpdateLink: String(j?.currentUpdateLink || p.currentUpdateLink || ""),
+            currentUpdateExpiresAt: String(
+              j?.currentUpdateExpiresAt || p.currentUpdateExpiresAt || ""
+            ),
+
+            upcomingEventTitle: String(j?.upcomingEventTitle || p.upcomingEventTitle || ""),
+            upcomingEventLink: String(j?.upcomingEventLink || p.upcomingEventLink || ""),
+            upcomingEventDate: String(j?.upcomingEventDate || p.upcomingEventDate || ""),
+            upcomingEventExpiresAt: String(
+              j?.upcomingEventExpiresAt || p.upcomingEventExpiresAt || ""
+            ),
+            upcomingEventDescription: String(
+              j?.upcomingEventDescription || p.upcomingEventDescription || ""
+            ),
+
+            backgroundStyle: String(j?.backgroundStyle || p.backgroundStyle || "kraft"),
+            isBiCoastal:
+              String(j?.isBiCoastal || "").toLowerCase() === "true" ||
+              j?.isBiCoastal === true ||
+              p.isBiCoastal === true,
+            secondLocation: String(j?.secondLocation || p.secondLocation || ""),
+
+            currentHeadshotUrl: String(j?.currentHeadshotUrl || p.currentHeadshotUrl || ""),
+
+            storyTitle: String(j?.storyTitle || p.storyTitle || ""),
+            storyProgram: String(j?.storyProgram || p.storyProgram || ""),
+            storyLocationName: String(j?.storyLocationName || p.storyLocationName || ""),
+            storyYears: String(j?.storyYears || p.storyYears || ""),
+            storyPartners: String(j?.storyPartners || p.storyPartners || ""),
+            storyShortStory: String(j?.storyShortStory || p.storyShortStory || ""),
+            storyQuote: String(j?.storyQuote || p.storyQuote || ""),
+            storyQuoteAuthor: String(j?.storyQuoteAuthor || p.storyQuoteAuthor || ""),
+            storyMediaUrl: String(j?.storyMediaUrl || p.storyMediaUrl || ""),
+            storyMoreInfoUrl: String(j?.storyMoreInfoUrl || p.storyMoreInfoUrl || ""),
+            storyCountry: String(j?.storyCountry || p.storyCountry || ""),
+            showOnMap: String(j?.showOnMap || p.showOnMap || ""),
+          };
+
+          const ps = String(next.primarySocial || "instagram");
+          setPrimarySocial(ps);
+          return next;
+        });
+
         if (j?.assets) setAssets(j.assets as PointerAssets);
       } catch {
         /* ignore */
       }
     };
+
     if (email) run();
   }, [email]);
 
-  // Auto-sync slug to professional name unless user explicitly unlocks slug edit
+  /* Slug preview: whenever name changes AND name is unlocked, update currentSlug */
   useEffect(() => {
-    if (!(profile as any).__forceSlugEdit) {
-      const next = slugify(name || (profile.name as string) || alumniId);
-      if (next && next !== alumniId) {
-        setAlumniId(next);
-        setProfile((p) => ({ ...p, slug: next }));
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [name]);
+    if (nameLocked) return;
+    const next = slugify(name || "");
+    if (!next) return;
+    setCurrentSlug(next);
+    setProfile((p: any) => ({ ...p, slug: next }));
+  }, [name, nameLocked]);
 
-  // Uploader lifecycle
+  /* uploader lifecycle */
   useEffect(() => {
     uploaderRef.current = createUploader({
       endpoint: "/api/upload",
@@ -441,10 +640,7 @@ export default function UpdateForm({ email }: { email: string }) {
             list.add(task.id);
             return { ...f, [task.kind]: Array.from(list) };
           });
-          showToast(
-            err?.message || `Failed uploading ${task.file.name}`,
-            "error"
-          );
+          showToast(err?.message || `Failed uploading ${task.file.name}`, "error");
         },
         onQueueEmpty: () => {
           if (queueEmptyResolver.current) {
@@ -455,13 +651,14 @@ export default function UpdateForm({ email }: { email: string }) {
         },
       },
     });
+
     return () => {
       uploaderRef.current?.cancelAll();
       uploaderRef.current = null;
     };
   }, []);
 
-  // Make whole dotted zone clickable to open Finder
+  /* Make dotted zone clickable */
   useEffect(() => {
     const root = hubRef.current;
     if (!root) return;
@@ -477,15 +674,14 @@ export default function UpdateForm({ email }: { email: string }) {
     return () => root.removeEventListener("click", handleClick);
   }, []);
 
-  /* drafts hydration when profile bits change */
+  /* drafts hydration */
   useEffect(() => {
     basicsDraft.setValue({
       name,
       location,
-      artistStatement: profile.artistStatement ?? "",
-      headshotUrl: profile.headshotUrl ?? "",
+      bioLong: profile.bioLong ?? "",
+      currentHeadshotUrl: profile.currentHeadshotUrl ?? "",
       backgroundStyle: profile.backgroundStyle ?? "kraft",
-      identityTags: profile.identityTags ?? [],
       isBiCoastal: profile.isBiCoastal ?? false,
       secondLocation: profile.secondLocation ?? "",
     } as any);
@@ -493,10 +689,9 @@ export default function UpdateForm({ email }: { email: string }) {
   }, [
     name,
     location,
-    profile.artistStatement,
-    profile.headshotUrl,
+    profile.bioLong,
+    profile.currentHeadshotUrl,
     profile.backgroundStyle,
-    profile.identityTags,
     profile.isBiCoastal,
     profile.secondLocation,
   ]);
@@ -512,9 +707,11 @@ export default function UpdateForm({ email }: { email: string }) {
       linkedin: profile.linkedin ?? "",
       youtube: profile.youtube ?? "",
       vimeo: profile.vimeo ?? "",
+      imdb: profile.imdb ?? "",
       facebook: profile.facebook ?? "",
       linktree: profile.linktree ?? "",
       publicEmail: profile.publicEmail ?? "",
+      primarySocial: profile.primarySocial ?? primarySocial ?? "instagram",
     } as any);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -527,52 +724,254 @@ export default function UpdateForm({ email }: { email: string }) {
     profile.linkedin,
     profile.youtube,
     profile.vimeo,
+    profile.imdb,
     profile.facebook,
     profile.linktree,
     profile.publicEmail,
+    profile.primarySocial,
+    primarySocial,
   ]);
 
   /* helpers */
-  const byKeys = (keys: string[]) =>
-    PROFILE_FIELDS.filter(
-      (f) => keys.includes((f.path || (f.key as string)) as string)
-    );
+  const fieldKeyOf = (f: any) => String(f?.path || f?.key || "").trim();
 
-  const renderFields = (keys: string[]) => (
-    <FieldRenderer
-      value={profile as AlumniProfile}
-      onChange={(next) => setProfile(next as Partial<AlumniProfile>)}
-      fields={byKeys(keys)}
-    />
-  );
+  const byKeys = (keys: string[]) => {
+    const wanted = new Set(keys.map((k) => String(k).trim()));
+    return PROFILE_FIELDS.filter((f) => wanted.has(fieldKeyOf(f)));
+  };
+
+  const LIVE_KEYS = new Set<string>([
+    "name",
+    "slug",
+    "location",
+    "isBiCoastal",
+    "secondLocation",
+    "backgroundStyle",
+    "bioShort",
+    "bioLong",
+    "pronouns",
+    "roles",
+    "currentWork",
+    "website",
+    "instagram",
+    "x",
+    "tiktok",
+    "threads",
+    "bluesky",
+    "linkedin",
+    "primarySocial",
+    "youtube",
+    "vimeo",
+    "imdb",
+    "facebook",
+    "linktree",
+    "publicEmail",
+    "spotlight",
+    "programs",
+    "tags",
+    "statusFlags",
+    "currentHeadshotUrl",
+    "currentUpdateText",
+    "currentUpdateLink",
+    "currentUpdateExpiresAt",
+    "upcomingEventTitle",
+    "upcomingEventLink",
+    "upcomingEventDate",
+    "upcomingEventExpiresAt",
+    "upcomingEventDescription",
+    "storyTitle",
+    "storyProgram",
+    "storyLocationName",
+    "storyYears",
+    "storyPartners",
+    "storyShortStory",
+    "storyQuote",
+    "storyQuoteAuthor",
+    "storyMediaUrl",
+    "storyMoreInfoUrl",
+    "storyCountry",
+    "showOnMap",
+  ]);
+
+  const keysForSaving = (keys: string[]) => keys.filter((k) => LIVE_KEYS.has(String(k)));
+
+  const renderFieldsOrNull = (keys: string[]) => {
+    const fields = byKeys(keys);
+    if (!fields.length) return null;
+    return (
+      <FieldRenderer
+        value={profile as AlumniProfile}
+        onChange={(next) => setProfile(next as any)}
+        fields={fields}
+        baseline={liveBaseline as any}
+      />
+    );
+  };
 
   const contactKeys = PROFILE_GROUPS["Contact"] ?? [];
 
   async function rehydrate() {
-    if (!alumniId) return;
+    if (!stableAlumniId && !currentSlug) return;
     try {
       const r = await fetch(
-        `/api/alumni/lookup?alumniId=${encodeURIComponent(alumniId)}`,
+        `/api/alumni/lookup?alumniId=${encodeURIComponent(currentSlug || stableAlumniId)}`,
         { cache: "no-store" }
       );
       if (!r.ok) return;
       const j = await r.json();
+
       if (j?.status) setStatus(String(j.status));
       if (j?.assets) setAssets(j.assets as PointerAssets);
+
+      const slug = String(j?.canonicalSlug || j?.slug || "").trim();
+      const nm = String(j?.name || "").trim();
+      const loc = String(j?.location || "").trim();
+
+      if (slug) setCurrentSlug(slug);
+      if (nm) setName(nm);
+      if (loc) setLocation(loc);
+
+      setLiveBaseline(baselineFromLookup(j, slug, nm, loc));
+
+      setProfile((p: any) => {
+        const next = {
+          ...p,
+          slug: slug || p.slug,
+          name: nm || p.name,
+          location: loc || p.location,
+
+          pronouns: String(j?.pronouns || p.pronouns || ""),
+          roles: String(j?.roles || p.roles || ""),
+          currentWork: String(j?.currentWork || p.currentWork || ""),
+
+          bioShort: String(j?.bioShort || p.bioShort || ""),
+          bioLong: String(j?.bioLong || p.bioLong || ""),
+
+          website: String(j?.website || p.website || ""),
+          instagram: String(j?.instagram || p.instagram || ""),
+          x: String(j?.x || p.x || ""),
+          tiktok: String(j?.tiktok || p.tiktok || ""),
+          threads: String(j?.threads || p.threads || ""),
+          bluesky: String(j?.bluesky || p.bluesky || ""),
+          linkedin: String(j?.linkedin || p.linkedin || ""),
+          primarySocial: String(j?.primarySocial || p.primarySocial || "instagram"),
+
+          youtube: String(j?.youtube || p.youtube || ""),
+          vimeo: String(j?.vimeo || p.vimeo || ""),
+          imdb: String(j?.imdb || p.imdb || ""),
+          facebook: String(j?.facebook || p.facebook || ""),
+          linktree: String(j?.linktree || p.linktree || ""),
+          publicEmail: String(j?.publicEmail || p.publicEmail || ""),
+
+          programs: String(j?.programs || p.programs || ""),
+          tags: String(j?.tags || p.tags || ""),
+          statusFlags: String(j?.statusFlags || p.statusFlags || ""),
+          spotlight: String(j?.spotlight || p.spotlight || ""),
+
+          currentUpdateText: String(j?.currentUpdateText || p.currentUpdateText || ""),
+          currentUpdateLink: String(j?.currentUpdateLink || p.currentUpdateLink || ""),
+          currentUpdateExpiresAt: String(
+            j?.currentUpdateExpiresAt || p.currentUpdateExpiresAt || ""
+          ),
+
+          upcomingEventTitle: String(j?.upcomingEventTitle || p.upcomingEventTitle || ""),
+          upcomingEventLink: String(j?.upcomingEventLink || p.upcomingEventLink || ""),
+          upcomingEventDate: String(j?.upcomingEventDate || p.upcomingEventDate || ""),
+          upcomingEventExpiresAt: String(
+            j?.upcomingEventExpiresAt || p.upcomingEventExpiresAt || ""
+          ),
+          upcomingEventDescription: String(
+            j?.upcomingEventDescription || p.upcomingEventDescription || ""
+          ),
+
+          currentHeadshotUrl: String(j?.currentHeadshotUrl || p.currentHeadshotUrl || ""),
+          backgroundStyle: String(j?.backgroundStyle || p.backgroundStyle || "kraft"),
+          isBiCoastal:
+            String(j?.isBiCoastal || "").toLowerCase() === "true" ||
+            j?.isBiCoastal === true ||
+            p.isBiCoastal === true,
+          secondLocation: String(j?.secondLocation || p.secondLocation || ""),
+        };
+
+        setPrimarySocial(String(next.primarySocial || "instagram"));
+        return next;
+      });
     } catch {
       /* ignore */
     }
   }
 
-  const totalBytes = (files: File[]) =>
-    files.reduce((s, f) => s + (f?.size ?? 0), 0);
+  const totalBytes = (files: File[]) => files.reduce((s, f) => s + (f?.size ?? 0), 0);
 
   const prettyMB = (n?: number | null) => {
     const mb = Number(n ?? 0) / 1_000_000;
     return Math.round(mb * 10) / 10;
   };
 
-  /* per-category save + uploads (with album-aware rename) */
+  /** Map to Profile-Live schema. */
+  function toLiveSavableProfile(p: any) {
+    return {
+      name: String(p.name || "").trim(),
+      slug: String(p.slug || "").trim().toLowerCase(),
+      location: String(p.location || "").trim(),
+      isBiCoastal: !!p.isBiCoastal,
+      secondLocation: String(p.secondLocation || "").trim(),
+      backgroundStyle: String(p.backgroundStyle || "kraft").trim(),
+
+      pronouns: String(p.pronouns || "").trim(),
+      roles: String(p.roles || "").trim(),
+      currentWork: String(p.currentWork || "").trim(),
+      bioShort: String(p.bioShort || "").trim(),
+      bioLong: String(p.bioLong || "").trim(),
+
+      website: String(p.website || "").trim(),
+      instagram: String(p.instagram || "").trim(),
+      x: String(p.x || "").trim(),
+      tiktok: String(p.tiktok || "").trim(),
+      threads: String(p.threads || "").trim(),
+      bluesky: String(p.bluesky || "").trim(),
+      linkedin: String(p.linkedin || "").trim(),
+      primarySocial: String(p.primarySocial || "").trim(),
+      youtube: String(p.youtube || "").trim(),
+      vimeo: String(p.vimeo || "").trim(),
+      imdb: String(p.imdb || "").trim(),
+      facebook: String(p.facebook || "").trim(),
+      linktree: String(p.linktree || "").trim(),
+      publicEmail: String(p.publicEmail || "").trim(),
+
+      spotlight: String(p.spotlight || "").trim(),
+      programs: String(p.programs || "").trim(),
+      tags: String(p.tags || "").trim(),
+      statusFlags: String(p.statusFlags || "").trim(),
+
+      currentUpdateText: String(p.currentUpdateText || "").trim(),
+      currentUpdateLink: String(p.currentUpdateLink || "").trim(),
+      currentUpdateExpiresAt: String(p.currentUpdateExpiresAt || "").trim(),
+
+      upcomingEventTitle: String(p.upcomingEventTitle || "").trim(),
+      upcomingEventLink: String(p.upcomingEventLink || "").trim(),
+      upcomingEventDate: String(p.upcomingEventDate || "").trim(),
+      upcomingEventExpiresAt: String(p.upcomingEventExpiresAt || "").trim(),
+      upcomingEventDescription: String(p.upcomingEventDescription || "").trim(),
+
+      currentHeadshotUrl: String(p.currentHeadshotUrl || "").trim(),
+
+      storyTitle: String(p.storyTitle || "").trim(),
+      storyProgram: String(p.storyProgram || "").trim(),
+      storyLocationName: String(p.storyLocationName || "").trim(),
+      storyYears: String(p.storyYears || "").trim(),
+      storyPartners: String(p.storyPartners || "").trim(),
+      storyShortStory: String(p.storyShortStory || "").trim(),
+      storyQuote: String(p.storyQuote || "").trim(),
+      storyQuoteAuthor: String(p.storyQuoteAuthor || "").trim(),
+      storyMediaUrl: String(p.storyMediaUrl || "").trim(),
+      storyMoreInfoUrl: String(p.storyMoreInfoUrl || "").trim(),
+      storyCountry: String(p.storyCountry || "").trim(),
+      showOnMap: String(p.showOnMap ?? "").trim(),
+    };
+  }
+
+  /* per-category save + uploads */
   async function saveCategory({
     tag,
     fieldKeys = [],
@@ -584,15 +983,15 @@ export default function UpdateForm({ email }: { email: string }) {
     uploadKinds?: UploadKind[];
     afterSave?: () => void;
   }) {
+    const alumniId = (currentSlug || stableAlumniId || "").trim();
     if (!alumniId) {
-      showToast("Please provide your alumni ID (slug).", "error");
+      showToast("Profile not loaded yet.", "error");
       return;
     }
 
     setLoading(true);
     setFailed({ headshot: [], album: [], reel: [], event: [] });
 
-    // progress totals for requested kinds only
     setProgress((p) => ({
       headshot: uploadKinds.includes("headshot")
         ? { uploaded: 0, total: headshotFile?.size ?? 0, pct: 0 }
@@ -611,19 +1010,14 @@ export default function UpdateForm({ email }: { email: string }) {
     try {
       const uploader = uploaderRef.current!;
       const baseFields: Record<string, string> = { alumniId };
-      if (albumName) baseFields.albumName = albumName; // give server the collection name
-      const humanBase = slugify(
-        (name || (profile.name as string) || alumniId || "alumni").trim()
-      );
+      if (albumName) baseFields.albumName = albumName;
+
+      const humanBase = slugify((name || profile.name || currentSlug || "alumni").trim());
 
       // queue uploads with renamed files
       if (uploadKinds.includes("headshot") && headshotFile) {
         const f = renameForKind(headshotFile, "headshot", humanBase);
-        uploader.enqueue({
-          kind: "headshot",
-          files: [f],
-          formFields: baseFields,
-        });
+        uploader.enqueue({ kind: "headshot", files: [f], formFields: baseFields });
       }
       if (uploadKinds.includes("album") && albumFiles.length) {
         const files = albumFiles.map((f, i) =>
@@ -632,15 +1026,11 @@ export default function UpdateForm({ email }: { email: string }) {
         uploader.enqueue({ kind: "album", files, formFields: baseFields });
       }
       if (uploadKinds.includes("reel") && reelFiles.length) {
-        const files = reelFiles.map((f, i) =>
-          renameForKind(f, "reel", humanBase, i + 1)
-        );
+        const files = reelFiles.map((f, i) => renameForKind(f, "reel", humanBase, i + 1));
         uploader.enqueue({ kind: "reel", files, formFields: baseFields });
       }
       if (uploadKinds.includes("event") && eventFiles.length) {
-        const files = eventFiles.map((f, i) =>
-          renameForKind(f, "event", humanBase, i + 1)
-        );
+        const files = eventFiles.map((f, i) => renameForKind(f, "event", humanBase, i + 1));
         uploader.enqueue({ kind: "event", files, formFields: baseFields });
       }
 
@@ -658,83 +1048,116 @@ export default function UpdateForm({ email }: { email: string }) {
         await waitForQueue;
       }
 
-      // CONTACT: clear hidden socials & set primary
+      // CONTACT: clear hidden socials & set primary (do not rely on async setProfile)
+      let profileForSave: any = profile;
       if (tag === "Contact") {
         const next = { ...(profile as any) };
         const ALL = ALL_SOCIALS as unknown as string[];
         ALL.forEach((k) => {
           if (!visibleSocials.includes(k)) next[k] = "";
         });
-        if (
-          visibleSocials.length &&
-          primarySocial &&
-          visibleSocials.includes(primarySocial)
-        ) {
-          (next as any).primarySocial = primarySocial;
+        if (visibleSocials.length && primarySocial && visibleSocials.includes(primarySocial)) {
+          next.primarySocial = primarySocial;
         }
         setProfile(next);
+        profileForSave = next;
       }
 
-      // 2) Partial profile save
-      const merged: AlumniProfile = normalizeProfile({
-        ...(profile as AlumniProfile),
-        name: name || (profile.name as string) || "",
-        slug: alumniId || (profile.slug as string) || "",
-        location: location || (profile.location as string) || "",
+      // Normalize, then map to Live keys
+      const mergedAny = normalizeProfile({
+        ...(profileForSave as any),
+        name: name || profileForSave.name || "",
+        slug: (currentSlug || profileForSave.slug || "").trim(),
+        location: location || profileForSave.location || "",
+
+        bioLong: String(profileForSave.bioLong || ""),
+        bioShort: String(profileForSave.bioShort || ""),
+        statusFlags: String(profileForSave.statusFlags || ""),
+        programs: String(profileForSave.programs || ""),
+        tags: String(profileForSave.tags || ""),
+        spotlight: String(profileForSave.spotlight || ""),
+        currentWork: String(profileForSave.currentWork || ""),
+        roles: String(profileForSave.roles || ""),
+        pronouns: String(profileForSave.pronouns || ""),
+      } as AlumniProfile) as any;
+
+      const mergedLive = toLiveSavableProfile({
+        ...mergedAny,
+        name,
+        slug: currentSlug,
+        location,
+        primarySocial:
+          tag === "Contact"
+            ? String(profileForSave.primarySocial || primarySocial || "instagram")
+            : String(profileForSave.primarySocial || profile.primarySocial || "instagram"),
       });
 
-      // Enforce Current Update starts with "I am "
-      if (fieldKeys.includes("currentUpdateText")) {
-        const t = merged.currentUpdateText || "";
-        if (!/^\s*i\s+am\b/i.test(t)) {
-          merged.currentUpdateText = `I am ${t}`.replace(/\s+/g, " ").trim();
-        }
-      }
-
-      const errs = validateProfile(merged);
+      // Validate only keys we’re saving
+      const errs = validateProfile(mergedAny as AlumniProfile) || {};
       const filteredErrs = Object.fromEntries(
         Object.entries(errs).filter(([k]) => fieldKeys.includes(k))
       );
       if (Object.keys(filteredErrs).length) {
         const firstKey = Object.keys(filteredErrs)[0];
-        const firstMsg =
-          (filteredErrs as any)[firstKey] || "Please fix the highlighted fields.";
+        const firstMsg = (filteredErrs as any)[firstKey] || "Please fix the highlighted fields.";
         showToast(firstMsg, "error");
         setLoading(false);
         return;
       }
 
-      const original = { slug: originalSlug || alumniId } as AlumniProfile;
-      const changesAll = buildLiveChanges(original, merged);
+      const baseline =
+        liveBaseline ??
+        (baselineFromLookup({}, originalSlug || currentSlug, name, location) as any);
+
+      const changesAll = buildLiveChanges(baseline as any, mergedLive as any) as Record<
+        string,
+        any
+      >;
+
       const changes = Object.fromEntries(
         Object.entries(changesAll).filter(([k]) => fieldKeys.includes(k))
       );
 
-      if (Object.keys(changes).length > 0) {
-        const res = await fetch("/api/alumni/save", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            alumniId, // possibly the NEW slug
-            oldSlug: originalSlug !== alumniId ? originalSlug : undefined, // NEW
-            changes,
-            submittedByEmail: email || "",
-            note: `partial save (${tag}) via alumni form`,
-          }),
-        });
-        const j = await res.json();
-        if (!res.ok || !j.ok) throw new Error(j?.error || "Save failed");
-        if (originalSlug !== alumniId) setOriginalSlug(alumniId); // move forward
+      if (Object.keys(changes).length === 0) {
+        showToast("No changes to save.", "success");
+        setLoading(false);
+        return;
       }
 
-      // clear staged files if any
+      const body = {
+        alumniId,
+        oldSlug: originalSlug && currentSlug && originalSlug !== currentSlug ? originalSlug : undefined,
+        changes,
+        submittedByEmail: email || "",
+        note: `partial save (${tag}) via alumni form`,
+      };
+
+      const res = await fetch("/api/alumni/save", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const j = await res.json().catch(() => ({} as any));
+      if (!res.ok || !j?.ok) throw new Error(j?.error || `Save failed (${res.status})`);
+
+      // hard assert: server must confirm it saved attempted keys
+      const attempted = Object.keys(changes);
+      const saved = new Set<string>((j?.savedFields ?? []) as string[]);
+      const missing = attempted.filter((k) => !saved.has(k));
+      if (missing.length) {
+        throw new Error(`Server did not persist: ${missing.join(", ")}. note=${j?.note ?? "none"}`);
+      }
+
+      if (originalSlug !== currentSlug) setOriginalSlug(currentSlug);
+      setLiveBaseline((prev: any) => ({ ...(prev ?? {}), ...mergedLive }));
+
       if (uploadKinds.includes("headshot")) setHeadshotFile(null);
       if (uploadKinds.includes("album")) setAlbumFiles([]);
       if (uploadKinds.includes("reel")) setReelFiles([]);
       if (uploadKinds.includes("event")) setEventFiles([]);
 
       afterSave?.();
-
       showToast(`Category saved — profile updated.`);
       await rehydrate();
     } catch (err: any) {
@@ -745,13 +1168,7 @@ export default function UpdateForm({ email }: { email: string }) {
   }
 
   /* pause/resume/cancel + failed retry */
-  const Controls = ({
-    kind,
-    disabled,
-  }: {
-    kind: UploadKind;
-    disabled?: boolean;
-  }) => (
+  const Controls = ({ kind, disabled }: { kind: UploadKind; disabled?: boolean }) => (
     <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
       <button
         type="button"
@@ -765,7 +1182,9 @@ export default function UpdateForm({ email }: { email: string }) {
       <button
         type="button"
         disabled={!!disabled}
-        onClick={() => uploaderRef.current?.resumeKind(kind, { alumniId })}
+        onClick={() =>
+          uploaderRef.current?.resumeKind(kind, { alumniId: currentSlug || stableAlumniId })
+        }
         style={datButtonGhost}
         className="dat-btn-ghost"
       >
@@ -791,13 +1210,12 @@ export default function UpdateForm({ email }: { email: string }) {
     const ids = failed[kind];
     if (!ids.length) return null;
     const tasks: UploadTask[] =
-      uploaderRef.current?.getTasks().filter((t) => ids.includes(t.id)) ??
-      [];
+      uploaderRef.current?.getTasks().filter((t) => ids.includes(t.id)) ?? [];
 
     const retryOne = (id: string) => {
       const t = uploaderRef.current?.getTaskById(id);
       if (!t) return;
-      const ff = { alumniId };
+      const ff = { alumniId: currentSlug || stableAlumniId };
       uploaderRef.current?.resumeKind(kind, ff);
       uploaderRef.current?.enqueue({ kind, files: [t.file], formFields: ff });
       setFailed((f) => ({ ...f, [kind]: f[kind].filter((x) => x !== id) }));
@@ -805,7 +1223,7 @@ export default function UpdateForm({ email }: { email: string }) {
     };
 
     const retryAll = () => {
-      const ff = { alumniId };
+      const ff = { alumniId: currentSlug || stableAlumniId };
       const files = tasks.map((t) => t.file);
       if (!files.length) return;
       uploaderRef.current?.resumeKind(kind, ff);
@@ -824,9 +1242,7 @@ export default function UpdateForm({ email }: { email: string }) {
           color: COLOR.snow,
         }}
       >
-        <div style={{ marginBottom: 8, fontWeight: 600 }}>
-          Some files failed to upload:
-        </div>
+        <div style={{ marginBottom: 8, fontWeight: 600 }}>Some files failed to upload:</div>
         <ul style={{ marginLeft: 18, listStyle: "disc" }}>
           {tasks.map((t) => (
             <li key={t.id} style={{ margin: "6px 0" }}>
@@ -843,12 +1259,7 @@ export default function UpdateForm({ email }: { email: string }) {
           ))}
         </ul>
         <div style={{ marginTop: 8 }}>
-          <button
-            type="button"
-            onClick={retryAll}
-            style={datButtonGhost}
-            className="dat-btn-ghost"
-          >
+          <button type="button" onClick={retryAll} style={datButtonGhost} className="dat-btn-ghost">
             Retry all failed
           </button>
         </div>
@@ -856,7 +1267,461 @@ export default function UpdateForm({ email }: { email: string }) {
     );
   };
 
-  /* render */
+ // ------------------------------------------------------------
+// ✅ DROPDOWN SECTIONS: ALWAYS RENDER
+// ------------------------------------------------------------
+
+// Prefer groups if present, otherwise fallback keys.
+const AboutEditKeys =
+  PROFILE_GROUPS["About"] ??
+  PROFILE_GROUPS["Bio"] ??
+  PROFILE_GROUPS["Profile"] ??
+  ["pronouns", "roles", "currentWork", "bioShort"];
+
+const TagsEditKeys =
+  PROFILE_GROUPS["Programs"] ??
+  PROFILE_GROUPS["Tags"] ??
+  PROFILE_GROUPS["Meta"] ??
+  ["spotlight", "programs", "tags", "statusFlags"];
+
+const UpdatesEditKeys =
+  PROFILE_GROUPS["Updates"] ??
+  PROFILE_GROUPS["Announcements"] ??
+  ["currentUpdateText", "currentUpdateLink", "currentUpdateExpiresAt"];
+
+const UpcomingEventEditKeys =
+  PROFILE_GROUPS["Upcoming Event"] ??
+  PROFILE_GROUPS["Events"] ??
+  [
+    "upcomingEventTitle",
+    "upcomingEventLink",
+    "upcomingEventDate",
+    "upcomingEventExpiresAt",
+    "upcomingEventDescription",
+  ];
+
+const ContactEditKeys = [
+  "website",
+  "instagram",
+  "x",
+  "tiktok",
+  "threads",
+  "bluesky",
+  "linkedin",
+  "primarySocial",
+  "youtube",
+  "vimeo",
+  "imdb",
+  "facebook",
+  "linktree",
+  "publicEmail",
+];
+
+// ✅ Story Map section keys (match Profile-Live headers)
+const StoryMapEditKeys =
+  PROFILE_GROUPS["Story Map Contribution"] ?? [
+    "storyTitle",
+    "storyProgram",
+    "storyLocationName",
+    "storyYears",
+    "storyPartners",
+    "storyShortStory",
+    "storyQuote",
+    "storyQuoteAuthor",
+    "storyMediaUrl",
+    "storyMoreInfoUrl",
+    "storyCountry",
+    "showOnMap",
+  ];
+
+// ------------------------------------------------------------
+// ✅ SAVE KEY SETS (single source of truth)
+// ------------------------------------------------------------
+
+const ContactSaveKeys = keysForSaving(ContactEditKeys);
+
+const ProfileBasicsSaveKeys = keysForSaving([
+  "slug",
+  "name",
+  "location",
+  "isBiCoastal",
+  "secondLocation",
+  "backgroundStyle",
+  "currentHeadshotUrl",
+  "bioLong",
+]);
+
+const AboutSaveKeys = keysForSaving(AboutEditKeys);
+const TagsSaveKeys = keysForSaving(TagsEditKeys);
+const UpdatesSaveKeys = keysForSaving(UpdatesEditKeys);
+const UpcomingEventSaveKeys = keysForSaving(UpcomingEventEditKeys);
+const StoryMapSaveKeys = keysForSaving(StoryMapEditKeys);
+
+// ✅ DEFINE THIS ONCE
+const ALL_SAVE_KEYS = Array.from(
+  new Set([
+    ...ProfileBasicsSaveKeys,
+    ...AboutSaveKeys,
+    ...TagsSaveKeys,
+    ...ContactSaveKeys,
+    ...UpdatesSaveKeys,
+    ...UpcomingEventSaveKeys,
+    ...StoryMapSaveKeys,
+  ])
+);
+
+
+// ------------------------------------------------------------
+// 2) ✅ Manual fallback (in case FieldRenderer has no defs yet)
+// ------------------------------------------------------------
+const ManualStoryMapFallback = () => (
+  <div style={{ display: "grid", gap: 14 }}>
+    <div>
+      <label style={labelStyle}>Story Title</label>
+      <input
+        value={profile.storyTitle || ""}
+        onChange={(e) => setProfile((p: any) => ({ ...p, storyTitle: e.target.value }))}
+        style={inputStyle}
+      />
+    </div>
+
+    <div>
+      <label style={labelStyle}>Associated Program</label>
+      <input
+        value={profile.storyProgram || ""}
+        onChange={(e) => setProfile((p: any) => ({ ...p, storyProgram: e.target.value }))}
+        style={inputStyle}
+        placeholder="ACTion / RAW / CASTAWAY / PASSAGE / ..."
+      />
+    </div>
+
+    <div>
+      <label style={labelStyle}>Country</label>
+      <input
+        value={profile.storyCountry || ""}
+        onChange={(e) => setProfile((p: any) => ({ ...p, storyCountry: e.target.value }))}
+        style={inputStyle}
+        placeholder="Ecuador, Slovakia..."
+      />
+    </div>
+
+    <div>
+      <label style={labelStyle}>Year(s)</label>
+      <input
+        value={profile.storyYears || ""}
+        onChange={(e) => setProfile((p: any) => ({ ...p, storyYears: e.target.value }))}
+        style={inputStyle}
+        placeholder="2016 or 2015–2016"
+      />
+    </div>
+
+    <div>
+      <label style={labelStyle}>Location Name (map pin label)</label>
+      <input
+        value={profile.storyLocationName || ""}
+        onChange={(e) => setProfile((p: any) => ({ ...p, storyLocationName: e.target.value }))}
+        style={inputStyle}
+        placeholder="City / Region / Landmark"
+      />
+    </div>
+
+    <div>
+      <label style={labelStyle}>Partners</label>
+      <input
+        value={profile.storyPartners || ""}
+        onChange={(e) => setProfile((p: any) => ({ ...p, storyPartners: e.target.value }))}
+        style={inputStyle}
+      />
+    </div>
+
+    <div>
+      <label style={labelStyle}>Media URL</label>
+      <input
+        value={profile.storyMediaUrl || ""}
+        onChange={(e) => setProfile((p: any) => ({ ...p, storyMediaUrl: e.target.value }))}
+        style={inputStyle}
+        placeholder="https://..."
+      />
+    </div>
+
+    <div>
+      <label style={labelStyle}>More Info URL</label>
+      <input
+        value={profile.storyMoreInfoUrl || ""}
+        onChange={(e) => setProfile((p: any) => ({ ...p, storyMoreInfoUrl: e.target.value }))}
+        style={inputStyle}
+        placeholder="https://..."
+      />
+    </div>
+
+    <div>
+      <label style={labelStyle}>Short Story</label>
+      <textarea
+        value={profile.storyShortStory || ""}
+        onChange={(e) => setProfile((p: any) => ({ ...p, storyShortStory: e.target.value }))}
+        rows={6}
+        style={{ ...inputStyle, minHeight: 160, resize: "vertical" }}
+      />
+    </div>
+
+    <div>
+      <label style={labelStyle}>Quote (no quotation marks)</label>
+      <textarea
+        value={profile.storyQuote || ""}
+        onChange={(e) => setProfile((p: any) => ({ ...p, storyQuote: e.target.value }))}
+        rows={3}
+        style={{ ...inputStyle, minHeight: 110, resize: "vertical" }}
+      />
+    </div>
+
+    <div>
+      <label style={labelStyle}>Quote Author</label>
+      <input
+        value={profile.storyQuoteAuthor || ""}
+        onChange={(e) => setProfile((p: any) => ({ ...p, storyQuoteAuthor: e.target.value }))}
+        style={inputStyle}
+      />
+    </div>
+
+    <label style={{ fontWeight: 700 }}>
+      <input
+        type="checkbox"
+        checked={
+          String(profile.showOnMap || "").toLowerCase() === "true" || profile.showOnMap === true
+        }
+        onChange={(e) => setProfile((p: any) => ({ ...p, showOnMap: e.target.checked }))}
+        style={{ marginRight: 10 }}
+      />
+      Show on Map?
+    </label>
+
+    <p style={{ ...explainStyle, marginTop: 6 }}>
+      (Fallback UI) Add Story Map keys to <code>PROFILE_FIELDS</code> to render via FieldRenderer.
+    </p>
+  </div>
+);
+
+// ------------------------------------------------------------
+// 3) ✅ Add the Collapsible block in your render (near other dropdowns)
+// ------------------------------------------------------------
+
+/* ✅ STORY MAP CONTRIBUTION (dropdown always present) */
+<Collapsible title="Story Map Contribution" defaultOpen={false}>
+  <Section>
+    <span style={subheadChipStyle} className="subhead-chip">
+      Add a story to the map
+    </span>
+    <p style={explainStyle} className="explain">
+      This powers a Story Map pin + a short narrative. If you toggle “Show on Map”, admins can pin
+      lat/lng later.
+    </p>
+
+    {renderFieldsOrNull(StoryMapEditKeys) ?? <ManualStoryMapFallback />}
+
+    <div style={{ marginTop: 20 }}>
+      <button
+        type="button"
+        onClick={() => saveCategory({ tag: "Story Map", fieldKeys: StoryMapSaveKeys })}
+        style={datButton}
+        className="dat-btn"
+      >
+        Save Story Map
+      </button>
+    </div>
+  </Section>
+</Collapsible>
+
+
+
+  // Manual fallback blocks when FieldRenderer has no matching fields.
+  const ManualAboutFallback = () => (
+    <div style={{ display: "grid", gap: 14 }}>
+      <div>
+        <label style={labelStyle}>Pronouns</label>
+        <input
+          value={profile.pronouns || ""}
+          onChange={(e) => setProfile((p: any) => ({ ...p, pronouns: e.target.value }))}
+          style={inputStyle}
+          placeholder="e.g. she/her, he/him, they/them"
+        />
+      </div>
+      <div>
+        <label style={labelStyle}>Roles</label>
+        <input
+          value={profile.roles || ""}
+          onChange={(e) => setProfile((p: any) => ({ ...p, roles: e.target.value }))}
+          style={inputStyle}
+          placeholder="Actor, Director, Playwright..."
+        />
+      </div>
+      <div>
+        <label style={labelStyle}>Current Work</label>
+        <input
+          value={profile.currentWork || ""}
+          onChange={(e) => setProfile((p: any) => ({ ...p, currentWork: e.target.value }))}
+          style={inputStyle}
+          placeholder="What are you working on right now?"
+        />
+      </div>
+      <div>
+        <label style={labelStyle}>Bio Short (optional)</label>
+        <textarea
+          value={profile.bioShort || ""}
+          onChange={(e) => setProfile((p: any) => ({ ...p, bioShort: e.target.value }))}
+          rows={4}
+          style={{ ...inputStyle, minHeight: 120, resize: "vertical" }}
+        />
+      </div>
+      <p style={{ ...explainStyle, marginTop: 6 }}>
+        (Fallback UI) If you want these to render via FieldRenderer, add these keys to
+        <code> PROFILE_FIELDS</code>.
+      </p>
+    </div>
+  );
+
+  const ManualTagsFallback = () => (
+    <div style={{ display: "grid", gap: 14 }}>
+      <div>
+        <label style={labelStyle}>Spotlight</label>
+        <input
+          value={profile.spotlight || ""}
+          onChange={(e) => setProfile((p: any) => ({ ...p, spotlight: e.target.value }))}
+          style={inputStyle}
+          placeholder="Optional featured line"
+        />
+      </div>
+      <div>
+        <label style={labelStyle}>Programs</label>
+        <input
+          value={profile.programs || ""}
+          onChange={(e) => setProfile((p: any) => ({ ...p, programs: e.target.value }))}
+          style={inputStyle}
+          placeholder="Comma-separated programs"
+        />
+      </div>
+      <div>
+        <label style={labelStyle}>Tags</label>
+        <input
+          value={profile.tags || ""}
+          onChange={(e) => setProfile((p: any) => ({ ...p, tags: e.target.value }))}
+          style={inputStyle}
+          placeholder="Comma-separated tags"
+        />
+      </div>
+      <div>
+        <label style={labelStyle}>Status Flags</label>
+        <input
+          value={profile.statusFlags || ""}
+          onChange={(e) => setProfile((p: any) => ({ ...p, statusFlags: e.target.value }))}
+          style={inputStyle}
+          placeholder="Comma-separated flags"
+        />
+      </div>
+      <p style={{ ...explainStyle, marginTop: 6 }}>
+        (Fallback UI) To restore your dropdown/select UI, ensure these keys exist in
+        <code> PROFILE_FIELDS</code> with the correct <code>path</code>.
+      </p>
+    </div>
+  );
+
+  const ManualUpdatesFallback = () => (
+    <div style={{ display: "grid", gap: 14 }}>
+      <div>
+        <label style={labelStyle}>Update Text</label>
+        <textarea
+          value={profile.currentUpdateText || ""}
+          onChange={(e) => setProfile((p: any) => ({ ...p, currentUpdateText: e.target.value }))}
+          rows={4}
+          style={{ ...inputStyle, minHeight: 140, resize: "vertical" }}
+        />
+      </div>
+      <div>
+        <label style={labelStyle}>Update Link</label>
+        <input
+          value={profile.currentUpdateLink || ""}
+          onChange={(e) => setProfile((p: any) => ({ ...p, currentUpdateLink: e.target.value }))}
+          style={inputStyle}
+          placeholder="https://..."
+        />
+      </div>
+      <div>
+        <label style={labelStyle}>Expires At</label>
+        <input
+          value={profile.currentUpdateExpiresAt || ""}
+          onChange={(e) =>
+            setProfile((p: any) => ({ ...p, currentUpdateExpiresAt: e.target.value }))
+          }
+          style={inputStyle}
+          placeholder="YYYY-MM-DD"
+        />
+      </div>
+      <p style={{ ...explainStyle, marginTop: 6 }}>
+        (Fallback UI) Add these keys to <code>PROFILE_FIELDS</code> to render via FieldRenderer.
+      </p>
+    </div>
+  );
+
+  const ManualUpcomingEventFallback = () => (
+    <div style={{ display: "grid", gap: 14 }}>
+      <div>
+        <label style={labelStyle}>Event Title</label>
+        <input
+          value={profile.upcomingEventTitle || ""}
+          onChange={(e) =>
+            setProfile((p: any) => ({ ...p, upcomingEventTitle: e.target.value }))
+          }
+          style={inputStyle}
+        />
+      </div>
+      <div>
+        <label style={labelStyle}>Event Link</label>
+        <input
+          value={profile.upcomingEventLink || ""}
+          onChange={(e) =>
+            setProfile((p: any) => ({ ...p, upcomingEventLink: e.target.value }))
+          }
+          style={inputStyle}
+          placeholder="https://..."
+        />
+      </div>
+      <div>
+        <label style={labelStyle}>Event Date</label>
+        <input
+          value={profile.upcomingEventDate || ""}
+          onChange={(e) => setProfile((p: any) => ({ ...p, upcomingEventDate: e.target.value }))}
+          style={inputStyle}
+          placeholder="YYYY-MM-DD"
+        />
+      </div>
+      <div>
+        <label style={labelStyle}>Expires At</label>
+        <input
+          value={profile.upcomingEventExpiresAt || ""}
+          onChange={(e) =>
+            setProfile((p: any) => ({ ...p, upcomingEventExpiresAt: e.target.value }))
+          }
+          style={inputStyle}
+          placeholder="YYYY-MM-DD"
+        />
+      </div>
+      <div>
+        <label style={labelStyle}>Description</label>
+        <textarea
+          value={profile.upcomingEventDescription || ""}
+          onChange={(e) =>
+            setProfile((p: any) => ({ ...p, upcomingEventDescription: e.target.value }))
+          }
+          rows={5}
+          style={{ ...inputStyle, minHeight: 160, resize: "vertical" }}
+        />
+      </div>
+      <p style={{ ...explainStyle, marginTop: 6 }}>
+        (Fallback UI) Add these keys to <code>PROFILE_FIELDS</code> to render via FieldRenderer.
+      </p>
+    </div>
+  );
+
+  /* ---------- render ---------- */
   return (
     <div className="alumni-update">
       {/* HERO */}
@@ -902,6 +1767,7 @@ export default function UpdateForm({ email }: { email: string }) {
             }}
           >
             Signed in as <strong>{email}</strong>
+            {isAdmin ? " (admin)" : ""}
           </p>
         </div>
       </div>
@@ -910,8 +1776,7 @@ export default function UpdateForm({ email }: { email: string }) {
       <main
         style={{
           marginTop: "-5rem",
-
-          padding: "5.5rem 0 4rem", // extra top/bottom buffer
+          padding: "5.5rem 0 4rem",
           position: "relative",
           opacity: 0.9,
           zIndex: 10,
@@ -921,7 +1786,6 @@ export default function UpdateForm({ email }: { email: string }) {
           {/* Media Hub */}
           <div data-mediahub ref={hubRef} style={{ margin: "2.5rem 0 3.25rem" }}>
             <MediaHub
-              // files
               headshotFile={headshotFile}
               setHeadshotFile={setHeadshotFile}
               albumFiles={albumFiles}
@@ -930,10 +1794,8 @@ export default function UpdateForm({ email }: { email: string }) {
               setReelFiles={setReelFiles}
               eventFiles={eventFiles}
               setEventFiles={setEventFiles}
-              // album/collection name (NEW)
               albumName={albumName}
               setAlbumName={setAlbumName}
-              // actions
               uploading={loading}
               onUploadAll={() =>
                 saveCategory({
@@ -942,56 +1804,27 @@ export default function UpdateForm({ email }: { email: string }) {
                   uploadKinds: ["headshot", "album", "reel", "event"],
                 })
               }
-              onOpenPicker={(k: "headshot" | "album" | "reel" | "event") =>
-                openPicker(k)
-              }
-              onFeature={(
-                kind: "headshot" | "album" | "reel" | "event",
-                _idx: number
-              ) => openPicker(kind)}
+              onOpenPicker={(k: "headshot" | "album" | "reel" | "event") => openPicker(k)}
+              onFeature={(kind: "headshot" | "album" | "reel" | "event") => openPicker(kind)}
             />
 
-            {/* Quick alternate: Headshot via URL */}
-            <div style={{ marginTop: 10 }}>
-              <button
-                type="button"
-                className="dat-btn-ghost"
-                style={datButtonGhost}
-                onClick={() => {
-                  const url = prompt("Paste a direct image URL for your headshot");
-                  if (url) setProfile((p) => ({ ...p, headshotUrl: url }));
-                }}
-              >
-                Use image URL instead
-              </button>
-            </div>
-
-            {/* Composite progress per kind */}
             {(progress.album.total > 0 ||
               progress.reel.total > 0 ||
               progress.event.total > 0 ||
               progress.headshot.total > 0) && (
               <div style={{ marginTop: 18 }}>
-                {(["headshot", "album", "reel", "event"] as UploadKind[]).map(
-                  (k) =>
-                    progress[k].total > 0 ? (
-                      <div key={k} style={{ marginBottom: 12 }}>
-                        <div
-                          style={{
-                            fontSize: 12,
-                            opacity: 0.9,
-                            marginBottom: 6,
-                          }}
-                        >
-                          {k[0].toUpperCase() + k.slice(1)} uploads{" "}
-                          {progress[k].pct}% &nbsp;({prettyMB(progress[k].uploaded)} /{" "}
-                          {prettyMB(progress[k].total)} MB)
-                        </div>
-                        <ProgressBar value={progress[k].pct} />
-                        <Controls kind={k} disabled={loading} />
-                        <FailedList kind={k} />
+                {(["headshot", "album", "reel", "event"] as UploadKind[]).map((k) =>
+                  progress[k].total > 0 ? (
+                    <div key={k} style={{ marginBottom: 12 }}>
+                      <div style={{ fontSize: 12, opacity: 0.9, marginBottom: 6 }}>
+                        {k[0].toUpperCase() + k.slice(1)} uploads {progress[k].pct}% &nbsp;(
+                        {prettyMB(progress[k].uploaded)} / {prettyMB(progress[k].total)} MB)
                       </div>
-                    ) : null
+                      <ProgressBar value={progress[k].pct} />
+                      <Controls kind={k} disabled={loading} />
+                      <FailedList kind={k} />
+                    </div>
+                  ) : null
                 )}
               </div>
             )}
@@ -1004,67 +1837,19 @@ export default function UpdateForm({ email }: { email: string }) {
                 Profile details
               </span>
               <p style={explainStyle} className="explain">
-                Your public name, where you’re based, identity tags, and aesthetic basics.
+                Your professional name and slug are locked by default. If your professional name
+                changed, unlock it and your slug preview will update automatically.
               </p>
 
-              {/* Slug (alumni id), Name, Location */}
               <div>
-                <label
-                  htmlFor="alumniId"
-                  style={{
-                    display: "block",
-                    marginBottom: 8,
-                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                    fontSize: 13,
-                    color: COLOR.snow,
-                    opacity: 0.9,
-                  }}
-                >
+                <label htmlFor="slug" style={labelStyle}>
                   Profile slug
                 </label>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr auto",
-                    gap: 12,
-                  }}
-                >
-                  <input
-                    id="alumniId"
-                    value={alumniId}
-                    onChange={(e) => {
-                      const v = e.target.value.trim().toLowerCase();
-                      setAlumniId(v);
-                      setProfile((p) => ({ ...p, slug: v }));
-                      setAutoDetected(false);
-                    }}
-                    required
-                    style={{
-                      ...inputStyle,
-                      opacity: (profile as any).__forceSlugEdit ? 1 : 0.65,
-                    }}
-                    placeholder="auto-generated from your professional name"
-                    disabled={!(profile as any).__forceSlugEdit}
-                  />
-                  <button
-                    type="button"
-                    className="dat-btn-ghost"
-                    style={datButtonGhost}
-                    onClick={() =>
-                      setProfile((p) => ({
-                        ...(p as any),
-                        __forceSlugEdit: !(p as any).__forceSlugEdit,
-                      }))
-                    }
-                    title="Only use if your professional name has changed"
-                  >
-                    {(profile as any).__forceSlugEdit
-                      ? "Lock slug"
-                      : "My professional name changed"}
-                  </button>
-                </div>
+                <input id="slug" value={currentSlug} readOnly style={inputLockedStyle} />
                 <p style={{ ...explainStyle, marginTop: 6 }} className="explain">
-                  Your slug mirrors your professional name. Unlock only if that name has changed.
+                  {autoDetected
+                    ? "We auto-detected your current slug from Profile-Live."
+                    : "Your slug mirrors your professional name."}
                 </p>
               </div>
 
@@ -1077,97 +1862,114 @@ export default function UpdateForm({ email }: { email: string }) {
                 }}
               >
                 <div>
-                  <label
-                    htmlFor="name"
-                    style={{
-                      display: "block",
-                      marginBottom: 8,
-                      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                      fontSize: 13,
-                      color: COLOR.snow,
-                      opacity: 0.9,
-                    }}
-                  >
+                  <label htmlFor="name" style={labelStyle}>
                     Professional name
                   </label>
-                  <input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    style={inputStyle}
-                    placeholder="e.g. Isabel Martínez"
-                  />
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12 }}>
+                    <input
+                      id="name"
+                      value={name}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setName(v);
+                        setProfile((p: any) => ({ ...p, name: v, slug: currentSlug }));
+                      }}
+                      style={nameLocked ? inputLockedStyle : inputStyle}
+                      disabled={nameLocked}
+                    />
+                    <button
+                      type="button"
+                      className="dat-btn-ghost"
+                      style={datButtonGhost}
+                      onClick={() => setNameLocked((x) => !x)}
+                    >
+                      {nameLocked ? "My professional name changed" : "Lock name"}
+                    </button>
+                  </div>
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="location"
-                    style={{
-                      display: "block",
-                      marginBottom: 8,
-                      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                      fontSize: 13,
-                      color: COLOR.snow,
-                      opacity: 0.9,
-                    }}
-                  >
+                  <label htmlFor="location" style={labelStyle}>
                     Base
                   </label>
                   <input
                     id="location"
                     value={location}
-                    onChange={(e) => setLocation(e.target.value)}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setLocation(v);
+                      setProfile((p: any) => ({ ...p, location: v }));
+                    }}
                     style={inputStyle}
-                    placeholder="e.g. NYC"
                   />
                 </div>
               </div>
 
-              {/* Identity + bi-coastal */}
               <div style={{ marginTop: 18 }}>
-                {renderFields(["identityTags", "isBiCoastal"])}
-                {profile.isBiCoastal ? renderFields(["secondLocation"]) : null}
-                <p style={{ ...explainStyle, marginTop: 8 }}>
-                  <strong>Identity tags</strong> help people discover your work.
-                </p>
+                <label style={{ fontWeight: 700 }}>
+                  <input
+                    type="checkbox"
+                    checked={!!profile.isBiCoastal}
+                    onChange={(e) =>
+                      setProfile((p: any) => ({ ...p, isBiCoastal: e.target.checked }))
+                    }
+                    style={{ marginRight: 10 }}
+                  />
+                  Bi-coastal
+                </label>
+
+                {profile.isBiCoastal ? (
+                  <div style={{ marginTop: 12 }}>
+                    <label style={labelStyle}>Second location</label>
+                    <input
+                      value={profile.secondLocation || ""}
+                      onChange={(e) =>
+                        setProfile((p: any) => ({ ...p, secondLocation: e.target.value }))
+                      }
+                      style={inputStyle}
+                    />
+                  </div>
+                ) : null}
               </div>
 
-              {/* Background swatches */}
               <div style={{ marginTop: 18 }}>
                 <BackgroundSwatches
                   value={String(profile.backgroundStyle || "kraft")}
-                  onChange={(next) =>
-                    setProfile((p) => ({
-                      ...(p as any),
-                      backgroundStyle: next,
-                    }))
-                  }
+                  onChange={(next) => setProfile((p: any) => ({ ...p, backgroundStyle: next }))}
                 />
               </div>
 
-              {/* Headshot URL + artist statement */}
-              <div style={{ marginTop: 18 }}>
-                {renderFields(["headshotUrl", "artistStatement"])}
+              <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
+                <div>
+                  <label style={labelStyle}>Headshot URL (optional)</label>
+                  <input
+                    value={profile.currentHeadshotUrl || ""}
+                    onChange={(e) =>
+                      setProfile((p: any) => ({ ...p, currentHeadshotUrl: e.target.value }))
+                    }
+                    style={inputStyle}
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Bio / Artist Statement (public)</label>
+                  <textarea
+                    value={String(profile.bioLong ?? "")}
+                    onChange={(e) => setProfile((p: any) => ({ ...p, bioLong: e.target.value }))}
+                    rows={10}
+                    style={{ ...inputStyle, minHeight: 220, resize: "vertical" }}
+                  />
+                </div>
               </div>
 
-              {/* Save basics */}
               <div style={{ marginTop: 20 }}>
                 <button
                   type="button"
                   onClick={() =>
                     saveCategory({
                       tag: "Profile Basics",
-                      fieldKeys: [
-                        "slug",
-                        "name",
-                        "location",
-                        "isBiCoastal",
-                        "secondLocation",
-                        "identityTags",
-                        "backgroundStyle",
-                        "headshotUrl",
-                        "artistStatement",
-                      ],
+                      fieldKeys: ProfileBasicsSaveKeys,
                       uploadKinds: [],
                       afterSave: () => basicsDraft.clearDraft(),
                     })
@@ -1181,56 +1983,64 @@ export default function UpdateForm({ email }: { email: string }) {
             </Section>
           </Collapsible>
 
-          {/* ====== 2) ROLES ====== */}
-          <Collapsible title="Roles" defaultOpen={false}>
+          {/* ✅ ABOUT (dropdown always present) */}
+          <Collapsible title="About" defaultOpen={false}>
             <Section>
               <span style={subheadChipStyle} className="subhead-chip">
-                How you identify professionally
+                The basics that help people know you
               </span>
               <p style={explainStyle} className="explain">
-                Add all roles you’ve held with DAT and the role you use today.
+                This section powers the details that show up across your profile.
               </p>
-              {renderFields(
-                PROFILE_GROUPS["Roles"] ?? ["datRoles", "currentRole"]
-              )}
+
+              {renderFieldsOrNull(AboutEditKeys) ?? <ManualAboutFallback />}
+
               <div style={{ marginTop: 20 }}>
                 <button
                   type="button"
-                  onClick={() =>
-                    saveCategory({
-                      tag: "Roles",
-                      fieldKeys: ["datRoles", "currentRole"],
-                    })
-                  }
+                  onClick={() => saveCategory({ tag: "About", fieldKeys: AboutSaveKeys })}
                   style={datButton}
                   className="dat-btn"
                 >
-                  Save Roles
+                  Save About
                 </button>
               </div>
             </Section>
           </Collapsible>
 
-          {/* ====== 3) CONTACT ====== */}
+          {/* ✅ PROGRAMS + TAGS (dropdown always present) */}
+          <Collapsible title="Programs & Tags" defaultOpen={false}>
+            <Section>
+              <span style={subheadChipStyle} className="subhead-chip">
+                Where you live in the DAT universe
+              </span>
+              <p style={explainStyle} className="explain">
+                Programs, tags, and status flags help your profile appear in the right places.
+              </p>
+
+              {renderFieldsOrNull(TagsEditKeys) ?? <ManualTagsFallback />}
+
+              <div style={{ marginTop: 20 }}>
+                <button
+                  type="button"
+                  onClick={() => saveCategory({ tag: "Programs & Tags", fieldKeys: TagsSaveKeys })}
+                  style={datButton}
+                  className="dat-btn"
+                >
+                  Save Programs & Tags
+                </button>
+              </div>
+            </Section>
+          </Collapsible>
+
+          {/* ====== 2) CONTACT ====== */}
           <Collapsible title="Contact" defaultOpen={false}>
             <Section>
               <span style={subheadChipStyle} className="subhead-chip">
                 Ways to reach you
               </span>
-              <p style={explainStyle} className="explain">
-                Share links and handles for your site and socials. Handles can be pasted as
-                <code style={{ margin: "0 4px" }}>@handle</code> or full URLs; we’ll normalize them.
-              </p>
 
-              {/* Social visibility + primary */}
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 10,
-                  marginBottom: 12,
-                }}
-              >
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
                 {ALL_SOCIALS.map((k) => {
                   const on = visibleSocials.includes(k);
                   return (
@@ -1240,18 +2050,21 @@ export default function UpdateForm({ email }: { email: string }) {
                       className="dat-btn-ghost"
                       style={{ ...(datButtonGhost as any), opacity: on ? 1 : 0.55 }}
                       onClick={() =>
-                        setVisibleSocials((v) =>
-                          on ? v.filter((x) => x !== k) : [...v, k]
-                        )
+                        setVisibleSocials((v) => (on ? v.filter((x) => x !== k) : [...v, k]))
                       }
                     >
                       {on ? "✓ " : ""} {k}
                     </button>
                   );
                 })}
+
                 <select
                   value={primarySocial}
-                  onChange={(e) => setPrimarySocial(e.target.value)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setPrimarySocial(v);
+                    setProfile((p: any) => ({ ...p, primarySocial: v }));
+                  }}
                   className="dat-btn-ghost"
                   style={{ ...(datButtonGhost as any), padding: "10px 12px" }}
                   title="Primary social"
@@ -1264,32 +2077,40 @@ export default function UpdateForm({ email }: { email: string }) {
                 </select>
               </div>
 
-              <ContactFields
-                value={profile as AlumniProfile}
-                onChange={(next) => setProfile(next as Partial<AlumniProfile>)}
-                fields={byKeys(contactKeys)}
-              />
+              {/* Prefer ContactFields if it has field defs; else fallback */}
+              {byKeys(contactKeys).length ? (
+                <ContactFields
+                  value={profile as any}
+                  onChange={(next) => setProfile(next as any)}
+                  fields={byKeys(contactKeys)}
+                />
+              ) : (
+                <div style={{ display: "grid", gap: 12 }}>
+                  {ContactEditKeys.filter((k) => k !== "primarySocial").map((k) => (
+                    <div key={k}>
+                      <label style={labelStyle}>{k}</label>
+                      <input
+                        value={profile[k] || ""}
+                        onChange={(e) => setProfile((p: any) => ({ ...p, [k]: e.target.value }))}
+                        style={inputStyle}
+                        placeholder={k === "publicEmail" ? "name@email.com" : "https://..."}
+                      />
+                    </div>
+                  ))}
+                  <p style={{ ...explainStyle, marginTop: 6 }}>
+                    (Fallback UI) Add contact keys to <code>PROFILE_FIELDS</code> if you want the
+                    curated ContactFields rendering.
+                  </p>
+                </div>
+              )}
+
               <div style={{ marginTop: 20 }}>
                 <button
                   type="button"
                   onClick={() =>
                     saveCategory({
                       tag: "Contact",
-                      fieldKeys: [
-                        "website",
-                        "instagram",
-                        "x",
-                        "tiktok",
-                        "threads",
-                        "bluesky",
-                        "linkedin",
-                        "youtube",
-                        "vimeo",
-                        "facebook",
-                        "linktree",
-                        "publicEmail",
-                        "primarySocial",
-                      ],
+                      fieldKeys: ContactSaveKeys,
                       afterSave: () => contactDraft.clearDraft(),
                     })
                   }
@@ -1299,77 +2120,30 @@ export default function UpdateForm({ email }: { email: string }) {
                   Save Contact
                 </button>
               </div>
+
+              <p style={{ ...explainStyle, marginTop: 12 }}>
+                Tip: toggle which socials you want visible above — hidden ones will be cleared on
+                save.
+              </p>
             </Section>
           </Collapsible>
 
-          {/* ====== 4) CURRENT UPDATE ====== */}
+          {/* ✅ CURRENT UPDATE (dropdown always present) */}
           <Collapsible title="Current Update" defaultOpen={false}>
             <Section>
               <span style={subheadChipStyle} className="subhead-chip">
-                What you’re up to now
+                A time-sensitive note
               </span>
               <p style={explainStyle} className="explain">
-                A one-liner in the first person that auto-archives after your expiration date. Add a link if there’s more to see.
+                Use this for a current project, announcement, or link you want featured.
               </p>
 
-              {/* "I am ..." enforced UI */}
-              <div style={{ display: "grid", gap: 12 }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: 4,
-                    fontWeight: 700,
-                    fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                    fontSize: "1.15rem",
-                  }}
-                >
-                  Current line (first person)
-                </label>
-                <div style={{ position: "relative" }}>
-                  <span
-                    style={{
-                      position: "absolute",
-                      left: 12,
-                      top: 12,
-                      fontWeight: 700,
-                      opacity: 0.95,
-                    }}
-                  >
-                    I am
-                  </span>
-                  <input
-                    style={{ ...inputStyle, paddingLeft: 56 }}
-                    placeholder="writing a new solo show that opens in January."
-                    value={(profile.currentUpdateText || "").replace(
-                      /^\s*i\s+am\s+/i,
-                      ""
-                    )}
-                    onChange={(e) =>
-                      setProfile((p) => ({
-                        ...p,
-                        currentUpdateText: `I am ${e.target.value}`
-                          .replace(/\s+/g, " ")
-                          .trim(),
-                      }))
-                    }
-                  />
-                </div>
-                {renderFields(["currentUpdateLink", "currentUpdateExpiresAt"])}
-              </div>
+              {renderFieldsOrNull(UpdatesEditKeys) ?? <ManualUpdatesFallback />}
 
               <div style={{ marginTop: 20 }}>
                 <button
                   type="button"
-                  onClick={() =>
-                    saveCategory({
-                      tag: "Current Update",
-                      fieldKeys: [
-                        "currentUpdateText",
-                        "currentUpdateLink",
-                        "currentUpdateExpiresAt",
-                      ],
-                    })
-                  }
+                  onClick={() => saveCategory({ tag: "Current Update", fieldKeys: UpdatesSaveKeys })}
                   style={datButton}
                   className="dat-btn"
                 >
@@ -1379,169 +2153,23 @@ export default function UpdateForm({ email }: { email: string }) {
             </Section>
           </Collapsible>
 
-          {/* ====== 5) UPCOMING EVENT ====== */}
+          {/* ✅ UPCOMING EVENT (dropdown always present) */}
           <Collapsible title="Upcoming Event" defaultOpen={false}>
             <Section>
               <span style={subheadChipStyle} className="subhead-chip">
-                Promote an upcoming event
+                Next thing people can attend
               </span>
               <p style={explainStyle} className="explain">
-                Add a short headline, optional link, date, and description. You can also attach media—images, audio (podcasts), or video (trailers/teasers). When it expires, we’ll archive it.
+                Add one upcoming event. Keep it clean and linkable.
               </p>
 
-              <div
-                style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}
-              >
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: 8,
-                      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                      fontSize: 13,
-                      color: COLOR.snow,
-                      opacity: 0.9,
-                    }}
-                  >
-                    Event title
-                  </label>
-                  <input
-                    style={inputStyle}
-                    value={(profile as any).upcomingEventTitle || ""}
-                    onChange={(e) =>
-                      setProfile((p) => ({
-                        ...(p as any),
-                        upcomingEventTitle: e.target.value,
-                      }))
-                    }
-                    placeholder="Opening night for…"
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: 8,
-                      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                      fontSize: 13,
-                      color: COLOR.snow,
-                      opacity: 0.9,
-                    }}
-                  >
-                    Event link (optional)
-                  </label>
-                  <input
-                    style={inputStyle}
-                    value={(profile as any).upcomingEventLink || ""}
-                    onChange={(e) =>
-                      setProfile((p) => ({
-                        ...(p as any),
-                        upcomingEventLink: e.target.value,
-                      }))
-                    }
-                    placeholder="https://example.com"
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: 8,
-                      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                      fontSize: 13,
-                      color: COLOR.snow,
-                      opacity: 0.9,
-                    }}
-                  >
-                    Short description (optional)
-                  </label>
-                  <textarea
-                    style={{ ...inputStyle, minHeight: 120, resize: "vertical" }}
-                    value={(profile as any).upcomingEventDescription || ""}
-                    onChange={(e) =>
-                      setProfile((p) => ({
-                        ...(p as any),
-                        upcomingEventDescription: e.target.value,
-                      }))
-                    }
-                    placeholder="What is it? Why should folks come?"
-                  />
-                </div>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                      "repeat(auto-fit, minmax(220px, 1fr))",
-                    gap: 16,
-                  }}
-                >
-                  <div>
-                    <label
-                      style={{
-                        display: "block",
-                        marginBottom: 8,
-                        fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                        fontSize: 13,
-                        color: COLOR.snow,
-                        opacity: 0.9,
-                      }}
-                    >
-                      Event date
-                    </label>
-                    <input
-                      style={inputStyle}
-                      type="date"
-                      value={(profile as any).upcomingEventDate || ""}
-                      onChange={(e) =>
-                        setProfile((p) => ({
-                          ...(p as any),
-                          upcomingEventDate: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label
-                      style={{
-                        display: "block",
-                        marginBottom: 8,
-                        fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                        fontSize: 13,
-                        color: COLOR.snow,
-                        opacity: 0.9,
-                      }}
-                    >
-                      Expiration date (auto archive)
-                    </label>
-                    <input
-                      style={inputStyle}
-                      type="date"
-                      value={(profile as any).upcomingEventExpiresAt || ""}
-                      onChange={(e) =>
-                        setProfile((p) => ({
-                          ...(p as any),
-                          upcomingEventExpiresAt: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
+              {renderFieldsOrNull(UpcomingEventEditKeys) ?? <ManualUpcomingEventFallback />}
 
               <div style={{ marginTop: 20 }}>
                 <button
                   type="button"
                   onClick={() =>
-                    saveCategory({
-                      tag: "Upcoming Event",
-                      fieldKeys: [
-                        "upcomingEventTitle",
-                        "upcomingEventLink",
-                        "upcomingEventDate",
-                        "upcomingEventExpiresAt",
-                        "upcomingEventDescription",
-                      ],
-                    })
+                    saveCategory({ tag: "Upcoming Event", fieldKeys: UpcomingEventSaveKeys })
                   }
                   style={datButton}
                   className="dat-btn"
@@ -1552,50 +2180,7 @@ export default function UpdateForm({ email }: { email: string }) {
             </Section>
           </Collapsible>
 
-          {/* ====== 6) STORY MAP ====== */}
-          <Collapsible title="Add a Story to the Story Map" defaultOpen={false}>
-            <Section>
-              <span style={subheadChipStyle} className="subhead-chip">
-                Story details
-              </span>
-              <p style={explainStyle} className="explain">
-                Pin a moment from your DAT journey. Choose program, location, add partners, a short story,
-                and an optional quote. Media links are archived for posterity.
-              </p>
-              {renderFields(
-                PROFILE_GROUPS["Story Map"] ?? [
-                  "story.title",
-                  "story.program",
-                  "story.programCountry",
-                  "story.years",
-                  "story.location",
-                  "story.partners",
-                  "story.mediaUrl",
-                  "story.shortStory",
-                  "story.url",
-                  "story.quote",
-                  "story.quoteAuthor",
-                ]
-              )}
-              <div style={{ marginTop: 20 }}>
-                <button
-                  type="button"
-                  onClick={() =>
-                    saveCategory({
-                      tag: "Story",
-                      fieldKeys: [], // stored to Story-Map sheet in your pipeline
-                    })
-                  }
-                  style={datButton}
-                  className="dat-btn"
-                >
-                  Save Story Details
-                </button>
-              </div>
-            </Section>
-          </Collapsible>
-
-          {/* Hidden global submit (optional Save All) */}
+          {/* Hidden submit */}
           <form onSubmit={(e) => e.preventDefault()}>
             <button ref={saveBtnRef} type="submit" className="hidden">
               Save
@@ -1607,44 +2192,11 @@ export default function UpdateForm({ email }: { email: string }) {
       {/* Sticky Save Bar */}
       <SaveBar
         loading={loading}
-        disabled={loading || !alumniId}
+        disabled={loading || !currentSlug}
         onClick={() => {
           saveCategory({
-            tag: "All (Basics + Roles + Contact + Updates + Upcoming Event)",
-            fieldKeys: [
-              "slug",
-              "name",
-              "location",
-              "isBiCoastal",
-              "secondLocation",
-              "identityTags",
-              "backgroundStyle",
-              "headshotUrl",
-              "artistStatement",
-              "datRoles",
-              "currentRole",
-              "website",
-              "instagram",
-              "x",
-              "tiktok",
-              "threads",
-              "bluesky",
-              "linkedin",
-              "youtube",
-              "vimeo",
-              "facebook",
-              "linktree",
-              "publicEmail",
-              "primarySocial",
-              "currentUpdateText",
-              "currentUpdateLink",
-              "currentUpdateExpiresAt",
-              "upcomingEventTitle",
-              "upcomingEventLink",
-              "upcomingEventDate",
-              "upcomingEventExpiresAt",
-              "upcomingEventDescription",
-            ],
+            tag: "All",
+            fieldKeys: ALL_SAVE_KEYS,
             uploadKinds: [],
             afterSave: () => {
               basicsDraft.clearDraft();
@@ -1658,7 +2210,7 @@ export default function UpdateForm({ email }: { email: string }) {
       <MediaPickerModal
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        alumniId={alumniId}
+        alumniId={currentSlug || stableAlumniId}
         kind={pickerKind}
         title={`Choose ${pickerKind}`}
         onFeatured={(fileId?: string) => {
@@ -1675,18 +2227,9 @@ export default function UpdateForm({ email }: { email: string }) {
 
       {/* ====== Global, scoped tidy CSS ====== */}
       <style jsx global>{`
-        /* Remove old borders/outlines */
-        .alumni-update * { border-color: transparent !important; }
-        .alumni-update hr,
-        .alumni-update fieldset,
-        .alumni-update .divider,
-        .alumni-update .card,
-        .alumni-update .panel {
-          border: none !important;
-          box-shadow: none !important;
-          background-clip: padding-box;
+        .alumni-update * {
+          border-color: transparent !important;
         }
-
         .alumni-update input,
         .alumni-update textarea,
         .alumni-update select {
@@ -1696,103 +2239,29 @@ export default function UpdateForm({ email }: { email: string }) {
           color: #111;
           border-radius: 10px;
           padding: 12px 14px;
-          box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-          font-family: var(--font-dm-sans), system-ui, sans-serif;        }
+          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+          font-family: var(--font-dm-sans), system-ui, sans-serif;
+        }
         .alumni-update input:focus,
         .alumni-update textarea:focus,
         .alumni-update select:focus {
           outline: none !important;
-          box-shadow: 0 0 0 3px rgba(217,169,25,0.25), 0 6px 18px rgba(0,0,0,0.14);
+          box-shadow: 0 0 0 3px rgba(217, 169, 25, 0.25), 0 6px 18px rgba(0, 0, 0, 0.14);
         }
-
-        .alumni-update label,
-        .alumni-update .explain,
-        .alumni-update p,
-        .alumni-update .helper {
-          font-family: var(--font-dm-sans), system-ui, sans-serif;        }
-        .alumni-update .subhead-chip {
-          font-family: var(--font-space-grotesk), system-ui, sans-serif;          font-size: 2rem;
-          font-weight: 600;
-          color: #D9A919;
-          display: inline-block;
-          margin: 0 0 1rem;
-          background-color: #241123;
-          opacity: 0.7;
-          padding: 0.1em 0.6em;
-          border-radius: 0.35em;
-          text-decoration: none;
+        .alumni-update textarea {
+          width: 100%;
         }
-        .alumni-update .explain { font-size: 0.98rem; opacity: 0.9; }
-
-        /* Bigger background swatches */
-        .alumni-update .background-swatches .swatch,
-        .alumni-update [data-swatch] {
-          width: 52px !important;
-          height: 36px !important;
-          border-radius: 12px !important;
-          box-shadow: 0 4px 14px rgba(0,0,0,0.18) !important;
-        }
-        .alumni-update .background-swatches .label {
-          font-size: 1rem !important;
-          padding: 8px 12px !important;
-        }
-
-        /* MediaHub: taller drop area + modern rail */
-        [data-mediahub] .dropzone,
-        [data-mediahub] .drop-area,
-        [data-mediahub] .dz,
-        [data-mediahub] .dropzone-root {
-          min-height: 190px !important;
-          border-radius: 16px !important;
-          border: 2px dashed rgba(255,255,255,0.55) !important;
-          background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)) !important;
-          backdrop-filter: blur(2px);
-          cursor: pointer;
-        }
-        [data-mediahub] .stage,
-        [data-mediahub] .staged,
-        [data-mediahub] .rail {
-          display: grid !important;
-          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
-          gap: 14px !important;
-          margin-top: 16px;
-        }
-        [data-mediahub] .tile,
-        [data-mediahub] .thumb {
-          border-radius: 14px !important;
-          overflow: hidden !important;
-          box-shadow: 0 12px 28px rgba(0,0,0,0.24) !important;
-          transition: transform .2s ease, box-shadow .2s ease, opacity .2s ease;
-        }
-        [data-mediahub] .tile:hover,
-        [data-mediahub] .thumb:hover {
-          transform: translateY(-3px) !important;
-          box-shadow: 0 16px 36px rgba(0,0,0,0.32) !important;
-        }
-        [data-mediahub] .tile .meta,
-        [data-mediahub] .thumb .meta {
-          position: absolute;
-          left: 8px; right: 8px; bottom: 8px;
-          font-family: var(--font-dm-sans), system-ui, sans-serif;          font-size: 12px;
-          padding: 6px 8px;
-          border-radius: 8px;
-          background: rgba(0,0,0,0.45);
-          color: #fff;
-        }
-
-        /* DAT buttons + hover */
         .dat-btn,
-        .dat-btn-ghost { transition: transform .08s ease, box-shadow .2s ease, opacity .2s ease; }
-        .dat-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(0,0,0,0.30); }
-        .dat-btn:active { transform: translateY(0); box-shadow: 0 6px 18px rgba(0,0,0,0.22); }
-        .dat-btn-ghost:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.55); }
-
-        /* Subtle hover for all interactive controls */
-        .alumni-update button:hover,
-        .alumni-update a:hover,
-        .alumni-update select:hover,
-        .alumni-update [role="button"]:hover {
-          filter: brightness(1.02);
+        .dat-btn-ghost {
+          transition: transform 0.08s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        }
+        .dat-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 10px 26px rgba(0, 0, 0, 0.3);
+        }
+        .dat-btn-ghost:hover {
+          background: rgba(255, 255, 255, 0.06);
+          border-color: rgba(255, 255, 255, 0.55);
         }
       `}</style>
     </div>

@@ -1,16 +1,25 @@
 // lib/normalizeAlumniRow.ts
 import type { AlumniRow } from "./types";
 
-function getFirst(row: Record<string, string>, keys: string[]): string {
+/** Build a case-insensitive view of the row */
+function lowerKeyed(row: Record<string, any>) {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(row || {})) {
+    const key = String(k || "").trim().toLowerCase();
+    const val = v == null ? "" : String(v);
+    out[key] = val;
+  }
+  return out;
+}
+
+/** Pull first non-empty value by trying multiple keys (case-insensitive) */
+function getFirstCI(row: Record<string, any>, keys: string[]): string {
+  const lk = lowerKeyed(row);
   for (const k of keys) {
-    const v = row[k];
+    const v = lk[String(k).trim().toLowerCase()];
     if (v != null && String(v).trim()) return String(v).trim();
   }
   return "";
-}
-
-function getLower(row: Record<string, string>, keys: string[]): string {
-  return getFirst(row, keys).toLowerCase();
 }
 
 function splitCsvish(raw: string): string[] {
@@ -25,87 +34,113 @@ function truthy(raw: string): boolean {
   return v === "true" || v === "yes" || v === "y" || v === "1" || v === "✓" || v === "checked";
 }
 
-function normalizeSingleUpdate(row: Record<string, string>) {
+function normalizeSingleUpdate(row: Record<string, any>) {
+  const lk = lowerKeyed(row);
   const hasMeaningfulData =
-    row["update headline"] || row["update body"] || row["update media url"];
+    lk["update headline"] || lk["update body"] || lk["update media url"] || lk["update media url(s)"];
 
   if (!hasMeaningfulData) return null;
 
-  const desc = row["update location"]?.trim() || "";
-  const title = row["update date"]?.trim() || "";
+  const desc = (lk["update location"] || "").trim();
+  const title = (lk["update date"] || "").trim();
   const subheadline = [desc, title].filter(Boolean).join("   |   ");
 
   return {
-    tag: row["update tag"]?.trim() || "DAT Spotlight",
+    tag: (lk["update tag"] || "DAT Spotlight").trim(),
     headline:
-      row["update headline"]?.trim() ||
-      row["update body"]?.slice(0, 60) ||
+      (lk["update headline"] || "").trim() ||
+      (lk["update body"] || "").slice(0, 60) ||
       "Spotlight Update",
     subheadline,
     subheadlineTitle: title,
     subheadlineDescription: desc,
-    body: row["update body"]?.trim() || "",
-    mediaUrl: row["update media url"]?.trim() || "",
-    ctaLink: row["update cta link"]?.trim() || "",
-    evergreen: (row["update evergreen"] || "").toLowerCase().startsWith("y"),
+    body: (lk["update body"] || "").trim(),
+    mediaUrl: (lk["update media url"] || lk["update media url(s)"] || "").trim(),
+    ctaLink: (lk["update cta link"] || "").trim(),
+    evergreen: (lk["update evergreen"] || "").toLowerCase().startsWith("y"),
   };
 }
 
 /**
  * Supports BOTH:
  * - legacy Profile-Data CSV headers (lowercased by loadAlumni.ts)
- * - new Profile-Live snapshot headers (we can choose either style)
+ * - new Profile-Live snapshot headers (varied casing/spacing)
  */
-export function normalizeAlumniRow(row: Record<string, string>): AlumniRow | null {
-  const name = getFirst(row, ["name"]);
-  const slugRaw = getFirst(row, ["slug", "canonicalslug", "profile slug", "profile-slug"]);
+export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
+  const name = getFirstCI(row, ["name"]);
+  const slugRaw = getFirstCI(row, [
+    "slug",
+    "canonicalslug",
+    "canonical slug",
+    "profile slug",
+    "profile-slug",
+    "profileslug",
+  ]);
   const slug = slugRaw.trim().toLowerCase();
-
   if (!name || !slug) return null;
 
   // Roles: accept legacy "role" or new "roles"
-  const rolesRaw = getFirst(row, ["roles", "role"]);
+  const rolesRaw = getFirstCI(row, ["roles", "role"]);
   const roles = rolesRaw ? splitCsvish(rolesRaw) : [];
-  const role = roles.join(", "); // legacy support
+  const role = roles.join(", ");
 
-  // Location + headshot: accept either world
-  const location = getFirst(row, ["location"]);
-  const headshotUrl = getFirst(row, [
+  // Location + headshot
+  const location = getFirstCI(row, ["location"]);
+  const headshotUrl = getFirstCI(row, [
     "currentheadshoturl",
     "current headshot url",
     "headshot url",
     "headshoturl",
   ]);
 
-  // Bios: legacy "artist statement" maps to bioLong in Live world
-  const bioLong = getFirst(row, ["biolong", "bio long", "artist statement"]);
-  // bioShort is evergreen-ish summary; DO NOT map Current Work into this
-  const bioShort = getFirst(row, ["bioshort", "bio short"]);
+  // ✅ Bio/Artist Statement: support Live + legacy
+  const bioLong = getFirstCI(row, [
+    "biolong",
+    "bio long",
+    "bioLong",
+    "bio_long",
+    "artist statement",
+    "artiststatement",
+  ]);
+  const bioShort = getFirstCI(row, ["bioshort", "bio short", "bioShort", "bio_short"]);
 
-  // Current Work: tweet-like update field
-  const currentWork = getFirst(row, ["currentwork", "current work"]);
+  // Current Work
+  const currentWork = getFirstCI(row, ["currentwork", "current work", "currentWork", "current_work"]);
 
-  // Website: keep canonical field as website, but accept legacy "artist url"
-  const website = getFirst(row, ["website", "artist url", "profile url"]);
+  // Website
+  const website = getFirstCI(row, ["website", "artist url", "profile url", "url"]);
 
-  // Flags: DAT involvement chips (Founding Member, Staff, etc.)
-  // Accept either legacy "status signifier" or new "flags"
-  const flagsRaw = getFirst(row, ["flags", "status signifier", "status flags"]);
+  // ✅ Status flags: accept ALL common variants
+  const flagsRaw = getFirstCI(row, [
+    "statusflags",
+    "status flags",
+    "statusFlags",
+    "flags",
+    "status signifier",
+    "statussignifier",
+  ]);
   const statusFlags = flagsRaw ? splitCsvish(flagsRaw) : [];
 
-  // Legacy filter/tag fields (still supported if present)
-  const identityTagsRaw = getFirst(row, ["identity tags"]);
+  // Identity tags
+  const identityTagsRaw = getFirstCI(row, ["identity tags", "identitytags", "identityTags"]);
   const identityTags = identityTagsRaw ? splitCsvish(identityTagsRaw) : [];
 
-  const programBadgesRaw = getFirst(row, ["project badges"]);
+  // Program badges (optional)
+  const programBadgesRaw = getFirstCI(row, [
+    "project badges",
+    "program badges",
+    "programbadges",
+    "programBadges",
+  ]);
   const programBadges = programBadgesRaw ? splitCsvish(programBadgesRaw) : [];
 
-  const socialsRaw = getFirst(row, ["artist social links", "social links", "socials"]);
+  // Socials
+  const socialsRaw = getFirstCI(row, ["artist social links", "social links", "socials"]);
   const socials = socialsRaw ? splitCsvish(socialsRaw) : [];
 
   // Seasons
   const programSeasons: number[] = [];
-  const seasonRaw = getFirst(row, ["season"]);
+  const seasonRaw = getFirstCI(row, ["season", "seasons"]);
   if (seasonRaw) {
     const seasonNums = seasonRaw
       .split(",")
@@ -114,29 +149,28 @@ export function normalizeAlumniRow(row: Record<string, string>): AlumniRow | nul
     programSeasons.push(...seasonNums);
   }
 
-  // Visibility: accept legacy "show on profile?" OR live "isPublic"
-  const showOnProfileRaw = getFirst(row, ["show on profile?", "ispublic", "is public"]);
-  // Keep the original string if it's legacy; but normalize if we’re in live-world
+  // Visibility
+  const showOnProfileRaw = getFirstCI(row, ["show on profile?", "ispublic", "is public", "isPublic"]);
   const showOnProfile = showOnProfileRaw
     ? truthy(showOnProfileRaw)
       ? "Yes"
       : "No"
     : "";
 
-  // Email: accept legacy OR live (note: public snapshot should omit, but normalize supports it)
-  const email = getFirst(row, ["email", "artist email"]).trim();
+  // Email
+  const email = getFirstCI(row, ["email", "artist email"]).trim();
 
-  // lastModified: accept legacy lastmodified OR live updatedAt
-  const lastModifiedRaw = getFirst(row, ["lastmodified", "updatedat", "updated at"]);
+  // lastModified
+  const lastModifiedRaw = getFirstCI(row, ["lastmodified", "updatedat", "updated at", "updatedAt"]);
   const lastModified = lastModifiedRaw ? new Date(lastModifiedRaw) : null;
 
-  // Productions: legacy
-  const productionsRaw = getFirst(row, ["productions"]);
+  // Productions (legacy)
+  const productionsRaw = getFirstCI(row, ["productions"]);
   const productions = productionsRaw ? splitCsvish(productionsRaw) : [];
 
-  const festival = getFirst(row, ["festival"]);
+  const festival = getFirstCI(row, ["festival"]);
 
-  // Updates feature (unchanged)
+  // Updates
   const update = normalizeSingleUpdate(row);
 
   return {
@@ -159,19 +193,15 @@ export function normalizeAlumniRow(row: Record<string, string>): AlumniRow | nul
     statusFlags,
     programSeasons,
 
-    // ✅ New fields
     currentWork: currentWork || "",
 
-    // ✅ timestamps
     lastModifiedRaw: lastModifiedRaw || "",
     lastModified,
 
-    // contact-ish
     email: email || "",
     website: website || "",
     socials,
 
-    // visibility
     showOnProfile,
 
     fieldNotes: [],

@@ -1,4 +1,3 @@
-// components/alumni/DirectoryPageClient.tsx
 "use client";
 
 import { useState, useMemo } from "react";
@@ -7,6 +6,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import AlumniSearch from "@/components/alumni/AlumniSearch/AlumniSearch";
+
+import type {
+  EnrichedProfileLiveRow,
+  ProfileLiveRow,
+} from "@/components/alumni/AlumniSearch/enrichAlumniData.server";
 
 interface AlumniItem {
   name: string;
@@ -25,7 +29,52 @@ interface AlumniItem {
 
 type SortOption = "last" | "first" | "recent";
 
-export default function DirectoryPageClient({ alumni }: { alumni: AlumniItem[] }) {
+function splitCsvish(raw?: string | null): string[] {
+  return String(raw || "")
+    .split(/[,;\n|]/g)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** Convert Profile-Live row (string-ish fields) into the directory AlumniItem shape */
+function liveRowToAlumniItem(r: ProfileLiveRow): AlumniItem {
+  // roles/programs/tags/statusFlags can be stored as CSV-ish strings in Profile-Live
+  const roles = splitCsvish(r.roles);
+  const programs = splitCsvish((r as any).programs);
+  const statusFlags = splitCsvish((r as any).statusFlags);
+  const identityTags = splitCsvish((r as any).tags);
+
+  // languages: only if your ProfileLiveRow includes it (some builds don’t)
+  const languages = splitCsvish((r as any).languages);
+
+  const updatedAt =
+    r.updatedAt && !Number.isNaN(Date.parse(r.updatedAt))
+      ? new Date(r.updatedAt).getTime()
+      : undefined;
+
+  return {
+    name: r.name || "",
+    slug: r.slug || "",
+    roles,
+    location: r.location || "",
+    programs,
+    statusFlags,
+    identityTags,
+    languages,
+    updatedAt,
+    // heuristic if you want it (otherwise filter UI still works)
+    updatedRecently: typeof updatedAt === "number" ? Date.now() - updatedAt < 1000 * 60 * 60 * 24 * 90 : false,
+    headshotUrl: (r as any).currentHeadshotUrl || undefined,
+  };
+}
+
+export default function DirectoryPageClient({
+  alumni,
+  enrichedData,
+}: {
+  alumni: AlumniItem[];
+  enrichedData: EnrichedProfileLiveRow[];
+}) {
   const [primaryResults, setPrimaryResults] = useState<AlumniItem[]>([]);
   const [secondaryResults, setSecondaryResults] = useState<AlumniItem[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -86,10 +135,10 @@ export default function DirectoryPageClient({ alumni }: { alumni: AlumniItem[] }
       result.sort((a, b) => {
         const nameA = a.name || "";
         const nameB = b.name || "";
-        const firstA = nameA.split(" ")[0];
-        const firstB = nameB.split(" ")[0];
-        const lastA = nameA.split(" ").slice(-1)[0];
-        const lastB = nameB.split(" ").slice(-1)[0];
+        const firstA = nameA.split(" ")[0] || "";
+        const firstB = nameB.split(" ")[0] || "";
+        const lastA = nameA.split(" ").slice(-1)[0] || "";
+        const lastB = nameB.split(" ").slice(-1)[0] || "";
 
         if (sortOption === "recent") return (b.updatedAt || 0) - (a.updatedAt || 0);
         if (sortOption === "first") return firstA.localeCompare(firstB);
@@ -123,7 +172,7 @@ export default function DirectoryPageClient({ alumni }: { alumni: AlumniItem[] }
     { name: "statusFlag", label: "INVOLVEMENT", options: ["Resident Artist", "Fellow", "Board Member"] },
     { name: "identityTag", label: "TAGS", options: ["Indigenous", "LGBTQIA+", "POC"] },
     { name: "language", label: "LANGUAGE", options: ["English", "Spanish", "French", "Portuguese"] },
-  ];
+  ] as const;
 
   /** Which data to display (memoized to avoid extra work per keystroke) */
   const mainResults = useMemo(
@@ -198,11 +247,11 @@ export default function DirectoryPageClient({ alumni }: { alumni: AlumniItem[] }
           <div style={{ display: "flex", gap: "1rem", alignItems: "stretch" }}>
             <div style={{ flex: 1, height: "47px" }}>
               <AlumniSearch
-                alumniData={alumni}
+                enrichedData={enrichedData}
                 filters={filters}
-                onResults={(primary, secondary, q) => {
-                  setPrimaryResults(primary);
-                  setSecondaryResults(secondary);
+                onResults={(primary: ProfileLiveRow[], secondary: ProfileLiveRow[], q: string) => {
+                  setPrimaryResults(primary.map(liveRowToAlumniItem));
+                  setSecondaryResults(secondary.map(liveRowToAlumniItem));
                   setQuery(q);
                 }}
                 showAllIfEmpty={true}
@@ -256,11 +305,7 @@ export default function DirectoryPageClient({ alumni }: { alumni: AlumniItem[] }
                     onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
                     onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                   >
-                    {opt === "last"
-                      ? "Last Name"
-                      : opt === "first"
-                      ? "First Name"
-                      : "Recently Updated"}
+                    {opt === "last" ? "Last Name" : opt === "first" ? "First Name" : "Recently Updated"}
                   </button>
                 ))}
               </div>
@@ -317,10 +362,13 @@ export default function DirectoryPageClient({ alumni }: { alumni: AlumniItem[] }
                     >
                       <option value="">{filter.label}</option>
                       {filter.options.map((opt) => (
-                        <option key={opt}>{opt}</option>
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
                       ))}
                     </select>
                   ))}
+
                   <label
                     style={{
                       fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
@@ -332,13 +380,12 @@ export default function DirectoryPageClient({ alumni }: { alumni: AlumniItem[] }
                     <input
                       type="checkbox"
                       checked={filters.updatedOnly}
-                      onChange={(e) =>
-                        setFilters({ ...filters, updatedOnly: e.target.checked })
-                      }
+                      onChange={(e) => setFilters({ ...filters, updatedOnly: e.target.checked })}
                     />{" "}
                     Recently Updated
                   </label>
                 </div>
+
                 <div style={{ textAlign: "right", marginTop: "0.5rem" }}>
                   <button
                     onClick={clearFilters}
@@ -419,7 +466,7 @@ export default function DirectoryPageClient({ alumni }: { alumni: AlumniItem[] }
                 role={alum.roles?.join(", ") ?? ""}
                 slug={alum.slug}
                 headshotUrl={alum.headshotUrl}
-                priority={idx < 12} // eagerly fetch first row/fold
+                priority={idx < 12}
               />
             ))}
           </div>

@@ -4,7 +4,7 @@
 
 import Head from "next/head";
 import { useMemo, useState, useEffect } from "react";
-import { AlumniRow, StoryRow } from "@/lib/types";
+import type { AlumniRow, StoryRow } from "@/lib/types";
 import ProfileCard from "@/components/profile/ProfileCard";
 import AlumniProfileBackdrop from "@/components/alumni/AlumniProfileBackdrop";
 import { clientDebug } from "@/lib/clientDebug";
@@ -43,20 +43,31 @@ function normSlugish(raw: unknown): string {
   const s0 = String(raw ?? "").trim();
   if (!s0) return "";
 
-  // If someone stored "/alumni/slug" (or full URL), extract the slug portion.
-  // We do this in a non-throwing way.
   try {
     const u = new URL(s0, "http://local");
     const m = u.pathname.match(/^\/alumni\/([^\/?#]+)/i);
     if (m?.[1]) return m[1].trim().toLowerCase();
   } catch {
-    // fall through
+    // ignore
   }
 
   const m2 = s0.match(/^\/alumni\/([^\/?#]+)/i);
   if (m2?.[1]) return m2[1].trim().toLowerCase();
 
   return s0.toLowerCase();
+}
+
+/** Coerce string|string[]|unknown into a normalized string[] */
+function coerceStrArray(v: any): string[] {
+  if (!v) return [];
+  if (Array.isArray(v)) return v.map(String).map((s) => s.trim()).filter(Boolean);
+  if (typeof v === "string") {
+    return v
+      .split(/[,;\n|]/g)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  return [];
 }
 
 export default function AlumniProfilePage({
@@ -67,23 +78,41 @@ export default function AlumniProfilePage({
   offsetBottom = "15rem",
   minSectionHeight = "100vh",
 }: AlumniProfileProps) {
-  const {
-    slug,
-    name,
-    roles = [],
-    role = "", // legacy fallback
-    headshotUrl = "",
-    programBadges = [],
-    identityTags = [],
-    statusFlags = [],
-    artistStatement = "",
-    backgroundChoice = "kraft",
-    location = "",
-    email = "",
-    website = "",
-    socials = [],
-    updates = [],
-  } = data || ({} as AlumniRow);
+  const d = (data || {}) as any;
+
+  const slug = cleanStr(d.slug) ?? "";
+  const name = cleanStr(d.name) ?? "";
+
+  const roles = Array.isArray(d.roles) ? (d.roles as string[]) : [];
+  const role = cleanStr(d.role) ?? "";
+  const headshotUrl = cleanStr(d.headshotUrl) ?? "";
+
+  // NOTE: these may be string[] OR strings depending on CSV/live snapshot
+  const programBadges = coerceStrArray(d.programBadges ?? d.programs ?? d.projectBadges);
+  const identityTags = coerceStrArray(d.identityTags ?? d.identity ?? d.identity_tags);
+  const statusFlags = coerceStrArray(d.statusFlags ?? d.flags ?? d.status_signifier);
+
+  // ✅ Bio / artist statement: accept multiple worlds
+  const artistStatement =
+    cleanStr(d.artistStatement) ??
+    cleanStr(d.bioLong) ??
+    cleanStr(d.bio_long) ??
+    cleanStr(d["bio long"]) ??
+    cleanStr(d["artist statement"]) ??
+    "";
+
+  // ✅ Background: support both keys
+  const backgroundChoice =
+    cleanStr(d.backgroundChoice ?? d.backgroundStyle ?? d.backgroundKey) ?? "kraft";
+
+  // Contact fields: accept multiple worlds
+  const location = cleanStr(d.location) ?? "";
+  const email = cleanStr(d.email) ?? "";
+  const website = cleanStr(d.website) ?? cleanStr(d.profileUrl) ?? cleanStr(d["profile url"]) ?? "";
+  const socials = coerceStrArray(d.socials ?? d.socialLinks ?? d["social links"] ?? d["artist social links"]);
+
+  // NOTE: updates shape is handled inside ProfileCard; we just pass through.
+  const updates = (d.updates ?? []) as any[];
 
   clientDebug("🧪 updates passed to ProfileCard:", updates);
 
@@ -106,7 +135,7 @@ export default function AlumniProfilePage({
 
   // ✅ Author stories (alias-aware, normalized)
   const authorStories = useMemo(() => {
-    return allStories.filter((story) => {
+    return (allStories || []).filter((story) => {
       const as = (story as any)?.authorSlug;
       if (!as) return false;
       return aliasNormSet.has(normSlugish(as));
@@ -123,7 +152,22 @@ export default function AlumniProfilePage({
   }, []);
 
   // ✅ Use the canonical slug for ProfileCard routing
-  const safeSlugForLinks = cleanStr(slug) ?? "";
+  const safeSlugForLinks = slug;
+
+  // ✅ Dev proof: confirm data is actually present BEFORE it hits ProfileCard
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+    // eslint-disable-next-line no-console
+    console.log("[AlumniProfilePage] incoming fields:", {
+      slug,
+      name,
+      artistStatement: artistStatement?.slice?.(0, 80),
+      statusFlags,
+      email,
+      website,
+      socials,
+    });
+  }, [slug, name, artistStatement, statusFlags, email, website, socials]);
 
   return (
     <>

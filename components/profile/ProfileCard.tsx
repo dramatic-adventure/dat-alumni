@@ -10,6 +10,9 @@ import ArtistBio from "./ArtistBio";
 import ProgramStamps from "@/components/alumni/ProgramStamps";
 import Lightbox from "@/components/shared/Lightbox";
 
+// ✅ RESTORE contact UI
+import ContactOverlay from "@/components/shared/ContactOverlay";
+
 import type { StoryRow, Production, SpotlightUpdate, Update } from "@/lib/types";
 import { productionMap as productionMapCanon, getSortYear } from "@/lib/productionMap.canon";
 
@@ -103,9 +106,7 @@ function normSlugish(raw: unknown): string {
     const u = new URL(s0, "http://local");
     const m = u.pathname.match(/^\/alumni\/([^\/?#]+)/i);
     if (m?.[1]) return m[1].trim().toLowerCase();
-  } catch {
-    // ignore
-  }
+  } catch {}
 
   const m2 = s0.match(/^\/alumni\/([^\/?#]+)/i);
   if (m2?.[1]) return m2[1].trim().toLowerCase();
@@ -124,18 +125,12 @@ const FeaturedStories = dynamic(() => import("@/components/shared/FeaturedStorie
   ssr: false,
 });
 
-/* -----------------------------------------------------------
- * Minimal local helper to normalize mixed string|number years
- * ----------------------------------------------------------*/
 type WithMaybeYear = { year?: string | number };
 const normalizeProductionYear = <T extends WithMaybeYear>(p: T) => ({
   ...p,
   year: typeof p.year === "string" ? parseInt(p.year, 10) || 0 : p.year ?? 0,
 });
 
-/* -------------------------------
- * Tiny URL helpers
- * ------------------------------*/
 function isHttpUrl(s: string) {
   return /^https?:\/\//i.test(s);
 }
@@ -163,12 +158,18 @@ function normalizeHref(raw: unknown): string {
   return `/${s.replace(/^\/+/, "")}`;
 }
 
-/* -----------------------------------------------------------
- * Featured card (updated look)
- *
- * Fix: avoid Next/Image “invalid image received null” when
- * /posters/<slug>-landscape.jpg 404s by preflighting local posters.
- * ----------------------------------------------------------*/
+function coerceStrArray(v: any): string[] {
+  if (!v) return [];
+  if (Array.isArray(v)) return v.map(String).map((s) => s.trim()).filter(Boolean);
+  if (typeof v === "string") {
+    return v
+      .split(/[,;\n|]/g)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
 function FeaturedWorkCard({
   title,
   href,
@@ -182,21 +183,15 @@ function FeaturedWorkCard({
 }) {
   const fallback = "/posters/fallback-16x9.jpg";
   const safeHref = normalizeHref(href);
-
   const [imgSrc, setImgSrc] = useState<string>(fallback);
 
   useEffect(() => {
     let alive = true;
 
     const candidate = normalizeImageSrc(imageUrl);
-
-    // Default to fallback immediately
     setImgSrc(fallback);
-
-    // If no candidate, stop.
     if (!candidate) return () => void (alive = false);
 
-    // ✅ If it’s a local poster guess (/posters/...), preflight it.
     const isLocalPoster = candidate.startsWith("/posters/");
     if (isLocalPoster) {
       fetch(candidate, { method: "HEAD" })
@@ -215,9 +210,7 @@ function FeaturedWorkCard({
       };
     }
 
-    // Otherwise, use candidate directly (remote / root-relative)
     setImgSrc(candidate);
-
     return () => {
       alive = false;
     };
@@ -246,18 +239,11 @@ function FeaturedWorkCard({
   );
 }
 
-/* -----------------------------------------------------------
- * ✅ NEW: Responsive meta for 3 / 2 / 1 AND “last row fills width”
- * (We use data attributes + CSS grid instead of Tailwind spans.)
- * ----------------------------------------------------------*/
 type SpanMeta = { md: "half" | "full"; lg: "third" | "half" | "full" };
-
 function spanMetaForIndex(i: number, len: number): SpanMeta {
-  // md = 2 columns
   const mdRemainder = len % 2;
   const md: SpanMeta["md"] = mdRemainder === 1 && i === len - 1 ? "full" : "half";
 
-  // lg = 3 columns
   const lgRemainder = len % 3;
   let lg: SpanMeta["lg"] = "third";
   if (lgRemainder === 1 && i === len - 1) lg = "full";
@@ -272,45 +258,60 @@ interface ProfileCardProps {
   role: string;
   headshotUrl?: string;
   location?: string;
-  identityTags?: string[];
-  statusFlags?: string[];
-  programBadges?: string[];
+  identityTags?: any;
+  statusFlags?: any;
+  programBadges?: any;
   artistStatement?: string;
   stories?: StoryRow[];
   email?: string;
   website?: string;
-  socials?: string[];
+  socials?: any;
   updates?: RawRow[];
-
-  /**
-   * ✅ Optional aliases for this profile slug.
-   * Used to match productions / panels keyed to legacy slugs.
-   */
   slugAliases?: string[];
 }
 
 const scaleCache = new Map<string, { first: number; last: number }>();
 
-export default function ProfileCard({
-  name,
-  slug,
-  role,
-  headshotUrl,
-  location,
-  identityTags = [],
-  statusFlags = [],
-  programBadges = [],
-  artistStatement,
-  stories = [],
-  email,
-  website,
-  socials,
-  updates = [],
-  slugAliases = [],
-}: ProfileCardProps) {
+export default function ProfileCard(props: ProfileCardProps) {
+  const {
+    name,
+    slug,
+    role,
+    headshotUrl,
+    location,
+    email,
+    website,
+    updates = [],
+    stories = [],
+    slugAliases = [],
+  } = props;
+
+  // ✅ Normalize "array-ish" props defensively
+  const identityTags = coerceStrArray((props as any).identityTags ?? (props as any)["identity tags"]);
+  const statusFlags = coerceStrArray(
+    (props as any).statusFlags ??
+      (props as any).statusflags ??
+      (props as any)["status flags"] ??
+      (props as any).flags ??
+      (props as any)["status signifier"],
+  );
+  const programBadges = coerceStrArray((props as any).programBadges ?? (props as any)["project badges"]);
+  const socials = coerceStrArray((props as any).socials ?? (props as any)["social links"]);
+
+  // ✅ Bio/statement: accept multiple keys
+  const artistStatement =
+    (props.artistStatement ?? "").trim() ||
+    String(
+      (props as any).bioLong ??
+        (props as any).biolong ??
+        (props as any)["bio long"] ??
+        (props as any)["artist statement"] ??
+        "",
+    ).trim();
+
   const profileCardRef = useRef<HTMLDivElement>(null);
 
-  // NOTE: keep these split vars (used by your name-stack measurement caching)
+  // Name scaling cache vars (unchanged)
   const nameParts = name.trim().split(" ");
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
   const lastName = nameParts.slice(-1).join(" ") || "";
@@ -354,37 +355,18 @@ export default function ProfileCard({
     return set;
   }, [slug, slugAliases]);
 
-  /**
-   * ✅ Step A: Verify aliases arrive here + are normalized correctly
-   * (Safe in dev; remove once confirmed.)
-   */
-  useEffect(() => {
-    if (process.env.NODE_ENV !== "development") return;
-    // eslint-disable-next-line no-console
-    console.log("[ProfileCard] slug:", slug, "slugAliases:", slugAliases, "aliasNormSet:", [
-      ...aliasNormSet,
-    ]);
-  }, [slug, slugAliases, aliasNormSet]);
-
-  // ✅ Featured productions (alias-aware, supports BOTH artists shapes)
+  // ✅ Featured productions (unchanged)
   const featuredProductions = useMemo(() => {
     const list = (Object.values(productionMapCanon) as Array<WithMaybeYear & Record<string, any>>)
       .filter((p) => {
         const artists = (p as any)?.artists;
         if (!artists || typeof artists !== "object") return false;
 
-        /**
-         * ✅ FINAL FILTER SNIPPET (tight + correct for your current map)
-         * Shape A (your real map): artists keyed by artist slug
-         */
         for (const key of Object.keys(artists as Record<string, any>)) {
           const k = normSlugish(key);
           if (k && aliasNormSet.has(k)) return true;
         }
 
-        /**
-         * Shape B fallback: artists keyed by role -> arrays/strings
-         */
         for (const v of Object.values(artists as Record<string, any>)) {
           if (!v) continue;
 
@@ -421,18 +403,15 @@ export default function ProfileCard({
     return list;
   }, [aliasNormSet]);
 
-  // ---- ✅ NEW: Featured DAT Work collapse/expand (show only top row on load) ----
   const [featuredExpanded, setFeaturedExpanded] = useState(false);
   const [featuredInitialCount, setFeaturedInitialCount] = useState(3);
 
   useEffect(() => {
-    // 3 on desktop (lg+), 2 on tablet (md), 1 on mobile
     const compute = () => {
       const w = typeof window !== "undefined" ? window.innerWidth : 1200;
       const count = w >= 1024 ? 3 : w >= 768 ? 2 : 1;
       setFeaturedInitialCount(count);
     };
-
     compute();
     window.addEventListener("resize", compute);
     return () => window.removeEventListener("resize", compute);
@@ -445,9 +424,8 @@ export default function ProfileCard({
 
   const canToggleFeatured = featuredProductions.length > featuredInitialCount;
 
-  /* ---------- PANELS: filter rows alias-aware ---------- */
+  /* ---------- PANELS ---------- */
   const rowsForThisProfile = filterForSlugIfPresent(updates as RawRow[], aliasNormSet);
-
   const spotlightUpdates = rowsForThisProfile.filter(isSpotlightRow).map(toSpotlightUpdate);
   const highlightUpdates: UIHighlightCard[] = rowsForThisProfile.filter(isHighlightRow).map(toHighlightCard);
 
@@ -460,9 +438,7 @@ export default function ProfileCard({
   const spotlightSection = hasSpotlight ? <SpotlightPanel updates={spotlightUpdates} /> : null;
   const highlightSection = hasHighlight ? <HighlightPanel cards={highlightUpdates} /> : null;
 
-  /* ----- Build categorized journey updates from non-spotlight/highlight rows ----- */
   const categorizedUpdatesMap = new Map<string, Update[]>();
-
   rowsForThisProfile
     .filter((u) => !isHighlightRow(u) && !isSpotlightRow(u))
     .forEach((raw) => {
@@ -487,6 +463,14 @@ export default function ProfileCard({
 
   return (
     <div ref={profileCardRef} style={{ position: "relative" }}>
+      {/* ✅ RESTORED Contact tab/overlay */}
+      <ContactOverlay
+        email={email}
+        website={website}
+        socials={socials}
+        profileCardRef={profileCardRef}
+      />
+
       {isMobile ? (
         <MobileProfileHeader
           name={name}
@@ -512,13 +496,7 @@ export default function ProfileCard({
       )}
 
       {(hasArtistBio || hasSpotlight || hasHighlight) && (
-        <div
-          style={{
-            backgroundColor: "#2493A9",
-            paddingTop: hasArtistBio ? "3rem" : "2rem",
-            paddingBottom: "2.5rem",
-          }}
-        >
+        <div style={{ backgroundColor: "#2493A9", paddingTop: hasArtistBio ? "3rem" : "2rem", paddingBottom: "2.5rem" }}>
           {hasArtistBio && (
             <ArtistBio
               identityTags={identityTags}
@@ -572,14 +550,7 @@ export default function ProfileCard({
           <ProfileShowcaseSection>
             {categorizedJourneyUpdates.map(({ category, updates }) => (
               <div key={category} id={`journey-category-${category}`} style={{ marginBottom: "2rem" }}>
-                <h3
-                  style={{
-                    fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                    fontSize: "2rem",
-                    marginBottom: "1rem",
-                    color: "#241123",
-                  }}
-                >
+                <h3 style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "2rem", marginBottom: "1rem", color: "#241123" }}>
                   {category}
                 </h3>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
@@ -601,10 +572,7 @@ export default function ProfileCard({
                           setLightboxUrls(media);
                           setLightboxOpen(true);
                         } else {
-                          alert(
-                            "This update has no link or media. Here's the content:\n\n" +
-                              (update.body || "No content"),
-                          );
+                          alert("This update has no link or media. Here's the content:\n\n" + (update.body || "No content"));
                         }
                       }}
                     />
@@ -617,158 +585,153 @@ export default function ProfileCard({
       )}
 
       {featuredProductions.length > 0 && (
-  <div className="bg-[#19657c] py-[30px] px-[30px]">
-    <h2
-      className="text-6xl text-[#D9A919] mb-4"
-      style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif" }}
-    >
-      Featured DAT Work
-    </h2>
-
-    <p
-      className="text-[#5BBFD3] text-lg max-w-3xl mb-8"
-      style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif" }}
-    >
-      Developed through cross-cultural exchange and a fearless approach to storytelling, this work reflects a deep
-      engagement with place, people, and purpose.
-    </p>
-
-    {/* ✅ Override carousel CSS AND enforce 1/2/3 grid behavior via CSS (not Tailwind spans) */}
-    <style>{`
-      /* Card: bottom corners only */
-      .datFeaturedCard{
-        border-top-left-radius: 0 !important;
-        border-top-right-radius: 0 !important;
-        border-bottom-left-radius: 18px !important;
-        border-bottom-right-radius: 18px !important;
-        overflow: hidden;
-
-        width: 100% !important;
-        max-width: none !important;
-        justify-self: stretch !important;
-        display: block !important;
-      }
-
-      /* Image area: square corners */
-      .datFeaturedImageShell{
-        border-radius: 0 !important;
-        overflow: hidden;
-      }
-
-      /* ✅ Grid that can represent thirds + halves + full with integer spans */
-      .datFeaturedGrid{
-        display: grid;
-        grid-template-columns: 1fr; /* mobile: 1 */
-        gap: 14px;
-        width: 100%;
-      }
-
-      /* md: use 4 columns so "half" = 2 and "full" = 4 */
-      @media (min-width: 768px){
-        .datFeaturedGrid{
-          grid-template-columns: repeat(4, minmax(0, 1fr)); /* tablet: 2 */
-        }
-        .datFeaturedItem[data-md="half"]{ grid-column: span 2; }
-        .datFeaturedItem[data-md="full"]{ grid-column: 1 / -1; }
-      }
-
-      /* lg: use 6 columns so "third" = 2, "half" = 3, "full" = 6 */
-      @media (min-width: 1024px){
-        .datFeaturedGrid{
-          grid-template-columns: repeat(6, minmax(0, 1fr)); /* desktop: 3 */
-        }
-        .datFeaturedItem[data-lg="third"]{ grid-column: span 2; }
-        .datFeaturedItem[data-lg="half"]{ grid-column: span 3; }
-        .datFeaturedItem[data-lg="full"]{ grid-column: 1 / -1; }
-      }
-    `}</style>
-
-    <div className="datFeaturedGrid" role="list">
-      {visibleFeaturedProductions.map((p, i) => {
-        const yearText = p?.year ? String((p as any).year) : "";
-        const cityText = (p as any)?.location ? String((p as any).location) : "";
-        const metaLine = [yearText, cityText].filter(Boolean).join(" • ");
-        const posterGuess = `/posters/${(p as any).slug}-landscape.jpg`;
-
-        const span = spanMetaForIndex(i, visibleFeaturedProductions.length);
-
-        return (
-          <div
-            key={(p as any).slug}
-            role="listitem"
-            className="datFeaturedItem"
-            data-md={span.md}
-            data-lg={span.lg}
-            style={{ minWidth: 0 }}
+        <div className="bg-[#19657c] py-[30px] px-[30px]">
+          <h2
+            className="text-6xl text-[#D9A919] mb-4"
+            style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif" }}
           >
-            <FeaturedWorkCard
-              title={(p as any).title}
-              href={`/theatre/${(p as any).slug}`}
-              imageUrl={posterGuess}
-              metaLine={metaLine}
-            />
-          </div>
-        );
-      })}
-    </div>
+            Featured DAT Work
+          </h2>
 
-    {/* ✅ Restore: FeaturedStories-style Button + Link wrapper */}
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-end",
-        marginTop: "2rem",
-      }}
-    >
-      {canToggleFeatured && (
-        <button
-          type="button"
-          onClick={() => setFeaturedExpanded((v) => !v)}
-          style={{
-            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-            fontWeight: 500,
-            textTransform: "uppercase",
-            letterSpacing: "0.35rem",
-            fontSize: "1.2rem",
-            color: "#241123",
-            backgroundColor: "#3FA9BE",
-            padding: "18px 40px",
-            border: "none",
-            borderRadius: "12px",
-            cursor: "pointer",
-            transition: "opacity 0.2s ease-in-out",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-        >
-          {featuredExpanded ? "Show Fewer Productions" : "Show All My Productions"}
-        </button>
+          <p
+            className="text-[#5BBFD3] text-lg max-w-3xl mb-8"
+            style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif" }}
+          >
+            Developed through cross-cultural exchange and a fearless approach to storytelling, this
+            work reflects a deep engagement with place, people, and purpose.
+          </p>
+
+          <style>{`
+            .datFeaturedCard{
+              border-top-left-radius: 0 !important;
+              border-top-right-radius: 0 !important;
+              border-bottom-left-radius: 18px !important;
+              border-bottom-right-radius: 18px !important;
+              overflow: hidden;
+
+              width: 100% !important;
+              max-width: none !important;
+              justify-self: stretch !important;
+              display: block !important;
+            }
+
+            .datFeaturedImageShell{
+              border-radius: 0 !important;
+              overflow: hidden;
+            }
+
+            .datFeaturedGrid{
+              display: grid;
+              grid-template-columns: 1fr;
+              gap: 14px;
+              width: 100%;
+            }
+
+            @media (min-width: 768px){
+              .datFeaturedGrid{
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+              }
+              .datFeaturedItem[data-md="half"]{ grid-column: span 2; }
+              .datFeaturedItem[data-md="full"]{ grid-column: 1 / -1; }
+            }
+
+            @media (min-width: 1024px){
+              .datFeaturedGrid{
+                grid-template-columns: repeat(6, minmax(0, 1fr));
+              }
+              .datFeaturedItem[data-lg="third"]{ grid-column: span 2; }
+              .datFeaturedItem[data-lg="half"]{ grid-column: span 3; }
+              .datFeaturedItem[data-lg="full"]{ grid-column: 1 / -1; }
+            }
+          `}</style>
+
+          <div className="datFeaturedGrid" role="list">
+            {visibleFeaturedProductions.map((p, i) => {
+              const yearText = p?.year ? String((p as any).year) : "";
+              const cityText = (p as any)?.location ? String((p as any).location) : "";
+              const metaLine = [yearText, cityText].filter(Boolean).join(" • ");
+              const posterGuess = `/posters/${(p as any).slug}-landscape.jpg`;
+
+              const span = spanMetaForIndex(i, visibleFeaturedProductions.length);
+
+              return (
+                <div
+                  key={(p as any).slug}
+                  role="listitem"
+                  className="datFeaturedItem"
+                  data-md={span.md}
+                  data-lg={span.lg}
+                  style={{ minWidth: 0 }}
+                >
+                  <FeaturedWorkCard
+                    title={(p as any).title}
+                    href={`/theatre/${(p as any).slug}`}
+                    imageUrl={posterGuess}
+                    metaLine={metaLine}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              marginTop: "2rem",
+            }}
+          >
+            {canToggleFeatured && (
+              <button
+                type="button"
+                onClick={() => setFeaturedExpanded((v) => !v)}
+                style={{
+                  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                  fontWeight: 500,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.35rem",
+                  fontSize: "1.2rem",
+                  color: "#241123",
+                  backgroundColor: "#3FA9BE",
+                  padding: "18px 40px",
+                  border: "none",
+                  borderRadius: "12px",
+                  cursor: "pointer",
+                  transition: "opacity 0.2s ease-in-out",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              >
+                {featuredExpanded ? "Show Fewer Productions" : "Show All My Productions"}
+              </button>
+            )}
+
+            <Link
+              href="/theatre"
+              style={{
+                marginTop: "0.6rem",
+                textAlign: "right",
+                width: "100%",
+                fontFamily: "var(--font-rock-salt), cursive",
+                fontSize: "1rem",
+                color: "#3FA9BE",
+                textDecoration: "none",
+                transition: "color 0.2s ease-in-out",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "#6C00AF")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#3FA9BE")}
+            >
+              ← Explore all DAT productions&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            </Link>
+          </div>
+        </div>
       )}
 
-      <Link
-        href="/theatre"
-        style={{
-          marginTop: "0.6rem",
-          textAlign: "right",
-          width: "100%",
-          fontFamily: "var(--font-rock-salt), cursive",
-          fontSize: "1rem",
-          color: "#3FA9BE",
-          textDecoration: "none",
-          transition: "color 0.2s ease-in-out",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "#6C00AF")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "#3FA9BE")}
-      >
-        ← Explore all DAT productions&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-      </Link>
-    </div>
-  </div>
-)}
-
-
-      {programBadges.length > 0 && (
+      {/* ✅ IMPORTANT FIX:
+          Don't gate stamps on programBadges. ProgramStamps should be driven by
+          programMap + slug (and it can no-op internally if none found). */}
+      {!!slug?.trim() && (
         <div className="relative py-6 m-0 animate-fadeIn" style={{ zIndex: 50 }}>
           <div className="max-w-6xl mx-auto px-4">
             <ProgramStamps artistSlug={slug} slugAliases={slugAliases} />

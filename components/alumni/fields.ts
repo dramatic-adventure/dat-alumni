@@ -15,9 +15,9 @@ export type FieldKind =
 
 /** Field definition used by our generic renderer */
 export type FieldDef = {
-  /** Top-level key OR a nested path like "story.title" */
+  /** Top-level key OR a nested path like "storyTitle" */
   key: keyof AlumniProfile | string;
-  path?: string; // explicit dot path if needed (e.g., "story.title")
+  path?: string; // keep for compatibility; we won’t use nested story.* anymore
   label: string;
   kind: FieldKind;
   required?: boolean;
@@ -30,17 +30,48 @@ export type FieldDef = {
 
 /** Options — roles & identity (can be loaded from Sheets later) */
 export const ROLE_OPTIONS: { value: RoleAtDAT; label: string }[] = [
-  "Actor","Director","Designer","Dramaturg","Playwright","Writer",
-  "Teaching Artist / Workshop Leader","Mentor","Filmmaker",
-  "Project Photographer / Videographer","Production Stage Manager",
-  "Assistant Stage Manager / Crew","Event Host / Emcee / Moderator / Speaker",
-  "Road Manager","Staff / Administrator","Other",
-].map(v => ({ value: v as RoleAtDAT, label: v }));
+  "Actor",
+  "Director",
+  "Designer",
+  "Dramaturg",
+  "Playwright",
+  "Writer",
+  "Teaching Artist / Workshop Leader",
+  "Mentor",
+  "Filmmaker",
+  "Project Photographer / Videographer",
+  "Production Stage Manager",
+  "Assistant Stage Manager / Crew",
+  "Event Host / Emcee / Moderator / Speaker",
+  "Road Manager",
+  "Staff / Administrator",
+  "Other",
+].map((v) => ({ value: v as RoleAtDAT, label: v }));
 
 export const IDENTITY_OPTIONS: { value: IdentityTag; label: string }[] = [
-  "Global Majority","LGBTQIA+","Disabled","Immigrant/First-Gen",
-  "Parent/Caregiver","Veteran","Rural","Indigenous","Other",
-].map(v => ({ value: v as IdentityTag, label: v }));
+  "Global Majority",
+  "LGBTQIA+",
+  "Disabled",
+  "Immigrant/First-Gen",
+  "Parent/Caregiver",
+  "Veteran",
+  "Rural",
+  "Indigenous",
+  "Other",
+].map((v) => ({ value: v as IdentityTag, label: v }));
+
+/**
+ * NOTE:
+ * We are switching Story Map fields from nested `story.*` to flat keys
+ * that can live in Profile-Live cleanly, then sync into Map Data.
+ *
+ * Profile-Live headers you shared (story-related):
+ * storyTitle, storyProgram, storyLocationName, storyYears, storyPartners,
+ * storyShortStory, storyQuote, storyQuoteAuthor, storyMediaUrl,
+ * storyMoreInfoUrl, storyCountry, showOnMap
+ *
+ * (We are NOT inventing extra story columns in Profile-Live here.)
+ */
 
 /** All form fields, config-driven */
 export const PROFILE_FIELDS: FieldDef[] = [
@@ -103,8 +134,10 @@ export const PROFILE_FIELDS: FieldDef[] = [
     help:
       "Optional discovery tags. Choose any that feel true to you. These help alumni find collaborators and shared communities.",
   },
+
+  // ✅ bioLong
   {
-    key: "artistStatement",
+    key: "bioLong",
     label: "Artist Statement / Short Bio",
     kind: "textarea",
     maxLen: 1500,
@@ -114,24 +147,25 @@ export const PROFILE_FIELDS: FieldDef[] = [
       "Share what drives your work, what you’re exploring, or where your path has led.",
   },
 
-  // Visuals placed in Profile Basics per your request
+  // Visuals placed in Profile Basics
   {
-    key: "headshotUrl",
+    key: "currentHeadshotUrl",
     label: "Headshot (URL or upload via the uploader above)",
     kind: "url",
     help:
       "Paste a direct image link if you prefer. We’ll download and archive a copy so it remains preserved. (Alt text and credit can be added in the media section.)",
     placeholder: "https://example.com/your-headshot.jpg",
   },
+
   {
     key: "backgroundStyle",
     label: "Background Theme",
     kind: "select",
     options: [
-      { value: "kraft",  label: "Kraft Paper (default)" },
-      { value: "ink",    label: "Plum Ink" },
-      { value: "teal",   label: "Teal" },
-      { value: "gold",   label: "Gold" },
+      { value: "kraft", label: "Kraft Paper (default)" },
+      { value: "ink", label: "Plum Ink" },
+      { value: "teal", label: "Teal" },
+      { value: "gold", label: "Gold" },
       { value: "purple", label: "Purple" },
     ],
     help:
@@ -154,37 +188,91 @@ export const PROFILE_FIELDS: FieldDef[] = [
     label: "Website / Portfolio",
     kind: "url",
     placeholder: "https://…",
-    help:
-      "Link to your site, portfolio, or résumé for deeper context.",
+    help: "Link to your site, portfolio, or résumé for deeper context.",
   },
   {
     key: "instagram",
     label: "Instagram",
     kind: "text",
-    placeholder: "@handle or profile URL",
+    placeholder: "@handle, handle, or profile URL",
     help:
-      "Paste your @handle or a profile URL — we’ll store the canonical handle and render a clean link.",
+      "Paste @handle, just the handle, or a full URL. We’ll save a clean link like https://www.instagram.com/yourhandle.",
   },
-  { key: "x",        label: "X (Twitter)", kind: "text",  placeholder: "@handle or profile URL" },
-  { key: "tiktok",   label: "TikTok",      kind: "text",  placeholder: "@handle or profile URL" },
-  { key: "threads",  label: "Threads",     kind: "text",  placeholder: "@handle or profile URL" },
+  {
+    key: "x",
+    label: "X (Twitter)",
+    kind: "text",
+    placeholder: "@handle, handle, or profile URL",
+    help: "Paste @handle, handle, or a full URL. We’ll save a clean profile link.",
+  },
+  {
+    key: "tiktok",
+    label: "TikTok",
+    kind: "text",
+    placeholder: "@handle, handle, or profile URL",
+    help: "Paste @handle, handle, or a full URL. We’ll save a clean profile link.",
+  },
+  {
+    key: "threads",
+    label: "Threads",
+    kind: "text",
+    placeholder: "@handle, handle, or profile URL",
+    help: "Paste @handle, handle, or a full URL. We’ll save a clean profile link.",
+  },
   {
     key: "bluesky",
     label: "Bluesky",
     kind: "text",
-    placeholder: "@handle or profile URL (e.g., name.bsky.social)",
+    placeholder: "handle (e.g., name.bsky.social) or profile URL",
+    help:
+      "Paste @handle, handle (including custom domains), or a full URL. We’ll save a clean profile link.",
   },
-  { key: "linkedin", label: "LinkedIn",    kind: "url",   placeholder: "https://linkedin.com/in/…" },
-  { key: "youtube",  label: "YouTube",     kind: "url",   placeholder: "https://youtube.com/…" },
-  { key: "vimeo",    label: "Vimeo",       kind: "url",   placeholder: "https://vimeo.com/…" },
-  { key: "facebook", label: "Facebook",    kind: "url",   placeholder: "https://facebook.com/…" },
-  { key: "linktree", label: "Linktree",    kind: "url",   placeholder: "https://linktr.ee/…" },
+  {
+    key: "linkedin",
+    label: "LinkedIn",
+    kind: "text",
+    placeholder: "handle (after /in/) or profile URL",
+    help:
+      "Paste your handle (the part after /in/) or a full profile URL. We’ll save https://www.linkedin.com/in/yourhandle.",
+  },
+  {
+    key: "youtube",
+    label: "YouTube",
+    kind: "text",
+    placeholder: "@handle, channel URL, or video URL",
+    help:
+      "Paste @handle, a channel URL, or any YouTube URL. If you paste just a handle, we’ll save https://www.youtube.com/@yourhandle.",
+  },
+  {
+    key: "vimeo",
+    label: "Vimeo",
+    kind: "text",
+    placeholder: "handle or profile URL",
+    help: "Paste your handle or a full URL. We’ll save https://vimeo.com/yourhandle.",
+  },
+  {
+    key: "facebook",
+    label: "Facebook",
+    kind: "text",
+    placeholder: "username or profile URL",
+    help:
+      "Paste your username or a full URL. We’ll save https://www.facebook.com/yourname.",
+  },
+  {
+    key: "linktree",
+    label: "Linktree",
+    kind: "text",
+    placeholder: "handle (e.g., yourname) or linktr.ee URL",
+    help:
+      "Paste your handle or a full Linktree URL. We’ll save a clean link like https://linktr.ee/yourname.",
+  },
   {
     key: "publicEmail",
-    label: "Public Email",
+    label: "Public / Professional Email (optional)",
     kind: "email",
+    placeholder: "name@yourdomain.com",
     help:
-      "Only include a public or professional email you’re comfortable displaying. You can remove it anytime.",
+      "This email is shown publicly on your profile (Contact tab). It can be different from the email you use to log in. Leave blank if you don’t want an email displayed.",
   },
 
   // ───────────────────────────────────────────────── Current Update (auto-archives)
@@ -202,8 +290,7 @@ export const PROFILE_FIELDS: FieldDef[] = [
     label: "Update Link",
     kind: "url",
     placeholder: "https://…",
-    help:
-      "Optional link to tickets, press, project page, or a relevant post.",
+    help: "Optional link to tickets, press, project page, or a relevant post.",
   },
   {
     key: "currentUpdateExpiresAt",
@@ -213,37 +300,41 @@ export const PROFILE_FIELDS: FieldDef[] = [
       "Your update will auto-archive after this date so your profile stays fresh. (Default is ~90 days if you leave this blank.)",
   },
 
-  // ───────────────────────────────────────────────── Story Map (nested story.*)
+  // ───────────────────────────────────────────────── Story Map Contribution (FLAT KEYS that match Profile-Live)
   {
-    key: "story.title",
-    path: "story.title",
+    key: "storyTitle",
     label: "Story Title",
     kind: "text",
     help:
       "A short title or headline that captures the heart of your story, project, or experience.",
   },
   {
-    key: "story.program",
-    path: "story.program",
+    key: "storyProgram",
     label: "Associated Program",
     kind: "select",
-    options: ["ACTion","Creative Trek","Teaching Artist Residency","RAW: Galápagos","Other"]
-      .map(v => ({ value: v, label: v })),
-    help:
-      "Choose the one DAT program this particular story is about.",
+    options: [
+      "ACTion",
+      "Creative Trek",
+      "Teaching Artist Residency",
+      "RAW: Galápagos",
+      "CASTAWAY",
+      "PASSAGE",
+      "Other",
+    ].map((v) => ({ value: v, label: v })),
+    help: "Choose the one DAT program this particular story is about.",
   },
   {
-    key: "story.programCountry",
-    path: "story.programCountry",
-    label: "Program Country",
+    key: "storyCountry",
+    label: "Country",
     kind: "select",
-    options: ["Ecuador","Slovakia","Tanzania","USA","Other"].map(v => ({ value: v, label: v })),
-    help:
-      "Country associated with that program instance (if applicable).",
+    options: ["Ecuador", "Slovakia", "Tanzania", "USA", "Other"].map((v) => ({
+      value: v,
+      label: v,
+    })),
+    help: "Country associated with that story/program instance (if applicable).",
   },
   {
-    key: "story.years",
-    path: "story.years",
+    key: "storyYears",
     label: "Year(s)",
     kind: "text",
     placeholder: "2016 or 2015–2016",
@@ -251,33 +342,39 @@ export const PROFILE_FIELDS: FieldDef[] = [
       "The year this story took place. If it spanned time, add a simple range (e.g., 2015–2016).",
   },
   {
-    key: "story.location",
-    path: "story.location",
-    label: "Story Location (map pin)",
+    key: "storyLocationName",
+    label: "Location Name (map pin label)",
     kind: "text",
     placeholder: "City/Region or Landmark",
     help:
-      "City, region, or landmark where this story unfolded. We’ll use this text on the map pin.",
+      "City, region, or landmark where this story unfolded. This becomes the map pin label.",
   },
   {
-    key: "story.partners",
-    path: "story.partners",
+    key: "storyPartners",
     label: "Partners",
     kind: "text",
-    help:
-      "Individuals, organizations, or communities who were part of the story.",
+    help: "Individuals, organizations, or communities who were part of the story.",
   },
+
+  // ✅ IMPORTANT: Profile-Live header is storyMediaUrl (NOT storyImageUrl)
   {
-    key: "story.mediaUrl",
-    path: "story.mediaUrl",
+    key: "storyMediaUrl",
     label: "Story Media URL",
     kind: "url",
     help:
-      "Link to a meaningful image, video, or document. We can download and archive it to preserve your story.",
+      "Link to a meaningful image, video, or document. We can archive it later to preserve your story.",
   },
+
+  // ✅ IMPORTANT: Profile-Live header is storyMoreInfoUrl (NOT storyMoreInfoLink)
   {
-    key: "story.shortStory",
-    path: "story.shortStory",
+    key: "storyMoreInfoUrl",
+    label: "More Info Link",
+    kind: "url",
+    help: "Optional: article, blog post, press, or project page.",
+  },
+
+  {
+    key: "storyShortStory",
     label: "Short Story",
     kind: "textarea",
     maxLen: 1200,
@@ -285,16 +382,7 @@ export const PROFILE_FIELDS: FieldDef[] = [
       "Tell us what happened — in a paragraph or two. What was the experience, the impact, and what made it meaningful?",
   },
   {
-    key: "story.url",
-    path: "story.url",
-    label: "External Link",
-    kind: "url",
-    help:
-      "Optional context or further reading (blog post, article, full project page).",
-  },
-  {
-    key: "story.quote",
-    path: "story.quote",
+    key: "storyQuote",
     label: "Quote (no quotation marks)",
     kind: "textarea",
     maxLen: 300,
@@ -302,18 +390,24 @@ export const PROFILE_FIELDS: FieldDef[] = [
       "A short line that stayed with you — from you or someone else. Please don’t add quotation marks; we’ll format them for you.",
   },
   {
-    key: "story.quoteAuthor",
-    path: "story.quoteAuthor",
+    key: "storyQuoteAuthor",
     label: "Quote Author",
     kind: "text",
+    help: "Who said the quote? If it’s you, include your name as you’d like it to appear.",
+  },
+
+  // ✅ IMPORTANT: Profile-Live header is showOnMap (NOT storyShowOnMap)
+  {
+    key: "showOnMap",
+    label: "Show on Map?",
+    kind: "toggle",
     help:
-      "Who said the quote? If it’s you, include your name as you’d like it to appear.",
+      "Turn this on when you’re ready for this story to appear publicly on the map (admins can add lat/lng later).",
   },
 
   // ───────────────────────────────────────────────── Tech Support
   {
-    key: "support.bug",
-    path: "support.bug",
+    key: "supportBug",
     label: "Report a Bug",
     kind: "textarea",
     maxLen: 1000,
@@ -321,8 +415,7 @@ export const PROFILE_FIELDS: FieldDef[] = [
       "What broke, where did it happen, and what did you expect to see? Include steps to reproduce if you can.",
   },
   {
-    key: "support.feature",
-    path: "support.feature",
+    key: "supportFeature",
     label: "Request a Feature",
     kind: "textarea",
     maxLen: 1000,
@@ -330,8 +423,7 @@ export const PROFILE_FIELDS: FieldDef[] = [
       "What would make this better for you or the community? Share the goal, not just the button.",
   },
   {
-    key: "support.assistance",
-    path: "support.assistance",
+    key: "supportAssistance",
     label: "Request Technical Assistance",
     kind: "textarea",
     maxLen: 1000,
@@ -342,34 +434,57 @@ export const PROFILE_FIELDS: FieldDef[] = [
 
 /** Section groupings used by the renderer */
 export const PROFILE_GROUPS: Record<string, string[]> = {
-  // Make sure “Profile Basics” renders first and can be default-open in the UI.
   "Profile Basics": [
-    "name","slug","currentRole",
-    "location","isBiCoastal","secondLocation",
-    "identityTags","artistStatement",
-    "headshotUrl","backgroundStyle",
+    "name",
+    "slug",
+    "currentRole",
+    "location",
+    "isBiCoastal",
+    "secondLocation",
+    "identityTags",
+    "bioLong",
+    "currentHeadshotUrl",
+    "backgroundStyle",
   ],
 
-  "Roles (DAT & Current)": [
-    "datRoles",
-  ],
+  "Roles (DAT & Current)": ["datRoles"],
 
   "Contact": [
-    "website","instagram","x","tiktok","threads","bluesky",
-    "linkedin","youtube","vimeo","facebook","linktree",
+    "website",
+    "instagram",
+    "x",
+    "tiktok",
+    "threads",
+    "bluesky",
+    "linkedin",
+    "youtube",
+    "vimeo",
+    "facebook",
+    "linktree",
     "publicEmail",
   ],
 
   "Current Update": [
-    "currentUpdateText","currentUpdateLink","currentUpdateExpiresAt",
+    "currentUpdateText",
+    "currentUpdateLink",
+    "currentUpdateExpiresAt",
   ],
 
+  // ✅ Flat keys that match Profile-Live headers
   "Story Map Contribution": [
-    "story.title","story.program","story.programCountry","story.years","story.location",
-    "story.partners","story.mediaUrl","story.shortStory","story.url","story.quote","story.quoteAuthor",
+    "storyTitle",
+    "storyProgram",
+    "storyCountry",
+    "storyYears",
+    "storyLocationName",
+    "storyPartners",
+    "storyMediaUrl",
+    "storyMoreInfoUrl",
+    "storyShortStory",
+    "storyQuote",
+    "storyQuoteAuthor",
+    "showOnMap",
   ],
 
-  "Tech Support": [
-    "support.bug","support.feature","support.assistance",
-  ],
+  "Tech Support": ["supportBug", "supportFeature", "supportAssistance"],
 };

@@ -4,6 +4,7 @@ import { google } from "googleapis";
 import { rateLimit } from "@/lib/rateLimit";
 import { promises as fs } from "fs";
 import path from "path";
+import { auth } from "@/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -79,7 +80,7 @@ function parseAdminEmails() {
 /**
  * Admin check:
  * 1) x-admin-token (ADMIN_TOKEN) override
- * 2) NextAuth v5-style `auth()` export if present
+ * 2) NextAuth session email allowlist / flags
  */
 async function isAdminRequest(req: Request): Promise<boolean> {
   const token = (req.headers.get("x-admin-token") || "").trim();
@@ -87,23 +88,29 @@ async function isAdminRequest(req: Request): Promise<boolean> {
   if (want && token && token === want) return true;
 
   try {
-    const mod: any = await import("@/app/api/auth/[...nextauth]/route");
-    if (typeof mod?.auth === "function") {
-      const session = await mod.auth();
-      const email = String(session?.user?.email || "").trim().toLowerCase();
-      if (!email) return false;
+    const session = await auth(); // ✅ no args
+    const email = String(session?.user?.email || "").trim().toLowerCase();
+    if (!email) return false;
 
-      if (session?.user?.isAdmin === true) return true;
-      if (session?.user?.role === "admin") return true;
+    // Optional: if you ever add these
+    if ((session as any)?.user?.isAdmin === true) return true;
+    if ((session as any)?.user?.role === "admin") return true;
 
-      const allow = parseAdminEmails();
-      return allow.size ? allow.has(email) : false;
-    }
+    const allow = parseAdminEmails();
+    return allow.size ? allow.has(email) : false;
   } catch {
-    // ignore
+    return false;
   }
+}
 
-  return false;
+/** Get session email if signed in (used for self-lookup security) */
+async function getSessionEmailIfAny(): Promise<string> {
+  try {
+    const session = await auth(); // ✅ no args
+    return String(session?.user?.email || "").trim().toLowerCase();
+  } catch {
+    return "";
+  }
 }
 
 /** Normalize gmail/googlemail and strip +tag/dots for gmail */
@@ -235,7 +242,6 @@ function splitPrevSlugs(raw: unknown) {
 }
 
 function getFallbackDir() {
-  // caller wants FALLBACK_DIR=public/fallback (default)
   return process.env.FALLBACK_DIR || path.join("public", "fallback");
 }
 
@@ -246,10 +252,7 @@ async function loadFallbackCsv(): Promise<CsvRow[]> {
   return parseCsvSimple(text);
 }
 
-async function lookupFromCsvFallback(params: {
-  alumniId?: string;
-  admin: boolean;
-}) {
+async function lookupFromCsvFallback(params: { alumniId?: string; admin: boolean }) {
   if (params.admin) return { kind: "admin-unavailable" as const };
 
   const needle = normSlug(params.alumniId || "");
@@ -260,7 +263,7 @@ async function lookupFromCsvFallback(params: {
   const match =
     rows.find((r) => normSlug(r.slug || "") === needle) ||
     rows.find((r) =>
-      splitPrevSlugs(r["Previous Slugs"] || r.previousSlugs).includes(needle)
+      splitPrevSlugs(r["Previous Slugs"] || (r as any).previousSlugs).includes(needle)
     );
 
   if (!match) return { kind: "not-found" as const };
@@ -277,14 +280,10 @@ async function lookupFromCsvFallback(params: {
       name: match.Name || match.name || "",
       roles: match.Role || match.roles || "",
       location: match.Location || match.location || "",
-      headshotUrl: match["Headshot URL"] || match.currentHeadshotUrl || "",
-
-      // ✅ keep only alumni's Artist URL
+      headshotUrl: match["Headshot URL"] || (match as any).currentHeadshotUrl || "",
       website: match["Artist URL"] || match.website || match["Profile URL"] || "",
-
-      // ✅ new public fields
-      statusFlags: match.statusFlags || match["Status Flags"] || "",
-      currentWork: match.currentWork || match["Current Work"] || "",
+      statusFlags: (match as any).statusFlags || match["Status Flags"] || "",
+      currentWork: (match as any).currentWork || match["Current Work"] || "",
     },
   };
 }
@@ -366,16 +365,12 @@ function buildFallbackCsvStrings(opts: {
     slugTriples,
   } = opts;
 
-  // Public CSV rule:
-  // - isPublic must be TRUE-ish
-  // - status must NOT be blocked-ish
   const pub = liveRows.filter((r) => {
     const pubOk = isPublicIdx !== -1 ? truthyCell(r[isPublicIdx]) : false;
     const status = statusIdx !== -1 ? String(r[statusIdx] ?? "") : "";
     return pubOk && !isBlockedStatus(status);
   });
 
-  // ---- alumni.csv ----
   const alumniLines: string[] = [];
   alumniLines.push(
     [
@@ -401,17 +396,14 @@ function buildFallbackCsvStrings(opts: {
     const slug = slugIdx !== -1 ? normSlug(String(r[slugIdx] ?? "")) : "";
     const name = nameIdx !== -1 ? String(r[nameIdx] ?? "").trim() : "";
     const roles = rolesIdx !== -1 ? String(r[rolesIdx] ?? "").trim() : "";
-    const location =
-      locationIdx !== -1 ? String(r[locationIdx] ?? "").trim() : "";
+    const location = locationIdx !== -1 ? String(r[locationIdx] ?? "").trim() : "";
     const headshot =
       headshotUrlIdx !== -1 ? String(r[headshotUrlIdx] ?? "").trim() : "";
-    const website =
-      websiteIdx !== -1 ? String(r[websiteIdx] ?? "").trim() : "";
+    const website = websiteIdx !== -1 ? String(r[websiteIdx] ?? "").trim() : "";
     const statusRaw = statusIdx !== -1 ? String(r[statusIdx] ?? "").trim() : "";
     const status = normalizeStatus(statusRaw);
     const lastModified =
       updatedAtIdx !== -1 ? String(r[updatedAtIdx] ?? "").trim() : "";
-
     const statusFlags =
       statusFlagsIdx !== -1 ? String(r[statusFlagsIdx] ?? "").trim() : "";
     const currentWork =
@@ -436,16 +428,13 @@ function buildFallbackCsvStrings(opts: {
     );
   }
 
-  // ---- slug-map.csv ----
   const slugLines: string[] = [];
   slugLines.push(["fromSlug", "toSlug", "createdAt"].join(","));
   for (const t of slugTriples) {
     slugLines.push(
-      [
-        toCsvCell(normSlug(t[0])),
-        toCsvCell(normSlug(t[1])),
-        toCsvCell(t[2] || ""),
-      ].join(",")
+      [toCsvCell(normSlug(t[0])), toCsvCell(normSlug(t[1])), toCsvCell(t[2] || "")].join(
+        ","
+      )
     );
   }
 
@@ -494,7 +483,14 @@ async function refreshFallbackSnapshots(opts: {
 // Main route (Profile-Live is the source of truth for reads)
 // ------------------------------------------------------------
 export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+
+  const nocache = (searchParams.get("nocache") || "").trim();
+  const forceNoStore = nocache === "1" || nocache.toLowerCase() === "true";
+
   const admin = await isAdminRequest(req);
+  const sessionEmail = await getSessionEmailIfAny(); // ✅ FIXED (no args)
+  const sessionEmailNorm = normalizeGmail(sessionEmail);
 
   // rate limit (per IP, 120 req / min)
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
@@ -505,9 +501,7 @@ export async function GET(req: Request) {
     );
   }
 
-  const { searchParams } = new URL(req.url);
-
-  // ✅ CSV export mode (no alumniId/email required)
+  // CSV export mode (no alumniId/email required)
   const exportParam = (searchParams.get("export") || "").trim().toLowerCase();
   const wantsExport =
     exportParam === "alumni.csv" ||
@@ -536,12 +530,12 @@ export async function GET(req: Request) {
 
   try {
     const sa = parseSA(saJson);
-    const auth = new google.auth.JWT({
+    const gAuth = new google.auth.JWT({
       email: sa.client_email,
       key: sa.private_key,
       scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
     });
-    const sheets = google.sheets({ version: "v4", auth });
+    const sheets = google.sheets({ version: "v4", auth: gAuth });
 
     // 0) Read Profile-Live
     const liveResp = await sheets.spreadsheets.values.get({
@@ -559,14 +553,20 @@ export async function GET(req: Request) {
     const rolesIdx = idxOf(LH as string[], ["roles", "role"]);
     const locationIdx = idxOf(LH as string[], ["location"]);
     const websiteIdx = idxOf(LH as string[], ["website", "profileurl", "profile url"]);
-    const headshotUrlIdx = idxOf(LH as string[], ["currentheadshoturl", "current headshot url"]);
+    const headshotUrlIdx = idxOf(LH as string[], [
+      "currentheadshoturl",
+      "current headshot url",
+    ]);
     const isPublicIdx = idxOf(LH as string[], ["ispublic", "is public"]);
     const statusIdx = idxOf(LH as string[], ["status"]);
     const updatedAtIdx = idxOf(LH as string[], ["updatedat", "updated at"]);
 
-    // ✅ new
     const statusFlagsIdx = idxOf(LH as string[], ["statusflags", "status flags"]);
     const currentWorkIdx = idxOf(LH as string[], ["currentwork", "current work"]);
+    const backgroundStyleIdx = idxOf(LH as string[], [
+      "backgroundstyle",
+      "background style",
+    ]);
 
     const emailIdx = idxOf(LH as string[], ["email"]);
     const instagramIdx = idxOf(LH as string[], ["instagram"]);
@@ -579,17 +579,21 @@ export async function GET(req: Request) {
     const programsIdx = idxOf(LH as string[], ["programs"]);
     const tagsIdx = idxOf(LH as string[], ["tags"]);
     const spotlightIdx = idxOf(LH as string[], ["spotlight"]);
-    const currentHeadshotIdIdx = idxOf(LH as string[], ["currentheadshotid", "current headshot id"]);
+    const currentHeadshotIdIdx = idxOf(LH as string[], [
+      "currentheadshotid",
+      "current headshot id",
+    ]);
 
     if (isDebug(req, "1")) {
       const sample = liveRows.slice(0, 5).map((r) => ({
         alumniId: alumniIdIdx !== -1 ? String(r[alumniIdIdx] ?? "") : "",
         slug: slugIdx !== -1 ? String(r[slugIdx] ?? "") : "",
+        email: emailIdx !== -1 ? String(r[emailIdx] ?? "") : "",
         status: statusIdx !== -1 ? String(r[statusIdx] ?? "") : "",
         isPublic: isPublicIdx !== -1 ? String(r[isPublicIdx] ?? "") : "",
         updatedAt: updatedAtIdx !== -1 ? String(r[updatedAtIdx] ?? "") : "",
-        statusFlags: statusFlagsIdx !== -1 ? String(r[statusFlagsIdx] ?? "") : "",
-        currentWork: currentWorkIdx !== -1 ? String(r[currentWorkIdx] ?? "") : "",
+        backgroundStyle:
+          backgroundStyleIdx !== -1 ? String(r[backgroundStyleIdx] ?? "") : "",
       }));
 
       return json(
@@ -602,6 +606,7 @@ export async function GET(req: Request) {
           idx: {
             alumniIdIdx,
             slugIdx,
+            emailIdx,
             statusIdx,
             isPublicIdx,
             nameIdx,
@@ -609,9 +614,10 @@ export async function GET(req: Request) {
             locationIdx,
             websiteIdx,
             headshotUrlIdx,
-            emailIdx,
+            updatedAtIdx,
             statusFlagsIdx,
             currentWorkIdx,
+            backgroundStyleIdx,
           },
           sample,
         },
@@ -644,7 +650,7 @@ export async function GET(req: Request) {
       slugTriples = [];
     }
 
-    // ✅ Export CSV directly from canonical Live + Slugs
+    // Export CSV directly from Live + Slugs
     if (wantsExport) {
       const { alumniCsv, slugMapCsv } = buildFallbackCsvStrings({
         liveRows,
@@ -671,12 +677,12 @@ export async function GET(req: Request) {
         status: 200,
         headers: {
           "Content-Type": "text/csv; charset=utf-8",
-          ...privateCache60Headers(),
+          ...(forceNoStore ? noStoreHeaders() : privateCache60Headers()),
         },
       });
     }
 
-    // Step 4: dev-only snapshot writing whenever Sheets is readable
+    // dev-only snapshot writing whenever Sheets is readable
     void refreshFallbackSnapshots({
       liveHeader: LH,
       liveRows,
@@ -701,6 +707,10 @@ export async function GET(req: Request) {
       return json({ error: "not found" }, { status: 404, headers: noStoreHeaders() });
     }
 
+    function okHeaders() {
+      return forceNoStore ? noStoreHeaders() : privateCache60Headers();
+    }
+
     function enforcePublicGate(row: any[]) {
       if (admin) return true;
       const pubOk = isPublicIdx !== -1 ? truthyCell(row[isPublicIdx]) : false;
@@ -713,24 +723,25 @@ export async function GET(req: Request) {
         alumniIdIdx !== -1 ? normSlug(String(row[alumniIdIdx] ?? "")) : "";
       const canonicalSlug =
         slugIdx !== -1 ? normSlug(String(row[slugIdx] ?? "")) : "";
-      const statusRaw =
-        statusIdx !== -1 ? String(row[statusIdx] ?? "") : "";
+      const statusRaw = statusIdx !== -1 ? String(row[statusIdx] ?? "") : "";
       const status = normalizeStatus(statusRaw);
 
-      const isPublic =
-        isPublicIdx !== -1 ? String(row[isPublicIdx] ?? "").trim() : "";
+      const isPublic = isPublicIdx !== -1 ? String(row[isPublicIdx] ?? "").trim() : "";
 
       const headshotUrl =
         headshotUrlIdx !== -1 ? String(row[headshotUrlIdx] ?? "").trim() : "";
-
       const headshotId =
-        currentHeadshotIdIdx !== -1 ? String(row[currentHeadshotIdIdx] ?? "").trim() : "";
+        currentHeadshotIdIdx !== -1
+          ? String(row[currentHeadshotIdIdx] ?? "").trim()
+          : "";
 
       const statusFlags =
         statusFlagsIdx !== -1 ? String(row[statusFlagsIdx] ?? "").trim() : "";
-
       const currentWork =
         currentWorkIdx !== -1 ? String(row[currentWorkIdx] ?? "").trim() : "";
+
+      const backgroundStyle =
+        backgroundStyleIdx !== -1 ? String(row[backgroundStyleIdx] ?? "").trim() : "";
 
       return {
         alumniId,
@@ -741,7 +752,6 @@ export async function GET(req: Request) {
         ...(redirectedFrom ? { redirectedFrom } : {}),
         updatedAt: updatedAtIdx !== -1 ? String(row[updatedAtIdx] ?? "").trim() : "",
 
-        // Public-safe fields
         name: nameIdx !== -1 ? String(row[nameIdx] ?? "").trim() : "",
         pronouns: pronounsIdx !== -1 ? String(row[pronounsIdx] ?? "").trim() : "",
         roles: rolesIdx !== -1 ? String(row[rolesIdx] ?? "").trim() : "",
@@ -759,11 +769,20 @@ export async function GET(req: Request) {
         tags: tagsIdx !== -1 ? String(row[tagsIdx] ?? "").trim() : "",
         statusFlags,
 
+        backgroundStyle,
+
         currentHeadshotUrl: headshotUrl || "",
         currentHeadshotId: headshotId || "",
 
-        // Admin-only
-        email: admin && emailIdx !== -1 ? String(row[emailIdx] ?? "").trim() : "",
+        // Email:
+        // - Admin: always see
+        // - Non-admin: only when doing email lookup for self
+        email:
+          (admin ||
+            (emailParamRaw && normalizeGmail(emailParamRaw) === sessionEmailNorm)) &&
+          emailIdx !== -1
+            ? String(row[emailIdx] ?? "").trim()
+            : "",
       };
     }
 
@@ -771,15 +790,34 @@ export async function GET(req: Request) {
     // Lookup flow:
     // - alumniId param might be: old slug, new slug, or stable alumniId.
     // - canonicalize via Profile-Slugs forward chain.
-    // - match:
-    //    1) slug == canonical
-    //    2) alumniId == canonical
     // ------------------------------------------------------------
     const incoming = alumniIdParamRaw;
     const canonical = incoming ? resolveForwardChainLocal(slugForwardMap, incoming) : "";
     const redirectedFrom = canonical && incoming && canonical !== incoming ? incoming : undefined;
 
+    // Debug 2
     if (isDebug(req, "2")) {
+      const emailParamNorm = normalizeGmail(emailParamRaw);
+      const selfGateWouldPass =
+        !!sessionEmailNorm && !!emailParamNorm && emailParamNorm === sessionEmailNorm;
+
+      const want = canonical || incoming;
+      const findRow = (key: string) => {
+        const k = normSlug(key);
+        if (!k) return null;
+        if (slugIdx !== -1) {
+          const hit = liveRows.find((r) => normSlug(String(r[slugIdx] ?? "")) === k);
+          if (hit) return hit;
+        }
+        if (alumniIdIdx !== -1) {
+          const hit = liveRows.find((r) => normSlug(String(r[alumniIdIdx] ?? "")) === k);
+          if (hit) return hit;
+        }
+        return null;
+      };
+
+      const row = want ? findRow(want) : null;
+
       return json(
         {
           sheetId,
@@ -788,6 +826,33 @@ export async function GET(req: Request) {
           canonical,
           redirectedFrom,
           slugForwardCount: Object.keys(slugForwardMap).length,
+          admin,
+          sessionEmail,
+          sessionEmailNorm,
+          emailParamRaw,
+          emailParamNorm,
+          selfGateWouldPass,
+          idxPreview: {
+            alumniIdIdx,
+            slugIdx,
+            emailIdx,
+            isPublicIdx,
+            statusIdx,
+            backgroundStyleIdx,
+            updatedAtIdx,
+          },
+          rowPreview: row
+            ? {
+                alumniId: alumniIdIdx !== -1 ? String(row[alumniIdIdx] ?? "") : "",
+                slug: slugIdx !== -1 ? String(row[slugIdx] ?? "") : "",
+                email: emailIdx !== -1 ? String(row[emailIdx] ?? "") : "",
+                isPublic: isPublicIdx !== -1 ? String(row[isPublicIdx] ?? "") : "",
+                status: statusIdx !== -1 ? String(row[statusIdx] ?? "") : "",
+                backgroundStyle:
+                  backgroundStyleIdx !== -1 ? String(row[backgroundStyleIdx] ?? "") : "",
+                updatedAt: updatedAtIdx !== -1 ? String(row[updatedAtIdx] ?? "") : "",
+              }
+            : null,
         },
         { status: 200, headers: noStoreHeaders() }
       );
@@ -815,10 +880,7 @@ export async function GET(req: Request) {
       const match = findLiveRowByKey(canonical);
       if (match) {
         if (!enforcePublicGate(match)) return notFound();
-        return json(buildPayload(match, redirectedFrom), {
-          status: 200,
-          headers: privateCache60Headers(),
-        });
+        return json(buildPayload(match, redirectedFrom), { status: 200, headers: okHeaders() });
       }
 
       // 1b) Reverse fallback (rare)
@@ -827,31 +889,59 @@ export async function GET(req: Request) {
         const match2 = findLiveRowByKey(reverse);
         if (match2) {
           if (!enforcePublicGate(match2)) return notFound();
-          return json(buildPayload(match2, incoming), {
-            status: 200,
-            headers: privateCache60Headers(),
-          });
+          return json(buildPayload(match2, incoming), { status: 200, headers: okHeaders() });
         }
       }
     }
 
-    // 2) Admin email lookup (Live email → Aliases email → alumniId)
-    if (admin && emailParamRaw) {
+    // 2) Email lookup (admin OR self-only) + STRICT duplicate handling
+    if (emailParamRaw) {
       const wantEmail = normalizeGmail(emailParamRaw);
 
-      if (emailIdx !== -1) {
-        const hit = liveRows.find(
-          (r) => normalizeGmail(String(r[emailIdx] ?? "")) === wantEmail
-        );
-        if (hit) {
-          return json(buildPayload(hit), {
-            status: 200,
-            headers: privateCache60Headers(),
-          });
+      if (!admin) {
+        if (!sessionEmailNorm || wantEmail !== sessionEmailNorm) {
+          return json({ error: "Forbidden" }, { status: 403, headers: noStoreHeaders() });
         }
       }
 
-      // Profile-Aliases (optional)
+      if (emailIdx === -1) return notFound();
+
+      const matches = liveRows.filter(
+        (r) => normalizeGmail(String(r[emailIdx] ?? "")) === wantEmail
+      );
+
+      if (matches.length === 1) {
+        const hit = matches[0];
+        if (!enforcePublicGate(hit)) return notFound();
+        return json(buildPayload(hit), { status: 200, headers: okHeaders() });
+      }
+
+      if (matches.length > 1) {
+        // ✅ STRICT: always 409 duplicate_email
+        if (!admin) {
+          return json({ error: "duplicate_email" }, { status: 409, headers: noStoreHeaders() });
+        }
+
+        const ids = matches.map((r) => ({
+          alumniId: alumniIdIdx !== -1 ? normSlug(String(r[alumniIdIdx] ?? "")) : "",
+          slug: slugIdx !== -1 ? normSlug(String(r[slugIdx] ?? "")) : "",
+          status: statusIdx !== -1 ? String(r[statusIdx] ?? "") : "",
+          isPublic: isPublicIdx !== -1 ? String(r[isPublicIdx] ?? "") : "",
+          updatedAt: updatedAtIdx !== -1 ? String(r[updatedAtIdx] ?? "") : "",
+        }));
+
+        return json(
+          {
+            error: "duplicate_email",
+            email: wantEmail,
+            matchCount: matches.length,
+            matches: ids,
+          },
+          { status: 409, headers: noStoreHeaders() }
+        );
+      }
+
+      // Profile-Aliases fallback (optional)
       try {
         const aliasResp = await sheets.spreadsheets.values.get({
           spreadsheetId: sheetId,
@@ -870,10 +960,8 @@ export async function GET(req: Request) {
           const ownerId = normSlug(String(mapHit[1] ?? ""));
           const hit2 = findLiveRowByKey(ownerId);
           if (hit2) {
-            return json(buildPayload(hit2), {
-              status: 200,
-              headers: privateCache60Headers(),
-            });
+            if (!enforcePublicGate(hit2)) return notFound();
+            return json(buildPayload(hit2), { status: 200, headers: okHeaders() });
           }
         }
       } catch {
@@ -897,7 +985,10 @@ export async function GET(req: Request) {
     }
 
     if (fb.kind === "ok") {
-      return json(fb.payload, { status: 200, headers: privateCache60Headers() });
+      return json(fb.payload, {
+        status: 200,
+        headers: forceNoStore ? noStoreHeaders() : privateCache60Headers(),
+      });
     }
 
     return json({ error: "not found" }, { status: 404, headers: noStoreHeaders() });

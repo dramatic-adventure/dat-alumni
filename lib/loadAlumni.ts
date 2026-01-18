@@ -1,7 +1,6 @@
 // /lib/loadAlumni.ts
 import { serverDebug, serverInfo, serverWarn, serverError } from "@/lib/serverDebug";
 import "server-only";
-// (note: `export {}` at top isn't needed; TS treats this file as a module already)
 
 import Papa from "papaparse";
 import { cache } from "react";
@@ -16,8 +15,7 @@ const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
  * Env
  * ────────────────────────────────────────────────────────── */
 
-// ✅ Default to internal API exports (Profile-Live source of truth)
-// Env overrides still supported for emergency.
+// ✅ CSV fallback (emergency only)
 const csvUrl =
   process.env.ALUMNI_CSV_URL ||
   process.env.NEXT_PUBLIC_ALUMNI_CSV_URL ||
@@ -29,13 +27,17 @@ const slugCsvUrl =
   "/api/alumni/lookup?export=slug-map.csv";
 
 const spreadsheetId = process.env.ALUMNI_SHEET_ID || "";
+
+// ✅ Live is source of truth
+const LIVE_TAB = process.env.ALUMNI_LIVE_TAB || "Profile-Live";
+
 const AUTO_CANON =
   (process.env.AUTO_CANONICALIZE_SLUGS ?? "true").toLowerCase() === "true";
 const AUTO_CANON_CREATE_ON_MISS =
   (process.env.AUTO_CANON_CREATE_ON_MISS ?? "false").toLowerCase() === "true";
 
 // Optional explicit tab names (recommended):
-const ALUMNI_TAB = process.env.ALUMNI_TAB || ""; // e.g. "Profile-Data"
+const ALUMNI_TAB = process.env.ALUMNI_TAB || ""; // e.g. "Profile-Data" (legacy auto-canon target)
 const SLUGS_TAB = process.env.SLUGS_TAB || "Profile-Slugs";
 
 if (DEBUG) {
@@ -46,9 +48,10 @@ if (DEBUG) {
   serverDebug("🔍 NEXT_PUBLIC_SLUGS_CSV_URL:", process.env.NEXT_PUBLIC_SLUGS_CSV_URL);
   serverDebug("✅ Using Slug CSV URL:", slugCsvUrl || "❌ NONE FOUND");
   serverDebug("🔍 ALUMNI_SHEET_ID:", spreadsheetId ? "<set>" : "<missing>");
+  serverDebug("🟩 LIVE TAB:", LIVE_TAB);
   serverDebug("🔧 AUTO_CANONICALIZE_SLUGS:", AUTO_CANON);
   serverDebug("🔧 AUTO_CANON_CREATE_ON_MISS:", AUTO_CANON_CREATE_ON_MISS);
-  serverDebug("🗂️  ALUMNI_TAB:", ALUMNI_TAB || "<auto>");
+  serverDebug("🗂️  ALUMNI_TAB (legacy):", ALUMNI_TAB || "<auto>");
   serverDebug("🗂️  SLUGS_TAB:", SLUGS_TAB);
 }
 
@@ -74,7 +77,27 @@ function toLowerSlug(s: string | undefined | null) {
 }
 
 function normalizeHeaderKey(k: string) {
-  return k.trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+  return k
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** case-insensitive header lookup */
+function idxOf(header: string[], candidates: string[]) {
+  const lower = header.map((h) => String(h || "").trim().toLowerCase());
+  for (const c of candidates) {
+    const i = lower.indexOf(c.toLowerCase());
+    if (i !== -1) return i;
+  }
+  return -1;
+}
+
+function truthy(v: any) {
+  const s = String(v ?? "").trim().toLowerCase();
+  return s === "true" || s === "yes" || s === "y" || s === "1" || s === "✓";
 }
 
 /** Build a fresh mapping from rows of [fromSlug, toSlug, createdAt] */
@@ -118,9 +141,7 @@ async function resolveSheetTitleByGid(
   try {
     const sheets = sheetsClient();
     const meta = await sheets.spreadsheets.get({ spreadsheetId });
-    const match = meta.data.sheets?.find(
-      (s) => s.properties?.sheetId === targetGid
-    );
+    const match = meta.data.sheets?.find((s) => s.properties?.sheetId === targetGid);
     return match?.properties?.title || null;
   } catch {
     return null;
@@ -147,7 +168,7 @@ let alumniCache: AlumniRow[] = [];
 let slugForwardMapCache: Record<string, string> | null = null;
 
 /* ──────────────────────────────────────────────────────────
- * Slug-forward map (CSV-only)
+ * Slug-forward map (CSV-only, unchanged)
  * ────────────────────────────────────────────────────────── */
 
 async function loadSlugMapFromCsv(): Promise<Record<string, string> | null> {
@@ -159,9 +180,7 @@ async function loadSlugMapFromCsv(): Promise<Record<string, string> | null> {
       skipEmptyLines: true,
     });
 
-    // Be defensive about header casing/variants
     const rows = parsed.data.map((r) => {
-      // Try common header variants
       const from =
         r.fromSlug ??
         (r as any)["from-slug"] ??
@@ -225,14 +244,221 @@ export async function getReverseSlugSource(target: string): Promise<string | nul
   let candidate: string | null = null;
   for (const [from, to] of Object.entries(map)) {
     if (to === want) {
-      if (!candidate || from < candidate) candidate = from; // deterministic
+      if (!candidate || from < candidate) candidate = from;
     }
   }
   return candidate;
 }
 
 /* ──────────────────────────────────────────────────────────
- * Alumni CSV loaders
+ * ✅ Profile-Live loader (SOURCE OF TRUTH)
+ * ────────────────────────────────────────────────────────── */
+
+async function loadAlumniFromLive(): Promise<AlumniRow[]> {
+  if (!spreadsheetId) throw new Error("Missing ALUMNI_SHEET_ID");
+
+  const sheets = sheetsClient();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: `${LIVE_TAB}!A:ZZ`,
+    valueRenderOption: "UNFORMATTED_VALUE",
+  });
+
+  const all = (res.data.values ?? []) as any[][];
+  if (!all.length) return [];
+
+  const header = (all[0] ?? []).map((h) => String(h ?? "").trim());
+  const rows = all.slice(1);
+
+  // Core indices
+  const slugIdx = idxOf(header, ["slug", "profile slug", "profile-slug"]);
+  const nameIdx = idxOf(header, ["name", "full name"]);
+  const isPublicIdx = idxOf(header, ["ispublic", "is public", "show on profile?", "show on profile"]);
+  const headshotIdx = idxOf(header, ["currentheadshoturl", "current headshot url", "headshot url"]);
+  const locationIdx = idxOf(header, ["location", "based in", "currently based in"]);
+
+  // Roles / tags / programs
+  const rolesIdx = idxOf(header, ["roles", "role", "primary role"]);
+  const tagsIdx = idxOf(header, ["identity tags", "tags", "identity", "identity_tags"]);
+  const programsIdx = idxOf(header, ["program badges", "project badges", "programs", "badges"]);
+
+  // ✅ Missing fields that your UI needs
+  const statusFlagsIdx = idxOf(header, ["status flags", "statusflags", "flags", "status"]);
+  const artistStatementIdx = idxOf(header, [
+    "artist statement",
+    "artiststatement",
+    "bio long",
+    "biolong",
+    "bio",
+    "bio (long)",
+  ]);
+  const emailIdx = idxOf(header, ["email", "email address"]);
+  const websiteIdx = idxOf(header, ["website", "site", "portfolio", "portfolio url"]);
+  const socialsIdx = idxOf(header, ["socials", "social links", "social links (csv)", "social"]);
+
+  // Optional
+  const backgroundIdx = idxOf(header, ["background choice", "background", "background style", "background key"]);
+
+  const out: AlumniRow[] = [];
+  let skipped = 0;
+
+  const cell = (r: any[], idx: number) =>
+    idx !== -1 ? String(r?.[idx] ?? "").trim() : "";
+
+  for (const r of rows) {
+    const isPublic = isPublicIdx !== -1 ? truthy(r?.[isPublicIdx]) : false;
+    if (!isPublic) {
+      skipped++;
+      continue;
+    }
+
+    const slug = slugIdx !== -1 ? toLowerSlug(r?.[slugIdx]) : "";
+    const name = cell(r, nameIdx);
+    if (!slug && !name) {
+      skipped++;
+      continue;
+    }
+
+    // Adapter: produce the same kind of shape your normalizer expects
+    // IMPORTANT: keys here are intentionally "legacy-ish" because normalizeAlumniRow
+    // already knows how to translate these into AlumniRow fields.
+    const shaped: Record<string, string> = {
+      "show on profile?": "Yes",
+      name,
+      slug,
+
+      location: cell(r, locationIdx),
+
+      // roles (both legacy + new)
+      role: cell(r, rolesIdx),
+      roles: cell(r, rolesIdx),
+
+      // headshot
+      "headshot url": cell(r, headshotIdx),
+
+      // identity tags + programs (legacy labels normalizeAlumniRow expects)
+      tags: cell(r, tagsIdx),
+      "identity tags": cell(r, tagsIdx),
+      programs: cell(r, programsIdx),
+      "project badges": cell(r, programsIdx),
+
+      // ✅ NEW: pass through what the Profile page needs
+      "status flags": cell(r, statusFlagsIdx),
+
+      // Put this under both likely keys; your normalizer can pick whichever it supports
+      "artist statement": cell(r, artistStatementIdx),
+      "bio long": cell(r, artistStatementIdx),
+
+      email: cell(r, emailIdx),
+      website: cell(r, websiteIdx),
+      socials: cell(r, socialsIdx),
+      "social links": cell(r, socialsIdx),
+
+      // optional but harmless if your normalizer supports it
+      "background choice": cell(r, backgroundIdx),
+    };
+
+    const normalizedKeys = Object.fromEntries(
+      Object.entries(shaped).map(([k, v]) => [
+        k.trim().toLowerCase(),
+        String(v ?? "").trim(),
+      ])
+    );
+
+    // Keep your existing empty-row heuristic
+    if (isMostlyEmpty(normalizedKeys)) {
+      skipped++;
+      continue;
+    }
+
+    const normalized = normalizeAlumniRow(normalizedKeys as any);
+    if (normalized) out.push(normalized);
+    else skipped++;
+  }
+
+  if (DEBUG) {
+    serverDebug(
+      `✅ [loadAlumniFromLive] Loaded ${out.length} public alumni from ${LIVE_TAB}, skipped ${skipped}`
+    );
+    // Optional: sanity log one row’s key fields
+    const sample = out[0] as any;
+    if (sample) {
+      serverDebug("🧪 [loadAlumniFromLive] sample normalized:", {
+        slug: sample.slug,
+        email: sample.email,
+        website: sample.website,
+        socials: sample.socials,
+        statusFlags: sample.statusFlags,
+        artistStatement: (sample.artistStatement || "").slice?.(0, 60),
+      });
+    }
+  }
+
+  return out;
+}
+
+/* ──────────────────────────────────────────────────────────
+ * Alumni CSV loader (FALLBACK)
+ * ────────────────────────────────────────────────────────── */
+
+async function loadAlumniFromCsvFallback(): Promise<AlumniRow[]> {
+  if (!csvUrl) {
+    serverError("❌ [loadAlumni fallback] Missing ALUMNI_CSV_URL or NEXT_PUBLIC_ALUMNI_CSV_URL in env");
+    return [];
+  }
+
+  if (DEBUG) serverDebug("🌐 [loadCsv fallback] Fetching:", csvUrl);
+
+  const csvText = await loadCsv(csvUrl, "alumni.csv");
+
+  if (DEBUG) serverDebug("📄 [loadAlumni fallback] Raw CSV snippet:", csvText.slice(0, 300));
+
+  const parsed = Papa.parse<Record<string, string>>(csvText, {
+    header: true,
+    skipEmptyLines: true,
+  });
+
+  const rows: AlumniRow[] = [];
+  let skipped = 0;
+
+  for (const raw of parsed.data) {
+    const normalizedKeys = Object.fromEntries(
+      Object.entries(raw).map(([key, value]) => [
+        key.trim().toLowerCase(),
+        value?.toString().trim() ?? "",
+      ])
+    );
+
+    const show = normalizedKeys["show on profile?"]?.toLowerCase();
+    const name = normalizedKeys["name"];
+    const slug =
+      normalizedKeys["slug"] ||
+      normalizedKeys["profile slug"] ||
+      (normalizedKeys as any)["profile-slug"];
+
+    if (!["yes", "y", "✓"].includes(show) || (!slug && !name) || isMostlyEmpty(normalizedKeys)) {
+      skipped++;
+      continue;
+    }
+
+    const normalized = normalizeAlumniRow({
+      ...normalizedKeys,
+      slug: slug || "",
+    } as any);
+
+    if (normalized) rows.push(normalized);
+    else skipped++;
+  }
+
+  if (DEBUG) {
+    serverDebug(`✅ [loadAlumni fallback] Loaded ${rows.length} alumni, skipped ${skipped}`);
+  }
+
+  return rows;
+}
+
+/* ──────────────────────────────────────────────────────────
+ * Public exports
  * ────────────────────────────────────────────────────────── */
 
 export const loadAlumni = cache(async (): Promise<AlumniRow[]> => {
@@ -241,76 +467,34 @@ export const loadAlumni = cache(async (): Promise<AlumniRow[]> => {
     return alumniCache;
   }
 
-  if (!csvUrl) {
-    serverError("❌ [loadAlumni] Missing ALUMNI_CSV_URL or NEXT_PUBLIC_ALUMNI_CSV_URL in env");
-    return [];
+  // 1) Live-first
+  try {
+    const liveRows = await loadAlumniFromLive();
+    alumniCache = liveRows;
+    return liveRows;
+  } catch (err) {
+    serverWarn("⚠️ [loadAlumni] Live load failed; falling back to CSV:", err);
   }
 
+  // 2) CSV fallback
   try {
-    if (DEBUG) serverDebug("🌐 [loadCsv] Fetching:", csvUrl);
-    const csvText = await loadCsv(csvUrl, "alumni.csv");
-
-    if (DEBUG) serverDebug("📄 [loadAlumni] Raw CSV snippet:", csvText.slice(0, 300));
-
-    const parsed = Papa.parse<Record<string, string>>(csvText, {
-      header: true,
-      skipEmptyLines: true,
-    });
-
-    const rows: AlumniRow[] = [];
-    let skipped = 0;
-
-    for (const raw of parsed.data) {
-      const normalizedKeys = Object.fromEntries(
-        Object.entries(raw).map(([key, value]) => [
-          key.trim().toLowerCase(),
-          value?.toString().trim() ?? "",
-        ])
-      );
-
-      const show = normalizedKeys["show on profile?"]?.toLowerCase();
-      const name = normalizedKeys["name"];
-      const slug = normalizedKeys["slug"] || normalizedKeys["profile slug"] || normalizedKeys["profile-slug"];
-
-      if (!["yes", "y", "✓"].includes(show) || (!slug && !name) || isMostlyEmpty(normalizedKeys)) {
-        skipped++;
-        continue;
-      }
-
-      const normalized = normalizeAlumniRow({
-        ...normalizedKeys,
-        // normalize alternate slug header into `slug` before row shaping
-        slug: slug || "",
-      });
-      if (normalized) rows.push(normalized);
-      else skipped++;
-    }
-
-    alumniCache = rows;
-
-    if (DEBUG) {
-      serverDebug(`✅ [loadAlumni] Loaded ${rows.length} alumni, skipped ${skipped}`);
-    }
-
-    return rows;
+    const fallback = await loadAlumniFromCsvFallback();
+    alumniCache = fallback;
+    return fallback;
   } catch (err) {
-    serverError("❌ [loadAlumni] Failed to load alumni:", err);
+    serverError("❌ [loadAlumni] CSV fallback also failed:", err);
     return [];
   }
 });
 
 export const loadVisibleAlumni = cache(async (): Promise<AlumniRow[]> => {
   const all = await loadAlumni();
-  return all.filter(
-    (a) => a.showOnProfile?.toLowerCase().trim() === "yes" && !!a.name?.trim()
-  );
+  return all.filter((a) => a.showOnProfile?.toLowerCase().trim() === "yes" && !!a.name?.trim());
 });
 
 /**
  * Returns a single alumni by slug — respects forward chains and uses reverse fallback.
- * - If the slug has been forwarded (old→new), we return the row for the latest target.
- * - If there is *no* row at a brand-new target yet, we try reverse lookup (new→old) and
- *   return the old row so the page/API doesn’t 404 while auto-canon catches up.
+ * NOTE: forward map is still CSV-based (Profile-Slugs export), which is fine for now.
  */
 export const loadAlumniBySlug = cache(async (slug: string): Promise<AlumniRow | null> => {
   const incoming = toLowerSlug(slug);
@@ -318,12 +502,9 @@ export const loadAlumniBySlug = cache(async (slug: string): Promise<AlumniRow | 
 
   const all = await loadAlumni();
 
-  // Try exact canonical row first
-  const foundCanonical =
-    all.find((a) => toLowerSlug(a.slug) === canonical) || null;
+  const foundCanonical = all.find((a) => toLowerSlug(a.slug) === canonical) || null;
   if (foundCanonical) return foundCanonical;
 
-  // Reverse fallback: new target hit before sheet updated – serve the old row
   const reverse = await getReverseSlugSource(incoming);
   if (reverse) {
     const foundReverse = all.find((a) => toLowerSlug(a.slug) === reverse) || null;
@@ -333,19 +514,11 @@ export const loadAlumniBySlug = cache(async (slug: string): Promise<AlumniRow | 
   return null;
 });
 
-/** ✅ Find a Profile-Data row by ANY alias (case-insensitive). */
-export async function loadAlumniByAliases(
-  aliases: Set<string>,
-): Promise<AlumniRow | null> {
+/** ✅ Find an alumni row by ANY alias (case-insensitive). */
+export async function loadAlumniByAliases(aliases: Set<string>): Promise<AlumniRow | null> {
   const all = await loadAlumni();
-  const want = new Set(
-    Array.from(aliases).map((s) => String(s || "").trim().toLowerCase()),
-  );
-  return (
-    all.find(
-      (a) => want.has(String(a.slug || "").trim().toLowerCase()),
-    ) || null
-  );
+  const want = new Set(Array.from(aliases).map((s) => String(s || "").trim().toLowerCase()));
+  return all.find((a) => want.has(String(a.slug || "").trim().toLowerCase())) || null;
 }
 
 /** Returns alumni for a specific season */
@@ -368,23 +541,11 @@ export function invalidateAlumniCaches(): void {
 }
 
 /* ──────────────────────────────────────────────────────────
- * Auto-canonicalize (write-through on first hit)
+ * Auto-canonicalize (legacy write-through, unchanged)
  * ────────────────────────────────────────────────────────── */
 
-/** simple in-memory guard so we don’t race the same pair */
 const inflightCanon = new Set<string>();
 
-/**
- * If Profile-Slugs says old→next and Alumni CSV still contains `old`,
- * rewrite that row’s slug to `next`, then clear caches.
- *
- * No-ops if:
- *  - feature flag AUTO_CANONICALIZE_SLUGS is false
- *  - no ALUMNI_SHEET_ID
- *  - next already exists as a row
- *  - alumni tab title cannot be resolved and fallback tab lacks a slug column
- * Also supports AUTO_CANON_CREATE_ON_MISS to optionally create a minimal row at `next`.
- */
 export async function ensureCanonicalAlumniSlug(oldSlug: string, nextSlug: string): Promise<void> {
   if (!AUTO_CANON) return;
   if (!spreadsheetId) return;
@@ -398,21 +559,18 @@ export async function ensureCanonicalAlumniSlug(oldSlug: string, nextSlug: strin
   inflightCanon.add(guardKey);
 
   try {
-    // 0) If `newKey` already exists in Profile-Data, nothing to do.
+    // If `newKey` already exists in current dataset, nothing to do.
     const all = await loadAlumni();
     if (all.some((a) => toLowerSlug(a.slug) === newKey)) return;
 
-    // find the row with `oldKey`
     const oldRow = all.find((a) => toLowerSlug(a.slug) === oldKey);
 
-    // Optionally create a minimal row if old is gone but we have a target slug
+    // Optional creation path (legacy, Profile-Data tab)
     if (!oldRow && AUTO_CANON_CREATE_ON_MISS) {
       let tabTitle: string | null = ALUMNI_TAB || null;
       if (!tabTitle) {
         const gid = extractGidFromUrl(csvUrl);
-        if (gid !== null) {
-          tabTitle = await resolveSheetTitleByGid(spreadsheetId, gid);
-        }
+        if (gid !== null) tabTitle = await resolveSheetTitleByGid(spreadsheetId, gid);
       }
       if (!tabTitle) tabTitle = "Profile-Data";
 
@@ -452,23 +610,17 @@ export async function ensureCanonicalAlumniSlug(oldSlug: string, nextSlug: strin
 
     if (!oldRow) return;
 
-    // 1) Resolve tab title:
     let tabTitle: string | null = ALUMNI_TAB || null;
     if (!tabTitle) {
       const gid = extractGidFromUrl(csvUrl);
-      if (gid !== null) {
-        tabTitle = await resolveSheetTitleByGid(spreadsheetId, gid);
-      }
+      if (gid !== null) tabTitle = await resolveSheetTitleByGid(spreadsheetId, gid);
     }
     if (!tabTitle) tabTitle = "Profile-Data";
 
-    if (DEBUG) {
-      serverDebug(`✏️ [auto-canon] Updating slug on tab "${tabTitle}": ${oldKey} → ${newKey}`);
-    }
+    if (DEBUG) serverDebug(`✏️ [auto-canon] Updating slug on tab "${tabTitle}": ${oldKey} → ${newKey}`);
 
     const sheets = sheetsClient();
 
-    // 2) Read entire tab to locate slug column and row
     const read = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: `${tabTitle}!A:ZZZ`,
@@ -481,39 +633,23 @@ export async function ensureCanonicalAlumniSlug(oldSlug: string, nextSlug: strin
     const rawHeader = rows[0].map((h) => String(h ?? ""));
     const headerNorm = rawHeader.map(normalizeHeaderKey);
 
-    // Accept multiple header variants for slug
-    const slugHeaderCandidates = new Set([
-      "slug",
-      "profile slug",
-      "profile-slug",
-    ]);
-    let slugCol = headerNorm.findIndex((h) => slugHeaderCandidates.has(h));
+    const slugHeaderCandidates = new Set(["slug", "profile slug", "profile-slug"]);
+    const slugCol = headerNorm.findIndex((h) => slugHeaderCandidates.has(h));
     if (slugCol === -1) {
       if (DEBUG) serverWarn(`⚠️ [auto-canon] No 'slug' column on tab "${tabTitle}"`);
       return;
     }
 
-    const oldRowIdx = rows.findIndex(
-      (r, i) => i > 0 && toLowerSlug(r?.[slugCol]) === oldKey
-    );
-    if (oldRowIdx === -1) {
-      if (DEBUG) serverDebug("[auto-canon] No row with old slug; skip");
-      return;
-    }
+    const oldRowIdx = rows.findIndex((r, i) => i > 0 && toLowerSlug(r?.[slugCol]) === oldKey);
+    if (oldRowIdx === -1) return;
 
-    // Also ensure no other row already has newKey (double-check)
-    const newRowIdx = rows.findIndex(
-      (r, i) => i > 0 && toLowerSlug(r?.[slugCol]) === newKey
-    );
-    if (newRowIdx !== -1) {
-      if (DEBUG) serverDebug("[auto-canon] New slug already present; skip update");
-      return;
-    }
+    const newRowIdx = rows.findIndex((r, i) => i > 0 && toLowerSlug(r?.[slugCol]) === newKey);
+    if (newRowIdx !== -1) return;
 
-    const rowNumber = oldRowIdx + 1; // 1-based A1
+    const rowNumber = oldRowIdx + 1;
     const row = rows[oldRowIdx];
     const newRow = [...row];
-    newRow[slugCol] = nextSlug; // preserve original casing/format provided
+    newRow[slugCol] = nextSlug;
 
     const endCol = colIndexToA1((rows[0]?.length || (slugCol + 1)) - 1);
 
@@ -524,13 +660,8 @@ export async function ensureCanonicalAlumniSlug(oldSlug: string, nextSlug: strin
       requestBody: { values: [newRow] },
     });
 
-    invalidateAlumniCaches(); // next request sees updated slug
-
-    if (DEBUG) {
-      serverDebug(
-        `✅ [auto-canon] Row ${rowNumber} updated on "${tabTitle}" → slug='${nextSlug}'`
-      );
-    }
+    invalidateAlumniCaches();
+    if (DEBUG) serverDebug(`✅ [auto-canon] Row ${rowNumber} updated on "${tabTitle}" → slug='${nextSlug}'`);
   } catch (e) {
     if (DEBUG) serverWarn("⚠️ [auto-canon] Failed to update Alumni slug:", e);
   } finally {

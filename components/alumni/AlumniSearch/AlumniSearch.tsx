@@ -1,36 +1,49 @@
 "use client";
 
+// /components/alumni/AlumniSearch/AlumniSearch.tsx
+
 import React, { useEffect, useMemo } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { AlumniItem, Filters } from "@/types/alumni"; // ✅ Shared type file
 import { useAlumniSearch } from "./useAlumniSearch";
+
+import type { Filters } from "@/types/alumni";
+import type {
+  EnrichedProfileLiveRow,
+  ProfileLiveRow,
+} from "./enrichAlumniData.server";
 
 /** ✅ Props interface for the AlumniSearch component */
 interface AlumniSearchProps {
-  /** List of alumni data to search through */
-  alumniData: AlumniItem[];
+  /** ✅ MUST be enriched Profile-Live rows (not AlumniItem / AlumniRow) */
+  enrichedData: EnrichedProfileLiveRow[];
+
   /** Callback to return primary and secondary search results */
-  onResults: (primary: AlumniItem[], secondary: AlumniItem[], q: string) => void;
+  onResults: (primary: ProfileLiveRow[], secondary: ProfileLiveRow[], q: string) => void;
+
   /** Compact mode for UI layout (optional) */
   compact?: boolean;
+
   /** Active filters applied to the search */
   filters?: Filters;
+
   /** Max number of secondary results to show */
   maxSecondary?: number;
+
   /** Show all results if search query is empty */
   showAllIfEmpty?: boolean;
+
   /** Enable console debug logs for search logic */
   debug?: boolean;
 }
 
 export default function AlumniSearch({
-  alumniData,
+  enrichedData,
   onResults,
   compact = false,
   filters = {},
   maxSecondary = 50,
   showAllIfEmpty = false,
-  debug = true
+  debug = true,
 }: AlumniSearchProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -43,7 +56,7 @@ export default function AlumniSearch({
 
   /** ✅ Custom hook handles all search logic */
   const { query, setQuery } = useAlumniSearch(
-    alumniData,
+    enrichedData,
     filters,
     maxSecondary,
     showAllIfEmpty,
@@ -58,20 +71,18 @@ export default function AlumniSearch({
 
   /** ✅ Update URL query parameters */
   const updateURL = (q: string) => {
-    // use current params safely
     const current = new URLSearchParams(searchParams?.toString() ?? "");
 
-    if (q.trim()) {
-      current.set("q", q);
-    } else {
-      current.delete("q");
-    }
+    if (q.trim()) current.set("q", q);
+    else current.delete("q");
 
+    // keep filters in URL too (optional)
     Object.entries(filters).forEach(([k, v]) =>
       v ? current.set(k, String(v)) : current.delete(k)
     );
 
-    router.replace(`${pathname}?${current.toString()}`, { scroll: false });
+    const qs = current.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   };
 
   /** ✅ Clear search input and reset URL */
@@ -90,7 +101,7 @@ export default function AlumniSearch({
           height: "47px",
           backgroundColor: "#F6E4C1",
           padding: "0 0.5rem",
-          borderRadius: "6px"
+          borderRadius: "6px",
         }}
       >
         {/* 🔍 Search Icon */}
@@ -112,18 +123,19 @@ export default function AlumniSearch({
         {/* ✅ Search Input */}
         <input
           type="text"
-          placeholder="Search alumni by name, location, program, keyword, year, or..."
+          placeholder="Search alumni by name, location, program, keyword, year, season, language, or..."
           value={query}
           onChange={(e) => {
-            setQuery(e.target.value);
-            updateURL(e.target.value);
+            const v = e.target.value;
+            setQuery(v);
+            updateURL(v);
           }}
           style={{
             flex: 1,
             fontSize: "1.1rem",
             backgroundColor: "#F6E4C1",
             border: "none",
-            outline: "none"
+            outline: "none",
           }}
         />
 
@@ -136,7 +148,7 @@ export default function AlumniSearch({
               border: "none",
               fontSize: "1.5rem",
               cursor: "pointer",
-              color: "#241123"
+              color: "#241123",
             }}
             aria-label="Clear search"
           >
