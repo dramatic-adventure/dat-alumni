@@ -50,10 +50,7 @@ function truthyCell(x: unknown) {
   return s === "true" || s === "yes" || s === "y" || s === "1" || s === "checked";
 }
 
-function json(
-  body: any,
-  init?: { status?: number; headers?: Record<string, string> }
-) {
+function json(body: any, init?: { status?: number; headers?: Record<string, string> }) {
   return NextResponse.json(body, {
     status: init?.status,
     headers: init?.headers,
@@ -391,23 +388,18 @@ function buildFallbackCsvStrings(opts: {
   );
 
   for (const r of pub) {
-    const alumniId =
-      alumniIdIdx !== -1 ? normSlug(String(r[alumniIdIdx] ?? "")) : "";
+    const alumniId = alumniIdIdx !== -1 ? normSlug(String(r[alumniIdIdx] ?? "")) : "";
     const slug = slugIdx !== -1 ? normSlug(String(r[slugIdx] ?? "")) : "";
     const name = nameIdx !== -1 ? String(r[nameIdx] ?? "").trim() : "";
     const roles = rolesIdx !== -1 ? String(r[rolesIdx] ?? "").trim() : "";
     const location = locationIdx !== -1 ? String(r[locationIdx] ?? "").trim() : "";
-    const headshot =
-      headshotUrlIdx !== -1 ? String(r[headshotUrlIdx] ?? "").trim() : "";
+    const headshot = headshotUrlIdx !== -1 ? String(r[headshotUrlIdx] ?? "").trim() : "";
     const website = websiteIdx !== -1 ? String(r[websiteIdx] ?? "").trim() : "";
     const statusRaw = statusIdx !== -1 ? String(r[statusIdx] ?? "").trim() : "";
     const status = normalizeStatus(statusRaw);
-    const lastModified =
-      updatedAtIdx !== -1 ? String(r[updatedAtIdx] ?? "").trim() : "";
-    const statusFlags =
-      statusFlagsIdx !== -1 ? String(r[statusFlagsIdx] ?? "").trim() : "";
-    const currentWork =
-      currentWorkIdx !== -1 ? String(r[currentWorkIdx] ?? "").trim() : "";
+    const lastModified = updatedAtIdx !== -1 ? String(r[updatedAtIdx] ?? "").trim() : "";
+    const statusFlags = statusFlagsIdx !== -1 ? String(r[statusFlagsIdx] ?? "").trim() : "";
+    const currentWork = currentWorkIdx !== -1 ? String(r[currentWorkIdx] ?? "").trim() : "";
 
     alumniLines.push(
       [
@@ -431,11 +423,7 @@ function buildFallbackCsvStrings(opts: {
   const slugLines: string[] = [];
   slugLines.push(["fromSlug", "toSlug", "createdAt"].join(","));
   for (const t of slugTriples) {
-    slugLines.push(
-      [toCsvCell(normSlug(t[0])), toCsvCell(normSlug(t[1])), toCsvCell(t[2] || "")].join(
-        ","
-      )
-    );
+    slugLines.push([toCsvCell(normSlug(t[0])), toCsvCell(normSlug(t[1])), toCsvCell(t[2] || "")].join(","));
   }
 
   return {
@@ -489,16 +477,13 @@ export async function GET(req: Request) {
   const forceNoStore = nocache === "1" || nocache.toLowerCase() === "true";
 
   const admin = await isAdminRequest(req);
-  const sessionEmail = await getSessionEmailIfAny(); // ✅ FIXED (no args)
+  const sessionEmail = await getSessionEmailIfAny();
   const sessionEmailNorm = normalizeGmail(sessionEmail);
 
   // rate limit (per IP, 120 req / min)
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
   if (!rateLimit(ip, 120, 60_000)) {
-    return json(
-      { error: "Too many requests" },
-      { status: 429, headers: noStoreHeaders() }
-    );
+    return json({ error: "Too many requests" }, { status: 429, headers: noStoreHeaders() });
   }
 
   // CSV export mode (no alumniId/email required)
@@ -513,19 +498,13 @@ export async function GET(req: Request) {
   const emailParamRaw = String(searchParams.get("email") || "").trim();
 
   if (!wantsExport && !alumniIdParamRaw && !emailParamRaw) {
-    return json(
-      { error: "email or alumniId required" },
-      { status: 400, headers: noStoreHeaders() }
-    );
+    return json({ error: "email or alumniId required" }, { status: 400, headers: noStoreHeaders() });
   }
 
   const sheetId = process.env.ALUMNI_SHEET_ID;
   const saJson = process.env.GCP_SA_JSON;
   if (!sheetId || !saJson) {
-    return json(
-      { error: "Server misconfigured" },
-      { status: 500, headers: noStoreHeaders() }
-    );
+    return json({ error: "Server misconfigured" }, { status: 500, headers: noStoreHeaders() });
   }
 
   try {
@@ -553,21 +532,20 @@ export async function GET(req: Request) {
     const rolesIdx = idxOf(LH as string[], ["roles", "role"]);
     const locationIdx = idxOf(LH as string[], ["location"]);
     const websiteIdx = idxOf(LH as string[], ["website", "profileurl", "profile url"]);
-    const headshotUrlIdx = idxOf(LH as string[], [
-      "currentheadshoturl",
-      "current headshot url",
-    ]);
+    const headshotUrlIdx = idxOf(LH as string[], ["currentheadshoturl", "current headshot url"]);
     const isPublicIdx = idxOf(LH as string[], ["ispublic", "is public"]);
     const statusIdx = idxOf(LH as string[], ["status"]);
     const updatedAtIdx = idxOf(LH as string[], ["updatedat", "updated at"]);
 
     const statusFlagsIdx = idxOf(LH as string[], ["statusflags", "status flags"]);
     const currentWorkIdx = idxOf(LH as string[], ["currentwork", "current work"]);
-    const backgroundStyleIdx = idxOf(LH as string[], [
-      "backgroundstyle",
-      "background style",
-    ]);
+    const backgroundStyleIdx = idxOf(LH as string[], ["backgroundstyle", "background style"]);
 
+    // ✅ NEW: fields needed for bi-coastal / second location (and consistent UI)
+    const isBiCoastalIdx = idxOf(LH as string[], ["isbicoastal", "is bi coastal", "is bi-coastal", "bi-coastal"]);
+    const secondLocationIdx = idxOf(LH as string[], ["secondlocation", "second location", "location2", "location 2"]);
+
+    // Additional fields for the update form (keep as-is)
     const emailIdx = idxOf(LH as string[], ["email"]);
     const instagramIdx = idxOf(LH as string[], ["instagram"]);
     const youtubeIdx = idxOf(LH as string[], ["youtube"]);
@@ -579,10 +557,7 @@ export async function GET(req: Request) {
     const programsIdx = idxOf(LH as string[], ["programs"]);
     const tagsIdx = idxOf(LH as string[], ["tags"]);
     const spotlightIdx = idxOf(LH as string[], ["spotlight"]);
-    const currentHeadshotIdIdx = idxOf(LH as string[], [
-      "currentheadshotid",
-      "current headshot id",
-    ]);
+    const currentHeadshotIdIdx = idxOf(LH as string[], ["currentheadshotid", "current headshot id"]);
 
     if (isDebug(req, "1")) {
       const sample = liveRows.slice(0, 5).map((r) => ({
@@ -592,8 +567,9 @@ export async function GET(req: Request) {
         status: statusIdx !== -1 ? String(r[statusIdx] ?? "") : "",
         isPublic: isPublicIdx !== -1 ? String(r[isPublicIdx] ?? "") : "",
         updatedAt: updatedAtIdx !== -1 ? String(r[updatedAtIdx] ?? "") : "",
-        backgroundStyle:
-          backgroundStyleIdx !== -1 ? String(r[backgroundStyleIdx] ?? "") : "",
+        backgroundStyle: backgroundStyleIdx !== -1 ? String(r[backgroundStyleIdx] ?? "") : "",
+        isBiCoastal: isBiCoastalIdx !== -1 ? String(r[isBiCoastalIdx] ?? "") : "",
+        secondLocation: secondLocationIdx !== -1 ? String(r[secondLocationIdx] ?? "") : "",
       }));
 
       return json(
@@ -618,6 +594,8 @@ export async function GET(req: Request) {
             statusFlagsIdx,
             currentWorkIdx,
             backgroundStyleIdx,
+            isBiCoastalIdx,
+            secondLocationIdx,
           },
           sample,
         },
@@ -638,10 +616,7 @@ export async function GET(req: Request) {
       const [, ...slugRowsRaw] = slugsVals.length ? slugsVals : [[]];
 
       slugTriples = slugRowsRaw
-        .map(
-          (r) =>
-            [String(r?.[0] ?? ""), String(r?.[1] ?? ""), String(r?.[2] ?? "")] as SlugRow
-        )
+        .map((r) => [String(r?.[0] ?? ""), String(r?.[1] ?? ""), String(r?.[2] ?? "")] as SlugRow)
         .filter((r) => normSlug(r[0]) && normSlug(r[1]));
 
       slugForwardMap = buildSlugForwardMap(slugTriples);
@@ -719,29 +694,28 @@ export async function GET(req: Request) {
     }
 
     function buildPayload(row: any[], redirectedFrom?: string) {
-      const alumniId =
-        alumniIdIdx !== -1 ? normSlug(String(row[alumniIdIdx] ?? "")) : "";
-      const canonicalSlug =
-        slugIdx !== -1 ? normSlug(String(row[slugIdx] ?? "")) : "";
+      const alumniId = alumniIdIdx !== -1 ? normSlug(String(row[alumniIdIdx] ?? "")) : "";
+      const canonicalSlug = slugIdx !== -1 ? normSlug(String(row[slugIdx] ?? "")) : "";
       const statusRaw = statusIdx !== -1 ? String(row[statusIdx] ?? "") : "";
       const status = normalizeStatus(statusRaw);
 
       const isPublic = isPublicIdx !== -1 ? String(row[isPublicIdx] ?? "").trim() : "";
 
-      const headshotUrl =
-        headshotUrlIdx !== -1 ? String(row[headshotUrlIdx] ?? "").trim() : "";
+      const headshotUrl = headshotUrlIdx !== -1 ? String(row[headshotUrlIdx] ?? "").trim() : "";
       const headshotId =
-        currentHeadshotIdIdx !== -1
-          ? String(row[currentHeadshotIdIdx] ?? "").trim()
-          : "";
+        currentHeadshotIdIdx !== -1 ? String(row[currentHeadshotIdIdx] ?? "").trim() : "";
 
-      const statusFlags =
-        statusFlagsIdx !== -1 ? String(row[statusFlagsIdx] ?? "").trim() : "";
-      const currentWork =
-        currentWorkIdx !== -1 ? String(row[currentWorkIdx] ?? "").trim() : "";
+      const statusFlags = statusFlagsIdx !== -1 ? String(row[statusFlagsIdx] ?? "").trim() : "";
+      const currentWork = currentWorkIdx !== -1 ? String(row[currentWorkIdx] ?? "").trim() : "";
 
       const backgroundStyle =
         backgroundStyleIdx !== -1 ? String(row[backgroundStyleIdx] ?? "").trim() : "";
+
+      // ✅ normalize as Live cell strings: "true" / ""
+      const isBiCoastal =
+        isBiCoastalIdx !== -1 && truthyCell(row[isBiCoastalIdx]) ? "true" : "";
+      const secondLocation =
+        secondLocationIdx !== -1 ? String(row[secondLocationIdx] ?? "").trim() : "";
 
       return {
         alumniId,
@@ -774,12 +748,15 @@ export async function GET(req: Request) {
         currentHeadshotUrl: headshotUrl || "",
         currentHeadshotId: headshotId || "",
 
+        // ✅ include these for the update form
+        isBiCoastal,
+        secondLocation,
+
         // Email:
         // - Admin: always see
         // - Non-admin: only when doing email lookup for self
         email:
-          (admin ||
-            (emailParamRaw && normalizeGmail(emailParamRaw) === sessionEmailNorm)) &&
+          (admin || (emailParamRaw && normalizeGmail(emailParamRaw) === sessionEmailNorm)) &&
           emailIdx !== -1
             ? String(row[emailIdx] ?? "").trim()
             : "",
@@ -798,8 +775,7 @@ export async function GET(req: Request) {
     // Debug 2
     if (isDebug(req, "2")) {
       const emailParamNorm = normalizeGmail(emailParamRaw);
-      const selfGateWouldPass =
-        !!sessionEmailNorm && !!emailParamNorm && emailParamNorm === sessionEmailNorm;
+      const selfGateWouldPass = !!sessionEmailNorm && !!emailParamNorm && emailParamNorm === sessionEmailNorm;
 
       const want = canonical || incoming;
       const findRow = (key: string) => {
@@ -839,6 +815,8 @@ export async function GET(req: Request) {
             isPublicIdx,
             statusIdx,
             backgroundStyleIdx,
+            isBiCoastalIdx,
+            secondLocationIdx,
             updatedAtIdx,
           },
           rowPreview: row
@@ -848,8 +826,9 @@ export async function GET(req: Request) {
                 email: emailIdx !== -1 ? String(row[emailIdx] ?? "") : "",
                 isPublic: isPublicIdx !== -1 ? String(row[isPublicIdx] ?? "") : "",
                 status: statusIdx !== -1 ? String(row[statusIdx] ?? "") : "",
-                backgroundStyle:
-                  backgroundStyleIdx !== -1 ? String(row[backgroundStyleIdx] ?? "") : "",
+                backgroundStyle: backgroundStyleIdx !== -1 ? String(row[backgroundStyleIdx] ?? "") : "",
+                isBiCoastal: isBiCoastalIdx !== -1 ? String(row[isBiCoastalIdx] ?? "") : "",
+                secondLocation: secondLocationIdx !== -1 ? String(row[secondLocationIdx] ?? "") : "",
                 updatedAt: updatedAtIdx !== -1 ? String(row[updatedAtIdx] ?? "") : "",
               }
             : null,
@@ -906,9 +885,7 @@ export async function GET(req: Request) {
 
       if (emailIdx === -1) return notFound();
 
-      const matches = liveRows.filter(
-        (r) => normalizeGmail(String(r[emailIdx] ?? "")) === wantEmail
-      );
+      const matches = liveRows.filter((r) => normalizeGmail(String(r[emailIdx] ?? "")) === wantEmail);
 
       if (matches.length === 1) {
         const hit = matches[0];
