@@ -30,7 +30,14 @@ type Props = {
   onFeature: (k: Kind, idx: number) => void;
 };
 
-const TAB_ORDER: { key: Kind; label: string; blurb: string; accept: string; multiple: boolean; icon: string }[] = [
+const TAB_ORDER: {
+  key: Kind;
+  label: string;
+  blurb: string;
+  accept: string;
+  multiple: boolean;
+  icon: string;
+}[] = [
   {
     key: "headshot",
     label: "Headshots",
@@ -65,6 +72,122 @@ const TAB_ORDER: { key: Kind; label: string; blurb: string; accept: string; mult
   },
 ];
 
+// ------------------------------------------------------------
+// Minimal style system (composer-aligned; single low-opacity dark module)
+// ------------------------------------------------------------
+const HUB = {
+  // one module background, lighter + calmer
+  bg: "rgba(36, 17, 35, 0.22)",
+  border: "rgba(255,255,255,0.10)",
+  borderStrong: "rgba(255,255,255,0.16)",
+  wash2: "rgba(255,255,255,0.03)",
+  washHover: "rgba(255,255,255,0.065)",
+  ink: "rgba(255,255,255,0.92)",
+  inkSoft: "rgba(255,255,255,0.78)",
+  inkFaint: "rgba(255,255,255,0.55)",
+  grape: "#6C00AF",
+  rose: "#F23359",
+};
+
+const hubText: React.CSSProperties = {
+  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+  letterSpacing: "0.01em",
+};
+
+const hubTitle: React.CSSProperties = {
+  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+  letterSpacing: "0.02em",
+};
+
+const btnBase: React.CSSProperties = {
+  ...hubTitle,
+  borderRadius: 999,
+  padding: "8px 12px",
+  border: `1px solid ${HUB.border}`,
+  background: HUB.wash2,
+  color: HUB.inkSoft,
+  cursor: "pointer",
+  userSelect: "none",
+  textDecoration: "none",
+  fontSize: 13,
+  fontWeight: 700,
+  letterSpacing: "0.02em",
+  transition:
+    "transform 120ms ease, opacity 120ms ease, background 120ms ease, border-color 120ms ease, filter 120ms ease, box-shadow 120ms ease",
+};
+
+const btnPrimary: React.CSSProperties = {
+  ...btnBase,
+  borderRadius: 999,
+  padding: "8px 12px",
+  border: `1px solid ${HUB.borderStrong}`,
+  background: "rgba(255,255,255,0.045)",
+  color: HUB.inkSoft,
+};
+
+const btnAccent: React.CSSProperties = {
+  ...btnBase,
+  borderRadius: 999,
+  padding: "8px 14px",
+  border: "1px solid rgba(255,255,255,0.12)",
+  background: "rgba(108,0,175,0.70)",
+  color: "rgba(242,242,242,0.98)",
+  fontWeight: 800,
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  textIndent: "0.14em",
+  boxShadow: "0 12px 26px rgba(0,0,0,0.18)",
+};
+
+const btnDanger: React.CSSProperties = {
+  ...btnBase,
+  borderRadius: 999,
+  padding: "6px 10px",
+  border: "1px solid rgba(242,51,89,0.30)",
+  background: "rgba(242,51,89,0.10)",
+  color: "rgba(255,255,255,0.86)",
+  fontSize: 12,
+  fontWeight: 800,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  textIndent: "0.06em",
+};
+
+const btnFeature: React.CSSProperties = {
+  ...btnBase,
+  borderRadius: 999,
+  padding: "6px 10px",
+  border: "1px solid rgba(108,0,175,0.38)",
+  background: "rgba(108,0,175,0.16)",
+  color: "rgba(255,255,255,0.86)",
+  fontSize: 12,
+  fontWeight: 800,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  textIndent: "0.06em",
+};
+
+const cardInset: React.CSSProperties = {
+  // no second dark block; just a quiet outline + spacing container
+  background: "transparent",
+  border: `1px solid ${HUB.border}`,
+  borderRadius: 14,
+};
+
+const inputDark: React.CSSProperties = {
+  ...hubText,
+  width: "100%",
+  borderRadius: 12,
+  padding: "12px 14px",
+  outline: "none",
+  border: `1px solid ${HUB.border}`,
+  background: "rgba(255,255,255,0.06)",
+  color: HUB.ink,
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)",
+};
+
+// ------------------------------------------------------------
+
 function SectionHeader({
   label,
   blurb,
@@ -81,29 +204,42 @@ function SectionHeader({
         gridTemplateColumns: "1fr auto",
         alignItems: "end",
         gap: 16,
-        marginBottom: 12,
+        marginBottom: 10,
       }}
     >
       <div>
         <div
           style={{
-            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-            fontSize: "1.6rem",
-            color: "#F2F2F2",
-            marginBottom: 8,
+            ...hubTitle,
+            fontSize: "1.05rem",
+            color: HUB.ink,
+            marginBottom: 6,
+            fontWeight: 800,
           }}
         >
           {label}
         </div>
         <div
           style={{
-            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-            fontSize: 14,
-            opacity: 0.9,
-            color: "#F2F2F2",
+            ...hubText,
+            fontSize: 13,
+            color: HUB.inkSoft,
+            lineHeight: 1.35,
           }}
         >
           {blurb}
+        </div>
+
+        <div
+          style={{
+            ...hubText,
+            marginTop: 8,
+            fontSize: 12,
+            color: HUB.inkFaint,
+            lineHeight: 1.25,
+          }}
+        >
+          Select a media type above, stage files here, then upload when ready.
         </div>
       </div>
       {right}
@@ -124,30 +260,28 @@ function Rail({
 }) {
   if (!files?.length) {
     return (
-      <div
-        style={{
-          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-          color: "rgba(255,255,255,0.8)",
-          fontSize: 14,
-          marginTop: 10,
-        }}
-      >
+      <div style={{ ...hubText, color: HUB.inkFaint, fontSize: 13, marginTop: 10 }}>
         Nothing staged yet—drop files above.
       </div>
     );
   }
+
   return (
     <div className="rail">
       {files.map((f, i) => {
         const isImage = f.type.startsWith("image/");
         const url = isImage ? URL.createObjectURL(f) : undefined;
+
         return (
           <div key={`${f.name}-${i}`} className="tile" style={{ position: "relative" }}>
             <div
               style={{
                 position: "relative",
                 paddingBottom: "62%",
-                background: "rgba(255,255,255,0.06)",
+                background: "rgba(255,255,255,0.035)",
+                border: `1px solid ${HUB.border}`,
+                borderRadius: 12,
+                overflow: "hidden",
               }}
             >
               {isImage ? (
@@ -181,43 +315,59 @@ function Rail({
               )}
             </div>
 
-            <div className="meta">
+            <div className="meta" style={{ ...hubText, color: HUB.inkSoft }}>
               <div
                 style={{
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
+                  fontSize: 13,
+                  opacity: 0.92,
                 }}
                 title={f.name}
               >
                 {f.name}
               </div>
-              <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+
+              <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
                 <button
                   type="button"
                   onClick={() => onFeature(i)}
-                  style={{
-                    borderRadius: 8,
-                    padding: "4px 8px",
-                    background: "rgba(108,0,175,0.85)",
-                    color: "#fff",
-                    border: "none",
-                    cursor: "pointer",
+                  style={btnFeature}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = "0.96";
+                    e.currentTarget.style.background = "rgba(108,0,175,0.22)";
+                    e.currentTarget.style.borderColor = "rgba(108,0,175,0.46)";
                   }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = "1";
+                    e.currentTarget.style.background = "rgba(108,0,175,0.16)";
+                    e.currentTarget.style.borderColor = "rgba(108,0,175,0.38)";
+                    e.currentTarget.style.transform = "translateY(0px)";
+                  }}
+                  onMouseDown={(e) => (e.currentTarget.style.transform = "translateY(1px)")}
+                  onMouseUp={(e) => (e.currentTarget.style.transform = "translateY(0px)")}
                 >
                   Feature
                 </button>
+
                 <button
                   type="button"
                   onClick={() => onRemove(i)}
-                  style={{
-                    borderRadius: 8,
-                    padding: "4px 8px",
-                    background: "rgba(242,51,89,0.85)",
-                    color: "#fff",
-                    border: "none",
-                    cursor: "pointer",
+                  style={btnDanger}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = "0.96";
+                    e.currentTarget.style.background = "rgba(242,51,89,0.14)";
+                    e.currentTarget.style.borderColor = "rgba(242,51,89,0.36)";
                   }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = "1";
+                    e.currentTarget.style.background = "rgba(242,51,89,0.10)";
+                    e.currentTarget.style.borderColor = "rgba(242,51,89,0.30)";
+                    e.currentTarget.style.transform = "translateY(0px)";
+                  }}
+                  onMouseDown={(e) => (e.currentTarget.style.transform = "translateY(1px)")}
+                  onMouseUp={(e) => (e.currentTarget.style.transform = "translateY(0px)")}
                 >
                   Remove
                 </button>
@@ -269,19 +419,22 @@ export default function MediaHub({
   return (
     <div
       style={{
-        background: "rgba(36, 17, 35, 0.35)",
-        borderRadius: 16,
+        background: HUB.bg,
+        border: `1px solid ${HUB.border}`,
+        borderRadius: 18,
         padding: "1.25rem",
-        color: "#fff",
+        color: HUB.ink,
+        boxShadow: "0 16px 40px rgba(0,0,0,0.18)",
       }}
     >
-      {/* Tabs */}
+      {/* Tabs + picker */}
       <div
         style={{
           display: "flex",
           gap: 10,
           flexWrap: "wrap",
-          marginBottom: 14,
+          marginBottom: 12,
+          alignItems: "center",
         }}
       >
         {TAB_ORDER.map((t) => (
@@ -290,58 +443,70 @@ export default function MediaHub({
             type="button"
             onClick={() => setTab(t.key)}
             style={{
-              borderRadius: 999,
-              padding: "8px 14px",
-              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-              border: "1px solid rgba(255,255,255,0.25)",
-              background:
-                tab === t.key ? "rgba(108,0,175,0.9)" : "rgba(255,255,255,0.04)",
-              color: "#fff",
-              cursor: "pointer",
+              ...btnBase,
+              background: tab === t.key ? "rgba(255,255,255,0.07)" : HUB.wash2,
+              border:
+                tab === t.key
+                  ? "1px solid rgba(255,255,255,0.22)"
+                  : `1px solid ${HUB.border}`,
+              color: tab === t.key ? "rgba(255,255,255,0.95)" : HUB.inkSoft,
+              boxShadow: tab === t.key ? "0 10px 22px rgba(0,0,0,0.14)" : "none",
             }}
+            onMouseEnter={(e) => {
+              if (tab === t.key) {
+                e.currentTarget.style.background = "rgba(255,255,255,0.085)";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.26)";
+                e.currentTarget.style.opacity = "0.98";
+                return;
+              }
+              e.currentTarget.style.background = HUB.washHover;
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.16)";
+              e.currentTarget.style.opacity = "0.96";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = "1";
+              e.currentTarget.style.background =
+                tab === t.key ? "rgba(255,255,255,0.07)" : HUB.wash2;
+              e.currentTarget.style.borderColor =
+                tab === t.key ? "rgba(255,255,255,0.22)" : HUB.border;
+              e.currentTarget.style.transform = "translateY(0px)";
+            }}
+            onMouseDown={(e) => (e.currentTarget.style.transform = "translateY(1px)")}
+            onMouseUp={(e) => (e.currentTarget.style.transform = "translateY(0px)")}
             aria-pressed={tab === t.key}
           >
-            <span style={{ marginRight: 8 }} aria-hidden>
+            <span
+              style={{ marginRight: 8, opacity: tab === t.key ? 0.95 : 0.85 }}
+              aria-hidden
+            >
               {t.icon}
             </span>
             {t.label}
           </button>
         ))}
 
-        <div style={{ marginLeft: "auto", display: "flex", gap: 10 }}>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button
             type="button"
             onClick={() => onOpenPicker(tab)}
-            style={{
-              borderRadius: 12,
-              padding: "8px 12px",
-              border: "1px solid rgba(255,255,255,0.35)",
-              background: "transparent",
-              color: "#fff",
-              cursor: "pointer",
+            style={btnPrimary}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = "0.98";
+              e.currentTarget.style.background = "rgba(255,255,255,0.06)";
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.22)";
+              e.currentTarget.style.boxShadow = "0 10px 22px rgba(0,0,0,0.12)";
             }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = "1";
+              e.currentTarget.style.background = "rgba(255,255,255,0.045)";
+              e.currentTarget.style.borderColor = HUB.borderStrong;
+              e.currentTarget.style.boxShadow = "none";
+              e.currentTarget.style.transform = "translateY(0px)";
+            }}
+            onMouseDown={(e) => (e.currentTarget.style.transform = "translateY(1px)")}
+            onMouseUp={(e) => (e.currentTarget.style.transform = "translateY(0px)")}
           >
             Choose existing…
-          </button>
-          <button
-            type="button"
-            disabled={!stagedCount || uploading}
-            onClick={onUploadAll}
-            style={{
-              borderRadius: 14,
-              padding: "10px 14px",
-              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-              fontWeight: 700,
-              background:
-                "linear-gradient(180deg, rgba(217,169,25,0.95), rgba(108,0,175,0.95))",
-              color: "#fff",
-              border: "none",
-              boxShadow: "0 8px 22px rgba(0,0,0,0.25)",
-              cursor: stagedCount ? "pointer" : "not-allowed",
-              opacity: stagedCount ? 1 : 0.6,
-            }}
-          >
-            {uploading ? "Uploading…" : "Upload staged media"}
           </button>
         </div>
       </div>
@@ -356,30 +521,21 @@ export default function MediaHub({
         <div style={{ marginBottom: 12 }}>
           <label
             style={{
+              ...hubText,
               display: "block",
               marginBottom: 6,
-              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: 13,
-              opacity: 0.85,
+              fontSize: 12,
+              color: HUB.inkFaint,
             }}
           >
             Album / Collection name
           </label>
+
           <input
             value={albumName}
             onChange={(e) => setAlbumName(e.target.value)}
             placeholder="e.g., 2024 Spring Production"
-            style={{
-              width: "100%",
-              borderRadius: 10,
-              padding: "12px 14px",
-              outline: "none",
-              border: "none",
-              background: "#fff",
-              color: "#111",
-              boxShadow: "0 6px 18px rgba(0,0,0,0.12)",
-              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-            }}
+            style={inputDark}
           />
         </div>
       )}
@@ -406,10 +562,10 @@ export default function MediaHub({
       ))}
 
       {/* Staged rails */}
-      <div className="staged">
-        {tab === "headshot" && (
-          <>
-            <div style={{ marginTop: 16, fontFamily: "var(--font-dm-sans), system-ui, sans-serif" }}>
+      <div style={{ ...cardInset, padding: 12, marginTop: 14 }}>
+        <div className="staged">
+          {tab === "headshot" && (
+            <div style={{ marginTop: 4 }}>
               {headshotFile ? (
                 <Rail
                   files={[headshotFile]}
@@ -418,58 +574,106 @@ export default function MediaHub({
                   onFeature={(i) => onFeature("headshot", i)}
                 />
               ) : (
-                <div
-                  style={{
-                    color: "rgba(255,255,255,0.8)",
-                    fontSize: 14,
-                    marginTop: 10,
-                  }}
-                >
+                <div style={{ ...hubText, color: HUB.inkFaint, fontSize: 13, marginTop: 10 }}>
                   Nothing staged yet—drop a headshot above.
                 </div>
               )}
             </div>
-          </>
-        )}
+          )}
 
-        {tab === "album" && (
-          <Rail
-            files={albumFiles}
-            kind="album"
-            onRemove={(i) => {
-              const next = [...albumFiles];
-              next.splice(i, 1);
-              setAlbumFiles(next);
-            }}
-            onFeature={(i) => onFeature("album", i)}
-          />
-        )}
+          {tab === "album" && (
+            <Rail
+              files={albumFiles}
+              kind="album"
+              onRemove={(i) => {
+                const next = [...albumFiles];
+                next.splice(i, 1);
+                setAlbumFiles(next);
+              }}
+              onFeature={(i) => onFeature("album", i)}
+            />
+          )}
 
-        {tab === "reel" && (
-          <Rail
-            files={reelFiles}
-            kind="reel"
-            onRemove={(i) => {
-              const next = [...reelFiles];
-              next.splice(i, 1);
-              setReelFiles(next);
-            }}
-            onFeature={(i) => onFeature("reel", i)}
-          />
-        )}
+          {tab === "reel" && (
+            <Rail
+              files={reelFiles}
+              kind="reel"
+              onRemove={(i) => {
+                const next = [...reelFiles];
+                next.splice(i, 1);
+                setReelFiles(next);
+              }}
+              onFeature={(i) => onFeature("reel", i)}
+            />
+          )}
 
-        {tab === "event" && (
-          <Rail
-            files={eventFiles}
-            kind="event"
-            onRemove={(i) => {
-              const next = [...eventFiles];
-              next.splice(i, 1);
-              setEventFiles(next);
-            }}
-            onFeature={(i) => onFeature("event", i)}
-          />
-        )}
+          {tab === "event" && (
+            <Rail
+              files={eventFiles}
+              kind="event"
+              onRemove={(i) => {
+                const next = [...eventFiles];
+                next.splice(i, 1);
+                setEventFiles(next);
+              }}
+              onFeature={(i) => onFeature("event", i)}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Upload action (bottom right, after staging) */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          marginTop: 12,
+        }}
+      >
+        <div style={{ ...hubText, fontSize: 12, color: HUB.inkFaint, lineHeight: 1.25 }}>
+          {stagedCount ? (
+            <>
+              Staged: <span style={{ color: HUB.inkSoft, fontVariantNumeric: "tabular-nums" }}>{stagedCount}</span>{" "}
+              {stagedCount === 1 ? "file" : "files"} — review above, then upload.
+            </>
+          ) : (
+            <>Nothing staged yet — choose a tab, then drop files above.</>
+          )}
+        </div>
+
+        <button
+          type="button"
+          disabled={!stagedCount || uploading}
+          onClick={onUploadAll}
+          style={{
+            ...btnAccent,
+            cursor: stagedCount && !uploading ? "pointer" : "not-allowed",
+            opacity: stagedCount && !uploading ? 1 : 0.55,
+            transform: "translateY(0px)",
+            background:
+              stagedCount && !uploading ? "rgba(108,0,175,0.72)" : "rgba(108,0,175,0.52)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.opacity = stagedCount && !uploading ? "0.96" : "0.55";
+            if (stagedCount && !uploading) {
+              e.currentTarget.style.filter = "brightness(1.06)";
+              e.currentTarget.style.boxShadow = "0 14px 28px rgba(0,0,0,0.16)";
+              e.currentTarget.style.transform = "translateY(-1px)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.opacity = stagedCount && !uploading ? "1" : "0.55";
+            e.currentTarget.style.filter = "none";
+            e.currentTarget.style.boxShadow = "0 12px 26px rgba(0,0,0,0.18)";
+            e.currentTarget.style.transform = "translateY(0px)";
+          }}
+          onMouseDown={(e) => (e.currentTarget.style.transform = "translateY(1px)")}
+          onMouseUp={(e) => (e.currentTarget.style.transform = "translateY(0px)")}
+        >
+          {uploading ? "Uploading…" : "Upload staged media"}
+        </button>
       </div>
     </div>
   );

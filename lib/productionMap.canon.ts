@@ -25,7 +25,7 @@ export interface Production {
 import {
   productionMap as rawProductionMap,
   getSortYear as rawGetSortYear,
-} from "@/lib/productionMap";
+} from "./productionMap";
 
 export const productionMap: Record<string, Production> =
   rawProductionMap as unknown as Record<string, Production>;

@@ -23,6 +23,7 @@ const TESTIMONIALS_TAB = process.env.DAT_TESTIMONIALS_TAB || "DAT_Testimonials";
 const TESTIMONIALS_SHEET_ID = process.env.DAT_TESTIMONIALS_SHEET_ID || ""; // optional override
 
 const MAX_CHARS = 280;
+const UPDATE_EXPIRE_DAYS = 90;
 
 function tsISO() {
   return new Date().toISOString();
@@ -64,12 +65,20 @@ function colToA1(colIdx0: number) {
   return out;
 }
 
+function addDaysYYYYMMDD(days: number) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  // store as YYYY-MM-DD (Live sheet friendly)
+  return d.toISOString().slice(0, 10);
+}
+
 /**
  * Loads Profile-Live sheet, finds row by alumniId, and returns:
  * - rowIndex1 (1-based row number in sheet)
  * - header + row
  * - identity fields (best effort)
  * - beforeText (currentUpdateText)
+ * - beforeExpiresAt (currentUpdateExpiresAt) if present
  */
 async function loadLiveRow(alumniId: string) {
   if (!spreadsheetId) throw new Error("Missing ALUMNI_SHEET_ID");
@@ -100,42 +109,43 @@ async function loadLiveRow(alumniId: string) {
   if (currentUpdateTextIdx < 0)
     throw new Error("Missing currentUpdateText column on Profile sheet.");
 
+  const currentUpdateExpiresAtIdx = idxOf(header, ["currentUpdateExpiresAt"]);
+
   const nameIdx = idxOf(header, ["name", "fullName", "fullname"]);
   const slugIdx = idxOf(header, ["slug"]);
   const emailIdx = idxOf(header, ["email"]);
 
   const beforeText = cell(row, currentUpdateTextIdx);
+  const beforeExpiresAt = cell(row, currentUpdateExpiresAtIdx);
 
   return {
     header,
     row,
     rowIndex1,
     currentUpdateTextIdx,
+    currentUpdateExpiresAtIdx,
     identity: {
       name: cell(row, nameIdx) || "Unknown",
       slug: cell(row, slugIdx) || alumniId,
       email: cell(row, emailIdx) || "",
     },
     beforeText,
+    beforeExpiresAt,
   };
 }
 
-async function writeLiveCurrentUpdate(
-  rowIndex1: number,
-  currentUpdateTextIdx: number,
-  text: string
-) {
+async function writeLiveCell(rowIndex1: number, colIdx0: number, value: string) {
   if (!spreadsheetId) throw new Error("Missing ALUMNI_SHEET_ID");
 
   const sheets = sheetsClient();
-  const col = colToA1(currentUpdateTextIdx);
+  const col = colToA1(colIdx0);
   const range = `${LIVE_TAB}!${col}${rowIndex1}:${col}${rowIndex1}`;
 
   await sheets.spreadsheets.values.update({
     spreadsheetId,
     range,
     valueInputOption: "RAW",
-    requestBody: { values: [[text]] },
+    requestBody: { values: [[value]] },
   });
 }
 
@@ -231,34 +241,69 @@ export async function POST(req: Request) {
 
   try {
     const live = await loadLiveRow(alumniId);
-    const before = (live.beforeText || "").trim();
+    const beforeText = (live.beforeText || "").trim();
+    const beforeExp = (live.beforeExpiresAt || "").trim();
+    const ts = tsISO();
 
-    // Dedupe only on exact match
-    if (before && before === text) {
-      const ts = tsISO();
+    const nextExpiresAt = addDaysYYYYMMDD(UPDATE_EXPIRE_DAYS);
+
+    const hasExpCol = live.currentUpdateExpiresAtIdx >= 0;
+
+    // If same text: treat as dedupe, BUT refresh expiry if possible
+    if (beforeText && beforeText === text) {
+      if (hasExpCol && beforeExp !== nextExpiresAt) {
+        await writeLiveCell(live.rowIndex1, live.currentUpdateExpiresAtIdx, nextExpiresAt);
+        await appendProfileChange({
+          ts,
+          alumniId,
+          email: live.identity.email || undefined,
+          field: "currentUpdateExpiresAt",
+          before: beforeExp,
+          after: nextExpiresAt,
+        });
+      }
+
       return NextResponse.json(
         {
           ok: true,
           deduped: true,
-          id: `${alumniId}::${ts}`, // still return a usable id for client logic
+          id: `${alumniId}::${ts}`,
+          ts,
+          expiresAt: hasExpCol ? nextExpiresAt : undefined,
         },
         { status: 200 }
       );
     }
 
-    // 1) write
-    await writeLiveCurrentUpdate(live.rowIndex1, live.currentUpdateTextIdx, text);
+    // 1) write text
+    await writeLiveCell(live.rowIndex1, live.currentUpdateTextIdx, text);
 
-    // 2) changes
-    const ts = tsISO();
+    // 1b) write expiry (if column exists)
+    if (hasExpCol) {
+      await writeLiveCell(live.rowIndex1, live.currentUpdateExpiresAtIdx, nextExpiresAt);
+    }
+
+    // 2) changes (text)
     await appendProfileChange({
       ts,
       alumniId,
       email: live.identity.email || undefined,
       field: "currentUpdateText",
-      before,
+      before: beforeText,
       after: text,
     });
+
+    // 2b) changes (expiry) only if we can persist it
+    if (hasExpCol) {
+      await appendProfileChange({
+        ts,
+        alumniId,
+        email: live.identity.email || undefined,
+        field: "currentUpdateExpiresAt",
+        before: beforeExp,
+        after: nextExpiresAt,
+      });
+    }
 
     // 3) internal-only append (no response changes, no UI leakage)
     const shouldSendInternal = promptUsed ? isDatGold(promptUsed) : false;
@@ -280,7 +325,8 @@ export async function POST(req: Request) {
         ok: true,
         deduped: false,
         id: `${alumniId}::${ts}`, // ✅ critical for Undo
-        ts, // optional, handy for debugging
+        ts,
+        expiresAt: hasExpCol ? nextExpiresAt : undefined,
       },
       { status: 200 }
     );

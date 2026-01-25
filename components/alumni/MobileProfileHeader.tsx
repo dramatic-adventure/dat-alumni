@@ -13,6 +13,7 @@ import { splitTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
 import { getLocationHrefForToken } from "@/lib/locations";
 
 interface MobileProfileHeaderProps {
+  alumniId: string;
   name: string;
   role: string;
   location?: string;
@@ -24,6 +25,7 @@ interface MobileProfileHeaderProps {
 }
 
 export default function MobileProfileHeader({
+  alumniId,
   name,
   role,
   location,
@@ -33,6 +35,7 @@ export default function MobileProfileHeader({
   website,
   socials,
 }: MobileProfileHeaderProps) {
+
   const fallbackImage = "/images/default-headshot.png";
   const imageSrc = useMemo(
     () => (headshotUrl ? headshotUrl.replace(/^http:\/\//i, "https://") : fallbackImage),
@@ -42,6 +45,61 @@ export default function MobileProfileHeader({
   const headerRef = useRef<HTMLDivElement>(null);
   const [isModalOpen, setModalOpen] = useState(false);
   const [currentUrl, setCurrentUrl] = useState("");
+
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
+  const galleryCacheRef = useRef<string[] | null>(null);
+  const openingRef = useRef(false);
+
+  async function openHeadshotGallery() {
+    if (galleryCacheRef.current && galleryCacheRef.current.length > 0) {
+      setGalleryUrls(galleryCacheRef.current);
+      setModalOpen(true);
+      return;
+    }
+
+
+    if (openingRef.current) return;
+    openingRef.current = true;
+
+    try {
+      const qs = new URLSearchParams({ alumniId, kind: "headshot" });
+      const r = await fetch(`/api/alumni/media/list?${qs.toString()}`, { cache: "no-store" });
+      const j = await r.json();
+
+      const urls =
+        (j?.items || [])
+          .map((it: any) => {
+            const ext = String(it?.externalUrl || "").trim();
+            if (ext) return ext;
+
+            const fid = String(it?.fileId || "").trim();
+            if (fid) return `https://drive.google.com/uc?export=view&id=${fid}`;
+
+            return "";
+          })
+          .filter(Boolean) || [];
+
+      const fallback = (imageSrc ? [imageSrc] : []).filter(Boolean);
+      const next = (urls.length ? urls : fallback).filter(Boolean);
+
+      if (!next.length) return;
+
+      galleryCacheRef.current = next;
+      setGalleryUrls(next);
+      setModalOpen(true);
+
+    } catch {
+      const fallback = (imageSrc ? [imageSrc] : []).filter(Boolean);
+      if (!fallback.length) return;
+
+      galleryCacheRef.current = fallback;
+      setGalleryUrls(fallback);
+      setModalOpen(true);
+    } finally {
+      openingRef.current = false;
+    }
+  }
+
 
   useEffect(() => {
     setCurrentUrl(window.location.href);
@@ -98,16 +156,28 @@ export default function MobileProfileHeader({
   const locationHref = location ? getLocationHrefForToken(location) : null;
 
   return (
-    <div ref={headerRef} style={{ backgroundColor: "#C39B6C" }}>
+    <div ref={headerRef} style={{ backgroundColor: "#C39B6C", position: "relative" }}>
       {hasContactInfo && (
-        <ContactOverlay
-          email={email}
-          website={website}
-          socials={socials}
-          profileCardRef={headerRef}
-        />
-      )}
-
+  <div
+    style={{
+      position: "absolute",
+      top: "1rem",
+      left: "1rem",
+      right: "1rem",
+      pointerEvents: "none",
+      zIndex: 60,
+    }}
+  >
+    <div style={{ pointerEvents: "auto", display: "flex", justifyContent: "flex-start" }}>
+      <ContactOverlay
+        email={email}
+        website={website}
+        socials={socials}
+        profileCardRef={headerRef}
+      />
+    </div>
+  </div>
+)}
       {statusFlags.length > 0 && (
         <div
           className="absolute top-1 right-[4rem] z-50"
@@ -125,22 +195,24 @@ export default function MobileProfileHeader({
         </div>
       )}
 
-      <div
-        role="share-button-wrapper"
-        className="absolute z-40"
-        style={{
-          top: "1rem",
-          right: "1rem",
-          padding: "4px",
-          minWidth: "44px",
-          minHeight: "44px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <ShareButton url={currentUrl} />
-      </div>
+      <div style={{ position: "absolute", top: "1rem", right: "1rem", zIndex: 70, pointerEvents: "none" }}>
+  <div style={{ pointerEvents: "auto" }}>
+    <div
+      role="share-button-wrapper"
+      style={{
+        padding: "4px",
+        minWidth: "44px",
+        minHeight: "44px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <ShareButton url={currentUrl} />
+    </div>
+  </div>
+</div>
+
 
       {/* Headshot */}
       <div
@@ -153,11 +225,15 @@ export default function MobileProfileHeader({
           width: "90%",
           maxWidth: "360px",
         }}
-        onClick={() => setModalOpen(true)}
+        onClick={openHeadshotGallery}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") setModalOpen(true);
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            e.stopPropagation();
+            openHeadshotGallery();
+          }
         }}
         aria-label="Open headshot"
       >
@@ -326,8 +402,13 @@ export default function MobileProfileHeader({
 
       {isModalOpen && (
         <Lightbox
-          images={[imageSrc]}
-          onClose={() => setModalOpen(false)}
+          images={(galleryUrls && galleryUrls.length ? galleryUrls : [imageSrc]).filter(Boolean)}
+          onClose={() => {
+            setModalOpen(false);
+            // Uncomment if you want fresh media on every open
+            // setGalleryUrls([]);
+          }}
+
         />
       )}
     </div>

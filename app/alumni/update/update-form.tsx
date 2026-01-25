@@ -4,6 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 
+import ProfileStudio, {
+  Field,
+  Row,
+  ghostButton as studioGhostButton,
+} from "@/components/alumni/update/ProfileStudio";
+import Dropzone from "@/components/media/Dropzone";
 import MediaPickerModal from "@/components/media/MediaPickerModal";
 import {
   normalizeProfile,
@@ -13,12 +19,10 @@ import {
 import { PROFILE_FIELDS, PROFILE_GROUPS } from "@/components/alumni/fields";
 import type { AlumniProfile } from "@/schemas";
 
-import Collapsible from "@/components/ui/Collapsible";
 import SaveBar from "@/components/alumni/update/SaveBar";
 import Toast from "@/components/alumni/update/Toast";
 
 import FieldRenderer from "@/components/alumni/FieldRenderer";
-import MediaHub from "@/components/media/MediaHub";
 import BackgroundSwatches from "@/components/alumni/update/BackgroundSwatches";
 
 import { createUploader, type UploadKind, type UploadTask } from "@/lib/uploader";
@@ -26,6 +30,8 @@ import { useDraft } from "@/lib/useDraft";
 
 import UpdateComposer from "@/components/alumni/UpdateComposer";
 import CommunityUpdateLine from "@/components/alumni/update/CommunityUpdateLine";
+
+const SHOW_LEGACY_SECTIONS = false; // flip to false when Studio is complete
 
 /* ====== Aesthetic constants ====== */
 const COLOR = {
@@ -52,7 +58,7 @@ const subheadChipStyle: CSSProperties = {
   textDecoration: "none",
 };
 
-const explainStyle: CSSProperties = {
+const explainStyleLocal: CSSProperties = {
   fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
   fontSize: 15,
   lineHeight: 1.55,
@@ -87,7 +93,7 @@ const inputLockedStyle: CSSProperties = {
   cursor: "not-allowed",
 };
 
-const datButton: CSSProperties = {
+const datButtonLocal: CSSProperties = {
   borderRadius: 14,
   padding: "12px 16px",
   fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
@@ -159,7 +165,11 @@ function renameForKind(
   const idx = String(index).padStart(3, "0");
   let newBase = baseName;
 
-  if (kind === "headshot") newBase = `${baseName}-headshot`;
+  if (kind === "headshot") {
+    const stamp = Date.now(); // or crypto.randomUUID()
+    newBase = `${baseName}-headshot-${stamp}`;
+  }
+
   if (kind === "album") {
     const albumSlug = slugify(albumName || "gallery");
     newBase = `${baseName}-${albumSlug}-${idx}`;
@@ -220,6 +230,173 @@ function ProgressBar({ value }: { value: number }) {
   );
 }
 
+// ------------------------------------------------------------
+// Module definitions + Live-key filtering (single source of truth)
+// ------------------------------------------------------------
+type ModuleKey =
+  | "Basics"
+  | "Identity"
+  | "Roles"
+  | "Contact"
+  | "CurrentUpdate"
+  | "StoryMap"
+  | "UpcomingEvent"
+  | "TechSupport";
+
+const LIVE_KEYS = new Set<string>([
+  "name",
+  "slug",
+  "location",
+  "isBiCoastal",
+  "secondLocation",
+  "backgroundStyle",
+  "bioShort",
+  "bioLong",
+  "pronouns",
+  "roles",
+  "identityTags",
+  "languages",
+  "currentWork",
+  "website",
+  "instagram",
+  "x",
+  "tiktok",
+  "threads",
+  "bluesky",
+  "linkedin",
+  "primarySocial",
+  "youtube",
+  "vimeo",
+  "imdb",
+  "facebook",
+  "linktree",
+  "publicEmail",
+  "spotlight",
+  "programs",
+  "tags",
+  "statusFlags",
+  "currentHeadshotUrl",
+  "currentUpdateText",
+  "currentUpdateLink",
+  "currentUpdateExpiresAt",
+  "upcomingEventTitle",
+  "upcomingEventLink",
+  "upcomingEventDate",
+  "upcomingEventExpiresAt",
+  "upcomingEventDescription",
+  "storyTitle",
+  "storyProgram",
+  "storyLocationName",
+  "storyYears",
+  "storyPartners",
+  "storyShortStory",
+  "storyQuote",
+  "storyQuoteAuthor",
+  "storyMediaUrl",
+  "storyMoreInfoUrl",
+  "storyCountry",
+  "showOnMap",
+  "supportBug",
+  "supportFeature",
+  "supportAssistance",
+]);
+
+function keysForSaving(keys: string[]) {
+  return keys.filter((k) => LIVE_KEYS.has(String(k)));
+}
+
+const MODULES: Record<ModuleKey, { fieldKeys: string[]; uploadKinds: UploadKind[] }> = {
+  Basics: {
+    fieldKeys: keysForSaving([
+      "slug",
+      "name",
+      "location",
+      "isBiCoastal",
+      "secondLocation",
+      "backgroundStyle",
+      "currentHeadshotUrl",
+      "bioLong",
+      "currentWork",
+      "upcomingEventTitle",
+      "upcomingEventLink",
+      "upcomingEventDate",
+      "upcomingEventExpiresAt",
+      "upcomingEventDescription",
+    ]),
+    uploadKinds: [],
+  },
+
+  Identity: {
+    fieldKeys: keysForSaving(["pronouns", "identityTags", "languages"]),
+    uploadKinds: [],
+  },
+
+  Roles: {
+    fieldKeys: keysForSaving(["roles"]),
+    uploadKinds: [],
+  },
+
+  Contact: {
+    fieldKeys: keysForSaving([
+      "website",
+      "instagram",
+      "x",
+      "tiktok",
+      "threads",
+      "bluesky",
+      "linkedin",
+      "youtube",
+      "vimeo",
+      "facebook",
+      "linktree",
+      "publicEmail",
+      "imdb",
+      // primarySocial handled by Contact save logic
+    ]),
+    uploadKinds: [],
+  },
+
+  CurrentUpdate: {
+    fieldKeys: keysForSaving(["currentUpdateText", "currentUpdateLink", "currentUpdateExpiresAt"]),
+    uploadKinds: [],
+  },
+
+  StoryMap: {
+    fieldKeys: keysForSaving([
+      "storyTitle",
+      "storyProgram",
+      "storyCountry",
+      "storyYears",
+      "storyLocationName",
+      "storyPartners",
+      "storyShortStory",
+      "storyQuote",
+      "storyQuoteAuthor",
+      "storyMediaUrl",
+      "storyMoreInfoUrl",
+      "showOnMap",
+    ]),
+    uploadKinds: [],
+  },
+
+  UpcomingEvent: {
+    fieldKeys: keysForSaving([
+      "upcomingEventTitle",
+      "upcomingEventLink",
+      "upcomingEventDate",
+      "upcomingEventExpiresAt",
+      "upcomingEventDescription",
+    ]),
+    uploadKinds: [],
+  },
+
+  TechSupport: {
+    fieldKeys: keysForSaving(["supportBug", "supportFeature", "supportAssistance"]),
+    uploadKinds: [],
+  },
+};
+
+
 export default function UpdateForm({
   email,
   isAdmin = false,
@@ -227,6 +404,28 @@ export default function UpdateForm({
   email: string;
   isAdmin?: boolean;
 }) {
+
+  const [studioTab, setStudioTab] = useState<
+  "basics" | "identity" | "media" | "contact" | "story" | "event"
+>("basics");
+
+
+const tabToModule = {
+  basics: "Basics",
+  identity: "Identity",
+  media: "Basics",
+  contact: "Contact",
+  story: "StoryMap",
+  event: "UpcomingEvent",
+} as const satisfies Record<
+  "basics" | "identity" | "media" | "contact" | "story" | "event",
+  ModuleKey
+>;
+
+const activeModule: ModuleKey = tabToModule[studioTab];
+
+  const mod = MODULES[activeModule];
+
   /** Stable identity state */
   const [stableAlumniId, setStableAlumniId] = useState(""); // never changes
   const [currentSlug, setCurrentSlug] = useState(""); // current canonical slug
@@ -248,7 +447,7 @@ export default function UpdateForm({
     name: "",
     slug: "",
     location: "",
-    isBiCoastal: false,
+    isBiCoastal: "",
     secondLocation: "",
     backgroundStyle: "kraft",
 
@@ -266,6 +465,8 @@ export default function UpdateForm({
 
     roles: "",
     pronouns: "",
+    identityTags: "",
+    languages: "",
     currentWork: "",
     programs: "",
     tags: "",
@@ -307,6 +508,7 @@ export default function UpdateForm({
 
   // ✅ Single source of truth for “who is this?”
   const getIdentity = () => (stableAlumniId || "").trim();
+  const isLoaded = !!getIdentity() && !!liveBaseline;
 
   /* drafts */
   const basicsDraft = useDraft({
@@ -317,8 +519,13 @@ export default function UpdateForm({
       bioLong: profile.bioLong ?? "",
       currentHeadshotUrl: profile.currentHeadshotUrl ?? "",
       backgroundStyle: profile.backgroundStyle ?? "kraft",
-      isBiCoastal: profile.isBiCoastal ?? false,
-      secondLocation: profile.secondLocation ?? "",
+      isBiCoastal:
+        String(profile.isBiCoastal ?? "")
+          .trim()
+          .toLowerCase() === "true"
+          ? "true"
+          : "",
+      secondLocation: String(profile.secondLocation ?? ""),
     },
     enabled: !!stableAlumniId,
   });
@@ -344,12 +551,25 @@ export default function UpdateForm({
     enabled: !!stableAlumniId,
   });
 
-  /* media selections */
-  const [headshotFile, setHeadshotFile] = useState<File | null>(null);
-  const [albumFiles, setAlbumFiles] = useState<File[]>([]);
-  const [reelFiles, setReelFiles] = useState<File[]>([]);
-  const [eventFiles, setEventFiles] = useState<File[]>([]);
-  const [albumName, setAlbumName] = useState<string>("");
+/* media selections */
+const [headshotFile, setHeadshotFile] = useState<File | null>(null);
+const [albumFiles, setAlbumFiles] = useState<File[]>([]);
+const [reelFiles, setReelFiles] = useState<File[]>([]);
+const [eventFiles, setEventFiles] = useState<File[]>([]);
+const [albumName, setAlbumName] = useState<string>("");
+
+const [headshotPreviewUrl, setHeadshotPreviewUrl] = useState<string>("");
+
+useEffect(() => {
+  if (!headshotFile) {
+    setHeadshotPreviewUrl("");
+    return;
+  }
+  const url = URL.createObjectURL(headshotFile);
+  setHeadshotPreviewUrl(url);
+  return () => URL.revokeObjectURL(url);
+}, [headshotFile]);
+
 
   /* progress + failures */
   const [progress, setProgress] = useState<{
@@ -391,13 +611,14 @@ export default function UpdateForm({
   const [eventOpen, setEventOpen] = useState(false);
   const eventSectionRef = useRef<HTMLDivElement | null>(null);
 
-  const openEventAndScroll = () => {
-    setEventOpen(true);
+const openEventAndScroll = () => {
+  setStudioTab("event");
+  window.setTimeout(() => {
+  document.getElementById("studio-event-anchor")
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+}, 120);
+};
 
-    window.setTimeout(() => {
-      eventSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 50);
-  };
 
 
 
@@ -426,6 +647,11 @@ export default function UpdateForm({
   /* uploader */
   const uploaderRef = useRef<ReturnType<typeof createUploader> | null>(null);
   const queueEmptyResolver = useRef<(() => void) | null>(null);
+
+  const headshotUploadResolver = useRef<{
+  resolve: (url: string) => void;
+  reject: (err: any) => void;
+} | null>(null);
 
   /* MEDIA HUB click */
   const hubRef = useRef<HTMLDivElement | null>(null);
@@ -527,6 +753,8 @@ export default function UpdateForm({
 
       pronouns: String(j?.pronouns || ""),
       roles: String(j?.roles || ""),
+      identityTags: String(j?.identityTags || ""),
+      languages: String(j?.languages || ""),
       currentWork: String(j?.currentWork || ""),
 
       bioShort: String(j?.bioShort || ""),
@@ -620,6 +848,8 @@ export default function UpdateForm({
 
             pronouns: String(j?.pronouns || p.pronouns || ""),
             roles: String(j?.roles || p.roles || ""),
+            identityTags: String(j?.identityTags || p.identityTags || ""),
+            languages: String(j?.languages || p.languages || ""),
             currentWork: String(j?.currentWork || p.currentWork || ""),
 
             bioShort: String(j?.bioShort || p.bioShort || ""),
@@ -718,23 +948,45 @@ export default function UpdateForm({
         onKindProgress: (kind, bucket) => {
           setProgress((p) => ({ ...p, [kind]: bucket }));
         },
-        onFileComplete: (_task, resp) => {
-          const json = resp || {};
-          if (json?.status) setStatus(String(json.status));
-          if (json?.updated) {
-            const key = Object.keys(json.updated)[0] as keyof PointerAssets;
-            const val = json.updated[key];
-            setAssets((a) => ({ ...a, [key]: val }));
-          }
-        },
-        onFileError: (task, err) => {
-          setFailed((f) => {
-            const list = new Set(f[task.kind]);
-            list.add(task.id);
-            return { ...f, [task.kind]: Array.from(list) };
-          });
-          showToast(err?.message || `Failed uploading ${task.file.name}`, "error");
-        },
+  onFileComplete: (task, resp) => {
+    const json = resp || {};
+
+    // ✅ If this was our one-shot headshot upload, resolve it
+    if (task?.kind === "headshot" && headshotUploadResolver.current) {
+      const url =
+        (json as any)?.url ||
+        (json as any)?.publicUrl ||
+        (json as any)?.asset?.url ||
+        "";
+      const { resolve } = headshotUploadResolver.current;
+      headshotUploadResolver.current = null;
+      resolve(String(url || "").trim());
+    }
+
+    if (json?.status) setStatus(String(json.status));
+    if (json?.updated) {
+      const key = Object.keys(json.updated)[0] as keyof PointerAssets;
+      const val = (json.updated as any)[key];
+      setAssets((a) => ({ ...a, [key]: val }));
+    }
+  },
+
+  onFileError: (task, err) => {
+    // ✅ Reject the one-shot headshot promise if it was waiting
+    if (task?.kind === "headshot" && headshotUploadResolver.current) {
+      const { reject } = headshotUploadResolver.current;
+      headshotUploadResolver.current = null;
+      reject(err);
+    }
+
+    setFailed((f) => {
+      const list = new Set(f[task.kind]);
+      list.add(task.id);
+      return { ...f, [task.kind]: Array.from(list) };
+    });
+    showToast(err?.message || `Failed uploading ${task.file.name}`, "error");
+  },
+
         onQueueEmpty: () => {
           if (queueEmptyResolver.current) {
             const resolve = queueEmptyResolver.current;
@@ -860,60 +1112,7 @@ const byKeys = (keys: string[]) => {
   return PROFILE_FIELDS.filter((f) => wanted.has(fieldKeyOf(f)));
 };
 
-const LIVE_KEYS = new Set<string>([
-  "name",
-  "slug",
-  "location",
-  "isBiCoastal",
-  "secondLocation",
-  "backgroundStyle",
-  "bioShort",
-  "bioLong",
-  "pronouns",
-  "roles",
-  "currentWork",
-  "website",
-  "instagram",
-  "x",
-  "tiktok",
-  "threads",
-  "bluesky",
-  "linkedin",
-  "primarySocial",
-  "youtube",
-  "vimeo",
-  "imdb",
-  "facebook",
-  "linktree",
-  "publicEmail",
-  "spotlight",
-  "programs",
-  "tags",
-  "statusFlags",
-  "currentHeadshotUrl",
-  "currentUpdateText",
-  "currentUpdateLink",
-  "currentUpdateExpiresAt",
-  "upcomingEventTitle",
-  "upcomingEventLink",
-  "upcomingEventDate",
-  "upcomingEventExpiresAt",
-  "upcomingEventDescription",
-  "storyTitle",
-  "storyProgram",
-  "storyLocationName",
-  "storyYears",
-  "storyPartners",
-  "storyShortStory",
-  "storyQuote",
-  "storyQuoteAuthor",
-  "storyMediaUrl",
-  "storyMoreInfoUrl",
-  "storyCountry",
-  "showOnMap",
-]);
 
-const keysForSaving = (keys: string[]) => keys.filter((k) => LIVE_KEYS.has(String(k)));
 
 const renderFieldsOrNull = (keys: string[]) => {
   const fields = byKeys(keys);
@@ -934,11 +1133,11 @@ const contactKeys = PROFILE_GROUPS["Contact"] ?? [];
  * ✅ Current Update save (tweet-style)
  * Calls /api/alumni/update (writes Live + appends Profile-Changes + optionally DAT_Testimonials)
  */
-const saveCurrentUpdate = async (text: string, promptUsed = "") => {
+const saveCurrentUpdate = async (text: string, promptUsed = ""): Promise<string | null> => {
   const alumniId = getIdentity();
   if (!alumniId) {
     showToast("Profile not loaded yet.", "error");
-    return;
+    return null;
   }
 
   const res = await fetch("/api/alumni/update", {
@@ -946,18 +1145,21 @@ const saveCurrentUpdate = async (text: string, promptUsed = "") => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       alumniId,
-      text, // ✅ matches server
-      promptUsed: String(promptUsed || "").trim(), // ✅ drives DAT Gold behavior
+      text,
+      promptUsed: String(promptUsed || "").trim(),
     }),
   });
 
   const j = await res.json().catch(() => ({}));
-if (!res.ok || !j?.ok) throw new Error(j?.error || `Update failed (${res.status})`);
+  if (!res.ok || !j?.ok) throw new Error(j?.error || `Update failed (${res.status})`);
+
+  return j?.id ? String(j.id) : null;
 };
 
-const postCurrentUpdate = async (rawText: string, meta?: any) => {
+
+const postCurrentUpdate = async (rawText: string, meta?: any): Promise<string | null> => {
   const text = String(rawText || "").trim();
-  if (!text) return;
+  if (!text) return null;
 
   const promptUsed =
     typeof meta?.promptUsed === "string"
@@ -970,13 +1172,49 @@ const postCurrentUpdate = async (rawText: string, meta?: any) => {
     // optimistic UI
     setProfile((p: any) => ({ ...p, currentUpdateText: text }));
 
-    await saveCurrentUpdate(text, promptUsed);
+    const id = await saveCurrentUpdate(text, promptUsed);
+
+    if (id) setLastPostedId(id);
+
     showToast("Posted ✅");
     await refreshFeed();
+
+    return id;
   } catch (err: any) {
     showToast(err?.message || "Update failed", "error");
+    return null;
   }
 };
+
+async function uploadHeadshotViaQueue(opts: { file: File; alumniId: string }) {
+  const { file, alumniId } = opts;
+  if (!alumniId) throw new Error("Missing alumniId for upload.");
+
+  const uploader = uploaderRef.current;
+  if (!uploader) throw new Error("Uploader not ready.");
+
+  // Set up one-shot resolver
+  const urlPromise = new Promise<string>((resolve, reject) => {
+    headshotUploadResolver.current = { resolve, reject };
+  });
+
+  uploader.enqueue({
+    kind: "headshot",
+    files: [file],
+    formFields: { alumniId },
+  });
+
+  const waitForQueue = new Promise<void>((resolve) => {
+    queueEmptyResolver.current = resolve;
+  });
+
+  uploader.start();
+  await waitForQueue;
+
+  const url = (await urlPromise).trim();
+  if (!url) throw new Error("Upload succeeded but no URL was returned.");
+  return url;
+}
 
 
 
@@ -1015,6 +1253,8 @@ async function rehydrate() {
 
         pronouns: String(j?.pronouns || p.pronouns || ""),
         roles: String(j?.roles || p.roles || ""),
+        identityTags: String(j?.identityTags || p.identityTags || ""),
+        languages: String(j?.languages || p.languages || ""),
         currentWork: String(j?.currentWork || p.currentWork || ""),
 
         bioShort: String(j?.bioShort || p.bioShort || ""),
@@ -1105,6 +1345,8 @@ function toLiveSavableProfile(p: any) {
 
     pronouns: String(p.pronouns || "").trim(),
     roles: String(p.roles || "").trim(),
+    identityTags: String(p.identityTags || "").trim(),
+    languages: String(p.languages || "").trim(),
     currentWork: String(p.currentWork || "").trim(),
     bioShort: String(p.bioShort || "").trim(),
     bioLong: String(p.bioLong || "").trim(),
@@ -1224,17 +1466,47 @@ async function saveCategory({
       (uploadKinds.includes("reel") && reelFiles.length > 0) ||
       (uploadKinds.includes("event") && eventFiles.length > 0);
 
-    if (hasUploads) {
-      const waitForQueue = new Promise<void>((resolve) => {
-        queueEmptyResolver.current = resolve;
-      });
-      uploader.start();
-      await waitForQueue;
-    }
+// ✅ nothing to do: no uploads staged AND no fields to save
+if (!hasUploads && fieldKeys.length === 0) {
+  showToast("Nothing to save.", "success");
+  setLoading(false);
+  return;
+}
+
+if (hasUploads) {
+  const waitForQueue = new Promise<void>((resolve) => {
+    queueEmptyResolver.current = resolve;
+  });
+  uploader.start();
+  await waitForQueue;
+
+  // ✅ MEDIA-ONLY SAVE PATH
+  // If this category was uploads-only, don't fall through into diff/save logic
+  if (!fieldKeys.length) {
+    if (uploadKinds.includes("headshot")) setHeadshotFile(null);
+    if (uploadKinds.includes("album")) setAlbumFiles([]);
+    if (uploadKinds.includes("reel")) setReelFiles([]);
+    if (uploadKinds.includes("event")) setEventFiles([]);
+
+setProgress((p) => ({
+  ...p,
+  ...(uploadKinds.includes("headshot") ? { headshot: { uploaded: 0, total: 0, pct: 0 } } : {}),
+  ...(uploadKinds.includes("album") ? { album: { uploaded: 0, total: 0, pct: 0 } } : {}),
+  ...(uploadKinds.includes("reel") ? { reel: { uploaded: 0, total: 0, pct: 0 } } : {}),
+  ...(uploadKinds.includes("event") ? { event: { uploaded: 0, total: 0, pct: 0 } } : {}),
+}));
+
+    showToast("Upload complete ✅");
+    await rehydrate();
+    return;
+  }
+}
+
 
     // CONTACT: clear hidden socials & set primary (do not rely on async setProfile)
     let profileForSave: any = profile;
-    if (tag === "Contact") {
+      const tagKey = String(tag).trim().toLowerCase();
+        if (tagKey === "contact") {
       const next = { ...(profile as any) };
       const ALL = ALL_SOCIALS as unknown as string[];
       ALL.forEach((k) => {
@@ -1270,10 +1542,12 @@ async function saveCategory({
       name,
       slug: currentSlug,
       location,
-      primarySocial:
-        tag === "Contact"
-          ? String(profileForSave.primarySocial || primarySocial || "instagram")
-          : String(profileForSave.primarySocial || profile.primarySocial || "instagram"),
+      primarySocial: String(
+        (tagKey === "contact"
+          ? (profileForSave.primarySocial || primarySocial || "instagram")
+          : (profileForSave.primarySocial || profile.primarySocial || "instagram")
+        ) || "instagram"
+      ),
     });
 
     // Validate only keys we’re saving
@@ -1292,7 +1566,8 @@ async function saveCategory({
 
     const changesAll = buildLiveChanges(baseline as any, mergedLive as any) as Record<string, any>;
 
-    const changes = Object.fromEntries(Object.entries(changesAll).filter(([k]) => fieldKeys.includes(k)));
+    const wanted = new Set(fieldKeys);
+    const changes = Object.fromEntries(Object.entries(changesAll).filter(([k]) => wanted.has(k)));
 
     if (Object.keys(changes).length === 0) {
       showToast("No changes to save.", "success");
@@ -1358,7 +1633,7 @@ const Controls = ({ kind, disabled }: { kind: UploadKind; disabled?: boolean }) 
     <button
       type="button"
       disabled={!!disabled}
-      onClick={() => uploaderRef.current?.resumeKind(kind, { alumniId: currentSlug || stableAlumniId })}
+      onClick={() => uploaderRef.current?.resumeKind(kind, { alumniId: stableAlumniId })}
       style={datButtonGhost}
       className="dat-btn-ghost"
     >
@@ -1388,7 +1663,7 @@ const FailedList = ({ kind }: { kind: UploadKind }) => {
   const retryOne = (id: string) => {
     const t = uploaderRef.current?.getTaskById(id);
     if (!t) return;
-    const ff = { alumniId: currentSlug || stableAlumniId };
+    const ff = { alumniId: stableAlumniId };
     uploaderRef.current?.resumeKind(kind, ff);
     uploaderRef.current?.enqueue({ kind, files: [t.file], formFields: ff });
     setFailed((f) => ({ ...f, [kind]: f[kind].filter((x) => x !== id) }));
@@ -1396,7 +1671,7 @@ const FailedList = ({ kind }: { kind: UploadKind }) => {
   };
 
   const retryAll = () => {
-    const ff = { alumniId: currentSlug || stableAlumniId };
+    const ff = { alumniId: stableAlumniId };
     const files = tasks.map((t) => t.file);
     if (!files.length) return;
     uploaderRef.current?.resumeKind(kind, ff);
@@ -1449,7 +1724,7 @@ const AboutEditKeys =
   PROFILE_GROUPS["About"] ??
   PROFILE_GROUPS["Bio"] ??
   PROFILE_GROUPS["Profile"] ??
-  ["pronouns", "roles", "currentWork", "bioShort"];
+  ["roles", "currentWork", "bioShort"];
 
 const TagsEditKeys =
   PROFILE_GROUPS["Programs"] ??
@@ -1507,41 +1782,8 @@ const StoryMapEditKeys =
     "showOnMap",
   ];
 
-// ------------------------------------------------------------
-// ✅ SAVE KEY SETS (single source of truth)
-// ------------------------------------------------------------
 
-const ContactSaveKeys = keysForSaving(ContactEditKeys);
 
-const ProfileBasicsSaveKeys = keysForSaving([
-  "slug",
-  "name",
-  "location",
-  "isBiCoastal",
-  "secondLocation",
-  "backgroundStyle",
-  "currentHeadshotUrl",
-  "bioLong",
-]);
-
-const AboutSaveKeys = keysForSaving(AboutEditKeys);
-const TagsSaveKeys = keysForSaving(TagsEditKeys);
-const UpdatesSaveKeys = keysForSaving(UpdatesEditKeys);
-const UpcomingEventSaveKeys = keysForSaving(UpcomingEventEditKeys);
-const StoryMapSaveKeys = keysForSaving(StoryMapEditKeys);
-
-// ✅ DEFINE THIS ONCE
-const ALL_SAVE_KEYS = Array.from(
-  new Set([
-    ...ProfileBasicsSaveKeys,
-    ...AboutSaveKeys,
-    ...TagsSaveKeys,
-    ...ContactSaveKeys,
-    ...UpdatesSaveKeys,
-    ...UpcomingEventSaveKeys,
-    ...StoryMapSaveKeys,
-  ])
-);
 
 // ------------------------------------------------------------
 // 2) ✅ Manual fallback (in case FieldRenderer has no defs yet)
@@ -1661,13 +1903,15 @@ const ManualStoryMapFallback = () => (
         checked={
           String(profile.showOnMap || "").toLowerCase() === "true" || profile.showOnMap === true
         }
-        onChange={(e) => setProfile((p: any) => ({ ...p, showOnMap: e.target.checked }))}
+        onChange={(e) =>
+          setProfile((p: any) => ({ ...p, showOnMap: e.target.checked ? "true" : "" }))
+        }
         style={{ marginRight: 10 }}
       />
       Show on Map?
     </label>
 
-    <p style={{ ...explainStyle, marginTop: 6 }}>
+    <p style={{ ...explainStyleLocal, marginTop: 6 }}>
       (Fallback UI) Add Story Map keys to <code>PROFILE_FIELDS</code> to render via FieldRenderer.
     </p>
   </div>
@@ -1767,7 +2011,7 @@ const ManualTagsFallback = () => (
       />
     </div>
 
-    <p style={{ ...explainStyle, marginTop: 6 }}>
+    <p style={{ ...explainStyleLocal, marginTop: 6 }}>
       (Fallback UI) To restore your dropdown/select UI, ensure these keys exist in
       <code> PROFILE_FIELDS</code> with the correct <code>path</code>.
     </p>
@@ -1808,7 +2052,7 @@ const ManualUpdatesFallback = () => (
       />
     </div>
 
-    <p style={{ ...explainStyle, marginTop: 6 }}>
+    <p style={{ ...explainStyleLocal, marginTop: 6 }}>
       (Fallback UI) Add these keys to <code>PROFILE_FIELDS</code> to render via FieldRenderer.
     </p>
   </div>
@@ -1869,7 +2113,7 @@ const ManualUpcomingEventFallback = () => (
       />
     </div>
 
-    <p style={{ ...explainStyle, marginTop: 6 }}>
+    <p style={{ ...explainStyleLocal, marginTop: 6 }}>
       (Fallback UI) Add these keys to <code>PROFILE_FIELDS</code> to render via FieldRenderer.
     </p>
   </div>
@@ -1971,89 +2215,72 @@ return (
               </div>
             </div>
 
-            {!getIdentity() ? (
-              <p style={{ ...explainStyle, color: COLOR.ink, opacity: 0.75, margin: 0 }}>
-                Loading your profile…
-              </p>
-            ) : (
-              <>
-            <UpdateComposer
-              onSubmit={async (text, meta) => {
-                const id = getIdentity();
-                if (!id) throw new Error("Profile not loaded yet.");
+            {!isLoaded ? (
+  <p style={{ ...explainStyleLocal, color: COLOR.ink, opacity: 0.75, margin: 0 }}>
+    Loading your profile…
+  </p>
+) : (
+  <>
+    <UpdateComposer
+      onSubmit={async (text, meta) => {
+        const id = await postCurrentUpdate(text, meta);
+        return id ? { id } : undefined;
+      }}
 
-                const res = await fetch("/api/alumni/update", {
-                  method: "POST",
-                  headers: { "content-type": "application/json" },
-                  body: JSON.stringify({
-                    alumniId: id,
-                    text,
-                    promptUsed: meta?.promptUsed,
-                  }),
-                });
+      onPosted={() => {}}
+      onError={(err) => console.error(err)}
+      onAddEvent={openEventAndScroll}
+    />
 
-                const j = await res.json().catch(() => null);
-                if (!res.ok || !j?.ok) throw new Error(j?.error || `Update failed (${res.status})`);
+    {/* Divider */}
+    <div
+      style={{
+        height: 1,
+        background: "rgba(36, 17, 35, 0.25)",
+        margin: "14px 2px 12px",
+      }}
+    />
 
-                if (j?.id) setLastPostedId(String(j.id));
-                await refreshFeed();
-
-                return j?.id ? { id: String(j.id) } : undefined;
-              }}
-              onPosted={() => {}}
-              onError={(err) => console.error(err)}
-              onAddEvent={openEventAndScroll}
-            />
-
-            {/* Divider */}
-            <div
-              style={{
-                height: 1,
-                background: "rgba(36, 17, 35, 0.25)",
-                margin: "14px 2px 12px",
-              }}
-            />
-
-            {/* Feed */}
-            {feedLoading ? (
-              <p style={{ ...explainStyle, color: COLOR.ink, opacity: 0.75, margin: 0 }}>
-                Loading…
-              </p>
-            ) : !feed.length ? (
-              <p style={{ ...explainStyle, color: COLOR.ink, opacity: 0.75, margin: 0 }}>
-                No updates yet.
-              </p>
-            ) : (
-              <div style={{ display: "grid", gap: 10 }}>
-                {feed.map((it: any) => (
-                  <CommunityUpdateLine
-                    key={it.id ?? `${it.alumniId}-${it.ts}-${it.field}`}
-                    name={it?.name}
-                    slug={it?.slug || it?.alumniId || "alumni"}
-                    text={it?.text}
-                    updateId={it?.id} // keep for undo
-                    showActions={Boolean(it?.id && (isAdmin || it.alumniId === stableAlumniId))}
-                    onUndo={undoPostedUpdate}
-                    style={{
-                      background: "#f2f2f27a",
-                      border: "1px solid rgba(36, 17, 35, 0.10)",
-                      boxShadow: "none",
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-              </>
-            )}
+    {/* Feed */}
+    {feedLoading ? (
+      <p style={{ ...explainStyleLocal, color: COLOR.ink, opacity: 0.75, margin: 0 }}>
+        Loading…
+      </p>
+    ) : !feed.length ? (
+      <p style={{ ...explainStyleLocal, color: COLOR.ink, opacity: 0.75, margin: 0 }}>
+        No updates yet.
+      </p>
+    ) : (
+      <div style={{ display: "grid", gap: 10 }}>
+        {feed.map((it: any) => (
+          <CommunityUpdateLine
+            key={it.id ?? `${it.alumniId}-${it.ts}-${it.field}`}
+            name={it?.name}
+            slug={it?.slug || it?.alumniId || "alumni"}
+            text={it?.text}
+            updateId={it?.id}
+            showActions={Boolean(it?.id && (isAdmin || it.alumniId === stableAlumniId))}
+            onUndo={undoPostedUpdate}
+            style={{
+              background: "#f2f2f27a",
+              border: "1px solid rgba(36, 17, 35, 0.10)",
+              boxShadow: "none",
+            }}
+          />
+        ))}
+      </div>
+    )}
+  </>
+)}
           </div>
         </div>
 
 
-{/* ====== MEDIA UPLOADS (separate container) ====== */}
+{/* ====== PROFILE STUDIO (replaces MediaHub container) ====== */}
 <div style={{ margin: "0.25rem 0 3.25rem" }}>
   <div
     style={{
-      background: "rgba(36, 17, 35, 0.22)",
+      background: "rgba(36, 17, 35, 0.22)", // single low-opacity shade
       borderRadius: 16,
       padding: "16px 16px 18px",
       color: COLOR.snow,
@@ -2070,325 +2297,948 @@ return (
         marginBottom: 12,
       }}
     >
-      Media Uploads
+      Profile Studio
     </div>
 
-    <div data-mediahub ref={hubRef}>
-      <MediaHub
-        headshotFile={headshotFile}
-        setHeadshotFile={setHeadshotFile}
-        albumFiles={albumFiles}
-        setAlbumFiles={setAlbumFiles}
-        reelFiles={reelFiles}
-        setReelFiles={setReelFiles}
-        eventFiles={eventFiles}
-        setEventFiles={setEventFiles}
-        albumName={albumName}
-        setAlbumName={setAlbumName}
-        uploading={loading}
-        onUploadAll={() =>
-          saveCategory({
-            tag: "Media (All)",
-            fieldKeys: [],
-            uploadKinds: ["headshot", "album", "reel", "event"],
-          })
-        }
-        onOpenPicker={(k: "headshot" | "album" | "reel" | "event") => openPicker(k)}
-        onFeature={(kind: "headshot" | "album" | "reel" | "event") => openPicker(kind)}
-      />
+<ProfileStudio
+  tab={studioTab}
+  onTabChange={setStudioTab}
+  loading={loading}
+  onOpenPicker={(k) => openPicker(k)}
+  basicsPanel={
+    <div>
+      <p style={explainStyleLocal}>
+        Start here. Confirm your headline profile details — and set your headshot.
+      </p>
 
-      {(progress.album.total > 0 ||
-        progress.reel.total > 0 ||
-        progress.event.total > 0 ||
-        progress.headshot.total > 0) && (
+      <div style={{ display: "grid", gap: 14 }}>
+        <span style={subheadChipStyle} className="subhead-chip">
+          Profile Basics
+        </span>
+
+        <p style={explainStyleLocal} className="explain">
+          Your professional name and slug are locked by default. If your professional name changed,
+          unlock it and your slug preview will update automatically.
+        </p>
+
+        <div>
+          <label htmlFor="slug" style={labelStyle}>
+            Profile slug
+          </label>
+          <input id="slug" value={currentSlug} readOnly style={inputLockedStyle} />
+          <p style={{ ...explainStyleLocal, marginTop: 6 }} className="explain">
+            {autoDetected
+              ? "We auto-detected your current slug from Profile-Live."
+              : "Your slug mirrors your professional name."}
+          </p>
+        </div>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 24,
+            marginTop: 12,
+          }}
+        >
+          <div>
+            <label htmlFor="name" style={labelStyle}>
+              Professional name
+            </label>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12 }}>
+              <input
+                id="name"
+                value={name}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setName(v);
+                  setProfile((p: any) => ({ ...p, name: v }));
+                }}
+                style={nameLocked ? inputLockedStyle : inputStyle}
+                disabled={nameLocked}
+              />
+              <button
+                type="button"
+                className="dat-btn-ghost"
+                style={datButtonGhost}
+                onClick={() => setNameLocked((x) => !x)}
+              >
+                {nameLocked ? "My professional name changed" : "Lock name"}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="location" style={labelStyle}>
+              Base
+            </label>
+            <input
+              id="location"
+              value={location}
+              onChange={(e) => {
+                const v = e.target.value;
+                setLocation(v);
+                setProfile((p: any) => ({ ...p, location: v }));
+              }}
+              style={inputStyle}
+            />
+          </div>
+        </div>
+
         <div style={{ marginTop: 18 }}>
-          {(["headshot", "album", "reel", "event"] as UploadKind[]).map((k) =>
-            progress[k].total > 0 ? (
-              <div key={k} style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 12, opacity: 0.9, marginBottom: 6 }}>
-                  {k[0].toUpperCase() + k.slice(1)} uploads {progress[k].pct}% &nbsp;(
-                  {prettyMB(progress[k].uploaded)} / {prettyMB(progress[k].total)} MB)
+          <label style={{ fontWeight: 700 }}>
+            <input
+              type="checkbox"
+              checked={isTrue(profile.isBiCoastal)}
+              onChange={(e) =>
+                setProfile((p: any) => ({
+                  ...p,
+                  isBiCoastal: e.target.checked ? "true" : "",
+                }))
+              }
+              style={{ marginRight: 10 }}
+            />
+            Bi-coastal
+          </label>
+
+          {isTrue(profile.isBiCoastal) ? (
+            <div style={{ marginTop: 12 }}>
+              <label style={labelStyle}>Second location</label>
+              <input
+                value={profile.secondLocation || ""}
+                onChange={(e) =>
+                  setProfile((p: any) => ({ ...p, secondLocation: e.target.value }))
+                }
+                style={inputStyle}
+              />
+            </div>
+          ) : null}
+        </div>
+
+        <div style={{ marginTop: 18 }}>
+          <BackgroundSwatches
+            value={String(profile.backgroundStyle || "kraft")}
+            onChange={(next) => setProfile((p: any) => ({ ...p, backgroundStyle: next }))}
+          />
+        </div>
+
+        <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
+          <div>
+            <label style={labelStyle}>Bio / Artist Statement (public)</label>
+            <textarea
+              value={String(profile.bioLong ?? "")}
+              onChange={(e) => setProfile((p: any) => ({ ...p, bioLong: e.target.value }))}
+              rows={10}
+              style={{ ...inputStyle, minHeight: 220, resize: "vertical" }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Headshot actions (URL + library + upload) */}
+      <div
+        style={{
+          marginTop: 16,
+          paddingTop: 14,
+          borderTop: "1px solid rgba(255,255,255,0.12)",
+        }}
+      >
+        <div style={{ display: "grid", gap: 12 }}>
+          <Field
+            label="Headshot URL (optional)"
+            help="If you paste a URL, it should point directly to the image file (not a webpage)."
+          >
+            <input
+              value={profile.currentHeadshotUrl || ""}
+              onChange={(e) =>
+                setProfile((p: any) => ({ ...p, currentHeadshotUrl: e.target.value }))
+              }
+              style={inputStyle}
+              placeholder="https://... (direct image URL)"
+            />
+          </Field>
+
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              style={studioGhostButton}
+              onClick={() => openPicker("headshot")}
+              disabled={loading}
+            >
+              Choose past headshot
+            </button>
+            <button
+              type="button"
+              style={studioGhostButton}
+              onClick={() => openPicker("album")}
+              disabled={loading}
+            >
+              Open library
+            </button>
+          </div>
+
+          <div style={{ display: "grid", gap: 10 }}>
+            <Dropzone
+              accept="image/*"
+              multiple={false}
+              disabled={loading}
+              label="Add a headshot"
+              sublabel="or drag & drop here"
+              onFiles={(files) => setHeadshotFile(files[0] || null)}
+              onReject={(rej) => showToast(rej[0]?.reason || "File rejected", "error")}
+            />
+
+            {headshotFile ? (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "84px 1fr auto",
+                  gap: 12,
+                  alignItems: "center",
+                  padding: 10,
+                  border: "1px solid rgba(255,255,255,0.14)",
+                  borderRadius: 12,
+                  background: "rgba(0,0,0,0.18)",
+                }}
+              >
+                <div
+                  style={{
+                    width: 84,
+                    height: 84,
+                    borderRadius: 12,
+                    overflow: "hidden",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    background: "rgba(255,255,255,0.06)",
+                  }}
+                >
+                  {headshotPreviewUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={headshotPreviewUrl}
+                      alt="Staged headshot preview"
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  ) : null}
                 </div>
-                <ProgressBar value={progress[k].pct} />
-                <Controls kind={k} disabled={loading} />
-                <FailedList kind={k} />
+
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, lineHeight: 1.2 }}>Staged headshot</div>
+                  <div style={{ opacity: 0.8, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {headshotFile.name} • {Math.round(headshotFile.size / 1024)} KB
+                  </div>
+                  <div style={{ opacity: 0.7, fontSize: 12, marginTop: 4 }}>
+                    This will become your featured headshot when you save.
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="dat-btn-ghost"
+                  style={datButtonGhost}
+                  onClick={() => setHeadshotFile(null)}
+                  disabled={loading}
+                >
+                  Clear
+                </button>
               </div>
-            ) : null
-          )}
+            ) : null}
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                style={datButtonLocal}
+                disabled={loading}
+                onClick={async () => {
+                  setLoading(true);
+                  try {
+                    // 1) If a headshot is staged, upload it and force it to win as currentHeadshotUrl
+                    if (headshotFile) {
+                      const uploadedUrl = await uploadHeadshotViaQueue({
+                        file: headshotFile,
+                        alumniId: stableAlumniId,
+                      });
+
+
+                      setProfile((p: any) => ({
+                        ...p,
+                        currentHeadshotUrl: String(uploadedUrl || "").trim(),
+                      }));
+                    }
+
+                    // 2) Save Basics (includes currentHeadshotUrl if we set it above)
+                    await saveCategory({
+                      tag: "Basics",
+                      fieldKeys: MODULES["Basics"].fieldKeys,
+                      uploadKinds: [],
+                      afterSave: () => {
+                        basicsDraft.clearDraft();
+                        setHeadshotFile(null);
+                      },
+                    });
+                  } catch (e: any) {
+                    showToast(e?.message || "Save failed", "error");
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                Save Profile Basics
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+  identityPanel={
+    <div>
+      <p style={explainStyleLocal}>
+        Identity helps us represent you accurately and build the right rooms for collaboration.
+      </p>
+
+      <span style={subheadChipStyle} className="subhead-chip">
+        Identity + Roles
+      </span>
+
+      {renderFieldsOrNull([
+        ...MODULES["Identity"].fieldKeys,
+        ...MODULES["Roles"].fieldKeys,
+      ]) ?? (
+        <div style={{ display: "grid", gap: 14 }}>
+          <div>
+            <label style={labelStyle}>Pronouns</label>
+            <input
+              value={profile.pronouns || ""}
+              onChange={(e) => setProfile((p: any) => ({ ...p, pronouns: e.target.value }))}
+              style={inputStyle}
+              placeholder="she/her, he/him, they/them…"
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Identity Tags</label>
+            <input
+              value={profile.identityTags || ""}
+              onChange={(e) => setProfile((p: any) => ({ ...p, identityTags: e.target.value }))}
+              style={inputStyle}
+              placeholder="comma-separated"
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Languages</label>
+            <input
+              value={profile.languages || ""}
+              onChange={(e) => setProfile((p: any) => ({ ...p, languages: e.target.value }))}
+              style={inputStyle}
+              placeholder="comma-separated"
+            />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Roles</label>
+            <input
+              value={profile.roles || ""}
+              onChange={(e) => setProfile((p: any) => ({ ...p, roles: e.target.value }))}
+              style={inputStyle}
+              placeholder="Actor, Director, Designer…"
+            />
+          </div>
         </div>
       )}
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 10,
+          flexWrap: "wrap",
+          marginTop: 16,
+        }}
+      >
+        <button
+          type="button"
+          style={datButtonLocal}
+          className="dat-btn"
+          disabled={loading}
+          onClick={() =>
+            saveCategory({
+              tag: "Identity",
+              fieldKeys: MODULES["Identity"].fieldKeys,
+              uploadKinds: [],
+            })
+          }
+        >
+          Save Identity
+        </button>
+
+        <button
+          type="button"
+          style={datButtonLocal}
+          className="dat-btn"
+          disabled={loading}
+          onClick={() =>
+            saveCategory({
+              tag: "Roles",
+              fieldKeys: MODULES["Roles"].fieldKeys,
+              uploadKinds: [],
+            })
+          }
+        >
+          Save Roles
+        </button>
+      </div>
     </div>
+  }
+      mediaPanel={
+        <div>
+          <p style={explainStyleLocal}>
+            Albums + reels live here. You’re choosing placement before uploading.
+          </p>
+
+          {/* Optional inner toggle: Albums vs Reels */}
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+            {/* You can implement a local toggle state in UpdateForm and pass it down;
+                for now keep both visible or split with two sub-panels */}
+            <button type="button" style={studioGhostButton} onClick={() => openPicker("album")} disabled={loading}>
+              Choose album media
+            </button>
+            <button type="button" style={studioGhostButton} onClick={() => openPicker("reel")} disabled={loading}>
+              Choose reel media
+            </button>
+          </div>
+
+          {/* Staging inputs */}
+          <div style={{ display: "grid", gap: 12 }}>
+            <Field label="Album name (optional)">
+              <input
+                value={albumName || ""}
+                onChange={(e) => setAlbumName(e.target.value)}
+                style={inputStyle}
+                placeholder="e.g. Production photos, BTS, PASSAGE…"
+              />
+            </Field>
+
+            <Field label="Add photos to album">
+              <Dropzone
+                accept="image/*"
+                multiple
+                disabled={loading}
+                label="Add photos to album"
+                sublabel="or drag & drop here"
+                onFiles={(files) => setAlbumFiles(files)}
+                onReject={(rej) => showToast(rej[0]?.reason || "File rejected", "error")}
+              />
+
+            </Field>
+
+            <Field label="Add reels (video files)">
+              <Dropzone
+                accept="video/*"
+                multiple
+                disabled={loading}
+                label="Add reels"
+                sublabel="or drag & drop here"
+                onFiles={(files) => setReelFiles(files)}
+                onReject={(rej) => showToast(rej[0]?.reason || "File rejected", "error")}
+              />
+            </Field>
+          </div>
+
+          {/* Upload staged media button (bottom-right, matching POST vibe) */}
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
+            <button
+              type="button"
+              style={datButtonLocal}
+              disabled={loading || (!albumFiles.length && !reelFiles.length)}
+              onClick={() =>
+                saveCategory({
+                  tag: "Media Upload",
+                  fieldKeys: [], // uploads-only
+                  uploadKinds: [
+                    ...(albumFiles.length ? (["album"] as UploadKind[]) : []),
+                    ...(reelFiles.length ? (["reel"] as UploadKind[]) : []),
+                  ],
+                })
+              }
+            >
+              Upload Staged Media
+            </button>
+          </div>
+        </div>
+      }
+      contactPanel={
+        <div>
+          <p style={explainStyleLocal}>
+            Keep it calm: select the channels you use — then fields reveal.
+          </p>
+
+          {/* ✅ Keep your existing Contact UI here (chips + visibleSocials + primarySocial + FieldRenderer fallback) */}
+<span style={subheadChipStyle} className="subhead-chip">
+              Ways to reach you
+            </span>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
+              {ALL_SOCIALS.map((k) => {
+                const on = visibleSocials.includes(k);
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    className="dat-btn-ghost"
+                    style={{ ...(datButtonGhost as any), opacity: on ? 1 : 0.55 }}
+                    onClick={() => setVisibleSocials((v) => (on ? v.filter((x) => x !== k) : [...v, k]))}
+                  >
+                    {on ? "✓ " : ""} {k}
+                  </button>
+                );
+              })}
+
+              <select
+                value={primarySocial}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setPrimarySocial(v);
+                  setProfile((p: any) => ({ ...p, primarySocial: v }));
+                }}
+                className="dat-btn-ghost"
+                style={{ ...(datButtonGhost as any), padding: "10px 12px" }}
+                title="Primary social"
+              >
+                {(visibleSocials.length ? visibleSocials : ["instagram"]).map((k) => (
+                  <option key={k} value={k}>
+                    {k} (primary)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Prefer FieldRenderer in this file; fallback manual inputs if defs missing */}
+            {renderFieldsOrNull(ContactEditKeys) ?? (
+              <div style={{ display: "grid", gap: 12 }}>
+                {ContactEditKeys.filter((k) => k !== "primarySocial").map((k) => (
+                  <div key={k}>
+                    <label style={labelStyle}>{k}</label>
+                    <input
+                      value={(profile as any)[k] || ""}
+                      onChange={(e) => setProfile((p: any) => ({ ...p, [k]: e.target.value }))}
+                      style={inputStyle}
+                      placeholder={k === "publicEmail" ? "name@email.com" : "https://..."}
+                    />
+                  </div>
+                ))}
+                <p style={{ ...explainStyleLocal, marginTop: 6 }}>
+                  (Fallback UI) Add contact keys to <code>PROFILE_FIELDS</code> if you want curated rendering.
+                </p>
+              </div>
+            )}
+
+            <div style={{ marginTop: 20 }}>
+              <button
+                type="button"
+                  onClick={() =>
+                    saveCategory({
+                      tag: "Contact",
+                      fieldKeys: MODULES["Contact"].fieldKeys,
+                      uploadKinds: MODULES["Contact"].uploadKinds,
+                      afterSave: () => contactDraft.clearDraft(),
+                    })
+                  }
+                style={datButtonLocal}
+                className="dat-btn"
+              >
+                Save Contact
+              </button>
+            </div>
+
+            <p style={{ ...explainStyleLocal, marginTop: 12 }}>
+              Tip: toggle which socials you want visible above — hidden ones will be cleared on save.
+            </p>
+        </div>
+      }
+      storyPanel={
+        <div>
+          <p style={explainStyleLocal}>
+            Your story becomes a map pin + memory. If you paste media, it should be a direct URL to the file.
+          </p>
+
+          {/* ✅ reuse your existing Story Map fields (FieldRenderer or Manual fallback) */}
+          {renderFieldsOrNull(StoryMapEditKeys) ?? <ManualStoryMapFallback />}
+
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
+            <button
+              type="button"
+              style={datButtonLocal}
+              disabled={loading}
+              onClick={() =>
+                saveCategory({
+                  tag: "Story Map",
+                  fieldKeys: MODULES["StoryMap"].fieldKeys,
+                  uploadKinds: [],
+                })
+              }
+            >
+              Publish Story to Map
+            </button>
+          </div>
+        </div>
+      }
+      eventPanel={
+        <div>
+          <div id="studio-event-anchor" />
+          <p style={explainStyleLocal}>
+            Add your upcoming event and its image. (If you paste media, it should be a direct URL to the file.)
+          </p>
+
+          {/* Event fields */}
+          {renderFieldsOrNull(UpcomingEventEditKeys) ?? <ManualUpcomingEventFallback />}
+
+          {/* Event image: choose from library + upload */}
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+              <button type="button" style={studioGhostButton} onClick={() => openPicker("event")} disabled={loading}>
+                Choose event image from library
+              </button>
+            </div>
+
+            <Field label="Upload event image(s)">
+              <Dropzone
+                accept="image/*"
+                multiple
+                disabled={loading}
+                label="Add event image(s)"
+                sublabel="or drag & drop here"
+                onFiles={(files) => setEventFiles(files)}
+                onReject={(rej) => showToast(rej[0]?.reason || "File rejected", "error")}
+              />
+            </Field>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 12 }}>
+              <button
+                type="button"
+                style={studioGhostButton}
+                disabled={loading || !eventFiles.length}
+                onClick={() => setEventFiles([])}
+              >
+                Clear staged
+              </button>
+              <button
+                type="button"
+                style={datButtonLocal}
+                disabled={loading || !eventFiles.length}
+                onClick={() =>
+                  saveCategory({
+                    tag: "Event Image Upload",
+                    fieldKeys: [], // uploads-only
+                    uploadKinds: ["event"],
+                  })
+                }
+              >
+                Upload Event Image
+              </button>
+            </div>
+          </div>
+
+          {/* Save event fields */}
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
+            <button
+              type="button"
+              style={datButtonLocal}
+              disabled={loading}
+              onClick={() =>
+                saveCategory({
+                  tag: "Upcoming Event",
+                  fieldKeys: MODULES["UpcomingEvent"].fieldKeys,
+                  uploadKinds: [],
+                })
+              }
+            >
+              Save Event
+            </button>
+          </div>
+        </div>
+      }
+    />
+
+    {/* Keep your progress + Controls + FailedList rendering below the Studio (unchanged) */}
+    {(progress.album.total > 0 ||
+      progress.reel.total > 0 ||
+      progress.event.total > 0 ||
+      progress.headshot.total > 0) && (
+      <div style={{ marginTop: 18 }}>
+        {(["headshot", "album", "reel", "event"] as UploadKind[]).map((k) =>
+          progress[k].total > 0 ? (
+            <div key={k} style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 12, opacity: 0.9, marginBottom: 6 }}>
+                {k[0].toUpperCase() + k.slice(1)} uploads {progress[k].pct}% &nbsp;(
+                {prettyMB(progress[k].uploaded)} / {prettyMB(progress[k].total)} MB)
+              </div>
+              <ProgressBar value={progress[k].pct} />
+              <Controls kind={k} disabled={loading} />
+              <FailedList kind={k} />
+            </div>
+          ) : null
+        )}
+      </div>
+    )}
   </div>
 </div>
 
 
-        {/* ====== 1) PROFILE BASICS ====== */}
-<Collapsible title="Profile Basics" defaultOpen>
-  <Section>
-    <span style={subheadChipStyle} className="subhead-chip">
-      Profile details
-    </span>
-    <p style={explainStyle} className="explain">
-      Your professional name and slug are locked by default. If your professional name changed,
-      unlock it and your slug preview will update automatically.
-    </p>
+{SHOW_LEGACY_SECTIONS ? (
+  <>
+                {/* ====== 1) PROFILE BASICS ====== */}
+          <Section>
+            <span style={subheadChipStyle} className="subhead-chip">
+              Profile details
+            </span>
+            <p style={explainStyleLocal} className="explain">
+              Your professional name and slug are locked by default. If your professional name changed,
+              unlock it and your slug preview will update automatically.
+            </p>
 
-    <div>
-      <label htmlFor="slug" style={labelStyle}>
-        Profile slug
-      </label>
-      <input id="slug" value={currentSlug} readOnly style={inputLockedStyle} />
-      <p style={{ ...explainStyle, marginTop: 6 }} className="explain">
-        {autoDetected
-          ? "We auto-detected your current slug from Profile-Live."
-          : "Your slug mirrors your professional name."}
-      </p>
-    </div>
+            <div>
+              <label htmlFor="slug" style={labelStyle}>
+                Profile slug
+              </label>
+              <input id="slug" value={currentSlug} readOnly style={inputLockedStyle} />
+              <p style={{ ...explainStyleLocal, marginTop: 6 }} className="explain">
+                {autoDetected
+                  ? "We auto-detected your current slug from Profile-Live."
+                  : "Your slug mirrors your professional name."}
+              </p>
+            </div>
 
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-        gap: 24,
-        marginTop: 12,
-      }}
-    >
-      <div>
-        <label htmlFor="name" style={labelStyle}>
-          Professional name
-        </label>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12 }}>
-          <input
-            id="name"
-            value={name}
-            onChange={(e) => {
-              const v = e.target.value;
-              setName(v);
-              setProfile((p: any) => ({ ...p, name: v }));
-            }}
-            style={nameLocked ? inputLockedStyle : inputStyle}
-            disabled={nameLocked}
-          />
-          <button
-            type="button"
-            className="dat-btn-ghost"
-            style={datButtonGhost}
-            onClick={() => setNameLocked((x) => !x)}
-          >
-            {nameLocked ? "My professional name changed" : "Lock name"}
-          </button>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: 24,
+                marginTop: 12,
+              }}
+            >
+              <div>
+                <label htmlFor="name" style={labelStyle}>
+                  Professional name
+                </label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12 }}>
+                  <input
+                    id="name"
+                    value={name}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setName(v);
+                      setProfile((p: any) => ({ ...p, name: v }));
+                    }}
+                    style={nameLocked ? inputLockedStyle : inputStyle}
+                    disabled={nameLocked}
+                  />
+                  <button
+                    type="button"
+                    className="dat-btn-ghost"
+                    style={datButtonGhost}
+                    onClick={() => setNameLocked((x) => !x)}
+                  >
+                    {nameLocked ? "My professional name changed" : "Lock name"}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="location" style={labelStyle}>
+                  Base
+                </label>
+                <input
+                  id="location"
+                  value={location}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setLocation(v);
+                    setProfile((p: any) => ({ ...p, location: v }));
+                  }}
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: 18 }}>
+              <label style={{ fontWeight: 700 }}>
+                <input
+                  type="checkbox"
+                  checked={isTrue(profile.isBiCoastal)}
+                  onChange={(e) =>
+                    setProfile((p: any) => ({
+                      ...p,
+                      isBiCoastal: e.target.checked ? "true" : "",
+                    }))
+                  }
+                  style={{ marginRight: 10 }}
+                />
+                Bi-coastal
+              </label>
+
+              {isTrue(profile.isBiCoastal) ? (
+                <div style={{ marginTop: 12 }}>
+                  <label style={labelStyle}>Second location</label>
+                  <input
+                    value={profile.secondLocation || ""}
+                    onChange={(e) => setProfile((p: any) => ({ ...p, secondLocation: e.target.value }))}
+                    style={inputStyle}
+                  />
+                </div>
+              ) : null}
+            </div>
+
+            <div style={{ marginTop: 18 }}>
+              <BackgroundSwatches
+                value={String(profile.backgroundStyle || "kraft")}
+                onChange={(next) => setProfile((p: any) => ({ ...p, backgroundStyle: next }))}
+              />
+            </div>
+
+            <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
+              <div>
+                <label style={labelStyle}>Headshot URL (optional)</label>
+                <input
+                  value={profile.currentHeadshotUrl || ""}
+                  onChange={(e) => setProfile((p: any) => ({ ...p, currentHeadshotUrl: e.target.value }))}
+                  style={inputStyle}
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Bio / Artist Statement (public)</label>
+                <textarea
+                  value={String(profile.bioLong ?? "")}
+                  onChange={(e) => setProfile((p: any) => ({ ...p, bioLong: e.target.value }))}
+                  rows={10}
+                  style={{ ...inputStyle, minHeight: 220, resize: "vertical" }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: 20 }}>
+              <button
+                type="button"
+                onClick={() =>
+                  saveCategory({
+                    tag: "Profile Basics",
+                    fieldKeys: MODULES["Basics"].fieldKeys,
+                    uploadKinds: [],
+                    afterSave: () => basicsDraft.clearDraft(),
+                  })
+                }
+                style={datButtonLocal}
+                className="dat-btn"
+              >
+                Save Profile Basics
+              </button>
+            </div>
+          </Section>
+
+        {/* ✅ ABOUT */}
+          <Section>{renderFieldsOrNull(AboutEditKeys) ?? <ManualAboutFallback />}</Section>
+
+        {/* ✅ PROGRAMS + TAGS */}
+          <Section>{renderFieldsOrNull(TagsEditKeys) ?? <ManualTagsFallback />}</Section>
+
+        {/* ✅ STORY MAP */}
+          <Section>{renderFieldsOrNull(StoryMapEditKeys) ?? <ManualStoryMapFallback />}</Section>
+
+        {/* ====== 2) CONTACT ====== */}
+          <Section>
+            <span style={subheadChipStyle} className="subhead-chip">
+              Ways to reach you
+            </span>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
+              {ALL_SOCIALS.map((k) => {
+                const on = visibleSocials.includes(k);
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    className="dat-btn-ghost"
+                    style={{ ...(datButtonGhost as any), opacity: on ? 1 : 0.55 }}
+                    onClick={() => setVisibleSocials((v) => (on ? v.filter((x) => x !== k) : [...v, k]))}
+                  >
+                    {on ? "✓ " : ""} {k}
+                  </button>
+                );
+              })}
+
+              <select
+                value={primarySocial}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setPrimarySocial(v);
+                  setProfile((p: any) => ({ ...p, primarySocial: v }));
+                }}
+                className="dat-btn-ghost"
+                style={{ ...(datButtonGhost as any), padding: "10px 12px" }}
+                title="Primary social"
+              >
+                {(visibleSocials.length ? visibleSocials : ["instagram"]).map((k) => (
+                  <option key={k} value={k}>
+                    {k} (primary)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Prefer FieldRenderer in this file; fallback manual inputs if defs missing */}
+            {renderFieldsOrNull(ContactEditKeys) ?? (
+              <div style={{ display: "grid", gap: 12 }}>
+                {ContactEditKeys.filter((k) => k !== "primarySocial").map((k) => (
+                  <div key={k}>
+                    <label style={labelStyle}>{k}</label>
+                    <input
+                      value={(profile as any)[k] || ""}
+                      onChange={(e) => setProfile((p: any) => ({ ...p, [k]: e.target.value }))}
+                      style={inputStyle}
+                      placeholder={k === "publicEmail" ? "name@email.com" : "https://..."}
+                    />
+                  </div>
+                ))}
+                <p style={{ ...explainStyleLocal, marginTop: 6 }}>
+                  (Fallback UI) Add contact keys to <code>PROFILE_FIELDS</code> if you want curated rendering.
+                </p>
+              </div>
+            )}
+
+            <div style={{ marginTop: 20 }}>
+              <button
+                type="button"
+                onClick={() =>
+                  saveCategory({
+                    tag: "Contact",
+                    fieldKeys: MODULES["Contact"].fieldKeys,
+                    afterSave: () => contactDraft.clearDraft(),
+                  })
+                }
+                style={datButtonLocal}
+                className="dat-btn"
+              >
+                Save Contact
+              </button>
+            </div>
+
+            <p style={{ ...explainStyleLocal, marginTop: 12 }}>
+              Tip: toggle which socials you want visible above — hidden ones will be cleared on save.
+            </p>
+          </Section>
+
+        {/* ✅ CURRENT UPDATE */}
+          <Section>{renderFieldsOrNull(UpdatesEditKeys) ?? <ManualUpdatesFallback />}</Section>
+
+        {/* ✅ UPCOMING EVENT */}
+        <div id="upcoming-event-section" ref={eventSectionRef}>
+          <Section>{renderFieldsOrNull(UpcomingEventEditKeys) ?? <ManualUpcomingEventFallback />}</Section>
         </div>
-      </div>
-
-      <div>
-        <label htmlFor="location" style={labelStyle}>
-          Base
-        </label>
-        <input
-          id="location"
-          value={location}
-          onChange={(e) => {
-            const v = e.target.value;
-            setLocation(v);
-            setProfile((p: any) => ({ ...p, location: v }));
-          }}
-          style={inputStyle}
-        />
-      </div>
-    </div>
-
-    <div style={{ marginTop: 18 }}>
-      <label style={{ fontWeight: 700 }}>
-        <input
-          type="checkbox"
-          checked={isTrue(profile.isBiCoastal)}
-          onChange={(e) =>
-            setProfile((p: any) => ({
-              ...p,
-              isBiCoastal: e.target.checked ? "true" : "",
-            }))
-          }
-          style={{ marginRight: 10 }}
-        />
-        Bi-coastal
-      </label>
-
-      {isTrue(profile.isBiCoastal) ? (
-        <div style={{ marginTop: 12 }}>
-          <label style={labelStyle}>Second location</label>
-          <input
-            value={profile.secondLocation || ""}
-            onChange={(e) => setProfile((p: any) => ({ ...p, secondLocation: e.target.value }))}
-            style={inputStyle}
-          />
-        </div>
-      ) : null}
-    </div>
-
-    <div style={{ marginTop: 18 }}>
-      <BackgroundSwatches
-        value={String(profile.backgroundStyle || "kraft")}
-        onChange={(next) => setProfile((p: any) => ({ ...p, backgroundStyle: next }))}
-      />
-    </div>
-
-    <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
-      <div>
-        <label style={labelStyle}>Headshot URL (optional)</label>
-        <input
-          value={profile.currentHeadshotUrl || ""}
-          onChange={(e) => setProfile((p: any) => ({ ...p, currentHeadshotUrl: e.target.value }))}
-          style={inputStyle}
-          placeholder="https://..."
-        />
-      </div>
-
-      <div>
-        <label style={labelStyle}>Bio / Artist Statement (public)</label>
-        <textarea
-          value={String(profile.bioLong ?? "")}
-          onChange={(e) => setProfile((p: any) => ({ ...p, bioLong: e.target.value }))}
-          rows={10}
-          style={{ ...inputStyle, minHeight: 220, resize: "vertical" }}
-        />
-      </div>
-    </div>
-
-    <div style={{ marginTop: 20 }}>
-      <button
-        type="button"
-        onClick={() =>
-          saveCategory({
-            tag: "Profile Basics",
-            fieldKeys: ProfileBasicsSaveKeys,
-            uploadKinds: [],
-            afterSave: () => basicsDraft.clearDraft(),
-          })
-        }
-        style={datButton}
-        className="dat-btn"
-      >
-        Save Profile Basics
-      </button>
-    </div>
-  </Section>
-</Collapsible>
-
-{/* ✅ ABOUT */}
-<Collapsible title="About" defaultOpen={false}>
-  <Section>{renderFieldsOrNull(AboutEditKeys) ?? <ManualAboutFallback />}</Section>
-</Collapsible>
-
-{/* ✅ PROGRAMS + TAGS */}
-<Collapsible title="Programs & Tags" defaultOpen={false}>
-  <Section>{renderFieldsOrNull(TagsEditKeys) ?? <ManualTagsFallback />}</Section>
-</Collapsible>
-
-{/* ✅ STORY MAP */}
-<Collapsible title="Story Map Contribution" defaultOpen={false}>
-  <Section>{renderFieldsOrNull(StoryMapEditKeys) ?? <ManualStoryMapFallback />}</Section>
-</Collapsible>
-
-{/* ====== 2) CONTACT ====== */}
-<Collapsible title="Contact" defaultOpen={false}>
-  <Section>
-    <span style={subheadChipStyle} className="subhead-chip">
-      Ways to reach you
-    </span>
-
-    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
-      {ALL_SOCIALS.map((k) => {
-        const on = visibleSocials.includes(k);
-        return (
-          <button
-            key={k}
-            type="button"
-            className="dat-btn-ghost"
-            style={{ ...(datButtonGhost as any), opacity: on ? 1 : 0.55 }}
-            onClick={() => setVisibleSocials((v) => (on ? v.filter((x) => x !== k) : [...v, k]))}
-          >
-            {on ? "✓ " : ""} {k}
-          </button>
-        );
-      })}
-
-      <select
-        value={primarySocial}
-        onChange={(e) => {
-          const v = e.target.value;
-          setPrimarySocial(v);
-          setProfile((p: any) => ({ ...p, primarySocial: v }));
-        }}
-        className="dat-btn-ghost"
-        style={{ ...(datButtonGhost as any), padding: "10px 12px" }}
-        title="Primary social"
-      >
-        {(visibleSocials.length ? visibleSocials : ["instagram"]).map((k) => (
-          <option key={k} value={k}>
-            {k} (primary)
-          </option>
-        ))}
-      </select>
-    </div>
-
-    {/* Prefer FieldRenderer in this file; fallback manual inputs if defs missing */}
-    {renderFieldsOrNull(ContactEditKeys) ?? (
-      <div style={{ display: "grid", gap: 12 }}>
-        {ContactEditKeys.filter((k) => k !== "primarySocial").map((k) => (
-          <div key={k}>
-            <label style={labelStyle}>{k}</label>
-            <input
-              value={(profile as any)[k] || ""}
-              onChange={(e) => setProfile((p: any) => ({ ...p, [k]: e.target.value }))}
-              style={inputStyle}
-              placeholder={k === "publicEmail" ? "name@email.com" : "https://..."}
-            />
-          </div>
-        ))}
-        <p style={{ ...explainStyle, marginTop: 6 }}>
-          (Fallback UI) Add contact keys to <code>PROFILE_FIELDS</code> if you want curated rendering.
-        </p>
-      </div>
-    )}
-
-    <div style={{ marginTop: 20 }}>
-      <button
-        type="button"
-        onClick={() =>
-          saveCategory({
-            tag: "Contact",
-            fieldKeys: ContactSaveKeys,
-            afterSave: () => contactDraft.clearDraft(),
-          })
-        }
-        style={datButton}
-        className="dat-btn"
-      >
-        Save Contact
-      </button>
-    </div>
-
-    <p style={{ ...explainStyle, marginTop: 12 }}>
-      Tip: toggle which socials you want visible above — hidden ones will be cleared on save.
-    </p>
-  </Section>
-</Collapsible>
-
-{/* ✅ CURRENT UPDATE */}
-<Collapsible title="Current Update" defaultOpen={false}>
-  <Section>{renderFieldsOrNull(UpdatesEditKeys) ?? <ManualUpdatesFallback />}</Section>
-</Collapsible>
-
-{/* ✅ UPCOMING EVENT */}
-<div id="upcoming-event-section" ref={eventSectionRef}>
-  <Collapsible
-    title="Upcoming Event"
-    defaultOpen={eventOpen}
-    key={eventOpen ? "event-open" : "event-closed"}
-  >
-    <Section>{renderFieldsOrNull(UpcomingEventEditKeys) ?? <ManualUpcomingEventFallback />}</Section>
-  </Collapsible>
-</div>
+  </>
+) : null}
 
 {/* Hidden submit */}
 <form onSubmit={(e) => e.preventDefault()}>
@@ -2397,28 +3247,11 @@ return (
   </button>
 </form>
 
-{/* Sticky Save Bar */}
-<SaveBar
-  loading={loading}
-  disabled={loading || !currentSlug}
-  onClick={() => {
-    saveCategory({
-      tag: "All",
-      fieldKeys: ALL_SAVE_KEYS,
-      uploadKinds: [],
-      afterSave: () => {
-        basicsDraft.clearDraft();
-        contactDraft.clearDraft();
-      },
-    });
-  }}
-/>
-
 {/* Media Picker */}
 <MediaPickerModal
   open={pickerOpen}
   onClose={() => setPickerOpen(false)}
-  alumniId={currentSlug || stableAlumniId}
+  alumniId={stableAlumniId}
   kind={pickerKind}
   title={`Choose ${pickerKind}`}
   onFeatured={(fileId?: string) => {

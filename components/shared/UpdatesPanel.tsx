@@ -4,10 +4,55 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { randomInt, randomFromArray, shuffleArray } from "@/utils/random";
 
+type CommunityFeedItem = {
+  id?: string;
+  alumniId?: string;
+  name?: string;
+  slug?: string;
+  text?: string; // composer update text
+};
+
+function personKey(u: UpdateItem): string {
+  return u.alumniId || u.link || u.author || u.text;
+}
+
+function uniquePeopleCount(items: UpdateItem[]): number {
+  const s = new Set(items.map(personKey));
+  return s.size;
+}
+
+function dedupeByPerson(items: UpdateItem[]): UpdateItem[] {
+  const seen = new Set<string>();
+  const out: UpdateItem[] = [];
+  for (const it of items) {
+    const k = personKey(it);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(it);
+  }
+  return out;
+}
+
+function toPanelUpdate(it: CommunityFeedItem): UpdateItem | null {
+  // "text" is currentUpdateText, nothing else allowed
+  const text = String(it?.text ?? "").trim();
+  if (!text) return null;
+
+  const slugOrId = it?.slug || it?.alumniId;
+
+  return {
+    alumniId: it.alumniId,
+    author: String(it?.name ?? "ALUM").toUpperCase(),
+    text,
+    link: slugOrId ? `/alumni/${slugOrId}` : "/alumni",
+  };
+}
+
 interface UpdateItem {
   text: string;
   link?: string;
   author?: string;
+  alumniId?: string;
 }
 
 interface UpdatesPanelProps {
@@ -161,12 +206,6 @@ const LOCATION_WORDS = [
   "kosice",
 ];
 
-function ensureFirstPerson(text: string): string {
-  const trimmed = text.trim();
-  if (trimmed.toLowerCase().startsWith("i ")) return trimmed;
-  return `I ${trimmed.charAt(0).toLowerCase()}${trimmed.slice(1)}`;
-}
-
 function weightedRandomSelection<T extends { weight: number }>(
   arr: T[],
   count: number
@@ -294,21 +333,16 @@ export default function UpdatesPanel({
   strictness = 0.5,
   verticalOffset = "-44%",
 }: UpdatesPanelProps) {
+  const [feedUpdates, setFeedUpdates] = useState<UpdateItem[] | null>(null);
+  const [feedKey, setFeedKey] = useState<string>(""); // used to re-stabilize art when feed changes
   const containerRef = useRef<HTMLDivElement>(null);
   const phraseRefs = useRef<(HTMLSpanElement | null)[]>([]);
-  const [phraseWidths, setPhraseWidths] = useState<number[]>([]);
+  // (removed phraseWidths — we measure per-item directly from phraseRefs when needed)
   const [containerSize, setContainerSize] = useState({
     width: 600,
     paddingLeft: 0,
     paddingRight: 0,
   });
-
-  useEffect(() => {
-    if (phraseRefs.current.length > 0) {
-      const widths = phraseRefs.current.map((el) => el?.offsetWidth || 0);
-      setPhraseWidths(widths);
-    }
-  }, []);
 
   useEffect(() => {
     if (containerRef.current) {
@@ -328,6 +362,44 @@ export default function UpdatesPanel({
     }
   }, []);
 
+    useEffect(() => {
+    let alive = true;
+
+    (async () => {
+      try {
+        const res = await fetch("/api/alumni/community-feed?days=60&limit=6", {
+          cache: "no-store",
+        });
+        const j = await res.json().catch(() => null);
+
+        if (!alive) return;
+        if (!res.ok || !j?.ok || !Array.isArray(j?.items)) {
+          setFeedUpdates([]); // will fall back below
+          setFeedKey("bad");
+          return;
+        }
+
+        const mapped = (j.items as CommunityFeedItem[])
+          .map(toPanelUpdate)
+          .filter(Boolean) as UpdateItem[];
+
+        // A simple stable key so the “random art” only regenerates when data truly changes
+        const nextKey = mapped.map((u) => `${u.author}|${u.link}|${u.text}`).join("||");
+
+        setFeedUpdates(mapped);
+        setFeedKey(nextKey);
+      } catch {
+        if (!alive) return;
+        setFeedUpdates([]); // will fall back below
+        setFeedKey("err");
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
 
   const fallbackUpdates: UpdateItem[] = [
     { author: "ALEX", text: "I just joined a new Broadway cast!", link: "/alumni/alex" },
@@ -335,86 +407,139 @@ export default function UpdatesPanel({
     { author: "PRIYA", text: "I published a play about climate change.", link: "/alumni/priya" },
   ];
 
-  const baseUpdates =
-    updates.length > 0
-      ? updates.map((u) => ({ ...u, text: ensureFirstPerson(u.text) }))
-      : fallbackUpdates;
+const incomingRaw =
+  feedUpdates && feedUpdates.length > 0
+    ? feedUpdates
+    : updates.length > 0
+    ? updates
+    : fallbackUpdates;
 
-  const [stableData] = useState(() => {
-  const shuffledPhrases = shuffleArray([...ROCK_SALT_PHRASES]);
-  const phraseIndexes = selectUniqueRandomIndexes(baseUpdates.length, 2);
+const incoming =
+  uniquePeopleCount(incomingRaw) > 3 ? dedupeByPerson(incomingRaw) : incomingRaw;
 
-  const totalDoodles = randomInt(
-    Math.ceil(baseUpdates.length * 0.66),
-    Math.ceil(baseUpdates.length * 1.0)
-  );
+const baseUpdates = incoming.map((u) => ({
+  ...u,
+  text: String(u.text ?? "").trim(),
+}));
 
-  const allCandidates: { updateIndex: number; start: number; weight: number }[] = [];
-  baseUpdates.forEach((u, i) => {
-    const words = u.text.split(" ");
-    words.forEach((word, idx) => {
-      const lower = word.replace(/[^a-zA-Z]/g, "").toLowerCase();
-      if (!lower || STOPWORDS.includes(lower) || lower.length <= 3) return;
 
-      let weight = 1;
-      if (LOCATION_WORDS.includes(lower)) weight += 10;
-      if (/^[A-Z]{2,}$/.test(word)) weight += 8;
-      if (/^".+"$/.test(word)) weight += 8;
-      if (idx >= words.length - 3) weight += 6;
-      if (/^[A-Z]/.test(word) && lower !== "i") weight += 4;
 
-      allCandidates.push({ updateIndex: i, start: idx, weight });
-    });
-  });
-
-  const selectedDoodles = weightedRandomSelection(allCandidates, totalDoodles);
-  const doodleMapByUpdate: Record<
-  number,
-  Record<number, { type: DoodleType; rotation: number; opacity: number; strokeWidth?: number; dashArray?: string }>
-> = {};
-
-  selectedDoodles.forEach((cand) => {
-    if (!doodleMapByUpdate[cand.updateIndex]) doodleMapByUpdate[cand.updateIndex] = {};
-    doodleMapByUpdate[cand.updateIndex][cand.start] = {
-  type: randomFromArray(DOODLES),
-  rotation: randomInt(-10, 10),
-  opacity: parseFloat((Math.random() * 0.2 + 0.8).toFixed(2)),
-  strokeWidth: randomInt(2, 4), // ✅ NEW
-  dashArray: `${randomInt(140, 160)}, ${randomInt(15, 25)}`, // ✅ NEW
+  type DoodleMark = {
+  type: DoodleType;
+  rotation: number;
+  opacity: number;
+  strokeWidth?: number;
+  dashArray?: string;
 };
-  });
 
-  const numDirections = randomInt(
-    Math.ceil(baseUpdates.length * 0.33),
-    Math.ceil(baseUpdates.length * 0.66)
-  );
-  const directionIndexes = selectUniqueRandomIndexes(baseUpdates.length, numDirections);
-  const shuffledDirections = shuffleArray([...STAGE_DIRECTIONS]);
+type StableUpdate = UpdateItem & {
+  direction: string | null;
+  rockSaltPhrase: string | null;
+  horizontalPercent: number;
+  rotation: number;
+  doodleMap: Record<number, DoodleMark>;
+  fontSize: number;
+};
 
-  return {
-    updates: baseUpdates.map((u, i) => {
-      const positionType = i === 0 ? "near" : "far";
-      const horizontalPercent =
-        positionType === "near"
-          ? randomInt(5, 12) * (Math.random() > 0.5 ? 1 : -1)
-          : randomInt(18, 24) * (Math.random() > 0.5 ? 1 : -1);
+type StableData = {
+  updates: StableUpdate[];
+  randomAct: number;
+  randomScene: number;
+  randomSceneDescription: string;
+};
 
-      return {
-        ...u,
-        direction: directionIndexes.includes(i) ? shuffledDirections.pop() || null : null,
-        rockSaltPhrase: phraseIndexes.includes(i) && shuffledPhrases.length > 0 ? shuffledPhrases.pop()! : null,
-        horizontalPercent,
-        rotation: randomInt(-8, 8),
-        doodleMap: doodleMapByUpdate[i] || {},
-        fontSize: randomInt(14, 24),
+const stableDataRef = useRef<StableData | null>(null);
+
+  const stableKeyRef = useRef<string>("");
+
+  if (!stableDataRef.current || stableKeyRef.current !== feedKey) {
+    stableKeyRef.current = feedKey;
+
+    const shuffledPhrases = shuffleArray([...ROCK_SALT_PHRASES]);
+    const phraseIndexes = selectUniqueRandomIndexes(baseUpdates.length, 2);
+
+    const totalDoodles = randomInt(
+      Math.ceil(baseUpdates.length * 0.66),
+      Math.ceil(baseUpdates.length * 1.0)
+    );
+
+    const allCandidates: { updateIndex: number; start: number; weight: number }[] = [];
+    baseUpdates.forEach((u, i) => {
+      const words = u.text.split(" ");
+      words.forEach((word, idx) => {
+        const lower = word.replace(/[^a-zA-Z]/g, "").toLowerCase();
+        if (!lower || STOPWORDS.includes(lower) || lower.length <= 3) return;
+
+        let weight = 1;
+        if (LOCATION_WORDS.includes(lower)) weight += 10;
+        if (/^[A-Z]{2,}$/.test(word)) weight += 8;
+        if (/^".+"$/.test(word)) weight += 8;
+        if (idx >= words.length - 3) weight += 6;
+        if (/^[A-Z]/.test(word) && lower !== "i") weight += 4;
+
+        allCandidates.push({ updateIndex: i, start: idx, weight });
+      });
+    });
+
+    const selectedDoodles = weightedRandomSelection(allCandidates, totalDoodles);
+
+    const doodleMapByUpdate: Record<
+      number,
+      Record<number, { type: DoodleType; rotation: number; opacity: number; strokeWidth?: number; dashArray?: string }>
+    > = {};
+
+    selectedDoodles.forEach((cand) => {
+      if (!doodleMapByUpdate[cand.updateIndex]) doodleMapByUpdate[cand.updateIndex] = {};
+      doodleMapByUpdate[cand.updateIndex][cand.start] = {
+        type: randomFromArray(DOODLES),
+        rotation: randomInt(-10, 10),
+        opacity: parseFloat((Math.random() * 0.2 + 0.8).toFixed(2)),
+        strokeWidth: randomInt(2, 4),
+        dashArray: `${randomInt(140, 160)}, ${randomInt(15, 25)}`,
       };
-    }),
-    randomAct: randomInt(1, 3),
-    randomScene: randomInt(1, 10),
-    randomSceneDescription: randomFromArray(SCENE_DESCRIPTIONS),
-  };
-});
+    });
 
+    const numDirections = randomInt(
+      Math.ceil(baseUpdates.length * 0.33),
+      Math.ceil(baseUpdates.length * 0.66)
+    );
+    const directionIndexes = selectUniqueRandomIndexes(baseUpdates.length, numDirections);
+    const shuffledDirections = shuffleArray([...STAGE_DIRECTIONS]);
+
+    stableDataRef.current = {
+      updates: baseUpdates.map((u, i) => {
+        const positionType = i === 0 ? "near" : "far";
+        const horizontalPercent =
+          positionType === "near"
+            ? randomInt(5, 12) * (Math.random() > 0.5 ? 1 : -1)
+            : randomInt(18, 24) * (Math.random() > 0.5 ? 1 : -1);
+
+        return {
+          ...u,
+          direction: directionIndexes.includes(i) ? shuffledDirections.pop() || null : null,
+          rockSaltPhrase:
+            phraseIndexes.includes(i) && shuffledPhrases.length > 0 ? shuffledPhrases.pop()! : null,
+          horizontalPercent,
+          rotation: randomInt(-8, 8),
+          doodleMap: doodleMapByUpdate[i] || {},
+          fontSize: randomInt(14, 24),
+        };
+      }),
+      randomAct: randomInt(1, 3),
+      randomScene: randomInt(1, 10),
+      randomSceneDescription: randomFromArray(SCENE_DESCRIPTIONS),
+    };
+  }
+
+  const stableData = stableDataRef.current!;
+
+  const innerWidthPx = Math.max(
+    0,
+    containerSize.width - containerSize.paddingLeft - containerSize.paddingRight
+  );
+
+  // cap for aesthetics on wide screens, but never exceed the container’s inner width
+  const textBlockWidth = `${Math.min(420, innerWidthPx)}px`;
 
   return (
     <section
@@ -468,10 +593,14 @@ export default function UpdatesPanel({
             color: "#241123",
             marginTop: "0rem",
             marginBottom: "3.25rem",
-            maxWidth: "400px",
+            width: "100%",
+            maxWidth: textBlockWidth,
             margin: "0 auto",
             textAlign: "left",
-            paddingLeft: "2rem",
+            paddingInline: "2rem",
+            boxSizing: "border-box",
+            overflowWrap: "anywhere",
+            wordBreak: "break-word",
             opacity: 0.5,
           }}
         >
@@ -481,16 +610,17 @@ export default function UpdatesPanel({
 
       {/* Updates */}
       <div style={{ display: "flex", flexDirection: "column", gap: "2.6rem" }}>
-        {stableData.updates.map((update, index) => {
-        const fontSize = update.fontSize; // ✅ Stable now
-        const phraseWidth = phraseRefs.current[index]?.offsetWidth || 0;
+{stableData.updates.map((update, index) => {
+  const fontSize = update.fontSize; // ✅ Stable now
+  const phraseWidth = phraseRefs.current[index]?.offsetWidth || 0;
 
-          const maxWidth = containerSize.width - containerSize.paddingLeft - containerSize.paddingRight;
+  return (
+    <Link
+      key={index}
+      href={update.link || "#"}
+      style={{ textDecoration: "none", color: "inherit", display: "block" }}
+    >
 
-       
-
-          return (
-            <Link key={index} href={update.link || "#"} style={{ textDecoration: "none", color: "inherit", display: "block" }}>
               <div
                 style={{ textAlign: "center", padding: "0.25rem 0", position: "relative" }}
                 onMouseEnter={(e) => handleHover(e, true)}
@@ -503,15 +633,15 @@ export default function UpdatesPanel({
                     }}
                     style={{
                       ...computePhraseStyle(
-                        update.horizontalPercent,
-                        containerSize.width,
-                        containerSize.paddingLeft,
-                        containerSize.paddingRight,
-                        phraseWidth,
-                        update.rotation,
-                        strictness,
-                        verticalOffset
-                      ),
+                      update.horizontalPercent,
+                      containerSize.width,
+                      containerSize.paddingLeft,
+                      containerSize.paddingRight,
+                      phraseWidth,
+                      update.rotation,
+                      strictness,
+                      verticalOffset
+                    ),
                       fontFamily: "var(--font-rock-salt), cursive",
                       fontSize: `${fontSize}px`,
                       color: "#F23359",
@@ -540,9 +670,13 @@ export default function UpdatesPanel({
                       color: "#241123",
                       fontStyle: "italic",
                       textAlign: "left",
-                      maxWidth: "400px",
+                      width: "100%",
+                      maxWidth: textBlockWidth,
                       margin: "0 auto 0rem auto",
-                      paddingLeft: "5rem",
+                      paddingInline: "2rem",
+                      boxSizing: "border-box",
+                      overflowWrap: "anywhere",
+                      wordBreak: "break-word",
                       opacity: 0.5,
                     }}
                   >
@@ -555,10 +689,14 @@ export default function UpdatesPanel({
                     fontSize: "1rem",
                     lineHeight: 1.5,
                     color: "#241123",
-                    maxWidth: "400px",
+                    width: "100%",
+                    maxWidth: textBlockWidth,
                     margin: "0 auto",
                     textAlign: "left",
-                    paddingLeft: "2rem",
+                    paddingInline: "2rem",
+                    boxSizing: "border-box",
+                    overflowWrap: "anywhere",
+                    wordBreak: "break-word",
                   }}
                 >
                   {renderText(update.text, update.doodleMap)}

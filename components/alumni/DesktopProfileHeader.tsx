@@ -15,6 +15,7 @@ import StatusFlags from "@/components/alumni/StatusFlags";
 import { splitTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
 
 interface DesktopProfileHeaderProps {
+  alumniId: string;
   name: string;
   role: string;
   roles?: string[];
@@ -26,7 +27,9 @@ interface DesktopProfileHeaderProps {
   socials?: string[];
 }
 
+
 export default function DesktopProfileHeader({
+  alumniId,
   name,
   role,
   roles = [],
@@ -37,9 +40,65 @@ export default function DesktopProfileHeader({
   website,
   socials,
 }: DesktopProfileHeaderProps) {
+
   const router = useRouter();
   const [isModalOpen, setModalOpen] = useState(false);
   const [currentUrl, setCurrentUrl] = useState("");
+
+  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
+  const galleryCacheRef = useRef<string[] | null>(null);
+  const openingRef = useRef(false);
+
+async function openHeadshotGallery() {
+  // If we already have urls, just open the modal (no refetch)
+  if (galleryCacheRef.current && galleryCacheRef.current.length > 0) {
+    setGalleryUrls(galleryCacheRef.current);
+    setModalOpen(true);
+    return;
+  }
+
+  if (openingRef.current) return;
+  openingRef.current = true;
+
+  try {
+    const qs = new URLSearchParams({ alumniId, kind: "headshot" });
+    const r = await fetch(`/api/alumni/media/list?${qs.toString()}`, { cache: "no-store" });
+    const j = await r.json();
+
+    const urls =
+      (j?.items || [])
+        .map((it: any) => {
+          const ext = String(it?.externalUrl || "").trim();
+          if (ext) return ext;
+
+          const fid = String(it?.fileId || "").trim();
+          if (fid) return `https://drive.google.com/uc?export=view&id=${fid}`;
+
+          return "";
+        })
+        .filter(Boolean) || [];
+
+    const fallback = (imageSrc ? [imageSrc] : []).filter(Boolean);
+    const next = (urls.length ? urls : fallback).filter(Boolean);
+
+    if (!next.length) return;
+
+    galleryCacheRef.current = next;
+    setGalleryUrls(next);
+    setModalOpen(true);
+
+  } catch {
+    const fallback = (imageSrc ? [imageSrc] : []).filter(Boolean);
+    if (!fallback.length) return;
+
+    galleryCacheRef.current = fallback;
+    setGalleryUrls(fallback);
+    setModalOpen(true);
+  } finally {
+    openingRef.current = false;
+  }
+}
+
 
   const nameParts = name.trim().split(" ");
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
@@ -176,16 +235,18 @@ export default function DesktopProfileHeader({
       {/* Headshot */}
       <div
         className="absolute top-0 left-[1.5rem] sm:left-4 z-40 w-[360px] h-[450px] overflow-hidden bg-[#241123] shadow-[6px_8px_20px_rgba(0,0,0,0.25)] cursor-pointer"
-        onClick={() => setModalOpen(true)}
+        onClick={openHeadshotGallery}
         role="button"
         tabIndex={0}
         aria-label="Open headshot"
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            setModalOpen(true);
+            e.stopPropagation();
+            openHeadshotGallery();
           }
         }}
+
       >
         <Image
           src={imageSrc}
@@ -362,8 +423,13 @@ export default function DesktopProfileHeader({
 
       {isModalOpen && (
         <Lightbox
-          images={[imageSrc]}
-          onClose={() => setModalOpen(false)}
+          images={(galleryUrls && galleryUrls.length ? galleryUrls : [imageSrc]).filter(Boolean)}
+          onClose={() => {
+            setModalOpen(false);
+            // Optional: if you want a fresh fetch each open, clear cache:
+            // setGalleryUrls([]);
+          }}
+
         />
       )}
     </div>

@@ -257,6 +257,7 @@ interface ProfileCardProps {
   slug: string;
   role: string;
   headshotUrl?: string;
+  currentHeadshotId?: string;
   location?: string;
   identityTags?: any;
   statusFlags?: any;
@@ -278,6 +279,7 @@ export default function ProfileCard(props: ProfileCardProps) {
     slug,
     role,
     headshotUrl,
+    currentHeadshotId,
     location,
     email,
     website,
@@ -285,6 +287,13 @@ export default function ProfileCard(props: ProfileCardProps) {
     stories = [],
     slugAliases = [],
   } = props;
+
+    const derivedHeadshotUrl =
+    (currentHeadshotId?.trim()
+      ? `/api/media/thumb?fileId=${encodeURIComponent(currentHeadshotId.trim())}`
+      : "") ||
+    headshotUrl ||
+    undefined;
 
   // ✅ Normalize "array-ish" props defensively
   const identityTags = coerceStrArray((props as any).identityTags ?? (props as any)["identity tags"]);
@@ -463,20 +472,15 @@ export default function ProfileCard(props: ProfileCardProps) {
 
   return (
     <div ref={profileCardRef} style={{ position: "relative" }}>
-      {/* ✅ RESTORED Contact tab/overlay */}
-      <ContactOverlay
-        email={email}
-        website={website}
-        socials={socials}
-        profileCardRef={profileCardRef}
-      />
+      {/* ✅ RESTORED Contact tab/overlay moved to mobile and desktop profile headers */}
 
       {isMobile ? (
         <MobileProfileHeader
+          alumniId={slug}
           name={name}
           role={role}
           location={location}
-          headshotUrl={headshotUrl}
+          headshotUrl={derivedHeadshotUrl}
           email={email}
           website={website}
           socials={socials}
@@ -484,10 +488,11 @@ export default function ProfileCard(props: ProfileCardProps) {
         />
       ) : (
         <DesktopProfileHeader
+          alumniId={slug}
           name={name}
           role={role}
           location={location}
-          headshotUrl={headshotUrl}
+          headshotUrl={derivedHeadshotUrl}
           email={email}
           website={website}
           socials={socials}
