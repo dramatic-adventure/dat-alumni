@@ -17,8 +17,8 @@ type MediaItem = {
   collectionId?: string;
   collectionTitle?: string;
   externalUrl?: string;
-  isCurrent?: string;
-  isFeatured?: string;
+  isCurrent?: boolean;
+  isFeatured?: boolean;
   sortIndex?: string;
   note?: string;
   drive?: DriveMeta;
@@ -49,7 +49,7 @@ export default function MediaPickerModal({
       setLoading(true);
       setErr("");
       try {
-        const url = `/api/media/list?alumniId=${encodeURIComponent(alumniId)}&kind=${kind}&includeDrive=true&limit=100`;
+        const url = `/api/alumni/media/list?alumniId=${encodeURIComponent(alumniId)}&kind=${kind}&includeDrive=true&limit=100`;
         const res = await fetch(url, { cache: "no-store" });
         const j = await res.json();
         if (!res.ok) throw new Error(j?.error || "Failed to load media");
@@ -98,7 +98,10 @@ export default function MediaPickerModal({
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {items.map((it) => {
-                const isLive = it.kind === "headshot" ? it.isCurrent === "TRUE" : it.isFeatured === "TRUE";
+                const isLive =
+                  it.kind === "headshot"
+                    ? it.isCurrent === true
+                    : it.isFeatured === true;
                 const label = isLive ? "Currently Featured" : "Feature";
                 const thumbAlt = it.drive?.name || it.fileId;
 
@@ -130,7 +133,7 @@ export default function MediaPickerModal({
                         {thumbAlt}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {new Date(it.uploadedAt || "").toLocaleString()}
+                        {it.uploadedAt ? new Date(it.uploadedAt).toLocaleString() : ""}
                       </div>
                       <div className="flex items-center justify-between">
                         {isLive ? (
