@@ -21,7 +21,6 @@ out/
 build/
 
 # misc
-.DS_Store
 *.pem
 
 # debug logs
@@ -54,3 +53,7 @@ next-env.d.tspackage-lock.json
 *.db-journal
 *.db-wal
 *.db-shm
+
+# macOS
+.DS_Store
+**/.DS_Store
