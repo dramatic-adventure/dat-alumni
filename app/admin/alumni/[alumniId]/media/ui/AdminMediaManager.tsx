@@ -35,7 +35,7 @@ export default function AdminMediaManager({ alumniId }: { alumniId: string }) {
         </button>
       </div>
 
-      {/* You could show a small summary here by calling /api/media/list and highlighting the live one */}
+      {/* You could show a small summary here by calling /api/alumni/media/list and highlighting the live one */}
 
       <MediaPickerModal
         open={pickerOpen}

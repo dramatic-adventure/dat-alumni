@@ -17,7 +17,8 @@ const ALLOWED_HOSTS = new Set<string>([
   "farm5.staticflickr.com",
   "farm6.staticflickr.com",
   "dl.dropboxusercontent.com",
-
+    // Google Drive
+  "drive.google.com",
   // ✅ Squarespace image CDN (your log shows this exact host)
   "images.squarespace-cdn.com",
 ]);
@@ -50,8 +51,17 @@ function normalizeUrlOrNull(url: string): URL | null {
 
 function isAllowedHost(hostname: string) {
   const host = hostname.toLowerCase();
-  return ALLOWED_HOSTS.has(host);
+
+  // exact allowlist
+  if (ALLOWED_HOSTS.has(host)) return true;
+
+  // allow Googleusercontent subdomains (lh3, lh5, etc.)
+  if (host === "googleusercontent.com") return true;
+  if (host.endsWith(".googleusercontent.com")) return true;
+
+  return false;
 }
+
 
 /**
  * HEAD: allow lightweight preflight checks (used by your ProfileCard poster preflight)
@@ -113,12 +123,23 @@ export async function GET(req: Request) {
           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome Safari",
         Accept: "image/avif,image/webp,image/*,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9",
-        // Some CDNs are fussier without a referer; harmless if ignored.
         Referer: "https://www.dramaticadventure.com/",
       },
-      // Cache upstream fetch in Next’s data cache a bit (helps repeat loads)
-      next: { revalidate: 60 * 60 * 24 }, // 24h
+      redirect: "follow",
+      next: { revalidate: 60 * 60 * 24 },
     });
+
+    // 🔐 Re-validate host after redirects (Drive → googleusercontent)
+    const finalUrl = new URL(upstream.url);
+    const finalHost = finalUrl.hostname.toLowerCase();
+
+    if (!isAllowedHost(finalHost)) {
+      return jsonErr(403, {
+        error: "Redirected host not allowed",
+        host: finalHost,
+      });
+    }
+
 
     if (!upstream.ok) {
       return jsonErr(502, {

@@ -18,8 +18,41 @@ interface MiniProfileCardProps {
   href?: string;
 
   /** NEW */
-  badgeLabel?: string;          // e.g. "LOCAL MASTER"
-  highlightFrame?: boolean;     // subtle honor treatment
+  badgeLabel?: string; // e.g. "LOCAL MASTER"
+  highlightFrame?: boolean; // subtle honor treatment
+
+  /**
+   * ✅ IMPORTANT: cache-bust key for Next/Image
+   * Pass something that changes when the headshot changes (e.g. updatedAt timestamp)
+   */
+  cacheKey?: string | number;
+}
+
+function normalizeHeadshotUrl(input?: string) {
+  const u = (input || "").trim();
+  if (!u) return "";
+  // remove stray whitespace inside URLs
+  return u.replace(/\s+/g, "").replace(/^http:\/\//i, "https://");
+}
+
+function addCacheBust(url: string, cacheKey?: string | number) {
+  if (!url) return url;
+  if (cacheKey === undefined || cacheKey === null || cacheKey === "") return url;
+
+  // Only apply to remote URLs (avoid messing with local /images/*)
+  const isRemote = /^https?:\/\//i.test(url);
+  if (!isRemote) return url;
+
+  try {
+    const parsed = new URL(url);
+    // Use a stable param name so it’s easy to reason about
+    parsed.searchParams.set("v", String(cacheKey));
+    return parsed.toString();
+  } catch {
+    // Fallback: naive append
+    const joiner = url.includes("?") ? "&" : "?";
+    return `${url}${joiner}v=${encodeURIComponent(String(cacheKey))}`;
+  }
 }
 
 export default function MiniProfileCard({
@@ -37,9 +70,16 @@ export default function MiniProfileCard({
 
   badgeLabel,
   highlightFrame = false,
+
+  cacheKey,
 }: MiniProfileCardProps) {
   const defaultImage = "/images/default-headshot.png";
-  const imageSrc = (headshotUrl || defaultImage).replace(/^http:\/\//i, "https://");
+
+  const normalized = normalizeHeadshotUrl(headshotUrl);
+  const baseSrc = normalized || defaultImage;
+
+  // ✅ Ensures Next/Image fetches the *latest* when cacheKey changes
+  const imageSrc = addCacheBust(baseSrc, cacheKey);
 
   const isLight = variant === "light";
 

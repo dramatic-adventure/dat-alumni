@@ -42,6 +42,45 @@ export default function MobileProfileHeader({
     [headshotUrl]
   );
 
+  const [displayHeadshotSrc, setDisplayHeadshotSrc] = useState<string>(imageSrc);
+
+  useEffect(() => {
+    setDisplayHeadshotSrc(imageSrc);
+  }, [imageSrc]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrateMostRecentHeadshot() {
+      try {
+        const qs = new URLSearchParams({ alumniId, kind: "headshot", limit: "1" });
+        const r = await fetch(`/api/alumni/media/list?${qs.toString()}`, { cache: "no-store" });
+        const j = await r.json();
+        const it = (j?.items || [])[0];
+        if (!it) return;
+
+        const fid = String(it?.fileId || "").trim();
+        const ext = String(it?.externalUrl || "").trim();
+
+        // Prefer externalUrl if present; otherwise Drive.
+        const top = ext || (fid ? `https://drive.google.com/uc?export=view&id=${fid}` : "");
+        if (!top) return;
+        if (cancelled) return;
+
+        setDisplayHeadshotSrc(top);
+      } catch {
+        // non-fatal
+      }
+    }
+
+    if (alumniId) hydrateMostRecentHeadshot();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [alumniId]);
+
+
   const headerRef = useRef<HTMLDivElement>(null);
   const [isModalOpen, setModalOpen] = useState(false);
   const [currentUrl, setCurrentUrl] = useState("");
@@ -50,10 +89,23 @@ export default function MobileProfileHeader({
   const galleryCacheRef = useRef<string[] | null>(null);
   const openingRef = useRef(false);
 
+  useEffect(() => {
+    // If the profile headshot changes, the lightbox cache is stale
+    galleryCacheRef.current = null;
+    setGalleryUrls([]);
+  }, [displayHeadshotSrc]);
+
   async function openHeadshotGallery() {
-    if (galleryCacheRef.current && galleryCacheRef.current.length > 0) {
+    const current = (displayHeadshotSrc ?? imageSrc) as string;
+
+    // open instantly with whatever the profile is currently displaying
+    setGalleryUrls((prev) => (prev?.length ? prev : [current].filter(Boolean) as string[]));
+    setModalOpen(true);
+
+    // If we already have urls AND they include the currently displayed headshot,
+    // just open with the cached gallery (no refetch).
+    if (galleryCacheRef.current && galleryCacheRef.current.length > 0 && galleryCacheRef.current.includes(current)) {
       setGalleryUrls(galleryCacheRef.current);
-      setModalOpen(true);
       return;
     }
 
@@ -65,21 +117,37 @@ export default function MobileProfileHeader({
       const qs = new URLSearchParams({ alumniId, kind: "headshot" });
       const r = await fetch(`/api/alumni/media/list?${qs.toString()}`, { cache: "no-store" });
       const j = await r.json();
+      
+const rawItems = (j?.items || []) as any[];
 
-      const urls =
-        (j?.items || [])
-          .map((it: any) => {
-            const ext = String(it?.externalUrl || "").trim();
-            if (ext) return ext;
+// Prioritize MOST RECENT (regardless of source)
+const ordered = [...rawItems].sort((a, b) => {
+  const ta = Date.parse(String(a?.uploadedAt || "")) || 0;
+  const tb = Date.parse(String(b?.uploadedAt || "")) || 0;
+  if (tb !== ta) return tb - ta;
 
-            const fid = String(it?.fileId || "").trim();
-            if (fid) return `https://drive.google.com/uc?export=view&id=${fid}`;
+  const sa = Number.isFinite(Number(a?.sortIndex)) ? Number(a.sortIndex) : Number.POSITIVE_INFINITY;
+  const sb = Number.isFinite(Number(b?.sortIndex)) ? Number(b.sortIndex) : Number.POSITIVE_INFINITY;
+  if (sa !== sb) return sa - sb;
 
-            return "";
-          })
-          .filter(Boolean) || [];
+  return String(b?.fileId || "").localeCompare(String(a?.fileId || ""));
+});
 
-      const fallback = (imageSrc ? [imageSrc] : []).filter(Boolean);
+const urls =
+  ordered
+    .map((it: any) => {
+      const fid = String(it?.fileId || "").trim();
+      if (fid) return `https://drive.google.com/uc?export=view&id=${fid}`;
+
+      const ext = String(it?.externalUrl || "").trim();
+      if (ext) return ext;
+
+      return "";
+    })
+    .filter(Boolean);
+
+
+      const fallback = ([displayHeadshotSrc ?? imageSrc].filter(Boolean)) as string[];
       const next = (urls.length ? urls : fallback).filter(Boolean);
 
       if (!next.length) return;
@@ -89,7 +157,7 @@ export default function MobileProfileHeader({
       setModalOpen(true);
 
     } catch {
-      const fallback = (imageSrc ? [imageSrc] : []).filter(Boolean);
+      const fallback = ([displayHeadshotSrc ?? imageSrc].filter(Boolean)) as string[];
       if (!fallback.length) return;
 
       galleryCacheRef.current = fallback;
@@ -158,26 +226,14 @@ export default function MobileProfileHeader({
   return (
     <div ref={headerRef} style={{ backgroundColor: "#C39B6C", position: "relative" }}>
       {hasContactInfo && (
-  <div
-    style={{
-      position: "absolute",
-      top: "1rem",
-      left: "1rem",
-      right: "1rem",
-      pointerEvents: "none",
-      zIndex: 60,
-    }}
-  >
-    <div style={{ pointerEvents: "auto", display: "flex", justifyContent: "flex-start" }}>
-      <ContactOverlay
-        email={email}
-        website={website}
-        socials={socials}
-        profileCardRef={headerRef}
-      />
-    </div>
-  </div>
+  <ContactOverlay
+    email={email}
+    website={website}
+    socials={socials}
+    profileCardRef={headerRef}
+  />
 )}
+
       {statusFlags.length > 0 && (
         <div
           className="absolute top-1 right-[4rem] z-50"
@@ -238,7 +294,7 @@ export default function MobileProfileHeader({
         aria-label="Open headshot"
       >
         <Image
-          src={imageSrc}
+          src={displayHeadshotSrc}
           alt={`${name}'s headshot`}
           fill
           placeholder="blur"

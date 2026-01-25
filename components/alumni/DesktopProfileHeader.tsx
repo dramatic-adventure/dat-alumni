@@ -49,66 +49,213 @@ export default function DesktopProfileHeader({
   const galleryCacheRef = useRef<string[] | null>(null);
   const openingRef = useRef(false);
 
-async function openHeadshotGallery() {
-  // If we already have urls, just open the modal (no refetch)
-  if (galleryCacheRef.current && galleryCacheRef.current.length > 0) {
-    setGalleryUrls(galleryCacheRef.current);
-    setModalOpen(true);
-    return;
-  }
+  const fallbackImage = "/images/default-headshot.png";
 
-  if (openingRef.current) return;
-  openingRef.current = true;
+  const imageSrc = useMemo(
+    () => (headshotUrl ? headshotUrl.replace(/^http:\/\//i, "https://") : fallbackImage),
+    [headshotUrl]
+  );
 
-  try {
-    const qs = new URLSearchParams({ alumniId, kind: "headshot" });
-    const r = await fetch(`/api/alumni/media/list?${qs.toString()}`, { cache: "no-store" });
-    const j = await r.json();
-
-    const urls =
-      (j?.items || [])
-        .map((it: any) => {
-          const ext = String(it?.externalUrl || "").trim();
-          if (ext) return ext;
-
-          const fid = String(it?.fileId || "").trim();
-          if (fid) return `https://drive.google.com/uc?export=view&id=${fid}`;
-
-          return "";
-        })
-        .filter(Boolean) || [];
-
-    const fallback = (imageSrc ? [imageSrc] : []).filter(Boolean);
-    const next = (urls.length ? urls : fallback).filter(Boolean);
-
-    if (!next.length) return;
-
-    galleryCacheRef.current = next;
-    setGalleryUrls(next);
-    setModalOpen(true);
-
-  } catch {
-    const fallback = (imageSrc ? [imageSrc] : []).filter(Boolean);
-    if (!fallback.length) return;
-
-    galleryCacheRef.current = fallback;
-    setGalleryUrls(fallback);
-    setModalOpen(true);
-  } finally {
-    openingRef.current = false;
-  }
-}
+  
 
 
   const nameParts = name.trim().split(" ");
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
   const lastName = nameParts.slice(-1).join(" ") || "";
 
-  const fallbackImage = "/images/default-headshot.png";
-  const imageSrc = useMemo(
-    () => (headshotUrl ? headshotUrl.replace(/^http:\/\//i, "https://") : fallbackImage),
-    [headshotUrl]
-  );
+  const [displayHeadshotSrc, setDisplayHeadshotSrc] = useState<string>(imageSrc);
+
+  // Keep displayed headshot aligned with prop fallback until hydration overrides it
+  useEffect(() => {
+    setDisplayHeadshotSrc(imageSrc);
+  }, [imageSrc]);
+
+
+    useEffect(() => {
+    let cancelled = false;
+
+    const toUrl = (it: any): string => {
+      const fid = String(it?.fileId || "").trim();
+      if (fid) return `https://drive.google.com/uc?export=view&id=${fid}`;
+
+      const ext = String(it?.externalUrl || "").trim();
+      if (ext) return ext;
+
+      return "";
+    };
+
+    const toTime = (it: any): number => {
+      // "uploadedAt" primary, then a few sensible fallbacks
+      const raw =
+        it?.uploadedAt ??
+        it?.createdAt ??
+        it?.updatedAt ??
+        it?.ts ??
+        it?.timestamp ??
+        "";
+
+      const n = typeof raw === "number" ? raw : Date.parse(String(raw));
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    const orderMostRecent = (items: any[]) =>
+      [...items].sort((a, b) => {
+        const ta = toTime(a);
+        const tb = toTime(b);
+        if (tb !== ta) return tb - ta;
+
+        const sa = Number.isFinite(Number(a?.sortIndex))
+          ? Number(a.sortIndex)
+          : Number.POSITIVE_INFINITY;
+        const sb = Number.isFinite(Number(b?.sortIndex))
+          ? Number(b.sortIndex)
+          : Number.POSITIVE_INFINITY;
+        if (sa !== sb) return sa - sb;
+
+        // stable tie-breaker
+        return String(b?.fileId || b?.externalUrl || "").localeCompare(
+          String(a?.fileId || a?.externalUrl || "")
+        );
+      });
+
+    async function hydrateHeadshots() {
+      try {
+        const qs = new URLSearchParams({ alumniId, kind: "headshot" });
+        const r = await fetch(`/api/alumni/media/list?${qs.toString()}`, { cache: "no-store" });
+        const j = await r.json();
+        const rawItems = (j?.items || []) as any[];
+
+        const ordered = orderMostRecent(rawItems);
+        const urls = ordered.map(toUrl).filter(Boolean);
+
+        // Pick THE single most recent headshot URL (regardless of source)
+        const top = urls[0] || "";
+        if (!cancelled && top) setDisplayHeadshotSrc(top);
+
+        // Also seed the lightbox cache with the same ordering
+        if (!cancelled && urls.length) {
+          galleryCacheRef.current = Array.from(new Set(urls));
+        }
+      } catch {
+        // non-fatal
+      }
+    }
+
+    if (alumniId) hydrateHeadshots();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [alumniId, imageSrc]);
+
+  useEffect(() => {
+    if (!isModalOpen) return;
+
+    const current = (displayHeadshotSrc || imageSrc || "").trim();
+    if (!current) return;
+
+    setGalleryUrls((prev) => {
+      const rest = (prev || []).filter((u) => u && u !== current);
+      return [current, ...rest];
+    });
+  }, [isModalOpen, displayHeadshotSrc, imageSrc]);
+
+  async function openHeadshotGallery() {
+    const current = (displayHeadshotSrc || imageSrc || "").trim();
+
+    // Open instantly with whatever we're currently displaying
+    setGalleryUrls((prev) => {
+      if (prev?.length) {
+        const rest = prev.filter((u) => u && u !== current);
+        return current ? [current, ...rest] : prev;
+      }
+      return current ? [current] : [];
+    });
+    setModalOpen(true);
+
+    // If we have a cache, use it immediately, but always force current to index 0
+    if (galleryCacheRef.current && galleryCacheRef.current.length > 0) {
+      const cached = galleryCacheRef.current.filter(Boolean);
+      const rest = cached.filter((u) => u !== current);
+      const next = current ? [current, ...rest] : cached;
+
+      setGalleryUrls(next);
+      return;
+    }
+
+    if (openingRef.current) return;
+    openingRef.current = true;
+
+    try {
+      const qs = new URLSearchParams({ alumniId, kind: "headshot" });
+      const r = await fetch(`/api/alumni/media/list?${qs.toString()}`, { cache: "no-store" });
+      const j = await r.json();
+      const rawItems = (j?.items || []) as any[];
+
+      const toUrl = (it: any): string => {
+        const fid = String(it?.fileId || "").trim();
+        if (fid) return `https://drive.google.com/uc?export=view&id=${fid}`;
+
+        const ext = String(it?.externalUrl || "").trim();
+        if (ext) return ext;
+
+        return "";
+      };
+
+      const toTime = (it: any): number => {
+        const raw =
+          it?.uploadedAt ??
+          it?.createdAt ??
+          it?.updatedAt ??
+          it?.ts ??
+          it?.timestamp ??
+          "";
+        const n = typeof raw === "number" ? raw : Date.parse(String(raw));
+        return Number.isFinite(n) ? n : 0;
+      };
+
+      const ordered = [...rawItems].sort((a, b) => {
+        const ta = toTime(a);
+        const tb = toTime(b);
+        if (tb !== ta) return tb - ta;
+
+        const sa = Number.isFinite(Number(a?.sortIndex))
+          ? Number(a.sortIndex)
+          : Number.POSITIVE_INFINITY;
+        const sb = Number.isFinite(Number(b?.sortIndex))
+          ? Number(b.sortIndex)
+          : Number.POSITIVE_INFINITY;
+        if (sa !== sb) return sa - sb;
+
+        return String(b?.fileId || b?.externalUrl || "").localeCompare(
+          String(a?.fileId || a?.externalUrl || "")
+        );
+      });
+
+      const urls = ordered.map(toUrl).filter(Boolean);
+
+      // Build final gallery, always with current first; fallback to current if list empty
+      const base = urls.length ? urls : (current ? [current] : []);
+      const unique = Array.from(new Set(base));
+      const rest = unique.filter((u) => u !== current);
+      const next = current ? [current, ...rest] : unique;
+
+      if (!next.length) return;
+
+      galleryCacheRef.current = next;
+      setGalleryUrls(next);
+    } catch {
+      // fallback: at least show the current displayed headshot
+      if (current) {
+        const next = [current];
+        galleryCacheRef.current = next;
+        setGalleryUrls(next);
+      }
+    } finally {
+      openingRef.current = false;
+    }
+  }
+
 
   const profileCardRef = useRef<HTMLDivElement>(null);
   const hasContactInfo = !!(email || website || (socials && socials.length > 0));
@@ -249,7 +396,7 @@ async function openHeadshotGallery() {
 
       >
         <Image
-          src={imageSrc}
+          src={displayHeadshotSrc}
           alt={`${name}'s headshot`}
           fill
           placeholder="blur"
@@ -423,13 +570,14 @@ async function openHeadshotGallery() {
 
       {isModalOpen && (
         <Lightbox
-          images={(galleryUrls && galleryUrls.length ? galleryUrls : [imageSrc]).filter(Boolean)}
+          images={(
+            galleryUrls && galleryUrls.length
+              ? galleryUrls
+              : [(displayHeadshotSrc || imageSrc || "").trim()]
+          ).filter(Boolean)}
           onClose={() => {
             setModalOpen(false);
-            // Optional: if you want a fresh fetch each open, clear cache:
-            // setGalleryUrls([]);
           }}
-
         />
       )}
     </div>

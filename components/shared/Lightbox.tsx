@@ -20,9 +20,12 @@ export default function Lightbox({
   const total = images.length;
   const multiple = total > 1;
 
-  const goTo = useCallback((index: number) => {
-    setCurrentIndex((index + total) % total);
-  }, [total]);
+  const goTo = useCallback(
+    (index: number) => {
+      setCurrentIndex((index + total) % total);
+    },
+    [total]
+  );
 
   const handleNext = useCallback(() => {
     if (multiple) goTo(currentIndex + 1);
@@ -62,7 +65,28 @@ export default function Lightbox({
     trackMouse: true,
   });
 
-  const currentUrl = images[currentIndex] ?? "";
+  const toLightboxSrc = useCallback((src: string) => {
+    const u = (src || "").trim();
+    if (!u) return "";
+
+    // Google Drive hotlinks can fail in the browser (redirect/cookie/html response).
+    // Routing through Next's image optimizer makes it load reliably (server-side fetch).
+    const isDrive =
+      u.includes("drive.google.com/uc") ||
+      u.includes("drive.google.com/thumbnail") ||
+      u.includes("lh3.googleusercontent.com") ||
+      u.includes("googleusercontent.com");
+
+    if (isDrive) {
+      return `/_next/image?url=${encodeURIComponent(u)}&w=2048&q=75`;
+    }
+
+    return u;
+  }, []);
+
+  const currentUrlRaw = images[currentIndex] ?? "";
+  const currentUrl = toLightboxSrc(currentUrlRaw);
+
   if (total === 0) return null;
 
   // a11y helper for side-panels
@@ -126,19 +150,76 @@ export default function Lightbox({
             />
 
             {multiple && (
-              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-50 flex gap-2">
-                {images.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setCurrentIndex(i)}
-                    className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                      i === currentIndex
-                        ? "bg-[#FFCC00] scale-125 shadow-md"
-                        : "bg-[#FFCC00]/40 hover:bg-[#FFCC00]/70"
-                    }`}
-                    aria-label={`Go to image ${i + 1}`}
-                  />
-                ))}
+              <div
+                className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50"
+                style={{ width: "min(520px, 78vw)" }}
+                aria-label={`Image ${currentIndex + 1} of ${total}`}
+              >
+                <div
+                  className="flex items-center gap-2"
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: 999,
+                    background: "rgba(0,0,0,0.35)",
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
+                    boxShadow: "0 10px 28px rgba(0,0,0,0.35)",
+                  }}
+                >
+                  {/* segmented bar */}
+                  <div
+                    className="flex-1"
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: `repeat(${total}, 1fr)`,
+                      gap: 6,
+                      alignItems: "center",
+                    }}
+                  >
+                    {images.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentIndex(i)}
+                        aria-label={`Go to image ${i + 1}`}
+                        style={{
+                          height: 6,
+                          borderRadius: 999,
+                          border: "none",
+                          cursor: "pointer",
+                          background:
+                            i === currentIndex
+                              ? "rgba(255,204,0,0.95)"
+                              : "rgba(255,204,0,0.22)",
+                          boxShadow:
+                            i === currentIndex
+                              ? "0 0 0 1px rgba(255,204,0,0.35), 0 6px 16px rgba(0,0,0,0.35)"
+                              : "none",
+                          transform:
+                            i === currentIndex ? "scaleY(1.15)" : "scaleY(1)",
+                          transition:
+                            "background 160ms ease, transform 160ms ease, box-shadow 160ms ease",
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  {/* compact counter */}
+                  <div
+                    style={{
+                      fontSize: 12,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "rgba(255,255,255,0.78)",
+                      paddingLeft: 10,
+                      borderLeft: "1px solid rgba(255,255,255,0.10)",
+                      marginLeft: 10,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {currentIndex + 1}/{total}
+                  </div>
+                </div>
               </div>
             )}
           </div>

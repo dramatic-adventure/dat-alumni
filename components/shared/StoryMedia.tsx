@@ -1,3 +1,4 @@
+// StoryMedia.tsx
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
@@ -32,6 +33,7 @@ export default function StoryMedia({
       });
       return parsed.toString();
     } catch {
+      // NOTE: relative URLs (like "/_next/image?...") will land here
       return trimmedUrl;
     }
   })();
@@ -39,8 +41,38 @@ export default function StoryMedia({
   const baseUrl = cleanUrl.split("?")[0];
   const isRemote = /^https?:\/\//i.test(cleanUrl);
 
-  const isImage = /\.(png|jpe?g|gif|webp|svg|heic|heif)$/i.test(baseUrl);
+  // ✅ Next.js image optimizer output (relative URL, no file extension)
+  const isNextImageOptimized = cleanUrl.startsWith("/_next/image");
+
+  // Detect image URLs that don't end with an extension (e.g., Google Drive /uc, googleusercontent)
+  const isLikelyImageNoExt = (() => {
+    try {
+      const u = new URL(cleanUrl);
+      const host = u.hostname;
+
+      const isDriveUc =
+        host === "drive.google.com" &&
+        (u.pathname === "/uc" ||
+          u.pathname.startsWith("/uc/") ||
+          u.pathname.startsWith("/thumbnail")) &&
+        (u.searchParams.has("id") || u.searchParams.has("export"));
+
+      const isGoogleUserContent = host.endsWith("googleusercontent.com");
+
+      return isDriveUc || isGoogleUserContent;
+    } catch {
+      // relative URLs (like "/_next/image?...") will land here
+      return false;
+    }
+  })();
+
+  const isImage =
+    isNextImageOptimized ||
+    /\.(png|jpe?g|gif|webp|svg|heic|heif)$/i.test(baseUrl) ||
+    isLikelyImageNoExt;
+
   const isVideoFile = /\.(mp4|webm|mov|ogg)$/i.test(baseUrl);
+
   const isAudio =
     /\.(mp3|wav|ogg)$/i.test(baseUrl) || cleanUrl.includes("soundcloud.com");
 
@@ -121,11 +153,9 @@ export default function StoryMedia({
     overflow: "hidden",
   };
 
-  // 🔥 KEY: remote images go through proxy so we never download the original
-  const proxyWidth = mode === "lightbox" ? 2200 : 1300;
-  const imgSrc = isRemote
-    ? `/api/img?url=${encodeURIComponent(cleanUrl)}&w=${proxyWidth}&q=74`
-    : cleanUrl;
+  // ✅ IMPORTANT: use the original URL and let next/image handle remote optimization
+  // (except when it's already a "/_next/image?..." URL; see image block below)
+  const imgSrc = cleanUrl;
 
   // 🎧 Audio
   if (isAudio) {
@@ -225,45 +255,49 @@ export default function StoryMedia({
     );
   }
 
-  // 🖼 Images
+  // 🖼 Images (local + remote via next/image)
   if (isImage) {
-    // Local assets can stay with next/image
-    if (!isRemote) {
+    // ✅ If we're already looking at Next's optimized image URL, render it directly.
+    // Avoids double-optimizing and fixes "blank swipe" when Lightbox receives "/_next/image?..."
+    if (isNextImageOptimized) {
       return (
         <div className={containerClass}>
           <div style={boxStyle}>
-            <Image
-              src={imgSrc}
+            <img
+              src={cleanUrl}
               alt={title || "Image"}
-              fill
-              className={mode === "lightbox" ? "object-contain" : "object-contain rounded-xl shadow-md"}
-              sizes={
-                mode === "lightbox"
-                  ? "90vw"
-                  : "(max-width: 640px) 92vw, (max-width: 1024px) 85vw, 1100px"
-              }
-              priority={false}
+              loading={mode === "lightbox" ? "eager" : "lazy"}
+              decoding="async"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+                borderRadius: mode === "lightbox" ? 0 : 16,
+              }}
             />
           </div>
         </div>
       );
     }
 
-    // Remote images: use <img> (now pointing at our resized proxy)
     return (
       <div className={containerClass}>
         <div style={boxStyle}>
-          <img
+          <Image
             src={imgSrc}
             alt={title || "Image"}
-            loading={mode === "lightbox" ? "eager" : "lazy"}
-            decoding="async"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-              borderRadius: mode === "lightbox" ? 0 : 16,
-            }}
+            fill
+            className={
+              mode === "lightbox"
+                ? "object-contain"
+                : "object-contain rounded-xl shadow-md"
+            }
+            sizes={
+              mode === "lightbox"
+                ? "90vw"
+                : "(max-width: 640px) 92vw, (max-width: 1024px) 85vw, 1100px"
+            }
+            priority={mode === "lightbox"}
           />
         </div>
       </div>
