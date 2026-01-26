@@ -9,6 +9,18 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60,
+    // ✅ allow next/image to use our local proxy route with query strings
+    localPatterns: [
+      // ✅ our image proxy route (path match only; query is ignored by matcher)
+      { pathname: "/api/img" },
+      { pathname: "/api/img/**" },
+
+      // ✅ local static assets used by next/image
+      { pathname: "/images/**" },
+      { pathname: "/icons/**" },
+      { pathname: "/seasons/**" },
+      { pathname: "/posters/**" },
+    ],
     remotePatterns: [
       // Placeholder
       { protocol: "https", hostname: "via.placeholder.com", pathname: "**" },

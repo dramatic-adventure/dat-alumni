@@ -33,7 +33,7 @@
     "googleapis": "^160.0.0",
     "lucide-react": "^0.511.0",
     "mapbox-gl": "^3.14.0",
-    "next": "^15.5.9",
+    "next": "^16.1.4",
     "next-auth": "^4.24.13",
     "node-fetch": "^3.3.2",
     "papaparse": "^5.5.3",

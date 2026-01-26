@@ -33,12 +33,12 @@ export type ProfileLiveRow = {
 
   spotlight?: string;
 
-  programs?: string;     // list-ish string
-  tags?: string;         // list-ish string
-  statusFlags?: string;  // list-ish string
+  programs?: string; // list-ish string
+  tags?: string; // list-ish string
+  statusFlags?: string; // list-ish string
 
   // ✅ NEW
-  languages?: string;    // list-ish string (English | Spanish | ...)
+  languages?: string; // list-ish string (English | Spanish | ...)
 
   isPublic?: string;
   status?: string;
@@ -55,6 +55,20 @@ export type ProfileLiveRow = {
 export type EnrichedProfileLiveRow = ProfileLiveRow & {
   canonicalSlug: string;
 
+  /**
+   * ✅ SINGLE authoritative headshot URL for all UI.
+   * Must be either:
+   * - `/api/img?url=...` (encoded upstream URL), OR
+   * - `/images/default-headshot.png`
+   */
+  headshotUrl?: string;
+
+  /**
+   * ✅ Cache-bust key that changes when the headshot changes.
+   * Prefer uploadedAt from Profile-Media.
+   */
+  headshotCacheKey?: string;
+
   // Search fields
   aliasTokens: string[];
   programTokens: string[];
@@ -66,10 +80,10 @@ export type EnrichedProfileLiveRow = ProfileLiveRow & {
 
   // Optional (nice to have)
   identityTokens: string[]; // your sheet calls these `tags` right now
-  statusTokens: string[];   // from statusFlags/status/isPublic
+  statusTokens: string[]; // from statusFlags/status/isPublic
 
   // ✅ NEW
-  seasonTokens: string[];   // derived from seasonData + programMap/productionMap season numbers
+  seasonTokens: string[]; // derived from seasonData + programMap/productionMap season numbers
   languageTokens: string[]; // derived from Profile-Live languages (and tags fallback)
 };
 
@@ -158,8 +172,10 @@ function addProfileLiveTokens(aliasTokens: Set<string>, item: ProfileLiveRow) {
   for (const x of splitListish(item.roles)) addPhraseTokens(aliasTokens, x);
   for (const x of splitListish(item.programs)) addPhraseTokens(aliasTokens, x);
   for (const x of splitListish(item.tags)) addPhraseTokens(aliasTokens, x);
-  for (const x of splitListish(item.statusFlags)) addPhraseTokens(aliasTokens, x);
-  for (const x of splitListish(item.languages)) addPhraseTokens(aliasTokens, x);
+  for (const x of splitListish(item.statusFlags))
+    addPhraseTokens(aliasTokens, x);
+  for (const x of splitListish(item.languages))
+    addPhraseTokens(aliasTokens, x);
 
   // Status / public flags
   addPhraseTokens(aliasTokens, item.isPublic);
@@ -188,15 +204,15 @@ function addSeasonFromNumber(set: Set<string>, seasonNum?: unknown) {
   const info = seasons.find((s) => s.slug === slug);
 
   // Always add slug + human label
-  addPhraseTokens(set, slug);              // "season-18"
-  addPhraseTokens(set, `season ${n}`);     // "season 18"
+  addPhraseTokens(set, slug); // "season-18"
+  addPhraseTokens(set, `season ${n}`); // "season 18"
 
   if (!info) return;
 
   // Add official title/years
-  addPhraseTokens(set, info.seasonTitle);  // "Season 18"
-  addPhraseTokens(set, info.years);        // "2023 / 2024"
-  addYearishTokens(set, info.years);       // adds 2023, 2024
+  addPhraseTokens(set, info.seasonTitle); // "Season 18"
+  addPhraseTokens(set, info.years); // "2023 / 2024"
+  addYearishTokens(set, info.years); // adds 2023, 2024
 
   // Add projects (helps search/filter discoverability)
   for (const p of info.projects || []) addPhraseTokens(set, p);
@@ -230,14 +246,162 @@ function addLanguageTokens(set: Set<string>, raw?: string) {
   }
 }
 
+function headshotUrlFrom(item: ProfileLiveRow): string {
+  const id = String(item.currentHeadshotId ?? "").trim();
+  if (id) {
+    return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`;
+  }
+
+  const u = String(item.currentHeadshotUrl ?? "").trim();
+  return u;
+}
+
 /**
  * ✅ SINGLE SOURCE OF TRUTH (server-only)
  * Enrich Profile-Live rows with alias/program/production tokens for client fuzzy search.
  */
+export type ProfileMediaRow = {
+  alumniId?: string;
+  kind?: string;
+  fileId?: string;
+  externalUrl?: string;
+  uploadedAt?: string;
+    isCurrent?: string | boolean; // sheet readers may return boolean true/false
+  sortIndex?: string; // optional; if present, can break ties deterministically
+};
+
+function driveUrlFromId(id: string) {
+  // More reliable than /thumbnail for returning an actual image/* response
+  return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`;
+}
+
+
+function withVersion(url: string, v?: string) {
+  const raw = String(url || "").trim();
+  if (!raw) return raw;
+
+  const ver = String(v || "").trim();
+  if (!ver) return raw;
+
+  try {
+    const u = new URL(raw);
+    // Use a stable param name; Drive ignores it, but caches won’t.
+    u.searchParams.set("v", ver);
+    return u.toString();
+  } catch {
+    // If it's not a valid absolute URL, just return as-is.
+    // (In your case it should be absolute, but this keeps it non-breaking.)
+    return raw;
+  }
+}
+
+function mediaKeysForRow(m: ProfileMediaRow): string[] {
+  const keys = new Set<string>();
+
+  const a = String(m.alumniId || "").trim();
+  if (a) keys.add(a);
+
+  // If your sheet sometimes stores slug in alumniId, also add normalized slug forms.
+  // (This is harmless even if alumniId is numeric; normSlug("123") is still "123".)
+  if (a) keys.add(normSlug(a));
+
+  return Array.from(keys);
+}
+
+function pickBestHeadshot(media: ProfileMediaRow[] | undefined) {
+  const kindIsHeadshot = (k?: unknown) => {
+    const s = String(k ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_-]+/g, " "); // normalize "head-shot" / "head_shot" / "head  shot"
+    // Accept common variants
+    return s === "headshot" || s === "head shot" || s.includes("headshot") || s.includes("head shot");
+  };
+
+  const rows = (media ?? []).filter((r) => kindIsHeadshot(r.kind));
+
+
+  const parseTime = (s?: string) => {
+    const t = Date.parse(String(s || ""));
+    return Number.isFinite(t) ? t : 0;
+  };
+
+  const isTrue = (v?: string | boolean) => {
+    if (v === true) return true;
+    if (v === false) return false;
+
+    const s = String(v ?? "").trim().toLowerCase();
+    return s === "true" || s === "t" || s === "yes" || s === "y" || s === "1";
+  };
+
+    const parseSortIndex = (v?: string) => {
+    const n = Number(String(v ?? "").trim());
+    return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+  };
+
+  const current = rows.filter((r) => isTrue(r.isCurrent));
+  const pool = current.length ? current : rows;
+
+  if (!pool.length) return { upstreamUrl: "", cacheKey: "" };
+
+  pool.sort((a, b) => {
+    // 0) if one is explicitly current, it wins
+    const aCur = isTrue(a.isCurrent);
+    const bCur = isTrue(b.isCurrent);
+    if (aCur !== bCur) return aCur ? -1 : 1;
+
+    // 1) newest uploadedAt wins
+    const tA = parseTime(a.uploadedAt);
+    const tB = parseTime(b.uploadedAt);
+    if (tA !== tB) return tB - tA;
+
+
+    // 2) if present, lower sortIndex wins (explicit manual quality ordering)
+    const sA = parseSortIndex(a.sortIndex);
+    const sB = parseSortIndex(b.sortIndex);
+    if (sA !== sB) return sA - sB;
+
+    // 3) prefer Drive uploads (fileId) over externalUrl
+    const aHasFile = !!String(a.fileId || "").trim();
+    const bHasFile = !!String(b.fileId || "").trim();
+    if (aHasFile !== bHasFile) return aHasFile ? -1 : 1;
+
+    // 4) stable deterministic fallback: compare identifier strings
+    const aKey = String(a.fileId || a.externalUrl || "").trim();
+    const bKey = String(b.fileId || b.externalUrl || "").trim();
+    if (aKey !== bKey) return bKey.localeCompare(aKey);
+
+    return 0;
+  });
+
+  const best = pool[0];
+  const fileId = String(best.fileId || "").trim();
+  const externalUrl = String(best.externalUrl || "").trim();
+  const uploadedAt = String(best.uploadedAt || "").trim();
+
+  const upstreamUrl = fileId ? driveUrlFromId(fileId) : externalUrl;
+  const cacheKey = uploadedAt || fileId || externalUrl;
+
+  return { upstreamUrl, cacheKey };
+}
+
 export async function enrichAlumniData(
-  alumni: ProfileLiveRow[]
+  alumni: ProfileLiveRow[],
+  profileMedia: ProfileMediaRow[] = []
 ): Promise<EnrichedProfileLiveRow[]> {
   const out: EnrichedProfileLiveRow[] = [];
+
+  // ✅ Index Profile-Media rows by alumniId/slug-like key for fast lookup
+  // Note: Profile-Live `alumniId` can be blank; we must also resolve by `slug`.
+  const mediaByKey = new Map<string, ProfileMediaRow[]>();
+
+  for (const m of profileMedia ?? []) {
+    for (const k of mediaKeysForRow(m)) {
+      const arr = mediaByKey.get(k) ?? [];
+      arr.push(m);
+      mediaByKey.set(k, arr);
+    }
+  }
 
   for (const item of alumni) {
     const aliasTokens = new Set<string>();
@@ -258,6 +422,82 @@ export async function enrichAlumniData(
     const canonicalSlug = await resolveCanonicalSlug(item.slug);
     const slugAliases = await getSlugAliases(canonicalSlug); // includes canonical
 
+    // ✅ Resolve authoritative headshot from Profile-Media
+    // Most recent wins (by uploadedAt); prefers isCurrent=TRUE.
+    // IMPORTANT: Profile-Live alumniId can be empty; fall back to slug/canonicalSlug for lookup.
+    // ✅ RIGHT: Profile-Media is keyed by alumniId
+    const mediaLookupKey = String(item.alumniId || "").trim();
+    // ✅ Resolve authoritative headshot from Profile-Media (most recent wins; prefers isCurrent=TRUE)
+    // Profile-Media is keyed by alumniId, but many Profile-Live rows may have alumniId blank.
+    // In your data, Profile-Media.alumniId often matches Profile-Live.slug (e.g. "jesse-baxter"),
+    // so we fall back deterministically to slug/canonicalSlug when alumniId is missing.
+    const key1 = String(item.alumniId || "").trim();
+    const key2 = String(item.slug || "").trim();
+    const key3 = String(canonicalSlug || "").trim();
+
+    const k1 = String(key1 || "").trim();
+    const k2 = String(key2 || "").trim();
+    const k3 = String(key3 || "").trim();
+
+    const mediaRows =
+      (k1 ? mediaByKey.get(k1) : undefined) ??
+      (k1 ? mediaByKey.get(normSlug(k1)) : undefined) ??
+      (k2 ? mediaByKey.get(k2) : undefined) ??
+      (k2 ? mediaByKey.get(normSlug(k2)) : undefined) ??
+      (k3 ? mediaByKey.get(k3) : undefined) ??
+      (k3 ? mediaByKey.get(normSlug(k3)) : undefined) ??
+      [];
+
+
+    if (process.env.NODE_ENV === "development" && item.slug === "THE-SLUG-YOU-TEST") {
+      console.log("[enrich] mediaRows (pre-pick):", mediaRows.map(r => ({
+        kind: r.kind,
+        isCurrent: r.isCurrent,
+        fileId: r.fileId,
+        externalUrl: r.externalUrl,
+        uploadedAt: r.uploadedAt,
+      })));
+    }
+
+    const resolvedHeadshot = pickBestHeadshot(mediaRows);
+    if (process.env.NODE_ENV === "development") {
+      console.log("[headshot-picker]", {
+        slug: item.slug,
+        alumniId: item.alumniId,
+        canonicalSlug,
+        mediaRowCount: mediaRows.length,
+        picked: resolvedHeadshot,
+        mediaRows: mediaRows.map((r) => ({
+          kind: r.kind,
+          isCurrent: r.isCurrent,
+          fileId: r.fileId,
+          externalUrl: r.externalUrl,
+          uploadedAt: r.uploadedAt,
+          sortIndex: r.sortIndex,
+        })),
+      });
+    }
+
+    if (process.env.NODE_ENV === "development" && item.slug === "THE-SLUG-YOU-TEST") {
+      console.log("[enrich] picked headshot:", resolvedHeadshot);
+    }
+
+    // ✅ Cache key based on Profile-Media uploadedAt (or stable fallback)
+    const resolvedHeadshotCacheKey =
+      resolvedHeadshot.cacheKey ||
+      String(item.updatedAt || item.currentHeadshotId || item.currentHeadshotUrl || "");
+
+    // Fallback to Profile-Live only if Profile-Media has nothing usable
+    const upstreamRaw = resolvedHeadshot.upstreamUrl || headshotUrlFrom(item) || "";
+
+    // ✅ VERSION the upstream URL so caches can't serve stale bytes when headshot changes
+    const upstream = upstreamRaw ? withVersion(upstreamRaw, resolvedHeadshotCacheKey) : "";
+
+    // ✅ All UI must route through /api/img?url=...
+    const resolvedHeadshotUrl = upstream
+      ? `/api/img?url=${encodeURIComponent(upstream)}`
+      : "/images/default-headshot.png";
+
     // Normalized slug set for joining against programMap/productionMap keys
     const aliasesNorm = new Set<string>();
     for (const s of slugAliases) {
@@ -266,7 +506,7 @@ export async function enrichAlumniData(
 
       // Slug searchable in multiple ways
       aliasTokens.add(normalizeText(s)); // as text
-      aliasTokens.add(n);               // hyphen form
+      aliasTokens.add(n); // hyphen form
     }
 
     // ✅ Catch-all: include all Profile-Live fields into aliasTokens
@@ -288,7 +528,8 @@ export async function enrichAlumniData(
     for (const t of splitListish(item.tags)) addPhraseTokens(identityTokens, t);
 
     // ✅ Status bucket (for scoring)
-    for (const s of splitListish(item.statusFlags)) addPhraseTokens(statusTokens, s);
+    for (const s of splitListish(item.statusFlags))
+      addPhraseTokens(statusTokens, s);
     addPhraseTokens(statusTokens, item.status);
     addPhraseTokens(statusTokens, item.isPublic);
 
@@ -317,7 +558,9 @@ export async function enrichAlumniData(
         if (prog.season) addYearishTokens(programTokens, prog.season);
 
         if (prog.program && prog.location)
-          programTokens.add(normalizeText(`${prog.program} ${prog.location}`));
+          programTokens.add(
+            normalizeText(`${prog.program} ${prog.location}`)
+          );
         if (prog.program && prog.year)
           addYearishTokens(programTokens, `${prog.program} ${prog.year}`);
         if (prog.program && prog.season)
@@ -354,7 +597,9 @@ export async function enrichAlumniData(
         if (prod.season) addYearishTokens(productionTokens, prod.season);
 
         if (prod.title && prod.location)
-          productionTokens.add(normalizeText(`${prod.title} ${prod.location}`));
+          productionTokens.add(
+            normalizeText(`${prod.title} ${prod.location}`)
+          );
         if (prod.title && prod.year)
           addYearishTokens(productionTokens, `${prod.title} ${prod.year}`);
         if (prod.title && prod.season)
@@ -390,6 +635,14 @@ export async function enrichAlumniData(
     out.push({
       ...item,
       canonicalSlug,
+
+      /**
+       * ✅ Authoritative headshot for all UI (already proxied or default).
+       * Do NOT overwrite Profile-Live’s currentHeadshotId/currentHeadshotUrl.
+       */
+      headshotUrl: resolvedHeadshotUrl,
+      headshotCacheKey: resolvedHeadshotCacheKey,
+
       aliasTokens: Array.from(aliasTokens),
       programTokens: Array.from(programTokens),
       productionTokens: Array.from(productionTokens),

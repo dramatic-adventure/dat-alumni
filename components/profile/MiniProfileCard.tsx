@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { CSSProperties } from "react";
+import { CSSProperties, useEffect, useMemo, useState, useCallback } from "react";
+import { useHeadshot } from "@/components/profile/HeadshotProvider";
 
 interface MiniProfileCardProps {
   name: string;
@@ -17,41 +18,32 @@ interface MiniProfileCardProps {
   variant?: "dark" | "light";
   href?: string;
 
-  /** NEW */
-  badgeLabel?: string; // e.g. "LOCAL MASTER"
-  highlightFrame?: boolean; // subtle honor treatment
+  badgeLabel?: string;
+  highlightFrame?: boolean;
 
   /**
-   * ✅ IMPORTANT: cache-bust key for Next/Image
-   * Pass something that changes when the headshot changes (e.g. updatedAt timestamp)
+   * ✅ Cache-bust key that changes when the headshot changes.
+   * Pass EnrichedProfile.headshotCacheKey when available.
    */
   cacheKey?: string | number;
 }
 
-function normalizeHeadshotUrl(input?: string) {
-  const u = (input || "").trim();
-  if (!u) return "";
-  // remove stray whitespace inside URLs
-  return u.replace(/\s+/g, "").replace(/^http:\/\//i, "https://");
-}
-
 function addCacheBust(url: string, cacheKey?: string | number) {
-  if (!url) return url;
-  if (cacheKey === undefined || cacheKey === null || cacheKey === "") return url;
-
-  // Only apply to remote URLs (avoid messing with local /images/*)
-  const isRemote = /^https?:\/\//i.test(url);
-  if (!isRemote) return url;
+  const raw = String(url || "").trim();
+  if (!raw) return raw;
+  if (cacheKey === undefined || cacheKey === null || cacheKey === "") return raw;
 
   try {
-    const parsed = new URL(url);
-    // Use a stable param name so it’s easy to reason about
-    parsed.searchParams.set("v", String(cacheKey));
-    return parsed.toString();
+    // Only touch our proxy URLs
+    if (!raw.startsWith("/api/img?")) return raw;
+
+    const u = new URL(raw, "http://local"); // base required for relative URLs
+    if (u.searchParams.has("v")) return raw;
+
+    u.searchParams.set("v", String(cacheKey));
+    return u.pathname + "?" + u.searchParams.toString();
   } catch {
-    // Fallback: naive append
-    const joiner = url.includes("?") ? "&" : "?";
-    return `${url}${joiner}v=${encodeURIComponent(String(cacheKey))}`;
+    return raw;
   }
 }
 
@@ -73,16 +65,53 @@ export default function MiniProfileCard({
 
   cacheKey,
 }: MiniProfileCardProps) {
-  const defaultImage = "/images/default-headshot.png";
+  const defaultImage = "/images/default-headshot.png";  
 
-  const normalized = normalizeHeadshotUrl(headshotUrl);
-  const baseSrc = normalized || defaultImage;
+  // Enrichment should already provide /api/img?url=... or default.
+  // We still harden here: blank => default.
+  const hs = useHeadshot(slug);
 
-  // ✅ Ensures Next/Image fetches the *latest* when cacheKey changes
-  const imageSrc = addCacheBust(baseSrc, cacheKey);
+  const baseSrc = useMemo(() => {
+    // Prefer explicit prop if provided
+    const prop = String(headshotUrl ?? "").trim().replace(/\s+/g, "");
+    if (prop) return prop;
+
+    // Else, prefer authoritative enriched headshot from provider
+    const ctx = String(hs?.url || "").trim();
+    if (ctx) return ctx;
+
+    // Else default
+    return defaultImage;
+  }, [headshotUrl, hs?.url, defaultImage]);
+
+  const effectiveCacheKey = cacheKey ?? hs?.cacheKey;
+
+  const srcWithBust = useMemo(() => {
+    // Only bust cache for non-default images.
+    if (baseSrc === defaultImage) return baseSrc;
+    return addCacheBust(baseSrc, effectiveCacheKey);
+  }, [baseSrc, defaultImage, effectiveCacheKey]);
+
+
+  // ✅ One-way fallback to default
+  const [imgSrc, setImgSrc] = useState<string>(srcWithBust);
+
+  useEffect(() => {
+    setImgSrc(srcWithBust);
+  }, [srcWithBust]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      // eslint-disable-next-line no-console
+      console.log("[MiniProfileCard]", { slug, srcWithBust, cacheKey });
+    }
+  }, [slug, srcWithBust, cacheKey]);
+
+  const handleError = useCallback(() => {
+    setImgSrc((prev) => (prev === defaultImage ? prev : defaultImage));
+  }, [defaultImage]);
 
   const isLight = variant === "light";
-
   const nameColor = isLight ? "#241123" : "#f2f2f2";
   const nameHover = isLight ? "#6c00af" : "#FFCC00";
   const roleColor = isLight ? "#241123" : "#f2f2f2";
@@ -108,8 +137,6 @@ export default function MiniProfileCard({
             boxShadow: "2px 3px 4px rgba(36,17,35,0.5)",
             transformOrigin: "center center",
             borderRadius: 0,
-
-            // ✅ subtle “honor” frame (square is fine; matches your poster vibe)
             outline: highlightFrame ? "3px solid rgba(255, 204, 0, 0.95)" : undefined,
             outlineOffset: highlightFrame ? "6px" : undefined,
           }}
@@ -135,8 +162,10 @@ export default function MiniProfileCard({
           ) : null}
 
           <Image
-            src={imageSrc}
+            key={imgSrc} // ✅ force remount when src changes
+            src={imgSrc}
             alt={`${name}${role ? ` — ${role}` : ""}`}
+            onError={handleError}
             fill
             className="object-cover transition-all duration-300"
             sizes="144px"

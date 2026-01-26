@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import AlumniSearch from "@/components/alumni/AlumniSearch/AlumniSearch";
+import { HeadshotProvider } from "@/components/profile/HeadshotProvider";
 
 import type {
   EnrichedProfileLiveRow,
@@ -25,6 +26,7 @@ interface AlumniItem {
   updatedRecently?: boolean;
   updatedAt?: number;
   headshotUrl?: string;
+  headshotCacheKey?: string | number;
 }
 
 type SortOption = "last" | "first" | "recent";
@@ -36,8 +38,21 @@ function splitCsvish(raw?: string | null): string[] {
     .filter(Boolean);
 }
 
+function driveViewUrlFromId(id?: string | null) {
+  const fid = String(id || "").trim();
+  if (!fid) return "";
+  // uc?export=view is a stable “direct view” URL for Drive file IDs
+  return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(fid)}`;
+}
+
+function driveUrlFromId(id?: string | null) {
+  const v = String(id ?? "").trim();
+  if (!v) return "";
+  return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(v)}`;
+}
+
 /** Convert Profile-Live row (string-ish fields) into the directory AlumniItem shape */
-function liveRowToAlumniItem(r: ProfileLiveRow): AlumniItem {
+function liveRowToAlumniItem(r: ProfileLiveRow, enrichedBySlug: Map<string, EnrichedProfileLiveRow>): AlumniItem {
   // roles/programs/tags/statusFlags can be stored as CSV-ish strings in Profile-Live
   const roles = splitCsvish(r.roles);
   const programs = splitCsvish((r as any).programs);
@@ -64,22 +79,48 @@ function liveRowToAlumniItem(r: ProfileLiveRow): AlumniItem {
     updatedAt,
     // heuristic if you want it (otherwise filter UI still works)
     updatedRecently: typeof updatedAt === "number" ? Date.now() - updatedAt < 1000 * 60 * 60 * 24 * 90 : false,
-    headshotUrl: (r as any).currentHeadshotUrl || undefined,
+    headshotUrl: (() => {
+  const bySlug = enrichedBySlug.get(r.slug);
+  const byCanon = enrichedBySlug.get((r as any).canonicalSlug);
+
+  // ✅ Deterministic + reliable:
+  // Enriched headshotUrl is already either `/api/img?url=...` or `/images/default-headshot.png`
+  return bySlug?.headshotUrl || byCanon?.headshotUrl || "/images/default-headshot.png";
+})(),
+
+    headshotCacheKey: (() => {
+      const bySlug = enrichedBySlug.get(r.slug);
+      const byCanon = enrichedBySlug.get((r as any).canonicalSlug);
+
+      // ✅ Cache key should come from Profile-Media uploadedAt via enrichment.
+      return bySlug?.headshotCacheKey || byCanon?.headshotCacheKey || undefined;
+    })(),
   };
 }
 
 export default function DirectoryPageClient({
   alumni,
-  enrichedData,
+  enrichedData = [],
 }: {
   alumni: AlumniItem[];
-  enrichedData: EnrichedProfileLiveRow[];
+  enrichedData?: EnrichedProfileLiveRow[];
 }) {
+
   const [primaryResults, setPrimaryResults] = useState<AlumniItem[]>([]);
   const [secondaryResults, setSecondaryResults] = useState<AlumniItem[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>("last");
   const [query, setQuery] = useState<string>("");
+
+  const enrichedBySlug = useMemo(() => {
+    const m = new Map<string, EnrichedProfileLiveRow>();
+        enrichedData.forEach((r) => {
+      m.set(r.slug, r);
+      if (r.canonicalSlug) m.set(r.canonicalSlug, r);
+    });
+    return m;
+  }, [enrichedData]);
+
 
   const [filters, setFilters] = useState({
     program: "",
@@ -188,297 +229,252 @@ export default function DirectoryPageClient({
   );
 
   return (
-    <div>
-      {/* HERO */}
-      <section
-        style={{
-          position: "relative",
-          width: "100%",
-          height: "55vh",
-          boxShadow: "0px 0px 33px rgba(0,0,0,0.5)",
-        }}
-      >
-        <Image
-          src="/images/alumni-hero.jpg"
-          alt="Alumni Directory Hero"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center"
-        />
-        <div style={{ position: "absolute", bottom: "1rem", right: "5%" }}>
-          <h1
-            style={{
-              fontFamily: "var(--font-anton), system-ui, sans-serif",
-              fontSize: "clamp(4rem, 9vw, 10rem)",
-              color: "#f2f2f2",
-              textTransform: "uppercase",
-              textShadow: "0 8px 20px rgba(0,0,0,0.8)",
-              margin: 0,
-            }}
-          >
-            DIRECTORY
-          </h1>
-        </div>
-      </section>
-
-      {/* MAIN */}
-      <main
-        style={{
-          marginTop: "0vh",
-          padding: "2rem 0",
-        }}
-      >
-        <section style={{ width: "90%", maxWidth: "1200px", margin: "0 auto" }}>
-          <h2
-            style={{
-              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-              color: "#6C00AF",
-              opacity: 0.9,
-              fontSize: "clamp(2.8rem, 5vw, 3.25rem)",
-              fontWeight: 500,
-              marginBottom: "3rem",
-            }}
-          >
-            Explore our global community.
-          </h2>
-
-          {/* Search + Sort */}
-          <div style={{ display: "flex", gap: "1rem", alignItems: "stretch" }}>
-            <div style={{ flex: 1, height: "47px" }}>
-              <AlumniSearch
-                enrichedData={enrichedData}
-                filters={filters}
-                onResults={(primary: ProfileLiveRow[], secondary: ProfileLiveRow[], q: string) => {
-                  setPrimaryResults(primary.map(liveRowToAlumniItem));
-                  setSecondaryResults(secondary.map(liveRowToAlumniItem));
-                  setQuery(q);
-                }}
-                showAllIfEmpty={true}
-                debug={false}
-              />
-            </div>
-
-            <button
-              onClick={() => setAdvancedOpen(!advancedOpen)}
+    <HeadshotProvider enrichedData={enrichedData || []}>
+      <div>
+        {/* HERO */}
+        <section
+          style={{
+            position: "relative",
+            width: "100%",
+            height: "55vh",
+            boxShadow: "0px 0px 33px rgba(0,0,0,0.5)",
+          }}
+        >
+          <Image
+            src="/images/alumni-hero.jpg"
+            alt="Alumni Directory Hero"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center"
+          />
+          <div style={{ position: "absolute", bottom: "1rem", right: "5%" }}>
+            <h1
               style={{
-                height: "47px",
-                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                fontWeight: 600,
-                backgroundColor: "#6C00AF",
+                fontFamily: "var(--font-anton), system-ui, sans-serif",
+                fontSize: "clamp(4rem, 9vw, 10rem)",
                 color: "#f2f2f2",
-                padding: "0 1rem",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "1rem",
-                letterSpacing: "0.1rem",
-                transition: "opacity 0.3s ease",
+                textTransform: "uppercase",
+                textShadow: "0 8px 20px rgba(0,0,0,0.8)",
+                margin: 0,
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
             >
-              ADVANCED SEARCH
-            </button>
-
-            {/* Hide sort buttons if query exists */}
-            {!query && (
-              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", color: "#F6E4C1" }}>
-                  Sort by:
-                </span>
-                {(["last", "first", "recent"] as const).map((opt) => (
-                  <button
-                    key={opt}
-                    onClick={() => setSortOption(opt)}
-                    style={{
-                      backgroundColor: sortOption === opt ? "#6C00AF" : "#F6E4C1",
-                      color: sortOption === opt ? "#f2f2f2" : "#241123",
-                      padding: "0.4rem 0.8rem",
-                      border: "none",
-                      borderRadius: "6px",
-                      fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                      fontWeight: 500,
-                      cursor: "pointer",
-                      transition: "opacity 0.3s ease",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
-                    onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-                  >
-                    {opt === "last" ? "Last Name" : opt === "first" ? "First Name" : "Recently Updated"}
-                  </button>
-                ))}
-              </div>
-            )}
+              DIRECTORY
+            </h1>
           </div>
+        </section>
 
-          {/* Advanced Filters */}
-          <AnimatePresence>
-            {advancedOpen && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                style={{
-                  backgroundColor: "rgba(36,17,35,0.4)",
-                  padding: "1rem",
-                  borderRadius: "8px",
-                  margin: "1rem",
-                }}
-              >
-                <div
-                  style={{
-                    display: "grid",
-                    gap: "0.5rem",
-                    gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
+        {/* MAIN */}
+        <main
+          style={{
+            marginTop: "0vh",
+            padding: "2rem 0",
+          }}
+        >
+          <section style={{ width: "90%", maxWidth: "1200px", margin: "0 auto" }}>
+            <h2
+              style={{
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                color: "#6C00AF",
+                opacity: 0.9,
+                fontSize: "clamp(2.8rem, 5vw, 3.25rem)",
+                fontWeight: 500,
+                marginBottom: "3rem",
+              }}
+            >
+              Explore our global community.
+            </h2>
+
+            {/* Search + Sort */}
+            <div style={{ display: "flex", gap: "1rem", alignItems: "stretch" }}>
+              <div style={{ flex: 1, height: "47px" }}>
+                <AlumniSearch
+                  enrichedData={enrichedData}
+                  filters={filters}
+                  onResults={(primary: ProfileLiveRow[], secondary: ProfileLiveRow[], q: string) => {
+                    setPrimaryResults(primary.map((r) => liveRowToAlumniItem(r, enrichedBySlug)));
+                    setSecondaryResults(secondary.map((r) => liveRowToAlumniItem(r, enrichedBySlug)));
+                    setQuery(q);
                   }}
-                >
-                  {filterOptions.map((filter) => (
-                    <select
-                      key={filter.name}
-                      value={(filters[filter.name as keyof typeof filters] as string) || ""}
-                      onChange={(e) =>
-                        setFilters({ ...filters, [filter.name as keyof typeof filters]: e.target.value })
-                      }
+                  showAllIfEmpty={true}
+                  debug={false}
+                />
+              </div>
+
+              <button
+                onClick={() => setAdvancedOpen(!advancedOpen)}
+                style={{
+                  height: "47px",
+                  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                  fontWeight: 600,
+                  backgroundColor: "#6C00AF",
+                  color: "#f2f2f2",
+                  padding: "0 1rem",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "1rem",
+                  letterSpacing: "0.1rem",
+                  transition: "opacity 0.3s ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+              >
+                ADVANCED SEARCH
+              </button>
+
+              {/* Hide sort buttons if query exists */}
+              {!query && (
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                  <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", color: "#F6E4C1" }}>
+                    Sort by:
+                  </span>
+                  {(["last", "first", "recent"] as const).map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => setSortOption(opt)}
                       style={{
-                        padding: "0.4rem",
-                        fontSize: "0.85rem",
+                        backgroundColor: sortOption === opt ? "#6C00AF" : "#F6E4C1",
+                        color: sortOption === opt ? "#f2f2f2" : "#241123",
+                        padding: "0.4rem 0.8rem",
+                        border: "none",
                         borderRadius: "6px",
                         fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                        border: "0px solid #ccc",
-                        cursor: "pointer",
-                        backgroundColor: filters[filter.name as keyof typeof filters]
-                          ? "#F23359"
-                          : "#e5d2bd",
-                        color: filters[filter.name as keyof typeof filters] ? "#f2f2f2" : "#241123",
-                        opacity: 0.9,
                         fontWeight: 500,
-                        letterSpacing: "0.04rem",
+                        cursor: "pointer",
                         transition: "opacity 0.3s ease",
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
                       onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                     >
-                      <option value="">{filter.label}</option>
-                      {filter.options.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
+                      {opt === "last" ? "Last Name" : opt === "first" ? "First Name" : "Recently Updated"}
+                    </button>
                   ))}
+                </div>
+              )}
+            </div>
 
-                  <label
+            {/* Advanced Filters */}
+            <AnimatePresence>
+              {advancedOpen && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  style={{
+                    backgroundColor: "rgba(36,17,35,0.4)",
+                    padding: "1rem",
+                    borderRadius: "8px",
+                    margin: "1rem",
+                  }}
+                >
+                  <div
                     style={{
-                      fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                      color: "#F6E4C1",
-                      fontWeight: 500,
-                      fontSize: "0.85rem",
+                      display: "grid",
+                      gap: "0.5rem",
+                      gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
                     }}
                   >
-                    <input
-                      type="checkbox"
-                      checked={filters.updatedOnly}
-                      onChange={(e) => setFilters({ ...filters, updatedOnly: e.target.checked })}
-                    />{" "}
-                    Recently Updated
-                  </label>
-                </div>
+                    {filterOptions.map((filter) => (
+                      <select
+                        key={filter.name}
+                        value={(filters[filter.name as keyof typeof filters] as string) || ""}
+                        onChange={(e) =>
+                          setFilters({ ...filters, [filter.name as keyof typeof filters]: e.target.value })
+                        }
+                        style={{
+                          padding: "0.4rem",
+                          fontSize: "0.85rem",
+                          borderRadius: "6px",
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          border: "0px solid #ccc",
+                          cursor: "pointer",
+                          backgroundColor: filters[filter.name as keyof typeof filters]
+                            ? "#F23359"
+                            : "#e5d2bd",
+                          color: filters[filter.name as keyof typeof filters] ? "#f2f2f2" : "#241123",
+                          opacity: 0.9,
+                          fontWeight: 500,
+                          letterSpacing: "0.04rem",
+                          transition: "opacity 0.3s ease",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+                        onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                      >
+                        <option value="">{filter.label}</option>
+                        {filter.options.map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
+                      </select>
+                    ))}
 
-                <div style={{ textAlign: "right", marginTop: "0.5rem" }}>
-                  <button
-                    onClick={clearFilters}
-                    style={{
-                      backgroundColor: "#F23359",
-                      color: "#f2f2f2",
-                      padding: "0.4rem 0.8rem",
-                      border: "none",
-                      borderRadius: "6px",
-                      fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                      fontWeight: 500,
-                      cursor: "pointer",
-                      letterSpacing: "0rem",
-                      transition: "opacity 0.3s ease",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
-                    onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-                  >
-                    Reset Filters
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </section>
+                    <label
+                      style={{
+                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                        color: "#F6E4C1",
+                        fontWeight: 500,
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={filters.updatedOnly}
+                        onChange={(e) => setFilters({ ...filters, updatedOnly: e.target.checked })}
+                      />{" "}
+                      Recently Updated
+                    </label>
+                  </div>
 
-        {/* Result Count */}
-        <div
-          style={{
-            textAlign: "center",
-            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-            fontWeight: 450,
-            fontSize: "1.2rem",
-            color: "#F6E4C1",
-            opacity: 0.8,
-            margin: "1.5rem 0rem",
-          }}
-        >
-          {mainResults.length + extraResults.length} alumni found
-        </div>
+                  <div style={{ textAlign: "right", marginTop: "0.5rem" }}>
+                    <button
+                      onClick={clearFilters}
+                      style={{
+                        backgroundColor: "#F23359",
+                        color: "#f2f2f2",
+                        padding: "0.4rem 0.8rem",
+                        border: "none",
+                        borderRadius: "6px",
+                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                        fontWeight: 500,
+                        cursor: "pointer",
+                        letterSpacing: "0rem",
+                        transition: "opacity 0.3s ease",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+                      onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                    >
+                      Reset Filters
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </section>
 
-        {/* Primary (or all if no query) */}
-        <section
-          style={{
-            width: "90%",
-            maxWidth: "1200px",
-            margin: "1.75rem auto",
-          }}
-        >
-          <h4
-            style={{
-              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-              fontWeight: 1000,
-              letterSpacing: 0.1,
-              color: "#F6E4C1",
-              opacity: 0.8,
-              marginBottom: "1rem",
-              fontSize: "1.5rem",
-            }}
-          >
-            Top matches:
-          </h4>
+          {/* Result Count */}
           <div
             style={{
-              display: "grid",
-              justifyContent: "center",
-              gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))",
-              gap: "1.5rem",
-              background: "rgba(36, 17, 35, 0.2)",
-              borderRadius: "8px",
-              padding: "2rem",
+              textAlign: "center",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+              fontWeight: 450,
+              fontSize: "1.2rem",
+              color: "#F6E4C1",
+              opacity: 0.8,
+              margin: "1.5rem 0rem",
             }}
           >
-            {mainResults.map((alum, idx) => (
-              <MiniProfileCard
-                key={alum.slug || idx}
-                name={alum.name}
-                role={alum.roles?.join(", ") ?? ""}
-                slug={alum.slug}
-                headshotUrl={alum.headshotUrl}
-                priority={idx < 12}
-              />
-            ))}
+            {mainResults.length + extraResults.length} alumni found
           </div>
-        </section>
 
-        {/* Secondary matches */}
-        {extraResults.length > 0 && (
+          {/* Primary (or all if no query) */}
           <section
             style={{
               width: "90%",
               maxWidth: "1200px",
-              margin: "2rem auto",
+              margin: "1.75rem auto",
             }}
           >
             <h4
@@ -492,7 +488,7 @@ export default function DirectoryPageClient({
                 fontSize: "1.5rem",
               }}
             >
-              More matches you might like:
+              Top matches:
             </h4>
             <div
               style={{
@@ -505,35 +501,88 @@ export default function DirectoryPageClient({
                 padding: "2rem",
               }}
             >
-              {extraResults.map((alum, idx) => (
-                <MiniProfileCard
-                  key={alum.slug || `extra-${idx}`}
-                  name={alum.name}
-                  role={alum.roles?.join(", ") ?? ""}
-                  slug={alum.slug}
-                  headshotUrl={alum.headshotUrl}
-                  priority={idx < 12}
-                />
-              ))}
+              {mainResults.map((alum, idx) => {
+
+                return (
+                  <MiniProfileCard
+                    key={alum.slug || String(idx)}
+                    name={alum.name}
+                    role={alum.roles?.join(", ") ?? ""}
+                    slug={alum.slug}
+                    priority={idx < 12}
+                  />
+                );
+              })}
+
             </div>
           </section>
-        )}
 
-        {/* Seasons Carousel */}
-        <section
-          style={{
-            width: "100%",
-            backgroundColor: "#6C00AF",
-            boxShadow: "0px 0px 33px rgba(0,0,0,0.8)",
-            padding: "4rem 0",
-            marginTop: "4rem",
-          }}
-        >
-          <div style={{ width: "100%", margin: "0 auto" }}>
-            <SeasonsCarouselAlt />
-          </div>
-        </section>
-      </main>
-    </div>
+          {/* Secondary matches */}
+          {extraResults.length > 0 && (
+            <section
+              style={{
+                width: "90%",
+                maxWidth: "1200px",
+                margin: "2rem auto",
+              }}
+            >
+              <h4
+                style={{
+                  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                  fontWeight: 1000,
+                  letterSpacing: 0.1,
+                  color: "#F6E4C1",
+                  opacity: 0.8,
+                  marginBottom: "1rem",
+                  fontSize: "1.5rem",
+                }}
+              >
+                More matches you might like:
+              </h4>
+              <div
+                style={{
+                  display: "grid",
+                  justifyContent: "center",
+                  gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))",
+                  gap: "1.5rem",
+                  background: "rgba(36, 17, 35, 0.2)",
+                  borderRadius: "8px",
+                  padding: "2rem",
+                }}
+              >
+                {extraResults.map((alum, idx) => {
+
+                  return (
+                    <MiniProfileCard
+                      key={alum.slug || String(idx)}
+                      name={alum.name}
+                      role={alum.roles?.join(", ") ?? ""}
+                      slug={alum.slug}
+                      priority={idx < 12}
+                    />
+                  );
+                })}
+
+              </div>
+            </section>
+          )}
+
+          {/* Seasons Carousel */}
+          <section
+            style={{
+              width: "100%",
+              backgroundColor: "#6C00AF",
+              boxShadow: "0px 0px 33px rgba(0,0,0,0.8)",
+              padding: "4rem 0",
+              marginTop: "4rem",
+            }}
+          >
+            <div style={{ width: "100%", margin: "0 auto" }}>
+              <SeasonsCarouselAlt />
+            </div>
+          </section>
+        </main>
+      </div>
+    </HeadshotProvider>
   );
 }

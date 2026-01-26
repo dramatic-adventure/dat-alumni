@@ -3,14 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
-export type StudioTab =
-  | "basics"
-  | "identity"
-  | "media"
-  | "contact"
-  | "story"
-  | "event";
-
+export type StudioTab = "basics" | "identity" | "media" | "contact" | "story" | "event";
 export type UploadKind = "headshot" | "album" | "reel" | "event";
 
 const COLOR = {
@@ -187,16 +180,21 @@ export default function ProfileStudio(props: ProfileStudioProps) {
     eventPanel,
   } = props;
 
-  const isControlled = controlledTab !== undefined;
+  const isControlled = controlledTab != null;
 
   const [internalTab, setInternalTab] = useState<StudioTab>(defaultTab);
 
-  // If parent changes defaultTab, sync internal state (uncontrolled mode only).
+  // Keep internal in sync when uncontrolled, and gracefully handle mode flips.
   useEffect(() => {
-    if (!isControlled) setInternalTab(defaultTab);
-  }, [defaultTab, isControlled]);
+    if (!isControlled) {
+      setInternalTab(defaultTab);
+    } else {
+      // if we become controlled, mirror the controlled tab once (prevents a stale flash if later uncontrolled again)
+      setInternalTab(controlledTab ?? defaultTab);
+    }
+  }, [defaultTab, isControlled, controlledTab]);
 
-  const tab: StudioTab = isControlled ? controlledTab : internalTab;
+  const tab: StudioTab = isControlled ? (controlledTab ?? internalTab) : internalTab;
 
   const setTab = (t: StudioTab) => {
     if (isControlled) onTabChange?.(t);
@@ -225,52 +223,59 @@ export default function ProfileStudio(props: ProfileStudioProps) {
       {/* Top nav (replaces MediaHub category row) */}
       <div style={tabRowStyle}>
         <button
-          type="button"
-          style={tabStyle(tab === "basics")}
-          onClick={() => setTab("basics")}
+            type="button"
+            style={tabStyle(tab === "basics")}
+            onClick={() => setTab("basics")}
+            aria-pressed={tab === "basics"}
         >
-          Basics
+            Basics
         </button>
 
         <button
-          type="button"
-          style={tabStyle(tab === "identity")}
-          onClick={() => setTab("identity")}
+            type="button"
+            style={tabStyle(tab === "identity")}
+            onClick={() => setTab("identity")}
+            aria-pressed={tab === "identity"}
         >
-          Identity
+            Identity
         </button>
 
         <button
-          type="button"
-          style={tabStyle(tab === "media")}
-          onClick={() => setTab("media")}
+            type="button"
+            style={tabStyle(tab === "media")}
+            onClick={() => setTab("media")}
+            aria-pressed={tab === "media"}
         >
-          Media
+            Media
         </button>
 
         <button
-          type="button"
-          style={tabStyle(tab === "contact")}
-          onClick={() => setTab("contact")}
+            type="button"
+            style={tabStyle(tab === "contact")}
+            onClick={() => setTab("contact")}
+            aria-pressed={tab === "contact"}
         >
-          Contact
+            Contact
         </button>
 
         <button
-          type="button"
-          style={tabStyle(tab === "story")}
-          onClick={() => setTab("story")}
+            type="button"
+            style={tabStyle(tab === "story")}
+            onClick={() => setTab("story")}
+            aria-pressed={tab === "story"}
         >
-          Story
+            Story
         </button>
 
         <button
-          type="button"
-          style={tabStyle(tab === "event")}
-          onClick={() => setTab("event")}
+            type="button"
+            style={tabStyle(tab === "event")}
+            onClick={() => setTab("event")}
+            aria-pressed={tab === "event"}
         >
-          Event
+            Event
         </button>
+
 
         <div
           style={{

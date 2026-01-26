@@ -25,6 +25,8 @@ interface UseAlumniSearchResult {
   setQuery: (value: string) => void;
 }
 
+type SearchRow = EnrichedProfileLiveRow;
+
 /** Small helper: safe includes for optional arrays */
 function hasToken(arr: string[] | undefined, token: string) {
   if (!arr?.length) return false;
@@ -43,7 +45,7 @@ function passesTokenFilter(
 }
 
 export function useAlumniSearch(
-  enrichedData: EnrichedProfileLiveRow[],
+  enrichedData: EnrichedProfileLiveRow[] | undefined,
   filters: Filters,
   maxSecondary: number = 50,
   showAllIfEmpty: boolean = false,
@@ -63,7 +65,7 @@ export function useAlumniSearch(
 
   const fuse = useMemo(
     () =>
-      new Fuse(enrichedData, {
+      new Fuse(enrichedData ?? [], {
         includeScore: true,
         threshold: 0.35,
         ignoreLocation: true,
@@ -100,7 +102,7 @@ export function useAlumniSearch(
       // --------------------------------------------
       // If filters are set, we gate results against token buckets.
       // This keeps your scoring logic unchanged while honoring filters.
-      const gated = enrichedData.filter((item) => {
+      const gated: SearchRow[] = (enrichedData ?? []).filter((item) => {
         // NOTE: these match against normalized token arrays produced on server.
         if (!passesTokenFilter(filters.program, item.programTokens)) return false;
         if (!passesTokenFilter(filters.role, item.roleTokens)) return false;
@@ -117,7 +119,7 @@ export function useAlumniSearch(
 
       // If empty query:
       if (!cleanedQuery) {
-        const all = gated as unknown as ProfileLiveRow[];
+        const all: ProfileLiveRow[] = gated as unknown as ProfileLiveRow[]; // boundary cast (enriched is a superset)
         onResults(showAllIfEmpty ? [] : [], showAllIfEmpty ? all : [], "");
         return;
       }
@@ -129,7 +131,7 @@ export function useAlumniSearch(
       const multiTerm = queryTerms.length > 1;
 
       const scoredResults: {
-        item: ProfileLiveRow;
+        item: EnrichedProfileLiveRow;
         score: number;
         coverage: number;
         reasons: string[];
@@ -331,7 +333,7 @@ export function useAlumniSearch(
 
         if (includeAsPrimary) {
           scoredResults.push({
-            item: item as unknown as ProfileLiveRow,
+            item,
             score,
             coverage,
             reasons,
@@ -341,7 +343,9 @@ export function useAlumniSearch(
       });
 
       scoredResults.sort((a, b) => b.score - a.score);
-      const primary = scoredResults.map((r) => r.item);
+      const primary: ProfileLiveRow[] = scoredResults.map(
+        (r) => r.item as unknown as ProfileLiveRow
+      );
 
       /** ✅ Secondary via Fuse (deduped by canonicalSlug/slug) */
       const secondary: ProfileLiveRow[] = [];

@@ -359,11 +359,26 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
   const canonicalOrIncoming = canonical || incoming;
 
   // 2) Build the full alias set (includes canonical)
-  const aliases = await getSlugAliases(canonicalOrIncoming);
+  const aliasesRaw = await getSlugAliases(canonicalOrIncoming);
+  const aliases = new Set<string>(Array.from(aliasesRaw as any).map((s: any) => normSlug(s)));
+  aliases.add(normSlug(canonicalOrIncoming));
+  aliases.add(normSlug(incoming));
+
 
   // 3) Load the profile row by ANY alias so we don't rely on its slug changing
   const alumni = await loadAlumniByAliases(aliases as any);
   if (!alumni) return notFound();
+
+  logOnce(
+    `alumni-hit:${encodeURIComponent(canonicalOrIncoming)}`,
+    undefined,
+    "[alumni] loaded",
+    {
+      incoming,
+      canonicalOrIncoming,
+      aliasesCount: aliases.size,
+    },
+  );
 
   // 4) STORIES
   const allStories = await getAllStories();

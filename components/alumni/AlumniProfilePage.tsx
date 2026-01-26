@@ -85,7 +85,8 @@ export default function AlumniProfilePage({
 
   const roles = Array.isArray(d.roles) ? (d.roles as string[]) : [];
   const role = cleanStr(d.role) ?? "";
-  const headshotUrl = cleanStr(d.headshotUrl) ?? "";
+  const headshotUrl = cleanStr(d.headshotUrl); // allow undefined; ProfileCard/Provider can fill
+
 
   // NOTE: these may be string[] OR strings depending on CSV/live snapshot
   const programBadges = coerceStrArray(d.programBadges ?? d.programs ?? d.projectBadges);
@@ -114,7 +115,9 @@ export default function AlumniProfilePage({
   // NOTE: updates shape is handled inside ProfileCard; we just pass through.
   const updates = (d.updates ?? []) as any[];
 
-  clientDebug("🧪 updates passed to ProfileCard:", updates);
+  if (process.env.NEXT_PUBLIC_DEBUG_PROFILE === "1") {
+    clientDebug("🧪 updates passed to ProfileCard:", updates);
+  }
 
   // ✅ Prefer roles[] if available, otherwise fallback to role
   const displayRole = roles.length > 0 ? roles.join(", ") : role;
@@ -214,7 +217,7 @@ export default function AlumniProfilePage({
                 slugAliases={slugAliases}
                 name={name}
                 role={displayRole}
-                headshotUrl={headshotUrl}
+                headshotUrl={headshotUrl || ""}
                 location={location}
                 programBadges={programBadges}
                 identityTags={identityTags}
