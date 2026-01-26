@@ -2,6 +2,7 @@
 "use server";
 
 import { serverDebug, serverInfo, serverWarn } from "@/lib/serverDebug";
+
 type BlobApi = {
   getText: (key: string) => Promise<string | null>;
   setText: (key: string, value: string) => Promise<boolean>;
@@ -55,19 +56,30 @@ export async function loadCsv(
 ): Promise<string> {
   const fs = await import("fs/promises");
   const path = await import("path");
-  const fallbackPath = path.join(process.cwd(), "public", "fallback", fallbackFileName);
+  const fallbackPath = path.join(
+    process.cwd(),
+    "public",
+    "fallback",
+    fallbackFileName
+  );
 
   const stripBOM = (txt: string) =>
     txt.length > 0 && txt.charCodeAt(0) === 0xfeff ? txt.slice(1) : txt;
 
   const isDocsHost = (url: string) => {
-    try { return new URL(url).hostname === "docs.google.com"; } catch { return false; }
+    try {
+      return new URL(url).hostname === "docs.google.com";
+    } catch {
+      return false;
+    }
   };
 
   const isSheetsFileUrl = (url: string) => {
     try {
       const u = new URL(url);
-      return u.hostname === "docs.google.com" && /\/spreadsheets\/d\//.test(u.pathname);
+      return (
+        u.hostname === "docs.google.com" && /\/spreadsheets\/d\//.test(u.pathname)
+      );
     } catch {
       return false;
     }
@@ -78,7 +90,11 @@ export async function loadCsv(
       const u = new URL(url);
       if (u.hostname !== "docs.google.com") return false;
       if (!u.pathname.includes("/spreadsheets/")) return false;
-      const fmt = (u.searchParams.get("format") || u.searchParams.get("output") || "").toLowerCase();
+      const fmt = (
+        u.searchParams.get("format") ||
+        u.searchParams.get("output") ||
+        ""
+      ).toLowerCase();
       return fmt === "csv" || u.pathname.endsWith("/export") || u.pathname.endsWith("/gviz/tq");
     } catch {
       return false;
@@ -102,20 +118,40 @@ export async function loadCsv(
       const s = v == null ? "" : String(v);
       return needsQ.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
-    return (rows || []).map((r) => (r || []).map(q).join(",")).join("\n");
+    return (rows || [])
+      .map((r) => (r || []).map(q).join(","))
+      .join("\n");
   };
 
+  // ------------------------------------------------------------
   // Effective caching mode
-  const revalidate = opts.noStore ? 0 : (Number.isFinite(opts.revalidate) ? Number(opts.revalidate) : 60);
-  const useNoStore = opts.noStore === true;
+  //
+  // During `next build`, some routes/pages are evaluated in build workers.
+  // Forcing `noStore` there triggers Next's "Dynamic server usage" warnings.
+  // So: during build, we degrade `noStore` to ISR.
+  // ------------------------------------------------------------
+  const IS_BUILD = process.env.NEXT_PHASE === "phase-production-build";
+
+  const useNoStore = opts.noStore === true && !IS_BUILD;
+  const revalidate = useNoStore
+    ? 0
+    : Number.isFinite(opts.revalidate)
+    ? Number(opts.revalidate)
+    : 60;
+
   const shouldBust =
-  opts.cacheBust === true ||
-  (useNoStore && !!sourceUrl && isSheetsCsvish(sourceUrl));
+    opts.cacheBust === true ||
+    (useNoStore && !!sourceUrl && isSheetsCsvish(sourceUrl));
 
   // ---------------- HTTP path ----------------
   const tryHttpFetch = async (url: string) => {
     const finalUrl = shouldBust ? withCacheBuster(url) : url;
-    if (DEBUG) serverInfo("🌐 [loadCsv] HTTP fetch:", finalUrl, { revalidate, noStore: useNoStore });
+    if (DEBUG)
+      serverInfo("🌐 [loadCsv] HTTP fetch:", finalUrl, {
+        revalidate,
+        noStore: useNoStore,
+        isBuild: IS_BUILD,
+      });
 
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), 8000);
@@ -130,7 +166,7 @@ export async function loadCsv(
       next: { revalidate },
     };
 
-    // Only force no-store when requested; otherwise let ISR do its job
+    // Only force no-store when requested (and not during build)
     if (useNoStore) {
       (fetchInit as any).cache = "no-store";
     }
@@ -181,7 +217,11 @@ export async function loadCsv(
     const wantTitle = u.searchParams.get("sheet");
 
     if (DEBUG) {
-      serverDebug("🔐 [loadCsv] SA Sheets fallback:", { spreadsheetId, wantGid, wantTitle });
+      serverDebug("🔐 [loadCsv] SA Sheets fallback:", {
+        spreadsheetId,
+        wantGid,
+        wantTitle,
+      });
     }
 
     // Helper to do one SA request
@@ -193,7 +233,9 @@ export async function loadCsv(
         includeGridData: false,
       });
 
-      const props = (meta.data.sheets || []).map((s) => s.properties!).filter(Boolean);
+      const props = (meta.data.sheets || [])
+        .map((s) => s.properties!)
+        .filter(Boolean);
       if (!props.length) throw new Error("Spreadsheet has no sheets");
 
       // 2) resolve sheet
@@ -204,7 +246,9 @@ export async function loadCsv(
         if (!hit?.title) throw new Error(`No sheet with gid=${wantGid}`);
         title = hit.title;
       } else if (wantTitle) {
-        const hit = props.find((p) => (p.title || "").toLowerCase() === wantTitle.toLowerCase());
+        const hit = props.find(
+          (p) => (p.title || "").toLowerCase() === wantTitle.toLowerCase()
+        );
         if (!hit?.title) throw new Error(`No sheet with title='${wantTitle}'`);
         title = hit.title;
       } else {
@@ -231,44 +275,76 @@ export async function loadCsv(
         return csv;
       } catch (err: any) {
         const msg = String(err?.message || err);
+
         // Early exit on non-retryable conditions
         if (
           msg.includes("Requested entity was not found") || // permissions / not shared with SA
-          msg.toLowerCase().includes("quota exceeded") ||   // rate limit — don't keep hammering
+          msg.toLowerCase().includes("quota exceeded") || // rate limit — don't keep hammering
           msg.includes("No sheet with gid=") ||
           msg.includes("No sheet with title=")
         ) {
           serverWarn("⚠️ [loadCsv] SA fallback non-retryable:", msg);
           break;
         }
+
         if (i < maxRetries - 1) {
           const delayMs = (i + 1) * 500; // 0.5s, 1.0s
-          if (DEBUG) serverDebug(`⏳ [loadCsv] SA retry in ${delayMs}ms (${i + 1}/${maxRetries - 1})`);
+          if (DEBUG)
+            serverDebug(
+              `⏳ [loadCsv] SA retry in ${delayMs}ms (${i + 1}/${
+                maxRetries - 1
+              })`
+            );
           await new Promise((r) => setTimeout(r, delayMs));
           continue;
         }
+
         serverWarn("⚠️ [loadCsv] SA fallback failed after retries:", msg);
         break;
       }
     }
+
     throw new Error("SA fallback did not succeed");
+  };
+
+  const persistToBlobsBestEffort = async (csv: string) => {
+    try {
+      const blobApi = await getBlobApi();
+      if (blobApi) await blobApi.setText(fallbackFileName, csv);
+    } catch {
+      // never break request
+    }
+  };
+
+  const readFromBlobsBestEffort = async (): Promise<string | null> => {
+    try {
+      const blobApi = await getBlobApi();
+      return blobApi ? await blobApi.getText(fallbackFileName) : null;
+    } catch {
+      return null;
+    }
   };
 
   // ---------------- main flow ----------------
   if (sourceUrl) {
     try {
       const csv = await tryHttpFetch(sourceUrl);
+
       // Best-effort: persist last-known-good CSV to Netlify Blobs
-        const blobApi = await getBlobApi();
-if (blobApi) await blobApi.setText(fallbackFileName, csv);
+      await persistToBlobsBestEffort(csv);
 
       // Best-effort fallback write (never break runtime if FS is read-only)
       try {
         await fs.mkdir(path.dirname(fallbackPath), { recursive: true });
         await fs.writeFile(fallbackPath, csv, "utf-8");
-        if (DEBUG) serverDebug("✅ [loadCsv] HTTP fetch ok; fallback updated:", fallbackFileName);
+        if (DEBUG)
+          serverDebug("✅ [loadCsv] HTTP fetch ok; fallback updated:", fallbackFileName);
       } catch (e) {
-        if (DEBUG) serverWarn("⚠️ [loadCsv] Could not write fallback (likely read-only FS):", String(e));
+        if (DEBUG)
+          serverWarn(
+            "⚠️ [loadCsv] Could not write fallback (likely read-only FS):",
+            String(e)
+          );
       }
 
       return csv;
@@ -279,17 +355,25 @@ if (blobApi) await blobApi.setText(fallbackFileName, csv);
       if (authError && isDocsHost(sourceUrl) && isSheetsFileUrl(sourceUrl)) {
         try {
           const csv = stripBOM(await tryServiceAccountSheetsBounded(sourceUrl));
+
           // Best-effort: persist last-known-good CSV to Netlify Blobs
-            const blobApi = await getBlobApi();
-if (blobApi) await blobApi.setText(fallbackFileName, csv);
+          await persistToBlobsBestEffort(csv);
 
           // Best-effort fallback write (never break runtime)
           try {
             await fs.mkdir(path.dirname(fallbackPath), { recursive: true });
             await fs.writeFile(fallbackPath, csv, "utf-8");
-            if (DEBUG) serverDebug("✅ [loadCsv] SA Sheets fallback ok; fallback updated:", fallbackFileName);
+            if (DEBUG)
+              serverDebug(
+                "✅ [loadCsv] SA Sheets fallback ok; fallback updated:",
+                fallbackFileName
+              );
           } catch (e) {
-            if (DEBUG) serverWarn("⚠️ [loadCsv] Could not write fallback (likely read-only FS):", String(e));
+            if (DEBUG)
+              serverWarn(
+                "⚠️ [loadCsv] Could not write fallback (likely read-only FS):",
+                String(e)
+              );
           }
 
           return csv;
@@ -303,15 +387,10 @@ if (blobApi) await blobApi.setText(fallbackFileName, csv);
   }
 
   // Netlify Blobs fallback (dynamic, persists across deploys)
-  try {
-    const blobApi = await getBlobApi();
-const blobCsv = blobApi ? await blobApi.getText(fallbackFileName) : null;
-    if (blobCsv) {
-      if (DEBUG) serverDebug("🫙 [loadCsv] Using Blobs fallback:", fallbackFileName);
-      return stripBOM(blobCsv);
-    }
-  } catch {
-  // never break fallback flow
+  const blobCsv = await readFromBlobsBestEffort();
+  if (blobCsv) {
+    if (DEBUG) serverDebug("🫙 [loadCsv] Using Blobs fallback:", fallbackFileName);
+    return stripBOM(blobCsv);
   }
 
   // Local fallback as last resort
