@@ -2,6 +2,28 @@
 "use server";
 
 import { serverDebug, serverInfo, serverWarn } from "@/lib/serverDebug";
+type BlobApi = {
+  getText: (key: string) => Promise<string | null>;
+  setText: (key: string, value: string) => Promise<boolean>;
+};
+
+async function getBlobApi(): Promise<BlobApi | null> {
+  // Only available on Netlify runtime (build/functions)
+  const isNetlify =
+    process.env.NETLIFY === "true" || !!process.env.NETLIFY_SITE_ID;
+
+  if (!isNetlify) return null;
+
+  try {
+    const mod = await import("@/lib/blobFallback");
+    return {
+      getText: mod.blobGetText,
+      setText: mod.blobSetText,
+    };
+  } catch {
+    return null;
+  }
+}
 
 const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
 const SA_FALLBACK_DISABLED = process.env.DISABLE_SA_FALLBACK === "1";
@@ -86,7 +108,9 @@ export async function loadCsv(
   // Effective caching mode
   const revalidate = opts.noStore ? 0 : (Number.isFinite(opts.revalidate) ? Number(opts.revalidate) : 60);
   const useNoStore = opts.noStore === true;
-  const shouldBust = (opts.cacheBust === true) || (useNoStore && isSheetsCsvish(String(sourceUrl)));
+  const shouldBust =
+  opts.cacheBust === true ||
+  (useNoStore && !!sourceUrl && isSheetsCsvish(sourceUrl));
 
   // ---------------- HTTP path ----------------
   const tryHttpFetch = async (url: string) => {
@@ -234,6 +258,9 @@ export async function loadCsv(
   if (sourceUrl) {
     try {
       const csv = await tryHttpFetch(sourceUrl);
+      // Best-effort: persist last-known-good CSV to Netlify Blobs
+        const blobApi = await getBlobApi();
+if (blobApi) await blobApi.setText(fallbackFileName, csv);
 
       // Best-effort fallback write (never break runtime if FS is read-only)
       try {
@@ -252,6 +279,9 @@ export async function loadCsv(
       if (authError && isDocsHost(sourceUrl) && isSheetsFileUrl(sourceUrl)) {
         try {
           const csv = stripBOM(await tryServiceAccountSheetsBounded(sourceUrl));
+          // Best-effort: persist last-known-good CSV to Netlify Blobs
+            const blobApi = await getBlobApi();
+if (blobApi) await blobApi.setText(fallbackFileName, csv);
 
           // Best-effort fallback write (never break runtime)
           try {
@@ -272,12 +302,25 @@ export async function loadCsv(
     }
   }
 
+  // Netlify Blobs fallback (dynamic, persists across deploys)
+  try {
+    const blobApi = await getBlobApi();
+const blobCsv = blobApi ? await blobApi.getText(fallbackFileName) : null;
+    if (blobCsv) {
+      if (DEBUG) serverDebug("🫙 [loadCsv] Using Blobs fallback:", fallbackFileName);
+      return stripBOM(blobCsv);
+    }
+  } catch {
+  // never break fallback flow
+  }
+
   // Local fallback as last resort
   try {
     if (DEBUG) serverDebug("📂 [loadCsv] Using fallback:", fallbackFileName);
     const csvText = await fs.readFile(fallbackPath, "utf-8");
     return stripBOM(csvText);
   } catch {
-    throw new Error(`❌ No CSV content found from URL or fallback: ${fallbackFileName}`);
+    serverWarn("⚠️ [loadCsv] No CSV content from URL, Blobs, or fallback file:", fallbackFileName);
+    throw new Error(`❌ No CSV content found from URL, Blobs, or fallback: ${fallbackFileName}`);
   }
 }
