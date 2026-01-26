@@ -1,6 +1,6 @@
 # netlify.toml
 [build]
-  command = "npm run prisma:generate && npm run build"
+  command = "DATABASE_URL=file:./dev.db npm run prisma:generate && npm run build"
   publish  = ".next"
 
 [[plugins]]
