@@ -13,7 +13,9 @@
     "eslint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "typecheck": "tsc --noEmit",
     "migrate:profiles": "tsx scripts/migrateProfileDataToLive.ts",
-    "migrate:profiles:dry": "DRY_RUN=1 tsx scripts/migrateProfileDataToLive.ts"
+    "migrate:profiles:dry": "DRY_RUN=1 tsx scripts/migrateProfileDataToLive.ts",
+    "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
+    "postinstall": "npm run prisma:generate"
   },
   "dependencies": {
     "@fontsource/space-grotesk": "^5.2.10",

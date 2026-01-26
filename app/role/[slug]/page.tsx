@@ -249,7 +249,7 @@ function toTitleCaseFromSlug(slug: string) {
 }
 
 function splitName(full: string) {
-  const parts = (full || "").trim().split(/\s+/);
+  const parts = (typeof full === "string" ? full : "").trim().split(/\s+/);
   const first = parts[0] || "";
   const last = parts.length > 1 ? parts[parts.length - 1] : "";
   return [first, last] as const;

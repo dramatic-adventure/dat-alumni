@@ -19,6 +19,7 @@ export async function generateStaticParams() {
 
   for (const artist of alumni) {
     for (const tag of artist.identityTags ?? []) {
+      if (typeof tag !== "string") continue;
       const canonical = getCanonicalTag(tag);
       if (canonical) slugs.add(slugifyTag(canonical));
     }
@@ -30,7 +31,7 @@ export async function generateStaticParams() {
 export async function generateMetadata(
   { params }: { params: { slug: string } }
 ): Promise<Metadata> {
-  const slugLower = params.slug.toLowerCase();
+  const slugLower = (params?.slug ?? "").toLowerCase();
   const alumni: AlumniRow[] = await loadVisibleAlumni();
 
   // Try to find the canonical label for this slug from actual data
@@ -38,11 +39,13 @@ export async function generateMetadata(
     alumni
       .flatMap((a) => a.identityTags ?? [])
       .map((t) => getCanonicalTag(t))
-      .find((c) => c && slugifyTag(c) === slugLower) ?? humanizeSlug(params.slug);
+      .find((c) => c && slugifyTag(c) === slugLower) ??
+        humanizeSlug(params?.slug ?? "");
+
 
   const title = `${labelFromData} — DAT Alumni`;
   const description = `Explore artists tagged as ${labelFromData}.`;
-  const canonicalPath = `/tag/${params.slug}`;
+  const canonicalPath = `/tag/${params?.slug ?? ""}`;
 
   return {
     title,
@@ -63,7 +66,7 @@ export async function generateMetadata(
 }
 
 export default async function TagPage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+  const slug = params?.slug ?? "";
   const alumni: AlumniRow[] = await loadVisibleAlumni();
   const slugLower = slug.toLowerCase();
 
@@ -139,7 +142,7 @@ export default async function TagPage({ params }: { params: { slug: string } }) 
               textAlign: "right",
             }}
           >
-            Artists tagged as {displayLabel.toLowerCase()}
+            Artists tagged as {(displayLabel ?? "").toLowerCase()}
           </p>
         </div>
       </div>
@@ -256,14 +259,15 @@ export default async function TagPage({ params }: { params: { slug: string } }) 
 
 // ------- helpers -------
 function humanizeSlug(slug: string) {
-  return slug
+  const safe = typeof slug === "string" ? slug : "";
+  return safe
     .split("-")
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
     .join(" ");
 }
 
 function splitName(full: string) {
-  const parts = (full || "").trim().split(/\s+/);
+  const parts = (typeof full === "string" ? full : "").trim().split(/\s+/);
   const first = parts[0] || "";
   const last = parts.length > 1 ? parts[parts.length - 1] : "";
   return [first, last] as const;

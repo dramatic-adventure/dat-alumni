@@ -68,6 +68,10 @@ const causeMetaMap: Record<string, CauseMeta> = {
 // Helpers
 // ===============================
 
+function norm(v: unknown) {
+  return String(v ?? "").trim().toLowerCase();
+}
+
 function normalizeStaticSrc(src?: string): string | undefined {
   if (!src) return undefined;
 
@@ -87,11 +91,11 @@ type CauseCategoryMeta = (typeof CAUSE_CATEGORIES)[number];
 type CauseSubcategoryMeta =
   (typeof CAUSE_SUBCATEGORIES_BY_CATEGORY)[keyof typeof CAUSE_SUBCATEGORIES_BY_CATEGORY][number];
 
-function findCauseBySlug(slug: string): {
+function findCauseBySlug(slug: unknown): {
   subCause?: CauseSubcategoryMeta;
   category?: CauseCategoryMeta;
 } | null {
-  const slugLower = slug.toLowerCase();
+  const slugLower = norm(slug);
 
   // 1) Try subcategory IDs first (this is what DramaClubPageTemplate uses)
   for (const subList of Object.values(CAUSE_SUBCATEGORIES_BY_CATEGORY)) {
@@ -202,7 +206,7 @@ export async function generateMetadata(
   { params }: { params: { slug: string } }
 ): Promise<Metadata> {
   const alumni: AlumniRow[] = await loadVisibleAlumni();
-  const slugLower = params.slug.toLowerCase();
+  const slugLower = norm((params as any)?.slug);
 
   const taxonomyHit = findCauseBySlug(slugLower);
   const taxonomyLabel = (() => {
@@ -217,6 +221,7 @@ export async function generateMetadata(
       .flatMap((a) => (((a as any).causeTags ?? []) as string[]))
       .map((t) => getCanonicalTag(t) ?? t)
       .find((c) => slugify(c) === slugLower) ??
+    taxonomyLabel ??
     taxonomyLabel ??
     humanizeSlug(params.slug);
 
@@ -248,7 +253,7 @@ export async function generateMetadata(
 
 export default async function CausePage({ params }: { params: { slug: string } }) {
   const { slug } = params;
-  const slugLower = slug.toLowerCase();
+  const slugLower = norm(slug);
 
   const alumni: AlumniRow[] = await loadVisibleAlumni();
   const allProductions: Production[] = Object.values(productionMap);
@@ -271,7 +276,7 @@ export default async function CausePage({ params }: { params: { slug: string } }
   // 1) Direct slug match (causeSlugs array)
   const slugMatch =
     (club.causeSlugs ?? [])
-      .map((s) => s.toLowerCase())
+      .map((s) => norm(s))
       .includes(slugLower);
 
   // 2) Taxonomy match: any DramaClub.cause subcategory whose id == slug
@@ -1072,15 +1077,18 @@ function ArtistGrid({ artists }: { artists: AlumniRow[] }) {
   );
 }
 
-function humanizeSlug(slug: string) {
-  return slug
+function humanizeSlug(slug: unknown) {
+  const s = String(slug ?? "").trim();
+  if (!s) return "";
+  return s
     .split("-")
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
     .join(" ");
 }
 
+
 function splitName(full: string) {
-  const parts = (full || "").trim().split(/\s+/);
+  const parts = (typeof full === "string" ? full : "").trim().split(/\s+/);
   const first = parts[0] || "";
   const last = parts.length > 1 ? parts[parts.length - 1] : "";
   return [first, last] as const;

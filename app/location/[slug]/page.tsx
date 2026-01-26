@@ -45,7 +45,7 @@ export async function generateStaticParams() {
 export async function generateMetadata(
   { params }: { params: { slug: string } }
 ): Promise<Metadata> {
-  const { slug } = params;
+  const slug = params?.slug ?? "";
   const canonical = unslugToCanonical(slug);
   const parent = getParentFor(canonical);
   const mainLabel = parent?.label ?? canonical;
@@ -56,11 +56,11 @@ export async function generateMetadata(
   return {
     title,
     description,
-    alternates: { canonical: `/location/${slug}` },
+    alternates: { canonical: `/location/${slug ?? ""}` },
     openGraph: {
       title,
       description,
-      url: `/location/${slug}`,
+      url: `/location/${slug ?? ""}`,
       type: "website",
     },
     twitter: {
@@ -74,13 +74,13 @@ export async function generateMetadata(
 export default async function LocationPage(
   { params }: { params: { slug: string } }
 ) {
-  const { slug } = params;
+  const slug = params?.slug ?? "";
   const alumni: AlumniRow[] = await loadVisibleAlumni();
 
   const canonical = unslugToCanonical(slug);      // e.g., "Brooklyn, NYC" or "New York City"
   const parent = getParentFor(canonical);         // boroughs → { label: "New York City", slug: "new-york-city" }
   const mainLabel = parent?.label ?? canonical;   // show parent bucket if borough
-  const mainSlug = slugifyLocation(mainLabel);
+  const mainSlug = slugifyLocation(typeof mainLabel === "string" ? mainLabel : "");
 
   // Main bucket (deduped via canonicalized links) — include boroughs when viewing NYC
   const artistsInLocation = alumni.filter((artist) =>
@@ -166,7 +166,10 @@ export default async function LocationPage(
             }}
           >
             Artists based in and around{" "}
-            {displayLabel.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())}
+            {(typeof displayLabel === "string" ? displayLabel : "").replace(
+              /\w\S*/g,
+              (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+            )}
           </p>
         </div>
       </div>

@@ -1,13 +1,16 @@
 // lib/prisma.ts
 import path from "path";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+
+// ✅ Your custom Prisma output is ./generated/prisma
+// The generated entry files are client.ts + enums.ts (per your ls output)
+import { PrismaClient } from "../generated/prisma/client";
 import {
-  PrismaClient,
   ContextType,
   AmountType,
   DonationKind,
   PaymentStatus,
-} from "../generated/prisma/client";
+} from "../generated/prisma/enums";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -28,17 +31,14 @@ const defaultUrl = `file:${path.join(process.cwd(), "dev.db")}`;
 const url = envUrl ?? defaultUrl;
 
 // Adapter: url-based (no need to manually instantiate better-sqlite3 Database)
-const adapter = new PrismaBetterSqlite3(
-  { url },
-  // Optional: leave default timestampFormat unless you *really* need unixepoch-ms
-  // { timestampFormat: "iso8601" }
-);
+const adapter = new PrismaBetterSqlite3({ url });
 
+// Reuse Prisma client in dev (prevents exhausting connections in hot reload)
 export const prisma = global.__prisma ?? new PrismaClient({ adapter });
 
 if (process.env.NODE_ENV !== "production") {
   global.__prisma = prisma;
 }
 
-// ✅ Re-export Prisma enums so app code can import from "@/lib/prisma"
+// ✅ Re-export enums so app code can import from "@/lib/prisma"
 export { ContextType, AmountType, DonationKind, PaymentStatus };

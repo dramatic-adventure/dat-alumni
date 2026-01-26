@@ -1,6 +1,6 @@
 # netlify.toml
 [build]
-  command = "npm run build"
+  command = "npm run prisma:generate && npm run build"
   publish  = ".next"
 
 [[plugins]]

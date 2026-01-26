@@ -17,13 +17,15 @@ import { buildTitleBuckets, slugifyTitle } from "@/lib/titles";
 export const revalidate = 3600;
 
 function humanizeSlug(slug: string) {
-  return slug
+  const safe = typeof slug === "string" ? slug : "";
+  return safe
     .split("-")
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
     .join(" ");
 }
 function titleCase(input: string) {
-  return input
+  const safe = typeof input === "string" ? input : "";
+  return safe
     .split(/\s+/)
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
     .join(" ");
@@ -56,7 +58,7 @@ export async function generateStaticParams() {
 export async function generateMetadata(
   { params }: { params: { slug: string } }
 ): Promise<Metadata> {
-  const { slug } = params;
+  const slug = params?.slug ?? "";
   const alumni: AlumniRow[] = await loadVisibleAlumni();
   const buckets = buildTitleBuckets(alumni);
   const target = slug.toLowerCase();
@@ -70,7 +72,7 @@ export async function generateMetadata(
 
   const label = entry?.meta.label ?? humanizeSlug(slug);
   const title = `${label} — DAT Alumni`;
-  const description = `Explore ${label.toLowerCase()} in the DAT alumni community.`;
+  const description = `Explore ${(typeof label === "string" ? label : "").toLowerCase()} in the DAT alumni community.`;
 
   return { title, description };
 }
@@ -78,7 +80,7 @@ export async function generateMetadata(
 export default async function TitlePage(
   { params }: { params: { slug: string } }
 ) {
-  const { slug } = params;
+  const slug = params?.slug ?? "";
   const target = slug.toLowerCase();
   const alumni: AlumniRow[] = await loadVisibleAlumni();
   const buckets = buildTitleBuckets(alumni);

@@ -35,7 +35,7 @@ const themeMetaMap: Record<string, ThemeMeta> = {
 =============================== */
 
 function normalizeStaticSrc(src?: string): string | undefined {
-  if (!src) return undefined;
+  if (!src || typeof src !== "string") return undefined;
 
   const trimmed = src.trim();
   if (!trimmed) return undefined;
@@ -49,11 +49,13 @@ function normalizeStaticSrc(src?: string): string | undefined {
 }
 
 function humanizeSlug(slug: string): string {
-  return slug
+  const safe = typeof slug === "string" ? slug : "";
+  return safe
     .split("-")
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
     .join(" ");
 }
+
 
 /* ===============================
    Static params
@@ -85,7 +87,8 @@ export async function generateMetadata(
   { params }: { params: { slug: string } }
 ): Promise<Metadata> {
   const allProductions: Production[] = Object.values(productionMap);
-  const slugLower = params.slug.toLowerCase();
+  const slugLower = (params?.slug ?? "").toLowerCase();
+
 
   const labelFromData =
     allProductions
@@ -94,7 +97,8 @@ export async function generateMetadata(
         return (((extra as any)?.themes ?? []) as string[]);
       })
       .map((t: string) => getCanonicalTag(t) ?? t)
-      .find((c: string) => slugify(c) === slugLower) ?? humanizeSlug(params.slug);
+            .find((c: string) => slugify(c) === slugLower) ??
+    humanizeSlug(params?.slug ?? "");
 
   const title = `${labelFromData} — DAT Themes`;
   const description = `Plays that explore the theme: ${labelFromData}.`;
@@ -127,7 +131,7 @@ export default async function ThemePage({
 }: {
   params: { slug: string };
 }) {
-  const { slug } = params;
+  const slug = params?.slug ?? "";
   const slugLower = slug.toLowerCase();
 
   const allProductions: Production[] = Object.values(productionMap);
