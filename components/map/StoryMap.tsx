@@ -283,6 +283,13 @@ async function fetchStoriesAsFeatures(): Promise<Feature[]> {
   if (!res.ok) throw new Error(`API /api/stories failed: ${res.status}`);
 
   const data = await res.json();
+  if (DEBUG) clientDebug("[StoryMap] /api/stories raw keys:", Object.keys(data || {}));
+  if (DEBUG) clientDebug("[StoryMap] /api/stories sample:", (data?.stories || [])[0]);
+  if (DEBUG) clientDebug(
+    "[StoryMap] /api/stories count:",
+    Array.isArray(data?.stories) ? data.stories.length : "not-array"
+  );
+
   if (!data?.ok || !Array.isArray(data?.stories)) {
     throw new Error("API /api/stories returned unexpected shape");
   }
@@ -321,41 +328,87 @@ async function fetchStoriesAsFeatures(): Promise<Feature[]> {
   return feats;
 }
 
-async function fetchFallbackStoriesJson(): Promise<Feature[]> {
-  const res = await fetch("/fallback/stories.json", { cache: "no-store" });
+async function fetchFallbackStoriesCsv(): Promise<Feature[]> {
+  const res = await fetch("/fallback/Clean Map Data.csv", { cache: "no-store" });
+  if (DEBUG) clientDebug("[StoryMap] fallback CSV status:", res.status, res.statusText);
   if (!res.ok) return [];
-  const data = await res.json();
 
-  const stories = Array.isArray(data)
-    ? data
-    : Array.isArray(data?.stories)
-    ? data.stories
-    : Array.isArray(data?.data)
-    ? data.data
-    : [];
+  const csvText = await res.text();
+
+  // Minimal CSV parser (same logic as API route, client-safe)
+  function parseCsvLine(line: string): string[] {
+    const out: string[] = [];
+    let cur = "";
+    let inQ = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+
+      if (ch === '"') {
+        if (inQ && line[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else {
+          inQ = !inQ;
+        }
+        continue;
+      }
+
+      if (ch === "," && !inQ) {
+        out.push(cur);
+        cur = "";
+        continue;
+      }
+
+      cur += ch;
+    }
+
+    out.push(cur);
+    return out;
+  }
+
+  function csvToObjects(csv: string): any[] {
+    const lines = csv
+      .split(/\r?\n/)
+      .map((l) => l.trimEnd())
+      .filter((l) => l.length > 0);
+
+    if (!lines.length) return [];
+
+    const headers = parseCsvLine(lines[0]).map((h) =>
+      String(h ?? "").replace(/^\uFEFF/, "").trim()
+    );
+
+    const rows: any[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseCsvLine(lines[i]);
+      const obj: any = {};
+      headers.forEach((h, idx) => {
+        obj[h] = (cols[idx] ?? "").trim();
+      });
+      rows.push(obj);
+    }
+    return rows;
+  }
+
+  const rows = csvToObjects(csvText);
 
   const feats: Feature[] = [];
-  for (const row of stories) {
-    const lat = toNumberStrict(
-      row.lat ?? row.Lat ?? row.latitude ?? row.Latitude ?? row.Latitude ?? row["Latitude"]
-    );
+  for (const row of rows) {
+    // Respect "Show on Map?" (optional but in your headers)
+    const showRaw =
+      row["Show on Map?"] ?? row["ShowOnMap?"] ?? row["showOnMap"] ?? "";
+    const show = String(showRaw).trim().toLowerCase();
+    if (show && !["y", "yes", "true", "1"].includes(show)) continue;
 
-    const lng = toNumberStrict(
-      row.lng ??
-        row.Lng ??
-        row.longitude ??
-        row.Longitude ??
-        row["Longitude"] ??
-        row.lon ??
-        row.Lon ??
-        row.long ??
-        row.Long
-    );
+    const lat = toNumberStrict(row.Latitude ?? row.lat ?? row.Lat ?? row["Latitude"]);
+    const lng = toNumberStrict(row.Longitude ?? row.lng ?? row.Lng ?? row["Longitude"]);
+
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
 
     const props = toFeaturePropsFromRow(row);
-    if (!props.Title) props.Title = asStr(row.title ?? "");
-    if (!props.Slug) props.Slug = asStr(row.slug ?? "");
+    if (!props.Title) props.Title = asStr(row.Title ?? row.title ?? "");
+    if (!props.Slug) props.Slug = asStr(row.slug ?? row.Slug ?? "");
 
     feats.push({
       type: "Feature",
@@ -363,6 +416,8 @@ async function fetchFallbackStoriesJson(): Promise<Feature[]> {
       properties: props,
     });
   }
+
+  if (DEBUG) clientDebug("[StoryMap] fallback feats:", feats.length);
 
   return feats;
 }
@@ -830,7 +885,7 @@ const loadData = async () => {
       try {
         let feats = await fetchStoriesAsFeatures();
         if (!feats || feats.length === 0) {
-          feats = await fetchFallbackStoriesJson();
+          feats = await fetchFallbackStoriesCsv();
         }
         if (canceled) return;
 
@@ -862,7 +917,7 @@ const loadData = async () => {
         clientWarn("[StoryMap] API load failed:", err);
 
         try {
-          const feats = await fetchFallbackStoriesJson();
+          const feats = await fetchFallbackStoriesCsv();
           if (canceled) return;
 
           if (feats?.length) {
