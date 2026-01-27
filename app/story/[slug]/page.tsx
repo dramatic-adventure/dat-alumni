@@ -1,5 +1,6 @@
 // app/story/[slug]/page.tsx
 export const dynamic = "force-dynamic"; // avoid prerender so server never executes client paths
+export const revalidate = 0; // explicit: never cache/prerender this route
 
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
@@ -32,7 +33,9 @@ async function getBaseUrl(): Promise<string> {
 
   const protoHeader = h.get("x-forwarded-proto") ?? "http";
   const proto =
-    host.includes("localhost") || host.includes("127.0.0.1") ? "http" : protoHeader;
+    host.includes("localhost") || host.includes("127.0.0.1")
+      ? "http"
+      : protoHeader;
 
   return `${proto}://${host}`;
 }
@@ -102,11 +105,13 @@ async function loadStoryFromStoriesApi(
           "ShortStory",
           "shortStory",
         ]) || "",
-      imageUrl: pickFirst(hit, ["imageUrl", "Image URL", "ImageURL", "image"]) || "",
+      imageUrl:
+        pickFirst(hit, ["imageUrl", "Image URL", "ImageURL", "image"]) || "",
       // Optional extras if your StoryRow supports them
       author: (pickFirst(hit, ["author", "Author"]) || undefined) as any,
       authorSlug: (pickFirst(hit, ["authorSlug", "AuthorSlug"]) || undefined) as any,
-      locationName: (pickFirst(hit, ["Location Name", "locationName"]) || undefined) as any,
+      locationName: (pickFirst(hit, ["Location Name", "locationName"]) ||
+        undefined) as any,
       country: (pickFirst(hit, ["Country", "country"]) || undefined) as any,
       program: (pickFirst(hit, ["Program", "program"]) || undefined) as any,
       years: (pickFirst(hit, ["Year(s)", "Years", "years"]) || undefined) as any,
@@ -123,9 +128,9 @@ async function findStoryBySlug(slugRaw: string): Promise<StoryRow | null> {
 
   // Primary dataset
   const all = await loadRows();
-  const primaryHit = all.find((row: any) => normalizeSlug(row?.slug) === needle) as
-    | StoryRow
-    | undefined;
+  const primaryHit = all.find(
+    (row: any) => normalizeSlug(row?.slug) === needle
+  ) as StoryRow | undefined;
   if (primaryHit) return primaryHit;
 
   // Fallback dataset (Clean Map Data via /api/stories)
@@ -146,6 +151,7 @@ export async function generateMetadata({
     return {
       title: "Story Not Found – Dramatic Adventure Theatre",
       description: "This story could not be found.",
+      robots: { index: false, follow: false },
     };
   }
 
