@@ -111,7 +111,7 @@ function createPopupHTML(d: FeatureProps) {
   if (slug) {
     const author = d.Author
       ? d["authorSlug"]
-        ? `<a href="${d["authorSlug"]}" rel="noopener noreferrer" style="color:#6C00AF; text-decoration:underline;">${d.Author}</a>`
+        ? `<a href="/alumni/${encodeURIComponent(d["authorSlug"])}" style="color:#6C00AF; text-decoration:underline;">${d.Author}</a>`
         : d.Author
       : "";
 
@@ -121,16 +121,12 @@ function createPopupHTML(d: FeatureProps) {
           author ? `By ${author}` : ""
         }</div>
         <a
-          href="#"
+          href="${fullStoryURL}"
           data-explore-story="1"
-          data-href='${fullStoryURL}'
-          target="_self"
-          rel="noopener"
           style='font-family:var(--font-rock-salt), cursive; color:#F23359; font-weight:600; text-decoration:none; font-size:1rem; margin-top:0.35rem; margin-bottom:0.9rem;'
         >
           Explore the Story →
         </a>
-
       </div>
     `;
     displayStory += metaLine;
@@ -754,7 +750,9 @@ useEffect(() => {
     const target = e.target as HTMLElement | null;
     if (!target) return;
 
-    const link = target.closest('a[data-explore-story="1"]') as HTMLAnchorElement | null;
+    const link = target.closest(
+      'a[data-explore-story="1"]'
+    ) as HTMLAnchorElement | null;
     if (!link) return;
 
     // Don’t let Mapbox / map click handlers eat this
@@ -764,14 +762,11 @@ useEffect(() => {
     link.setAttribute("target", "_self");
     link.removeAttribute("rel");
 
-    const href =
-      link.getAttribute("data-href") ||
-      link.getAttribute("href") ||
-      "";
+    const href = link.getAttribute("href") || "";
+    if (!href || href === "#") return;
 
-    if (!href) return;
     // Force same-tab navigation
-    window.location.href = href;
+    window.location.assign(href);
   };
 
   // Capture phase is key: we run before Mapbox handlers
