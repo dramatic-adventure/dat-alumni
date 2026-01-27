@@ -2,7 +2,6 @@
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
-import Papa from "papaparse";
 import Supercluster from "supercluster";
 import { clientDebug, clientWarn } from "@/lib/clientDebug";
 
@@ -57,19 +56,14 @@ const colorMap: Record<string, string> = {
    Helpers
    =========================== */
 const isSmallScreen = () =>
-  typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches;
+  typeof window !== "undefined" &&
+  window.matchMedia("(max-width: 640px)").matches;
 
 function normalize(s: string) {
-  return s ? s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase() : "";
+  return s
+    ? s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase()
+    : "";
 }
-
-const findIdx = (aliases: string[], headers: string[]) => {
-  for (const a of aliases) {
-    const i = headers.indexOf(a);
-    if (i >= 0) return i;
-  }
-  return -1;
-};
 
 const toNum = (v: unknown) => {
   if (v == null) return NaN;
@@ -105,10 +99,14 @@ function createPopupHTML(d: FeatureProps) {
   const maxLength = 225;
   const shortStory = d["Short Story"] || "";
   let displayStory =
-    shortStory.length > maxLength ? shortStory.slice(0, maxLength).trim() + "…" : shortStory;
+    shortStory.length > maxLength
+      ? shortStory.slice(0, maxLength).trim() + "…"
+      : shortStory;
 
   const slug = (d["Slug"] || "").trim();
-  const fullStoryURL = slug ? `https://stories.dramaticadventure.com/story/${slug}` : "";
+  const fullStoryURL = slug
+    ? `https://stories.dramaticadventure.com/story/${slug}`
+    : "";
 
   if (slug) {
     const author = d.Author
@@ -119,7 +117,9 @@ function createPopupHTML(d: FeatureProps) {
 
     const metaLine = `
       <div style='display:flex; justify-content:space-between; align-items:flex-start; font-size:0.75rem; gap:.75rem;'>
-        <div style='font-family:var(--font-space-grotesk), system-ui, sans-serif; font-weight:bold; color:#6C00AF;'>${author ? `By ${author}` : ""}</div>
+        <div style='font-family:var(--font-space-grotesk), system-ui, sans-serif; font-weight:bold; color:#6C00AF;'>${
+          author ? `By ${author}` : ""
+        }</div>
         <a href='${fullStoryURL}' target='_blank' style='font-family:var(--font-rock-salt), cursive; color:#F23359; font-weight:600; text-decoration:none; font-size:1rem; margin-top:0.35rem; margin-bottom:0.9rem;'>Explore the Story →</a>
       </div>
     `;
@@ -127,19 +127,33 @@ function createPopupHTML(d: FeatureProps) {
   }
 
   return `
-    ${d["Location Name"] ? `<div class="popup-location">${d["Location Name"]}</div>` : ""}
+    ${
+      d["Location Name"]
+        ? `<div class="popup-location">${d["Location Name"]}</div>`
+        : ""
+    }
     ${d.Title ? `<div class="popup-title">${d.Title}</div>` : ""}
     ${
       d.Program || d.Country || d["Year(s)"]
         ? `<div class="popup-program">
-             ${d.Program || ""}${d.Country ? `: ${d.Country}` : ""}${d["Year(s)"] ? ` ${d["Year(s)"]}` : ""}
+             ${d.Program || ""}${
+            d.Country ? `: ${d.Country}` : ""
+          }${d["Year(s)"] ? ` ${d["Year(s)"]}` : ""}
            </div>`
         : ""
     }
     ${media}
-    ${d.Partners ? `<div class="popup-partners">Created in collaboration with ${d.Partners}, rooted in a shared vision.</div>` : ""}
+    ${
+      d.Partners
+        ? `<div class="popup-partners">Created in collaboration with ${d.Partners}, rooted in a shared vision.</div>`
+        : ""
+    }
     ${d.Quote ? `<div class="popup-quote">&ldquo;${d.Quote}&rdquo;</div>` : ""}
-    ${d["Quote Author"] ? `<div class="popup-quote-author">– ${d["Quote Author"]}</div>` : ""}
+    ${
+      d["Quote Author"]
+        ? `<div class="popup-quote-author">– ${d["Quote Author"]}</div>`
+        : ""
+    }
     ${displayStory ? `<div class="popup-story">${displayStory}</div>` : ""}
     ${
       d["More Info Link"]
@@ -152,92 +166,205 @@ function createPopupHTML(d: FeatureProps) {
 }
 
 /* ===========================
-   CSV parsing + fallback
+   API -> Feature mapping
    =========================== */
-function buildFeatures(rows: string[][]): Feature[] {
-  if (!rows.length) return [];
-  while (rows.length && rows[0].every((c) => !(String(c || "").trim()))) rows.shift();
+type ApiStory = Record<string, any>;
 
-  const rawHeaders = rows.shift()!.map((h) => String(h ?? "").replace(/^\uFEFF/, "").trim());
-  const headers = rawHeaders.map((h) => h.toLowerCase());
+function asStr(v: any): string {
+  return v == null ? "" : String(v);
+}
 
-  const tI = findIdx(["title"], headers);
-  const latI = findIdx(["latitude", "lat"], headers);
-  const lngI = findIdx(["longitude", "lon", "lng", "long"], headers);
+function pickFirst(row: any, keys: string[]): string {
+  for (const k of keys) {
+    const v = row?.[k];
+    if (v != null && String(v).trim() !== "") return String(v).trim();
+  }
+  return "";
+}
 
-  const pI = findIdx(["program"], headers);
-  const lI = findIdx(["location name", "location"], headers);
-  const sI = findIdx(["show on map?", "show", "visible"], headers);
-  const cI = findIdx(["category"], headers);
-  const coI = findIdx(["country"], headers);
-  const yI = findIdx(["year(s)", "years", "year"], headers);
-  const paI = findIdx(["partners"], headers);
-  const imI = findIdx(["image url", "image", "photo"], headers);
-  const qI = findIdx(["quote"], headers);
-  const qaI = findIdx(["quote author"], headers);
-  const stI = findIdx(["short story", "story"], headers);
-  const liI = findIdx(["more info link", "link"], headers);
-  const aI = findIdx(["author"], headers);
-  const auI = findIdx(["authorslug", "author slug"], headers);
-  const suI = findIdx(["story url"], headers);
-  const slI = findIdx(["slug"], headers);
+function toFeaturePropsFromRow(row: any): FeatureProps {
+  const title = pickFirst(row, ["Title", "title"]);
+  const program = pickFirst(row, ["Program", "program"]);
 
-  if ([tI, latI, lngI].includes(-1)) return [];
+  const locationName = pickFirst(row, [
+    "Location Name",
+    "LocationName",
+    "locationName",
+    "location_name",
+    "location",
+    "Location",
+  ]);
 
-  const feats: Feature[] = rows.reduce((acc: Feature[], r) => {
-    const la = toNum(r[latI]);
-    const lo = toNum(r[lngI]);
-    if (Number.isNaN(la) || Number.isNaN(lo)) return acc;
-    if (sI >= 0 && `${r[sI]}`.trim().toLowerCase() === "no") return acc;
+  const country = pickFirst(row, ["Country", "country"]);
 
-    acc.push({
+  const years = pickFirst(row, [
+    "Year(s)",
+    "Years",
+    "year(s)",
+    "years",
+    "yearRange",
+    "year_range",
+    "year",
+    "Year",
+  ]);
+
+  const partners = pickFirst(row, ["Partners", "partners"]);
+
+  const shortStory = pickFirst(row, [
+    "Short Story",
+    "ShortStory",
+    "shortStory",
+    "short_story",
+    "story",
+    "Story",
+  ]);
+
+  const quote = pickFirst(row, ["Quote", "quote"]);
+  const quoteAuthor = pickFirst(row, [
+    "Quote Author",
+    "QuoteAuthor",
+    "quoteAuthor",
+    "quote_author",
+  ]);
+
+  const imageUrl = pickFirst(row, [
+    "Image URL",
+    "ImageURL",
+    "imageUrl",
+    "image_url",
+    "image",
+    "Image",
+  ]);
+
+  const author = pickFirst(row, ["Author", "author"]);
+  const authorSlug = pickFirst(row, ["authorSlug", "AuthorSlug", "author_slug"]);
+
+  const moreInfo = pickFirst(row, [
+    "More Info Link",
+    "MoreInfoLink",
+    "moreInfoLink",
+    "more_info_link",
+    "Link",
+    "link",
+  ]);
+
+  const storyUrl = pickFirst(row, ["Story URL", "StoryURL", "storyUrl", "story_url"]);
+  const slug = pickFirst(row, ["slug", "Slug"]);
+  const category = pickFirst(row, ["Category", "category"]);
+
+  return {
+    Title: title,
+    Program: program,
+    "Location Name": locationName,
+    Country: country,
+    "Year(s)": years,
+    Partners: partners,
+    "Image URL": imageUrl,
+    Quote: quote,
+    "Quote Author": quoteAuthor,
+    "Short Story": shortStory,
+    Author: author,
+    authorSlug: authorSlug,
+    "More Info Link": moreInfo,
+    "Story URL": storyUrl,
+    Slug: slug,
+    category: category ? category.toLowerCase().trim() : "",
+  };
+}
+
+
+function toNumberStrict(v: any): number {
+  if (typeof v === "number") return v;
+  return toNum(v);
+}
+
+async function fetchStoriesAsFeatures(): Promise<Feature[]> {
+  const res = await fetch("/api/stories", { cache: "no-store" });
+  if (!res.ok) throw new Error(`API /api/stories failed: ${res.status}`);
+
+  const data = await res.json();
+  if (!data?.ok || !Array.isArray(data?.stories)) {
+    throw new Error("API /api/stories returned unexpected shape");
+  }
+
+  const feats: Feature[] = [];
+  for (const row of data.stories as ApiStory[]) {
+    const lat = toNumberStrict(
+      row.lat ?? row.Lat ?? row.latitude ?? row.Latitude ?? row.Latitude ?? row["Latitude"]
+    );
+
+    const lng = toNumberStrict(
+      row.lng ??
+        row.Lng ??
+        row.longitude ??
+        row.Longitude ??
+        row["Longitude"] ??
+        row.lon ??
+        row.Lon ??
+        row.long ??
+        row.Long
+    );
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+
+    const props = toFeaturePropsFromRow(row);
+    if (!props.Title) props.Title = asStr(row.title ?? "");
+    if (!props.Slug) props.Slug = asStr(row.slug ?? "");
+
+    feats.push({
       type: "Feature",
-      geometry: { type: "Point", coordinates: [lo, la] },
-      properties: {
-        Title: r[tI] || "",
-        Program: pI >= 0 ? r[pI] || "" : "",
-        "Location Name": lI >= 0 ? r[lI] || "" : "",
-        Country: coI >= 0 ? r[coI] || "" : "",
-        "Year(s)": yI >= 0 ? r[yI] || "" : "",
-        Partners: paI >= 0 ? r[paI] || "" : "",
-        "Image URL": imI >= 0 ? r[imI] || "" : "",
-        Quote: qI >= 0 ? r[qI] || "" : "",
-        "Quote Author": qaI >= 0 ? r[qaI] || "" : "",
-        "Short Story": stI >= 0 ? r[stI] || "" : "",
-        Author: aI >= 0 ? r[aI] || "" : "",
-        authorSlug: auI >= 0 ? r[auI] || "" : "",
-        "More Info Link": liI >= 0 ? r[liI] || "" : "",
-        "Story URL": suI >= 0 ? r[suI] || "" : "",
-        Slug: slI >= 0 ? r[slI] || "" : "",
-        category: cI >= 0 ? (r[cI] || "").toLowerCase() : "",
-      },
+      geometry: { type: "Point", coordinates: [lng, lat] },
+      properties: props,
     });
-    return acc;
-  }, []);
-
-  // debug (client-side gated)
-  clientDebug("[StoryMap] Headers:", rawHeaders);
-  clientDebug("[StoryMap] Features parsed:", feats.length);
+  }
 
   return feats;
 }
 
-function parseCsvUrl(url: string): Promise<Feature[]> {
-  return new Promise((resolve, reject) => {
-    Papa.parse(url, {
-      download: true,
-      header: false,
-      skipEmptyLines: true,
-      complete: ({ data }) => {
-        try {
-          resolve(buildFeatures(data as string[][]));
-        } catch (e) {
-          reject(e);
-        }
-      },
-      error: (err) => reject(err),
+async function fetchFallbackStoriesJson(): Promise<Feature[]> {
+  const res = await fetch("/fallback/stories.json", { cache: "no-store" });
+  if (!res.ok) return [];
+  const data = await res.json();
+
+  const stories = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.stories)
+    ? data.stories
+    : Array.isArray(data?.data)
+    ? data.data
+    : [];
+
+  const feats: Feature[] = [];
+  for (const row of stories) {
+    const lat = toNumberStrict(
+      row.lat ?? row.Lat ?? row.latitude ?? row.Latitude ?? row.Latitude ?? row["Latitude"]
+    );
+
+    const lng = toNumberStrict(
+      row.lng ??
+        row.Lng ??
+        row.longitude ??
+        row.Longitude ??
+        row["Longitude"] ??
+        row.lon ??
+        row.Lon ??
+        row.long ??
+        row.Long
+    );
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+
+    const props = toFeaturePropsFromRow(row);
+    if (!props.Title) props.Title = asStr(row.title ?? "");
+    if (!props.Slug) props.Slug = asStr(row.slug ?? "");
+
+    feats.push({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [lng, lat] },
+      properties: props,
     });
-  });
+  }
+
+  return feats;
 }
 
 /* ===========================
@@ -246,14 +373,11 @@ function parseCsvUrl(url: string): Promise<Feature[]> {
 export type StoryMapProps = {
   hideSearch?: boolean;
   initialZoom?: number;
-  csvUrl?: string;
 };
 
 export default function StoryMap({
   hideSearch = false,
   initialZoom = 1.2,
-  csvUrl = process.env.NEXT_PUBLIC_MAP_CSV_URL ||
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzkIPStlL2TU7AHySD3Kw9CqBFTi1q6QW7N99ivE3FpofNhHlwWejU0LXeMOmnTawtmLCT71KWMU-F/pub?gid=582055134&single=true&output=csv",
 }: StoryMapProps) {
   const mapEl = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -263,26 +387,46 @@ export default function StoryMap({
 
   // Zoom hint (dismiss forever after first modifier-zoom)
   const [showZoomHint, setShowZoomHint] = useState<boolean>(() => {
-    try { return localStorage.getItem("dat:zoom-hint-dismissed") !== "1"; }
-    catch { return true; }
+    try {
+      return localStorage.getItem("dat:zoom-hint-dismissed") !== "1";
+    } catch {
+      return true;
+    }
   });
+
+  const showZoomHintRef = useRef(showZoomHint);
+
+  useEffect(() => {
+    showZoomHintRef.current = showZoomHint;
+  }, [showZoomHint]);
+
 
   const [menuOpenDetected, setMenuOpenDetected] = useState(false);
 
   // Coachmark state
   const [showCoach, setShowCoach] = useState<boolean>(() => {
-    try { return localStorage.getItem("dat:storymap-coach-dismissed") !== "1"; }
-    catch { return true; }
+    try {
+      return localStorage.getItem("dat:storymap-coach-dismissed") !== "1";
+    } catch {
+      return true;
+    }
   });
-  const [isMacLike, setIsMacLike] = useState(false);
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, []);
   const featuresRef = useRef<Feature[]>([]);
-  const indexRef = useRef<Supercluster | null>(null);
+  const indexRef = useRef<Supercluster<any, any> | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const currentPopupRef = useRef<mapboxgl.Popup | null>(null);
   const currentPopupCoords = useRef<[number, number] | null>(null);
+  const sharedPopupRef = useRef<mapboxgl.Popup | null>(null);
   const currentRadiusRef = useRef<number>(28);
+  const onZoomOrMoveRef = useRef<(() => void) | null>(null);
+  const renderClustersRef = useRef<() => void>(() => {});
 
   /* ===========================
      Styles
@@ -395,14 +539,12 @@ export default function StoryMap({
       .popup-button:hover { background:#123a40; text-decoration:none; }
       .popup-button:active { transform: scale(.99); }
 
-      /* --- Coachmark (classy tip near controls) --- */
       .storymap-coachmark {
         position: absolute;
-        top: 12px;             /* below the controls row */
-        right: 120px;          /* leaves room for Mapbox buttons + search */
-        z-index: 6;            /* below popups (10) */
+        top: 12px;
+        right: 120px;
+        z-index: 6;
         max-width: 320px;
-
         background: #241123;
         color: #f2f2f2;
         opacity: 0.9;
@@ -410,14 +552,12 @@ export default function StoryMap({
         border-radius: 14px;
         box-shadow: 0 6px 22px rgba(0,0,0,0.25);
         backdrop-filter: blur(4px);
-
         font-family: var(--font-space-grotesk), system-ui, sans-serif;
         font-size: 15px;
         line-height: 1.3;
         display: grid;
         grid-template-columns: 1fr auto;
         gap: 8px;
-
         animation: coach-fade 220ms ease-out;
         pointer-events: auto;
       }
@@ -425,51 +565,33 @@ export default function StoryMap({
         content: "";
         position: absolute;
         top: 16px;
-        right: -10px; /* arrow points toward controls */
+        right: -10px;
         border-width: 10px 0 10px 10px;
         border-style: solid;
         border-color: transparent transparent transparent rgba(36,17,35,0.95);
         filter: drop-shadow(0 1px 1px rgba(0,0,0,0.25));
       }
-      .storymap-coachmark .coach-title {
-        font-weight: 700;
-        letter-spacing: .02em;
-        opacity: .98;
-      }
-      .storymap-coachmark .coach-close {
-        cursor: pointer;
-        opacity: .85;
-        border: none;
-        background: transparent;
-        color: #f2f2f2;
-        font-weight: 800;
-        line-height: 1;
-      }
-      .storymap-coachmark .coach-close:hover { opacity: 1; }
+      .storymap-coachmark .coach-title { font-weight: 700; letter-spacing: .02em; opacity: .98; }
       @keyframes coach-fade { from { opacity: 0; transform: translateY(-2px); }
                               to   { opacity: 1; transform: translateY(0); } }
 
-      /* === Mobile: center the coachmark and make it wider === */
-@media (max-width: 640px) {
-  .storymap-coachmark {
-    top: calc(64px + env(safe-area-inset-top, 0px));
-    right: auto;
-    left: 50%;
-    transform: translateX(-50%);
-    width: auto;                       /* let it expand */
-    max-width: min(98vw, 640px);       /* ⬅️ wider than before (was 92vw/420px) */
-    padding: 12px 16px;                /* a touch more breathing room */
-    font-size: 15px;
-    text-align: left;
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-  .storymap-coachmark::after { display: none; } /* hide the arrow on phones */
-  .storymap-coachmark .coach-close { align-self: start; justify-self: end; }
-}
+      @media (max-width: 640px) {
+        .storymap-coachmark {
+          top: calc(64px + env(safe-area-inset-top, 0px));
+          right: auto;
+          left: 50%;
+          transform: translateX(-50%);
+          width: auto;
+          max-width: min(98vw, 640px);
+          padding: 12px 16px;
+          font-size: 15px;
+          text-align: left;
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+        .storymap-coachmark::after { display: none; }
+      }
 
-
-      /* Zoom hint */
       .zoom-hint {
         position: absolute; left: 12px; top: 12px;
         background: #241123; opacity: 0.6; color: #f2f2f2;  padding: 6px 10px; border-radius: 10px;
@@ -477,30 +599,32 @@ export default function StoryMap({
         user-select: none;
         z-index: 6;
       }
-        /* Hide the zoom hint on phones / touch devices */
-@media (max-width: 640px), (pointer: coarse) {
-  .zoom-hint { display: none !important; }
-}
-
+      @media (max-width: 640px), (pointer: coarse) {
+        .zoom-hint { display: none !important; }
+      }
     `;
     document.head.appendChild(style);
-    return () => { if (style.parentNode) style.parentNode.removeChild(style); };
+    return () => {
+      if (style.parentNode) style.parentNode.removeChild(style);
+    };
   }, []);
 
   /* ===========================
-     Coachmark: detect platform, show once, auto-dismiss
+     Coachmark: show once, auto-dismiss
      =========================== */
   useEffect(() => {
-    try {
-      setIsMacLike(
-        /Mac|Macintosh|MacIntel|MacPPC|Mac68K/.test(navigator.platform) ||
-        /\bMac OS X\b/.test(navigator.userAgent)
-      );
-    } catch { /* no-op */ }
+    if (!showCoach) return;
 
-    const t = setTimeout(() => setShowCoach(false), 6500);
+    const t = setTimeout(() => {
+      setShowCoach(false);
+      try {
+        localStorage.setItem("dat:storymap-coach-dismissed", "1");
+      } catch {}
+    }, 6500);
+
     return () => clearTimeout(t);
-  }, []);
+  }, [showCoach]);
+
 
   /* ===========================
      Detect header menu open/close
@@ -531,8 +655,16 @@ export default function StoryMap({
     update();
 
     const mo = new MutationObserver(update);
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-menu-open"] });
-    mo.observe(document.body, { attributes: true, attributeFilter: ["class", "data-header-open"], childList: true, subtree: true });
+    mo.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-menu-open"],
+    });
+    mo.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["class", "data-header-open"],
+      childList: true,
+      subtree: true,
+    });
 
     const onOpen = () => setMenuOpenDetected(true);
     const onClose = () => setMenuOpenDetected(false);
@@ -562,7 +694,10 @@ export default function StoryMap({
       attributionControl: false,
     });
 
-    map.addControl(new mapboxgl.NavigationControl({ visualizePitch: false, showCompass: false }), "top-right");
+    map.addControl(
+      new mapboxgl.NavigationControl({ visualizePitch: false, showCompass: false }),
+      "top-right"
+    );
     map.addControl(new mapboxgl.FullscreenControl(), "top-right");
 
     map.dragPan.enable();
@@ -574,14 +709,16 @@ export default function StoryMap({
       map.setZoom(targetZoom);
     }
 
-    // Require Ctrl/⌘ for wheel zoom so page scroll works
     map.scrollZoom.disable();
     const wheelHandler = (e: WheelEvent) => {
       if (e.ctrlKey || e.metaKey) {
         if (!(map.scrollZoom as any)._enabled) map.scrollZoom.enable();
-        if (showZoomHint) {
+        if (showZoomHintRef.current) {
+          showZoomHintRef.current = false;
           setShowZoomHint(false);
-          try { localStorage.setItem("dat:zoom-hint-dismissed", "1"); } catch {}
+          try {
+            localStorage.setItem("dat:zoom-hint-dismissed", "1");
+          } catch {}
         }
       } else {
         if ((map.scrollZoom as any)._enabled) map.scrollZoom.disable();
@@ -589,30 +726,45 @@ export default function StoryMap({
     };
     map.getCanvas().addEventListener("wheel", wheelHandler, { passive: true });
 
-    // Keep Mapbox in sync with viewport changes (mobile address bar, rotation, etc.)
     const resizeHandler = () => {
-      try { map.resize(); } catch {}
+      try {
+        map.resize();
+      } catch {}
     };
     window.addEventListener("resize", resizeHandler);
     window.addEventListener("orientationchange", resizeHandler);
 
-    // Click off popup to close
     const clickHandler = (e: mapboxgl.MapMouseEvent) => {
-      const tgt = (e.originalEvent as MouseEvent).target as HTMLElement;
+      if (!currentPopupRef.current) return;
+
+      const target = (e.originalEvent as MouseEvent).target as HTMLElement | null;
+      if (!target) return;
+
+      // If the click is inside the popup or on a marker/cluster, do nothing
       if (
-        currentPopupRef.current &&
-        !tgt.closest(".mapboxgl-popup-content") &&
-        !tgt.closest(".cluster-marker") &&
-        !tgt.closest(".mapboxgl-marker")
+        target.closest(".mapboxgl-popup") ||
+        target.closest(".mapboxgl-marker") ||
+        target.closest(".cluster-marker")
       ) {
-        currentPopupRef.current.remove();
-        currentPopupRef.current = null;
-        currentPopupCoords.current = null;
+        return;
       }
+
+      // Otherwise close
+      currentPopupRef.current.remove();
+      currentPopupRef.current = null;
+      currentPopupCoords.current = null;
     };
     map.on("click", clickHandler);
 
+
     mapRef.current = map;
+
+    const globalMouseUp = () => {
+      try {
+        map.dragPan.enable();
+      } catch {}
+    };
+    window.addEventListener("mouseup", globalMouseUp);
 
     return () => {
       map.getCanvas().removeEventListener("wheel", wheelHandler);
@@ -621,26 +773,65 @@ export default function StoryMap({
       map.off("click", clickHandler);
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
+      window.removeEventListener("mouseup", globalMouseUp);
       map.remove();
       mapRef.current = null;
     };
-  }, [initialZoom, showZoomHint]);
+  }, [initialZoom]);
 
   /* ===========================
-     Data load + fallback
+     Data load from API + JSON fallback
      =========================== */
+
   useEffect(() => {
     const m = mapRef.current;
     if (!m) return;
 
     let canceled = false;
 
-    const loadData = async () => {
+const loadData = async () => {
+  const attachZoomMoveHandler = () => {
+    const onZoomOrMove = () => {
+      const desired = milesToPixelRadius(
+        CLUSTER_DISTANCE_MILES,
+        m.getZoom(),
+        m.getCenter().lat
+      );
+
+      if (desired !== currentRadiusRef.current) {
+        currentRadiusRef.current = desired;
+        indexRef.current = new Supercluster({
+          radius: desired,
+          maxZoom: CLUSTER_MAX_ZOOM,
+          minPoints: CLUSTER_MIN_POINTS,
+          map: (props: any) => props,
+          reduce: () => {},
+        });
+        indexRef.current.load(featuresRef.current as any);
+      }
+
+      renderClustersRef.current();
+    };
+
+
+    // Detach previous handler if any
+    if (onZoomOrMoveRef.current) {
+      m.off("moveend", onZoomOrMoveRef.current);
+      m.off("zoomend", onZoomOrMoveRef.current);
+    }
+
+    // Store + attach new handler
+    onZoomOrMoveRef.current = onZoomOrMove;
+    m.on("moveend", onZoomOrMove);
+    m.on("zoomend", onZoomOrMove);
+  };
+
+
       try {
-        const primary = csvUrl;
-        const fallback = "/fallback/story-map.csv";
-        let feats = await parseCsvUrl(primary);
-        if (!feats || feats.length === 0) feats = await parseCsvUrl(fallback);
+        let feats = await fetchStoriesAsFeatures();
+        if (!feats || feats.length === 0) {
+          feats = await fetchFallbackStoriesJson();
+        }
         if (canceled) return;
 
         featuresRef.current = feats || [];
@@ -654,43 +845,67 @@ export default function StoryMap({
           radius: r,
           maxZoom: CLUSTER_MAX_ZOOM,
           minPoints: CLUSTER_MIN_POINTS,
+
+          // Keep full props for non-cluster points
+          map: (props: any) => props,
+          reduce: () => {},
         });
         indexRef.current.load((feats || []) as any);
         renderClusters();
 
-        const onZoomOrMove = () => {
-          const desired = milesToPixelRadius(CLUSTER_DISTANCE_MILES, m.getZoom(), m.getCenter().lat);
-          if (desired !== currentRadiusRef.current) {
-            currentRadiusRef.current = desired;
-            indexRef.current = new Supercluster({
-              radius: desired,
-              maxZoom: CLUSTER_MAX_ZOOM,
-              minPoints: CLUSTER_MIN_POINTS,
-            });
-            indexRef.current.load(featuresRef.current as any);
-          }
-          renderClusters();
-        };
 
-        m.off("moveend", onZoomOrMove);
-        m.off("zoomend", onZoomOrMove);
-        m.on("moveend", onZoomOrMove);
-        m.on("zoomend", onZoomOrMove);
+        attachZoomMoveHandler();
+
 
         clientDebug("[StoryMap] Loaded features:", feats.length);
       } catch (err) {
-        clientWarn("[StoryMap] CSV load failed:", err);
+        clientWarn("[StoryMap] API load failed:", err);
+
+        try {
+          const feats = await fetchFallbackStoriesJson();
+          if (canceled) return;
+
+          if (feats?.length) {
+            featuresRef.current = feats;
+
+            const z = m.getZoom();
+            const lat = m.getCenter().lat;
+            const r = milesToPixelRadius(CLUSTER_DISTANCE_MILES, z, lat);
+            currentRadiusRef.current = r;
+
+            indexRef.current = new Supercluster({
+              radius: r,
+              maxZoom: CLUSTER_MAX_ZOOM,
+              minPoints: CLUSTER_MIN_POINTS,
+              map: (props: any) => props,
+              reduce: () => {},
+            });
+            indexRef.current.load((feats || []) as any);
+            renderClusters();
+
+            attachZoomMoveHandler();
+          }
+        } catch {}
       }
     };
 
     const onMapLoad = () => loadData();
-    m.on("load", onMapLoad);
+    if (m.loaded()) loadData();
+    else m.on("load", onMapLoad);
 
     return () => {
       canceled = true;
       m.off("load", onMapLoad);
+
+      const handler = onZoomOrMoveRef.current;
+      if (handler) {
+        m.off("moveend", handler);
+        m.off("zoomend", handler);
+      }
     };
-  }, [csvUrl]);
+
+
+  }, []);
 
   /* ===========================
      Render clusters / markers
@@ -706,7 +921,11 @@ export default function StoryMap({
     const z = Math.floor(m.getZoom());
 
     const b = (m.getBounds?.() as mapboxgl.LngLatBounds | null) || null;
-    if (!b || typeof b.getSouthWest !== "function" || typeof b.getNorthEast !== "function") {
+    if (
+      !b ||
+      typeof b.getSouthWest !== "function" ||
+      typeof b.getNorthEast !== "function"
+    ) {
       return;
     }
     const sw = b.getSouthWest();
@@ -729,57 +948,79 @@ export default function StoryMap({
           }
           currentPopupCoords.current = null;
           const nextZoom = Math.min(m.getZoom() + 3, 18);
-          m.easeTo({ center: [lon, lat], zoom: nextZoom, offset: [0, popupOffsetY()], duration: 500 });
+          m.easeTo({
+            center: [lon, lat],
+            zoom: nextZoom,
+            offset: [0, popupOffsetY()],
+            duration: 500,
+          });
         };
         el.addEventListener("mousedown", () => m.dragPan.disable());
         el.addEventListener("mouseup", () => m.dragPan.enable());
+        el.addEventListener("mouseleave", () => m.dragPan.enable());
 
         const mk = new mapboxgl.Marker({ element: el }).setLngLat([lon, lat]).addTo(m);
         markersRef.current.push(mk);
-      } else {
-        const props = c.properties as FeatureProps;
-        const popup = new mapboxgl.Popup({
-          closeButton: false,
-          closeOnClick: true,
-          closeOnMove: false,
-          anchor: "bottom",
-          offset: 11,
-        }).setHTML(createPopupHTML(props));
+} else {
+  const props = c.properties as FeatureProps;
 
-        const mk = new mapboxgl.Marker({ color: colorMap[props.category] || "#3FB1CE" })
-          .setLngLat([lon, lat])
-          .setPopup(popup)
-          .addTo(m);
+  const mk = new mapboxgl.Marker({ color: colorMap[props.category] || "#3FB1CE" })
+    .setLngLat([lon, lat])
+    .addTo(m);
 
-        mk.getElement().addEventListener("click", (e) => {
-          e.stopPropagation();
-          if (currentPopupRef.current) currentPopupRef.current.remove();
-          popup.addTo(m);
-          currentPopupRef.current = popup;
-          currentPopupCoords.current = [lon, lat];
-          m.easeTo({ center: [lon, lat], offset: [0, popupOffsetY()], duration: 300 });
-        });
+  mk.getElement().addEventListener("click", (e) => {
+    e.stopPropagation();
 
-        mk.getElement().addEventListener("mousedown", () => m.dragPan.disable());
-        mk.getElement().addEventListener("mouseup", () => m.dragPan.enable());
+    // Close any existing popup (shared)
+    if (sharedPopupRef.current) {
+      sharedPopupRef.current.remove();
+    }
 
-        markersRef.current.push(mk);
-      }
-    });
+    // Create (once) + reuse a single popup not tied to markers
+    if (!sharedPopupRef.current) {
+      sharedPopupRef.current = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false,
+        closeOnMove: false,
+        anchor: "bottom",
+        offset: 11,
+      });
 
-    if (currentPopupCoords.current) {
-      markersRef.current.forEach((marker: any) => {
-        if (marker.getPopup) {
-          const ll = marker.getLngLat();
-          const [x, y] = currentPopupCoords.current!;
-          if (Math.abs(ll.lng - x) < 1e-6 && Math.abs(ll.lat - y) < 1e-6) {
-            marker.getPopup().addTo(m);
-            currentPopupRef.current = marker.getPopup();
-          }
+      sharedPopupRef.current.on("close", () => {
+        if (currentPopupRef.current === sharedPopupRef.current) {
+          currentPopupRef.current = null;
+          currentPopupCoords.current = null;
         }
       });
     }
+
+    sharedPopupRef.current
+      .setLngLat([lon, lat])
+      .setHTML(createPopupHTML(props))
+      .addTo(m);
+
+    currentPopupRef.current = sharedPopupRef.current;
+    currentPopupCoords.current = [lon, lat];
+
+    m.easeTo({ center: [lon, lat], offset: [0, popupOffsetY()], duration: 300 });
+  });
+
+  mk.getElement().addEventListener("mousedown", () => m.dragPan.disable());
+  mk.getElement().addEventListener("mouseup", () => m.dragPan.enable());
+  mk.getElement().addEventListener("mouseleave", () => m.dragPan.enable());
+
+  markersRef.current.push(mk);
+}
+
+    });
+
+
   };
+
+  // Keep ref pointing at the latest renderClusters implementation
+  renderClustersRef.current = renderClusters;
+
+
 
   /* ===========================
      Search
@@ -787,13 +1028,19 @@ export default function StoryMap({
   const filterMarkers = (q: string) => {
     const exact = [...q.matchAll(/"([^"]+)"/g)].map((m) => normalize(m[1]));
     const rest = q.replace(/"[^"]+"/g, "");
-    const terms = normalize(rest).split(/\s+|,/).filter(Boolean);
+    const terms = normalize(rest)
+      .split(/\s+|,/)
+      .filter(Boolean);
 
     const features = featuresRef.current;
     const filtered =
       exact.length || terms.length
         ? features.filter((f) => {
-            const txt = normalize(Object.values(f.properties).join(" "));
+            const txt = normalize(
+              Object.values(f.properties)
+                .map((v) => (v == null ? "" : String(v)))
+                .join(" ")
+            );
             if (!exact.every((e) => txt.includes(e))) return false;
             return terms.length ? terms.some((t) => txt.includes(t)) : true;
           })
@@ -802,19 +1049,34 @@ export default function StoryMap({
     const m = mapRef.current;
     if (!m) return;
 
-    const r = milesToPixelRadius(CLUSTER_DISTANCE_MILES, m.getZoom(), m.getCenter().lat);
+    const r = milesToPixelRadius(
+      CLUSTER_DISTANCE_MILES,
+      m.getZoom(),
+      m.getCenter().lat
+    );
     currentRadiusRef.current = r;
 
     indexRef.current = new Supercluster({
       radius: r,
       maxZoom: CLUSTER_MAX_ZOOM,
       minPoints: CLUSTER_MIN_POINTS,
+      map: (props: any) => props,
+      reduce: () => {},
     });
     indexRef.current.load(filtered as any);
+    if (currentPopupRef.current) {
+      currentPopupRef.current.remove();
+      currentPopupRef.current = null;
+      currentPopupCoords.current = null;
+    }
     renderClusters();
 
     if (filtered.length === 1) {
-      m.flyTo({ center: filtered[0].geometry.coordinates, zoom: 8, duration: 500 });
+      m.flyTo({
+        center: filtered[0].geometry.coordinates,
+        zoom: 8,
+        duration: 500,
+      });
     } else if (filtered.length > 1) {
       const cs = filtered.map((f) => f.geometry.coordinates);
       const lons = cs.map((c) => c[0]);
@@ -824,7 +1086,10 @@ export default function StoryMap({
           [Math.min(...lons), Math.min(...lats)],
           [Math.max(...lons), Math.max(...lats)],
         ],
-        { padding: { top: 80, right: 60, bottom: 120, left: 60 }, duration: 500 }
+        {
+          padding: { top: 80, right: 60, bottom: 120, left: 60 },
+          duration: 500,
+        }
       );
     }
   };
@@ -844,21 +1109,30 @@ export default function StoryMap({
         }}
       >
         <div className="storymap-overlay">
-          {/* Coachmark (classy tip, centered on phones) */}
+          {/* Coachmark */}
           {showCoach && !shouldHideSearch && (
-            <div className="storymap-coachmark" role="region" aria-label="Map navigation tips">
+            <div
+              className="storymap-coachmark"
+              role="region"
+              aria-label="Map navigation tips"
+            >
               <div className="coach-title">Navigate our Story Map</div>
-            
+
               <div style={{ gridColumn: "1 / -1", opacity: 0.85 }}>
                 Search locations, zoom in, or go full screen.
               </div>
             </div>
           )}
 
-          {/* Zoom hint (top-left, dismisses forever after modifier-zoom) */}
+          {/* Zoom hint */}
           {showZoomHint && (
             <div className="zoom-hint">
-              Hold {(typeof navigator !== "undefined" && /Mac/i.test(navigator.platform)) ? "⌘" : "Ctrl"} to zoom the map
+              Hold{" "}
+              {typeof navigator !== "undefined" &&
+              /Mac/i.test(navigator.platform)
+                ? "⌘"
+                : "Ctrl"}{" "}
+              to zoom the map
             </div>
           )}
 
@@ -875,7 +1149,10 @@ export default function StoryMap({
                 🔍
               </div>
 
-              <div id="storymap-search-box" className={searchOpen ? "expanded" : ""}>
+              <div
+                id="storymap-search-box"
+                className={searchOpen ? "expanded" : ""}
+              >
                 <input
                   id="storymap-search-input"
                   placeholder='Search stories, countries, programs… (use quotes for exact: "Ecuador")'
@@ -883,8 +1160,12 @@ export default function StoryMap({
                   onChange={(e) => {
                     const val = e.target.value;
                     setQuery(val);
-                    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-                    debounceTimer.current = setTimeout(() => filterMarkers(val), 300);
+                    if (debounceTimer.current)
+                      clearTimeout(debounceTimer.current);
+                    debounceTimer.current = setTimeout(
+                      () => filterMarkers(val),
+                      300
+                    );
                   }}
                 />
               </div>
