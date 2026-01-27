@@ -24,7 +24,7 @@ export function CanonicalSlugGate({
       if (!res.ok) return;
       const data = await res.json();
 
-      const canonical = String(data?.alumniId || "").trim().toLowerCase();
+      const canonical = String(data?.canonicalSlug || "").trim().toLowerCase();
       if (!canonical) return;
 
       if (!cancelled && canonical !== slug.toLowerCase()) {
