@@ -104,14 +104,14 @@ function createPopupHTML(d: FeatureProps) {
       : shortStory;
 
   const slug = (d["Slug"] || "").trim();
-  const fullStoryURL = slug
-    ? `https://stories.dramaticadventure.com/story/${slug}`
-    : "";
+
+  // ✅ IMPORTANT: stay same-origin (localhost in dev / current host in prod)
+  const fullStoryURL = slug ? `/story/${encodeURIComponent(slug)}` : "";
 
   if (slug) {
     const author = d.Author
       ? d["authorSlug"]
-        ? `<a href="${d["authorSlug"]}" target="_blank" rel="noopener noreferrer" style="color:#6C00AF; text-decoration:underline;">${d.Author}</a>`
+        ? `<a href="${d["authorSlug"]}" rel="noopener noreferrer" style="color:#6C00AF; text-decoration:underline;">${d.Author}</a>`
         : d.Author
       : "";
 
@@ -120,7 +120,17 @@ function createPopupHTML(d: FeatureProps) {
         <div style='font-family:var(--font-space-grotesk), system-ui, sans-serif; font-weight:bold; color:#6C00AF;'>${
           author ? `By ${author}` : ""
         }</div>
-        <a href='${fullStoryURL}' target='_blank' style='font-family:var(--font-rock-salt), cursive; color:#F23359; font-weight:600; text-decoration:none; font-size:1rem; margin-top:0.35rem; margin-bottom:0.9rem;'>Explore the Story →</a>
+        <a
+          href="#"
+          data-explore-story="1"
+          data-href='${fullStoryURL}'
+          target="_self"
+          rel="noopener"
+          style='font-family:var(--font-rock-salt), cursive; color:#F23359; font-weight:600; text-decoration:none; font-size:1rem; margin-top:0.35rem; margin-bottom:0.9rem;'
+        >
+          Explore the Story →
+        </a>
+
       </div>
     `;
     displayStory += metaLine;
@@ -248,7 +258,12 @@ function toFeaturePropsFromRow(row: any): FeatureProps {
     "link",
   ]);
 
-  const storyUrl = pickFirst(row, ["Story URL", "StoryURL", "storyUrl", "story_url"]);
+  const storyUrl = pickFirst(row, [
+    "Story URL",
+    "StoryURL",
+    "storyUrl",
+    "story_url",
+  ]);
   const slug = pickFirst(row, ["slug", "Slug"]);
   const category = pickFirst(row, ["Category", "category"]);
 
@@ -272,7 +287,6 @@ function toFeaturePropsFromRow(row: any): FeatureProps {
   };
 }
 
-
 function toNumberStrict(v: any): number {
   if (typeof v === "number") return v;
   return toNum(v);
@@ -285,10 +299,11 @@ async function fetchStoriesAsFeatures(): Promise<Feature[]> {
   const data = await res.json();
   if (DEBUG) clientDebug("[StoryMap] /api/stories raw keys:", Object.keys(data || {}));
   if (DEBUG) clientDebug("[StoryMap] /api/stories sample:", (data?.stories || [])[0]);
-  if (DEBUG) clientDebug(
-    "[StoryMap] /api/stories count:",
-    Array.isArray(data?.stories) ? data.stories.length : "not-array"
-  );
+  if (DEBUG)
+    clientDebug(
+      "[StoryMap] /api/stories count:",
+      Array.isArray(data?.stories) ? data.stories.length : "not-array"
+    );
 
   if (!data?.ok || !Array.isArray(data?.stories)) {
     throw new Error("API /api/stories returned unexpected shape");
@@ -454,7 +469,6 @@ export default function StoryMap({
   useEffect(() => {
     showZoomHintRef.current = showZoomHint;
   }, [showZoomHint]);
-
 
   const [menuOpenDetected, setMenuOpenDetected] = useState(false);
 
@@ -680,7 +694,6 @@ export default function StoryMap({
     return () => clearTimeout(t);
   }, [showCoach]);
 
-
   /* ===========================
      Detect header menu open/close
      =========================== */
@@ -732,6 +745,43 @@ export default function StoryMap({
       window.removeEventListener("dat:menu-close", onClose);
     };
   }, []);
+
+  /* ===========================
+   Popup link navigation (global, reliable)
+   =========================== */
+useEffect(() => {
+  const onDocClickCapture = (e: MouseEvent) => {
+    const target = e.target as HTMLElement | null;
+    if (!target) return;
+
+    const link = target.closest('a[data-explore-story="1"]') as HTMLAnchorElement | null;
+    if (!link) return;
+
+    // Don’t let Mapbox / map click handlers eat this
+    e.preventDefault();
+    e.stopPropagation();
+
+    link.setAttribute("target", "_self");
+    link.removeAttribute("rel");
+
+    const href =
+      link.getAttribute("data-href") ||
+      link.getAttribute("href") ||
+      "";
+
+    if (!href) return;
+    // Force same-tab navigation
+    window.location.href = href;
+  };
+
+  // Capture phase is key: we run before Mapbox handlers
+  document.addEventListener("click", onDocClickCapture, true);
+
+  return () => {
+    document.removeEventListener("click", onDocClickCapture, true);
+  };
+}, []);
+
 
   /* ===========================
      Map init
@@ -811,7 +861,6 @@ export default function StoryMap({
     };
     map.on("click", clickHandler);
 
-
     mapRef.current = map;
 
     const globalMouseUp = () => {
@@ -844,43 +893,41 @@ export default function StoryMap({
 
     let canceled = false;
 
-const loadData = async () => {
-  const attachZoomMoveHandler = () => {
-    const onZoomOrMove = () => {
-      const desired = milesToPixelRadius(
-        CLUSTER_DISTANCE_MILES,
-        m.getZoom(),
-        m.getCenter().lat
-      );
+    const loadData = async () => {
+      const attachZoomMoveHandler = () => {
+        const onZoomOrMove = () => {
+          const desired = milesToPixelRadius(
+            CLUSTER_DISTANCE_MILES,
+            m.getZoom(),
+            m.getCenter().lat
+          );
 
-      if (desired !== currentRadiusRef.current) {
-        currentRadiusRef.current = desired;
-        indexRef.current = new Supercluster({
-          radius: desired,
-          maxZoom: CLUSTER_MAX_ZOOM,
-          minPoints: CLUSTER_MIN_POINTS,
-          map: (props: any) => props,
-          reduce: () => {},
-        });
-        indexRef.current.load(featuresRef.current as any);
-      }
+          if (desired !== currentRadiusRef.current) {
+            currentRadiusRef.current = desired;
+            indexRef.current = new Supercluster({
+              radius: desired,
+              maxZoom: CLUSTER_MAX_ZOOM,
+              minPoints: CLUSTER_MIN_POINTS,
+              map: (props: any) => props,
+              reduce: () => {},
+            });
+            indexRef.current.load(featuresRef.current as any);
+          }
 
-      renderClustersRef.current();
-    };
+          renderClustersRef.current();
+        };
 
+        // Detach previous handler if any
+        if (onZoomOrMoveRef.current) {
+          m.off("moveend", onZoomOrMoveRef.current);
+          m.off("zoomend", onZoomOrMoveRef.current);
+        }
 
-    // Detach previous handler if any
-    if (onZoomOrMoveRef.current) {
-      m.off("moveend", onZoomOrMoveRef.current);
-      m.off("zoomend", onZoomOrMoveRef.current);
-    }
-
-    // Store + attach new handler
-    onZoomOrMoveRef.current = onZoomOrMove;
-    m.on("moveend", onZoomOrMove);
-    m.on("zoomend", onZoomOrMove);
-  };
-
+        // Store + attach new handler
+        onZoomOrMoveRef.current = onZoomOrMove;
+        m.on("moveend", onZoomOrMove);
+        m.on("zoomend", onZoomOrMove);
+      };
 
       try {
         let feats = await fetchStoriesAsFeatures();
@@ -908,9 +955,7 @@ const loadData = async () => {
         indexRef.current.load((feats || []) as any);
         renderClusters();
 
-
         attachZoomMoveHandler();
-
 
         clientDebug("[StoryMap] Loaded features:", feats.length);
       } catch (err) {
@@ -958,8 +1003,6 @@ const loadData = async () => {
         m.off("zoomend", handler);
       }
     };
-
-
   }, []);
 
   /* ===========================
@@ -1016,66 +1059,62 @@ const loadData = async () => {
 
         const mk = new mapboxgl.Marker({ element: el }).setLngLat([lon, lat]).addTo(m);
         markersRef.current.push(mk);
-} else {
-  const props = c.properties as FeatureProps;
+      } else {
+        const props = c.properties as FeatureProps;
 
-  const mk = new mapboxgl.Marker({ color: colorMap[props.category] || "#3FB1CE" })
-    .setLngLat([lon, lat])
-    .addTo(m);
+        const mk = new mapboxgl.Marker({ color: colorMap[props.category] || "#3FB1CE" })
+          .setLngLat([lon, lat])
+          .addTo(m);
 
-  mk.getElement().addEventListener("click", (e) => {
-    e.stopPropagation();
+        mk.getElement().addEventListener("click", (e) => {
+          e.stopPropagation();
+          (e as any).preventDefault?.();
 
-    // Close any existing popup (shared)
-    if (sharedPopupRef.current) {
-      sharedPopupRef.current.remove();
-    }
+          // Close any existing popup (shared)
+          if (sharedPopupRef.current) {
+            sharedPopupRef.current.remove();
+          }
 
-    // Create (once) + reuse a single popup not tied to markers
-    if (!sharedPopupRef.current) {
-      sharedPopupRef.current = new mapboxgl.Popup({
-        closeButton: false,
-        closeOnClick: false,
-        closeOnMove: false,
-        anchor: "bottom",
-        offset: 11,
-      });
+          // Create (once) + reuse a single popup not tied to markers
+          if (!sharedPopupRef.current) {
+            sharedPopupRef.current = new mapboxgl.Popup({
+              closeButton: false,
+              closeOnClick: false,
+              closeOnMove: false,
+              anchor: "bottom",
+              offset: 11,
+            });
 
-      sharedPopupRef.current.on("close", () => {
-        if (currentPopupRef.current === sharedPopupRef.current) {
-          currentPopupRef.current = null;
-          currentPopupCoords.current = null;
-        }
-      });
-    }
+            sharedPopupRef.current.on("close", () => {
+              if (currentPopupRef.current === sharedPopupRef.current) {
+                currentPopupRef.current = null;
+                currentPopupCoords.current = null;
+              }
+            });
+          }
 
-    sharedPopupRef.current
-      .setLngLat([lon, lat])
-      .setHTML(createPopupHTML(props))
-      .addTo(m);
+          sharedPopupRef.current
+            .setLngLat([lon, lat])
+            .setHTML(createPopupHTML(props))
+            .addTo(m);
 
-    currentPopupRef.current = sharedPopupRef.current;
-    currentPopupCoords.current = [lon, lat];
+          currentPopupRef.current = sharedPopupRef.current;
+          currentPopupCoords.current = [lon, lat];
 
-    m.easeTo({ center: [lon, lat], offset: [0, popupOffsetY()], duration: 300 });
-  });
+          m.easeTo({ center: [lon, lat], offset: [0, popupOffsetY()], duration: 300 });
+        });
 
-  mk.getElement().addEventListener("mousedown", () => m.dragPan.disable());
-  mk.getElement().addEventListener("mouseup", () => m.dragPan.enable());
-  mk.getElement().addEventListener("mouseleave", () => m.dragPan.enable());
+        mk.getElement().addEventListener("mousedown", () => m.dragPan.disable());
+        mk.getElement().addEventListener("mouseup", () => m.dragPan.enable());
+        mk.getElement().addEventListener("mouseleave", () => m.dragPan.enable());
 
-  markersRef.current.push(mk);
-}
-
+        markersRef.current.push(mk);
+      }
     });
-
-
   };
 
   // Keep ref pointing at the latest renderClusters implementation
   renderClustersRef.current = renderClusters;
-
-
 
   /* ===========================
      Search
