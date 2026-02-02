@@ -6,6 +6,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0; // ✅ never ISR-cache this route
 
+// Bump this any time you want to confirm you're running the expected build.
+const IMG_ROUTE_BUILD = "2026-02-01T21:48";
+
 // ✅ IMPORTANT: keep this allowlist tight (add only hosts you actually use)
 const ALLOWED_HOSTS = new Set<string>([
   "i.imgur.com",
@@ -32,8 +35,24 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
+function noStoreHeaders() {
+  return {
+    // ✅ kill caching everywhere (browser, CDN, Next, proxies)
+    "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+    Pragma: "no-cache",
+    Expires: "0",
+    Vary: "Accept",
+  };
+}
+
 function jsonErr(status: number, payload: Record<string, unknown>) {
-  return NextResponse.json(payload, { status });
+  return NextResponse.json(payload, {
+    status,
+    headers: {
+      ...noStoreHeaders(),
+      "X-Img-Route-Build": IMG_ROUTE_BUILD,
+    },
+  });
 }
 
 function isAllowedProtocol(p: string) {
@@ -63,14 +82,18 @@ function isAllowedHost(hostname: string) {
   return false;
 }
 
-function noStoreHeaders() {
-  return {
-    // ✅ kill caching everywhere (browser, CDN, Next, proxies)
-    "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-    Pragma: "no-cache",
-    Expires: "0",
-    Vary: "Accept",
-  };
+function isPlausibleDriveFileId(id: string) {
+  const s = (id || "").trim();
+  if (s.length < 10 || s.length > 200) return false;
+  return /^[a-zA-Z0-9_-]+$/.test(s);
+}
+
+function buildDriveUcUrl(fileId: string) {
+  const id = (fileId || "").trim();
+  if (!id) return "";
+  return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(
+    id
+  )}`;
 }
 
 /**
@@ -78,10 +101,23 @@ function noStoreHeaders() {
  */
 export async function HEAD(req: Request) {
   const { searchParams } = new URL(req.url);
-  const url = searchParams.get("url") || "";
-  if (!url) return jsonErr(400, { error: "Missing url" });
 
-  const parsed = normalizeUrlOrNull(url);
+  const url = (searchParams.get("url") || "").trim();
+  const fileId =
+    (searchParams.get("fileId") || searchParams.get("id") || "").trim();
+
+  // ✅ If fileId is present, validate it BEFORE building the effective URL.
+  // This prevents junk like fileId=... from returning 200.
+  if (fileId && !isPlausibleDriveFileId(fileId)) {
+    return jsonErr(400, { error: "Invalid fileId" });
+  }
+
+  // ✅ Accept either url=... OR fileId=...
+  const effectiveUrl = url || (fileId ? buildDriveUcUrl(fileId) : "");
+  if (!effectiveUrl) return jsonErr(400, { error: "Missing url" });
+
+  // ✅ IMPORTANT: parse effectiveUrl (not raw url)
+  const parsed = normalizeUrlOrNull(effectiveUrl);
   if (!parsed) return jsonErr(400, { error: "Invalid url/protocol" });
 
   const host = parsed.hostname.toLowerCase();
@@ -96,7 +132,10 @@ export async function HEAD(req: Request) {
   // We don’t fetch upstream for HEAD — just say “ok, allowed”
   return new NextResponse(null, {
     status: 200,
-    headers: noStoreHeaders(),
+    headers: {
+      ...noStoreHeaders(),
+      "X-Img-Route-Build": IMG_ROUTE_BUILD,
+    },
   });
 }
 
@@ -104,13 +143,23 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
 
-    const url = searchParams.get("url") || "";
+    const url = (searchParams.get("url") || "").trim();
+    const fileId =
+      (searchParams.get("fileId") || searchParams.get("id") || "").trim();
+
+    // ✅ Validate fileId early (avoid wasted fetch/processing).
+    if (fileId && !isPlausibleDriveFileId(fileId)) {
+      return jsonErr(400, { error: "Invalid fileId" });
+    }
+
     const w = clamp(Number(searchParams.get("w") || "1400"), 200, 2400);
     const q = clamp(Number(searchParams.get("q") || "72"), 40, 90);
 
-    if (!url) return jsonErr(400, { error: "Missing url" });
+    // ✅ Accept either url=... OR fileId=...
+    const effectiveUrl = url || (fileId ? buildDriveUcUrl(fileId) : "");
+    if (!effectiveUrl) return jsonErr(400, { error: "Missing url" });
 
-    const parsed = normalizeUrlOrNull(url);
+    const parsed = normalizeUrlOrNull(effectiveUrl);
     if (!parsed) return jsonErr(400, { error: "Invalid url/protocol" });
 
     // 🔒 SSRF protection: allowlist hostnames
@@ -218,6 +267,7 @@ export async function GET(req: Request) {
       headers: {
         "Content-Type": "image/webp",
         ...noStoreHeaders(),
+        "X-Img-Route-Build": IMG_ROUTE_BUILD,
       },
     });
   } catch (err: unknown) {
@@ -230,7 +280,13 @@ export async function GET(req: Request) {
 
     return NextResponse.json(
       { error: "Image proxy error", detail: message },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          ...noStoreHeaders(),
+          "X-Img-Route-Build": IMG_ROUTE_BUILD,
+        },
+      }
     );
   }
 }
