@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0; // ✅ never ISR-cache this route
 
 // Bump this any time you want to confirm you're running the expected build.
-const IMG_ROUTE_BUILD = "2026-02-01T21:48";
+const IMG_ROUTE_BUILD = "2026-02-02T04:35-proxy-only";
 
 // ✅ IMPORTANT: keep this allowlist tight (add only hosts you actually use)
 const ALLOWED_HOSTS = new Set<string>([
@@ -27,12 +27,8 @@ const ALLOWED_HOSTS = new Set<string>([
 ]);
 
 // Safety: prevent very large upstream images from blowing memory.
-// (This is upstream payload size, not final webp size.)
+// (This is upstream payload size, not final transformed size.)
 const MAX_UPSTREAM_BYTES = 18 * 1024 * 1024; // 18MB
-
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n));
-}
 
 function noStoreHeaders() {
   return {
@@ -41,17 +37,12 @@ function noStoreHeaders() {
     Pragma: "no-cache",
     Expires: "0",
     Vary: "Accept",
+    "X-Img-Route-Build": IMG_ROUTE_BUILD,
   };
 }
 
 function jsonErr(status: number, payload: Record<string, unknown>) {
-  return NextResponse.json(payload, {
-    status,
-    headers: {
-      ...noStoreHeaders(),
-      "X-Img-Route-Build": IMG_ROUTE_BUILD,
-    },
-  });
+  return NextResponse.json(payload, { status, headers: noStoreHeaders() });
 }
 
 function isAllowedProtocol(p: string) {
@@ -96,7 +87,7 @@ function buildDriveUcUrl(fileId: string) {
 }
 
 /**
- * HEAD: allow lightweight preflight checks (used by your ProfileCard poster preflight)
+ * HEAD: allow lightweight preflight checks (no upstream fetch)
  */
 export async function HEAD(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -106,7 +97,6 @@ export async function HEAD(req: Request) {
     (searchParams.get("fileId") || searchParams.get("id") || "").trim();
 
   // ✅ If fileId is present, validate it BEFORE building the effective URL.
-  // This prevents junk like fileId=... from returning 200.
   if (fileId && !isPlausibleDriveFileId(fileId)) {
     return jsonErr(400, { error: "Invalid fileId" });
   }
@@ -115,7 +105,6 @@ export async function HEAD(req: Request) {
   const effectiveUrl = url || (fileId ? buildDriveUcUrl(fileId) : "");
   if (!effectiveUrl) return jsonErr(400, { error: "Missing url" });
 
-  // ✅ IMPORTANT: parse effectiveUrl (not raw url)
   const parsed = normalizeUrlOrNull(effectiveUrl);
   if (!parsed) return jsonErr(400, { error: "Invalid url/protocol" });
 
@@ -128,16 +117,13 @@ export async function HEAD(req: Request) {
     });
   }
 
-  // We don’t fetch upstream for HEAD — just say “ok, allowed”
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      ...noStoreHeaders(),
-      "X-Img-Route-Build": IMG_ROUTE_BUILD,
-    },
-  });
+  return new NextResponse(null, { status: 200, headers: noStoreHeaders() });
 }
 
+/**
+ * GET: proxy-only (no sharp). Returns upstream bytes + upstream content-type.
+ * This avoids sharp native-module issues on Netlify Next runtime.
+ */
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -150,9 +136,6 @@ export async function GET(req: Request) {
     if (fileId && !isPlausibleDriveFileId(fileId)) {
       return jsonErr(400, { error: "Invalid fileId" });
     }
-
-    const w = clamp(Number(searchParams.get("w") || "1400"), 200, 2400);
-    const q = clamp(Number(searchParams.get("q") || "72"), 40, 90);
 
     // ✅ Accept either url=... OR fileId=...
     const effectiveUrl = url || (fileId ? buildDriveUcUrl(fileId) : "");
@@ -172,7 +155,6 @@ export async function GET(req: Request) {
     }
 
     // ✅ NOTE: we intentionally DO NOT cache upstream fetches.
-    // This prevents stale headshots when Drive/CDNs cache aggressively.
     const upstream = await fetch(parsed.toString(), {
       cache: "no-store",
       headers: {
@@ -219,10 +201,9 @@ export async function GET(req: Request) {
     }
 
     const contentType = upstream.headers.get("content-type") || "";
-    // Some CDNs/hosts (including Drive flows) may return octet-stream for images.
-    // Only reject when it's clearly NOT an image (html/text/json).
     const ct = contentType.toLowerCase();
 
+    // Only reject when it's clearly NOT an image (html/text/json/xml).
     if (ct) {
       const clearlyNotImage =
         ct.startsWith("text/") ||
@@ -247,57 +228,14 @@ export async function GET(req: Request) {
       });
     }
 
-    // Resize + convert
-    // Resize + convert (lazy-load sharp so module init doesn't crash)
-    let sharpFn: any;
-    try {
-      const mod: any = await import("sharp");
-      // Works across CJS + ESM shapes:
-      // - CJS: mod is the function
-      // - ESM: mod.default is the function
-      sharpFn = typeof mod === "function" ? mod : mod?.default;
-      if (typeof sharpFn !== "function") {
-        return jsonErr(500, {
-          error: "sharp loaded but is not callable",
-          detail: `typeof mod=${typeof mod}, typeof mod.default=${typeof mod?.default}`,
-        });
-      }
-    } catch (e) {
-      const detail =
-        e instanceof Error
-          ? e.message
-          : typeof e === "string"
-            ? e
-            : JSON.stringify(e);
+    // ✅ Proxy-only response: preserve upstream bytes and content-type.
+    const outCt = contentType || "application/octet-stream";
 
-      return jsonErr(500, {
-        error: "sharp failed to load in production",
-        detail,
-        hint: "Native sharp binary unavailable in this environment",
-      });
-    }
-
-    const out = await sharpFn(inputBuf, { failOn: "none" })
-      .rotate() // respect EXIF orientation
-      .resize({
-        width: w,
-        withoutEnlargement: true,
-        fit: "inside",
-      })
-      .webp({ quality: q })
-      .toBuffer();
-
-
-
-    // ✅ BodyInit-safe for Response/NextResponse
-    const body = new Uint8Array(out);
-
-    return new NextResponse(body, {
+    return new NextResponse(new Uint8Array(inputBuf), {
       status: 200,
       headers: {
-        "Content-Type": "image/webp",
         ...noStoreHeaders(),
-        "X-Img-Route-Build": IMG_ROUTE_BUILD,
+        "Content-Type": outCt,
       },
     });
   } catch (err: unknown) {
@@ -310,13 +248,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json(
       { error: "Image proxy error", detail: message },
-      {
-        status: 500,
-        headers: {
-          ...noStoreHeaders(),
-          "X-Img-Route-Build": IMG_ROUTE_BUILD,
-        },
-      }
+      { status: 500, headers: noStoreHeaders() }
     );
   }
 }
