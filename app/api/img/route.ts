@@ -1,6 +1,5 @@
 // app/api/img/route.ts
 import { NextResponse } from "next/server";
-import sharp from "sharp";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -249,7 +248,36 @@ export async function GET(req: Request) {
     }
 
     // Resize + convert
-    const out = await sharp(inputBuf, { failOn: "none" })
+    // Resize + convert (lazy-load sharp so module init doesn't crash)
+    let sharpFn: any;
+    try {
+      const mod: any = await import("sharp");
+      // Works across CJS + ESM shapes:
+      // - CJS: mod is the function
+      // - ESM: mod.default is the function
+      sharpFn = typeof mod === "function" ? mod : mod?.default;
+      if (typeof sharpFn !== "function") {
+        return jsonErr(500, {
+          error: "sharp loaded but is not callable",
+          detail: `typeof mod=${typeof mod}, typeof mod.default=${typeof mod?.default}`,
+        });
+      }
+    } catch (e) {
+      const detail =
+        e instanceof Error
+          ? e.message
+          : typeof e === "string"
+            ? e
+            : JSON.stringify(e);
+
+      return jsonErr(500, {
+        error: "sharp failed to load in production",
+        detail,
+        hint: "Native sharp binary unavailable in this environment",
+      });
+    }
+
+    const out = await sharpFn(inputBuf, { failOn: "none" })
       .rotate() // respect EXIF orientation
       .resize({
         width: w,
@@ -258,6 +286,8 @@ export async function GET(req: Request) {
       })
       .webp({ quality: q })
       .toBuffer();
+
+
 
     // ✅ BodyInit-safe for Response/NextResponse
     const body = new Uint8Array(out);
