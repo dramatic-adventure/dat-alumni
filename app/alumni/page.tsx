@@ -65,6 +65,7 @@ export default async function Alumni() {
     (process.env.NEXT_PUBLIC_DEBUG_SHEETS === "1" || process.env.DEBUG_SHEETS === "1");
 
   if (DEBUG_SHEETS) {
+    // eslint-disable-next-line no-console
     console.log("[profile-media] rows:", profileMediaRows.length);
 
     const sampleIds = profileMediaRows
@@ -72,15 +73,16 @@ export default async function Alumni() {
       .filter(Boolean)
       .slice(0, 10);
 
+    // eslint-disable-next-line no-console
     console.log("[profile-media] sample alumniIds:", sampleIds);
 
     const jesse = profileMediaRows
       .filter((r) => String((r as any)?.alumniId || "").trim().toLowerCase() === "jesse-baxter")
       .slice(0, 10);
 
+    // eslint-disable-next-line no-console
     console.log("[profile-media] jesse-baxter rows:", jesse.length, jesse);
   }
-
 
   // ✅ Enrichment merges the two and picks best headshot per person
   const enrichedData: EnrichedProfileLiveRow[] = await enrichAlumniData(

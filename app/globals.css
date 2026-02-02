@@ -675,3 +675,38 @@ footer .footer-cta {
 }
 
 
+/* -----------------------------------------------------------
+   Profile Studio: subtle modern hover for ALL buttons/links
+   Scope is #profile-studio wrapper in /alumni/update/page.tsx
+----------------------------------------------------------- */
+
+#profile-studio button,
+#profile-studio a {
+  transition:
+    transform 150ms ease,
+    filter 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    opacity 150ms ease;
+}
+
+#profile-studio button:hover,
+#profile-studio a:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+#profile-studio button:active,
+#profile-studio a:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+  filter: brightness(1.02);
+}
+
+#profile-studio button:focus-visible,
+#profile-studio a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.28), 0 10px 30px rgba(0, 0, 0, 0.16);
+}

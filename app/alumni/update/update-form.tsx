@@ -1,14 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+
+
 import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 
 import ProfileStudio, {
+  type StudioTab,
   Field,
   Row,
   ghostButton as studioGhostButton,
 } from "@/components/alumni/update/ProfileStudio";
+
 import Dropzone from "@/components/media/Dropzone";
 import MediaPickerModal from "@/components/media/MediaPickerModal";
 import {
@@ -31,7 +36,7 @@ import { useDraft } from "@/lib/useDraft";
 import UpdateComposer from "@/components/alumni/UpdateComposer";
 import CommunityUpdateLine from "@/components/alumni/update/CommunityUpdateLine";
 
-const SHOW_LEGACY_SECTIONS = false; // flip to false when Studio is complete
+const SHOW_LEGACY_SECTIONS = false; // legacy UI removed; Studio only
 
 /* ====== Aesthetic constants ====== */
 const COLOR = {
@@ -64,6 +69,15 @@ const explainStyleLocal: CSSProperties = {
   lineHeight: 1.55,
   color: COLOR.snow,
   opacity: 0.95,
+  margin: "0 0 14px",
+};
+
+const explainStyleLight: CSSProperties = {
+  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+  fontSize: 15,
+  lineHeight: 1.55,
+  color: COLOR.ink,
+  opacity: 0.75,
   margin: "0 0 14px",
 };
 
@@ -146,8 +160,58 @@ function slugify(s: string) {
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-+|-+$)/g, "");
+    .replace(/(^-+|-+$)/g, "")
+    .trim();
 }
+
+function alumniIdFromLookupPayload(j: any) {
+  return String(j?.alumniId || "").trim();
+}
+
+function slugFromLookupPayload(j: any) {
+  return String(j?.canonicalSlug || "").trim();
+}
+
+/**
+ * Identity rules:
+ * - viewerAlumniId: signed-in user (permissions/authorship)
+ * - targetAlumniId: profile being edited (admin impersonation via ?alumniId=)
+ */
+function normalizeId(v: any) {
+  const s = String(v ?? "").trim();
+  return s || null;
+}
+
+function resolveTargetAlumniId(args: {
+  admin: boolean;
+  viewerAlumniId: string | null;
+  targetAlumniIdFromQuery: string | null;
+}) {
+  const { admin, viewerAlumniId, targetAlumniIdFromQuery } = args;
+
+  // Only admins can impersonate via query param.
+  if (admin && targetAlumniIdFromQuery) return targetAlumniIdFromQuery;
+
+  // Everyone else edits themselves.
+  return viewerAlumniId;
+}
+
+function isImpersonating(args: {
+  admin: boolean;
+  viewerAlumniId: string | null;
+  targetAlumniIdFromQuery: string | null;
+  targetAlumniId: string | null;
+}) {
+  const { admin, viewerAlumniId, targetAlumniIdFromQuery, targetAlumniId } = args;
+  return !!(
+    admin &&
+    viewerAlumniId &&
+    targetAlumniIdFromQuery &&
+    targetAlumniId &&
+    targetAlumniId !== viewerAlumniId
+  );
+}
+
 
 function fileExtension(name: string) {
   const m = /\.[A-Za-z0-9]+$/.exec(name);
@@ -205,6 +269,8 @@ function Section({ children }: { children?: ReactNode }) {
   );
 }
 
+
+
 function ProgressBar({ value }: { value: number }) {
   const pct = Math.max(0, Math.min(100, Math.round(value || 0)));
   return (
@@ -243,7 +309,7 @@ type ModuleKey =
   | "UpcomingEvent"
   | "TechSupport";
 
-const LIVE_KEYS = new Set<string>([
+const LIVE_KEYS = new Set<string>(Object.freeze([
   "name",
   "slug",
   "location",
@@ -291,21 +357,26 @@ const LIVE_KEYS = new Set<string>([
   "storyPartners",
   "storyShortStory",
   "storyQuote",
-  "storyQuoteAuthor",
+  "storyQuoteAttribution",
   "storyMediaUrl",
   "storyMoreInfoUrl",
   "storyCountry",
-  "showOnMap",
+  "storyShowOnMap",
+  "storyKey",
+  "storyTimeStamp",
   "supportBug",
   "supportFeature",
   "supportAssistance",
-]);
+]));
 
 function keysForSaving(keys: string[]) {
-  return keys.filter((k) => LIVE_KEYS.has(String(k)));
+  // Identity-free: only filters keys against LIVE_KEYS.
+  // Never consult viewer/target identity here.
+  return (keys || []).map(String).filter((k) => LIVE_KEYS.has(k));
 }
 
-const MODULES: Record<ModuleKey, { fieldKeys: string[]; uploadKinds: UploadKind[] }> = {
+
+const MODULES = {
   Basics: {
     fieldKeys: keysForSaving([
       "slug",
@@ -371,10 +442,12 @@ const MODULES: Record<ModuleKey, { fieldKeys: string[]; uploadKinds: UploadKind[
       "storyPartners",
       "storyShortStory",
       "storyQuote",
-      "storyQuoteAuthor",
+      "storyQuoteAttribution",
       "storyMediaUrl",
       "storyMoreInfoUrl",
-      "showOnMap",
+      "storyShowOnMap",
+      "storyKey",
+      "storyTimeStamp",
     ]),
     uploadKinds: [],
   },
@@ -394,40 +467,252 @@ const MODULES: Record<ModuleKey, { fieldKeys: string[]; uploadKinds: UploadKind[
     fieldKeys: keysForSaving(["supportBug", "supportFeature", "supportAssistance"]),
     uploadKinds: [],
   },
-};
+} satisfies Record<ModuleKey, { fieldKeys: string[]; uploadKinds: UploadKind[] }>;
 
+// ------------------------------------------------------------
+// Boolean normalization (Live sheet-friendly) — FILE SCOPE
+// ------------------------------------------------------------
+function truthy(v: any) {
+  const s = String(v ?? "").trim().toLowerCase();
+  return v === true || s === "true" || s === "1" || s === "yes";
+}
+
+function boolCell(v: any) {
+  return truthy(v) ? "true" : "";
+}
+
+function isTrue(v: any) {
+  return truthy(v);
+}
+
+// ------------------------------------------------------------
+// Baseline in Profile-Live key space (for diff) — FILE SCOPE
+// ------------------------------------------------------------
+function baselineFromLookup(j: any, slug: string, nm: string, loc: string) {
+  return {
+    slug: String(slug || "").trim().toLowerCase(),
+    name: String(nm || "").trim(),
+    location: String(loc || "").trim(),
+
+    isBiCoastal: boolCell(j?.isBiCoastal),
+    secondLocation: String(j?.secondLocation || ""),
+    backgroundStyle: String(j?.backgroundStyle || "kraft"),
+
+    pronouns: String(j?.pronouns || ""),
+    roles: String(j?.roles || ""),
+    identityTags: String(j?.identityTags || ""),
+    languages: String(j?.languages || ""),
+    currentWork: String(j?.currentWork || ""),
+
+    bioShort: String(j?.bioShort || ""),
+    bioLong: String(j?.bioLong || ""),
+
+    website: String(j?.website || ""),
+    instagram: String(j?.instagram || ""),
+    x: String(j?.x || ""),
+    tiktok: String(j?.tiktok || ""),
+    threads: String(j?.threads || ""),
+    bluesky: String(j?.bluesky || ""),
+    linkedin: String(j?.linkedin || ""),
+    primarySocial: String(j?.primarySocial || ""),
+
+    youtube: String(j?.youtube || ""),
+    vimeo: String(j?.vimeo || ""),
+    imdb: String(j?.imdb || ""),
+    facebook: String(j?.facebook || ""),
+    linktree: String(j?.linktree || ""),
+    publicEmail: String(j?.publicEmail || ""),
+
+    spotlight: String(j?.spotlight || ""),
+    programs: String(j?.programs || ""),
+    tags: String(j?.tags || ""),
+    statusFlags: String(j?.statusFlags || ""),
+
+    currentUpdateText: String(j?.currentUpdateText || ""),
+    currentUpdateLink: String(j?.currentUpdateLink || ""),
+    currentUpdateExpiresAt: String(j?.currentUpdateExpiresAt || ""),
+
+    upcomingEventTitle: String(j?.upcomingEventTitle || ""),
+    upcomingEventLink: String(j?.upcomingEventLink || ""),
+    upcomingEventDate: String(j?.upcomingEventDate || ""),
+    upcomingEventExpiresAt: String(j?.upcomingEventExpiresAt || ""),
+    upcomingEventDescription: String(j?.upcomingEventDescription || ""),
+
+    currentHeadshotUrl: String(j?.currentHeadshotUrl || ""),
+
+    storyTitle: String(j?.storyTitle || ""),
+    storyProgram: String(j?.storyProgram || ""),
+    storyLocationName: String(j?.storyLocationName || ""),
+    storyYears: String(j?.storyYears || ""),
+    storyPartners: String(j?.storyPartners || ""),
+    storyShortStory: String(j?.storyShortStory || ""),
+    storyQuote: String(j?.storyQuote || ""),
+    storyQuoteAttribution: String(j?.storyQuoteAttribution || ""),
+    storyMediaUrl: String(j?.storyMediaUrl || ""),
+    storyMoreInfoUrl: String(j?.storyMoreInfoUrl || ""),
+    storyCountry: String(j?.storyCountry || ""),
+    storyShowOnMap: boolCell(j?.storyShowOnMap),
+    storyKey: String(j?.storyKey || ""),
+  };
+}
 
 export default function UpdateForm({
   email,
   isAdmin = false,
+  alumniId,
+  impersonating = false,
 }: {
   email: string;
   isAdmin?: boolean;
+  alumniId?: string;
+  impersonating?: boolean;
 }) {
 
-  const [studioTab, setStudioTab] = useState<
-  "basics" | "identity" | "media" | "contact" | "story" | "event"
->("basics");
+// ========================
+// Identity: viewer vs target
+// ========================
+
+// Viewer identity is server-resolved via /api/alumni/owner.
+// (Do NOT treat email as identity; it is only a lookup fallback.)
+const [viewerAlumniIdFromSession, setViewerAlumniIdFromSession] = useState("");
+
+// Admin impersonation inputs (page.tsx prop or query param)
+const impersonationTargetIdProp = String(alumniId || "").trim();
+
+// ✅ Allow impersonation if:
+// - admin (prod/dev), OR
+// - non-production (local/dev preview)
+const canImpersonateHere = isAdmin || process.env.NODE_ENV !== "production";
+
+// If page.tsx passed an alumniId, use it (admin-gated by canImpersonateHere).
+const targetAlumniIdFromProp =
+  canImpersonateHere && impersonationTargetIdProp ? impersonationTargetIdProp : "";
 
 
-const tabToModule = {
-  basics: "Basics",
-  identity: "Identity",
-  media: "Basics",
-  contact: "Contact",
-  story: "StoryMap",
-  event: "UpcomingEvent",
-} as const satisfies Record<
-  "basics" | "identity" | "media" | "contact" | "story" | "event",
-  ModuleKey
->;
+  useEffect(() => {
+    let alive = true;
+    const run = async () => {
+    try {
+      const r = await fetch("/api/alumni/owner", { cache: "no-store" });
+      const j = await r.json().catch(() => ({}));
+      if (!alive) return;
 
-const activeModule: ModuleKey = tabToModule[studioTab];
+      if (r.ok && j?.alumniId) {
+        setViewerAlumniIdFromSession(String(j.alumniId).trim());
+        return;
+      }
 
+      // Non-OK response or missing alumniId
+      setViewerAlumniIdFromSession("");
+    } catch {
+      // Network / runtime error
+      if (alive) setViewerAlumniIdFromSession("");
+    }
+
+    };
+    run();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const headshotUploadInFlight = useRef(false);
+
+  const searchParams = useSearchParams();
+
+  const targetAlumniIdFromQuery = String(
+    searchParams.get("alumniId") || searchParams.get("asId") || ""
+  ).trim();
+
+  const forceSlug = String(searchParams.get("slug") || "").trim();
+
+  // target = profile being edited (admin-gated)
+  const targetAlumniId = resolveTargetAlumniId({
+    admin: canImpersonateHere,
+    viewerAlumniId: normalizeId(viewerAlumniIdFromSession),
+    targetAlumniIdFromQuery: normalizeId(targetAlumniIdFromProp || targetAlumniIdFromQuery),
+  });
+
+const lookupUrl = useMemo(() => {
+  if (targetAlumniId) {
+    return `/api/alumni/lookup?alumniId=${encodeURIComponent(targetAlumniId)}&nocache=1`;
+  }
+
+  if (forceSlug) {
+    return `/api/alumni/lookup?slug=${encodeURIComponent(forceSlug)}&nocache=1`;
+  }
+
+  // Email is LAST-resort fallback only when we have no alumniId target.
+  const e = String(email || "").trim();
+  if (!e) return "";
+  return `/api/alumni/lookup?email=${encodeURIComponent(e)}&nocache=1`;
+}, [targetAlumniId, forceSlug, email]);
+
+  // ✅ Hooks MUST be inside the component:
+  const [studioTab, setStudioTab] = useState<StudioTab>("basics");
+
+  const didInitTabFromQuery = useRef(false);
+
+  useEffect(() => {
+    if (didInitTabFromQuery.current) return;
+
+    const raw = String(searchParams?.get("tab") || "").toLowerCase();
+    const allowed: StudioTab[] = ["basics", "identity", "media", "contact", "story", "event"];
+
+    if (allowed.includes(raw as StudioTab)) {
+      setStudioTab(raw as StudioTab);
+    }
+
+    didInitTabFromQuery.current = true;
+  }, [searchParams]);
+
+
+  const tabToModule = useMemo(
+    () =>
+      ({
+        basics: "Basics",
+        identity: "Identity",
+        media: "Basics",
+        contact: "Contact",
+        story: "StoryMap",
+        event: "UpcomingEvent",
+      }) as const satisfies Record<StudioTab, ModuleKey>,
+    []
+  );
+
+  const activeModule: ModuleKey = tabToModule[studioTab];
   const mod = MODULES[activeModule];
 
-  /** Stable identity state */
-  const [stableAlumniId, setStableAlumniId] = useState(""); // never changes
+  const [targetAlumniIdFromLookup, setTargetAlumniIdFromLookup] = useState("");
+
+  // Viewer identity: only from session (or optional prop if you truly have one).
+  const viewerAlumniId = String(viewerAlumniIdFromSession || "").trim();
+
+  // Target identity (for loading/editing): from target resolver OR lookup payload
+  const resolvedTargetAlumniId = String(
+    targetAlumniId || targetAlumniIdFromLookup || ""
+  ).trim();
+
+  const impersonatingNow = isImpersonating({
+    admin: canImpersonateHere,
+    viewerAlumniId: normalizeId(viewerAlumniId),
+    targetAlumniIdFromQuery: normalizeId(targetAlumniIdFromProp || targetAlumniIdFromQuery),
+    targetAlumniId: normalizeId(resolvedTargetAlumniId),
+  });
+
+  // stableAlumniId is the TARGET profile id (drives what loads into the form)
+  const stableAlumniId = resolvedTargetAlumniId;
+
+  const getIdentity = useCallback(() => stableAlumniId, [stableAlumniId]);
+
+  const [studioMountKey, setStudioMountKey] = useState(0);
+
+  useEffect(() => {
+    // When the target person changes, force a full remount of the Studio subtree
+    // so it cannot keep the previous person's baseline/draft state.
+    setStudioMountKey((k) => k + 1);
+  }, [stableAlumniId]);
+
   const [currentSlug, setCurrentSlug] = useState(""); // current canonical slug
   const [originalSlug, setOriginalSlug] = useState(""); // previous slug for forward mapping
   const [autoDetected, setAutoDetected] = useState(false);
@@ -499,15 +784,16 @@ const activeModule: ModuleKey = tabToModule[studioTab];
     storyPartners: "",
     storyShortStory: "",
     storyQuote: "",
-    storyQuoteAuthor: "",
+    storyQuoteAttribution: "",
     storyMediaUrl: "",
     storyMoreInfoUrl: "",
     storyCountry: "",
-    showOnMap: "",
+    storyShowOnMap: "",
+    storyKey: "",
+    storyTimeStamp: "",
   });
 
   // ✅ Single source of truth for “who is this?”
-  const getIdentity = () => (stableAlumniId || "").trim();
   const isLoaded = !!getIdentity() && !!liveBaseline;
 
   /* drafts */
@@ -551,24 +837,24 @@ const activeModule: ModuleKey = tabToModule[studioTab];
     enabled: !!stableAlumniId,
   });
 
-/* media selections */
-const [headshotFile, setHeadshotFile] = useState<File | null>(null);
-const [albumFiles, setAlbumFiles] = useState<File[]>([]);
-const [reelFiles, setReelFiles] = useState<File[]>([]);
-const [eventFiles, setEventFiles] = useState<File[]>([]);
-const [albumName, setAlbumName] = useState<string>("");
+  /* media selections */
+  const [headshotFile, setHeadshotFile] = useState<File | null>(null);
+  const [albumFiles, setAlbumFiles] = useState<File[]>([]);
+  const [reelFiles, setReelFiles] = useState<File[]>([]);
+  const [eventFiles, setEventFiles] = useState<File[]>([]);
+  const [albumName, setAlbumName] = useState<string>("");
 
-const [headshotPreviewUrl, setHeadshotPreviewUrl] = useState<string>("");
+  const [headshotPreviewUrl, setHeadshotPreviewUrl] = useState<string>("");
 
-useEffect(() => {
-  if (!headshotFile) {
-    setHeadshotPreviewUrl("");
-    return;
-  }
-  const url = URL.createObjectURL(headshotFile);
-  setHeadshotPreviewUrl(url);
-  return () => URL.revokeObjectURL(url);
-}, [headshotFile]);
+  useEffect(() => {
+    if (!headshotFile) {
+      setHeadshotPreviewUrl("");
+      return;
+    }
+    const url = URL.createObjectURL(headshotFile);
+    setHeadshotPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [headshotFile]);
 
 
   /* progress + failures */
@@ -606,6 +892,300 @@ useEffect(() => {
     null
   );
   const saveBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  const showToast = useCallback((msg: string, type: "success" | "error" = "success") => {
+    setToast({ msg, type });
+    window.setTimeout(() => setToast(null), 2600);
+  }, []);
+
+  const showToastRef = useRef(showToast);
+
+  useEffect(() => {
+    showToastRef.current = showToast;
+  }, [showToast]);
+
+    // ------------------------------------------------------------
+  // STORY MAP editor state (UI-only; NOT saved to Profile-Live)
+  // ------------------------------------------------------------
+  // STORY MAP pointer (saved in Profile-Live as storyKey)
+  const activeStoryKey = String(profile?.storyKey || "").trim();
+
+  const read = (obj: any, ...keys: string[]) => {
+    for (const k of keys) {
+      const v = obj?.[k];
+      if (v !== undefined && v !== null && String(v).trim() !== "") return String(v);
+    }
+    return "";
+  };
+
+  function NOW_ISO() {
+    return new Date().toISOString();
+  }
+
+  const clearStoryEditor = () => {
+    setProfile((p: any) => ({
+      ...p,
+
+      // ✅ clear pointer (prevents “accidentally editing last-selected story”)
+      storyKey: "",
+
+      // ✅ clear buffer fields
+      storyTitle: "",
+      storyProgram: "",
+      storyLocationName: "",
+      storyYears: "",
+      storyPartners: "",
+      storyShortStory: "",
+      storyQuote: "",
+      storyQuoteAttribution: "",
+      storyMediaUrl: "",
+      storyMoreInfoUrl: "",
+      storyCountry: "",
+
+      // ✅ default false
+      storyShowOnMap: "",
+
+      // ✅ new edit session timestamp
+      storyTimeStamp: NOW_ISO(),
+    }));
+  };
+
+// ------------------------------------------------------------
+// MY STORIES (list for dropdown)
+// ------------------------------------------------------------
+type MyStory = {
+  // canonical key (required)
+  storyKey: string;
+
+  // identity / ownership (often useful for debugging + display)
+  alumniId?: string;
+  author?: string;
+  authorSlug?: string;
+
+  // story fields (buffer-compatible names)
+  storyTitle?: string;
+  storyProgram?: string;
+  storyLocationName?: string;
+  storyYears?: string;
+  storyPartners?: string;
+  storyShortStory?: string;
+  storyQuote?: string;
+  storyQuoteAttribution?: string;
+  storyMediaUrl?: string;
+  storyMoreInfoUrl?: string;
+  storyCountry?: string;
+  storyShowOnMap?: any;
+
+  // timestamp (Map Data is usually `ts`; your editor buffer uses `storyTimeStamp`)
+  ts?: string;
+  storyTimeStamp?: string;
+};
+
+
+const [myStories, setMyStories] = useState<MyStory[]>([]);
+const [myStoriesLoading, setMyStoriesLoading] = useState(false);
+
+const refreshMyStories = useCallback(
+  async (targetIdArg?: string) => {
+    const alumniIdForStories = String(targetIdArg ?? stableAlumniId ?? "").trim();
+
+    if (!alumniIdForStories) {
+      // Don’t toast on initial boot (avoids noise); just clear list.
+      setMyStories([]);
+      return;
+    }
+
+    setMyStoriesLoading(true);
+
+    try {
+      const url = `/api/map/my-stories?alumniId=${encodeURIComponent(alumniIdForStories)}`;
+      const r = await fetch(url, { cache: "no-store" });
+      const j = await r.json().catch(() => ({}));
+
+      if (!r.ok) {
+        const msg =
+          r.status === 404
+            ? 'My Stories endpoint not found (404). Check app/api/map/my-stories/route.ts exists and restart dev server.'
+            : typeof j?.error === "string"
+            ? j.error
+            : `Couldn’t load My Stories (${r.status}).`;
+
+        showToastRef.current?.(msg, "error");
+        setMyStories([]);
+        return;
+      }
+
+      const raw: any[] = Array.isArray(j?.stories)
+        ? j.stories
+        : Array.isArray(j?.items)
+        ? j.items
+        : [];
+
+      const seen = new Set<string>();
+      const cleaned: MyStory[] = [];
+      let missingKey = 0;
+
+      for (const it of raw) {
+        const key = String(it?.storyKey || it?.story_key || it?.key || "").trim();
+        if (!key) {
+          missingKey++;
+          continue;
+        }
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        cleaned.push({
+          ...it,
+          storyKey: key,
+
+          alumniId: String(it?.alumniId || it?.alumni_id || ""),
+          author: String(it?.author || it?.Author || it?.name || ""),
+          authorSlug: String(it?.authorSlug || it?.author_slug || it?.slug || ""),
+
+          storyTitle: String(it?.storyTitle || it?.title || it?.Title || ""),
+          storyProgram: String(it?.storyProgram || it?.program || it?.Program || ""),
+          storyLocationName: String(
+            it?.storyLocationName || it?.locationName || it?.LocationName || ""
+          ),
+          storyYears: String(it?.storyYears || it?.years || it?.Years || ""),
+          storyPartners: String(it?.storyPartners || it?.partners || it?.Partners || ""),
+          storyShortStory: String(it?.storyShortStory || it?.shortStory || it?.ShortStory || ""),
+          storyQuote: String(it?.storyQuote || it?.quote || it?.Quote || ""),
+          storyQuoteAttribution: String(
+            it?.storyQuoteAttribution || it?.quoteAttribution || it?.QuoteAttribution || ""
+          ),
+          storyMediaUrl: String(
+            it?.storyMediaUrl || it?.mediaURL || it?.mediaUrl || it?.MediaURL || ""
+          ),
+          storyMoreInfoUrl: String(
+            it?.storyMoreInfoUrl || it?.moreInfoLink || it?.moreInfoUrl || it?.MoreInfoLink || ""
+          ),
+          storyCountry: String(it?.storyCountry || it?.country || it?.Country || ""),
+          storyShowOnMap: it?.storyShowOnMap ?? it?.showOnMap ?? it?.ShowOnMap,
+
+          ts: String(it?.ts || it?.TS || ""),
+          storyTimeStamp: String(it?.storyTimeStamp || it?.timestamp || it?.timeStamp || ""),
+        });
+      }
+
+      cleaned.sort((a, b) => {
+        const at = Date.parse(String(a.ts || a.storyTimeStamp || "")) || 0;
+        const bt = Date.parse(String(b.ts || b.storyTimeStamp || "")) || 0;
+        return bt - at;
+      });
+
+      setMyStories(cleaned);
+
+      if (!cleaned.length && raw.length && missingKey === raw.length) {
+        showToastRef.current?.(
+          `Found ${raw.length} rows, but none had a storyKey. Check Map Data storyKey column + API mapping.`,
+          "error"
+        );
+      }
+    } catch (e: any) {
+      setMyStories([]);
+      showToastRef.current?.(e?.message || "Couldn’t load My Stories.", "error");
+    } finally {
+      setMyStoriesLoading(false);
+    }
+  },
+  [stableAlumniId]
+);
+
+useEffect(() => {
+  // Load when identity becomes available (session/admin/lookup).
+  if (!stableAlumniId) return;
+  refreshMyStories();
+}, [stableAlumniId, refreshMyStories]);
+
+async function onSelectStoryFromMyStories(storyKey: string) {
+  const key = String(storyKey || "").trim();
+  if (!key) return;
+
+  // ✅ Prefer in-memory lookup (no per-select fetch)
+  const row = (myStories || []).find(
+    (s) => String((s as any)?.storyKey ?? "").trim() === key
+  );
+
+  // Optional fallback fetch if not found in list (safe, but ideally never needed)
+  let data: any = row;
+
+  // Safety net: should rarely run.
+  // Protects against stale My Stories state or just-published rows.
+
+  if (!data && key) {
+    const r = await fetch(
+      `/api/map/story?storyKey=${encodeURIComponent(key)}`,
+      { cache: "no-store" }
+    );
+    if (r.ok) {
+      const j = await r.json().catch(() => null);
+      if (j?.item) data = j.item;
+    }
+  }
+
+  if (!data) {
+    showToastRef.current?.("Couldn’t load that story.", "error");
+    return;
+  }
+
+  // ✅ Hydrate the editor buffer from the selected story row
+  setProfile((p: any) => ({
+    ...p,
+    storyKey: key,
+
+    storyTitle: read(data, "storyTitle", "title", "Title"),
+    storyProgram: read(data, "storyProgram", "program", "Program"),
+    storyLocationName: read(
+      data,
+      "storyLocationName",
+      "locationName",
+      "Location Name",
+      "LocationName"
+    ),
+    storyYears: read(data, "storyYears", "years", "Year(s)", "Years"),
+    storyPartners: read(data, "storyPartners", "partners", "Partners"),
+    storyShortStory: read(
+      data,
+      "storyShortStory",
+      "shortStory",
+      "Short Story",
+      "ShortStory"
+    ),
+    storyQuote: read(data, "storyQuote", "quote", "Quote"),
+    storyQuoteAttribution: read(
+      data,
+      "storyQuoteAttribution",
+      "quoteAttribution",
+      "Quote Attribution",
+      "QuoteAttribution"
+    ),
+    storyMediaUrl: read(
+      data,
+      "storyMediaUrl",
+      "mediaURL",
+      "mediaUrl",
+      "Image URL",
+      "Media URL"
+    ),
+    storyMoreInfoUrl: read(
+      data,
+      "storyMoreInfoUrl",
+      "moreInfoLink",
+      "moreInfoUrl",
+      "More Info Link",
+      "MoreInfoLink"
+    ),
+    storyCountry: read(data, "storyCountry", "country", "Country"),
+
+    storyShowOnMap: boolCell(
+      data?.storyShowOnMap ?? data?.showOnMap ?? data?.ShowOnMap
+    ),
+
+    storyTimeStamp: String(data?.ts || data?.storyTimeStamp || "") || NOW_ISO(),
+  }));
+}
+
 
     // Upcoming Event Collapsible control
   const [eventOpen, setEventOpen] = useState(false);
@@ -683,16 +1263,9 @@ const openEventAndScroll = () => {
     setPrimarySocial((prev) => (ps && ps !== prev ? ps : prev));
   }, [profile?.primarySocial]);
 
-
-  const showToast = (msg: string, type: "success" | "error" = "success") => {
-    setToast({ msg, type });
-    window.setTimeout(() => setToast(null), 2600);
-  };
-
-
   const openPicker = (kind: "headshot" | "album" | "reel" | "event") => {
     if (!getIdentity()) {
-      showToast("Profile not loaded yet.", "error");
+      showToastRef.current?.("Profile not loaded yet.", "error");
       return;
     }
     setPickerKind(kind);
@@ -722,211 +1295,123 @@ const openEventAndScroll = () => {
   }
 
 
-  // ------------------------------------------------------------
-  // Boolean normalization (Live sheet-friendly)
-  // ------------------------------------------------------------
-  const truthy = (v: any) => {
-    const s = String(v ?? "").trim().toLowerCase();
-    return v === true || s === "true" || s === "1" || s === "yes";
+  /* ---------- LOAD: hydrate from lookup(target first; email last) ---------- */
+useEffect(() => {
+  const run = async () => {
+    try {
+      const url = lookupUrl.startsWith("/") ? lookupUrl : `/${lookupUrl}`;
+      const res = await fetch(url, { cache: "no-store", credentials: "include" });
+      if (!res.ok) return;
+
+      const j = await res.json();
+
+      const slug = String(j?.canonicalSlug || j?.slug || "").trim();
+
+      if (slug) {
+        setCurrentSlug(slug);
+        setOriginalSlug(slug);
+        setAutoDetected(true);
+      }
+
+      // Target identity from lookup payload (NEVER viewer identity)
+      const resolvedId = alumniIdFromLookupPayload(j);
+      if (resolvedId) setTargetAlumniIdFromLookup(resolvedId);
+
+      const nm = String(j?.name || "").trim();
+      if (nm) setName(nm);
+
+      const loc = String(j?.location || "").trim();
+      if (loc) setLocation(loc);
+
+      if (j?.status) setStatus(String(j.status));
+
+      setLiveBaseline(baselineFromLookup(j, slug, nm, loc));
+
+      setProfile((p: any) => ({
+        ...p,
+
+        name: nm || p.name,
+        slug: slug || p.slug,
+        location: loc || p.location,
+
+        pronouns: String(j?.pronouns || p.pronouns || ""),
+        roles: String(j?.roles || p.roles || ""),
+        identityTags: String(j?.identityTags || p.identityTags || ""),
+        languages: String(j?.languages || p.languages || ""),
+        currentWork: String(j?.currentWork || p.currentWork || ""),
+
+        bioShort: String(j?.bioShort || p.bioShort || ""),
+        bioLong: String(j?.bioLong || p.bioLong || ""),
+
+        website: String(j?.website || p.website || ""),
+        instagram: String(j?.instagram || p.instagram || ""),
+        x: String(j?.x || p.x || ""),
+        tiktok: String(j?.tiktok || p.tiktok || ""),
+        threads: String(j?.threads || p.threads || ""),
+        bluesky: String(j?.bluesky || p.bluesky || ""),
+        linkedin: String(j?.linkedin || p.linkedin || ""),
+        primarySocial: String(j?.primarySocial || p.primarySocial || "instagram"),
+
+        youtube: String(j?.youtube || p.youtube || ""),
+        vimeo: String(j?.vimeo || p.vimeo || ""),
+        imdb: String(j?.imdb || p.imdb || ""),
+        facebook: String(j?.facebook || p.facebook || ""),
+        linktree: String(j?.linktree || p.linktree || ""),
+        publicEmail: String(j?.publicEmail || p.publicEmail || ""),
+
+        programs: String(j?.programs || p.programs || ""),
+        tags: String(j?.tags || p.tags || ""),
+        statusFlags: String(j?.statusFlags || p.statusFlags || ""),
+        spotlight: String(j?.spotlight || p.spotlight || ""),
+
+        currentUpdateText: String(j?.currentUpdateText || p.currentUpdateText || ""),
+        currentUpdateLink: String(j?.currentUpdateLink || p.currentUpdateLink || ""),
+        currentUpdateExpiresAt: String(j?.currentUpdateExpiresAt || p.currentUpdateExpiresAt || ""),
+
+        upcomingEventTitle: String(j?.upcomingEventTitle || p.upcomingEventTitle || ""),
+        upcomingEventLink: String(j?.upcomingEventLink || p.upcomingEventLink || ""),
+        upcomingEventDate: String(j?.upcomingEventDate || p.upcomingEventDate || ""),
+        upcomingEventExpiresAt: String(j?.upcomingEventExpiresAt || p.upcomingEventExpiresAt || ""),
+        upcomingEventDescription: String(j?.upcomingEventDescription || p.upcomingEventDescription || ""),
+
+        backgroundStyle: String(j?.backgroundStyle || p.backgroundStyle || "kraft"),
+        // normalize into Live-cell shape (string "true" or "")
+        isBiCoastal: boolCell(j?.isBiCoastal || p.isBiCoastal),
+        secondLocation: String(j?.secondLocation || p.secondLocation || ""),
+
+        currentHeadshotUrl: String(j?.currentHeadshotUrl || p.currentHeadshotUrl || ""),
+
+        storyTitle: String(j?.storyTitle || p.storyTitle || ""),
+        storyProgram: String(j?.storyProgram || p.storyProgram || ""),
+        storyLocationName: String(j?.storyLocationName || p.storyLocationName || ""),
+        storyYears: String(j?.storyYears || p.storyYears || ""),
+        storyPartners: String(j?.storyPartners || p.storyPartners || ""),
+        storyShortStory: String(j?.storyShortStory || p.storyShortStory || ""),
+        storyQuote: String(j?.storyQuote || p.storyQuote || ""),
+        storyQuoteAttribution: String(j?.storyQuoteAttribution || p.storyQuoteAttribution || ""),
+        storyMediaUrl: String(j?.storyMediaUrl || p.storyMediaUrl || ""),
+        storyMoreInfoUrl: String(j?.storyMoreInfoUrl || p.storyMoreInfoUrl || ""),
+        storyCountry: String(j?.storyCountry || p.storyCountry || ""),
+        storyShowOnMap: boolCell(j?.storyShowOnMap || p.storyShowOnMap),
+        storyKey: String(j?.storyKey || p.storyKey || ""),
+      }));
+
+      if (j?.assets) setAssets(j.assets as PointerAssets);
+    } catch {
+      /* ignore */
+    }
   };
 
-  const boolCell = (v: any) => (truthy(v) ? "true" : "");
+  // ✅ Lookup allowed if:
+  // - we have a target id (admin impersonation or self), OR
+  // - we have a forced slug, OR
+  // - we have email fallback (only when no target id)
+  const canLookup =
+    Boolean(lookupUrl) &&
+    (Boolean(stableAlumniId) || Boolean(forceSlug) || Boolean(String(email || "").trim()));
 
-  // ✅ single truth function for UI checks
-  const isTrue = (v: any) => String(v ?? "").trim().toLowerCase() === "true";
-
-
-
-
-  /** Baseline in Profile-Live key space (for diff). */
-  function baselineFromLookup(j: any, slug: string, nm: string, loc: string) {
-    return {
-      slug: String(slug || "").trim().toLowerCase(),
-      name: String(nm || "").trim(),
-      location: String(loc || "").trim(),
-
-      // ✅ normalize to Live "cell" values for reliable diffs
-      isBiCoastal: boolCell(j?.isBiCoastal),
-      secondLocation: String(j?.secondLocation || ""),
-      backgroundStyle: String(j?.backgroundStyle || "kraft"),
-
-
-      pronouns: String(j?.pronouns || ""),
-      roles: String(j?.roles || ""),
-      identityTags: String(j?.identityTags || ""),
-      languages: String(j?.languages || ""),
-      currentWork: String(j?.currentWork || ""),
-
-      bioShort: String(j?.bioShort || ""),
-      bioLong: String(j?.bioLong || ""),
-
-      website: String(j?.website || ""),
-      instagram: String(j?.instagram || ""),
-      x: String(j?.x || ""),
-      tiktok: String(j?.tiktok || ""),
-      threads: String(j?.threads || ""),
-      bluesky: String(j?.bluesky || ""),
-      linkedin: String(j?.linkedin || ""),
-      primarySocial: String(j?.primarySocial || ""),
-
-      youtube: String(j?.youtube || ""),
-      vimeo: String(j?.vimeo || ""),
-      imdb: String(j?.imdb || ""),
-      facebook: String(j?.facebook || ""),
-      linktree: String(j?.linktree || ""),
-      publicEmail: String(j?.publicEmail || ""),
-
-      spotlight: String(j?.spotlight || ""),
-      programs: String(j?.programs || ""),
-      tags: String(j?.tags || ""),
-      statusFlags: String(j?.statusFlags || ""),
-
-      currentUpdateText: String(j?.currentUpdateText || ""),
-      currentUpdateLink: String(j?.currentUpdateLink || ""),
-      currentUpdateExpiresAt: String(j?.currentUpdateExpiresAt || ""),
-
-      upcomingEventTitle: String(j?.upcomingEventTitle || ""),
-      upcomingEventLink: String(j?.upcomingEventLink || ""),
-      upcomingEventDate: String(j?.upcomingEventDate || ""),
-      upcomingEventExpiresAt: String(j?.upcomingEventExpiresAt || ""),
-      upcomingEventDescription: String(j?.upcomingEventDescription || ""),
-
-      currentHeadshotUrl: String(j?.currentHeadshotUrl || ""),
-
-      storyTitle: String(j?.storyTitle || ""),
-      storyProgram: String(j?.storyProgram || ""),
-      storyLocationName: String(j?.storyLocationName || ""),
-      storyYears: String(j?.storyYears || ""),
-      storyPartners: String(j?.storyPartners || ""),
-      storyShortStory: String(j?.storyShortStory || ""),
-      storyQuote: String(j?.storyQuote || ""),
-      storyQuoteAuthor: String(j?.storyQuoteAuthor || ""),
-      storyMediaUrl: String(j?.storyMediaUrl || ""),
-      storyMoreInfoUrl: String(j?.storyMoreInfoUrl || ""),
-      storyCountry: String(j?.storyCountry || ""),
-      showOnMap: boolCell(j?.showOnMap),
-
-    };
-  }
-
-  /* ---------- LOAD: hydrate from lookup(email) ---------- */
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const res = await fetch(`/api/alumni/lookup?email=${encodeURIComponent(email)}`, {
-          cache: "no-store",
-        });
-        if (!res.ok) return;
-
-        const j = await res.json();
-
-        if (j?.alumniId) setStableAlumniId(String(j.alumniId));
-
-        const slug = String(j?.canonicalSlug || j?.slug || "").trim();
-        if (slug) {
-          setCurrentSlug(slug);
-          setOriginalSlug(slug);
-          setAutoDetected(true);
-        }
-
-        const nm = String(j?.name || "").trim();
-        if (nm) setName(nm);
-
-        const loc = String(j?.location || "").trim();
-        if (loc) setLocation(loc);
-
-        if (j?.status) setStatus(String(j.status));
-
-        setLiveBaseline(baselineFromLookup(j, slug, nm, loc));
-
-        setProfile((p: any) => {
-          const next = {
-            ...p,
-            name: nm || p.name,
-            slug: slug || p.slug,
-            location: loc || p.location,
-
-            pronouns: String(j?.pronouns || p.pronouns || ""),
-            roles: String(j?.roles || p.roles || ""),
-            identityTags: String(j?.identityTags || p.identityTags || ""),
-            languages: String(j?.languages || p.languages || ""),
-            currentWork: String(j?.currentWork || p.currentWork || ""),
-
-            bioShort: String(j?.bioShort || p.bioShort || ""),
-            bioLong: String(j?.bioLong || p.bioLong || ""),
-
-            website: String(j?.website || p.website || ""),
-            instagram: String(j?.instagram || p.instagram || ""),
-            x: String(j?.x || p.x || ""),
-            tiktok: String(j?.tiktok || p.tiktok || ""),
-            threads: String(j?.threads || p.threads || ""),
-            bluesky: String(j?.bluesky || p.bluesky || ""),
-            linkedin: String(j?.linkedin || p.linkedin || ""),
-            primarySocial: String(j?.primarySocial || p.primarySocial || "instagram"),
-
-            youtube: String(j?.youtube || p.youtube || ""),
-            vimeo: String(j?.vimeo || p.vimeo || ""),
-            imdb: String(j?.imdb || p.imdb || ""),
-            facebook: String(j?.facebook || p.facebook || ""),
-            linktree: String(j?.linktree || p.linktree || ""),
-            publicEmail: String(j?.publicEmail || p.publicEmail || ""),
-
-            programs: String(j?.programs || p.programs || ""),
-            tags: String(j?.tags || p.tags || ""),
-            statusFlags: String(j?.statusFlags || p.statusFlags || ""),
-            spotlight: String(j?.spotlight || p.spotlight || ""),
-
-            currentUpdateText: String(j?.currentUpdateText || p.currentUpdateText || ""),
-            currentUpdateLink: String(j?.currentUpdateLink || p.currentUpdateLink || ""),
-            currentUpdateExpiresAt: String(
-              j?.currentUpdateExpiresAt || p.currentUpdateExpiresAt || ""
-            ),
-
-            upcomingEventTitle: String(j?.upcomingEventTitle || p.upcomingEventTitle || ""),
-            upcomingEventLink: String(j?.upcomingEventLink || p.upcomingEventLink || ""),
-            upcomingEventDate: String(j?.upcomingEventDate || p.upcomingEventDate || ""),
-            upcomingEventExpiresAt: String(
-              j?.upcomingEventExpiresAt || p.upcomingEventExpiresAt || ""
-            ),
-            upcomingEventDescription: String(
-              j?.upcomingEventDescription || p.upcomingEventDescription || ""
-            ),
-
-            backgroundStyle: String(j?.backgroundStyle || p.backgroundStyle || "kraft"),
-            // ✅ normalize into Live-cell shape (string "true" or "")
-            isBiCoastal: boolCell(j?.isBiCoastal || p.isBiCoastal),
-            secondLocation: String(j?.secondLocation || p.secondLocation || ""),
-
-            currentHeadshotUrl: String(j?.currentHeadshotUrl || p.currentHeadshotUrl || ""),
-
-            storyTitle: String(j?.storyTitle || p.storyTitle || ""),
-            storyProgram: String(j?.storyProgram || p.storyProgram || ""),
-            storyLocationName: String(j?.storyLocationName || p.storyLocationName || ""),
-            storyYears: String(j?.storyYears || p.storyYears || ""),
-            storyPartners: String(j?.storyPartners || p.storyPartners || ""),
-            storyShortStory: String(j?.storyShortStory || p.storyShortStory || ""),
-            storyQuote: String(j?.storyQuote || p.storyQuote || ""),
-            storyQuoteAuthor: String(j?.storyQuoteAuthor || p.storyQuoteAuthor || ""),
-            storyMediaUrl: String(j?.storyMediaUrl || p.storyMediaUrl || ""),
-            storyMoreInfoUrl: String(j?.storyMoreInfoUrl || p.storyMoreInfoUrl || ""),
-            storyCountry: String(j?.storyCountry || p.storyCountry || ""),
-            // ✅ normalize into Live-cell shape
-            showOnMap: boolCell(j?.showOnMap || p.showOnMap),
-
-          };
-
-          return next;
-        });
-
-
-        if (j?.assets) setAssets(j.assets as PointerAssets);
-      } catch {
-        /* ignore */
-      }
-    };
-
-    if (email) run();
-  }, [email]);
+  if (canLookup) run();
+}, [lookupUrl, stableAlumniId, forceSlug, email]);
 
   /* Slug preview: whenever name changes AND name is unlocked, update currentSlug */
   useEffect(() => {
@@ -984,7 +1469,7 @@ const openEventAndScroll = () => {
       list.add(task.id);
       return { ...f, [task.kind]: Array.from(list) };
     });
-    showToast(err?.message || `Failed uploading ${task.file.name}`, "error");
+    showToastRef.current?.(err?.message || `Failed uploading ${task.file.name}`, "error");
   },
 
         onQueueEmpty: () => {
@@ -1134,17 +1619,19 @@ const contactKeys = PROFILE_GROUPS["Contact"] ?? [];
  * Calls /api/alumni/update (writes Live + appends Profile-Changes + optionally DAT_Testimonials)
  */
 const saveCurrentUpdate = async (text: string, promptUsed = ""): Promise<string | null> => {
-  const alumniId = getIdentity();
-  if (!alumniId) {
-    showToast("Profile not loaded yet.", "error");
+  const id = String(viewerAlumniId || "").trim();
+  if (!id) {
+    showToastRef.current?.("Profile not loaded yet.", "error");
     return null;
   }
+
+
 
   const res = await fetch("/api/alumni/update", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      alumniId,
+      alumniId: id,
       text,
       promptUsed: String(promptUsed || "").trim(),
     }),
@@ -1176,27 +1663,34 @@ const postCurrentUpdate = async (rawText: string, meta?: any): Promise<string | 
 
     if (id) setLastPostedId(id);
 
-    showToast("Posted ✅");
+    showToastRef.current?.("Posted ✅");
     await refreshFeed();
 
     return id;
   } catch (err: any) {
-    showToast(err?.message || "Update failed", "error");
+    showToastRef.current?.(err?.message || "Update failed", "error");
     return null;
   }
 };
 
 async function uploadHeadshotViaQueue(opts: { file: File; alumniId: string }) {
+  // keep signature if you want, but always pass stableAlumniId into it
   const { file, alumniId } = opts;
   if (!alumniId) throw new Error("Missing alumniId for upload.");
 
   const uploader = uploaderRef.current;
   if (!uploader) throw new Error("Uploader not ready.");
 
+  // ✅ Prevent parallel headshot uploads from stomping the resolver
+  if (headshotUploadResolver.current) {
+    throw new Error("Headshot upload already in progress.");
+  }
+
   // Set up one-shot resolver
   const urlPromise = new Promise<string>((resolve, reject) => {
     headshotUploadResolver.current = { resolve, reject };
   });
+
 
   uploader.enqueue({
     kind: "headshot",
@@ -1204,14 +1698,10 @@ async function uploadHeadshotViaQueue(opts: { file: File; alumniId: string }) {
     formFields: { alumniId },
   });
 
-  const waitForQueue = new Promise<void>((resolve) => {
-    queueEmptyResolver.current = resolve;
-  });
-
   uploader.start();
-  await waitForQueue;
 
-  const url = (await urlPromise).trim();
+  const url = (await urlPromise).trim(); // ✅ resolves on headshot completion
+
   if (!url) throw new Error("Upload succeeded but no URL was returned.");
   return url;
 }
@@ -1219,22 +1709,30 @@ async function uploadHeadshotViaQueue(opts: { file: File; alumniId: string }) {
 
 
 async function rehydrate() {
-  // ✅ Most reliable: refresh by email (avoids slug/id mismatch)
-  if (!email) return;
+  // Refresh using the same resolver as initial load (target alumniId first; email last).
+  if (!lookupUrl) return;
+
 
   try {
-    const r = await fetch(`/api/alumni/lookup?email=${encodeURIComponent(email)}`, {
-      cache: "no-store",
-    });
+    const url = lookupUrl.startsWith("/") ? lookupUrl : `/${lookupUrl}`;
+    const r = await fetch(url, { cache: "no-store", credentials: "include" });
     if (!r.ok) return;
 
     const j = await r.json();
 
     if (j?.status) setStatus(String(j.status));
     if (j?.assets) setAssets(j.assets as PointerAssets);
-    if (j?.alumniId) setStableAlumniId(String(j.alumniId));
 
     const slug = String(j?.canonicalSlug || j?.slug || "").trim();
+
+    // ✅ Same fallback: slug may BE the alumniId
+    // (optional) if you want a separate “story list slug”, add state for it.
+    // Otherwise do nothing here.
+    const s = slugFromLookupPayload(j);
+    if (s) setCurrentSlug(s);
+
+
+
     const nm = String(j?.name || "").trim();
     const loc = String(j?.location || "").trim();
 
@@ -1307,12 +1805,13 @@ async function rehydrate() {
         storyPartners: String(j?.storyPartners || p.storyPartners || ""),
         storyShortStory: String(j?.storyShortStory || p.storyShortStory || ""),
         storyQuote: String(j?.storyQuote || p.storyQuote || ""),
-        storyQuoteAuthor: String(j?.storyQuoteAuthor || p.storyQuoteAuthor || ""),
+        storyQuoteAttribution: String(j?.storyQuoteAttribution || p.storyQuoteAttribution || ""),
         storyMediaUrl: String(j?.storyMediaUrl || p.storyMediaUrl || ""),
         storyMoreInfoUrl: String(j?.storyMoreInfoUrl || p.storyMoreInfoUrl || ""),
         storyCountry: String(j?.storyCountry || p.storyCountry || ""),
         // ✅ normalize into Live-cell shape
-        showOnMap: boolCell(j?.showOnMap || p.showOnMap),
+        storyShowOnMap: boolCell(j?.storyShowOnMap || p.storyShowOnMap),
+        storyKey: String(j?.storyKey || p.storyKey || ""),
 
       };
 
@@ -1390,13 +1889,144 @@ function toLiveSavableProfile(p: any) {
     storyPartners: String(p.storyPartners || "").trim(),
     storyShortStory: String(p.storyShortStory || "").trim(),
     storyQuote: String(p.storyQuote || "").trim(),
-    storyQuoteAuthor: String(p.storyQuoteAuthor || "").trim(),
+    storyQuoteAttribution: String(p.storyQuoteAttribution || "").trim(),
     storyMediaUrl: String(p.storyMediaUrl || "").trim(),
     storyMoreInfoUrl: String(p.storyMoreInfoUrl || "").trim(),
     storyCountry: String(p.storyCountry || "").trim(),
-    showOnMap: boolCell(p.showOnMap),
+    storyShowOnMap: boolCell(p.storyShowOnMap),
+    storyTimeStamp: String(p.storyTimeStamp || "").trim(), // keep if already present
+    storyKey: String(p.storyKey || "").trim(),
 
   };
+}
+
+async function saveStoryMapViaWriter(opts?: { clearAfter?: boolean }) {
+  const targetId = String(stableAlumniId || "").trim();
+  if (!targetId) {
+    showToastRef.current?.("Profile not loaded yet.", "error");
+    return;
+  }
+
+  const viewerId = String(viewerAlumniId || "").trim();
+  if (!viewerId) {
+    showToastRef.current?.("You must be signed in to publish.", "error");
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const keyNow = String(profile?.storyKey || "").trim();
+
+    const required = [
+      profile.storyTitle,
+      profile.storyProgram,
+      profile.storyLocationName,
+      profile.storyCountry,
+    ].map((x) => String(x || "").trim());
+
+    if (required.some((x) => !x)) {
+      showToastRef.current?.("Please fill Title, Program, Location Name, and Country.", "error");
+      return;
+    }
+    const mode = keyNow ? "edit" : "create";
+
+    // 1) Save the StoryMap buffer into Profile-Live first (writer reads from Profile-Live)
+    const alumniSaveRes = await fetch("/api/alumni/save", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+      alumniId: targetId,
+      changes: {
+          storyTitle: String(profile.storyTitle || "").trim(),
+          storyProgram: String(profile.storyProgram || "").trim(),
+          storyLocationName: String(profile.storyLocationName || "").trim(),
+          storyYears: String(profile.storyYears || "").trim(),
+          storyPartners: String(profile.storyPartners || "").trim(),
+          storyShortStory: String(profile.storyShortStory || "").trim(),
+          storyQuote: String(profile.storyQuote || "").trim(),
+          storyQuoteAttribution: String(profile.storyQuoteAttribution || "").trim(),
+          storyMediaUrl: String(profile.storyMediaUrl || "").trim(),
+          storyMoreInfoUrl: String(profile.storyMoreInfoUrl || "").trim(),
+          storyCountry: String(profile.storyCountry || "").trim(),
+          storyShowOnMap: boolCell(profile.storyShowOnMap),
+
+          // pointer + edit session
+          storyKey: keyNow || "",
+          storyTimeStamp: NOW_ISO(),
+        },
+        submittedByEmail: email || "",
+        note: "story buffer save (pre-publish)",
+      }),
+    });
+
+    const alumniSaveJson = await alumniSaveRes.json().catch(() => ({}));
+    if (!alumniSaveRes.ok || !alumniSaveJson?.ok) {
+      throw new Error(alumniSaveJson?.error || `Story buffer save failed (${alumniSaveRes.status})`);
+    }
+    // 2) Call Story Writer API to publish/edit
+    const res = await fetch("/api/map/write-story", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        alumniId: targetId,
+
+        // editor attribution (viewer)
+        editorAlumniId: viewerId,
+        editorSlug: String(currentSlug || profile.slug || "").trim() || "unknown",
+
+        mode,
+        storyKey: keyNow || undefined,
+      }),
+    });
+
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || !j?.ok) throw new Error(j?.error || `Story publish failed (${res.status})`);
+
+    const wasEditing = !!keyNow;
+    showToastRef.current?.(wasEditing ? "Story updated ✅" : "Story published ✅", "success");
+
+    const nextKey = String(j?.storyKey || j?.data?.storyKey || "").trim();
+
+    if (nextKey) {
+      // ✅ Persist pointer in Profile-Live buffer space
+      setProfile((p: any) => ({
+        ...p,
+        storyKey: nextKey,
+        // ✅ show “this is the current edit session”
+        storyTimeStamp: NOW_ISO(),
+      }));
+    }
+
+    // ✅ Persist pointer to Profile-Live so it survives reload
+    await fetch("/api/alumni/save", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        alumniId: targetId,
+        changes: {
+          storyKey: nextKey,
+          storyTimeStamp: NOW_ISO(),
+        },
+        submittedByEmail: email || "",
+        note: "story pointer save (post-publish)",
+        skipChangeLog: true,
+      }),
+    });
+
+
+    await refreshMyStories(targetId);
+
+    // keep Profile-Live story fields out of canonical logic:
+    // do NOT call /api/alumni/save. Optionally clear the buffer.
+    if (opts?.clearAfter) {
+      clearStoryEditor();
+    }
+
+  } catch (err: any) {
+    showToastRef.current?.(err?.message || "Story publish failed", "error");
+  } finally {
+    setLoading(false);
+  }
 }
 
 /* per-category save + uploads */
@@ -1405,15 +2035,29 @@ async function saveCategory({
   fieldKeys = [],
   uploadKinds = [],
   afterSave,
+  profileOverride,
 }: {
   tag: string;
   fieldKeys?: string[];
   uploadKinds?: UploadKind[];
   afterSave?: () => void;
+  profileOverride?: any;
 }) {
-  const alumniId = stableAlumniId.trim();
+  const alumniId = String(stableAlumniId || "").trim();
   if (!alumniId) {
-    showToast("Profile not loaded yet.", "error");
+    showToastRef.current?.("Profile not loaded yet.", "error");
+    return;
+  }
+
+const submittedBy = String(email || "").trim();
+const viewerId = String(viewerAlumniId || "").trim(); // available for admin-only logging if desired
+
+  // ------------------------------------------------------------
+  // ✅ Story Map: canonical writer ONLY (no /api/alumni/save)
+  // ------------------------------------------------------------
+  const tagKey = String(tag).trim().toLowerCase();
+  if (activeModule === "StoryMap" || tagKey === "story map" || tagKey === "storymap") {
+    await saveStoryMapViaWriter();
     return;
   }
 
@@ -1437,7 +2081,7 @@ async function saveCategory({
 
   try {
     const uploader = uploaderRef.current!;
-    const baseFields: Record<string, string> = { alumniId };
+    const baseFields: Record<string, string> = { alumniId: stableAlumniId };
     if (albumName) baseFields.albumName = albumName;
 
     const humanBase = slugify((name || profile.name || currentSlug || "alumni").trim());
@@ -1468,14 +2112,21 @@ async function saveCategory({
 
 // ✅ nothing to do: no uploads staged AND no fields to save
 if (!hasUploads && fieldKeys.length === 0) {
-  showToast("Nothing to save.", "success");
+  showToastRef.current?.("Nothing to save.", "success");
   setLoading(false);
   return;
 }
 
 if (hasUploads) {
+  if (queueEmptyResolver.current) {
+    throw new Error("Upload queue is already being awaited.");
+  }
+
   const waitForQueue = new Promise<void>((resolve) => {
-    queueEmptyResolver.current = resolve;
+    queueEmptyResolver.current = () => {
+      queueEmptyResolver.current = null;
+      resolve();
+    };
   });
   uploader.start();
   await waitForQueue;
@@ -1496,7 +2147,7 @@ setProgress((p) => ({
   ...(uploadKinds.includes("event") ? { event: { uploaded: 0, total: 0, pct: 0 } } : {}),
 }));
 
-    showToast("Upload complete ✅");
+    showToastRef.current?.("Upload complete ✅");
     await rehydrate();
     return;
   }
@@ -1504,10 +2155,11 @@ setProgress((p) => ({
 
 
     // CONTACT: clear hidden socials & set primary (do not rely on async setProfile)
-    let profileForSave: any = profile;
-      const tagKey = String(tag).trim().toLowerCase();
-        if (tagKey === "contact") {
-      const next = { ...(profile as any) };
+    let profileForSave: any = profileOverride ?? profile;
+
+    // reuse the existing tagKey computed earlier in this function
+    if (tagKey === "contact") {
+      const next = { ...(profileForSave as any) }; // use override if provided
       const ALL = ALL_SOCIALS as unknown as string[];
       ALL.forEach((k) => {
         if (!visibleSocials.includes(k)) next[k] = "";
@@ -1556,7 +2208,7 @@ setProgress((p) => ({
     if (Object.keys(filteredErrs).length) {
       const firstKey = Object.keys(filteredErrs)[0];
       const firstMsg = (filteredErrs as any)[firstKey] || "Please fix the highlighted fields.";
-      showToast(firstMsg, "error");
+      showToastRef.current?.(firstMsg, "error");
       setLoading(false);
       return;
     }
@@ -1568,15 +2220,15 @@ setProgress((p) => ({
 
     const wanted = new Set(fieldKeys);
     const changes = Object.fromEntries(Object.entries(changesAll).filter(([k]) => wanted.has(k)));
-
+    
     if (Object.keys(changes).length === 0) {
-      showToast("No changes to save.", "success");
+      showToastRef.current?.("No changes to save.", "success");
       setLoading(false);
       return;
     }
 
     const body = {
-      alumniId,
+      alumniId: stableAlumniId,
       oldSlug: originalSlug && currentSlug && originalSlug !== currentSlug ? originalSlug : undefined,
       changes,
       submittedByEmail: email || "",
@@ -1609,10 +2261,10 @@ setProgress((p) => ({
     if (uploadKinds.includes("event")) setEventFiles([]);
 
     afterSave?.();
-    showToast(`Category saved — profile updated.`);
+    showToastRef.current?.(`Category saved — profile updated.`);
     await rehydrate();
   } catch (err: any) {
-    showToast(err?.message || "Something went wrong", "error");
+    showToastRef.current?.(err?.message || "Something went wrong", "error");
   } finally {
     setLoading(false);
   }
@@ -1691,6 +2343,7 @@ const FailedList = ({ kind }: { kind: UploadKind }) => {
       }}
     >
       <div style={{ marginBottom: 8, fontWeight: 600 }}>Some files failed to upload:</div>
+
       <ul style={{ marginLeft: 18, listStyle: "disc" }}>
         {tasks.map((t) => (
           <li key={t.id} style={{ margin: "6px 0" }}>
@@ -1706,6 +2359,7 @@ const FailedList = ({ kind }: { kind: UploadKind }) => {
           </li>
         ))}
       </ul>
+
       <div style={{ marginTop: 8 }}>
         <button type="button" onClick={retryAll} style={datButtonGhost} className="dat-btn-ghost">
           Retry all failed
@@ -1714,6 +2368,7 @@ const FailedList = ({ kind }: { kind: UploadKind }) => {
     </div>
   );
 };
+
 
 // ------------------------------------------------------------
 // ✅ DROPDOWN SECTIONS: ALWAYS RENDER
@@ -1775,13 +2430,12 @@ const StoryMapEditKeys =
     "storyPartners",
     "storyShortStory",
     "storyQuote",
-    "storyQuoteAuthor",
+    "storyQuoteAttribution",
     "storyMediaUrl",
     "storyMoreInfoUrl",
     "storyCountry",
-    "showOnMap",
+    "storyShowOnMap",
   ];
-
 
 
 
@@ -1891,8 +2545,8 @@ const ManualStoryMapFallback = () => (
     <div>
       <label style={labelStyle}>Quote Author</label>
       <input
-        value={profile.storyQuoteAuthor || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, storyQuoteAuthor: e.target.value }))}
+        value={profile.storyQuoteAttribution || ""}
+        onChange={(e) => setProfile((p: any) => ({ ...p, storyQuoteAttribution: e.target.value }))}
         style={inputStyle}
       />
     </div>
@@ -1901,10 +2555,10 @@ const ManualStoryMapFallback = () => (
       <input
         type="checkbox"
         checked={
-          String(profile.showOnMap || "").toLowerCase() === "true" || profile.showOnMap === true
+          String(profile.storyShowOnMap || "").toLowerCase() === "true" || profile.storyShowOnMap === true
         }
         onChange={(e) =>
-          setProfile((p: any) => ({ ...p, showOnMap: e.target.checked ? "true" : "" }))
+          setProfile((p: any) => ({ ...p, storyShowOnMap: e.target.checked ? "true" : "" }))
         }
         style={{ marginRight: 10 }}
       />
@@ -1918,145 +2572,10 @@ const ManualStoryMapFallback = () => (
 );
 
 // ------------------------------------------------------------
-// 3) ✅ Add the Collapsible blocks in your render (near other dropdowns)
+// 3) ✅ Manual fallbacks used by ProfileStudio panels when FieldRenderer lacks defs
 // ------------------------------------------------------------
 
 // Manual fallback blocks when FieldRenderer has no matching fields.
-const ManualAboutFallback = () => (
-  <div style={{ display: "grid", gap: 14 }}>
-    <div>
-      <label style={labelStyle}>Pronouns</label>
-      <input
-        value={profile.pronouns || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, pronouns: e.target.value }))}
-        style={inputStyle}
-        placeholder="e.g. she/her, he/him, they/them"
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Roles</label>
-      <input
-        value={profile.roles || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, roles: e.target.value }))}
-        style={inputStyle}
-        placeholder="Actor, Director, Playwright..."
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Current Work</label>
-      <input
-        value={profile.currentWork || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, currentWork: e.target.value }))}
-        style={inputStyle}
-        placeholder="What are you working on right now?"
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Bio Short (optional)</label>
-      <textarea
-        value={profile.bioShort || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, bioShort: e.target.value }))}
-        rows={4}
-        style={{ ...inputStyle, minHeight: 120, resize: "vertical" }}
-      />
-    </div>
-
-    {/* intentionally blank */}
-
-  </div>
-);
-
-const ManualTagsFallback = () => (
-  <div style={{ display: "grid", gap: 14 }}>
-    <div>
-      <label style={labelStyle}>Spotlight</label>
-      <input
-        value={profile.spotlight || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, spotlight: e.target.value }))}
-        style={inputStyle}
-        placeholder="Optional featured line"
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Programs</label>
-      <input
-        value={profile.programs || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, programs: e.target.value }))}
-        style={inputStyle}
-        placeholder="Comma-separated programs"
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Tags</label>
-      <input
-        value={profile.tags || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, tags: e.target.value }))}
-        style={inputStyle}
-        placeholder="Comma-separated tags"
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Status Flags</label>
-      <input
-        value={profile.statusFlags || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, statusFlags: e.target.value }))}
-        style={inputStyle}
-        placeholder="Comma-separated flags"
-      />
-    </div>
-
-    <p style={{ ...explainStyleLocal, marginTop: 6 }}>
-      (Fallback UI) To restore your dropdown/select UI, ensure these keys exist in
-      <code> PROFILE_FIELDS</code> with the correct <code>path</code>.
-    </p>
-  </div>
-);
-
-const ManualUpdatesFallback = () => (
-  <div style={{ display: "grid", gap: 14 }}>
-    <div>
-      <label style={labelStyle}>Update Text</label>
-      <textarea
-        value={profile.currentUpdateText || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, currentUpdateText: e.target.value }))}
-        rows={4}
-        style={{ ...inputStyle, minHeight: 140, resize: "vertical" }}
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Update Link</label>
-      <input
-        value={profile.currentUpdateLink || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, currentUpdateLink: e.target.value }))}
-        style={inputStyle}
-        placeholder="https://..."
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Expires At</label>
-      <input
-        value={profile.currentUpdateExpiresAt || ""}
-        onChange={(e) =>
-          setProfile((p: any) => ({ ...p, currentUpdateExpiresAt: e.target.value }))
-        }
-        style={inputStyle}
-        placeholder="YYYY-MM-DD"
-      />
-    </div>
-
-    <p style={{ ...explainStyleLocal, marginTop: 6 }}>
-      (Fallback UI) Add these keys to <code>PROFILE_FIELDS</code> to render via FieldRenderer.
-    </p>
-  </div>
-);
 
 const ManualUpcomingEventFallback = () => (
   <div style={{ display: "grid", gap: 14 }}>
@@ -2177,7 +2696,7 @@ return (
         position: "relative",
         zIndex: 10,
       }}
-    >
+    > 
       <div style={{ width: "90%", margin: "0 auto" }}>
         {/* ====== COMMUNITY LEDGER (Composer + Feed, one container) ====== */}
         <div style={{ margin: "2rem 0 3.25rem" }}>
@@ -2216,9 +2735,9 @@ return (
             </div>
 
             {!isLoaded ? (
-  <p style={{ ...explainStyleLocal, color: COLOR.ink, opacity: 0.75, margin: 0 }}>
-    Loading your profile…
-  </p>
+              <p style={{ ...explainStyleLight, margin: 0 }}>
+                Loading your profile…
+              </p>
 ) : (
   <>
     <UpdateComposer
@@ -2228,7 +2747,15 @@ return (
       }}
 
       onPosted={() => {}}
-      onError={(err) => console.error(err)}
+      onError={(err) => {
+        const msg =
+          typeof (err as any)?.message === "string"
+            ? (err as any).message
+            : typeof err === "string"
+            ? err
+            : "Something went wrong.";
+        showToastRef.current?.(msg, "error");
+      }}
       onAddEvent={openEventAndScroll}
     />
 
@@ -2243,13 +2770,15 @@ return (
 
     {/* Feed */}
     {feedLoading ? (
-      <p style={{ ...explainStyleLocal, color: COLOR.ink, opacity: 0.75, margin: 0 }}>
+      <p style={{ ...explainStyleLight, margin: 0 }}>
         Loading…
       </p>
+
     ) : !feed.length ? (
-      <p style={{ ...explainStyleLocal, color: COLOR.ink, opacity: 0.75, margin: 0 }}>
+      <p style={{ ...explainStyleLight, margin: 0 }}>
         No updates yet.
       </p>
+
     ) : (
       <div style={{ display: "grid", gap: 10 }}>
         {feed.map((it: any) => (
@@ -2272,694 +2801,857 @@ return (
     )}
   </>
 )}
-          </div>
-        </div>
-
+</div>
+</div>
+</div>
 
 {/* ====== PROFILE STUDIO (replaces MediaHub container) ====== */}
-<div style={{ margin: "0.25rem 0 3.25rem" }}>
+<div
+  style={{
+    margin: "0.25rem 0 3.25rem",
+    paddingLeft: "clamp(0.25rem, 5vw, 4rem)",
+    paddingRight: "clamp(0.25rem, 5vw, 4rem)",
+    boxSizing: "border-box",
+  }}
+>
   <div
     style={{
-      background: "rgba(36, 17, 35, 0.22)", // single low-opacity shade
+      background: "rgba(36, 17, 35, 0.22)",
       borderRadius: 16,
       padding: "16px 16px 18px",
       color: COLOR.snow,
     }}
   >
-    <div
-      style={{
-        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-        fontSize: 14,
-        textTransform: "uppercase",
-        fontWeight: 700,
-        letterSpacing: ".1em",
-        opacity: 0.9,
-        marginBottom: 12,
-      }}
-    >
-      Profile Studio
-    </div>
+    <div className="mx-auto w-full max-w-6xl">
+      <style>{`
+      @keyframes datSpin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    `}</style>
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+      fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+      fontSize: 14,
+      textTransform: "uppercase",
+      fontWeight: 700,
+      letterSpacing: ".1em",
+      opacity: 0.9,
+      marginBottom: 12,
+      paddingLeft: "clamp(12px, 2.5vw, 24px)",
+      paddingRight: "clamp(12px, 2.5vw, 24px)",
+    }}
+  >
+    <span>Profile Studio</span>
 
-<ProfileStudio
-  tab={studioTab}
-  onTabChange={setStudioTab}
-  loading={loading}
-  onOpenPicker={(k) => openPicker(k)}
-  basicsPanel={
-    <div>
-      <p style={explainStyleLocal}>
-        Start here. Confirm your headline profile details — and set your headshot.
-      </p>
+    {loading ? (
+      <span
+        aria-label="Loading"
+        style={{
+          width: 14,
+          height: 14,
+          borderRadius: 999,
+          border: "2px solid rgba(255,255,255,0.25)",
+          borderTopColor: "rgba(255,255,255,0.9)",
+          animation: "datSpin 0.8s linear infinite",
+        }}
+      />
+    ) : null}
+  </div>
 
-      <div style={{ display: "grid", gap: 14 }}>
-        <span style={subheadChipStyle} className="subhead-chip">
-          Profile Basics
-        </span>
-
-        <p style={explainStyleLocal} className="explain">
-          Your professional name and slug are locked by default. If your professional name changed,
-          unlock it and your slug preview will update automatically.
+<div
+  key={`${stableAlumniId}:${studioMountKey}`}
+>
+  <ProfileStudio
+    defaultTab={studioTab}
+    onTabChange={setStudioTab}
+    loading={loading}
+    onOpenPicker={(k) => openPicker(k)}
+    basicsPanel={
+      <div>
+        <div id="studio-basics-anchor" />
+        <p style={explainStyleLocal}>
+          Start here. Confirm your headline profile details — and set your headshot.
         </p>
 
-        <div>
-          <label htmlFor="slug" style={labelStyle}>
-            Profile slug
-          </label>
-          <input id="slug" value={currentSlug} readOnly style={inputLockedStyle} />
-          <p style={{ ...explainStyleLocal, marginTop: 6 }} className="explain">
-            {autoDetected
-              ? "We auto-detected your current slug from Profile-Live."
-              : "Your slug mirrors your professional name."}
+        <div style={{ display: "grid", gap: 14 }}>
+          <span style={subheadChipStyle} className="subhead-chip">
+            Profile Basics
+          </span>
+
+          <p style={explainStyleLocal} className="explain">
+            Your professional name and slug are locked by default. If your professional name
+            changed, unlock it and your slug preview will update automatically.
           </p>
-        </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 24,
-            marginTop: 12,
-          }}
-        >
           <div>
-            <label htmlFor="name" style={labelStyle}>
-              Professional name
+            <label htmlFor="slug" style={labelStyle}>
+              Profile slug
             </label>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12 }}>
-              <input
-                id="name"
-                value={name}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setName(v);
-                  setProfile((p: any) => ({ ...p, name: v }));
-                }}
-                style={nameLocked ? inputLockedStyle : inputStyle}
-                disabled={nameLocked}
-              />
-              <button
-                type="button"
-                className="dat-btn-ghost"
-                style={datButtonGhost}
-                onClick={() => setNameLocked((x) => !x)}
-              >
-                {nameLocked ? "My professional name changed" : "Lock name"}
-              </button>
-            </div>
+            <input id="slug" value={currentSlug} readOnly style={inputLockedStyle} />
+            <p style={{ ...explainStyleLocal, marginTop: 6 }} className="explain">
+              {autoDetected
+                ? "We auto-detected your current slug from Profile-Live."
+                : "Your slug mirrors your professional name."}
+            </p>
           </div>
 
-          <div>
-            <label htmlFor="location" style={labelStyle}>
-              Base
-            </label>
-            <input
-              id="location"
-              value={location}
-              onChange={(e) => {
-                const v = e.target.value;
-                setLocation(v);
-                setProfile((p: any) => ({ ...p, location: v }));
-              }}
-              style={inputStyle}
-            />
-          </div>
-        </div>
-
-        <div style={{ marginTop: 18 }}>
-          <label style={{ fontWeight: 700 }}>
-            <input
-              type="checkbox"
-              checked={isTrue(profile.isBiCoastal)}
-              onChange={(e) =>
-                setProfile((p: any) => ({
-                  ...p,
-                  isBiCoastal: e.target.checked ? "true" : "",
-                }))
-              }
-              style={{ marginRight: 10 }}
-            />
-            Bi-coastal
-          </label>
-
-          {isTrue(profile.isBiCoastal) ? (
-            <div style={{ marginTop: 12 }}>
-              <label style={labelStyle}>Second location</label>
-              <input
-                value={profile.secondLocation || ""}
-                onChange={(e) =>
-                  setProfile((p: any) => ({ ...p, secondLocation: e.target.value }))
-                }
-                style={inputStyle}
-              />
-            </div>
-          ) : null}
-        </div>
-
-        <div style={{ marginTop: 18 }}>
-          <BackgroundSwatches
-            value={String(profile.backgroundStyle || "kraft")}
-            onChange={(next) => setProfile((p: any) => ({ ...p, backgroundStyle: next }))}
-          />
-        </div>
-
-        <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
-          <div>
-            <label style={labelStyle}>Bio / Artist Statement (public)</label>
-            <textarea
-              value={String(profile.bioLong ?? "")}
-              onChange={(e) => setProfile((p: any) => ({ ...p, bioLong: e.target.value }))}
-              rows={10}
-              style={{ ...inputStyle, minHeight: 220, resize: "vertical" }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Headshot actions (URL + library + upload) */}
-      <div
-        style={{
-          marginTop: 16,
-          paddingTop: 14,
-          borderTop: "1px solid rgba(255,255,255,0.12)",
-        }}
-      >
-        <div style={{ display: "grid", gap: 12 }}>
-          <Field
-            label="Headshot URL (optional)"
-            help="If you paste a URL, it should point directly to the image file (not a webpage)."
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: 24,
+              marginTop: 12,
+            }}
           >
-            <input
-              value={profile.currentHeadshotUrl || ""}
-              onChange={(e) =>
-                setProfile((p: any) => ({ ...p, currentHeadshotUrl: e.target.value }))
-              }
-              style={inputStyle}
-              placeholder="https://... (direct image URL)"
-            />
-          </Field>
-
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <button
-              type="button"
-              style={studioGhostButton}
-              onClick={() => openPicker("headshot")}
-              disabled={loading}
-            >
-              Choose past headshot
-            </button>
-            <button
-              type="button"
-              style={studioGhostButton}
-              onClick={() => openPicker("album")}
-              disabled={loading}
-            >
-              Open library
-            </button>
-          </div>
-
-          <div style={{ display: "grid", gap: 10 }}>
-            <Dropzone
-              accept="image/*"
-              multiple={false}
-              disabled={loading}
-              label="Add a headshot"
-              sublabel="or drag & drop here"
-              onFiles={(files) => setHeadshotFile(files[0] || null)}
-              onReject={(rej) => showToast(rej[0]?.reason || "File rejected", "error")}
-            />
-
-            {headshotFile ? (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "84px 1fr auto",
-                  gap: 12,
-                  alignItems: "center",
-                  padding: 10,
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  borderRadius: 12,
-                  background: "rgba(0,0,0,0.18)",
-                }}
-              >
-                <div
-                  style={{
-                    width: 84,
-                    height: 84,
-                    borderRadius: 12,
-                    overflow: "hidden",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    background: "rgba(255,255,255,0.06)",
+            <div>
+              <label htmlFor="name" style={labelStyle}>
+                Professional name
+              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12 }}>
+                <input
+                  id="name"
+                  value={name}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setName(v);
+                    setProfile((p: any) => ({ ...p, name: v }));
                   }}
-                >
-                  {headshotPreviewUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={headshotPreviewUrl}
-                      alt="Staged headshot preview"
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    />
-                  ) : null}
-                </div>
-
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, lineHeight: 1.2 }}>Staged headshot</div>
-                  <div style={{ opacity: 0.8, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {headshotFile.name} • {Math.round(headshotFile.size / 1024)} KB
-                  </div>
-                  <div style={{ opacity: 0.7, fontSize: 12, marginTop: 4 }}>
-                    This will become your featured headshot when you save.
-                  </div>
-                </div>
-
+                  style={nameLocked ? inputLockedStyle : inputStyle}
+                  disabled={nameLocked}
+                />
                 <button
                   type="button"
                   className="dat-btn-ghost"
                   style={datButtonGhost}
-                  onClick={() => setHeadshotFile(null)}
-                  disabled={loading}
+                  onClick={() => setNameLocked((x) => !x)}
                 >
-                  Clear
+                  {nameLocked ? "My professional name changed" : "Lock name"}
                 </button>
               </div>
-            ) : null}
-
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap" }}>
-              <button
-                type="button"
-                style={datButtonLocal}
-                disabled={loading}
-                onClick={async () => {
-                  setLoading(true);
-                  try {
-                    // 1) If a headshot is staged, upload it and force it to win as currentHeadshotUrl
-                    if (headshotFile) {
-                      const uploadedUrl = await uploadHeadshotViaQueue({
-                        file: headshotFile,
-                        alumniId: stableAlumniId,
-                      });
-
-
-                      setProfile((p: any) => ({
-                        ...p,
-                        currentHeadshotUrl: String(uploadedUrl || "").trim(),
-                      }));
-                    }
-
-                    // 2) Save Basics (includes currentHeadshotUrl if we set it above)
-                    await saveCategory({
-                      tag: "Basics",
-                      fieldKeys: MODULES["Basics"].fieldKeys,
-                      uploadKinds: [],
-                      afterSave: () => {
-                        basicsDraft.clearDraft();
-                        setHeadshotFile(null);
-                      },
-                    });
-                  } catch (e: any) {
-                    showToast(e?.message || "Save failed", "error");
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-              >
-                Save Profile Basics
-              </button>
             </div>
 
-          </div>
-        </div>
-      </div>
-    </div>
-  }
-  identityPanel={
-    <div>
-      <p style={explainStyleLocal}>
-        Identity helps us represent you accurately and build the right rooms for collaboration.
-      </p>
-
-      <span style={subheadChipStyle} className="subhead-chip">
-        Identity + Roles
-      </span>
-
-      {renderFieldsOrNull([
-        ...MODULES["Identity"].fieldKeys,
-        ...MODULES["Roles"].fieldKeys,
-      ]) ?? (
-        <div style={{ display: "grid", gap: 14 }}>
-          <div>
-            <label style={labelStyle}>Pronouns</label>
-            <input
-              value={profile.pronouns || ""}
-              onChange={(e) => setProfile((p: any) => ({ ...p, pronouns: e.target.value }))}
-              style={inputStyle}
-              placeholder="she/her, he/him, they/them…"
-            />
-          </div>
-
-          <div>
-            <label style={labelStyle}>Identity Tags</label>
-            <input
-              value={profile.identityTags || ""}
-              onChange={(e) => setProfile((p: any) => ({ ...p, identityTags: e.target.value }))}
-              style={inputStyle}
-              placeholder="comma-separated"
-            />
-          </div>
-
-          <div>
-            <label style={labelStyle}>Languages</label>
-            <input
-              value={profile.languages || ""}
-              onChange={(e) => setProfile((p: any) => ({ ...p, languages: e.target.value }))}
-              style={inputStyle}
-              placeholder="comma-separated"
-            />
-          </div>
-
-          <div>
-            <label style={labelStyle}>Roles</label>
-            <input
-              value={profile.roles || ""}
-              onChange={(e) => setProfile((p: any) => ({ ...p, roles: e.target.value }))}
-              style={inputStyle}
-              placeholder="Actor, Director, Designer…"
-            />
-          </div>
-        </div>
-      )}
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 10,
-          flexWrap: "wrap",
-          marginTop: 16,
-        }}
-      >
-        <button
-          type="button"
-          style={datButtonLocal}
-          className="dat-btn"
-          disabled={loading}
-          onClick={() =>
-            saveCategory({
-              tag: "Identity",
-              fieldKeys: MODULES["Identity"].fieldKeys,
-              uploadKinds: [],
-            })
-          }
-        >
-          Save Identity
-        </button>
-
-        <button
-          type="button"
-          style={datButtonLocal}
-          className="dat-btn"
-          disabled={loading}
-          onClick={() =>
-            saveCategory({
-              tag: "Roles",
-              fieldKeys: MODULES["Roles"].fieldKeys,
-              uploadKinds: [],
-            })
-          }
-        >
-          Save Roles
-        </button>
-      </div>
-    </div>
-  }
-      mediaPanel={
-        <div>
-          <p style={explainStyleLocal}>
-            Albums + reels live here. You’re choosing placement before uploading.
-          </p>
-
-          {/* Optional inner toggle: Albums vs Reels */}
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-            {/* You can implement a local toggle state in UpdateForm and pass it down;
-                for now keep both visible or split with two sub-panels */}
-            <button type="button" style={studioGhostButton} onClick={() => openPicker("album")} disabled={loading}>
-              Choose album media
-            </button>
-            <button type="button" style={studioGhostButton} onClick={() => openPicker("reel")} disabled={loading}>
-              Choose reel media
-            </button>
-          </div>
-
-          {/* Staging inputs */}
-          <div style={{ display: "grid", gap: 12 }}>
-            <Field label="Album name (optional)">
+            <div>
+              <label htmlFor="location" style={labelStyle}>
+                Base
+              </label>
               <input
-                value={albumName || ""}
-                onChange={(e) => setAlbumName(e.target.value)}
-                style={inputStyle}
-                placeholder="e.g. Production photos, BTS, PASSAGE…"
-              />
-            </Field>
-
-            <Field label="Add photos to album">
-              <Dropzone
-                accept="image/*"
-                multiple
-                disabled={loading}
-                label="Add photos to album"
-                sublabel="or drag & drop here"
-                onFiles={(files) => setAlbumFiles(files)}
-                onReject={(rej) => showToast(rej[0]?.reason || "File rejected", "error")}
-              />
-
-            </Field>
-
-            <Field label="Add reels (video files)">
-              <Dropzone
-                accept="video/*"
-                multiple
-                disabled={loading}
-                label="Add reels"
-                sublabel="or drag & drop here"
-                onFiles={(files) => setReelFiles(files)}
-                onReject={(rej) => showToast(rej[0]?.reason || "File rejected", "error")}
-              />
-            </Field>
-          </div>
-
-          {/* Upload staged media button (bottom-right, matching POST vibe) */}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
-            <button
-              type="button"
-              style={datButtonLocal}
-              disabled={loading || (!albumFiles.length && !reelFiles.length)}
-              onClick={() =>
-                saveCategory({
-                  tag: "Media Upload",
-                  fieldKeys: [], // uploads-only
-                  uploadKinds: [
-                    ...(albumFiles.length ? (["album"] as UploadKind[]) : []),
-                    ...(reelFiles.length ? (["reel"] as UploadKind[]) : []),
-                  ],
-                })
-              }
-            >
-              Upload Staged Media
-            </button>
-          </div>
-        </div>
-      }
-      contactPanel={
-        <div>
-          <p style={explainStyleLocal}>
-            Keep it calm: select the channels you use — then fields reveal.
-          </p>
-
-          {/* ✅ Keep your existing Contact UI here (chips + visibleSocials + primarySocial + FieldRenderer fallback) */}
-<span style={subheadChipStyle} className="subhead-chip">
-              Ways to reach you
-            </span>
-
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
-              {ALL_SOCIALS.map((k) => {
-                const on = visibleSocials.includes(k);
-                return (
-                  <button
-                    key={k}
-                    type="button"
-                    className="dat-btn-ghost"
-                    style={{ ...(datButtonGhost as any), opacity: on ? 1 : 0.55 }}
-                    onClick={() => setVisibleSocials((v) => (on ? v.filter((x) => x !== k) : [...v, k]))}
-                  >
-                    {on ? "✓ " : ""} {k}
-                  </button>
-                );
-              })}
-
-              <select
-                value={primarySocial}
+                id="location"
+                value={location}
                 onChange={(e) => {
                   const v = e.target.value;
-                  setPrimarySocial(v);
-                  setProfile((p: any) => ({ ...p, primarySocial: v }));
+                  setLocation(v);
+                  setProfile((p: any) => ({ ...p, location: v }));
                 }}
-                className="dat-btn-ghost"
-                style={{ ...(datButtonGhost as any), padding: "10px 12px" }}
-                title="Primary social"
-              >
-                {(visibleSocials.length ? visibleSocials : ["instagram"]).map((k) => (
-                  <option key={k} value={k}>
-                    {k} (primary)
-                  </option>
-                ))}
-              </select>
+                style={inputStyle}
+              />
             </div>
+          </div>
 
-            {/* Prefer FieldRenderer in this file; fallback manual inputs if defs missing */}
-            {renderFieldsOrNull(ContactEditKeys) ?? (
-              <div style={{ display: "grid", gap: 12 }}>
-                {ContactEditKeys.filter((k) => k !== "primarySocial").map((k) => (
-                  <div key={k}>
-                    <label style={labelStyle}>{k}</label>
-                    <input
-                      value={(profile as any)[k] || ""}
-                      onChange={(e) => setProfile((p: any) => ({ ...p, [k]: e.target.value }))}
-                      style={inputStyle}
-                      placeholder={k === "publicEmail" ? "name@email.com" : "https://..."}
-                    />
-                  </div>
-                ))}
-                <p style={{ ...explainStyleLocal, marginTop: 6 }}>
-                  (Fallback UI) Add contact keys to <code>PROFILE_FIELDS</code> if you want curated rendering.
-                </p>
-              </div>
-            )}
+          <div style={{ marginTop: 18 }}>
+            <label style={{ fontWeight: 700 }}>
+              <input
+                type="checkbox"
+                checked={isTrue(profile.isBiCoastal)}
+                onChange={(e) =>
+                  setProfile((p: any) => ({
+                    ...p,
+                    isBiCoastal: e.target.checked ? "true" : "",
+                  }))
+                }
+                style={{ marginRight: 10 }}
+              />
+              Bi-coastal
+            </label>
 
-            <div style={{ marginTop: 20 }}>
-              <button
-                type="button"
-                  onClick={() =>
-                    saveCategory({
-                      tag: "Contact",
-                      fieldKeys: MODULES["Contact"].fieldKeys,
-                      uploadKinds: MODULES["Contact"].uploadKinds,
-                      afterSave: () => contactDraft.clearDraft(),
-                    })
+            {isTrue(profile.isBiCoastal) ? (
+              <div style={{ marginTop: 12 }}>
+                <label style={labelStyle}>Second location</label>
+                <input
+                  value={profile.secondLocation || ""}
+                  onChange={(e) =>
+                    setProfile((p: any) => ({ ...p, secondLocation: e.target.value }))
                   }
-                style={datButtonLocal}
-                className="dat-btn"
-              >
-                Save Contact
-              </button>
+                  style={inputStyle}
+                />
+              </div>
+            ) : null}
+          </div>
+
+          <div style={{ marginTop: 18 }}>
+            <BackgroundSwatches
+              value={String(profile.backgroundStyle || "kraft")}
+              onChange={(next) => setProfile((p: any) => ({ ...p, backgroundStyle: next }))}
+            />
+          </div>
+
+          <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
+            <div>
+              <label style={labelStyle}>Bio / Artist Statement (public)</label>
+              <textarea
+                value={String(profile.bioLong ?? "")}
+                onChange={(e) => setProfile((p: any) => ({ ...p, bioLong: e.target.value }))}
+                rows={10}
+                style={{ ...inputStyle, minHeight: 220, resize: "vertical" }}
+              />
             </div>
-
-            <p style={{ ...explainStyleLocal, marginTop: 12 }}>
-              Tip: toggle which socials you want visible above — hidden ones will be cleared on save.
-            </p>
-        </div>
-      }
-      storyPanel={
-        <div>
-          <p style={explainStyleLocal}>
-            Your story becomes a map pin + memory. If you paste media, it should be a direct URL to the file.
-          </p>
-
-          {/* ✅ reuse your existing Story Map fields (FieldRenderer or Manual fallback) */}
-          {renderFieldsOrNull(StoryMapEditKeys) ?? <ManualStoryMapFallback />}
-
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
-            <button
-              type="button"
-              style={datButtonLocal}
-              disabled={loading}
-              onClick={() =>
-                saveCategory({
-                  tag: "Story Map",
-                  fieldKeys: MODULES["StoryMap"].fieldKeys,
-                  uploadKinds: [],
-                })
-              }
-            >
-              Publish Story to Map
-            </button>
           </div>
         </div>
-      }
-      eventPanel={
-        <div>
-          <div id="studio-event-anchor" />
-          <p style={explainStyleLocal}>
-            Add your upcoming event and its image. (If you paste media, it should be a direct URL to the file.)
-          </p>
 
-          {/* Event fields */}
-          {renderFieldsOrNull(UpcomingEventEditKeys) ?? <ManualUpcomingEventFallback />}
-
-          {/* Event image: choose from library + upload */}
-          <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
-              <button type="button" style={studioGhostButton} onClick={() => openPicker("event")} disabled={loading}>
-                Choose event image from library
-              </button>
-            </div>
-
-            <Field label="Upload event image(s)">
-              <Dropzone
-                accept="image/*"
-                multiple
-                disabled={loading}
-                label="Add event image(s)"
-                sublabel="or drag & drop here"
-                onFiles={(files) => setEventFiles(files)}
-                onReject={(rej) => showToast(rej[0]?.reason || "File rejected", "error")}
+        {/* Headshot actions (URL + library + upload) */}
+        <div
+          style={{
+            marginTop: 16,
+            paddingTop: 14,
+            borderTop: "1px solid rgba(255,255,255,0.12)",
+          }}
+        >
+          <div style={{ display: "grid", gap: 12 }}>
+            <Field
+              label="Headshot URL (optional)"
+              help="If you paste a URL, it should point directly to the image file (not a webpage)."
+            >
+              <input
+                value={profile.currentHeadshotUrl || ""}
+                onChange={(e) =>
+                  setProfile((p: any) => ({ ...p, currentHeadshotUrl: e.target.value }))
+                }
+                style={inputStyle}
+                placeholder="https://... (direct image URL)"
               />
             </Field>
 
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 12 }}>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <button
                 type="button"
                 style={studioGhostButton}
-                disabled={loading || !eventFiles.length}
-                onClick={() => setEventFiles([])}
+                onClick={() => openPicker("headshot")}
+                disabled={loading}
               >
-                Clear staged
+                Choose past headshot
               </button>
               <button
                 type="button"
-                style={datButtonLocal}
-                disabled={loading || !eventFiles.length}
-                onClick={() =>
-                  saveCategory({
-                    tag: "Event Image Upload",
-                    fieldKeys: [], // uploads-only
-                    uploadKinds: ["event"],
-                  })
-                }
+                style={studioGhostButton}
+                onClick={() => openPicker("album")}
+                disabled={loading}
               >
-                Upload Event Image
+                Open library
               </button>
             </div>
+
+            <div style={{ display: "grid", gap: 10 }}>
+              <Dropzone
+                accept="image/*"
+                multiple={false}
+                disabled={loading}
+                label="Add a headshot"
+                sublabel="or drag & drop here"
+                onFiles={(files) => setHeadshotFile(files[0] || null)}
+                onReject={(rej) =>
+                  showToastRef.current?.(rej[0]?.reason || "File rejected", "error")
+                }
+              />
+
+              {headshotFile ? (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "84px 1fr auto",
+                    gap: 12,
+                    alignItems: "center",
+                    padding: 10,
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    borderRadius: 12,
+                    background: "rgba(0,0,0,0.18)",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 84,
+                      height: 84,
+                      borderRadius: 12,
+                      overflow: "hidden",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      background: "rgba(255,255,255,0.06)",
+                    }}
+                  >
+                    {headshotPreviewUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={headshotPreviewUrl}
+                        alt="Staged headshot preview"
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    ) : null}
+                  </div>
+
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, lineHeight: 1.2 }}>Staged headshot</div>
+                    <div
+                      style={{
+                        opacity: 0.8,
+                        fontSize: 13,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {headshotFile.name} • {Math.round(headshotFile.size / 1024)} KB
+                    </div>
+                    <div style={{ opacity: 0.7, fontSize: 12, marginTop: 4 }}>
+                      This will become your featured headshot when you save.
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="dat-btn-ghost"
+                    style={datButtonGhost}
+                    onClick={() => setHeadshotFile(null)}
+                    disabled={loading}
+                  >
+                    Clear
+                  </button>
+                </div>
+              ) : null}
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 10,
+                  flexWrap: "wrap",
+                }}
+              >
+                <button
+                  type="button"
+                  style={datButtonLocal}
+                  disabled={loading}
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      const alumniId = getIdentity();
+                      if (!alumniId) throw new Error("Profile not loaded yet.");
+                      if (!profile) throw new Error("Profile not loaded yet.");
+
+                      const hadStagedHeadshot = !!headshotFile;
+
+                      let nextProfile: any = profile;
+
+                      if (headshotFile) {
+                        if (headshotUploadInFlight.current) {
+                          throw new Error("Headshot upload already in progress.");
+                        }
+
+                        headshotUploadInFlight.current = true;
+                        try {
+                          const url = await uploadHeadshotViaQueue({
+                            file: headshotFile,
+                            alumniId,
+                          });
+
+                          const resolvedUrl = String(url || "").trim();
+
+                          if (resolvedUrl) {
+                            nextProfile = { ...profile, currentHeadshotUrl: resolvedUrl };
+                            setProfile(nextProfile);
+                            showToastRef.current?.("Headshot uploaded ✓", "success");
+                          } else {
+                            showToastRef.current?.(
+                              "Headshot uploaded ✓ (no URL returned, but it should still be live)",
+                              "success"
+                            );
+                          }
+                        } finally {
+                          headshotUploadInFlight.current = false;
+                        }
+                      }
+
+                      await saveCategory({
+                        tag: "Basics",
+                        fieldKeys: MODULES["Basics"].fieldKeys,
+                        uploadKinds: [],
+                        profileOverride: nextProfile,
+                        afterSave: () => {
+                          basicsDraft.clearDraft();
+                          setHeadshotFile(null);
+
+                          if (hadStagedHeadshot) {
+                            showToastRef.current?.(
+                              "Profile basics saved ✓ (headshot set)",
+                              "success"
+                            );
+                          } else {
+                            showToastRef.current?.("Profile basics saved ✓", "success");
+                          }
+                        },
+                      });
+                    } catch (e: any) {
+                      showToastRef.current?.(e?.message || "Save failed", "error");
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
+                  Save Profile Basics
+                </button>
+              </div>
+            </div>
+            {/* ✅ CLOSE the grid gap=10 div */}
+          </div>
+          {/* ✅ CLOSE the grid gap=12 div */}
+        </div>
+        {/* ✅ CLOSE headshot actions wrapper */}
+      </div>
+    }
+    identityPanel={
+      <div>
+        <div id="studio-identity-anchor" />
+        <p style={explainStyleLocal}>
+          Identity helps us represent you accurately and build the right rooms for collaboration.
+        </p>
+
+        <span style={subheadChipStyle} className="subhead-chip">
+          Identity + Roles
+        </span>
+
+        {renderFieldsOrNull([
+          ...MODULES["Identity"].fieldKeys,
+          ...MODULES["Roles"].fieldKeys,
+        ]) ?? (
+          <div style={{ display: "grid", gap: 14 }}>
+            <div>
+              <label style={labelStyle}>Pronouns</label>
+              <input
+                value={profile.pronouns || ""}
+                onChange={(e) =>
+                  setProfile((p: any) => ({ ...p, pronouns: e.target.value }))
+                }
+                style={inputStyle}
+                placeholder="she/her, he/him, they/them…"
+              />
+            </div>
+
+            <div>
+              <label style={labelStyle}>Identity Tags</label>
+              <input
+                value={profile.identityTags || ""}
+                onChange={(e) =>
+                  setProfile((p: any) => ({ ...p, identityTags: e.target.value }))
+                }
+                style={inputStyle}
+                placeholder="comma-separated"
+              />
+            </div>
+
+            <div>
+              <label style={labelStyle}>Languages</label>
+              <input
+                value={profile.languages || ""}
+                onChange={(e) =>
+                  setProfile((p: any) => ({ ...p, languages: e.target.value }))
+                }
+                style={inputStyle}
+                placeholder="comma-separated"
+              />
+            </div>
+
+            <div>
+              <label style={labelStyle}>Roles</label>
+              <input
+                value={profile.roles || ""}
+                onChange={(e) =>
+                  setProfile((p: any) => ({ ...p, roles: e.target.value }))
+                }
+                style={inputStyle}
+                placeholder="Actor, Director, Designer…"
+              />
+            </div>
+          </div>
+        )}
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 10,
+            flexWrap: "wrap",
+            marginTop: 16,
+          }}
+        >
+          <button
+            type="button"
+            style={datButtonLocal}
+            className="dat-btn"
+            disabled={loading}
+            onClick={() =>
+              saveCategory({
+                tag: "Identity",
+                fieldKeys: MODULES["Identity"].fieldKeys,
+                uploadKinds: [],
+              })
+            }
+          >
+            Save Identity
+          </button>
+
+          <button
+            type="button"
+            style={datButtonLocal}
+            className="dat-btn"
+            disabled={loading}
+            onClick={() =>
+              saveCategory({
+                tag: "Roles",
+                fieldKeys: MODULES["Roles"].fieldKeys,
+                uploadKinds: [],
+              })
+            }
+          >
+            Save Roles
+          </button>
+        </div>
+      </div>
+    }
+    mediaPanel={
+      <div>
+        <div id="studio-media-anchor" />
+        <p style={explainStyleLocal}>
+          Albums + reels live here. You’re choosing placement before uploading.
+        </p>
+
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+          <button
+            type="button"
+            style={studioGhostButton}
+            onClick={() => openPicker("album")}
+            disabled={loading}
+          >
+            Choose album media
+          </button>
+          <button
+            type="button"
+            style={studioGhostButton}
+            onClick={() => openPicker("reel")}
+            disabled={loading}
+          >
+            Choose reel media
+          </button>
+        </div>
+
+        <div style={{ display: "grid", gap: 12 }}>
+          <Field label="Album name (optional)">
+            <input
+              value={albumName || ""}
+              onChange={(e) => setAlbumName(e.target.value)}
+              style={inputStyle}
+              placeholder="e.g. Production photos, BTS, PASSAGE…"
+            />
+          </Field>
+
+          <Field label="Add photos to album">
+            <Dropzone
+              accept="image/*"
+              multiple
+              disabled={loading}
+              label="Add photos to album"
+              sublabel="or drag & drop here"
+              onFiles={(files) => setAlbumFiles(files)}
+              onReject={(rej) =>
+                showToastRef.current?.(rej[0]?.reason || "File rejected", "error")
+              }
+            />
+          </Field>
+
+          <Field label="Add reels (video files)">
+            <Dropzone
+              accept="video/*"
+              multiple
+              disabled={loading}
+              label="Add reels"
+              sublabel="or drag & drop here"
+              onFiles={(files) => setReelFiles(files)}
+              onReject={(rej) =>
+                showToastRef.current?.(rej[0]?.reason || "File rejected", "error")
+              }
+            />
+          </Field>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
+          <button
+            type="button"
+            style={datButtonLocal}
+            disabled={loading || (!albumFiles.length && !reelFiles.length)}
+            onClick={() =>
+              saveCategory({
+                tag: "Media Upload",
+                fieldKeys: [],
+                uploadKinds: [
+                  ...(albumFiles.length ? (["album"] as UploadKind[]) : []),
+                  ...(reelFiles.length ? (["reel"] as UploadKind[]) : []),
+                ],
+              })
+            }
+          >
+            Upload Staged Media
+          </button>
+        </div>
+      </div>
+    }
+    contactPanel={
+      <div>
+        <div id="studio-contact-anchor" />
+        <p style={explainStyleLocal}>
+          Keep it calm: select the channels you use — then fields reveal.
+        </p>
+
+        <span style={subheadChipStyle} className="subhead-chip">
+          Ways to reach you
+        </span>
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
+          {ALL_SOCIALS.map((k) => {
+            const on = visibleSocials.includes(k);
+            return (
+              <button
+                key={k}
+                type="button"
+                className="dat-btn-ghost"
+                style={{ ...(datButtonGhost as any), opacity: on ? 1 : 0.55 }}
+                onClick={() =>
+                  setVisibleSocials((v) => (on ? v.filter((x) => x !== k) : [...v, k]))
+                }
+              >
+                {on ? "✓ " : ""} {k}
+              </button>
+            );
+          })}
+
+          <select
+            value={primarySocial}
+            onChange={(e) => {
+              const v = e.target.value;
+              setPrimarySocial(v);
+              setProfile((p: any) => ({ ...p, primarySocial: v }));
+            }}
+            className="dat-btn-ghost"
+            style={{ ...(datButtonGhost as any), padding: "10px 12px" }}
+            title="Primary social"
+          >
+            {(visibleSocials.length ? visibleSocials : ["instagram"]).map((k) => (
+              <option key={k} value={k}>
+                {k} (primary)
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {renderFieldsOrNull(ContactEditKeys) ?? (
+          <div style={{ display: "grid", gap: 12 }}>
+            {ContactEditKeys.filter((k) => k !== "primarySocial").map((k) => (
+              <div key={k}>
+                <label style={labelStyle}>{k}</label>
+                <input
+                  value={(profile as any)[k] || ""}
+                  onChange={(e) => setProfile((p: any) => ({ ...p, [k]: e.target.value }))}
+                  style={inputStyle}
+                  placeholder={k === "publicEmail" ? "name@email.com" : "https://..."}
+                />
+              </div>
+            ))}
+            <p style={{ ...explainStyleLocal, marginTop: 6 }}>
+              (Fallback UI) Add contact keys to <code>PROFILE_FIELDS</code> if you want curated rendering.
+            </p>
+          </div>
+        )}
+
+        <div style={{ marginTop: 20 }}>
+          <button
+            type="button"
+            onClick={() =>
+              saveCategory({
+                tag: "Contact",
+                fieldKeys: MODULES["Contact"].fieldKeys,
+                uploadKinds: MODULES["Contact"].uploadKinds,
+                afterSave: () => contactDraft.clearDraft(),
+              })
+            }
+            style={datButtonLocal}
+            className="dat-btn"
+          >
+            Save Contact
+          </button>
+        </div>
+
+        <p style={{ ...explainStyleLocal, marginTop: 12 }}>
+          Tip: toggle which socials you want visible above — hidden ones will be cleared on save.
+        </p>
+      </div>
+    }
+    storyPanel={
+      <div>
+        <div id="studio-story-anchor" />
+        <p style={explainStyleLocal}>
+          Your story becomes a map pin + memory. If you paste media, it should be a direct URL to the file.
+        </p>
+
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
+          <button
+            type="button"
+            style={studioGhostButton}
+            disabled={loading}
+            onClick={() => clearStoryEditor()}
+            title="Start a new story (clears the editor)"
+          >
+            New Story
+          </button>
+
+          <select
+            value={String(profile.storyKey || "")}
+            disabled={loading || myStoriesLoading}
+            onChange={(e) => {
+              const k = String(e.target.value || "").trim();
+              if (!k) return;
+              onSelectStoryFromMyStories(k);
+            }}
+            className="dat-btn-ghost"
+            style={{ ...(datButtonGhost as any), padding: "10px 12px", minWidth: 260 }}
+            title="Load one of your previously published stories"
+          >
+            <option value="">
+              {myStoriesLoading ? "Loading your stories…" : "Select a published story…"}
+            </option>
+
+            {(myStories || []).map((s) => {
+              const title = String(s.storyTitle || "").trim() || "(untitled)";
+              const program = String(s.storyProgram || "").trim();
+              const country = String(s.storyCountry || "").trim();
+              const years = String(s.storyYears || "").trim();
+
+              // Title -- Program: Country Year(s)
+              const label = `${title} -- ${program || "Program"}: ${country || "Country"}${years ? ` ${years}` : ""}`;
+
+              return (
+                <option key={s.storyKey} value={s.storyKey}>
+                  {label}
+                </option>
+              );
+            })}
+
+          </select>
+
+          <button
+            type="button"
+            style={studioGhostButton}
+            disabled={loading || myStoriesLoading}
+            onClick={() => refreshMyStories()}
+            title="Refresh My Stories list"
+          >
+            Refresh
+          </button>
+        </div>
+
+        {renderFieldsOrNull(StoryMapEditKeys) ?? <ManualStoryMapFallback />}
+
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
+          <button
+            type="button"
+            style={datButtonLocal}
+            disabled={loading}
+            onClick={() => saveStoryMapViaWriter({ clearAfter: true })}
+          >
+            Publish Story to Map
+          </button>
+        </div>
+      </div>
+    }
+    eventPanel={
+      <div>
+        <div id="studio-event-anchor" />
+        <p style={explainStyleLocal}>
+          Add your upcoming event and its image. (If you paste media, it should be a direct URL to the file.)
+        </p>
+
+        {renderFieldsOrNull(UpcomingEventEditKeys) ?? <ManualUpcomingEventFallback />}
+
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+            <button
+              type="button"
+              style={studioGhostButton}
+              onClick={() => openPicker("event")}
+              disabled={loading}
+            >
+              Choose event image from library
+            </button>
           </div>
 
-          {/* Save event fields */}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
+          <Field label="Upload event image(s)">
+            <Dropzone
+              accept="image/*"
+              multiple
+              disabled={loading}
+              label="Add event image(s)"
+              sublabel="or drag & drop here"
+              onFiles={(files) => setEventFiles(files)}
+              onReject={(rej) =>
+                showToastRef.current?.(rej[0]?.reason || "File rejected", "error")
+              }
+            />
+          </Field>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 12 }}>
+            <button
+              type="button"
+              style={studioGhostButton}
+              disabled={loading || !eventFiles.length}
+              onClick={() => setEventFiles([])}
+            >
+              Clear staged
+            </button>
             <button
               type="button"
               style={datButtonLocal}
-              disabled={loading}
+              disabled={loading || !eventFiles.length}
               onClick={() =>
                 saveCategory({
-                  tag: "Upcoming Event",
-                  fieldKeys: MODULES["UpcomingEvent"].fieldKeys,
-                  uploadKinds: [],
+                  tag: "Event Image Upload",
+                  fieldKeys: [],
+                  uploadKinds: ["event"],
                 })
               }
             >
-              Save Event
+              Upload Event Image
             </button>
           </div>
         </div>
-      }
-    />
+
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
+          <button
+            type="button"
+            style={datButtonLocal}
+            disabled={loading}
+            onClick={() =>
+              saveCategory({
+                tag: "Upcoming Event",
+                fieldKeys: MODULES["UpcomingEvent"].fieldKeys,
+                uploadKinds: [],
+              })
+            }
+          >
+            Save Event
+          </button>
+        </div>
+      </div>
+    }
+  />
+</div>
+
 
     {/* Keep your progress + Controls + FailedList rendering below the Studio (unchanged) */}
     {(progress.album.total > 0 ||
@@ -2986,260 +3678,6 @@ return (
 </div>
 
 
-{SHOW_LEGACY_SECTIONS ? (
-  <>
-                {/* ====== 1) PROFILE BASICS ====== */}
-          <Section>
-            <span style={subheadChipStyle} className="subhead-chip">
-              Profile details
-            </span>
-            <p style={explainStyleLocal} className="explain">
-              Your professional name and slug are locked by default. If your professional name changed,
-              unlock it and your slug preview will update automatically.
-            </p>
-
-            <div>
-              <label htmlFor="slug" style={labelStyle}>
-                Profile slug
-              </label>
-              <input id="slug" value={currentSlug} readOnly style={inputLockedStyle} />
-              <p style={{ ...explainStyleLocal, marginTop: 6 }} className="explain">
-                {autoDetected
-                  ? "We auto-detected your current slug from Profile-Live."
-                  : "Your slug mirrors your professional name."}
-              </p>
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                gap: 24,
-                marginTop: 12,
-              }}
-            >
-              <div>
-                <label htmlFor="name" style={labelStyle}>
-                  Professional name
-                </label>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12 }}>
-                  <input
-                    id="name"
-                    value={name}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setName(v);
-                      setProfile((p: any) => ({ ...p, name: v }));
-                    }}
-                    style={nameLocked ? inputLockedStyle : inputStyle}
-                    disabled={nameLocked}
-                  />
-                  <button
-                    type="button"
-                    className="dat-btn-ghost"
-                    style={datButtonGhost}
-                    onClick={() => setNameLocked((x) => !x)}
-                  >
-                    {nameLocked ? "My professional name changed" : "Lock name"}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="location" style={labelStyle}>
-                  Base
-                </label>
-                <input
-                  id="location"
-                  value={location}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setLocation(v);
-                    setProfile((p: any) => ({ ...p, location: v }));
-                  }}
-                  style={inputStyle}
-                />
-              </div>
-            </div>
-
-            <div style={{ marginTop: 18 }}>
-              <label style={{ fontWeight: 700 }}>
-                <input
-                  type="checkbox"
-                  checked={isTrue(profile.isBiCoastal)}
-                  onChange={(e) =>
-                    setProfile((p: any) => ({
-                      ...p,
-                      isBiCoastal: e.target.checked ? "true" : "",
-                    }))
-                  }
-                  style={{ marginRight: 10 }}
-                />
-                Bi-coastal
-              </label>
-
-              {isTrue(profile.isBiCoastal) ? (
-                <div style={{ marginTop: 12 }}>
-                  <label style={labelStyle}>Second location</label>
-                  <input
-                    value={profile.secondLocation || ""}
-                    onChange={(e) => setProfile((p: any) => ({ ...p, secondLocation: e.target.value }))}
-                    style={inputStyle}
-                  />
-                </div>
-              ) : null}
-            </div>
-
-            <div style={{ marginTop: 18 }}>
-              <BackgroundSwatches
-                value={String(profile.backgroundStyle || "kraft")}
-                onChange={(next) => setProfile((p: any) => ({ ...p, backgroundStyle: next }))}
-              />
-            </div>
-
-            <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
-              <div>
-                <label style={labelStyle}>Headshot URL (optional)</label>
-                <input
-                  value={profile.currentHeadshotUrl || ""}
-                  onChange={(e) => setProfile((p: any) => ({ ...p, currentHeadshotUrl: e.target.value }))}
-                  style={inputStyle}
-                  placeholder="https://..."
-                />
-              </div>
-
-              <div>
-                <label style={labelStyle}>Bio / Artist Statement (public)</label>
-                <textarea
-                  value={String(profile.bioLong ?? "")}
-                  onChange={(e) => setProfile((p: any) => ({ ...p, bioLong: e.target.value }))}
-                  rows={10}
-                  style={{ ...inputStyle, minHeight: 220, resize: "vertical" }}
-                />
-              </div>
-            </div>
-
-            <div style={{ marginTop: 20 }}>
-              <button
-                type="button"
-                onClick={() =>
-                  saveCategory({
-                    tag: "Profile Basics",
-                    fieldKeys: MODULES["Basics"].fieldKeys,
-                    uploadKinds: [],
-                    afterSave: () => basicsDraft.clearDraft(),
-                  })
-                }
-                style={datButtonLocal}
-                className="dat-btn"
-              >
-                Save Profile Basics
-              </button>
-            </div>
-          </Section>
-
-        {/* ✅ ABOUT */}
-          <Section>{renderFieldsOrNull(AboutEditKeys) ?? <ManualAboutFallback />}</Section>
-
-        {/* ✅ PROGRAMS + TAGS */}
-          <Section>{renderFieldsOrNull(TagsEditKeys) ?? <ManualTagsFallback />}</Section>
-
-        {/* ✅ STORY MAP */}
-          <Section>{renderFieldsOrNull(StoryMapEditKeys) ?? <ManualStoryMapFallback />}</Section>
-
-        {/* ====== 2) CONTACT ====== */}
-          <Section>
-            <span style={subheadChipStyle} className="subhead-chip">
-              Ways to reach you
-            </span>
-
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
-              {ALL_SOCIALS.map((k) => {
-                const on = visibleSocials.includes(k);
-                return (
-                  <button
-                    key={k}
-                    type="button"
-                    className="dat-btn-ghost"
-                    style={{ ...(datButtonGhost as any), opacity: on ? 1 : 0.55 }}
-                    onClick={() => setVisibleSocials((v) => (on ? v.filter((x) => x !== k) : [...v, k]))}
-                  >
-                    {on ? "✓ " : ""} {k}
-                  </button>
-                );
-              })}
-
-              <select
-                value={primarySocial}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setPrimarySocial(v);
-                  setProfile((p: any) => ({ ...p, primarySocial: v }));
-                }}
-                className="dat-btn-ghost"
-                style={{ ...(datButtonGhost as any), padding: "10px 12px" }}
-                title="Primary social"
-              >
-                {(visibleSocials.length ? visibleSocials : ["instagram"]).map((k) => (
-                  <option key={k} value={k}>
-                    {k} (primary)
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Prefer FieldRenderer in this file; fallback manual inputs if defs missing */}
-            {renderFieldsOrNull(ContactEditKeys) ?? (
-              <div style={{ display: "grid", gap: 12 }}>
-                {ContactEditKeys.filter((k) => k !== "primarySocial").map((k) => (
-                  <div key={k}>
-                    <label style={labelStyle}>{k}</label>
-                    <input
-                      value={(profile as any)[k] || ""}
-                      onChange={(e) => setProfile((p: any) => ({ ...p, [k]: e.target.value }))}
-                      style={inputStyle}
-                      placeholder={k === "publicEmail" ? "name@email.com" : "https://..."}
-                    />
-                  </div>
-                ))}
-                <p style={{ ...explainStyleLocal, marginTop: 6 }}>
-                  (Fallback UI) Add contact keys to <code>PROFILE_FIELDS</code> if you want curated rendering.
-                </p>
-              </div>
-            )}
-
-            <div style={{ marginTop: 20 }}>
-              <button
-                type="button"
-                onClick={() =>
-                  saveCategory({
-                    tag: "Contact",
-                    fieldKeys: MODULES["Contact"].fieldKeys,
-                    afterSave: () => contactDraft.clearDraft(),
-                  })
-                }
-                style={datButtonLocal}
-                className="dat-btn"
-              >
-                Save Contact
-              </button>
-            </div>
-
-            <p style={{ ...explainStyleLocal, marginTop: 12 }}>
-              Tip: toggle which socials you want visible above — hidden ones will be cleared on save.
-            </p>
-          </Section>
-
-        {/* ✅ CURRENT UPDATE */}
-          <Section>{renderFieldsOrNull(UpdatesEditKeys) ?? <ManualUpdatesFallback />}</Section>
-
-        {/* ✅ UPCOMING EVENT */}
-        <div id="upcoming-event-section" ref={eventSectionRef}>
-          <Section>{renderFieldsOrNull(UpcomingEventEditKeys) ?? <ManualUpcomingEventFallback />}</Section>
-        </div>
-  </>
-) : null}
-
 {/* Hidden submit */}
 <form onSubmit={(e) => e.preventDefault()}>
   <button ref={saveBtnRef} type="submit" className="hidden">
@@ -3254,17 +3692,18 @@ return (
   alumniId={stableAlumniId}
   kind={pickerKind}
   title={`Choose ${pickerKind}`}
-  onFeatured={(fileId?: string) => {
+  onFeatured={async (fileId?: string) => {
     if (fileId) {
       const key = POINTER_MAP[pickerKind];
       setAssets((a) => ({ ...a, [key]: fileId }));
     }
-    showToast("Featured media updated.");
+    showToastRef.current?.("Featured media updated.");
+    await rehydrate();
   }}
 />
 
 {/* Toast */}
-{toast && <Toast msg={toast.msg} type={toast.type} />}
+{toast ? <Toast msg={toast.msg} type={toast.type} /> : null}
 
 
         {/* Global CSS */}

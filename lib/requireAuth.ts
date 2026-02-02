@@ -4,8 +4,12 @@ import { NextResponse } from "next/server";
 // NextAuth v5 helper (your project has /auth.ts exporting `auth`)
 let authFn: undefined | (() => Promise<{ user?: { email?: string | null } } | null>);
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  ({ auth: authFn } = require("@/auth"));
+  try {
+    const mod = await import("@/auth");
+    authFn = mod.auth;
+  } catch {
+    // optional: auth not installed
+  }
 } catch {
   // optional: auth not installed
 }
@@ -65,6 +69,7 @@ export async function requireAuth(req: Request): Promise<RequireAuthOK | Require
   const isAdmin = ADMIN_EMAILS.includes(email);
   return { ok: true, email, isAdmin };
 }
+
 
 export async function requireAdmin(req: Request): Promise<RequireAuthOK | RequireAuthFail> {
   const auth = await requireAuth(req);

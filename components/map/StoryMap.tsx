@@ -925,10 +925,22 @@ useEffect(() => {
       };
 
       try {
-        let feats = await fetchStoriesAsFeatures();
+        let feats: Feature[] = [];
+        let source: "api" | "fallback" = "api";
+
+        try {
+          feats = await fetchStoriesAsFeatures();
+        } catch {
+          feats = [];
+        }
+
         if (!feats || feats.length === 0) {
+          source = "fallback";
           feats = await fetchFallbackStoriesCsv();
         }
+
+        if (DEBUG) clientDebug("[StoryMap] data source:", source, "feats:", feats.length);
+
         if (canceled) return;
 
         featuresRef.current = feats || [];

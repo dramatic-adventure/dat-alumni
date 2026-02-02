@@ -69,7 +69,7 @@ function parseAdminEmails() {
   return new Set(
     String(process.env.ADMIN_EMAILS || "")
       .split(",")
-      .map((s) => s.trim().toLowerCase())
+      .map((s) => normalizeGmail(String(s || "").trim()))
       .filter(Boolean)
   );
 }
@@ -86,8 +86,9 @@ async function isAdminRequest(req: Request): Promise<boolean> {
 
   try {
     const session = await auth(); // ✅ no args
-    const email = String(session?.user?.email || "").trim().toLowerCase();
+    const email = normalizeGmail(String(session?.user?.email || "").trim());
     if (!email) return false;
+
 
     // Optional: if you ever add these
     if ((session as any)?.user?.isAdmin === true) return true;
@@ -268,7 +269,7 @@ async function lookupFromCsvFallback(params: { alumniId?: string; admin: boolean
   return {
     kind: "ok" as const,
     payload: {
-      alumniId: normSlug(match["Profile ID"] || match.alumniId || match.slug || needle),
+      alumniId: normSlug(match["Profile ID"] || match.alumniId || ""),
       canonicalSlug: normSlug(match.slug || ""),
       redirectedFrom: normSlug(match.slug || "") !== needle ? needle : undefined,
       source: "csv-fallback",
@@ -412,7 +413,7 @@ function buildFallbackCsvStrings(opts: {
         toCsvCell(status),
         toCsvCell(statusFlags),
         toCsvCell(currentWork),
-        toCsvCell(alumniId || slug),
+        toCsvCell(alumniId),
         toCsvCell(slug),
         toCsvCell(""),
         toCsvCell(lastModified),
@@ -494,12 +495,29 @@ export async function GET(req: Request) {
     exportParam === "slug-map.csv" ||
     exportParam === "slug-map";
 
-  const alumniIdParamRaw = normSlug(searchParams.get("alumniId") || "");
-  const emailParamRaw = String(searchParams.get("email") || "").trim();
+const alumniIdExplicit = normSlug(
+  searchParams.get("alumniId") || searchParams.get("asId") || ""
+);
+const slugExplicit = normSlug(searchParams.get("slug") || "");
 
-  if (!wantsExport && !alumniIdParamRaw && !emailParamRaw) {
-    return json({ error: "email or alumniId required" }, { status: 400, headers: noStoreHeaders() });
-  }
+const lookupKey = alumniIdExplicit || slugExplicit; // what we’ll actually search by
+
+const emailParamRaw = String(searchParams.get("email") || "").trim();
+
+if (!wantsExport && !lookupKey && !emailParamRaw) {
+  return json(
+    { error: "email, slug, or alumniId required" },
+    { status: 400, headers: noStoreHeaders() }
+  );
+}
+
+// ✅ In production:
+// - alumniId/asId is admin-only (stable internal ID)
+// - slug is allowed publicly (but will be gated by isPublic + status)
+if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "production") {
+  return json({ error: "Forbidden" }, { status: 403, headers: noStoreHeaders() });
+}
+
 
   const sheetId = process.env.ALUMNI_SHEET_ID;
   const saJson = process.env.GCP_SA_JSON;
@@ -768,7 +786,7 @@ export async function GET(req: Request) {
     // - alumniId param might be: old slug, new slug, or stable alumniId.
     // - canonicalize via Profile-Slugs forward chain.
     // ------------------------------------------------------------
-    const incoming = alumniIdParamRaw;
+    const incoming = lookupKey;
     const canonical = incoming ? resolveForwardChainLocal(slugForwardMap, incoming) : "";
     const redirectedFrom = canonical && incoming && canonical !== incoming ? incoming : undefined;
 
@@ -950,9 +968,10 @@ export async function GET(req: Request) {
   } catch (e: any) {
     // Sheets failed: fallback (public only)
     const fb = await lookupFromCsvFallback({
-      alumniId: alumniIdParamRaw,
+      alumniId: lookupKey,
       admin,
     });
+
 
     if (fb.kind === "admin-unavailable") {
       return json(

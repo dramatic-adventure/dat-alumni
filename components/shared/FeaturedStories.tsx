@@ -317,7 +317,7 @@ export default function FeaturedStories({ stories, authorSlug }: FeaturedStories
 
   {/* Explore the Story Map Link */}
   <Link
-    href="https://dramaticadventure.com/story-map#story"
+    href="/story-map#story"
     style={{
       marginTop: "0.6rem",
       textAlign: "right", // ✅ Center text relative to button width

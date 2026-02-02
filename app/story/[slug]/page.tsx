@@ -8,6 +8,8 @@ import type { Metadata } from "next";
 import loadRows from "@/lib/loadRows";
 import type { StoryRow } from "@/lib/types";
 import ClientStory from "./ClientStory";
+import { resolveCanonicalSlug, getSlugAliases, normSlug } from "@/lib/slugAliases";
+import { loadAlumniByAliases } from "@/lib/loadAlumni";
 
 /** Next can hand us params as an object OR a Promise in some server contexts. */
 type RouteParams = { slug: string };
@@ -64,6 +66,29 @@ function pickOgImage(story: StoryRow, baseUrl: string): string {
   return /^https?:\/\//i.test(src)
     ? src
     : `${baseUrl}${src.startsWith("/") ? "" : "/"}${src}`;
+}
+
+async function resolveAuthor(authorSlugOrId: string) {
+  const incoming = normSlug(authorSlugOrId);
+  if (!incoming) return null;
+
+  const canonical = (await resolveCanonicalSlug(incoming)) || incoming;
+
+  const aliasesRaw = await getSlugAliases(canonical); // should include canonical
+  const aliases = new Set<string>(
+    Array.from(aliasesRaw as any).map((s: any) => normSlug(String(s)))
+  );
+
+  aliases.add(canonical);
+  aliases.add(incoming);
+
+  const alum = await loadAlumniByAliases(aliases as any);
+  if (!alum) return null;
+
+  const name = String((alum as any)?.name || "").trim();
+  if (!name) return null;
+
+  return { name, slug: canonical };
 }
 
 /**
@@ -193,5 +218,19 @@ export default async function StorySlugPage({
 
   if (!story) return notFound();
 
-  return <ClientStory story={story} />;
+  const authorKey =
+    pickFirst(story as any, ["authorSlug", "AuthorSlug", "alumniSlug", "profileSlug"]) ||
+    pickFirst(story as any, ["author", "Author", "authorName", "AuthorName"]) ||
+    "";
+
+  const resolvedAuthor = authorKey ? await resolveAuthor(authorKey) : null;
+
+  const storyWithResolvedAuthor = {
+    ...(story as any),
+    authorSlug: resolvedAuthor?.slug || (story as any)?.authorSlug,
+    author: resolvedAuthor?.name || (story as any)?.author,
+    authorName: resolvedAuthor?.name || (story as any)?.authorName,
+  };
+
+  return <ClientStory story={storyWithResolvedAuthor as any} />;
 }

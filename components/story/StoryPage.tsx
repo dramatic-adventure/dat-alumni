@@ -35,6 +35,9 @@ export default function StoryPage({ story }: StoryPageProps) {
 
   const storyUrl = `https://stories.dramaticadventure.com/story/${slug}`;
 
+  const authorName = (story as any)?.authorName || author || "";
+  const authorHrefSlug = (story as any)?.authorSlug || authorSlug || "";
+
   return (
     <main>
       <div
@@ -44,7 +47,7 @@ export default function StoryPage({ story }: StoryPageProps) {
         {/* Top Bar: Back Link + Share */}
         <div className="flex justify-between items-center mb-4">
           <a
-            href="https://dramaticadventure.com/story-map#story"
+            href="/story-map#story"
             style={{
               fontFamily: "var(--font-rock-salt), cursive",
               fontSize: "1.15rem",
@@ -90,11 +93,16 @@ export default function StoryPage({ story }: StoryPageProps) {
         {shortStory && <p className="popup-story">{shortStory}</p>}
 
         {/* Author */}
-        {author && authorSlug && (
+        {authorName ? (
           <p className="popup-author">
-            By <Link href={`/alumni/${authorSlug}`}>{author}</Link>
+            By{" "}
+            {authorHrefSlug ? (
+              <Link href={`/alumni/${authorHrefSlug}`}>{authorName}</Link>
+            ) : (
+              <span>{authorName}</span>
+            )}
           </p>
-        )}
+        ) : null}
 
         {/* CTA Button */}
         {moreInfoLink && (

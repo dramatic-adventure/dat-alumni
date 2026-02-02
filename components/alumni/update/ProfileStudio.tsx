@@ -22,6 +22,8 @@ const tabRowStyle: CSSProperties = {
   flexWrap: "wrap",
   gap: 10,
   alignItems: "center",
+  paddingLeft: 2,
+  paddingRight: 2,
 };
 
 const tabStyle = (active: boolean): CSSProperties => ({
@@ -125,9 +127,7 @@ function Field({
       {children}
 
       {help ? (
-        <p style={{ ...studioExplainStyle, marginTop: 6, marginBottom: 0 }}>
-          {help}
-        </p>
+        <p style={{ ...studioExplainStyle, marginTop: 6, marginBottom: 0 }}>{help}</p>
       ) : null}
     </div>
   );
@@ -152,17 +152,36 @@ type ProfileStudioProps = {
   contactPanel: ReactNode;
   storyPanel: ReactNode;
   eventPanel: ReactNode;
+
+  /**
+   * Optional container wrapper (OFF by default).
+   * Use this when you want ProfileStudio to match the same width/padding as
+   * composer/community feed without relying on outer layout.
+   */
+  container?: boolean;
+
+  /**
+   * Override container classes if needed.
+   * Only used when container === true.
+   */
+  containerClassName?: string;
+
+  /**
+   * When switching tabs, scroll to the panel’s anchor if present.
+   * Default: true.
+   */
+  scrollToAnchorOnTabChange?: boolean;
 };
 
-/**
- * ProfileStudio is intentionally dumb:
- * - It does not know about buildLiveChanges, baseline, drafts, etc.
- * - It just calls the callbacks you already trust.
- *
- * Supports BOTH:
- * - controlled:   tab + onTabChange
- * - uncontrolled: defaultTab (internal state)
- */
+const TAB_ANCHOR_ID: Record<StudioTab, string> = {
+  basics: "studio-basics-anchor",
+  identity: "studio-identity-anchor",
+  media: "studio-media-anchor",
+  contact: "studio-contact-anchor",
+  story: "studio-story-anchor",
+  event: "studio-event-anchor",
+};
+
 export default function ProfileStudio(props: ProfileStudioProps) {
   const {
     defaultTab = "basics",
@@ -178,20 +197,24 @@ export default function ProfileStudio(props: ProfileStudioProps) {
     contactPanel,
     storyPanel,
     eventPanel,
+
+    container = false,
+    containerClassName = "mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8",
+
+    scrollToAnchorOnTabChange = true,
   } = props;
 
-  const isControlled = controlledTab != null;
-
+  const isControlled = typeof controlledTab !== "undefined";
   const [internalTab, setInternalTab] = useState<StudioTab>(defaultTab);
 
   // Keep internal in sync when uncontrolled, and gracefully handle mode flips.
   useEffect(() => {
     if (!isControlled) {
       setInternalTab(defaultTab);
-    } else {
-      // if we become controlled, mirror the controlled tab once (prevents a stale flash if later uncontrolled again)
-      setInternalTab(controlledTab ?? defaultTab);
+      return;
     }
+    // If we become controlled, mirror the controlled tab once.
+    setInternalTab(controlledTab ?? defaultTab);
   }, [defaultTab, isControlled, controlledTab]);
 
   const tab: StudioTab = isControlled ? (controlledTab ?? internalTab) : internalTab;
@@ -201,6 +224,21 @@ export default function ProfileStudio(props: ProfileStudioProps) {
     else setInternalTab(t);
   };
 
+  // ✅ On tab change, scroll to that tab’s anchor if it exists.
+  useEffect(() => {
+    if (!scrollToAnchorOnTabChange) return;
+    if (typeof window === "undefined") return;
+
+    const id = TAB_ANCHOR_ID[tab];
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    // Give React a beat to paint the new panel contents.
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [tab, scrollToAnchorOnTabChange]);
+
   const panel = useMemo(() => {
     if (tab === "basics") return basicsPanel;
     if (tab === "identity") return identityPanel;
@@ -208,83 +246,67 @@ export default function ProfileStudio(props: ProfileStudioProps) {
     if (tab === "contact") return contactPanel;
     if (tab === "story") return storyPanel;
     return eventPanel;
-  }, [
-    tab,
-    basicsPanel,
-    identityPanel,
-    mediaPanel,
-    contactPanel,
-    storyPanel,
-    eventPanel,
-  ]);
+  }, [tab, basicsPanel, identityPanel, mediaPanel, contactPanel, storyPanel, eventPanel]);
 
-  return (
+  const inner = (
     <div>
       {/* Top nav (replaces MediaHub category row) */}
       <div style={tabRowStyle}>
         <button
-            type="button"
-            style={tabStyle(tab === "basics")}
-            onClick={() => setTab("basics")}
-            aria-pressed={tab === "basics"}
+          type="button"
+          style={tabStyle(tab === "basics")}
+          onClick={() => setTab("basics")}
+          aria-pressed={tab === "basics"}
         >
-            Basics
+          Basics
         </button>
 
         <button
-            type="button"
-            style={tabStyle(tab === "identity")}
-            onClick={() => setTab("identity")}
-            aria-pressed={tab === "identity"}
+          type="button"
+          style={tabStyle(tab === "identity")}
+          onClick={() => setTab("identity")}
+          aria-pressed={tab === "identity"}
         >
-            Identity
+          Identity
         </button>
 
         <button
-            type="button"
-            style={tabStyle(tab === "media")}
-            onClick={() => setTab("media")}
-            aria-pressed={tab === "media"}
+          type="button"
+          style={tabStyle(tab === "media")}
+          onClick={() => setTab("media")}
+          aria-pressed={tab === "media"}
         >
-            Media
+          Media
         </button>
 
         <button
-            type="button"
-            style={tabStyle(tab === "contact")}
-            onClick={() => setTab("contact")}
-            aria-pressed={tab === "contact"}
+          type="button"
+          style={tabStyle(tab === "contact")}
+          onClick={() => setTab("contact")}
+          aria-pressed={tab === "contact"}
         >
-            Contact
+          Contact
         </button>
 
         <button
-            type="button"
-            style={tabStyle(tab === "story")}
-            onClick={() => setTab("story")}
-            aria-pressed={tab === "story"}
+          type="button"
+          style={tabStyle(tab === "story")}
+          onClick={() => setTab("story")}
+          aria-pressed={tab === "story"}
         >
-            Story
+          Story
         </button>
 
         <button
-            type="button"
-            style={tabStyle(tab === "event")}
-            onClick={() => setTab("event")}
-            aria-pressed={tab === "event"}
+          type="button"
+          style={tabStyle(tab === "event")}
+          onClick={() => setTab("event")}
+          aria-pressed={tab === "event"}
         >
-            Event
+          Event
         </button>
 
-
-        <div
-          style={{
-            marginLeft: "auto",
-            display: "flex",
-            gap: 8,
-            alignItems: "center",
-          }}
-        >
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
           <button
             type="button"
             style={{ ...ghostButton, padding: "10px 12px", opacity: 0.9 }}
@@ -300,6 +322,13 @@ export default function ProfileStudio(props: ProfileStudioProps) {
       <div style={panelStyle}>{panel}</div>
     </div>
   );
+
+  // ✅ Optional self-contained layout wrapper (helps avoid "empty sibling div" mistakes)
+  if (container) {
+    return <div className={containerClassName}>{inner}</div>;
+  }
+
+  return inner;
 }
 
 // Export the helper too so modules can use it consistently.

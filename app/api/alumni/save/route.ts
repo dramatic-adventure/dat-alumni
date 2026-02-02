@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { sheetsClient } from "@/lib/googleClients";
 import { requireAuth } from "@/lib/requireAuth";
 import { rateLimit } from "@/lib/rateLimit";
+// import { maybeArchiveStorySnapshotFromLiveRow } from "@/lib/mapArchive";
 
 export const runtime = "nodejs";
 
@@ -371,12 +372,13 @@ function canonKey(rawKey: string) {
   // 1) exact alias
   if (FIELD_ALIASES[kLower]) return FIELD_ALIASES[kLower];
 
-  // 2) smash separators: "bioLong" / "bio_long" / "bio-long"
+  // 2) smash separators
   const smashed = kLower.replace(/[\s_-]+/g, "");
   if (FIELD_ALIASES[smashed]) return FIELD_ALIASES[smashed];
 
-  // 3) default: lowercased raw key
-  return kLower;
+  // 3) default: return smashed (NOT just lowercased)
+  // This makes "bio_long" => "biolong", matching your headerMap keys.
+  return smashed;
 }
 
 export async function PUT(req: Request) {
@@ -439,11 +441,20 @@ export async function PUT(req: Request) {
     const header = rowsAll[0] ?? [];
     const dataRows = rowsAll.slice(1);
 
-    // map header -> col idx (lowercase)
+    // map Profile-Live header -> col idx (canonical)
     const headerMap: Record<string, number> = {};
     header.forEach((h: any, i: number) => {
-      headerMap[String(h ?? "").trim().toLowerCase()] = i;
+      const raw = String(h ?? "").trim();
+      if (!raw) return;
+
+      const kCanon = canonKey(raw);
+      if (!kCanon) return;
+
+      // If multiple headers collapse to same canonical key, keep the first
+      // (you can flip this to "last wins" if you prefer).
+      if (typeof headerMap[kCanon] !== "number") headerMap[kCanon] = i;
     });
+
 
     const idIdx = idxOf(header as string[], ["alumniid", "alumni id", "id"]);
     const slugIdx = idxOf(header as string[], ["slug"]);
@@ -482,15 +493,16 @@ export async function PUT(req: Request) {
       }
     }
 
-    // ensure the logged-in email is mapped (non-fatal)
-    if (auth.email) {
-      void ensureAlias(sheets, spreadsheetId, auth.email, ownerKey).catch(
-        () => {}
-      );
-    }
-
-    const submitter = String(submittedByEmail || auth.email || "").trim();
+    // Editor identity (audit only)
+    const editorEmail = String(submittedByEmail || auth.email || "").trim();
     const nowIso = new Date().toISOString();
+
+
+    // ensure the editor email is mapped (non-fatal)
+    // (helps resolveOwnerAlumniId find the owner next time)
+    if (editorEmail) {
+      void ensureAlias(sheets, spreadsheetId, editorEmail, ownerKey).catch(() => {});
+    }
 
     // Find the live row by stable alumniId
     let rowIndex = dataRows.findIndex((r) => normId(r?.[idIdx]) === ownerKey);
@@ -505,11 +517,11 @@ export async function PUT(req: Request) {
 
     const currentRow = rowIndex !== -1 ? (dataRows[rowIndex] ?? []) : [];
 
-    const beforeForFieldLower = (fieldLower: string): string => {
-      const colIdx = headerMap[fieldLower];
-      if (typeof colIdx !== "number" || colIdx < 0) return "";
-      return String(currentRow[colIdx] ?? "");
-    };
+const beforeForCanonKey = (fieldCanon: string): string => {
+  const colIdx = headerMap[fieldCanon];
+  if (typeof colIdx !== "number" || colIdx < 0) return "";
+  return String(currentRow[colIdx] ?? "");
+};
 
     /**
      * Filter incoming changes:
@@ -526,6 +538,8 @@ export async function PUT(req: Request) {
     const acceptedInputKeys: string[] = [];
     const acceptedCanonicalKeys: string[] = [];
 
+    const dropped: { inputKey: string; canon: string; reason: string }[] = [];
+
     for (const [rawKey, rawVal] of Object.entries(
       changes as Record<string, unknown>
     )) {
@@ -533,33 +547,75 @@ export async function PUT(req: Request) {
       if (!inputKey) continue;
 
       const kCanon = canonKey(inputKey);
-      if (!kCanon) continue;
+      if (!kCanon) {
+        dropped.push({ inputKey, canon: "", reason: "canon_empty" });
+        continue;
+      }
 
-      if (isStableIdField(kCanon)) continue;
-      if (isServerControlledField(kCanon)) continue;
-      if (isAdminOnlyField(kCanon) && !admin) continue;
+      if (isStableIdField(kCanon)) {
+        dropped.push({ inputKey, canon: kCanon, reason: "stable_id_field" });
+        continue;
+      }
+
+      if (isServerControlledField(kCanon)) {
+        dropped.push({ inputKey, canon: kCanon, reason: "server_controlled" });
+        continue;
+      }
+
+      if (isAdminOnlyField(kCanon) && !admin) {
+        dropped.push({ inputKey, canon: kCanon, reason: "admin_only" });
+        continue;
+      }
 
       const colIdx = headerMap[kCanon];
-      if (typeof colIdx !== "number" || colIdx < 0) continue;
+      if (typeof colIdx !== "number" || colIdx < 0) {
+        dropped.push({ inputKey, canon: kCanon, reason: "no_column_match" });
+        continue;
+      }
 
       filteredChangesByCanonical[kCanon] = rawVal == null ? "" : String(rawVal);
       acceptedInputKeys.push(inputKey);
       acceptedCanonicalKeys.push(kCanon);
     }
 
+    // If the client explicitly changed the profile's email, use THAT.
+    // Otherwise, only allow auto-backfill for non-admin self-saves *when the live email is blank*.
+    const explicitEmailChange = String(filteredChangesByCanonical["email"] ?? "").trim();
+
+    const currentLiveEmail =
+      rowIndex !== -1 && emailIdx !== -1
+        ? String(currentRow[emailIdx] ?? "").trim()
+        : "";
+
+    // Admin safety: never auto-write the admin/editor email into someone else's profile.
+    // Only non-admin self-saves can auto-backfill email when it's missing.
+    const canAutoBackfillEmail = !admin;
+    const shouldBackfillEmail = canAutoBackfillEmail && !currentLiveEmail;
+
+    const emailToWrite = explicitEmailChange || (shouldBackfillEmail ? editorEmail : "");
+
     if (!Object.keys(filteredChangesByCanonical).length) {
       return NextResponse.json(
-        { ok: true, note: "No-op (no valid fields)", savedFields: [] },
+        {
+          ok: true,
+          note: "No-op (no valid fields)",
+          savedFields: [],
+          debug:
+            process.env.NODE_ENV === "development"
+              ? { dropped }
+              : undefined,
+        },
         { status: 200 }
       );
     }
 
+
     // 1) Append audit rows to Profile-Changes (ts, alumniId, email, field, before, after)
     const changeRows: string[][] = [];
-    for (const [fieldLower, after] of Object.entries(filteredChangesByCanonical)) {
-      const before = rowIndex !== -1 ? beforeForFieldLower(fieldLower) : "";
+    for (const [fieldCanon, after] of Object.entries(filteredChangesByCanonical)) {
+      const before = rowIndex !== -1 ? beforeForCanonKey(fieldCanon) : "";
       if (before === after) continue;
-      changeRows.push([nowIso, ownerKey, submitter, fieldLower, before, after]);
+      changeRows.push([nowIso, ownerKey, editorEmail, fieldCanon, before, after]);
     }
 
     if (changeRows.length) {
@@ -590,15 +646,12 @@ export async function PUT(req: Request) {
       }
     }
 
-    // Decide whether we are about to write/backfill email on Live
-    const currentLiveEmail =
-      rowIndex !== -1 && emailIdx !== -1
-        ? String(currentRow[emailIdx] ?? "").trim()
-        : "";
-    const willBackfillEmail = emailIdx !== -1 && !currentLiveEmail && !!submitter;
+    const willWriteEmail =
+      emailIdx !== -1 &&
+      !!emailToWrite &&
+      normalizeGmail(emailToWrite) !== normalizeGmail(currentLiveEmail);
 
-    // Unique-email guard
-    if (willBackfillEmail) {
+    if (willWriteEmail) {
       const dup = checkDuplicateEmailInLive({
         dataRows,
         emailIdx,
@@ -608,9 +661,30 @@ export async function PUT(req: Request) {
         isPublicIdx,
         updatedIdx,
         ownerKey,
-        candidateEmail: submitter,
+        candidateEmail: emailToWrite,
       });
       if (dup) return NextResponse.json(dup, { status: 409 });
+    }
+
+    // ✅ Ensure server-driven email writes are audited.
+    // If the client didn't explicitly send "email", but the server will write it,
+    // append a Profile-Changes row for email.
+    const emailWasExplicitlyInChanges =
+      Object.prototype.hasOwnProperty.call(filteredChangesByCanonical, "email");
+
+    if (willWriteEmail && !emailWasExplicitlyInChanges) {
+      const before = currentLiveEmail;
+      const after = emailToWrite;
+
+      // avoid noise, but this should already be true if willWriteEmail is true
+      if (normalizeGmail(before) !== normalizeGmail(after)) {
+        await sheets.spreadsheets.values.append({
+          spreadsheetId,
+          range: "Profile-Changes!A:F",
+          valueInputOption: "RAW",
+          requestBody: { values: [[nowIso, ownerKey, editorEmail, "email", before, after]] },
+        });
+      }
     }
 
     if (rowIndex === -1) {
@@ -635,10 +709,16 @@ export async function PUT(req: Request) {
       newRow[idIdx] = ownerKey;
       newRow[slugIdx] = finalSlug;
 
+      // NOTE: `status = "needs_review"` is an INTERNAL “recent changes” flag for admins.
+      // It is NOT a publish gate. Public visibility is controlled by `isPublic` only.
+      // Do not block/withhold public updates based on `status`.
+
       newRow[statusIdx] = "needs_review";
       if (updatedIdx !== -1) newRow[updatedIdx] = nowIso;
 
-      if (emailIdx !== -1 && submitter) newRow[emailIdx] = submitter;
+      if (emailIdx !== -1 && emailToWrite) {
+        newRow[emailIdx] = emailToWrite;
+      }
 
       await sheets.spreadsheets.values.update({
         spreadsheetId,
@@ -647,11 +727,6 @@ export async function PUT(req: Request) {
         requestBody: { values: [newRow] },
       });
 
-      if (submitter) {
-        void ensureAlias(sheets, spreadsheetId, submitter, ownerKey).catch(
-          () => {}
-        );
-      }
     } else {
       // Update row
       const absoluteRowNumber = rowIndex + 2;
@@ -666,12 +741,15 @@ export async function PUT(req: Request) {
       row[idIdx] = ownerKey;
       row[slugIdx] = finalSlug;
 
+      // NOTE: `status = "needs_review"` is an INTERNAL “recent changes” flag for admins.
+      // It is NOT a publish gate. Public visibility is controlled by `isPublic` only.
+      // Do not block/withhold public updates based on `status`.
+
       row[statusIdx] = "needs_review";
       if (updatedIdx !== -1) row[updatedIdx] = nowIso;
 
-      if (emailIdx !== -1) {
-        const curr = String(row[emailIdx] ?? "").trim();
-        if (!curr && submitter) row[emailIdx] = submitter;
+      if (emailIdx !== -1 && emailToWrite) {
+        row[emailIdx] = emailToWrite;
       }
 
       await sheets.spreadsheets.values.update({
@@ -691,13 +769,18 @@ export async function PUT(req: Request) {
 
       // optional debug
       savedFieldsCanonical: Array.from(new Set(acceptedCanonicalKeys)),
-      debug: {
-        tab: "Profile-Live",
-        ownerKey,
-        wroteAt: nowIso,
-        rowIndex,
-        changeRowCount: changeRows.length,
-      },
+      debug:
+        process.env.NODE_ENV === "development"
+          ? {
+              tab: "Profile-Live",
+              ownerKey,
+              wroteAt: nowIso,
+              rowIndex,
+              changeRowCount: changeRows.length,
+              dropped, // optional: super helpful while you’re stabilizing field mapping
+            }
+          : undefined,
+
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);

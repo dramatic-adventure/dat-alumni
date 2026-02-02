@@ -17,7 +17,7 @@ export function CanonicalSlugGate({
     let cancelled = false;
 
     (async () => {
-      const res = await fetch(`/api/alumni/lookup?alumniId=${encodeURIComponent(slug)}`, {
+      const res = await fetch(`/api/alumni/lookup?slug=${encodeURIComponent(slug)}&nocache=1`, {
         cache: "no-store",
       });
 

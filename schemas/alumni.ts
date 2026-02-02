@@ -66,8 +66,11 @@ export type AlumniProfile = {
   /** Secondary base (free text) */
   secondLocation?: string;
 
-  /** Headshot as a URL (server may ingest for archival) */
+  /** Public/display headshot URL (often derived). */
   headshotUrl?: string;
+
+  /** Profile-Live write key used by the Studio editor. */
+  currentHeadshotUrl?: string;
 
   /** Optional identity tags (opt-in, controlled vocab) */
   identityTags?: IdentityTag[];

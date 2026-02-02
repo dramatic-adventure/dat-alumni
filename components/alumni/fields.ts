@@ -67,7 +67,7 @@ export const IDENTITY_OPTIONS: { value: IdentityTag; label: string }[] = [
  *
  * Profile-Live headers you shared (story-related):
  * storyTitle, storyProgram, storyLocationName, storyYears, storyPartners,
- * storyShortStory, storyQuote, storyQuoteAuthor, storyMediaUrl,
+ * storyShortStory, storyQuote, storyQuoteAttribution, storyMediaUrl,
  * storyMoreInfoUrl, storyCountry, showOnMap
  *
  * (We are NOT inventing extra story columns in Profile-Live here.)
@@ -390,15 +390,15 @@ export const PROFILE_FIELDS: FieldDef[] = [
       "A short line that stayed with you — from you or someone else. Please don’t add quotation marks; we’ll format them for you.",
   },
   {
-    key: "storyQuoteAuthor",
+    key: "storyQuoteAttribution",
     label: "Quote Author",
     kind: "text",
     help: "Who said the quote? If it’s you, include your name as you’d like it to appear.",
   },
 
-  // ✅ IMPORTANT: Profile-Live header is showOnMap (NOT storyShowOnMap)
+  // ✅ IMPORTANT: Profile-Live header is storystoryShowOnMap (NOT storyShowOnMap)
   {
-    key: "showOnMap",
+    key: "storyShowOnMap",
     label: "Show on Map?",
     kind: "toggle",
     help:
@@ -482,8 +482,8 @@ export const PROFILE_GROUPS: Record<string, string[]> = {
     "storyMoreInfoUrl",
     "storyShortStory",
     "storyQuote",
-    "storyQuoteAuthor",
-    "showOnMap",
+    "storyQuoteAttribution",
+    "storyShowOnMap",
   ],
 
   "Tech Support": ["supportBug", "supportFeature", "supportAssistance"],

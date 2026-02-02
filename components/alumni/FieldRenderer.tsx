@@ -2,11 +2,7 @@
 
 import { useMemo } from "react";
 import type { AlumniProfile } from "@/schemas";
-import {
-  PROFILE_FIELDS,
-  PROFILE_GROUPS,
-  type FieldDef,
-} from "@/components/alumni/fields";
+import type { FieldDef } from "@/components/alumni/fields";
 
 /** ─────────────────────────────────────────────────────────────
  * Small path helpers for nested keys like "story.title"
@@ -98,8 +94,9 @@ function FieldRow({
 
   // If draft is blank, use baseline as placeholder fallback.
   // Never overwrite draft; this is purely display guidance.
-  const computedPlaceholder =
-  isBlank(raw) ? (toPlaceholderValue(baseRaw) || def.placeholder) : def.placeholder;
+  const computedPlaceholder = isBlank(raw)
+    ? toPlaceholderValue(baseRaw) || def.placeholder
+    : def.placeholder;
 
   // For UI controls where placeholder isn’t meaningful, show “Currently saved…”
   const showCurrentLine =
@@ -123,242 +120,289 @@ function FieldRow({
       typeof val === "string"
     ) {
       val = clampLen(val, def.maxLen);
-    }
-    if (def.kind === "email" && typeof val === "string") {
-      val = val.trim();
+        }
+
+    // Normalize toggles to Live-friendly cell strings
+    if (def.kind === "toggle") {
+      val = val ? "true" : "";
     }
 
-    onChange(setByPath(value, path, val));
+    // Normalize select/multiselect/chips into comma-separated strings if arrays
+    if ((def.kind === "multiselect" || def.kind === "chips") && Array.isArray(val)) {
+      val = val.join(", ");
+    }
+
+    const next = setByPath(value, path, val);
+    onChange(next);
   }
 
-  const currentLine = showCurrentLine ? (
-    <p className="mt-1 text-[11px] text-gray-400">
-      Currently saved:{" "}
-      <span className="text-gray-600 font-medium">
-        {toPlaceholderValue(baseRaw)}
-      </span>
-    </p>
-  ) : null;
+  // --- UI renderers (keep simple, resilient) ---
+  const baseLine =
+    showCurrentLine ? (
+      <p className="mt-1 text-xs text-gray-500">
+        Currently saved: <span className="font-medium">{toPlaceholderValue(baseRaw)}</span>
+      </p>
+    ) : null;
 
-  // Render by kind
-  switch (def.kind) {
-    case "text":
-    case "url":
-    case "email":
+  const commonInputClass =
+    "w-full rounded-xl border border-black/10 bg-white/80 px-3 py-2 text-[15px] text-[#241123] shadow-sm outline-none focus:ring-2 focus:ring-black/10";
+
+  const wrapClass = "rounded-2xl bg-white/70 p-3";
+
+  const renderTextLike = (type: "text" | "email" | "url" = "text") => (
+    <div className={wrapClass}>
+      {commonLabel}
+      <input
+        type={type}
+        value={typeof raw === "string" ? raw : toPlaceholderValue(raw)}
+        placeholder={computedPlaceholder || ""}
+        className={commonInputClass}
+        onChange={(e) => update(e.target.value)}
+      />
+      {baseLine}
+      {help}
+      {counter}
+    </div>
+  );
+
+  const renderTextarea = () => (
+    <div className={wrapClass}>
+      {commonLabel}
+      <textarea
+        value={typeof raw === "string" ? raw : toPlaceholderValue(raw)}
+        placeholder={computedPlaceholder || ""}
+        className={commonInputClass}
+        rows={def.maxLen && def.maxLen > 180 ? 7 : 5}
+        onChange={(e) => update(e.target.value)}
+      />
+      {baseLine}
+      {help}
+      {counter}
+    </div>
+  );
+
+  const renderDate = () => (
+    <div className={wrapClass}>
+      {commonLabel}
+      <input
+        type="date"
+        value={typeof raw === "string" ? raw : ""}
+        className={commonInputClass}
+        onChange={(e) => update(e.target.value)}
+      />
+      {baseLine}
+      {help}
+    </div>
+  );
+
+  const renderToggle = () => {
+    const checked = String(raw || "").toLowerCase() === "true" || raw === true;
+    return (
+      <div className={wrapClass}>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="text-[11px] tracking-wider uppercase text-gray-600 font-medium">
+              {def.label}
+              {def.required ? <span className="ml-1 text-red-500">*</span> : null}
+            </div>
+            {help}
+            {baseLine}
+          </div>
+
+          <button
+            type="button"
+            className={[
+              "h-8 w-14 rounded-full border transition",
+              checked ? "bg-black/80 border-black/20" : "bg-black/5 border-black/10",
+            ].join(" ")}
+            onClick={() => update(!checked)}
+            aria-pressed={checked}
+          >
+            <span
+              className={[
+                "block h-7 w-7 rounded-full bg-white shadow-sm transition",
+                checked ? "translate-x-6" : "translate-x-1",
+              ].join(" ")}
+            />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderSelect = () => (
+    <div className={wrapClass}>
+      {commonLabel}
+      <select
+        value={typeof raw === "string" ? raw : ""}
+        className={commonInputClass}
+        onChange={(e) => update(e.target.value)}
+      >
+        <option value="">{computedPlaceholder ? computedPlaceholder : "Select…"}</option>
+        {(def.options ?? []).map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      {baseLine}
+      {help}
+    </div>
+  );
+
+  // If options exist, render pill toggles; otherwise comma-separated text input
+  const renderMulti = () => {
+    const hasOptions = Array.isArray(def.options) && def.options.length > 0;
+
+    const current = (Array.isArray(raw) ? raw.join(", ") : String(raw || ""))
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (!hasOptions) {
       return (
-        <div className="mb-4">
+        <div className={wrapClass}>
           {commonLabel}
           <input
-            type={def.kind === "email" ? "email" : "text"}
-            value={(raw ?? "") as any}
+            type="text"
+            value={String(raw || "")}
+            placeholder={computedPlaceholder || "Comma-separated"}
+            className={commonInputClass}
             onChange={(e) => update(e.target.value)}
-            placeholder={computedPlaceholder}
-            className="w-full h-11 rounded-xl border border-gray-200 px-3 focus:outline-none focus:ring-4 focus:ring-purple-200"
           />
+          {baseLine}
           {help}
-          {currentLine}
-          {counter}
-        </div>
-      );
-
-    case "textarea":
-      return (
-        <div className="mb-4">
-          {commonLabel}
-          <textarea
-            value={(raw ?? "") as any}
-            onChange={(e) => update(e.target.value)}
-            placeholder={computedPlaceholder}
-            className="w-full min-h-[120px] rounded-xl border border-gray-200 px-3 py-2 focus:outline-none focus:ring-4 focus:ring-purple-200"
-          />
-          {help}
-          {currentLine}
-          {counter}
-        </div>
-      );
-
-    case "toggle":
-      return (
-        <div className="mb-4">
-          <label className="inline-flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={Boolean(raw)}
-              onChange={(e) => update(e.target.checked)}
-              className="h-4 w-4"
-            />
-            <span className="text-sm text-gray-700">{def.label}</span>
-          </label>
-          {help}
-          {currentLine}
-        </div>
-      );
-
-    case "select":
-      return (
-        <div className="mb-4">
-          {commonLabel}
-          <select
-            value={(raw ?? "") as any}
-            onChange={(e) => update(e.target.value)}
-            className="w-full h-11 rounded-xl border border-gray-200 px-3 bg-white focus:outline-none focus:ring-4 focus:ring-purple-200"
-          >
-            <option value="">{def.placeholder ?? "Select…"}</option>
-            {(def.options ?? []).map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          {help}
-          {currentLine}
-        </div>
-      );
-
-    case "multiselect":
-      return (
-        <div className="mb-4">
-          {commonLabel}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-xl border border-gray-200 p-3">
-            {(def.options ?? []).map((opt) => {
-              const arr: string[] = Array.isArray(raw) ? raw : [];
-              const checked = arr.includes(opt.value);
-              return (
-                <label key={opt.value} className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(e) => {
-                      const next = new Set(arr);
-                      if (e.target.checked) next.add(opt.value);
-                      else next.delete(opt.value);
-                      update(Array.from(next));
-                    }}
-                    className="h-4 w-4"
-                  />
-                  <span className="text-sm text-gray-800">{opt.label}</span>
-                </label>
-              );
-            })}
-          </div>
-          {help}
-          {currentLine}
-        </div>
-      );
-
-    case "chips": {
-      const arr: string[] =
-        Array.isArray(raw)
-          ? raw
-          : typeof raw === "string" && raw.trim()
-          ? raw
-              .split(",")
-              .map((s: string) => s.trim())
-              .filter(Boolean)
-          : [];
-      return (
-        <div className="mb-4">
-          {commonLabel}
-          <textarea
-            value={arr.join(", ")}
-            onChange={(e) =>
-              update(
-                e.target.value
-                  .split(",")
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-              )
-            }
-            placeholder={computedPlaceholder ?? "Comma-separated items"}
-            className="w-full min-h-[80px] rounded-xl border border-gray-200 px-3 py-2 focus:outline-none focus:ring-4 focus:ring-purple-200"
-          />
-          {help}
-          {currentLine}
         </div>
       );
     }
 
-    case "date":
+    const toggle = (v: string) => {
+      const set = new Set(current);
+      if (set.has(v)) set.delete(v);
+      else set.add(v);
+      update(Array.from(set));
+    };
+
+    return (
+      <div className={wrapClass}>
+        {commonLabel}
+        <div className="flex flex-wrap gap-2">
+          {(def.options ?? []).map((o) => {
+            const on = current.includes(o.value);
+            return (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => toggle(o.value)}
+                className={[
+                  "rounded-full px-3 py-1 text-sm border transition",
+                  on ? "bg-black/80 text-white border-black/20" : "bg-white/70 text-[#241123] border-black/10",
+                ].join(" ")}
+              >
+                {on ? "✓ " : ""}
+                {o.label}
+              </button>
+            );
+          })}
+        </div>
+        {baseLine}
+        {help}
+      </div>
+    );
+  };
+
+  switch (def.kind) {
+    case "text":
       return (
-        <div className="mb-4">
-          {commonLabel}
-          <input
-            type="date"
-            value={(raw ?? "") as any}
-            onChange={(e) => update(e.target.value)}
-            className="w-full h-11 rounded-xl border border-gray-200 px-3 focus:outline-none focus:ring-4 focus:ring-purple-200"
-          />
-          {help}
-          {currentLine}
+        <div className="grid gap-2">
+          {renderTextLike("text")}
         </div>
       );
-
+    case "email":
+      return (
+        <div className="grid gap-2">
+          {renderTextLike("email")}
+        </div>
+      );
+    case "url":
+      return (
+        <div className="grid gap-2">
+          {renderTextLike("url")}
+        </div>
+      );
+    case "textarea":
+      return (
+        <div className="grid gap-2">
+          {renderTextarea()}
+        </div>
+      );
+    case "date":
+      return (
+        <div className="grid gap-2">
+          {renderDate()}
+        </div>
+      );
+    case "toggle":
+      return (
+        <div className="grid gap-2">
+          {renderToggle()}
+        </div>
+      );
+    case "select":
+      return (
+        <div className="grid gap-2">
+          {renderSelect()}
+        </div>
+      );
+    case "multiselect":
+      return (
+        <div className="grid gap-2">
+          {renderMulti()}
+        </div>
+      );
+    case "chips":
+      return (
+        <div className="grid gap-2">
+          {renderMulti()}
+        </div>
+      );
     default:
-      return null;
+      return (
+        <div className="grid gap-2">
+          {renderTextLike("text")}
+        </div>
+      );
   }
 }
 
-/** Public component
- * - fields: defaults to PROFILE_FIELDS
- * - groups: optional sectioning (defaults to PROFILE_GROUPS)
- */
+/** Render a list of fields (order as passed) */
 export default function FieldRenderer({
   value,
   onChange,
-  baseline, // ✅ NEW: baseline Profile-Live snapshot for placeholders
-  fields = PROFILE_FIELDS,
-  groups = PROFILE_GROUPS,
+  fields,
+  baseline,
 }: {
   value: AlumniProfile;
   onChange: (next: AlumniProfile) => void;
+  fields: FieldDef[];
   baseline?: AlumniProfile | null;
-  fields?: FieldDef[];
-  groups?: Record<string, string[]>;
 }) {
-  // Index field defs by key/path for grouping
-  const byKey = useMemo(() => {
-    const map = new Map<string, FieldDef>();
-    for (const f of fields) {
-      const k = (f.path || (f.key as string)) as string;
-      map.set(k, f);
-    }
-    return map;
-  }, [fields]);
-
-  const sections = useMemo(() => {
-    const res: Array<{ title: string; defs: FieldDef[] }> = [];
-    if (!groups) {
-      res.push({ title: "Fields", defs: fields });
-      return res;
-    }
-    for (const [title, keys] of Object.entries(groups)) {
-      const defs = keys.map((k) => byKey.get(k)).filter(Boolean) as FieldDef[];
-      if (defs.length) res.push({ title, defs });
-    }
-    return res;
-  }, [groups, fields, byKey]);
+  const safeFields = useMemo(() => (Array.isArray(fields) ? fields : []), [fields]);
 
   return (
-    <div className="space-y-8">
-      {sections.map((sec) => (
-        <section
-          key={sec.title}
-          className="rounded-2xl bg-white shadow-card p-6 border border-gray-100"
-        >
-          <h3 className="text-base font-semibold mb-4 tracking-wide text-gray-900">
-            {sec.title}
-          </h3>
-          {sec.defs.map((def) => (
-            <FieldRow
-              key={(def.path || (def.key as string)) as string}
-              def={def}
-              value={value}
-              onChange={onChange}
-              baseline={baseline} // ✅ pass through
-            />
-          ))}
-        </section>
-      ))}
+    <div className="grid gap-3">
+      {safeFields.map((def, i) => {
+        const key = String(def.path || def.key);
+        return (
+          <FieldRow
+            key={`${key}-${i}`}
+            def={def}
+            value={value}
+            onChange={onChange}
+            baseline={baseline ?? null}
+          />
+        );
+      })}
     </div>
   );
 }

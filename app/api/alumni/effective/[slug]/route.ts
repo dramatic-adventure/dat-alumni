@@ -191,21 +191,26 @@ export async function GET(req: Request, ctx: { params: { slug: string } }) {
     // Authoritative canonicalization + Live profile data
     const lookupUrl = new URL("/api/alumni/lookup", origin);
     lookupUrl.searchParams.set("alumniId", incoming);
+    lookupUrl.searchParams.set("slug", incoming);
+
+    const cookie = req.headers.get("cookie") || "";
 
     const base: any = await fetchJson(lookupUrl.toString(), {
       headers: {
         "x-debug": req.headers.get("x-debug") || "",
         "x-admin-token": req.headers.get("x-admin-token") || "",
+        ...(cookie ? { cookie } : {}),
       },
     });
 
+
     const canonical = lower(base?.canonicalSlug || incoming).trim();
 
-const redirectedFrom =
-  lower(base?.redirectedFrom || "").trim() ||
-  (canonical && canonical !== incoming ? incoming : "");
+    const redirectedFrom =
+      lower(base?.redirectedFrom || "").trim() ||
+      (canonical && canonical !== incoming ? incoming : "");
 
-const hasRedirect = Boolean(canonical && incoming && canonical !== incoming);
+    const hasRedirect = Boolean(canonical && incoming && canonical !== incoming);
 
 
     // Optional redirect mode (useful for browser hits)

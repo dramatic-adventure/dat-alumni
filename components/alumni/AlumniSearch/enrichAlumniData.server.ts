@@ -7,6 +7,13 @@ import { productionMap } from "@/lib/productionMap";
 import { seasons } from "@/lib/seasonData";
 import { getSlugAliases, normSlug, resolveCanonicalSlug } from "@/lib/slugAliases";
 
+function devLog(...args: any[]) {
+  if (process.env.NODE_ENV !== "development") return;
+  if (process.env.DEBUG_HEADSHOTS !== "1") return;
+  // eslint-disable-next-line no-console
+  console.log(...args);
+}
+
 /**
  * Profile-Live row shape (based on your current headers).
  * Keep it local to this module so it stays obviously tied to enrichment.
@@ -266,7 +273,7 @@ export type ProfileMediaRow = {
   fileId?: string;
   externalUrl?: string;
   uploadedAt?: string;
-    isCurrent?: string | boolean; // sheet readers may return boolean true/false
+  isCurrent?: string | boolean; // sheet readers may return boolean true/false
   sortIndex?: string; // optional; if present, can break ties deterministically
 };
 
@@ -339,22 +346,18 @@ function pickBestHeadshot(media: ProfileMediaRow[] | undefined) {
     return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
   };
 
-  const current = rows.filter((r) => isTrue(r.isCurrent));
-  const pool = current.length ? current : rows;
+  if (!rows.length) return { upstreamUrl: "", cacheKey: "" };
 
-  if (!pool.length) return { upstreamUrl: "", cacheKey: "" };
-
-  pool.sort((a, b) => {
-    // 0) if one is explicitly current, it wins
+  rows.sort((a, b) => {
+    // 0) TRUE wins first (PRIMARY)
     const aCur = isTrue(a.isCurrent);
     const bCur = isTrue(b.isCurrent);
     if (aCur !== bCur) return aCur ? -1 : 1;
 
-    // 1) newest uploadedAt wins
+    // 1) newest uploadedAt wins (SECONDARY)
     const tA = parseTime(a.uploadedAt);
     const tB = parseTime(b.uploadedAt);
     if (tA !== tB) return tB - tA;
-
 
     // 2) if present, lower sortIndex wins (explicit manual quality ordering)
     const sA = parseSortIndex(a.sortIndex);
@@ -366,15 +369,16 @@ function pickBestHeadshot(media: ProfileMediaRow[] | undefined) {
     const bHasFile = !!String(b.fileId || "").trim();
     if (aHasFile !== bHasFile) return aHasFile ? -1 : 1;
 
-    // 4) stable deterministic fallback: compare identifier strings
+    // 4) stable deterministic fallback
     const aKey = String(a.fileId || a.externalUrl || "").trim();
     const bKey = String(b.fileId || b.externalUrl || "").trim();
-    if (aKey !== bKey) return bKey.localeCompare(aKey);
+    if (aKey !== bKey) return aKey.localeCompare(bKey);
 
     return 0;
   });
 
-  const best = pool[0];
+  const best = rows[0];
+
   const fileId = String(best.fileId || "").trim();
   const externalUrl = String(best.externalUrl || "").trim();
   const uploadedAt = String(best.uploadedAt || "").trim();
@@ -422,12 +426,11 @@ export async function enrichAlumniData(
     const canonicalSlug = await resolveCanonicalSlug(item.slug);
     const slugAliases = await getSlugAliases(canonicalSlug); // includes canonical
 
-    // ✅ Resolve authoritative headshot from Profile-Media
-    // Most recent wins (by uploadedAt); prefers isCurrent=TRUE.
-    // IMPORTANT: Profile-Live alumniId can be empty; fall back to slug/canonicalSlug for lookup.
-    // ✅ RIGHT: Profile-Media is keyed by alumniId
-    const mediaLookupKey = String(item.alumniId || "").trim();
     // ✅ Resolve authoritative headshot from Profile-Media (most recent wins; prefers isCurrent=TRUE)
+    // Profile-Media is keyed by alumniId, but many Profile-Live rows may have alumniId blank.
+    // In your data, Profile-Media.alumniId often matches Profile-Live.slug (e.g. "jesse-baxter"),
+    // so we fall back deterministically to slug/canonicalSlug when alumniId is missing.
+
     // Profile-Media is keyed by alumniId, but many Profile-Live rows may have alumniId blank.
     // In your data, Profile-Media.alumniId often matches Profile-Live.slug (e.g. "jesse-baxter"),
     // so we fall back deterministically to slug/canonicalSlug when alumniId is missing.
@@ -439,7 +442,7 @@ export async function enrichAlumniData(
     const k2 = String(key2 || "").trim();
     const k3 = String(key3 || "").trim();
 
-    const mediaRows =
+    const mediaRows: ProfileMediaRow[] =
       (k1 ? mediaByKey.get(k1) : undefined) ??
       (k1 ? mediaByKey.get(normSlug(k1)) : undefined) ??
       (k2 ? mediaByKey.get(k2) : undefined) ??
@@ -449,8 +452,13 @@ export async function enrichAlumniData(
       [];
 
 
-    if (process.env.NODE_ENV === "development" && item.slug === "THE-SLUG-YOU-TEST") {
-      console.log("[enrich] mediaRows (pre-pick):", mediaRows.map(r => ({
+
+    if (
+  process.env.NODE_ENV === "development" &&
+  process.env.DEBUG_HEADSHOT_SLUG &&
+  normSlug(item.slug) === normSlug(process.env.DEBUG_HEADSHOT_SLUG)
+) {
+      devLog("[enrich] mediaRows (pre-pick):", mediaRows.map(r => ({
         kind: r.kind,
         isCurrent: r.isCurrent,
         fileId: r.fileId,
@@ -461,7 +469,7 @@ export async function enrichAlumniData(
 
     const resolvedHeadshot = pickBestHeadshot(mediaRows);
     if (process.env.NODE_ENV === "development") {
-      console.log("[headshot-picker]", {
+      devLog("[headshot-picker]", {
         slug: item.slug,
         alumniId: item.alumniId,
         canonicalSlug,
@@ -478,8 +486,12 @@ export async function enrichAlumniData(
       });
     }
 
-    if (process.env.NODE_ENV === "development" && item.slug === "THE-SLUG-YOU-TEST") {
-      console.log("[enrich] picked headshot:", resolvedHeadshot);
+    if (
+  process.env.NODE_ENV === "development" &&
+  process.env.DEBUG_HEADSHOT_SLUG &&
+  normSlug(item.slug) === normSlug(process.env.DEBUG_HEADSHOT_SLUG)
+) {
+      devLog("[enrich] picked headshot:", resolvedHeadshot);
     }
 
     // ✅ Cache key based on Profile-Media uploadedAt (or stable fallback)
@@ -627,10 +639,10 @@ export async function enrichAlumniData(
     }
 
     // Optional: expand some fields into word tokens for better matching
-    tokenize(item.bioShort).forEach((t) => bioTokens.add(t));
-    tokenize(item.bioLong).forEach((t) => bioTokens.add(t));
-    tokenize(item.currentWork).forEach((t) => bioTokens.add(t));
-    tokenize(item.location).forEach((t) => locationTokens.add(t));
+    tokenize(item.bioShort).forEach((t: string) => bioTokens.add(t));
+    tokenize(item.bioLong).forEach((t: string) => bioTokens.add(t));
+    tokenize(item.currentWork).forEach((t: string) => bioTokens.add(t));
+    tokenize(item.location).forEach((t: string) => locationTokens.add(t));
 
     out.push({
       ...item,

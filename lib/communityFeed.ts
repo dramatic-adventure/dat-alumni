@@ -67,7 +67,7 @@ const STORY_FIELDS = new Set([
   "storyPartners",
   "storyShortStory",
   "storyQuote",
-  "storyQuoteAuthor",
+  "storyQuoteAttribution",
   "storyMediaUrl",
   "storyMoreInfoUrl",
   "storyCountry",
