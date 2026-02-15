@@ -10,6 +10,14 @@ interface MiniProfileCardProps {
   role: string;
   slug: string;
   headshotUrl?: string;
+
+  /**
+   * ✅ If provided, MiniProfileCard can self-hydrate
+   * the selected/current headshot from /api/alumni/media/list
+   * (useful on pages that don't mount HeadshotProvider).
+   */
+  alumniId?: string;
+
   customStyle?: CSSProperties;
   nameFontSize?: number;
   roleFontSize?: number;
@@ -31,20 +39,125 @@ interface MiniProfileCardProps {
 function addCacheBust(url: string, cacheKey?: string | number) {
   const raw = String(url || "").trim();
   if (!raw) return raw;
-  if (cacheKey === undefined || cacheKey === null || cacheKey === "") return raw;
+
+  const ck =
+    cacheKey === undefined || cacheKey === null ? "" : String(cacheKey).trim();
+  if (!ck) return raw;
 
   try {
     // Only touch our proxy URLs
     if (!raw.startsWith("/api/img?")) return raw;
 
     const u = new URL(raw, "http://local"); // base required for relative URLs
-    if (u.searchParams.has("v")) return raw;
-
-    u.searchParams.set("v", String(cacheKey));
+    u.searchParams.set("v", ck);
     return u.pathname + "?" + u.searchParams.toString();
   } catch {
     return raw;
   }
+}
+
+/**
+ * If /api/img is in "redirect fallback" mode (302), Next/Image can behave inconsistently.
+ * So we HEAD with redirect:manual and if we see Location, we bypass the proxy and use that src directly.
+ */
+async function resolveImgProxyRedirect(src: string): Promise<string> {
+  const raw = String(src || "").trim();
+  if (!raw.startsWith("/api/img?")) return raw;
+
+  try {
+    const res = await fetch(raw, {
+      method: "HEAD",
+      cache: "no-store",
+      redirect: "manual",
+    });
+
+    if (res.status >= 300 && res.status < 400) {
+      const loc = res.headers.get("location");
+      if (loc) return loc;
+    }
+
+    return raw;
+  } catch {
+    return raw;
+  }
+}
+
+// ---- mini hydrator (for pages without HeadshotProvider) ----
+function isTrueFlag(v: any): boolean {
+  if (v === true) return true;
+  const s = String(v ?? "").trim().toLowerCase();
+  return s === "true" || s === "t" || s === "1" || s === "yes" || s === "y";
+}
+
+function toTime(it: any): number {
+  const raw =
+    it?.uploadedAt ??
+    it?.createdAt ??
+    it?.updatedAt ??
+    it?.ts ??
+    it?.timestamp ??
+    "";
+  const n = typeof raw === "number" ? raw : Date.parse(String(raw));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function toCacheKey(it: any): string {
+  const t = toTime(it);
+  return t ? String(t) : "";
+}
+
+function toApiImgUrl(it: any): string {
+  const fid = String(it?.fileId || "").trim();
+  const ext = String(it?.externalUrl || "").trim();
+  const v = toCacheKey(it);
+
+  if (fid) {
+    const qs = new URLSearchParams();
+    qs.set("fileId", fid);
+    if (v) qs.set("v", v);
+    return `/api/img?${qs.toString()}`;
+  }
+
+  if (ext) {
+    const qs = new URLSearchParams();
+    qs.set("url", ext);
+    if (v) qs.set("v", v);
+    return `/api/img?${qs.toString()}`;
+  }
+
+  return "";
+}
+
+function orderMostRecent(items: any[]) {
+  return [...(items || [])].sort((a, b) => {
+    const ta = toTime(a);
+    const tb = toTime(b);
+    if (tb !== ta) return tb - ta;
+
+    const sa = Number.isFinite(Number(a?.sortIndex))
+      ? Number(a.sortIndex)
+      : Number.POSITIVE_INFINITY;
+    const sb = Number.isFinite(Number(b?.sortIndex))
+      ? Number(b.sortIndex)
+      : Number.POSITIVE_INFINITY;
+    if (sa !== sb) return sa - sb;
+
+    return String(b?.fileId || b?.externalUrl || "").localeCompare(
+      String(a?.fileId || a?.externalUrl || "")
+    );
+  });
+}
+
+function pickCurrentOrMostRecent(items: any[]) {
+  const headshots = (items || []).filter((x) => {
+    const k = String(x?.kind || "headshot").trim().toLowerCase();
+    return k === "headshot";
+  });
+
+  const current = headshots.filter((x) => isTrueFlag(x?.isCurrent));
+  if (current.length) return orderMostRecent(current)[0];
+
+  return orderMostRecent(headshots)[0] || null;
 }
 
 export default function MiniProfileCard({
@@ -52,6 +165,8 @@ export default function MiniProfileCard({
   role,
   slug,
   headshotUrl,
+  alumniId,
+
   customStyle,
   nameFontSize,
   roleFontSize,
@@ -65,51 +180,85 @@ export default function MiniProfileCard({
 
   cacheKey,
 }: MiniProfileCardProps) {
-  const defaultImage = "/images/default-headshot.png";  
+  // ✅ Your real fallback (public/images/default-headshot.png)
+  const defaultImage = "/images/default-headshot.png";
 
-  // Enrichment should already provide /api/img?url=... or default.
-  // We still harden here: blank => default.
   const hs = useHeadshot(slug);
 
-  const baseSrc = useMemo(() => {
-    // Prefer explicit prop if provided
-    const prop = String(headshotUrl ?? "").trim().replace(/\s+/g, "");
-    if (prop) return prop;
+  // ✅ Local override when HeadshotProvider isn't available on this route
+  const [hydratedHeadshotUrl, setHydratedHeadshotUrl] = useState<string>("");
 
-    // Else, prefer authoritative enriched headshot from provider
+  useEffect(() => {
+    let cancelled = false;
+
+  async function hydrate() {
+    const id = String(alumniId || "").trim();
+    if (!id) return;
+
+    // ✅ If provider already has it, or we were given a headshotUrl prop,
+    // do NOT do per-card network calls (directory must be instant).
+    const hasProvider = !!String(hs?.url || "").trim();
+    const hasProp = !!String(headshotUrl || "").trim();
+    if (hasProvider || hasProp) return;
+
+    try {
+      const qs = new URLSearchParams({ alumniId: id, kind: "headshot" });
+      const r = await fetch(`/api/alumni/media/list?${qs.toString()}`, {
+        cache: "no-store",
+      });
+      const j = await r.json();
+      const rawItems = (j?.items || []) as any[];
+
+      const chosen = pickCurrentOrMostRecent(rawItems);
+      const chosenUrl = chosen ? toApiImgUrl(chosen) : "";
+
+      if (!cancelled && chosenUrl) setHydratedHeadshotUrl(chosenUrl);
+    } catch {
+      // non-fatal
+    }
+  }
+
+    hydrate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [alumniId, hs?.url, headshotUrl]);
+
+  const baseSrc = useMemo(() => {
+    // 1) ✅ Provider (authoritative when mounted)
     const ctx = String(hs?.url || "").trim();
     if (ctx) return ctx;
 
-    // Else default
+    // 2) ✅ Local hydrator (for routes without provider)
+    const hyd = String(hydratedHeadshotUrl || "").trim();
+    if (hyd) return hyd;
+
+    // 3) Prop fallback (legacy)
+    const prop = String(headshotUrl ?? "").trim().replace(/\s+/g, "");
+    if (prop) return prop;
+
     return defaultImage;
-  }, [headshotUrl, hs?.url, defaultImage]);
+  }, [hs?.url, hydratedHeadshotUrl, headshotUrl, defaultImage]);
 
   const effectiveCacheKey = cacheKey ?? hs?.cacheKey;
 
   const srcWithBust = useMemo(() => {
-    // Only bust cache for non-default images.
-    if (baseSrc === defaultImage) return baseSrc;
+    if (!baseSrc || baseSrc === defaultImage) return defaultImage;
     return addCacheBust(baseSrc, effectiveCacheKey);
   }, [baseSrc, defaultImage, effectiveCacheKey]);
 
+// ✅ Instant render: show the real src immediately.
+// If it fails, fall back once.
+const [imgSrc, setImgSrc] = useState<string>(srcWithBust || defaultImage);
 
-  // ✅ One-way fallback to default
-  const [imgSrc, setImgSrc] = useState<string>(srcWithBust);
+useEffect(() => {
+  setImgSrc(srcWithBust || defaultImage);
+}, [srcWithBust, defaultImage]);
 
-  useEffect(() => {
-    setImgSrc(srcWithBust);
-  }, [srcWithBust]);
-
-  useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
-      console.log("[MiniProfileCard]", { slug, srcWithBust, cacheKey });
-    }
-  }, [slug, srcWithBust, cacheKey]);
-
-  const handleError = useCallback(() => {
-    setImgSrc((prev) => (prev === defaultImage ? prev : defaultImage));
-  }, [defaultImage]);
+const handleError = useCallback(() => {
+  setImgSrc(defaultImage);
+}, [defaultImage]);
 
   const isLight = variant === "light";
   const nameColor = isLight ? "#241123" : "#f2f2f2";
@@ -127,7 +276,10 @@ export default function MiniProfileCard({
       style={{ textDecoration: "none" }}
       aria-label={`${name} profile`}
     >
-      <div className="flex flex-col items-start" style={{ width: "144px", ...customStyle }}>
+      <div
+        className="flex flex-col items-start"
+        style={{ width: "144px", ...customStyle }}
+      >
         {/* Headshot */}
         <div
           className="relative w-full transition-all duration-300 group-hover:scale-[1.11] group-hover:brightness-105"
@@ -137,7 +289,9 @@ export default function MiniProfileCard({
             boxShadow: "2px 3px 4px rgba(36,17,35,0.5)",
             transformOrigin: "center center",
             borderRadius: 0,
-            outline: highlightFrame ? "3px solid rgba(255, 204, 0, 0.95)" : undefined,
+            outline: highlightFrame
+              ? "3px solid rgba(255, 204, 0, 0.95)"
+              : undefined,
             outlineOffset: highlightFrame ? "6px" : undefined,
           }}
         >
@@ -162,7 +316,7 @@ export default function MiniProfileCard({
           ) : null}
 
           <Image
-            key={imgSrc} // ✅ force remount when src changes
+            key={imgSrc} // remount only when src changes
             src={imgSrc}
             alt={`${name}${role ? ` — ${role}` : ""}`}
             onError={handleError}
