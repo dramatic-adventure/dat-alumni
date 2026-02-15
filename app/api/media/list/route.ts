@@ -16,7 +16,7 @@ type MediaItem = {
   collectionId?: string;
   collectionTitle?: string;
   externalUrl?: string;
-  isCurrent?: string;  // "TRUE"/"FALSE" or ""
+  isCurrent?: string; // "TRUE"/"FALSE" or ""
   isFeatured?: string; // "TRUE"/"FALSE" or ""
   sortIndex?: string;
   note?: string;
@@ -36,7 +36,12 @@ function idxOf(header: string[], candidates: string[]) {
   return -1;
 }
 
-async function withRetry<T>(fn: () => Promise<T>, label: string, tries = 3, baseDelayMs = 250): Promise<T> {
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  label: string,
+  tries = 3,
+  baseDelayMs = 250
+): Promise<T> {
   let lastErr: any;
   for (let attempt = 1; attempt <= tries; attempt++) {
     try {
@@ -45,7 +50,9 @@ async function withRetry<T>(fn: () => Promise<T>, label: string, tries = 3, base
       lastErr = e;
       const msg = String(e?.message || e);
       if (
-        /ECONNRESET|ENOTFOUND|ETIMEDOUT|EPIPE|socket hang up|rateLimitExceeded|backendError|internalError/i.test(msg) &&
+        /ECONNRESET|ENOTFOUND|ETIMEDOUT|EPIPE|socket hang up|rateLimitExceeded|backendError|internalError/i.test(
+          msg
+        ) &&
         attempt < tries
       ) {
         const delay = baseDelayMs * Math.pow(2, attempt - 1);
@@ -60,31 +67,65 @@ async function withRetry<T>(fn: () => Promise<T>, label: string, tries = 3, base
 
 function parseIntSafe(v: string | null, d: number) {
   const n = v ? parseInt(v, 10) : NaN;
-  return Number.isFinite(n) && n > 0 ? n : d;
+  return Number.isFinite(n) && n >= 0 ? n : d;
 }
 
 function toISOOrEmpty(v: string) {
-  const t = Date.parse(v);
-  if (Number.isFinite(t)) return new Date(t).toISOString();
+  const s = String(v || "").trim();
+  if (!s) return "";
   // Already ISO?
-  if (/^\d{4}-\d{2}-\d{2}T/.test(v)) return v;
+  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) return s;
+
+  const t = Date.parse(s);
+  if (Number.isFinite(t)) return new Date(t).toISOString();
   return "";
+}
+
+function cacheHeaders(opts: { includeDrive: boolean }) {
+  // "Nicer option":
+  // - Cache the list for a short window at the edge/CDN
+  // - Allow stale-while-revalidate for snappy repeat loads
+  //
+  // IMPORTANT: if includeDrive=true, we skip caching because it triggers Drive lookups
+  // (expensive + potentially variable) and we don't want that stuck in caches.
+  if (opts.includeDrive) {
+    return {
+      "Cache-Control": "private, no-store",
+    };
+  }
+
+  return {
+    // Browser can keep it briefly; CDN keeps it longer.
+    // Adjust if you want: s-maxage=120 for 2min, etc.
+    "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=86400",
+  };
 }
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const alumniId = String(searchParams.get("alumniId") || "").trim();
-    const kind = (String(searchParams.get("kind") || "all").trim().toLowerCase() as AnyKind);
-    const limit = Math.min(parseIntSafe(searchParams.get("limit"), 50), 100);
-    const offset = Math.max(parseIntSafe(searchParams.get("offset"), 0), 0);
-    const includeDrive = String(searchParams.get("includeDrive") || "false").toLowerCase() === "true";
+    const kind = String(searchParams.get("kind") || "all")
+      .trim()
+      .toLowerCase() as AnyKind;
+
+    const limit = Math.min(parseIntSafe(searchParams.get("limit"), 50) || 50, 100);
+    const offset = Math.max(parseIntSafe(searchParams.get("offset"), 0) || 0, 0);
+
+    const includeDrive =
+      String(searchParams.get("includeDrive") || "false").toLowerCase() === "true";
 
     if (!alumniId) {
-      return NextResponse.json({ error: "alumniId required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "alumniId required" },
+        { status: 400, headers: cacheHeaders({ includeDrive }) }
+      );
     }
     if (!["headshot", "album", "reel", "event", "all"].includes(kind)) {
-      return NextResponse.json({ error: "kind invalid" }, { status: 400 });
+      return NextResponse.json(
+        { error: "kind invalid" },
+        { status: 400, headers: cacheHeaders({ includeDrive }) }
+      );
     }
 
     const sheets = sheetsClient();
@@ -103,7 +144,10 @@ export async function GET(req: Request) {
 
     const mRows = (mediaResp.data.values ?? []) as string[][];
     if (mRows.length === 0) {
-      return NextResponse.json({ ok: true, items: [], total: 0, offset, limit });
+      return NextResponse.json(
+        { ok: true, items: [], total: 0, offset, limit },
+        { headers: cacheHeaders({ includeDrive }) }
+      );
     }
 
     const header = mRows[0] as string[];
@@ -124,10 +168,11 @@ export async function GET(req: Request) {
 
     // Filter
     const filtered = rows.filter((r) => {
-      const aid = idxAid !== -1 ? String(r[idxAid] || "") : "";
+      const aid = idxAid !== -1 ? String(r[idxAid] || "").trim() : "";
       if (aid !== alumniId) return false;
+
       if (kind !== "all") {
-        const k = idxKind !== -1 ? String(r[idxKind] || "").toLowerCase() : "";
+        const k = idxKind !== -1 ? String(r[idxKind] || "").trim().toLowerCase() : "";
         if (k !== kind) return false;
       }
       return true;
@@ -135,20 +180,20 @@ export async function GET(req: Request) {
 
     // Map to typed objects
     const itemsAll: MediaItem[] = filtered.map((r) => {
-      const k = (idxKind !== -1 ? String(r[idxKind] || "").toLowerCase() : "") as MediaKind;
+      const k = (idxKind !== -1 ? String(r[idxKind] || "").trim().toLowerCase() : "") as MediaKind;
       return {
         alumniId,
         kind: k,
-        fileId: idxFile !== -1 ? String(r[idxFile] || "") : "",
+        fileId: idxFile !== -1 ? String(r[idxFile] || "").trim() : "",
         uploadedAt: idxUploadedAt !== -1 ? toISOOrEmpty(String(r[idxUploadedAt] || "")) : "",
-        uploadedByEmail: idxUploadedBy !== -1 ? String(r[idxUploadedBy] || "") : "",
-        collectionId: idxColId !== -1 ? String(r[idxColId] || "") : "",
-        collectionTitle: idxColTitle !== -1 ? String(r[idxColTitle] || "") : "",
-        externalUrl: idxExtUrl !== -1 ? String(r[idxExtUrl] || "") : "",
-        isCurrent: idxIsCur !== -1 ? String(r[idxIsCur] || "") : "",
-        isFeatured: idxIsFeat !== -1 ? String(r[idxIsFeat] || "") : "",
-        sortIndex: idxSort !== -1 ? String(r[idxSort] || "") : "",
-        note: idxNote !== -1 ? String(r[idxNote] || "") : "",
+        uploadedByEmail: idxUploadedBy !== -1 ? String(r[idxUploadedBy] || "").trim() : "",
+        collectionId: idxColId !== -1 ? String(r[idxColId] || "").trim() : "",
+        collectionTitle: idxColTitle !== -1 ? String(r[idxColTitle] || "").trim() : "",
+        externalUrl: idxExtUrl !== -1 ? String(r[idxExtUrl] || "").trim() : "",
+        isCurrent: idxIsCur !== -1 ? String(r[idxIsCur] || "").trim() : "",
+        isFeatured: idxIsFeat !== -1 ? String(r[idxIsFeat] || "").trim() : "",
+        sortIndex: idxSort !== -1 ? String(r[idxSort] || "").trim() : "",
+        note: idxNote !== -1 ? String(r[idxNote] || "").trim() : "",
       };
     });
 
@@ -157,9 +202,16 @@ export async function GET(req: Request) {
       const ta = Date.parse(a.uploadedAt || "") || 0;
       const tb = Date.parse(b.uploadedAt || "") || 0;
       if (tb !== ta) return tb - ta;
-      const sa = Number.isFinite(Number(a.sortIndex)) ? Number(a.sortIndex) : Number.POSITIVE_INFINITY;
-      const sb = Number.isFinite(Number(b.sortIndex)) ? Number(b.sortIndex) : Number.POSITIVE_INFINITY;
+
+      const sa = Number.isFinite(Number(a.sortIndex))
+        ? Number(a.sortIndex)
+        : Number.POSITIVE_INFINITY;
+      const sb = Number.isFinite(Number(b.sortIndex))
+        ? Number(b.sortIndex)
+        : Number.POSITIVE_INFINITY;
       if (sa !== sb) return sa - sb;
+
+      // stable tie-breaker
       return (b.fileId || "").localeCompare(a.fileId || "");
     });
 
@@ -169,7 +221,6 @@ export async function GET(req: Request) {
     // Optional: hydrate Drive metadata (name, links)
     if (includeDrive && items.length) {
       const drive = driveClient();
-      // Be gentle with API limits; do serial with retry
       for (const it of items) {
         if (!it.fileId) continue;
         try {
@@ -187,15 +238,18 @@ export async function GET(req: Request) {
             webViewLink: file.data.webViewLink || undefined,
             thumbnailLink: file.data.thumbnailLink || undefined,
           };
-        } catch (e) {
-          // Non-fatal if Drive lookup fails
+        } catch {
+          // non-fatal
         }
       }
     }
 
     const nextOffset = offset + items.length < total ? offset + items.length : undefined;
 
-    return NextResponse.json({ ok: true, items, total, offset, limit, nextOffset });
+    return NextResponse.json(
+      { ok: true, items, total, offset, limit, nextOffset },
+      { headers: cacheHeaders({ includeDrive }) }
+    );
   } catch (e: any) {
     const msg = e?.message || "server error";
     console.error("MEDIA LIST ERROR:", msg);

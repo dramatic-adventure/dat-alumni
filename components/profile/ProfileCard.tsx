@@ -95,6 +95,25 @@ const toHighlightCard = (row: RawRow): UIHighlightCard => ({
   expirationDate: row.expirationDate || undefined,
 });
 
+function sanitizeHeadshotUrl(raw?: string): string | undefined {
+  const s = String(raw ?? "").trim().replace(/\s+/g, "");
+  if (!s) return undefined;
+
+  try {
+    const u = new URL(s, "http://local");
+    // strip common tracking params for cache-friendliness
+    u.searchParams.forEach((_, key) => {
+      const k = key.toLowerCase();
+      if (k.startsWith("utm") || k === "fbclid") u.searchParams.delete(key);
+    });
+    // If it was relative, keep it relative
+    if (!/^https?:\/\//i.test(s)) return u.pathname + (u.search ? `?${u.searchParams.toString()}` : "");
+    return u.toString();
+  } catch {
+    return s;
+  }
+}
+
 /* -----------------------------------------------------------
  * Slug normalization for alias-aware matching
  * ----------------------------------------------------------*/
@@ -255,6 +274,14 @@ function spanMetaForIndex(i: number, len: number): SpanMeta {
 interface ProfileCardProps {
   name: string;
   slug: string;
+
+  /**
+   * ✅ NEW (optional): real stable ID used by Profile-Media / Profile-Live.
+   * If provided, headers can hydrate headshots instantly via /api/alumni/media/list.
+   * Fallback remains `slug` to avoid breaking callers.
+   */
+  alumniId?: string;
+
   role: string;
   headshotUrl?: string;
   currentHeadshotId?: string;
@@ -288,12 +315,26 @@ export default function ProfileCard(props: ProfileCardProps) {
     slugAliases = [],
   } = props;
 
-    const derivedHeadshotUrl =
-    (currentHeadshotId?.trim()
+  const alumniIdForMedia = (props.alumniId ?? slug)?.trim() || slug;
+
+  const derivedHeadshotUrl = useMemo(() => {
+    const fromId = currentHeadshotId?.trim()
       ? `/api/media/thumb?fileId=${encodeURIComponent(currentHeadshotId.trim())}`
-      : "") ||
-    headshotUrl ||
-    undefined;
+      : "";
+
+    return sanitizeHeadshotUrl(fromId) || sanitizeHeadshotUrl(headshotUrl) || undefined;
+  }, [currentHeadshotId, headshotUrl]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!derivedHeadshotUrl) return;
+
+    // ✅ prefetch headshot ASAP so header Image paints instantly
+    const img = new window.Image();
+    img.decoding = "async";
+    img.loading = "eager";
+    img.src = derivedHeadshotUrl;
+  }, [derivedHeadshotUrl]);
 
   // ✅ Normalize "array-ish" props defensively
   const identityTags = coerceStrArray((props as any).identityTags ?? (props as any)["identity tags"]);
@@ -476,7 +517,7 @@ export default function ProfileCard(props: ProfileCardProps) {
 
       {isMobile ? (
         <MobileProfileHeader
-          alumniId={slug}
+          alumniId={alumniIdForMedia}
           name={name}
           role={role}
           location={location}
@@ -488,7 +529,7 @@ export default function ProfileCard(props: ProfileCardProps) {
         />
       ) : (
         <DesktopProfileHeader
-          alumniId={slug}
+          alumniId={alumniIdForMedia}
           name={name}
           role={role}
           location={location}

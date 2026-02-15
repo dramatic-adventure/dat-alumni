@@ -45,6 +45,17 @@ export default function MobileProfileHeader({
   const [displayHeadshotSrc, setDisplayHeadshotSrc] = useState<string>(imageSrc);
 
   useEffect(() => {
+  if (typeof window === "undefined") return;
+  const src = (displayHeadshotSrc || "").trim();
+  if (!src) return;
+
+  const img = new window.Image();
+  img.decoding = "async";
+  img.loading = "eager";
+  img.src = src;
+}, [displayHeadshotSrc]);
+
+  useEffect(() => {
     setDisplayHeadshotSrc(imageSrc);
   }, [imageSrc]);
 
@@ -54,7 +65,7 @@ export default function MobileProfileHeader({
     async function hydrateMostRecentHeadshot() {
       try {
         const qs = new URLSearchParams({ alumniId, kind: "headshot", limit: "1" });
-        const r = await fetch(`/api/alumni/media/list?${qs.toString()}`, { cache: "no-store" });
+        const r = await fetch(`/api/alumni/media/list?${qs.toString()}`)
         const j = await r.json();
         const it = (j?.items || [])[0];
         if (!it) return;
@@ -63,7 +74,9 @@ export default function MobileProfileHeader({
         const ext = String(it?.externalUrl || "").trim();
 
         // Prefer externalUrl if present; otherwise Drive.
-        const top = ext || (fid ? `https://drive.google.com/uc?export=view&id=${fid}` : "");
+        const top =
+          (fid ? `/api/img?fileId=${encodeURIComponent(fid)}` : "") ||
+          (ext ? `/api/img?url=${encodeURIComponent(ext)}` : "");
         if (!top) return;
         if (cancelled) return;
 
@@ -115,7 +128,7 @@ export default function MobileProfileHeader({
 
     try {
       const qs = new URLSearchParams({ alumniId, kind: "headshot" });
-      const r = await fetch(`/api/alumni/media/list?${qs.toString()}`, { cache: "no-store" });
+      const r = await fetch(`/api/alumni/media/list?${qs.toString()}`)
       const j = await r.json();
       
 const rawItems = (j?.items || []) as any[];
@@ -137,15 +150,14 @@ const urls =
   ordered
     .map((it: any) => {
       const fid = String(it?.fileId || "").trim();
-      if (fid) return `https://drive.google.com/uc?export=view&id=${fid}`;
+      if (fid) return `/api/img?fileId=${encodeURIComponent(fid)}`;
 
       const ext = String(it?.externalUrl || "").trim();
-      if (ext) return ext;
+      if (ext) return `/api/img?url=${encodeURIComponent(ext)}`;
 
       return "";
     })
     .filter(Boolean);
-
 
       const fallback = ([displayHeadshotSrc ?? imageSrc].filter(Boolean)) as string[];
       const next = (urls.length ? urls : fallback).filter(Boolean);
@@ -299,7 +311,8 @@ const urls =
           fill
           placeholder="blur"
           blurDataURL={fallbackImage}
-          loading="lazy"
+          priority
+          fetchPriority="high"
           style={{ objectFit: "cover", objectPosition: "top center" }}
         />
       </div>

@@ -66,23 +66,41 @@ export default function Lightbox({
   });
 
   const toLightboxSrc = useCallback((src: string) => {
-    const u = (src || "").trim();
-    if (!u) return "";
+  const u = (src || "").trim();
+  if (!u) return "";
 
-    // Google Drive hotlinks can fail in the browser (redirect/cookie/html response).
-    // Routing through Next's image optimizer makes it load reliably (server-side fetch).
-    const isDrive =
-      u.includes("drive.google.com/uc") ||
-      u.includes("drive.google.com/thumbnail") ||
-      u.includes("lh3.googleusercontent.com") ||
-      u.includes("googleusercontent.com");
+  // ✅ If it's already our proxy, don't touch it.
+  if (u.startsWith("/api/img")) return u;
 
-    if (isDrive) {
-      return `/_next/image?url=${encodeURIComponent(u)}&w=2048&q=75`;
-    }
-
+  // ✅ If someone still passes thumb URLs, normalize to /api/img.
+  //    (/api/media/thumb?fileId=...&w=...)
+  if (u.startsWith("/api/media/thumb")) {
+    try {
+      const parsed = new URL(u, "http://local");
+      const fid = String(parsed.searchParams.get("fileId") || "").trim();
+      if (fid) return `/api/img?fileId=${encodeURIComponent(fid)}`;
+    } catch {}
     return u;
-  }, []);
+  }
+
+  // ✅ Drive / googleusercontent links are unreliable directly.
+  // Route through /api/img so the server does the fetching correctly.
+  const isDriveLike =
+    u.includes("drive.google.com") ||
+    u.includes("googleusercontent.com") ||
+    u.includes("lh3.googleusercontent.com") ||
+    u.includes("lh4.googleusercontent.com") ||
+    u.includes("lh5.googleusercontent.com") ||
+    u.includes("lh6.googleusercontent.com");
+
+  if (isDriveLike) {
+    return `/api/img?url=${encodeURIComponent(u)}`;
+  }
+
+  // Everything else: return as-is.
+  return u;
+}, []);
+
 
   const currentUrlRaw = images[currentIndex] ?? "";
   const currentUrl = toLightboxSrc(currentUrlRaw);
