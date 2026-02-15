@@ -1,18 +1,20 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import { getLocationHrefForToken } from "@/lib/locations";
-import ScaledName from "@/components/shared/NameStack"; // default export; alias name is fine
+import ScaledName from "@/components/shared/NameStack";
 import LocationBadge from "@/components/shared/LocationBadge";
 import ShareButton from "@/components/ui/ShareButton";
 import Lightbox from "@/components/shared/Lightbox";
 import ContactOverlay from "@/components/shared/ContactOverlay";
 import StatusFlags from "@/components/alumni/StatusFlags";
 import { splitTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
+
+const DEBUG_MEDIA = false;
 
 interface DesktopProfileHeaderProps {
   alumniId: string;
@@ -27,7 +29,6 @@ interface DesktopProfileHeaderProps {
   socials?: string[];
 }
 
-
 export default function DesktopProfileHeader({
   alumniId,
   name,
@@ -40,9 +41,9 @@ export default function DesktopProfileHeader({
   website,
   socials,
 }: DesktopProfileHeaderProps) {
-
   const router = useRouter();
   const [isModalOpen, setModalOpen] = useState(false);
+  const [lightboxStartIndex, setLightboxStartIndex] = useState(0);
   const [currentUrl, setCurrentUrl] = useState("");
 
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
@@ -51,54 +52,177 @@ export default function DesktopProfileHeader({
 
   const fallbackImage = "/images/default-headshot.png";
 
-  const imageSrc = useMemo(
-    () => (headshotUrl ? headshotUrl.replace(/^http:\/\//i, "https://") : fallbackImage),
-    [headshotUrl]
+  const dbg = useCallback((...args: any[]) => {
+    if (!DEBUG_MEDIA) return;
+    // eslint-disable-next-line no-console
+    console.log(...args);
+  }, []);
+
+  // ✅ Lightbox-safe URLs: always absolute.
+  const toAbsUrl = useCallback((u: string): string => {
+    const s = String(u || "").trim();
+    if (!s) return "";
+    if (/^https?:\/\//i.test(s)) return s;
+    if (typeof window === "undefined") return s;
+    try {
+      return new URL(s, window.location.origin).toString();
+    } catch {
+      return s;
+    }
+  }, []);
+
+  // Normalize media URLs so we can de-dupe and find the "current" item reliably.
+  // - Treat /api/img?... as same asset if fileId matches OR url= matches (ignoring v=)
+  // - Treat /_next/image?... as same asset if url= matches (ignoring w/q/etc.)
+  // - Ignore origin differences (absolute vs relative)
+  const mediaKey = useCallback((u: string): string => {
+    const s = String(u || "").trim();
+    if (!s) return "";
+
+    const tryParse = (): URL | null => {
+      try {
+        if (typeof window !== "undefined") return new URL(s, window.location.origin);
+        if (/^https?:\/\//i.test(s)) return new URL(s);
+        return null;
+      } catch {
+        return null;
+      }
+    };
+
+    const parsed = tryParse();
+    if (!parsed) return s;
+
+    const path = parsed.pathname;
+
+    if (path === "/api/img") {
+      const fileId = parsed.searchParams.get("fileId");
+      if (fileId) return `apiimg:fileId:${fileId}`;
+
+      const url = parsed.searchParams.get("url") || "";
+      const normUrl = url.trim().replace(/^http:\/\//i, "https://");
+      if (normUrl) return `apiimg:url:${normUrl}`;
+
+      return "apiimg:unknown";
+    }
+
+    if (path === "/_next/image") {
+      const inner = parsed.searchParams.get("url") || "";
+      const normInner = inner.trim().replace(/^http:\/\//i, "https://");
+      if (normInner) return `nextimg:url:${normInner}`;
+      return "nextimg:unknown";
+    }
+
+    const originless = `${path}${parsed.search ? parsed.search : ""}${parsed.hash || ""}`;
+    return originless;
+  }, []);
+
+  const uniqueByMediaKey = useCallback(
+    (urls: string[]) => {
+      const seen = new Set<string>();
+      const out: string[] = [];
+      for (const u of urls) {
+        const s = String(u || "").trim();
+        if (!s) continue;
+        const k = mediaKey(s);
+        if (!k) continue;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        out.push(s);
+      }
+      return out;
+    },
+    [mediaKey]
   );
 
-  
+  const buildGalleryAndIndex = useCallback(
+    (urls: string[], preferredUrl: string) => {
+      const uniq = uniqueByMediaKey(urls);
+      const prefKey = mediaKey(preferredUrl);
+      const idx = prefKey ? uniq.findIndex((u) => mediaKey(u) === prefKey) : -1;
+      return { urls: uniq, startIndex: idx >= 0 ? idx : 0 };
+    },
+    [mediaKey, uniqueByMediaKey]
+  );
 
+  const isTrueFlag = useCallback((v: any): boolean => {
+    if (v === true) return true;
+    const s = String(v ?? "").trim().toLowerCase();
+    return s === "true" || s === "t" || s === "1" || s === "yes" || s === "y";
+  }, []);
+
+  const imageSrc = useMemo(() => {
+    const raw = headshotUrl ? headshotUrl.replace(/^http:\/\//i, "https://") : "";
+    return raw.trim();
+  }, [headshotUrl]);
 
   const nameParts = name.trim().split(" ");
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
   const lastName = nameParts.slice(-1).join(" ") || "";
 
-  const [displayHeadshotSrc, setDisplayHeadshotSrc] = useState<string>(imageSrc);
+  const [targetHeadshotSrc, setTargetHeadshotSrc] = useState<string>("");
+  const [shownHeadshotSrc, setShownHeadshotSrc] = useState<string>(fallbackImage);
+  const [isSwapping, setIsSwapping] = useState(false);
 
-  // Keep displayed headshot aligned with prop fallback until hydration overrides it
-  useEffect(() => {
-    setDisplayHeadshotSrc(imageSrc);
-  }, [imageSrc]);
+  const handleHeadshotError = useCallback(() => {
+    setShownHeadshotSrc(fallbackImage);
+  }, [fallbackImage]);
 
+  // ---------- helpers ----------
+  const toTime = useCallback((it: any): number => {
+    const raw =
+      it?.uploadedAt ??
+      it?.createdAt ??
+      it?.updatedAt ??
+      it?.ts ??
+      it?.timestamp ??
+      "";
+    const n = typeof raw === "number" ? raw : Date.parse(String(raw));
+    return Number.isFinite(n) ? n : 0;
+  }, []);
 
-    useEffect(() => {
-    let cancelled = false;
+  const toCacheKey = useCallback(
+    (it: any): string => {
+      const t = toTime(it);
+      return t ? String(t) : "";
+    },
+    [toTime]
+  );
 
-    const toUrl = (it: any): string => {
+  const toApiImgUrl = useCallback(
+    (it: any): string => {
       const fid = String(it?.fileId || "").trim();
-      if (fid) return `https://drive.google.com/uc?export=view&id=${fid}`;
-
       const ext = String(it?.externalUrl || "").trim();
-      if (ext) return ext;
+      const v = toCacheKey(it);
+
+      if (fid) {
+        const qs = new URLSearchParams();
+        qs.set("fileId", fid);
+        if (v) qs.set("v", v);
+        return `/api/img?${qs.toString()}`;
+      }
+
+      if (ext) {
+        const qs = new URLSearchParams();
+        qs.set("url", ext);
+        if (v) qs.set("v", v);
+        return `/api/img?${qs.toString()}`;
+      }
 
       return "";
-    };
+    },
+    [toCacheKey]
+  );
 
-    const toTime = (it: any): number => {
-      // "uploadedAt" primary, then a few sensible fallbacks
-      const raw =
-        it?.uploadedAt ??
-        it?.createdAt ??
-        it?.updatedAt ??
-        it?.ts ??
-        it?.timestamp ??
-        "";
+  const toProxyUrl = useCallback((raw: string): string => {
+    const u = String(raw || "").trim();
+    if (!u) return "";
+    const qs = new URLSearchParams();
+    qs.set("url", u.replace(/^http:\/\//i, "https://"));
+    return `/api/img?${qs.toString()}`;
+  }, []);
 
-      const n = typeof raw === "number" ? raw : Date.parse(String(raw));
-      return Number.isFinite(n) ? n : 0;
-    };
-
-    const orderMostRecent = (items: any[]) =>
+  const orderMostRecent = useCallback(
+    (items: any[]) =>
       [...items].sort((a, b) => {
         const ta = toTime(a);
         const tb = toTime(b);
@@ -112,32 +236,59 @@ export default function DesktopProfileHeader({
           : Number.POSITIVE_INFINITY;
         if (sa !== sb) return sa - sb;
 
-        // stable tie-breaker
         return String(b?.fileId || b?.externalUrl || "").localeCompare(
           String(a?.fileId || a?.externalUrl || "")
         );
-      });
+      }),
+    [toTime]
+  );
+
+  const pickCurrentOrMostRecent = useCallback(
+    (items: any[]) => {
+      const headshots = (items || []).filter(
+        (x) => String(x?.kind || "headshot") === "headshot"
+      );
+
+      const current = headshots.filter((x) => isTrueFlag(x?.isCurrent));
+
+      if (current.length) return orderMostRecent(current)[0];
+      return orderMostRecent(headshots)[0] || null;
+    },
+    [orderMostRecent, isTrueFlag]
+  );
+
+  // ---------- hydrate headshots + seed lightbox cache ----------
+  useEffect(() => {
+    let cancelled = false;
 
     async function hydrateHeadshots() {
       try {
         const qs = new URLSearchParams({ alumniId, kind: "headshot" });
-        const r = await fetch(`/api/alumni/media/list?${qs.toString()}`, { cache: "no-store" });
+        const r = await fetch(`/api/alumni/media/list?${qs.toString()}`);
         const j = await r.json();
         const rawItems = (j?.items || []) as any[];
 
-        const ordered = orderMostRecent(rawItems);
-        const urls = ordered.map(toUrl).filter(Boolean);
+        const chosen = pickCurrentOrMostRecent(rawItems);
+        const chosenUrl = chosen ? toApiImgUrl(chosen) : "";
 
-        // Pick THE single most recent headshot URL (regardless of source)
-        const top = urls[0] || "";
-        if (!cancelled && top) setDisplayHeadshotSrc(top);
+        const fallbackUrl = imageSrc ? toProxyUrl(imageSrc) : "";
+        const finalChosenUrl = chosenUrl || fallbackUrl;
 
-        // Also seed the lightbox cache with the same ordering
-        if (!cancelled && urls.length) {
-          galleryCacheRef.current = Array.from(new Set(urls));
+        if (!cancelled && finalChosenUrl) {
+          setTargetHeadshotSrc(finalChosenUrl);
         }
-      } catch {
-        // non-fatal
+
+        const ordered = orderMostRecent(rawItems);
+        const urls = ordered.map(toApiImgUrl).filter(Boolean);
+
+        const legacy = imageSrc ? toProxyUrl(imageSrc) : "";
+        const merged = legacy ? [...urls, legacy] : urls;
+
+        if (!cancelled && merged.length) {
+          galleryCacheRef.current = uniqueByMediaKey(merged);
+        }
+      } catch (e) {
+        dbg("hydrateHeadshots failed:", e);
       }
     }
 
@@ -146,40 +297,62 @@ export default function DesktopProfileHeader({
     return () => {
       cancelled = true;
     };
-  }, [alumniId, imageSrc]);
+  }, [
+    alumniId,
+    dbg,
+    imageSrc,
+    orderMostRecent,
+    pickCurrentOrMostRecent,
+    toApiImgUrl,
+    toProxyUrl,
+    uniqueByMediaKey,
+  ]);
 
+  // ---------- preload + swap ----------
   useEffect(() => {
-    if (!isModalOpen) return;
+    if (typeof window === "undefined") return;
 
-    const current = (displayHeadshotSrc || imageSrc || "").trim();
-    if (!current) return;
+    const src = String(targetHeadshotSrc || "").trim();
+    if (!src) return;
 
-    setGalleryUrls((prev) => {
-      const rest = (prev || []).filter((u) => u && u !== current);
-      return [current, ...rest];
-    });
-  }, [isModalOpen, displayHeadshotSrc, imageSrc]);
+    let cancelled = false;
+    setIsSwapping(true);
+
+    const img = new window.Image();
+    img.onload = () => {
+      if (cancelled) return;
+      setShownHeadshotSrc(src);
+      setIsSwapping(false);
+    };
+    img.onerror = () => {
+      if (cancelled) return;
+      setShownHeadshotSrc(fallbackImage);
+      setIsSwapping(false);
+    };
+    img.src = src;
+
+    return () => {
+      cancelled = true;
+    };
+  }, [targetHeadshotSrc, fallbackImage]);
 
   async function openHeadshotGallery() {
-    const current = (displayHeadshotSrc || imageSrc || "").trim();
+    const current = (shownHeadshotSrc || targetHeadshotSrc || fallbackImage || "").trim();
+    if (!current) return;
 
-    // Open instantly with whatever we're currently displaying
-    setGalleryUrls((prev) => {
-      if (prev?.length) {
-        const rest = prev.filter((u) => u && u !== current);
-        return current ? [current, ...rest] : prev;
-      }
-      return current ? [current] : [];
-    });
+    // Seed immediately so Lightbox has something
+    setGalleryUrls([current]);
+    setLightboxStartIndex(0);
     setModalOpen(true);
 
-    // If we have a cache, use it immediately, but always force current to index 0
+    // Use cache immediately
     if (galleryCacheRef.current && galleryCacheRef.current.length > 0) {
-      const cached = galleryCacheRef.current.filter(Boolean);
-      const rest = cached.filter((u) => u !== current);
-      const next = current ? [current, ...rest] : cached;
-
-      setGalleryUrls(next);
+      const { urls: nextUrls, startIndex } = buildGalleryAndIndex(
+        galleryCacheRef.current.filter(Boolean),
+        current
+      );
+      setGalleryUrls(nextUrls);
+      setLightboxStartIndex(startIndex);
       return;
     }
 
@@ -188,74 +361,34 @@ export default function DesktopProfileHeader({
 
     try {
       const qs = new URLSearchParams({ alumniId, kind: "headshot" });
-      const r = await fetch(`/api/alumni/media/list?${qs.toString()}`, { cache: "no-store" });
+      const r = await fetch(`/api/alumni/media/list?${qs.toString()}`);
       const j = await r.json();
       const rawItems = (j?.items || []) as any[];
 
-      const toUrl = (it: any): string => {
-        const fid = String(it?.fileId || "").trim();
-        if (fid) return `https://drive.google.com/uc?export=view&id=${fid}`;
+      const ordered = orderMostRecent(rawItems);
+      const urls = ordered.map(toApiImgUrl).filter(Boolean);
 
-        const ext = String(it?.externalUrl || "").trim();
-        if (ext) return ext;
-
-        return "";
-      };
-
-      const toTime = (it: any): number => {
-        const raw =
-          it?.uploadedAt ??
-          it?.createdAt ??
-          it?.updatedAt ??
-          it?.ts ??
-          it?.timestamp ??
-          "";
-        const n = typeof raw === "number" ? raw : Date.parse(String(raw));
-        return Number.isFinite(n) ? n : 0;
-      };
-
-      const ordered = [...rawItems].sort((a, b) => {
-        const ta = toTime(a);
-        const tb = toTime(b);
-        if (tb !== ta) return tb - ta;
-
-        const sa = Number.isFinite(Number(a?.sortIndex))
-          ? Number(a.sortIndex)
-          : Number.POSITIVE_INFINITY;
-        const sb = Number.isFinite(Number(b?.sortIndex))
-          ? Number(b.sortIndex)
-          : Number.POSITIVE_INFINITY;
-        if (sa !== sb) return sa - sb;
-
-        return String(b?.fileId || b?.externalUrl || "").localeCompare(
-          String(a?.fileId || a?.externalUrl || "")
-        );
-      });
-
-      const urls = ordered.map(toUrl).filter(Boolean);
-
-      // Build final gallery, always with current first; fallback to current if list empty
-      const base = urls.length ? urls : (current ? [current] : []);
-      const unique = Array.from(new Set(base));
-      const rest = unique.filter((u) => u !== current);
-      const next = current ? [current, ...rest] : unique;
+      const legacy = imageSrc ? toProxyUrl(imageSrc) : "";
+      const base = urls.length ? urls : current ? [current] : legacy ? [legacy] : [];
+      const nextRaw = base.filter(Boolean);
+      const { urls: next, startIndex } = buildGalleryAndIndex(nextRaw, current);
 
       if (!next.length) return;
 
       galleryCacheRef.current = next;
+      dbg("[Lightbox URLs]", alumniId, next);
       setGalleryUrls(next);
-    } catch {
-      // fallback: at least show the current displayed headshot
-      if (current) {
-        const next = [current];
-        galleryCacheRef.current = next;
-        setGalleryUrls(next);
-      }
+      setLightboxStartIndex(startIndex);
+    } catch (e) {
+      dbg("openHeadshotGallery failed:", e);
+      const next = [current].filter(Boolean);
+      galleryCacheRef.current = next;
+      setGalleryUrls(next);
+      setLightboxStartIndex(0);
     } finally {
       openingRef.current = false;
     }
   }
-
 
   const profileCardRef = useRef<HTMLDivElement>(null);
   const hasContactInfo = !!(email || website || (socials && socials.length > 0));
@@ -315,10 +448,8 @@ export default function DesktopProfileHeader({
 
   const locationHref = location ? getLocationHrefForToken(location) : null;
 
-  // Extra prefetching: when the header is visible, prefetch all target pages.
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") {
-      // Fallback: just prefetch immediately
       titleLinks.forEach(({ href }) => router.prefetch(href));
       if (locationHref) router.prefetch(locationHref);
       return;
@@ -344,6 +475,27 @@ export default function DesktopProfileHeader({
     return () => io.disconnect();
   }, [titleLinks, locationHref, router]);
 
+  const lightboxImages = useMemo(() => {
+    const raw = (
+      galleryUrls?.length
+        ? galleryUrls
+        : [(shownHeadshotSrc || targetHeadshotSrc || fallbackImage).trim()]
+    )
+      .filter(Boolean)
+      .map(toAbsUrl)
+      .filter(Boolean);
+
+    const uniq = uniqueByMediaKey(raw);
+    return uniq.length ? uniq : [toAbsUrl(fallbackImage)].filter(Boolean);
+  }, [
+    galleryUrls,
+    shownHeadshotSrc,
+    targetHeadshotSrc,
+    fallbackImage,
+    toAbsUrl,
+    uniqueByMediaKey,
+  ]);
+
   return (
     <div ref={profileCardRef} style={{ position: "relative" }}>
       {hasContactInfo && (
@@ -368,7 +520,7 @@ export default function DesktopProfileHeader({
           <StatusFlags
             flags={statusFlags}
             fontSize="1.75rem"
-            fontFamily='var(--font-dm-sans), system-ui, sans-serif'
+            fontFamily="var(--font-dm-sans), system-ui, sans-serif"
             textColor="#F6E4C1"
             borderRadius="33px"
           />
@@ -381,8 +533,11 @@ export default function DesktopProfileHeader({
 
       {/* Headshot */}
       <div
-        className="absolute top-0 left-[1.5rem] sm:left-4 z-40 w-[360px] h-[450px] overflow-hidden bg-[#241123] shadow-[6px_8px_20px_rgba(0,0,0,0.25)] cursor-pointer"
-        onClick={openHeadshotGallery}
+        className="absolute top-0 left-[1.5rem] sm:left-4 z-40 w-[360px] h-[450px] overflow-hidden shadow-[6px_8px_20px_rgba(0,0,0,0.25)] cursor-pointer"
+        onClick={() => {
+          if (galleryCacheRef.current?.length) openHeadshotGallery();
+          else if (shownHeadshotSrc) openHeadshotGallery();
+        }}
         role="button"
         tabIndex={0}
         aria-label="Open headshot"
@@ -390,22 +545,18 @@ export default function DesktopProfileHeader({
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             e.stopPropagation();
-            openHeadshotGallery();
+            if (galleryCacheRef.current?.length || shownHeadshotSrc) openHeadshotGallery();
           }
         }}
-
       >
         <Image
-          src={displayHeadshotSrc}
+          src={shownHeadshotSrc || fallbackImage}
           alt={`${name}'s headshot`}
           fill
-          placeholder="blur"
-          blurDataURL={fallbackImage}
           priority
-          style={{
-            objectFit: "cover",
-            objectPosition: "top center",
-          }}
+          placeholder="empty"
+          onError={handleHeadshotError}
+          style={{ objectFit: "cover", objectPosition: "top center" }}
         />
       </div>
 
@@ -570,14 +721,9 @@ export default function DesktopProfileHeader({
 
       {isModalOpen && (
         <Lightbox
-          images={(
-            galleryUrls && galleryUrls.length
-              ? galleryUrls
-              : [(displayHeadshotSrc || imageSrc || "").trim()]
-          ).filter(Boolean)}
-          onClose={() => {
-            setModalOpen(false);
-          }}
+          images={lightboxImages}
+          startIndex={lightboxStartIndex}
+          onClose={() => setModalOpen(false)}
         />
       )}
     </div>

@@ -10,6 +10,7 @@ import {
   AmountType,
   DonationKind,
   PaymentStatus,
+  DonorTier,
 } from "../generated/prisma/enums";
 
 declare global {
@@ -41,4 +42,4 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 // ✅ Re-export enums so app code can import from "@/lib/prisma"
-export { ContextType, AmountType, DonationKind, PaymentStatus };
+export { ContextType, AmountType, DonationKind, PaymentStatus, DonorTier };

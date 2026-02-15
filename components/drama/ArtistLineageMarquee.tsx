@@ -12,6 +12,10 @@ export type LineageArtist = {
   role?: string;
   roles?: string[];
   isLocalMaster?: boolean;
+
+  // ✅ Optional: allow passing canonical id explicitly (best if you have it)
+  alumniId?: string;
+  headshotCacheKey?: string | number;
 };
 
 type Props = {
@@ -25,6 +29,10 @@ type Props = {
 function clean(s?: string | null) {
   const t = String(s ?? "").trim();
   return t ? t : "";
+}
+
+function normSlugKey(s: string) {
+  return clean(s).toLowerCase();
 }
 
 function slugFromAlumniHref(href?: string) {
@@ -98,8 +106,8 @@ export default function ArtistLineageMarquee({
   }, []);
 
   const ordered = useMemo(() => {
-    const localMasters = artists.filter((a) => a?.name && a.isLocalMaster);
-    const others = artists.filter((a) => a?.name && !a.isLocalMaster);
+    const localMasters = (artists || []).filter((a) => a?.name && a.isLocalMaster);
+    const others = (artists || []).filter((a) => a?.name && !a.isLocalMaster);
 
     const pinned = localMasters.slice(0, Math.max(0, pinLocalMastersCount));
     const remainderLocal = localMasters.slice(Math.max(0, pinLocalMastersCount));
@@ -254,7 +262,11 @@ export default function ArtistLineageMarquee({
               const fallback = fallbackKeyFromName(a.name) || `artist-${idx}`;
               const stableKey = rawSlug || fallback;
 
-              const headshot = clean(a.headshotUrl) || clean(a.avatarSrc) || undefined;
+              // ✅ Always pass something safe. Never pass empty string.
+              const headshot =
+                clean(a.headshotUrl) ||
+                clean(a.avatarSrc) ||
+                "/images/default-headshot.png";
 
               const role =
                 clean(a.role) ||
@@ -262,17 +274,23 @@ export default function ArtistLineageMarquee({
                 "";
 
               const hasRealSlug = !!hrefSlug || isLikelyRealAlumniSlug(rawSlug);
+
               const computedHref =
                 clean(a.href) ||
                 (hasRealSlug && rawSlug ? `/alumni/${encodeURIComponent(rawSlug)}` : undefined);
 
+              // ✅ Prefer explicit alumniId, else use canonical-ish slug key
+              const alumniId = clean(a.alumniId) || normSlugKey(rawSlug) || undefined;
+
               return (
                 <div key={`${stableKey}-${idx}`} className="dc-lineage-item">
                   <MiniProfileCard
+                    alumniId={alumniId}
                     name={a.name}
                     role={role}
                     slug={rawSlug || fallback}
                     headshotUrl={headshot}
+                    cacheKey={a.headshotCacheKey}
                     href={computedHref}
                     variant="light"
                     badgeLabel={a.isLocalMaster ? "LOCAL MASTER" : undefined}

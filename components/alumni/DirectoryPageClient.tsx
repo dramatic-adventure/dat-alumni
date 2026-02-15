@@ -38,63 +38,46 @@ function splitCsvish(raw?: string | null): string[] {
     .filter(Boolean);
 }
 
-function driveViewUrlFromId(id?: string | null) {
-  const fid = String(id || "").trim();
-  if (!fid) return "";
-  // uc?export=view is a stable “direct view” URL for Drive file IDs
-  return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(fid)}`;
-}
-
-function driveUrlFromId(id?: string | null) {
-  const v = String(id ?? "").trim();
-  if (!v) return "";
-  return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(v)}`;
-}
-
 /** Convert Profile-Live row (string-ish fields) into the directory AlumniItem shape */
-function liveRowToAlumniItem(r: ProfileLiveRow, enrichedBySlug: Map<string, EnrichedProfileLiveRow>): AlumniItem {
+function liveRowToAlumniItem(
+  r: ProfileLiveRow,
+  enrichedBySlug: Map<string, EnrichedProfileLiveRow>
+): AlumniItem {
   // roles/programs/tags/statusFlags can be stored as CSV-ish strings in Profile-Live
-  const roles = splitCsvish(r.roles);
+  const roles = splitCsvish((r as any).roles);
   const programs = splitCsvish((r as any).programs);
+  const seasons = splitCsvish((r as any).seasons);
   const statusFlags = splitCsvish((r as any).statusFlags);
   const identityTags = splitCsvish((r as any).tags);
-
-  // languages: only if your ProfileLiveRow includes it (some builds don’t)
   const languages = splitCsvish((r as any).languages);
 
   const updatedAt =
-    r.updatedAt && !Number.isNaN(Date.parse(r.updatedAt))
-      ? new Date(r.updatedAt).getTime()
+    (r as any).updatedAt && !Number.isNaN(Date.parse(String((r as any).updatedAt)))
+      ? new Date(String((r as any).updatedAt)).getTime()
       : undefined;
 
+  const bySlug = enrichedBySlug.get(String((r as any).slug || "").trim());
+  const byCanon = enrichedBySlug.get(String((r as any).canonicalSlug || "").trim());
+
   return {
-    name: r.name || "",
-    slug: r.slug || "",
+    name: String((r as any).name || ""),
+    slug: String((r as any).slug || ""),
     roles,
-    location: r.location || "",
+    location: String((r as any).location || ""),
     programs,
+    seasons,
     statusFlags,
     identityTags,
     languages,
     updatedAt,
-    // heuristic if you want it (otherwise filter UI still works)
-    updatedRecently: typeof updatedAt === "number" ? Date.now() - updatedAt < 1000 * 60 * 60 * 24 * 90 : false,
-    headshotUrl: (() => {
-  const bySlug = enrichedBySlug.get(r.slug);
-  const byCanon = enrichedBySlug.get((r as any).canonicalSlug);
+    updatedRecently:
+      typeof updatedAt === "number" ? Date.now() - updatedAt < 1000 * 60 * 60 * 24 * 90 : false,
 
-  // ✅ Deterministic + reliable:
-  // Enriched headshotUrl is already either `/api/img?url=...` or `/images/default-headshot.png`
-  return bySlug?.headshotUrl || byCanon?.headshotUrl || "/images/default-headshot.png";
-})(),
+    // ✅ Deterministic: enriched headshotUrl is already proxied or fallback-safe
+    headshotUrl: bySlug?.headshotUrl || byCanon?.headshotUrl || "/images/default-headshot.png",
 
-    headshotCacheKey: (() => {
-      const bySlug = enrichedBySlug.get(r.slug);
-      const byCanon = enrichedBySlug.get((r as any).canonicalSlug);
-
-      // ✅ Cache key should come from Profile-Media uploadedAt via enrichment.
-      return bySlug?.headshotCacheKey || byCanon?.headshotCacheKey || undefined;
-    })(),
+    // ✅ Cache key from enrichment (Profile-Media uploadedAt)
+    headshotCacheKey: bySlug?.headshotCacheKey || byCanon?.headshotCacheKey || undefined,
   };
 }
 
@@ -105,7 +88,6 @@ export default function DirectoryPageClient({
   alumni: AlumniItem[];
   enrichedData?: EnrichedProfileLiveRow[];
 }) {
-
   const [primaryResults, setPrimaryResults] = useState<AlumniItem[]>([]);
   const [secondaryResults, setSecondaryResults] = useState<AlumniItem[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -114,13 +96,12 @@ export default function DirectoryPageClient({
 
   const enrichedBySlug = useMemo(() => {
     const m = new Map<string, EnrichedProfileLiveRow>();
-        enrichedData.forEach((r) => {
+    (enrichedData || []).forEach((r) => {
       m.set(r.slug, r);
-      if (r.canonicalSlug) m.set(r.canonicalSlug, r);
+      if ((r as any).canonicalSlug) m.set((r as any).canonicalSlug, r);
     });
     return m;
   }, [enrichedData]);
-
 
   const [filters, setFilters] = useState({
     program: "",
@@ -136,38 +117,40 @@ export default function DirectoryPageClient({
   /** Dropdown options (derived from props) */
   const programs = useMemo(() => {
     const set = new Set<string>();
-    alumni.forEach((a) => a.programs?.forEach((p) => set.add(p)));
+    (alumni || []).forEach((a) => a.programs?.forEach((p) => set.add(p)));
     return Array.from(set).sort();
   }, [alumni]);
 
   const seasons = useMemo(() => {
     const set = new Set<string>();
-    alumni.forEach((a) => a.seasons?.forEach((s) => set.add(s)));
+    (alumni || []).forEach((a) => a.seasons?.forEach((s) => set.add(s)));
     return Array.from(set).sort();
   }, [alumni]);
 
   const locations = useMemo(() => {
     const set = new Set<string>();
-    alumni.forEach((a) => a.location && set.add(a.location));
+    (alumni || []).forEach((a) => a.location && set.add(a.location));
     return Array.from(set).sort();
   }, [alumni]);
 
   const roles = useMemo(() => {
     const set = new Set<string>();
-    alumni.forEach((a) => a.roles?.forEach((r) => set.add(r)));
+    (alumni || []).forEach((a) => a.roles?.forEach((r) => set.add(r)));
     return Array.from(set).sort();
   }, [alumni]);
 
   /** Filter + sort helper */
   const applyFiltersAndSort = (list: AlumniItem[]): AlumniItem[] => {
-    let result = [...list];
+    let result = [...(list || [])];
 
     if (filters.program) result = result.filter((a) => a.programs?.includes(filters.program));
     if (filters.season) result = result.filter((a) => a.seasons?.includes(filters.season));
     if (filters.location) result = result.filter((a) => a.location === filters.location);
     if (filters.role) result = result.filter((a) => a.roles?.includes(filters.role));
-    if (filters.statusFlag) result = result.filter((a) => a.statusFlags?.includes(filters.statusFlag));
-    if (filters.identityTag) result = result.filter((a) => a.identityTags?.includes(filters.identityTag));
+    if (filters.statusFlag)
+      result = result.filter((a) => a.statusFlags?.includes(filters.statusFlag));
+    if (filters.identityTag)
+      result = result.filter((a) => a.identityTags?.includes(filters.identityTag));
     if (filters.language) result = result.filter((a) => a.languages?.includes(filters.language));
     if (filters.updatedOnly) result = result.filter((a) => a.updatedRecently);
 
@@ -215,7 +198,7 @@ export default function DirectoryPageClient({
     { name: "language", label: "LANGUAGE", options: ["English", "Spanish", "French", "Portuguese"] },
   ] as const;
 
-  /** Which data to display (memoized to avoid extra work per keystroke) */
+  /** Which data to display (memoized) */
   const mainResults = useMemo(
     () => applyFiltersAndSort(query ? primaryResults : alumni),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -265,12 +248,7 @@ export default function DirectoryPageClient({
         </section>
 
         {/* MAIN */}
-        <main
-          style={{
-            marginTop: "0vh",
-            padding: "2rem 0",
-          }}
-        >
+        <main style={{ marginTop: "0vh", padding: "2rem 0" }}>
           <section style={{ width: "90%", maxWidth: "1200px", margin: "0 auto" }}>
             <h2
               style={{
@@ -326,7 +304,12 @@ export default function DirectoryPageClient({
               {/* Hide sort buttons if query exists */}
               {!query && (
                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                  <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", color: "#F6E4C1" }}>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                      color: "#F6E4C1",
+                    }}
+                  >
                     Sort by:
                   </span>
                   {(["last", "first", "recent"] as const).map((opt) => (
@@ -470,13 +453,7 @@ export default function DirectoryPageClient({
           </div>
 
           {/* Primary (or all if no query) */}
-          <section
-            style={{
-              width: "90%",
-              maxWidth: "1200px",
-              margin: "1.75rem auto",
-            }}
-          >
+          <section style={{ width: "90%", maxWidth: "1200px", margin: "1.75rem auto" }}>
             <h4
               style={{
                 fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
@@ -488,8 +465,9 @@ export default function DirectoryPageClient({
                 fontSize: "1.5rem",
               }}
             >
-              Top matches:
+              {query ? "Top matches:" : "All alumni:"}
             </h4>
+
             <div
               style={{
                 display: "grid",
@@ -501,31 +479,24 @@ export default function DirectoryPageClient({
                 padding: "2rem",
               }}
             >
-              {mainResults.map((alum, idx) => {
-
-                return (
-                  <MiniProfileCard
-                    key={alum.slug || String(idx)}
-                    name={alum.name}
-                    role={alum.roles?.join(", ") ?? ""}
-                    slug={alum.slug}
-                    priority={idx < 12}
-                  />
-                );
-              })}
-
+              {mainResults.map((alum, idx) => (
+                <MiniProfileCard
+                  key={alum.slug || String(idx)}
+                  alumniId={alum.slug}
+                  name={alum.name}
+                  role={alum.roles?.join(", ") ?? ""}
+                  slug={alum.slug}
+                  headshotUrl={alum.headshotUrl || "/images/default-headshot.png"}
+                  cacheKey={alum.headshotCacheKey}
+                  priority={idx < 12}
+                />
+              ))}
             </div>
           </section>
 
           {/* Secondary matches */}
           {extraResults.length > 0 && (
-            <section
-              style={{
-                width: "90%",
-                maxWidth: "1200px",
-                margin: "2rem auto",
-              }}
-            >
+            <section style={{ width: "90%", maxWidth: "1200px", margin: "2rem auto" }}>
               <h4
                 style={{
                   fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
@@ -539,6 +510,7 @@ export default function DirectoryPageClient({
               >
                 More matches you might like:
               </h4>
+
               <div
                 style={{
                   display: "grid",
@@ -550,19 +522,18 @@ export default function DirectoryPageClient({
                   padding: "2rem",
                 }}
               >
-                {extraResults.map((alum, idx) => {
-
-                  return (
-                    <MiniProfileCard
-                      key={alum.slug || String(idx)}
-                      name={alum.name}
-                      role={alum.roles?.join(", ") ?? ""}
-                      slug={alum.slug}
-                      priority={idx < 12}
-                    />
-                  );
-                })}
-
+                {extraResults.map((alum, idx) => (
+                  <MiniProfileCard
+                    key={alum.slug || String(idx)}
+                    alumniId={alum.slug}
+                    name={alum.name}
+                    role={alum.roles?.join(", ") ?? ""}
+                    slug={alum.slug}
+                    headshotUrl={alum.headshotUrl || "/images/default-headshot.png"}
+                    cacheKey={alum.headshotCacheKey}
+                    priority={idx < 12}
+                  />
+                ))}
               </div>
             </section>
           )}

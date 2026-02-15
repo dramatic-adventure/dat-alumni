@@ -256,8 +256,7 @@ export default function Header() {
               width={252}
               height={LOGOS.height}
               priority
-              className="w-auto"
-              style={{ height: LOGOS.height }}
+              style={{ height: LOGOS.height, width: "auto" }}
               draggable={false}
             />
           </Link>
@@ -309,8 +308,7 @@ export default function Header() {
                 width={252}
                 height={LOGOS.height}
                 priority
-                className="w-auto"
-                style={{ height: LOGOS.height }}
+                style={{ height: LOGOS.height, width: "auto" }}
                 draggable={false}
               />
             </Link>

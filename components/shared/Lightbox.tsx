@@ -1,12 +1,13 @@
+// components/shared/Lightbox.tsx
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useSwipeable } from "react-swipeable";
 import LightboxPortal from "./LightboxPortal";
 import StoryMedia from "@/components/shared/StoryMedia";
 
 interface LightboxProps {
-  images: string[];
+  images: string[]; // legacy name; now supports images/videos/embeds/links
   startIndex?: number;
   onClose: () => void;
 }
@@ -16,15 +17,43 @@ export default function Lightbox({
   startIndex = 0,
   onClose,
 }: LightboxProps) {
-  const [currentIndex, setCurrentIndex] = useState(startIndex);
-  const total = images.length;
+  const safeImages = useMemo(
+    () => (images || []).map((s) => String(s || "").trim()).filter(Boolean),
+    [images]
+  );
+
+  const total = safeImages.length;
   const multiple = total > 1;
+
+  const clampIndex = useCallback(
+    (idx: number) => {
+      if (total <= 0) return 0;
+      return ((idx % total) + total) % total;
+    },
+    [total]
+  );
+
+  const [currentIndex, setCurrentIndex] = useState(() =>
+    clampIndex(startIndex)
+  );
+
+  // When parent changes the desired startIndex (e.g., click different headshot),
+  // snap to it (clamped).
+  useEffect(() => {
+    setCurrentIndex(clampIndex(startIndex));
+  }, [startIndex, clampIndex]);
+
+  // When the media list changes (seed -> cached list, or de-dupe),
+  // keep index valid and stable.
+  useEffect(() => {
+    setCurrentIndex((prev) => clampIndex(prev));
+  }, [safeImages, clampIndex]);
 
   const goTo = useCallback(
     (index: number) => {
-      setCurrentIndex((index + total) % total);
+      setCurrentIndex(clampIndex(index));
     },
-    [total]
+    [clampIndex]
   );
 
   const handleNext = useCallback(() => {
@@ -65,27 +94,9 @@ export default function Lightbox({
     trackMouse: true,
   });
 
-  const toLightboxSrc = useCallback((src: string) => {
-    const u = (src || "").trim();
-    if (!u) return "";
-
-    // Google Drive hotlinks can fail in the browser (redirect/cookie/html response).
-    // Routing through Next's image optimizer makes it load reliably (server-side fetch).
-    const isDrive =
-      u.includes("drive.google.com/uc") ||
-      u.includes("drive.google.com/thumbnail") ||
-      u.includes("lh3.googleusercontent.com") ||
-      u.includes("googleusercontent.com");
-
-    if (isDrive) {
-      return `/_next/image?url=${encodeURIComponent(u)}&w=2048&q=75`;
-    }
-
-    return u;
-  }, []);
-
-  const currentUrlRaw = images[currentIndex] ?? "";
-  const currentUrl = toLightboxSrc(currentUrlRaw);
+  // ✅ Requirement: do not rewrite URLs inside Lightbox. Pass through unchanged.
+  const currentUrlRaw = safeImages[currentIndex] ?? "";
+  const currentUrl = currentUrlRaw;
 
   if (total === 0) return null;
 
@@ -100,7 +111,7 @@ export default function Lightbox({
   return (
     <LightboxPortal>
       <div className="fixed inset-0 z-[99999] grid grid-cols-3 w-screen h-screen">
-        {/* Left Panel (click/keyboard to close; below image stack) */}
+        {/* Left Panel (click/keyboard to close; below media stack) */}
         <div
           className="w-full h-full"
           onClick={onClose}
@@ -119,13 +130,13 @@ export default function Lightbox({
           }}
         />
 
-        {/* Center Panel (dim backdrop; image sits above this panel) */}
+        {/* Center Panel (dim backdrop; media sits above this panel) */}
         <div
           className="flex items-center justify-center col-start-2"
           style={{
             position: "relative",
             zIndex: 20,
-            backgroundColor: "rgba(0, 0, 0, 0.75)", // 0.70 OK too
+            backgroundColor: "rgba(0, 0, 0, 0.75)",
             backdropFilter: "blur(6px)",
             WebkitBackdropFilter: "blur(6px)",
             marginLeft: "calc(-100vw)",
@@ -136,7 +147,7 @@ export default function Lightbox({
           role="dialog"
           aria-modal="true"
         >
-          {/* IMAGE STACK — sits ABOVE side panels and backdrop; clicking image does NOT close */}
+          {/* MEDIA STACK — sits ABOVE side panels and backdrop; clicking media does NOT close */}
           <div
             className="relative max-w-[95vw] max-h-[95vh]"
             style={{ pointerEvents: "auto", zIndex: 50 }}
@@ -153,7 +164,7 @@ export default function Lightbox({
               <div
                 className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50"
                 style={{ width: "min(520px, 78vw)" }}
-                aria-label={`Image ${currentIndex + 1} of ${total}`}
+                aria-label={`Item ${currentIndex + 1} of ${total}`}
               >
                 <div
                   className="flex items-center gap-2"
@@ -177,11 +188,11 @@ export default function Lightbox({
                       alignItems: "center",
                     }}
                   >
-                    {images.map((_, i) => (
+                    {safeImages.map((_, i) => (
                       <button
                         key={i}
                         onClick={() => setCurrentIndex(i)}
-                        aria-label={`Go to image ${i + 1}`}
+                        aria-label={`Go to item ${i + 1}`}
                         style={{
                           height: 6,
                           borderRadius: 999,
@@ -225,7 +236,7 @@ export default function Lightbox({
           </div>
         </div>
 
-        {/* Right Panel (click/keyboard to close; below image stack) */}
+        {/* Right Panel (click/keyboard to close; below media stack) */}
         <div
           className="w-full h-full"
           onClick={onClose}

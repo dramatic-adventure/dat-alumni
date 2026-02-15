@@ -39,8 +39,8 @@ export async function generateStaticParams() {
   const seen = new Set<string>();
   const out: { slug: string }[] = [];
   for (const b of valid) {
-    const keySlug = String(b.meta.key);            // fixed buckets: use key (e.g., "playwrights")
-    const labelSlug = slugifyTitle(b.meta.label);  // dynamic buckets: use label
+    const keySlug = String(b.meta.key); // fixed buckets: use key (e.g., "playwrights")
+    const labelSlug = slugifyTitle(b.meta.label); // dynamic buckets: use label
     const canonical = keySlug.startsWith("title:") ? labelSlug : keySlug;
     if (!seen.has(canonical)) {
       out.push({ slug: canonical });
@@ -87,7 +87,7 @@ export default async function TitlePage(
 
   // Find target bucket by either key or label slug
   const entry = Array.from(buckets.values()).find((b) => {
-    const keySlug = String(b.meta.key);           // e.g., "designers" or "title:actors"
+    const keySlug = String(b.meta.key); // e.g., "designers" or "title:actors"
     const labelSlug = slugifyTitle(b.meta.label); // e.g., "actors"
     const canonical = keySlug.startsWith("title:") ? labelSlug : keySlug;
     return canonical === target || labelSlug === target;
@@ -241,10 +241,12 @@ export default async function TitlePage(
                       {group.people.map((artist) => (
                         <MiniProfileCard
                           key={artist.slug}
+                          alumniId={artist.slug}
                           name={artist.name}
                           role={artist.role}
                           slug={artist.slug}
                           headshotUrl={artist.headshotUrl}
+                          cacheKey={(artist as any).headshotCacheKey}
                         />
                       ))}
                     </div>
@@ -263,10 +265,12 @@ export default async function TitlePage(
                 {flatSelected.map((artist) => (
                   <MiniProfileCard
                     key={artist.slug}
+                    alumniId={artist.slug}
                     name={artist.name}
                     role={artist.role}
                     slug={artist.slug}
                     headshotUrl={artist.headshotUrl}
+                    cacheKey={(artist as any).headshotCacheKey}
                   />
                 ))}
               </div>

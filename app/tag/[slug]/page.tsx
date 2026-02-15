@@ -3,11 +3,14 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
 import type { AlumniRow } from "@/lib/types";
+
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import TagsGrid from "@/components/alumni/TagsGrid";
+
 import { getCanonicalTag, slugifyTag } from "@/lib/tags";
 
 export const revalidate = 3600;
@@ -20,17 +23,21 @@ export async function generateStaticParams() {
   for (const artist of alumni) {
     for (const tag of artist.identityTags ?? []) {
       if (typeof tag !== "string") continue;
-      const canonical = getCanonicalTag(tag);
-      if (canonical) slugs.add(slugifyTag(canonical));
+      const canonical = getCanonicalTag(tag) ?? tag;
+      if (!canonical) continue;
+      slugs.add(slugifyTag(canonical));
     }
   }
+
   return Array.from(slugs).map((slug) => ({ slug }));
 }
 
 // Helpful metadata per tag page
-export async function generateMetadata(
-  { params }: { params: { slug: string } }
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
   const slugLower = (params?.slug ?? "").toLowerCase();
   const alumni: AlumniRow[] = await loadVisibleAlumni();
 
@@ -38,10 +45,8 @@ export async function generateMetadata(
   const labelFromData =
     alumni
       .flatMap((a) => a.identityTags ?? [])
-      .map((t) => getCanonicalTag(t))
-      .find((c) => c && slugifyTag(c) === slugLower) ??
-        humanizeSlug(params?.slug ?? "");
-
+      .map((t) => getCanonicalTag(t) ?? t)
+      .find((c) => c && slugifyTag(c) === slugLower) ?? humanizeSlug(params?.slug ?? "");
 
   const title = `${labelFromData} — DAT Alumni`;
   const description = `Explore artists tagged as ${labelFromData}.`;
@@ -65,15 +70,20 @@ export async function generateMetadata(
   };
 }
 
-export default async function TagPage({ params }: { params: { slug: string } }) {
+export default async function TagPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
   const slug = params?.slug ?? "";
-  const alumni: AlumniRow[] = await loadVisibleAlumni();
   const slugLower = slug.toLowerCase();
+
+  const alumni: AlumniRow[] = await loadVisibleAlumni();
 
   // Filter by canonicalized tag
   const filteredRaw = alumni.filter((artist) =>
     (artist.identityTags ?? []).some((tag) => {
-      const c = getCanonicalTag(tag);
+      const c = getCanonicalTag(tag) ?? tag;
       return c ? slugifyTag(c) === slugLower : false;
     })
   );
@@ -94,7 +104,7 @@ export default async function TagPage({ params }: { params: { slug: string } }) 
   const displayLabel =
     filtered
       .flatMap((a) => a.identityTags ?? [])
-      .map((t: string) => getCanonicalTag(t))
+      .map((t) => getCanonicalTag(t) ?? t)
       .find((c) => c && slugifyTag(c) === slugLower) ?? humanizeSlug(slug);
 
   return (
@@ -194,10 +204,15 @@ export default async function TagPage({ params }: { params: { slug: string } }) 
               {filtered.map((artist) => (
                 <MiniProfileCard
                   key={artist.slug}
+                  // ✅ IMPORTANT: lets MiniProfileCard self-hydrate selected/current headshot
+                  alumniId={artist.slug}
                   name={artist.name}
                   role={artist.role}
                   slug={artist.slug}
+                  // keep this as fallback only
                   headshotUrl={artist.headshotUrl}
+                  // ✅ cache-bust key when available
+                  cacheKey={(artist as any)?.headshotCacheKey}
                 />
               ))}
             </div>

@@ -60,6 +60,13 @@ function normId(x: unknown) {
   return String(x ?? "").trim().toLowerCase();
 }
 
+function buildImgProxyUrl(fileId: string, v?: string) {
+  const id = String(fileId || "").trim();
+  const vv = String(v || "").trim();
+  if (!id) return "";
+  return `/api/img?fileId=${encodeURIComponent(id)}${vv ? `&v=${encodeURIComponent(vv)}` : ""}`;
+}
+
 /** ADMIN_EMAILS is a comma-separated list of admin addresses */
 export function isAdmin(email?: string | null) {
   const raw = process.env.ADMIN_EMAILS || "";
@@ -79,6 +86,8 @@ export async function resolveOwnerAlumniId(
 ): Promise<string> {
   const sheets = sheetsClient();
   const nEmail = normalizeGmail(email);
+
+  const OWNERSHIP_BUILD = "2026-02-15T14:xx-verify-live-write";
 
   // 1) Profile-Live
   const live = await withRetry(
@@ -129,9 +138,7 @@ export async function resolveOwnerAlumniId(
     const aRows = alias.data.values ?? [];
     if (aRows.length > 1) {
       const [, ...rest] = aRows as string[][];
-      const hit = rest.find(
-        ([e, aid]) => e && aid && normalizeGmail(String(e)) === nEmail
-      );
+      const hit = rest.find(([e, aid]) => e && aid && normalizeGmail(String(e)) === nEmail);
       if (hit) return normId(hit[1]);
     }
   } catch {
@@ -216,13 +223,20 @@ export async function featureExistingInMedia(
   const targetRowIndices: number[] = [];
   let targetIndex: number | null = null;
 
+  const wantKind = String(kind || "").trim().toLowerCase();
+  const wantFile = String(fileId || "").trim();
+
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i] as string[];
-    if (normId(r[idxAid]) === aid && String(r[idxKind] || "") === kind) {
+    const rowKind = String(r[idxKind] || "").trim().toLowerCase();
+    const rowFile = String(r[idxFile] || "").trim();
+
+    if (normId(r[idxAid]) === aid && rowKind === wantKind) {
       targetRowIndices.push(i);
-      if (String(r[idxFile] || "") === fileId) targetIndex = i;
+      if (rowFile === wantFile) targetIndex = i;
     }
   }
+
 
   if (targetIndex == null) throw new Error("fileId not found for this alumni/kind");
 
@@ -240,7 +254,7 @@ export async function featureExistingInMedia(
     if (i === targetIndex) continue;
     const row = rows[i] as string[];
     while (row.length < mh.length) row.push("");
-    if (row[flagColIdx] === "TRUE") {
+    if (String(row[flagColIdx] || "").trim().toUpperCase() === "TRUE") {
       row[flagColIdx] = "FALSE";
       data.push({ range: `Profile-Media!A${i + 2}:L${i + 2}`, values: [row] });
     }
@@ -291,9 +305,7 @@ export async function setLivePointer(
 
   const aid = normId(alumniId);
 
-  let rowIndex = rows.findIndex(
-    (r: string[], i: number) => i > 0 && normId(r[idIdx]) === aid
-  );
+  let rowIndex = rows.findIndex((r: string[], i: number) => i > 0 && normId(r[idIdx]) === aid);
 
   if (rowIndex === -1) {
     rowIndex = rows.length;
@@ -337,4 +349,182 @@ export async function setLivePointer(
   }
 
   return colName;
+}
+
+/** Set current headshot (Profile-Media isCurrent TRUE/FALSE + Profile-Live id+url) */
+export async function setCurrentHeadshot(
+  spreadsheetId: string,
+  alumniId: string,
+  fileId: string,
+  nowIso: string
+): Promise<{ currentHeadshotId: string; currentHeadshotUrl: string }> {
+  const sheets = sheetsClient();
+
+  const aid = normId(alumniId);
+  const fid = String(fileId || "").trim();
+  if (!aid) throw new Error("alumniId required");
+  if (!fid) throw new Error("fileId required");
+
+  // 1) Flip Profile-Media isCurrent so exactly one headshot is TRUE
+  await featureExistingInMedia(spreadsheetId, aid, "headshot", fid);
+
+  // 2) Read Profile-Media to find the selected row's externalUrl (canonical)
+  const media = await withRetry(
+    () =>
+      sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: "Profile-Media!A:L",
+      }),
+    "Sheets get Profile-Media (for headshot url)"
+  );
+
+  const mRows = (media.data.values ?? []) as string[][];
+  const [mh, ...rows] = mRows;
+  if (!mh) throw new Error("Profile-Media has no header");
+
+  const mhLower = mh.map((h) => String(h || "").trim().toLowerCase());
+  const idxAid = mhLower.indexOf("alumniid");
+  const idxKind = mhLower.indexOf("kind");
+  const idxFile = mhLower.indexOf("fileid");
+  const idxExternal = mhLower.indexOf("externalurl");
+  const idxUploadedAt = mhLower.indexOf("uploadedat");
+
+  if (idxAid === -1 || idxKind === -1 || idxFile === -1) {
+    throw new Error("Profile-Media is missing required columns");
+  }
+
+  const selectedIndex0 = rows.findIndex((r) => {
+    const rowKind = String(r[idxKind] || "").trim().toLowerCase();
+    const rowFile = String(r[idxFile] || "").trim();
+    return normId(r[idxAid]) === aid && rowKind === "headshot" && rowFile === fid;
+  });
+
+  // Because we already featured an existing row above, this SHOULD exist.
+  if (selectedIndex0 === -1) {
+    throw new Error("fileId not found for this alumni/kind");
+  }
+
+  const hit = rows[selectedIndex0] as string[];
+  const urlFromSheet = idxExternal !== -1 ? String(hit?.[idxExternal] || "").trim() : "";
+
+  // ✅ Use the stable cache key for this specific media row.
+  // Prefer uploadedAt; fall back to nowIso only if uploadedAt is missing.
+  const uploadedAt = idxUploadedAt !== -1 ? String(hit?.[idxUploadedAt] || "").trim() : "";
+  const v = uploadedAt || nowIso;
+
+  // Prefer externalUrl from sheet; if blank, fall back to canonical proxy url (stable v).
+  const currentHeadshotUrl = urlFromSheet || buildImgProxyUrl(fid, v);
+
+  // ✅ If the selected headshot row has no externalUrl yet, backfill it with the canonical proxy URL.
+  // This prevents future "blank url" drift while keeping changes minimal.
+  if (!urlFromSheet && idxExternal !== -1) {
+    const row = [...(rows[selectedIndex0] ?? [])] as string[];
+    while (row.length < mh.length) row.push("");
+    row[idxExternal] = currentHeadshotUrl;
+
+    await withRetry(
+      () =>
+        sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `Profile-Media!A${selectedIndex0 + 2}:L${selectedIndex0 + 2}`,
+          valueInputOption: "RAW",
+          requestBody: { values: [row] },
+        }),
+      "Sheets update Profile-Media (backfill externalUrl)"
+    );
+  }
+
+  // 3) Write Profile-Live currentHeadshotId + currentHeadshotUrl (and needs_review + lastChangeType)
+  const live = await withRetry(
+    () =>
+      sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: "Profile-Live!A:ZZ",
+      }),
+    "Sheets get Profile-Live (set headshot)"
+  );
+
+  const lRows = (live.data.values ?? []) as string[][];
+  const header = (lRows[0] ?? []) as string[];
+
+  const idIdx = idxOf(header, ["alumniid", "slug", "alumni id", "id"]);
+  if (idIdx === -1) throw new Error(`Profile-Live missing "alumniId" header`);
+
+  const headshotIdIdx = idxOf(header, ["currentheadshotid"]);
+  const headshotUrlIdx = idxOf(header, ["currentheadshoturl"]);
+
+  const statusIdx = idxOf(header, ["status"]);
+  const updatedIdx = idxOf(header, ["updatedat", "updated at"]);
+  const lastChangeIdx = idxOf(header, ["lastchangetype"]);
+
+  let rowIndex = lRows.findIndex((r, i) => i > 0 && normId(r[idIdx]) === aid);
+
+  if (rowIndex === -1) {
+    rowIndex = lRows.length;
+    const newRow: string[] = Array(header.length).fill("");
+
+    newRow[idIdx] = aid;
+    if (headshotIdIdx !== -1) newRow[headshotIdIdx] = fid;
+    if (headshotUrlIdx !== -1) newRow[headshotUrlIdx] = currentHeadshotUrl;
+    if (statusIdx !== -1) newRow[statusIdx] = "needs_review";
+    if (updatedIdx !== -1) newRow[updatedIdx] = nowIso;
+    if (lastChangeIdx !== -1) newRow[lastChangeIdx] = "media";
+
+    await withRetry(
+      () =>
+        sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `Profile-Live!A${rowIndex + 1}:ZZ${rowIndex + 1}`,
+          valueInputOption: "RAW",
+          requestBody: { values: [newRow] },
+        }),
+      "Sheets update Profile-Live (create & set headshot)"
+    );
+  } else {
+    const row = [...(lRows[rowIndex] ?? [])] as string[];
+    while (row.length < header.length) row.push("");
+
+    if (headshotIdIdx !== -1) row[headshotIdIdx] = fid;
+    if (headshotUrlIdx !== -1) row[headshotUrlIdx] = currentHeadshotUrl;
+    if (statusIdx !== -1) row[statusIdx] = "needs_review";
+    if (updatedIdx !== -1) row[updatedIdx] = nowIso;
+    if (lastChangeIdx !== -1) row[lastChangeIdx] = "media";
+
+    await withRetry(
+      () =>
+        sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `Profile-Live!A${rowIndex + 1}:ZZ${rowIndex + 1}`,
+          valueInputOption: "RAW",
+          requestBody: { values: [row] },
+        }),
+      "Sheets update Profile-Live (set headshot)"
+    );
+  }
+
+  // ✅ VERIFY: read back the exact row we just wrote (kills "it said ok but sheet didn't change")
+  const rowA1 = rowIndex + 1; // 1-based row for A1 notation
+  const verify = await withRetry(
+    () =>
+      sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `Profile-Live!A${rowA1}:ZZ${rowA1}`,
+        valueRenderOption: "UNFORMATTED_VALUE",
+      }),
+    "Sheets get Profile-Live (verify headshot write)"
+  );
+
+  const vRow = (verify.data.values?.[0] ?? []) as string[];
+  const vId = headshotIdIdx !== -1 ? String(vRow[headshotIdIdx] || "").trim() : "";
+  const vUrl = headshotUrlIdx !== -1 ? String(vRow[headshotUrlIdx] || "").trim() : "";
+
+  if (vId !== fid || vUrl !== currentHeadshotUrl) {
+    throw new Error(
+      `Profile-Live headshot write did not persist (row ${rowA1}). ` +
+        `expected id=${fid} url=${currentHeadshotUrl} ` +
+        `got id=${vId} url=${vUrl}`
+    );
+  }
+
+  return { currentHeadshotId: fid, currentHeadshotUrl };
 }

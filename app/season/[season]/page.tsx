@@ -88,12 +88,16 @@ export async function generateStaticParams() {
   return seasons.map((_, i) => ({ season: `${i + 1}` }));
 }
 
-export async function generateMetadata(
-  { params }: { params: { season: string } }
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: { season: string };
+}): Promise<Metadata> {
   const { season } = params;
   const n = Number(season);
-  const info = Number.isFinite(n) ? seasons.find((s) => s.slug === `season-${n}`) : undefined;
+  const info = Number.isFinite(n)
+    ? seasons.find((s) => s.slug === `season-${n}`)
+    : undefined;
 
   const title = info ? `${info.seasonTitle} — DAT` : `Season ${season} — DAT`;
   const description = info
@@ -103,9 +107,11 @@ export async function generateMetadata(
   return { title, description };
 }
 
-export default async function SeasonPage(
-  { params }: { params: { season: string } }
-) {
+export default async function SeasonPage({
+  params,
+}: {
+  params: { season: string };
+}) {
   const { season } = params;
 
   const seasonNumber = parseInt(season, 10);
@@ -119,8 +125,12 @@ export default async function SeasonPage(
   }
 
   // Group data
-  const programs = Object.values(programMap).filter((p) => p.season === seasonNumber);
-  const productions = Object.values(productionMap).filter((p) => p.season === seasonNumber);
+  const programs = Object.values(programMap).filter(
+    (p) => p.season === seasonNumber
+  );
+  const productions = Object.values(productionMap).filter(
+    (p) => p.season === seasonNumber
+  );
 
   // Visible alumni only
   const alumni = (await loadVisibleAlumni()) as AlumniRow[];
@@ -144,7 +154,9 @@ export default async function SeasonPage(
   // Programs grouped by label
   const programsByGroup: Record<string, typeof programs> = {};
   for (const program of programs) {
-    const key = `${program.program ?? "Other"}: ${program.location ?? "Unknown"} ${program.year ?? "Unknown"}`;
+    const key = `${program.program ?? "Other"}: ${program.location ?? "Unknown"} ${
+      program.year ?? "Unknown"
+    }`;
     (programsByGroup[key] ||= []).push(program);
   }
 
@@ -230,7 +242,10 @@ export default async function SeasonPage(
 
                   {group.map((program) => {
                     // ✅ Resolve + dedupe artists via alias map
-                    const resolved = resolveArtists(program.artists, aliasToCanonical);
+                    const resolved = resolveArtists(
+                      program.artists,
+                      aliasToCanonical
+                    );
                     const canonicalSlugs = Array.from(resolved.keys()).sort();
 
                     return (
@@ -247,7 +262,8 @@ export default async function SeasonPage(
                         <div
                           style={{
                             display: "grid",
-                            gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                            gridTemplateColumns:
+                              "repeat(auto-fill, minmax(140px, 1fr))",
                             gap: "1rem",
                             justifyItems: "center",
                             marginTop: "1rem",
@@ -257,15 +273,22 @@ export default async function SeasonPage(
                             const alum = alumniMap[canon];
                             if (!alum) return null;
 
-                            const roles = Array.from(resolved.get(canon)!.roles).join(", ");
+                            const roles = Array.from(
+                              resolved.get(canon)!.roles
+                            ).join(", ");
 
                             return (
                               <MiniProfileCard
                                 key={canon}
+                                // ✅ IMPORTANT: lets MiniProfileCard self-hydrate selected/current headshot
+                                alumniId={alum.slug}
                                 name={alum.name}
                                 role={roles}
                                 slug={alum.slug} // ✅ canonical
+                                // keep this as fallback only
                                 headshotUrl={alum.headshotUrl}
+                                // ✅ cache-bust key when available
+                                cacheKey={(alum as any)?.headshotCacheKey}
                               />
                             );
                           })}
@@ -307,7 +330,10 @@ export default async function SeasonPage(
                       .slice()
                       .sort((a, b) => a.title.localeCompare(b.title))
                       .map((prod) => {
-                        const resolved = resolveArtists(prod.artists, aliasToCanonical);
+                        const resolved = resolveArtists(
+                          prod.artists,
+                          aliasToCanonical
+                        );
                         const canonicalSlugs = Array.from(resolved.keys()).sort();
 
                         return (
@@ -321,12 +347,17 @@ export default async function SeasonPage(
                               padding: "2rem",
                             }}
                           >
-                            {renderMaybeLink(prod.url, prod.title, "production-link")}
+                            {renderMaybeLink(
+                              prod.url,
+                              prod.title,
+                              "production-link"
+                            )}
 
                             <div
                               style={{
                                 display: "grid",
-                                gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                                gridTemplateColumns:
+                                  "repeat(auto-fill, minmax(140px, 1fr))",
                                 gap: "1rem",
                                 justifyItems: "center",
                                 marginTop: "1rem",
@@ -336,15 +367,22 @@ export default async function SeasonPage(
                                 const alum = alumniMap[canon];
                                 if (!alum) return null;
 
-                                const roles = Array.from(resolved.get(canon)!.roles).join(", ");
+                                const roles = Array.from(
+                                  resolved.get(canon)!.roles
+                                ).join(", ");
 
                                 return (
                                   <MiniProfileCard
                                     key={canon}
+                                    // ✅ IMPORTANT: lets MiniProfileCard self-hydrate selected/current headshot
+                                    alumniId={alum.slug}
                                     name={alum.name}
                                     role={roles}
                                     slug={alum.slug} // ✅ canonical
+                                    // keep this as fallback only
                                     headshotUrl={alum.headshotUrl}
+                                    // ✅ cache-bust key when available
+                                    cacheKey={(alum as any)?.headshotCacheKey}
                                   />
                                 );
                               })}
@@ -425,15 +463,24 @@ export default async function SeasonPage(
   );
 }
 
-function renderMaybeLink(href: string | undefined, label: string, className: string) {
+function renderMaybeLink(
+  href: string | undefined,
+  label: string,
+  className: string
+) {
   if (!href) return <span className={className}>{label}</span>;
   const isInternal = href.startsWith("/");
   return isInternal ? (
-    <Link href={href} prefetch className={className}>
+    <Link href={href} prefetch={false} className={className}>
       {label}
     </Link>
   ) : (
-    <a href={href} className={className} target="_blank" rel="noopener noreferrer">
+    <a
+      href={href}
+      className={className}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
       {label}
     </a>
   );

@@ -62,12 +62,13 @@ export type ProfileLiveRow = {
 export type EnrichedProfileLiveRow = ProfileLiveRow & {
   canonicalSlug: string;
 
-  /**
-   * ✅ SINGLE authoritative headshot URL for all UI.
-   * Must be either:
-   * - `/api/img?url=...` (encoded upstream URL), OR
-   * - `/images/default-headshot.png`
-   */
+/**
+ * ✅ SINGLE authoritative headshot URL for all UI.
+ * Must be either:
+ * - `/api/img?fileId=...` (Drive file id), OR
+ * - `/api/img?url=...` (encoded upstream URL), OR
+ * - `/images/default-headshot.png`
+ */
   headshotUrl?: string;
 
   /**
@@ -302,6 +303,29 @@ function withVersion(url: string, v?: string) {
   }
 }
 
+function withProxyVersion(url: string, v?: string) {
+  const raw = String(url || "").trim();
+  if (!raw) return raw;
+
+  const ver = String(v || "").trim();
+  if (!ver) return raw;
+
+  // Only version our proxy URLs
+  if (!raw.startsWith("/api/img")) return raw;
+
+  try {
+    const u = new URL(raw, "http://local"); // base required for relative
+    // Prefer the stable param name "v"
+    if (!u.searchParams.get("v") && !u.searchParams.get("cacheKey")) {
+      u.searchParams.set("v", ver);
+    }
+    return u.pathname + (u.search || "");
+  } catch {
+    return raw;
+  }
+}
+
+
 function mediaKeysForRow(m: ProfileMediaRow): string[] {
   const keys = new Set<string>();
 
@@ -346,7 +370,7 @@ function pickBestHeadshot(media: ProfileMediaRow[] | undefined) {
     return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
   };
 
-  if (!rows.length) return { upstreamUrl: "", cacheKey: "" };
+if (!rows.length) return { upstreamUrl: "", cacheKey: "", fileId: "" };
 
   rows.sort((a, b) => {
     // 0) TRUE wins first (PRIMARY)
@@ -386,7 +410,8 @@ function pickBestHeadshot(media: ProfileMediaRow[] | undefined) {
   const upstreamUrl = fileId ? driveUrlFromId(fileId) : externalUrl;
   const cacheKey = uploadedAt || fileId || externalUrl;
 
-  return { upstreamUrl, cacheKey };
+  return { upstreamUrl, cacheKey, fileId };
+
 }
 
 export async function enrichAlumniData(
@@ -502,13 +527,30 @@ export async function enrichAlumniData(
     // Fallback to Profile-Live only if Profile-Media has nothing usable
     const upstreamRaw = resolvedHeadshot.upstreamUrl || headshotUrlFrom(item) || "";
 
-    // ✅ VERSION the upstream URL so caches can't serve stale bytes when headshot changes
-    const upstream = upstreamRaw ? withVersion(upstreamRaw, resolvedHeadshotCacheKey) : "";
+    // ✅ Do NOT version upstream; version the proxy URL instead (v=... on /api/img)
+    const upstream = upstreamRaw ? upstreamRaw : "";
 
-    // ✅ All UI must route through /api/img?url=...
-    const resolvedHeadshotUrl = upstream
-      ? `/api/img?url=${encodeURIComponent(upstream)}`
-      : "/images/default-headshot.png";
+    // ✅ All UI must route through /api/img (fileId preferred, url fallback)
+    const resolvedHeadshotUrlRaw = resolvedHeadshot.fileId
+      ? `/api/img?fileId=${encodeURIComponent(resolvedHeadshot.fileId)}`
+      : upstream
+        ? `/api/img?url=${encodeURIComponent(upstream)}`
+        : "/images/default-headshot.png";
+
+    // ✅ Ensure proxied URLs are versioned so caches never serve stale headshots
+    const resolvedHeadshotUrl =
+      resolvedHeadshotUrlRaw.startsWith("/api/img")
+        ? withProxyVersion(resolvedHeadshotUrlRaw, resolvedHeadshotCacheKey)
+        : resolvedHeadshotUrlRaw;
+
+    if (process.env.NODE_ENV === "development" && process.env.DEBUG_HEADSHOTS === "1") {
+      devLog("[enrich] final headshotUrl:", {
+        slug: item.slug,
+        headshotUrl: resolvedHeadshotUrl,
+        headshotCacheKey: resolvedHeadshotCacheKey,
+      });
+    }
+
 
     // Normalized slug set for joining against programMap/productionMap keys
     const aliasesNorm = new Set<string>();

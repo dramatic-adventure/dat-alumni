@@ -42,9 +42,11 @@ export async function generateStaticParams() {
 }
 
 // ✅ Helpful metadata
-export async function generateMetadata(
-  { params }: { params: { slug: string } }
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
   const slug = params?.slug ?? "";
   const canonical = unslugToCanonical(slug);
   const parent = getParentFor(canonical);
@@ -71,16 +73,20 @@ export async function generateMetadata(
   };
 }
 
-export default async function LocationPage(
-  { params }: { params: { slug: string } }
-) {
+export default async function LocationPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
   const slug = params?.slug ?? "";
   const alumni: AlumniRow[] = await loadVisibleAlumni();
 
-  const canonical = unslugToCanonical(slug);      // e.g., "Brooklyn, NYC" or "New York City"
-  const parent = getParentFor(canonical);         // boroughs → { label: "New York City", slug: "new-york-city" }
-  const mainLabel = parent?.label ?? canonical;   // show parent bucket if borough
-  const mainSlug = slugifyLocation(typeof mainLabel === "string" ? mainLabel : "");
+  const canonical = unslugToCanonical(slug); // e.g., "Brooklyn, NYC" or "New York City"
+  const parent = getParentFor(canonical); // boroughs → { label: "New York City", slug: "new-york-city" }
+  const mainLabel = parent?.label ?? canonical; // show parent bucket if borough
+  const mainSlug = slugifyLocation(
+    typeof mainLabel === "string" ? mainLabel : ""
+  );
 
   // Main bucket (deduped via canonicalized links) — include boroughs when viewing NYC
   const artistsInLocation = alumni.filter((artist) =>
@@ -96,9 +102,13 @@ export default async function LocationPage(
   const centerLabel = resolveNearbyCenter(canonical);
   const excludeSlugs = new Set<string>();
   if (mainLabel === "New York City") {
-    ["new-york-city", "brooklyn-nyc", "queens-nyc", "bronx-nyc", "staten-island-nyc"].forEach(
-      (s) => excludeSlugs.add(s)
-    );
+    [
+      "new-york-city",
+      "brooklyn-nyc",
+      "queens-nyc",
+      "bronx-nyc",
+      "staten-island-nyc",
+    ].forEach((s) => excludeSlugs.add(s));
   } else {
     excludeSlugs.add(mainSlug);
   }
@@ -114,7 +124,11 @@ export default async function LocationPage(
     : [];
 
   // If the slug isn't recognized and we have no results at all, 404
-  if (!isKnownLocationSlug(slug) && artistsInLocation.length === 0 && nearby.length === 0) {
+  if (
+    !isKnownLocationSlug(slug) &&
+    artistsInLocation.length === 0 &&
+    nearby.length === 0
+  ) {
     return notFound();
   }
 
@@ -211,7 +225,8 @@ export default async function LocationPage(
                 opacity: 0.8,
               }}
             >
-              Showing <strong>{parent.label}</strong> results for <em>{canonical}</em>.
+              Showing <strong>{parent.label}</strong> results for{" "}
+              <em>{canonical}</em>.
             </p>
           )}
 
@@ -234,15 +249,22 @@ export default async function LocationPage(
                 {artistsInLocation.map((artist) => (
                   <MiniProfileCard
                     key={artist.slug}
+                    // ✅ IMPORTANT: lets MiniProfileCard self-hydrate selected/current headshot
+                    alumniId={artist.slug}
                     name={artist.name}
                     role={artist.role}
                     slug={artist.slug}
+                    // keep this as fallback only
                     headshotUrl={artist.headshotUrl}
+                    // ✅ Cache-bust when available (safe no-op if missing)
+                    cacheKey={(artist as any)?.headshotCacheKey}
                   />
                 ))}
               </div>
             ) : (
-              <p className="text-gray-600 italic">No artists currently listed in this location.</p>
+              <p className="text-gray-600 italic">
+                No artists currently listed in this location.
+              </p>
             )}
           </div>
         </div>
@@ -265,7 +287,8 @@ export default async function LocationPage(
                 display: "inline-block",
               }}
             >
-              Other Nearby Artists <span style={{ opacity: 0.7 }}>(≤ 2 hours)</span>
+              Other Nearby Artists{" "}
+              <span style={{ opacity: 0.7 }}>(≤ 2 hours)</span>
             </h3>
 
             <div
@@ -286,10 +309,15 @@ export default async function LocationPage(
                 {nearby.map((n) => (
                   <MiniProfileCard
                     key={n.alum.slug}
+                    // ✅ IMPORTANT: lets MiniProfileCard self-hydrate selected/current headshot
+                    alumniId={n.alum.slug}
                     name={n.alum.name}
                     role={n.alum.role}
                     slug={n.alum.slug}
+                    // keep this as fallback only
                     headshotUrl={n.alum.headshotUrl}
+                    // ✅ Cache-bust when available (safe no-op if missing)
+                    cacheKey={(n.alum as any)?.headshotCacheKey}
                   />
                 ))}
               </div>

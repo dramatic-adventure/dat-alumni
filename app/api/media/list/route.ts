@@ -16,7 +16,7 @@ type MediaItem = {
   collectionId?: string;
   collectionTitle?: string;
   externalUrl?: string;
-  isCurrent?: string;  // "TRUE"/"FALSE" or ""
+  isCurrent?: string; // "TRUE"/"FALSE" or ""
   isFeatured?: string; // "TRUE"/"FALSE" or ""
   sortIndex?: string;
   note?: string;
@@ -36,7 +36,12 @@ function idxOf(header: string[], candidates: string[]) {
   return -1;
 }
 
-async function withRetry<T>(fn: () => Promise<T>, label: string, tries = 3, baseDelayMs = 250): Promise<T> {
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  label: string,
+  tries = 3,
+  baseDelayMs = 250
+): Promise<T> {
   let lastErr: any;
   for (let attempt = 1; attempt <= tries; attempt++) {
     try {
@@ -45,7 +50,9 @@ async function withRetry<T>(fn: () => Promise<T>, label: string, tries = 3, base
       lastErr = e;
       const msg = String(e?.message || e);
       if (
-        /ECONNRESET|ENOTFOUND|ETIMEDOUT|EPIPE|socket hang up|rateLimitExceeded|backendError|internalError/i.test(msg) &&
+        /ECONNRESET|ENOTFOUND|ETIMEDOUT|EPIPE|socket hang up|rateLimitExceeded|backendError|internalError/i.test(
+          msg
+        ) &&
         attempt < tries
       ) {
         const delay = baseDelayMs * Math.pow(2, attempt - 1);
@@ -74,11 +81,19 @@ function toISOOrEmpty(v: string) {
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
+
     const alumniId = String(searchParams.get("alumniId") || "").trim();
-    const kind = (String(searchParams.get("kind") || "all").trim().toLowerCase() as AnyKind);
+    const kind = String(searchParams.get("kind") || "all")
+      .trim()
+      .toLowerCase() as AnyKind;
+
     const limit = Math.min(parseIntSafe(searchParams.get("limit"), 50), 100);
     const offset = Math.max(parseIntSafe(searchParams.get("offset"), 0), 0);
-    const includeDrive = String(searchParams.get("includeDrive") || "false").toLowerCase() === "true";
+    const includeDrive =
+      String(searchParams.get("includeDrive") || "false").toLowerCase() === "true";
+
+    // ✅ Debug headers only (no response shape changes)
+    const debug = String(searchParams.get("debug") || "").trim() === "1";
 
     if (!alumniId) {
       return NextResponse.json({ error: "alumniId required" }, { status: 400 });
@@ -101,33 +116,73 @@ export async function GET(req: Request) {
       "Sheets get Profile-Media"
     );
 
-    const mRows = (mediaResp.data.values ?? []) as string[][];
+    const mRows = (mediaResp.data.values ?? []) as any[][];
     if (mRows.length === 0) {
-      return NextResponse.json({ ok: true, items: [], total: 0, offset, limit });
+      const res = NextResponse.json({ ok: true, items: [], total: 0, offset, limit });
+      if (debug) {
+        res.headers.set("X-Media-Debug", "1");
+        res.headers.set("X-Media-AlumniId-Query", alumniId);
+        res.headers.set("X-Media-Sheet-Rows", "0");
+        res.headers.set("X-Media-Header-Has-AlumniId", "false");
+        res.headers.set("X-Media-Header-Has-IsCurrent", "false");
+        res.headers.set("X-Media-Sample-Aids", "");
+        res.headers.set("X-Media-Filtered-Count", "0");
+      }
+      return res;
     }
 
-    const header = mRows[0] as string[];
+    const header = (mRows[0] ?? []) as any[];
     const rows = mRows.slice(1);
 
-    const idxAid = idxOf(header, ["alumniid", "alumni id", "alumni_id"]);
-    const idxKind = idxOf(header, ["kind"]);
-    const idxFile = idxOf(header, ["fileid", "file id"]);
-    const idxUploadedAt = idxOf(header, ["uploadedat", "uploaded at"]);
-    const idxUploadedBy = idxOf(header, ["uploadedbyemail", "uploaded by email", "uploadedby"]);
-    const idxColId = idxOf(header, ["collectionid", "collection id"]);
-    const idxColTitle = idxOf(header, ["collectiontitle", "collection title"]);
-    const idxExtUrl = idxOf(header, ["externalurl", "external url"]);
-    const idxIsCur = idxOf(header, ["iscurrent"]);
-    const idxIsFeat = idxOf(header, ["isfeatured"]);
-    const idxSort = idxOf(header, ["sortindex", "sort index"]);
-    const idxNote = idxOf(header, ["note", "notes"]);
+    const totalSheetRows = rows.length;
+    let sampleAids: string[] = [];
+
+    const idxAid = idxOf(header as string[], ["alumniid", "alumni id", "alumni_id"]);
+    const idxKind = idxOf(header as string[], ["kind"]);
+    const idxFile = idxOf(header as string[], ["fileid", "file id"]);
+    const idxUploadedAt = idxOf(header as string[], ["uploadedat", "uploaded at"]);
+    const idxUploadedBy = idxOf(header as string[], [
+      "uploadedbyemail",
+      "uploaded by email",
+      "uploadedby",
+    ]);
+    const idxColId = idxOf(header as string[], ["collectionid", "collection id"]);
+    const idxColTitle = idxOf(header as string[], ["collectiontitle", "collection title"]);
+    const idxExtUrl = idxOf(header as string[], ["externalurl", "external url"]);
+
+    const idxIsCur = idxOf(header as string[], [
+      "iscurrent",
+      "is current",
+      "current",
+      "current?",
+      "is_current",
+    ]);
+    const idxIsFeat = idxOf(header as string[], [
+      "isfeatured",
+      "is featured",
+      "featured",
+      "featured?",
+      "is_featured",
+    ]);
+
+    const idxSort = idxOf(header as string[], ["sortindex", "sort index"]);
+    const idxNote = idxOf(header as string[], ["note", "notes"]);
+
+    if (debug && idxAid !== -1) {
+      sampleAids = rows
+        .slice(0, 25)
+        .map((r) => String((r?.[idxAid] ?? "") as any).trim())
+        .filter(Boolean)
+        .slice(0, 5);
+    }
 
     // Filter
     const filtered = rows.filter((r) => {
-      const aid = idxAid !== -1 ? String(r[idxAid] || "") : "";
-      if (aid !== alumniId) return false;
+      const aid = idxAid !== -1 ? String(r?.[idxAid] ?? "") : "";
+      if (aid.trim() !== alumniId) return false;
+
       if (kind !== "all") {
-        const k = idxKind !== -1 ? String(r[idxKind] || "").toLowerCase() : "";
+        const k = idxKind !== -1 ? String(r?.[idxKind] ?? "").toLowerCase() : "";
         if (k !== kind) return false;
       }
       return true;
@@ -135,20 +190,23 @@ export async function GET(req: Request) {
 
     // Map to typed objects
     const itemsAll: MediaItem[] = filtered.map((r) => {
-      const k = (idxKind !== -1 ? String(r[idxKind] || "").toLowerCase() : "") as MediaKind;
+      const k = (idxKind !== -1 ? String(r?.[idxKind] ?? "").toLowerCase() : "") as MediaKind;
+
       return {
         alumniId,
         kind: k,
-        fileId: idxFile !== -1 ? String(r[idxFile] || "") : "",
-        uploadedAt: idxUploadedAt !== -1 ? toISOOrEmpty(String(r[idxUploadedAt] || "")) : "",
-        uploadedByEmail: idxUploadedBy !== -1 ? String(r[idxUploadedBy] || "") : "",
-        collectionId: idxColId !== -1 ? String(r[idxColId] || "") : "",
-        collectionTitle: idxColTitle !== -1 ? String(r[idxColTitle] || "") : "",
-        externalUrl: idxExtUrl !== -1 ? String(r[idxExtUrl] || "") : "",
-        isCurrent: idxIsCur !== -1 ? String(r[idxIsCur] || "") : "",
-        isFeatured: idxIsFeat !== -1 ? String(r[idxIsFeat] || "") : "",
-        sortIndex: idxSort !== -1 ? String(r[idxSort] || "") : "",
-        note: idxNote !== -1 ? String(r[idxNote] || "") : "",
+        fileId: idxFile !== -1 ? String(r?.[idxFile] ?? "") : "",
+        uploadedAt:
+          idxUploadedAt !== -1 ? toISOOrEmpty(String(r?.[idxUploadedAt] ?? "")) : "",
+        uploadedByEmail: idxUploadedBy !== -1 ? String(r?.[idxUploadedBy] ?? "") : "",
+        collectionId: idxColId !== -1 ? String(r?.[idxColId] ?? "") : "",
+        collectionTitle: idxColTitle !== -1 ? String(r?.[idxColTitle] ?? "") : "",
+        externalUrl: idxExtUrl !== -1 ? String(r?.[idxExtUrl] ?? "") : "",
+        // NOTE: keep as string for backward compatibility with your client logic
+        isCurrent: idxIsCur !== -1 ? String(r?.[idxIsCur] ?? "") : "",
+        isFeatured: idxIsFeat !== -1 ? String(r?.[idxIsFeat] ?? "") : "",
+        sortIndex: idxSort !== -1 ? String(r?.[idxSort] ?? "") : "",
+        note: idxNote !== -1 ? String(r?.[idxNote] ?? "") : "",
       };
     });
 
@@ -157,9 +215,15 @@ export async function GET(req: Request) {
       const ta = Date.parse(a.uploadedAt || "") || 0;
       const tb = Date.parse(b.uploadedAt || "") || 0;
       if (tb !== ta) return tb - ta;
-      const sa = Number.isFinite(Number(a.sortIndex)) ? Number(a.sortIndex) : Number.POSITIVE_INFINITY;
-      const sb = Number.isFinite(Number(b.sortIndex)) ? Number(b.sortIndex) : Number.POSITIVE_INFINITY;
+
+      const sa = Number.isFinite(Number(a.sortIndex))
+        ? Number(a.sortIndex)
+        : Number.POSITIVE_INFINITY;
+      const sb = Number.isFinite(Number(b.sortIndex))
+        ? Number(b.sortIndex)
+        : Number.POSITIVE_INFINITY;
       if (sa !== sb) return sa - sb;
+
       return (b.fileId || "").localeCompare(a.fileId || "");
     });
 
@@ -187,7 +251,7 @@ export async function GET(req: Request) {
             webViewLink: file.data.webViewLink || undefined,
             thumbnailLink: file.data.thumbnailLink || undefined,
           };
-        } catch (e) {
+        } catch {
           // Non-fatal if Drive lookup fails
         }
       }
@@ -195,7 +259,19 @@ export async function GET(req: Request) {
 
     const nextOffset = offset + items.length < total ? offset + items.length : undefined;
 
-    return NextResponse.json({ ok: true, items, total, offset, limit, nextOffset });
+    const res = NextResponse.json({ ok: true, items, total, offset, limit, nextOffset });
+
+    if (debug) {
+      res.headers.set("X-Media-Debug", "1");
+      res.headers.set("X-Media-AlumniId-Query", alumniId);
+      res.headers.set("X-Media-Sheet-Rows", String(totalSheetRows));
+      res.headers.set("X-Media-Header-Has-AlumniId", String(idxAid !== -1));
+      res.headers.set("X-Media-Header-Has-IsCurrent", String(idxIsCur !== -1));
+      res.headers.set("X-Media-Sample-Aids", sampleAids.join(","));
+      res.headers.set("X-Media-Filtered-Count", String(filtered.length));
+    }
+
+    return res;
   } catch (e: any) {
     const msg = e?.message || "server error";
     console.error("MEDIA LIST ERROR:", msg);

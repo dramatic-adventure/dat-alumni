@@ -1,31 +1,34 @@
 // /app/api/media/feature/route.ts
 import { NextResponse } from "next/server";
-import { sheetsClient } from "@/lib/googleClients";
 import { requireAuth } from "@/lib/requireAuth";
 import { rateLimit } from "@/lib/rateLimit";
 import {
   isAdmin,
   resolveOwnerAlumniId,
-  withRetry,
   featureExistingInMedia,
   setLivePointer,
+  setCurrentHeadshot,
   type MediaKind,
 } from "@/lib/ownership";
 
 export const runtime = "nodejs";
 
+function isPlausibleDriveFileId(id: string) {
+  const s = (id || "").trim();
+  if (s.length < 10 || s.length > 200) return false;
+  if (s.includes("...")) return false; // ✅ never allow stubs
+  return /^[a-zA-Z0-9_-]+$/.test(s);
+}
+
 export async function POST(req: Request) {
-  // Auth (supports admin key / DEV_BYPASS_AUTH via requireAuth)
   const auth = await requireAuth(req);
   if (!auth.ok) return auth.response;
 
-  // Per-IP rate limit (60/min)
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
   if (!rateLimit(ip)) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
-  // Parse body safely
   let body: any;
   try {
     body = await req.json();
@@ -34,7 +37,6 @@ export async function POST(req: Request) {
   }
 
   try {
-    // Normalize inputs
     const alumniId = String(body.alumniId || "").trim().toLowerCase();
     const kind = String(body.kind || "").trim().toLowerCase() as MediaKind;
     const fileId = String(body.fileId || "").trim();
@@ -45,12 +47,24 @@ export async function POST(req: Request) {
     }
     if (!fileId) return NextResponse.json({ error: "fileId required" }, { status: 400 });
 
+    // ✅ hard validation: no stubs, no junk
+    if (!isPlausibleDriveFileId(fileId)) {
+      return NextResponse.json(
+        {
+          error: "Invalid fileId",
+          detail:
+            "fileId must be a real Drive file id (letters/numbers/_/-), 10–200 chars, and must not contain '...'.",
+        },
+        { status: 400 }
+      );
+    }
+
     const spreadsheetId = process.env.ALUMNI_SHEET_ID;
     if (!spreadsheetId) {
       return NextResponse.json({ error: "Missing ALUMNI_SHEET_ID" }, { status: 500 });
     }
 
-    // Owner/Admin guard: non-admins can only edit their own alumniId
+    // Owner/Admin guard
     if (auth.email && !isAdmin(auth.email)) {
       const ownerId = await resolveOwnerAlumniId(spreadsheetId, auth.email);
       if (!ownerId || ownerId !== alumniId) {
@@ -58,51 +72,65 @@ export async function POST(req: Request) {
       }
     }
 
-    const sheets = sheetsClient();
     const nowIso = new Date().toISOString();
 
-    // 1) Flip featured/current flags in Profile-Media
+    // ✅ Headshots are special: setCurrentHeadshot flips isCurrent AND writes Live id+url.
+    // We still need to ensure the row exists (no stubs), so we surface the same 404.
+    if (kind === "headshot") {
+      try {
+        const result = await setCurrentHeadshot(spreadsheetId, alumniId, fileId, nowIso);
+
+        return NextResponse.json({
+          ok: true,
+          updated: {
+            currentHeadshotId: result.currentHeadshotId,
+            currentHeadshotUrl: result.currentHeadshotUrl,
+          },
+          status: "needs_review",
+          at: nowIso,
+        });
+      } catch (e: any) {
+        const msg = String(e?.message || e);
+        if (/fileid not found for this alumni\/kind/i.test(msg)) {
+          return NextResponse.json(
+            {
+              error: "Media row not found",
+              detail:
+                "That fileId does not exist in Profile-Media for this alumniId/kind. Add the row first (via upload/insert), then feature it.",
+              alumniId,
+              kind,
+              fileId,
+            },
+            { status: 404 }
+          );
+        }
+        throw e;
+      }
+    }
+
+    // ✅ IMPORTANT: do NOT create stub rows.
+    // If the row doesn't exist yet, featureExistingInMedia should throw and we surface it.
     try {
       await featureExistingInMedia(spreadsheetId, alumniId, kind, fileId);
     } catch (e: any) {
       const msg = String(e?.message || e);
-      // If the fileId isn't present yet, create a minimal row and retry
       if (/fileid not found for this alumni\/kind/i.test(msg)) {
-        await withRetry(
-          () =>
-            sheets.spreadsheets.values.append({
-              spreadsheetId,
-              range: "Profile-Media!A:L",
-              valueInputOption: "RAW",
-              requestBody: {
-                values: [
-                  [
-                    alumniId, // A: alumniId
-                    kind, // B: kind
-                    "", // C: collectionId
-                    "", // D: collectionTitle
-                    fileId, // E: fileId
-                    "", // F: externalUrl
-                    auth.email || "", // G: uploadedByEmail (best guess)
-                    nowIso, // H: uploadedAt
-                    "", // I: isCurrent (set by flip)
-                    "", // J: isFeatured (set by flip)
-                    "", // K: sortIndex
-                    "stub from /api/media/feature", // L: note
-                  ],
-                ],
-              },
-            }),
-          "Sheets append Profile-Media (stub for missing fileId)"
+        return NextResponse.json(
+          {
+            error: "Media row not found",
+            detail:
+              "That fileId does not exist in Profile-Media for this alumniId/kind. Add the row first (via upload/insert), then feature it.",
+            alumniId,
+            kind,
+            fileId,
+          },
+          { status: 404 }
         );
-        // Retry the flip now that the row exists
-        await featureExistingInMedia(spreadsheetId, alumniId, kind, fileId);
-      } else {
-        throw e; // bubble up other errors
       }
+      throw e;
     }
 
-    // 2) Update Live pointer + needs_review + lastChangeType="media"
+    // Other kinds keep existing pointer behavior
     const updatedCol = await setLivePointer(spreadsheetId, alumniId, kind, fileId, nowIso);
 
     return NextResponse.json({

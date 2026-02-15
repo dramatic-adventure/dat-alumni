@@ -1,4 +1,4 @@
-// StoryMedia.tsx
+// components/shared/StoryMedia.tsx
 "use client";
 
 /* eslint-disable @next/next/no-img-element */
@@ -19,30 +19,53 @@ export default function StoryMedia({
   style,
   mode = "default",
 }: StoryMediaProps) {
-  if (!imageUrl) return null;
+  const raw = String(imageUrl || "").trim();
 
-  const trimmedUrl = imageUrl.trim().replace(/\s+/g, "");
+  // Keep existing behavior: remove whitespace that occasionally sneaks into URLs.
+  const trimmedUrl = raw.replace(/\s+/g, "");
 
   const cleanUrl = (() => {
+    if (!trimmedUrl) return "";
     try {
       const parsed = new URL(trimmedUrl);
-      // strip tracking params
+      // strip tracking params (keep everything else intact)
       parsed.searchParams.forEach((_, key) => {
         const k = key.toLowerCase();
         if (k.startsWith("utm") || k === "fbclid") parsed.searchParams.delete(key);
       });
       return parsed.toString();
     } catch {
-      // NOTE: relative URLs (like "/_next/image?...") will land here
+      // relative URLs (like "/_next/image?...") will land here
       return trimmedUrl;
     }
   })();
 
+  if (!cleanUrl) return null;
+
   const baseUrl = cleanUrl.split("?")[0];
   const isRemote = /^https?:\/\//i.test(cleanUrl);
 
-  // ✅ Next.js image optimizer output (relative URL, no file extension)
-  const isNextImageOptimized = cleanUrl.startsWith("/_next/image");
+  const getPathname = (url: string): string | null => {
+    try {
+      // If we have a browser, support relative + absolute (important for /api/img and /_next/image)
+      if (typeof window !== "undefined") {
+        return new URL(url, window.location.origin).pathname;
+      }
+      // Server-side fallback: absolute only
+      if (isRemote) return new URL(url).pathname;
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  const pathname = getPathname(cleanUrl);
+
+  // ✅ Must ALWAYS treat these as images, even when absolute.
+  const isNextImageOptimized =
+    cleanUrl.startsWith("/_next/image") || pathname === "/_next/image";
+
+  const isApiImg = cleanUrl.startsWith("/api/img") || pathname === "/api/img";
 
   // Detect image URLs that don't end with an extension (e.g., Google Drive /uc, googleusercontent)
   const isLikelyImageNoExt = (() => {
@@ -61,12 +84,13 @@ export default function StoryMedia({
 
       return isDriveUc || isGoogleUserContent;
     } catch {
-      // relative URLs (like "/_next/image?...") will land here
+      // relative URLs will land here
       return false;
     }
   })();
 
   const isImage =
+    isApiImg ||
     isNextImageOptimized ||
     /\.(png|jpe?g|gif|webp|svg|heic|heif)$/i.test(baseUrl) ||
     isLikelyImageNoExt;
@@ -83,7 +107,7 @@ export default function StoryMedia({
 
       if (host.includes("youtu.be")) {
         const id = parsed.pathname.slice(1);
-        return `https://www.youtube.com/embed/${id}`;
+        return id ? `https://www.youtube.com/embed/${id}` : null;
       }
       if (host.includes("youtube.com")) {
         const id = parsed.searchParams.get("v");
@@ -96,7 +120,7 @@ export default function StoryMedia({
       }
       if (host.includes("vimeo.com")) {
         const id = parsed.pathname.split("/")[1];
-        return `https://player.vimeo.com/video/${id}`;
+        return id ? `https://player.vimeo.com/video/${id}` : null;
       }
       if (host.includes("drive.google.com")) {
         const match = parsed.pathname.match(/\/d\/(.+?)\//);
@@ -152,10 +176,6 @@ export default function StoryMedia({
     position: "relative",
     overflow: "hidden",
   };
-
-  // ✅ IMPORTANT: use the original URL and let next/image handle remote optimization
-  // (except when it's already a "/_next/image?..." URL; see image block below)
-  const imgSrc = cleanUrl;
 
   // 🎧 Audio
   if (isAudio) {
@@ -255,11 +275,10 @@ export default function StoryMedia({
     );
   }
 
-  // 🖼 Images (local + remote via next/image)
+  // 🖼 Images
   if (isImage) {
-    // ✅ If we're already looking at Next's optimized image URL, render it directly.
-    // Avoids double-optimizing and fixes "blank swipe" when Lightbox receives "/_next/image?..."
-    if (isNextImageOptimized) {
+    // ✅ Requirement: always render /api/img?... and /_next/image?... as <img>, even when absolute.
+    if (isApiImg || isNextImageOptimized) {
       return (
         <div className={containerClass}>
           <div style={boxStyle}>
@@ -280,11 +299,12 @@ export default function StoryMedia({
       );
     }
 
+    // Everything else: keep existing next/image behavior.
     return (
       <div className={containerClass}>
         <div style={boxStyle}>
           <Image
-            src={imgSrc}
+            src={cleanUrl}
             alt={title || "Image"}
             fill
             className={
@@ -298,11 +318,110 @@ export default function StoryMedia({
                 : "(max-width: 640px) 92vw, (max-width: 1024px) 85vw, 1100px"
             }
             priority={mode === "lightbox"}
+            unoptimized={!isRemote}
           />
         </div>
       </div>
     );
   }
 
-  return null;
+  // 🔗 Fallback: clean link card (instead of returning null)
+  const parseLinkMeta = (url: string) => {
+    try {
+      const u =
+        typeof window !== "undefined"
+          ? new URL(url, window.location.origin)
+          : isRemote
+          ? new URL(url)
+          : null;
+
+      if (!u) return { href: url, host: "", display: url };
+
+      const host = u.hostname.replace(/^www\./i, "");
+      const path = u.pathname && u.pathname !== "/" ? u.pathname : "";
+      const display = `${host}${path}`;
+      return { href: u.toString(), host, display };
+    } catch {
+      return { href: url, host: "", display: url };
+    }
+  };
+
+  const linkMeta = parseLinkMeta(cleanUrl);
+
+  return (
+    <div className={containerClass}>
+      <a
+        href={linkMeta.href}
+        target="_blank"
+        rel="noreferrer noopener"
+        className="block"
+        style={{ textDecoration: "none" }}
+        aria-label={title ? `Open link: ${title}` : "Open link"}
+      >
+        <div
+          style={{
+            ...defaultBoxStyle,
+            height: mode === "lightbox" ? "auto" : undefined,
+            padding: mode === "lightbox" ? 18 : 16,
+            borderRadius: 16,
+            background: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.14)",
+            boxShadow: "0 10px 28px rgba(0,0,0,0.28)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            color: "rgba(255,255,255,0.92)",
+            maxWidth: mode === "lightbox" ? "min(900px, 90vw)" : "min(1100px, 92vw)",
+            margin: "0 auto",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 12,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.65)",
+              marginBottom: 10,
+            }}
+          >
+            Link
+          </div>
+
+          <div
+            style={{
+              fontSize: mode === "lightbox" ? 18 : 16,
+              fontWeight: 800,
+              lineHeight: 1.2,
+              marginBottom: 8,
+              wordBreak: "break-word",
+            }}
+          >
+            {title || linkMeta.host || "Open link"}
+          </div>
+
+          <div
+            style={{
+              fontSize: 14,
+              color: "rgba(255,255,255,0.78)",
+              wordBreak: "break-word",
+            }}
+          >
+            {linkMeta.display}
+          </div>
+
+          <div
+            style={{
+              marginTop: 12,
+              fontSize: 13,
+              color: "rgba(255,204,0,0.92)",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              fontWeight: 800,
+            }}
+          >
+            Open →
+          </div>
+        </div>
+      </a>
+    </div>
+  );
 }

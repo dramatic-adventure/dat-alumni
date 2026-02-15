@@ -60,7 +60,9 @@ function groupByProgramLocation() {
     for (const [loc, list] of p.locations) {
       p.locations.set(
         loc,
-        list.slice().sort((a, b) => extractYearNumber(b.year) - extractYearNumber(a.year))
+        list
+          .slice()
+          .sort((a, b) => extractYearNumber(b.year) - extractYearNumber(a.year))
       );
     }
   }
@@ -258,10 +260,15 @@ export default async function ProgramPage({ params }: { params: { slug: string }
                 {people.map(({ alum, roles }) => (
                   <MiniProfileCard
                     key={alum.slug}
+                    // ✅ IMPORTANT: lets MiniProfileCard self-hydrate selected/current headshot
+                    alumniId={alum.slug}
                     name={alum.name}
                     role={roles || alum.role}
                     slug={alum.slug}
+                    // keep this as fallback only
                     headshotUrl={alum.headshotUrl}
+                    // ✅ Cache-bust when available (safe no-op if missing)
+                    cacheKey={(alum as any)?.headshotCacheKey}
                   />
                 ))}
               </div>

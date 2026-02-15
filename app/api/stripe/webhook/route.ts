@@ -7,6 +7,7 @@ import {
   AmountType,
   DonationKind,
   PaymentStatus,
+  DonorTier,
 } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -73,6 +74,11 @@ function parseIntSafe(x: unknown): number | null {
     return Number.isFinite(n) ? n : null;
   }
   return null;
+}
+
+function normEmail(email: string | null | undefined) {
+  const s = (email ?? "").trim().toLowerCase();
+  return s.length ? s : null;
 }
 
 // ---------- tiny time helpers ----------
@@ -292,6 +298,7 @@ async function safeCreateOrUpdateDonationPayment(
         data: {
           donorKey: (data as any).donorKey ?? undefined,
           donorEmail: (data as any).donorEmail ?? undefined,
+          donorEmailNorm: (data as any).donorEmailNorm ?? undefined,
           donorName: (data as any).donorName ?? undefined,
           billingCountry: (data as any).billingCountry ?? undefined,
 
@@ -336,6 +343,7 @@ async function safeCreateOrUpdateDonationPayment(
           // Canonical snapshot from Checkout/invoice
           donorKey: (data as any).donorKey ?? undefined,
           donorEmail: (data as any).donorEmail ?? undefined,
+          donorEmailNorm: (data as any).donorEmailNorm ?? undefined,
           donorName: (data as any).donorName ?? undefined,
           billingCountry: (data as any).billingCountry ?? undefined,
 
@@ -367,6 +375,78 @@ async function safeCreateOrUpdateDonationPayment(
     return;
   }
 }
+
+// ---------- DonorSummary recompute (80/20) ----------
+
+// ✅ Update these thresholds to your real tier rules.
+// Keeping this local avoids importing donor-tier logic from elsewhere.
+function tierFromRolling365UsdMinor(rolling365UsdMinor: number): DonorTier {
+  // Example thresholds (edit as needed)
+  // NOTE: values are in MINOR units (cents)
+  if (rolling365UsdMinor >= 250_00) return DonorTier.champion;
+  if (rolling365UsdMinor >= 100_00) return DonorTier.supporter;
+  return DonorTier.community;
+}
+
+async function recomputeDonorSummaryByEmailNorm(tx: TxClient, donorEmailNorm: string) {
+  const email = (donorEmailNorm ?? "").trim().toLowerCase();
+  if (!email) return;
+
+  const since = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+
+  // 80/20: rolling365 is USD-only (matches your model name rolling365UsdMinor).
+  // If/when you support multi-currency tiers, add FX conversion or a stored usdAmountMinor.
+  const agg = await tx.donationPayment.aggregate({
+    where: {
+      donorEmailNorm: email,
+      status: PaymentStatus.succeeded,
+      currency: "usd",
+      createdAt: { gte: since },
+    },
+    _sum: { amountMinor: true },
+  });
+
+  const rolling365UsdMinor = agg._sum.amountMinor ?? 0;
+  const tier = tierFromRolling365UsdMinor(rolling365UsdMinor);
+
+  await tx.donorSummary.upsert({
+    where: { donorEmailNorm: email },
+    create: {
+      donorEmailNorm: email,
+      donorKey: email, // 80/20: stable default; if you later prefer donorKey, adjust here.
+      rolling365UsdMinor,
+      tier,
+      lastTierComputedAt: nowUtc(),
+    },
+    update: {
+      rolling365UsdMinor,
+      tier,
+      lastTierComputedAt: nowUtc(),
+    },
+  });
+}
+
+/**
+ * ✅ Single funnel for DonationPayment writes that should sync DonorSummary.
+ * - No duplication across webhook event types.
+ * - Idempotent & safe under Stripe retries.
+ */
+async function writeDonationAndMaybeSyncSummary(
+  tx: TxClient,
+  where: { stripePaymentIntentId?: string | null; stripeInvoiceId?: string | null },
+  data: Parameters<typeof prisma.donationPayment.create>[0]["data"]
+) {
+  await safeCreateOrUpdateDonationPayment(tx, where, data);
+
+  // Only recompute after succeeded donations (your requirement)
+  if ((data as any).status === PaymentStatus.succeeded) {
+    const donorEmailNorm = (data as any).donorEmailNorm as string | null | undefined;
+    if (donorEmailNorm) {
+      await recomputeDonorSummaryByEmailNorm(tx, donorEmailNorm);
+    }
+  }
+}
+
 
 export async function POST(req: Request) {
   try {
@@ -431,6 +511,8 @@ export async function POST(req: Request) {
             (typeof session.customer_email === "string" ? session.customer_email : null) ??
             null;
 
+          const donorEmailNorm = normEmail(donorEmail);
+
           const donorName =
             session.customer_details?.name ??
             (typeof (session as any).customer_details?.name === "string"
@@ -471,7 +553,7 @@ export async function POST(req: Request) {
 
             const stripePaymentIntentId = asId(session.payment_intent);
 
-            await safeCreateOrUpdateDonationPayment(
+            await writeDonationAndMaybeSyncSummary(
               tx,
               { stripePaymentIntentId },
               {
@@ -480,6 +562,7 @@ export async function POST(req: Request) {
 
                 donorKey,
                 donorEmail,
+                donorEmailNorm,
                 donorName,
                 billingCountry,
 
@@ -1013,6 +1096,8 @@ export async function POST(req: Request) {
             (invoice as any).customer_details?.email ??
             null;
 
+          const donorEmailNorm = normEmail(donorEmail);
+
           const donorName =
             (invoice as any).customer_name ??
             (invoice as any).customer_details?.name ??
@@ -1171,7 +1256,7 @@ export async function POST(req: Request) {
             extracted: { donorKey, campaignSlug, contextType, contextId, tierId, amountType },
           });
 
-      await safeCreateOrUpdateDonationPayment(
+      await writeDonationAndMaybeSyncSummary(
         tx,
         { stripeInvoiceId },   // ✅ canonical unique key for monthly ledger
         {
@@ -1180,6 +1265,7 @@ export async function POST(req: Request) {
 
           donorKey,
           donorEmail,
+          donorEmailNorm,
           donorName,
           billingCountry,
 
@@ -1219,6 +1305,7 @@ export async function POST(req: Request) {
           periodEnd,
         }
       );
+
 
           break;
         }

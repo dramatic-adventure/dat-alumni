@@ -36,7 +36,14 @@ const UpdatesPanel = dynamic(() => import("@/components/shared/UpdatesPanel"), {
   ),
 });
 
-type AlumniItem = { name: string; slug: string; roles?: string[]; headshotUrl?: string };
+type AlumniItem = {
+  name: string;
+  slug: string;
+  roles?: string[];
+  headshotUrl?: string;
+  headshotCacheKey?: string;
+};
+
 type UpdateItem = { text: string; link?: string; author?: string };
 
 function rolesToArray(v?: string) {
@@ -52,7 +59,13 @@ export default function AlumniPage({
   initialUpdates,
   enrichedData,
 }: {
-  highlights: { name: string; roles?: string[]; slug: string; headshotUrl?: string }[];
+  highlights: {
+    name: string;
+    roles?: string[];
+    slug: string;
+    headshotUrl?: string;
+    headshotCacheKey?: string;
+  }[];
   alumniData: AlumniItem[];
   initialUpdates: UpdateItem[];
   enrichedData: EnrichedProfileLiveRow[];
@@ -158,7 +171,7 @@ export default function AlumniPage({
 
               <Link
                 href="/directory"
-                prefetch
+                prefetch={false}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -223,10 +236,12 @@ export default function AlumniPage({
                     style={{ flex: "0 0 auto", width: "150px", scrollSnapAlign: "start" }}
                   >
                     <MiniProfileCard
+                      alumniId={alum.slug}
                       name={alum.name}
                       role={rolesToArray(alum.roles).join(", ")}
                       slug={alum.slug}
                       priority={idx < 6}
+                      cacheKey={(alum as any).headshotCacheKey}
                     />
                   </div>
                 ))}
@@ -273,10 +288,12 @@ export default function AlumniPage({
                     style={{ flex: "0 0 auto", width: "150px", scrollSnapAlign: "start" }}
                   >
                     <MiniProfileCard
+                      alumniId={alum.slug}
                       name={alum.name}
                       role={rolesToArray(alum.roles).join(", ")}
                       slug={alum.slug}
                       priority={idx < 6}
+                      cacheKey={(alum as any).headshotCacheKey}
                     />
                   </div>
                 ))}
@@ -285,7 +302,7 @@ export default function AlumniPage({
 
               <Link
                 href={`/directory?q=${encodeURIComponent(query)}`}
-                prefetch
+                prefetch={false}
                 style={{
                   display: "inline-block",
                   marginTop: "1.5rem",

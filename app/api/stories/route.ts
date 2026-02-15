@@ -92,7 +92,6 @@ function csvToObjects(csvText: string): any[] {
   return rows;
 }
 
-
 function firstNonEmpty(obj: any, keys: string[]): string {
   for (const k of keys) {
     const v = obj?.[k];
@@ -219,22 +218,72 @@ function validateCsvOrThrow(csvText: string, label: string) {
   }
 }
 
+/**
+ * ✅ “Primary has an issue” includes “stale/incomplete export”.
+ * We count non-empty data rows (after the real header).
+ */
+function countDataRows(csvText: string): number {
+  const rawLines = String(csvText || "")
+    .split(/\r?\n/)
+    .map((l) => l.replace(/^\uFEFF/, "").trimEnd());
+
+  if (!rawLines.length) return 0;
+
+  let headerIdx = -1;
+
+  if (rawLines.length >= 2 && isCommaOnlyLine(rawLines[0]) && rawLines[1]) {
+    headerIdx = 1;
+  } else {
+    for (let i = 0; i < rawLines.length; i++) {
+      const line = rawLines[i];
+      if (!line) continue;
+      if (isCommaOnlyLine(line)) continue;
+      headerIdx = i;
+      break;
+    }
+  }
+
+  if (headerIdx === -1) return 0;
+
+  let n = 0;
+  for (let i = headerIdx + 1; i < rawLines.length; i++) {
+    const line = rawLines[i];
+    if (!line) continue;
+    if (isCommaOnlyLine(line)) continue;
+    n++;
+  }
+
+  return n;
+}
+
+function validateRowCountOrThrow(csvText: string, label: string, minRows: number) {
+  const n = countDataRows(csvText);
+  if (n < minRows) {
+    throw new Error(`${label}: CSV has too few data rows (${n} < ${minRows})`);
+  }
+}
+
 /* ===========================
    Output shape expected by StoryMap + Studio picker
    =========================== */
 function buildStoriesFromCsv(csv: string) {
   const rows = csvToObjects(csv);
 
-  return rows
-    .map((r: any) => {
-      if (!truthyShowOnMap(r)) return null;
+  const reasons = {
+    hidden_showOnMap: 0,
+    missing_title: 0,
+    missing_slug: 0,
+    missing_lat: 0,
+    missing_lng: 0,
+    ok: 0,
+  };
 
-      // canonical identity + sorting (Map Data headers)
-      const storyKey = firstNonEmpty(r, ["storyKey", "StoryKey", "story_key"]);
-      const alumniId = firstNonEmpty(r, ["alumniId", "AlumniId", "alumni_id"]);
-      const ts = firstNonEmpty(r, ["ts", "createdTs", "createdAt"]);
-      const updatedTs =
-        firstNonEmpty(r, ["updatedTs", "UpdatedTs", "updated_ts"]) || ts;
+  const stories = rows
+    .map((r: any) => {
+      if (!truthyShowOnMap(r)) {
+        reasons.hidden_showOnMap++;
+        return null;
+      }
 
       const storyUrl = firstNonEmpty(r, [
         "Story URL",
@@ -287,7 +336,30 @@ function buildStoriesFromCsv(csv: string) {
         ])
       );
 
-      if (!title || !slug || lat == null || lng == null) return null;
+      if (!title) {
+        reasons.missing_title++;
+        return null;
+      }
+      if (!slug) {
+        reasons.missing_slug++;
+        return null;
+      }
+      if (lat == null) {
+        reasons.missing_lat++;
+        return null;
+      }
+      if (lng == null) {
+        reasons.missing_lng++;
+        return null;
+      }
+
+      reasons.ok++;
+
+      const storyKey = firstNonEmpty(r, ["storyKey", "StoryKey", "story_key"]);
+      const alumniId = firstNonEmpty(r, ["alumniId", "AlumniId", "alumni_id"]);
+      const ts = firstNonEmpty(r, ["ts", "createdTs", "createdAt"]);
+      const updatedTs =
+        firstNonEmpty(r, ["updatedTs", "UpdatedTs", "updated_ts"]) || ts;
 
       const categoryRaw = firstNonEmpty(r, ["Category", "category"]);
       const category = categoryRaw ? categoryRaw.toLowerCase().trim() : "";
@@ -295,7 +367,6 @@ function buildStoriesFromCsv(csv: string) {
       const quoteAttribution = firstNonEmpty(r, [
         "Quote Attribution",
         "Quote attribution",
-        // legacy fallbacks
         "Quote Author",
         "QuoteAuthor",
         "quoteAuthor",
@@ -305,7 +376,6 @@ function buildStoriesFromCsv(csv: string) {
       return {
         lat,
         lng,
-
         Title: title,
         Program: firstNonEmpty(r, ["Program", "program"]),
         "Location Name": firstNonEmpty(r, [
@@ -325,10 +395,8 @@ function buildStoriesFromCsv(csv: string) {
           "story",
         ]),
         Quote: firstNonEmpty(r, ["Quote", "quote"]),
-
         "Quote Attribution": quoteAttribution,
         "Quote Author": quoteAttribution,
-
         "Image URL": firstNonEmpty(r, [
           "Image URL",
           "ImageURL",
@@ -346,17 +414,20 @@ function buildStoriesFromCsv(csv: string) {
           "more_info_link",
         ]),
         "Story URL": storyUrl,
-
         storyKey,
         alumniId,
         ts,
         updatedTs,
-
         slug,
         category,
       };
     })
     .filter(Boolean);
+
+  // attach debug counters for /api/stories?debug=1 by stashing on function object
+  (buildStoriesFromCsv as any)._lastReasons = reasons;
+
+  return stories;
 }
 
 function noStoreHeaders() {
@@ -429,6 +500,10 @@ export async function GET(req: Request) {
         }
       : null;
 
+    // ✅ Minimum rows expected from the primary export (protects against “stale/partial”)
+    // You said you “definitely have 6” right now; set this to 3 to be safe in the future.
+    const MIN_PRIMARY_DATA_ROWS = 3;
+
     const tryLoad = async (label: "primary" | "published", urlToUse: string) => {
       try {
         const txt = await loadCsv(urlToUse, FALLBACK_NAME, { noStore: true });
@@ -438,10 +513,17 @@ export async function GET(req: Request) {
           diag[label].looksLikeHtml = looksLikeHtml(txt);
           diag[label].looksLikeCsv = looksLikeCsv(txt);
           diag[label].hasExpectedHeaders = headerHasExpectedColumns(txt);
+          diag[label].rowCount = countDataRows(txt);
           diag[label].snippet = snippet(txt, 600);
         }
 
         validateCsvOrThrow(txt, label);
+
+        // ✅ Treat “too few rows” as an error for PRIMARY so fallback can kick in.
+        if (label === "primary") {
+          validateRowCountOrThrow(txt, label, MIN_PRIMARY_DATA_ROWS);
+        }
+
         return txt;
       } catch (e: any) {
         if (debug) {
@@ -454,6 +536,7 @@ export async function GET(req: Request) {
     let csv = "";
     let used: "primary" | "published" = "primary";
 
+    // ✅ Rule honored: fallback ONLY if primary has an issue (including stale/partial row-count).
     try {
       csv = await tryLoad("primary", sourceUrl);
       used = "primary";
@@ -490,6 +573,8 @@ export async function GET(req: Request) {
 
     let stories = buildStoriesFromCsv(csv);
 
+    const dropReasons = debug ? (buildStoriesFromCsv as any)._lastReasons : undefined;
+
     if (filterAlumniId) {
       stories = stories.filter(
         (s: any) => String(s?.alumniId || "").trim() === filterAlumniId
@@ -502,7 +587,7 @@ export async function GET(req: Request) {
       {
         ok: true,
         stories,
-        ...(debug ? { _debug: { used, ...diag } } : {}),
+        ...(debug ? { _debug: { used, ...diag, dropReasons } } : {}),
       },
       { status: 200, headers: noStoreHeaders() }
     );

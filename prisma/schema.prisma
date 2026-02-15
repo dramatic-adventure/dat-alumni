@@ -44,11 +44,11 @@ model StripeWebhookEvent {
 }
 
 model RecurringGift {
-  id                   String  @id @default(cuid())
+  id String @id @default(cuid())
 
-  donorKey             String?
-  donorEmail           String?
-  donorName            String?
+  donorKey   String?
+  donorEmail String?
+  donorName  String?
 
   stripeCustomerId     String?
   stripeSubscriptionId String  @unique
@@ -69,13 +69,13 @@ model RecurringGift {
   amountType   AmountType
 
   // ✅ attribution (optional but valuable)
-  utmSource    String?
-  utmMedium    String?
-  utmCampaign  String?
-  utmContent   String?
-  utmTerm      String?
-  referrer     String?
-  landingPath  String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmContent  String?
+  utmTerm     String?
+  referrer    String?
+  landingPath String?
 
   // ✅ recurring lifecycle
   canceledAt       DateTime?
@@ -84,11 +84,9 @@ model RecurringGift {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-
   @@index([donorKey])
   @@index([status])
   @@index([createdAt])
-
   // ✅ high-ROI reporting indexes
   @@index([campaignSlug])
   @@index([contextType, contextId])
@@ -96,13 +94,14 @@ model RecurringGift {
 }
 
 model DonationPayment {
-  id     String       @id @default(cuid())
+  id     String        @id @default(cuid())
   kind   DonationKind
   status PaymentStatus
 
-  donorKey    String?
-  donorEmail  String?
-  donorName   String?
+  donorKey       String?
+  donorEmail     String?
+  donorEmailNorm String?
+  donorName      String?
   billingCountry String?
 
   amountMinor Int
@@ -120,13 +119,13 @@ model DonationPayment {
   amountType   AmountType
 
   // ✅ attribution
-  utmSource    String?
-  utmMedium    String?
-  utmCampaign  String?
-  utmContent   String?
-  utmTerm      String?
-  referrer     String?
-  landingPath  String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmContent  String?
+  utmTerm     String?
+  referrer    String?
+  landingPath String?
 
   // ✅ refunds/disputes
   refundedAmountMinor Int?
@@ -147,15 +146,44 @@ model DonationPayment {
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-
   @@index([donorKey])
   @@index([createdAt])
   @@index([stripeCustomerId])
   @@index([stripeSubscriptionId])
   @@index([status])
-
+  @@index([donorKey, createdAt])
+  @@index([donorEmailNorm, createdAt])
+  @@index([donorEmailNorm])
   // ✅ high-ROI reporting indexes
   @@index([campaignSlug])
   @@index([contextType, contextId])
   @@index([tierId])
+}
+
+model DonorSummary {
+  id String @id @default(cuid())
+
+  // Canonical identity: prefer donorKey when present; fall back to email
+  donorKey       String? @unique
+  donorEmailNorm String? @unique
+
+  // Cached rollups (USD-only for now)
+  rolling365UsdMinor Int       @default(0)
+  tier               DonorTier @default(community)
+
+  // Used to trigger “upgrade” emails safely
+  lastTierEmailed    DonorTier?
+  lastTierComputedAt DateTime   @default(now())
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  @@index([tier])
+}
+
+enum DonorTier {
+  community // < $50
+  supporter // >= $50
+  patron // >= $250
+  champion // >= $1000
+  legend // >= $5000
 }

@@ -111,10 +111,19 @@ type SnapshotStamp = {
 
 type LineageArtist = {
   name: string;
-  slug: string;
-  role: string;
+  slug?: string;
+  role?: string;
+  roles?: string[];
   headshotUrl?: string;
+  avatarSrc?: string;
   href?: string;
+
+  // ✅ for stable headshot selection + cache busting
+  alumniId?: string;
+  headshotCacheKey?: string | number;
+
+  // ✅ optional if you ever want to pin / badge them
+  isLocalMaster?: boolean;
 };
 
 export interface DramaClubPageTemplateProps {
@@ -1594,7 +1603,7 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
       const headshotUrl =
         String(x?.headshotUrl || "").trim() ||
         String(x?.avatarSrc || "").trim() ||
-        undefined;
+        "/images/default-headshot.png";
 
       // ✅ Exclude lead team from lineage marquee
       const hKey = normHref(href);
@@ -1607,14 +1616,25 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
 
       const ts = extractRecencyTs(x);
 
+      const alumniId =
+        String(x?.alumniId || "").trim() ||
+        (slug ? slug.toLowerCase() : undefined);
+
+      const headshotCacheKey =
+        x?.headshotCacheKey ??
+        x?.avatarUpdatedAt ??
+        x?.updatedAt ??
+        x?.headshotUpdatedAt ??
+        undefined;
+
       out.push({
-        item: { name, slug, role, headshotUrl, href },
+        item: { name, slug, role, headshotUrl, href, alumniId, headshotCacheKey },
         manual: opts.manual,
         ts,
         i: opts.orderIndex,
       });
     };
-
+    
     // 1) ✅ Manual visiting artists FIRST (always included)
     (visitingArtists ?? []).forEach((a: any, idx: number) =>
       push(a, { manual: true, orderIndex: idx })
@@ -2470,10 +2490,18 @@ const voicesHeading = `Voices from ${voicesFrom}`;
                                 className="dc-lead-mini-item"
                               >
                                 <MiniProfileCard
+                                  alumniId={slug.toLowerCase()}
                                   name={person.name}
                                   role={roleSafe}
                                   slug={slug}
-                                  headshotUrl={(person as any).avatarSrc}
+                                  headshotUrl={(person as any).avatarSrc || "/images/default-headshot.png"}
+                                  cacheKey={
+                                    (person as any).headshotCacheKey ??
+                                    (person as any).avatarUpdatedAt ??
+                                    (person as any).updatedAt ??
+                                    undefined
+                                  }
+                                  href={href}
                                   variant="light"
                                 />
                               </div>

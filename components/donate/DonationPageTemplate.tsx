@@ -1771,27 +1771,35 @@ const ctaDisabled =
                             : "Thank you."}
                         </h2>
 
-                        <p className="donateReturnSub font-sans">
-                          {receipt?.mode === "subscription" ? (
-  <p className="donateReceiptHelp font-sans">
-    Need to change or cancel your monthly sponsorship? Email{" "}
-    <a className="donateReceiptHelpLink" href="mailto:support@dramaticadventure.com">
-      support@dramaticadventure.com
-    </a>
-    .
-  </p>
-) : null}
+                  <div className="donateReturnSub font-sans">
+                    {receipt?.mode === "subscription" ? (
+                      <p className="donateReceiptHelp font-sans">
+                        Need to change or cancel your monthly sponsorship? Email{" "}
+                        <a className="donateReceiptHelpLink" href="mailto:support@dramaticadventure.com">
+                          support@dramaticadventure.com
+                        </a>
+                        .
+                      </p>
+                    ) : null}
+                  </div>
 
-                          {receipt
-                            ? receipt.mode === "subscription"
-                              ? <span className="donateSubActive">Your subscription is active.</span>
-                              : receipt.paymentStatus === "paid"
-                              ? "Your donation is confirmed."
-                              : "Your donation is processing."
-                            : receiptError
-                            ? "We couldn’t load the receipt details yet — your gift may still be confirmed in Stripe."
-                            : "Loading your receipt…"}
+
+                        <p className="donateReturnSub font-sans">
+                          {receipt ? (
+                            receipt.mode === "subscription" ? (
+                              <span className="donateSubActive">Your subscription is active.</span>
+                            ) : receipt.paymentStatus === "paid" ? (
+                              "Your donation is confirmed."
+                            ) : (
+                              "Your donation is processing."
+                            )
+                          ) : receiptError ? (
+                            "We couldn’t load the receipt details yet — your gift may still be confirmed in Stripe."
+                          ) : (
+                            "Loading your receipt…"
+                          )}
                         </p>
+
 
                         <div className="donateReturnRefRow">
                           <div className="donateReturnRefLabel font-sans">

@@ -288,11 +288,11 @@ export default function ProfileCard(props: ProfileCardProps) {
     slugAliases = [],
   } = props;
 
-    const derivedHeadshotUrl =
+  const derivedHeadshotUrl =
     (currentHeadshotId?.trim()
-      ? `/api/media/thumb?fileId=${encodeURIComponent(currentHeadshotId.trim())}`
+      ? `/api/img?fileId=${encodeURIComponent(currentHeadshotId.trim())}`
       : "") ||
-    headshotUrl ||
+    (headshotUrl ? headshotUrl.replace(/^http:\/\//i, "https://") : "") ||
     undefined;
 
   // ✅ Normalize "array-ish" props defensively

@@ -1,6 +1,8 @@
 // /lib/requireAuth.ts
 import { NextResponse } from "next/server";
 
+
+
 // NextAuth v5 helper (your project has /auth.ts exporting `auth`)
 let authFn: undefined | (() => Promise<{ user?: { email?: string | null } } | null>);
 try {

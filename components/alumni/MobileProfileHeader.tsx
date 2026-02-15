@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import ShareButton from "@/components/ui/ShareButton";
@@ -8,7 +8,7 @@ import ContactOverlay from "@/components/shared/ContactOverlay";
 import Lightbox from "@/components/shared/Lightbox";
 import StatusFlags from "@/components/alumni/StatusFlags";
 
-import NameStack from "@/components/shared/NameStack"; // a.k.a. ScaledName
+import NameStack from "@/components/shared/NameStack";
 import { splitTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
 import { getLocationHrefForToken } from "@/lib/locations";
 
@@ -35,142 +35,336 @@ export default function MobileProfileHeader({
   website,
   socials,
 }: MobileProfileHeaderProps) {
-
   const fallbackImage = "/images/default-headshot.png";
-  const imageSrc = useMemo(
-    () => (headshotUrl ? headshotUrl.replace(/^http:\/\//i, "https://") : fallbackImage),
-    [headshotUrl]
+
+  // IMPORTANT:
+  // Do NOT show fallback during normal load — only on actual image failure.
+  const imageSrc = useMemo(() => {
+    const raw = headshotUrl ? headshotUrl.replace(/^http:\/\//i, "https://") : "";
+    return raw.trim(); // ✅ may be ""
+  }, [headshotUrl]);
+
+  const [targetHeadshotSrc, setTargetHeadshotSrc] = useState<string>("");
+  const [shownHeadshotSrc, setShownHeadshotSrc] = useState<string>("");
+  const [isHeadshotLoading, setIsHeadshotLoading] = useState<boolean>(true);
+
+  const handleHeadshotError = useCallback(() => {
+    setShownHeadshotSrc((prev) => (prev === fallbackImage ? prev : fallbackImage));
+    setIsHeadshotLoading(false);
+  }, [fallbackImage]);
+
+  // ---------- de-dupe + startIndex helpers ----------
+  const mediaKey = useCallback((u: string): string => {
+    const s = String(u || "").trim();
+    if (!s) return "";
+
+    const tryParse = (): URL | null => {
+      try {
+        if (typeof window !== "undefined") return new URL(s, window.location.origin);
+        if (/^https?:\/\//i.test(s)) return new URL(s);
+        return null;
+      } catch {
+        return null;
+      }
+    };
+
+    const parsed = tryParse();
+    if (!parsed) return s;
+
+    const path = parsed.pathname;
+
+    if (path === "/api/img") {
+      const fileId = parsed.searchParams.get("fileId");
+      if (fileId) return `apiimg:fileId:${fileId}`;
+
+      const url = parsed.searchParams.get("url") || "";
+      const normUrl = url.trim().replace(/^http:\/\//i, "https://");
+      if (normUrl) return `apiimg:url:${normUrl}`;
+
+      return "apiimg:unknown";
+    }
+
+    if (path === "/_next/image") {
+      const inner = parsed.searchParams.get("url") || "";
+      const normInner = inner.trim().replace(/^http:\/\//i, "https://");
+      if (normInner) return `nextimg:url:${normInner}`;
+      return "nextimg:unknown";
+    }
+
+    const originless = `${path}${parsed.search ? parsed.search : ""}${parsed.hash || ""}`;
+    return originless;
+  }, []);
+
+  const uniqueByMediaKey = useCallback(
+    (urls: string[]) => {
+      const seen = new Set<string>();
+      const out: string[] = [];
+      for (const u of urls) {
+        const s = String(u || "").trim();
+        if (!s) continue;
+        const k = mediaKey(s);
+        if (!k) continue;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        out.push(s);
+      }
+      return out;
+    },
+    [mediaKey]
   );
 
-  const [displayHeadshotSrc, setDisplayHeadshotSrc] = useState<string>(imageSrc);
+  const buildGalleryAndIndex = useCallback(
+    (urls: string[], preferredUrl: string) => {
+      const uniq = uniqueByMediaKey(urls);
+      const prefKey = mediaKey(preferredUrl);
+      const idx = prefKey ? uniq.findIndex((u) => mediaKey(u) === prefKey) : -1;
+      return { urls: uniq, startIndex: idx >= 0 ? idx : 0 };
+    },
+    [mediaKey, uniqueByMediaKey]
+  );
 
-  useEffect(() => {
-    setDisplayHeadshotSrc(imageSrc);
-  }, [imageSrc]);
+  // ---------- helpers ----------
+  const toTime = useCallback((it: any): number => {
+    const raw =
+      it?.uploadedAt ??
+      it?.createdAt ??
+      it?.updatedAt ??
+      it?.ts ??
+      it?.timestamp ??
+      "";
+    const n = typeof raw === "number" ? raw : Date.parse(String(raw));
+    return Number.isFinite(n) ? n : 0;
+  }, []);
 
+  const toCacheKey = useCallback(
+    (it: any): string => {
+      const raw = it?.uploadedAt ?? it?.createdAt ?? it?.updatedAt ?? "";
+      const s = String(raw || "").trim();
+      if (s) return s;
+      const t = toTime(it);
+      return t ? String(t) : "";
+    },
+    [toTime]
+  );
+
+  const toApiImgUrl = useCallback(
+    (it: any): string => {
+      const fid = String(it?.fileId || "").trim();
+      const ext = String(it?.externalUrl || "").trim();
+      const v = toCacheKey(it);
+
+      if (fid) {
+        const qs = new URLSearchParams();
+        qs.set("fileId", fid);
+        if (v) qs.set("v", v);
+        return `/api/img?${qs.toString()}`;
+      }
+
+      if (ext) {
+        const qs = new URLSearchParams();
+        qs.set("url", ext);
+        if (v) qs.set("v", v);
+        return `/api/img?${qs.toString()}`;
+      }
+
+      return "";
+    },
+    [toCacheKey]
+  );
+
+  const orderMostRecent = useCallback(
+    (items: any[]) =>
+      [...items].sort((a, b) => {
+        const ta = toTime(a);
+        const tb = toTime(b);
+        if (tb !== ta) return tb - ta;
+
+        const sa = Number.isFinite(Number(a?.sortIndex))
+          ? Number(a.sortIndex)
+          : Number.POSITIVE_INFINITY;
+        const sb = Number.isFinite(Number(b?.sortIndex))
+          ? Number(b.sortIndex)
+          : Number.POSITIVE_INFINITY;
+        if (sa !== sb) return sa - sb;
+
+        return String(b?.fileId || b?.externalUrl || "").localeCompare(
+          String(a?.fileId || a?.externalUrl || "")
+        );
+      }),
+    [toTime]
+  );
+
+  const pickCurrentOrMostRecent = useCallback(
+    (items: any[]) => {
+      const headshots = (items || []).filter(
+        (x) => String(x?.kind || "headshot") === "headshot"
+      );
+
+      const current = headshots.filter((x) => {
+        const v = x?.isCurrent;
+        return v === true || String(v || "").trim().toLowerCase() === "true";
+      });
+      if (current.length) {
+        // If multiple are marked current, pick the most recent among them (deterministic)
+        return orderMostRecent(current)[0];
+      }
+
+      return orderMostRecent(headshots)[0] || null;
+    },
+    [orderMostRecent]
+  );
+
+  // ✅ Hydrate "current headshot" (isCurrent first, else most recent)
+  // ✅ Seed the lightbox cache in deterministic order
   useEffect(() => {
     let cancelled = false;
 
-    async function hydrateMostRecentHeadshot() {
+    async function hydrateHeadshotAndCache() {
       try {
-        const qs = new URLSearchParams({ alumniId, kind: "headshot", limit: "1" });
-        const r = await fetch(`/api/alumni/media/list?${qs.toString()}`, { cache: "no-store" });
+        const qs = new URLSearchParams({ alumniId, kind: "headshot" });
+        const r = await fetch(`/api/media/list?${qs.toString()}`, { cache: "no-store" });
         const j = await r.json();
-        const it = (j?.items || [])[0];
-        if (!it) return;
+        const rawItems = (j?.items || []) as any[];
 
-        const fid = String(it?.fileId || "").trim();
-        const ext = String(it?.externalUrl || "").trim();
+        const chosen = pickCurrentOrMostRecent(rawItems);
+        const chosenUrl = chosen ? toApiImgUrl(chosen) : "";
 
-        // Prefer externalUrl if present; otherwise Drive.
-        const top = ext || (fid ? `https://drive.google.com/uc?export=view&id=${fid}` : "");
-        if (!top) return;
-        if (cancelled) return;
+        // Fallback to legacy headshotUrl if present
+        const legacy = imageSrc ? `/api/img?${new URLSearchParams({ url: imageSrc }).toString()}` : "";
 
-        setDisplayHeadshotSrc(top);
+        const finalChosen = chosenUrl || legacy;
+
+        if (!cancelled) {
+          if (finalChosen) {
+            setTargetHeadshotSrc(finalChosen);
+          } else {
+            setIsHeadshotLoading(false);
+          }
+        }
+
+        const ordered = orderMostRecent(rawItems);
+        const urls = ordered.map(toApiImgUrl).filter(Boolean);
+
+        const merged = legacy ? [...urls, legacy] : urls;
+
+        if (!cancelled && merged.length) {
+          galleryCacheRef.current = uniqueByMediaKey(merged);
+        }
       } catch {
         // non-fatal
       }
     }
 
-    if (alumniId) hydrateMostRecentHeadshot();
+    if (alumniId) hydrateHeadshotAndCache();
 
     return () => {
       cancelled = true;
     };
-  }, [alumniId]);
+  }, [
+    alumniId,
+    pickCurrentOrMostRecent,
+    orderMostRecent,
+    toApiImgUrl,
+    imageSrc,
+    uniqueByMediaKey,
+  ]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const src = String(targetHeadshotSrc || "").trim();
+    if (!src) return;
 
+    let cancelled = false;
+    setIsHeadshotLoading(true);
+
+    const img = new window.Image();
+    img.onload = () => {
+      if (cancelled) return;
+      setShownHeadshotSrc(src);
+      setIsHeadshotLoading(false);
+    };
+    img.onerror = () => {
+      if (cancelled) return;
+      setShownHeadshotSrc(fallbackImage);
+      setIsHeadshotLoading(false);
+    };
+    img.src = src;
+
+    return () => {
+      cancelled = true;
+    };
+  }, [targetHeadshotSrc, fallbackImage]);
+
+  // ---------- lightbox plumbing ----------
   const headerRef = useRef<HTMLDivElement>(null);
   const [isModalOpen, setModalOpen] = useState(false);
+  const [lightboxStartIndex, setLightboxStartIndex] = useState(0);
   const [currentUrl, setCurrentUrl] = useState("");
 
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const galleryCacheRef = useRef<string[] | null>(null);
   const openingRef = useRef(false);
 
-  useEffect(() => {
-    // If the profile headshot changes, the lightbox cache is stale
-    galleryCacheRef.current = null;
-    setGalleryUrls([]);
-  }, [displayHeadshotSrc]);
-
   async function openHeadshotGallery() {
-    const current = (displayHeadshotSrc ?? imageSrc) as string;
+    const current = String(shownHeadshotSrc || targetHeadshotSrc || "").trim();
+    if (!current) return;
 
-    // open instantly with whatever the profile is currently displaying
-    setGalleryUrls((prev) => (prev?.length ? prev : [current].filter(Boolean) as string[]));
+    // Seed immediately so Lightbox has something
+    setGalleryUrls([current]);
+    setLightboxStartIndex(0);
     setModalOpen(true);
 
-    // If we already have urls AND they include the currently displayed headshot,
-    // just open with the cached gallery (no refetch).
-    if (galleryCacheRef.current && galleryCacheRef.current.length > 0 && galleryCacheRef.current.includes(current)) {
-      setGalleryUrls(galleryCacheRef.current);
+    // Use cache immediately (already most-recent-first + de-duped)
+    if (galleryCacheRef.current && galleryCacheRef.current.length > 0) {
+      const { urls: nextUrls, startIndex } = buildGalleryAndIndex(
+        galleryCacheRef.current.filter(Boolean),
+        current
+      );
+      setGalleryUrls(nextUrls);
+      setLightboxStartIndex(startIndex);
       return;
     }
-
 
     if (openingRef.current) return;
     openingRef.current = true;
 
     try {
       const qs = new URLSearchParams({ alumniId, kind: "headshot" });
-      const r = await fetch(`/api/alumni/media/list?${qs.toString()}`, { cache: "no-store" });
+      const r = await fetch(`/api/media/list?${qs.toString()}`, { cache: "no-store" });
       const j = await r.json();
-      
-const rawItems = (j?.items || []) as any[];
+      const rawItems = (j?.items || []) as any[];
 
-// Prioritize MOST RECENT (regardless of source)
-const ordered = [...rawItems].sort((a, b) => {
-  const ta = Date.parse(String(a?.uploadedAt || "")) || 0;
-  const tb = Date.parse(String(b?.uploadedAt || "")) || 0;
-  if (tb !== ta) return tb - ta;
+      // ✅ Deterministic ordering for gallery
+      const ordered = orderMostRecent(rawItems);
+      const urls = ordered.map(toApiImgUrl).filter(Boolean);
 
-  const sa = Number.isFinite(Number(a?.sortIndex)) ? Number(a.sortIndex) : Number.POSITIVE_INFINITY;
-  const sb = Number.isFinite(Number(b?.sortIndex)) ? Number(b.sortIndex) : Number.POSITIVE_INFINITY;
-  if (sa !== sb) return sa - sb;
+      const baseRaw = urls.length ? urls : [current];
 
-  return String(b?.fileId || "").localeCompare(String(a?.fileId || ""));
-});
+      // Include legacy headshotUrl as last resort, but de-dupe against api/img fileId/url matches
+      const legacy = imageSrc ? `/api/img?${new URLSearchParams({ url: imageSrc }).toString()}` : "";
+      const merged = legacy ? [...baseRaw, legacy] : baseRaw;
 
-const urls =
-  ordered
-    .map((it: any) => {
-      const fid = String(it?.fileId || "").trim();
-      if (fid) return `https://drive.google.com/uc?export=view&id=${fid}`;
-
-      const ext = String(it?.externalUrl || "").trim();
-      if (ext) return ext;
-
-      return "";
-    })
-    .filter(Boolean);
-
-
-      const fallback = ([displayHeadshotSrc ?? imageSrc].filter(Boolean)) as string[];
-      const next = (urls.length ? urls : fallback).filter(Boolean);
+      const { urls: next, startIndex } = buildGalleryAndIndex(merged, current);
 
       if (!next.length) return;
 
       galleryCacheRef.current = next;
       setGalleryUrls(next);
-      setModalOpen(true);
-
+      setLightboxStartIndex(startIndex);
     } catch {
-      const fallback = ([displayHeadshotSrc ?? imageSrc].filter(Boolean)) as string[];
-      if (!fallback.length) return;
-
+      const fallback = [current].filter(Boolean);
       galleryCacheRef.current = fallback;
       setGalleryUrls(fallback);
-      setModalOpen(true);
+      setLightboxStartIndex(0);
     } finally {
       openingRef.current = false;
     }
   }
 
-
   useEffect(() => {
-    setCurrentUrl(window.location.href);
+    if (typeof window !== "undefined") {
+      setCurrentUrl(window.location.href);
+    }
   }, []);
 
   const nameParts = name.trim().split(" ");
@@ -223,16 +417,27 @@ const urls =
 
   const locationHref = location ? getLocationHrefForToken(location) : null;
 
+  // Lightbox images: de-duped, with a safe fallback
+  const lightboxImages = useMemo(() => {
+    const raw = (galleryUrls?.length
+      ? galleryUrls
+      : [String(shownHeadshotSrc || targetHeadshotSrc || "").trim()]
+    ).filter(Boolean);
+
+    const uniq = uniqueByMediaKey(raw);
+    return uniq.length ? uniq : [fallbackImage].filter(Boolean);
+  }, [galleryUrls, shownHeadshotSrc, targetHeadshotSrc, uniqueByMediaKey, fallbackImage]);
+
   return (
     <div ref={headerRef} style={{ backgroundColor: "#C39B6C", position: "relative" }}>
       {hasContactInfo && (
-  <ContactOverlay
-    email={email}
-    website={website}
-    socials={socials}
-    profileCardRef={headerRef}
-  />
-)}
+        <ContactOverlay
+          email={email}
+          website={website}
+          socials={socials}
+          profileCardRef={headerRef}
+        />
+      )}
 
       {statusFlags.length > 0 && (
         <div
@@ -242,7 +447,7 @@ const urls =
           <StatusFlags
             flags={statusFlags}
             fontSize="1.15rem"
-            fontFamily='var(--font-dm-sans), system-ui, sans-serif'
+            fontFamily="var(--font-dm-sans), system-ui, sans-serif"
             textColor="#F6E4C1"
             borderRadius="20px"
             className="gap-1"
@@ -251,24 +456,31 @@ const urls =
         </div>
       )}
 
-      <div style={{ position: "absolute", top: "1rem", right: "1rem", zIndex: 70, pointerEvents: "none" }}>
-  <div style={{ pointerEvents: "auto" }}>
-    <div
-      role="share-button-wrapper"
-      style={{
-        padding: "4px",
-        minWidth: "44px",
-        minHeight: "44px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <ShareButton url={currentUrl} />
-    </div>
-  </div>
-</div>
-
+      <div
+        style={{
+          position: "absolute",
+          top: "1rem",
+          right: "1rem",
+          zIndex: 70,
+          pointerEvents: "none",
+        }}
+      >
+        <div style={{ pointerEvents: "auto" }}>
+          <div
+            role="share-button-wrapper"
+            style={{
+              padding: "4px",
+              minWidth: "44px",
+              minHeight: "44px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <ShareButton url={currentUrl} />
+          </div>
+        </div>
+      </div>
 
       {/* Headshot */}
       <div
@@ -293,15 +505,33 @@ const urls =
         }}
         aria-label="Open headshot"
       >
-        <Image
-          src={displayHeadshotSrc}
-          alt={`${name}'s headshot`}
-          fill
-          placeholder="blur"
-          blurDataURL={fallbackImage}
-          loading="lazy"
-          style={{ objectFit: "cover", objectPosition: "top center" }}
-        />
+        {shownHeadshotSrc ? (
+          <Image
+            src={shownHeadshotSrc}
+            alt={`${name}'s headshot`}
+            fill
+            priority
+            placeholder="empty"
+            onError={handleHeadshotError}
+            style={{
+              objectFit: "cover",
+              objectPosition: "top center",
+            }}
+          />
+        ) : (
+          <div
+            aria-label="Loading headshot"
+            style={{
+              width: "100%",
+              height: "100%",
+              backgroundColor: "#241123",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: isHeadshotLoading ? 1 : 0.9,
+            }}
+          />
+        )}
       </div>
 
       {/* Name + meta */}
@@ -458,13 +688,11 @@ const urls =
 
       {isModalOpen && (
         <Lightbox
-          images={(galleryUrls && galleryUrls.length ? galleryUrls : [imageSrc]).filter(Boolean)}
+          images={lightboxImages}
+          startIndex={lightboxStartIndex}
           onClose={() => {
             setModalOpen(false);
-            // Uncomment if you want fresh media on every open
-            // setGalleryUrls([]);
           }}
-
         />
       )}
     </div>

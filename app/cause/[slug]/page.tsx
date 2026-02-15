@@ -112,8 +112,7 @@ function findCauseBySlug(slug: unknown): {
 
   // 2) Fallback: maybe you're hitting a category ID itself
   const catHit = CAUSE_CATEGORIES.find(
-    (cat) =>
-      (cat as any).id === slugLower || (cat as any).slug === slugLower
+    (cat) => (cat as any).id === slugLower || (cat as any).slug === slugLower
   );
 
   if (catHit) {
@@ -153,27 +152,27 @@ export async function generateStaticParams() {
   }
 
   for (const club of dramaClubs) {
-  // 1) Explicit causeSlugs → already in canonical slug form
-  for (const s of club.causeSlugs ?? []) {
-    if (!s) continue;
-    slugs.add(s.toLowerCase());
-  }
+    // 1) Explicit causeSlugs → already in canonical slug form
+    for (const s of club.causeSlugs ?? []) {
+      if (!s) continue;
+      slugs.add(s.toLowerCase());
+    }
 
-  // 2) Also add subcategory IDs from the canonical causes list
-  for (const c of club.causes ?? []) {
-    if (!c?.category || !c?.subcategory) continue;
+    // 2) Also add subcategory IDs from the canonical causes list
+    for (const c of club.causes ?? []) {
+      if (!c?.category || !c?.subcategory) continue;
 
-    const subList =
-      CAUSE_SUBCATEGORIES_BY_CATEGORY[
-        c.category as keyof typeof CAUSE_SUBCATEGORIES_BY_CATEGORY
-      ] || [];
+      const subList =
+        CAUSE_SUBCATEGORIES_BY_CATEGORY[
+          c.category as keyof typeof CAUSE_SUBCATEGORIES_BY_CATEGORY
+        ] || [];
 
-    const meta = subList.find((m) => (m as any).id === c.subcategory);
-    if (meta && (meta as any).id) {
-      slugs.add((meta as any).id.toLowerCase());
+      const meta = subList.find((m) => (m as any).id === c.subcategory);
+      if (meta && (meta as any).id) {
+        slugs.add((meta as any).id.toLowerCase());
+      }
     }
   }
-}
 
   for (const story of stories as Story[]) {
     const causeTags: string[] = (story.causeTags ?? []) as string[];
@@ -202,9 +201,11 @@ export async function generateStaticParams() {
 // Metadata
 // ===============================
 
-export async function generateMetadata(
-  { params }: { params: { slug: string } }
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string };
+}): Promise<Metadata> {
   const alumni: AlumniRow[] = await loadVisibleAlumni();
   const slugLower = norm((params as any)?.slug);
 
@@ -251,7 +252,11 @@ export async function generateMetadata(
 // Page
 // ===============================
 
-export default async function CausePage({ params }: { params: { slug: string } }) {
+export default async function CausePage({
+  params,
+}: {
+  params: { slug: string };
+}) {
   const { slug } = params;
   const slugLower = norm(slug);
 
@@ -273,35 +278,32 @@ export default async function CausePage({ params }: { params: { slug: string } }
 
   // 🔹 UPDATED: clubs match either old causeTags OR new taxonomy causes
   const clubsForCause = allDramaClubs.filter((club) => {
-  // 1) Direct slug match (causeSlugs array)
-  const slugMatch =
-    (club.causeSlugs ?? [])
+    // 1) Direct slug match (causeSlugs array)
+    const slugMatch = (club.causeSlugs ?? [])
       .map((s) => norm(s))
       .includes(slugLower);
 
-  // 2) Taxonomy match: any DramaClub.cause subcategory whose id == slug
-  let taxonomyMatch = false;
-  const rawCauses = club.causes ?? [];
+    // 2) Taxonomy match: any DramaClub.cause subcategory whose id == slug
+    let taxonomyMatch = false;
+    const rawCauses = club.causes ?? [];
 
-  if (Array.isArray(rawCauses)) {
-    taxonomyMatch = rawCauses.some((c) => {
-      if (!c?.category || !c?.subcategory) return false;
+    if (Array.isArray(rawCauses)) {
+      taxonomyMatch = rawCauses.some((c) => {
+        if (!c?.category || !c?.subcategory) return false;
 
-      const subList =
-        CAUSE_SUBCATEGORIES_BY_CATEGORY[
-          c.category as keyof typeof CAUSE_SUBCATEGORIES_BY_CATEGORY
-        ] || [];
+        const subList =
+          CAUSE_SUBCATEGORIES_BY_CATEGORY[
+            c.category as keyof typeof CAUSE_SUBCATEGORIES_BY_CATEGORY
+          ] || [];
 
-      const meta = subList.find(
-        (m) => (m as any).id === c.subcategory
-      );
+        const meta = subList.find((m) => (m as any).id === c.subcategory);
 
-      return (meta as any)?.id === slugLower;
-    });
-  }
+        return (meta as any)?.id === slugLower;
+      });
+    }
 
-  return slugMatch || taxonomyMatch;
-});
+    return slugMatch || taxonomyMatch;
+  });
 
   const storiesForCause = allStories.filter((story) =>
     ((story.causeTags ?? []) as string[]).some(matchTag)
@@ -316,18 +318,17 @@ export default async function CausePage({ params }: { params: { slug: string } }
 
   for (const prod of productionsForCause) {
     const extra = productionDetailsMap[prod.slug] as ExtraWithPeople | undefined;
-    const people = [
-      ...(extra?.cast ?? []),
-      ...(extra?.creativeTeam ?? []),
-    ] as PersonRoleMaybeSlug[];
+    const people = [...(extra?.cast ?? []), ...(extra?.creativeTeam ?? [])] as
+      | PersonRoleMaybeSlug[]
+      | undefined;
 
-    for (const p of people) {
+    for (const p of people ?? []) {
       if (p.slug) contributedSet.add(p.slug);
     }
   }
 
   const hasCauseTag = (artist: AlumniRow) =>
-    ((((artist as any).causeTags ?? []) as string[])).some(matchTag);
+    (((artist as any).causeTags ?? []) as string[]).some(matchTag);
 
   const both: AlumniRow[] = [];
   const tagOnly: AlumniRow[] = [];
@@ -369,7 +370,8 @@ export default async function CausePage({ params }: { params: { slug: string } }
     return meta.shortLabel || meta.label;
   })();
 
-    const displayLabel = taxonomyLabel ?? displayLabelFromAlumni ?? humanizeSlug(slug);
+  const displayLabel =
+    taxonomyLabel ?? displayLabelFromAlumni ?? humanizeSlug(slug);
 
   const byLastName = (a: AlumniRow, b: AlumniRow) => {
     const [af, al] = splitName(a.name);
@@ -395,9 +397,9 @@ export default async function CausePage({ params }: { params: { slug: string } }
           c.category as keyof typeof CAUSE_SUBCATEGORIES_BY_CATEGORY
         ] ?? [];
 
-      const meta = subList.find(
-        (m) => (m as any).id === c.subcategory
-      ) as any | undefined;
+      const meta = subList.find((m) => (m as any).id === c.subcategory) as
+        | any
+        | undefined;
 
       if (meta?.id) {
         usedSubcategoryIds.add(String(meta.id).toLowerCase());
@@ -449,9 +451,7 @@ export default async function CausePage({ params }: { params: { slug: string } }
 
     const items = subList
       .map((sub) => sub as any)
-      .filter((sub) =>
-        usedSubcategoryIds.has(String(sub.id || "").toLowerCase())
-      )
+      .filter((sub) => usedSubcategoryIds.has(String(sub.id || "").toLowerCase()))
       .map((sub) => {
         const id = String(sub.id || "").toLowerCase();
         const label =
@@ -475,8 +475,8 @@ export default async function CausePage({ params }: { params: { slug: string } }
   const heroSrc =
     normalizeStaticSrc(meta.heroImageUrl) || "/images/alumni-hero.jpg";
   const heroIntro =
-    meta.intro || "Plays, drama clubs, stories, and artists championing this cause";
-
+    meta.intro ||
+    "Plays, drama clubs, stories, and artists championing this cause";
 
   return (
     <div
@@ -567,7 +567,9 @@ export default async function CausePage({ params }: { params: { slug: string } }
                 {/* 🔹 use poster-grid + PosterCard */}
                 <div className="poster-grid">
                   {productionsForCause.map((prod) => {
-                    const extra = productionDetailsMap[prod.slug] as ProductionExtra | undefined;
+                    const extra = productionDetailsMap[prod.slug] as
+                      | ProductionExtra
+                      | undefined;
                     const extraAny = extra as any;
 
                     const rawHero: string | undefined =
@@ -581,7 +583,10 @@ export default async function CausePage({ params }: { params: { slug: string } }
                       if (rawHero.includes("-portrait")) {
                         posterSrcRaw = rawHero;
                       } else if (rawHero.includes("-landscape")) {
-                        posterSrcRaw = rawHero.replace("-landscape", "-portrait");
+                        posterSrcRaw = rawHero.replace(
+                          "-landscape",
+                          "-portrait"
+                        );
                       } else {
                         posterSrcRaw = rawHero;
                       }
@@ -590,7 +595,8 @@ export default async function CausePage({ params }: { params: { slug: string } }
                     }
 
                     const posterSrc =
-                      normalizeStaticSrc(posterSrcRaw) ?? "/posters/fallback-16x9.jpg";
+                      normalizeStaticSrc(posterSrcRaw) ??
+                      "/posters/fallback-16x9.jpg";
 
                     const tagline = extraAny?.tagline as string | undefined;
 
@@ -640,7 +646,7 @@ export default async function CausePage({ params }: { params: { slug: string } }
                     const img =
                       normalizeStaticSrc(
                         (story.heroImage as string | undefined) ??
-                        (story.thumbnail as string | undefined)
+                          (story.thumbnail as string | undefined)
                       ) ?? "/images/stories/fallback.jpg";
 
                     return (
@@ -709,9 +715,7 @@ export default async function CausePage({ params }: { params: { slug: string } }
 
                 {contribOnly.length > 0 && (
                   <div>
-                    <Subheading>
-                      Artists Who’ve Worked on These Plays
-                    </Subheading>
+                    <Subheading>Artists Who’ve Worked on These Plays</Subheading>
                     <ArtistGrid artists={contribOnly} />
                   </div>
                 )}
@@ -720,9 +724,15 @@ export default async function CausePage({ params }: { params: { slug: string } }
           )}
         </div>
 
-                {/* EXPLORE MORE CAUSES (grouped by category, only used subcategories) */}
+        {/* EXPLORE MORE CAUSES (grouped by category, only used subcategories) */}
         {groupedUsedSubcategories.length > 0 && (
-          <section style={{ width: "90%", maxWidth: 1200, margin: "4rem auto 0" }}>
+          <section
+            style={{
+              width: "90%",
+              maxWidth: 1200,
+              margin: "4rem auto 0",
+            }}
+          >
             <SectionLabel>Other Causes We Champion</SectionLabel>
 
             <div
@@ -739,7 +749,8 @@ export default async function CausePage({ params }: { params: { slug: string } }
                 <div key={group.categoryId}>
                   <h3
                     style={{
-                      fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                      fontFamily:
+                        "var(--font-space-grotesk), system-ui, sans-serif",
                       fontSize: "1.1rem",
                       letterSpacing: "0.12em",
                       textTransform: "uppercase",
@@ -785,7 +796,6 @@ export default async function CausePage({ params }: { params: { slug: string } }
           </section>
         )}
 
-
         {/* Season nav */}
         <section
           style={{
@@ -806,17 +816,16 @@ export default async function CausePage({ params }: { params: { slug: string } }
         a:hover { text-decoration: none; }
 
         .cause-shell .drama-micro-card {
-  opacity: 0.8;
-  transition:
-    transform 180ms ease-out,
-    box-shadow 180ms ease-out,
-    opacity 180ms ease-out;
-}
+          opacity: 0.8;
+          transition:
+            transform 180ms ease-out,
+            box-shadow 180ms ease-out,
+            opacity 180ms ease-out;
+        }
 
-.cause-shell .drama-micro-card:hover {
-  opacity: 1;
-}
-
+        .cause-shell .drama-micro-card:hover {
+          opacity: 1;
+        }
 
         .cause-shell{
           background: rgba(36, 17, 35, 0.18);
@@ -1067,10 +1076,15 @@ function ArtistGrid({ artists }: { artists: AlumniRow[] }) {
       {artists.map((artist) => (
         <MiniProfileCard
           key={artist.slug}
+          // ✅ IMPORTANT: lets MiniProfileCard self-hydrate selected/current headshot
+          alumniId={artist.slug}
           name={artist.name}
           role={artist.role}
           slug={artist.slug}
+          // keep this as fallback only
           headshotUrl={artist.headshotUrl}
+          // ✅ Cache-bust when available (safe no-op if missing)
+          cacheKey={(artist as any)?.headshotCacheKey}
         />
       ))}
     </div>
@@ -1085,7 +1099,6 @@ function humanizeSlug(slug: unknown) {
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
     .join(" ");
 }
-
 
 function splitName(full: string) {
   const parts = (typeof full === "string" ? full : "").trim().split(/\s+/);
