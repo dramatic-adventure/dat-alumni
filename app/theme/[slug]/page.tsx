@@ -30,6 +30,17 @@ const themeMetaMap: Record<string, ThemeMeta> = {
   // },
 };
 
+type ParamsLike<T> = Promise<T> | T;
+
+async function resolveParams(
+  params: ParamsLike<{ slug: string }> | ParamsLike<{ slug?: string }>
+) {
+  const p = (params instanceof Promise ? await params : params) as {
+    slug?: string;
+  };
+  return p;
+}
+
 /* ===============================
    Helpers
 =============================== */
@@ -55,7 +66,6 @@ function humanizeSlug(slug: string): string {
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
     .join(" ");
 }
-
 
 /* ===============================
    Static params
@@ -83,26 +93,49 @@ export async function generateStaticParams() {
    Metadata
 =============================== */
 
-export async function generateMetadata(
-  { params }: { params: { slug: string } }
-): Promise<Metadata> {
-  const allProductions: Production[] = Object.values(productionMap);
-  const slugLower = (params?.slug ?? "").toLowerCase();
+export async function generateMetadata({
+  params,
+}: {
+  params: ParamsLike<{ slug: string }> | { slug: string };
+}): Promise<Metadata> {
+  const p = await resolveParams(params);
+  const slug = String(p?.slug ?? "").trim();
+  const slugLower = slug.toLowerCase();
 
+  // ✅ Never crash in metadata
+  if (!slugLower) {
+    return {
+      title: "DAT Themes",
+      description: "Explore productions by theme.",
+      alternates: { canonical: "/theme" },
+      openGraph: {
+        title: "DAT Themes",
+        description: "Explore productions by theme.",
+        url: "/theme",
+        type: "website",
+      },
+      twitter: {
+        card: "summary",
+        title: "DAT Themes",
+        description: "Explore productions by theme.",
+      },
+    };
+  }
+
+  const allProductions: Production[] = Object.values(productionMap);
 
   const labelFromData =
     allProductions
-      .flatMap((p: Production) => {
-        const extra = productionDetailsMap[p.slug] as ProductionExtra | undefined;
+      .flatMap((prod: Production) => {
+        const extra = productionDetailsMap[prod.slug] as ProductionExtra | undefined;
         return (((extra as any)?.themes ?? []) as string[]);
       })
       .map((t: string) => getCanonicalTag(t) ?? t)
-            .find((c: string) => slugify(c) === slugLower) ??
-    humanizeSlug(params?.slug ?? "");
+      .find((c: string) => slugify(c) === slugLower) ?? humanizeSlug(slug);
 
   const title = `${labelFromData} — DAT Themes`;
   const description = `Plays that explore the theme: ${labelFromData}.`;
-  const canonicalPath = `/theme/${params.slug}`;
+  const canonicalPath = `/theme/${slug}`;
 
   return {
     title,
@@ -129,9 +162,16 @@ export async function generateMetadata(
 export default async function ThemePage({
   params,
 }: {
-  params: { slug: string };
+  params: ParamsLike<{ slug: string }> | { slug: string };
 }) {
-  const slug = params?.slug ?? "";
+  const p = await resolveParams(params);
+  const slug = String(p?.slug ?? "").trim();
+
+  // ✅ seasons-style guard
+  if (!slug) {
+    notFound();
+  }
+
   const slugLower = slug.toLowerCase();
 
   const allProductions: Production[] = Object.values(productionMap);
@@ -142,13 +182,11 @@ export default async function ThemePage({
   };
 
   // --- Productions for this theme ---
-  const productionsForTheme: Production[] = allProductions.filter(
-    (prod: Production) => {
-      const extra = productionDetailsMap[prod.slug] as ProductionExtra | undefined;
-      const themes: string[] = ((extra as any)?.themes ?? []) as string[];
-      return themes.some((t: string) => matchTag(t));
-    }
-  );
+  const productionsForTheme: Production[] = allProductions.filter((prod: Production) => {
+    const extra = productionDetailsMap[prod.slug] as ProductionExtra | undefined;
+    const themes: string[] = ((extra as any)?.themes ?? []) as string[];
+    return themes.some((t: string) => matchTag(t));
+  });
 
   if (!productionsForTheme.length) {
     return notFound();
@@ -156,14 +194,17 @@ export default async function ThemePage({
 
   const displayLabelFromData =
     allProductions
-      .flatMap((p: Production) => {
-        const extra = productionDetailsMap[p.slug] as ProductionExtra | undefined;
+      .flatMap((prod: Production) => {
+        const extra = productionDetailsMap[prod.slug] as ProductionExtra | undefined;
         return (((extra as any)?.themes ?? []) as string[]);
       })
       .map((t: string) => getCanonicalTag(t) ?? t)
       .find((c: string) => slugify(c) === slugLower);
 
   const displayLabel = displayLabelFromData ?? humanizeSlug(slug);
+
+  // ✅ Dynamic hero headline
+  const heroHeadline = displayLabel;
 
   // --- Collect all themes for "Explore More Themes" chips ---
   const themeSlugToLabel = new Map<string, string>();
@@ -183,21 +224,16 @@ export default async function ThemePage({
     for (const t of themes) addThemeLabel(t);
   }
 
-  const moreThemeLinks: Array<[string, string]> = Array.from(
-    themeSlugToLabel.entries()
-  )
+  const moreThemeLinks: Array<[string, string]> = Array.from(themeSlugToLabel.entries())
     .filter(([s]) => s !== slugLower)
-    .sort(
-      ([, aLabel]: [string, string], [, bLabel]: [string, string]) =>
-        aLabel.localeCompare(bLabel, undefined, { sensitivity: "base" })
+    .sort(([, aLabel], [, bLabel]) =>
+      aLabel.localeCompare(bLabel, undefined, { sensitivity: "base" })
     );
 
   // Optional per-theme meta
   const meta = themeMetaMap[slugLower] || {};
-  const heroSrc =
-    normalizeStaticSrc(meta.heroImageUrl) || "/images/alumni-hero.jpg";
-  const heroIntro =
-    meta.intro || "How this idea shapes our journey.";
+  const heroSrc = normalizeStaticSrc(meta.heroImageUrl) || "/images/alumni-hero.jpg";
+  const heroIntro = meta.intro || "How this idea shapes our journey.";
 
   return (
     <div
@@ -240,7 +276,7 @@ export default async function ThemePage({
           <h1
             style={{
               fontFamily: "var(--font-anton), system-ui, sans-serif",
-              fontSize: "clamp(4rem, 9vw, 8rem)",
+              fontSize: "clamp(3.2rem, 7.8vw, 7.6rem)",
               color: "#f2f2f2",
               opacity: 0.88,
               textTransform: "uppercase",
@@ -249,7 +285,7 @@ export default async function ThemePage({
               lineHeight: "1",
             }}
           >
-            {displayLabel}
+            {heroHeadline}
           </h1>
           <p
             style={{
@@ -280,10 +316,7 @@ export default async function ThemePage({
       >
         <div style={{ width: "90%", maxWidth: 1200, margin: "0 auto" }}>
           {/* SECTION: Plays */}
-          <section
-            style={{ marginBottom: "4rem" }}
-            aria-label={`Productions tagged with ${displayLabel}`}
-          >
+          <section style={{ marginBottom: "4rem" }} aria-label={`Productions tagged with ${displayLabel}`}>
             <SectionLabel>Stories That Move Through This Terrain</SectionLabel>
 
             <div className="theme-shell">
@@ -301,20 +334,16 @@ export default async function ThemePage({
                   let posterSrcRaw: string | undefined;
 
                   if (rawHero) {
-                    if (rawHero.includes("-portrait")) {
-                      posterSrcRaw = rawHero;
-                    } else if (rawHero.includes("-landscape")) {
+                    if (rawHero.includes("-portrait")) posterSrcRaw = rawHero;
+                    else if (rawHero.includes("-landscape"))
                       posterSrcRaw = rawHero.replace("-landscape", "-portrait");
-                    } else {
-                      posterSrcRaw = rawHero;
-                    }
+                    else posterSrcRaw = rawHero;
                   } else {
                     posterSrcRaw = "/posters/fallback-16x9.jpg";
                   }
 
                   const posterSrc =
-                    normalizeStaticSrc(posterSrcRaw) ??
-                    "/posters/fallback-16x9.jpg";
+                    normalizeStaticSrc(posterSrcRaw) ?? "/posters/fallback-16x9.jpg";
 
                   // Subtitle priority (tagline → location → season → year → extras)
                   const tagline = extraAny?.tagline as string | undefined;
@@ -323,8 +352,8 @@ export default async function ThemePage({
                     (prod as any)?.location ||
                     (extraAny?.seasonLabel as string | undefined) ||
                     (prod as any)?.year?.toString() ||
-                    extra?.subtitle ||
-                    extra?.city ||
+                    (extra as any)?.subtitle ||
+                    (extra as any)?.city ||
                     undefined;
 
                   return (
@@ -343,10 +372,7 @@ export default async function ThemePage({
 
           {/* SECTION: Explore more themes */}
           {moreThemeLinks.length > 0 && (
-            <section
-              style={{ marginTop: "0.5rem" }}
-              aria-label="Explore other themes"
-            >
+            <section style={{ marginTop: "0.5rem" }} aria-label="Explore other themes">
               <SectionLabel>Other Constellations</SectionLabel>
 
               <div
@@ -357,17 +383,11 @@ export default async function ThemePage({
                 }}
               >
                 <div className="more-themes-grid">
-                  {moreThemeLinks.map(
-                    ([themeSlug, label]: [string, string]) => (
-                      <Link
-                        key={themeSlug}
-                        href={`/theme/${themeSlug}`}
-                        className="theme-chip"
-                      >
-                        {label}
-                      </Link>
-                    )
-                  )}
+                  {moreThemeLinks.map(([themeSlug, label]) => (
+                    <Link key={themeSlug} href={`/theme/${themeSlug}`} className="theme-chip">
+                      {label}
+                    </Link>
+                  ))}
                 </div>
               </div>
             </section>
@@ -382,12 +402,13 @@ export default async function ThemePage({
             boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)",
             padding: "4rem 0",
             marginTop: "4rem",
+            marginBottom: "-2rem",
           }}
         >
           <SeasonsCarouselAlt />
         </section>
 
-        {/* Local, page-scoped styles to keep globals clean */}
+        {/* Local, page-scoped styles */}
         <style>{`
           a { text-decoration: none; }
           a:hover { text-decoration: none; }

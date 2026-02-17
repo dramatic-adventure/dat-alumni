@@ -16,6 +16,8 @@ import { buildTitleBuckets, slugifyTitle } from "@/lib/titles";
 // Use ISR instead of force-dynamic
 export const revalidate = 3600;
 
+type ParamsLike<T> = Promise<T> | T;
+
 function humanizeSlug(slug: string) {
   const safe = typeof slug === "string" ? slug : "";
   return safe
@@ -31,6 +33,15 @@ function titleCase(input: string) {
     .join(" ");
 }
 
+async function resolveParams(
+  params: ParamsLike<{ slug: string }> | ParamsLike<{ slug?: string }>
+) {
+  const p = (params instanceof Promise ? await params : params) as {
+    slug?: string;
+  };
+  return p;
+}
+
 export async function generateStaticParams() {
   const alumni: AlumniRow[] = await loadVisibleAlumni();
   const buckets = buildTitleBuckets(alumni);
@@ -39,9 +50,10 @@ export async function generateStaticParams() {
   const seen = new Set<string>();
   const out: { slug: string }[] = [];
   for (const b of valid) {
-    const keySlug = String(b.meta.key);            // fixed buckets: use key (e.g., "playwrights")
-    const labelSlug = slugifyTitle(b.meta.label);  // dynamic buckets: use label
+    const keySlug = String(b.meta.key); // fixed buckets: use key (e.g., "playwrights")
+    const labelSlug = slugifyTitle(b.meta.label); // dynamic buckets: use label
     const canonical = keySlug.startsWith("title:") ? labelSlug : keySlug;
+
     if (!seen.has(canonical)) {
       out.push({ slug: canonical });
       seen.add(canonical);
@@ -55,10 +67,22 @@ export async function generateStaticParams() {
   return out;
 }
 
-export async function generateMetadata(
-  { params }: { params: { slug: string } }
-): Promise<Metadata> {
-  const slug = params?.slug ?? "";
+export async function generateMetadata({
+  params,
+}: {
+  params: ParamsLike<{ slug: string }> | { slug: string };
+}): Promise<Metadata> {
+  const p = await resolveParams(params);
+  const slug = String(p?.slug ?? "").trim();
+
+  // ✅ Metadata must never crash; fall back gracefully.
+  if (!slug) {
+    return {
+      title: "DAT Alumni — Titles",
+      description: "Explore creative titles in the DAT alumni community.",
+    };
+  }
+
   const alumni: AlumniRow[] = await loadVisibleAlumni();
   const buckets = buildTitleBuckets(alumni);
   const target = slug.toLowerCase();
@@ -72,22 +96,33 @@ export async function generateMetadata(
 
   const label = entry?.meta.label ?? humanizeSlug(slug);
   const title = `${label} — DAT Alumni`;
-  const description = `Explore ${(typeof label === "string" ? label : "").toLowerCase()} in the DAT alumni community.`;
+  const description = `Explore ${(typeof label === "string" ? label : "")
+    .toLowerCase()} in the DAT alumni community.`;
 
   return { title, description };
 }
 
-export default async function TitlePage(
-  { params }: { params: { slug: string } }
-) {
-  const slug = params?.slug ?? "";
+export default async function TitlePage({
+  params,
+}: {
+  params: ParamsLike<{ slug: string }> | { slug: string };
+}) {
+  const p = await resolveParams(params);
+
+  const slug = String(p?.slug ?? "").trim();
   const target = slug.toLowerCase();
+
+  // ✅ seasons-style guard
+  if (!target) {
+    notFound();
+  }
+
   const alumni: AlumniRow[] = await loadVisibleAlumni();
   const buckets = buildTitleBuckets(alumni);
 
   // Find target bucket by either key or label slug
   const entry = Array.from(buckets.values()).find((b) => {
-    const keySlug = String(b.meta.key);           // e.g., "designers" or "title:actors"
+    const keySlug = String(b.meta.key); // e.g., "designers" or "title:actors"
     const labelSlug = slugifyTitle(b.meta.label); // e.g., "actors"
     const canonical = keySlug.startsWith("title:") ? labelSlug : keySlug;
     return canonical === target || labelSlug === target;
@@ -117,7 +152,9 @@ export default async function TitlePage(
             const people = Array.from(slugs)
               .map((s) => bySlug.get(s))
               .filter(Boolean)
-              .sort((a, b) => (a!.name || "").localeCompare(b!.name || "")) as AlumniRow[];
+              .sort((a, b) =>
+                (a!.name || "").localeCompare(b!.name || "")
+              ) as AlumniRow[];
             return { title, people };
           })
           .sort((a, b) => a.title.localeCompare(b.title))
@@ -215,7 +252,8 @@ export default async function TitlePage(
                   <section key={group.title}>
                     <h4
                       style={{
-                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                        fontFamily:
+                          "var(--font-space-grotesk), system-ui, sans-serif",
                         fontSize: "1.9rem",
                         fontWeight: 500,
                         color: "#D9A919",
@@ -233,7 +271,8 @@ export default async function TitlePage(
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                        gridTemplateColumns:
+                          "repeat(auto-fill, minmax(140px, 1fr))",
                         gap: "1rem",
                         justifyItems: "center",
                       }}
@@ -241,6 +280,7 @@ export default async function TitlePage(
                       {group.people.map((artist) => (
                         <MiniProfileCard
                           key={artist.slug}
+                          alumniId={artist.slug}
                           name={artist.name}
                           role={artist.role}
                           slug={artist.slug}
@@ -263,6 +303,7 @@ export default async function TitlePage(
                 {flatSelected.map((artist) => (
                   <MiniProfileCard
                     key={artist.slug}
+                    alumniId={artist.slug}
                     name={artist.name}
                     role={artist.role}
                     slug={artist.slug}
@@ -313,6 +354,7 @@ export default async function TitlePage(
             boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)",
             padding: "4rem 0",
             marginTop: "4rem",
+            marginBottom: "-2rem", // ✅ tuck into footer like /role
           }}
         >
           <SeasonsCarouselAlt />
