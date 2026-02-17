@@ -216,8 +216,11 @@ export async function loadCsv(
         Referer: "https://docs.google.com/",
       },
       signal: controller.signal,
-      next: { revalidate },
-    };
+      };
+
+      if (!useNoStore && revalidate > 0) {
+        fetchInit.next = { revalidate };
+      }
 
     if (useNoStore) (fetchInit as any).cache = "no-store";
 

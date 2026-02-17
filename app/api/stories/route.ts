@@ -49,12 +49,12 @@ function csvToObjects(csvText: string): any[] {
 
   if (!rawLines.length) return [];
 
-  // ✅ Your sheet export has a junk comma-only line as row 1.
-  // The real header is row 2.
+  // ✅ This sheet has an ARRAYFORMULA row in row 1.
+  // Headers are in row 2.
   let headerIdx = -1;
 
-  // Prefer row 2 if row 1 is comma-only junk.
-  if (rawLines.length >= 2 && isCommaOnlyLine(rawLines[0]) && rawLines[1]) {
+  // Prefer row 2 explicitly (deterministic for this sheet)
+  if (rawLines.length >= 2 && rawLines[1]) {
     headerIdx = 1;
   } else {
     // Fallback: find first “real” header line (skip comma-only junk + blanks)
@@ -219,6 +219,38 @@ function validateCsvOrThrow(csvText: string, label: string) {
   }
 }
 
+function buildSearchBlob(row: any, extra: Record<string, any>) {
+  const pick = (k: string) => (row?.[k] == null ? "" : String(row[k]));
+
+  const curatedFields = [
+    pick("Title"),
+    pick("Program"),
+    pick("Location Name"),
+    pick("Country"),
+    pick("Region Tag"),
+    pick("Year(s)"),
+    pick("Partners"),
+    pick("Short Story"),
+    pick("Quote"),
+    pick("Quote Attribution"),
+    pick("Author"),
+    pick("authorSlug"),
+    pick("Story URL"),
+    pick("Slug"),
+    pick("storySlug"),
+    pick("storyKey"),
+    pick("alumniId"),
+    pick("Category"),
+  ].join(" ");
+
+  const curatedExtra = Object.values(extra || {})
+    .map((v) => (v == null ? "" : String(v)))
+    .join(" ");
+
+  return `${curatedFields} ${curatedExtra}`.trim();
+}
+
+
 /* ===========================
    Output shape expected by StoryMap + Studio picker
    =========================== */
@@ -302,28 +334,28 @@ function buildStoriesFromCsv(csv: string) {
         "quote_author",
       ]);
 
+      const __search = buildSearchBlob(r, {
+        title,
+        slug,
+        storyUrl,
+        storyKey,
+        alumniId,
+        category,
+        quoteAttribution,
+      });
+
       return {
         lat,
         lng,
 
         Title: title,
         Program: firstNonEmpty(r, ["Program", "program"]),
-        "Location Name": firstNonEmpty(r, [
-          "Location Name",
-          "LocationName",
-          "locationName",
-        ]),
+        "Location Name": firstNonEmpty(r, ["Location Name", "LocationName", "locationName"]),
         Country: firstNonEmpty(r, ["Country", "country"]),
         RegionTag: firstNonEmpty(r, ["Region Tag", "RegionTag", "regionTag"]),
         "Year(s)": firstNonEmpty(r, ["Year(s)", "Years", "year(s)", "years"]),
         Partners: firstNonEmpty(r, ["Partners", "partners"]),
-        "Short Story": firstNonEmpty(r, [
-          "Short Story",
-          "shortStory",
-          "short_story",
-          "Story",
-          "story",
-        ]),
+        "Short Story": firstNonEmpty(r, ["Short Story", "shortStory", "short_story", "Story", "story"]),
         Quote: firstNonEmpty(r, ["Quote", "quote"]),
 
         "Quote Attribution": quoteAttribution,
@@ -339,12 +371,7 @@ function buildStoriesFromCsv(csv: string) {
         ]),
         Author: firstNonEmpty(r, ["Author", "author"]),
         authorSlug: firstNonEmpty(r, ["authorSlug", "AuthorSlug", "author_slug"]),
-        "More Info Link": firstNonEmpty(r, [
-          "More Info Link",
-          "MoreInfoLink",
-          "moreInfoLink",
-          "more_info_link",
-        ]),
+        "More Info Link": firstNonEmpty(r, ["More Info Link", "MoreInfoLink", "moreInfoLink", "more_info_link"]),
         "Story URL": storyUrl,
 
         storyKey,
@@ -352,8 +379,14 @@ function buildStoriesFromCsv(csv: string) {
         ts,
         updatedTs,
 
+        // ✅ keep both shapes for client compatibility
         slug,
+        Slug: slug,
+
         category,
+
+        // ✅ the whole point: deterministic search on client
+        __search,
       };
     })
     .filter(Boolean);
@@ -410,7 +443,7 @@ export async function GET(req: Request) {
       ? `${publishedUrlRaw}${publishedUrlRaw.includes("?") ? "&" : "?"}_cb=${cb}`
       : "";
 
-    const FALLBACK_NAME = "Clean Map Data.csv";
+    const FALLBACK_NAME = "Clean Map Data.csv"; // local repo fallback
 
     const diag: any = debug
       ? {
@@ -426,67 +459,100 @@ export async function GET(req: Request) {
           },
           primary: {},
           published: {},
+          fallback: {},
         }
       : null;
 
-    const tryLoad = async (label: "primary" | "published", urlToUse: string) => {
-      try {
-        const txt = await loadCsv(urlToUse, FALLBACK_NAME, { noStore: true });
+const tryLoad = async (
+  label: "primary" | "published",
+  urlToUse: string
+): Promise<{ text: string; didFallback: boolean }> => {
+  try {
+    const txt = await loadCsv(urlToUse, FALLBACK_NAME, {
+      noStore: true,
+      cacheBust: false,
+    });
 
-        if (debug) {
-          diag[label].firstMeaningfulLine = firstMeaningfulLine(txt);
-          diag[label].looksLikeHtml = looksLikeHtml(txt);
-          diag[label].looksLikeCsv = looksLikeCsv(txt);
-          diag[label].hasExpectedHeaders = headerHasExpectedColumns(txt);
-          diag[label].snippet = snippet(txt, 600);
-        }
+    // Heuristic: if the remote source fails, loadCsv may return the local fallback file.
+    // Detect that by checking whether the returned content looks like the expected CSV
+    // *and* the URL we asked for is empty or clearly not reachable is not detectable here,
+    // so we mark fallback if validation fails for the remote label but succeeds for the text.
+    //
+    // Instead: we validate normally (remote expectations). If it passes, we assume remote.
+    // If it fails, the caller will handle fallback explicitly.
 
-        validateCsvOrThrow(txt, label);
-        return txt;
-      } catch (e: any) {
-        if (debug) {
-          diag[label].error = e?.message || String(e);
-        }
-        throw e;
-      }
-    };
-
-    let csv = "";
-    let used: "primary" | "published" = "primary";
-
-    try {
-      csv = await tryLoad("primary", sourceUrl);
-      used = "primary";
-    } catch (primaryErr: any) {
-      if (!publishedUrl) {
-        const msg = primaryErr?.message || String(primaryErr);
-        return NextResponse.json(
-          {
-            ok: false,
-            error: `Primary CSV failed and NEXT_PUBLIC_MAP_CSV_URL is missing: ${msg}`,
-            ...(debug ? { _debug: diag } : {}),
-          },
-          { status: 500, headers: noStoreHeaders() }
-        );
-      }
-
-      try {
-        csv = await tryLoad("published", publishedUrl);
-        used = "published";
-      } catch (publishedErr: any) {
-        const msg1 = primaryErr?.message || String(primaryErr);
-        const msg2 = publishedErr?.message || String(publishedErr);
-
-        return NextResponse.json(
-          {
-            ok: false,
-            error: `Both CSV sources failed. primary=${msg1}; published=${msg2}`,
-            ...(debug ? { _debug: diag } : {}),
-          },
-          { status: 500, headers: noStoreHeaders() }
-        );
-      }
+    if (debug) {
+      diag[label].firstMeaningfulLine = firstMeaningfulLine(txt);
+      diag[label].looksLikeHtml = looksLikeHtml(txt);
+      diag[label].looksLikeCsv = looksLikeCsv(txt);
+      diag[label].hasExpectedHeaders = headerHasExpectedColumns(txt);
+      diag[label].snippet = snippet(txt, 600);
     }
+
+    validateCsvOrThrow(txt, label);
+    return { text: txt, didFallback: false };
+  } catch (e: any) {
+    if (debug) {
+      diag[label].error = e?.message || String(e);
+    }
+    throw e;
+  }
+};
+
+const loadLocalFallback = async (): Promise<string> => {
+  // Force “no url” so loadCsv MUST use the local fallback file.
+  const txt = await loadCsv("", FALLBACK_NAME, { noStore: true, cacheBust: false });
+
+  if (debug) {
+    diag.fallback = {
+      firstMeaningfulLine: firstMeaningfulLine(txt),
+      looksLikeHtml: looksLikeHtml(txt),
+      looksLikeCsv: looksLikeCsv(txt),
+      hasExpectedHeaders: headerHasExpectedColumns(txt),
+      snippet: snippet(txt, 600),
+    };
+  }
+
+  // Validate as “fallback”
+  validateCsvOrThrow(txt, "fallback");
+  return txt;
+};
+
+let csv = "";
+let used: "primary" | "published" | "fallback" = "primary";
+
+try {
+  csv = (await tryLoad("primary", sourceUrl)).text;
+  used = "primary";
+} catch (primaryErr: any) {
+  try {
+    if (publishedUrl) {
+      csv = (await tryLoad("published", publishedUrl)).text;
+      used = "published";
+    } else {
+      throw new Error("NEXT_PUBLIC_MAP_CSV_URL is missing");
+    }
+  } catch (publishedErr: any) {
+    // Final tier: local fallback file
+    try {
+      csv = await loadLocalFallback();
+      used = "fallback";
+    } catch (fallbackErr: any) {
+      const msg1 = primaryErr?.message || String(primaryErr);
+      const msg2 = publishedErr?.message || String(publishedErr);
+      const msg3 = fallbackErr?.message || String(fallbackErr);
+
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `All CSV sources failed. primary=${msg1}; published=${msg2}; fallback=${msg3}`,
+          ...(debug ? { _debug: diag } : {}),
+        },
+        { status: 500, headers: noStoreHeaders() }
+      );
+    }
+  }
+}
 
     let stories = buildStoriesFromCsv(csv);
 
