@@ -69,7 +69,7 @@ export default function Footer() {
     </a>
 
     <a
-      href="https://dramaticadventure.com/checkout/donate?donatePageId=6125b0c5c6be590e4c5a2802"
+      href="/donate"
       className="block w-full box-border text-center transition hover:opacity-80 uppercase tracking-[0.345em]"
       style={{
         backgroundColor: "#2493A9",
@@ -131,7 +131,7 @@ export default function Footer() {
         >
           Dramatic Adventure Theatre is a 501(c)(3) nonprofit organization,&nbsp;
           <a
-            href="https://www.guidestar.org/profile/9883629#"
+            href="https://app.candid.org/profile/9883629/dramatic-adventure-theatre-inc-80-0178507"
             target="_blank"
             rel="noopener noreferrer"
             style={{ color: "#F23359", textDecoration: "underline" }}

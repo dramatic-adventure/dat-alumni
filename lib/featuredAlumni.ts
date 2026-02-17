@@ -1,7 +1,11 @@
 import { loadAlumni } from "@/lib/loadAlumni";
 import { getRecentUpdates } from "@/lib/getRecentUpdates";
 
-export const vipList = [
+/**
+ * ✅ VIPs get an extra boost in the weighted lottery.
+ * Removing a slug here just removes the VIP boost (they can still be picked normally).
+ */
+export const vipSet = new Set<string>([
   "alexis-floyd", "natalie-benally", "wolframio-sinue", "lucia-siposova",
   "mathilde-prosen-oldani", "naira-agvani-zakaryan", "javier-spivey",
   "peter-petkovsek", "antonia-lache", "sarah-grace-sanders", "candis-c-jones",
@@ -25,8 +29,30 @@ export const vipList = [
   "jeanne-lauren-smith", "jamil-mangan", "heather-massie",
   "eugene-michael-santiago", "blaine-patagoc", "amy-e-witting",
   "amanda-cortinas", "gustavo-redin", "jason-williamson", "christen-madrazo",
-  "lydia-perez-feldman", "kathleen-amshoff", "lisa-bearpark"
-];
+  "lydia-perez-feldman", "kathleen-amshoff", "lisa-bearpark", "jesse-baxter", 
+  "mary-k-baxter", "noelle-dominique-rodriguez", "maria-segal",
+]);
+
+/**
+ * ✅ NEVER FEATURED list:
+ * Anyone in here is removed from the pool entirely (won't show up as featured, ever).
+ * Put people here if:
+ * - they requested not to be featured
+ * - privacy concerns
+ * - incomplete profile, missing headshot, etc.
+ */
+
+export const neverFeatured = new Set<string>([
+  "santi-baxter",
+  "michael-herman",
+  "jacob-hellman",
+  "susanna-morris",
+  "petra-slovakova",
+  "tamara-durackova",
+  "rachel-wiese",
+]);
+
+
 
 // ✅ Weighted random selection
 function weightedRandom<T>(items: T[], weights: number[]): T {
@@ -41,10 +67,14 @@ function weightedRandom<T>(items: T[], weights: number[]): T {
 }
 
 export async function getFeaturedAlumni() {
-  const alumni = await loadAlumni();
+  const allAlumni = await loadAlumni();
+
+  // ✅ Filter out "never feature" slugs FIRST so they cannot be picked.
+  const alumni = allAlumni.filter((a) => !neverFeatured.has(a.slug));
+
   const recentUpdates = getRecentUpdates(alumni, 50);
 
-  const vipPool = alumni.filter((a) => vipList.includes(a.slug));
+  const vipPool = alumni.filter((a) => vipSet.has(a.slug));
   const recentPool = alumni.filter((a) =>
     recentUpdates.some((u) => u.slug === a.slug)
   );
