@@ -125,7 +125,7 @@ export default function CommunityUpdateLine({
 
   const safeName = (name || "").trim();
   const safeText = (text || "").trim();
-  if (!safeName && !safeText) return null;
+  const isEmpty = !safeName && !safeText;
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const dotsBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -201,9 +201,12 @@ export default function CommunityUpdateLine({
     }
   }
 
+  if (isEmpty) return null;
+
   return (
     <>
       <div
+
         ref={wrapRef}
         className={`dat-update-row ${showActions ? "show-actions" : ""} ${className || ""}`}
         style={{ ...rowStyle, ...style }}

@@ -1,10 +1,47 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
+import { MODULES, type ModuleKey } from "./liveModules";
+import { boolCell } from "@/app/alumni/update/helpers/boolean";
+import { baselineFromLookup } from "@/app/alumni/update/helpers/baseline";
+import { toLiveSavableProfile, totalBytes, prettyMB } from "@/app/alumni/update/helpers/liveMap";
+import {
+  UpcomingEventEditKeys,
+  ContactEditKeys,
+  StoryMapEditKeys,
+} from "@/app/alumni/update/constants/editKeys";
+import ManualStoryMapFallback from "@/app/alumni/update/fallbacks/ManualStoryMapFallback";
+import ManualUpcomingEventFallback from "@/app/alumni/update/fallbacks/ManualUpcomingEventFallback";
+import { UploadProgressSection } from "@/app/alumni/update/uploads/UploadControls";
 
-import type { CSSProperties, ReactNode } from "react";
+
+import { Section } from "./UpdateBits";
+import {
+  POINTER_MAP,
+  type PointerAssets,
+  slugify,
+  alumniIdFromLookupPayload,
+  slugFromLookupPayload,
+  normalizeId,
+  resolveTargetAlumniId,
+  isImpersonating,
+  renameForKind,
+} from "./updateUtils";
+
+import {
+  COLOR,
+  subheadChipStyle,
+  explainStyleLocal,
+  explainStyleLight,
+  labelStyle,
+  inputStyle,
+  inputLockedStyle,
+  datButtonLocal,
+  datButtonGhost,
+} from "./updateStyles";
+
 import Image from "next/image";
 
 import ProfileStudio, {
@@ -14,7 +51,14 @@ import ProfileStudio, {
   ghostButton as studioGhostButton,
 } from "@/components/alumni/update/ProfileStudio";
 
-import Dropzone from "@/components/media/Dropzone";
+import BasicsPanel from "@/app/alumni/update/studio/BasicsPanel";
+import IdentityPanel from "@/app/alumni/update/studio/IdentityPanel";
+import MediaPanel from "@/app/alumni/update/studio/MediaPanel";
+import ContactPanel from "@/app/alumni/update/studio/ContactPanel";
+import StoryPanel from "@/app/alumni/update/studio/StoryPanel";
+import EventPanel from "@/app/alumni/update/studio/EventPanel";
+
+
 import MediaPickerModal from "@/components/media/MediaPickerModal";
 import {
   normalizeProfile,
@@ -24,537 +68,16 @@ import {
 import { PROFILE_FIELDS, PROFILE_GROUPS } from "@/components/alumni/fields";
 import type { AlumniProfile } from "@/schemas";
 
-import SaveBar from "@/components/alumni/update/SaveBar";
 import Toast from "@/components/alumni/update/Toast";
 
 import FieldRenderer from "@/components/alumni/FieldRenderer";
-import BackgroundSwatches from "@/components/alumni/update/BackgroundSwatches";
 
 import { createUploader, type UploadKind, type UploadTask } from "@/lib/uploader";
 import { useDraft } from "@/lib/useDraft";
 
-import UpdateComposer from "@/components/alumni/UpdateComposer";
-import CommunityUpdateLine from "@/components/alumni/update/CommunityUpdateLine";
+import Feed from "@/app/alumni/update/community/Feed";
 
 const SHOW_LEGACY_SECTIONS = false; // legacy UI removed; Studio only
-
-/* ====== Aesthetic constants ====== */
-const COLOR = {
-  ink: "#241123",
-  brand: "#6C00AF",
-  gold: "#D9A919",
-  teal: "#2493A9",
-  red: "#F23359",
-  snow: "#F2F2F2",
-};
-
-const subheadChipStyle: CSSProperties = {
-  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-  fontSize: "2rem",
-  fontWeight: 600,
-  letterSpacing: ".5px",
-  color: COLOR.gold,
-  display: "inline-block",
-  margin: "0 0 1rem",
-  backgroundColor: COLOR.ink,
-  opacity: 0.7,
-  padding: "0.1em 0.6em",
-  borderRadius: "0.35em",
-  textDecoration: "none",
-};
-
-const explainStyleLocal: CSSProperties = {
-  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-  fontSize: 15,
-  lineHeight: 1.55,
-  color: COLOR.snow,
-  opacity: 0.95,
-  margin: "0 0 14px",
-};
-
-const explainStyleLight: CSSProperties = {
-  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-  fontSize: 15,
-  lineHeight: 1.55,
-  color: COLOR.ink,
-  opacity: 0.75,
-  margin: "0 0 14px",
-};
-
-const labelStyle: CSSProperties = {
-  display: "block",
-  marginBottom: 8,
-  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-  fontSize: 13,
-  color: COLOR.snow,
-  opacity: 0.9,
-};
-
-const inputStyle: CSSProperties = {
-  width: "100%",
-  borderRadius: 10,
-  padding: "12px 14px",
-  outline: "none",
-  border: "none",
-  background: "#f2f2f2",
-  color: "#241123",
-  boxShadow: "0 6px 18px rgba(0,0,0,0.12)",
-};
-
-const inputLockedStyle: CSSProperties = {
-  ...inputStyle,
-  opacity: 0.65,
-  cursor: "not-allowed",
-};
-
-const datButtonLocal: CSSProperties = {
-  borderRadius: 14,
-  padding: "12px 16px",
-  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-  fontWeight: 500,
-  fontSize: "0.9rem",
-  textTransform: "uppercase",
-  letterSpacing: "0.2em",
-  background: COLOR.teal,
-  color: COLOR.snow,
-  border: "1px solid rgba(0,0,0,0.22)",
-  boxShadow: "0 10px 26px rgba(0,0,0,0.22)",
-  cursor: "pointer",
-  transform: "translateZ(0)",
-};
-
-
-const datButtonGhost: CSSProperties = {
-  borderRadius: 14,
-  padding: "10px 14px",
-  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-  fontWeight: 700,
-  letterSpacing: "0.03em",
-  background: "transparent",
-  color: "#f2f2f2",
-  border: "1px solid rgba(255,255,255,0.65)",
-  boxShadow: "0 6px 18px rgba(0,0,0,0.12)",
-  cursor: "pointer",
-};
-
-/* ---------- helpers ---------- */
-type PointerAssets = {
-  currentHeadshotId?: string;
-  featuredAlbumId?: string;
-  featuredReelId?: string;
-  featuredEventId?: string;
-};
-
-const POINTER_MAP: Record<"headshot" | "album" | "reel" | "event", keyof PointerAssets> =
-  {
-    headshot: "currentHeadshotId",
-    album: "featuredAlbumId",
-    reel: "featuredReelId",
-    event: "featuredEventId",
-  };
-
-// “Isabel Martínez” -> “isabel-martinez”
-function slugify(s: string) {
-  return (s || "")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-+|-+$)/g, "")
-    .trim();
-}
-
-function alumniIdFromLookupPayload(j: any) {
-  return String(j?.alumniId || "").trim();
-}
-
-function slugFromLookupPayload(j: any) {
-  return String(j?.canonicalSlug || "").trim();
-}
-
-/**
- * Identity rules:
- * - viewerAlumniId: signed-in user (permissions/authorship)
- * - targetAlumniId: profile being edited (admin impersonation via ?alumniId=)
- */
-function normalizeId(v: any) {
-  const s = String(v ?? "").trim();
-  return s || null;
-}
-
-function resolveTargetAlumniId(args: {
-  admin: boolean;
-  viewerAlumniId: string | null;
-  targetAlumniIdFromQuery: string | null;
-}) {
-  const { admin, viewerAlumniId, targetAlumniIdFromQuery } = args;
-
-  // Only admins can impersonate via query param.
-  if (admin && targetAlumniIdFromQuery) return targetAlumniIdFromQuery;
-
-  // Everyone else edits themselves.
-  return viewerAlumniId;
-}
-
-function isImpersonating(args: {
-  admin: boolean;
-  viewerAlumniId: string | null;
-  targetAlumniIdFromQuery: string | null;
-  targetAlumniId: string | null;
-}) {
-  const { admin, viewerAlumniId, targetAlumniIdFromQuery, targetAlumniId } = args;
-  return !!(
-    admin &&
-    viewerAlumniId &&
-    targetAlumniIdFromQuery &&
-    targetAlumniId &&
-    targetAlumniId !== viewerAlumniId
-  );
-}
-
-
-function fileExtension(name: string) {
-  const m = /\.[A-Za-z0-9]+$/.exec(name);
-  return m ? m[0] : "";
-}
-
-function renameForKind(
-  file: File,
-  kind: UploadKind,
-  baseName: string,
-  index = 1,
-  albumName?: string
-) {
-  const ext = fileExtension(file.name) || "";
-  const idx = String(index).padStart(3, "0");
-  let newBase = baseName;
-
-  if (kind === "headshot") {
-    const stamp = Date.now(); // or crypto.randomUUID()
-    newBase = `${baseName}-headshot-${stamp}`;
-  }
-
-  if (kind === "album") {
-    const albumSlug = slugify(albumName || "gallery");
-    newBase = `${baseName}-${albumSlug}-${idx}`;
-  }
-  if (kind === "reel") newBase = `${baseName}-reel-${idx}`;
-  if (kind === "event") newBase = `${baseName}-event-${idx}`;
-
-  const newName = `${newBase}${ext || ".bin"}`;
-  try {
-    return new File([file], newName, {
-      type: file.type,
-      lastModified: file.lastModified,
-    });
-  } catch {
-    return file;
-  }
-}
-
-function Section({ children }: { children?: ReactNode }) {
-  return (
-    <div
-      style={{
-        textAlign: "left",
-        marginBottom: "3rem",
-        background: "rgba(36, 17, 35, 0.22)",
-        borderRadius: 10,
-        padding: "2rem",
-        color: COLOR.snow,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-
-
-function ProgressBar({ value }: { value: number }) {
-  const pct = Math.max(0, Math.min(100, Math.round(value || 0)));
-  return (
-    <div
-      style={{
-        width: "100%",
-        height: 8,
-        borderRadius: 999,
-        background: "rgba(255,255,255,0.18)",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          width: `${pct}%`,
-          height: "100%",
-          borderRadius: 999,
-          transition: "width .25s ease",
-          background: `linear-gradient(90deg, ${COLOR.gold}, ${COLOR.brand})`,
-        }}
-      />
-    </div>
-  );
-}
-
-// ------------------------------------------------------------
-// Module definitions + Live-key filtering (single source of truth)
-// ------------------------------------------------------------
-type ModuleKey =
-  | "Basics"
-  | "Identity"
-  | "Roles"
-  | "Contact"
-  | "CurrentUpdate"
-  | "StoryMap"
-  | "UpcomingEvent"
-  | "TechSupport";
-
-const LIVE_KEYS = new Set<string>(Object.freeze([
-  "name",
-  "slug",
-  "location",
-  "isBiCoastal",
-  "secondLocation",
-  "backgroundStyle",
-  "bioShort",
-  "bioLong",
-  "pronouns",
-  "roles",
-  "identityTags",
-  "languages",
-  "currentWork",
-  "website",
-  "instagram",
-  "x",
-  "tiktok",
-  "threads",
-  "bluesky",
-  "linkedin",
-  "primarySocial",
-  "youtube",
-  "vimeo",
-  "imdb",
-  "facebook",
-  "linktree",
-  "publicEmail",
-  "spotlight",
-  "programs",
-  "tags",
-  "statusFlags",
-  "currentHeadshotUrl",
-  "currentUpdateText",
-  "currentUpdateLink",
-  "currentUpdateExpiresAt",
-  "upcomingEventTitle",
-  "upcomingEventLink",
-  "upcomingEventDate",
-  "upcomingEventExpiresAt",
-  "upcomingEventDescription",
-  "storyTitle",
-  "storyProgram",
-  "storyLocationName",
-  "storyYears",
-  "storyPartners",
-  "storyShortStory",
-  "storyQuote",
-  "storyQuoteAttribution",
-  "storyMediaUrl",
-  "storyMoreInfoUrl",
-  "storyCountry",
-  "storyShowOnMap",
-  "storyKey",
-  "storyTimeStamp",
-  "supportBug",
-  "supportFeature",
-  "supportAssistance",
-]));
-
-function keysForSaving(keys: string[]) {
-  // Identity-free: only filters keys against LIVE_KEYS.
-  // Never consult viewer/target identity here.
-  return (keys || []).map(String).filter((k) => LIVE_KEYS.has(k));
-}
-
-
-const MODULES = {
-  Basics: {
-    fieldKeys: keysForSaving([
-      "slug",
-      "name",
-      "location",
-      "isBiCoastal",
-      "secondLocation",
-      "backgroundStyle",
-      "currentHeadshotUrl",
-      "bioLong",
-      "currentWork",
-      "upcomingEventTitle",
-      "upcomingEventLink",
-      "upcomingEventDate",
-      "upcomingEventExpiresAt",
-      "upcomingEventDescription",
-    ]),
-    uploadKinds: [],
-  },
-
-  Identity: {
-    fieldKeys: keysForSaving(["pronouns", "identityTags", "languages"]),
-    uploadKinds: [],
-  },
-
-  Roles: {
-    fieldKeys: keysForSaving(["roles"]),
-    uploadKinds: [],
-  },
-
-  Contact: {
-    fieldKeys: keysForSaving([
-      "website",
-      "instagram",
-      "x",
-      "tiktok",
-      "threads",
-      "bluesky",
-      "linkedin",
-      "youtube",
-      "vimeo",
-      "facebook",
-      "linktree",
-      "publicEmail",
-      "imdb",
-      // primarySocial handled by Contact save logic
-    ]),
-    uploadKinds: [],
-  },
-
-  CurrentUpdate: {
-    fieldKeys: keysForSaving(["currentUpdateText", "currentUpdateLink", "currentUpdateExpiresAt"]),
-    uploadKinds: [],
-  },
-
-  StoryMap: {
-    fieldKeys: keysForSaving([
-      "storyTitle",
-      "storyProgram",
-      "storyCountry",
-      "storyYears",
-      "storyLocationName",
-      "storyPartners",
-      "storyShortStory",
-      "storyQuote",
-      "storyQuoteAttribution",
-      "storyMediaUrl",
-      "storyMoreInfoUrl",
-      "storyShowOnMap",
-      "storyKey",
-      "storyTimeStamp",
-    ]),
-    uploadKinds: [],
-  },
-
-  UpcomingEvent: {
-    fieldKeys: keysForSaving([
-      "upcomingEventTitle",
-      "upcomingEventLink",
-      "upcomingEventDate",
-      "upcomingEventExpiresAt",
-      "upcomingEventDescription",
-    ]),
-    uploadKinds: [],
-  },
-
-  TechSupport: {
-    fieldKeys: keysForSaving(["supportBug", "supportFeature", "supportAssistance"]),
-    uploadKinds: [],
-  },
-} satisfies Record<ModuleKey, { fieldKeys: string[]; uploadKinds: UploadKind[] }>;
-
-// ------------------------------------------------------------
-// Boolean normalization (Live sheet-friendly) — FILE SCOPE
-// ------------------------------------------------------------
-function truthy(v: any) {
-  const s = String(v ?? "").trim().toLowerCase();
-  return v === true || s === "true" || s === "1" || s === "yes";
-}
-
-function boolCell(v: any) {
-  return truthy(v) ? "true" : "";
-}
-
-function isTrue(v: any) {
-  return truthy(v);
-}
-
-// ------------------------------------------------------------
-// Baseline in Profile-Live key space (for diff) — FILE SCOPE
-// ------------------------------------------------------------
-function baselineFromLookup(j: any, slug: string, nm: string, loc: string) {
-  return {
-    slug: String(slug || "").trim().toLowerCase(),
-    name: String(nm || "").trim(),
-    location: String(loc || "").trim(),
-
-    isBiCoastal: boolCell(j?.isBiCoastal),
-    secondLocation: String(j?.secondLocation || ""),
-    backgroundStyle: String(j?.backgroundStyle || "kraft"),
-
-    pronouns: String(j?.pronouns || ""),
-    roles: String(j?.roles || ""),
-    identityTags: String(j?.identityTags || ""),
-    languages: String(j?.languages || ""),
-    currentWork: String(j?.currentWork || ""),
-
-    bioShort: String(j?.bioShort || ""),
-    bioLong: String(j?.bioLong || ""),
-
-    website: String(j?.website || ""),
-    instagram: String(j?.instagram || ""),
-    x: String(j?.x || ""),
-    tiktok: String(j?.tiktok || ""),
-    threads: String(j?.threads || ""),
-    bluesky: String(j?.bluesky || ""),
-    linkedin: String(j?.linkedin || ""),
-    primarySocial: String(j?.primarySocial || ""),
-
-    youtube: String(j?.youtube || ""),
-    vimeo: String(j?.vimeo || ""),
-    imdb: String(j?.imdb || ""),
-    facebook: String(j?.facebook || ""),
-    linktree: String(j?.linktree || ""),
-    publicEmail: String(j?.publicEmail || ""),
-
-    spotlight: String(j?.spotlight || ""),
-    programs: String(j?.programs || ""),
-    tags: String(j?.tags || ""),
-    statusFlags: String(j?.statusFlags || ""),
-
-    currentUpdateText: String(j?.currentUpdateText || ""),
-    currentUpdateLink: String(j?.currentUpdateLink || ""),
-    currentUpdateExpiresAt: String(j?.currentUpdateExpiresAt || ""),
-
-    upcomingEventTitle: String(j?.upcomingEventTitle || ""),
-    upcomingEventLink: String(j?.upcomingEventLink || ""),
-    upcomingEventDate: String(j?.upcomingEventDate || ""),
-    upcomingEventExpiresAt: String(j?.upcomingEventExpiresAt || ""),
-    upcomingEventDescription: String(j?.upcomingEventDescription || ""),
-
-    currentHeadshotUrl: String(j?.currentHeadshotUrl || ""),
-
-    storyTitle: String(j?.storyTitle || ""),
-    storyProgram: String(j?.storyProgram || ""),
-    storyLocationName: String(j?.storyLocationName || ""),
-    storyYears: String(j?.storyYears || ""),
-    storyPartners: String(j?.storyPartners || ""),
-    storyShortStory: String(j?.storyShortStory || ""),
-    storyQuote: String(j?.storyQuote || ""),
-    storyQuoteAttribution: String(j?.storyQuoteAttribution || ""),
-    storyMediaUrl: String(j?.storyMediaUrl || ""),
-    storyMoreInfoUrl: String(j?.storyMoreInfoUrl || ""),
-    storyCountry: String(j?.storyCountry || ""),
-    storyShowOnMap: boolCell(j?.storyShowOnMap),
-    storyKey: String(j?.storyKey || ""),
-  };
-}
 
 export default function UpdateForm({
   email,
@@ -693,17 +216,8 @@ const lookupUrl = useMemo(() => {
     targetAlumniId || targetAlumniIdFromLookup || ""
   ).trim();
 
-  const impersonatingNow = isImpersonating({
-    admin: canImpersonateHere,
-    viewerAlumniId: normalizeId(viewerAlumniId),
-    targetAlumniIdFromQuery: normalizeId(targetAlumniIdFromProp || targetAlumniIdFromQuery),
-    targetAlumniId: normalizeId(resolvedTargetAlumniId),
-  });
-
   // stableAlumniId is the TARGET profile id (drives what loads into the form)
   const stableAlumniId = resolvedTargetAlumniId;
-
-  const getIdentity = useCallback(() => stableAlumniId, [stableAlumniId]);
 
   const [studioMountKey, setStudioMountKey] = useState(0);
 
@@ -794,7 +308,7 @@ const lookupUrl = useMemo(() => {
   });
 
   // ✅ Single source of truth for “who is this?”
-  const isLoaded = !!getIdentity() && !!liveBaseline;
+  const isLoaded = !!stableAlumniId && !!liveBaseline;
 
   /* drafts */
   const basicsDraft = useDraft({
@@ -900,6 +414,74 @@ const lookupUrl = useMemo(() => {
 
   const showToastRef = useRef(showToast);
 
+  const toastNow = (msg: string, type: "success" | "error" = "success") =>
+    showToastRef.current?.(msg, type);
+
+  // Lift the Basics save click handler into a named function (logic unchanged)
+  async function handleSaveBasics() {
+    setLoading(true);
+    try {
+      const alumniId = stableAlumniId;
+      if (!alumniId) throw new Error("Profile not loaded yet.");
+      if (!profile) throw new Error("Profile not loaded yet.");
+
+      const hadStagedHeadshot = !!headshotFile;
+
+      let nextProfile: any = profile;
+
+      if (headshotFile) {
+        if (headshotUploadInFlight.current) {
+          throw new Error("Headshot upload already in progress.");
+        }
+
+        headshotUploadInFlight.current = true;
+        try {
+          const url = await uploadHeadshotViaQueue({
+            file: headshotFile,
+            alumniId,
+          });
+
+          const resolvedUrl = String(url || "").trim();
+
+          if (resolvedUrl) {
+            nextProfile = { ...profile, currentHeadshotUrl: resolvedUrl };
+            setProfile(nextProfile);
+            showToastRef.current?.("Headshot uploaded ✓", "success");
+          } else {
+            showToastRef.current?.(
+              "Headshot uploaded ✓ (no URL returned, but it should still be live)",
+              "success"
+            );
+          }
+        } finally {
+          headshotUploadInFlight.current = false;
+        }
+      }
+
+      await saveCategory({
+        tag: "Basics",
+        fieldKeys: MODULES["Basics"].fieldKeys,
+        uploadKinds: [],
+        profileOverride: nextProfile,
+        afterSave: () => {
+          basicsDraft.clearDraft();
+          setHeadshotFile(null);
+
+          if (hadStagedHeadshot) {
+            showToastRef.current?.("Profile basics saved ✓ (headshot set)", "success");
+          } else {
+            showToastRef.current?.("Profile basics saved ✓", "success");
+          }
+        },
+      });
+    } catch (e: any) {
+      showToastRef.current?.(e?.message || "Save failed", "error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
   useEffect(() => {
     showToastRef.current = showToast;
   }, [showToast]);
@@ -908,7 +490,6 @@ const lookupUrl = useMemo(() => {
   // STORY MAP editor state (UI-only; NOT saved to Profile-Live)
   // ------------------------------------------------------------
   // STORY MAP pointer (saved in Profile-Live as storyKey)
-  const activeStoryKey = String(profile?.storyKey || "").trim();
 
   const read = (obj: any, ...keys: string[]) => {
     for (const k of keys) {
@@ -1187,9 +768,7 @@ async function onSelectStoryFromMyStories(storyKey: string) {
 }
 
 
-    // Upcoming Event Collapsible control
-  const [eventOpen, setEventOpen] = useState(false);
-  const eventSectionRef = useRef<HTMLDivElement | null>(null);
+
 
 const openEventAndScroll = () => {
   setStudioTab("event");
@@ -1264,7 +843,7 @@ const openEventAndScroll = () => {
   }, [profile?.primarySocial]);
 
   const openPicker = (kind: "headshot" | "album" | "reel" | "event") => {
-    if (!getIdentity()) {
+    if (!stableAlumniId) {
       showToastRef.current?.("Profile not loaded yet.", "error");
       return;
     }
@@ -1612,14 +1191,12 @@ const renderFieldsOrNull = (keys: string[]) => {
   );
 };
 
-const contactKeys = PROFILE_GROUPS["Contact"] ?? [];
-
 /**
  * ✅ Current Update save (tweet-style)
  * Calls /api/alumni/update (writes Live + appends Profile-Changes + optionally DAT_Testimonials)
  */
 const saveCurrentUpdate = async (text: string, promptUsed = ""): Promise<string | null> => {
-  const id = String(viewerAlumniId || "").trim();
+  const id = String(stableAlumniId || "").trim();
   if (!id) {
     showToastRef.current?.("Profile not loaded yet.", "error");
     return null;
@@ -1821,83 +1398,6 @@ async function rehydrate() {
   } catch {
     /* ignore */
   }
-}
-
-const totalBytes = (files: File[]) => files.reduce((s, f) => s + (f?.size ?? 0), 0);
-
-const prettyMB = (n?: number | null) => {
-  const mb = Number(n ?? 0) / 1_000_000;
-  return Math.round(mb * 10) / 10;
-};
-
-/** Map to Profile-Live schema. */
-function toLiveSavableProfile(p: any) {
-  return {
-    name: String(p.name || "").trim(),
-    slug: String(p.slug || "").trim().toLowerCase(),
-    location: String(p.location || "").trim(),
-    // ✅ Live sheet-friendly values
-    isBiCoastal: boolCell(p.isBiCoastal),
-    secondLocation: String(p.secondLocation || "").trim(),
-
-    backgroundStyle: String(p.backgroundStyle || "kraft").trim(),
-
-    pronouns: String(p.pronouns || "").trim(),
-    roles: String(p.roles || "").trim(),
-    identityTags: String(p.identityTags || "").trim(),
-    languages: String(p.languages || "").trim(),
-    currentWork: String(p.currentWork || "").trim(),
-    bioShort: String(p.bioShort || "").trim(),
-    bioLong: String(p.bioLong || "").trim(),
-
-    website: String(p.website || "").trim(),
-    instagram: String(p.instagram || "").trim(),
-    x: String(p.x || "").trim(),
-    tiktok: String(p.tiktok || "").trim(),
-    threads: String(p.threads || "").trim(),
-    bluesky: String(p.bluesky || "").trim(),
-    linkedin: String(p.linkedin || "").trim(),
-    primarySocial: String(p.primarySocial || "").trim(),
-    youtube: String(p.youtube || "").trim(),
-    vimeo: String(p.vimeo || "").trim(),
-    imdb: String(p.imdb || "").trim(),
-    facebook: String(p.facebook || "").trim(),
-    linktree: String(p.linktree || "").trim(),
-    publicEmail: String(p.publicEmail || "").trim(),
-
-    spotlight: String(p.spotlight || "").trim(),
-    programs: String(p.programs || "").trim(),
-    tags: String(p.tags || "").trim(),
-    statusFlags: String(p.statusFlags || "").trim(),
-
-    currentUpdateText: String(p.currentUpdateText || "").trim(),
-    currentUpdateLink: String(p.currentUpdateLink || "").trim(),
-    currentUpdateExpiresAt: String(p.currentUpdateExpiresAt || "").trim(),
-
-    upcomingEventTitle: String(p.upcomingEventTitle || "").trim(),
-    upcomingEventLink: String(p.upcomingEventLink || "").trim(),
-    upcomingEventDate: String(p.upcomingEventDate || "").trim(),
-    upcomingEventExpiresAt: String(p.upcomingEventExpiresAt || "").trim(),
-    upcomingEventDescription: String(p.upcomingEventDescription || "").trim(),
-
-    currentHeadshotUrl: String(p.currentHeadshotUrl || "").trim(),
-
-    storyTitle: String(p.storyTitle || "").trim(),
-    storyProgram: String(p.storyProgram || "").trim(),
-    storyLocationName: String(p.storyLocationName || "").trim(),
-    storyYears: String(p.storyYears || "").trim(),
-    storyPartners: String(p.storyPartners || "").trim(),
-    storyShortStory: String(p.storyShortStory || "").trim(),
-    storyQuote: String(p.storyQuote || "").trim(),
-    storyQuoteAttribution: String(p.storyQuoteAttribution || "").trim(),
-    storyMediaUrl: String(p.storyMediaUrl || "").trim(),
-    storyMoreInfoUrl: String(p.storyMoreInfoUrl || "").trim(),
-    storyCountry: String(p.storyCountry || "").trim(),
-    storyShowOnMap: boolCell(p.storyShowOnMap),
-    storyTimeStamp: String(p.storyTimeStamp || "").trim(), // keep if already present
-    storyKey: String(p.storyKey || "").trim(),
-
-  };
 }
 
 async function saveStoryMapViaWriter(opts?: { clearAfter?: boolean }) {
@@ -2270,373 +1770,8 @@ setProgress((p) => ({
   }
 }
 
-/* pause/resume/cancel + failed retry */
-const Controls = ({ kind, disabled }: { kind: UploadKind; disabled?: boolean }) => (
-  <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-    <button
-      type="button"
-      disabled={!!disabled}
-      onClick={() => uploaderRef.current?.pauseKind(kind)}
-      style={datButtonGhost}
-      className="dat-btn-ghost"
-    >
-      Pause
-    </button>
-    <button
-      type="button"
-      disabled={!!disabled}
-      onClick={() => uploaderRef.current?.resumeKind(kind, { alumniId: stableAlumniId })}
-      style={datButtonGhost}
-      className="dat-btn-ghost"
-    >
-      Resume
-    </button>
-    <button
-      type="button"
-      disabled={!!disabled}
-      onClick={() => uploaderRef.current?.cancelKind(kind)}
-      style={{
-        ...datButtonGhost,
-        border: "1px solid rgba(242,51,89,0.7)",
-        background: "rgba(242,51,89,0.15)",
-      }}
-      className="dat-btn-ghost"
-    >
-      Cancel
-    </button>
-  </div>
-);
-
-const FailedList = ({ kind }: { kind: UploadKind }) => {
-  const ids = failed[kind];
-  if (!ids.length) return null;
-  const tasks: UploadTask[] = uploaderRef.current?.getTasks().filter((t) => ids.includes(t.id)) ?? [];
-
-  const retryOne = (id: string) => {
-    const t = uploaderRef.current?.getTaskById(id);
-    if (!t) return;
-    const ff = { alumniId: stableAlumniId };
-    uploaderRef.current?.resumeKind(kind, ff);
-    uploaderRef.current?.enqueue({ kind, files: [t.file], formFields: ff });
-    setFailed((f) => ({ ...f, [kind]: f[kind].filter((x) => x !== id) }));
-    uploaderRef.current?.start();
-  };
-
-  const retryAll = () => {
-    const ff = { alumniId: stableAlumniId };
-    const files = tasks.map((t) => t.file);
-    if (!files.length) return;
-    uploaderRef.current?.resumeKind(kind, ff);
-    uploaderRef.current?.enqueue({ kind, files, formFields: ff });
-    setFailed((f) => ({ ...f, [kind]: [] }));
-    uploaderRef.current?.start();
-  };
-
-  return (
-    <div
-      style={{
-        marginTop: 12,
-        background: "rgba(242,51,89,0.12)",
-        borderRadius: 8,
-        padding: 12,
-        color: COLOR.snow,
-      }}
-    >
-      <div style={{ marginBottom: 8, fontWeight: 600 }}>Some files failed to upload:</div>
-
-      <ul style={{ marginLeft: 18, listStyle: "disc" }}>
-        {tasks.map((t) => (
-          <li key={t.id} style={{ margin: "6px 0" }}>
-            {t.file.name} ({prettyMB(t.file.size)} MB)
-            <button
-              type="button"
-              onClick={() => retryOne(t.id)}
-              style={{ ...datButtonGhost, padding: "4px 8px", marginLeft: 10 }}
-              className="dat-btn-ghost"
-            >
-              Retry
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      <div style={{ marginTop: 8 }}>
-        <button type="button" onClick={retryAll} style={datButtonGhost} className="dat-btn-ghost">
-          Retry all failed
-        </button>
-      </div>
-    </div>
-  );
-};
 
 
-// ------------------------------------------------------------
-// ✅ DROPDOWN SECTIONS: ALWAYS RENDER
-// ------------------------------------------------------------
-
-// Prefer groups if present, otherwise fallback keys.
-const AboutEditKeys =
-  PROFILE_GROUPS["About"] ??
-  PROFILE_GROUPS["Bio"] ??
-  PROFILE_GROUPS["Profile"] ??
-  ["roles", "currentWork", "bioShort"];
-
-const TagsEditKeys =
-  PROFILE_GROUPS["Programs"] ??
-  PROFILE_GROUPS["Tags"] ??
-  PROFILE_GROUPS["Meta"] ??
-  ["spotlight", "programs", "tags", "statusFlags"];
-
-const UpdatesEditKeys =
-  PROFILE_GROUPS["Updates"] ??
-  PROFILE_GROUPS["Announcements"] ??
-  ["currentUpdateText", "currentUpdateLink", "currentUpdateExpiresAt"];
-
-const UpcomingEventEditKeys =
-  PROFILE_GROUPS["Upcoming Event"] ??
-  PROFILE_GROUPS["Events"] ??
-  [
-    "upcomingEventTitle",
-    "upcomingEventLink",
-    "upcomingEventDate",
-    "upcomingEventExpiresAt",
-    "upcomingEventDescription",
-  ];
-
-const ContactEditKeys = [
-  "website",
-  "instagram",
-  "x",
-  "tiktok",
-  "threads",
-  "bluesky",
-  "linkedin",
-  "primarySocial",
-  "youtube",
-  "vimeo",
-  "imdb",
-  "facebook",
-  "linktree",
-  "publicEmail",
-];
-
-// ✅ Story Map section keys (match Profile-Live headers)
-const StoryMapEditKeys =
-  PROFILE_GROUPS["Story Map Contribution"] ?? [
-    "storyTitle",
-    "storyProgram",
-    "storyLocationName",
-    "storyYears",
-    "storyPartners",
-    "storyShortStory",
-    "storyQuote",
-    "storyQuoteAttribution",
-    "storyMediaUrl",
-    "storyMoreInfoUrl",
-    "storyCountry",
-    "storyShowOnMap",
-  ];
-
-
-
-// ------------------------------------------------------------
-// 2) ✅ Manual fallback (in case FieldRenderer has no defs yet)
-// ------------------------------------------------------------
-const ManualStoryMapFallback = () => (
-  <div style={{ display: "grid", gap: 14 }}>
-    <div>
-      <label style={labelStyle}>Story Title</label>
-      <input
-        value={profile.storyTitle || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, storyTitle: e.target.value }))}
-        style={inputStyle}
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Associated Program</label>
-      <input
-        value={profile.storyProgram || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, storyProgram: e.target.value }))}
-        style={inputStyle}
-        placeholder="ACTion / RAW / CASTAWAY / PASSAGE / ..."
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Country</label>
-      <input
-        value={profile.storyCountry || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, storyCountry: e.target.value }))}
-        style={inputStyle}
-        placeholder="Ecuador, Slovakia..."
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Year(s)</label>
-      <input
-        value={profile.storyYears || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, storyYears: e.target.value }))}
-        style={inputStyle}
-        placeholder="2016 or 2015–2016"
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Location Name (map pin label)</label>
-      <input
-        value={profile.storyLocationName || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, storyLocationName: e.target.value }))}
-        style={inputStyle}
-        placeholder="City / Region / Landmark"
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Partners</label>
-      <input
-        value={profile.storyPartners || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, storyPartners: e.target.value }))}
-        style={inputStyle}
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Media URL</label>
-      <input
-        value={profile.storyMediaUrl || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, storyMediaUrl: e.target.value }))}
-        style={inputStyle}
-        placeholder="https://..."
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>More Info URL</label>
-      <input
-        value={profile.storyMoreInfoUrl || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, storyMoreInfoUrl: e.target.value }))}
-        style={inputStyle}
-        placeholder="https://..."
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Short Story</label>
-      <textarea
-        value={profile.storyShortStory || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, storyShortStory: e.target.value }))}
-        rows={6}
-        style={{ ...inputStyle, minHeight: 160, resize: "vertical" }}
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Quote (no quotation marks)</label>
-      <textarea
-        value={profile.storyQuote || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, storyQuote: e.target.value }))}
-        rows={3}
-        style={{ ...inputStyle, minHeight: 110, resize: "vertical" }}
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Quote Author</label>
-      <input
-        value={profile.storyQuoteAttribution || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, storyQuoteAttribution: e.target.value }))}
-        style={inputStyle}
-      />
-    </div>
-
-    <label style={{ fontWeight: 700 }}>
-      <input
-        type="checkbox"
-        checked={
-          String(profile.storyShowOnMap || "").toLowerCase() === "true" || profile.storyShowOnMap === true
-        }
-        onChange={(e) =>
-          setProfile((p: any) => ({ ...p, storyShowOnMap: e.target.checked ? "true" : "" }))
-        }
-        style={{ marginRight: 10 }}
-      />
-      Show on Map?
-    </label>
-
-    <p style={{ ...explainStyleLocal, marginTop: 6 }}>
-      (Fallback UI) Add Story Map keys to <code>PROFILE_FIELDS</code> to render via FieldRenderer.
-    </p>
-  </div>
-);
-
-// ------------------------------------------------------------
-// 3) ✅ Manual fallbacks used by ProfileStudio panels when FieldRenderer lacks defs
-// ------------------------------------------------------------
-
-// Manual fallback blocks when FieldRenderer has no matching fields.
-
-const ManualUpcomingEventFallback = () => (
-  <div style={{ display: "grid", gap: 14 }}>
-    <div>
-      <label style={labelStyle}>Event Title</label>
-      <input
-        value={profile.upcomingEventTitle || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, upcomingEventTitle: e.target.value }))}
-        style={inputStyle}
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Event Link</label>
-      <input
-        value={profile.upcomingEventLink || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, upcomingEventLink: e.target.value }))}
-        style={inputStyle}
-        placeholder="https://..."
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Event Date</label>
-      <input
-        value={profile.upcomingEventDate || ""}
-        onChange={(e) => setProfile((p: any) => ({ ...p, upcomingEventDate: e.target.value }))}
-        style={inputStyle}
-        placeholder="YYYY-MM-DD"
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Expires At</label>
-      <input
-        value={profile.upcomingEventExpiresAt || ""}
-        onChange={(e) =>
-          setProfile((p: any) => ({ ...p, upcomingEventExpiresAt: e.target.value }))
-        }
-        style={inputStyle}
-        placeholder="YYYY-MM-DD"
-      />
-    </div>
-
-    <div>
-      <label style={labelStyle}>Description</label>
-      <textarea
-        value={profile.upcomingEventDescription || ""}
-        onChange={(e) =>
-          setProfile((p: any) => ({ ...p, upcomingEventDescription: e.target.value }))
-        }
-        rows={5}
-        style={{ ...inputStyle, minHeight: 160, resize: "vertical" }}
-      />
-    </div>
-
-    <p style={{ ...explainStyleLocal, marginTop: 6 }}>
-      (Fallback UI) Add these keys to <code>PROFILE_FIELDS</code> to render via FieldRenderer.
-    </p>
-  </div>
-);
 
 return (
   <div className="alumni-update">
@@ -2699,113 +1834,45 @@ return (
     > 
       <div style={{ width: "90%", margin: "0 auto" }}>
         {/* ====== COMMUNITY LEDGER (Composer + Feed, one container) ====== */}
-        <div style={{ margin: "2rem 0 3.25rem" }}>
-          <div
-            style={{
-              background: "#f2f2f241",
-              border: "none",
-              boxShadow: "none",
-              borderRadius: 16,
-              padding: "16px 16px 14px",
-            }}
-          >
-            {/* Header */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "baseline",
-                justifyContent: "space-between",
-                gap: 16,
-                marginBottom: 10,
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                  fontSize: 14,
-                  textTransform: "uppercase",
-                  fontWeight: 700,
-                  letterSpacing: ".1em",
-                  color: COLOR.ink,
-                  opacity: 0.85,
-                }}
-              >
-                Community Feed
-              </div>
-            </div>
-
-            {!isLoaded ? (
-              <p style={{ ...explainStyleLight, margin: 0 }}>
-                Loading your profile…
-              </p>
-) : (
-  <>
-    <UpdateComposer
-      onSubmit={async (text, meta) => {
-        const id = await postCurrentUpdate(text, meta);
-        return id ? { id } : undefined;
-      }}
-
-      onPosted={() => {}}
-      onError={(err) => {
-        const msg =
-          typeof (err as any)?.message === "string"
-            ? (err as any).message
-            : typeof err === "string"
-            ? err
-            : "Something went wrong.";
-        showToastRef.current?.(msg, "error");
-      }}
-      onAddEvent={openEventAndScroll}
-    />
-
-    {/* Divider */}
-    <div
-      style={{
-        height: 1,
-        background: "rgba(36, 17, 35, 0.25)",
-        margin: "14px 2px 12px",
-      }}
-    />
-
-    {/* Feed */}
-    {feedLoading ? (
-      <p style={{ ...explainStyleLight, margin: 0 }}>
-        Loading…
-      </p>
-
-    ) : !feed.length ? (
-      <p style={{ ...explainStyleLight, margin: 0 }}>
-        No updates yet.
-      </p>
-
-    ) : (
-      <div style={{ display: "grid", gap: 10 }}>
-        {feed.map((it: any) => (
-          <CommunityUpdateLine
-            key={it.id ?? `${it.alumniId}-${it.ts}-${it.field}`}
-            name={it?.name}
-            slug={it?.slug || it?.alumniId || "alumni"}
-            text={it?.text}
-            updateId={it?.id}
-            showActions={Boolean(it?.id && (isAdmin || it.alumniId === stableAlumniId))}
-            onUndo={undoPostedUpdate}
-            style={{
-              background: "#f2f2f27a",
-              border: "1px solid rgba(36, 17, 35, 0.10)",
-              boxShadow: "none",
-            }}
-          />
-        ))}
-      </div>
-    )}
-  </>
-)}
-</div>
-</div>
+        <Feed
+          email={email}
+          isAdmin={Boolean(isAdmin)}
+          stableAlumniId={stableAlumniId}
+          feed={feed}
+          feedLoading={feedLoading}
+          postCurrentUpdate={postCurrentUpdate}
+          undoPostedUpdate={undoPostedUpdate}
+          openEventAndScroll={openEventAndScroll}
+          showToastRef={showToastRef}
+          isLoaded={isLoaded}
+          COLOR={COLOR}
+          explainStyleLight={explainStyleLight}
+        />
 </div>
 
 {/* ====== PROFILE STUDIO (replaces MediaHub container) ====== */}
+
+{isAdmin && impersonating && alumniId ? (
+  <div className="flex justify-center mb-8">
+    <div
+      style={{
+        backgroundColor: "rgba(255, 204, 0, 0.6)", // soft DAT yellow
+        color: "#244123",
+        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+        fontWeight: 700,
+        fontSize: "1.2rem",
+        letterSpacing: "0.14em",
+        padding: "14px 28px",   // ← clear, visible padding
+        borderRadius: "18px",
+        marginBottom: "1rem",
+      }}
+    >
+      ATTN ADMIN: Now editing as {alumniId}
+    </div>
+  </div>
+) : null}
+
+
 <div
   style={{
     margin: "0.25rem 0 3.25rem",
@@ -2872,808 +1939,152 @@ return (
     loading={loading}
     onOpenPicker={(k) => openPicker(k)}
     basicsPanel={
-      <div>
-        <div id="studio-basics-anchor" />
-        <p style={explainStyleLocal}>
-          Start here. Confirm your headline profile details — and set your headshot.
-        </p>
-
-        <div style={{ display: "grid", gap: 14 }}>
-          <span style={subheadChipStyle} className="subhead-chip">
-            Profile Basics
-          </span>
-
-          <p style={explainStyleLocal} className="explain">
-            Your professional name and slug are locked by default. If your professional name
-            changed, unlock it and your slug preview will update automatically.
-          </p>
-
-          <div>
-            <label htmlFor="slug" style={labelStyle}>
-              Profile slug
-            </label>
-            <input id="slug" value={currentSlug} readOnly style={inputLockedStyle} />
-            <p style={{ ...explainStyleLocal, marginTop: 6 }} className="explain">
-              {autoDetected
-                ? "We auto-detected your current slug from Profile-Live."
-                : "Your slug mirrors your professional name."}
-            </p>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: 24,
-              marginTop: 12,
-            }}
-          >
-            <div>
-              <label htmlFor="name" style={labelStyle}>
-                Professional name
-              </label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12 }}>
-                <input
-                  id="name"
-                  value={name}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setName(v);
-                    setProfile((p: any) => ({ ...p, name: v }));
-                  }}
-                  style={nameLocked ? inputLockedStyle : inputStyle}
-                  disabled={nameLocked}
-                />
-                <button
-                  type="button"
-                  className="dat-btn-ghost"
-                  style={datButtonGhost}
-                  onClick={() => setNameLocked((x) => !x)}
-                >
-                  {nameLocked ? "My professional name changed" : "Lock name"}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="location" style={labelStyle}>
-                Base
-              </label>
-              <input
-                id="location"
-                value={location}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setLocation(v);
-                  setProfile((p: any) => ({ ...p, location: v }));
-                }}
-                style={inputStyle}
-              />
-            </div>
-          </div>
-
-          <div style={{ marginTop: 18 }}>
-            <label style={{ fontWeight: 700 }}>
-              <input
-                type="checkbox"
-                checked={isTrue(profile.isBiCoastal)}
-                onChange={(e) =>
-                  setProfile((p: any) => ({
-                    ...p,
-                    isBiCoastal: e.target.checked ? "true" : "",
-                  }))
-                }
-                style={{ marginRight: 10 }}
-              />
-              Bi-coastal
-            </label>
-
-            {isTrue(profile.isBiCoastal) ? (
-              <div style={{ marginTop: 12 }}>
-                <label style={labelStyle}>Second location</label>
-                <input
-                  value={profile.secondLocation || ""}
-                  onChange={(e) =>
-                    setProfile((p: any) => ({ ...p, secondLocation: e.target.value }))
-                  }
-                  style={inputStyle}
-                />
-              </div>
-            ) : null}
-          </div>
-
-          <div style={{ marginTop: 18 }}>
-            <BackgroundSwatches
-              value={String(profile.backgroundStyle || "kraft")}
-              onChange={(next) => setProfile((p: any) => ({ ...p, backgroundStyle: next }))}
-            />
-          </div>
-
-          <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
-            <div>
-              <label style={labelStyle}>Bio / Artist Statement (public)</label>
-              <textarea
-                value={String(profile.bioLong ?? "")}
-                onChange={(e) => setProfile((p: any) => ({ ...p, bioLong: e.target.value }))}
-                rows={10}
-                style={{ ...inputStyle, minHeight: 220, resize: "vertical" }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Headshot actions (URL + library + upload) */}
-        <div
-          style={{
-            marginTop: 16,
-            paddingTop: 14,
-            borderTop: "1px solid rgba(255,255,255,0.12)",
-          }}
-        >
-          <div style={{ display: "grid", gap: 12 }}>
-            <Field
-              label="Headshot URL (optional)"
-              help="If you paste a URL, it should point directly to the image file (not a webpage)."
-            >
-              <input
-                value={profile.currentHeadshotUrl || ""}
-                onChange={(e) =>
-                  setProfile((p: any) => ({ ...p, currentHeadshotUrl: e.target.value }))
-                }
-                style={inputStyle}
-                placeholder="https://... (direct image URL)"
-              />
-            </Field>
-
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <button
-                type="button"
-                style={studioGhostButton}
-                onClick={() => openPicker("headshot")}
-                disabled={loading}
-              >
-                Choose past headshot
-              </button>
-              <button
-                type="button"
-                style={studioGhostButton}
-                onClick={() => openPicker("album")}
-                disabled={loading}
-              >
-                Open library
-              </button>
-            </div>
-
-            <div style={{ display: "grid", gap: 10 }}>
-              <Dropzone
-                accept="image/*"
-                multiple={false}
-                disabled={loading}
-                label="Add a headshot"
-                sublabel="or drag & drop here"
-                onFiles={(files) => setHeadshotFile(files[0] || null)}
-                onReject={(rej) =>
-                  showToastRef.current?.(rej[0]?.reason || "File rejected", "error")
-                }
-              />
-
-              {headshotFile ? (
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "84px 1fr auto",
-                    gap: 12,
-                    alignItems: "center",
-                    padding: 10,
-                    border: "1px solid rgba(255,255,255,0.14)",
-                    borderRadius: 12,
-                    background: "rgba(0,0,0,0.18)",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 84,
-                      height: 84,
-                      borderRadius: 12,
-                      overflow: "hidden",
-                      border: "1px solid rgba(255,255,255,0.12)",
-                      background: "rgba(255,255,255,0.06)",
-                    }}
-                  >
-                    {headshotPreviewUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={headshotPreviewUrl}
-                        alt="Staged headshot preview"
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      />
-                    ) : null}
-                  </div>
-
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, lineHeight: 1.2 }}>Staged headshot</div>
-                    <div
-                      style={{
-                        opacity: 0.8,
-                        fontSize: 13,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {headshotFile.name} • {Math.round(headshotFile.size / 1024)} KB
-                    </div>
-                    <div style={{ opacity: 0.7, fontSize: 12, marginTop: 4 }}>
-                      This will become your featured headshot when you save.
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    className="dat-btn-ghost"
-                    style={datButtonGhost}
-                    onClick={() => setHeadshotFile(null)}
-                    disabled={loading}
-                  >
-                    Clear
-                  </button>
-                </div>
-              ) : null}
-
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: 10,
-                  flexWrap: "wrap",
-                }}
-              >
-                <button
-                  type="button"
-                  style={datButtonLocal}
-                  disabled={loading}
-                  onClick={async () => {
-                    setLoading(true);
-                    try {
-                      const alumniId = getIdentity();
-                      if (!alumniId) throw new Error("Profile not loaded yet.");
-                      if (!profile) throw new Error("Profile not loaded yet.");
-
-                      const hadStagedHeadshot = !!headshotFile;
-
-                      let nextProfile: any = profile;
-
-                      if (headshotFile) {
-                        if (headshotUploadInFlight.current) {
-                          throw new Error("Headshot upload already in progress.");
-                        }
-
-                        headshotUploadInFlight.current = true;
-                        try {
-                          const url = await uploadHeadshotViaQueue({
-                            file: headshotFile,
-                            alumniId,
-                          });
-
-                          const resolvedUrl = String(url || "").trim();
-
-                          if (resolvedUrl) {
-                            nextProfile = { ...profile, currentHeadshotUrl: resolvedUrl };
-                            setProfile(nextProfile);
-                            showToastRef.current?.("Headshot uploaded ✓", "success");
-                          } else {
-                            showToastRef.current?.(
-                              "Headshot uploaded ✓ (no URL returned, but it should still be live)",
-                              "success"
-                            );
-                          }
-                        } finally {
-                          headshotUploadInFlight.current = false;
-                        }
-                      }
-
-                      await saveCategory({
-                        tag: "Basics",
-                        fieldKeys: MODULES["Basics"].fieldKeys,
-                        uploadKinds: [],
-                        profileOverride: nextProfile,
-                        afterSave: () => {
-                          basicsDraft.clearDraft();
-                          setHeadshotFile(null);
-
-                          if (hadStagedHeadshot) {
-                            showToastRef.current?.(
-                              "Profile basics saved ✓ (headshot set)",
-                              "success"
-                            );
-                          } else {
-                            showToastRef.current?.("Profile basics saved ✓", "success");
-                          }
-                        },
-                      });
-                    } catch (e: any) {
-                      showToastRef.current?.(e?.message || "Save failed", "error");
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                >
-                  Save Profile Basics
-                </button>
-              </div>
-            </div>
-            {/* ✅ CLOSE the grid gap=10 div */}
-          </div>
-          {/* ✅ CLOSE the grid gap=12 div */}
-        </div>
-        {/* ✅ CLOSE headshot actions wrapper */}
-      </div>
+      <BasicsPanel
+        explainStyleLocal={explainStyleLocal}
+        subheadChipStyle={subheadChipStyle}
+        labelStyle={labelStyle}
+        inputStyle={inputStyle}
+        inputLockedStyle={inputLockedStyle}
+        datButtonGhost={datButtonGhost}
+        datButtonLocal={datButtonLocal}
+        COLOR={COLOR}
+        loading={loading}
+        autoDetected={autoDetected}
+        currentSlug={currentSlug}
+        name={name}
+        setName={setName}
+        nameLocked={nameLocked}
+        setNameLocked={setNameLocked}
+        location={location}
+        setLocation={setLocation}
+        profile={profile}
+        setProfile={setProfile}
+        headshotFile={headshotFile}
+        setHeadshotFile={setHeadshotFile}
+        headshotPreviewUrl={headshotPreviewUrl}
+        toast={toastNow}
+        openPicker={openPicker}
+        onSave={handleSaveBasics}
+      />
     }
     identityPanel={
-      <div>
-        <div id="studio-identity-anchor" />
-        <p style={explainStyleLocal}>
-          Identity helps us represent you accurately and build the right rooms for collaboration.
-        </p>
-
-        <span style={subheadChipStyle} className="subhead-chip">
-          Identity + Roles
-        </span>
-
-        {renderFieldsOrNull([
-          ...MODULES["Identity"].fieldKeys,
-          ...MODULES["Roles"].fieldKeys,
-        ]) ?? (
-          <div style={{ display: "grid", gap: 14 }}>
-            <div>
-              <label style={labelStyle}>Pronouns</label>
-              <input
-                value={profile.pronouns || ""}
-                onChange={(e) =>
-                  setProfile((p: any) => ({ ...p, pronouns: e.target.value }))
-                }
-                style={inputStyle}
-                placeholder="she/her, he/him, they/them…"
-              />
-            </div>
-
-            <div>
-              <label style={labelStyle}>Identity Tags</label>
-              <input
-                value={profile.identityTags || ""}
-                onChange={(e) =>
-                  setProfile((p: any) => ({ ...p, identityTags: e.target.value }))
-                }
-                style={inputStyle}
-                placeholder="comma-separated"
-              />
-            </div>
-
-            <div>
-              <label style={labelStyle}>Languages</label>
-              <input
-                value={profile.languages || ""}
-                onChange={(e) =>
-                  setProfile((p: any) => ({ ...p, languages: e.target.value }))
-                }
-                style={inputStyle}
-                placeholder="comma-separated"
-              />
-            </div>
-
-            <div>
-              <label style={labelStyle}>Roles</label>
-              <input
-                value={profile.roles || ""}
-                onChange={(e) =>
-                  setProfile((p: any) => ({ ...p, roles: e.target.value }))
-                }
-                style={inputStyle}
-                placeholder="Actor, Director, Designer…"
-              />
-            </div>
-          </div>
-        )}
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 10,
-            flexWrap: "wrap",
-            marginTop: 16,
-          }}
-        >
-          <button
-            type="button"
-            style={datButtonLocal}
-            className="dat-btn"
-            disabled={loading}
-            onClick={() =>
-              saveCategory({
-                tag: "Identity",
-                fieldKeys: MODULES["Identity"].fieldKeys,
-                uploadKinds: [],
-              })
-            }
-          >
-            Save Identity
-          </button>
-
-          <button
-            type="button"
-            style={datButtonLocal}
-            className="dat-btn"
-            disabled={loading}
-            onClick={() =>
-              saveCategory({
-                tag: "Roles",
-                fieldKeys: MODULES["Roles"].fieldKeys,
-                uploadKinds: [],
-              })
-            }
-          >
-            Save Roles
-          </button>
-        </div>
-      </div>
+      <IdentityPanel
+        explainStyleLocal={explainStyleLocal}
+        subheadChipStyle={subheadChipStyle}
+        labelStyle={labelStyle}
+        inputStyle={inputStyle}
+        datButtonLocal={datButtonLocal}
+        loading={loading}
+        profile={profile}
+        setProfile={setProfile}
+        renderFieldsOrNull={renderFieldsOrNull}
+        MODULES={MODULES as any}
+        saveCategory={saveCategory as any}
+      />
     }
     mediaPanel={
-      <div>
-        <div id="studio-media-anchor" />
-        <p style={explainStyleLocal}>
-          Albums + reels live here. You’re choosing placement before uploading.
-        </p>
-
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-          <button
-            type="button"
-            style={studioGhostButton}
-            onClick={() => openPicker("album")}
-            disabled={loading}
-          >
-            Choose album media
-          </button>
-          <button
-            type="button"
-            style={studioGhostButton}
-            onClick={() => openPicker("reel")}
-            disabled={loading}
-          >
-            Choose reel media
-          </button>
-        </div>
-
-        <div style={{ display: "grid", gap: 12 }}>
-          <Field label="Album name (optional)">
-            <input
-              value={albumName || ""}
-              onChange={(e) => setAlbumName(e.target.value)}
-              style={inputStyle}
-              placeholder="e.g. Production photos, BTS, PASSAGE…"
-            />
-          </Field>
-
-          <Field label="Add photos to album">
-            <Dropzone
-              accept="image/*"
-              multiple
-              disabled={loading}
-              label="Add photos to album"
-              sublabel="or drag & drop here"
-              onFiles={(files) => setAlbumFiles(files)}
-              onReject={(rej) =>
-                showToastRef.current?.(rej[0]?.reason || "File rejected", "error")
-              }
-            />
-          </Field>
-
-          <Field label="Add reels (video files)">
-            <Dropzone
-              accept="video/*"
-              multiple
-              disabled={loading}
-              label="Add reels"
-              sublabel="or drag & drop here"
-              onFiles={(files) => setReelFiles(files)}
-              onReject={(rej) =>
-                showToastRef.current?.(rej[0]?.reason || "File rejected", "error")
-              }
-            />
-          </Field>
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
-          <button
-            type="button"
-            style={datButtonLocal}
-            disabled={loading || (!albumFiles.length && !reelFiles.length)}
-            onClick={() =>
-              saveCategory({
-                tag: "Media Upload",
-                fieldKeys: [],
-                uploadKinds: [
-                  ...(albumFiles.length ? (["album"] as UploadKind[]) : []),
-                  ...(reelFiles.length ? (["reel"] as UploadKind[]) : []),
-                ],
-              })
-            }
-          >
-            Upload Staged Media
-          </button>
-        </div>
-      </div>
+      <MediaPanel
+        explainStyleLocal={explainStyleLocal}
+        inputStyle={inputStyle}
+        datButtonLocal={datButtonLocal}
+        loading={loading}
+        albumName={albumName}
+        setAlbumName={setAlbumName}
+        albumFiles={albumFiles}
+        setAlbumFiles={setAlbumFiles}
+        reelFiles={reelFiles}
+        setReelFiles={setReelFiles}
+        openPicker={openPicker}
+        showToastError={(msg) => showToastRef.current?.(msg, "error")}
+        saveCategory={saveCategory as any}
+      />
     }
     contactPanel={
-      <div>
-        <div id="studio-contact-anchor" />
-        <p style={explainStyleLocal}>
-          Keep it calm: select the channels you use — then fields reveal.
-        </p>
-
-        <span style={subheadChipStyle} className="subhead-chip">
-          Ways to reach you
-        </span>
-
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
-          {ALL_SOCIALS.map((k) => {
-            const on = visibleSocials.includes(k);
-            return (
-              <button
-                key={k}
-                type="button"
-                className="dat-btn-ghost"
-                style={{ ...(datButtonGhost as any), opacity: on ? 1 : 0.55 }}
-                onClick={() =>
-                  setVisibleSocials((v) => (on ? v.filter((x) => x !== k) : [...v, k]))
-                }
-              >
-                {on ? "✓ " : ""} {k}
-              </button>
-            );
-          })}
-
-          <select
-            value={primarySocial}
-            onChange={(e) => {
-              const v = e.target.value;
-              setPrimarySocial(v);
-              setProfile((p: any) => ({ ...p, primarySocial: v }));
-            }}
-            className="dat-btn-ghost"
-            style={{ ...(datButtonGhost as any), padding: "10px 12px" }}
-            title="Primary social"
-          >
-            {(visibleSocials.length ? visibleSocials : ["instagram"]).map((k) => (
-              <option key={k} value={k}>
-                {k} (primary)
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {renderFieldsOrNull(ContactEditKeys) ?? (
-          <div style={{ display: "grid", gap: 12 }}>
-            {ContactEditKeys.filter((k) => k !== "primarySocial").map((k) => (
-              <div key={k}>
-                <label style={labelStyle}>{k}</label>
-                <input
-                  value={(profile as any)[k] || ""}
-                  onChange={(e) => setProfile((p: any) => ({ ...p, [k]: e.target.value }))}
-                  style={inputStyle}
-                  placeholder={k === "publicEmail" ? "name@email.com" : "https://..."}
-                />
-              </div>
-            ))}
-            <p style={{ ...explainStyleLocal, marginTop: 6 }}>
-              (Fallback UI) Add contact keys to <code>PROFILE_FIELDS</code> if you want curated rendering.
-            </p>
-          </div>
-        )}
-
-        <div style={{ marginTop: 20 }}>
-          <button
-            type="button"
-            onClick={() =>
-              saveCategory({
-                tag: "Contact",
-                fieldKeys: MODULES["Contact"].fieldKeys,
-                uploadKinds: MODULES["Contact"].uploadKinds,
-                afterSave: () => contactDraft.clearDraft(),
-              })
-            }
-            style={datButtonLocal}
-            className="dat-btn"
-          >
-            Save Contact
-          </button>
-        </div>
-
-        <p style={{ ...explainStyleLocal, marginTop: 12 }}>
-          Tip: toggle which socials you want visible above — hidden ones will be cleared on save.
-        </p>
-      </div>
+      <ContactPanel
+        explainStyleLocal={explainStyleLocal}
+        subheadChipStyle={subheadChipStyle}
+        datButtonGhost={datButtonGhost}
+        datButtonLocal={datButtonLocal}
+        labelStyle={labelStyle}
+        inputStyle={inputStyle}
+        loading={loading}
+        ALL_SOCIALS={ALL_SOCIALS}
+        visibleSocials={visibleSocials}
+        setVisibleSocials={setVisibleSocials}
+        primarySocial={primarySocial}
+        setPrimarySocial={setPrimarySocial}
+        profile={profile}
+        setProfile={setProfile}
+        ContactEditKeys={ContactEditKeys}
+        renderFieldsOrNull={renderFieldsOrNull}
+        saveCategory={saveCategory as any}
+        contactFieldKeys={MODULES["Contact"].fieldKeys}
+        onClearDraft={() => contactDraft.clearDraft()}
+      />
     }
     storyPanel={
-      <div>
-        <div id="studio-story-anchor" />
-        <p style={explainStyleLocal}>
-          Your story becomes a map pin + memory. If you paste media, it should be a direct URL to the file.
-        </p>
-
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
-          <button
-            type="button"
-            style={studioGhostButton}
-            disabled={loading}
-            onClick={() => clearStoryEditor()}
-            title="Start a new story (clears the editor)"
-          >
-            New Story
-          </button>
-
-          <select
-            value={String(profile.storyKey || "")}
-            disabled={loading || myStoriesLoading}
-            onChange={(e) => {
-              const k = String(e.target.value || "").trim();
-              if (!k) return;
-              onSelectStoryFromMyStories(k);
-            }}
-            className="dat-btn-ghost"
-            style={{ ...(datButtonGhost as any), padding: "10px 12px", minWidth: 260 }}
-            title="Load one of your previously published stories"
-          >
-            <option value="">
-              {myStoriesLoading ? "Loading your stories…" : "Select a published story…"}
-            </option>
-
-            {(myStories || []).map((s) => {
-              const title = String(s.storyTitle || "").trim() || "(untitled)";
-              const program = String(s.storyProgram || "").trim();
-              const country = String(s.storyCountry || "").trim();
-              const years = String(s.storyYears || "").trim();
-
-              // Title -- Program: Country Year(s)
-              const label = `${title} -- ${program || "Program"}: ${country || "Country"}${years ? ` ${years}` : ""}`;
-
-              return (
-                <option key={s.storyKey} value={s.storyKey}>
-                  {label}
-                </option>
-              );
-            })}
-
-          </select>
-
-          <button
-            type="button"
-            style={studioGhostButton}
-            disabled={loading || myStoriesLoading}
-            onClick={() => refreshMyStories()}
-            title="Refresh My Stories list"
-          >
-            Refresh
-          </button>
-        </div>
-
-        {renderFieldsOrNull(StoryMapEditKeys) ?? <ManualStoryMapFallback />}
-
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
-          <button
-            type="button"
-            style={datButtonLocal}
-            disabled={loading}
-            onClick={() => saveStoryMapViaWriter({ clearAfter: true })}
-          >
-            Publish Story to Map
-          </button>
-        </div>
-      </div>
+      <StoryPanel
+        loading={loading}
+        explainStyleLocal={explainStyleLocal}
+        datButtonLocal={datButtonLocal}
+        datButtonGhost={datButtonGhost}
+        subheadChipStyle={subheadChipStyle}
+        profile={profile}
+        setProfile={setProfile}
+        clearStoryEditor={clearStoryEditor}
+        saveStoryMapViaWriter={saveStoryMapViaWriter}
+        myStories={myStories}
+        myStoriesLoading={myStoriesLoading}
+        refreshMyStories={refreshMyStories}
+        onSelectStoryFromMyStories={onSelectStoryFromMyStories}
+        renderFieldsOrNull={renderFieldsOrNull}
+        storyMapEditKeys={StoryMapEditKeys}
+        manualFallback={
+          <ManualStoryMapFallback
+            profile={profile}
+            setProfile={setProfile}
+            labelStyle={labelStyle}
+            inputStyle={inputStyle}
+            explainStyleLocal={explainStyleLocal}
+          />
+        }
+      />
     }
     eventPanel={
-      <div>
-        <div id="studio-event-anchor" />
-        <p style={explainStyleLocal}>
-          Add your upcoming event and its image. (If you paste media, it should be a direct URL to the file.)
-        </p>
-
-        {renderFieldsOrNull(UpcomingEventEditKeys) ?? <ManualUpcomingEventFallback />}
-
-        <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.12)" }}>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
-            <button
-              type="button"
-              style={studioGhostButton}
-              onClick={() => openPicker("event")}
-              disabled={loading}
-            >
-              Choose event image from library
-            </button>
-          </div>
-
-          <Field label="Upload event image(s)">
-            <Dropzone
-              accept="image/*"
-              multiple
-              disabled={loading}
-              label="Add event image(s)"
-              sublabel="or drag & drop here"
-              onFiles={(files) => setEventFiles(files)}
-              onReject={(rej) =>
-                showToastRef.current?.(rej[0]?.reason || "File rejected", "error")
-              }
-            />
-          </Field>
-
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 12 }}>
-            <button
-              type="button"
-              style={studioGhostButton}
-              disabled={loading || !eventFiles.length}
-              onClick={() => setEventFiles([])}
-            >
-              Clear staged
-            </button>
-            <button
-              type="button"
-              style={datButtonLocal}
-              disabled={loading || !eventFiles.length}
-              onClick={() =>
-                saveCategory({
-                  tag: "Event Image Upload",
-                  fieldKeys: [],
-                  uploadKinds: ["event"],
-                })
-              }
-            >
-              Upload Event Image
-            </button>
-          </div>
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
-          <button
-            type="button"
-            style={datButtonLocal}
-            disabled={loading}
-            onClick={() =>
-              saveCategory({
-                tag: "Upcoming Event",
-                fieldKeys: MODULES["UpcomingEvent"].fieldKeys,
-                uploadKinds: [],
-              })
-            }
-          >
-            Save Event
-          </button>
-        </div>
-      </div>
+      <EventPanel
+        loading={loading}
+        explainStyleLocal={explainStyleLocal}
+        profile={profile}
+        setProfile={setProfile}
+        renderFieldsOrNull={renderFieldsOrNull}
+        eventEditKeys={UpcomingEventEditKeys}
+        manualFallback={
+          <ManualUpcomingEventFallback
+            profile={profile}
+            setProfile={setProfile}
+            labelStyle={labelStyle}
+            inputStyle={inputStyle}
+            explainStyleLocal={explainStyleLocal}
+          />
+        }
+      />
     }
+
   />
 </div>
 
 
     {/* Keep your progress + Controls + FailedList rendering below the Studio (unchanged) */}
-    {(progress.album.total > 0 ||
-      progress.reel.total > 0 ||
-      progress.event.total > 0 ||
-      progress.headshot.total > 0) && (
-      <div style={{ marginTop: 18 }}>
-        {(["headshot", "album", "reel", "event"] as UploadKind[]).map((k) =>
-          progress[k].total > 0 ? (
-            <div key={k} style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 12, opacity: 0.9, marginBottom: 6 }}>
-                {k[0].toUpperCase() + k.slice(1)} uploads {progress[k].pct}% &nbsp;(
-                {prettyMB(progress[k].uploaded)} / {prettyMB(progress[k].total)} MB)
-              </div>
-              <ProgressBar value={progress[k].pct} />
-              <Controls kind={k} disabled={loading} />
-              <FailedList kind={k} />
-            </div>
-          ) : null
-        )}
-      </div>
-    )}
+    <UploadProgressSection
+      progress={progress}
+      failed={failed}
+      loading={loading}
+      uploaderRef={uploaderRef}
+      stableAlumniId={stableAlumniId}
+      datButtonGhost={datButtonGhost}
+      COLOR={COLOR}
+      setFailed={setFailed}
+    />
   </div>
 </div>
 
