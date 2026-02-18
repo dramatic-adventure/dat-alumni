@@ -2,24 +2,20 @@
   "name": "dat-alumni",
   "version": "0.1.0",
   "private": true,
-    "scripts": {
+  "scripts": {
     "dev": "next dev",
     "build": "next build",
     "build:seed": "node scripts/make-namestack-seed.mjs && next build",
     "start": "next start",
-
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx,.mjs,.cjs",
-    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx,.mjs,.cjs --fix",
-
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run lint",
-
     "migrate:profiles": "tsx scripts/migrateProfileDataToLive.ts",
     "migrate:profiles:dry": "DRY_RUN=1 tsx scripts/migrateProfileDataToLive.ts",
     "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
     "postinstall": "echo \"skip prisma generate in postinstall\""
   },
-
   "dependencies": {
     "@fontsource/space-grotesk": "^5.2.10",
     "@headlessui/react": "^2.2.4",
@@ -70,8 +66,8 @@
     "@types/swiper": "^5.4.3",
     "autoprefixer": "^10.4.21",
     "dotenv": "^17.2.3",
-    "eslint": "8.57.1",
-    "eslint-config-next": "15.3.3",
+    "eslint": "^9.39.2",
+    "eslint-config-next": "^16.1.6",
     "madge": "^8.0.0",
     "postcss": "^8.5.3",
     "prisma": "^7.2.0",
