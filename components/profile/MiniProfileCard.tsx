@@ -46,7 +46,7 @@ function addCacheBust(url: string, cacheKey?: string | number) {
 
   try {
     // Only touch our proxy URLs
-    if (!raw.startsWith("/api/img?")) return raw;
+    if (!raw.startsWith("/api/img?") && !raw.startsWith("/api/media/thumb?")) return raw;
 
     const u = new URL(raw, "http://local"); // base required for relative URLs
     u.searchParams.set("v", ck);
@@ -109,21 +109,14 @@ function toCacheKey(it: any): string {
 function toApiImgUrl(it: any): string {
   const fid = String(it?.fileId || "").trim();
   const ext = String(it?.externalUrl || "").trim();
-  const v = toCacheKey(it);
 
+  // Small + fast for minis
   if (fid) {
-    const qs = new URLSearchParams();
-    qs.set("fileId", fid);
-    if (v) qs.set("v", v);
-    return `/api/img?${qs.toString()}`;
+    return `/api/media/thumb?fileId=${encodeURIComponent(fid)}&w=480`;
   }
 
-  if (ext) {
-    const qs = new URLSearchParams();
-    qs.set("url", ext);
-    if (v) qs.set("v", v);
-    return `/api/img?${qs.toString()}`;
-  }
+  // If it's an external URL, just use it directly (it must be allowed in next.config remotePatterns)
+  if (ext) return ext;
 
   return "";
 }

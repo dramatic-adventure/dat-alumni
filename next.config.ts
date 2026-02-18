@@ -9,11 +9,17 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60,
-    // ✅ allow next/image to use our local proxy route with query strings
+
+    // ✅ allow next/image to use our local proxy routes with query strings
+    // (matcher checks pathname only; query is ignored)
     localPatterns: [
-      // ✅ our image proxy route (path match only; query is ignored by matcher)
+      // ✅ our image proxy route(s)
       { pathname: "/api/img" },
       { pathname: "/api/img/**" },
+
+      // ✅ NEW: thumb proxy used by profile headers / cards
+      { pathname: "/api/media/thumb" },
+      { pathname: "/api/media/thumb/**" },
 
       // ✅ local static assets used by next/image
       { pathname: "/images/**" },
@@ -21,13 +27,14 @@ const nextConfig: NextConfig = {
       { pathname: "/seasons/**" },
       { pathname: "/posters/**" },
     ],
+
     remotePatterns: [
       // Placeholder
       { protocol: "https", hostname: "via.placeholder.com", pathname: "**" },
 
       // Squarespace
       { protocol: "https", hostname: "images.squarespace-cdn.com", pathname: "**" },
-      { protocol: "http",  hostname: "images.squarespace-cdn.com", pathname: "**" },
+      { protocol: "http", hostname: "images.squarespace-cdn.com", pathname: "**" },
 
       // Flickr
       { protocol: "https", hostname: "live.staticflickr.com", pathname: "**" },

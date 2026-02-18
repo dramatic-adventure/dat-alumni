@@ -12,49 +12,130 @@ import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import RolesGrid from "@/components/alumni/RolesGrid";
 import { pluralizeTitle } from "@/lib/pluralizeTitle";
-import { getCanonicalFlag, slugifyFlag } from "@/lib/flags";
+import { getCanonicalFlag, slugifyFlag, type FlagLabel } from "@/lib/flags";
 
 export const revalidate = 3600;
+
+// ------- helpers -------
+function toTitleCaseFromSlug(slug: string) {
+  return slug
+    .split("-")
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
+    .join(" ");
+}
+
+function splitName(full: string) {
+  const parts = (typeof full === "string" ? full : "").trim().split(/\s+/);
+  const first = parts[0] || "";
+  const last = parts.length > 1 ? parts[parts.length - 1] : "";
+  return [first, last] as const;
+}
+
+/**
+ * Fallback slugify for unknown/non-canonical flags.
+ * Keeps URLs stable even if a new flag gets introduced before the canonical map is updated.
+ */
+function fallbackSlugify(raw: string): string {
+  return String(raw || "")
+    .trim()
+    .toLowerCase()
+    .replace(/['’]/g, "") // drop apostrophes
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * ✅ Canonicalize if possible; otherwise fall back to raw flag string.
+ * For canonical flags we use slugifyFlag (typed). For unknown flags we use fallbackSlugify.
+ */
+function normalizeFlagForSlug(
+  flag: string
+): { label: string; slug: string } | null {
+  const raw = String(flag || "").trim();
+  if (!raw) return null;
+
+  const canonical = getCanonicalFlag(raw) as FlagLabel | null;
+
+  if (canonical) {
+    return { label: canonical, slug: slugifyFlag(canonical) };
+  }
+
+  // unknown flag — still allow routing
+  return { label: raw, slug: fallbackSlugify(raw) };
+}
 
 // Build all valid role slugs at build time
 export async function generateStaticParams() {
   const alumni: AlumniRow[] = await loadVisibleAlumni();
   const slugs = new Set<string>();
+
   for (const artist of alumni) {
     for (const flag of artist.statusFlags ?? []) {
-      const canonical = getCanonicalFlag(flag);
-      if (canonical) slugs.add(slugifyFlag(canonical));
+      const norm = normalizeFlagForSlug(flag);
+      if (norm?.slug) slugs.add(norm.slug);
     }
   }
+
   return Array.from(slugs).map((slug) => ({ slug }));
 }
 
 // Helpful metadata per role page
-export async function generateMetadata(
-  { params }: { params: { slug: string } }
-) {
-  const raw = params.slug ?? "";
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }> | { slug: string };
+}) {
+  // ✅ Next 15: params may be a Promise in some dynamic setups
+  const p = (params instanceof Promise ? await params : params) as {
+    slug?: string;
+  };
+
+  const raw = String(p?.slug ?? "").trim();
+
+  // ✅ Metadata should never crash the page; fall back gracefully.
+  if (!raw) {
+    return {
+      title: "DAT Alumni — Roles",
+      description: "Explore Dramatic Adventure Theatre alumni by role.",
+    };
+  }
+
   const pretty =
     raw
       .split("-")
       .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
       .join(" ") || "Role";
+
   const title = `${pluralizeTitle(pretty)} — DAT Alumni`;
   const description = `Explore Dramatic Adventure Theatre alumni designated as ${pretty}.`;
   return { title, description };
 }
 
-export default async function RolePage(
-  { params }: { params: { slug: string } }
-) {
-  const slugLower = (params.slug || "").toLowerCase();
+export default async function RolePage({
+  params,
+}: {
+  params: Promise<{ slug: string }> | { slug: string };
+}) {
+  // ✅ Next 15: params may be a Promise in some dynamic setups
+  const p = (params instanceof Promise ? await params : params) as {
+    slug?: string;
+  };
+
+  const slugLower = String(p?.slug ?? "").trim().toLowerCase();
+
+  // ✅ seasons-style guard
+  if (!slugLower) {
+    notFound();
+  }
+
   const alumni: AlumniRow[] = await loadVisibleAlumni();
 
-  // Filter by canonicalized status flag
+  // Filter by canonicalized status flag; fallback to raw flag slug if canonical is unknown
   const filteredRaw = alumni.filter((artist) =>
     (artist.statusFlags ?? []).some((flag) => {
-      const c = getCanonicalFlag(flag);
-      return c ? slugifyFlag(c) === slugLower : false;
+      const norm = normalizeFlagForSlug(flag);
+      return norm ? norm.slug.toLowerCase() === slugLower : false;
     })
   );
 
@@ -74,8 +155,8 @@ export default async function RolePage(
   const displayLabel =
     filtered
       .flatMap((a) => a.statusFlags ?? [])
-      .map((f) => getCanonicalFlag(f))
-      .find((c) => c && slugifyFlag(c) === slugLower) ??
+      .map((f) => normalizeFlagForSlug(f))
+      .find((x) => x && x.slug.toLowerCase() === slugLower)?.label ??
     toTitleCaseFromSlug(slugLower);
 
   const pluralLabel = pluralizeTitle(displayLabel);
@@ -177,9 +258,12 @@ export default async function RolePage(
               {filtered.map((artist) => (
                 <MiniProfileCard
                   key={artist.slug}
+                  // ✅ IMPORTANT: lets MiniProfileCard self-hydrate selected/current headshot
+                  alumniId={artist.slug}
                   name={artist.name}
                   role={artist.role}
                   slug={artist.slug}
+                  // keep this as fallback only
                   headshotUrl={artist.headshotUrl}
                 />
               ))}
@@ -226,6 +310,7 @@ export default async function RolePage(
             boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)",
             padding: "4rem 0",
             marginTop: "4rem",
+            marginBottom: "-2rem",
           }}
         >
           <SeasonsCarouselAlt />
@@ -238,19 +323,4 @@ export default async function RolePage(
       `}</style>
     </div>
   );
-}
-
-// ------- helpers -------
-function toTitleCaseFromSlug(slug: string) {
-  return slug
-    .split("-")
-    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
-    .join(" ");
-}
-
-function splitName(full: string) {
-  const parts = (typeof full === "string" ? full : "").trim().split(/\s+/);
-  const first = parts[0] || "";
-  const last = parts.length > 1 ? parts[parts.length - 1] : "";
-  return [first, last] as const;
 }

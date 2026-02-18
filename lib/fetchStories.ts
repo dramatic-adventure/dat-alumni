@@ -6,7 +6,7 @@ import { serverDebug, serverWarn, serverError } from "@/lib/serverDebug";
 
 const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
 const CSV_URL = process.env.STORY_MAP_CSV_URL;
-const FALLBACK_FILENAME = "story-map.csv";
+const FALLBACK_FILENAME = "Clean Map Data.csv";
 
 export async function fetchStories(): Promise<StoryRow[]> {
   try {

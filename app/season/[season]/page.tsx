@@ -22,6 +22,20 @@ function normSlugKey(s: string) {
   return (s || "").trim().toLowerCase();
 }
 
+/**
+ * Parse the [season] param defensively.
+ * Accepts:
+ *  - "3"
+ *  - "season-3"
+ *  - " Season-3 "
+ *  - anything containing digits => first digit-run wins
+ */
+function seasonParamToNumber(raw: unknown) {
+  const s = String(raw ?? "").trim();
+  const m = s.match(/\d+/);
+  return m ? Number(m[0]) : NaN;
+}
+
 /** Build alias->canonical map from alumni list */
 function buildAliasToCanonical(alumni: AlumniRow[]) {
   const map = new Map<string, string>();
@@ -89,10 +103,12 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata(
-  { params }: { params: { season: string } }
+  { params }: { params: Promise<{ season: string }> | { season: string } }
 ): Promise<Metadata> {
-  const { season } = params;
-  const n = Number(season);
+  const resolvedParams = await Promise.resolve(params);
+  const { season } = resolvedParams;
+
+  const n = seasonParamToNumber(season);
   const info = Number.isFinite(n) ? seasons.find((s) => s.slug === `season-${n}`) : undefined;
 
   const title = info ? `${info.seasonTitle} — DAT` : `Season ${season} — DAT`;
@@ -104,11 +120,12 @@ export async function generateMetadata(
 }
 
 export default async function SeasonPage(
-  { params }: { params: { season: string } }
+  { params }: { params: Promise<{ season: string }> | { season: string } }
 ) {
-  const { season } = params;
+  const resolvedParams = await Promise.resolve(params);
+  const { season } = resolvedParams;
 
-  const seasonNumber = parseInt(season, 10);
+  const seasonNumber = seasonParamToNumber(season);
   if (!Number.isFinite(seasonNumber) || seasonNumber <= 0) {
     return <div className="p-10 text-center text-red-600">Invalid season</div>;
   }
@@ -118,9 +135,9 @@ export default async function SeasonPage(
     return <div className="p-10 text-center text-gray-500">Season not found</div>;
   }
 
-  // Group data
-  const programs = Object.values(programMap).filter((p) => p.season === seasonNumber);
-  const productions = Object.values(productionMap).filter((p) => p.season === seasonNumber);
+  // Group data (coerce season to number to avoid string/number mismatches)
+  const programs = Object.values(programMap).filter((p: any) => Number(p.season) === seasonNumber);
+  const productions = Object.values(productionMap).filter((p: any) => Number(p.season) === seasonNumber);
 
   // Visible alumni only
   const alumni = (await loadVisibleAlumni()) as AlumniRow[];
@@ -137,14 +154,14 @@ export default async function SeasonPage(
   // Festivals -> productions
   const productionsByFestival: Record<string, typeof productions> = {};
   for (const prod of productions) {
-    const key = prod.festival || "Other Productions";
+    const key = (prod as any).festival || "Other Productions";
     (productionsByFestival[key] ||= []).push(prod);
   }
 
   // Programs grouped by label
   const programsByGroup: Record<string, typeof programs> = {};
   for (const program of programs) {
-    const key = `${program.program ?? "Other"}: ${program.location ?? "Unknown"} ${program.year ?? "Unknown"}`;
+    const key = `${(program as any).program ?? "Other"}: ${(program as any).location ?? "Unknown"} ${(program as any).year ?? "Unknown"}`;
     (programsByGroup[key] ||= []).push(program);
   }
 
@@ -212,7 +229,7 @@ export default async function SeasonPage(
       <main
         style={{
           marginTop: "-5rem",
-          padding: "4rem 0 2rem",
+          padding: "4rem 0 0",
           position: "relative",
           opacity: 0.9,
           zIndex: 10,
@@ -225,11 +242,10 @@ export default async function SeasonPage(
               {Object.entries(programsByGroup).map(([label, group]) => (
                 <div key={label}>
                   <h3 style={{ margin: "3rem 0 1rem" }}>
-                    {renderMaybeLink(group[0].url, label, "program-link")}
+                    {renderMaybeLink((group as any)[0].url, label, "program-link")}
                   </h3>
 
-                  {group.map((program) => {
-                    // ✅ Resolve + dedupe artists via alias map
+                  {(group as any).map((program: any) => {
                     const resolved = resolveArtists(program.artists, aliasToCanonical);
                     const canonicalSlugs = Array.from(resolved.keys()).sort();
 
@@ -265,7 +281,7 @@ export default async function SeasonPage(
                                 name={alum.name}
                                 role={roles}
                                 slug={alum.slug} // ✅ canonical
-                                headshotUrl={alum.headshotUrl}
+                                headshotUrl={(alum as any).headshotUrl}
                               />
                             );
                           })}
@@ -305,8 +321,8 @@ export default async function SeasonPage(
 
                     {productionsByFestival[festival]
                       .slice()
-                      .sort((a, b) => a.title.localeCompare(b.title))
-                      .map((prod) => {
+                      .sort((a: any, b: any) => String(a.title).localeCompare(String(b.title)))
+                      .map((prod: any) => {
                         const resolved = resolveArtists(prod.artists, aliasToCanonical);
                         const canonicalSlugs = Array.from(resolved.keys()).sort();
 
@@ -344,7 +360,7 @@ export default async function SeasonPage(
                                     name={alum.name}
                                     role={roles}
                                     slug={alum.slug} // ✅ canonical
-                                    headshotUrl={alum.headshotUrl}
+                                    headshotUrl={(alum as any).headshotUrl}
                                   />
                                 );
                               })}
@@ -363,9 +379,14 @@ export default async function SeasonPage(
           style={{
             width: "100vw",
             backgroundColor: "#6C00AF",
-            boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)",
-            padding: "4rem 0",
+
+            // ✅ shadow only at the TOP edge (casts upward onto kraft paper)
+            boxShadow: "0px -18px 28px rgba(36, 17, 35, 0.3)",
+
+            // ✅ no bottom padding so it “attaches” to footer
+            padding: "3.5rem 0 0",
             marginTop: "4rem",
+            marginBottom: 0,
           }}
         >
           <SeasonsCarouselAlt />

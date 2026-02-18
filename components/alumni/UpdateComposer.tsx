@@ -176,6 +176,9 @@ export default function UpdateComposer({
     red: "#F23359",
   };
 
+  const { gold, red } = COLOR;
+
+
   const [text, setText] = useState<string>(clampText(normalizeNewlines(initialText), maxChars));
   const [isPosting, setIsPosting] = useState(false);
   const [touched, setTouched] = useState(false);
@@ -421,7 +424,7 @@ export default function UpdateComposer({
     const warn = remaining <= 20;
     const over = remaining < 0;
 
-    const fg = over ? COLOR.red : warn ? COLOR.gold : "rgba(36,17,35,0.40)";
+    const fg = over ? red : warn ? gold : "rgba(36,17,35,0.40)";
     const bg = "rgba(36,17,35,0.12)";
 
     return (
@@ -440,7 +443,7 @@ export default function UpdateComposer({
         />
       </svg>
     );
-  }, [text.length, maxChars, remaining]);
+  }, [text.length, maxChars, remaining, gold, red]);
 
   const pad = compact ? 10 : 12;
 

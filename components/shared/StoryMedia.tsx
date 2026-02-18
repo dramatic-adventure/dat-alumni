@@ -25,18 +25,30 @@ export default function StoryMedia({
 
   const cleanUrl = (() => {
     try {
-      const parsed = new URL(trimmedUrl);
+      // ✅ allow relative URLs like /api/img?... and /_next/image?...
+      const parsed = new URL(trimmedUrl, "http://local");
+
       // strip tracking params
       parsed.searchParams.forEach((_, key) => {
         const k = key.toLowerCase();
         if (k.startsWith("utm") || k === "fbclid") parsed.searchParams.delete(key);
       });
+
+      const isLocal = parsed.origin === "http://local";
+
+      // ✅ keep locals as relative paths (don’t leak dummy origin)
+      if (isLocal) {
+        const qs = parsed.searchParams.toString();
+        return parsed.pathname + (qs ? `?${qs}` : "");
+      }
+
+      // ✅ remote stays fully qualified
       return parsed.toString();
     } catch {
-      // NOTE: relative URLs (like "/_next/image?...") will land here
       return trimmedUrl;
     }
   })();
+
 
   const baseUrl = cleanUrl.split("?")[0];
   const isRemote = /^https?:\/\//i.test(cleanUrl);
@@ -47,7 +59,13 @@ export default function StoryMedia({
   // Detect image URLs that don't end with an extension (e.g., Google Drive /uc, googleusercontent)
   const isLikelyImageNoExt = (() => {
     try {
-      const u = new URL(cleanUrl);
+      const u = new URL(cleanUrl, "http://local");
+
+      // ✅ our local proxy endpoints are images (no file extension)
+      if (u.origin === "http://local") {
+        return u.pathname.startsWith("/api/img") || u.pathname.startsWith("/api/media/thumb");
+      }
+
       const host = u.hostname;
 
       const isDriveUc =
@@ -61,7 +79,6 @@ export default function StoryMedia({
 
       return isDriveUc || isGoogleUserContent;
     } catch {
-      // relative URLs (like "/_next/image?...") will land here
       return false;
     }
   })();

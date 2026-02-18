@@ -6,11 +6,29 @@ import { randomInt, randomFromArray, shuffleArray } from "@/utils/random";
 
 type CommunityFeedItem = {
   id?: string;
+  type?: string;
+  kind?: string;
+  field?: string;
   alumniId?: string;
   name?: string;
   slug?: string;
-  text?: string; // composer update text
+  text?: string;
+  ts?: string | number;
+  createdAt?: string;
 };
+
+function clampToUniquePeople(items: UpdateItem[], maxPeople: number): UpdateItem[] {
+  const seen = new Set<string>();
+  const out: UpdateItem[] = [];
+  for (const it of items) {
+    const k = personKey(it);
+    if (!k || seen.has(k)) continue;
+    seen.add(k);
+    out.push(it);
+    if (out.length >= maxPeople) break;
+  }
+  return out;
+}
 
 function personKey(u: UpdateItem): string {
   return u.alumniId || u.link || u.author || u.text;
@@ -34,7 +52,13 @@ function dedupeByPerson(items: UpdateItem[]): UpdateItem[] {
 }
 
 function toPanelUpdate(it: CommunityFeedItem): UpdateItem | null {
-  // "text" is currentUpdateText, nothing else allowed
+  const isComposer =
+    String(it?.type || "").toLowerCase() === "composer" ||
+    (String(it?.kind || "").toLowerCase() === "current" &&
+      String(it?.field || "").toLowerCase() === "currentupdatetext");
+
+  if (!isComposer) return null;
+
   const text = String(it?.text ?? "").trim();
   if (!text) return null;
 
@@ -47,6 +71,7 @@ function toPanelUpdate(it: CommunityFeedItem): UpdateItem | null {
     link: slugOrId ? `/alumni/${slugOrId}` : "/alumni",
   };
 }
+
 
 interface UpdateItem {
   text: string;
@@ -62,6 +87,9 @@ interface UpdatesPanelProps {
   strictness?: number; // Extra control for clamping
   verticalOffset?: string; // Allows vertical adjustment
 }
+
+const contributeUrl = "/alumni/studio";
+const contributeText = "Write the next line";
 
 const DOODLES: DoodleType[] = ["underline", "circle"];
 type DoodleType = "underline" | "circle";
@@ -367,7 +395,7 @@ export default function UpdatesPanel({
 
     (async () => {
       try {
-        const res = await fetch("/api/alumni/community-feed?days=60&limit=6", {
+        const res = await fetch("/api/alumni/community-feed?days=60&limit=20&type=composer", {
           cache: "no-store",
         });
         const j = await res.json().catch(() => null);
@@ -382,6 +410,13 @@ export default function UpdatesPanel({
         const mapped = (j.items as CommunityFeedItem[])
           .map(toPanelUpdate)
           .filter(Boolean) as UpdateItem[];
+
+        // ✅ ensure "most recent" order if API returns mixed ordering
+        mapped.sort((a: any, b: any) => {
+          const ta = Date.parse(String((a as any).ts || (a as any).createdAt || "")) || 0;
+          const tb = Date.parse(String((b as any).ts || (b as any).createdAt || "")) || 0;
+          return tb - ta;
+        });
 
         // A simple stable key so the “random art” only regenerates when data truly changes
         const nextKey = mapped.map((u) => `${u.author}|${u.link}|${u.text}`).join("||");
@@ -407,20 +442,28 @@ export default function UpdatesPanel({
     { author: "PRIYA", text: "I published a play about climate change.", link: "/alumni/priya" },
   ];
 
-const incomingRaw =
-  feedUpdates && feedUpdates.length > 0
-    ? feedUpdates
-    : updates.length > 0
-    ? updates
-    : fallbackUpdates;
+// ✅ This panel should ONLY show composer updates from the API feed.
+// Never fall back to `updates` prop (that’s where "Updated profile" can leak in).
+const feedOnly = (feedUpdates && feedUpdates.length > 0) ? feedUpdates : [];
+
+// ✅ Take up to 3 unique alumni from the feed (most recent wins because API is already time-ordered).
+const picked = clampToUniquePeople(feedOnly, 3);
+
+// ✅ If we don’t yet have 3 unique alumni with composer updates, fill remaining slots with samples.
+// (Keeps layout stable while real participation ramps up.)
+const usedAuthors = new Set(picked.map((u) => (u.author || "").toUpperCase()));
+const fillers = fallbackUpdates.filter((u) => !usedAuthors.has((u.author || "").toUpperCase()));
 
 const incoming =
-  uniquePeopleCount(incomingRaw) > 3 ? dedupeByPerson(incomingRaw) : incomingRaw;
+  picked.length >= 3
+    ? picked.slice(0, 3)
+    : [...picked, ...fillers].slice(0, 3);
 
 const baseUpdates = incoming.map((u) => ({
   ...u,
   text: String(u.text ?? "").trim(),
 }));
+
 
 
 
@@ -599,8 +642,9 @@ const stableDataRef = useRef<StableData | null>(null);
             textAlign: "left",
             paddingInline: "2rem",
             boxSizing: "border-box",
-            overflowWrap: "anywhere",
-            wordBreak: "break-word",
+            // ✅ Prefer whole words; only break a word if it’s truly unbreakable (e.g., a long URL)
+            overflowWrap: "break-word",
+            wordBreak: "normal",
             opacity: 0.5,
           }}
         >
@@ -675,8 +719,9 @@ const stableDataRef = useRef<StableData | null>(null);
                       margin: "0 auto 0rem auto",
                       paddingInline: "2rem",
                       boxSizing: "border-box",
-                      overflowWrap: "anywhere",
-                      wordBreak: "break-word",
+                      // ✅ Prefer whole words; only break a word if it’s truly unbreakable (e.g., a long URL)
+                      overflowWrap: "break-word",
+                      wordBreak: "normal",
                       opacity: 0.5,
                     }}
                   >
@@ -707,7 +752,7 @@ const stableDataRef = useRef<StableData | null>(null);
         })}
       </div>
 
-      {/* Button */}
+      {/* Button + Alumni contribute link */}
       <div style={{ textAlign: "center", marginTop: "3.75rem", paddingBottom: "2rem" }}>
         <Link
           href={linkUrl}
@@ -729,7 +774,42 @@ const stableDataRef = useRef<StableData | null>(null);
         >
           {linkText}
         </Link>
+
+        <div style={{ marginTop: "0.95rem" }}>
+          <Link
+            href="/alumni/update"
+            style={{
+              fontSize: "0.95rem",
+              fontWeight: 600,
+              color: "#f23359",
+              textDecoration: "none",
+              letterSpacing: "0.5px",
+              opacity: 0.85,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.45rem",
+              transition: "opacity 0.2s ease, letter-spacing 0.2s ease, color 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = "1";
+              e.currentTarget.style.letterSpacing = "1.6px";
+              e.currentTarget.style.color = "#6C00AF";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = "0.85";
+              e.currentTarget.style.letterSpacing = "0.5px";
+              e.currentTarget.style.color = "#f23359";
+            }}
+          >
+            <span>Write the next line</span>
+            <span aria-hidden style={{ fontSize: "1.05em", lineHeight: 1 }}>
+              →
+            </span>
+          </Link>
+        </div>
+
       </div>
+
     </section>
   );
 }
@@ -744,7 +824,6 @@ function handleHover(e: React.MouseEvent<HTMLDivElement>, isHover: boolean) {
 
     dialogueSpans.forEach((span) => {
       (span as HTMLElement).style.backgroundColor = "#FFCC00";
-      (span as HTMLElement).style.display = "inline"; // ensures no extra block area
     });
   } else {
     nameEl.style.backgroundColor = "transparent";

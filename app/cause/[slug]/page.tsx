@@ -37,6 +37,17 @@ import PosterCard from "@/components/shared/PosterCard";
 
 export const revalidate = 3600;
 
+type ParamsLike<T> = Promise<T> | T;
+
+async function resolveParams(
+  params: ParamsLike<{ slug: string }> | ParamsLike<{ slug?: string }>
+) {
+  const p = (params instanceof Promise ? await params : params) as {
+    slug?: string;
+  };
+  return p;
+}
+
 type PersonRoleMaybeSlug = {
   name: string;
   role: string;
@@ -99,7 +110,7 @@ function findCauseBySlug(slug: unknown): {
 
   // 1) Try subcategory IDs first (this is what DramaClubPageTemplate uses)
   for (const subList of Object.values(CAUSE_SUBCATEGORIES_BY_CATEGORY)) {
-    const hit = subList.find((c) => c.id === slugLower);
+    const hit = subList.find((c) => (c as any).id === slugLower);
     if (hit) {
       const parentCategory = CAUSE_CATEGORIES.find(
         (cat) =>
@@ -112,8 +123,7 @@ function findCauseBySlug(slug: unknown): {
 
   // 2) Fallback: maybe you're hitting a category ID itself
   const catHit = CAUSE_CATEGORIES.find(
-    (cat) =>
-      (cat as any).id === slugLower || (cat as any).slug === slugLower
+    (cat) => (cat as any).id === slugLower || (cat as any).slug === slugLower
   );
 
   if (catHit) {
@@ -153,27 +163,27 @@ export async function generateStaticParams() {
   }
 
   for (const club of dramaClubs) {
-  // 1) Explicit causeSlugs → already in canonical slug form
-  for (const s of club.causeSlugs ?? []) {
-    if (!s) continue;
-    slugs.add(s.toLowerCase());
-  }
+    // 1) Explicit causeSlugs → already in canonical slug form
+    for (const s of club.causeSlugs ?? []) {
+      if (!s) continue;
+      slugs.add(s.toLowerCase());
+    }
 
-  // 2) Also add subcategory IDs from the canonical causes list
-  for (const c of club.causes ?? []) {
-    if (!c?.category || !c?.subcategory) continue;
+    // 2) Also add subcategory IDs from the canonical causes list
+    for (const c of club.causes ?? []) {
+      if (!c?.category || !c?.subcategory) continue;
 
-    const subList =
-      CAUSE_SUBCATEGORIES_BY_CATEGORY[
-        c.category as keyof typeof CAUSE_SUBCATEGORIES_BY_CATEGORY
-      ] || [];
+      const subList =
+        CAUSE_SUBCATEGORIES_BY_CATEGORY[
+          c.category as keyof typeof CAUSE_SUBCATEGORIES_BY_CATEGORY
+        ] || [];
 
-    const meta = subList.find((m) => (m as any).id === c.subcategory);
-    if (meta && (meta as any).id) {
-      slugs.add((meta as any).id.toLowerCase());
+      const meta = subList.find((m) => (m as any).id === c.subcategory);
+      if (meta && (meta as any).id) {
+        slugs.add(String((meta as any).id).toLowerCase());
+      }
     }
   }
-}
 
   for (const story of stories as Story[]) {
     const causeTags: string[] = (story.causeTags ?? []) as string[];
@@ -186,12 +196,12 @@ export async function generateStaticParams() {
   // 🔹 NEW: also prebuild pages for canonical taxonomy IDs
   for (const cat of CAUSE_CATEGORIES) {
     const id = (cat as any).id as string | undefined;
-    if (id) slugs.add(id);
+    if (id) slugs.add(id.toLowerCase());
   }
   for (const subList of Object.values(CAUSE_SUBCATEGORIES_BY_CATEGORY)) {
     for (const sub of subList) {
       const id = (sub as any).id as string | undefined;
-      if (id) slugs.add(id);
+      if (id) slugs.add(id.toLowerCase());
     }
   }
 
@@ -202,11 +212,36 @@ export async function generateStaticParams() {
 // Metadata
 // ===============================
 
-export async function generateMetadata(
-  { params }: { params: { slug: string } }
-): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: ParamsLike<{ slug: string }> | { slug: string };
+}): Promise<Metadata> {
+  const p = await resolveParams(params);
+  const slug = String(p?.slug ?? "").trim();
+  const slugLower = norm(slug);
+
+  // ✅ Metadata must never crash; fall back gracefully.
+  if (!slugLower) {
+    return {
+      title: "DAT Causes",
+      description: "Explore plays, drama clubs, stories, and artists by cause.",
+      alternates: { canonical: "/cause" },
+      openGraph: {
+        title: "DAT Causes",
+        description: "Explore plays, drama clubs, stories, and artists by cause.",
+        url: "/cause",
+        type: "website",
+      },
+      twitter: {
+        card: "summary",
+        title: "DAT Causes",
+        description: "Explore plays, drama clubs, stories, and artists by cause.",
+      },
+    };
+  }
+
   const alumni: AlumniRow[] = await loadVisibleAlumni();
-  const slugLower = norm((params as any)?.slug);
 
   const taxonomyHit = findCauseBySlug(slugLower);
   const taxonomyLabel = (() => {
@@ -222,12 +257,11 @@ export async function generateMetadata(
       .map((t) => getCanonicalTag(t) ?? t)
       .find((c) => slugify(c) === slugLower) ??
     taxonomyLabel ??
-    taxonomyLabel ??
-    humanizeSlug(params.slug);
+    humanizeSlug(slug);
 
   const title = `${labelFromData} — DAT Causes`;
   const description = `Plays, drama clubs, stories, and artists connected to the cause: ${labelFromData}.`;
-  const canonicalPath = `/cause/${params.slug}`;
+  const canonicalPath = `/cause/${slug}`;
 
   return {
     title,
@@ -251,8 +285,19 @@ export async function generateMetadata(
 // Page
 // ===============================
 
-export default async function CausePage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+export default async function CausePage({
+  params,
+}: {
+  params: ParamsLike<{ slug: string }> | { slug: string };
+}) {
+  const p = await resolveParams(params);
+  const slug = String(p?.slug ?? "").trim();
+
+  // ✅ seasons-style guard
+  if (!slug) {
+    notFound();
+  }
+
   const slugLower = norm(slug);
 
   const alumni: AlumniRow[] = await loadVisibleAlumni();
@@ -273,35 +318,30 @@ export default async function CausePage({ params }: { params: { slug: string } }
 
   // 🔹 UPDATED: clubs match either old causeTags OR new taxonomy causes
   const clubsForCause = allDramaClubs.filter((club) => {
-  // 1) Direct slug match (causeSlugs array)
-  const slugMatch =
-    (club.causeSlugs ?? [])
-      .map((s) => norm(s))
-      .includes(slugLower);
+    // 1) Direct slug match (causeSlugs array)
+    const slugMatch = (club.causeSlugs ?? []).map((s) => norm(s)).includes(slugLower);
 
-  // 2) Taxonomy match: any DramaClub.cause subcategory whose id == slug
-  let taxonomyMatch = false;
-  const rawCauses = club.causes ?? [];
+    // 2) Taxonomy match: any DramaClub.cause subcategory whose id == slug
+    let taxonomyMatch = false;
+    const rawCauses = club.causes ?? [];
 
-  if (Array.isArray(rawCauses)) {
-    taxonomyMatch = rawCauses.some((c) => {
-      if (!c?.category || !c?.subcategory) return false;
+    if (Array.isArray(rawCauses)) {
+      taxonomyMatch = rawCauses.some((c) => {
+        if (!c?.category || !c?.subcategory) return false;
 
-      const subList =
-        CAUSE_SUBCATEGORIES_BY_CATEGORY[
-          c.category as keyof typeof CAUSE_SUBCATEGORIES_BY_CATEGORY
-        ] || [];
+        const subList =
+          CAUSE_SUBCATEGORIES_BY_CATEGORY[
+            c.category as keyof typeof CAUSE_SUBCATEGORIES_BY_CATEGORY
+          ] || [];
 
-      const meta = subList.find(
-        (m) => (m as any).id === c.subcategory
-      );
+        const meta = subList.find((m) => (m as any).id === c.subcategory);
 
-      return (meta as any)?.id === slugLower;
-    });
-  }
+        return String((meta as any)?.id ?? "").toLowerCase() === slugLower;
+      });
+    }
 
-  return slugMatch || taxonomyMatch;
-});
+    return slugMatch || taxonomyMatch;
+  });
 
   const storiesForCause = allStories.filter((story) =>
     ((story.causeTags ?? []) as string[]).some(matchTag)
@@ -316,10 +356,7 @@ export default async function CausePage({ params }: { params: { slug: string } }
 
   for (const prod of productionsForCause) {
     const extra = productionDetailsMap[prod.slug] as ExtraWithPeople | undefined;
-    const people = [
-      ...(extra?.cast ?? []),
-      ...(extra?.creativeTeam ?? []),
-    ] as PersonRoleMaybeSlug[];
+    const people = [...(extra?.cast ?? []), ...(extra?.creativeTeam ?? [])] as PersonRoleMaybeSlug[];
 
     for (const p of people) {
       if (p.slug) contributedSet.add(p.slug);
@@ -369,7 +406,7 @@ export default async function CausePage({ params }: { params: { slug: string } }
     return meta.shortLabel || meta.label;
   })();
 
-    const displayLabel = taxonomyLabel ?? displayLabelFromAlumni ?? humanizeSlug(slug);
+  const displayLabel = taxonomyLabel ?? displayLabelFromAlumni ?? humanizeSlug(slug);
 
   const byLastName = (a: AlumniRow, b: AlumniRow) => {
     const [af, al] = splitName(a.name);
@@ -395,9 +432,7 @@ export default async function CausePage({ params }: { params: { slug: string } }
           c.category as keyof typeof CAUSE_SUBCATEGORIES_BY_CATEGORY
         ] ?? [];
 
-      const meta = subList.find(
-        (m) => (m as any).id === c.subcategory
-      ) as any | undefined;
+      const meta = subList.find((m) => (m as any).id === c.subcategory) as any | undefined;
 
       if (meta?.id) {
         usedSubcategoryIds.add(String(meta.id).toLowerCase());
@@ -409,11 +444,8 @@ export default async function CausePage({ params }: { params: { slug: string } }
       const id = String(s || "").toLowerCase();
       if (!id) continue;
 
-      const isKnown = Object.values(CAUSE_SUBCATEGORIES_BY_CATEGORY).some(
-        (subList) =>
-          subList.some(
-            (sub) => String((sub as any).id || "").toLowerCase() === id
-          )
+      const isKnown = Object.values(CAUSE_SUBCATEGORIES_BY_CATEGORY).some((subList) =>
+        subList.some((sub) => String((sub as any).id || "").toLowerCase() === id)
       );
 
       if (isKnown) {
@@ -449,9 +481,7 @@ export default async function CausePage({ params }: { params: { slug: string } }
 
     const items = subList
       .map((sub) => sub as any)
-      .filter((sub) =>
-        usedSubcategoryIds.has(String(sub.id || "").toLowerCase())
-      )
+      .filter((sub) => usedSubcategoryIds.has(String(sub.id || "").toLowerCase()))
       .map((sub) => {
         const id = String(sub.id || "").toLowerCase();
         const label =
@@ -472,11 +502,9 @@ export default async function CausePage({ params }: { params: { slug: string } }
 
   // Optional meta (no-op if empty)
   const meta = causeMetaMap[slugLower] || {};
-  const heroSrc =
-    normalizeStaticSrc(meta.heroImageUrl) || "/images/alumni-hero.jpg";
+  const heroSrc = normalizeStaticSrc(meta.heroImageUrl) || "/images/alumni-hero.jpg";
   const heroIntro =
     meta.intro || "Plays, drama clubs, stories, and artists championing this cause";
-
 
   return (
     <div
@@ -564,7 +592,6 @@ export default async function CausePage({ params }: { params: { slug: string } }
               <SectionLabel>Productions Born from This Cause</SectionLabel>
 
               <div className="cause-shell">
-                {/* 🔹 use poster-grid + PosterCard */}
                 <div className="poster-grid">
                   {productionsForCause.map((prod) => {
                     const extra = productionDetailsMap[prod.slug] as ProductionExtra | undefined;
@@ -578,13 +605,10 @@ export default async function CausePage({ params }: { params: { slug: string } }
                     let posterSrcRaw: string | undefined;
 
                     if (rawHero) {
-                      if (rawHero.includes("-portrait")) {
-                        posterSrcRaw = rawHero;
-                      } else if (rawHero.includes("-landscape")) {
+                      if (rawHero.includes("-portrait")) posterSrcRaw = rawHero;
+                      else if (rawHero.includes("-landscape"))
                         posterSrcRaw = rawHero.replace("-landscape", "-portrait");
-                      } else {
-                        posterSrcRaw = rawHero;
-                      }
+                      else posterSrcRaw = rawHero;
                     } else {
                       posterSrcRaw = "/posters/fallback-16x9.jpg";
                     }
@@ -594,7 +618,6 @@ export default async function CausePage({ params }: { params: { slug: string } }
 
                     const tagline = extraAny?.tagline as string | undefined;
 
-                    // you can tweak subtitle priority here
                     const subtitle =
                       tagline ||
                       prod.location ||
@@ -623,7 +646,6 @@ export default async function CausePage({ params }: { params: { slug: string } }
               <SectionLabel>Drama Clubs on the Frontlines</SectionLabel>
 
               <div className="cause-shell">
-                {/* 🔹 Use existing micro-card grid (shared design) */}
                 <DramaClubIndexMicroGrid clubs={clubsForCause} />
               </div>
             </section>
@@ -640,24 +662,15 @@ export default async function CausePage({ params }: { params: { slug: string } }
                     const img =
                       normalizeStaticSrc(
                         (story.heroImage as string | undefined) ??
-                        (story.thumbnail as string | undefined)
+                          (story.thumbnail as string | undefined)
                       ) ?? "/images/stories/fallback.jpg";
 
                     return (
-                      <Link
-                        key={story.slug}
-                        href={`/stories/${story.slug}`}
-                        className="cause-card-link"
-                      >
+                      <Link key={story.slug} href={`/stories/${story.slug}`} className="cause-card-link">
                         <article className="cause-card cause-card--story article-card">
                           {img && (
                             <div className="story-img-shell">
-                              <Image
-                                src={img}
-                                alt={story.title}
-                                fill
-                                className="object-cover"
-                              />
+                              <Image src={img} alt={story.title} fill className="object-cover" />
                             </div>
                           )}
 
@@ -665,14 +678,10 @@ export default async function CausePage({ params }: { params: { slug: string } }
                             <h3 className="story-title">{story.title}</h3>
                             {(story.locationLabel || story.programLabel) && (
                               <p className="story-meta">
-                                {[story.locationLabel, story.programLabel]
-                                  .filter(Boolean)
-                                  .join(" • ")}
+                                {[story.locationLabel, story.programLabel].filter(Boolean).join(" • ")}
                               </p>
                             )}
-                            {story.teaser && (
-                              <p className="story-teaser">{story.teaser}</p>
-                            )}
+                            {story.teaser && <p className="story-teaser">{story.teaser}</p>}
 
                             <div className="article-cta">Read story →</div>
                           </div>
@@ -700,18 +709,14 @@ export default async function CausePage({ params }: { params: { slug: string } }
 
                 {tagOnly.length > 0 && (
                   <div>
-                    <Subheading>
-                      Artists Who Carry This Cause in Their Practice
-                    </Subheading>
+                    <Subheading>Artists Who Carry This Cause in Their Practice</Subheading>
                     <ArtistGrid artists={tagOnly} />
                   </div>
                 )}
 
                 {contribOnly.length > 0 && (
                   <div>
-                    <Subheading>
-                      Artists Who’ve Worked on These Plays
-                    </Subheading>
+                    <Subheading>Artists Who’ve Worked on These Plays</Subheading>
                     <ArtistGrid artists={contribOnly} />
                   </div>
                 )}
@@ -720,7 +725,7 @@ export default async function CausePage({ params }: { params: { slug: string } }
           )}
         </div>
 
-                {/* EXPLORE MORE CAUSES (grouped by category, only used subcategories) */}
+        {/* EXPLORE MORE CAUSES (grouped by category, only used subcategories) */}
         {groupedUsedSubcategories.length > 0 && (
           <section style={{ width: "90%", maxWidth: 1200, margin: "4rem auto 0" }}>
             <SectionLabel>Other Causes We Champion</SectionLabel>
@@ -761,9 +766,7 @@ export default async function CausePage({ params }: { params: { slug: string } }
                         <Link
                           key={item.id}
                           href={`/cause/${item.id}`}
-                          className={`cause-chip ${
-                            chipBg ? "cause-chip--image" : ""
-                          }`}
+                          className={`cause-chip ${chipBg ? "cause-chip--image" : ""}`}
                           style={
                             chipBg
                               ? {
@@ -785,7 +788,6 @@ export default async function CausePage({ params }: { params: { slug: string } }
           </section>
         )}
 
-
         {/* Season nav */}
         <section
           style={{
@@ -794,6 +796,7 @@ export default async function CausePage({ params }: { params: { slug: string } }
             boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)",
             padding: "4rem 0",
             marginTop: "4rem",
+            marginBottom: "-2rem", // ✅ tuck into footer like other pages
           }}
         >
           <SeasonsCarouselAlt />
@@ -1067,6 +1070,7 @@ function ArtistGrid({ artists }: { artists: AlumniRow[] }) {
       {artists.map((artist) => (
         <MiniProfileCard
           key={artist.slug}
+          alumniId={artist.slug}
           name={artist.name}
           role={artist.role}
           slug={artist.slug}
@@ -1085,7 +1089,6 @@ function humanizeSlug(slug: unknown) {
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
     .join(" ");
 }
-
 
 function splitName(full: string) {
   const parts = (typeof full === "string" ? full : "").trim().split(/\s+/);

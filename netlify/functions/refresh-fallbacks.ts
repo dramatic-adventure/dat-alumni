@@ -60,7 +60,7 @@ const SHEETS: SheetSpec[] = (() => {
     { name: "Clean Map Data.csv", url: pick(process.env.NEXT_PUBLIC_MAP_CSV_URL) },
 
     // Optional (only if you later add an env var for it)
-    // { name: "story-map.csv", url: pick(process.env.NEXT_PUBLIC_STORY_MAP_CSV_URL) },
+    // { name: "Clean Map Data.csv", url: pick(process.env.NEXT_PUBLIC_MAP_CSV_URL) },
   ];
 
   return out.filter((s) => s.name && s.url);

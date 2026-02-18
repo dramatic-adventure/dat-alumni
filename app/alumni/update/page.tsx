@@ -89,9 +89,10 @@ async function resolveSlugToAlumniId(slugOrId: string) {
 export default async function UpdatePage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const session = await auth();
+  const sp = searchParams ? await searchParams : undefined;
 
   if (!session) {
     const callback = encodeURIComponent("/alumni/update");
@@ -131,10 +132,11 @@ export default async function UpdatePage({
 
   // ✅ allow impersonation for admin only (keep it strict)
   const raw =
-    searchParams?.asId ??
-    searchParams?.alumniId ??
-    searchParams?.asSlug ??
-    searchParams?.slug;
+    sp?.asId ??
+    sp?.alumniId ??
+    sp?.asSlug ??
+    sp?.slug;
+
 
   const asIdRaw = Array.isArray(raw) ? raw[0] : raw;
   const asId = normId(asIdRaw);

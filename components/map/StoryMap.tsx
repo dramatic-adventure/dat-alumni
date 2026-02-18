@@ -21,25 +21,50 @@ const DEBUG = String(process.env.SHOW_DAT_DEBUG || "").toLowerCase() === "true";
 
 /* ===========================
    Types
-   =========================== */
-type FeatureProps = {
+   =========================== */type FeatureProps = {
   Title: string;
   Program: string;
   "Location Name": string;
   Country: string;
   "Year(s)": string;
   Partners: string;
-  "Image URL": string;
+
+  // Media (sheet uses mediaUrl, legacy uses Image URL)
+  mediaUrl?: string;
+  "Image URL"?: string;
+
   Quote: string;
-  "Quote Author": string;
+  "Quote Attribution"?: string;
+  "Quote Author"?: string; // legacy
+
   "Short Story": string;
+
   Author: string;
   authorSlug: string;
+
   "More Info Link": string;
+
+  // URL + slug variants
   "Story URL": string;
-  Slug: string;
+  Slug: string; // what your popup uses (/story/[slug])
+  storySlug?: string; // raw sheet field
+  storyKey?: string;
+
+  // Useful map/search facets
+  Category?: string;
   category: string;
+  "Region Tag"?: string;
+  "Show on Map?"?: string;
+
+  // Useful internal/search/debug
+  alumniId?: string;
+  ts?: string;
+  updatedTs?: string;
+
+  // ✅ Search index (precomputed)
+  __search?: string;
 };
+
 type Feature = {
   type: "Feature";
   geometry: { type: "Point"; coordinates: [number, number] };
@@ -59,11 +84,98 @@ const isSmallScreen = () =>
   typeof window !== "undefined" &&
   window.matchMedia("(max-width: 640px)").matches;
 
-function normalize(s: string) {
-  return s
-    ? s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase()
+function buildSearchIndex_(props: any, rawRow: any) {
+  const propsText = Object.values(props || {})
+    .map((v) => (v == null ? "" : String(v)))
+    .join(" ");
+
+  // ✅ IMPORTANT: index VALUES, not JSON (which includes KEYS/headers)
+  const rawValuesText = rawRow
+    ? Object.values(rawRow)
+        .map((v) => (v == null ? "" : String(v)))
+        .join(" ")
     : "";
+
+  return normalize(`${propsText} ${rawValuesText}`);
 }
+
+
+function normalize(s: string) {
+  if (!s) return "";
+  const raw = String(s);
+
+  try {
+    return raw
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ") // punctuation/unicode -> spaces
+      .replace(/\s+/g, " ")
+      .trim();
+  } catch {
+    return raw
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+}
+
+const STOPWORDS = new Set([
+  "a","an","the","and","or","but","if","then","so",
+  "of","to","in","on","at","for","from","by","with", "without",
+  "as","is","are","was","were","be","been","being",
+  "this","that","these","those","it","its",
+]);
+
+function tokenizeQuery(q: string) {
+  const norm = normalize(q);
+  const tokensAll = norm.split(" ").filter(Boolean);
+
+  // Google-ish: drop stopwords and tiny tokens, but only if doing so leaves something
+  const tokensFiltered = tokensAll.filter((t) => t.length >= 2 && !STOPWORDS.has(t));
+  const tokens = tokensFiltered.length ? tokensFiltered : tokensAll;
+
+  // “Unquoted phrase” we want to reward heavily (after stopword removal)
+  const phrase = tokens.join(" ").trim();
+
+  return { norm, tokensAll, tokens, phrase };
+}
+
+function scoreMatch(txt: string, exactPhrases: string[], tokens: string[], phrase: string) {
+  if (!txt) return 0;
+
+  // Quoted phrases are hard requirements
+  for (const p of exactPhrases) {
+    if (!p) continue;
+    if (!txt.includes(p)) return 0;
+  }
+
+  let score = 0;
+
+  // Big boost if the (unquoted) phrase appears contiguously
+  if (phrase && phrase.length >= 4 && txt.includes(phrase)) score += 100;
+
+  // Token hits (AND semantics for matching; scoring adds relevance)
+  let hits = 0;
+  for (const t of tokens) {
+    if (!t) continue;
+    if (txt.includes(t)) {
+      hits++;
+      score += 10;
+    }
+  }
+
+  // Google-ish: if they typed multiple meaningful tokens, require all of them.
+  // (If there’s only 1 token, any hit is fine.)
+  if (tokens.length >= 2 && hits < tokens.length) return 0;
+
+  // Slight bonus for longer queries that fully match
+  if (tokens.length >= 3) score += 10;
+
+  return score;
+}
+
 
 const toNum = (v: unknown) => {
   if (v == null) return NaN;
@@ -88,7 +200,7 @@ const popupOffsetY = () => (isSmallScreen() ? 140 : 220);
 
 function createPopupHTML(d: FeatureProps) {
   let media = "";
-  const url = d["Image URL"] || "";
+  const url = d.mediaUrl || d["Image URL"] || "";
   const vid = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([\w-]+)/);
   if (vid) {
     media = `<div class="popup-video"><iframe src="https://www.youtube.com/embed/${vid[1]}" allowfullscreen></iframe></div>`;
@@ -103,7 +215,7 @@ function createPopupHTML(d: FeatureProps) {
       ? shortStory.slice(0, maxLength).trim() + "…"
       : shortStory;
 
-  const slug = (d["Slug"] || "").trim();
+  const slug = String((d as any).Slug || (d as any).slug || "").trim();
 
   // ✅ IMPORTANT: stay same-origin (localhost in dev / current host in prod)
   const fullStoryURL = slug ? `/story/${encodeURIComponent(slug)}` : "";
@@ -156,10 +268,11 @@ function createPopupHTML(d: FeatureProps) {
     }
     ${d.Quote ? `<div class="popup-quote">&ldquo;${d.Quote}&rdquo;</div>` : ""}
     ${
-      d["Quote Author"]
-        ? `<div class="popup-quote-author">– ${d["Quote Author"]}</div>`
+      (d["Quote Attribution"] || d["Quote Author"])
+        ? `<div class="popup-quote-author">– ${d["Quote Attribution"] || d["Quote Author"]}</div>`
         : ""
     }
+
     ${displayStory ? `<div class="popup-story">${displayStory}</div>` : ""}
     ${
       d["More Info Link"]
@@ -226,11 +339,24 @@ function toFeaturePropsFromRow(row: any): FeatureProps {
   ]);
 
   const quote = pickFirst(row, ["Quote", "quote"]);
-  const quoteAuthor = pickFirst(row, [
+  const quoteAttribution = pickFirst(row, [
+    "Quote Attribution",
+    "QuoteAttribution",
+    "quoteAttribution",
+    "quote_attribution",
+    // legacy
     "Quote Author",
     "QuoteAuthor",
     "quoteAuthor",
     "quote_author",
+  ]);
+
+  const mediaUrl = pickFirst(row, [
+    "mediaUrl",
+    "mediaURL",
+    "MediaUrl",
+    "Media URL",
+    "media_url",
   ]);
 
   const imageUrl = pickFirst(row, [
@@ -241,6 +367,7 @@ function toFeaturePropsFromRow(row: any): FeatureProps {
     "image",
     "Image",
   ]);
+
 
   const author = pickFirst(row, ["Author", "author"]);
   const authorSlug = pickFirst(row, ["authorSlug", "AuthorSlug", "author_slug"]);
@@ -260,26 +387,58 @@ function toFeaturePropsFromRow(row: any): FeatureProps {
     "storyUrl",
     "story_url",
   ]);
-  const slug = pickFirst(row, ["slug", "Slug"]);
+  const slug = pickFirst(row, ["storySlug", "StorySlug", "story_slug", "slug", "Slug"]);
+  const storySlug = pickFirst(row, ["storySlug", "StorySlug", "story_slug"]);
+  const storyKey = pickFirst(row, ["storyKey", "StoryKey", "story_key"]);
+
   const category = pickFirst(row, ["Category", "category"]);
 
-  return {
+  const regionTag = pickFirst(row, ["Region Tag", "RegionTag", "regionTag", "region_tag"]);
+  const showOnMap = pickFirst(row, ["Show on Map?", "ShowOnMap?", "showOnMap", "show_on_map"]);
+  const alumniId = pickFirst(row, ["alumniId", "AlumniId", "alumni_id"]);
+  const ts = pickFirst(row, ["ts", "TS"]);
+  const updatedTs = pickFirst(row, ["updatedTs", "UpdatedTs", "updated_ts"]);
+  const categoryRaw = pickFirst(row, ["Category", "category"]);
+
+
+    return {
     Title: title,
     Program: program,
     "Location Name": locationName,
     Country: country,
     "Year(s)": years,
     Partners: partners,
-    "Image URL": imageUrl,
+
+    mediaUrl: mediaUrl || "",
+    "Image URL": imageUrl || "",
+
     Quote: quote,
-    "Quote Author": quoteAuthor,
+    "Quote Attribution": quoteAttribution || "",
+    // legacy key kept for popup compatibility if needed
+    "Quote Author": "",
+
     "Short Story": shortStory,
     Author: author,
     authorSlug: authorSlug,
+
     "More Info Link": moreInfo,
     "Story URL": storyUrl,
+
     Slug: slug,
-    category: category ? category.toLowerCase().trim() : "",
+    storySlug,
+    storyKey,
+
+    Category: categoryRaw,
+    category: categoryRaw ? categoryRaw.toLowerCase().trim() : "",
+
+    "Region Tag": regionTag,
+    "Show on Map?": showOnMap,
+
+    alumniId,
+    ts,
+    updatedTs,
+
+    __search: "", // filled later
   };
 }
 
@@ -288,11 +447,30 @@ function toNumberStrict(v: any): number {
   return toNum(v);
 }
 
-async function fetchStoriesAsFeatures(): Promise<Feature[]> {
+type SearchItem = {
+  key: string; // stable-ish identity (slug > storyKey > fallback)
+  title: string;
+  slug: string;
+  author: string;
+  authorSlug: string;
+  coords?: [number, number]; // [lng, lat] if present
+  __search: string; // normalized search blob
+  // Keep raw-ish props for display if you want later
+  locationName?: string;
+  country?: string;
+  program?: string;
+  years?: string;
+};
+
+async function fetchStoriesForMapAndSearch(): Promise<{
+  features: Feature[];
+  searchItems: SearchItem[];
+}> {
   const res = await fetch("/api/stories", { cache: "no-store" });
   if (!res.ok) throw new Error(`API /api/stories failed: ${res.status}`);
 
   const data = await res.json();
+
   if (DEBUG) clientDebug("[StoryMap] /api/stories raw keys:", Object.keys(data || {}));
   if (DEBUG) clientDebug("[StoryMap] /api/stories sample:", (data?.stories || [])[0]);
   if (DEBUG)
@@ -306,11 +484,51 @@ async function fetchStoriesAsFeatures(): Promise<Feature[]> {
   }
 
   const feats: Feature[] = [];
-  for (const row of data.stories as ApiStory[]) {
-    const lat = toNumberStrict(
-      row.lat ?? row.Lat ?? row.latitude ?? row.Latitude ?? row.Latitude ?? row["Latitude"]
-    );
+  const items: SearchItem[] = [];
 
+  let skippedNoCoords = 0;
+
+  for (const row of data.stories as ApiStory[]) {
+    const props = toFeaturePropsFromRow(row);
+
+      // Respect Show on Map? for search as well (FALSE = not searchable, no pin)
+    const showRaw = asStr(
+      row["Show on Map?"] ?? row.ShowOnMap ?? row.showOnMap ?? ""
+    ).trim().toLowerCase();
+    const showOnMap = showRaw === "" ? true : ["y", "yes", "true", "1"].includes(showRaw);
+    if (!showOnMap) continue;
+
+    // tolerate different names coming from API route
+    const rowSlug = asStr(row.Slug ?? row.slug ?? row.storySlug ?? props.Slug ?? "");
+    const slug = (rowSlug || "").trim();
+
+    const title = asStr(row.Title ?? row.title ?? props.Title ?? "").trim();
+    const author = asStr(row.Author ?? row.author ?? props.Author ?? "").trim();
+    const authorSlug = asStr(row.authorSlug ?? row.AuthorSlug ?? props.authorSlug ?? "").trim();
+
+    // IMPORTANT: use server-provided __search if present; otherwise build locally
+    const searchBlob =
+      asStr(row.__search) ||
+      buildSearchIndex_(
+        {
+          ...props,
+          Title: title || props.Title,
+          Slug: slug || props.Slug,
+          Author: author || props.Author,
+          authorSlug: authorSlug || props.authorSlug,
+        },
+        row
+      );
+
+    const key =
+      asStr(row.storyKey ?? row.StoryKey ?? props.storyKey ?? "") ||
+      slug ||
+      `${title}::${author}::${items.length}`;
+
+    // Pull coords *if present*, but DO NOT require them to be searchable
+    const lat = toNumberStrict(
+      row.lat ?? row.Lat ?? row.latitude ?? row.Latitude ?? row["Latitude"]
+    );
     const lng = toNumberStrict(
       row.lng ??
         row.Lng ??
@@ -323,11 +541,32 @@ async function fetchStoriesAsFeatures(): Promise<Feature[]> {
         row.Long
     );
 
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+    const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
 
-    const props = toFeaturePropsFromRow(row);
-    if (!props.Title) props.Title = asStr(row.title ?? "");
-    if (!props.Slug) props.Slug = asStr(row.slug ?? "");
+    items.push({
+      key,
+      title,
+      slug,
+      author,
+      authorSlug,
+      coords: hasCoords ? ([lng, lat] as [number, number]) : undefined,
+      __search: normalize(searchBlob),
+      locationName: asStr(row["Location Name"] ?? row.locationName ?? props["Location Name"] ?? ""),
+      country: asStr(row.Country ?? row.country ?? props.Country ?? ""),
+      program: asStr(row.Program ?? row.program ?? props.Program ?? ""),
+      years: asStr(row["Year(s)"] ?? row.years ?? props["Year(s)"] ?? ""),
+    });
+
+    if (!hasCoords) {
+      skippedNoCoords++;
+      continue;
+    }
+
+    // Now build the actual map Feature (coords required)
+    if (!props.Title) props.Title = title;
+    if (!props.Slug) props.Slug = slug;
+
+    props.__search = normalize(searchBlob);
 
     feats.push({
       type: "Feature",
@@ -336,17 +575,42 @@ async function fetchStoriesAsFeatures(): Promise<Feature[]> {
     });
   }
 
-  return feats;
+  if (DEBUG) {
+    clientDebug("[StoryMap] searchItems total:", items.length);
+    clientDebug("[StoryMap] map features total:", feats.length);
+    clientDebug("[StoryMap] skipped (no coords) but searchable:", skippedNoCoords);
+  }
+
+  return { features: feats, searchItems: items };
 }
 
-async function fetchFallbackStoriesCsv(): Promise<Feature[]> {
-  const res = await fetch("/fallback/Clean Map Data.csv", { cache: "no-store" });
-  if (DEBUG) clientDebug("[StoryMap] fallback CSV status:", res.status, res.statusText);
-  if (!res.ok) return [];
+
+async function fetchFallbackStoriesForMapAndSearch(): Promise<{
+  features: Feature[];
+  searchItems: SearchItem[];
+}> {
+  // Some servers choke on raw spaces in URLs; also support alternate filenames.
+  const candidates = [
+    "/fallback/Clean%20Map%20Data.csv",
+    "/fallback/Clean Map Data.csv",
+    "/fallback/clean-map-data.csv",
+  ];
+
+  let res: Response | null = null;
+  for (const url of candidates) {
+    const r = await fetch(url, { cache: "no-store" });
+    if (DEBUG) clientDebug("[StoryMap] fallback CSV try:", url, r.status, r.statusText);
+    if (r.ok) {
+      res = r;
+      break;
+    }
+  }
+
+  if (!res) return { features: [], searchItems: [] };
 
   const csvText = await res.text();
 
-  // Minimal CSV parser (same logic as API route, client-safe)
+  // Minimal CSV parser (client-safe)
   function parseCsvLine(line: string): string[] {
     const out: string[] = [];
     let cur = "";
@@ -378,48 +642,120 @@ async function fetchFallbackStoriesCsv(): Promise<Feature[]> {
     return out;
   }
 
-  function csvToObjects(csv: string): any[] {
-    const lines = csv
-      .split(/\r?\n/)
-      .map((l) => l.trimEnd())
-      .filter((l) => l.length > 0);
+function isCommaOnlyLine(line: string): boolean {
+  const s = String(line || "").trim();
+  if (!s) return true;
+  return s.replace(/[, \t]/g, "") === "";
+}
 
-    if (!lines.length) return [];
+function csvToObjects(csv: string): any[] {
+  const lines = csv
+    .split(/\r?\n/)
+    .map((l) => String(l ?? "").replace(/^\uFEFF/, "").trimEnd())
+    .filter((l) => l.length > 0);
 
-    const headers = parseCsvLine(lines[0]).map((h) =>
-      String(h ?? "").replace(/^\uFEFF/, "").trim()
-    );
+  if (!lines.length) return [];
 
-    const rows: any[] = [];
-    for (let i = 1; i < lines.length; i++) {
-      const cols = parseCsvLine(lines[i]);
-      const obj: any = {};
-      headers.forEach((h, idx) => {
-        obj[h] = (cols[idx] ?? "").trim();
-      });
-      rows.push(obj);
-    }
-    return rows;
+  // ✅ This sheet has an ARRAYFORMULA row in row 1.
+  // Headers are in row 2.
+  let headerIdx = -1;
+
+  // Prefer row 2 explicitly (deterministic for this sheet)
+  if (lines.length >= 2 && lines[1]) {
+    headerIdx = 1;
+  } else {
+    // Fallback: find first meaningful non-comma-only line
+    headerIdx = lines.findIndex((l) => !isCommaOnlyLine(l));
+    if (headerIdx === -1) return [];
   }
+
+  const headers = parseCsvLine(lines[headerIdx]).map((h) =>
+    String(h ?? "").replace(/^\uFEFF/, "").trim()
+  );
+
+  const rows: any[] = [];
+  for (let i = headerIdx + 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line) continue;
+    if (isCommaOnlyLine(line)) continue;
+
+    const cols = parseCsvLine(line);
+    const obj: any = {};
+    headers.forEach((h, idx) => {
+      if (!h) return;
+      obj[h] = (cols[idx] ?? "").trim();
+    });
+    rows.push(obj);
+  }
+  return rows;
+}
 
   const rows = csvToObjects(csvText);
 
   const feats: Feature[] = [];
+  const items: SearchItem[] = [];
+
+  let skippedNoCoords = 0;
+
   for (const row of rows) {
-    // Respect "Show on Map?" (optional but in your headers)
+    // Respect "Show on Map?" if present
     const showRaw =
       row["Show on Map?"] ?? row["ShowOnMap?"] ?? row["showOnMap"] ?? "";
     const show = String(showRaw).trim().toLowerCase();
     if (show && !["y", "yes", "true", "1"].includes(show)) continue;
 
+    const props = toFeaturePropsFromRow(row);
+
+    const slug = asStr(row.storySlug ?? row.slug ?? row.Slug ?? props.Slug ?? "").trim();
+    const title = asStr(row.Title ?? row.title ?? props.Title ?? "").trim();
+    const author = asStr(row.Author ?? row.author ?? props.Author ?? "").trim();
+    const authorSlug = asStr(row.authorSlug ?? props.authorSlug ?? "").trim();
+
+    const searchBlob =
+      asStr((row as any).__search) ||
+      buildSearchIndex_(
+        {
+          ...props,
+          Title: title || props.Title,
+          Slug: slug || props.Slug,
+          Author: author || props.Author,
+          authorSlug: authorSlug || props.authorSlug,
+        },
+        row
+      );
+
+    const key =
+      asStr(row.storyKey ?? row.StoryKey ?? props.storyKey ?? "") ||
+      slug ||
+      `${title}::${author}::${items.length}`;
+
     const lat = toNumberStrict(row.Latitude ?? row.lat ?? row.Lat ?? row["Latitude"]);
     const lng = toNumberStrict(row.Longitude ?? row.lng ?? row.Lng ?? row["Longitude"]);
+    const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
 
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+    items.push({
+      key,
+      title,
+      slug,
+      author,
+      authorSlug,
+      coords: hasCoords ? ([lng, lat] as [number, number]) : undefined,
+      __search: normalize(searchBlob),
+      locationName: asStr(row["Location Name"] ?? props["Location Name"] ?? ""),
+      country: asStr(row.Country ?? props.Country ?? ""),
+      program: asStr(row.Program ?? props.Program ?? ""),
+      years: asStr(row["Year(s)"] ?? props["Year(s)"] ?? ""),
+    });
 
-    const props = toFeaturePropsFromRow(row);
-    if (!props.Title) props.Title = asStr(row.Title ?? row.title ?? "");
-    if (!props.Slug) props.Slug = asStr(row.slug ?? row.Slug ?? "");
+    if (!hasCoords) {
+      skippedNoCoords++;
+      continue;
+    }
+
+    if (!props.Title) props.Title = title;
+    if (!props.Slug) props.Slug = slug;
+
+    props.__search = normalize(searchBlob);
 
     feats.push({
       type: "Feature",
@@ -428,9 +764,13 @@ async function fetchFallbackStoriesCsv(): Promise<Feature[]> {
     });
   }
 
-  if (DEBUG) clientDebug("[StoryMap] fallback feats:", feats.length);
+  if (DEBUG) {
+    clientDebug("[StoryMap] fallback searchItems total:", items.length);
+    clientDebug("[StoryMap] fallback map features total:", feats.length);
+    clientDebug("[StoryMap] fallback skipped (no coords) but searchable:", skippedNoCoords);
+  }
 
-  return feats;
+  return { features: feats, searchItems: items };
 }
 
 /* ===========================
@@ -484,6 +824,7 @@ export default function StoryMap({
     };
   }, []);
   const featuresRef = useRef<Feature[]>([]);
+  const searchItemsRef = useRef<SearchItem[]>([]);
   const indexRef = useRef<Supercluster<any, any> | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const currentPopupRef = useRef<mapboxgl.Popup | null>(null);
@@ -492,6 +833,8 @@ export default function StoryMap({
   const currentRadiusRef = useRef<number>(28);
   const onZoomOrMoveRef = useRef<(() => void) | null>(null);
   const renderClustersRef = useRef<() => void>(() => {});
+
+  const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
 
   /* ===========================
      Styles
@@ -925,23 +1268,87 @@ useEffect(() => {
       };
 
       try {
-        let feats: Feature[] = [];
-        let source: "api" | "fallback" = "api";
+        let apiLoaded: { features: Feature[]; searchItems: SearchItem[] } | null = null;
+        let fbLoaded: { features: Feature[]; searchItems: SearchItem[] } | null = null;
 
+        // Helper: merge by key, prefer the richer item (longer __search wins)
+        const mergeSearchItems = (a: SearchItem[], b: SearchItem[]) => {
+          const byKey = new Map<string, SearchItem>();
+
+          for (const it of [...a, ...b]) {
+            const k = String(it.key || "").trim();
+            if (!k) continue;
+
+            const prev = byKey.get(k);
+            if (!prev) {
+              byKey.set(k, it);
+              continue;
+            }
+
+            const prevLen = (prev.__search || "").length;
+            const nextLen = (it.__search || "").length;
+
+            const winner = nextLen > prevLen ? it : prev;
+            const loser = winner === it ? prev : it;
+
+            byKey.set(k, {
+              ...winner,
+              // fill missing display fields from loser
+              slug: winner.slug || loser.slug,
+              title: winner.title || loser.title,
+              author: winner.author || loser.author,
+              authorSlug: winner.authorSlug || loser.authorSlug,
+              coords: winner.coords || loser.coords,
+              locationName: winner.locationName || loser.locationName,
+              country: winner.country || loser.country,
+              program: winner.program || loser.program,
+              years: winner.years || loser.years,
+              __search: winner.__search || loser.__search,
+            });
+          }
+
+          return Array.from(byKey.values());
+        };
+
+
+        // 1) Load API (for pins + some search text)
         try {
-          feats = await fetchStoriesAsFeatures();
+          apiLoaded = await fetchStoriesForMapAndSearch();
         } catch {
-          feats = [];
+          apiLoaded = null;
         }
 
-        if (!feats || feats.length === 0) {
-          source = "fallback";
-          feats = await fetchFallbackStoriesCsv();
+        // 2) Always load fallback CSV for search completeness
+        //    (even when API succeeds) — this is the missing piece.
+        try {
+          fbLoaded = await fetchFallbackStoriesForMapAndSearch();
+        } catch {
+          fbLoaded = null;
         }
-
-        if (DEBUG) clientDebug("[StoryMap] data source:", source, "feats:", feats.length);
 
         if (canceled) return;
+
+        const apiFeatures = apiLoaded?.features || [];
+        const fbFeatures = fbLoaded?.features || [];
+
+        const apiSearch = apiLoaded?.searchItems || [];
+        const fbSearch = fbLoaded?.searchItems || [];
+
+        // Search should cover EVERYTHING we have text for
+        searchItemsRef.current = mergeSearchItems(apiSearch, fbSearch);
+
+        // Map pins: prefer API pins; if none, use CSV pins
+        const feats = apiFeatures.length ? apiFeatures : fbFeatures;
+
+        if (DEBUG) {
+          clientDebug("[StoryMap] api feats:", apiFeatures.length, "api search:", apiSearch.length);
+          clientDebug("[StoryMap] fb feats:", fbFeatures.length, "fb search:", fbSearch.length);
+          clientDebug("[StoryMap] merged searchItems:", searchItemsRef.current.length);
+          // Quick sanity check: do we even HAVE the substring "drama" in the merged index?
+          const dramaHits = searchItemsRef.current.filter((it) => (it.__search || "").includes("drama")).length;
+          const girlHits = searchItemsRef.current.filter((it) => (it.__search || "").includes("a girl without wings")).length;
+          clientDebug("[StoryMap] sanity hits — drama:", dramaHits, "A Girl without Wings:", girlHits);
+        }
 
         featuresRef.current = feats || [];
 
@@ -954,46 +1361,20 @@ useEffect(() => {
           radius: r,
           maxZoom: CLUSTER_MAX_ZOOM,
           minPoints: CLUSTER_MIN_POINTS,
-
-          // Keep full props for non-cluster points
           map: (props: any) => props,
           reduce: () => {},
         });
+
         indexRef.current.load((feats || []) as any);
         renderClusters();
 
         attachZoomMoveHandler();
 
-        clientDebug("[StoryMap] Loaded features:", feats.length);
+        clientDebug("[StoryMap] Loaded map features:", feats.length);
       } catch (err) {
-        clientWarn("[StoryMap] API load failed:", err);
-
-        try {
-          const feats = await fetchFallbackStoriesCsv();
-          if (canceled) return;
-
-          if (feats?.length) {
-            featuresRef.current = feats;
-
-            const z = m.getZoom();
-            const lat = m.getCenter().lat;
-            const r = milesToPixelRadius(CLUSTER_DISTANCE_MILES, z, lat);
-            currentRadiusRef.current = r;
-
-            indexRef.current = new Supercluster({
-              radius: r,
-              maxZoom: CLUSTER_MAX_ZOOM,
-              minPoints: CLUSTER_MIN_POINTS,
-              map: (props: any) => props,
-              reduce: () => {},
-            });
-            indexRef.current.load((feats || []) as any);
-            renderClusters();
-
-            attachZoomMoveHandler();
-          }
-        } catch {}
+        clientWarn("[StoryMap] load failed:", err);
       }
+
     };
 
     const onMapLoad = () => loadData();
@@ -1129,32 +1510,97 @@ useEffect(() => {
   const filterMarkers = (q: string) => {
     const exact = [...q.matchAll(/"([^"]+)"/g)].map((m) => normalize(m[1]));
     const rest = q.replace(/"[^"]+"/g, "");
-    const terms = normalize(rest)
-      .split(/\s+|,/)
-      .filter(Boolean);
 
-    const features = featuresRef.current;
-    const filtered =
-      exact.length || terms.length
-        ? features.filter((f) => {
-            const txt = normalize(
-              Object.values(f.properties)
-                .map((v) => (v == null ? "" : String(v)))
-                .join(" ")
-            );
-            if (!exact.every((e) => txt.includes(e))) return false;
-            return terms.length ? terms.some((t) => txt.includes(t)) : true;
+    // ✅ Use your Google-ish tokenizer (stopwords + tiny tokens)
+    const { tokensAll, tokens, phrase } = tokenizeQuery(rest);
+
+    // ✅ "Has query" should respect tokens, not the old 3+ char filter
+    const hasQuery = exact.length > 0 || tokens.length > 0;
+
+
+
+    const allItems = searchItemsRef.current;
+
+    if (DEBUG) {
+      const sample = allItems[0]?.__search || "";
+      clientDebug("[StoryMap] __search sample (first 220):", sample.slice(0, 220));
+    }
+
+    const matchedItems = hasQuery
+      ? allItems
+          .map((it) => {
+            const txt = it.__search || "";
+            const score = scoreMatch(txt, exact, tokens, phrase);
+            return { it, score };
           })
-        : features;
+          .filter((x) => x.score > 0)
+          .sort((a, b) => b.score - a.score)
+          .map((x) => x.it)
+      : [];
 
+    // Show results dropdown (including items without coords)
+    setSearchResults(matchedItems.slice(0, 30));
+
+
+
+
+    // If no query, restore full map
     const m = mapRef.current;
     if (!m) return;
 
-    const r = milesToPixelRadius(
-      CLUSTER_DISTANCE_MILES,
-      m.getZoom(),
-      m.getCenter().lat
-    );
+    if (!hasQuery) {
+      const feats = featuresRef.current;
+
+      const r = milesToPixelRadius(CLUSTER_DISTANCE_MILES, m.getZoom(), m.getCenter().lat);
+      currentRadiusRef.current = r;
+
+      indexRef.current = new Supercluster({
+        radius: r,
+        maxZoom: CLUSTER_MAX_ZOOM,
+        minPoints: CLUSTER_MIN_POINTS,
+        map: (props: any) => props,
+        reduce: () => {},
+      });
+
+      indexRef.current.load(feats as any);
+
+      if (currentPopupRef.current) {
+        currentPopupRef.current.remove();
+        currentPopupRef.current = null;
+        currentPopupCoords.current = null;
+      }
+
+      renderClusters();
+      return;
+    }
+
+    // Filter ONLY the map features (those with coords), but based on the same matching rules.
+    const feats = featuresRef.current;
+
+    if (DEBUG) {
+      // Quick sanity checks without violating no-console
+      const dramaAny = feats.some((f) =>
+        normalize(String((f.properties as any).__search || "")).includes("drama")
+      );
+
+      const girlAny = feats.some((f) =>
+        normalize(String((f.properties as any).__search || "")).includes("a girl without wings")
+      );
+
+      clientDebug("[StoryMap] feats loaded:", feats.length);
+      clientDebug("[StoryMap] sanity — contains 'drama' in __search?:", dramaAny);
+      clientDebug("[StoryMap] sanity — contains 'a girl without wings' in __search?:", girlAny);
+    }
+
+    const filteredFeatures = feats.filter((f) => {
+      const txt = String((f.properties as any).__search || "");
+      return scoreMatch(txt, exact, tokens, phrase) > 0;
+    });
+
+
+
+
+    const r = milesToPixelRadius(CLUSTER_DISTANCE_MILES, m.getZoom(), m.getCenter().lat);
     currentRadiusRef.current = r;
 
     indexRef.current = new Supercluster({
@@ -1164,22 +1610,26 @@ useEffect(() => {
       map: (props: any) => props,
       reduce: () => {},
     });
-    indexRef.current.load(filtered as any);
+
+    indexRef.current.load(filteredFeatures as any);
+
     if (currentPopupRef.current) {
       currentPopupRef.current.remove();
       currentPopupRef.current = null;
       currentPopupCoords.current = null;
     }
+
     renderClusters();
 
-    if (filtered.length === 1) {
+    // Auto-zoom ONLY if there is exactly one *mappable* match
+    if (filteredFeatures.length === 1) {
       m.flyTo({
-        center: filtered[0].geometry.coordinates,
+        center: filteredFeatures[0].geometry.coordinates,
         zoom: 8,
         duration: 500,
       });
-    } else if (filtered.length > 1) {
-      const cs = filtered.map((f) => f.geometry.coordinates);
+    } else if (filteredFeatures.length > 1) {
+      const cs = filteredFeatures.map((f) => f.geometry.coordinates);
       const lons = cs.map((c) => c[0]);
       const lats = cs.map((c) => c[1]);
       m.fitBounds(
@@ -1194,6 +1644,7 @@ useEffect(() => {
       );
     }
   };
+
 
   const shouldHideSearch = hideSearch || menuOpenDetected;
 
@@ -1261,14 +1712,97 @@ useEffect(() => {
                   onChange={(e) => {
                     const val = e.target.value;
                     setQuery(val);
-                    if (debounceTimer.current)
-                      clearTimeout(debounceTimer.current);
-                    debounceTimer.current = setTimeout(
-                      () => filterMarkers(val),
-                      300
-                    );
+
+                    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+                    debounceTimer.current = setTimeout(() => {
+                      filterMarkers(val);
+                    }, 300);
                   }}
                 />
+
+                {searchOpen && query.trim() && searchResults.length > 0 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 42,
+                      right: 0,
+                      width: "100%",
+                      maxHeight: 360,
+                      overflowY: "auto",
+                      background: "rgba(255,255,255,0.92)",
+                      border: "1px solid rgba(0,0,0,0.15)",
+                      borderRadius: 12,
+                      boxShadow: "0 10px 30px rgba(0,0,0,0.18)",
+                      zIndex: 10,
+                      backdropFilter: "blur(8px)",
+                    }}
+                  >
+                    {searchResults.map((it) => {
+                      const subtitle = [it.program, it.country, it.years].filter(Boolean).join(" · ");
+                      const hasPin = !!it.coords;
+
+                      return (
+                        <div
+                          key={it.key}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => {
+                            // If it has coords, fly there and keep the current filter active
+                            if (it.coords && mapRef.current) {
+                              mapRef.current.flyTo({
+                                center: it.coords,
+                                zoom: Math.max(mapRef.current.getZoom(), 6),
+                                duration: 550,
+                              });
+                              return;
+                            }
+
+                            // If no coords but has slug, navigate to story
+                            if (it.slug) {
+                              window.location.assign(`/story/${encodeURIComponent(it.slug)}`);
+                              return;
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              (e.currentTarget as any).click();
+                            }
+                          }}
+                          style={{
+                            padding: "10px 12px",
+                            borderBottom: "1px solid rgba(0,0,0,0.08)",
+                            cursor: it.coords || it.slug ? "pointer" : "default",
+                            display: "grid",
+                            gap: 2,
+                          }}
+                        >
+                          <div style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontWeight: 700 }}>
+                            {it.title || "(Untitled)"}
+                            {!hasPin && (
+                              <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.65 }}>
+                                (no map pin)
+                              </span>
+                            )}
+                          </div>
+
+                          {!!subtitle && (
+                            <div style={{ fontSize: 13, opacity: 0.75 }}>
+                              {subtitle}
+                            </div>
+                          )}
+
+                          {(it.author || it.authorSlug) && (
+                            <div style={{ fontSize: 12, opacity: 0.7 }}>
+                              {it.author ? `By ${it.author}` : ""}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
               </div>
             </>
           )}

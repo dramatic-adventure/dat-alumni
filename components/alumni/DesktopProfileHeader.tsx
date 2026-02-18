@@ -65,6 +65,17 @@ export default function DesktopProfileHeader({
 
   const [displayHeadshotSrc, setDisplayHeadshotSrc] = useState<string>(imageSrc);
 
+  useEffect(() => {
+  if (typeof window === "undefined") return;
+  const src = (displayHeadshotSrc || "").trim();
+  if (!src) return;
+
+  const img = new window.Image();
+  img.decoding = "async";
+  img.loading = "eager";
+  img.src = src;
+}, [displayHeadshotSrc]);
+
   // Keep displayed headshot aligned with prop fallback until hydration overrides it
   useEffect(() => {
     setDisplayHeadshotSrc(imageSrc);
@@ -76,13 +87,14 @@ export default function DesktopProfileHeader({
 
     const toUrl = (it: any): string => {
       const fid = String(it?.fileId || "").trim();
-      if (fid) return `https://drive.google.com/uc?export=view&id=${fid}`;
+      if (fid) return `/api/img?fileId=${encodeURIComponent(fid)}`;
 
       const ext = String(it?.externalUrl || "").trim();
-      if (ext) return ext;
+      if (ext) return `/api/img?url=${encodeURIComponent(ext)}`;
 
       return "";
     };
+
 
     const toTime = (it: any): number => {
       // "uploadedAt" primary, then a few sensible fallbacks
@@ -121,7 +133,7 @@ export default function DesktopProfileHeader({
     async function hydrateHeadshots() {
       try {
         const qs = new URLSearchParams({ alumniId, kind: "headshot" });
-        const r = await fetch(`/api/alumni/media/list?${qs.toString()}`, { cache: "no-store" });
+        const r = await fetch(`/api/alumni/media/list?${qs.toString()}`)
         const j = await r.json();
         const rawItems = (j?.items || []) as any[];
 
@@ -146,7 +158,7 @@ export default function DesktopProfileHeader({
     return () => {
       cancelled = true;
     };
-  }, [alumniId, imageSrc]);
+  }, [alumniId]);
 
   useEffect(() => {
     if (!isModalOpen) return;
@@ -188,16 +200,16 @@ export default function DesktopProfileHeader({
 
     try {
       const qs = new URLSearchParams({ alumniId, kind: "headshot" });
-      const r = await fetch(`/api/alumni/media/list?${qs.toString()}`, { cache: "no-store" });
+      const r = await fetch(`/api/alumni/media/list?${qs.toString()}`)
       const j = await r.json();
       const rawItems = (j?.items || []) as any[];
 
       const toUrl = (it: any): string => {
         const fid = String(it?.fileId || "").trim();
-        if (fid) return `https://drive.google.com/uc?export=view&id=${fid}`;
+        if (fid) return `/api/img?fileId=${encodeURIComponent(fid)}`;
 
         const ext = String(it?.externalUrl || "").trim();
-        if (ext) return ext;
+        if (ext) return `/api/img?url=${encodeURIComponent(ext)}`;
 
         return "";
       };

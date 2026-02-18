@@ -2,7 +2,8 @@
 
 /**
  * 📍 This page is powered by normalized location tokens, not a single `location` field.
- * Params are plain objects in Next 15 — do NOT type them as Promises.
+ * NOTE: In this codebase, some Next 15 dynamic setups pass params as a Promise.
+ * We support both Promise and plain object safely.
  */
 
 import Image from "next/image";
@@ -27,6 +28,17 @@ import {
 
 export const revalidate = 3600;
 
+type ParamsLike<T> = Promise<T> | T;
+
+async function resolveParams(
+  params: ParamsLike<{ slug: string }> | ParamsLike<{ slug?: string }>
+) {
+  const p = (params instanceof Promise ? await params : params) as {
+    slug?: string;
+  };
+  return p;
+}
+
 // ✅ Build all valid slugs from data (server-safe)
 export async function generateStaticParams() {
   const alumni: AlumniRow[] = await loadVisibleAlumni();
@@ -42,10 +54,34 @@ export async function generateStaticParams() {
 }
 
 // ✅ Helpful metadata
-export async function generateMetadata(
-  { params }: { params: { slug: string } }
-): Promise<Metadata> {
-  const slug = params?.slug ?? "";
+export async function generateMetadata({
+  params,
+}: {
+  params: ParamsLike<{ slug: string }> | { slug: string };
+}): Promise<Metadata> {
+  const p = await resolveParams(params);
+  const slug = String(p?.slug ?? "").trim();
+
+  // ✅ Metadata should never crash; fall back gracefully.
+  if (!slug) {
+    return {
+      title: "DAT Locations",
+      description: "Explore where DAT alumni are based around the world.",
+      alternates: { canonical: "/location" },
+      openGraph: {
+        title: "DAT Locations",
+        description: "Explore where DAT alumni are based around the world.",
+        url: "/location",
+        type: "website",
+      },
+      twitter: {
+        card: "summary",
+        title: "DAT Locations",
+        description: "Explore where DAT alumni are based around the world.",
+      },
+    };
+  }
+
   const canonical = unslugToCanonical(slug);
   const parent = getParentFor(canonical);
   const mainLabel = parent?.label ?? canonical;
@@ -56,11 +92,11 @@ export async function generateMetadata(
   return {
     title,
     description,
-    alternates: { canonical: `/location/${slug ?? ""}` },
+    alternates: { canonical: `/location/${slug}` },
     openGraph: {
       title,
       description,
-      url: `/location/${slug ?? ""}`,
+      url: `/location/${slug}`,
       type: "website",
     },
     twitter: {
@@ -71,15 +107,24 @@ export async function generateMetadata(
   };
 }
 
-export default async function LocationPage(
-  { params }: { params: { slug: string } }
-) {
-  const slug = params?.slug ?? "";
+export default async function LocationPage({
+  params,
+}: {
+  params: ParamsLike<{ slug: string }> | { slug: string };
+}) {
+  const p = await resolveParams(params);
+  const slug = String(p?.slug ?? "").trim();
+
+  // ✅ seasons-style guard
+  if (!slug) {
+    notFound();
+  }
+
   const alumni: AlumniRow[] = await loadVisibleAlumni();
 
-  const canonical = unslugToCanonical(slug);      // e.g., "Brooklyn, NYC" or "New York City"
-  const parent = getParentFor(canonical);         // boroughs → { label: "New York City", slug: "new-york-city" }
-  const mainLabel = parent?.label ?? canonical;   // show parent bucket if borough
+  const canonical = unslugToCanonical(slug); // e.g., "Brooklyn, NYC" or "New York City"
+  const parent = getParentFor(canonical); // boroughs → { label: "New York City", slug: "new-york-city" }
+  const mainLabel = parent?.label ?? canonical; // show parent bucket if borough
   const mainSlug = slugifyLocation(typeof mainLabel === "string" ? mainLabel : "");
 
   // Main bucket (deduped via canonicalized links) — include boroughs when viewing NYC
@@ -96,9 +141,13 @@ export default async function LocationPage(
   const centerLabel = resolveNearbyCenter(canonical);
   const excludeSlugs = new Set<string>();
   if (mainLabel === "New York City") {
-    ["new-york-city", "brooklyn-nyc", "queens-nyc", "bronx-nyc", "staten-island-nyc"].forEach(
-      (s) => excludeSlugs.add(s)
-    );
+    [
+      "new-york-city",
+      "brooklyn-nyc",
+      "queens-nyc",
+      "bronx-nyc",
+      "staten-island-nyc",
+    ].forEach((s) => excludeSlugs.add(s));
   } else {
     excludeSlugs.add(mainSlug);
   }
@@ -234,6 +283,7 @@ export default async function LocationPage(
                 {artistsInLocation.map((artist) => (
                   <MiniProfileCard
                     key={artist.slug}
+                    alumniId={artist.slug}
                     name={artist.name}
                     role={artist.role}
                     slug={artist.slug}
@@ -242,7 +292,9 @@ export default async function LocationPage(
                 ))}
               </div>
             ) : (
-              <p className="text-gray-600 italic">No artists currently listed in this location.</p>
+              <p className="text-gray-600 italic">
+                No artists currently listed in this location.
+              </p>
             )}
           </div>
         </div>
@@ -286,6 +338,7 @@ export default async function LocationPage(
                 {nearby.map((n) => (
                   <MiniProfileCard
                     key={n.alum.slug}
+                    alumniId={n.alum.slug}
                     name={n.alum.name}
                     role={n.alum.role}
                     slug={n.alum.slug}
@@ -336,6 +389,7 @@ export default async function LocationPage(
             boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)",
             padding: "4rem 0",
             marginTop: "4rem",
+            marginBottom: "-2rem", // ✅ tuck into footer like other pages
           }}
         >
           <SeasonsCarouselAlt />
