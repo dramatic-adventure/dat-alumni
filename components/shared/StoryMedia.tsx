@@ -144,9 +144,10 @@ export default function StoryMedia({
   const containerClass =
     mode === "lightbox"
       ? "popup-media text-center"
-      : "popup-media w-full mx-auto my-4";
+      : "popup-media w-full my-4"; // ✅ remove mx-auto (centering often pairs with max-width rules)
 
-  // HARD clamp to prevent “oversized” layout explosions
+
+  // ✅ Default: fill parent container width; parent controls padding
   const defaultBoxStyle: React.CSSProperties =
     mode === "lightbox"
       ? {
@@ -158,10 +159,13 @@ export default function StoryMedia({
         }
       : {
           width: "100%",
-          maxWidth: "min(92vw, 1100px)",
-          height: "clamp(260px, 55vh, 620px)",
-          margin: "0 auto",
+          maxWidth: "100%",
+          aspectRatio: "16 / 9",     // ✅ gives stable layout
+          maxHeight: "70vh",         // ✅ prevents absurdly tall on large screens
+          margin: 0,
         };
+
+
 
   const boxStyle: React.CSSProperties = {
     ...defaultBoxStyle,
@@ -233,6 +237,7 @@ export default function StoryMedia({
           allowFullScreen
           loading="lazy"
           className="w-full aspect-video rounded-xl shadow-md min-h-[300px] sm:min-h-[400px] lg:min-h-[480px]"
+          style={{ border: "none", display: "block" }}
           aria-label={title || "Embedded video"}
         />
       </div>
@@ -298,8 +303,8 @@ export default function StoryMedia({
     }
 
     return (
-      <div className={containerClass}>
-        <div style={boxStyle}>
+      <div className={containerClass} style={{ width: "100%", maxWidth: "100%" }}>
+        <div style={{ ...boxStyle, width: "100%", maxWidth: "100%" }}>
           <Image
             src={imgSrc}
             alt={title || "Image"}
@@ -307,7 +312,7 @@ export default function StoryMedia({
             className={
               mode === "lightbox"
                 ? "object-contain"
-                : "object-contain rounded-xl shadow-md"
+                : "object-cover rounded-xl shadow-md"
             }
             sizes={
               mode === "lightbox"

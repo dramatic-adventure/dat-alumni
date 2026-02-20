@@ -12,7 +12,34 @@ export async function fetchStories(): Promise<StoryRow[]> {
   try {
     const csvText = await loadCsv(CSV_URL, FALLBACK_FILENAME);
 
-    const { data, errors } = Papa.parse<Record<string, string>>(csvText, {
+    // ✅ Clean Map Data exports often start with a comma-only “ARRAYFORMULA” junk row.
+    // PapaParse (header:true) will treat that as the header row unless we strip it.
+    function isCommaOnlyLine(line: string): boolean {
+      const s = String(line || "").trim();
+      if (!s) return true;
+      return s.replace(/[, \t]/g, "") === "";
+    }
+
+    function stripLeadingJunk(csv: string): string {
+      const lines = String(csv || "").split(/\r?\n/);
+      let start = 0;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = String(lines[i] ?? "").replace(/^\uFEFF/, "").trim();
+        if (!line) continue;
+        if (isCommaOnlyLine(line)) continue;
+
+        // First meaningful line is our true header row
+        start = i;
+        break;
+      }
+
+      return lines.slice(start).join("\n");
+    }
+
+    const cleanedCsvText = stripLeadingJunk(csvText);
+
+    const { data, errors } = Papa.parse<Record<string, string>>(cleanedCsvText, {
       header: true,
       skipEmptyLines: true,
     });

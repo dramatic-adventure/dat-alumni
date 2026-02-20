@@ -1,4 +1,4 @@
-// lib/loadRows.ts  (or wherever this file lives)
+// lib/loadRows.ts  
 
 import { cache } from "react";
 import { fetchStories } from "./fetchStories";

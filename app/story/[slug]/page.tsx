@@ -5,6 +5,7 @@ export const revalidate = 0; // explicit: never cache/prerender this route
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import type { Metadata } from "next";
+import { normalizeStoryRow } from "@/lib/normalizeStoryRow";
 import loadRows from "@/lib/loadRows";
 import type { StoryRow } from "@/lib/types";
 import ClientStory from "./ClientStory";
@@ -59,6 +60,27 @@ function pickFirst(row: any, keys: string[]): string {
   return "";
 }
 
+function extractSlugFromStoryUrl(url: any): string {
+  const u = String(url ?? "").trim();
+  if (!u) return "";
+  try {
+    const parsed = new URL(u, "http://local");
+    const m = parsed.pathname.match(/\/story\/([^\/?#]+)/i);
+    if (m?.[1]) return decodeURIComponent(m[1]).trim();
+  } catch {
+    const cleaned = u.replace(/^https?:\/\/[^/]+/i, "");
+    const m = cleaned.match(/\/story\/([^\/?#]+)/i);
+    if (m?.[1]) return decodeURIComponent(m[1]).trim();
+  }
+  return "";
+}
+
+/**
+ * Normalize any story-ish row (loadRows OR /api/stories Clean Map Data)
+ * into the exact keys the client StoryPage expects.
+ */
+
+
 // server-safe OG image picker
 function pickOgImage(story: StoryRow, baseUrl: string): string {
   const src = (story.imageUrl || "").trim();
@@ -112,9 +134,17 @@ async function loadStoryFromStoriesApi(
     const wanted = normalizeSlug(slug);
 
     const hit = data.stories.find((r: any) => {
-      const s = pickFirst(r, ["slug", "Slug", "SLUG"]);
+      const direct =
+        pickFirst(r, ["storySlug", "Story Slug", "StorySlug", "slug", "Slug", "SLUG"]);
+
+      const fromUrl = extractSlugFromStoryUrl(
+        pickFirst(r, ["Story URL", "StoryURL", "storyUrl", "story_url", "url", "URL"])
+      );
+
+      const s = direct || fromUrl;
       return normalizeSlug(s) === wanted;
     });
+
 
     if (!hit) return null;
 
@@ -124,11 +154,24 @@ async function loadStoryFromStoriesApi(
       title: pickFirst(hit, ["title", "Title"]) || slug,
       story:
         pickFirst(hit, [
+          // ✅ full body first
+          "Full Story",
+          "FullStory",
+          "fullStory",
+          "full_story",
+          "Body",
+          "body",
+          "Content",
+          "content",
+          "Text",
+          "text",
           "story",
           "Story",
+          // ✅ then teaser
           "Short Story",
           "ShortStory",
           "shortStory",
+          "short_story",
         ]) || "",
       imageUrl:
         pickFirst(hit, ["imageUrl", "Image URL", "ImageURL", "image"]) || "",
@@ -148,21 +191,102 @@ async function loadStoryFromStoriesApi(
   }
 }
 
+function hasAnyContentFields(story: any): boolean {
+  const s = (story?.story || "").trim();
+  const p = (story?.partners || "").trim();
+  const q = (story?.quote || "").trim();
+  const loc = (story?.location || "").trim();
+  const c = (story?.country || "").trim();
+  const y = (story?.year || "").trim();
+  const prog = (story?.program || "").trim();
+  return !!(s || p || q || loc || c || y || prog);
+}
+
+function mergePreferPrimary(primary: any, fallback: any) {
+  const pick = (a: any, b: any) => (String(a ?? "").trim() ? a : b);
+
+  return {
+    ...(fallback || {}),
+    ...(primary || {}),
+
+    // canonical keys the client expects — primary wins unless blank
+    slug: pick(primary?.slug, fallback?.slug),
+    title: pick(primary?.title, fallback?.title),
+    story: pick(primary?.story, fallback?.story),
+    imageUrl: pick(primary?.imageUrl, fallback?.imageUrl),
+
+    location: pick(primary?.location, fallback?.location),
+    country: pick(primary?.country, fallback?.country),
+    year: pick(primary?.year, fallback?.year),
+    program: pick(primary?.program, fallback?.program),
+    partners: pick(primary?.partners, fallback?.partners),
+
+    quote: pick(primary?.quote, fallback?.quote),
+    quoteAuthor: pick(primary?.quoteAuthor, fallback?.quoteAuthor),
+
+    moreInfoLink: pick(primary?.moreInfoLink, fallback?.moreInfoLink),
+    author: pick(primary?.author, fallback?.author),
+    authorSlug: pick(primary?.authorSlug, fallback?.authorSlug),
+  } as any;
+}
+
 async function findStoryBySlug(slugRaw: string): Promise<StoryRow | null> {
   const needle = normalizeSlug(slugRaw);
 
   // Primary dataset
   const all = await loadRows();
-  const primaryHit = all.find(
-    (row: any) => normalizeSlug(row?.slug) === needle
-  ) as StoryRow | undefined;
-  if (primaryHit) return primaryHit;
+  const primaryHit = all.find((row: any) => {
+    const s =
+      pickFirst(row, [
+        "slug",
+        "Slug",
+        "storySlug",
+        "story_slug",
+        "Story Slug",
+        "StorySlug",
+      ]) ||
+      extractSlugFromStoryUrl(
+        pickFirst(row, ["Story URL", "StoryURL", "storyUrl", "story_url", "url", "URL"])
+      );
+
+    return normalizeSlug(s) === needle;
+  }) as StoryRow | undefined;
+
+  const baseUrl = await getBaseUrl();
+
+  if (primaryHit) {
+    const primaryNorm = await normalizeStoryRow(primaryHit);
+    if (primaryNorm && !primaryNorm.slug) {
+      (primaryNorm as any).slug = slugRaw;
+    }
+
+
+    // ✅ If primary is missing the “body” fields, enrich from /api/stories and merge
+    if (!hasAnyContentFields(primaryNorm)) {
+      const apiHit = await loadStoryFromStoriesApi(baseUrl, slugRaw);
+      if (apiHit) {
+      const apiNorm = await normalizeStoryRow(apiHit as any);
+      if (apiNorm && !apiNorm.slug) {
+        (apiNorm as any).slug = slugRaw;
+      }
+        return mergePreferPrimary(primaryNorm, apiNorm);
+      }
+    }
+
+    return primaryNorm;
+  }
 
   // Fallback dataset (Clean Map Data via /api/stories)
-  const baseUrl = await getBaseUrl();
   const apiHit = await loadStoryFromStoriesApi(baseUrl, slugRaw);
-  return apiHit;
+  if (!apiHit) return null;
+
+  const apiNorm = await normalizeStoryRow(apiHit as any);
+  if (apiNorm && !apiNorm.slug) {
+    (apiNorm as any).slug = slugRaw;
+  }
+  return apiNorm;
 }
+
 
 export async function generateMetadata({
   params,
@@ -214,9 +338,10 @@ export default async function StorySlugPage({
   params: RouteParams | Promise<RouteParams>;
 }) {
   const { slug: rawSlug } = await readParams(params);
-  const story = await findStoryBySlug(rawSlug);
+  const storyRaw = await findStoryBySlug(rawSlug);
+  if (!storyRaw) return notFound();
 
-  if (!story) return notFound();
+  const story = await normalizeStoryRow(storyRaw as any);
 
   const authorKey =
     pickFirst(story as any, ["authorSlug", "AuthorSlug", "alumniSlug", "profileSlug"]) ||

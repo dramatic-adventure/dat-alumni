@@ -311,7 +311,7 @@ export default function ProfileCard(props: ProfileCardProps) {
     email,
     website,
     updates = [],
-    stories = [],
+    stories: storiesProp = [],
     slugAliases = [],
   } = props;
 
@@ -395,15 +395,151 @@ export default function ProfileCard(props: ProfileCardProps) {
   }, [name, hasMeasured]);
 
   const hasArtistBio = !!artistStatement?.trim() || identityTags.length > 0;
-  const hasStories = stories?.length > 0;
 
-  // ✅ Alias-aware normalized slug set
+  // ✅ Alias-aware normalized slug set (must be defined BEFORE any story filtering)
   const aliasNormSet = useMemo(() => {
     const set = new Set<string>();
     set.add(normSlugish(slug));
     for (const a of slugAliases) set.add(normSlugish(a));
     return set;
   }, [slug, slugAliases]);
+
+  // -------------------------------------------------------
+  // ✅ Stories: pull from SAME source as Story Map pins (/api/stories)
+  // Prefer server-filter via alumniId when available.
+  // -------------------------------------------------------
+  const [storiesFromApi, setStoriesFromApi] = useState<StoryRow[] | null>(null);
+
+  useEffect(() => {
+    // If caller already provided stories, keep them (no fetch).
+    if (Array.isArray(storiesProp) && storiesProp.length > 0) {
+      setStoriesFromApi(null);
+      return;
+    }
+
+    let alive = true;
+
+    (async () => {
+      try {
+        const qs =
+          props.alumniId && String(props.alumniId).trim()
+            ? `?alumniId=${encodeURIComponent(String(props.alumniId).trim())}`
+            : "";
+
+        const res = await fetch(`/api/stories${qs}`, { cache: "no-store" });
+        if (!res.ok) return;
+
+        const json = (await res.json()) as any;
+        const rows = Array.isArray(json) ? json : Array.isArray(json?.stories) ? json.stories : [];
+
+        const mapped: StoryRow[] = rows
+          .map((r: any) => {
+            const slug = String(
+              r?.storySlug ??
+                r?.story_slug ??
+                r?.["story slug"] ??
+                r?.slug ??
+                r?.Slug ??
+                ""
+            ).trim();
+
+            const title = String(r?.Title ?? r?.title ?? r?.headline ?? r?.Headline ?? "").trim();
+
+            const story = String(
+              r?.["Short Story"] ?? r?.shortStory ?? r?.["short story"] ?? r?.Story ?? r?.story ?? ""
+            ).trim();
+
+            const imageUrl = String(
+              r?.mediaUrl ??
+                r?.mediaURL ??
+                r?.["mediaUrl"] ??
+                r?.["Media URL"] ??
+                r?.["Image URL"] ??
+                r?.imageUrl ??
+                r?.ImageURL ??
+                ""
+            ).trim();
+
+            const authorSlug = String(
+              r?.authorSlug ?? r?.AuthorSlug ?? r?.author ?? r?.Author ?? ""
+            ).trim();
+
+            if (!slug || !title) return null;
+
+            return {
+              ...(r as any),
+              slug,
+              title,
+              story,
+              imageUrl,
+              authorSlug,
+            } as StoryRow;
+
+          })
+          .filter(Boolean) as StoryRow[];
+
+        if (!alive) return;
+        setStoriesFromApi(mapped);
+      } catch {
+        // swallow — we'll just end up with none
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [storiesProp, props.alumniId]);
+
+  const storiesUnified = useMemo(() => {
+    const base = (storiesFromApi && storiesFromApi.length > 0 ? storiesFromApi : storiesProp) || [];
+
+    // If /api/stories was filtered by alumniId, it's already correct.
+    if (props.alumniId && String(props.alumniId).trim()) return base;
+
+    // Otherwise alias-filter by authorSlug (same logic as pins use conceptually)
+    return base.filter((s: any) => {
+      const a = normSlugish(s?.authorSlug ?? s?.profileSlug ?? s?.author ?? "");
+      return a && aliasNormSet.has(a);
+    });
+  }, [storiesFromApi, storiesProp, props.alumniId, aliasNormSet]);
+
+  const storiesForFeatured = useMemo(() => {
+  const toSlug = (s: any) =>
+    String(s?.slug ?? s?.storySlug ?? s?.story_slug ?? "").trim();
+
+  return (storiesUnified || [])
+    .map((s: any) => {
+      const slug = toSlug(s);
+      const title = String(s?.title ?? s?.Title ?? "").trim();
+
+      // story text can be empty; do NOT require it
+      const story = String(
+        s?.story ??
+          s?.["Short Story"] ??
+          s?.shortStory ??
+          s?.Story ??
+          ""
+      ).trim();
+
+      const imageUrl = String(
+        s?.imageUrl ??
+          s?.["Image URL"] ??
+          s?.mediaUrl ??
+          s?.MediaUrl ??
+          ""
+      ).trim();
+
+      const authorSlug = String(s?.authorSlug ?? s?.AuthorSlug ?? "").trim();
+
+      if (!slug || !title) return null;
+
+      return { ...(s as any), slug, title, story, imageUrl, authorSlug } as StoryRow;
+    })
+    .filter(Boolean) as StoryRow[];
+}, [storiesUnified]);
+
+const hasStories = storiesForFeatured.length > 0;
+
 
   // ✅ Featured productions (unchanged)
   const featuredProductions = useMemo(() => {
@@ -789,9 +925,10 @@ export default function ProfileCard(props: ProfileCardProps) {
           The parent already passed the correct (alias-aware) slice. */}
       {hasStories && (
         <section className="bg-[#f2f2f2] rounded-xl px-[30px] py-[30px] mt-[0px]">
-          <FeaturedStories stories={stories} authorSlug={undefined} />
+          <FeaturedStories stories={storiesForFeatured} authorSlug={undefined} />
         </section>
       )}
+
 
       {lightboxOpen && <Lightbox images={lightboxUrls} onClose={() => setLightboxOpen(false)} />}
     </div>

@@ -266,20 +266,31 @@ a, button, [role="link"], [role="button"] {
   font-family: var(--font-space-grotesk), system-ui, sans-serif;
   font-size: 0.8rem;
   text-align: right;
-  margin-top: 1.5rem;
-  margin-bottom: 0;
+  margin-bottom: 0.2rem;
+  margin-top: 0.2rem;
 }
 .popup-program {
   font-family: var(--font-space-grotesk), system-ui, sans-serif;
   font-size: 1rem;
+  margin-top: 0.3rem;
   margin-bottom: 0.75rem;
 }
 .popup-media {
   display: flex;
   flex-direction: column;
+  align-items: stretch; /* ✅ force full-width children */
+  width: 100%;
+  max-width: 100%;
   gap: 1rem;
   margin-bottom: 0;
 }
+
+/* ✅ force the StoryMedia wrapper div(s) to actually span */
+.popup-media > * {
+  width: 100%;
+  max-width: 100%;
+}
+
 .popup-image {
   width: 100%;
   height: auto;
@@ -299,40 +310,52 @@ a, button, [role="link"], [role="button"] {
 }
 .popup-partners {
   font-family: var(--font-dm-sans), system-ui, sans-serif;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   font-style: italic;
   text-align: right;
+  margin-top: 0.25rem;
   margin-bottom: 1.2rem;
   line-height: 1.4;
 }
 .popup-quote {
   font-family: var(--font-space-grotesk), system-ui, sans-serif;
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   font-style: italic;
   margin: 0.75rem 2rem 0.25rem;
 }
 .popup-quote-author {
   font-family: var(--font-dm-sans), system-ui, sans-serif;
-  font-size: 0.8rem;
+  font-size: 1rem;
   margin: 0.25rem 3rem 1.9rem;
 }
 .popup-story {
   font-family: var(--font-dm-sans), system-ui, sans-serif;
-  font-size: 1rem;
+  font-size: 1.05rem;
   line-height: 1.5;
   margin: -0.5rem 0;
 }
 .popup-author {
   font-family: var(--font-dm-sans), system-ui, sans-serif;
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #FF007F;
+  color: #6c00af;
   margin-bottom: 0.75rem;
 }
 .popup-author a {
-  color: #FF007F;
-  text-decoration: underline;
+  transition: color 160ms ease, letter-spacing 160ms ease;
 }
+
+/* keep your existing default author color */
+.popup-author a {
+  color: #6c00af;
+}
+
+/* hover behavior for BOTH author link + "Explore more stories" button */
+.popup-author a:hover {
+  color: #f23359 !important;
+  letter-spacing: 0.1em; /* increase from your base 0.4em on the button */
+}
+
 .popup-button {
   display: block;
   width: 100%;
@@ -349,9 +372,16 @@ a, button, [role="link"], [role="button"] {
   transition: background-color 0.3s ease;
   margin-top: 1.5rem;
 }
+.popup-button {
+  text-decoration: none !important;
+  transition: background-color 160ms ease, color 160ms ease, letter-spacing 160ms ease;
+}
+
 .popup-button:hover {
   background: #123a40;
+  text-decoration: none !important;
 }
+
 .story-page ul {
   list-style: none;
   padding: 0;
@@ -360,11 +390,20 @@ a, button, [role="link"], [role="button"] {
   gap: 0.5rem;
 }
 .story-page li {
-  background-color: #eee;
+  background-color: #f2f2f2;
   padding: 0.25rem 0.75rem;
   border-radius: 6px;
   font-size: 0.75rem;
 }
+
+/* Explore More Stories hover behavior */
+.explore-more-link{
+  transition: color 160ms ease;
+}
+.explore-more-link:hover {
+  color: #6c00af !important;
+}
+
 
 /* ===============================
    🪧 Program Stamps

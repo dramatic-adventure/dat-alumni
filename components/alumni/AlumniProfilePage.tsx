@@ -83,6 +83,9 @@ export default function AlumniProfilePage({
   const slug = cleanStr(d.slug) ?? "";
   const name = cleanStr(d.name) ?? "";
 
+  // ✅ Stable story identity (matches your Stories sheet column `alumniId`)
+  const alumniId = cleanStr(d.alumniId ?? d.alumni_id ?? d["alumni id"] ?? d.id ?? d.profileId) ?? "";
+
   const roles = Array.isArray(d.roles) ? (d.roles as string[]) : [];
   const role = cleanStr(d.role) ?? "";
   const headshotUrl = cleanStr(d.headshotUrl); // allow undefined; ProfileCard/Provider can fill
@@ -137,13 +140,44 @@ export default function AlumniProfilePage({
   }, [slug, slugAliases]);
 
   // ✅ Author stories (alias-aware, normalized)
-  const authorStories = useMemo(() => {
-    return (allStories || []).filter((story) => {
-      const as = (story as any)?.authorSlug;
-      if (!as) return false;
-      return aliasNormSet.has(normSlugish(as));
-    });
-  }, [allStories, aliasNormSet]);
+const authorStories = useMemo(() => {
+  const rows = allStories || [];
+
+  const byId =
+    alumniId
+      ? rows.filter((s: any) => {
+          const sid = String(s?.alumniId ?? s?.alumni_id ?? s?.["alumni id"] ?? "").trim();
+          return sid && sid === alumniId;
+        })
+      : [];
+
+  // ✅ If alumniId produces matches, use them. If not, fall back to slug/alias matching.
+  if (byId.length > 0) return byId;
+
+  return rows.filter((s: any) => {
+    // match either authorSlug OR alumniId against slug/aliases
+    const a = String(
+      s?.authorSlug ??
+        s?.AuthorSlug ??
+        s?.author_slug ??
+        s?.["author slug"] ??
+        ""
+    ).trim();
+
+    const sid = String(
+      s?.alumniId ??
+        s?.AlumniId ??
+        s?.alumni_id ??
+        s?.["alumni id"] ??
+        ""
+    ).trim();
+
+    const aNorm = a ? normSlugish(a) : "";
+    const idNorm = sid ? normSlugish(sid) : "";
+
+    return (aNorm && aliasNormSet.has(aNorm)) || (idNorm && aliasNormSet.has(idNorm));
+  });
+}, [allStories, aliasNormSet, alumniId]);
 
   // ✅ Detect mobile viewport
   const [isMobile, setIsMobile] = useState(false);
@@ -215,6 +249,9 @@ export default function AlumniProfilePage({
               <ProfileCard
                 slug={safeSlugForLinks}
                 slugAliases={slugAliases}
+                // IMPORTANT: only pass a real stable alumniId.
+// If missing, pass nothing so ProfileCard falls back to alias/authorSlug matching.
+alumniId={alumniId || undefined}
                 name={name}
                 role={displayRole}
                 headshotUrl={headshotUrl || ""}
