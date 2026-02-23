@@ -39,11 +39,11 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.tspackage-lock.json
 
 .env
 .env.*
 .env.local
+.env.*.local
 
 /generated/prisma
 
@@ -57,3 +57,6 @@ next-env.d.tspackage-lock.json
 # macOS
 .DS_Store
 **/.DS_Store
+
+# Netlify prod import file (never commit)
+netlify.env
