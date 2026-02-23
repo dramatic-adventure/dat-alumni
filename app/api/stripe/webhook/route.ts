@@ -25,7 +25,8 @@ const EVENT_ALIAS: Record<string, Stripe.Event["type"]> = {
 
 // Pin the apiVersion to whatever your Stripe SDK types expect.
 // Your error shows it expects "2025-12-15.clover".
-const STRIPE_API_VERSION: Stripe.StripeConfig["apiVersion"] = "2025-12-15.clover";
+// Intentionally not pinning apiVersion. Webhook signature verification + event handling
+// should be compatible with the account/webhook's configured API version.
 
 
 function misconfigured(name: string) {
@@ -380,7 +381,7 @@ export async function POST(req: Request) {
     if (!sig) return new NextResponse("Missing stripe-signature header", { status: 400 });
 
     const rawBody = Buffer.from(await req.arrayBuffer());
-    const stripe = new Stripe(stripeSecretKey, { apiVersion: STRIPE_API_VERSION });
+    const stripe = new Stripe(stripeSecretKey);
 
     let event: Stripe.Event;
     try {
@@ -400,8 +401,10 @@ export async function POST(req: Request) {
       console.log(`[stripe] alias ${event.type} -> ${canonicalType}`);
     }
 
-    // eslint-disable-next-line no-console
-    console.log(`[stripe] ${event.type} -> ${canonicalType} ${event.id}`);
+    if (DEBUG) {
+      // eslint-disable-next-line no-console
+      console.log(`[stripe] ${event.type} -> ${canonicalType} ${event.id}`);
+    }
 
     const result = await prisma.$transaction(async (tx) => {
       // Idempotency guard
