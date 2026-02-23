@@ -50,13 +50,10 @@ export type DramaClubCauseSubcategory =
   | "island-ecosystem-protection"
   | "biodiversity-wildlife-protection"
   | "environmental-education"
-  | "natural-resource-stewardship"
   | "community-led-conservation"
-  | "disaster-resilience"
   // 3. Youth Empowerment, Mental Health & Wellbeing
   | "youth-leadership"
   | "youth-mental-health-emotional-wellbeing"
-  | "trauma-informed-spaces"
   | "arts-access-for-youth"
   | "social-emotional-learning"
   | "youth-in-care-displacement-support"
@@ -68,8 +65,6 @@ export type DramaClubCauseSubcategory =
   | "education-equity"
   | "literacy-learning-access"
   | "inclusive-education-disabled-youth"
-  | "digital-inclusion"
-  | "school-retention-success"
   | "global-learning-cultural-literacy"
   | "reducing-barriers-to-education"
   // 5. Social Justice, Human Rights & Equity
@@ -79,9 +74,9 @@ export type DramaClubCauseSubcategory =
   | "disability-rights"
   | "migration-refugee-rights"
   | "poverty-reduction-social-inclusion"
-  | "criminalization-of-poverty-awareness"
   | "access-to-justice"
   | "peacebuilding-anti-violence"
+  | "democracy-civic-voice"
   // 6. Community Wellbeing, Safety & Resilience
   | "food-security"
   | "clean-water-access"
@@ -91,6 +86,7 @@ export type DramaClubCauseSubcategory =
   | "local-leadership-capacity-building"
   | "health-access-rural-indigenous"
   | "post-conflict-post-trauma-community-healing"
+  | "ethical-regenerative-travel"
   // 7. Arts, Culture, Storytelling & Representation
   | "freedom-of-expression"
   | "arts-cultural-preservation"
@@ -196,7 +192,7 @@ export const CAUSE_CATEGORIES_BY_ID: Record<
 );
 
 /* ----------------------------------------
- * Canonical Subcategory Mapping (60)
+ * Canonical Subcategory Mapping
  * ------------------------------------- */
 
 /**
@@ -220,35 +216,43 @@ export const CAUSE_SUBCATEGORIES_BY_CATEGORY: Record<
     {
       id: "indigenous-land-rights",
       label: "Indigenous Land Rights",
+      shortLabel: "Indigenous land rights",
     },
     {
       id: "indigenous-water-rights",
       label: "Indigenous Water Rights",
+      shortLabel: "Water rights & protection",
     },
     {
       id: "tribal-community-sovereignty",
       label: "Tribal & Community Sovereignty",
+      shortLabel: "Tribal sovereignty",
     },
     {
       id: "ancestral-territory-protection",
       label: "Ancestral Territory Protection",
+      shortLabel: "Ancestral territory protection",
     },
     {
       id: "indigenous-cultural-preservation-traditional-knowledge",
       label: "Cultural Preservation & Traditional Knowledge",
+      shortLabel: "Indigenous cultural preservation",
     },
     {
       id: "language-revitalization",
       label: "Language Revitalization",
+      shortLabel: "Language revitalization",
     },
     {
       id: "indigenous-ecological-knowledge",
       label: "Indigenous Ecological Knowledge",
+      shortLabel: "Indigenous ecological knowledge",
     },
     {
       id: "anti-extractive-justice",
       label:
         "Anti-Extractive Justice (anti-mining, anti-oil, anti-deforestation)",
+      shortLabel: "Harmful mining & extraction",
     },
   ],
 
@@ -257,38 +261,37 @@ export const CAUSE_SUBCATEGORIES_BY_CATEGORY: Record<
     {
       id: "climate-justice",
       label: "Climate Justice",
+      shortLabel: "Climate justice",
     },
     {
       id: "rainforest-protection",
       label: "Rainforest Protection",
+      shortLabel: "Rainforest protection",
     },
     {
       id: "coastal-ocean-conservation",
       label: "Coastal & Ocean Conservation",
+      shortLabel: "Coastal & ocean protection",
     },
     {
       id: "island-ecosystem-protection",
       label: "Island Ecosystem Protection",
+      shortLabel: "Island ecosystem protection",
     },
     {
       id: "biodiversity-wildlife-protection",
       label: "Biodiversity & Wildlife Protection",
+      shortLabel: "Wildlife & biodiversity protection",
     },
     {
       id: "environmental-education",
       label: "Environmental Education",
-    },
-    {
-      id: "natural-resource-stewardship",
-      label: "Natural Resource Stewardship",
+      shortLabel: "Environmental education",
     },
     {
       id: "community-led-conservation",
       label: "Community-Led Conservation",
-    },
-    {
-      id: "disaster-resilience",
-      label: "Disaster Resilience",
+      shortLabel: "Community-led conservation",
     },
   ],
 
@@ -297,38 +300,42 @@ export const CAUSE_SUBCATEGORIES_BY_CATEGORY: Record<
     {
       id: "youth-leadership",
       label: "Youth Leadership",
+      shortLabel: "Youth leadership",
     },
     {
       id: "youth-mental-health-emotional-wellbeing",
       label: "Mental Health & Emotional Wellbeing",
-    },
-    {
-      id: "trauma-informed-spaces",
-      label: "Trauma-Informed Spaces",
+      shortLabel: "Youth mental health & wellbeing",
     },
     {
       id: "arts-access-for-youth",
       label: "Arts Access for Youth",
+      shortLabel: "Arts access for youth",
     },
     {
       id: "social-emotional-learning",
       label: "Social-Emotional Learning",
+      shortLabel: "Social-emotional learning",
     },
     {
       id: "youth-in-care-displacement-support",
       label: "Support for Youth in Care / Displacement",
+      shortLabel: "Youth in care & displacement",
     },
     {
       id: "bullying-prevention",
       label: "Bullying Prevention",
+      shortLabel: "Bullying prevention",
     },
     {
       id: "youth-safety-resilience",
       label: "Youth Safety & Resilience",
+      shortLabel: "Youth safety & resilience",
     },
     {
       id: "girls-empowerment-agency",
       label: "Girls’ Empowerment & Agency",
+      shortLabel: "Girls’ empowerment & agency",
     },
   ],
 
@@ -337,35 +344,33 @@ export const CAUSE_SUBCATEGORIES_BY_CATEGORY: Record<
     {
       id: "education-equity",
       label: "Education Equity",
+      shortLabel: "Education equity",
     },
     {
       id: "literacy-learning-access",
       label: "Literacy & Learning Access",
+      shortLabel: "Literacy & learning access",
     },
     {
       id: "inclusive-education-disabled-youth",
       label: "Inclusive Education for Disabled Youth",
-    },
-    {
-      id: "digital-inclusion",
-      label: "Digital Inclusion",
+      shortLabel: "Inclusive education (disabled youth)",
     },
     {
       id: "arts-education-access",
       label: "Arts Education Access",
-    },
-    {
-      id: "school-retention-success",
-      label: "School Retention & Success",
+      shortLabel: "Arts education access",
     },
     {
       id: "global-learning-cultural-literacy",
       label: "Global Learning & Cultural Literacy",
+      shortLabel: "Global learning & cultural literacy",
     },
     {
       id: "reducing-barriers-to-education",
       label:
         "Reducing Barriers to Education (rural, minority, Roma, etc.)",
+      shortLabel: "Removing barriers to education",
     },
   ],
 
@@ -374,38 +379,47 @@ export const CAUSE_SUBCATEGORIES_BY_CATEGORY: Record<
     {
       id: "anti-racism",
       label: "Anti-Racism",
+      shortLabel: "Anti-racism",
     },
     {
       id: "gender-equality-womens-rights",
       label: "Gender Equality & Women’s Rights",
+      shortLabel: "Gender equality & women’s rights",
     },
     {
       id: "lgbtq-inclusion",
       label: "LGBTQ+ Inclusion",
+      shortLabel: "LGBTQ+ inclusion",
     },
     {
       id: "disability-rights",
       label: "Disability Rights",
+      shortLabel: "Disability rights",
     },
     {
       id: "migration-refugee-rights",
       label: "Migration & Refugee Rights",
+      shortLabel: "Migrant & refugee rights",
     },
     {
       id: "poverty-reduction-social-inclusion",
       label: "Poverty Reduction & Social Inclusion",
-    },
-    {
-      id: "criminalization-of-poverty-awareness",
-      label: "Criminalization of Poverty Awareness",
+      shortLabel: "Poverty reduction & social inclusion",
     },
     {
       id: "access-to-justice",
       label: "Access to Justice",
+      shortLabel: "Access to justice",
     },
     {
       id: "peacebuilding-anti-violence",
       label: "Peacebuilding & Anti-Violence",
+      shortLabel: "Peacebuilding & anti-violence",
+    },
+    {
+      id: "democracy-civic-voice",
+      label: "Democracy, Civic Voice & Anti-Authoritarianism",
+      shortLabel: "Democracy & civic voice",
     },
   ],
 
@@ -414,34 +428,47 @@ export const CAUSE_SUBCATEGORIES_BY_CATEGORY: Record<
     {
       id: "food-security",
       label: "Food Security",
+      shortLabel: "Food security",
     },
     {
       id: "clean-water-access",
       label: "Clean Water Access",
+      shortLabel: "Access to clean water",
     },
     {
       id: "housing-urban-renewal",
       label: "Housing & Urban Renewal",
+      shortLabel: "Housing & urban renewal",
     },
     {
       id: "community-safety",
       label: "Community Safety",
+      shortLabel: "Community safety",
     },
     {
       id: "violence-prevention",
       label: "Violence Prevention",
+      shortLabel: "Violence prevention",
     },
     {
       id: "local-leadership-capacity-building",
       label: "Local Leadership & Capacity Building",
+      shortLabel: "Local leadership & capacity building",
     },
     {
       id: "health-access-rural-indigenous",
       label: "Health Access (especially rural & Indigenous)",
+      shortLabel: "Health access (rural & Indigenous)",
     },
     {
       id: "post-conflict-post-trauma-community-healing",
       label: "Post-Conflict / Post-Trauma Community Healing",
+      shortLabel: "Post-conflict community healing",
+    },
+    {
+      id: "ethical-regenerative-travel",
+      label: "Ethical Travel & Regenerative Tourism",
+      shortLabel: "Ethical & regenerative travel",
     },
   ],
 
@@ -450,43 +477,104 @@ export const CAUSE_SUBCATEGORIES_BY_CATEGORY: Record<
     {
       id: "freedom-of-expression",
       label: "Freedom of Expression",
+      shortLabel: "Freedom of expression",
     },
     {
       id: "arts-cultural-preservation",
       label: "Cultural Preservation",
+      shortLabel: "Cultural preservation",
     },
     {
       id: "arts-heritage-traditional-knowledge",
       label: "Heritage & Traditional Knowledge",
+      shortLabel: "Heritage & traditional knowledge",
     },
     {
       id: "representation-in-the-arts",
       label: "Representation in the Arts",
+      shortLabel: "Representation in the arts",
     },
     {
       id: "equity-in-storytelling",
       label: "Equity in Storytelling",
+      shortLabel: "Equity in storytelling",
     },
     {
       id: "narrative-justice",
       label: "Narrative Justice",
+      shortLabel: "Narrative justice",
     },
     {
       id: "intergenerational-storytelling",
       label: "Intergenerational Storytelling",
+      shortLabel: "Intergenerational storytelling",
     },
     {
       id: "community-creative-expression",
       label: "Community Creative Expression",
+      shortLabel: "Community creative expression",
     },
     {
       id: "artistic-rights-access",
       label: "Artistic Rights & Access",
+      shortLabel: "Artistic rights & access",
     },
     {
       id: "cross-cultural-exchange-solidarity",
       label: "Cross-Cultural Exchange & Solidarity",
-      shortLabel: "Cross-cultural exchange",
+      shortLabel: "Cross-cultural solidarity",
     },
+  ],
+};
+export const FEATURED_CAUSE_SUBCATEGORIES_BY_CATEGORY: Record<
+  DramaClubCauseCategory,
+  DramaClubCauseSubcategory[]
+> = {
+  "indigenous-sovereignty-rights": [
+    "indigenous-land-rights",
+    "indigenous-cultural-preservation-traditional-knowledge",
+    "language-revitalization",
+    "anti-extractive-justice",
+  ],
+
+  "climate-justice-biodiversity-environmental-protection": [
+    "climate-justice",
+    "rainforest-protection",
+    "coastal-ocean-conservation",
+    "biodiversity-wildlife-protection",
+  ],
+
+  "youth-empowerment-mental-health-wellbeing": [
+    "youth-leadership",
+    "youth-mental-health-emotional-wellbeing",
+    "arts-access-for-youth",
+    "youth-safety-resilience",
+  ],
+
+  "education-access-equity-opportunity": [
+    "education-equity",
+    "arts-education-access",
+    "literacy-learning-access",
+  ],
+
+  "social-justice-human-rights-equity": [
+    "anti-racism",
+    "gender-equality-womens-rights",
+    "lgbtq-inclusion",
+    "democracy-civic-voice",
+  ],
+
+  "community-wellbeing-safety-resilience": [
+    "food-security",
+    "clean-water-access",
+    "community-safety",
+    "ethical-regenerative-travel",
+  ],
+
+  "arts-culture-storytelling-representation": [
+    "representation-in-the-arts",
+    "equity-in-storytelling",
+    "narrative-justice",
+    "cross-cultural-exchange-solidarity",
   ],
 };

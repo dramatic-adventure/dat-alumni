@@ -261,10 +261,10 @@ export const productionDetailsMap: Record<string, ProductionExtra> = {
         label: "Environmental Conservation",
         // Climate Justice, Biodiversity & Environmental Protection
         category: "climate-justice-biodiversity-environmental-protection",
-        subcategory: "natural-resource-stewardship",
+        subcategory: undefined,
         iconSrc: "/icons/cause-environment.svg",
         iconAlt: "Environmental Conservation",
-        // no href → /cause/natural-resource-stewardship (canonical)
+        // no href → slugify(label) → /cause/environmental-conservation
       },
       {
         label: "Indigenous Rights",

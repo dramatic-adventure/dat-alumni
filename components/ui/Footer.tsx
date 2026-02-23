@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { FaInstagram, FaFacebook, FaTwitter, FaYoutube, FaEnvelope } from "react-icons/fa";
 import { useFitTextToParent } from "../hooks/useFitTextToParent";
 
@@ -11,8 +12,63 @@ export default function Footer() {
     desktopMin: 768,
   });
 
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const done = () => {
+      if (cancelled) return;
+      // kick your fit hook after fonts/layout settle
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (cancelled) return;
+          window.dispatchEvent(new Event("resize"));
+        });
+      });
+    };
+
+    const ready = document?.fonts?.ready;
+    if (ready?.then) {
+      ready.then(done).catch(done);
+    } else {
+      done();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+    // Re-run fit after initial paint and after fonts load (prevents refresh-to-refresh size variance)
+  useEffect(() => {
+    let cancelled = false;
+
+    const nudge = () => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (cancelled) return;
+          window.dispatchEvent(new Event("resize"));
+        });
+      });
+    };
+
+    nudge();
+
+    const fontsReady = document?.fonts?.ready;
+    if (fontsReady?.then) {
+      fontsReady.then(() => {
+        if (cancelled) return;
+        nudge();
+      });
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
-    <footer className="relative z-10 bg-[#241123] pt-16 lg:pt-24 pb-10 px-3 sm:px-4 lg:px-6">
+    <footer className="relative z-10 bg-[#241123] overflow-x-hidden w-screen left-1/2 -ml-[50vw] pt-16 lg:pt-24 pb-10 px-3 sm:px-4 lg:px-6">
       <div className="max-w-7xl mx-auto flex flex-col">
 
         {/* Headline — bleed to viewport, then 90vw <768 / 62.25vw ≥768 */}
@@ -29,7 +85,7 @@ export default function Footer() {
             <h2
               ref={h2Ref}
               className="
-                block text-center
+                block text-center max-w-full
                 font-gloucester text-[#F23359] font-[400]
                 leading-[0.85] tracking-[0.01em] whitespace-nowrap
                 text-[16.15vw] md:text-[12rem]
@@ -119,7 +175,7 @@ export default function Footer() {
 
         {/* EIN / Legal — safe width cap */}
         <p
-          className="text-center font-grotesk mx-auto w-[88vw] md:w-auto whitespace-nowrap"
+          className="text-center font-grotesk mx-auto w-[88vw] md:w-auto whitespace-normal md:whitespace-nowrap text-balance"
           style={{
             fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
             color: "#A7A9BE",

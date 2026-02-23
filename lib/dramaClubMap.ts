@@ -144,6 +144,13 @@ export type DramaClubDraft = {
   artistPathwaysBlurb?: string;
   visitingArtists: PersonRef[];
 
+  // Alumni micro-cards for Artist Pathways, linking to /alumni/[slug].
+  alumniPathways?: {
+    name: string;
+    role: string;
+    slug: string;
+  }[];
+
   // Causes / focus areas
   causes: DramaClubCause[];
   primaryCause?: DramaClubCause;
@@ -157,6 +164,21 @@ export type DramaClubDraft = {
 
   relatedProgramSlugs: string[];
 };
+
+export function inferVideoProvider(url: string): EmbeddableVideo["provider"] {
+  const u = String(url ?? "").trim();
+  if (!u) return "other";
+  try {
+    const parsed = new URL(u);
+    const host = parsed.hostname.toLowerCase();
+    if (host.includes("youtu.be") || host.includes("youtube.com")) return "youtube";
+    if (host.includes("vimeo.com")) return "vimeo";
+    if (host.includes("loom.com")) return "loom";
+    return "other";
+  } catch {
+    return "other";
+  }
+}
 
 export type DramaClub = {
   // ========================
@@ -398,79 +420,122 @@ const IMG_ANDEAN_MASK = "/images/Andean_Mask_Work.jpg";
  *
  * Exported so you can import it anywhere as a “blank club” reference.
  */
-export const DRAMA_CLUB_TEMPLATE: DramaClub = {
+export const DRAMA_CLUB_TEMPLATE: DramaClubDraft = {
   // required
   slug: "",
   name: "",
   country: "",
   description: "",
 
-  // optional
+  // Geography
   region: undefined,
   city: undefined,
-  heroTextureTagline: undefined,
 
+  heroTextureTagline: undefined,
+  heroTextureSrc: undefined,
+  regionTextureSrc: undefined,
+
+  // Display helpers
   location: undefined,
   shortBlurb: undefined,
   cardImage: undefined,
 
+  // Branding
   logoSrc: undefined,
   logoAlt: undefined,
 
+  // Images / Media
   heroImage: undefined,
-  gallery: undefined,
-
+  gallery: [],
   video: undefined,
-
   videoThumbnail: undefined,
   videoTitle: undefined,
 
+  // Narrative / Story
   whatHappens: undefined,
   originStory: undefined,
+
   language: undefined,
+  workingLanguages: undefined,
+
+  ageRange: undefined,
+  whoWeServe: undefined,
+
   localLanguageName: undefined,
   localLanguageLabel: undefined,
 
+  coreFocus: undefined,
+  localChallenge: undefined,
+
+  roomFeelsLike: undefined,
+  roomFeelsLikeOverride: undefined,
+
   elderQuote: undefined,
   alumniQuote: undefined,
+
   culturalExchangeLearn: undefined,
   culturalExchangeShare: undefined,
 
+  // Status & activity timeline
   status: undefined,
   foundedYear: undefined,
   yearsActive: undefined,
+
   firstYearActive: undefined,
   lastYearActive: undefined,
   statusOverride: undefined,
 
+  // Impact / activity
+  youthArtistsServed: undefined,
   approxYouthServed: undefined,
   youthReached: undefined,
+
   showcasesCount: undefined,
   communityShowcases: undefined,
   approxCommunityAudience: undefined,
 
+  currentImpactStats: [],
+  sponsorshipUnlockStats: [],
+
+  currentWeeksPerYear: undefined,
+  targetWeeksPerYear: undefined,
+  currentLocalFacilitators: undefined,
+  targetLocalFacilitators: undefined,
+
+  // Community / relationships
   meetingPlace: undefined,
-  partners: undefined,
-  communityPartners: undefined,
-  communityNeeds: undefined,
+  communityAnchor: undefined,
+  leadPartner: undefined,
+
+  partners: [],
+  communityPartners: [],
+  communityNeeds: [],
   localContext: undefined,
 
-  leadArtists: undefined,
-  currentProjects: undefined,
+  leadArtist: undefined,
+  leadArtists: [],
+  currentProjects: [],
 
+  // Artist / AIR pathways
   artistPathwaysBlurb: undefined,
-  visitingArtists: undefined,
+  visitingArtists: [],
   alumniPathways: undefined,
 
-  causes: undefined,
-  causeSlugs: undefined,
+  // Causes / focus areas
+  causes: [],
+  primaryCause: undefined,
+  primaryCauseSlug: undefined,
+  causeSlugs: [],
 
+  // Map + cross-links
   lat: undefined,
   lng: undefined,
-  relatedProgramSlugs: undefined,
+  storyMapHref: undefined,
+
+  relatedProgramSlugs: [],
 };
 
-export const dramaClubMap: Record<string, DramaClub> = {
+export const dramaClubMap = {
   /* ============================
      ECUADOR – ANDES
      ============================ */
@@ -498,7 +563,6 @@ export const dramaClubMap: Record<string, DramaClub> = {
 
     video: {
       url: "https://youtu.be/jhdkvuWrWh4?si=WBNbv-l6Erq4iTs8",
-      provider: "youtube",
       title: "Video example (placeholder)",
     },
 
@@ -694,7 +758,7 @@ export const dramaClubMap: Record<string, DramaClub> = {
     causes: [
       { category: "indigenous-sovereignty-rights", subcategory: "indigenous-cultural-preservation-traditional-knowledge" },
       { category: "indigenous-sovereignty-rights", subcategory: "ancestral-territory-protection" },
-      { category: "climate-justice-biodiversity-environmental-protection", subcategory: "island-ecosystem-protection" },
+      { category: "climate-justice-biodiversity-environmental-protection", subcategory: "community-led-conservation" },
       { category: "arts-culture-storytelling-representation", subcategory: "intergenerational-storytelling" },
     ],
 
@@ -733,7 +797,6 @@ export const dramaClubMap: Record<string, DramaClub> = {
 
     video: {
       url: "https://youtu.be/jhdkvuWrWh4?si=WBNbv-l6Erq4iTs8",
-      provider: "youtube",
       title: "Video example (placeholder)",
     },
 
@@ -1123,7 +1186,6 @@ export const dramaClubMap: Record<string, DramaClub> = {
 
   video: {
     url: "https://youtu.be/jhdkvuWrWh4?si=WBNbv-l6Erq4iTs8",
-    provider: "youtube",
     title: "Video example (placeholder)",
   },
 
@@ -1794,7 +1856,7 @@ export const dramaClubMap: Record<string, DramaClub> = {
 
     causes: [
       { category: "youth-empowerment-mental-health-wellbeing", subcategory: "youth-in-care-displacement-support" },
-      { category: "youth-empowerment-mental-health-wellbeing", subcategory: "trauma-informed-spaces" },
+      { category: "community-wellbeing-safety-resilience", subcategory: "post-conflict-post-trauma-community-healing" },
       { category: "arts-culture-storytelling-representation", subcategory: "community-creative-expression" },
     ],
 
@@ -2181,7 +2243,7 @@ export const dramaClubMap: Record<string, DramaClub> = {
 
     causes: [
       { category: "climate-justice-biodiversity-environmental-protection", subcategory: "biodiversity-wildlife-protection" },
-      { category: "climate-justice-biodiversity-environmental-protection", subcategory: "disaster-resilience" },
+      { category: "community-wellbeing-safety-resilience", subcategory: "community-safety" },
       { category: "youth-empowerment-mental-health-wellbeing", subcategory: "youth-leadership" },
       { category: "arts-culture-storytelling-representation", subcategory: "community-creative-expression" },
     ],
@@ -2313,7 +2375,7 @@ export const dramaClubMap: Record<string, DramaClub> = {
       "Artists learn how to build work fast in school contexts while keeping the theatre bold.",
 
     causes: [
-      { category: "education-access-equity-opportunity", subcategory: "school-retention-success" },
+      { category: "education-access-equity-opportunity", subcategory: "reducing-barriers-to-education" },
       { category: "education-access-equity-opportunity", subcategory: "arts-education-access" },
       { category: "arts-culture-storytelling-representation", subcategory: "community-creative-expression" },
       { category: "youth-empowerment-mental-health-wellbeing", subcategory: "youth-leadership" },
@@ -2390,9 +2452,9 @@ export const dramaClubMap: Record<string, DramaClub> = {
     lat: 40.7128,
     lng: -74.006,
   },
-};
+} satisfies Record<string, DramaClubDraft>;
 
-export const dramaClubs: DramaClub[] = Object.values(dramaClubMap);
+export const dramaClubs: DramaClubDraft[] = Object.values(dramaClubMap);
 
 // (Optional) If you want this constant accessible site-wide:
 export const DRAMA_CLUB_LEAD_TEAM_CSV_URL =
