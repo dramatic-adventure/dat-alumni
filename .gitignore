@@ -60,3 +60,7 @@ yarn-error.log*
 
 # Netlify prod import file (never commit)
 netlify.env
+
+# logs
+*.log
+dev.log
