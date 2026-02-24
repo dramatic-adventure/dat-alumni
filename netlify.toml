@@ -8,3 +8,6 @@
 
 [functions]
   directory = "netlify/functions"
+
+[build.environment]
+  SECRETS_SCAN_OMIT_PATHS = "public/namestack-hints.json"
