@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useSwipeable } from "react-swipeable";
 import LightboxPortal from "./LightboxPortal";
 import StoryMedia from "@/components/shared/StoryMedia";
@@ -20,10 +20,12 @@ export default function Lightbox({
   const total = images.length;
   const multiple = total > 1;
 
+  useEffect(() => {
+    setCurrentIndex(startIndex);
+  }, [startIndex, images.length]);
+
   const goTo = useCallback(
-    (index: number) => {
-      setCurrentIndex((index + total) % total);
-    },
+    (index: number) => setCurrentIndex((index + total) % total),
     [total]
   );
 
@@ -66,48 +68,38 @@ export default function Lightbox({
   });
 
   const toLightboxSrc = useCallback((src: string) => {
-  const u = (src || "").trim();
-  if (!u) return "";
+    const u = (src || "").trim();
+    if (!u) return "";
 
-  // ✅ If it's already our proxy, don't touch it.
-  if (u.startsWith("/api/img")) return u;
+    if (u.startsWith("/api/img")) return u;
 
-  // ✅ If someone still passes thumb URLs, normalize to /api/img.
-  //    (/api/media/thumb?fileId=...&w=...)
-  if (u.startsWith("/api/media/thumb")) {
-    try {
-      const parsed = new URL(u, "http://local");
-      const fid = String(parsed.searchParams.get("fileId") || "").trim();
-      if (fid) return `/api/img?fileId=${encodeURIComponent(fid)}`;
-    } catch {}
+    if (u.startsWith("/api/media/thumb")) {
+      try {
+        const parsed = new URL(u, "http://local");
+        const fid = String(parsed.searchParams.get("fileId") || "").trim();
+        if (fid) return `/api/img?fileId=${encodeURIComponent(fid)}`;
+      } catch {}
+      return u;
+    }
+
+    const isDriveLike =
+      u.includes("drive.google.com") ||
+      u.includes("googleusercontent.com") ||
+      u.includes("lh3.googleusercontent.com") ||
+      u.includes("lh4.googleusercontent.com") ||
+      u.includes("lh5.googleusercontent.com") ||
+      u.includes("lh6.googleusercontent.com");
+
+    if (isDriveLike) return `/api/img?url=${encodeURIComponent(u)}`;
+
     return u;
-  }
-
-  // ✅ Drive / googleusercontent links are unreliable directly.
-  // Route through /api/img so the server does the fetching correctly.
-  const isDriveLike =
-    u.includes("drive.google.com") ||
-    u.includes("googleusercontent.com") ||
-    u.includes("lh3.googleusercontent.com") ||
-    u.includes("lh4.googleusercontent.com") ||
-    u.includes("lh5.googleusercontent.com") ||
-    u.includes("lh6.googleusercontent.com");
-
-  if (isDriveLike) {
-    return `/api/img?url=${encodeURIComponent(u)}`;
-  }
-
-  // Everything else: return as-is.
-  return u;
-}, []);
-
+  }, []);
 
   const currentUrlRaw = images[currentIndex] ?? "";
   const currentUrl = toLightboxSrc(currentUrlRaw);
 
   if (total === 0) return null;
 
-  // a11y helper for side-panels
   const onSidePanelKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -117,60 +109,82 @@ export default function Lightbox({
 
   return (
     <LightboxPortal>
-      <div className="fixed inset-0 z-[99999] grid grid-cols-3 w-screen h-screen">
-        {/* Left Panel (click/keyboard to close; below image stack) */}
+      {/* 3-panel scaffold: guarantees click-out targets exist */}
+      <div className="fixed inset-0 z-[999999] grid grid-cols-3 w-screen h-screen">
+        {/* LEFT CLICK-OUT PANEL */}
         <div
           className="w-full h-full"
+          role="button"
+          tabIndex={0}
+          aria-label="Close lightbox"
           onClick={onClose}
           onKeyDown={onSidePanelKeyDown}
-          role="button"
-          aria-label="Close lightbox"
-          tabIndex={0}
           style={{
             position: "relative",
             zIndex: 30,
             backgroundColor: "transparent",
-            backdropFilter: "blur(0px)",
-            WebkitBackdropFilter: "blur(0px)",
-            pointerEvents: "auto",
             cursor: "pointer",
           }}
         />
 
-        {/* Center Panel (dim backdrop; image sits above this panel) */}
+        {/* CENTER PANEL: draws the dim/blur backdrop across full viewport */}
         <div
-          className="flex items-center justify-center col-start-2"
+          role="dialog"
+          aria-modal="true"
+          className="col-start-2 flex items-center justify-center"
+          onClick={onClose}
           style={{
             position: "relative",
             zIndex: 20,
-            backgroundColor: "rgba(0, 0, 0, 0.75)", // 0.70 OK too
-            backdropFilter: "blur(6px)",
-            WebkitBackdropFilter: "blur(6px)",
+
+            // Make THIS middle cell paint across the entire viewport width.
             marginLeft: "calc(-100vw)",
             marginRight: "calc(-100vw)",
+
+            backgroundColor: "rgba(0, 0, 0, 0.70)",
+            backdropFilter: "blur(14px)",
+            WebkitBackdropFilter: "blur(14px)",
+
             cursor: "pointer",
           }}
-          onClick={onClose}
-          role="dialog"
-          aria-modal="true"
         >
-          {/* IMAGE STACK — sits ABOVE side panels and backdrop; clicking image does NOT close */}
+          {/* MEDIA + PAGER STACK: sits above click-out panels/backdrop */}
           <div
-            className="relative max-w-[95vw] max-h-[95vh]"
-            style={{ pointerEvents: "auto", zIndex: 50 }}
-            onClick={(e) => e.stopPropagation()}
-            {...swipeHandlers}
+            style={{
+              position: "relative",
+              zIndex: 50,
+              pointerEvents: "none", // ✅ stack is click-through
+              width: "min(92vw, 1200px)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
           >
-            <StoryMedia
-              imageUrl={currentUrl}
-              title={`Media ${currentIndex + 1}`}
-              mode="lightbox"
-            />
+            {/* Media box (~80% viewport height), swipe handlers only here */}
+            <div
+              {...swipeHandlers}
+              className="relative w-full overflow-hidden"
+              style={{
+                height: "80vh",
+                maxHeight: 760,
+                cursor: "default",
+                touchAction: "pan-y",
+                pointerEvents: "auto", // ✅ re-enable events for media footprint
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <StoryMedia
+                imageUrl={currentUrl}
+                title={`Media ${currentIndex + 1}`}
+                mode="lightbox"
+              />
+            </div>
 
+            {/* Pager below with spacing */}
             {multiple && (
               <div
-                className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50"
-                style={{ width: "min(520px, 78vw)" }}
+                className="flex justify-center"
+                style={{ width: "min(520px, 78vw)", marginTop: 16 }}
                 aria-label={`Image ${currentIndex + 1} of ${total}`}
               >
                 <div
@@ -178,14 +192,15 @@ export default function Lightbox({
                   style={{
                     padding: "10px 12px",
                     borderRadius: 999,
-                    background: "rgba(0,0,0,0.35)",
+                    background: "rgba(0,0,0,0.40)",
                     border: "1px solid rgba(255,255,255,0.10)",
                     backdropFilter: "blur(8px)",
                     WebkitBackdropFilter: "blur(8px)",
                     boxShadow: "0 10px 28px rgba(0,0,0,0.35)",
                   }}
+                  onClick={(e) => e.stopPropagation()}   // ✅ only the pill blocks click-out
+                  onPointerDown={(e) => e.stopPropagation()}
                 >
-                  {/* segmented bar */}
                   <div
                     className="flex-1"
                     style={{
@@ -222,7 +237,6 @@ export default function Lightbox({
                     ))}
                   </div>
 
-                  {/* compact counter */}
                   <div
                     style={{
                       fontSize: 12,
@@ -243,27 +257,24 @@ export default function Lightbox({
           </div>
         </div>
 
-        {/* Right Panel (click/keyboard to close; below image stack) */}
+        {/* RIGHT CLICK-OUT PANEL */}
         <div
           className="w-full h-full"
+          role="button"
+          tabIndex={0}
+          aria-label="Close lightbox"
           onClick={onClose}
           onKeyDown={onSidePanelKeyDown}
-          role="button"
-          aria-label="Close lightbox"
-          tabIndex={0}
           style={{
             position: "relative",
             zIndex: 30,
             backgroundColor: "transparent",
-            backdropFilter: "blur(0px)",
-            WebkitBackdropFilter: "blur(0px)",
-            pointerEvents: "auto",
             cursor: "pointer",
           }}
         />
       </div>
 
-      {/* Global tweak: kill zoom/magnifier cursor and stray inline gaps on images inside the dialog */}
+      {/* Cursor & image display tweaks */}
       <style jsx global>{`
         .col-start-2[role="dialog"] img {
           cursor: default !important;

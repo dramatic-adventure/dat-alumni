@@ -141,21 +141,21 @@ export default function StoryMedia({
       (element as any).msRequestFullscreen();
   };
 
-  const containerClass =
-    mode === "lightbox"
-      ? "popup-media text-center"
-      : "popup-media w-full my-4"; // ✅ remove mx-auto (centering often pairs with max-width rules)
+const containerClass =
+  mode === "lightbox"
+    ? "w-full h-full" // 🚫 do NOT include popup-media in lightbox mode
+    : "popup-media w-full my-4";
 
 
   // ✅ Default: fill parent container width; parent controls padding
   const defaultBoxStyle: React.CSSProperties =
     mode === "lightbox"
       ? {
-          width: "90vw",
-          height: "90vh",
-          maxWidth: "1600px",
-          maxHeight: "90vh",
-          margin: "0 auto",
+          width: "100%",
+          height: "100%",
+          maxWidth: "100%",
+          maxHeight: "100%",
+          margin: 0,
         }
       : {
           width: "100%",
@@ -283,7 +283,7 @@ export default function StoryMedia({
     // Avoids double-optimizing and fixes "blank swipe" when Lightbox receives "/_next/image?..."
     if (isNextImageOptimized) {
       return (
-        <div className={containerClass}>
+        <div className={containerClass} onClick={(e) => e.stopPropagation()}>
           <div style={boxStyle}>
             <img
               src={cleanUrl}
@@ -303,12 +303,39 @@ export default function StoryMedia({
     }
 
     return (
-      <div className={containerClass} style={{ width: "100%", maxWidth: "100%" }}>
-        <div style={{ ...boxStyle, width: "100%", maxWidth: "100%" }}>
+      <div
+        className={containerClass}
+        style={{
+          width: "100%",
+          maxWidth: "100%",
+          height: mode === "lightbox" ? "100%" : undefined,
+          position: "relative",
+          zIndex: 0, // prevent accidental overlay behavior
+        }}
+        onPointerDown={(e) => {
+          if (mode === "lightbox") e.stopPropagation();
+        }}
+        onClick={(e) => {
+          if (mode === "lightbox") e.stopPropagation();
+        }}
+      >
+        {/* ✅ This box is EXACTLY the media footprint. It alone blocks click-out. */}
+        <div
+          style={{
+            ...boxStyle,
+            width: "100%",
+            maxWidth: "100%",
+            height: "100%",
+            minHeight: 0,
+            margin: 0,
+            cursor: "default",
+          }}
+        >
           <Image
             src={imgSrc}
             alt={title || "Image"}
             fill
+            quality={mode === "lightbox" ? 92 : 80}
             className={
               mode === "lightbox"
                 ? "object-contain"
@@ -316,7 +343,7 @@ export default function StoryMedia({
             }
             sizes={
               mode === "lightbox"
-                ? "90vw"
+                ? "(max-width: 768px) 92vw, 1200px"
                 : "(max-width: 640px) 92vw, (max-width: 1024px) 85vw, 1100px"
             }
             priority={mode === "lightbox"}
