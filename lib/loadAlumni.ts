@@ -1,5 +1,12 @@
 // /lib/loadAlumni.ts
-import { serverDebug, serverInfo, serverWarn, serverError } from "@/lib/serverDebug";
+import {
+  serverDebug,
+  serverInfo,
+  serverWarn,
+  serverError,
+  serverDebugEnv,
+  serverDebugBranch,
+} from "@/lib/serverDebug";
 import "server-only";
 
 import Papa from "papaparse";
@@ -9,7 +16,12 @@ import { normalizeAlumniRow } from "./normalizeAlumniRow";
 import { loadCsv } from "./loadCsv";
 import { sheetsClient } from "./googleClients"; // service-account Sheets client
 
-const DEBUG = process.env.SHOW_DAT_DEBUG === "true";
+const DEBUG =
+  process.env.SHOW_DAT_DEBUG === "true" &&
+  process.env.CI !== "true" &&
+  process.env.CI !== "1" &&
+  process.env.NETLIFY !== "true" &&
+  !process.env.CONTEXT;
 
 /* ──────────────────────────────────────────────────────────
  * Env
@@ -41,12 +53,15 @@ const ALUMNI_TAB = process.env.ALUMNI_TAB || ""; // e.g. "Profile-Data" (legacy 
 const SLUGS_TAB = process.env.SLUGS_TAB || "Profile-Slugs";
 
 if (DEBUG) {
-  serverDebug("🔍 ALUMNI_CSV_URL:", process.env.ALUMNI_CSV_URL);
-  serverDebug("🔍 NEXT_PUBLIC_ALUMNI_CSV_URL:", process.env.NEXT_PUBLIC_ALUMNI_CSV_URL);
-  serverDebug("✅ Using Alumni CSV URL:", csvUrl || "❌ NONE FOUND");
-  serverDebug("🔍 SLUGS_CSV_URL:", process.env.SLUGS_CSV_URL);
-  serverDebug("🔍 NEXT_PUBLIC_SLUGS_CSV_URL:", process.env.NEXT_PUBLIC_SLUGS_CSV_URL);
-  serverDebug("✅ Using Slug CSV URL:", slugCsvUrl || "❌ NONE FOUND");
+  // Never print env values. Only print "status" + safe URL hints.
+  serverDebugEnv("ALUMNI_CSV_URL");
+  serverDebugEnv("NEXT_PUBLIC_ALUMNI_CSV_URL");
+  serverDebugEnv("SLUGS_CSV_URL");
+  serverDebugEnv("NEXT_PUBLIC_SLUGS_CSV_URL");
+
+  serverDebugBranch("Alumni CSV", ["ALUMNI_CSV_URL", "NEXT_PUBLIC_ALUMNI_CSV_URL"]);
+  serverDebugBranch("Slug CSV", ["SLUGS_CSV_URL", "NEXT_PUBLIC_SLUGS_CSV_URL"]);
+
   serverDebug("🔍 ALUMNI_SHEET_ID:", spreadsheetId ? "<set>" : "<missing>");
   serverDebug("🟩 LIVE TAB:", LIVE_TAB);
   serverDebug("🔧 AUTO_CANONICALIZE_SLUGS:", AUTO_CANON);
@@ -385,11 +400,11 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
     if (sample) {
       serverDebug("🧪 [loadAlumniFromLive] sample normalized:", {
         slug: sample.slug,
-        email: sample.email,
-        website: sample.website,
-        socials: sample.socials,
         statusFlags: sample.statusFlags,
-        artistStatement: (sample.artistStatement || "").slice?.(0, 60),
+        artistStatementPreview: (sample.artistStatement || "").slice?.(0, 60),
+        hasEmail: !!sample.email,
+        hasWebsite: !!sample.website,
+        hasSocials: !!sample.socials,
       });
     }
   }
@@ -407,11 +422,16 @@ async function loadAlumniFromCsvFallback(): Promise<AlumniRow[]> {
     return [];
   }
 
-  if (DEBUG) serverDebug("🌐 [loadCsv fallback] Fetching:", csvUrl);
+  if (DEBUG) {
+    serverDebugBranch("🌐 [loadCsv fallback]", ["ALUMNI_CSV_URL", "NEXT_PUBLIC_ALUMNI_CSV_URL"]);
+  }
 
   const csvText = await loadCsv(csvUrl, "alumni.csv");
 
-  if (DEBUG) serverDebug("📄 [loadAlumni fallback] Raw CSV snippet:", csvText.slice(0, 300));
+  if (DEBUG) {
+    // Don’t log content; it may include emails/urls/etc.
+    serverDebug("📄 [loadAlumni fallback] CSV bytes:", csvText.length);
+  }
 
   const parsed = Papa.parse<Record<string, string>>(csvText, {
     header: true,
@@ -668,3 +688,4 @@ export async function ensureCanonicalAlumniSlug(oldSlug: string, nextSlug: strin
     inflightCanon.delete(guardKey);
   }
 }
+

@@ -16,15 +16,25 @@ function norm(v: string | null | undefined) {
   return (v ?? "").trim().toLowerCase();
 }
 
-/** If ADMIN_API_KEY is unset, allow. If set, require exact match in header. */
+/**
+ * Admin auth:
+ * - In production: REQUIRE ADMIN_API_KEY to be set and matched.
+ * - In non-production: allow when unset (local/dev convenience).
+ */
 function okAdmin(req: Request) {
-  const required = process.env.ADMIN_API_KEY || "";
+  const required = (process.env.ADMIN_API_KEY || "").trim();
+  const isProd = process.env.NODE_ENV === "production";
+
+  // Production must never allow writes without a configured key.
+  if (isProd && !required) return false;
+
+  // Dev convenience: if no key configured, allow.
   if (!required) return true;
+
   const headerName = process.env.ADMIN_HEADER_NAME || "X-Admin-Key";
-  const provided = req.headers.get(headerName) || "";
+  const provided = (req.headers.get(headerName) || "").trim();
   return provided === required;
 }
-
 async function run(oldSlugRaw: string | null, nextSlugRaw: string | null) {
   if (process.env.AUTO_CANONICALIZE_SLUGS !== "true") {
     return json({ ok: false, error: "AUTO_CANONICALIZE_SLUGS is not enabled" }, 403);
@@ -69,3 +79,4 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   return run(searchParams.get("old"), searchParams.get("next"));
 }
+

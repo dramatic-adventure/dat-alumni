@@ -1,6 +1,7 @@
 // lib/slugAliases.ts
 
 import { loadSlugMap } from "@/lib/loadSlugMap";
+import { serverDebug } from "@/lib/serverDebug";
 
 /** Normalize strings like 'Slug Name ' to 'slug-name' for matching and URLs. */
 export function normSlug(v: string | null | undefined): string {
@@ -24,11 +25,11 @@ type Cache = {
 // In-memory cache so we don’t re-read the sheet constantly in dev.
 let cache: Cache | null = null;
 
-function debugLog(...args: any[]) {
-  if (process.env.SHOW_DAT_DEBUG === "true") {
-    // eslint-disable-next-line no-console
-    console.log("[slug-aliases]", ...args);
-  }
+function debugLog(...args: unknown[]) {
+  // serverDebug is already:
+  // - gated by SHOW_DAT_DEBUG / DAT_LOG_LEVEL
+  // - hard-silenced in CI/Netlify/next build
+  serverDebug("[slug-aliases]", ...args);
 }
 
 // Small helper so env parsing is consistent.
@@ -208,3 +209,4 @@ export function getSlugAliasDebugSnapshot() {
     ageMs: Date.now() - cache.stamp,
   };
 }
+

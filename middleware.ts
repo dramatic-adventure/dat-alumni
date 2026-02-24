@@ -1,9 +1,10 @@
-// middleware.ts (full replacement)
+// middleware.ts
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+// Broad matcher + explicit guards is the most reliable across runtimes.
 export const config = {
-  matcher: ["/alumni/:slug*"],
+  matcher: ["/:path*"],
 };
 
 /** Edge-safe timeout wrapper for fetch. */
@@ -15,10 +16,9 @@ async function fetchWithTimeout(
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), ms);
   try {
-    const res = await fetch(url, {
+    return await fetch(url, {
       ...init,
       signal: controller.signal,
-      // Be explicit on caching for middleware -> API calls
       cache: "no-store",
       headers: {
         "Cache-Control": "no-cache, no-store, max-age=0",
@@ -26,16 +26,34 @@ async function fetchWithTimeout(
         ...(init.headers || {}),
       },
     });
-    return res;
   } finally {
     clearTimeout(id);
   }
 }
 
-export async function middleware(req: NextRequest) {
+function isStaticFilePath(pathname: string) {
+  // Any path ending in ".ext" (e.g. .png, .js, .css, .map, .ico)
+  return /\.[a-z0-9]+$/i.test(pathname);
+}
+
+export default async function middleware(req: NextRequest) {
   const { pathname, origin, search } = req.nextUrl;
 
-  const m = pathname.match(/^\/alumni\/([^\/?#]+)/i);
+  // 🚫 Never interfere with Next internals, APIs, or obvious static assets
+  if (
+    pathname.startsWith("/_next/") ||
+    pathname.startsWith("/api/") ||
+    pathname === "/favicon.ico" ||
+    pathname === "/robots.txt" ||
+    pathname.startsWith("/sitemap") ||
+    isStaticFilePath(pathname)
+  ) {
+    return NextResponse.next();
+  }
+
+  // ✅ Only canonicalize exact alumni profile paths:
+  // /alumni/{slug} or /alumni/{slug}/
+  const m = pathname.match(/^\/alumni\/([^\/?#]+)\/?$/i);
   if (!m) return NextResponse.next();
 
   const incoming = decodeURIComponent(m[1] || "").trim().toLowerCase();
@@ -44,7 +62,6 @@ export async function middleware(req: NextRequest) {
   // Ask server which slug is canonical (old -> new)
   const fwdUrl = new URL("/api/admin/forward-slug", origin);
   fwdUrl.searchParams.set("slug", incoming);
-  // tiny cache-buster to dodge any intermediaries
   fwdUrl.searchParams.set("_cb", String(Date.now()));
 
   try {
@@ -67,38 +84,7 @@ export async function middleware(req: NextRequest) {
       // ignore JSON parse errors -> treat as no forward
     }
 
-    // If forwarding, redirect and fire-and-forget a write-through to Sheets
     if (canon && canon !== incoming) {
-      try {
-        const autoUrl = new URL("/api/admin/auto-canon", origin);
-        autoUrl.searchParams.set("old", incoming);
-        autoUrl.searchParams.set("next", canon);
-        autoUrl.searchParams.set("_cb", String(Date.now()));
-
-        const adminHeaderName = process.env.ADMIN_HEADER_NAME || "X-Admin-Key";
-        // IMPORTANT: middleware runs on the Edge runtime and is bundled at build time.
-        // If we read secrets here, they can be inlined into the edge bundle and trigger
-        // Netlify secrets scanning failures.
-        // Keep admin bypass ONLY in non-production (local dev / previews if you want).
-        const adminKey =
-          process.env.NODE_ENV === "production" ? "" : (process.env.ADMIN_API_KEY || "");
-
-        // Don't await; just attempt to trigger server-side
-        fetchWithTimeout(
-          autoUrl.toString(),
-          {
-            method: "GET",
-            headers: adminKey
-              ? ({ [adminHeaderName]: adminKey } as Record<string, string>)
-              : undefined,
-          },
-          1500
-        ).catch(() => {});
-      } catch {
-        // swallow — redirect should still proceed
-      }
-
-      // Preserve the original query string on redirect
       const loc = new URL(`/alumni/${encodeURIComponent(canon)}`, origin);
       if (search) loc.search = search;
 
@@ -109,14 +95,12 @@ export async function middleware(req: NextRequest) {
       return out;
     }
 
-    // No forwarding — let the request through
     const next = NextResponse.next();
     next.headers.set("x-slug-in", incoming);
     next.headers.set("x-slug-target", canon || "");
     next.headers.set("x-slug-action", "pass");
     return next;
   } catch {
-    // Absolute soft-fail: pass instead of error
     const next = NextResponse.next();
     next.headers.set("x-slug-in", incoming);
     next.headers.set("x-slug-target", "");

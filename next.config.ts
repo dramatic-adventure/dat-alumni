@@ -13,12 +13,12 @@ const nextConfig: NextConfig = {
     // ✅ allow next/image to use our local proxy routes with query strings
     // (matcher checks pathname only; query is ignored)
     localPatterns: [
-      // ✅ our image proxy route(s)
+      // ✅ exact endpoints (querystring ignored)
       { pathname: "/api/img" },
-      { pathname: "/api/img/**" },
-
-      // ✅ NEW: thumb proxy used by profile headers / cards
       { pathname: "/api/media/thumb" },
+
+      // ✅ future-proof subpaths
+      { pathname: "/api/img/**" },
       { pathname: "/api/media/thumb/**" },
 
       // ✅ local static assets used by next/image
@@ -79,3 +79,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
