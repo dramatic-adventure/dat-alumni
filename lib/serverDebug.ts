@@ -12,7 +12,7 @@ const DEFAULT_LEVEL: Level = process.env.NODE_ENV === "production" ? "error" : "
 const RESOLVED_LEVEL = (
   process.env.SHOW_DAT_DEBUG === "true"
     ? "debug"
-    : (process.env.LOG_LEVEL || DEFAULT_LEVEL)
+    : (process.env.DAT_LOG_LEVEL || DEFAULT_LEVEL)
 ).toLowerCase() as Level;
 
 const THRESHOLD = ORDER[RESOLVED_LEVEL] ?? ORDER.info;

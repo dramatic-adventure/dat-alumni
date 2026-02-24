@@ -17,7 +17,7 @@ const CLUSTER_DISTANCE_MILES = 50;
 
 // Page background behind globe (transparent per your current design)
 const DAT_BLUE = "transparent";
-const DEBUG = String(process.env.SHOW_DAT_DEBUG || "").toLowerCase() === "true";
+const DEBUG = String(process.env.NEXT_PUBLIC_SHOW_DAT_DEBUG || "").toLowerCase() === "true";
 
 /* ===========================
    Types

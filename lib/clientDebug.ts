@@ -11,11 +11,10 @@ function strToBool(v?: string | null): boolean {
   return s === "1" || s === "true" || s === "yes" || s === "on";
 }
 
-/** Primary flag (public, client-safe). Also honor SHOW_DAT_DEBUG for backwards-compat. */
+/** Primary flag (public, client-safe).  */
 const enabled =
   strToBool(process.env.NEXT_PUBLIC_DEBUG_ALUMNI) ||
-  strToBool(process.env.NEXT_PUBLIC_SHOW_DAT_DEBUG) ||
-  strToBool(process.env.SHOW_DAT_DEBUG);
+  strToBool(process.env.NEXT_PUBLIC_SHOW_DAT_DEBUG);
 
 /** Optional public level override; defaults to silent unless enabled. */
 const envLevel = (process.env.NEXT_PUBLIC_LOG_LEVEL || (enabled ? "debug" : "silent")).toLowerCase() as Level;
