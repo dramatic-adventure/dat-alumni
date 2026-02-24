@@ -76,7 +76,12 @@ export async function middleware(req: NextRequest) {
         autoUrl.searchParams.set("_cb", String(Date.now()));
 
         const adminHeaderName = process.env.ADMIN_HEADER_NAME || "X-Admin-Key";
-        const adminKey = process.env.ADMIN_API_KEY || "";
+        // IMPORTANT: middleware runs on the Edge runtime and is bundled at build time.
+        // If we read secrets here, they can be inlined into the edge bundle and trigger
+        // Netlify secrets scanning failures.
+        // Keep admin bypass ONLY in non-production (local dev / previews if you want).
+        const adminKey =
+          process.env.NODE_ENV === "production" ? "" : (process.env.ADMIN_API_KEY || "");
 
         // Don't await; just attempt to trigger server-side
         fetchWithTimeout(
