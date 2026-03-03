@@ -111,7 +111,7 @@ export default function AlumniProfilePage({
 
   // Contact fields: accept multiple worlds
   const location = cleanStr(d.location) ?? "";
-  const email = cleanStr(d.email) ?? "";
+  const publicEmail = cleanStr((d as any).publicEmail);
   const website = cleanStr(d.website) ?? cleanStr(d.profileUrl) ?? cleanStr(d["profile url"]) ?? "";
   const socials = coerceStrArray(d.socials ?? d.socialLinks ?? d["social links"] ?? d["artist social links"]);
 
@@ -200,11 +200,11 @@ const authorStories = useMemo(() => {
       name,
       artistStatement: artistStatement?.slice?.(0, 80),
       statusFlags,
-      email,
+      publicEmail,
       website,
       socials,
     });
-  }, [slug, name, artistStatement, statusFlags, email, website, socials]);
+  }, [slug, name, artistStatement, statusFlags, publicEmail, website, socials]);
 
   return (
     <>
@@ -261,7 +261,7 @@ alumniId={alumniId || undefined}
                 statusFlags={statusFlags}
                 artistStatement={artistStatement}
                 stories={authorStories}
-                email={email}
+                publicEmail={publicEmail}
                 website={website}
                 socials={socials}
                 updates={updates}

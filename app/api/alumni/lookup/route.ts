@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 // Debug gates
 // ------------------------------------------------------------
 function isDebug(req: Request, mode: "1" | "2") {
+  if (process.env.NODE_ENV === "production") return false; // ✅ hard off in prod
   return (
     req.headers.get("x-debug") === mode &&
     (req.headers.get("x-admin-token") || "").trim() ===
@@ -565,6 +566,14 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
 
     // Additional fields for the update form (keep as-is)
     const emailIdx = idxOf(LH as string[], ["email"]);
+
+    // ✅ Public email (safe to return publicly)
+    const publicEmailIdx = idxOf(LH as string[], [
+      "publicemail",
+      "public email",
+      "public_email",
+      "publicEmail",
+    ]);
     const instagramIdx = idxOf(LH as string[], ["instagram"]);
     const youtubeIdx = idxOf(LH as string[], ["youtube"]);
     const vimeoIdx = idxOf(LH as string[], ["vimeo"]);
@@ -581,7 +590,7 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
       const sample = liveRows.slice(0, 5).map((r) => ({
         alumniId: alumniIdIdx !== -1 ? String(r[alumniIdIdx] ?? "") : "",
         slug: slugIdx !== -1 ? String(r[slugIdx] ?? "") : "",
-        email: emailIdx !== -1 ? String(r[emailIdx] ?? "") : "",
+        // email intentionally omitted (never expose login email, even in debug)
         status: statusIdx !== -1 ? String(r[statusIdx] ?? "") : "",
         isPublic: isPublicIdx !== -1 ? String(r[isPublicIdx] ?? "") : "",
         updatedAt: updatedAtIdx !== -1 ? String(r[updatedAtIdx] ?? "") : "",
@@ -600,6 +609,7 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
           idx: {
             alumniIdIdx,
             slugIdx,
+            publicEmailIdx,
             emailIdx,
             statusIdx,
             isPublicIdx,
@@ -752,6 +762,7 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
         bioShort: bioShortIdx !== -1 ? String(row[bioShortIdx] ?? "").trim() : "",
         bioLong: bioLongIdx !== -1 ? String(row[bioLongIdx] ?? "").trim() : "",
         website: websiteIdx !== -1 ? String(row[websiteIdx] ?? "").trim() : "",
+        publicEmail: publicEmailIdx !== -1 ? String(row[publicEmailIdx] ?? "").trim() : "",
         instagram: instagramIdx !== -1 ? String(row[instagramIdx] ?? "").trim() : "",
         youtube: youtubeIdx !== -1 ? String(row[youtubeIdx] ?? "").trim() : "",
         vimeo: vimeoIdx !== -1 ? String(row[vimeoIdx] ?? "").trim() : "",
@@ -841,7 +852,7 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
             ? {
                 alumniId: alumniIdIdx !== -1 ? String(row[alumniIdIdx] ?? "") : "",
                 slug: slugIdx !== -1 ? String(row[slugIdx] ?? "") : "",
-                email: emailIdx !== -1 ? String(row[emailIdx] ?? "") : "",
+                // email intentionally omitted (never expose login email, even in debug)
                 isPublic: isPublicIdx !== -1 ? String(row[isPublicIdx] ?? "") : "",
                 status: statusIdx !== -1 ? String(row[statusIdx] ?? "") : "",
                 backgroundStyle: backgroundStyleIdx !== -1 ? String(row[backgroundStyleIdx] ?? "") : "",

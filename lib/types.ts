@@ -89,11 +89,12 @@ export interface AlumniRow {
   updates?: SpotlightUpdate[];
 
   // Optional contact
-  email?: string;
+  email?: string;        // private/admin (do not show publicly)
+  publicEmail?: string;  // public-facing email (safe to show)
   website?: string;
   socials?: string[];
   hasContactInfo?: boolean;
-}
+  }
 
 // ========== Updates ==========
 /**

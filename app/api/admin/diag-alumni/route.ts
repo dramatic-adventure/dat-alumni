@@ -1,4 +1,4 @@
-// /app/api/admin/diag-alumni/route.ts
+// app/api/admin/diag-alumni/route.ts
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -89,6 +89,11 @@ function findFirstKey(row: Row, candidates: string[]) {
 
 /** ---- route ---- */
 export async function GET(req: Request) {
+  // ✅ Never expose diag endpoints in production
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+  }
+
   try {
     const url = new URL(req.url);
     const slug = (url.searchParams.get("slug") || "").trim().toLowerCase();

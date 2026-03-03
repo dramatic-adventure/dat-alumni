@@ -46,6 +46,11 @@ function pick(r: Row, keys: string[]) {
 }
 
 export async function GET(req: Request) {
+  // ✅ Never expose diag endpoints in production
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+  }
+
   try {
     const url = new URL(req.url);
     const incoming = normSlug(url.searchParams.get("slug") || "");

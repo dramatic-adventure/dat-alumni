@@ -10,8 +10,7 @@ import ArtistBio from "./ArtistBio";
 import ProgramStamps from "@/components/alumni/ProgramStamps";
 import Lightbox from "@/components/shared/Lightbox";
 
-// ✅ RESTORE contact UI
-import ContactOverlay from "@/components/shared/ContactOverlay";
+// (ContactOverlay now lives inside MobileProfileHeader/DesktopProfileHeader)
 
 import type { StoryRow, Production, SpotlightUpdate, Update } from "@/lib/types";
 import { productionMap as productionMapCanon, getSortYear } from "@/lib/productionMap.canon";
@@ -291,7 +290,7 @@ interface ProfileCardProps {
   programBadges?: any;
   artistStatement?: string;
   stories?: StoryRow[];
-  email?: string;
+  publicEmail?: string;
   website?: string;
   socials?: any;
   updates?: RawRow[];
@@ -308,7 +307,7 @@ export default function ProfileCard(props: ProfileCardProps) {
     headshotUrl,
     currentHeadshotId,
     location,
-    email,
+    publicEmail,
     website,
     updates = [],
     stories: storiesProp = [],
@@ -654,11 +653,12 @@ const hasStories = storiesForFeatured.length > 0;
       {isMobile ? (
         <MobileProfileHeader
           alumniId={alumniIdForMedia}
+          slug={slug}
           name={name}
           role={role}
           location={location}
           headshotUrl={derivedHeadshotUrl}
-          email={email}
+          publicEmail={publicEmail}
           website={website}
           socials={socials}
           statusFlags={statusFlags}
@@ -666,11 +666,12 @@ const hasStories = storiesForFeatured.length > 0;
       ) : (
         <DesktopProfileHeader
           alumniId={alumniIdForMedia}
+          slug={slug}
           name={name}
           role={role}
           location={location}
           headshotUrl={derivedHeadshotUrl}
-          email={email}
+          publicEmail={publicEmail}
           website={website}
           socials={socials}
           statusFlags={statusFlags}

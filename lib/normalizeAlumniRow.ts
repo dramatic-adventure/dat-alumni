@@ -157,8 +157,8 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
       : "No"
     : "";
 
-  // Email
-  const email = getFirstCI(row, ["email", "artist email"]).trim();
+  // Public email ONLY (Option A). Never extract private/admin email into public runtime objects.
+  const publicEmail = getFirstCI(row, ["publicEmail", "public email", "public_email"]).trim();
 
   // lastModified
   const lastModifiedRaw = getFirstCI(row, ["lastmodified", "updatedat", "updated at", "updatedAt"]);
@@ -198,7 +198,9 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
     lastModifiedRaw: lastModifiedRaw || "",
     lastModified,
 
-    email: email || "",
+    // NOTE: private email is intentionally never populated in the public build.
+    email: "",
+    publicEmail: publicEmail || "",
     website: website || "",
     socials,
 

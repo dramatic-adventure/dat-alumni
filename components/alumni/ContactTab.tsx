@@ -5,18 +5,12 @@
 import React from "react";
 
 export interface ContactTabProps {
-  email?: string;
-  website?: string;
-  socials?: string[];
   onClick?: React.MouseEventHandler;
   onMouseDown?: React.MouseEventHandler;
   isOpen?: boolean;
 }
 
 export default function ContactTab({
-  email,
-  website,
-  socials = [],
   onClick,
   onMouseDown,
   isOpen = false,

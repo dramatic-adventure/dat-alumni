@@ -24,7 +24,12 @@ function parseSA(jsonStr: string) {
 }
 
 function getSheetsClient() {
-  const saRaw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON || "";
+  // Prefer the existing env name, but allow the canonical SA JSON used elsewhere.
+  const saRaw =
+    process.env.GOOGLE_SERVICE_ACCOUNT_JSON ||
+    process.env.GCP_SA_JSON ||
+    "";
+
   if (!saRaw) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_JSON");
 
   const sa = parseSA(saRaw);

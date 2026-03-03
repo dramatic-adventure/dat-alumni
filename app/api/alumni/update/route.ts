@@ -3,6 +3,8 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { sheetsClient } from "@/lib/googleClients";
 import { isDatGold } from "@/lib/updateStarters";
+import { requireAuth } from "@/lib/requireAuth";
+import { getOwnerEmailForAlumniId, normalizeGmail } from "@/lib/ownership";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -72,14 +74,6 @@ function addDaysYYYYMMDD(days: number) {
   return d.toISOString().slice(0, 10);
 }
 
-/**
- * Loads Profile-Live sheet, finds row by alumniId, and returns:
- * - rowIndex1 (1-based row number in sheet)
- * - header + row
- * - identity fields (best effort)
- * - beforeText (currentUpdateText)
- * - beforeExpiresAt (currentUpdateExpiresAt) if present
- */
 async function loadLiveRow(alumniId: string) {
   if (!spreadsheetId) throw new Error("Missing ALUMNI_SHEET_ID");
 
@@ -113,7 +107,6 @@ async function loadLiveRow(alumniId: string) {
 
   const nameIdx = idxOf(header, ["name", "fullName", "fullname"]);
   const slugIdx = idxOf(header, ["slug"]);
-  const emailIdx = idxOf(header, ["email"]);
 
   const beforeText = cell(row, currentUpdateTextIdx);
   const beforeExpiresAt = cell(row, currentUpdateExpiresAtIdx);
@@ -127,7 +120,6 @@ async function loadLiveRow(alumniId: string) {
     identity: {
       name: cell(row, nameIdx) || "Unknown",
       slug: cell(row, slugIdx) || alumniId,
-      email: cell(row, emailIdx) || "",
     },
     beforeText,
     beforeExpiresAt,
@@ -151,7 +143,7 @@ async function writeLiveCell(rowIndex1: number, colIdx0: number, value: string) 
 
 async function appendProfileChange(args: {
   alumniId: string;
-  email?: string;
+  email?: string; // keep header name "email" but store editor session email
   field: string;
   before?: string;
   after?: string;
@@ -173,14 +165,11 @@ async function appendProfileChange(args: {
   });
 }
 
-/**
- * Internal-only sink. Never referenced in UI strings or responses.
- */
 async function appendTestimonialRow(row: {
   timestamp: string;
   alumniId: string;
   name: string;
-  email: string;
+  email: string; // editor email for internal follow-up if desired
   slug: string;
   full_text: string;
   prompt_used: string;
@@ -220,6 +209,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Missing ALUMNI_SHEET_ID" }, { status: 500 });
   }
 
+  // ✅ Auth gate FIRST
+  const auth = await requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   let body: Body | null = null;
   try {
     body = (await req.json()) as Body;
@@ -239,6 +232,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Empty update" }, { status: 400 });
   }
 
+  // ✅ Ownership gate BEFORE touching Profile-Live
+  if (!auth.isAdmin) {
+    const ownerEmail = await getOwnerEmailForAlumniId(spreadsheetId, alumniId);
+    if (!ownerEmail) {
+      return NextResponse.json(
+        { ok: false, error: "This profile is not yet claimed. Please contact DAT." },
+        { status: 403 }
+      );
+    }
+    if (normalizeGmail(auth.email) !== normalizeGmail(ownerEmail)) {
+      return NextResponse.json(
+        { ok: false, error: "Forbidden: you may only update your own profile." },
+        { status: 403 }
+      );
+    }
+  }
+
   try {
     const live = await loadLiveRow(alumniId);
     const beforeText = (live.beforeText || "").trim();
@@ -246,17 +256,16 @@ export async function POST(req: Request) {
     const ts = tsISO();
 
     const nextExpiresAt = addDaysYYYYMMDD(UPDATE_EXPIRE_DAYS);
-
     const hasExpCol = live.currentUpdateExpiresAtIdx >= 0;
 
-    // If same text: treat as dedupe, BUT refresh expiry if possible
+    // If same text: dedupe, but refresh expiry if possible
     if (beforeText && beforeText === text) {
       if (hasExpCol && beforeExp !== nextExpiresAt) {
         await writeLiveCell(live.rowIndex1, live.currentUpdateExpiresAtIdx, nextExpiresAt);
         await appendProfileChange({
           ts,
           alumniId,
-          email: live.identity.email || undefined,
+          email: auth.email,
           field: "currentUpdateExpiresAt",
           before: beforeExp,
           after: nextExpiresAt,
@@ -264,13 +273,7 @@ export async function POST(req: Request) {
       }
 
       return NextResponse.json(
-        {
-          ok: true,
-          deduped: true,
-          id: `${alumniId}::${ts}`,
-          ts,
-          expiresAt: hasExpCol ? nextExpiresAt : undefined,
-        },
+        { ok: true, deduped: true, id: `${alumniId}::${ts}`, ts, expiresAt: hasExpCol ? nextExpiresAt : undefined },
         { status: 200 }
       );
     }
@@ -287,18 +290,18 @@ export async function POST(req: Request) {
     await appendProfileChange({
       ts,
       alumniId,
-      email: live.identity.email || undefined,
+      email: auth.email,
       field: "currentUpdateText",
       before: beforeText,
       after: text,
     });
 
-    // 2b) changes (expiry) only if we can persist it
+    // 2b) changes (expiry)
     if (hasExpCol) {
       await appendProfileChange({
         ts,
         alumniId,
-        email: live.identity.email || undefined,
+        email: auth.email,
         field: "currentUpdateExpiresAt",
         before: beforeExp,
         after: nextExpiresAt,
@@ -312,7 +315,7 @@ export async function POST(req: Request) {
         timestamp: ts,
         alumniId,
         name: live.identity.name,
-        email: live.identity.email,
+        email: auth.email, // editor email (not public)
         slug: live.identity.slug,
         full_text: text,
         prompt_used: promptUsed,
@@ -321,19 +324,11 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json(
-      {
-        ok: true,
-        deduped: false,
-        id: `${alumniId}::${ts}`, // ✅ critical for Undo
-        ts,
-        expiresAt: hasExpCol ? nextExpiresAt : undefined,
-      },
+      { ok: true, deduped: false, id: `${alumniId}::${ts}`, ts, expiresAt: hasExpCol ? nextExpiresAt : undefined },
       { status: 200 }
     );
   } catch (err: any) {
     const msg = String(err?.message || "Update failed");
-
-    // user-facing hints WITHOUT internal tab names
     const lower = msg.toLowerCase();
     const hint =
       lower.includes("currentupdatetext")

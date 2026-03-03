@@ -203,13 +203,23 @@ export async function loadProfileLiveRowsPublic(): Promise<ProfileLiveRow[]> {
     if (!all.length) return [];
 
     const header = (all[0] ?? []).map((h) => String(h ?? "").trim());
+
+    // Safety: never ship private email
+    // (If someone re-adds "email" to the type later, this prevents accidental population)
+    const privateEmailIdx = idxOf(header, ["email", "email address"]);
+    if (privateEmailIdx !== -1) {
+      // Intentionally DO NOT read or include it anywhere.
+      // Optionally: you can log server-side in dev if you want:
+      // if (process.env.NODE_ENV === "development") console.warn("Profile-Live has an email column; ignored for public load.");
+    }
+
     const rows = all.slice(1);
 
     // Indices we care about (tolerant)
     const slugIdx = idxOf(header, ["slug", "profile slug", "profile-slug"]);
     const nameIdx = idxOf(header, ["name", "full name"]);
     const alumniIdIdx = idxOf(header, ["alumniid", "alumni id"]);
-    const emailIdx = idxOf(header, ["email", "email address"]);
+    const publicEmailIdx = idxOf(header, ["publicEmail", "public_email", "public email"]);
 
     const pronounsIdx = idxOf(header, ["pronouns"]);
     const rolesIdx = idxOf(header, ["roles", "role", "primary role"]);
@@ -281,7 +291,8 @@ export async function loadProfileLiveRowsPublic(): Promise<ProfileLiveRow[]> {
         slug,
 
         alumniId: (cell(r, alumniIdIdx) || "").toLowerCase() || undefined,
-        email: cell(r, emailIdx) || undefined,
+        // ✅ public-facing contact only
+        publicEmail: cell(r, publicEmailIdx) || undefined,
 
         pronouns: cell(r, pronounsIdx) || undefined,
         roles: cell(r, rolesIdx) || undefined,

@@ -14,24 +14,26 @@ import { getLocationHrefForToken } from "@/lib/locations";
 
 interface MobileProfileHeaderProps {
   alumniId: string;
+  slug?: string;
   name: string;
   role: string;
   location?: string;
   headshotUrl?: string;
   statusFlags?: string[];
-  email?: string;
+  publicEmail?: string;
   website?: string;
   socials?: string[];
 }
 
 export default function MobileProfileHeader({
   alumniId,
+  slug,
   name,
   role,
   location,
   headshotUrl,
   statusFlags = [],
-  email,
+  publicEmail,
   website,
   socials,
 }: MobileProfileHeaderProps) {
@@ -189,7 +191,7 @@ const urls =
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
   const lastName = nameParts.slice(-1).join(" ") || "";
 
-  const hasContactInfo = !!(email || website || (socials && socials.length > 0));
+  const hasContactInfo = !!(publicEmail || website || (socials && socials.length > 0));
 
   // Build title links
   const allRoles = splitTitles(role).map((r) => r.trim()).filter(Boolean);
@@ -238,13 +240,15 @@ const urls =
   return (
     <div ref={headerRef} style={{ backgroundColor: "#C39B6C", position: "relative" }}>
       {hasContactInfo && (
-  <ContactOverlay
-    email={email}
-    website={website}
-    socials={socials}
-    profileCardRef={headerRef}
-  />
-)}
+        <ContactOverlay
+          name={name}
+          slug={slug}
+          publicEmail={publicEmail}
+          website={website}
+          socials={socials}
+          profileCardRef={headerRef}
+        />
+      )}
 
       {statusFlags.length > 0 && (
         <div

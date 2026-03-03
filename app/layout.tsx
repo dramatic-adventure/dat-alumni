@@ -40,10 +40,36 @@ const majorMono = localFont({
   ],
 });
 
+function normalizeBaseUrl(raw?: string) {
+  const s = String(raw ?? "").trim();
+  if (!s || s === "undefined" || s === "null") return undefined;
+  // allow values like "example.com" by auto-adding https
+  const withProto = /^https?:\/\//i.test(s) ? s : `https://${s}`;
+  return withProto.replace(/\/+$/, "");
+}
+
+function resolveMetadataBase() {
+  const candidates = [
+    process.env.NEXT_PUBLIC_SITE_URL, // your explicit preferred canonical
+    process.env.SITE_URL,             // Netlify standard
+    process.env.URL,                  // Netlify runtime
+    process.env.DEPLOY_PRIME_URL,     // Netlify previews
+    process.env.DEPLOY_URL,           // Netlify alt
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+  ];
+
+  for (const c of candidates) {
+    const normalized = normalizeBaseUrl(c);
+    if (normalized) return new URL(normalized);
+  }
+
+  return new URL("http://localhost:3000");
+}
+
 export const metadata = {
   title: "Dramatic Adventure Theatre – Alumni Stories",
   description: "Immersive global storytelling from DAT artists.",
-  metadataBase: new URL(process.env.NEXTAUTH_URL || "http://localhost:3000"),
+  metadataBase: resolveMetadataBase(),
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

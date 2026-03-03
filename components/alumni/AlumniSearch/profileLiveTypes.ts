@@ -2,11 +2,13 @@
 export type ProfileLiveRow = {
   name: string;
   alumniId?: string;
-  email?: string;
   slug: string;
 
+  // ✅ public-facing contact only (optional)
+  publicEmail?: string;
+
   pronouns?: string;
-  roles?: string;            // ← NOTE: appears string in sheet
+  roles?: string;
   location?: string;
   currentWork?: string;
 
@@ -20,9 +22,9 @@ export type ProfileLiveRow = {
   imdb?: string;
 
   spotlight?: string;
-  programs?: string;         // usually CSV or pipe list
-  tags?: string;             // usually CSV or pipe list
-  statusFlags?: string;      // usually CSV or pipe list
+  programs?: string;
+  tags?: string;
+  statusFlags?: string;
   isPublic?: string;
   status?: string;
   updatedAt?: string;
@@ -33,4 +35,7 @@ export type ProfileLiveRow = {
   featuredAlbumId?: string;
   featuredReelId?: string;
   featuredEventId?: string;
+
+  // ✅ if you’re using this now
+  languages?: string;
 };

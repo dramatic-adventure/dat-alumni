@@ -1,7 +1,6 @@
 // /lib/loadAlumni.ts
 import {
   serverDebug,
-  serverInfo,
   serverWarn,
   serverError,
   serverDebugEnv,
@@ -180,6 +179,10 @@ function colIndexToA1(n: number): string {
  * ────────────────────────────────────────────────────────── */
 
 let alumniCache: AlumniRow[] = [];
+let alumniCacheAt = 0;
+
+const ALUMNI_TTL_MS = Number(process.env.ALUMNI_TTL_MS || 60_000); // 60s default
+
 let slugForwardMapCache: Record<string, string> | null = null;
 
 /* ──────────────────────────────────────────────────────────
@@ -307,7 +310,17 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
     "bio",
     "bio (long)",
   ]);
-  const emailIdx = idxOf(header, ["email", "email address"]);
+  const publicEmailIdx = idxOf(header, [
+    "public email",
+    "publicemail",
+    "public_email",
+    "publicemail address",
+    "publicemailaddress",
+    "publicEmail", // <-- add this
+  ]);
+  if (DEBUG) {
+    serverDebug("🧾 [live] publicEmailIdx:", publicEmailIdx, "headerSample:", header.slice(0, 40));
+  }
   const websiteIdx = idxOf(header, ["website", "site", "portfolio", "portfolio url"]);
   const socialsIdx = idxOf(header, ["socials", "social links", "social links (csv)", "social"]);
 
@@ -363,8 +376,8 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
       // Put this under both likely keys; your normalizer can pick whichever it supports
       "artist statement": cell(r, artistStatementIdx),
       "bio long": cell(r, artistStatementIdx),
-
-      email: cell(r, emailIdx),
+      "public email": cell(r, publicEmailIdx),
+      publicEmail: cell(r, publicEmailIdx),
       website: cell(r, websiteIdx),
       socials: cell(r, socialsIdx),
       "social links": cell(r, socialsIdx),
@@ -466,7 +479,11 @@ async function loadAlumniFromCsvFallback(): Promise<AlumniRow[]> {
       slug: slug || "",
     } as any);
 
-    if (normalized) rows.push(normalized);
+    if (normalized) {
+      // ✅ hard strip private email no matter what the CSV contains
+      (normalized as any).email = "";
+      rows.push(normalized);
+    }
     else skipped++;
   }
 
@@ -481,16 +498,23 @@ async function loadAlumniFromCsvFallback(): Promise<AlumniRow[]> {
  * Public exports
  * ────────────────────────────────────────────────────────── */
 
-export const loadAlumni = cache(async (): Promise<AlumniRow[]> => {
-  if (alumniCache.length) {
+export const loadAlumni = async (): Promise<AlumniRow[]> => {
+  const now = Date.now();
+
+  if (alumniCache.length && now - alumniCacheAt < ALUMNI_TTL_MS) {
     if (DEBUG) serverDebug("⚡ Returning cached alumni:", alumniCache.length);
     return alumniCache;
+  }
+
+  if (DEBUG && alumniCache.length) {
+    serverDebug("♻️ Cache expired; reloading from Sheets. Cached count:", alumniCache.length);
   }
 
   // 1) Live-first
   try {
     const liveRows = await loadAlumniFromLive();
     alumniCache = liveRows;
+    alumniCacheAt = Date.now();
     return liveRows;
   } catch (err) {
     serverWarn("⚠️ [loadAlumni] Live load failed; falling back to CSV:", err);
@@ -500,12 +524,13 @@ export const loadAlumni = cache(async (): Promise<AlumniRow[]> => {
   try {
     const fallback = await loadAlumniFromCsvFallback();
     alumniCache = fallback;
+    alumniCacheAt = Date.now();
     return fallback;
   } catch (err) {
     serverError("❌ [loadAlumni] CSV fallback also failed:", err);
     return [];
   }
-});
+};
 
 export const loadVisibleAlumni = cache(async (): Promise<AlumniRow[]> => {
   const all = await loadAlumni();
@@ -556,6 +581,7 @@ export const loadAlumniBySeason = cache(async (season: number): Promise<AlumniRo
 
 export function invalidateAlumniCaches(): void {
   alumniCache = [];
+  alumniCacheAt = 0; // ✅ reset TTL clock
   slugForwardMapCache = null;
   if (DEBUG) serverDebug("🧹 Cleared alumni + slug-forward caches");
 }

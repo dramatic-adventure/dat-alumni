@@ -1,17 +1,22 @@
 // app/api/debug/public/route.ts
 import { NextResponse } from "next/server";
-import fs from "node:fs";
-import path from "node:path";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const cwd = process.cwd();
-  const p = path.join(cwd, "public", "seasons", "season-fallback.jpg");
-  const exists = fs.existsSync(p);
-  const dir = fs.existsSync(path.join(cwd, "public", "seasons"))
-    ? fs.readdirSync(path.join(cwd, "public", "seasons"))
-    : [];
+  // ✅ Never expose debug endpoints in production
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { ok: false, error: "Not found" },
+      { status: 404, headers: { "Cache-Control": "no-store, max-age=0" } }
+    );
+  }
 
-  return NextResponse.json({ cwd, exists, path: p, dir });
+  // keep whatever you want here in dev only
+  const cwd = process.cwd();
+  return NextResponse.json(
+    { ok: true, cwd },
+    { headers: { "Cache-Control": "no-store, max-age=0" } }
+  );
 }

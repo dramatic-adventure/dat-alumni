@@ -1,24 +1,109 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 
 interface ContactPanelProps {
+  name?: string;
+  slug?: string;
   email?: string;
   website?: string;
   socials?: string[];
   onClose: () => void;
 }
 
+// (intentionally no email-derived name helpers; we use name -> slug fallback only)
+
+function firstNameFromSlugOrUnknown(slug?: string) {
+  const s = String(slug || "").trim();
+  if (!s) return "this alum";
+
+  // "jesse-baxter" -> "Jesse", "lucia_siposova" -> "Lucia"
+  const decoded = decodeURIComponent(s);
+  const first = decoded
+    .split(/[^\p{L}\p{N}]+/u) // split on non letters/numbers (unicode-safe)
+    .filter(Boolean)[0];
+
+  if (!first) return "this alum";
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+}
+
+function EmailRow({
+  email,
+  name,
+  slug,
+  className,
+  Arrow,
+}: {
+  email: string;
+  name?: string;
+  slug?: string;
+  className: string;
+  Arrow: () => ReactElement;
+}) {
+  const displayName = useMemo(() => {
+    const n = String(name || "").trim();
+    if (n) return n.split(/\s+/)[0] || "this alum";
+    return firstNameFromSlugOrUnknown(slug);
+  }, [name, slug]);
+
+  return (
+    <a
+      href={`mailto:${email}`}
+      className={className}
+      style={{ textDecoration: "none" }}
+      aria-label={`Email ${displayName}`}
+    >
+      <div className="flex items-center gap-1">
+        <Arrow />
+        <span>
+          {`Email ${displayName}`}
+        </span>
+      </div>
+    </a>
+  );
+}
+
+function normalizeUrl(raw: string) {
+  const s = String(raw || "").trim();
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return s;
+  return `https://${s}`;
+}
+
+function displayUrl(raw: string) {
+  return String(raw || "").trim().replace(/^https?:\/\//i, "");
+}
+
+function normalizeSocialUrl(raw: string) {
+  const s = String(raw || "").trim();
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return s;
+
+  // simple handle support: "@name" -> instagram profile
+  if (s.startsWith("@")) return `https://instagram.com/${s.slice(1)}`;
+
+  // if they paste "instagram.com/..." without scheme
+  if (/^[a-z0-9.-]+\.[a-z]{2,}\//i.test(s)) return `https://${s}`;
+
+  return s; // fall back (still clickable if it’s a valid scheme like "mailto:" etc.)
+}
+
 export default function ContactPanel({
+  name,
+  slug,
   email,
   website,
   socials = [],
   onClose,
 }: ContactPanelProps) {
-  const linkClasses =
-    "flex items-center text-sm font-normal text-black transition-all duration-200 hover:tracking-[0.025em] hover:text-[#6C00AF] visited:text-black";
+const linkClasses =
+  "flex items-center text-sm font-normal text-black transition-all duration-200 hover:tracking-[0.08em] hover:text-[#6C00AF] visited:text-black";
 
-  const hasLinks = email || website || socials.length > 0;
+  const emailSafe = String(email || "").trim();
+  const websiteSafe = String(website || "").trim();
+  const socialsSafe = (socials || []).map((s) => String(s || "").trim()).filter(Boolean);
+
+  const hasLinks = !!emailSafe || !!websiteSafe || socialsSafe.length > 0;
   const panelRef = useRef<HTMLDivElement>(null);
 
   const Arrow = () => (
@@ -47,6 +132,8 @@ export default function ContactPanel({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
+
+  if (!hasLinks) return null;
 
   return (
     <div
@@ -81,34 +168,33 @@ export default function ContactPanel({
           </div>
 
           <div className="flex flex-col gap-1">
-            {email && (
-              <a
-                href={`mailto:${email}`}
+            {emailSafe && (
+              <EmailRow
+                email={emailSafe}
+                name={name}
+                slug={slug}
                 className={linkClasses}
-                style={{ textDecoration: "none" }}
-              >
-                <Arrow />
-                <span>{email}</span>
-              </a>
+                Arrow={Arrow}
+              />
             )}
 
-            {website && (
+            {websiteSafe && (
               <a
-                href={website}
+                href={normalizeUrl(websiteSafe)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={linkClasses}
                 style={{ textDecoration: "none" }}
               >
                 <Arrow />
-                <span>{website}</span>
+                <span>{displayUrl(websiteSafe)}</span>
               </a>
             )}
 
-            {socials.map((social, i) => (
+            {socialsSafe.map((social, i) => (
               <a
                 key={i}
-                href={social}
+                href={normalizeSocialUrl(social)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={linkClasses}

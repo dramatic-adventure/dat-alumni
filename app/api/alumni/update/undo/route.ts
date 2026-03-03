@@ -2,6 +2,8 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { sheetsClient } from "@/lib/googleClients";
+import { requireAuth } from "@/lib/requireAuth";
+import { getOwnerEmailForAlumniId, normalizeGmail } from "@/lib/ownership";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -117,7 +119,6 @@ async function appendProfileChange(args: {
 }) {
   const sheets = sheetsClient();
 
-  // Your headers now include isUndone, so append through G.
   await sheets.spreadsheets.values.append({
     spreadsheetId,
     range: `${CHANGES_TAB}!A:G`,
@@ -144,13 +145,11 @@ type Body = { id: string } | { alumniId: string; ts: string };
 function parseIdOrBody(body: any): { alumniId: string; ts: string } {
   const id = norm(body?.id);
 
-  // Prefer "alumniId::ts" if provided
   if (id && id.includes("::")) {
     const parts = id.split("::");
     return { alumniId: norm(parts[0]), ts: norm(parts[1] || "") };
   }
 
-  // Fallback for legacy payloads
   return { alumniId: norm(body?.alumniId), ts: norm(body?.ts) };
 }
 
@@ -170,12 +169,6 @@ async function markChangeRowUndone(rowIndex1: number, isUndoneIdx: number) {
   });
 }
 
-/**
- * Find the matching Profile-Changes row for this alumniId + ts + field=currentUpdateText
- * Returns before/after + rowIndex1 so we can mark isUndone=true on that row.
- *
- * IMPORTANT: skips rows already marked isUndone=true.
- */
 async function findChangeRow(alumniId: string, ts: string) {
   const sheets = sheetsClient();
   const res = await sheets.spreadsheets.values.get({
@@ -203,7 +196,6 @@ async function findChangeRow(alumniId: string, ts: string) {
 
   const isUndoneAt = (r: any[]) => isTrue(cell(r, isUndoneIdx));
 
-  // Exact match first (best case)
   const exactIdx0 = rows.findIndex((r) => {
     if (isUndoneAt(r)) return false;
     return (
@@ -216,7 +208,7 @@ async function findChangeRow(alumniId: string, ts: string) {
   if (exactIdx0 >= 0) {
     const r = rows[exactIdx0];
     return {
-      rowIndex1: 2 + exactIdx0, // header row=1, first data row=2
+      rowIndex1: 2 + exactIdx0,
       isUndoneIdx,
       email: cell(r, emailIdx),
       before: cell(r, beforeIdx),
@@ -225,7 +217,6 @@ async function findChangeRow(alumniId: string, ts: string) {
     };
   }
 
-  // Fallback: latest not-undone change for this field.
   const candidates = rows
     .map((r, i) => ({ r, i }))
     .filter(({ r }) => !isUndoneAt(r))
@@ -257,6 +248,10 @@ export async function POST(req: Request) {
     );
   }
 
+  // ✅ Auth gate
+  const auth = await requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   let body: Body | any = null;
   try {
     body = (await req.json()) as any;
@@ -275,39 +270,43 @@ export async function POST(req: Request) {
     );
   }
 
+  // ✅ Ownership gate
+  if (!auth.isAdmin) {
+    const ownerEmail = await getOwnerEmailForAlumniId(spreadsheetId, alumniId);
+    if (!ownerEmail) {
+      return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
+    if (normalizeGmail(auth.email) !== normalizeGmail(ownerEmail)) {
+      return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
+    }
+  }
+
   try {
     const change = await findChangeRow(alumniId, ts);
 
-    // Revert TO the 'before' value
     const target = norm(change.before);
 
-    // Load current live text (so undo ledger is accurate)
     const live = await loadLiveRow(alumniId);
     const liveNow = norm(live.beforeText);
 
-    // Idempotent: if already reverted, ok (but still mark undone if it wasn't)
     if (liveNow === target) {
       await markChangeRowUndone(change.rowIndex1, change.isUndoneIdx);
       return NextResponse.json({ ok: true, alreadyUndone: true }, { status: 200 });
     }
 
-    // 1) Write to Live
     await writeLiveCurrentUpdate(live.rowIndex1, live.currentUpdateTextIdx, target);
 
-    // 2) Mark the ORIGINAL change row undone so it drops out of the feed
     await markChangeRowUndone(change.rowIndex1, change.isUndoneIdx);
 
-    // 3) Append a change row recording the undo action
-    //    If you DO NOT want "undo" to appear as a feed item, set isUndone:"true".
     const tsNow = tsISO();
     await appendProfileChange({
       ts: tsNow,
       alumniId,
-      email: change.email || undefined,
+      email: auth.email, // ✅ record who performed the undo
       field: "currentUpdateText",
       before: liveNow,
       after: target,
-      isUndone: "true", // ✅ suppress the undo-ledger row from feeds, too
+      isUndone: "true",
     });
 
     return NextResponse.json({ ok: true }, { status: 200 });

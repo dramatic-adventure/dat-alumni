@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 
 import { getLocationHrefForToken } from "@/lib/locations";
 import ScaledName from "@/components/shared/NameStack"; // default export; alias name is fine
-import LocationBadge from "@/components/shared/LocationBadge";
 import ShareButton from "@/components/ui/ShareButton";
 import Lightbox from "@/components/shared/Lightbox";
 import ContactOverlay from "@/components/shared/ContactOverlay";
@@ -16,13 +15,14 @@ import { splitTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
 
 interface DesktopProfileHeaderProps {
   alumniId: string;
+  slug?: string;
   name: string;
   role: string;
   roles?: string[];
   location?: string;
   headshotUrl?: string;
   statusFlags?: string[];
-  email?: string;
+  publicEmail?: string;
   website?: string;
   socials?: string[];
 }
@@ -30,13 +30,14 @@ interface DesktopProfileHeaderProps {
 
 export default function DesktopProfileHeader({
   alumniId,
+  slug,
   name,
   role,
   roles = [],
   location,
   headshotUrl,
   statusFlags = [],
-  email,
+  publicEmail,
   website,
   socials,
 }: DesktopProfileHeaderProps) {
@@ -270,7 +271,7 @@ export default function DesktopProfileHeader({
 
 
   const profileCardRef = useRef<HTMLDivElement>(null);
-  const hasContactInfo = !!(email || website || (socials && socials.length > 0));
+  const hasContactInfo = !!(publicEmail || website || (socials && socials.length > 0));
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -360,7 +361,9 @@ export default function DesktopProfileHeader({
     <div ref={profileCardRef} style={{ position: "relative" }}>
       {hasContactInfo && (
         <ContactOverlay
-          email={email}
+          name={name}
+          slug={slug}
+          publicEmail={publicEmail}
           website={website}
           socials={socials}
           profileCardRef={profileCardRef}

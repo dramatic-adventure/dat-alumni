@@ -106,34 +106,36 @@ function resolveStableAlumniIdForEdit(opts: {
   return key;
 }
 
-/** Resolve the alumniId that "owns" an email (Live → Aliases → Changes) */
+/** Resolve stable owner alumniId for a login email (Profile-Owners → Aliases optional) */
 async function resolveOwnerAlumniId(
   sheets: ReturnType<typeof sheetsClient>,
   spreadsheetId: string,
   email: string
 ): Promise<string> {
   const nEmail = normalizeGmail(email);
+  if (!nEmail) return "";
 
-  // 1) Profile-Live
-  const live = await sheets.spreadsheets.values.get({
+  // 1) Profile-Owners (source of truth)
+  const owners = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: "Profile-Live!A:ZZ",
+    range: "Profile-Owners!A:ZZ",
     valueRenderOption: "UNFORMATTED_VALUE",
   });
-  const liveRows = live.data.values ?? [];
-  if (liveRows.length > 0) {
-    const [H, ...rows] = liveRows as any[][];
+
+  const ownersRows = owners.data.values ?? [];
+  if (ownersRows.length > 1) {
+    const [H, ...rows] = ownersRows as any[][];
     const idIdx = idxOf(H, ["alumniid", "alumni id", "id"]);
-    const emailIdx = idxOf(H, ["email"]);
-    if (idIdx !== -1 && emailIdx !== -1) {
+    const ownerEmailIdx = idxOf(H, ["owneremail", "owner email"]);
+    if (idIdx !== -1 && ownerEmailIdx !== -1) {
       for (const r of rows) {
-        const e = normalizeGmail(String(r[emailIdx] || ""));
+        const e = normalizeGmail(String(r[ownerEmailIdx] || ""));
         if (e && e === nEmail) return normId(r[idIdx]);
       }
     }
   }
 
-  // 2) Profile-Aliases (optional)
+  // 2) Optional legacy Profile-Aliases fallback
   try {
     const alias = await sheets.spreadsheets.values.get({
       spreadsheetId,
@@ -143,34 +145,11 @@ async function resolveOwnerAlumniId(
     const aRows = alias.data.values ?? [];
     if (aRows.length > 1) {
       const [, ...rest] = aRows;
-      const hit = rest.find(
-        ([e, aid]) => e && aid && normalizeGmail(String(e)) === nEmail
-      );
+      const hit = rest.find(([e, aid]) => e && aid && normalizeGmail(String(e)) === nEmail);
       if (hit) return normId(hit[1]);
     }
   } catch {
     // optional
-  }
-
-  // 3) Profile-Changes (most recent)
-  const chg = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range: "Profile-Changes!A:ZZ",
-    valueRenderOption: "UNFORMATTED_VALUE",
-  });
-  const chgRows = chg.data.values ?? [];
-  if (chgRows.length > 1) {
-    const [h, ...rows2] = chgRows as any[][];
-    const emailIdx = idxOf(h, ["email"]);
-    const idIdx = idxOf(h, ["alumniid", "alumni id", "id"]);
-    if (emailIdx !== -1 && idIdx !== -1) {
-      for (let i = rows2.length - 1; i >= 0; i--) {
-        const r = rows2[i];
-        const e = normalizeGmail(String(r[emailIdx] || ""));
-        const id = normId(r[idIdx]);
-        if (e === nEmail && id) return id;
-      }
-    }
   }
 
   return "";
@@ -263,61 +242,6 @@ async function ensureAlias(
   } catch {
     // don't fail saves because alias sheet is unavailable
   }
-}
-
-/**
- * ✅ Unique email guard for Profile-Live.
- * Returns null if OK; otherwise a 409 payload with match details.
- */
-function checkDuplicateEmailInLive(opts: {
-  dataRows: any[][];
-  emailIdx: number;
-  idIdx: number;
-  slugIdx: number;
-  statusIdx: number;
-  isPublicIdx: number;
-  updatedIdx: number;
-  ownerKey: string;
-  candidateEmail: string;
-}) {
-  const {
-    dataRows,
-    emailIdx,
-    idIdx,
-    slugIdx,
-    statusIdx,
-    isPublicIdx,
-    updatedIdx,
-    ownerKey,
-    candidateEmail,
-  } = opts;
-
-  if (emailIdx === -1) return null;
-
-  const want = normalizeGmail(candidateEmail);
-  if (!want) return null;
-
-  const matches = dataRows
-    .filter((r) => normalizeGmail(String(r?.[emailIdx] ?? "")) === want)
-    .map((r) => ({
-      alumniId: idIdx !== -1 ? normId(r?.[idIdx]) : "",
-      slug: slugIdx !== -1 ? normId(r?.[slugIdx]) : "",
-      status: statusIdx !== -1 ? String(r?.[statusIdx] ?? "") : "",
-      isPublic: isPublicIdx !== -1 ? String(r?.[isPublicIdx] ?? "") : "",
-      updatedAt: updatedIdx !== -1 ? String(r?.[updatedIdx] ?? "") : "",
-    }));
-
-  const owners = new Set(matches.map((m) => m.alumniId).filter(Boolean));
-
-  if (owners.size === 0) return null;
-  if (owners.size === 1 && owners.has(normId(ownerKey))) return null;
-
-  return {
-    error: "duplicate_email" as const,
-    email: want,
-    matchCount: matches.length,
-    matches,
-  };
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -460,8 +384,8 @@ export async function PUT(req: Request) {
     const slugIdx = idxOf(header as string[], ["slug"]);
     const statusIdx = idxOf(header as string[], ["status"]);
     const updatedIdx = idxOf(header as string[], ["updatedat", "updated at"]);
-    const emailIdx = idxOf(header as string[], ["email"]);
-    const isPublicIdx = idxOf(header as string[], ["ispublic", "is public"]);
+    // const emailIdx = idxOf(header as string[], ["email"]); // legacy: no longer used
+    // const isPublicIdx = idxOf(header as string[], ["ispublic", "is public"]); // currently unused
 
     if (idIdx === -1) throw new Error('Profile-Live missing "alumniId" header');
     if (slugIdx === -1) throw new Error('Profile-Live missing "slug" header');
@@ -517,11 +441,11 @@ export async function PUT(req: Request) {
 
     const currentRow = rowIndex !== -1 ? (dataRows[rowIndex] ?? []) : [];
 
-const beforeForCanonKey = (fieldCanon: string): string => {
-  const colIdx = headerMap[fieldCanon];
-  if (typeof colIdx !== "number" || colIdx < 0) return "";
-  return String(currentRow[colIdx] ?? "");
-};
+    const beforeForCanonKey = (fieldCanon: string): string => {
+      const colIdx = headerMap[fieldCanon];
+      if (typeof colIdx !== "number" || colIdx < 0) return "";
+      return String(currentRow[colIdx] ?? "");
+    };
 
     /**
      * Filter incoming changes:
@@ -580,19 +504,9 @@ const beforeForCanonKey = (fieldCanon: string): string => {
 
     // If the client explicitly changed the profile's email, use THAT.
     // Otherwise, only allow auto-backfill for non-admin self-saves *when the live email is blank*.
-    const explicitEmailChange = String(filteredChangesByCanonical["email"] ?? "").trim();
-
-    const currentLiveEmail =
-      rowIndex !== -1 && emailIdx !== -1
-        ? String(currentRow[emailIdx] ?? "").trim()
-        : "";
-
-    // Admin safety: never auto-write the admin/editor email into someone else's profile.
-    // Only non-admin self-saves can auto-backfill email when it's missing.
-    const canAutoBackfillEmail = !admin;
-    const shouldBackfillEmail = canAutoBackfillEmail && !currentLiveEmail;
-
-    const emailToWrite = explicitEmailChange || (shouldBackfillEmail ? editorEmail : "");
+    // ✅ Login identity is NOT stored in Profile-Live.email.
+    // Public contact is Profile-Live.publicEmail.
+    // Therefore: never auto-write Profile-Live.email here.
 
     if (!Object.keys(filteredChangesByCanonical).length) {
       return NextResponse.json(
@@ -646,46 +560,6 @@ const beforeForCanonKey = (fieldCanon: string): string => {
       }
     }
 
-    const willWriteEmail =
-      emailIdx !== -1 &&
-      !!emailToWrite &&
-      normalizeGmail(emailToWrite) !== normalizeGmail(currentLiveEmail);
-
-    if (willWriteEmail) {
-      const dup = checkDuplicateEmailInLive({
-        dataRows,
-        emailIdx,
-        idIdx,
-        slugIdx,
-        statusIdx,
-        isPublicIdx,
-        updatedIdx,
-        ownerKey,
-        candidateEmail: emailToWrite,
-      });
-      if (dup) return NextResponse.json(dup, { status: 409 });
-    }
-
-    // ✅ Ensure server-driven email writes are audited.
-    // If the client didn't explicitly send "email", but the server will write it,
-    // append a Profile-Changes row for email.
-    const emailWasExplicitlyInChanges =
-      Object.prototype.hasOwnProperty.call(filteredChangesByCanonical, "email");
-
-    if (willWriteEmail && !emailWasExplicitlyInChanges) {
-      const before = currentLiveEmail;
-      const after = emailToWrite;
-
-      // avoid noise, but this should already be true if willWriteEmail is true
-      if (normalizeGmail(before) !== normalizeGmail(after)) {
-        await sheets.spreadsheets.values.append({
-          spreadsheetId,
-          range: "Profile-Changes!A:F",
-          valueInputOption: "RAW",
-          requestBody: { values: [[nowIso, ownerKey, editorEmail, "email", before, after]] },
-        });
-      }
-    }
 
     if (rowIndex === -1) {
       // Create row (admin-only)
@@ -716,9 +590,7 @@ const beforeForCanonKey = (fieldCanon: string): string => {
       newRow[statusIdx] = "needs_review";
       if (updatedIdx !== -1) newRow[updatedIdx] = nowIso;
 
-      if (emailIdx !== -1 && emailToWrite) {
-        newRow[emailIdx] = emailToWrite;
-      }
+      // ✅ Do not write Profile-Live.email (ownership is Profile-Owners; public contact is publicEmail)
 
       await sheets.spreadsheets.values.update({
         spreadsheetId,
@@ -748,9 +620,7 @@ const beforeForCanonKey = (fieldCanon: string): string => {
       row[statusIdx] = "needs_review";
       if (updatedIdx !== -1) row[updatedIdx] = nowIso;
 
-      if (emailIdx !== -1 && emailToWrite) {
-        row[emailIdx] = emailToWrite;
-      }
+      // ✅ Do not write Profile-Live.email (ownership is Profile-Owners; public contact is publicEmail)
 
       await sheets.spreadsheets.values.update({
         spreadsheetId,

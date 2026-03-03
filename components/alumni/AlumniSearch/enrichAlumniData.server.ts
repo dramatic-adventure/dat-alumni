@@ -14,6 +14,16 @@ function devLog(...args: any[]) {
   console.log(...args);
 }
 
+function shouldHeadshotDebug(item?: { slug?: string }) {
+  if (process.env.NODE_ENV !== "development") return false;
+  if (process.env.DEBUG_HEADSHOTS !== "1") return false;
+
+  const want = String(process.env.DEBUG_HEADSHOT_SLUG || "").trim();
+  if (!want) return true;
+
+  return normSlug(item?.slug || "") === normSlug(want);
+}
+
 /**
  * Profile-Live row shape (based on your current headers).
  * Keep it local to this module so it stays obviously tied to enrichment.
@@ -21,7 +31,7 @@ function devLog(...args: any[]) {
 export type ProfileLiveRow = {
   name: string;
   alumniId?: string;
-  email?: string;
+  publicEmail?: string;
   slug: string;
 
   pronouns?: string;
@@ -158,7 +168,8 @@ function addProfileLiveTokens(aliasTokens: Set<string>, item: ProfileLiveRow) {
   addPhraseTokens(aliasTokens, item.alumniId);
 
   // Contact / web
-  addPhraseTokens(aliasTokens, item.email);
+  // ⚠️ Do NOT add email to client-search tokens (avoids shipping emails to the browser).
+  // addPhraseTokens(aliasTokens, item.email);
   addPhraseTokens(aliasTokens, item.website);
   addPhraseTokens(aliasTokens, item.instagram);
   addPhraseTokens(aliasTokens, item.youtube);
@@ -453,22 +464,22 @@ export async function enrichAlumniData(
 
 
 
-    if (
-  process.env.NODE_ENV === "development" &&
-  process.env.DEBUG_HEADSHOT_SLUG &&
-  normSlug(item.slug) === normSlug(process.env.DEBUG_HEADSHOT_SLUG)
-) {
-      devLog("[enrich] mediaRows (pre-pick):", mediaRows.map(r => ({
-        kind: r.kind,
-        isCurrent: r.isCurrent,
-        fileId: r.fileId,
-        externalUrl: r.externalUrl,
-        uploadedAt: r.uploadedAt,
-      })));
+    if (shouldHeadshotDebug(item)) {
+      devLog(
+        "[enrich] mediaRows (pre-pick):",
+        mediaRows.map((r) => ({
+          kind: r.kind,
+          isCurrent: r.isCurrent,
+          fileId: r.fileId,
+          externalUrl: r.externalUrl,
+          uploadedAt: r.uploadedAt,
+        }))
+      );
     }
 
     const resolvedHeadshot = pickBestHeadshot(mediaRows);
-    if (process.env.NODE_ENV === "development") {
+
+    if (shouldHeadshotDebug(item)) {
       devLog("[headshot-picker]", {
         slug: item.slug,
         alumniId: item.alumniId,
@@ -486,11 +497,7 @@ export async function enrichAlumniData(
       });
     }
 
-    if (
-  process.env.NODE_ENV === "development" &&
-  process.env.DEBUG_HEADSHOT_SLUG &&
-  normSlug(item.slug) === normSlug(process.env.DEBUG_HEADSHOT_SLUG)
-) {
+    if (shouldHeadshotDebug(item)) {
       devLog("[enrich] picked headshot:", resolvedHeadshot);
     }
 
@@ -644,8 +651,10 @@ export async function enrichAlumniData(
     tokenize(item.currentWork).forEach((t: string) => bioTokens.add(t));
     tokenize(item.location).forEach((t: string) => locationTokens.add(t));
 
+    const safeItem = item;
+
     out.push({
-      ...item,
+      ...safeItem,
       canonicalSlug,
 
       /**

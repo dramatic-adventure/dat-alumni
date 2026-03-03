@@ -455,7 +455,7 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
           fieldNotes: (normalizedAlumni as any).fieldNotes || [],
           imageUrls: mergedImageUrls,
           posterUrls: mergedPosterUrls,
-          email: (normalizedAlumni as any).email || "",
+          publicEmail: (normalizedAlumni as any).publicEmail || "",
           website: (normalizedAlumni as any).website || "",
           socials: (normalizedAlumni as any).socials || [],
           updates: (normalizedAlumni as any).updates || [],

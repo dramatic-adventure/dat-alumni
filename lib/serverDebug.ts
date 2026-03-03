@@ -90,7 +90,7 @@ function collectSecretValues(): string[] {
   return vals;
 }
 
-const SECRET_VALUES = collectSecretValues();
+const SECRET_VALUES = HARD_SILENT ? [] : collectSecretValues();
 
 function redactString(s: string): string {
   let out = s;

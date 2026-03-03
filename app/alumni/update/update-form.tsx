@@ -116,7 +116,10 @@ const targetAlumniIdFromProp =
     let alive = true;
     const run = async () => {
     try {
-      const r = await fetch("/api/alumni/owner", { cache: "no-store" });
+      const r = await fetch("/api/alumni/owner?nocache=1", {
+        cache: "no-store",
+        credentials: "include",
+      });
       const j = await r.json().catch(() => ({}));
       if (!alive) return;
 

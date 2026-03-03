@@ -72,6 +72,47 @@ export function isAdmin(email?: string | null) {
   return !!(email && set.has(String(email).toLowerCase()));
 }
 
+/** Owners tab name (internal) */
+export const OWNERS_TAB = process.env.ALUMNI_OWNERS_TAB || "Profile-Owners";
+
+/**
+ * Look up the owner email for an alumniId from Profile-Owners.
+ * Returns "" if not found / not configured.
+ */
+export async function getOwnerEmailForAlumniId(
+  spreadsheetId: string,
+  alumniId: string
+): Promise<string> {
+  if (!spreadsheetId) return "";
+
+  const sheets = sheetsClient();
+  const res = await withRetry(
+    () =>
+      sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `${OWNERS_TAB}!A:ZZ`,
+        valueRenderOption: "UNFORMATTED_VALUE",
+      }),
+    "Sheets get Profile-Owners"
+  );
+
+  const all = (res.data.values ?? []) as any[][];
+  if (all.length < 2) return "";
+
+  const header = (all[0] ?? []).map((h) => String(h ?? "").trim());
+  const rows = all.slice(1);
+
+  const idIdx = idxOf(header, ["alumniId", "alumniid", "id", "slug"]);
+  const ownerIdx = idxOf(header, ["ownerEmail", "owneremail"]);
+  if (idIdx < 0 || ownerIdx < 0) return "";
+
+  const target = String(alumniId ?? "").trim();
+  const row = rows.find((r) => String(r?.[idIdx] ?? "").trim() === target);
+  if (!row) return "";
+
+  return String(row?.[ownerIdx] ?? "").trim();
+}
+
 /** Resolve the alumniId that "owns" an email (Live → Aliases → Changes) */
 export async function resolveOwnerAlumniId(
   spreadsheetId: string,
@@ -93,7 +134,7 @@ export async function resolveOwnerAlumniId(
   const liveRows = live.data.values ?? [];
   if (liveRows.length > 0) {
     const [H, ...rows] = liveRows as string[][];
-    const idIdx = idxOf(H, ["alumniid", "slug", "alumni id", "id"]);
+    const idIdx = idxOf(H, ["alumniid", "alumniId", "slug", "alumni id", "id"]);
     if (idIdx !== -1) {
       const emailCols: number[] = (H || [])
         .map((h: string, i: number) => ({
@@ -152,7 +193,7 @@ export async function resolveOwnerAlumniId(
   if (chgRows.length > 1) {
     const [h, ...rows2] = chgRows as string[][];
     const emailIdx = idxOf(h, ["email", "submittedbyemail"]);
-    const slugIdx = idxOf(h, ["alumniid", "slug", "alumni id", "id"]);
+    const slugIdx = idxOf(h, ["alumniid", "alumniId", "slug", "alumni id", "id"]);
     if (emailIdx !== -1 && slugIdx !== -1) {
       for (let i = rows2.length - 1; i >= 0; i--) {
         const r = rows2[i] as string[];
@@ -195,7 +236,6 @@ export async function featureExistingInMedia(
   const [mh, ...rows] = mRows as string[][];
   if (!mh) throw new Error("Profile-Media has no header");
 
-  // Case-insensitive header mapping (supports alumniId vs alumniid, etc.)
   const mhLower = mh.map((h) => String(h || "").trim().toLowerCase());
   const idxAid = mhLower.indexOf("alumniid");
   const idxKind = mhLower.indexOf("kind");
@@ -279,7 +319,7 @@ export async function setLivePointer(
   const rows = live.data.values ?? [];
   const header = (rows[0] ?? []) as string[];
 
-  const idIdx = idxOf(header, ["alumniid", "slug", "alumni id", "id"]);
+  const idIdx = idxOf(header, ["alumniid", "alumniId", "slug", "alumni id", "id"]);
   if (idIdx === -1) throw new Error(`Profile-Live missing "alumniId" header`);
 
   const statusIdx = idxOf(header, ["status"]);
