@@ -2,17 +2,10 @@
 import "server-only";
 import { google, sheets_v4, drive_v3 } from "googleapis";
 
-/**
- * Prevent accidental client-side import (will surface fast in dev)
- */
 if (typeof window !== "undefined") {
   throw new Error("googleClients must only be imported on the server");
 }
 
-/**
- * Cache auth client across HMR reloads in dev to avoid re-auth churn.
- * (globalThis is safe in Node)
- */
 declare global {
   // eslint-disable-next-line no-var
   var __DAT_GOOGLE_JWT__: ReturnType<typeof getJWT> | undefined;
@@ -24,30 +17,65 @@ type ServiceAccount = {
   project_id?: string;
 };
 
+function normalizePrivateKey(raw: string) {
+  let k = String(raw || "");
+  if (k.includes("\\n")) k = k.replace(/\\n/g, "\n");
+  return k;
+}
+
+function decodeSaJsonFromEnv(): string {
+  const raw = String(process.env.GCP_SA_JSON || "").trim();
+  if (raw) return raw;
+
+  const b64 = String(process.env.GCP_SA_JSON_BASE64 || "").trim();
+  if (!b64) return "";
+
+  // Base64 → UTF-8 JSON
+  return Buffer.from(b64, "base64").toString("utf8").trim();
+}
+
 function getServiceAccount(): ServiceAccount {
-  const raw = process.env.GCP_SA_JSON;
-  if (!raw) throw new Error("GCP_SA_JSON is missing");
+  // 1) Preferred: split vars
+  const client_email = String(process.env.GCP_SA_EMAIL || "").trim();
+  const private_key = normalizePrivateKey(process.env.GCP_SA_PRIVATE_KEY || "");
+  const project_id_raw = String(process.env.GCP_PROJECT_ID || "").trim();
+
+  if (client_email && private_key) {
+    return {
+      client_email,
+      private_key,
+      project_id: project_id_raw || undefined,
+    };
+  }
+
+  // 2) Fallback: JSON (raw or base64)
+  const text = decodeSaJsonFromEnv();
+  if (!text) {
+    throw new Error(
+      "Missing GCP_SA_EMAIL/GCP_SA_PRIVATE_KEY (or GCP_SA_JSON / GCP_SA_JSON_BASE64)"
+    );
+  }
 
   let parsed: any;
   try {
-    parsed = JSON.parse(raw);
+    parsed = JSON.parse(text);
   } catch {
     throw new Error("GCP_SA_JSON is not valid JSON");
   }
 
-  const client_email = String(parsed.client_email || "").trim();
-  let private_key = String(parsed.private_key || "");
+  const jsonEmail = String(parsed.client_email || "").trim();
+  const jsonKey = normalizePrivateKey(String(parsed.private_key || ""));
+  const jsonProj = String(parsed.project_id || "").trim();
 
-  if (!client_email || !private_key) {
+  if (!jsonEmail || !jsonKey) {
     throw new Error("GCP_SA_JSON missing client_email/private_key");
   }
 
-  // Allow keys stored with literal "\n" sequences
-  if (private_key.includes("\\n")) {
-    private_key = private_key.replace(/\\n/g, "\n");
-  }
-
-  return { client_email, private_key, project_id: parsed.project_id };
+  return {
+    client_email: jsonEmail,
+    private_key: jsonKey,
+    project_id: jsonProj || undefined,
+  };
 }
 
 function getJWT() {
@@ -65,7 +93,7 @@ function getJWT() {
 }
 
 function getAuth() {
-  // Reuse the same JWT across hot reloads in dev
+  // Keep cache (fine). If you ever need, you can gate by NODE_ENV.
   if (!globalThis.__DAT_GOOGLE_JWT__) {
     globalThis.__DAT_GOOGLE_JWT__ = getJWT();
   }
@@ -73,11 +101,9 @@ function getAuth() {
 }
 
 export function sheetsClient(): sheets_v4.Sheets {
-  const auth = getAuth();
-  return google.sheets({ version: "v4", auth });
+  return google.sheets({ version: "v4", auth: getAuth() });
 }
 
 export function driveClient(): drive_v3.Drive {
-  const auth = getAuth();
-  return google.drive({ version: "v3", auth });
+  return google.drive({ version: "v3", auth: getAuth() });
 }
