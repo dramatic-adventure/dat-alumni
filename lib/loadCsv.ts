@@ -137,6 +137,42 @@ async function blobGetTextBestEffort(storeName: string, key: string): Promise<st
 }
 
 /**
+ * Read SA creds from either:
+ * - GCP_SA_JSON (raw JSON), or
+ * - GCP_SA_JSON_BASE64 (single-line base64)
+ *
+ * Returns null if missing/invalid (never throws).
+ */
+function readServiceAccountJsonText(): string | null {
+  const raw = (process.env.GCP_SA_JSON || "").trim();
+  if (raw) return raw;
+
+  const b64 = (process.env.GCP_SA_JSON_BASE64 || "").trim();
+  if (!b64) return null;
+
+  try {
+    // Node runtime (Netlify build + runtime) supports Buffer.
+    return Buffer.from(b64, "base64").toString("utf8");
+  } catch {
+    return null;
+  }
+}
+
+function parseServiceAccountSafely(): any | null {
+  const txt = readServiceAccountJsonText();
+  if (!txt) return null;
+
+  try {
+    return JSON.parse(txt);
+  } catch (e) {
+    // IMPORTANT: do not crash build/prerender
+    serverWarn("⚠️ [loadCsv] Service account env is present but not valid JSON");
+    if (DEBUG) serverDebug("🧪 [loadCsv] SA parse error:", String(e));
+    return null;
+  }
+}
+
+/**
  * Load a CSV from a live URL or local fallback.
  * - Defaults to ISR (revalidate: 60) so static prerendering works
  * - Only uses no-store + cache-buster when `noStore: true`
@@ -191,6 +227,8 @@ export async function loadCsv(
       shouldBust,
       isBuild: IS_BUILD,
       isNetlifyRuntime: isNetlifyRuntime(),
+      hasSaJson: !!(process.env.GCP_SA_JSON || "").trim(),
+      hasSaB64: !!(process.env.GCP_SA_JSON_BASE64 || "").trim(),
     });
   }
 
@@ -216,11 +254,11 @@ export async function loadCsv(
         Referer: "https://docs.google.com/",
       },
       signal: controller.signal,
-      };
+    };
 
-      if (!useNoStore && revalidate > 0) {
-        fetchInit.next = { revalidate };
-      }
+    if (!useNoStore && revalidate > 0) {
+      fetchInit.next = { revalidate };
+    }
 
     if (useNoStore) (fetchInit as any).cache = "no-store";
 
@@ -253,11 +291,14 @@ export async function loadCsv(
   // ---------------- Service Account fallback (Sheets API only, bounded) ----------------
   const tryServiceAccountSheetsBounded = async (url: string) => {
     if (SA_FALLBACK_DISABLED) throw new Error("SA fallback disabled via DISABLE_SA_FALLBACK=1");
-    if (!process.env.GCP_SA_JSON) throw new Error("GCP_SA_JSON missing; cannot use Service Account fallback");
+
+    // ✅ IMPORTANT: never crash if env is malformed; just refuse SA fallback.
+    const sa = parseServiceAccountSafely();
+    if (!sa) throw new Error("Service Account JSON missing/invalid (GCP_SA_JSON or GCP_SA_JSON_BASE64)");
+
     if (!isSheetsFileUrl(url)) throw new Error("SA fallback requires a /spreadsheets/d/<fileId> URL");
 
     const { google } = await import("googleapis");
-    const sa = JSON.parse(process.env.GCP_SA_JSON as string);
 
     let privateKey = String(sa.private_key || "");
     if (privateKey.includes("\\n")) privateKey = privateKey.replace(/\\n/g, "\n");
