@@ -15,7 +15,12 @@ import Lightbox from "@/components/shared/Lightbox";
 /* -------------------------- Types -------------------------- */
 export type GalleryImage = { src: string; alt?: string };
 
-export type PersonRole = { role: string; name: string; href?: string };
+export type PersonRole = {
+  role: string;
+  name: string;
+  href?: string;
+  dramaClubSlug?: string;
+};
 
 type InputImage = GalleryImage;
 type SafeImage = { src: string; alt: string };
@@ -53,6 +58,7 @@ type PartnerForTemplate = {
 
 export interface ProductionPageTemplateProps {
   title: string;
+  originalTitle?: string;
 
   // Season / hero
   seasonLabel?: string;
@@ -94,8 +100,18 @@ export interface ProductionPageTemplateProps {
   quoteImageUrl?: string;
 
   // Roster
-  creativeTeam?: Array<{ role?: string; name?: string; href?: string }>;
-  cast?: Array<{ role?: string; name?: string; href?: string }>;
+  creativeTeam?: Array<{
+    role?: string;
+    name?: string;
+    href?: string;
+    dramaClubSlug?: string;
+  }>;
+  cast?: Array<{
+    role?: string;
+    name?: string;
+    href?: string;
+    dramaClubSlug?: string;
+  }>;
 
   // Media
   galleryImages?: GalleryImage[];
@@ -119,6 +135,7 @@ export interface ProductionPageTemplateProps {
   // CTAs
   getInvolvedLink?: string;
   donateLink?: string;
+  donateProductionSlug?: string;
   ticketsLink?: string;
   notifyMeUrl?: string;
 
@@ -212,16 +229,22 @@ function SmartLink({
 function NameCell({
   name,
   href,
+  dramaClubSlug,
   base = "/alumni",
 }: {
   name: string;
   href?: string;
+  dramaClubSlug?: string;
   base?: string;
 }) {
   const safeName = cleanStr(name);
   if (!safeName) return null;
 
-  const finalHref = cleanHref(href) ?? `${base}/${slugify(safeName)}`;
+  const finalHref =
+    cleanHref(href) ??
+    (cleanStr(dramaClubSlug)
+      ? `/drama-club/${dramaClubSlug}`
+      : `${base}/${slugify(safeName)}`);
 
   return (
     <Link
@@ -594,6 +617,7 @@ function hasRenderableProcess(sections?: ProcessSlice[]) {
 export default function ProductionPageTemplate(props: ProductionPageTemplateProps) {
   const {
     title,
+    originalTitle,
     seasonLabel,
     seasonHref,
     subtitle,
@@ -612,6 +636,9 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
     location,
     runtime,
     ageRecommendation,
+
+    runStartISO,
+    runEndISO,
 
     heroImageUrl,
     heroImageAlt,
@@ -643,6 +670,7 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
 
     getInvolvedLink,
     donateLink,
+    donateProductionSlug,
     ticketsLink,
 
     processSections,
@@ -657,6 +685,7 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
   } = props;
 
   const titleText = cleanStr(title) ?? "";
+  const originalTitleText = cleanStr(originalTitle);
   const seasonLabelText = cleanStr(seasonLabel);
   const seasonHrefText = cleanHref(seasonHref);
   const subtitleText = cleanStr(subtitle);
@@ -678,6 +707,7 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
   const heroImageAltText = cleanStr(heroImageAlt);
 
   const donateLinkText = cleanHref(donateLink);
+  const donateProductionSlugText = cleanStr(donateProductionSlug);
   const getInvolvedLinkText = cleanHref(getInvolvedLink);
   const ticketsLinkText = cleanHref(ticketsLink);
 
@@ -704,7 +734,15 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
       const name = cleanStr(m?.name);
       if (!role || !name) return [];
       const href = cleanHref(m?.href);
-      return [{ role, name, ...(href ? { href } : {}) }];
+      const dramaClubSlug = cleanStr(m?.dramaClubSlug);
+      return [
+        {
+          role,
+          name,
+          ...(href ? { href } : {}),
+          ...(dramaClubSlug ? { dramaClubSlug } : {}),
+        },
+      ];
     });
   }, [cast]);
 
@@ -714,7 +752,15 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
       const name = cleanStr(m?.name);
       if (!role || !name) return [];
       const href = cleanHref(m?.href);
-      return [{ role, name, ...(href ? { href } : {}) }];
+      const dramaClubSlug = cleanStr(m?.dramaClubSlug);
+      return [
+        {
+          role,
+          name,
+          ...(href ? { href } : {}),
+          ...(dramaClubSlug ? { dramaClubSlug } : {}),
+        },
+      ];
     });
   }, [creativeTeam]);
 
@@ -874,17 +920,45 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
   const narrativeGridClass =
     showAboutSection && showSidebarCol ? "primary-narrative-grid pn-two" : "primary-narrative-grid";
 
-  const runIsPast = inferIsPastRun(datesText);
+  const now = new Date();
+
+  const parsedRunEnd = cleanStr(runEndISO) ? new Date(runEndISO as string) : null;
+  const parsedRunStart = cleanStr(runStartISO) ? new Date(runStartISO as string) : null;
+
+  const hasValidRunEnd = !!parsedRunEnd && !Number.isNaN(parsedRunEnd.getTime());
+  const hasValidRunStart = !!parsedRunStart && !Number.isNaN(parsedRunStart.getTime());
+
+  const runIsPast = hasValidRunEnd
+    ? parsedRunEnd < now
+    : inferIsPastRun(datesText);
+
+  const runIsUpcomingOrCurrent = hasValidRunEnd
+    ? parsedRunEnd >= now
+    : hasValidRunStart
+      ? parsedRunStart >= now || !inferIsPastRun(datesText)
+      : !runIsPast;
+
+  const pastProductionDonateHref =
+    "/donate?mode=new-work&freq=monthly";
+
+  const currentProductionDonateHref = donateProductionSlugText
+    ? `/donate?mode=new-work-specific&freq=one_time&production=${encodeURIComponent(
+        donateProductionSlugText
+      )}`
+    : donateLinkText ?? "/donate?mode=new-work&freq=monthly";
 
   let primaryCtaHref = "";
   let primaryCtaLabel = "";
 
-  if (ticketsLinkText && !runIsPast) {
+  if (ticketsLinkText && runIsUpcomingOrCurrent) {
     primaryCtaHref = ticketsLinkText;
     primaryCtaLabel = "Purchase Tickets";
-  } else if (donateLinkText) {
-    primaryCtaHref = donateLinkText;
-    primaryCtaLabel = "Sponsor the Story";
+  } else if (runIsUpcomingOrCurrent) {
+    primaryCtaHref = currentProductionDonateHref;
+    primaryCtaLabel = "Sponsor This New Work";
+  } else if (runIsPast) {
+    primaryCtaHref = pastProductionDonateHref;
+    primaryCtaLabel = "Sponsor Stories Like This";
   } else if (getInvolvedLinkText) {
     primaryCtaHref = getInvolvedLinkText;
     primaryCtaLabel = "Get Involved";
@@ -1073,7 +1147,8 @@ if (ageRecText) metaValues.push({ value: ageRecText });
   const impactBlurb =
     "Whether you’ve discovered this production while it’s on stage or years after the final curtain, your support helps fuel long-term youth drama clubs, artist mentorship, and new work in communities around the world.";
 
-  const hasImpactCTA = !!donateLinkText || !!getInvolvedLinkText;
+  const hasImpactCTA =
+    runIsPast || runIsUpcomingOrCurrent || !!getInvolvedLinkText;
   const showDramaClubBlock = !!dramaClubNameText || !!dramaClubLinkText;
 
   const showImpactRight = showDramaClubBlock || hasCauses || hasPartners;
@@ -1129,6 +1204,7 @@ if (ageRecText) metaValues.push({ value: ageRecText });
               zIndex: 2,
             }}
           >
+            <div className="hero-text-shade" />
             <div className="hero-text-group">
               {seasonLabelText &&
                 (seasonHrefText ? (
@@ -1139,7 +1215,17 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                   <span className="eyebrow season-eyebrow">{seasonLabelText}</span>
                 ))}
 
-              <h1 className="hero-title">{displayTitle}</h1>
+              <div className="hero-title-lockup">
+                <h1 className="hero-title">{displayTitle}</h1>
+
+                {originalTitleText && (
+                  <p className="hero-original-title font-sans">
+                    <span className="hero-original-text" lang="es">
+                      {originalTitleText}
+                    </span>
+                  </p>
+                )}
+              </div>
 
               {heroTitleVariant && <p className="hero-subtitle">{heroTitleVariant}</p>}
 
@@ -1268,11 +1354,16 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                           {safeCast.map((member, i) => (
                             <li
                               key={`${member.role}-${member.name}-${i}`}
-                              className="flex items-center justify-between gap-4 py-3 border-top-soft text-sm"
+                              className="credit-row border-top-soft"
                             >
                               <span className="role-label">{member.role}</span>
-                              <span className="font-medium">
-                                <NameCell name={member.name} href={member.href} base={autoLinkPeopleBase} />
+                              <span className="credit-name">
+                                <NameCell
+                                  name={member.name}
+                                  href={member.href}
+                                  dramaClubSlug={member.dramaClubSlug}
+                                  base={autoLinkPeopleBase}
+                                />
                               </span>
                             </li>
                           ))}
@@ -1289,11 +1380,16 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                           {safeCreativeTeam.map((person, i) => (
                             <li
                               key={`${person.role}-${person.name}-${i}`}
-                              className="flex items-center justify-between gap-4 py-3 border-top-soft text-sm"
+                              className="credit-row border-top-soft"
                             >
                               <span className="role-label">{person.role}</span>
-                              <span className="font-medium">
-                                <NameCell name={person.name} href={person.href} base={autoLinkPeopleBase} />
+                              <span className="credit-name">
+                                <NameCell
+                                  name={person.name}
+                                  href={person.href}
+                                  dramaClubSlug={person.dramaClubSlug}
+                                  base={autoLinkPeopleBase}
+                                />
                               </span>
                             </li>
                           ))}
@@ -1375,9 +1471,13 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                 </p>
 
                 <div className="impact-cta-stack" style={{ marginTop: 10 }}>
-                  {donateLinkText && (
-                    <DATButtonLink href={donateLinkText} size="lg" className="sponsor-btn">
-                      Sponsor the Story
+                  {(runIsUpcomingOrCurrent || runIsPast) && (
+                    <DATButtonLink
+                      href={runIsPast ? pastProductionDonateHref : currentProductionDonateHref}
+                      size="lg"
+                      className="sponsor-btn"
+                    >
+                      {runIsPast ? "Sponsor Stories Like This" : "Sponsor This New Work"}
                     </DATButtonLink>
                   )}
                   {getInvolvedLinkText && (
@@ -1547,6 +1647,16 @@ if (ageRecText) metaValues.push({ value: ageRecText });
             0 8px 24px rgba(0,0,0,0.90);
         }
 
+        main a,
+        main a:link,
+        main a:visited,
+        main a:hover,
+        main a:focus,
+        main a:focus-visible,
+        main a:active{
+          text-decoration: none !important;
+        }
+
         .eyebrow{
           display:block; margin-bottom:0.375rem;
           font-family: var(--font-space-grotesk, system-ui, sans-serif);
@@ -1558,16 +1668,86 @@ if (ageRecText) metaValues.push({ value: ageRecText });
         .season-link:hover .season-eyebrow{ color:#FFCC00 !important; letter-spacing:0.30em; opacity:1 !important; }
 
         .hero-title{
+          display: block;
+          width: max-content;
+          max-width: 100%;
           font-family: var(--font-anton, system-ui, sans-serif);
           font-size: clamp(2.8rem, 7vw, 7rem);
-          color: #f2f2f2; text-transform: uppercase;
-          margin: 0; line-height: 1; letter-spacing: 0.06em; opacity: .9;
+          color: #f2f2f2;
+          text-transform: uppercase;
+          margin: 0;
+          line-height: 1;
+          letter-spacing: 0.06em;
+          opacity: .9;
         }
         .hero-subtitle{
           margin-top: .4rem;
           font-family: var(--font-space-grotesk, system-ui, sans-serif);
           font-size: clamp(1rem, 2.2vw, 1.5rem); letter-spacing: .18em;
           text-transform: uppercase; font-weight: 600; color: #f2f2f2; opacity: 0.9;
+        }
+        .hero-original-title{
+          margin: 0;
+          margin-top: clamp(0.2rem, 0.8vw, 0.45rem);
+          display: block;
+          width: max-content;
+          max-width: 100%;
+          text-align: right;
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: clamp(0.9rem, 1.35vw, 1.15rem);
+          line-height: 1.15;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          font-weight: 500;
+          color: #FFCC00;
+          opacity: 0.96;
+          text-shadow:
+            0 0 4px rgba(0,0,0,0.82),
+            0 8px 24px rgba(0,0,0,0.90);
+        }
+
+        .hero-original-text{
+          color: inherit;
+        }
+        .hero-title-lockup{
+          display: inline-flex;
+          flex-direction: column;
+          align-items: flex-end;
+          width: max-content;
+          max-width: 100%;
+        }
+        .hero-text-group{
+          display: inline-flex;
+          flex-direction: column;
+          align-items: flex-start;
+          width: fit-content;
+          max-width: min(92vw, 1100px);
+        }
+        .hero-stack{
+          position: relative;
+          width: fit-content;
+          max-width: min(92vw, 1100px);
+        }
+
+        .hero-text-shade{
+          position: absolute;
+          inset: -1.2rem -1.6rem -1rem -1.6rem;
+          background:
+            radial-gradient(
+              ellipse at left center,
+              rgba(36,17,35,0.52) 0%,
+              rgba(36,17,35,0.38) 38%,
+              rgba(36,17,35,0.18) 68%,
+              rgba(36,17,35,0.00) 100%
+            );
+          filter: blur(14px);
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        .hero-text-group{
+          position: relative;
+          z-index: 1;
         }
         .hero-byline{
           margin-top: .65rem;
@@ -1578,9 +1758,14 @@ if (ageRecText) metaValues.push({ value: ageRecText });
 
         .playwright-link {
           color: #f2f2f2 !important; font-weight: 700; letter-spacing: 0.22em; opacity: .85;
+          text-decoration: none !important;
           transition: color 180ms ease, letter-spacing 180ms ease, transform 180ms ease, opacity 180ms ease;
         }
-        .playwright-link:hover { color:#FFCC00 !important; letter-spacing:0.30em; transform: translateX(2px); opacity:1; }
+        .playwright-link:hover,
+        .playwright-link:focus-visible {
+          color:#FFCC00 !important; letter-spacing:0.30em; transform: translateX(2px); opacity:1;
+          text-decoration: none !important;
+        }
 
         .tagline-inline{
           font-family: var(--font-rock-salt, cursive);
@@ -1625,13 +1810,24 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           letter-spacing: .12em; text-transform: uppercase; font-weight: 900; color: #241123;
         }
 
-        .meta-link, .meta-link:visited{
+        .meta-link,
+        .meta-link:link,
+        .meta-link:visited,
+        .meta-link:hover,
+        .meta-link:focus,
+        .meta-link:focus-visible,
+        .meta-link:active{
           color: #6c00af !important;
-          text-decoration: none;
+          text-decoration: none !important;
           transform-origin: left center;
           transition: color 160ms ease, transform 160ms ease, opacity 160ms ease, letter-spacing 160ms ease;
         }
-        .meta-link:hover{ color: #F23359 !important; transform: scale(1.02) translateX(1px); letter-spacing: .16em; }
+        .meta-link:hover,
+        .meta-link:focus-visible{
+          color: #F23359 !important;
+          transform: scale(1.02) translateX(1px);
+          letter-spacing: .16em;
+        }
 
         .body-text{
           font-family: var(--font-space-grotesk, system-ui, sans-serif);
@@ -1639,23 +1835,45 @@ if (ageRecText) metaValues.push({ value: ageRecText });
         }
         .about-body{ font-weight: 500; letter-spacing: .005em; }
 
-        .about-body a, .about-body a:visited{
-          color:#6c00af !important; font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
+        .about-body a,
+        .about-body a:link,
+        .about-body a:visited,
+        .about-body a:hover,
+        .about-body a:focus,
+        .about-body a:focus-visible,
+        .about-body a:active{
+          color:#6c00af !important;
+          font-weight: 600;
+          text-decoration: none !important;
           transition: color 160ms ease, transform 160ms ease;
         }
-        .about-body a:hover{ color:#F23359 !important; transform: translateY(-1px); }
+        .about-body a:hover,
+        .about-body a:focus-visible{
+          color:#F23359 !important;
+          transform: translateY(-1px);
+        }
 
-        .process-wrap{ padding-top: 40px; padding-bottom: 15px; display: flex; flex-direction: column; justify-content: center; }
+        .process-wrap{ padding-top: 40px; padding-bottom: 15px !important; display: flex; flex-direction: column; justify-content: center; }
         .quote-wrap{ padding-top: 40px; padding-bottom: -10px !important; display: flex; flex-direction: column; justify-content: center; }
 
         .impact-cta-stack{ display:flex; flex-direction:column; width:max-content; align-items:stretch; }
         .under-btn{ display:block; text-align:center; margin-top:8px; }
 
-        .involved-link, .involved-link:visited{
+        .involved-link,
+        .involved-link:link,
+        .involved-link:visited,
+        .involved-link:hover,
+        .involved-link:focus,
+        .involved-link:focus-visible,
+        .involved-link:active{
           color: #6c00af !important; font-weight: 500; letter-spacing: .01em;
+          text-decoration: none !important;
           transition: transform 160ms ease, letter-spacing 160ms ease, opacity 160ms ease, color 160ms ease;
         }
-        .involved-link:hover{ transform: scale(1.02); letter-spacing:.02em; opacity:.9; color:#F23359 !important; }
+        .involved-link:hover,
+        .involved-link:focus-visible{
+          transform: scale(1.02); letter-spacing:.02em; opacity:.9; color:#F23359 !important;
+        }
 
         .support-eyebrow-tight{
           margin: 0;
@@ -1673,14 +1891,24 @@ if (ageRecText) metaValues.push({ value: ageRecText });
         }
         .club-loc{ margin: 0; font-size: .92rem; color: #241123B3; }
 
-        .club-link-black, .club-link-black:visited{
+        .club-link-black,
+        .club-link-black:link,
+        .club-link-black:visited,
+        .club-link-black:hover,
+        .club-link-black:focus,
+        .club-link-black:focus-visible,
+        .club-link-black:active{
           color:#6c00af !important; font-weight: 400;
+          text-decoration: none !important;
           transition: transform 160ms ease, letter-spacing 160ms ease, opacity 160ms ease, color 160ms ease;
         }
-        .club-link-black:hover{ transform: scale(1.02) translateX(1px); letter-spacing:.06em; opacity:.96; color:#F23359 !important; }
+        .club-link-black:hover,
+        .club-link-black:focus-visible{
+          transform: scale(1.02) translateX(1px); letter-spacing:.06em; opacity:.96; color:#F23359 !important;
+        }
 
         .drama-club-wrapper{ transition: transform 160ms ease, filter 160ms ease; display:inline-block; margin-top: 1rem; margin-bottom: 2rem; }
-        .drama-club-link{ display:inline-block; }
+        .drama-club-link{ display:inline-block; text-decoration: none !important; }
         .drama-club-link:hover, .drama-club-wrapper:hover{ transform: translateY(-2px); filter: brightness(0.88); }
 
         .cause-row{ margin-top: 8px; display:flex; flex-wrap:wrap; gap: 8px; }
@@ -1694,27 +1922,30 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           text-transform: uppercase;
           letter-spacing: 0.11em;
           background: rgba(255,255,255,0.9);
-          text-decoration: none;
+          text-decoration: none !important;
           color: #241123;
           transition: background-color 150ms ease, color 150ms ease, transform 130ms ease, box-shadow 130ms ease, border-color 130ms ease, opacity 130ms ease;
         }
-        .cause-chip:hover {
+        .cause-chip:hover,
+        .cause-chip:focus-visible {
           background-color: #FFCC00;
           border-color: #FFCC00;
           color: #241123;
           transform: translateY(-1px);
           box-shadow: 0 6px 14px rgba(0,0,0,0.22);
           opacity: 0.97;
+          text-decoration: none !important;
         }
 
         .impact-partners-block{ margin-top: 3.8rem; padding-top: 0rem; }
         .partner-list{ margin-top: 8px; display: flex; flex-direction: column; gap: 8px; }
         .partner-bar{
           position: relative; display: flex; align-items: center; gap: 12px; padding: 8px 10px;
-          border-radius: 5px; background: #f2f2f24d; border: 1px solid #2411231A; text-decoration: none;
+          border-radius: 5px; background: #f2f2f24d; border: 1px solid #2411231A; text-decoration: none !important;
           transition: transform 120ms ease, background-color 120ms ease;
         }
-        .partner-bar:hover{ transform: translateY(-1px); background: #FFcc0040; }
+        .partner-bar:hover,
+        .partner-bar:focus-visible{ transform: translateY(-1px); background: #FFcc0040; text-decoration: none !important; }
         .partner-logo-shell{
           flex: 0 0 auto; width: 64px; height: 64px; border-radius: 3px; background: #24112312;
           display: flex; align-items: center; justify-content: center;
@@ -1731,23 +1962,54 @@ if (ageRecText) metaValues.push({ value: ageRecText });
         .resources-list{ list-style: none; margin: 0; padding-left: 0; display: grid; row-gap: 8px; margin-top: 1rem; }
         .resource-item{ position: relative; padding-left: 1.1rem; }
         .resource-item::before{ content: "›"; position: absolute; left: 0; top: 0.08rem; font-weight: 500; letter-spacing: .02em; color: #241123CC; }
-        .resource-link, .resource-link:visited{
+        .resource-link,
+        .resource-link:link,
+        .resource-link:visited,
+        .resource-link:hover,
+        .resource-link:focus,
+        .resource-link:focus-visible,
+        .resource-link:active{
           color:#6c00af !important; font-weight: 500; transform-origin: left center;
           transition: transform 140ms ease, opacity 140ms ease, color 140ms ease, letter-spacing 140ms ease;
-          text-decoration: none;
+          text-decoration: none !important;
         }
-        .resource-link:hover{
+        .resource-link:hover,
+        .resource-link:focus-visible{
           color:#F23359 !important; transform: scale(1.02) translateX(1px); opacity:.96; letter-spacing:.03em;
         }
 
-        .role-label{ font-size: .68rem; font-weight: 400; text-transform: uppercase; letter-spacing: .2em; color: #24112399; }
+        .role-label{
+          display: block;
+          min-width: 0;
+          white-space: normal;
+          overflow-wrap: anywhere;
+          word-break: break-word;
+          line-height: 1.35;
+          font-size: .68rem;
+          font-weight: 400;
+          text-transform: uppercase;
+          letter-spacing: .2em;
+          color: #24112399;
+        }
         .border-top-soft{ border-top: 1px solid #2411231A; }
 
-        .namecell, .namecell:link, .namecell:visited{
-          color: #6c00af !important; font-weight:400; text-underline-offset: 4px;
+        .namecell,
+        .namecell:link,
+        .namecell:visited,
+        .namecell:hover,
+        .namecell:focus,
+        .namecell:focus-visible,
+        .namecell:active{
+          color: #6c00af !important;
+          font-weight: 400;
+          text-decoration: none !important;
+          text-transform: none !important;
+          font-variant-ligatures: normal;
+          unicode-bidi: plaintext;
           transition: color 160ms ease, transform 160ms ease, letter-spacing 160ms ease, line-height 160ms ease;
         }
-        .namecell:hover, .namecell:focus-visible{
+        .namecell:hover,
+        .namecell:focus-visible{
           color: #F23359 !important; transform: translateX(-2px); letter-spacing: .02em; line-height: 1.05;
         }
 
@@ -1775,8 +2037,17 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           font-size: clamp(1.8rem, 4.2vw, 3.2rem); line-height: 1.05; margin: 0; letter-spacing: .01em;
         }
         .big-quote-source{ margin-top: .6rem; font-family: var(--font-space-grotesk, system-ui, sans-serif); font-size: .9rem; opacity: .9; }
-        .quote-source-link{ color:#FFCC00 !important; transition: color 160ms ease, letter-spacing 160ms ease; text-decoration: none; }
-        .quote-source-link:hover{ color:#F23359 !important; letter-spacing:.01em; }
+        .quote-source-link,
+        .quote-source-link:link,
+        .quote-source-link:visited,
+        .quote-source-link:hover,
+        .quote-source-link:focus,
+        .quote-source-link:focus-visible,
+        .quote-source-link:active{
+          color:#FFCC00 !important; transition: color 160ms ease, letter-spacing 160ms ease; text-decoration: none !important;
+        }
+        .quote-source-link:hover,
+        .quote-source-link:focus-visible{ color:#F23359 !important; letter-spacing:.01em; }
 
         .glare-sheen{
           position: relative;
@@ -1827,7 +2098,6 @@ if (ageRecText) metaValues.push({ value: ageRecText });
         }
         .fieldgrid-toggle{ background: none; border: none; padding: 0; cursor: pointer; }
 
-        /* From the Field alignment */
         .fieldgrid-block{
           margin-left: -2.5rem;
           width: calc(100% + 2.5rem);
@@ -2020,6 +2290,28 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           font-size: .66rem;
           font-weight: 600;
           color: #24112380;
+        }
+
+        .credit-row{
+          display: grid;
+          grid-template-columns: minmax(0, 0.95fr) minmax(0, 1fr);
+          align-items: start;
+          gap: 1rem;
+        }
+
+        .credit-name{
+          min-width: 0;
+          text-align: right;
+          justify-self: end;
+        }
+
+        .credit-name .namecell{
+          display: inline-block;
+          max-width: 100%;
+          text-align: right;
+          white-space: normal;
+          overflow-wrap: anywhere;
+          word-break: break-word;
         }
 
         @media (max-width: 640px){

@@ -14,6 +14,7 @@ import { AlumniRow } from "./types";
 import { normalizeAlumniRow } from "./normalizeAlumniRow";
 import { loadCsv } from "./loadCsv";
 import { sheetsClient } from "./googleClients"; // service-account Sheets client
+import { csvUrls } from "@/lib/csvUrls";
 
 const DEBUG =
   process.env.SHOW_DAT_DEBUG === "true" &&
@@ -26,16 +27,9 @@ const DEBUG =
  * Env
  * ────────────────────────────────────────────────────────── */
 
-// ✅ CSV fallback (emergency only)
-const csvUrl =
-  process.env.ALUMNI_CSV_URL ||
-  process.env.NEXT_PUBLIC_ALUMNI_CSV_URL ||
-  "/api/alumni/lookup?export=alumni.csv";
-
-const slugCsvUrl =
-  process.env.SLUGS_CSV_URL ||
-  process.env.NEXT_PUBLIC_SLUGS_CSV_URL ||
-  "/api/alumni/lookup?export=slug-map.csv";
+// ✅ CSV fallback (emergency only) — now sourced from code, not env (avoids Lambda env 4KB limit)
+const csvUrl = csvUrls.alumni;
+const slugCsvUrl = csvUrls.slugs;
 
 const spreadsheetId = process.env.ALUMNI_SHEET_ID || "";
 
@@ -53,13 +47,8 @@ const SLUGS_TAB = process.env.SLUGS_TAB || "Profile-Slugs";
 
 if (DEBUG) {
   // Never print env values. Only print "status" + safe URL hints.
-  serverDebugEnv("ALUMNI_CSV_URL");
-  serverDebugEnv("NEXT_PUBLIC_ALUMNI_CSV_URL");
-  serverDebugEnv("SLUGS_CSV_URL");
-  serverDebugEnv("NEXT_PUBLIC_SLUGS_CSV_URL");
-
-  serverDebugBranch("Alumni CSV", ["ALUMNI_CSV_URL", "NEXT_PUBLIC_ALUMNI_CSV_URL"]);
-  serverDebugBranch("Slug CSV", ["SLUGS_CSV_URL", "NEXT_PUBLIC_SLUGS_CSV_URL"]);
+  serverDebug("🌐 Alumni CSV source:", csvUrl.slice(0, 80) + "…");
+  serverDebug("🌐 Slug CSV source:", slugCsvUrl.slice(0, 80) + "…");
 
   serverDebug("🔍 ALUMNI_SHEET_ID:", spreadsheetId ? "<set>" : "<missing>");
   serverDebug("🟩 LIVE TAB:", LIVE_TAB);
@@ -431,12 +420,12 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
 
 async function loadAlumniFromCsvFallback(): Promise<AlumniRow[]> {
   if (!csvUrl) {
-    serverError("❌ [loadAlumni fallback] Missing ALUMNI_CSV_URL or NEXT_PUBLIC_ALUMNI_CSV_URL in env");
+    serverError("❌ [loadAlumni fallback] Missing csvUrls.alumni");
     return [];
   }
 
   if (DEBUG) {
-    serverDebugBranch("🌐 [loadCsv fallback]", ["ALUMNI_CSV_URL", "NEXT_PUBLIC_ALUMNI_CSV_URL"]);
+    serverDebug("🌐 [loadCsv fallback] Using:", csvUrl.slice(0, 80) + "…");
   }
 
   const csvText = await loadCsv(csvUrl, "alumni.csv");
@@ -535,6 +524,22 @@ export const loadAlumni = async (): Promise<AlumniRow[]> => {
 export const loadVisibleAlumni = cache(async (): Promise<AlumniRow[]> => {
   const all = await loadAlumni();
   return all.filter((a) => a.showOnProfile?.toLowerCase().trim() === "yes" && !!a.name?.trim());
+});
+
+export const loadAlumniNameBySlug = cache(async (): Promise<Record<string, string>> => {
+  const all = await loadVisibleAlumni();
+
+  const map: Record<string, string> = {};
+
+  for (const alum of all) {
+    const slug = String(alum.slug ?? "").trim().toLowerCase();
+    const name = String(alum.name ?? "").trim();
+
+    if (!slug || !name) continue;
+    map[slug] = name;
+  }
+
+  return map;
 });
 
 /**

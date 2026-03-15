@@ -1,76 +1,47 @@
 import { schedule } from "@netlify/functions";
 import { blobSetText } from "../../lib/blobFallback";
+import { csvUrls } from "../../lib/csvUrls";
 
 type SheetSpec = { name: string; url: string };
 
-// Configure via env so we don't hardcode Sheet IDs/GIDs in git.
-// Format (JSON):
-// [
-//   {"name":"Profile-Live.csv","url":"https://docs.google.com/spreadsheets/d/<ID>/export?format=csv&gid=<GID>"},
-//   {"name":"alumni.csv","url":"https://docs.google.com/spreadsheets/d/<ID>/export?format=csv&gid=<GID>"}
-// ]
-const SHEETS: SheetSpec[] = (() => {
-  // 1) Preferred: explicit JSON mapping (highest control)
-  try {
-    const raw = process.env.FALLBACK_SHEETS_JSON || "[]";
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      const fromJson = parsed
-        .map((x: any) => ({
-          name: String(x?.name || ""),
-          url: String(x?.url || ""),
-        }))
-        .filter((x) => x.name && x.url);
-      if (fromJson.length) return fromJson;
-    }
-  } catch {
-    // fall through
-  }
+// ✅ Hardcode the list in code (NOT env) to avoid AWS Lambda 4KB env-var limit issues.
+// If you want this configurable later, we can reintroduce a *single* small env var
+// (like a base URL) — but for production stabilization, keep it deterministic.
+const SHEETS: SheetSpec[] = [
+  // Core profile system
+  { name: "Profile-Live.csv", url: csvUrls.profileLive },
+  { name: "Profile-Media.csv", url: csvUrls.profileMedia },
+  { name: "Profile-Changes.csv", url: csvUrls.profileChanges },
+  { name: "Profile-Folders.csv", url: csvUrls.profileFolders },
+  { name: "Profile-Slugs.csv", url: csvUrls.slugs },
 
-  // 2) Fallback: build from known env vars (safe defaults)
-  const pick = (...vals: Array<string | undefined>) =>
-    (vals.find((v) => typeof v === "string" && v.trim().length > 0) || "").trim();
+  // Collections + directory/alumni
+  { name: "collections.csv", url: csvUrls.collections },
+  { name: "alumni.csv", url: csvUrls.alumni },
 
-  const out: SheetSpec[] = [
-    // Core profile system
-    { name: "Profile-Live.csv", url: pick(process.env.NEXT_PUBLIC_PROFILE_LIVE_CSV_URL) },
-    { name: "Profile-Media.csv", url: pick(process.env.NEXT_PUBLIC_PROFILE_MEDIA_CSV_URL) },
-    { name: "Profile-Changes.csv", url: pick(process.env.NEXT_PUBLIC_PROFILE_CHANGES_CSV_URL) },
-    { name: "Profile-Folders.csv", url: pick(process.env.NEXT_PUBLIC_PROFILE_FOLDERS_CSV_URL) },
-    { name: "Profile-Slugs.csv", url: pick(process.env.NEXT_PUBLIC_SLUGS_CSV_URL, process.env.SLUGS_CSV_URL) },
+  // Community / promos
+  { name: "alumni-updates.csv", url: csvUrls.alumniUpdates },
+  { name: "spotlights-highlights.csv", url: csvUrls.spotlights },
+  { name: "promos.csv", url: csvUrls.promos },
 
-    // Collections + directory/alumni
-    { name: "collections.csv", url: pick(process.env.NEXT_PUBLIC_COLLECTIONS_CSV_URL, process.env.COLLECTIONS_CSV_URL) },
-    { name: "alumni.csv", url: pick(process.env.NEXT_PUBLIC_ALUMNI_CSV_URL, process.env.ALUMNI_CSV_URL) },
+  // Journey (you said: no journey updates yet → do NOT include it)
+  { name: "journey-albums.csv", url: csvUrls.journeyAlbums },
+  // { name: "journey-updates.csv", url: csvUrls.updates }, // intentionally disabled
 
-    // Community / promos
-    { name: "alumni-updates.csv", url: pick(process.env.NEXT_PUBLIC_ALUMNI_UPDATES_CSV_URL) },
-    { name: "spotlights-highlights.csv", url: pick(process.env.NEXT_PUBLIC_SPOTLIGHTS_CSV_URL) },
-    { name: "promos.csv", url: pick(process.env.NEXT_PUBLIC_PROMOS_CSV_URL) },
+  // Stories
+  { name: "stories.csv", url: csvUrls.stories },
 
-    // Journey (you said: no journey updates yet → do NOT include it)
-    { name: "journey-albums.csv", url: pick(process.env.NEXT_PUBLIC_JOURNEY_ALBUMS_CSV_URL) },
-    // { name: "journey-updates.csv", url: pick(process.env.NEXT_PUBLIC_UPDATES_CSV_URL) }, // intentionally disabled
+  // Map (you confirmed this is intentionally the same as stories)
+  { name: "Clean Map Data.csv", url: csvUrls.cleanMapData },
 
-    // Stories
-    { name: "stories.csv", url: pick(process.env.NEXT_PUBLIC_STORIES_CSV_URL) },
-
-    // Map (you said: Clean Map Data is the one to point to)
-    // IMPORTANT: NEXT_PUBLIC_MAP_CSV_URL must be set to the *published CSV URL* for the "Clean Map Data" sheet.
-    { name: "Clean Map Data.csv", url: pick(process.env.NEXT_PUBLIC_MAP_CSV_URL) },
-
-    // Optional (only if you later add an env var for it)
-    // { name: "Clean Map Data.csv", url: pick(process.env.NEXT_PUBLIC_MAP_CSV_URL) },
-  ];
-
-  return out.filter((s) => s.name && s.url);
-})();
+  // Drama club lead team (only include if you want it cached in blobs)
+  // { name: "drama-club-lead-team.csv", url: csvUrls.dramaClubLeadTeam },
+].filter((s) => s.name && s.url);
 
 async function refreshAll() {
   const results: Array<{ name: string; ok: boolean; bytes: number; status?: number }> = [];
 
   for (const s of SHEETS) {
-    // extra safety: skip any accidental empties
     if (!s.url) {
       results.push({ name: s.name, ok: false, bytes: 0 });
       continue;
@@ -107,5 +78,5 @@ const baseHandler = async () => {
   };
 };
 
-// Every 15 minutes (UTC); change as you like.
+// Every 15 minutes (UTC)
 export const handler = schedule("*/15 * * * *", baseHandler);

@@ -5,12 +5,13 @@ import {
   productionDetailsMap,
   type ProductionExtra,
 } from "@/lib/productionDetailsMap";
-import { dramaClubs } from "@/lib/dramaClubs";
+import { dramaClubs } from "@/lib/dramaClubMap";
 import ProductionPageTemplate, {
   PersonRole,
   GalleryImage,
 } from "@/components/productions/ProductionPageTemplate";
 import { buildRelated } from "@/lib/buildRelated";
+import { loadAlumniNameBySlug } from "@/lib/loadAlumni";
 
 // NOTE: params is now a Promise in Next 15 for some routes
 type PageProps = { params: Promise<{ slug: string }> };
@@ -34,16 +35,21 @@ function slugToName(slug: string): string {
 
 function splitArtists(
   artists: Record<string, string[]>,
+  alumniNameBySlug: Record<string, string>,
 ): { creativeTeam: PersonRole[]; cast: PersonRole[] } {
   const creativeTeam: PersonRole[] = [];
   const cast: PersonRole[] = [];
 
   Object.entries(artists).forEach(([personSlug, roles]) => {
-    if (!personSlug.trim()) return;
-    const name = slugToName(personSlug);
+    const safeSlug = personSlug.trim();
+    if (!safeSlug) return;
+
+    const name = alumniNameBySlug[safeSlug] ?? slugToName(safeSlug);
+    const href = `/alumni/${safeSlug}`;
 
     roles.forEach((role) => {
-      const entry: PersonRole = { role, name }; // no href here
+      const entry: PersonRole = { role, name, href };
+
       if (role.toLowerCase().includes("actor")) {
         cast.push(entry);
       } else {
@@ -57,6 +63,7 @@ function splitArtists(
 
 function derivePlaywright(
   p: Production,
+  alumniNameBySlug: Record<string, string>,
   extra?: ProductionExtra,
 ): string | undefined {
   if (extra?.playwright) return extra.playwright;
@@ -66,7 +73,8 @@ function derivePlaywright(
   );
   if (!hit) return undefined;
 
-  return slugToName(hit[0]);
+  const safeSlug = hit[0].trim().toLowerCase();
+  return alumniNameBySlug[safeSlug] ?? slugToName(safeSlug);
 }
 
 /* ---------- Meta link helpers ---------- */
@@ -148,17 +156,19 @@ export default async function TheatreProductionPage({ params }: PageProps) {
 
   const extra = productionDetailsMap[slug];
 
-  const { creativeTeam, cast } = extra?.creativeTeamOverride
-    ? {
-        creativeTeam: extra.creativeTeamOverride,
-        cast: extra.castOverride ?? [],
-      }
-    : splitArtists(base.artists);
+  const alumniNameBySlug = await loadAlumniNameBySlug();
+  const split = splitArtists(base.artists, alumniNameBySlug);
+
+  const creativeTeam =
+    extra?.creativeTeamOverride ?? split.creativeTeam;
+
+  const cast =
+    extra?.castOverride ?? split.cast;
 
   const heroImageUrl = getHeroImageUrl(slug, base as Production, extra);
 
   // Legacy/fallback playwright
-  const playwrightName = derivePlaywright(base as Production, extra);
+  const playwrightName = derivePlaywright(base as Production, alumniNameBySlug, extra);
   const playwrightHref = playwrightName
     ? `/alumni/${playwrightName
         .toLowerCase()
@@ -177,7 +187,7 @@ export default async function TheatreProductionPage({ params }: PageProps) {
   const dramaClubLocation =
     extra?.dramaClubLocation ?? club?.location ?? undefined;
 
-  const defaultClubHref = club ? `/drama-clubs/${club.slug}` : undefined;
+  const defaultClubHref = club ? `/drama-club/${club.slug}` : undefined;
   const dramaClubLink = extra?.dramaClubLink ?? defaultClubHref;
 
   // Flexible credit line
@@ -271,6 +281,7 @@ export default async function TheatreProductionPage({ params }: PageProps) {
   return (
     <ProductionPageTemplate
       title={base.title}
+      originalTitle={extra?.originalTitle}
       seasonLabel={
         base.season ? `Season ${base.season} • ${base.year}` : String(base.year)
       }
@@ -308,6 +319,7 @@ export default async function TheatreProductionPage({ params }: PageProps) {
       /* CTAs */
       getInvolvedLink={extra?.getInvolvedLink}
       donateLink={extra?.donateLink}
+      donateProductionSlug={slug}
       ticketsLink={extra?.ticketsLink}
       /* Rosters */
       creativeTeam={creativeTeam}

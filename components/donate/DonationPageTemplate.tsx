@@ -5,7 +5,8 @@
 import "./donationPage.css";
 import "./donationPage.restore.css";
 import { LEFT_COLUMN_BY_MODE } from "@/lib/donate/leftColumnContent";
-
+import { productionMap } from "@/lib/productionMap";
+import { productionDetailsMap } from "@/lib/productionDetailsMap";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -422,6 +423,43 @@ function findOptionLabel(
   return (hit as any)?.label ?? null;
 }
 
+function cleanText(v?: string | null) {
+  const t = (v ?? "").trim();
+  return t.length ? t : undefined;
+}
+
+function firstMeaningfulParagraph(input?: string | string[] | null) {
+  if (!input) return undefined;
+
+  if (Array.isArray(input)) {
+    const hit = input.find((x) => cleanText(x));
+    return cleanText(hit);
+  }
+
+  const raw = cleanText(input);
+  if (!raw) return undefined;
+
+  const first = raw.split(/\n{2,}/).map((x) => x.trim()).find(Boolean);
+  return cleanText(first);
+}
+
+function normalizePublicImagePath(input?: string | null) {
+  const raw = cleanText(input);
+  if (!raw) return undefined;
+
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (raw.startsWith("/")) return raw;
+  if (raw.startsWith("public/")) return `/${raw.slice("public/".length).replace(/^\/+/, "")}`;
+
+  return `/${raw.replace(/^\/+/, "")}`;
+}
+
+function inferProductionImage(slug?: string) {
+  const safeSlug = cleanText(slug);
+  if (!safeSlug) return undefined;
+  return `/posters/${safeSlug}-landscape.jpg`;
+}
+
 function getCauseDisplayLabel(
   category?: DramaClubCauseCategory,
   subcategory?: DramaClubCauseSubcategory
@@ -593,17 +631,17 @@ export default function DonationPageTemplate({
   // Initial context → mode / cause
   const initialCause = parseCause(initial.cause);
 
-  const initialMode: DonationModeId =
-    initial.mode ||
-    (initial.club || initial.clubCountry
-      ? "drama-club"
-      : initial.cause
-      ? "cause"
-      : initial.production
-      ? "new-work"
-      : initial.project
-      ? "special-project"
-      : "general");
+  const initialMode: DonationModeId = (() => {
+    if (initial.mode) return initial.mode;
+
+    if (initial.club || initial.clubCountry) return "drama-club";
+    if (initial.cause) return "cause";
+
+    if (initial.production) return "new-work-specific";
+    if (initial.project) return "special-project-specific";
+
+    return "general";
+  })();
 
   const [mode, setMode] = useState<DonationModeId>(initialMode);
 
@@ -715,36 +753,193 @@ const [allCauses, setAllCauses] = useState(() => !initialCause.category);
 
   const artistFocusParam = heroMode === "artist" ? artistFocus : undefined;
   
-  // ✅ Left column content (dynamic by sponsor mode)
-const leftContent = useMemo(() => {
-  let key: keyof typeof LEFT_COLUMN_BY_MODE = "story";
+  // ✅ Left column content (generic by mode, enriched when a specific item is selected)
+  const leftContent = useMemo(() => {
+    let key: keyof typeof LEFT_COLUMN_BY_MODE = "story";
 
-  switch (heroMode) {
-    case "general":
-      key = "story";
-      break;
-    case "drama-club":
-      key = "drama_club";
-      break;
-    case "new-work":
-      key = "new_work";
-      break;
-    case "special-project":
-      key = "special_project";
-      break;
-    case "artist":
-      key = "artist";
-      break;
-    case "cause":
-      key = "cause";
-      break;
-    default:
-      key = "story";
-      break;
-  }
+    switch (heroMode) {
+      case "general":
+        key = "story";
+        break;
+      case "drama-club":
+        key = "drama_club";
+        break;
+      case "new-work":
+        key = "new_work";
+        break;
+      case "special-project":
+        key = "special_project";
+        break;
+      case "artist":
+        key = "artist";
+        break;
+      case "cause":
+        key = "cause";
+        break;
+      default:
+        key = "story";
+        break;
+    }
 
-  return LEFT_COLUMN_BY_MODE[key];
-}, [heroMode]);
+    const base = LEFT_COLUMN_BY_MODE[key];
+
+    const selectedClub =
+      club ? clubOptions.find((c: any) => String(c.id) === club) : null;
+    const selectedClubFromMap = club ? clubFromMapId(club) : null;
+
+    const selectedProduction =
+      production
+        ? activeProductions.find((p: any) => String(p.id) === production)
+        : null;
+
+    const selectedProductionBase =
+      production ? (productionMap as any)?.[production] : null;
+    const selectedProductionExtra =
+      production ? (productionDetailsMap as any)?.[production] : null;
+
+    const selectedProject =
+      project
+        ? activeSpecialProjects.find((p: any) => String(p.id) === project)
+        : null;
+
+    if (heroMode === "artist") {
+      const focusMeta = ARTIST_FOCUS_OPTIONS.find((o) => o.id === artistFocus);
+      const pretty = focusMeta?.label ?? "All artist support";
+
+      const customDescriptionByFocus: Record<ArtistImpactFocus, string> = {
+        all: "Support artists across access, stipends, mentorship, rehearsal support, and long-term creative pathways.",
+        equitable_access:
+          "Help remove financial barriers so under-resourced artists can participate fully in DAT’s creative work.",
+        sustained_participation:
+          "Help artists stay in the work long enough to deepen their craft, relationships, and contribution.",
+        creative_breakthrough:
+          "Fuel the rehearsal time, experimentation, mentorship, and trust that allow bold new artistic work to emerge.",
+        artist_leadership:
+          "Support mentors, facilitators, and ensemble anchors who strengthen the artistic culture around them.",
+        long_term_fellowship:
+          "Invest in artists whose relationship with DAT can grow into long-term collaboration, mentorship, and major new work.",
+      };
+
+      return {
+        ...base,
+        title: pretty,
+        description: customDescriptionByFocus[artistFocus],
+      };
+    }
+
+    if (heroMode === "drama-club") {
+      if (selectedClubFromMap) {
+        const clubName =
+          cleanText(selectedClubFromMap.name) ??
+          cleanText((selectedClub as any)?.label) ??
+          "This Drama Club";
+
+        const clubLocation =
+          cleanText(selectedClubFromMap.location) ??
+          [selectedClubFromMap.city, selectedClubFromMap.region, selectedClubFromMap.country]
+            .map((x) => cleanText(x))
+            .filter(Boolean)
+            .join(", ");
+
+        const clubDescription =
+          cleanText(selectedClubFromMap.shortBlurb) ??
+          cleanText(selectedClubFromMap.whatHappens) ??
+          cleanText(selectedClubFromMap.description) ??
+          (clubLocation
+            ? `${clubName} is rooted in ${clubLocation}. Your gift supports mentorship, ensemble-building, and youth-led theatre in this community.`
+            : `Your gift strengthens ${clubName} through mentorship, creative process, and community-based theatre-making.`);
+
+        const clubImage =
+          normalizePublicImagePath(selectedClubFromMap.heroImage) ??
+          normalizePublicImagePath(selectedClubFromMap.cardImage) ??
+          base.imageSrc;
+
+        return {
+          ...base,
+          title: clubName,
+          description: clubDescription,
+          imageSrc: clubImage,
+          imageAlt: clubName,
+        };
+      }
+
+      if (selectedClubCountry) {
+        return {
+          ...base,
+          title: `Drama Clubs in ${selectedClubCountry}`,
+          description: `Support youth-led theatre, local mentorship, and community-based creative work across drama clubs in ${selectedClubCountry}.`,
+        };
+      }
+
+      return base;
+    }
+
+    if (heroMode === "new-work" && (selectedProduction || selectedProductionBase || selectedProductionExtra)) {
+      const productionTitle =
+        cleanText((selectedProduction as any)?.label) ??
+        cleanText(selectedProductionBase?.title) ??
+        "This New Work";
+
+      const productionDescription =
+        cleanText((selectedProduction as any)?.subline) ??
+        firstMeaningfulParagraph(selectedProductionExtra?.synopsis) ??
+        cleanText(selectedProductionExtra?.subtitle) ??
+        "Support the next phase of this production’s development.";
+
+      const productionImage =
+        normalizePublicImagePath(selectedProductionExtra?.heroImageUrl) ??
+        normalizePublicImagePath(selectedProductionBase?.posterUrl) ??
+        inferProductionImage(production) ??
+        base.imageSrc;
+
+      return {
+        ...base,
+        title: productionTitle,
+        description: productionDescription,
+        imageSrc: productionImage,
+        imageAlt: productionTitle,
+      };
+    }
+
+    if (heroMode === "special-project" && selectedProject) {
+      const projectTitle =
+        cleanText((selectedProject as any)?.label) ?? "This Special Project";
+      const projectSubline =
+        cleanText((selectedProject as any)?.subline) ??
+        "Support this focused project and the work it makes possible.";
+
+      return {
+        ...base,
+        title: projectTitle,
+        description: projectSubline,
+      };
+    }
+
+    if (heroMode === "cause") {
+      const causeLabel = getCauseDisplayLabel(causeCategory, causeSubcategory);
+      if (causeLabel) {
+        return {
+          ...base,
+          title: causeLabel,
+          description: `Support DAT work connected to ${causeLabel} through artists, youth programs, community partnerships, and new work.`,
+        };
+      }
+    }
+
+    return base;
+  }, [
+    heroMode,
+    artistFocus,
+    club,
+    selectedClubCountry,
+    production,
+    project,
+    causeCategory,
+    causeSubcategory,
+    clubOptions,
+    activeProductions,
+    activeSpecialProjects,
+  ]);
 
 
   const fallbackHero =

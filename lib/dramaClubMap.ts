@@ -771,17 +771,17 @@ export const dramaClubMap = {
      ECUADOR – AMAZON
      ============================ */
 
-  "shuar-story-circle": {
+  "ayumpum-jintia-colectivo": {
     ...DRAMA_CLUB_TEMPLATE,
-    slug: "shuar-story-circle",
-    name: "Shuar Story Circle",
+    slug: "ayumpum-jintia-colectivo",
+    name: "Ayumpum Jintia Colectivo",
     country: "Ecuador",
     region: "Amazon",
     city: "Gualaquiza",
 
     heroTextureTagline: "the Amazon • Shuar Territory",
-    location: "Community center & jungle clearing",
-    meetingPlace: "Shuar community center beside the jungle clearing",
+    location: "The Shuar Community of San Luis (San Luis Ininkis)",
+    meetingPlace: "Basketball Court & Community Gathering Space",
     shortBlurb:
       "A youth-driven ensemble rooted in Shuar storytelling, environmental guardianship, and the sounds of the Amazon.",
     cardImage: IMG_AMAZON,
@@ -807,8 +807,8 @@ export const dramaClubMap = {
     originStory:
       "Born from a series of residencies, this club grew out of workshops in a jungle community center and has become a gathering place for young storytellers, dancers, and musicians.",
     language: "Shuar / Spanish",
-    localLanguageName: "Ayumpum Jintia Nunink",
-    localLanguageLabel: "In Shuar",
+    localLanguageName: "The Maker's Way Collective",
+    localLanguageLabel: "In English",
 
     elderQuote: {
       text: "When the youth perform, the forest listens — and so do we.",

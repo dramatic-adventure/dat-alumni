@@ -185,6 +185,31 @@ export const programMap: Record<string, ProgramData> = {
   },
 
   // Season 16 entry:
+  "site-lines-ecuador-2022": {
+    title: "SITE-LINES: The Amazon 2022",
+    slug: "site-lines-ecuador-2022",
+    program: "SITE-LINES",
+    location: "Ecuador",
+    year: 2022,
+    season: 16,
+    url: "/site-lines",
+    artists: {
+      "jesse-baxter": ["Director"],
+      "peter-petkovsek": ["Director"],
+      "gustavo-redin": ["Director of Community Partnerships"],
+      "carla-rizzo": ["Community Partnerships Coordinator"],
+      "daniela-garzon-silva": ["Documentary Photographer"],
+      "juliana-franco": ["Road Manager"],
+      "yan-rey": ["Road Manager"],
+      "alexandra-dayka": ["Theatremaker"],
+      "vanessa-frank": ["Theatremaker"],
+      "lisa-herman": ["Theatremaker"],
+      "deborah-katz": ["Theatremaker"],
+      "mathilde-prosen-oldani": ["Theatremaker"],
+      "marisa-puller": ["Theatremaker"],
+      "maria-segal": ["Theatremaker"],
+    }
+  },
   // Season 15 entry:
   // Season 14 entry:
   // Season 13 entry:

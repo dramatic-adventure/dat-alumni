@@ -47,6 +47,9 @@ export interface ProductionExtra {
 
   /** Tagline that appears in the white card (Row 2) */
   subtitle?: string;
+    
+  /** Optional original title (for international shows, etc.) */
+  originalTitle?: string;
 
   /** Legacy single-playwright fields (still supported) */
   playwright?: string;
@@ -196,7 +199,173 @@ export interface ProductionExtra {
 }
 
 /** Per-slug details. Keep show-specific content here—page remains generic. */
+
+
 export const productionDetailsMap: Record<string, ProductionExtra> = {
+  "the-rainbow-of-san-luis": {
+    heroImageUrl: "posters/the-rainbow-of-san-luis-landscape.jpg",
+
+    subtitle:
+      "A stone remembers what people forget.",
+
+    originalTitle: "El Arcoiris de San Luis",
+
+    creditPrefix: "CO-CREATED WITH",
+    creditPeople: [
+      { name: "The Shuar Children of San Luis" },
+      { name: "Community Elders of San Luis" },
+      { name: "Dramatic Adventure Theatre Artists" },
+    ],
+
+    useCustomAboutLayout: true,
+
+    // Meta
+    dates: "Community Street Performance • Gualaquiza, Ecuador",
+    festival: "SITE-LINES Community Performance",
+    venue: "Public Street Performance",
+    city: "Gualaquiza, Ecuador",
+    runtime: "Approx. 30–40 minutes",
+    ageRecommendation: "All ages",
+
+    synopsis: [
+      "The Rainbow of San Luis (El Arcoiris de San Luis) is a community-created street performance devised with Shuar children and shaped in collaboration with elders from the San Luis community in the Ecuadorian Amazon.",
+      "The story centers on a couple who have forgotten their culture. In a moment of sadness and confusion, they fall into a dream where they encounter Natam — a rock who guides them on a journey of remembrance.",
+      "A stone remembers what people forget.",
+      "What follows is a theatrical journey of rediscovery, as Natam guides the couple back toward forgotten language, ancestral stories, and the cultural values that still live within their people.",
+      "Performed in the streets of nearby Gualaquiza, the piece became both celebration and declaration — a proud public sharing of culture, memory, and identity by the young actors of San Luis.",
+    ],
+
+    themes: [
+      "Memory",
+      "Belonging",
+      "Cultural Identity",
+      "Quest",
+      "Coming Home",
+      "Myth & Folklore",
+    ],
+
+    pullQuote: {
+      quote:
+        "The children took the stage with powerful energy, sharing their cultural values and stories with their neighbors.",
+      attribution: "Dramatic Adventure Theatre",
+    },
+
+    quoteImageUrl: "/images/site-lines-shuar-performance.jpg",
+
+    /** Community / causes */
+    dramaClubSlug: "ayumpum-jintia-colectivo",
+
+    causes: [
+      {
+        label: "Indigenous Rights",
+        category: "indigenous-sovereignty-rights",
+        subcategory: "indigenous-cultural-preservation-traditional-knowledge",
+        iconSrc: "/icons/cause-indigenous.svg",
+        iconAlt: "Indigenous Rights",
+      },
+      {
+        label: "Arts Education Access",
+        category: "education-access-equity-opportunity",
+        subcategory: "arts-education-access",
+      },
+      {
+        label: "Cultural Preservation",
+        category: "indigenous-sovereignty-rights",
+        subcategory: "indigenous-cultural-preservation-traditional-knowledge",
+      },
+    ],
+
+    partners: [
+      {
+        name: "Shuar Community of San Luis",
+        type: "community",
+      },
+      {
+        name: "Dramatic Adventure Theatre",
+        href: "https://dramaticadventure.com",
+        type: "artistic",
+      },
+    ],
+
+    /** CTAs */
+    getInvolvedLink: "https://dramaticadventuretheatre.org/get-involved",
+    donateLink: "/donate",
+
+    /** Roster */
+    castOverride: [
+      {
+        role: "Ensemble",
+        name: "The Ayumpum Jintia Colectivo",
+        dramaClubSlug: "ayumpum-jintia-colectivo",
+      },
+    ] as PersonRole[],
+
+    /** Production Gallery */
+    galleryImages: [
+      {
+        src: "/images/site-lines-shuar-performance.jpg",
+        alt: "Shuar youth performing El Arcoiris de San Luis in Gualaquiza",
+      },
+      {
+        src: "/images/site-lines-rehearsal.jpg",
+        alt: "Shuar children rehearsing scenes during the collaborative process",
+      },
+      {
+        src: "/images/site-lines-community.jpg",
+        alt: "Community members gathering for the street performance",
+      },
+    ],
+
+    /** Field Gallery */
+    fieldGalleryImages: [
+      {
+        src: "/images/site-lines-rehearsal.jpg",
+        alt: "Creative workshop with Shuar youth",
+      },
+      {
+        src: "/images/site-lines-story-circle.jpg",
+        alt: "Elders sharing stories during the development process",
+      },
+    ],
+
+    fieldGalleryTitle: "El Arcoiris de San Luis — From the Field",
+
+    /** Process */
+    processSections: [
+      {
+        heading: "Stories from the Community",
+        body: [
+          "The project began through conversations with elders of the San Luis community, who shared stories, language, and cultural teachings with the young participants.",
+          "These stories formed the foundation for the play's dream journey and the character of Natam, the guiding rock spirit.",
+        ],
+      },
+      {
+        heading: "Creating with the Children",
+        body:
+          "Through improvisation, storytelling, and physical theatre exercises, the children developed scenes that reflected both their cultural pride and the challenges facing their community.",
+        image: {
+          src: "/images/site-lines-rehearsal.jpg",
+          alt: "Shuar youth creating scenes during rehearsal",
+        },
+      },
+      {
+        heading: "A Street Performance for the City",
+        body:
+          "The final performance took place in the nearby city of Gualaquiza. Performing in the street allowed the children to share their culture directly with their neighbors, transforming the public space into a stage for ancestral memory and community pride.",
+      },
+    ],
+
+    /** History */
+    historyRuns: [
+      {
+        dateRange: "Community Performance",
+        city: "Gualaquiza, Ecuador",
+        venue: "Public Street Performance",
+        festival: "SITE-LINES",
+      },
+    ],
+  },
+
   "a-girl-without-wings": {
     /** Hero image for the theatre page (adjust the path if needed) */
     heroImageUrl: "posters/a-girl-without-wings-landscape.jpg",
@@ -236,9 +405,9 @@ export const productionDetailsMap: Record<string, ProductionExtra> = {
     ],
     themes: [
       "Courage",
-      "Connection",
       "Coming of age",
-      "Community resilience",
+      "Belonging",
+      "Love",
       "Myth & folklore",
     ],
     pullQuote: {
@@ -309,7 +478,7 @@ export const productionDetailsMap: Record<string, ProductionExtra> = {
 
     /** CTAs */
     getInvolvedLink: "https://dramaticadventuretheatre.org/get-involved",
-    donateLink: "https://dramaticadventuretheatre.org/donate",
+    donateLink: "/donate",
     ticketsLink: "https://dramaticadventuretheatre.org/tickets",
 
     /** Overrides for roster (to test NameCell + autoLinkPeopleBase) */
@@ -559,7 +728,7 @@ creditPeople: [
 
     /** CTAs */
     getInvolvedLink: "https://dramaticadventure.com/get-involved",
-    donateLink: "https://dramaticadventure.com/donate",
+    donateLink: "/donate",
     ticketsLink: "https://dramaticadventure.com/tickets",
 
     /** Media — Production Gallery (main) */

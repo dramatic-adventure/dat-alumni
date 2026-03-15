@@ -1,4 +1,5 @@
-// lib/loadRows.ts  
+// lib/loadRows.ts
+import "server-only";
 
 import { cache } from "react";
 import { fetchStories } from "./fetchStories";
@@ -7,8 +8,6 @@ import { getSlugAliases, normSlug } from "@/lib/slugAliases";
 
 // 🔄 Cached story fetcher
 const loadRows = cache(async (): Promise<StoryRow[]> => {
-  // IMPORTANT: fetchStories() must already return normalized StoryRow[]
-  // (see notes below)
   return await fetchStories();
 });
 
@@ -21,7 +20,11 @@ export async function getStoriesByAlumniSlug(slug: string): Promise<StoryRow[]> 
 
   // canonical + all aliases
   const aliases = await getSlugAliases(incoming);
-  const aliasSet = new Set(Array.from(aliases).map((s) => normSlug(s)));
+  const aliasSet = new Set(
+    Array.from(aliases)
+      .map((s) => normSlug(s))
+      .filter(Boolean)
+  );
 
   const rows = await loadRows();
   return rows.filter((row) => {
