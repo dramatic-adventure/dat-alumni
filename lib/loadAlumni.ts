@@ -12,7 +12,6 @@ import { cache } from "react";
 import { AlumniRow } from "./types";
 import { normalizeAlumniRow } from "./normalizeAlumniRow";
 import { sheetsClient } from "./googleClients"; // service-account Sheets client
-import { csvUrls } from "@/lib/csvUrls";
 
 const DEBUG =
   process.env.SHOW_DAT_DEBUG === "true" &&
@@ -25,8 +24,6 @@ const DEBUG =
  * Env
  * ────────────────────────────────────────────────────────── */
 
-// ✅ alumni URL still used in ensureCanonicalAlumniSlug for gid resolution
-const csvUrl = csvUrls.alumni;
 
 const spreadsheetId = process.env.ALUMNI_SHEET_ID || "";
 
@@ -113,35 +110,6 @@ function buildSlugForwardMap(rows: Array<[string, string, string?]>) {
   const out: Record<string, string> = {};
   for (const [from, { to }] of mapLatest) out[from] = to;
   return out;
-}
-
-/** Extracts the gid number from a Google Sheets CSV url (?gid=XXXX). */
-function extractGidFromUrl(url?: string | null): number | null {
-  if (!url) return null;
-  try {
-    const u = new URL(url);
-    const gidStr = u.searchParams.get("gid");
-    if (!gidStr) return null;
-    const n = Number(gidStr);
-    return Number.isFinite(n) ? n : null;
-  } catch {
-    return null;
-  }
-}
-
-/** Resolves a sheet tab title from spreadsheet metadata using its numeric gid. */
-async function resolveSheetTitleByGid(
-  spreadsheetId: string,
-  targetGid: number
-): Promise<string | null> {
-  try {
-    const sheets = sheetsClient();
-    const meta = await sheets.spreadsheets.get({ spreadsheetId });
-    const match = meta.data.sheets?.find((s) => s.properties?.sheetId === targetGid);
-    return match?.properties?.title || null;
-  } catch {
-    return null;
-  }
 }
 
 /** Convert a zero-based column index to A1 letter(s). */
@@ -526,12 +494,7 @@ export async function ensureCanonicalAlumniSlug(oldSlug: string, nextSlug: strin
 
     // Optional creation path (legacy, Profile-Data tab)
     if (!oldRow && AUTO_CANON_CREATE_ON_MISS) {
-      let tabTitle: string | null = ALUMNI_TAB || null;
-      if (!tabTitle) {
-        const gid = extractGidFromUrl(csvUrl);
-        if (gid !== null) tabTitle = await resolveSheetTitleByGid(spreadsheetId, gid);
-      }
-      if (!tabTitle) tabTitle = "Profile-Data";
+      const tabTitle: string = ALUMNI_TAB || "Profile-Data";
 
       const sheets = sheetsClient();
 
@@ -569,12 +532,7 @@ export async function ensureCanonicalAlumniSlug(oldSlug: string, nextSlug: strin
 
     if (!oldRow) return;
 
-    let tabTitle: string | null = ALUMNI_TAB || null;
-    if (!tabTitle) {
-      const gid = extractGidFromUrl(csvUrl);
-      if (gid !== null) tabTitle = await resolveSheetTitleByGid(spreadsheetId, gid);
-    }
-    if (!tabTitle) tabTitle = "Profile-Data";
+    const tabTitle: string = ALUMNI_TAB || "Profile-Data";
 
     if (DEBUG) serverDebug(`✏️ [auto-canon] Updating slug on tab "${tabTitle}": ${oldKey} → ${newKey}`);
 

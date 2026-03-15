@@ -19,10 +19,8 @@ export const csvUrls = {
   profileChanges: csvFromGid(860918826),
   profileFolders: csvFromGid(1082982855),
 
-  // Slugs / collections / alumni
-  slugs: csvFromGid(2159235),
+  // Collections
   collections: csvFromGid(245900238),
-  alumni: csvFromGid(1202839730),
 
   // Updates / promos / spotlights / albums
   updates: csvFromGid(1903489342),
