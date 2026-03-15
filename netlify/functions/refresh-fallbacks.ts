@@ -13,11 +13,8 @@ const SHEETS: SheetSpec[] = [
   { name: "Profile-Media.csv", url: csvUrls.profileMedia },
   { name: "Profile-Changes.csv", url: csvUrls.profileChanges },
   { name: "Profile-Folders.csv", url: csvUrls.profileFolders },
-  { name: "Profile-Slugs.csv", url: csvUrls.slugs },
-
-  // Collections + directory/alumni
+  // Collections
   { name: "collections.csv", url: csvUrls.collections },
-  { name: "alumni.csv", url: csvUrls.alumni },
 
   // Community / promos
   { name: "alumni-updates.csv", url: csvUrls.alumniUpdates },

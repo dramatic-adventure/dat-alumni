@@ -8,11 +8,9 @@ import {
 } from "@/lib/serverDebug";
 import "server-only";
 
-import Papa from "papaparse";
 import { cache } from "react";
 import { AlumniRow } from "./types";
 import { normalizeAlumniRow } from "./normalizeAlumniRow";
-import { loadCsv } from "./loadCsv";
 import { sheetsClient } from "./googleClients"; // service-account Sheets client
 import { csvUrls } from "@/lib/csvUrls";
 
@@ -27,9 +25,8 @@ const DEBUG =
  * Env
  * ────────────────────────────────────────────────────────── */
 
-// ✅ CSV fallback (emergency only) — now sourced from code, not env (avoids Lambda env 4KB limit)
+// ✅ alumni URL still used in ensureCanonicalAlumniSlug for gid resolution
 const csvUrl = csvUrls.alumni;
-const slugCsvUrl = csvUrls.slugs;
 
 const spreadsheetId = process.env.ALUMNI_SHEET_ID || "";
 
@@ -46,10 +43,6 @@ const ALUMNI_TAB = process.env.ALUMNI_TAB || ""; // e.g. "Profile-Data" (legacy 
 const SLUGS_TAB = process.env.SLUGS_TAB || "Profile-Slugs";
 
 if (DEBUG) {
-  // Never print env values. Only print "status" + safe URL hints.
-  serverDebug("🌐 Alumni CSV source:", csvUrl.slice(0, 80) + "…");
-  serverDebug("🌐 Slug CSV source:", slugCsvUrl.slice(0, 80) + "…");
-
   serverDebug("🔍 ALUMNI_SHEET_ID:", spreadsheetId ? "<set>" : "<missing>");
   serverDebug("🟩 LIVE TAB:", LIVE_TAB);
   serverDebug("🔧 AUTO_CANONICALIZE_SLUGS:", AUTO_CANON);
@@ -175,49 +168,44 @@ const ALUMNI_TTL_MS = Number(process.env.ALUMNI_TTL_MS || 60_000); // 60s defaul
 let slugForwardMapCache: Record<string, string> | null = null;
 
 /* ──────────────────────────────────────────────────────────
- * Slug-forward map (CSV-only, unchanged)
+ * Slug-forward map (Sheets API)
  * ────────────────────────────────────────────────────────── */
 
-async function loadSlugMapFromCsv(): Promise<Record<string, string> | null> {
-  if (!slugCsvUrl) return null;
+async function loadSlugMapFromSheets(): Promise<Record<string, string> | null> {
+  if (!spreadsheetId) return null;
   try {
-    const csvText = await loadCsv(slugCsvUrl, "slug-map.csv");
-    const parsed = Papa.parse<Record<string, string>>(csvText, {
-      header: true,
-      skipEmptyLines: true,
+    const sheets = sheetsClient();
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${SLUGS_TAB}!A:C`,
+      valueRenderOption: "UNFORMATTED_VALUE",
     });
+    const all = (res.data.values ?? []) as string[][];
+    if (all.length < 2) return {};
 
-    const rows = parsed.data.map((r) => {
-      const from =
-        r.fromSlug ??
-        (r as any)["from-slug"] ??
-        (r as any).from ??
-        (r as any).old ??
-        (r as any).alias ??
-        "";
-      const to =
-        r.toSlug ??
-        (r as any)["to-slug"] ??
-        (r as any).to ??
-        (r as any).canonical ??
-        (r as any).target ??
-        "";
-      const createdAt = (r as any).createdAt ?? (r as any)["created-at"] ?? "";
-      return [toLowerSlug(from), toLowerSlug(to), createdAt] as [string, string, string?];
-    });
+    const header = all[0].map((h) => String(h ?? "").trim().toLowerCase());
+    const iFrom = header.indexOf("fromslug");
+    const iTo = header.indexOf("toslug");
+    const iAt = header.indexOf("createdat");
+
+    const rows = all.slice(1).map((r) => [
+      toLowerSlug(r[iFrom] ?? ""),
+      toLowerSlug(r[iTo] ?? ""),
+      String(r[iAt] ?? "").trim(),
+    ] as [string, string, string?]);
 
     const map = buildSlugForwardMap(rows);
-    if (DEBUG) serverDebug(`🔁 [slug-map] Loaded ${Object.keys(map).length} mappings from CSV`);
+    if (DEBUG) serverDebug(`🔁 [slug-map] Loaded ${Object.keys(map).length} mappings from Sheets API`);
     return map;
   } catch (e) {
-    if (DEBUG) serverWarn("⚠️ [slug-map] CSV load failed:", e);
+    if (DEBUG) serverWarn("⚠️ [slug-map] Sheets API load failed:", e);
     return null;
   }
 }
 
 export const loadSlugForwardMap = cache(async (): Promise<Record<string, string>> => {
   if (slugForwardMapCache) return slugForwardMapCache;
-  const map = (await loadSlugMapFromCsv()) ?? {};
+  const map = (await loadSlugMapFromSheets()) ?? {};
   slugForwardMapCache = map;
   return map;
 });
@@ -415,75 +403,6 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
 }
 
 /* ──────────────────────────────────────────────────────────
- * Alumni CSV loader (FALLBACK)
- * ────────────────────────────────────────────────────────── */
-
-async function loadAlumniFromCsvFallback(): Promise<AlumniRow[]> {
-  if (!csvUrl) {
-    serverError("❌ [loadAlumni fallback] Missing csvUrls.alumni");
-    return [];
-  }
-
-  if (DEBUG) {
-    serverDebug("🌐 [loadCsv fallback] Using:", csvUrl.slice(0, 80) + "…");
-  }
-
-  const csvText = await loadCsv(csvUrl, "alumni.csv");
-
-  if (DEBUG) {
-    // Don’t log content; it may include emails/urls/etc.
-    serverDebug("📄 [loadAlumni fallback] CSV bytes:", csvText.length);
-  }
-
-  const parsed = Papa.parse<Record<string, string>>(csvText, {
-    header: true,
-    skipEmptyLines: true,
-  });
-
-  const rows: AlumniRow[] = [];
-  let skipped = 0;
-
-  for (const raw of parsed.data) {
-    const normalizedKeys = Object.fromEntries(
-      Object.entries(raw).map(([key, value]) => [
-        key.trim().toLowerCase(),
-        value?.toString().trim() ?? "",
-      ])
-    );
-
-    const show = normalizedKeys["show on profile?"]?.toLowerCase();
-    const name = normalizedKeys["name"];
-    const slug =
-      normalizedKeys["slug"] ||
-      normalizedKeys["profile slug"] ||
-      (normalizedKeys as any)["profile-slug"];
-
-    if (!["yes", "y", "✓"].includes(show) || (!slug && !name) || isMostlyEmpty(normalizedKeys)) {
-      skipped++;
-      continue;
-    }
-
-    const normalized = normalizeAlumniRow({
-      ...normalizedKeys,
-      slug: slug || "",
-    } as any);
-
-    if (normalized) {
-      // ✅ hard strip private email no matter what the CSV contains
-      (normalized as any).email = "";
-      rows.push(normalized);
-    }
-    else skipped++;
-  }
-
-  if (DEBUG) {
-    serverDebug(`✅ [loadAlumni fallback] Loaded ${rows.length} alumni, skipped ${skipped}`);
-  }
-
-  return rows;
-}
-
-/* ──────────────────────────────────────────────────────────
  * Public exports
  * ────────────────────────────────────────────────────────── */
 
@@ -499,24 +418,13 @@ export const loadAlumni = async (): Promise<AlumniRow[]> => {
     serverDebug("♻️ Cache expired; reloading from Sheets. Cached count:", alumniCache.length);
   }
 
-  // 1) Live-first
   try {
     const liveRows = await loadAlumniFromLive();
     alumniCache = liveRows;
     alumniCacheAt = Date.now();
     return liveRows;
   } catch (err) {
-    serverWarn("⚠️ [loadAlumni] Live load failed; falling back to CSV:", err);
-  }
-
-  // 2) CSV fallback
-  try {
-    const fallback = await loadAlumniFromCsvFallback();
-    alumniCache = fallback;
-    alumniCacheAt = Date.now();
-    return fallback;
-  } catch (err) {
-    serverError("❌ [loadAlumni] CSV fallback also failed:", err);
+    serverError("❌ [loadAlumni] Sheets API load failed:", err);
     return [];
   }
 };
@@ -544,7 +452,7 @@ export const loadAlumniNameBySlug = cache(async (): Promise<Record<string, strin
 
 /**
  * Returns a single alumni by slug — respects forward chains and uses reverse fallback.
- * NOTE: forward map is still CSV-based (Profile-Slugs export), which is fine for now.
+ * NOTE: forward map is loaded from Sheets API (Profile-Slugs tab).
  */
 export const loadAlumniBySlug = cache(async (slug: string): Promise<AlumniRow | null> => {
   const incoming = toLowerSlug(slug);
