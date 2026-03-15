@@ -440,6 +440,7 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
       <CanonicalSlugGate slug={incoming} basePath="/alumni" />
 
       <AlumniProfilePage
+        key={canonicalOrIncoming}
         data={{
           slug: canonicalOrIncoming || (normalizedAlumni as any).slug || incoming,
           name: (normalizedAlumni as any).name,
