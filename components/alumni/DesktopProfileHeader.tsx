@@ -64,23 +64,19 @@ export default function DesktopProfileHeader({
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
   const lastName = nameParts.slice(-1).join(" ") || "";
 
-  const [displayHeadshotSrc, setDisplayHeadshotSrc] = useState<string>(imageSrc);
+  const [overrideHeadshotSrc, setOverrideHeadshotSrc] = useState<string>("");
+  const displayHeadshotSrc = overrideHeadshotSrc || imageSrc;
 
   useEffect(() => {
-  if (typeof window === "undefined") return;
-  const src = (displayHeadshotSrc || "").trim();
-  if (!src) return;
+    if (typeof window === "undefined") return;
+    const src = (displayHeadshotSrc || "").trim();
+    if (!src) return;
 
-  const img = new window.Image();
-  img.decoding = "async";
-  img.loading = "eager";
-  img.src = src;
-}, [displayHeadshotSrc]);
-
-  // Keep displayed headshot aligned with prop fallback until hydration overrides it
-  useEffect(() => {
-    setDisplayHeadshotSrc(imageSrc);
-  }, [imageSrc]);
+    const img = new window.Image();
+    img.decoding = "async";
+    img.loading = "eager";
+    img.src = src;
+  }, [displayHeadshotSrc]);
 
 
     useEffect(() => {
@@ -143,7 +139,7 @@ export default function DesktopProfileHeader({
 
         // Pick THE single most recent headshot URL (regardless of source)
         const top = urls[0] || "";
-        if (!cancelled && top) setDisplayHeadshotSrc(top);
+        if (!cancelled && top) setOverrideHeadshotSrc(top);
 
         // Also seed the lightbox cache with the same ordering
         if (!cancelled && urls.length) {

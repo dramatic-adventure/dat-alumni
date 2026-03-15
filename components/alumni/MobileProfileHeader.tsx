@@ -44,22 +44,19 @@ export default function MobileProfileHeader({
     [headshotUrl]
   );
 
-  const [displayHeadshotSrc, setDisplayHeadshotSrc] = useState<string>(imageSrc);
+  const [overrideHeadshotSrc, setOverrideHeadshotSrc] = useState<string>("");
+  const displayHeadshotSrc = overrideHeadshotSrc || imageSrc;
 
   useEffect(() => {
-  if (typeof window === "undefined") return;
-  const src = (displayHeadshotSrc || "").trim();
-  if (!src) return;
+    if (typeof window === "undefined") return;
+    const src = (displayHeadshotSrc || "").trim();
+    if (!src) return;
 
-  const img = new window.Image();
-  img.decoding = "async";
-  img.loading = "eager";
-  img.src = src;
-}, [displayHeadshotSrc]);
-
-  useEffect(() => {
-    setDisplayHeadshotSrc(imageSrc);
-  }, [imageSrc]);
+    const img = new window.Image();
+    img.decoding = "async";
+    img.loading = "eager";
+    img.src = src;
+  }, [displayHeadshotSrc]);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,7 +79,7 @@ export default function MobileProfileHeader({
         if (!top) return;
         if (cancelled) return;
 
-        setDisplayHeadshotSrc(top);
+        setOverrideHeadshotSrc(top);
       } catch {
         // non-fatal
       }
