@@ -31,7 +31,8 @@ yarn-error.log*
 
 # env files (never commit secrets)
 .env*
-!.env.example   # keep a template without secrets
+!.env.example      # keep a template without secrets
+!.env.production   # NEXT_PUBLIC_* vars only — no secrets
 
 # hosting
 .vercel/
@@ -44,6 +45,7 @@ yarn-error.log*
 .env.*
 .env.local
 .env.*.local
+!.env.production   # NEXT_PUBLIC_* vars only — no secrets
 
 /generated/prisma
 
