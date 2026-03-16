@@ -89,6 +89,7 @@ export default function AlumniProfilePage({
   const roles = Array.isArray(d.roles) ? (d.roles as string[]) : [];
   const role = cleanStr(d.role) ?? "";
   const headshotUrl = cleanStr(d.headshotUrl); // allow undefined; ProfileCard/Provider can fill
+  const currentHeadshotId = cleanStr(d.currentHeadshotId ?? d.currentheadshotid ?? d["current headshot id"]);
 
 
   // NOTE: these may be string[] OR strings depending on CSV/live snapshot
@@ -256,6 +257,7 @@ alumniId={alumniId || undefined}
                 name={name}
                 role={displayRole}
                 headshotUrl={headshotUrl || ""}
+                currentHeadshotId={currentHeadshotId || undefined}
                 location={location}
                 programBadges={programBadges}
                 identityTags={identityTags}
