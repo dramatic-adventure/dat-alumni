@@ -49,42 +49,45 @@ export default function MobileProfileHeader({
   const [currentUrl, setCurrentUrl] = useState("");
 
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
-  const galleryCacheRef = useRef<string[] | null>(null);
+  const galleryCacheRef = useRef<{ alumniId: string; urls: string[] } | null>(null);
   const openingRef = useRef(false);
-  const fetchGenRef = useRef(0);
+  const alumniIdRef = useRef(alumniId);
+  alumniIdRef.current = alumniId;
 
-  // Reset gallery cache when profile changes
+  // Belt-and-suspenders reset (primary guard is the alumniId check inside the handler)
   useEffect(() => {
     galleryCacheRef.current = null;
     setGalleryUrls([]);
     openingRef.current = false;
-    fetchGenRef.current++;
   }, [alumniId]);
 
   async function openHeadshotGallery() {
+    const capturedAlumniId = alumniId;
     const current = imageSrc.trim();
-    const gen = fetchGenRef.current;
 
-    // Open instantly with the currently displayed headshot
     setGalleryUrls(current ? [current] : []);
     setModalOpen(true);
 
-    // If we already have a cache for this profile, use it immediately
-    if (galleryCacheRef.current && galleryCacheRef.current.length > 0) {
-      setGalleryUrls(galleryCacheRef.current);
+    const cached = galleryCacheRef.current;
+    if (cached && cached.alumniId === capturedAlumniId && cached.urls.length > 0) {
+      setGalleryUrls(cached.urls);
       return;
+    }
+
+    if (cached && cached.alumniId !== capturedAlumniId) {
+      galleryCacheRef.current = null;
+      openingRef.current = false;
     }
 
     if (openingRef.current) return;
     openingRef.current = true;
 
     try {
-      const qs = new URLSearchParams({ alumniId, kind: "headshot" });
+      const qs = new URLSearchParams({ alumniId: capturedAlumniId, kind: "headshot" });
       const r = await fetch(`/api/alumni/media/list?${qs.toString()}`);
       const j = await r.json();
 
-      // Discard if profile changed while fetching
-      if (fetchGenRef.current !== gen) return;
+      if (alumniIdRef.current !== capturedAlumniId) return;
 
       const rawItems = (j?.items || []) as any[];
 
@@ -92,8 +95,8 @@ export default function MobileProfileHeader({
         const ta = Date.parse(String(a?.uploadedAt || "")) || 0;
         const tb = Date.parse(String(b?.uploadedAt || "")) || 0;
         if (tb !== ta) return tb - ta;
-        const sa = Number.isFinite(Number(a?.sortIndex)) ? Number(a.sortIndex) : Number.POSITIVE_INFINITY;
-        const sb = Number.isFinite(Number(b?.sortIndex)) ? Number(b.sortIndex) : Number.POSITIVE_INFINITY;
+        const sa = Number.isFinite(Number(a?.sortIndex)) ? Number(a.sortIndex) : Infinity;
+        const sb = Number.isFinite(Number(b?.sortIndex)) ? Number(b.sortIndex) : Infinity;
         if (sa !== sb) return sa - sb;
         return String(b?.fileId || "").localeCompare(String(a?.fileId || ""));
       });
@@ -110,22 +113,30 @@ export default function MobileProfileHeader({
 
       const unique = Array.from(new Set(urls));
 
-      // Check if the currently-displayed headshot is already represented via proxy
-      function extractDriveId(url: string): string | null {
+      function proxyFileId(url: string): string | null {
+        try { return new URL(url, "http://x").searchParams.get("fileId") || null; }
+        catch { return null; }
+      }
+      function proxyExtUrl(url: string): string | null {
+        try { return new URL(url, "http://x").searchParams.get("url") || null; }
+        catch { return null; }
+      }
+      function driveId(url: string): string | null {
         const m = url.match(/\/d\/([A-Za-z0-9_\-]{20,})/);
         return m ? m[1] : null;
       }
-      const currentDriveId = current ? extractDriveId(current) : null;
+
+      const currentFid = current ? proxyFileId(current) : null;
+      const currentDriveId = current ? driveId(current) : null;
+
       const currentAlreadyRepresented = !!current && unique.some((u) => {
         if (u === current) return true;
         try {
-          const params = new URL(u, "http://x").searchParams;
-          const proxiedExt = params.get("url");
-          if (proxiedExt && decodeURIComponent(proxiedExt) === current) return true;
-          if (currentDriveId) {
-            const fid = params.get("fileId");
-            if (fid && decodeURIComponent(fid) === currentDriveId) return true;
-          }
+          const uFid = proxyFileId(u);
+          const uExt = proxyExtUrl(u);
+          if (uFid && currentFid && uFid === currentFid) return true;
+          if (uExt && decodeURIComponent(uExt) === current) return true;
+          if (uFid && currentDriveId && decodeURIComponent(uFid) === currentDriveId) return true;
         } catch { /* ignore */ }
         return false;
       });
@@ -136,12 +147,12 @@ export default function MobileProfileHeader({
 
       if (!next.length) return;
 
-      galleryCacheRef.current = next;
+      galleryCacheRef.current = { alumniId: capturedAlumniId, urls: next };
       setGalleryUrls(next);
     } catch {
-      if (current && fetchGenRef.current === gen) {
+      if (alumniIdRef.current === capturedAlumniId && current) {
         const next = [current];
-        galleryCacheRef.current = next;
+        galleryCacheRef.current = { alumniId: capturedAlumniId, urls: next };
         setGalleryUrls(next);
       }
     } finally {
