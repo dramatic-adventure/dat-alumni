@@ -240,6 +240,17 @@ export default async function UpdatePage({
   return (
     <main className="w-full px-4 sm:px-6 lg:px-10 py-6">
       <div className="mx-auto w-full max-w-6xl">
+        {isAdmin && (
+          <div className="mb-4 flex justify-end">
+            <a
+              href="/admin/invites"
+              className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-widest opacity-60 transition hover:opacity-100"
+              style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif" }}
+            >
+              ⚙ Admin
+            </a>
+          </div>
+        )}
         {isAdmin && asId && !impersonateAlumniId ? (
           <div className="mb-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm">
             Couldn&apos;t resolve <b>{asId}</b> to an alumniId.
