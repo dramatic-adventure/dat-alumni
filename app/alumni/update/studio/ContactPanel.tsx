@@ -130,10 +130,6 @@ export default function ContactPanel({
             </div>
           ))}
 
-          <p style={{ ...explainStyleLocal, marginTop: 6 }}>
-            (Fallback UI) Add contact keys to <code>PROFILE_FIELDS</code> if you want curated
-            rendering.
-          </p>
         </div>
       )}
 

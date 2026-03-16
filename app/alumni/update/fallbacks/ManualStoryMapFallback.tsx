@@ -145,9 +145,6 @@ export default function ManualStoryMapFallback({
         Show on Map?
       </label>
 
-      <p style={{ ...explainStyleLocal, marginTop: 6 }}>
-        (Fallback UI) Add Story Map keys to <code>PROFILE_FIELDS</code> to render via FieldRenderer.
-      </p>
     </div>
   );
 }

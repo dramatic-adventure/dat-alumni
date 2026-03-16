@@ -2057,10 +2057,13 @@ return (
       <EventPanel
         loading={loading}
         explainStyleLocal={explainStyleLocal}
+        datButtonLocal={datButtonLocal}
         profile={profile}
         setProfile={setProfile}
         renderFieldsOrNull={renderFieldsOrNull}
         eventEditKeys={UpcomingEventEditKeys}
+        saveCategory={saveCategory as any}
+        eventFieldKeys={UpcomingEventEditKeys}
         manualFallback={
           <ManualUpcomingEventFallback
             profile={profile}

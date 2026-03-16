@@ -68,9 +68,6 @@ export default function ManualUpcomingEventFallback({
         />
       </div>
 
-      <p style={{ ...explainStyleLocal, marginTop: 6 }}>
-        (Fallback UI) Add these keys to <code>PROFILE_FIELDS</code> to render via FieldRenderer.
-      </p>
     </div>
   );
 }
