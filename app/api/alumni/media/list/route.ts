@@ -149,9 +149,11 @@ function cacheAny(key: string) {
 }
 
 function responseHeaders() {
-  // Let the browser cache briefly too (helps even if component is noisy)
+  // private + no-store: prevents CDN (Netlify edge) from caching responses
+  // across different alumniId query params, which caused cross-profile
+  // headshot contamination. Server-side module cache still dedupes Sheets calls.
   return {
-    "Cache-Control": "public, max-age=10, stale-while-revalidate=60",
+    "Cache-Control": "private, no-store",
   };
 }
 

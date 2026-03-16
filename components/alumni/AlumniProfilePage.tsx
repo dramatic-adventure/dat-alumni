@@ -247,6 +247,7 @@ const authorStories = useMemo(() => {
               }}
             >
               <ProfileCard
+                key={slug}
                 slug={safeSlugForLinks}
                 slugAliases={slugAliases}
                 // IMPORTANT: only pass a real stable alumniId.
