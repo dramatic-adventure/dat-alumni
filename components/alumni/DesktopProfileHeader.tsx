@@ -47,13 +47,10 @@ export default function DesktopProfileHeader({
   const [currentUrl, setCurrentUrl] = useState("");
 
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
-  // Keyed by alumniId — validated synchronously before use so a stale cache from a
-  // previous profile can never leak in, even on fast navigation (useEffect fires after paint).
-  const galleryCacheRef = useRef<{ alumniId: string; urls: string[] } | null>(null);
-  // Updated every render (not in an effect) so async fetches can always compare against
-  // the current alumniId without a closure-capture race.
-  const alumniIdRef = useRef(alumniId);
-  alumniIdRef.current = alumniId;
+  // AbortController so any in-flight gallery fetch is cancelled when this
+  // component unmounts. ProfileCard passes key={alumniId} so a full remount
+  // (and therefore a fresh fetch) happens on every profile navigation.
+  const fetchAbortRef = useRef<AbortController | null>(null);
 
   const fallbackImage = "/images/default-headshot.png";
 
@@ -62,44 +59,31 @@ export default function DesktopProfileHeader({
     [headshotUrl]
   );
 
-  // Belt-and-suspenders cleanup; primary guard is the alumniId check in the handler.
+  // Cancel any in-flight fetch when the component unmounts.
   useEffect(() => {
-    galleryCacheRef.current = null;
-    setGalleryUrls([]);
-  }, [alumniId]);
+    return () => { fetchAbortRef.current?.abort(); };
+  }, []);
 
   const nameParts = name.trim().split(" ");
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
   const lastName = nameParts.slice(-1).join(" ") || "";
 
   async function openHeadshotGallery() {
-    const id = alumniId; // captured at click time
     const current = imageSrc.trim();
 
-    // Show current headshot immediately while we fetch the full gallery
+    // Show current headshot immediately, open modal
     setGalleryUrls(current ? [current] : []);
     setModalOpen(true);
 
-    // Use cache only if it belongs to this profile (handles race before useEffect fires)
-    const cached = galleryCacheRef.current;
-    if (cached?.alumniId === id && cached.urls.length > 0) {
-      setGalleryUrls(cached.urls);
-      return;
-    }
-    // Clear any stale cache from a previous profile synchronously
-    if (cached && cached.alumniId !== id) {
-      galleryCacheRef.current = null;
-    }
+    // Cancel any previous fetch and start a fresh one
+    fetchAbortRef.current?.abort();
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
 
-    // No openingRef — if two concurrent fetches run for the same profile they produce
-    // identical results and the last one to land simply overwrites with the same data.
     try {
-      const qs = new URLSearchParams({ alumniId: id, kind: "headshot" });
-      const r = await fetch(`/api/alumni/media/list?${qs.toString()}`);
+      const qs = new URLSearchParams({ alumniId, kind: "headshot" });
+      const r = await fetch(`/api/alumni/media/list?${qs}`, { signal: controller.signal });
       const j = await r.json();
-
-      // Discard if the user navigated away while this fetch was in-flight
-      if (alumniIdRef.current !== id) return;
 
       const rawItems = (j?.items || []) as any[];
 
@@ -118,64 +102,37 @@ export default function DesktopProfileHeader({
       };
 
       const ordered = [...rawItems].sort((a, b) => {
-        const ta = toTime(a), tb = toTime(b);
-        if (tb !== ta) return tb - ta;
+        const td = toTime(b) - toTime(a);
+        if (td !== 0) return td;
         const sa = Number.isFinite(Number(a?.sortIndex)) ? Number(a.sortIndex) : Infinity;
         const sb = Number.isFinite(Number(b?.sortIndex)) ? Number(b.sortIndex) : Infinity;
-        if (sa !== sb) return sa - sb;
-        return String(b?.fileId || b?.externalUrl || "").localeCompare(String(a?.fileId || a?.externalUrl || ""));
+        return sa - sb;
       });
 
-      const urls = ordered.map(toUrl).filter(Boolean);
-      const unique = Array.from(new Set(urls));
+      const unique = Array.from(new Set(ordered.map(toUrl).filter(Boolean)));
 
-      // Check if the currently-displayed headshot is already in the API results.
-      // `current` is often /api/img?fileId=FILEID&v=TIMESTAMP while toUrl() produces
-      // /api/img?fileId=FILEID — compare by fileId param to avoid a duplicate entry.
-      function proxyFileId(url: string): string | null {
-        try { return new URL(url, "http://x").searchParams.get("fileId") || null; }
+      // Avoid duplicating the currently-displayed headshot.
+      // headshotUrl from the alumni sheet is often /api/img?fileId=X&v=TIMESTAMP
+      // while toUrl() produces /api/img?fileId=X — match by fileId param.
+      function getFileId(url: string): string | null {
+        try { return new URL(url, "http://x").searchParams.get("fileId"); }
         catch { return null; }
       }
-      function proxyExtUrl(url: string): string | null {
-        try { return new URL(url, "http://x").searchParams.get("url") || null; }
-        catch { return null; }
-      }
-      function rawDriveId(url: string): string | null {
-        const m = url.match(/\/d\/([A-Za-z0-9_\-]{20,})/);
-        return m ? m[1] : null;
-      }
-
-      const currentFid = current ? proxyFileId(current) : null;
-      const currentDriveId = current ? rawDriveId(current) : null;
-
-      const currentAlreadyRepresented = !!current && unique.some((u) => {
+      const currentFid = current ? getFileId(current) : null;
+      const alreadyIn = !!current && unique.some(u => {
         if (u === current) return true;
-        try {
-          const uFid = proxyFileId(u);
-          const uExt = proxyExtUrl(u);
-          if (uFid && currentFid && uFid === currentFid) return true;
-          if (uExt && decodeURIComponent(uExt) === current) return true;
-          if (uFid && currentDriveId && decodeURIComponent(uFid) === currentDriveId) return true;
-        } catch { /* ignore */ }
-        return false;
+        const uFid = getFileId(u);
+        return !!(uFid && currentFid && uFid === currentFid);
       });
 
       const next = unique.length
-        ? (current && !currentAlreadyRepresented ? [current, ...unique] : unique)
+        ? (current && !alreadyIn ? [current, ...unique] : unique)
         : (current ? [current] : []);
 
-      if (!next.length) return;
-
-      // One final stale check before committing to state
-      if (alumniIdRef.current !== id) return;
-
-      galleryCacheRef.current = { alumniId: id, urls: next };
-      setGalleryUrls(next);
-    } catch {
-      if (alumniIdRef.current === id && current) {
-        galleryCacheRef.current = { alumniId: id, urls: [current] };
-        setGalleryUrls([current]);
-      }
+      if (next.length > 0) setGalleryUrls(next);
+    } catch (e: any) {
+      // AbortError = component unmounted or user reopened lightbox; ignore silently.
+      // Other errors: keep the single current headshot already shown.
     }
   }
 

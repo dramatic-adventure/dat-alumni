@@ -49,39 +49,42 @@ export default function MobileProfileHeader({
   const [currentUrl, setCurrentUrl] = useState("");
 
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
-  const galleryCacheRef = useRef<{ alumniId: string; urls: string[] } | null>(null);
-  const alumniIdRef = useRef(alumniId);
-  alumniIdRef.current = alumniId;
+  // AbortController so any in-flight gallery fetch is cancelled when this
+  // component unmounts. ProfileCard passes key={alumniId} so a full remount
+  // (and therefore a fresh fetch) happens on every profile navigation.
+  const fetchAbortRef = useRef<AbortController | null>(null);
 
+  // Cancel any in-flight fetch when the component unmounts.
   useEffect(() => {
-    galleryCacheRef.current = null;
-    setGalleryUrls([]);
-  }, [alumniId]);
+    return () => { fetchAbortRef.current?.abort(); };
+  }, []);
 
   async function openHeadshotGallery() {
-    const id = alumniId;
     const current = imageSrc.trim();
 
+    // Show current headshot immediately, open modal
     setGalleryUrls(current ? [current] : []);
     setModalOpen(true);
 
-    const cached = galleryCacheRef.current;
-    if (cached?.alumniId === id && cached.urls.length > 0) {
-      setGalleryUrls(cached.urls);
-      return;
-    }
-    if (cached && cached.alumniId !== id) {
-      galleryCacheRef.current = null;
-    }
+    // Cancel any previous fetch and start a fresh one
+    fetchAbortRef.current?.abort();
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
 
     try {
-      const qs = new URLSearchParams({ alumniId: id, kind: "headshot" });
-      const r = await fetch(`/api/alumni/media/list?${qs.toString()}`);
+      const qs = new URLSearchParams({ alumniId, kind: "headshot" });
+      const r = await fetch(`/api/alumni/media/list?${qs}`, { signal: controller.signal });
       const j = await r.json();
 
-      if (alumniIdRef.current !== id) return;
-
       const rawItems = (j?.items || []) as any[];
+
+      const toUrl = (it: any): string => {
+        const fid = String(it?.fileId || "").trim();
+        if (fid) return `/api/img?fileId=${encodeURIComponent(fid)}`;
+        const ext = String(it?.externalUrl || "").trim();
+        if (ext) return `/api/img?url=${encodeURIComponent(ext)}`;
+        return "";
+      };
 
       const ordered = [...rawItems].sort((a, b) => {
         const ta = Date.parse(String(a?.uploadedAt || "")) || 0;
@@ -89,64 +92,33 @@ export default function MobileProfileHeader({
         if (tb !== ta) return tb - ta;
         const sa = Number.isFinite(Number(a?.sortIndex)) ? Number(a.sortIndex) : Infinity;
         const sb = Number.isFinite(Number(b?.sortIndex)) ? Number(b.sortIndex) : Infinity;
-        if (sa !== sb) return sa - sb;
-        return String(b?.fileId || "").localeCompare(String(a?.fileId || ""));
+        return sa - sb;
       });
 
-      const urls = ordered
-        .map((it: any) => {
-          const fid = String(it?.fileId || "").trim();
-          if (fid) return `/api/img?fileId=${encodeURIComponent(fid)}`;
-          const ext = String(it?.externalUrl || "").trim();
-          if (ext) return `/api/img?url=${encodeURIComponent(ext)}`;
-          return "";
-        })
-        .filter(Boolean);
+      const unique = Array.from(new Set(ordered.map(toUrl).filter(Boolean)));
 
-      const unique = Array.from(new Set(urls));
-
-      function proxyFileId(url: string): string | null {
-        try { return new URL(url, "http://x").searchParams.get("fileId") || null; }
+      // Avoid duplicating the currently-displayed headshot.
+      // headshotUrl from the alumni sheet is often /api/img?fileId=X&v=TIMESTAMP
+      // while toUrl() produces /api/img?fileId=X — match by fileId param.
+      function getFileId(url: string): string | null {
+        try { return new URL(url, "http://x").searchParams.get("fileId"); }
         catch { return null; }
       }
-      function proxyExtUrl(url: string): string | null {
-        try { return new URL(url, "http://x").searchParams.get("url") || null; }
-        catch { return null; }
-      }
-      function driveId(url: string): string | null {
-        const m = url.match(/\/d\/([A-Za-z0-9_\-]{20,})/);
-        return m ? m[1] : null;
-      }
-
-      const currentFid = current ? proxyFileId(current) : null;
-      const currentDriveId = current ? driveId(current) : null;
-
-      const currentAlreadyRepresented = !!current && unique.some((u) => {
+      const currentFid = current ? getFileId(current) : null;
+      const alreadyIn = !!current && unique.some(u => {
         if (u === current) return true;
-        try {
-          const uFid = proxyFileId(u);
-          const uExt = proxyExtUrl(u);
-          if (uFid && currentFid && uFid === currentFid) return true;
-          if (uExt && decodeURIComponent(uExt) === current) return true;
-          if (uFid && currentDriveId && decodeURIComponent(uFid) === currentDriveId) return true;
-        } catch { /* ignore */ }
-        return false;
+        const uFid = getFileId(u);
+        return !!(uFid && currentFid && uFid === currentFid);
       });
 
       const next = unique.length
-        ? (current && !currentAlreadyRepresented ? [current, ...unique] : unique)
+        ? (current && !alreadyIn ? [current, ...unique] : unique)
         : (current ? [current] : []);
 
-      if (!next.length) return;
-      if (alumniIdRef.current !== id) return;
-
-      galleryCacheRef.current = { alumniId: id, urls: next };
-      setGalleryUrls(next);
-    } catch {
-      if (alumniIdRef.current === id && current) {
-        galleryCacheRef.current = { alumniId: id, urls: [current] };
-        setGalleryUrls([current]);
-      }
+      if (next.length > 0) setGalleryUrls(next);
+    } catch (e: any) {
+      // AbortError = component unmounted or user reopened lightbox; ignore silently.
+      // Other errors: keep the single current headshot already shown.
     }
   }
 
