@@ -52,15 +52,15 @@ export default function MobileProfileHeader({
   const [currentUrl, setCurrentUrl] = useState("");
 
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
+  const [currentHeadshotIndex, setCurrentHeadshotIndex] = useState(0);
   const fetchAbortRef = useRef<AbortController | null>(null);
 
-  // On mount: fetch Profile-Media, update displayed headshot to isCurrent item,
-  // pre-populate gallery, and warm the browser image cache so the lightbox is instant.
+  // Fetch Profile-Media: update displayed headshot to isCurrent item,
+  // pre-populate gallery, warm browser image cache, track isCurrent index.
+  // Re-runs on tab-focus so changes to isCurrent in the sheet are reflected
+  // immediately when you switch back to the browser — no navigation needed.
   useEffect(() => {
     let alive = true;
-    fetchAbortRef.current?.abort();
-    const controller = new AbortController();
-    fetchAbortRef.current = controller;
 
     const toUrl = (it: any): string => {
       const fid = String(it?.fileId || "").trim();
@@ -70,7 +70,11 @@ export default function MobileProfileHeader({
       return "";
     };
 
-    (async () => {
+    async function run() {
+      fetchAbortRef.current?.abort();
+      const controller = new AbortController();
+      fetchAbortRef.current = controller;
+
       try {
         const qs = new URLSearchParams({ alumniId, kind: "headshot" });
         const r = await fetch(`/api/alumni/media/list?${qs}`, { signal: controller.signal });
@@ -87,26 +91,37 @@ export default function MobileProfileHeader({
         });
 
         const unique = Array.from(new Set(ordered.map(toUrl).filter(Boolean)));
-        if (!alive) return;
+        if (!alive || controller.signal.aborted) return;
 
         // Update displayed headshot to the isCurrent item from Profile-Media.
         const currentItem = rawItems.find((it: any) => it?.isCurrent === true);
-        if (currentItem) {
-          const url = toUrl(currentItem);
-          if (url) setImageSrc(url);
-        }
+        const currentUrl = currentItem ? toUrl(currentItem) : null;
+        if (currentUrl) setImageSrc(currentUrl);
 
-        // Pre-populate gallery + warm browser image cache.
+        // Pre-populate gallery, track isCurrent index, warm browser image cache.
         if (unique.length) {
           setGalleryUrls(unique);
+          const idx = currentUrl ? unique.indexOf(currentUrl) : -1;
+          setCurrentHeadshotIndex(idx >= 0 ? idx : 0);
           unique.forEach(url => { try { new window.Image().src = url; } catch {} });
         }
       } catch {
         // AbortError on unmount, or network error — ignore silently.
       }
-    })();
+    }
 
-    return () => { alive = false; controller.abort(); };
+    run();
+
+    // Re-fetch on tab focus so isCurrent changes in the sheet show up
+    // the moment you switch back to the browser without a page reload.
+    const onVisible = () => { if (document.visibilityState === "visible") run(); };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      alive = false;
+      fetchAbortRef.current?.abort();
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [alumniId]);
 
   function openHeadshotGallery() {
@@ -413,6 +428,7 @@ export default function MobileProfileHeader({
       {isModalOpen && (
         <Lightbox
           images={(galleryUrls && galleryUrls.length ? galleryUrls : [imageSrc]).filter(Boolean)}
+          startIndex={currentHeadshotIndex}
           onClose={() => {
             setModalOpen(false);
             // Uncomment if you want fresh media on every open
