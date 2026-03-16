@@ -1,7 +1,9 @@
 // app/alumni/update/page.tsx
 import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import UpdateForm from "./update-form";
 import { cookies, headers } from "next/headers";
+import { redeemInviteToken } from "@/lib/invites";
 
 export const revalidate = 0;
 
@@ -94,6 +96,89 @@ export default async function UpdatePage({
   const session = await auth();
   const sp = searchParams ? await searchParams : undefined;
 
+  // ── Invite token handling ──────────────────────────────────────
+  const inviteRaw = sp?.invite;
+  const inviteToken = normId(Array.isArray(inviteRaw) ? inviteRaw[0] : inviteRaw);
+
+  // If there's an invite token but no session, send them to sign-in
+  // preserving the invite token in the callback URL
+  if (inviteToken && !session) {
+    const callback = encodeURIComponent(`/alumni/update?invite=${inviteToken}`);
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-16 text-center">
+        <h1
+          className="mb-4 text-3xl font-bold"
+          style={{
+            fontFamily: "var(--font-anton), system-ui, sans-serif",
+            textTransform: "uppercase",
+          }}
+        >
+          You&apos;ve been invited!
+        </h1>
+        <p
+          className="mb-6"
+          style={{
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+          }}
+        >
+          Sign in with Google to claim your alumni profile.
+        </p>
+        <a
+          href={`/api/auth/signin?callbackUrl=${callback}`}
+          className="inline-block whitespace-nowrap rounded-xl bg-[#6c00af] px-8 py-3 font-semibold uppercase tracking-[0.35rem] text-[#f2f2f2] transition-[transform,filter,box-shadow] duration-150 hover:-translate-y-[1px] hover:brightness-[1.07] hover:shadow-[0_10px_30px_rgba(0,0,0,0.25)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+          style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif" }}
+        >
+          Sign In with Google
+        </a>
+      </div>
+    );
+  }
+
+  // If signed in with an invite token, attempt redemption
+  if (inviteToken && session?.user?.email) {
+    const result = await redeemInviteToken(inviteToken, session.user.email);
+
+    if (!result.ok) {
+      const messages: Record<string, string> = {
+        expired: "This invite link has expired. Please ask for a new one.",
+        already_used: "This invite link has already been used.",
+        already_owned: "This profile is already linked to an account.",
+        invalid: "This invite link is invalid.",
+      };
+      return (
+        <div className="mx-auto max-w-2xl px-6 py-16 text-center">
+          <h1
+            className="mb-4 text-3xl font-bold"
+            style={{
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
+              textTransform: "uppercase",
+            }}
+          >
+            Invite Link Issue
+          </h1>
+          <p
+            className="mb-8"
+            style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif" }}
+          >
+            {messages[result.reason] ?? "Something went wrong with this invite link."}
+          </p>
+          <a
+            href="/alumni/update"
+            className="inline-block whitespace-nowrap rounded-xl bg-[#6c00af] px-8 py-3 font-semibold uppercase tracking-[0.35rem] text-[#f2f2f2] transition-[transform,filter,box-shadow] duration-150 hover:-translate-y-[1px] hover:brightness-[1.07] hover:shadow-[0_10px_30px_rgba(0,0,0,0.25)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+            style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif" }}
+          >
+            Go to Profile Studio
+          </a>
+        </div>
+      );
+    }
+
+    // ✅ Redemption succeeded — redirect to clean URL so the token
+    // isn't re-processed on refresh and the profile loads normally
+    redirect("/alumni/update");
+  }
+
+  // ── Standard (non-invite) flow ─────────────────────────────────
   if (!session) {
     const callback = encodeURIComponent("/alumni/update");
     return (
@@ -137,7 +222,6 @@ export default async function UpdatePage({
     sp?.asSlug ??
     sp?.slug;
 
-
   const asIdRaw = Array.isArray(raw) ? raw[0] : raw;
   const asId = normId(asIdRaw);
 
@@ -158,11 +242,11 @@ export default async function UpdatePage({
       <div className="mx-auto w-full max-w-6xl">
         {isAdmin && asId && !impersonateAlumniId ? (
           <div className="mb-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm">
-            Couldn’t resolve <b>{asId}</b> to an alumniId.
+            Couldn&apos;t resolve <b>{asId}</b> to an alumniId.
           </div>
         ) : null}
 
-        {/* ✅ This wrapper is what we’ll scope the global “studio button hover” styles to */}
+        {/* ✅ This wrapper is what we'll scope the global "studio button hover" styles to */}
         <div id="profile-studio" className="rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6 lg:p-8">
           <UpdateForm
             key={impersonateAlumniId || email}
