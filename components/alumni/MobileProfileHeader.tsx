@@ -51,80 +51,99 @@ export default function MobileProfileHeader({
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const galleryCacheRef = useRef<string[] | null>(null);
   const openingRef = useRef(false);
+  const fetchGenRef = useRef(0);
 
+  // Reset gallery cache when profile changes
   useEffect(() => {
-    // If the profile headshot changes, the lightbox cache is stale
     galleryCacheRef.current = null;
     setGalleryUrls([]);
-  }, [imageSrc]);
+    openingRef.current = false;
+    fetchGenRef.current++;
+  }, [alumniId]);
 
   async function openHeadshotGallery() {
-    const current = imageSrc;
+    const current = imageSrc.trim();
+    const gen = fetchGenRef.current;
 
-    // open instantly with whatever the profile is currently displaying
-    setGalleryUrls((prev) => (prev?.length ? prev : [current].filter(Boolean) as string[]));
+    // Open instantly with the currently displayed headshot
+    setGalleryUrls(current ? [current] : []);
     setModalOpen(true);
 
-    // If we already have urls AND they include the currently displayed headshot,
-    // just open with the cached gallery (no refetch).
-    if (galleryCacheRef.current && galleryCacheRef.current.length > 0 && galleryCacheRef.current.includes(current)) {
+    // If we already have a cache for this profile, use it immediately
+    if (galleryCacheRef.current && galleryCacheRef.current.length > 0) {
       setGalleryUrls(galleryCacheRef.current);
       return;
     }
-
 
     if (openingRef.current) return;
     openingRef.current = true;
 
     try {
       const qs = new URLSearchParams({ alumniId, kind: "headshot" });
-      const r = await fetch(`/api/alumni/media/list?${qs.toString()}`)
+      const r = await fetch(`/api/alumni/media/list?${qs.toString()}`);
       const j = await r.json();
-      
-const rawItems = (j?.items || []) as any[];
 
-// Prioritize MOST RECENT (regardless of source)
-const ordered = [...rawItems].sort((a, b) => {
-  const ta = Date.parse(String(a?.uploadedAt || "")) || 0;
-  const tb = Date.parse(String(b?.uploadedAt || "")) || 0;
-  if (tb !== ta) return tb - ta;
+      // Discard if profile changed while fetching
+      if (fetchGenRef.current !== gen) return;
 
-  const sa = Number.isFinite(Number(a?.sortIndex)) ? Number(a.sortIndex) : Number.POSITIVE_INFINITY;
-  const sb = Number.isFinite(Number(b?.sortIndex)) ? Number(b.sortIndex) : Number.POSITIVE_INFINITY;
-  if (sa !== sb) return sa - sb;
+      const rawItems = (j?.items || []) as any[];
 
-  return String(b?.fileId || "").localeCompare(String(a?.fileId || ""));
-});
+      const ordered = [...rawItems].sort((a, b) => {
+        const ta = Date.parse(String(a?.uploadedAt || "")) || 0;
+        const tb = Date.parse(String(b?.uploadedAt || "")) || 0;
+        if (tb !== ta) return tb - ta;
+        const sa = Number.isFinite(Number(a?.sortIndex)) ? Number(a.sortIndex) : Number.POSITIVE_INFINITY;
+        const sb = Number.isFinite(Number(b?.sortIndex)) ? Number(b.sortIndex) : Number.POSITIVE_INFINITY;
+        if (sa !== sb) return sa - sb;
+        return String(b?.fileId || "").localeCompare(String(a?.fileId || ""));
+      });
 
-const urls =
-  ordered
-    .map((it: any) => {
-      const fid = String(it?.fileId || "").trim();
-      if (fid) return `/api/img?fileId=${encodeURIComponent(fid)}`;
+      const urls = ordered
+        .map((it: any) => {
+          const fid = String(it?.fileId || "").trim();
+          if (fid) return `/api/img?fileId=${encodeURIComponent(fid)}`;
+          const ext = String(it?.externalUrl || "").trim();
+          if (ext) return `/api/img?url=${encodeURIComponent(ext)}`;
+          return "";
+        })
+        .filter(Boolean);
 
-      const ext = String(it?.externalUrl || "").trim();
-      if (ext) return `/api/img?url=${encodeURIComponent(ext)}`;
+      const unique = Array.from(new Set(urls));
 
-      return "";
-    })
-    .filter(Boolean);
+      // Check if the currently-displayed headshot is already represented via proxy
+      function extractDriveId(url: string): string | null {
+        const m = url.match(/\/d\/([A-Za-z0-9_\-]{20,})/);
+        return m ? m[1] : null;
+      }
+      const currentDriveId = current ? extractDriveId(current) : null;
+      const currentAlreadyRepresented = !!current && unique.some((u) => {
+        if (u === current) return true;
+        try {
+          const params = new URL(u, "http://x").searchParams;
+          const proxiedExt = params.get("url");
+          if (proxiedExt && decodeURIComponent(proxiedExt) === current) return true;
+          if (currentDriveId) {
+            const fid = params.get("fileId");
+            if (fid && decodeURIComponent(fid) === currentDriveId) return true;
+          }
+        } catch { /* ignore */ }
+        return false;
+      });
 
-      const fallback = ([imageSrc].filter(Boolean)) as string[];
-      const next = (urls.length ? urls : fallback).filter(Boolean);
+      const next = unique.length
+        ? (current && !currentAlreadyRepresented ? [current, ...unique] : unique)
+        : (current ? [current] : []);
 
       if (!next.length) return;
 
       galleryCacheRef.current = next;
       setGalleryUrls(next);
-      setModalOpen(true);
-
     } catch {
-      const fallback = ([imageSrc].filter(Boolean)) as string[];
-      if (!fallback.length) return;
-
-      galleryCacheRef.current = fallback;
-      setGalleryUrls(fallback);
-      setModalOpen(true);
+      if (current && fetchGenRef.current === gen) {
+        const next = [current];
+        galleryCacheRef.current = next;
+        setGalleryUrls(next);
+      }
     } finally {
       openingRef.current = false;
     }
