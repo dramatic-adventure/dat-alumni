@@ -50,44 +50,36 @@ export default function MobileProfileHeader({
 
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const galleryCacheRef = useRef<{ alumniId: string; urls: string[] } | null>(null);
-  const openingRef = useRef(false);
   const alumniIdRef = useRef(alumniId);
   alumniIdRef.current = alumniId;
 
-  // Belt-and-suspenders reset (primary guard is the alumniId check inside the handler)
   useEffect(() => {
     galleryCacheRef.current = null;
     setGalleryUrls([]);
-    openingRef.current = false;
   }, [alumniId]);
 
   async function openHeadshotGallery() {
-    const capturedAlumniId = alumniId;
+    const id = alumniId;
     const current = imageSrc.trim();
 
     setGalleryUrls(current ? [current] : []);
     setModalOpen(true);
 
     const cached = galleryCacheRef.current;
-    if (cached && cached.alumniId === capturedAlumniId && cached.urls.length > 0) {
+    if (cached?.alumniId === id && cached.urls.length > 0) {
       setGalleryUrls(cached.urls);
       return;
     }
-
-    if (cached && cached.alumniId !== capturedAlumniId) {
+    if (cached && cached.alumniId !== id) {
       galleryCacheRef.current = null;
-      openingRef.current = false;
     }
 
-    if (openingRef.current) return;
-    openingRef.current = true;
-
     try {
-      const qs = new URLSearchParams({ alumniId: capturedAlumniId, kind: "headshot" });
+      const qs = new URLSearchParams({ alumniId: id, kind: "headshot" });
       const r = await fetch(`/api/alumni/media/list?${qs.toString()}`);
       const j = await r.json();
 
-      if (alumniIdRef.current !== capturedAlumniId) return;
+      if (alumniIdRef.current !== id) return;
 
       const rawItems = (j?.items || []) as any[];
 
@@ -146,17 +138,15 @@ export default function MobileProfileHeader({
         : (current ? [current] : []);
 
       if (!next.length) return;
+      if (alumniIdRef.current !== id) return;
 
-      galleryCacheRef.current = { alumniId: capturedAlumniId, urls: next };
+      galleryCacheRef.current = { alumniId: id, urls: next };
       setGalleryUrls(next);
     } catch {
-      if (alumniIdRef.current === capturedAlumniId && current) {
-        const next = [current];
-        galleryCacheRef.current = { alumniId: capturedAlumniId, urls: next };
-        setGalleryUrls(next);
+      if (alumniIdRef.current === id && current) {
+        galleryCacheRef.current = { alumniId: id, urls: [current] };
+        setGalleryUrls([current]);
       }
-    } finally {
-      openingRef.current = false;
     }
   }
 

@@ -47,12 +47,11 @@ export default function DesktopProfileHeader({
   const [currentUrl, setCurrentUrl] = useState("");
 
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
-  // Cache is keyed by alumniId so a stale cache from a previous profile is never used,
-  // even if the user clicks the headshot before the reset useEffect fires (which runs
-  // after paint, so there's a real race window on fast navigation).
+  // Keyed by alumniId — validated synchronously before use so a stale cache from a
+  // previous profile can never leak in, even on fast navigation (useEffect fires after paint).
   const galleryCacheRef = useRef<{ alumniId: string; urls: string[] } | null>(null);
-  const openingRef = useRef(false);
-  // Always reflects the current alumniId synchronously (updated every render, not in an effect).
+  // Updated every render (not in an effect) so async fetches can always compare against
+  // the current alumniId without a closure-capture race.
   const alumniIdRef = useRef(alumniId);
   alumniIdRef.current = alumniId;
 
@@ -63,12 +62,10 @@ export default function DesktopProfileHeader({
     [headshotUrl]
   );
 
-  // Belt-and-suspenders reset when profile changes (the primary guard is the alumniId
-  // check inside openHeadshotGallery, but this keeps state clean).
+  // Belt-and-suspenders cleanup; primary guard is the alumniId check in the handler.
   useEffect(() => {
     galleryCacheRef.current = null;
     setGalleryUrls([]);
-    openingRef.current = false;
   }, [alumniId]);
 
   const nameParts = name.trim().split(" ");
@@ -76,39 +73,33 @@ export default function DesktopProfileHeader({
   const lastName = nameParts.slice(-1).join(" ") || "";
 
   async function openHeadshotGallery() {
-    const capturedAlumniId = alumniId; // captured synchronously at click time
+    const id = alumniId; // captured at click time
     const current = imageSrc.trim();
 
-    // Open instantly with the currently displayed headshot
+    // Show current headshot immediately while we fetch the full gallery
     setGalleryUrls(current ? [current] : []);
     setModalOpen(true);
 
-    // Use cache only if it belongs to THIS profile.
-    // (The reset useEffect clears it too, but runs after paint — there's a real race
-    // window where a fast click can fire before the effect, so we validate here.)
+    // Use cache only if it belongs to this profile (handles race before useEffect fires)
     const cached = galleryCacheRef.current;
-    if (cached && cached.alumniId === capturedAlumniId && cached.urls.length > 0) {
+    if (cached?.alumniId === id && cached.urls.length > 0) {
       setGalleryUrls(cached.urls);
       return;
     }
-
-    // If cache is stale (from a previous profile), clear it synchronously before fetching
-    if (cached && cached.alumniId !== capturedAlumniId) {
+    // Clear any stale cache from a previous profile synchronously
+    if (cached && cached.alumniId !== id) {
       galleryCacheRef.current = null;
-      openingRef.current = false;
     }
 
-    if (openingRef.current) return;
-    openingRef.current = true;
-
+    // No openingRef — if two concurrent fetches run for the same profile they produce
+    // identical results and the last one to land simply overwrites with the same data.
     try {
-      const qs = new URLSearchParams({ alumniId: capturedAlumniId, kind: "headshot" });
+      const qs = new URLSearchParams({ alumniId: id, kind: "headshot" });
       const r = await fetch(`/api/alumni/media/list?${qs.toString()}`);
       const j = await r.json();
 
-      // Discard if the user navigated to a different profile while we were fetching.
-      // alumniIdRef.current is updated synchronously on every render, so it's always fresh.
-      if (alumniIdRef.current !== capturedAlumniId) return;
+      // Discard if the user navigated away while this fetch was in-flight
+      if (alumniIdRef.current !== id) return;
 
       const rawItems = (j?.items || []) as any[];
 
@@ -138,9 +129,9 @@ export default function DesktopProfileHeader({
       const urls = ordered.map(toUrl).filter(Boolean);
       const unique = Array.from(new Set(urls));
 
-      // Determine if the currently-displayed headshot is already in the API results.
-      // `current` may be a proxy URL like /api/img?fileId=FILEID&v=TIMESTAMP, while
-      // toUrl() produces /api/img?fileId=FILEID (no &v=). Compare by fileId param.
+      // Check if the currently-displayed headshot is already in the API results.
+      // `current` is often /api/img?fileId=FILEID&v=TIMESTAMP while toUrl() produces
+      // /api/img?fileId=FILEID — compare by fileId param to avoid a duplicate entry.
       function proxyFileId(url: string): string | null {
         try { return new URL(url, "http://x").searchParams.get("fileId") || null; }
         catch { return null; }
@@ -149,24 +140,21 @@ export default function DesktopProfileHeader({
         try { return new URL(url, "http://x").searchParams.get("url") || null; }
         catch { return null; }
       }
-      function driveId(url: string): string | null {
+      function rawDriveId(url: string): string | null {
         const m = url.match(/\/d\/([A-Za-z0-9_\-]{20,})/);
         return m ? m[1] : null;
       }
 
       const currentFid = current ? proxyFileId(current) : null;
-      const currentDriveId = current ? driveId(current) : null;
+      const currentDriveId = current ? rawDriveId(current) : null;
 
       const currentAlreadyRepresented = !!current && unique.some((u) => {
         if (u === current) return true;
         try {
           const uFid = proxyFileId(u);
           const uExt = proxyExtUrl(u);
-          // Same proxy fileId (ignores &v= version param difference)
           if (uFid && currentFid && uFid === currentFid) return true;
-          // Proxy URL whose ?url= param decodes to current
           if (uExt && decodeURIComponent(uExt) === current) return true;
-          // Current is a raw Drive URL and proxy uses its fileId
           if (uFid && currentDriveId && decodeURIComponent(uFid) === currentDriveId) return true;
         } catch { /* ignore */ }
         return false;
@@ -178,16 +166,16 @@ export default function DesktopProfileHeader({
 
       if (!next.length) return;
 
-      galleryCacheRef.current = { alumniId: capturedAlumniId, urls: next };
+      // One final stale check before committing to state
+      if (alumniIdRef.current !== id) return;
+
+      galleryCacheRef.current = { alumniId: id, urls: next };
       setGalleryUrls(next);
     } catch {
-      if (alumniIdRef.current === capturedAlumniId && current) {
-        const next = [current];
-        galleryCacheRef.current = { alumniId: capturedAlumniId, urls: next };
-        setGalleryUrls(next);
+      if (alumniIdRef.current === id && current) {
+        galleryCacheRef.current = { alumniId: id, urls: [current] };
+        setGalleryUrls([current]);
       }
-    } finally {
-      openingRef.current = false;
     }
   }
 
