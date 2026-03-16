@@ -2,7 +2,6 @@
 import { auth } from "@/auth";
 import UpdateForm from "./update-form";
 import { cookies, headers } from "next/headers";
-import ProfileOwnersAdminPanel from "@/components/admin/ProfileOwnersAdminPanel";
 
 export const revalidate = 0;
 
@@ -157,7 +156,6 @@ export default async function UpdatePage({
   return (
     <main className="w-full px-4 sm:px-6 lg:px-10 py-6">
       <div className="mx-auto w-full max-w-6xl">
-        {isAdmin ? <ProfileOwnersAdminPanel /> : null}
         {isAdmin && asId && !impersonateAlumniId ? (
           <div className="mb-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm">
             Couldn’t resolve <b>{asId}</b> to an alumniId.
