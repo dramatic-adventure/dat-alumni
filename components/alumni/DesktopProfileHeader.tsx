@@ -49,6 +49,7 @@ export default function DesktopProfileHeader({
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const galleryCacheRef = useRef<string[] | null>(null);
   const openingRef = useRef(false);
+  const fetchGenRef = useRef(0); // incremented on profile change to cancel stale fetches
 
   const fallbackImage = "/images/default-headshot.png";
 
@@ -61,44 +62,25 @@ export default function DesktopProfileHeader({
   useEffect(() => {
     galleryCacheRef.current = null;
     setGalleryUrls([]);
+    openingRef.current = false;
+    fetchGenRef.current++; // invalidate any in-flight fetch for the previous profile
   }, [alumniId]);
 
   const nameParts = name.trim().split(" ");
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
   const lastName = nameParts.slice(-1).join(" ") || "";
 
-  useEffect(() => {
-    if (!isModalOpen) return;
-
-    const current = (imageSrc || "").trim();
-    if (!current) return;
-
-    setGalleryUrls((prev) => {
-      const rest = (prev || []).filter((u) => u && u !== current);
-      return [current, ...rest];
-    });
-  }, [isModalOpen, imageSrc]);
-
   async function openHeadshotGallery() {
     const current = imageSrc.trim();
+    const gen = fetchGenRef.current; // snapshot — if this changes, our fetch is stale
 
-    // Open instantly with whatever we're currently displaying
-    setGalleryUrls((prev) => {
-      if (prev?.length) {
-        const rest = prev.filter((u) => u && u !== current);
-        return current ? [current, ...rest] : prev;
-      }
-      return current ? [current] : [];
-    });
+    // Open instantly with the currently displayed headshot
+    setGalleryUrls(current ? [current] : []);
     setModalOpen(true);
 
-    // If we have a cache, use it immediately, but always force current to index 0
+    // If we already have a cache for this profile, use it immediately
     if (galleryCacheRef.current && galleryCacheRef.current.length > 0) {
-      const cached = galleryCacheRef.current.filter(Boolean);
-      const rest = cached.filter((u) => u !== current);
-      const next = current ? [current, ...rest] : cached;
-
-      setGalleryUrls(next);
+      setGalleryUrls(galleryCacheRef.current);
       return;
     }
 
@@ -107,8 +89,12 @@ export default function DesktopProfileHeader({
 
     try {
       const qs = new URLSearchParams({ alumniId, kind: "headshot" });
-      const r = await fetch(`/api/alumni/media/list?${qs.toString()}`)
+      const r = await fetch(`/api/alumni/media/list?${qs.toString()}`);
       const j = await r.json();
+
+      // If the user navigated to a different profile while we were fetching, discard
+      if (fetchGenRef.current !== gen) return;
+
       const rawItems = (j?.items || []) as any[];
 
       const toUrl = (it: any): string => {
@@ -151,13 +137,13 @@ export default function DesktopProfileHeader({
         );
       });
 
+      // Use only API-proxied URLs — never mix raw imageSrc with /api/img?... URLs
+      // or the same headshot will appear twice (different URL strings, same image).
       const urls = ordered.map(toUrl).filter(Boolean);
+      const unique = Array.from(new Set(urls));
 
-      // Build final gallery, always with current first; fallback to current if list empty
-      const base = urls.length ? urls : (current ? [current] : []);
-      const unique = Array.from(new Set(base));
-      const rest = unique.filter((u) => u !== current);
-      const next = current ? [current, ...rest] : unique;
+      // If the media sheet returned nothing, fall back to the currently displayed headshot
+      const next = unique.length ? unique : (current ? [current] : []);
 
       if (!next.length) return;
 
@@ -165,7 +151,7 @@ export default function DesktopProfileHeader({
       setGalleryUrls(next);
     } catch {
       // fallback: at least show the current displayed headshot
-      if (current) {
+      if (current && fetchGenRef.current === gen) {
         const next = [current];
         galleryCacheRef.current = next;
         setGalleryUrls(next);
