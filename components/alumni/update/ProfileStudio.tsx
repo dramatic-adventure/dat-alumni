@@ -171,6 +171,11 @@ type ProfileStudioProps = {
    * Default: true.
    */
   scrollToAnchorOnTabChange?: boolean;
+
+  /**
+   * If provided, renders a subtle gear icon link in the tab bar (admin only).
+   */
+  adminHref?: string;
 };
 
 const TAB_ANCHOR_ID: Record<StudioTab, string> = {
@@ -190,6 +195,7 @@ export default function ProfileStudio(props: ProfileStudioProps) {
 
     loading,
     onOpenPicker,
+    adminHref,
 
     basicsPanel,
     identityPanel,
@@ -316,6 +322,42 @@ export default function ProfileStudio(props: ProfileStudioProps) {
           >
             Library
           </button>
+          {adminHref && (
+            <a
+              href={adminHref}
+              title="Admin tools"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 36,
+                height: 36,
+                borderRadius: 999,
+                border: "1px solid rgba(255,255,255,0.15)",
+                background: "rgba(255,255,255,0.05)",
+                color: "rgba(255,255,255,0.45)",
+                transition: "color 150ms, background 150ms, border-color 150ms",
+                textDecoration: "none",
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.9)";
+                (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.10)";
+                (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,255,255,0.30)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLAnchorElement).style.color = "rgba(255,255,255,0.45)";
+                (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.05)";
+                (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(255,255,255,0.15)";
+              }}
+            >
+              {/* Gear / settings icon */}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+            </a>
+          )}
         </div>
       </div>
 

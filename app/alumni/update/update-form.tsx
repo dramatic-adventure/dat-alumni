@@ -1941,6 +1941,7 @@ return (
     onTabChange={setStudioTab}
     loading={loading}
     onOpenPicker={(k) => openPicker(k)}
+    adminHref={isAdmin ? "/admin/invites" : undefined}
     basicsPanel={
       <BasicsPanel
         explainStyleLocal={explainStyleLocal}
