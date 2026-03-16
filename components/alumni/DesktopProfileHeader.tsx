@@ -68,6 +68,10 @@ export default function DesktopProfileHeader({
   const displayHeadshotSrc = overrideHeadshotSrc || imageSrc;
 
   useEffect(() => {
+    setOverrideHeadshotSrc("");
+  }, [imageSrc]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
     const src = (displayHeadshotSrc || "").trim();
     if (!src) return;

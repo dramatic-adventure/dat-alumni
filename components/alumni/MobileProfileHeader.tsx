@@ -48,6 +48,10 @@ export default function MobileProfileHeader({
   const displayHeadshotSrc = overrideHeadshotSrc || imageSrc;
 
   useEffect(() => {
+    setOverrideHeadshotSrc("");
+  }, [imageSrc]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
     const src = (displayHeadshotSrc || "").trim();
     if (!src) return;
