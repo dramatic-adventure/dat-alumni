@@ -93,30 +93,6 @@ export default function InvitesClient({ alumni }: { alumni: AlumniEntry[] }) {
       {/* ── Page content ── */}
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "48px 24px 80px" }}>
 
-        {/* Back link + heading */}
-        <a
-          href="/alumni/update"
-          style={{ opacity: 0.45, fontSize: 13, textDecoration: "none", color: "inherit", display: "inline-block", marginBottom: 24 }}
-        >
-          ← Back to Profile Studio
-        </a>
-
-        <h1
-          style={{
-            fontFamily: "var(--font-anton), system-ui, sans-serif",
-            fontSize: "clamp(28px, 5vw, 48px)",
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            marginBottom: 6,
-            marginTop: 0,
-          }}
-        >
-          Invite Links
-        </h1>
-        <p style={{ opacity: 0.5, marginBottom: 36, fontSize: 14, marginTop: 0 }}>
-          {alumni.length} alumni in Profile-Live · Single-use · Valid for 30 days · Already-claimed profiles skipped automatically
-        </p>
-
         {/* ── Card ── */}
         <div
           style={{
@@ -128,6 +104,30 @@ export default function InvitesClient({ alumni }: { alumni: AlumniEntry[] }) {
             WebkitBackdropFilter: "blur(8px)",
           }}
         >
+          {/* Back link + heading */}
+          <a
+            href="/alumni/update"
+            style={{ opacity: 0.45, fontSize: 13, textDecoration: "none", color: "inherit", display: "inline-block", marginBottom: 20 }}
+          >
+            ← Back to Profile Studio
+          </a>
+
+          <h1
+            style={{
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
+              fontSize: "clamp(28px, 5vw, 48px)",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              marginBottom: 6,
+              marginTop: 0,
+            }}
+          >
+            Invite Links
+          </h1>
+          <p style={{ opacity: 0.5, marginBottom: 28, fontSize: 14, marginTop: 0 }}>
+            {alumni.length} alumni in Profile-Live · Single-use · Valid for 30 days · Already-claimed profiles skipped automatically
+          </p>
+
           {/* Actions */}
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: results.length ? 24 : 0 }}>
             <button
