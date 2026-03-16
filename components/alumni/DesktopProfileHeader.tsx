@@ -61,7 +61,7 @@ export default function DesktopProfileHeader({
   useEffect(() => {
     galleryCacheRef.current = null;
     setGalleryUrls([]);
-  }, [alumniId, imageSrc]);
+  }, [alumniId]);
 
   const nameParts = name.trim().split(" ");
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
