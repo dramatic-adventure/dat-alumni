@@ -41,6 +41,20 @@ function noStoreHeaders() {
   };
 }
 
+/** Cache headers for stable fileId-based image responses.
+ *  Google Drive fileIds are immutable — same ID always means the same bytes.
+ *  private: browser-only cache (no CDN sharing across users).
+ *  max-age=86400: 24h fresh; stale-while-revalidate: serve stale for 7 days
+ *  while revalidating in the background.
+ */
+function fileIdCacheHeaders() {
+  return {
+    "Cache-Control": "private, max-age=86400, stale-while-revalidate=604800",
+    Vary: "Accept",
+    "X-Img-Route-Build": IMG_ROUTE_BUILD,
+  };
+}
+
 function jsonErr(status: number, payload: Record<string, unknown>) {
   return NextResponse.json(payload, { status, headers: noStoreHeaders() });
 }
@@ -231,10 +245,14 @@ export async function GET(req: Request) {
     // ✅ Proxy-only response: preserve upstream bytes and content-type.
     const outCt = contentType || "application/octet-stream";
 
+    // fileId requests are immutable — cache in the browser for 24h.
+    // url= requests may change, so keep no-store for those.
+    const cacheHeaders = fileId ? fileIdCacheHeaders() : noStoreHeaders();
+
     return new NextResponse(new Uint8Array(inputBuf), {
       status: 200,
       headers: {
-        ...noStoreHeaders(),
+        ...cacheHeaders,
         "Content-Type": outCt,
       },
     });

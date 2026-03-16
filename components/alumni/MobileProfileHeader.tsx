@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import ShareButton from "@/components/ui/ShareButton";
@@ -39,9 +39,12 @@ export default function MobileProfileHeader({
 }: MobileProfileHeaderProps) {
 
   const fallbackImage = "/images/default-headshot.png";
-  const imageSrc = useMemo(
-    () => (headshotUrl ? headshotUrl.replace(/^http:\/\//i, "https://") : fallbackImage),
-    [headshotUrl]
+
+  // imageSrc starts as the server-provided headshot (Squarespace URL or
+  // currentHeadshotId-derived URL). The mount effect may update it to the
+  // isCurrent item from Profile-Media once that fetch resolves.
+  const [imageSrc, setImageSrc] = useState(
+    () => headshotUrl ? headshotUrl.replace(/^http:\/\//i, "https://") : fallbackImage
   );
 
   const headerRef = useRef<HTMLDivElement>(null);
@@ -49,69 +52,71 @@ export default function MobileProfileHeader({
   const [currentUrl, setCurrentUrl] = useState("");
 
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
-  // AbortController so any in-flight gallery fetch is cancelled when this
-  // component unmounts. ProfileCard passes key={alumniId} so a full remount
-  // (and therefore a fresh fetch) happens on every profile navigation.
   const fetchAbortRef = useRef<AbortController | null>(null);
 
-  // Cancel any in-flight fetch when the component unmounts.
+  // On mount: fetch Profile-Media, update displayed headshot to isCurrent item,
+  // pre-populate gallery, and warm the browser image cache so the lightbox is instant.
   useEffect(() => {
-    return () => { fetchAbortRef.current?.abort(); };
-  }, []);
-
-  async function openHeadshotGallery() {
-    const current = imageSrc.trim();
-
-    // Show current headshot immediately, open modal
-    setGalleryUrls(current ? [current] : []);
-    setModalOpen(true);
-
-    // Cancel any previous fetch and start a fresh one
+    let alive = true;
     fetchAbortRef.current?.abort();
     const controller = new AbortController();
     fetchAbortRef.current = controller;
 
-    try {
-      const qs = new URLSearchParams({ alumniId, kind: "headshot" });
-      const r = await fetch(`/api/alumni/media/list?${qs}`, { signal: controller.signal });
-      const j = await r.json();
+    const toUrl = (it: any): string => {
+      const fid = String(it?.fileId || "").trim();
+      if (fid) return `/api/img?fileId=${encodeURIComponent(fid)}`;
+      const ext = String(it?.externalUrl || "").trim();
+      if (ext) return `/api/img?url=${encodeURIComponent(ext)}`;
+      return "";
+    };
 
-      const rawItems = (j?.items || []) as any[];
+    (async () => {
+      try {
+        const qs = new URLSearchParams({ alumniId, kind: "headshot" });
+        const r = await fetch(`/api/alumni/media/list?${qs}`, { signal: controller.signal });
+        const j = await r.json();
+        const rawItems = (j?.items || []) as any[];
 
-      const toUrl = (it: any): string => {
-        const fid = String(it?.fileId || "").trim();
-        if (fid) return `/api/img?fileId=${encodeURIComponent(fid)}`;
-        const ext = String(it?.externalUrl || "").trim();
-        if (ext) return `/api/img?url=${encodeURIComponent(ext)}`;
-        return "";
-      };
+        const ordered = [...rawItems].sort((a, b) => {
+          const ta = Date.parse(String(a?.uploadedAt || "")) || 0;
+          const tb = Date.parse(String(b?.uploadedAt || "")) || 0;
+          if (tb !== ta) return tb - ta;
+          const sa = Number.isFinite(Number(a?.sortIndex)) ? Number(a.sortIndex) : Infinity;
+          const sb = Number.isFinite(Number(b?.sortIndex)) ? Number(b.sortIndex) : Infinity;
+          return sa - sb;
+        });
 
-      const ordered = [...rawItems].sort((a, b) => {
-        const ta = Date.parse(String(a?.uploadedAt || "")) || 0;
-        const tb = Date.parse(String(b?.uploadedAt || "")) || 0;
-        if (tb !== ta) return tb - ta;
-        const sa = Number.isFinite(Number(a?.sortIndex)) ? Number(a.sortIndex) : Infinity;
-        const sb = Number.isFinite(Number(b?.sortIndex)) ? Number(b.sortIndex) : Infinity;
-        return sa - sb;
-      });
+        const unique = Array.from(new Set(ordered.map(toUrl).filter(Boolean)));
+        if (!alive) return;
 
-      const unique = Array.from(new Set(ordered.map(toUrl).filter(Boolean)));
+        // Update displayed headshot to the isCurrent item from Profile-Media.
+        const currentItem = rawItems.find((it: any) => it?.isCurrent === true);
+        if (currentItem) {
+          const url = toUrl(currentItem);
+          if (url) setImageSrc(url);
+        }
 
-      // Avoid duplicating the currently-displayed headshot.
-      // headshotUrl from the alumni sheet is often /api/img?fileId=X&v=TIMESTAMP
-      // while toUrl() produces /api/img?fileId=X — match by fileId param.
-      // If Profile-Media has entries, use those exclusively — they are the
-      // authoritative headshot gallery. Only fall back to the Squarespace
-      // headshotUrl when Profile-Media has nothing for this alumni.
-      const next = unique.length
-        ? unique
-        : (current ? [current] : []);
+        // Pre-populate gallery + warm browser image cache.
+        if (unique.length) {
+          setGalleryUrls(unique);
+          unique.forEach(url => { try { new window.Image().src = url; } catch {} });
+        }
+      } catch {
+        // AbortError on unmount, or network error — ignore silently.
+      }
+    })();
 
-      if (next.length > 0) setGalleryUrls(next);
-    } catch (e: any) {
-      // AbortError = component unmounted or user reopened lightbox; ignore silently.
-      // Other errors: keep the single current headshot already shown.
+    return () => { alive = false; controller.abort(); };
+  }, [alumniId]);
+
+  function openHeadshotGallery() {
+    // Gallery is pre-populated by the mount fetch; fall back to current
+    // headshot only if the fetch hasn't resolved yet.
+    if (!galleryUrls.length) {
+      const current = imageSrc.trim();
+      if (current) setGalleryUrls([current]);
     }
+    setModalOpen(true);
   }
 
 
