@@ -652,6 +652,7 @@ const hasStories = storiesForFeatured.length > 0;
 
       {isMobile ? (
         <MobileProfileHeader
+          key={alumniIdForMedia}
           alumniId={alumniIdForMedia}
           slug={slug}
           name={name}
@@ -665,6 +666,7 @@ const hasStories = storiesForFeatured.length > 0;
         />
       ) : (
         <DesktopProfileHeader
+          key={alumniIdForMedia}
           alumniId={alumniIdForMedia}
           slug={slug}
           name={name}
