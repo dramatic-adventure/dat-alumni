@@ -57,124 +57,26 @@ export default function DesktopProfileHeader({
     [headshotUrl]
   );
 
-  
 
 
   const nameParts = name.trim().split(" ");
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
   const lastName = nameParts.slice(-1).join(" ") || "";
 
-  const [overrideHeadshotSrc, setOverrideHeadshotSrc] = useState<string>("");
-  const displayHeadshotSrc = overrideHeadshotSrc || imageSrc;
-
-  useEffect(() => {
-    setOverrideHeadshotSrc("");
-  }, [imageSrc]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const src = (displayHeadshotSrc || "").trim();
-    if (!src) return;
-
-    const img = new window.Image();
-    img.decoding = "async";
-    img.loading = "eager";
-    img.src = src;
-  }, [displayHeadshotSrc]);
-
-
-    useEffect(() => {
-    let cancelled = false;
-
-    const toUrl = (it: any): string => {
-      const fid = String(it?.fileId || "").trim();
-      if (fid) return `/api/img?fileId=${encodeURIComponent(fid)}`;
-
-      const ext = String(it?.externalUrl || "").trim();
-      if (ext) return `/api/img?url=${encodeURIComponent(ext)}`;
-
-      return "";
-    };
-
-
-    const toTime = (it: any): number => {
-      // "uploadedAt" primary, then a few sensible fallbacks
-      const raw =
-        it?.uploadedAt ??
-        it?.createdAt ??
-        it?.updatedAt ??
-        it?.ts ??
-        it?.timestamp ??
-        "";
-
-      const n = typeof raw === "number" ? raw : Date.parse(String(raw));
-      return Number.isFinite(n) ? n : 0;
-    };
-
-    const orderMostRecent = (items: any[]) =>
-      [...items].sort((a, b) => {
-        const ta = toTime(a);
-        const tb = toTime(b);
-        if (tb !== ta) return tb - ta;
-
-        const sa = Number.isFinite(Number(a?.sortIndex))
-          ? Number(a.sortIndex)
-          : Number.POSITIVE_INFINITY;
-        const sb = Number.isFinite(Number(b?.sortIndex))
-          ? Number(b.sortIndex)
-          : Number.POSITIVE_INFINITY;
-        if (sa !== sb) return sa - sb;
-
-        // stable tie-breaker
-        return String(b?.fileId || b?.externalUrl || "").localeCompare(
-          String(a?.fileId || a?.externalUrl || "")
-        );
-      });
-
-    async function hydrateHeadshots() {
-      try {
-        const qs = new URLSearchParams({ alumniId, kind: "headshot" });
-        const r = await fetch(`/api/alumni/media/list?${qs.toString()}`)
-        const j = await r.json();
-        const rawItems = (j?.items || []) as any[];
-
-        const ordered = orderMostRecent(rawItems);
-        const urls = ordered.map(toUrl).filter(Boolean);
-
-        // Pick THE single most recent headshot URL (regardless of source)
-        const top = urls[0] || "";
-        if (!cancelled && top) setOverrideHeadshotSrc(top);
-
-        // Also seed the lightbox cache with the same ordering
-        if (!cancelled && urls.length) {
-          galleryCacheRef.current = Array.from(new Set(urls));
-        }
-      } catch {
-        // non-fatal
-      }
-    }
-
-    if (alumniId) hydrateHeadshots();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [alumniId]);
-
   useEffect(() => {
     if (!isModalOpen) return;
 
-    const current = (displayHeadshotSrc || imageSrc || "").trim();
+    const current = (imageSrc || "").trim();
     if (!current) return;
 
     setGalleryUrls((prev) => {
       const rest = (prev || []).filter((u) => u && u !== current);
       return [current, ...rest];
     });
-  }, [isModalOpen, displayHeadshotSrc, imageSrc]);
+  }, [isModalOpen, imageSrc]);
 
   async function openHeadshotGallery() {
-    const current = (displayHeadshotSrc || imageSrc || "").trim();
+    const current = imageSrc.trim();
 
     // Open instantly with whatever we're currently displaying
     setGalleryUrls((prev) => {
@@ -411,7 +313,7 @@ export default function DesktopProfileHeader({
 
       >
         <Image
-          src={displayHeadshotSrc}
+          src={imageSrc}
           alt={`${name}'s headshot`}
           fill
           placeholder="blur"
@@ -588,7 +490,7 @@ export default function DesktopProfileHeader({
           images={(
             galleryUrls && galleryUrls.length
               ? galleryUrls
-              : [(displayHeadshotSrc || imageSrc || "").trim()]
+              : [imageSrc]
           ).filter(Boolean)}
           onClose={() => {
             setModalOpen(false);

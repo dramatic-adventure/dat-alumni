@@ -44,59 +44,6 @@ export default function MobileProfileHeader({
     [headshotUrl]
   );
 
-  const [overrideHeadshotSrc, setOverrideHeadshotSrc] = useState<string>("");
-  const displayHeadshotSrc = overrideHeadshotSrc || imageSrc;
-
-  useEffect(() => {
-    setOverrideHeadshotSrc("");
-  }, [imageSrc]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const src = (displayHeadshotSrc || "").trim();
-    if (!src) return;
-
-    const img = new window.Image();
-    img.decoding = "async";
-    img.loading = "eager";
-    img.src = src;
-  }, [displayHeadshotSrc]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function hydrateMostRecentHeadshot() {
-      try {
-        const qs = new URLSearchParams({ alumniId, kind: "headshot", limit: "1" });
-        const r = await fetch(`/api/alumni/media/list?${qs.toString()}`)
-        const j = await r.json();
-        const it = (j?.items || [])[0];
-        if (!it) return;
-
-        const fid = String(it?.fileId || "").trim();
-        const ext = String(it?.externalUrl || "").trim();
-
-        // Prefer externalUrl if present; otherwise Drive.
-        const top =
-          (fid ? `/api/img?fileId=${encodeURIComponent(fid)}` : "") ||
-          (ext ? `/api/img?url=${encodeURIComponent(ext)}` : "");
-        if (!top) return;
-        if (cancelled) return;
-
-        setOverrideHeadshotSrc(top);
-      } catch {
-        // non-fatal
-      }
-    }
-
-    if (alumniId) hydrateMostRecentHeadshot();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [alumniId]);
-
-
   const headerRef = useRef<HTMLDivElement>(null);
   const [isModalOpen, setModalOpen] = useState(false);
   const [currentUrl, setCurrentUrl] = useState("");
@@ -109,10 +56,10 @@ export default function MobileProfileHeader({
     // If the profile headshot changes, the lightbox cache is stale
     galleryCacheRef.current = null;
     setGalleryUrls([]);
-  }, [displayHeadshotSrc]);
+  }, [imageSrc]);
 
   async function openHeadshotGallery() {
-    const current = (displayHeadshotSrc ?? imageSrc) as string;
+    const current = imageSrc;
 
     // open instantly with whatever the profile is currently displaying
     setGalleryUrls((prev) => (prev?.length ? prev : [current].filter(Boolean) as string[]));
@@ -162,7 +109,7 @@ const urls =
     })
     .filter(Boolean);
 
-      const fallback = ([displayHeadshotSrc ?? imageSrc].filter(Boolean)) as string[];
+      const fallback = ([imageSrc].filter(Boolean)) as string[];
       const next = (urls.length ? urls : fallback).filter(Boolean);
 
       if (!next.length) return;
@@ -172,7 +119,7 @@ const urls =
       setModalOpen(true);
 
     } catch {
-      const fallback = ([displayHeadshotSrc ?? imageSrc].filter(Boolean)) as string[];
+      const fallback = ([imageSrc].filter(Boolean)) as string[];
       if (!fallback.length) return;
 
       galleryCacheRef.current = fallback;
@@ -311,7 +258,7 @@ const urls =
         aria-label="Open headshot"
       >
         <Image
-          src={displayHeadshotSrc}
+          src={imageSrc}
           alt={`${name}'s headshot`}
           fill
           placeholder="blur"
