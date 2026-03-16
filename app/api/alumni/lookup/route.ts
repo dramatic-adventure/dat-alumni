@@ -1,10 +1,10 @@
 // /app/api/alumni/lookup/route.ts
 import { NextResponse } from "next/server";
-import { google } from "googleapis";
 import { rateLimit } from "@/lib/rateLimit";
 import { promises as fs } from "fs";
 import path from "path";
 import { auth } from "@/auth";
+import { sheetsClient } from "@/lib/googleClients";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,13 +24,6 @@ function isDebug(req: Request, mode: "1" | "2") {
 // ------------------------------------------------------------
 // Helpers
 // ------------------------------------------------------------
-function parseSA(jsonStr: string) {
-  try {
-    return JSON.parse(jsonStr);
-  } catch {
-    return JSON.parse(jsonStr.replace(/\\n/g, "\n"));
-  }
-}
 
 /** case-insensitive header lookup */
 function idxOf(header: any[], candidates: string[]) {
@@ -521,19 +514,12 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
 
 
   const sheetId = process.env.ALUMNI_SHEET_ID;
-  const saJson = process.env.GCP_SA_JSON;
-  if (!sheetId || !saJson) {
-    return json({ error: "Server misconfigured" }, { status: 500, headers: noStoreHeaders() });
+  if (!sheetId) {
+    return json({ error: "Server misconfigured: missing ALUMNI_SHEET_ID" }, { status: 500, headers: noStoreHeaders() });
   }
 
   try {
-    const sa = parseSA(saJson);
-    const gAuth = new google.auth.JWT({
-      email: sa.client_email,
-      key: sa.private_key,
-      scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-    });
-    const sheets = google.sheets({ version: "v4", auth: gAuth });
+    const sheets = sheetsClient();
 
     // 0) Read Profile-Live
     const liveResp = await sheets.spreadsheets.values.get({
