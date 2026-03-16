@@ -100,19 +100,11 @@ export default function MobileProfileHeader({
       // Avoid duplicating the currently-displayed headshot.
       // headshotUrl from the alumni sheet is often /api/img?fileId=X&v=TIMESTAMP
       // while toUrl() produces /api/img?fileId=X — match by fileId param.
-      function getFileId(url: string): string | null {
-        try { return new URL(url, "http://x").searchParams.get("fileId"); }
-        catch { return null; }
-      }
-      const currentFid = current ? getFileId(current) : null;
-      const alreadyIn = !!current && unique.some(u => {
-        if (u === current) return true;
-        const uFid = getFileId(u);
-        return !!(uFid && currentFid && uFid === currentFid);
-      });
-
+      // If Profile-Media has entries, use those exclusively — they are the
+      // authoritative headshot gallery. Only fall back to the Squarespace
+      // headshotUrl when Profile-Media has nothing for this alumni.
       const next = unique.length
-        ? (current && !alreadyIn ? [current, ...unique] : unique)
+        ? unique
         : (current ? [current] : []);
 
       if (next.length > 0) setGalleryUrls(next);
