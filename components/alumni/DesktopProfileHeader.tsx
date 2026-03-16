@@ -57,7 +57,11 @@ export default function DesktopProfileHeader({
     [headshotUrl]
   );
 
-
+  // Reset gallery cache when profile changes to prevent stale/duplicate images
+  useEffect(() => {
+    galleryCacheRef.current = null;
+    setGalleryUrls([]);
+  }, [alumniId, imageSrc]);
 
   const nameParts = name.trim().split(" ");
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
