@@ -1,6 +1,6 @@
 // lib/slugAliases.ts
 
-import { loadSlugMap } from "@/lib/loadSlugMap";
+import { loadSlugForwardMap } from "@/lib/loadAlumni";
 import { serverDebug } from "@/lib/serverDebug";
 
 /** Normalize strings like 'Slug Name ' to 'slug-name' for matching and URLs. */
@@ -39,45 +39,19 @@ function getTtlMs(): number {
   return Number.isFinite(n) && n > 0 ? n : 60_000;
 }
 
-/**
- * Load the slug map and return a normalized Map(from -> to).
- *
- * Source of truth:
- * - loadSlugMap() should ultimately read Profile-Slugs (or SLUGS_CSV_URL) and
- *   write/update the local fallback slug-map.csv on success.
- */
-export async function loadSlugForwardsMap(): Promise<Map<string, string>> {
-  try {
-    const map = await loadSlugMap();
-
-    if (!(map instanceof Map) || map.size === 0) {
-      debugLog("loadSlugMap returned empty map");
-      return map instanceof Map ? map : new Map();
-    }
-
-    return map;
-  } catch (err) {
-    debugLog(
-      "loadSlugForwardsMap failed, returning empty map:",
-      (err as Error)?.message || err,
-    );
-    return new Map();
-  }
-}
-
 /** Build/refresh indices in memory. */
 async function ensureIndex(): Promise<void> {
   try {
     const ttlMs = getTtlMs();
     if (cache && Date.now() - cache.stamp < ttlMs) return;
 
-    const fwdMap = await loadSlugForwardsMap();
+    const fwdMap = await loadSlugForwardMap();
     const forwards: Forward[] = [];
     const byFrom = new Map<string, string>();
     const byTo = new Map<string, Set<string>>();
     const all = new Set<string>();
 
-    for (const [fromRaw, toRaw] of fwdMap.entries()) {
+    for (const [fromRaw, toRaw] of Object.entries(fwdMap)) {
       const from = normSlug(fromRaw);
       const to = normSlug(toRaw);
 
