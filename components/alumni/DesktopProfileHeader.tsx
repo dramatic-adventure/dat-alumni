@@ -137,13 +137,40 @@ export default function DesktopProfileHeader({
         );
       });
 
-      // Use only API-proxied URLs — never mix raw imageSrc with /api/img?... URLs
-      // or the same headshot will appear twice (different URL strings, same image).
       const urls = ordered.map(toUrl).filter(Boolean);
       const unique = Array.from(new Set(urls));
 
-      // If the media sheet returned nothing, fall back to the currently displayed headshot
-      const next = unique.length ? unique : (current ? [current] : []);
+      // Check whether the currently-displayed headshot is already represented in the
+      // API results (it might be stored as an externalUrl proxy or a fileId proxy,
+      // both of which are different URL strings from the raw `current`).
+      // We need this to avoid: (a) omitting it, or (b) adding a duplicate.
+      function extractDriveId(url: string): string | null {
+        const m = url.match(/\/d\/([A-Za-z0-9_\-]{20,})/);
+        return m ? m[1] : null;
+      }
+      const currentDriveId = current ? extractDriveId(current) : null;
+
+      const currentAlreadyRepresented = !!current && unique.some((u) => {
+        if (u === current) return true;
+        try {
+          const params = new URL(u, "http://x").searchParams;
+          const proxiedExt = params.get("url");
+          if (proxiedExt && decodeURIComponent(proxiedExt) === current) return true;
+          if (currentDriveId) {
+            const fid = params.get("fileId");
+            if (fid && decodeURIComponent(fid) === currentDriveId) return true;
+          }
+        } catch { /* ignore */ }
+        return false;
+      });
+
+      // Build final list: all API results, with current prepended if not already there.
+      // This guarantees (a) all sheet headshots show, and (b) no duplicate of current.
+      const base = unique.length
+        ? (current && !currentAlreadyRepresented ? [current, ...unique] : unique)
+        : (current ? [current] : []);
+
+      const next = base;
 
       if (!next.length) return;
 
