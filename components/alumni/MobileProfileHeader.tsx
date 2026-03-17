@@ -194,9 +194,7 @@ export default function MobileProfileHeader({
   );
 
   const locationHref = location ? getLocationHrefForToken(location) : null;
-
-  // Multi-city: show "City1 · City2" when a second location is present
-  const displayLocation = secondLocation ? `${location} · ${secondLocation}` : location;
+  const secondLocationHref = secondLocation ? getLocationHrefForToken(secondLocation) : null;
 
   return (
     <div ref={headerRef} style={{ backgroundColor: "#C39B6C", position: "relative" }}>
@@ -294,150 +292,313 @@ export default function MobileProfileHeader({
         <NameStack firstName={firstName} lastName={lastName} containerWidth={320} gapRem={0.6} />
 
         {(allRoles.length > 0 || currentTitle || location) && (
-          <div
-            style={{ marginBottom: "2rem", textAlign: "center", wordBreak: "break-word" }}
-          >
-            {/* Row 1: DAT role links */}
-            {titleLinks.length > 0 && (
-              <div className="flex flex-wrap justify-center items-center gap-x-3 mt-2">
-                <span className="flex items-center flex-wrap justify-center">
-                  {titleLinks.map(({ label, href }, idx) => (
-                    <span key={`${href}-${label}`} className="flex items-center">
-                      <Link
-                        href={href}
-                        prefetch
-                        className="no-underline hover:no-underline transition-all duration-200 inline-block"
-                        style={{
-                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                          fontSize: "clamp(1rem, 4vw, 1.35rem)",
-                          color: "#241123",
-                          textTransform: "uppercase",
-                          letterSpacing: "2px",
-                          fontWeight: 800,
-                          opacity: 0.95,
-                          whiteSpace: "nowrap",
-                          transformOrigin: "left center",
-                          transition: "transform 0.2s ease, color 0.2s ease",
-                          cursor: "pointer",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = "scaleX(1.05)";
-                          e.currentTarget.style.color = "#6C00AF";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = "scaleX(1)";
-                          e.currentTarget.style.color = "#241123";
-                        }}
-                        aria-label={`View ${label}`}
-                      >
-                        {label}
-                      </Link>
-                      {idx < titleLinks.length - 1 && (
-                        <span
-                          style={{
-                            fontSize: "clamp(1rem, 4vw, 1.35rem)",
-                            color: "#241123",
-                            opacity: 0.7,
-                            margin: "0 0.5rem",
-                            fontWeight: 400,
-                          }}
-                          aria-hidden="true"
-                        >
-                          –
-                        </span>
-                      )}
-                    </span>
-                  ))}
-                </span>
-              </div>
-            )}
+          <div style={{ marginBottom: "2rem", textAlign: "center", wordBreak: "break-word" }}>
 
-            {/* Row 2: Current professional title (outside DAT) */}
-            {currentTitle && (
+            {/* ── Row 1 ──────────────────────────────────────────────────────────
+                When currentTitle exists: show it BIG — this is their primary identity.
+                When no currentTitle: show DAT role links big (unchanged behavior).
+            ─────────────────────────────────────────────────────────────────── */}
+            {currentTitle ? (
               <div
                 style={{
-                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                  fontSize: "clamp(0.85rem, 3.5vw, 1.05rem)",
+                  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                  fontSize: "clamp(1rem, 4vw, 1.35rem)",
                   color: "#241123",
                   textTransform: "uppercase",
                   letterSpacing: "2px",
-                  fontWeight: 600,
-                  opacity: 0.65,
-                  marginTop: "0.3rem",
-                  textAlign: "center",
+                  fontWeight: 800,
+                  lineHeight: 1.2,
+                  marginTop: "0.5rem",
                 }}
               >
                 {currentTitle}
               </div>
+            ) : (
+              titleLinks.length > 0 && (
+                <div className="flex flex-wrap justify-center items-center gap-x-3 mt-2">
+                  <span className="flex items-center flex-wrap justify-center">
+                    {titleLinks.map(({ label, href }, idx) => (
+                      <span key={`${href}-${label}`} className="flex items-center">
+                        <Link
+                          href={href}
+                          prefetch
+                          className="no-underline hover:no-underline transition-all duration-200 inline-block"
+                          style={{
+                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                            fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                            color: "#241123",
+                            textTransform: "uppercase",
+                            letterSpacing: "2px",
+                            fontWeight: 800,
+                            opacity: 0.95,
+                            whiteSpace: "nowrap",
+                            transformOrigin: "left center",
+                            transition: "transform 0.2s ease, color 0.2s ease",
+                            cursor: "pointer",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = "scaleX(1.05)";
+                            e.currentTarget.style.color = "#6C00AF";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = "scaleX(1)";
+                            e.currentTarget.style.color = "#241123";
+                          }}
+                          aria-label={`View ${label}`}
+                        >
+                          {label}
+                        </Link>
+                        {idx < titleLinks.length - 1 && (
+                          <span
+                            style={{
+                              fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                              color: "#241123",
+                              opacity: 0.7,
+                              margin: "0 0.5rem",
+                              fontWeight: 400,
+                            }}
+                            aria-hidden="true"
+                          >
+                            –
+                          </span>
+                        )}
+                      </span>
+                    ))}
+                  </span>
+                </div>
+              )
             )}
 
-            {/* Row 3: Location */}
-            {location && (
+            {/* ── Row 2 ──────────────────────────────────────────────────────────
+                DAT role — shown smaller with a "DAT" badge when currentTitle
+                is present. Links remain so alumni are browsable by DAT role.
+            ─────────────────────────────────────────────────────────────────── */}
+            {currentTitle && titleLinks.length > 0 && (
               <div
-                className="flex justify-center mt-2"
+                className="flex flex-wrap justify-center items-center"
+                style={{ gap: "0.5rem", marginTop: "0.5rem" }}
               >
-                {locationHref ? (
-                  <Link
-                    href={locationHref}
-                    prefetch
-                    className="no-underline hover:no-underline transition-all duration-200"
-                    style={{
-                      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                      fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
-                      fontWeight: 900,
-                      letterSpacing: "2px",
-                      opacity: 0.5,
-                      display: "inline-block",
-                      cursor: "pointer",
-                      transformOrigin: "left center",
-                      transition: "transform 0.2s ease, color 0.2s ease, opacity 0.2s ease",
-                      color: "#241123",
-                    }}
-                    aria-label={`View artists based in ${location}`}
-                  >
-                    <span
+                {/* DAT badge */}
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                    fontSize: "0.55rem",
+                    letterSpacing: "3px",
+                    fontWeight: 900,
+                    color: "#F6E4C1",
+                    backgroundColor: "#241123",
+                    textTransform: "uppercase",
+                    padding: "3px 8px 2px",
+                    borderRadius: "4px",
+                    flexShrink: 0,
+                  }}
+                >
+                  DAT
+                </span>
+
+                {/* Separator */}
+                <span
+                  style={{ color: "#241123", opacity: 0.35, fontSize: "0.9rem", flexShrink: 0 }}
+                  aria-hidden
+                >
+                  ·
+                </span>
+
+                {/* DAT role links — smaller, still clickable */}
+                {titleLinks.map(({ label, href }, idx) => (
+                  <span key={`${href}-${label}`} className="flex items-center" style={{ gap: "0.5rem" }}>
+                    <Link
+                      href={href}
+                      prefetch
+                      className="no-underline hover:no-underline transition-all duration-200 inline-block"
+                      style={{
+                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                        fontSize: "clamp(0.75rem, 3vw, 0.9rem)",
+                        color: "#241123",
+                        textTransform: "uppercase",
+                        letterSpacing: "1.5px",
+                        fontWeight: 700,
+                        opacity: 0.55,
+                        cursor: "pointer",
+                      }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "scaleX(1.05)";
-                        (e.currentTarget.parentElement as HTMLElement).style.color = "#6C00AF";
-                        (e.currentTarget.parentElement as HTMLElement).style.opacity = "1";
+                        e.currentTarget.style.opacity = "0.9";
+                        e.currentTarget.style.color = "#6C00AF";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "scaleX(1)";
-                        (e.currentTarget.parentElement as HTMLElement).style.color = "#241123";
-                        (e.currentTarget.parentElement as HTMLElement).style.opacity = "0.5";
+                        e.currentTarget.style.opacity = "0.55";
+                        e.currentTarget.style.color = "#241123";
                       }}
-                      style={{ display: "inline-block" }}
+                      aria-label={`View ${label}`}
                     >
-                      Based in {(displayLocation ?? "").toUpperCase()}
-                    </span>
-                  </Link>
-                ) : (
-                  <span
-                    style={{
-                      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                      fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
-                      fontWeight: 900,
-                      letterSpacing: "2px",
-                      opacity: 0.5,
-                      display: "inline-block",
-                      cursor: "pointer",
-                      transformOrigin: "left center",
-                      transition: "transform 0.2s ease, color 0.2s ease, opacity 0.2s ease",
-                      color: "#241123",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "scaleX(1.05)";
-                      e.currentTarget.style.color = "#6C00AF";
-                      e.currentTarget.style.opacity = "1";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "scaleX(1)";
-                      e.currentTarget.style.color = "#241123";
-                      e.currentTarget.style.opacity = "0.5";
-                    }}
-                  >
-                    Based in {(displayLocation ?? "").toUpperCase()}
+                      {label}
+                    </Link>
+                    {idx < titleLinks.length - 1 && (
+                      <span
+                        style={{
+                          fontSize: "clamp(0.75rem, 3vw, 0.9rem)",
+                          color: "#241123",
+                          opacity: 0.4,
+                          fontWeight: 400,
+                        }}
+                        aria-hidden
+                      >
+                        –
+                      </span>
+                    )}
                   </span>
+                ))}
+              </div>
+            )}
+
+            {/* ── Row 3 ──────────────────────────────────────────────────────────
+                Location.
+                Single city → "Based in CITY" (unchanged).
+                Two cities → "CITY1 · CITY2" — each city independently linked,
+                no "Based in" prefix (it doesn't read naturally for two cities).
+            ─────────────────────────────────────────────────────────────────── */}
+            {location && (
+              <div className="flex justify-center items-center flex-wrap mt-2" style={{ gap: 0 }}>
+                {secondLocation ? (
+                  /* ── Multi-city ── */
+                  <>
+                    {locationHref ? (
+                      <Link
+                        href={locationHref}
+                        prefetch
+                        className="no-underline hover:no-underline"
+                        style={{
+                          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                          fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
+                          fontWeight: 900,
+                          letterSpacing: "2px",
+                          opacity: 0.5,
+                          textTransform: "uppercase",
+                          color: "#241123",
+                          transition: "color 0.2s, opacity 0.2s",
+                        }}
+                        aria-label={`View artists based in ${location}`}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = "#6C00AF";
+                          e.currentTarget.style.opacity = "1";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = "#241123";
+                          e.currentTarget.style.opacity = "0.5";
+                        }}
+                      >
+                        {location.toUpperCase()}
+                      </Link>
+                    ) : (
+                      <span
+                        style={{
+                          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                          fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
+                          fontWeight: 900,
+                          letterSpacing: "2px",
+                          opacity: 0.5,
+                          textTransform: "uppercase",
+                          color: "#241123",
+                        }}
+                      >
+                        {location.toUpperCase()}
+                      </span>
+                    )}
+
+                    <span
+                      style={{ color: "#241123", opacity: 0.4, fontSize: "1rem", margin: "0 0.4rem" }}
+                      aria-hidden
+                    >
+                      ·
+                    </span>
+
+                    {secondLocationHref ? (
+                      <Link
+                        href={secondLocationHref}
+                        prefetch
+                        className="no-underline hover:no-underline"
+                        style={{
+                          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                          fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
+                          fontWeight: 900,
+                          letterSpacing: "2px",
+                          opacity: 0.5,
+                          textTransform: "uppercase",
+                          color: "#241123",
+                          transition: "color 0.2s, opacity 0.2s",
+                        }}
+                        aria-label={`View artists based in ${secondLocation}`}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.color = "#6C00AF";
+                          e.currentTarget.style.opacity = "1";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.color = "#241123";
+                          e.currentTarget.style.opacity = "0.5";
+                        }}
+                      >
+                        {secondLocation.toUpperCase()}
+                      </Link>
+                    ) : (
+                      <span
+                        style={{
+                          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                          fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
+                          fontWeight: 900,
+                          letterSpacing: "2px",
+                          opacity: 0.5,
+                          textTransform: "uppercase",
+                          color: "#241123",
+                        }}
+                      >
+                        {secondLocation.toUpperCase()}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  /* ── Single city ── */
+                  locationHref ? (
+                    <Link
+                      href={locationHref}
+                      prefetch
+                      className="no-underline hover:no-underline transition-all duration-200"
+                      style={{
+                        fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                        fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
+                        fontWeight: 900,
+                        letterSpacing: "2px",
+                        opacity: 0.5,
+                        display: "inline-block",
+                        color: "#241123",
+                        transition: "color 0.2s, opacity 0.2s",
+                      }}
+                      aria-label={`View artists based in ${location}`}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = "#6C00AF";
+                        e.currentTarget.style.opacity = "1";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = "#241123";
+                        e.currentTarget.style.opacity = "0.5";
+                      }}
+                    >
+                      Based in {location.toUpperCase()}
+                    </Link>
+                  ) : (
+                    <span
+                      style={{
+                        fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                        fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
+                        fontWeight: 900,
+                        letterSpacing: "2px",
+                        opacity: 0.5,
+                        textTransform: "uppercase",
+                        color: "#241123",
+                      }}
+                    >
+                      Based in {location.toUpperCase()}
+                    </span>
+                  )
                 )}
               </div>
             )}
