@@ -438,10 +438,6 @@ export default function MobileProfileHeader({
                     }}>
                       {/* Always-visible row: DAT + primary role + toggle */}
                       <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
-                        {/* Balancing spacer for pill circle */}
-                        {titleLinks.length > 1 && (
-                          <span aria-hidden="true" style={{ width: "1.1em", height: "1.1em", fontSize: "0.95rem", flexShrink: 0, visibility: "hidden" }} />
-                        )}
                         <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.72rem", letterSpacing: "3.5px", fontWeight: 900, color: "#ffcc00", textTransform: "uppercase" }}>
                           DAT
                         </span>
