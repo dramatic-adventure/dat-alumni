@@ -194,23 +194,25 @@ export default function TheatreIndexPage() {
                   {festivalShort(featured.festival)}
                 </p>
               )}
-              <div className="mt-6 flex flex-wrap gap-3">
+              <div className="mt-6">
                 <span
                   className="inline-flex items-center gap-1.5 rounded-full border px-5 py-2 text-[0.68rem] font-bold uppercase tracking-[0.2em] transition duration-300 group-hover:bg-[#FFCC00]/10"
                   style={{ borderColor: "rgba(255,204,0,0.4)", color: "#FFCC00" }}
                 >
                   Explore Production →
                 </span>
-                <Link
-                  href={`/season/${featured.season}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-4 py-2 text-[0.68rem] font-semibold uppercase tracking-[0.15em] text-white/45 transition hover:border-white/35 hover:text-white/80"
-                >
-                  Season {featured.season} Archive
-                </Link>
               </div>
             </div>
           </Link>
+          {/* Season link lives outside the card to avoid nested <a> tags */}
+          <div className="mt-3 flex justify-start">
+            <Link
+              href={`/season/${featured.season}`}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-4 py-2 text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-white/40 transition hover:border-white/35 hover:text-white/75"
+            >
+              Season {featured.season} Archive ↗
+            </Link>
+          </div>
         </section>
       )}
 
