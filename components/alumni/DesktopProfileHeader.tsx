@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-import { getLocationHrefForToken } from "@/lib/locations";
+import { getLocationHrefForToken, normalizeLocation } from "@/lib/locations";
 import ScaledName from "@/components/shared/NameStack"; // default export; alias name is fine
 import ShareButton from "@/components/ui/ShareButton";
 import Lightbox from "@/components/shared/Lightbox";
@@ -215,6 +215,8 @@ export default function DesktopProfileHeader({
 
   const locationHref = location ? getLocationHrefForToken(location) : null;
   const secondLocationHref = secondLocation ? getLocationHrefForToken(secondLocation) : null;
+  const displayLocation = location ? (normalizeLocation(location) ?? location) : null;
+  const displaySecondLocation = secondLocation ? (normalizeLocation(secondLocation) ?? secondLocation) : null;
 
   // Extra prefetching: when the header is visible, prefetch all target pages.
   useEffect(() => {
@@ -369,14 +371,17 @@ export default function DesktopProfileHeader({
                             letterSpacing: "2px",
                             fontWeight: 700,
                             opacity: 0.9,
-                            transformOrigin: "left",
+                            paddingRight: "1rem",
+                            transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease",
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = "scaleX(1.05)";
+                            e.currentTarget.style.letterSpacing = "4.5px";
+                            e.currentTarget.style.paddingRight = "0";
                             e.currentTarget.style.color = "#6C00AF";
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = "scaleX(1)";
+                            e.currentTarget.style.letterSpacing = "2px";
+                            e.currentTarget.style.paddingRight = "1rem";
                             e.currentTarget.style.color = "#241123";
                           }}
                           aria-label={`View ${label}`}
@@ -405,8 +410,7 @@ export default function DesktopProfileHeader({
 
             {/* ── Row 2 ──────────────────────────────────────────────────────────
                 When currentTitle is present: ONE compact line merging the DAT
-                badge, DAT role links, and location. Keeps the header clean —
-                just [Name] [Title] [context line].
+                container (badge + role) and location. Keeps the header clean.
                 When no currentTitle: show location the standard way below the
                 big DAT role links (unchanged behavior).
             ─────────────────────────────────────────────────────────────────── */}
@@ -416,162 +420,156 @@ export default function DesktopProfileHeader({
                   className="flex flex-row items-center flex-wrap"
                   style={{ gap: "0.55rem", marginTop: "0.55rem" }}
                 >
-                  {/* DAT badge — #ffcc00 text, dark background */}
+                  {/* DAT container: badge + role(s) as one connected unit, no dot separator */}
                   {titleLinks.length > 0 && (
                     <span
                       style={{
-                        fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                        fontSize: "0.7rem",
-                        letterSpacing: "3px",
-                        fontWeight: 900,
-                        color: "#ffcc00",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
                         backgroundColor: "#241123",
-                        textTransform: "uppercase",
-                        padding: "3px 10px 2px",
+                        padding: "3px 10px 3px 9px",
                         borderRadius: "4px",
                         flexShrink: 0,
                       }}
                     >
-                      DAT
-                    </span>
-                  )}
-
-                  {/* DAT role links */}
-                  {titleLinks.length > 0 && (
-                    <>
                       <span
-                        style={{ color: "#241123", opacity: 0.35, fontSize: "1rem", flexShrink: 0 }}
-                        aria-hidden
+                        style={{
+                          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                          fontSize: "0.7rem",
+                          letterSpacing: "3px",
+                          fontWeight: 900,
+                          color: "#ffcc00",
+                          textTransform: "uppercase",
+                        }}
                       >
-                        ·
+                        DAT
                       </span>
                       {titleLinks.map(({ label, href }, idx) => (
-                        <span key={`${href}-${label}`} className="flex items-center" style={{ gap: "0.55rem" }}>
+                        <span key={`${href}-${label}`} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+                          {idx > 0 && (
+                            <span style={{ color: "#ffcc00", opacity: 0.35, fontSize: "0.65rem", fontWeight: 400 }} aria-hidden>–</span>
+                          )}
                           <Link
                             href={href}
                             prefetch
-                            className="no-underline hover:no-underline transition-all duration-200 inline-block"
+                            className="no-underline hover:no-underline inline-block"
                             style={{
                               fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                              fontSize: "1.05rem",
-                              color: "#241123",
+                              fontSize: "0.8rem",
+                              color: "#ffcc00",
+                              opacity: 0.75,
                               textTransform: "uppercase",
-                              letterSpacing: "1.5px",
+                              letterSpacing: "2px",
                               fontWeight: 700,
-                              opacity: 0.55,
-                              transformOrigin: "left",
+                              paddingRight: "0.4rem",
+                              transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease",
                             }}
-                            onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.color = "#6C00AF"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.55"; e.currentTarget.style.color = "#241123"; }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.letterSpacing = "3.5px";
+                              e.currentTarget.style.paddingRight = "0";
+                              e.currentTarget.style.color = "#6C00AF";
+                              e.currentTarget.style.opacity = "1";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.letterSpacing = "2px";
+                              e.currentTarget.style.paddingRight = "0.4rem";
+                              e.currentTarget.style.color = "#ffcc00";
+                              e.currentTarget.style.opacity = "0.75";
+                            }}
                             aria-label={`View ${label}`}
                           >
                             {label}
                           </Link>
-                          {idx < titleLinks.length - 1 && (
-                            <span style={{ fontSize: "1.05rem", color: "#241123", opacity: 0.4, fontWeight: 400 }}>–</span>
-                          )}
                         </span>
                       ))}
-                    </>
+                    </span>
                   )}
 
-                  {/* Dot separator between roles and location */}
+                  {/* Dot separator between DAT container and location */}
                   {titleLinks.length > 0 && location && (
                     <span style={{ color: "#241123", opacity: 0.35, fontSize: "1rem", flexShrink: 0 }} aria-hidden>·</span>
                   )}
 
-                  {/* Location — inline with the rest of the context line */}
+                  {/* Location — no prefix text, pipe separator for multi-city */}
                   {location && (
                     secondLocation ? (
-                      /* Between CITY & CITY2 */
-                      <>
-                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.05rem", color: "#241123", fontWeight: 700, letterSpacing: "1.5px", opacity: 0.5 }}>
-                          Between&nbsp;
-                        </span>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
                         {locationHref ? (
-                          <Link href={locationHref} prefetch className="no-underline hover:no-underline"
-                            style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.05rem", color: "#241123", fontWeight: 900, letterSpacing: "1.5px", opacity: 0.5, textTransform: "uppercase", transition: "color 0.2s, opacity 0.2s" }}
-                            aria-label={`View artists based in ${location}`}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; }}
-                          >{location}</Link>
+                          <Link href={locationHref} prefetch className="no-underline hover:no-underline inline-block"
+                            style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.05rem", color: "#241123", fontWeight: 700, letterSpacing: "1.5px", opacity: 0.5, textTransform: "uppercase", paddingRight: "0.3rem", transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease" }}
+                            aria-label={`View artists based in ${displayLocation}`}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; e.currentTarget.style.letterSpacing = "2.5px"; e.currentTarget.style.paddingRight = "0"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; e.currentTarget.style.letterSpacing = "1.5px"; e.currentTarget.style.paddingRight = "0.3rem"; }}
+                          >{displayLocation?.toUpperCase()}</Link>
                         ) : (
-                          <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.05rem", color: "#241123", fontWeight: 900, letterSpacing: "1.5px", opacity: 0.5, textTransform: "uppercase" }}>{location}</span>
+                          <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.05rem", color: "#241123", fontWeight: 700, letterSpacing: "1.5px", opacity: 0.5, textTransform: "uppercase" }}>{displayLocation?.toUpperCase()}</span>
                         )}
-                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.05rem", color: "#241123", fontWeight: 700, letterSpacing: "1.5px", opacity: 0.5 }}>&nbsp;&amp;&nbsp;</span>
+                        <span style={{ color: "#241123", opacity: 0.3, fontSize: "1rem", fontWeight: 300 }}>|</span>
                         {secondLocationHref ? (
-                          <Link href={secondLocationHref} prefetch className="no-underline hover:no-underline"
-                            style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.05rem", color: "#241123", fontWeight: 900, letterSpacing: "1.5px", opacity: 0.5, textTransform: "uppercase", transition: "color 0.2s, opacity 0.2s" }}
-                            aria-label={`View artists based in ${secondLocation}`}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; }}
-                          >{secondLocation}</Link>
+                          <Link href={secondLocationHref} prefetch className="no-underline hover:no-underline inline-block"
+                            style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.05rem", color: "#241123", fontWeight: 700, letterSpacing: "1.5px", opacity: 0.5, textTransform: "uppercase", paddingRight: "0.3rem", transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease" }}
+                            aria-label={`View artists based in ${displaySecondLocation}`}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; e.currentTarget.style.letterSpacing = "2.5px"; e.currentTarget.style.paddingRight = "0"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; e.currentTarget.style.letterSpacing = "1.5px"; e.currentTarget.style.paddingRight = "0.3rem"; }}
+                          >{displaySecondLocation?.toUpperCase()}</Link>
                         ) : (
-                          <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.05rem", color: "#241123", fontWeight: 900, letterSpacing: "1.5px", opacity: 0.5, textTransform: "uppercase" }}>{secondLocation}</span>
+                          <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.05rem", color: "#241123", fontWeight: 700, letterSpacing: "1.5px", opacity: 0.5, textTransform: "uppercase" }}>{displaySecondLocation?.toUpperCase()}</span>
                         )}
-                      </>
+                      </span>
                     ) : (
-                      /* Based in CITY */
                       locationHref ? (
-                        <Link href={locationHref} prefetch className="no-underline hover:no-underline"
-                          style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.05rem", color: "#241123", fontWeight: 700, letterSpacing: "1.5px", opacity: 0.5, transition: "color 0.2s, opacity 0.2s" }}
-                          aria-label={`View artists based in ${location}`}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; }}
-                        >
-                          Based in <span style={{ textTransform: "uppercase" }}>{location}</span>
-                        </Link>
+                        <Link href={locationHref} prefetch className="no-underline hover:no-underline inline-block"
+                          style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.05rem", color: "#241123", fontWeight: 700, letterSpacing: "1.5px", opacity: 0.5, textTransform: "uppercase", paddingRight: "0.3rem", transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease" }}
+                          aria-label={`View artists based in ${displayLocation}`}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; e.currentTarget.style.letterSpacing = "2.5px"; e.currentTarget.style.paddingRight = "0"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; e.currentTarget.style.letterSpacing = "1.5px"; e.currentTarget.style.paddingRight = "0.3rem"; }}
+                        >{displayLocation?.toUpperCase()}</Link>
                       ) : (
-                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.05rem", color: "#241123", fontWeight: 700, letterSpacing: "1.5px", opacity: 0.5 }}>
-                          Based in <span style={{ textTransform: "uppercase" }}>{location}</span>
-                        </span>
+                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.05rem", color: "#241123", fontWeight: 700, letterSpacing: "1.5px", opacity: 0.5, textTransform: "uppercase" }}>{displayLocation?.toUpperCase()}</span>
                       )
                     )
                   )}
                 </div>
               )
             ) : (
-              /* ── No currentTitle: location below the big DAT role links (unchanged) ── */
+              /* ── No currentTitle: location below the big DAT role links ── */
               location && (
-                <div style={{ marginTop: "0.4rem", display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0" }}>
+                <div style={{ marginTop: "0.4rem", display: "flex", alignItems: "center", flexWrap: "wrap", gap: "0.4rem" }}>
                   {secondLocation ? (
                     <>
                       {locationHref ? (
-                        <Link href={locationHref} prefetch className="no-underline hover:no-underline"
-                          style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.2rem", color: "#241123", fontWeight: 900, letterSpacing: "2px", opacity: 0.5, textTransform: "uppercase", transition: "color 0.2s, opacity 0.2s" }}
-                          aria-label={`View artists based in ${location}`}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; }}
-                        >{location}</Link>
+                        <Link href={locationHref} prefetch className="no-underline hover:no-underline inline-block"
+                          style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.2rem", color: "#241123", fontWeight: 700, letterSpacing: "2px", opacity: 0.5, textTransform: "uppercase", paddingRight: "0.5rem", transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease" }}
+                          aria-label={`View artists based in ${displayLocation}`}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; e.currentTarget.style.letterSpacing = "3.5px"; e.currentTarget.style.paddingRight = "0"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; e.currentTarget.style.letterSpacing = "2px"; e.currentTarget.style.paddingRight = "0.5rem"; }}
+                        >{displayLocation?.toUpperCase()}</Link>
                       ) : (
-                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.2rem", color: "#241123", fontWeight: 900, letterSpacing: "2px", opacity: 0.5, textTransform: "uppercase" }}>{location}</span>
+                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.2rem", color: "#241123", fontWeight: 700, letterSpacing: "2px", opacity: 0.5, textTransform: "uppercase" }}>{displayLocation?.toUpperCase()}</span>
                       )}
-                      <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.2rem", color: "#241123", fontWeight: 700, letterSpacing: "2px", opacity: 0.5, margin: "0 0.35rem" }}>&amp;</span>
+                      <span style={{ color: "#241123", opacity: 0.3, fontSize: "1.1rem", fontWeight: 300 }}>|</span>
                       {secondLocationHref ? (
-                        <Link href={secondLocationHref} prefetch className="no-underline hover:no-underline"
-                          style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.2rem", color: "#241123", fontWeight: 900, letterSpacing: "2px", opacity: 0.5, textTransform: "uppercase", transition: "color 0.2s, opacity 0.2s" }}
-                          aria-label={`View artists based in ${secondLocation}`}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; }}
-                        >{secondLocation}</Link>
+                        <Link href={secondLocationHref} prefetch className="no-underline hover:no-underline inline-block"
+                          style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.2rem", color: "#241123", fontWeight: 700, letterSpacing: "2px", opacity: 0.5, textTransform: "uppercase", paddingRight: "0.5rem", transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease" }}
+                          aria-label={`View artists based in ${displaySecondLocation}`}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; e.currentTarget.style.letterSpacing = "3.5px"; e.currentTarget.style.paddingRight = "0"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; e.currentTarget.style.letterSpacing = "2px"; e.currentTarget.style.paddingRight = "0.5rem"; }}
+                        >{displaySecondLocation?.toUpperCase()}</Link>
                       ) : (
-                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.2rem", color: "#241123", fontWeight: 900, letterSpacing: "2px", opacity: 0.5, textTransform: "uppercase" }}>{secondLocation}</span>
+                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.2rem", color: "#241123", fontWeight: 700, letterSpacing: "2px", opacity: 0.5, textTransform: "uppercase" }}>{displaySecondLocation?.toUpperCase()}</span>
                       )}
                     </>
                   ) : (
                     locationHref ? (
-                      <Link href={locationHref} prefetch className="no-underline hover:no-underline transition-all duration-200"
-                        style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.2rem", color: "#241123", fontWeight: 900, letterSpacing: "2px", opacity: 0.5, display: "inline-block", paddingRight: "2rem" }}
-                        aria-label={`View artists based in ${location}`}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; }}
-                      >
-                        Based in <span style={{ textTransform: "uppercase" }}>{location}</span>
-                      </Link>
+                      <Link href={locationHref} prefetch className="no-underline hover:no-underline inline-block"
+                        style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.2rem", color: "#241123", fontWeight: 700, letterSpacing: "2px", opacity: 0.5, textTransform: "uppercase", paddingRight: "0.5rem", transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease" }}
+                        aria-label={`View artists based in ${displayLocation}`}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; e.currentTarget.style.letterSpacing = "3.5px"; e.currentTarget.style.paddingRight = "0"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; e.currentTarget.style.letterSpacing = "2px"; e.currentTarget.style.paddingRight = "0.5rem"; }}
+                      >{displayLocation?.toUpperCase()}</Link>
                     ) : (
-                      <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.2rem", color: "#241123", fontWeight: 900, letterSpacing: "2px", opacity: 0.5, display: "inline-block", paddingRight: "2rem" }}>
-                        Based in <span style={{ textTransform: "uppercase" }}>{location}</span>
-                      </span>
+                      <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "1.2rem", color: "#241123", fontWeight: 700, letterSpacing: "2px", opacity: 0.5, textTransform: "uppercase" }}>{displayLocation?.toUpperCase()}</span>
                     )
                   )}
                 </div>
