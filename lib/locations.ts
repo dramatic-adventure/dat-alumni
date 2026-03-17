@@ -173,6 +173,9 @@ export function getLocationLinksForAlumni(
   if (typeof (a as any).locations_other === "string") {
     raw.push(...splitLocations((a as any).locations_other));
   }
+  // Also index secondLocation so bi-coastal alumni appear on both city browse pages
+  if (typeof (a as any).secondLocation === "string" && (a as any).secondLocation)
+    raw.push((a as any).secondLocation);
 
   const out: { label: string; href: string }[] = [];
   const seen = new Set<string>();

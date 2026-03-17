@@ -8,7 +8,7 @@ import ContactOverlay from "@/components/shared/ContactOverlay";
 import Lightbox from "@/components/shared/Lightbox";
 import StatusFlags from "@/components/alumni/StatusFlags";
 
-import NameStack from "@/components/shared/NameStack"; // a.k.a. ScaledName
+import NameStack from "@/components/shared/NameStack";
 import { splitTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
 import { getLocationHrefForToken, normalizeLocation } from "@/lib/locations";
 
@@ -46,9 +46,6 @@ export default function MobileProfileHeader({
 
   const fallbackImage = "/images/default-headshot.png";
 
-  // imageSrc starts as the server-provided headshot (Squarespace URL or
-  // currentHeadshotId-derived URL). The mount effect may update it to the
-  // isCurrent item from Profile-Media once that fetch resolves.
   const [imageSrc, setImageSrc] = useState(
     () => headshotUrl ? headshotUrl.replace(/^http:\/\//i, "https://") : fallbackImage
   );
@@ -56,15 +53,10 @@ export default function MobileProfileHeader({
   const headerRef = useRef<HTMLDivElement>(null);
   const [isModalOpen, setModalOpen] = useState(false);
   const [currentUrl, setCurrentUrl] = useState("");
-
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [currentHeadshotIndex, setCurrentHeadshotIndex] = useState(0);
   const fetchAbortRef = useRef<AbortController | null>(null);
 
-  // Fetch Profile-Media: update displayed headshot to isCurrent item,
-  // pre-populate gallery, warm browser image cache, track isCurrent index.
-  // Re-runs on tab-focus so changes to isCurrent in the sheet are reflected
-  // immediately when you switch back to the browser — no navigation needed.
   useEffect(() => {
     let alive = true;
 
@@ -99,12 +91,10 @@ export default function MobileProfileHeader({
         const unique = Array.from(new Set(ordered.map(toUrl).filter(Boolean)));
         if (!alive || controller.signal.aborted) return;
 
-        // Update displayed headshot to the isCurrent item from Profile-Media.
         const currentItem = rawItems.find((it: any) => it?.isCurrent === true);
         const currentUrl = currentItem ? toUrl(currentItem) : null;
         if (currentUrl) setImageSrc(currentUrl);
 
-        // Pre-populate gallery, track isCurrent index, warm browser image cache.
         if (unique.length) {
           setGalleryUrls(unique);
           const idx = currentUrl ? unique.indexOf(currentUrl) : -1;
@@ -118,8 +108,6 @@ export default function MobileProfileHeader({
 
     run();
 
-    // Re-fetch on tab focus so isCurrent changes in the sheet show up
-    // the moment you switch back to the browser without a page reload.
     const onVisible = () => { if (document.visibilityState === "visible") run(); };
     document.addEventListener("visibilitychange", onVisible);
 
@@ -131,8 +119,6 @@ export default function MobileProfileHeader({
   }, [alumniId]);
 
   function openHeadshotGallery() {
-    // Gallery is pre-populated by the mount fetch; fall back to current
-    // headshot only if the fetch hasn't resolved yet.
     if (!galleryUrls.length) {
       const current = imageSrc.trim();
       if (current) setGalleryUrls([current]);
@@ -140,10 +126,7 @@ export default function MobileProfileHeader({
     setModalOpen(true);
   }
 
-
-  useEffect(() => {
-    setCurrentUrl(window.location.href);
-  }, []);
+  useEffect(() => { setCurrentUrl(window.location.href); }, []);
 
   const nameParts = name.trim().split(" ");
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
@@ -151,7 +134,6 @@ export default function MobileProfileHeader({
 
   const hasContactInfo = !!(publicEmail || website || (socials && socials.length > 0));
 
-  // Build title links
   const allRoles = splitTitles(role).map((r) => r.trim()).filter(Boolean);
 
   function hrefForTitleToken(token: string): string | null {
@@ -159,15 +141,9 @@ export default function MobileProfileHeader({
     if (!keys.length) return null;
 
     const preference = [
-      "playwrights",
-      "travel-writers",
-      "designers",
-      "stage-managers",
-      "teaching-artists",
-      "special-event-hosts",
-      "managers-community-partnerships",
-      "partners",
-      "executive-directors",
+      "playwrights", "travel-writers", "designers", "stage-managers",
+      "teaching-artists", "special-event-hosts", "managers-community-partnerships",
+      "partners", "executive-directors",
     ];
 
     const asStrings = keys.map(String);
@@ -193,234 +169,183 @@ export default function MobileProfileHeader({
     ).values()
   );
 
+  const currentTitleHref = currentTitle ? hrefForTitleToken(currentTitle) : null;
+
   const locationHref = location ? getLocationHrefForToken(location) : null;
   const secondLocationHref = secondLocation ? getLocationHrefForToken(secondLocation) : null;
   const displayLocation = location ? (normalizeLocation(location) ?? location) : null;
   const displaySecondLocation = secondLocation ? (normalizeLocation(secondLocation) ?? secondLocation) : null;
 
+  // ─── shared style helpers ────────────────────────────────────────────────
+
+  const cityLinkStyle = (size: string): React.CSSProperties => ({
+    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+    fontSize: size,
+    color: "#241123",
+    fontWeight: 700,
+    letterSpacing: "1.5px",
+    opacity: 0.5,
+    textTransform: "uppercase",
+    paddingRight: "0.35rem",
+    transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease",
+  });
+
+  const cityLinkHover = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.currentTarget.style.color = "#6C00AF";
+    e.currentTarget.style.opacity = "1";
+    e.currentTarget.style.letterSpacing = "3px";
+    e.currentTarget.style.paddingRight = "0";
+  };
+  const cityLinkLeave = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.currentTarget.style.color = "#241123";
+    e.currentTarget.style.opacity = "0.5";
+    e.currentTarget.style.letterSpacing = "1.5px";
+    e.currentTarget.style.paddingRight = "0.35rem";
+  };
+
+  function LocationDisplay({ size, textSize }: { size: string; textSize?: string }) {
+    if (!location) return null;
+    const fs = size;
+    const ts = textSize ?? size;
+
+    if (secondLocation) {
+      return (
+        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+          {locationHref ? (
+            <Link href={locationHref} prefetch className="no-underline hover:no-underline inline-block"
+              style={cityLinkStyle(fs)}
+              aria-label={`View artists based in ${displayLocation}`}
+              onMouseEnter={cityLinkHover}
+              onMouseLeave={cityLinkLeave}
+            >{displayLocation?.toUpperCase()}</Link>
+          ) : (
+            <span style={{ ...cityLinkStyle(fs), paddingRight: 0, transition: "none" }}>{displayLocation?.toUpperCase()}</span>
+          )}
+          <span style={{ color: "#241123", opacity: 0.3, fontSize: fs, fontWeight: 300 }}>|</span>
+          {secondLocationHref ? (
+            <Link href={secondLocationHref} prefetch className="no-underline hover:no-underline inline-block"
+              style={cityLinkStyle(fs)}
+              aria-label={`View artists based in ${displaySecondLocation}`}
+              onMouseEnter={cityLinkHover}
+              onMouseLeave={cityLinkLeave}
+            >{displaySecondLocation?.toUpperCase()}</Link>
+          ) : (
+            <span style={{ ...cityLinkStyle(fs), paddingRight: 0, transition: "none" }}>{displaySecondLocation?.toUpperCase()}</span>
+          )}
+        </span>
+      );
+    }
+
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
+        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: ts, color: "#241123", fontWeight: 400, opacity: 0.4, letterSpacing: "0.5px" }}>
+          Based in
+        </span>
+        {locationHref ? (
+          <Link href={locationHref} prefetch className="no-underline hover:no-underline inline-block"
+            style={cityLinkStyle(fs)}
+            aria-label={`View artists based in ${displayLocation}`}
+            onMouseEnter={cityLinkHover}
+            onMouseLeave={cityLinkLeave}
+          >{displayLocation?.toUpperCase()}</Link>
+        ) : (
+          <span style={{ ...cityLinkStyle(fs), paddingRight: 0, transition: "none" }}>{displayLocation?.toUpperCase()}</span>
+        )}
+      </span>
+    );
+  }
+
   return (
     <div ref={headerRef} style={{ backgroundColor: "#C39B6C", position: "relative" }}>
       {hasContactInfo && (
-        <ContactOverlay
-          name={name}
-          slug={slug}
-          publicEmail={publicEmail}
-          website={website}
-          socials={socials}
-          profileCardRef={headerRef}
-        />
+        <ContactOverlay name={name} slug={slug} publicEmail={publicEmail} website={website} socials={socials} profileCardRef={headerRef} />
       )}
 
       {statusFlags.length > 0 && (
-        <div
-          className="absolute top-1 right-[4rem] z-50"
-          style={{ clipPath: "inset(0px -9999px -9999px -9999px)" }}
-        >
-          <StatusFlags
-            flags={statusFlags}
-            fontSize="1.15rem"
-            fontFamily='var(--font-dm-sans), system-ui, sans-serif'
-            textColor="#F6E4C1"
-            borderRadius="20px"
-            className="gap-1"
-            padding="1.6rem 0.5rem 0.5rem"
-          />
+        <div className="absolute top-1 right-[4rem] z-50" style={{ clipPath: "inset(0px -9999px -9999px -9999px)" }}>
+          <StatusFlags flags={statusFlags} fontSize="1.15rem" fontFamily='var(--font-dm-sans), system-ui, sans-serif' textColor="#F6E4C1" borderRadius="20px" className="gap-1" padding="1.6rem 0.5rem 0.5rem" />
         </div>
       )}
 
       <div style={{ position: "absolute", top: "1rem", right: "1rem", zIndex: 70, pointerEvents: "none" }}>
-  <div style={{ pointerEvents: "auto" }}>
-    <div
-      role="share-button-wrapper"
-      style={{
-        padding: "4px",
-        minWidth: "44px",
-        minHeight: "44px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <ShareButton url={currentUrl} />
-    </div>
-  </div>
-</div>
-
+        <div style={{ pointerEvents: "auto" }}>
+          <div role="share-button-wrapper" style={{ padding: "4px", minWidth: "44px", minHeight: "44px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <ShareButton url={currentUrl} />
+          </div>
+        </div>
+      </div>
 
       {/* Headshot */}
       <div
         className="relative cursor-pointer"
-        style={{
-          aspectRatio: "4 / 5",
-          boxShadow: "6px 8px 20px rgba(0,0,0,0.25)",
-          backgroundColor: "#241123",
-          margin: "0 auto",
-          width: "90%",
-          maxWidth: "360px",
-        }}
+        style={{ aspectRatio: "4 / 5", boxShadow: "6px 8px 20px rgba(0,0,0,0.25)", backgroundColor: "#241123", margin: "0 auto", width: "90%", maxWidth: "360px" }}
         onClick={openHeadshotGallery}
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            e.stopPropagation();
-            openHeadshotGallery();
-          }
-        }}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); openHeadshotGallery(); } }}
         aria-label="Open headshot"
       >
-        <Image
-          src={imageSrc}
-          alt={`${name}'s headshot`}
-          fill
-          placeholder="blur"
-          blurDataURL={fallbackImage}
-          priority
-          fetchPriority="high"
-          style={{ objectFit: "cover", objectPosition: "top center" }}
-        />
+        <Image src={imageSrc} alt={`${name}'s headshot`} fill placeholder="blur" blurDataURL={fallbackImage} priority fetchPriority="high" style={{ objectFit: "cover", objectPosition: "top center" }} />
       </div>
 
       {/* Name + meta */}
-      <div
-        style={{
-          width: "90%",
-          maxWidth: "360px",
-          margin: "1.5rem auto 0",
-          overflow: "hidden",
-        }}
-      >
+      <div style={{ width: "90%", maxWidth: "360px", margin: "1.5rem auto 0", overflow: "hidden" }}>
         <NameStack firstName={firstName} lastName={lastName} containerWidth={320} gapRem={0.6} />
 
         {(allRoles.length > 0 || currentTitle || location) && (
           <div style={{ marginBottom: "2rem", textAlign: "center", wordBreak: "break-word" }}>
 
-            {/* ── Row 1 ──────────────────────────────────────────────────────────
-                When currentTitle exists: show it BIG — this is their primary identity.
-                When no currentTitle: show DAT role links big (unchanged behavior).
-            ─────────────────────────────────────────────────────────────────── */}
             {currentTitle ? (
-              <div
-                style={{
-                  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                  fontSize: "clamp(1rem, 4vw, 1.35rem)",
-                  color: "#241123",
-                  textTransform: "uppercase",
-                  letterSpacing: "2px",
-                  fontWeight: 800,
-                  lineHeight: 1.2,
-                  marginTop: "0.5rem",
-                }}
-              >
-                {currentTitle}
-              </div>
-            ) : (
-              titleLinks.length > 0 && (
-                <div className="flex flex-wrap justify-center items-center gap-x-3 mt-2">
-                  <span className="flex items-center flex-wrap justify-center">
-                    {titleLinks.map(({ label, href }, idx) => (
-                      <span key={`${href}-${label}`} className="flex items-center">
-                        <Link
-                          href={href}
-                          prefetch
-                          className="no-underline hover:no-underline inline-block"
-                          style={{
-                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                            fontSize: "clamp(1rem, 4vw, 1.35rem)",
-                            color: "#241123",
-                            textTransform: "uppercase",
-                            letterSpacing: "2px",
-                            fontWeight: 800,
-                            opacity: 0.95,
-                            whiteSpace: "nowrap",
-                            paddingRight: "0.75rem",
-                            transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease",
-                            cursor: "pointer",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.letterSpacing = "4px";
-                            e.currentTarget.style.paddingRight = "0";
-                            e.currentTarget.style.color = "#6C00AF";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.letterSpacing = "2px";
-                            e.currentTarget.style.paddingRight = "0.75rem";
-                            e.currentTarget.style.color = "#241123";
-                          }}
-                          aria-label={`View ${label}`}
-                        >
-                          {label}
-                        </Link>
-                        {idx < titleLinks.length - 1 && (
-                          <span
-                            style={{
-                              fontSize: "clamp(1rem, 4vw, 1.35rem)",
-                              color: "#241123",
-                              opacity: 0.7,
-                              margin: "0 0.5rem",
-                              fontWeight: 400,
-                            }}
-                            aria-hidden="true"
-                          >
-                            –
-                          </span>
-                        )}
-                      </span>
-                    ))}
-                  </span>
-                </div>
-              )
-            )}
+              /* ── Has currentTitle ── */
+              <>
+                {/* Row 1: currentTitle + DAT pill, centered, wrappable */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
 
-            {/* ── Row 2 ──────────────────────────────────────────────────────────
-                When currentTitle is present: ONE compact line merging the DAT
-                container (badge + role) and location.
-                When no currentTitle: location below big DAT roles.
-            ─────────────────────────────────────────────────────────────────── */}
-            {currentTitle ? (
-              (titleLinks.length > 0 || location) && (
-                <div
-                  className="flex flex-wrap justify-center items-center"
-                  style={{ gap: "0.5rem", marginTop: "0.55rem" }}
-                >
-                  {/* DAT container: badge + role(s) as one connected unit, no dot separator */}
-                  {titleLinks.length > 0 && (
-                    <span
+                  {/* currentTitle — linked if it maps to a browse page */}
+                  {currentTitleHref ? (
+                    <Link
+                      href={currentTitleHref}
+                      prefetch
+                      className="no-underline hover:no-underline inline-block"
                       style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.45rem",
-                        backgroundColor: "#241123",
-                        padding: "3px 9px 3px 8px",
-                        borderRadius: "4px",
-                        flexShrink: 0,
+                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                        fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                        color: "#241123",
+                        textTransform: "uppercase",
+                        letterSpacing: "2px",
+                        fontWeight: 800,
+                        lineHeight: 1.2,
+                        paddingRight: "0.75rem",
+                        transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease",
                       }}
+                      onMouseEnter={(e) => { e.currentTarget.style.letterSpacing = "4px"; e.currentTarget.style.paddingRight = "0"; e.currentTarget.style.color = "#6C00AF"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.letterSpacing = "2px"; e.currentTarget.style.paddingRight = "0.75rem"; e.currentTarget.style.color = "#241123"; }}
+                      aria-label={`View ${currentTitle}`}
                     >
-                      <span
-                        style={{
-                          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                          fontSize: "0.65rem",
-                          letterSpacing: "3px",
-                          fontWeight: 900,
-                          color: "#ffcc00",
-                          textTransform: "uppercase",
-                        }}
-                      >
+                      {currentTitle}
+                    </Link>
+                  ) : (
+                    <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "clamp(1rem, 4vw, 1.35rem)", color: "#241123", textTransform: "uppercase", letterSpacing: "2px", fontWeight: 800, lineHeight: 1.2 }}>
+                      {currentTitle}
+                    </span>
+                  )}
+
+                  {/* DAT pill inline */}
+                  {titleLinks.length > 0 && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem", backgroundColor: "#241123", padding: "4px 11px 4px 9px", borderRadius: "4px", flexShrink: 0 }}>
+                      <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.72rem", letterSpacing: "3.5px", fontWeight: 900, color: "#ffcc00", textTransform: "uppercase" }}>
                         DAT
                       </span>
                       {titleLinks.map(({ label, href }, idx) => (
                         <span key={`${href}-${label}`} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
-                          {idx > 0 && (
-                            <span style={{ color: "#ffcc00", opacity: 0.35, fontSize: "0.6rem", fontWeight: 400 }} aria-hidden>–</span>
-                          )}
+                          {idx > 0 && <span style={{ color: "#ffcc00", opacity: 0.35, fontSize: "0.62rem", fontWeight: 400 }} aria-hidden>–</span>}
                           <Link
                             href={href}
                             prefetch
                             className="no-underline hover:no-underline inline-block"
                             style={{
                               fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                              fontSize: "clamp(0.65rem, 2.5vw, 0.75rem)",
+                              fontSize: "clamp(0.7rem, 2.5vw, 0.82rem)",
                               color: "#ffcc00",
                               opacity: 0.75,
                               textTransform: "uppercase",
@@ -429,18 +354,8 @@ export default function MobileProfileHeader({
                               paddingRight: "0.35rem",
                               transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease",
                             }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.letterSpacing = "3px";
-                              e.currentTarget.style.paddingRight = "0";
-                              e.currentTarget.style.color = "#6C00AF";
-                              e.currentTarget.style.opacity = "1";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.letterSpacing = "2px";
-                              e.currentTarget.style.paddingRight = "0.35rem";
-                              e.currentTarget.style.color = "#ffcc00";
-                              e.currentTarget.style.opacity = "0.75";
-                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.letterSpacing = "3px"; e.currentTarget.style.paddingRight = "0"; e.currentTarget.style.color = "#f23359"; e.currentTarget.style.opacity = "1"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.letterSpacing = "2px"; e.currentTarget.style.paddingRight = "0.35rem"; e.currentTarget.style.color = "#ffcc00"; e.currentTarget.style.opacity = "0.75"; }}
                             aria-label={`View ${label}`}
                           >
                             {label}
@@ -449,95 +364,60 @@ export default function MobileProfileHeader({
                       ))}
                     </span>
                   )}
-
-                  {/* Dot separator between DAT container and location */}
-                  {titleLinks.length > 0 && location && (
-                    <span style={{ color: "#241123", opacity: 0.35, fontSize: "0.9rem", flexShrink: 0 }} aria-hidden>·</span>
-                  )}
-
-                  {/* Location — no prefix text, pipe separator for multi-city */}
-                  {location && (
-                    secondLocation ? (
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
-                        {locationHref ? (
-                          <Link href={locationHref} prefetch className="no-underline hover:no-underline inline-block"
-                            style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "clamp(0.65rem, 2.5vw, 0.8rem)", color: "#241123", fontWeight: 700, letterSpacing: "1.5px", opacity: 0.5, textTransform: "uppercase", paddingRight: "0.25rem", transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease" }}
-                            aria-label={`View artists based in ${displayLocation}`}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; e.currentTarget.style.letterSpacing = "2.5px"; e.currentTarget.style.paddingRight = "0"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; e.currentTarget.style.letterSpacing = "1.5px"; e.currentTarget.style.paddingRight = "0.25rem"; }}
-                          >{displayLocation?.toUpperCase()}</Link>
-                        ) : (
-                          <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "clamp(0.65rem, 2.5vw, 0.8rem)", color: "#241123", fontWeight: 700, letterSpacing: "1.5px", opacity: 0.5, textTransform: "uppercase" }}>{displayLocation?.toUpperCase()}</span>
-                        )}
-                        <span style={{ color: "#241123", opacity: 0.3, fontSize: "0.85rem", fontWeight: 300 }}>|</span>
-                        {secondLocationHref ? (
-                          <Link href={secondLocationHref} prefetch className="no-underline hover:no-underline inline-block"
-                            style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "clamp(0.65rem, 2.5vw, 0.8rem)", color: "#241123", fontWeight: 700, letterSpacing: "1.5px", opacity: 0.5, textTransform: "uppercase", paddingRight: "0.25rem", transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease" }}
-                            aria-label={`View artists based in ${displaySecondLocation}`}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; e.currentTarget.style.letterSpacing = "2.5px"; e.currentTarget.style.paddingRight = "0"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; e.currentTarget.style.letterSpacing = "1.5px"; e.currentTarget.style.paddingRight = "0.25rem"; }}
-                          >{displaySecondLocation?.toUpperCase()}</Link>
-                        ) : (
-                          <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "clamp(0.65rem, 2.5vw, 0.8rem)", color: "#241123", fontWeight: 700, letterSpacing: "1.5px", opacity: 0.5, textTransform: "uppercase" }}>{displaySecondLocation?.toUpperCase()}</span>
-                        )}
-                      </span>
-                    ) : (
-                      locationHref ? (
-                        <Link href={locationHref} prefetch className="no-underline hover:no-underline inline-block"
-                          style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "clamp(0.65rem, 2.5vw, 0.8rem)", color: "#241123", fontWeight: 700, letterSpacing: "1.5px", opacity: 0.5, textTransform: "uppercase", paddingRight: "0.25rem", transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease" }}
-                          aria-label={`View artists based in ${displayLocation}`}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; e.currentTarget.style.letterSpacing = "2.5px"; e.currentTarget.style.paddingRight = "0"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; e.currentTarget.style.letterSpacing = "1.5px"; e.currentTarget.style.paddingRight = "0.25rem"; }}
-                        >{displayLocation?.toUpperCase()}</Link>
-                      ) : (
-                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "clamp(0.65rem, 2.5vw, 0.8rem)", color: "#241123", fontWeight: 700, letterSpacing: "1.5px", opacity: 0.5, textTransform: "uppercase" }}>{displayLocation?.toUpperCase()}</span>
-                      )
-                    )
-                  )}
                 </div>
-              )
+
+                {/* Row 2: location */}
+                {location && (
+                  <div style={{ marginTop: "0.45rem", display: "flex", justifyContent: "center" }}>
+                    <LocationDisplay size="clamp(0.7rem, 2.5vw, 0.85rem)" textSize="clamp(0.65rem, 2.5vw, 0.8rem)" />
+                  </div>
+                )}
+              </>
             ) : (
-              /* ── No currentTitle: location below the big DAT role links ── */
-              location && (
-                <div className="flex justify-center items-center flex-wrap mt-2" style={{ gap: "0.4rem" }}>
-                  {secondLocation ? (
-                    <>
-                      {locationHref ? (
-                        <Link href={locationHref} prefetch className="no-underline hover:no-underline inline-block"
-                          style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "clamp(0.8rem, 3vw, 0.95rem)", fontWeight: 700, letterSpacing: "2px", opacity: 0.5, textTransform: "uppercase", color: "#241123", paddingRight: "0.4rem", transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease" }}
-                          aria-label={`View artists based in ${displayLocation}`}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; e.currentTarget.style.letterSpacing = "3.5px"; e.currentTarget.style.paddingRight = "0"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; e.currentTarget.style.letterSpacing = "2px"; e.currentTarget.style.paddingRight = "0.4rem"; }}
-                        >{displayLocation?.toUpperCase()}</Link>
-                      ) : (
-                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "clamp(0.8rem, 3vw, 0.95rem)", fontWeight: 700, letterSpacing: "2px", opacity: 0.5, textTransform: "uppercase", color: "#241123" }}>{displayLocation?.toUpperCase()}</span>
-                      )}
-                      <span style={{ color: "#241123", opacity: 0.3, fontSize: "0.9rem", fontWeight: 300 }}>|</span>
-                      {secondLocationHref ? (
-                        <Link href={secondLocationHref} prefetch className="no-underline hover:no-underline inline-block"
-                          style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "clamp(0.8rem, 3vw, 0.95rem)", fontWeight: 700, letterSpacing: "2px", opacity: 0.5, textTransform: "uppercase", color: "#241123", paddingRight: "0.4rem", transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease" }}
-                          aria-label={`View artists based in ${displaySecondLocation}`}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; e.currentTarget.style.letterSpacing = "3.5px"; e.currentTarget.style.paddingRight = "0"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; e.currentTarget.style.letterSpacing = "2px"; e.currentTarget.style.paddingRight = "0.4rem"; }}
-                        >{displaySecondLocation?.toUpperCase()}</Link>
-                      ) : (
-                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "clamp(0.8rem, 3vw, 0.95rem)", fontWeight: 700, letterSpacing: "2px", opacity: 0.5, textTransform: "uppercase", color: "#241123" }}>{displaySecondLocation?.toUpperCase()}</span>
-                      )}
-                    </>
-                  ) : (
-                    locationHref ? (
-                      <Link href={locationHref} prefetch className="no-underline hover:no-underline inline-block"
-                        style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "clamp(0.8rem, 3vw, 0.95rem)", fontWeight: 700, letterSpacing: "2px", opacity: 0.5, color: "#241123", textTransform: "uppercase", paddingRight: "0.4rem", transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease" }}
-                        aria-label={`View artists based in ${displayLocation}`}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; e.currentTarget.style.letterSpacing = "3.5px"; e.currentTarget.style.paddingRight = "0"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.5"; e.currentTarget.style.letterSpacing = "2px"; e.currentTarget.style.paddingRight = "0.4rem"; }}
-                      >{displayLocation?.toUpperCase()}</Link>
-                    ) : (
-                      <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "clamp(0.8rem, 3vw, 0.95rem)", fontWeight: 700, letterSpacing: "2px", opacity: 0.5, textTransform: "uppercase", color: "#241123" }}>{displayLocation?.toUpperCase()}</span>
-                    )
-                  )}
-                </div>
-              )
+              /* ── No currentTitle: big DAT role links, location below ── */
+              <>
+                {titleLinks.length > 0 && (
+                  <div className="flex flex-wrap justify-center items-center gap-x-3 mt-2">
+                    <span className="flex items-center flex-wrap justify-center">
+                      {titleLinks.map(({ label, href }, idx) => (
+                        <span key={`${href}-${label}`} className="flex items-center">
+                          <Link
+                            href={href}
+                            prefetch
+                            className="no-underline hover:no-underline inline-block"
+                            style={{
+                              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                              fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                              color: "#241123",
+                              textTransform: "uppercase",
+                              letterSpacing: "2px",
+                              fontWeight: 800,
+                              opacity: 0.95,
+                              whiteSpace: "nowrap",
+                              paddingRight: "0.75rem",
+                              transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease",
+                              cursor: "pointer",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.letterSpacing = "4px"; e.currentTarget.style.paddingRight = "0"; e.currentTarget.style.color = "#6C00AF"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.letterSpacing = "2px"; e.currentTarget.style.paddingRight = "0.75rem"; e.currentTarget.style.color = "#241123"; }}
+                            aria-label={`View ${label}`}
+                          >
+                            {label}
+                          </Link>
+                          {idx < titleLinks.length - 1 && (
+                            <span style={{ fontSize: "clamp(1rem, 4vw, 1.35rem)", color: "#241123", opacity: 0.7, margin: "0 0.5rem", fontWeight: 400 }} aria-hidden="true">–</span>
+                          )}
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                )}
+                {location && (
+                  <div style={{ marginTop: "0.5rem", display: "flex", justifyContent: "center" }}>
+                    <LocationDisplay size="clamp(0.8rem, 3vw, 0.95rem)" />
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
@@ -547,12 +427,7 @@ export default function MobileProfileHeader({
         <Lightbox
           images={(galleryUrls && galleryUrls.length ? galleryUrls : [imageSrc]).filter(Boolean)}
           startIndex={currentHeadshotIndex}
-          onClose={() => {
-            setModalOpen(false);
-            // Uncomment if you want fresh media on every open
-            // setGalleryUrls([]);
-          }}
-
+          onClose={() => setModalOpen(false)}
         />
       )}
     </div>
