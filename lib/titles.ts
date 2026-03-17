@@ -16,7 +16,7 @@ export function slugifyTitle(input: string) {
 export function splitTitles(raw?: string | null): string[] {
   if (!raw) return [];
   return raw
-    .split(/[,\u2215/|;·•—–]+/g) // keep hyphenated titles intact
+    .split(/[,\u2215/|;·•—–\n\r]+/g) // keep hyphenated titles intact; also split on newlines (multi-line Sheets cells)
     .map((s) => s.trim())
     .filter(Boolean);
 }

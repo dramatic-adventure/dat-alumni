@@ -15,6 +15,23 @@ import { getLocationHrefForToken, normalizeLocation } from "@/lib/locations";
 // CSS custom properties for .ls-hover — TypeScript needs the cast
 type WithLSVars = React.CSSProperties & { "--ls-base"?: string; "--ls-hover"?: string };
 
+// Priority order for DAT role display (lower number = shown first)
+const ROLE_DISPLAY_PRIORITY: Record<string, number> = {
+  "executive director": 1,
+  "artistic director": 2,
+  "director": 3,
+  "partner": 4,
+  "playwright": 5,
+  "travel writer": 6,
+  "designer": 7,
+  "stage manager": 8,
+  "teaching artist": 9,
+  "actor": 10,
+  "performer": 11,
+  "special event host": 12,
+  "manager": 13,
+};
+
 interface MobileProfileHeaderProps {
   alumniId: string;
   slug?: string;
@@ -58,6 +75,8 @@ export default function MobileProfileHeader({
   const [currentUrl, setCurrentUrl] = useState("");
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [currentHeadshotIndex, setCurrentHeadshotIndex] = useState(0);
+  const [rolesExpanded, setRolesExpanded] = useState(false);
+  const [currentTitlesExpanded, setCurrentTitlesExpanded] = useState(false);
   const fetchAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -161,7 +180,7 @@ export default function MobileProfileHeader({
     return `/title/${slug}`;
   }
 
-  const titleLinks = Array.from(
+  const titleLinksUnsorted = Array.from(
     new Map(
       allRoles
         .map((label) => {
@@ -171,8 +190,23 @@ export default function MobileProfileHeader({
         .filter(Boolean) as Array<[string, { label: string; href: string }]>
     ).values()
   );
+  // Sort by DAT role prominence (Artistic Director before Actor, etc.)
+  const titleLinks = [...titleLinksUnsorted].sort((a, b) => {
+    const pa = ROLE_DISPLAY_PRIORITY[a.label.toLowerCase()] ?? 50;
+    const pb = ROLE_DISPLAY_PRIORITY[b.label.toLowerCase()] ?? 50;
+    return pa - pb;
+  });
 
-  const currentTitleHref = currentTitle ? hrefForTitleToken(currentTitle) : null;
+  // Multi-value currentTitle support: "Social Worker, Teacher" → ["Social Worker", "Teacher"]
+  const currentTitles = currentTitle
+    ? splitTitles(currentTitle).map((t) => t.trim()).filter(Boolean)
+    : [];
+  const primaryCurrentTitle = currentTitles[0] ?? null;
+  const extraCurrentTitles = currentTitles.slice(1).map((label) => ({
+    label,
+    href: hrefForTitleToken(label),
+  }));
+  const currentTitleHref = primaryCurrentTitle ? hrefForTitleToken(primaryCurrentTitle) : null;
 
   const locationHref = location ? getLocationHrefForToken(location) : null;
   const secondLocationHref = secondLocation ? getLocationHrefForToken(secondLocation) : null;
@@ -310,50 +344,99 @@ export default function MobileProfileHeader({
         {(allRoles.length > 0 || currentTitle || location) && (
           <div style={{ marginBottom: "2rem", textAlign: "center", wordBreak: "break-word" }}>
 
-            {currentTitle ? (
+            {primaryCurrentTitle ? (
               /* ── Has currentTitle ── */
               <>
-                {/* Row 1: currentTitle + DAT pill, centered, wrappable */}
+                {/* Row 1: primary currentTitle (+ toggle if extras) + DAT pill, centered, wrappable */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
 
-                  {/* currentTitle — linked if it maps to a browse page */}
-                  {currentTitleHref ? (
-                    <Link
-                      href={currentTitleHref}
-                      prefetch
-                      className="ls-hover no-underline hover:no-underline"
-                      data-text={currentTitle}
-                      style={{
-                        "--ls-base": "2px",
-                        "--ls-hover": "4.5px",
-                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                        fontSize: "clamp(1rem, 4vw, 1.35rem)",
-                        color: "#241123",
-                        textTransform: "uppercase",
-                        fontWeight: 800,
-                        lineHeight: 1.2,
-                      } as WithLSVars}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
-                      aria-label={`View ${currentTitle}`}
-                    >
-                      {currentTitle}
-                    </Link>
-                  ) : (
-                    <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "clamp(1rem, 4vw, 1.35rem)", color: "#241123", textTransform: "uppercase", letterSpacing: "2px", fontWeight: 800, lineHeight: 1.2 }}>
-                      {currentTitle}
-                    </span>
-                  )}
-
-                  {/* DAT pill inline */}
-                  {titleLinks.length > 0 && (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem", backgroundColor: "#241123", padding: "4px 11px 4px 9px", borderRadius: "4px", flexShrink: 0 }}>
-                      <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.72rem", letterSpacing: "3.5px", fontWeight: 900, color: "#ffcc00", textTransform: "uppercase" }}>
-                        DAT
+                  {/* Primary currentTitle + expand toggle */}
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                    {currentTitleHref ? (
+                      <Link
+                        href={currentTitleHref}
+                        prefetch
+                        className="ls-hover no-underline hover:no-underline"
+                        data-text={primaryCurrentTitle}
+                        style={{
+                          "--ls-base": "2px",
+                          "--ls-hover": "4.5px",
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                          color: "#241123",
+                          textTransform: "uppercase",
+                          fontWeight: 800,
+                          lineHeight: 1.2,
+                        } as WithLSVars}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
+                        aria-label={`View ${primaryCurrentTitle}`}
+                      >
+                        {primaryCurrentTitle}
+                      </Link>
+                    ) : (
+                      <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "clamp(1rem, 4vw, 1.35rem)", color: "#241123", textTransform: "uppercase", letterSpacing: "2px", fontWeight: 800, lineHeight: 1.2 }}>
+                        {primaryCurrentTitle}
                       </span>
-                      {titleLinks.map(({ label, href }, idx) => (
-                        <span key={`${href}-${label}`} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
-                          {idx > 0 && <span style={{ color: "#ffcc00", opacity: 0.35, fontSize: "0.62rem", fontWeight: 400 }} aria-hidden>–</span>}
+                    )}
+                    {extraCurrentTitles.length > 0 && (
+                      <button
+                        onClick={(e) => { e.preventDefault(); setCurrentTitlesExpanded((r) => !r); }}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "#241123", opacity: currentTitlesExpanded ? 0.5 : 0.3, fontSize: "0.9rem", fontWeight: 900, padding: 0, lineHeight: 1, fontFamily: "var(--font-dm-sans), system-ui, sans-serif" }}
+                        aria-label={currentTitlesExpanded ? "Collapse titles" : "Show more titles"}
+                      >{currentTitlesExpanded ? "×" : "+"}</button>
+                    )}
+                  </span>
+
+                  {/* DAT pill inline: primary role + expand/collapse for extras */}
+                  {titleLinks.length > 0 && (
+                    <span style={{
+                      display: "inline-flex",
+                      flexDirection: rolesExpanded ? "column" : "row",
+                      alignItems: rolesExpanded ? "flex-start" : "center",
+                      gap: rolesExpanded ? "0.25rem" : "0.45rem",
+                      backgroundColor: "#241123",
+                      padding: "4px 11px 4px 9px",
+                      borderRadius: "4px",
+                      flexShrink: 0,
+                    }}>
+                      {/* Always-visible row: DAT + primary role + toggle */}
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
+                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.72rem", letterSpacing: "3.5px", fontWeight: 900, color: "#ffcc00", textTransform: "uppercase" }}>
+                          DAT
+                        </span>
+                        <Link
+                          href={titleLinks[0].href}
+                          prefetch
+                          className="ls-hover no-underline hover:no-underline"
+                          data-text={titleLinks[0].label}
+                          style={{
+                            "--ls-base": "2px",
+                            "--ls-hover": "3.5px",
+                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                            fontSize: "clamp(0.7rem, 2.5vw, 0.82rem)",
+                            color: "#ffcc00",
+                            opacity: 0.75,
+                            textTransform: "uppercase",
+                            fontWeight: 700,
+                          } as WithLSVars}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#f23359"; e.currentTarget.style.opacity = "1"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#ffcc00"; e.currentTarget.style.opacity = "0.75"; }}
+                          aria-label={`View ${titleLinks[0].label}`}
+                        >
+                          {titleLinks[0].label}
+                        </Link>
+                        {titleLinks.length > 1 && (
+                          <button
+                            onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
+                            style={{ background: "none", border: "none", cursor: "pointer", color: "#ffcc00", opacity: rolesExpanded ? 0.65 : 0.4, fontSize: "0.72rem", fontWeight: 900, padding: 0, lineHeight: 1, fontFamily: "var(--font-dm-sans), system-ui, sans-serif" }}
+                            aria-label={rolesExpanded ? "Collapse roles" : "Show more roles"}
+                          >{rolesExpanded ? "×" : "+"}</button>
+                        )}
+                      </span>
+                      {/* Extra roles — revealed on expand */}
+                      {rolesExpanded && titleLinks.slice(1).map(({ label, href }) => (
+                        <span key={`${href}-${label}`} style={{ paddingLeft: "1.85rem" }}>
                           <Link
                             href={href}
                             prefetch
@@ -381,7 +464,38 @@ export default function MobileProfileHeader({
                   )}
                 </div>
 
-                {/* Row 2: location */}
+                {/* Extra currentTitles — revealed when expanded */}
+                {currentTitlesExpanded && extraCurrentTitles.map(({ label, href }) => (
+                  <div key={label} style={{ marginTop: "0.2rem", display: "flex", justifyContent: "center" }}>
+                    {href ? (
+                      <Link
+                        href={href}
+                        prefetch
+                        className="ls-hover no-underline hover:no-underline"
+                        data-text={label}
+                        style={{
+                          "--ls-base": "2px",
+                          "--ls-hover": "4.5px",
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                          color: "#241123",
+                          textTransform: "uppercase",
+                          fontWeight: 800,
+                          lineHeight: 1.2,
+                        } as WithLSVars}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
+                        aria-label={`View ${label}`}
+                      >{label}</Link>
+                    ) : (
+                      <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "clamp(1rem, 4vw, 1.35rem)", color: "#241123", textTransform: "uppercase", letterSpacing: "2px", fontWeight: 800, lineHeight: 1.2 }}>
+                        {label}
+                      </span>
+                    )}
+                  </div>
+                ))}
+
+                {/* Location row */}
                 {location && (
                   <div style={{ marginTop: "0.45rem", display: "flex", justifyContent: "center" }}>
                     <LocationDisplay size="clamp(0.7rem, 2.5vw, 0.85rem)" textSize="clamp(0.65rem, 2.5vw, 0.8rem)" />
@@ -391,40 +505,69 @@ export default function MobileProfileHeader({
             ) : (
               /* ── No currentTitle: big DAT role links, location below ── */
               <>
+                {/* Big DAT role links (no currentTitle): primary + expand for extras */}
                 {titleLinks.length > 0 && (
-                  <div className="flex flex-wrap justify-center items-center gap-x-3 mt-2">
-                    <span className="flex items-center flex-wrap justify-center">
-                      {titleLinks.map(({ label, href }, idx) => (
-                        <span key={`${href}-${label}`} className="flex items-center">
-                          <Link
-                            href={href}
-                            prefetch
-                            className="ls-hover no-underline hover:no-underline"
-                            data-text={label}
-                            style={{
-                              "--ls-base": "2px",
-                              "--ls-hover": "4.5px",
-                              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                              fontSize: "clamp(1rem, 4vw, 1.35rem)",
-                              color: "#241123",
-                              textTransform: "uppercase",
-                              fontWeight: 800,
-                              opacity: 0.95,
-                              whiteSpace: "nowrap",
-                              cursor: "pointer",
-                            } as WithLSVars}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.95"; }}
-                            aria-label={`View ${label}`}
-                          >
-                            {label}
-                          </Link>
-                          {idx < titleLinks.length - 1 && (
-                            <span style={{ fontSize: "clamp(1rem, 4vw, 1.35rem)", color: "#241123", opacity: 0.7, margin: "0 0.5rem", fontWeight: 400 }} aria-hidden="true">–</span>
-                          )}
-                        </span>
-                      ))}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.1rem", marginTop: "0.5rem" }}>
+                    {/* Primary role row */}
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
+                      <Link
+                        href={titleLinks[0].href}
+                        prefetch
+                        className="ls-hover no-underline hover:no-underline"
+                        data-text={titleLinks[0].label}
+                        style={{
+                          "--ls-base": "2px",
+                          "--ls-hover": "4.5px",
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                          color: "#241123",
+                          textTransform: "uppercase",
+                          fontWeight: 800,
+                          opacity: 0.95,
+                          whiteSpace: "nowrap",
+                          cursor: "pointer",
+                        } as WithLSVars}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.95"; }}
+                        aria-label={`View ${titleLinks[0].label}`}
+                      >
+                        {titleLinks[0].label}
+                      </Link>
+                      {titleLinks.length > 1 && (
+                        <button
+                          onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: "#241123", opacity: rolesExpanded ? 0.5 : 0.3, fontSize: "0.9rem", fontWeight: 900, padding: 0, lineHeight: 1, fontFamily: "var(--font-dm-sans), system-ui, sans-serif" }}
+                          aria-label={rolesExpanded ? "Collapse roles" : "Show more roles"}
+                        >{rolesExpanded ? "×" : "+"}</button>
+                      )}
                     </span>
+                    {/* Extra roles revealed on expand */}
+                    {rolesExpanded && titleLinks.slice(1).map(({ label, href }) => (
+                      <Link
+                        key={`${href}-${label}`}
+                        href={href}
+                        prefetch
+                        className="ls-hover no-underline hover:no-underline"
+                        data-text={label}
+                        style={{
+                          "--ls-base": "2px",
+                          "--ls-hover": "4.5px",
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                          color: "#241123",
+                          textTransform: "uppercase",
+                          fontWeight: 800,
+                          opacity: 0.95,
+                          whiteSpace: "nowrap",
+                          cursor: "pointer",
+                        } as WithLSVars}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.95"; }}
+                        aria-label={`View ${label}`}
+                      >
+                        {label}
+                      </Link>
+                    ))}
                   </div>
                 )}
                 {location && (

@@ -33,6 +33,23 @@ interface DesktopProfileHeaderProps {
 // CSS custom properties for .ls-hover — TypeScript needs the cast
 type WithLSVars = React.CSSProperties & { "--ls-base"?: string; "--ls-hover"?: string };
 
+// Priority order for DAT role display (lower number = shown first)
+const ROLE_DISPLAY_PRIORITY: Record<string, number> = {
+  "executive director": 1,
+  "artistic director": 2,
+  "director": 3,
+  "partner": 4,
+  "playwright": 5,
+  "travel writer": 6,
+  "designer": 7,
+  "stage manager": 8,
+  "teaching artist": 9,
+  "actor": 10,
+  "performer": 11,
+  "special event host": 12,
+  "manager": 13,
+};
+
 export default function DesktopProfileHeader({
   alumniId,
   slug,
@@ -55,6 +72,8 @@ export default function DesktopProfileHeader({
   const [currentUrl, setCurrentUrl] = useState("");
   const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
   const [currentHeadshotIndex, setCurrentHeadshotIndex] = useState(0);
+  const [rolesExpanded, setRolesExpanded] = useState(false);
+  const [currentTitlesExpanded, setCurrentTitlesExpanded] = useState(false);
   const fetchAbortRef = useRef<AbortController | null>(null);
   const fallbackImage = "/images/default-headshot.png";
 
@@ -166,8 +185,8 @@ export default function DesktopProfileHeader({
   }
 
   const titleLinks = useMemo(
-    () =>
-      Array.from(
+    () => {
+      const links = Array.from(
         new Map(
           allRoles
             .map((label) => {
@@ -176,11 +195,28 @@ export default function DesktopProfileHeader({
             })
             .filter(Boolean) as Array<[string, { label: string; href: string }]>
         ).values()
-      ),
+      );
+      // Sort by DAT role prominence (Artistic Director before Actor, etc.)
+      return [...links].sort((a, b) => {
+        const pa = ROLE_DISPLAY_PRIORITY[a.label.toLowerCase()] ?? 50;
+        const pb = ROLE_DISPLAY_PRIORITY[b.label.toLowerCase()] ?? 50;
+        return pa - pb;
+      });
+    },
     [allRoles]
   );
 
-  const currentTitleHref = currentTitle ? hrefForTitleToken(currentTitle) : null;
+  // Multi-value currentTitle support: "Social Worker, Teacher" → ["Social Worker", "Teacher"]
+  // First value = primary (user controls order); extras expandable via "+"
+  const currentTitles = currentTitle
+    ? splitTitles(currentTitle).map((t) => t.trim()).filter(Boolean)
+    : [];
+  const primaryCurrentTitle = currentTitles[0] ?? null;
+  const extraCurrentTitles = currentTitles.slice(1).map((label) => ({
+    label,
+    href: hrefForTitleToken(label),
+  }));
+  const currentTitleHref = primaryCurrentTitle ? hrefForTitleToken(primaryCurrentTitle) : null;
 
   const locationHref = location ? getLocationHrefForToken(location) : null;
   const secondLocationHref = secondLocation ? getLocationHrefForToken(secondLocation) : null;
@@ -331,44 +367,90 @@ export default function DesktopProfileHeader({
         {(titleLinks.length > 0 || currentTitle || location) && (
           <div style={{ marginTop: "0.5rem" }}>
 
-            {currentTitle ? (
+            {primaryCurrentTitle ? (
               <>
-                {/* Row 1: currentTitle + DAT pill inline */}
+                {/* Row 1: primary currentTitle (+ toggle if extras) + DAT pill inline */}
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
 
-                  {currentTitleHref ? (
-                    <Link href={currentTitleHref} prefetch
-                      className="ls-hover no-underline hover:no-underline"
-                      data-text={currentTitle}
-                      style={{
-                        "--ls-base": "2px",
-                        "--ls-hover": "4.5px",
-                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                        fontSize: "1.7rem",
-                        color: "#241123",
-                        textTransform: "uppercase",
-                        fontWeight: 700,
-                        lineHeight: 1.15,
-                      } as WithLSVars}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
-                      aria-label={`View ${currentTitle}`}
-                    >{currentTitle}</Link>
-                  ) : (
-                    <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "1.7rem", color: "#241123", textTransform: "uppercase", fontWeight: 700, lineHeight: 1.15, letterSpacing: "2px" }}>
-                      {currentTitle}
-                    </span>
-                  )}
-
-                  {/* DAT pill: contains DAT badge + role link(s) */}
-                  {titleLinks.length > 0 && (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.55rem", backgroundColor: "#241123", padding: "5px 13px 5px 11px", borderRadius: "4px", flexShrink: 0 }}>
-                      <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.82rem", letterSpacing: "3.5px", fontWeight: 900, color: "#ffcc00", textTransform: "uppercase" }}>
-                        DAT
+                  {/* Primary currentTitle + expand toggle */}
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
+                    {currentTitleHref ? (
+                      <Link href={currentTitleHref} prefetch
+                        className="ls-hover no-underline hover:no-underline"
+                        data-text={primaryCurrentTitle}
+                        style={{
+                          "--ls-base": "2px",
+                          "--ls-hover": "4.5px",
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontSize: "1.7rem",
+                          color: "#241123",
+                          textTransform: "uppercase",
+                          fontWeight: 700,
+                          lineHeight: 1.15,
+                        } as WithLSVars}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
+                        aria-label={`View ${primaryCurrentTitle}`}
+                      >{primaryCurrentTitle}</Link>
+                    ) : (
+                      <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "1.7rem", color: "#241123", textTransform: "uppercase", fontWeight: 700, lineHeight: 1.15, letterSpacing: "2px" }}>
+                        {primaryCurrentTitle}
                       </span>
-                      {titleLinks.map(({ label, href }, idx) => (
-                        <span key={`${href}-${label}`} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
-                          {idx > 0 && <span style={{ color: "#ffcc00", opacity: 0.35, fontSize: "0.7rem" }} aria-hidden>–</span>}
+                    )}
+                    {extraCurrentTitles.length > 0 && (
+                      <button
+                        onClick={(e) => { e.preventDefault(); setCurrentTitlesExpanded((r) => !r); }}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "#241123", opacity: currentTitlesExpanded ? 0.5 : 0.3, fontSize: "1rem", fontWeight: 900, padding: 0, lineHeight: 1, fontFamily: "var(--font-dm-sans), system-ui, sans-serif" }}
+                        aria-label={currentTitlesExpanded ? "Collapse titles" : "Show more titles"}
+                      >{currentTitlesExpanded ? "×" : "+"}</button>
+                    )}
+                  </span>
+
+                  {/* DAT pill: primary role + expand/collapse for extras */}
+                  {titleLinks.length > 0 && (
+                    <span style={{
+                      display: "inline-flex",
+                      flexDirection: rolesExpanded ? "column" : "row",
+                      alignItems: rolesExpanded ? "flex-start" : "center",
+                      gap: rolesExpanded ? "0.28rem" : "0.55rem",
+                      backgroundColor: "#241123",
+                      padding: "5px 13px 5px 11px",
+                      borderRadius: "4px",
+                      flexShrink: 0,
+                    }}>
+                      {/* Always-visible row: DAT + primary role + toggle */}
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "0.55rem" }}>
+                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.82rem", letterSpacing: "3.5px", fontWeight: 900, color: "#ffcc00", textTransform: "uppercase" }}>
+                          DAT
+                        </span>
+                        <Link href={titleLinks[0].href} prefetch
+                          className="ls-hover no-underline hover:no-underline"
+                          data-text={titleLinks[0].label}
+                          style={{
+                            "--ls-base": "2px",
+                            "--ls-hover": "3.5px",
+                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                            fontSize: "0.9rem",
+                            color: "#ffcc00",
+                            opacity: 0.75,
+                            textTransform: "uppercase",
+                            fontWeight: 700,
+                          } as WithLSVars}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#f23359"; e.currentTarget.style.opacity = "1"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#ffcc00"; e.currentTarget.style.opacity = "0.75"; }}
+                          aria-label={`View ${titleLinks[0].label}`}
+                        >{titleLinks[0].label}</Link>
+                        {titleLinks.length > 1 && (
+                          <button
+                            onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
+                            style={{ background: "none", border: "none", cursor: "pointer", color: "#ffcc00", opacity: rolesExpanded ? 0.65 : 0.4, fontSize: "0.78rem", fontWeight: 900, padding: 0, lineHeight: 1, fontFamily: "var(--font-dm-sans), system-ui, sans-serif" }}
+                            aria-label={rolesExpanded ? "Collapse roles" : "Show more roles"}
+                          >{rolesExpanded ? "×" : "+"}</button>
+                        )}
+                      </span>
+                      {/* Extra roles — revealed on expand */}
+                      {rolesExpanded && titleLinks.slice(1).map(({ label, href }) => (
+                        <span key={`${href}-${label}`} style={{ paddingLeft: "2.05rem" }}>
                           <Link href={href} prefetch
                             className="ls-hover no-underline hover:no-underline"
                             data-text={label}
@@ -392,7 +474,36 @@ export default function DesktopProfileHeader({
                   )}
                 </div>
 
-                {/* Row 2: location */}
+                {/* Extra currentTitles — revealed when expanded */}
+                {currentTitlesExpanded && extraCurrentTitles.map(({ label, href }) => (
+                  <div key={label} style={{ marginTop: "0.2rem" }}>
+                    {href ? (
+                      <Link href={href} prefetch
+                        className="ls-hover no-underline hover:no-underline"
+                        data-text={label}
+                        style={{
+                          "--ls-base": "2px",
+                          "--ls-hover": "4.5px",
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontSize: "1.7rem",
+                          color: "#241123",
+                          textTransform: "uppercase",
+                          fontWeight: 700,
+                          lineHeight: 1.15,
+                        } as WithLSVars}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
+                        aria-label={`View ${label}`}
+                      >{label}</Link>
+                    ) : (
+                      <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "1.7rem", color: "#241123", textTransform: "uppercase", fontWeight: 700, lineHeight: 1.15, letterSpacing: "2px" }}>
+                        {label}
+                      </span>
+                    )}
+                  </div>
+                ))}
+
+                {/* Location row */}
                 {location && (
                   <div style={{ marginTop: "0.5rem" }}>
                     <LocationDisplay size="1.05rem" />
@@ -401,35 +512,56 @@ export default function DesktopProfileHeader({
               </>
             ) : (
               <>
-                {/* Big DAT role links (no currentTitle) */}
+                {/* Big DAT role links (no currentTitle): primary + expand for extras */}
                 {titleLinks.length > 0 && (
-                  <div className="flex flex-row items-center flex-wrap gap-y-1">
-                    <span className="flex items-center flex-wrap">
-                      {titleLinks.map(({ label, href }, idx) => (
-                        <span key={`${href}-${label}`} className="flex items-center">
-                          <Link href={href} prefetch
-                            className="ls-hover no-underline hover:no-underline"
-                            data-text={label}
-                            style={{
-                              "--ls-base": "2px",
-                              "--ls-hover": "4.5px",
-                              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                              fontSize: "1.7rem",
-                              color: "#241123",
-                              textTransform: "uppercase",
-                              fontWeight: 700,
-                              opacity: 0.9,
-                            } as WithLSVars}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.9"; }}
-                            aria-label={`View ${label}`}
-                          >{label}</Link>
-                          {idx < titleLinks.length - 1 && (
-                            <span style={{ fontSize: "1.7rem", color: "#241123", opacity: 0.5, margin: "0 0.6rem", fontWeight: 300 }}>–</span>
-                          )}
-                        </span>
-                      ))}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.1rem" }}>
+                    {/* Primary role row */}
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.55rem" }}>
+                      <Link href={titleLinks[0].href} prefetch
+                        className="ls-hover no-underline hover:no-underline"
+                        data-text={titleLinks[0].label}
+                        style={{
+                          "--ls-base": "2px",
+                          "--ls-hover": "4.5px",
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontSize: "1.7rem",
+                          color: "#241123",
+                          textTransform: "uppercase",
+                          fontWeight: 700,
+                          opacity: 0.9,
+                        } as WithLSVars}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.9"; }}
+                        aria-label={`View ${titleLinks[0].label}`}
+                      >{titleLinks[0].label}</Link>
+                      {titleLinks.length > 1 && (
+                        <button
+                          onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: "#241123", opacity: rolesExpanded ? 0.5 : 0.3, fontSize: "1rem", fontWeight: 900, padding: 0, lineHeight: 1, fontFamily: "var(--font-dm-sans), system-ui, sans-serif" }}
+                          aria-label={rolesExpanded ? "Collapse roles" : "Show more roles"}
+                        >{rolesExpanded ? "×" : "+"}</button>
+                      )}
                     </span>
+                    {/* Extra roles revealed on expand */}
+                    {rolesExpanded && titleLinks.slice(1).map(({ label, href }) => (
+                      <Link key={`${href}-${label}`} href={href} prefetch
+                        className="ls-hover no-underline hover:no-underline"
+                        data-text={label}
+                        style={{
+                          "--ls-base": "2px",
+                          "--ls-hover": "4.5px",
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontSize: "1.7rem",
+                          color: "#241123",
+                          textTransform: "uppercase",
+                          fontWeight: 700,
+                          opacity: 0.9,
+                        } as WithLSVars}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.9"; }}
+                        aria-label={`View ${label}`}
+                      >{label}</Link>
+                    ))}
                   </div>
                 )}
                 {location && (
