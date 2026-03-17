@@ -111,6 +111,9 @@ export default function TheatreIndexPage() {
             right: "5%",
             maxWidth: "90vw",
             textAlign: "right",
+            background: "radial-gradient(ellipse at 80% 60%, rgba(36,17,35,0.55) 0%, transparent 72%)",
+            padding: "2rem 1.5rem 1.5rem 4rem",
+            borderRadius: "12px",
           }}
         >
           <p style={{ ...eyebrowOnDark, marginBottom: "0.5rem" }}>
@@ -476,13 +479,13 @@ export default function TheatreIndexPage() {
                         </span>
                       </div>
 
-                      {/* Right panel: stacked season pill + year, then full season link */}
+                      {/* Right panel: stacked season pill + year, then full season link top-right */}
                       <div
                         style={{
                           flex: 1,
                           padding: "0.75rem 1.25rem",
                           display: "flex",
-                          alignItems: "center",
+                          alignItems: "flex-start",
                           justifyContent: "space-between",
                           gap: "1rem",
                           flexWrap: "wrap",
@@ -496,16 +499,15 @@ export default function TheatreIndexPage() {
                             style={{
                               textDecoration: "none",
                               fontFamily: "var(--font-anton), system-ui, sans-serif",
-                              fontSize: "1.05rem",
+                              fontSize: "1.4rem",
                               textTransform: "uppercase",
-                              letterSpacing: "0.18em",
+                              letterSpacing: "0.2em",
                               color: C.ink,
                               backgroundColor: C.gold,
-                              padding: "0.2em 0.7em",
+                              padding: "0.25em 0.85em",
                               borderRadius: "0.3em",
                               display: "inline-block",
                               alignSelf: "flex-start",
-                              transition: "letter-spacing 0.2s ease, color 0.2s ease",
                             }}
                           >
                             Season {sn}
@@ -513,10 +515,10 @@ export default function TheatreIndexPage() {
                           <span
                             style={{
                               fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                              fontSize: "0.88rem",
+                              fontSize: "1.05rem",
                               fontWeight: 600,
                               color: C.ink,
-                              paddingLeft: "0.1em",
+                              paddingLeft: "0.15em",
                             }}
                           >
                             {schoolYear(year)}
@@ -613,16 +615,16 @@ export default function TheatreIndexPage() {
           transition: box-shadow 0.28s ease, border-color 0.28s ease;
         }
         .theatre-featured-card:hover {
-          box-shadow: 0 12px 48px rgba(83,0,135,0.2) !important;
-          border-color: rgba(83,0,135,0.35) !important;
-        }
-        .theatre-featured-card:hover .theatre-explore-btn {
-          background-color: #530087 !important;
-          color: #f2f2f2 !important;
-          letter-spacing: 0.24em !important;
+          box-shadow: 0 12px 48px rgba(108,0,175,0.2) !important;
+          border-color: rgba(108,0,175,0.35) !important;
         }
         .theatre-explore-btn {
           transition: background-color 0.2s ease, color 0.2s ease, letter-spacing 0.2s ease;
+        }
+        .theatre-explore-btn:hover {
+          background-color: #6C00AF !important;
+          color: #f2f2f2 !important;
+          letter-spacing: 0.24em !important;
         }
         .theatre-poster-img {
           transition: transform 0.5s ease;
@@ -634,7 +636,7 @@ export default function TheatreIndexPage() {
           transition: color 0.18s ease, letter-spacing 0.18s ease;
         }
         .theatre-text-link:hover {
-          color: #530087 !important;
+          color: #6C00AF !important;
           letter-spacing: 0.22em !important;
         }
 
@@ -652,24 +654,24 @@ export default function TheatreIndexPage() {
           transition: color 0.18s ease, letter-spacing 0.18s ease;
         }
         .theatre-season-chapter-link:hover {
-          color: #530087 !important;
-          letter-spacing: 0.22em !important;
+          color: #6C00AF !important;
+          letter-spacing: 0.24em !important;
         }
 
+        /* Season pill: letter-spacing expands + slight opacity fade — stays gold */
         .theatre-season-pill-link {
-          transition: color 0.18s ease, background-color 0.18s ease, letter-spacing 0.18s ease;
+          transition: letter-spacing 0.22s ease, opacity 0.22s ease;
         }
         .theatre-season-pill-link:hover {
-          color: #f2f2f2 !important;
-          background-color: #530087 !important;
-          letter-spacing: 0.24em !important;
+          letter-spacing: 0.3em !important;
+          opacity: 0.82;
         }
 
         .theatre-bottom-link {
           transition: box-shadow 0.2s ease, filter 0.2s ease, letter-spacing 0.2s ease;
         }
         .theatre-bottom-link:hover {
-          box-shadow: 0 4px 16px rgba(83,0,135,0.3);
+          box-shadow: 0 4px 16px rgba(108,0,175,0.3);
           filter: brightness(0.9) saturate(1.3);
           letter-spacing: 0.2em !important;
         }
@@ -678,9 +680,9 @@ export default function TheatreIndexPage() {
           transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
         }
         .theatre-prod-card:hover {
-          box-shadow: 0 8px 32px rgba(83,0,135,0.18), 0 2px 6px rgba(83,0,135,0.1);
+          box-shadow: 0 8px 32px rgba(108,0,175,0.18), 0 2px 6px rgba(108,0,175,0.1);
           transform: translateY(-3px);
-          border-color: rgba(83,0,135,0.3) !important;
+          border-color: rgba(108,0,175,0.3) !important;
         }
         .theatre-prod-card:hover .theatre-card-poster {
           transform: scale(1.05);
