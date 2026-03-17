@@ -43,6 +43,13 @@ function parseFestival(festival: string | undefined): { event: string | null; ve
   };
 }
 
+// Seasons run Fall–Summer (school year). The production year is the spring/end year.
+// Season 1 = 2006-2007, so schoolYear(2007) → "2006–2007"
+function schoolYear(sortYear: number): string {
+  if (!sortYear || sortYear === 0) return "";
+  return `${sortYear - 1}–${sortYear}`;
+}
+
 export default function TheatreIndexPage() {
   const allProductions = Object.values(productionMap).sort(sortProductions);
 
@@ -191,7 +198,7 @@ export default function TheatreIndexPage() {
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.1em",
-                    color: C.ink,
+                    color: "#f2f2f2",
                   }}
                 >
                   {label}
@@ -201,7 +208,7 @@ export default function TheatreIndexPage() {
                     fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                     fontSize: "0.78rem",
                     fontWeight: 500,
-                    color: C.inkMid,
+                    color: "rgba(242,242,242,0.62)",
                     marginTop: "0.25rem",
                     lineHeight: 1.4,
                   }}
@@ -359,86 +366,77 @@ export default function TheatreIndexPage() {
       )}
 
       {/* ═══════════════════════════════════════════
-          SEASON QUICK-NAV  — dark band, fully readable
-      ═══════════════════════════════════════════ */}
-      <div
-        style={{
-          backgroundColor: C.ink,
-          borderTop: `2px solid rgba(36,17,35,0.9)`,
-          borderBottom: `2px solid rgba(36,17,35,0.9)`,
-          padding: "0.85rem 0",
-        }}
-      >
-        <div style={{ width: "90vw", maxWidth: "1120px", margin: "0 auto", overflowX: "auto" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", whiteSpace: "nowrap" }}>
-            <span
-              style={{
-                fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                fontSize: "0.72rem",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.2em",
-                color: "#9c7ab0",
-                marginRight: "0.6rem",
-                flexShrink: 0,
-              }}
-            >
-              Jump to
-            </span>
-            {seasonNums.map((sn) => (
-              <a
-                key={sn}
-                href={`#season-${sn}`}
-                className="theatre-nav-pill"
-                style={{
-                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                  fontSize: "0.72rem",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  color: C.white,
-                  textDecoration: "none",
-                  padding: "0.4em 0.9em",
-                  borderRadius: "6px",
-                  flexShrink: 0,
-                  border: "1px solid rgba(255,255,255,0.15)",
-                }}
-              >
-                S{sn}
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ═══════════════════════════════════════════
           PRODUCTIONS BY SEASON
       ═══════════════════════════════════════════ */}
       <section style={{ padding: "4rem 0 5rem" }}>
         <div style={{ width: "90vw", maxWidth: "1120px", margin: "0 auto" }}>
 
+          {/* Archive heading + season quick-nav combined */}
           <div
             style={{
               marginBottom: "3rem",
               backgroundColor: "rgba(255,255,255,0.35)",
-              borderRadius: "10px",
-              padding: "1.1rem 1.4rem",
-              display: "inline-block",
+              borderRadius: "14px",
+              padding: "1.4rem 1.6rem",
             }}
           >
-            <p style={{ ...eyebrowOnKraft, margin: "0 0 0.4rem" }}>The Full Archive</p>
+            <p style={{ ...eyebrowOnKraft, margin: "0 0 0.3rem" }}>The Full Archive</p>
             <h2
               style={{
                 fontFamily: "var(--font-anton), system-ui, sans-serif",
                 fontSize: "clamp(2.2rem, 5vw, 3.6rem)",
                 textTransform: "uppercase",
                 color: C.ink,
-                margin: 0,
+                margin: "0 0 1.1rem",
                 lineHeight: 1.0,
               }}
             >
               All Productions
             </h2>
+
+            {/* Divider */}
+            <div style={{ height: "1.5px", backgroundColor: "rgba(36,17,35,0.15)", marginBottom: "1rem" }} />
+
+            {/* Jump-to season pills */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.2em",
+                  color: C.inkMid,
+                  marginRight: "0.3rem",
+                  flexShrink: 0,
+                }}
+              >
+                Jump to
+              </span>
+              {seasonNums.map((sn) => (
+                <a
+                  key={sn}
+                  href={`#season-${sn}`}
+                  className="theatre-nav-pill"
+                  style={{
+                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                    fontSize: "0.7rem",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                    color: C.ink,
+                    textDecoration: "none",
+                    padding: "0.35em 0.85em",
+                    borderRadius: "6px",
+                    flexShrink: 0,
+                    border: `1.5px solid rgba(36,17,35,0.28)`,
+                    backgroundColor: "rgba(255,255,255,0.5)",
+                  }}
+                >
+                  S{sn}
+                </a>
+              ))}
+            </div>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "4rem" }}>
@@ -449,7 +447,7 @@ export default function TheatreIndexPage() {
 
               return (
                 <div key={sn} id={`season-${sn}`}>
-                  {/* Season chapter heading */}
+                  {/* Season chapter heading — number inside white container */}
                   <div
                     style={{
                       marginBottom: "1.5rem",
@@ -457,87 +455,104 @@ export default function TheatreIndexPage() {
                       borderBottom: `2.5px solid ${C.divider}`,
                     }}
                   >
-                    {/* Row 1: ghost number */}
-                    <span
-                      aria-hidden
-                      style={{
-                        fontFamily: "var(--font-anton), system-ui, sans-serif",
-                        fontSize: "clamp(4.5rem, 10vw, 7rem)",
-                        color: "rgba(36,17,35,0.11)",
-                        lineHeight: 0.85,
-                        userSelect: "none",
-                        display: "block",
-                        marginBottom: "0.5rem",
-                      }}
-                    >
-                      {sn}
-                    </span>
-
-                    {/* Row 2: full-width white scrim strip */}
                     <div
                       style={{
-                        backgroundColor: "rgba(255,255,255,0.35)",
-                        borderRadius: "10px",
-                        padding: "0.7rem 1.1rem",
                         display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: "1rem",
-                        flexWrap: "wrap",
+                        alignItems: "stretch",
+                        backgroundColor: "rgba(255,255,255,0.35)",
+                        borderRadius: "14px",
+                        border: "1px solid rgba(36,17,35,0.1)",
+                        overflow: "hidden",
                       }}
                     >
-                      {/* Left: season pill + year · location */}
-                      <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+                      {/* Left panel: big season number */}
+                      <div
+                        aria-hidden
+                        style={{
+                          backgroundColor: "rgba(36,17,35,0.07)",
+                          borderRight: "1px solid rgba(36,17,35,0.1)",
+                          padding: "0.6rem 1.1rem",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          minWidth: "4.5rem",
+                        }}
+                      >
                         <span
                           style={{
                             fontFamily: "var(--font-anton), system-ui, sans-serif",
-                            fontSize: "1.05rem",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.18em",
-                            color: C.ink,
-                            backgroundColor: C.gold,
-                            padding: "0.18em 0.65em",
-                            borderRadius: "0.3em",
-                            display: "inline-block",
-                            flexShrink: 0,
+                            fontSize: "clamp(3rem, 8vw, 5rem)",
+                            color: "rgba(36,17,35,0.22)",
+                            lineHeight: 1,
+                            userSelect: "none",
                           }}
                         >
-                          Season {sn}
-                        </span>
-                        <span
-                          style={{
-                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                            fontSize: "0.9rem",
-                            fontWeight: 700,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.08em",
-                            color: C.ink,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {year} · {locs}
+                          {sn}
                         </span>
                       </div>
 
-                      {/* Right: full season link */}
-                      <Link
-                        href={`/season/${sn}`}
-                        className="theatre-season-chapter-link"
+                      {/* Right panel: season pill + year/location + link */}
+                      <div
                         style={{
-                          textDecoration: "none",
-                          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                          fontSize: "0.8rem",
-                          fontWeight: 800,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.16em",
-                          color: C.ink,
-                          flexShrink: 0,
+                          flex: 1,
+                          padding: "0.75rem 1.25rem",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: "1rem",
+                          flexWrap: "wrap",
                         }}
                       >
-                        Full Season ↗
-                      </Link>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.9rem", flexWrap: "wrap" }}>
+                          <span
+                            style={{
+                              fontFamily: "var(--font-anton), system-ui, sans-serif",
+                              fontSize: "1.05rem",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.18em",
+                              color: C.ink,
+                              backgroundColor: C.gold,
+                              padding: "0.2em 0.7em",
+                              borderRadius: "0.3em",
+                              display: "inline-block",
+                              flexShrink: 0,
+                            }}
+                          >
+                            Season {sn}
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                              fontSize: "0.9rem",
+                              fontWeight: 600,
+                              color: C.ink,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {schoolYear(year)} · {locs}
+                          </span>
+                        </div>
+
+                        <Link
+                          href={`/season/${sn}`}
+                          className="theatre-season-chapter-link"
+                          style={{
+                            textDecoration: "none",
+                            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                            fontSize: "0.8rem",
+                            fontWeight: 800,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.16em",
+                            color: C.ink,
+                            flexShrink: 0,
+                          }}
+                        >
+                          Full Season ↗
+                        </Link>
+                      </div>
                     </div>
                   </div>
 
@@ -627,9 +642,9 @@ export default function TheatreIndexPage() {
           transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
         }
         .theatre-nav-pill:hover {
-          background: rgba(255,255,255,0.12) !important;
-          border-color: rgba(255,255,255,0.4) !important;
-          color: #FFCC00 !important;
+          background: #FFCC00 !important;
+          border-color: rgba(36,17,35,0.4) !important;
+          color: #241123 !important;
         }
         .theatre-season-chapter-link:hover span:last-child {
           color: #530087 !important;
@@ -693,7 +708,6 @@ const eyebrowOnKraft: React.CSSProperties = {
 // PRODUCTION CARD
 // ═══════════════════════════════════════════════════════════════
 function ProductionCard({ p }: { p: Production }) {
-  const hasPoster = Boolean(p.posterUrl && p.posterUrl.trim());
   const { event, venue } = parseFestival(p.festival ?? undefined);
 
   return (
@@ -727,25 +741,6 @@ function ProductionCard({ p }: { p: Production }) {
           className="object-cover object-top theatre-card-poster"
           style={{ filter: "brightness(1.12) contrast(1.05) saturate(1.1)" }}
         />
-        {!hasPoster && (
-          <span
-            style={{
-              position: "absolute",
-              top: "0.6rem",
-              left: "0.6rem",
-              fontFamily: "var(--font-anton), system-ui, sans-serif",
-              fontSize: "0.65rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.15em",
-              color: C.ink,
-              backgroundColor: C.gold,
-              padding: "0.2em 0.55em",
-              borderRadius: "4px",
-            }}
-          >
-            S{p.season}
-          </span>
-        )}
       </div>
 
       {/* Text panel */}
