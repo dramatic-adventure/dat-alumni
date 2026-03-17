@@ -403,7 +403,33 @@ export default function DesktopProfileHeader({
                   )}
                 </div>
 
-                {/* Row 2: DAT pill — own line below currentTitle */}
+                {/* Extra currentTitles — revealed when expanded (before DAT pill) */}
+                {currentTitlesExpanded && extraCurrentTitles.map(({ label, href }) => (
+                  <div key={label} style={{ marginTop: "0.2rem" }}>
+                    {href ? (
+                      <Link href={href} prefetch
+                        className="ls-hover no-underline hover:no-underline"
+                        style={{
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontSize: "1.7rem",
+                          color: "#241123",
+                          textTransform: "uppercase",
+                          fontWeight: 700,
+                          lineHeight: 1.15,
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
+                        aria-label={`View ${label}`}
+                      >{label}</Link>
+                    ) : (
+                      <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "1.7rem", color: "#241123", textTransform: "uppercase", fontWeight: 700, lineHeight: 1.15, letterSpacing: "2px" }}>
+                        {label}
+                      </span>
+                    )}
+                  </div>
+                ))}
+
+                {/* DAT pill — always below all currentTitle rows */}
                 {titleLinks.length > 0 && (
                   <div style={{ marginTop: "0.35rem" }}>
                     <span style={{
@@ -411,8 +437,8 @@ export default function DesktopProfileHeader({
                       flexDirection: rolesExpanded ? "column" : "row",
                       alignItems: rolesExpanded ? "flex-start" : "center",
                       gap: rolesExpanded ? "0.28rem" : "0.55rem",
-                      backgroundColor: "transparent",
-                      border: "1px solid rgba(36, 17, 35, 0.28)",
+                      backgroundColor: "rgba(36, 17, 35, 0.08)",
+                      border: "1px solid rgba(36, 17, 35, 0.2)",
                       padding: "5px 13px 5px 11px",
                       borderRadius: "4px",
                     }}>
@@ -467,32 +493,6 @@ export default function DesktopProfileHeader({
                     </span>
                   </div>
                 )}
-
-                {/* Extra currentTitles — revealed when expanded */}
-                {currentTitlesExpanded && extraCurrentTitles.map(({ label, href }) => (
-                  <div key={label} style={{ marginTop: "0.2rem" }}>
-                    {href ? (
-                      <Link href={href} prefetch
-                        className="ls-hover no-underline hover:no-underline"
-                        style={{
-                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                          fontSize: "1.7rem",
-                          color: "#241123",
-                          textTransform: "uppercase",
-                          fontWeight: 700,
-                          lineHeight: 1.15,
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
-                        aria-label={`View ${label}`}
-                      >{label}</Link>
-                    ) : (
-                      <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "1.7rem", color: "#241123", textTransform: "uppercase", fontWeight: 700, lineHeight: 1.15, letterSpacing: "2px" }}>
-                        {label}
-                      </span>
-                    )}
-                  </div>
-                ))}
 
                 {/* Location row */}
                 {location && (

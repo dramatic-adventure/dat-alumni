@@ -384,7 +384,35 @@ export default function MobileProfileHeader({
                   )}
                 </div>
 
-                {/* Row 2: DAT pill — own line below currentTitle */}
+                {/* Extra currentTitles — revealed when expanded (before DAT pill) */}
+                {currentTitlesExpanded && extraCurrentTitles.map(({ label, href }) => (
+                  <div key={label} style={{ marginTop: "0.2rem", display: "flex", justifyContent: "center" }}>
+                    {href ? (
+                      <Link
+                        href={href}
+                        prefetch
+                        className="ls-hover no-underline hover:no-underline"
+                        style={{
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                          color: "#241123",
+                          textTransform: "uppercase",
+                          fontWeight: 800,
+                          lineHeight: 1.2,
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
+                        aria-label={`View ${label}`}
+                      >{label}</Link>
+                    ) : (
+                      <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "clamp(1rem, 4vw, 1.35rem)", color: "#241123", textTransform: "uppercase", letterSpacing: "2px", fontWeight: 800, lineHeight: 1.2 }}>
+                        {label}
+                      </span>
+                    )}
+                  </div>
+                ))}
+
+                {/* DAT pill — always below all currentTitle rows */}
                 {titleLinks.length > 0 && (
                   <div style={{ marginTop: "0.35rem", display: "flex", justifyContent: "center" }}>
                     <span style={{
@@ -392,8 +420,8 @@ export default function MobileProfileHeader({
                       flexDirection: rolesExpanded ? "column" : "row",
                       alignItems: rolesExpanded ? "flex-start" : "center",
                       gap: rolesExpanded ? "0.25rem" : "0.45rem",
-                      backgroundColor: "transparent",
-                      border: "1px solid rgba(36, 17, 35, 0.28)",
+                      backgroundColor: "rgba(36, 17, 35, 0.08)",
+                      border: "1px solid rgba(36, 17, 35, 0.2)",
                       padding: "4px 11px 4px 9px",
                       borderRadius: "4px",
                     }}>
@@ -456,34 +484,6 @@ export default function MobileProfileHeader({
                     </span>
                   </div>
                 )}
-
-                {/* Extra currentTitles — revealed when expanded */}
-                {currentTitlesExpanded && extraCurrentTitles.map(({ label, href }) => (
-                  <div key={label} style={{ marginTop: "0.2rem", display: "flex", justifyContent: "center" }}>
-                    {href ? (
-                      <Link
-                        href={href}
-                        prefetch
-                        className="ls-hover no-underline hover:no-underline"
-                        style={{
-                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                          fontSize: "clamp(1rem, 4vw, 1.35rem)",
-                          color: "#241123",
-                          textTransform: "uppercase",
-                          fontWeight: 800,
-                          lineHeight: 1.2,
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
-                        aria-label={`View ${label}`}
-                      >{label}</Link>
-                    ) : (
-                      <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "clamp(1rem, 4vw, 1.35rem)", color: "#241123", textTransform: "uppercase", letterSpacing: "2px", fontWeight: 800, lineHeight: 1.2 }}>
-                        {label}
-                      </span>
-                    )}
-                  </div>
-                ))}
 
                 {/* Location row */}
                 {location && (
