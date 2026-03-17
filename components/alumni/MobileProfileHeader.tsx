@@ -394,14 +394,15 @@ export default function MobileProfileHeader({
                       flexDirection: rolesExpanded ? "column" : "row",
                       alignItems: rolesExpanded ? "flex-start" : "center",
                       gap: rolesExpanded ? "0.25rem" : "0.45rem",
-                      backgroundColor: "rgba(36, 17, 35, 0.5)",
+                      backgroundColor: "transparent",
+                      border: "1px solid rgba(36, 17, 35, 0.28)",
                       padding: "4px 11px 4px 9px",
                       borderRadius: "4px",
                       flexShrink: 0,
                     }}>
                       {/* Always-visible row: DAT + primary role + toggle */}
                       <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
-                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.72rem", letterSpacing: "3.5px", fontWeight: 900, color: "#ffcc00", textTransform: "uppercase" }}>
+                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.72rem", letterSpacing: "3.5px", fontWeight: 900, color: "#241123", opacity: 0.45, textTransform: "uppercase" }}>
                           DAT
                         </span>
                         <Link
@@ -411,13 +412,13 @@ export default function MobileProfileHeader({
                           style={{
                             fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                             fontSize: "clamp(0.7rem, 2.5vw, 0.82rem)",
-                            color: "#ffcc00",
+                            color: "#241123",
                             opacity: 0.75,
                             textTransform: "uppercase",
                             fontWeight: 700,
                           }}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = "#f23359"; e.currentTarget.style.opacity = "1"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = "#ffcc00"; e.currentTarget.style.opacity = "0.75"; }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.75"; }}
                           aria-label={`View ${titleLinks[0].label}`}
                         >
                           {titleLinks[0].label}
@@ -425,9 +426,9 @@ export default function MobileProfileHeader({
                         {titleLinks.length > 1 && (
                           <button
                             onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
-                            style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#ffcc00", opacity: rolesExpanded ? 0.45 : 0.22, fontSize: "0.95rem", fontWeight: 700, padding: 0, width: "1.5em", height: "1.5em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = "#f23359"; e.currentTarget.style.opacity = "1"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = "#ffcc00"; e.currentTarget.style.opacity = rolesExpanded ? "0.45" : "0.22"; }}
+                            style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: rolesExpanded ? 0.3 : 0.16, fontSize: "0.95rem", fontWeight: 700, padding: 0, width: "1.5em", height: "1.5em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = rolesExpanded ? "0.3" : "0.16"; }}
                             aria-label={rolesExpanded ? "Collapse roles" : "Show more roles"}
                           >{rolesExpanded ? "−" : "+"}</button>
                         )}
@@ -442,13 +443,13 @@ export default function MobileProfileHeader({
                             style={{
                               fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                               fontSize: "clamp(0.7rem, 2.5vw, 0.82rem)",
-                              color: "#ffcc00",
+                              color: "#241123",
                               opacity: 0.75,
                               textTransform: "uppercase",
                               fontWeight: 700,
                             }}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = "#f23359"; e.currentTarget.style.opacity = "1"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = "#ffcc00"; e.currentTarget.style.opacity = "0.75"; }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.75"; }}
                             aria-label={`View ${label}`}
                           >
                             {label}
