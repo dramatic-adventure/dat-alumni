@@ -771,7 +771,7 @@ footer .footer-cta {
 .ls-hover {
   display: inline-block;
   letter-spacing: var(--ls-base, 2px);
-  transition: letter-spacing 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+  transition: letter-spacing 0.3s ease-out, color 0.2s ease, opacity 0.2s ease;
 }
 
 .ls-hover::after {
