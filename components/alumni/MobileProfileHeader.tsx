@@ -349,6 +349,10 @@ export default function MobileProfileHeader({
               <>
                 {/* Row 1: primary currentTitle + expand toggle */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.35rem", marginTop: "0.5rem" }}>
+                  {/* Balancing spacer — mirrors the circle button so text stays optically centered */}
+                  {extraCurrentTitles.length > 0 && (
+                    <span aria-hidden="true" style={{ width: "1.1em", height: "1.1em", fontSize: "1.2rem", flexShrink: 0, visibility: "hidden" }} />
+                  )}
                   {currentTitleHref ? (
                     <Link
                       href={currentTitleHref}
@@ -434,6 +438,10 @@ export default function MobileProfileHeader({
                     }}>
                       {/* Always-visible row: DAT + primary role + toggle */}
                       <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
+                        {/* Balancing spacer for pill circle */}
+                        {titleLinks.length > 1 && (
+                          <span aria-hidden="true" style={{ width: "1.1em", height: "1.1em", fontSize: "0.95rem", flexShrink: 0, visibility: "hidden" }} />
+                        )}
                         <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.72rem", letterSpacing: "3.5px", fontWeight: 900, color: "#ffcc00", textTransform: "uppercase" }}>
                           DAT
                         </span>
