@@ -30,6 +30,9 @@ interface DesktopProfileHeaderProps {
   isBiCoastal?: boolean;
 }
 
+// CSS custom properties for .ls-hover — TypeScript needs the cast
+type WithLSVars = React.CSSProperties & { "--ls-base"?: string; "--ls-hover"?: string };
+
 export default function DesktopProfileHeader({
   alumniId,
   slug,
@@ -108,9 +111,7 @@ export default function DesktopProfileHeader({
           setCurrentHeadshotIndex(idx >= 0 ? idx : 0);
           unique.forEach(url => { try { new window.Image().src = url; } catch {} });
         }
-      } catch {
-        // AbortError on unmount, or network error — ignore silently.
-      }
+      } catch { /* AbortError or network — ignore */ }
     }
 
     run();
@@ -130,23 +131,17 @@ export default function DesktopProfileHeader({
   const lastName = nameParts.slice(-1).join(" ") || "";
 
   function openHeadshotGallery() {
-    if (!galleryUrls.length) {
-      const current = imageSrc.trim();
-      if (current) setGalleryUrls([current]);
-    }
+    if (!galleryUrls.length) { const c = imageSrc.trim(); if (c) setGalleryUrls([c]); }
     setModalOpen(true);
   }
 
   const profileCardRef = useRef<HTMLDivElement>(null);
   const hasContactInfo = !!(publicEmail || website || (socials && socials.length > 0));
 
-  useEffect(() => {
-    if (typeof window !== "undefined") setCurrentUrl(window.location.href);
-  }, []);
+  useEffect(() => { if (typeof window !== "undefined") setCurrentUrl(window.location.href); }, []);
 
   const allRoles = (roles && roles.length > 0 ? roles : splitTitles(role))
-    .map((r) => r.trim())
-    .filter(Boolean);
+    .map((r) => r.trim()).filter(Boolean);
 
   function hrefForTitleToken(token: string): string | null {
     const keys = bucketsForTitleToken(token);
@@ -185,7 +180,6 @@ export default function DesktopProfileHeader({
     [allRoles]
   );
 
-  // currentTitle can also be linked if it maps to a title bucket
   const currentTitleHref = currentTitle ? hrefForTitleToken(currentTitle) : null;
 
   const locationHref = location ? getLocationHrefForToken(location) : null;
@@ -201,7 +195,6 @@ export default function DesktopProfileHeader({
     }
     const el = profileCardRef.current;
     if (!el) return;
-
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
@@ -215,90 +208,92 @@ export default function DesktopProfileHeader({
       },
       { rootMargin: "200px" }
     );
-
     io.observe(el);
     return () => io.disconnect();
   }, [titleLinks, locationHref, router]);
 
-  // ─── shared style helpers ────────────────────────────────────────────────
-
-  // Letter-spacing hover with paddingRight buffer so surrounding elements never shift.
-  // City1 (left of pipe) and city2 (right of pipe) both use paddingRight so the pipe
-  // stays fixed as letter-spacing expands into the pre-reserved space.
-  const cityLinkStyle = (size: string): React.CSSProperties => ({
-    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-    fontSize: size,
-    color: "#241123",
-    fontWeight: 700,
-    letterSpacing: "1.5px",
-    opacity: 0.5,
-    textTransform: "uppercase",
-    paddingRight: "0.4rem",
-    transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease",
-  });
-
-  const cityLinkHover = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.currentTarget.style.color = "#6C00AF";
-    e.currentTarget.style.opacity = "1";
-    e.currentTarget.style.letterSpacing = "3px";
-    e.currentTarget.style.paddingRight = "0";
-  };
-  const cityLinkLeave = (size: string) => (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.currentTarget.style.color = "#241123";
-    e.currentTarget.style.opacity = "0.5";
-    e.currentTarget.style.letterSpacing = "1.5px";
-    e.currentTarget.style.paddingRight = "0.4rem";
-  };
-
-  // Location block — reused in both "with currentTitle" and standalone paths
-  function LocationDisplay({ size, basedInSize }: { size: string; basedInSize?: string }) {
+  // ─── Location sub-component ────────────────────────────────────────────
+  function LocationDisplay({ size }: { size: string }) {
     if (!location) return null;
-    const fs = size;
-    const bfs = basedInSize ?? size;
+
+    // City link: .ls-hover handles letter-spacing with no layout shift.
+    // Only color + opacity change in JS handlers.
+    const cityStyle: WithLSVars = {
+      "--ls-base": "1.5px",
+      "--ls-hover": "3px",
+      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+      fontSize: size,
+      color: "#241123",
+      fontWeight: 700,
+      opacity: 0.5,
+      textTransform: "uppercase",
+    };
+
+    // Plain version (no CSS custom props) for non-interactive spans
+    const cityPlainStyle: React.CSSProperties = {
+      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+      fontSize: size,
+      color: "#241123",
+      fontWeight: 700,
+      opacity: 0.5,
+      textTransform: "uppercase",
+    };
+
+    const onEnter = (e: React.MouseEvent<HTMLAnchorElement>) => {
+      e.currentTarget.style.color = "#6C00AF";
+      e.currentTarget.style.opacity = "1";
+    };
+    const onLeave = (e: React.MouseEvent<HTMLAnchorElement>) => {
+      e.currentTarget.style.color = "#241123";
+      e.currentTarget.style.opacity = "0.5";
+    };
 
     if (secondLocation) {
       return (
         <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
           {locationHref ? (
-            <Link href={locationHref} prefetch className="no-underline hover:no-underline inline-block"
-              style={cityLinkStyle(fs)}
-              aria-label={`View artists based in ${displayLocation}`}
-              onMouseEnter={cityLinkHover}
-              onMouseLeave={cityLinkLeave(fs)}
+            <Link href={locationHref} prefetch
+              className="ls-hover no-underline hover:no-underline"
+              data-text={displayLocation ?? ""}
+              style={cityStyle}
+              aria-label={`View artists in ${displayLocation}`}
+              onMouseEnter={onEnter} onMouseLeave={onLeave}
             >{displayLocation?.toUpperCase()}</Link>
           ) : (
-            <span style={{ ...cityLinkStyle(fs), paddingRight: 0, transition: "none" }}>{displayLocation?.toUpperCase()}</span>
+            <span style={cityPlainStyle}>{displayLocation?.toUpperCase()}</span>
           )}
-          <span style={{ color: "#241123", opacity: 0.3, fontSize: fs, fontWeight: 300 }}>|</span>
+          <span style={{ color: "#241123", opacity: 0.25, fontSize: size, fontWeight: 200, lineHeight: 1 }}>|</span>
           {secondLocationHref ? (
-            <Link href={secondLocationHref} prefetch className="no-underline hover:no-underline inline-block"
-              style={cityLinkStyle(fs)}
-              aria-label={`View artists based in ${displaySecondLocation}`}
-              onMouseEnter={cityLinkHover}
-              onMouseLeave={cityLinkLeave(fs)}
+            <Link href={secondLocationHref} prefetch
+              className="ls-hover no-underline hover:no-underline"
+              data-text={displaySecondLocation ?? ""}
+              style={cityStyle}
+              aria-label={`View artists in ${displaySecondLocation}`}
+              onMouseEnter={onEnter} onMouseLeave={onLeave}
             >{displaySecondLocation?.toUpperCase()}</Link>
           ) : (
-            <span style={{ ...cityLinkStyle(fs), paddingRight: 0, transition: "none" }}>{displaySecondLocation?.toUpperCase()}</span>
+            <span style={cityPlainStyle}>{displaySecondLocation?.toUpperCase()}</span>
           )}
         </span>
       );
     }
 
-    // Single city — show "Based in"
+    // Single city — "Based in CITY"
     return (
-      <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
-        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: bfs, color: "#241123", fontWeight: 400, opacity: 0.4, letterSpacing: "0.5px" }}>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: size, color: "#241123", fontWeight: 400, opacity: 0.38, letterSpacing: "0.5px" }}>
           Based in
         </span>
         {locationHref ? (
-          <Link href={locationHref} prefetch className="no-underline hover:no-underline inline-block"
-            style={cityLinkStyle(fs)}
-            aria-label={`View artists based in ${displayLocation}`}
-            onMouseEnter={cityLinkHover}
-            onMouseLeave={cityLinkLeave(fs)}
+          <Link href={locationHref} prefetch
+            className="ls-hover no-underline hover:no-underline"
+            data-text={displayLocation ?? ""}
+            style={cityStyle}
+            aria-label={`View artists in ${displayLocation}`}
+            onMouseEnter={onEnter} onMouseLeave={onLeave}
           >{displayLocation?.toUpperCase()}</Link>
         ) : (
-          <span style={{ ...cityLinkStyle(fs), paddingRight: 0, transition: "none" }}>{displayLocation?.toUpperCase()}</span>
+          <span style={cityPlainStyle}>{displayLocation?.toUpperCase()}</span>
         )}
       </span>
     );
@@ -323,13 +318,8 @@ export default function DesktopProfileHeader({
       {/* Headshot */}
       <div
         className="absolute top-0 left-[1.5rem] sm:left-4 z-40 w-[360px] h-[450px] overflow-hidden bg-[#241123] shadow-[6px_8px_20px_rgba(0,0,0,0.25)] cursor-pointer"
-        onClick={openHeadshotGallery}
-        role="button"
-        tabIndex={0}
-        aria-label="Open headshot"
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); openHeadshotGallery(); }
-        }}
+        onClick={openHeadshotGallery} role="button" tabIndex={0} aria-label="Open headshot"
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); openHeadshotGallery(); } }}
       >
         <Image src={imageSrc} alt={`${name}'s headshot`} fill placeholder="blur" blurDataURL={fallbackImage} priority style={{ objectFit: "cover", objectPosition: "top center" }} />
       </div>
@@ -339,44 +329,38 @@ export default function DesktopProfileHeader({
         <ScaledName firstName={firstName} lastName={lastName} containerWidth={360} gapRem={0.6} />
 
         {(titleLinks.length > 0 || currentTitle || location) && (
-          <div style={{ marginTop: "0.5rem", marginBottom: "0.5rem" }}>
+          <div style={{ marginTop: "0.5rem" }}>
 
             {currentTitle ? (
-              /* ── Has currentTitle: title + DAT pill on one row, location on row below ── */
               <>
-                {/* Row 1: currentTitle (optionally linked) + DAT pill inline to the right */}
-                <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", flexWrap: "wrap" }}>
+                {/* Row 1: currentTitle + DAT pill inline */}
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
 
-                  {/* currentTitle — linked if it maps to a browse page */}
                   {currentTitleHref ? (
-                    <Link
-                      href={currentTitleHref}
-                      prefetch
-                      className="no-underline hover:no-underline inline-block"
+                    <Link href={currentTitleHref} prefetch
+                      className="ls-hover no-underline hover:no-underline"
+                      data-text={currentTitle}
                       style={{
+                        "--ls-base": "2px",
+                        "--ls-hover": "4.5px",
                         fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                         fontSize: "1.7rem",
                         color: "#241123",
                         textTransform: "uppercase",
-                        letterSpacing: "2px",
                         fontWeight: 700,
                         lineHeight: 1.15,
-                        paddingRight: "1rem",
-                        transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease",
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.letterSpacing = "4.5px"; e.currentTarget.style.paddingRight = "0"; e.currentTarget.style.color = "#6C00AF"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.letterSpacing = "2px"; e.currentTarget.style.paddingRight = "1rem"; e.currentTarget.style.color = "#241123"; }}
+                      } as WithLSVars}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
                       aria-label={`View ${currentTitle}`}
-                    >
-                      {currentTitle}
-                    </Link>
+                    >{currentTitle}</Link>
                   ) : (
-                    <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "1.7rem", color: "#241123", textTransform: "uppercase", letterSpacing: "2px", fontWeight: 700, lineHeight: 1.15 }}>
+                    <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "1.7rem", color: "#241123", textTransform: "uppercase", fontWeight: 700, lineHeight: 1.15, letterSpacing: "2px" }}>
                       {currentTitle}
                     </span>
                   )}
 
-                  {/* DAT pill: badge + role(s), inline to the right of currentTitle */}
+                  {/* DAT pill: contains DAT badge + role link(s) */}
                   {titleLinks.length > 0 && (
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "0.55rem", backgroundColor: "#241123", padding: "5px 13px 5px 11px", borderRadius: "4px", flexShrink: 0 }}>
                       <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.82rem", letterSpacing: "3.5px", fontWeight: 900, color: "#ffcc00", textTransform: "uppercase" }}>
@@ -384,28 +368,24 @@ export default function DesktopProfileHeader({
                       </span>
                       {titleLinks.map(({ label, href }, idx) => (
                         <span key={`${href}-${label}`} style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
-                          {idx > 0 && <span style={{ color: "#ffcc00", opacity: 0.35, fontSize: "0.7rem", fontWeight: 400 }} aria-hidden>–</span>}
-                          <Link
-                            href={href}
-                            prefetch
-                            className="no-underline hover:no-underline inline-block"
+                          {idx > 0 && <span style={{ color: "#ffcc00", opacity: 0.35, fontSize: "0.7rem" }} aria-hidden>–</span>}
+                          <Link href={href} prefetch
+                            className="ls-hover no-underline hover:no-underline"
+                            data-text={label}
                             style={{
+                              "--ls-base": "2px",
+                              "--ls-hover": "3.5px",
                               fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                               fontSize: "0.9rem",
                               color: "#ffcc00",
                               opacity: 0.75,
                               textTransform: "uppercase",
-                              letterSpacing: "2px",
                               fontWeight: 700,
-                              paddingRight: "0.4rem",
-                              transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.letterSpacing = "3.5px"; e.currentTarget.style.paddingRight = "0"; e.currentTarget.style.color = "#f23359"; e.currentTarget.style.opacity = "1"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.letterSpacing = "2px"; e.currentTarget.style.paddingRight = "0.4rem"; e.currentTarget.style.color = "#ffcc00"; e.currentTarget.style.opacity = "0.75"; }}
+                            } as WithLSVars}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = "#f23359"; e.currentTarget.style.opacity = "1"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = "#ffcc00"; e.currentTarget.style.opacity = "0.75"; }}
                             aria-label={`View ${label}`}
-                          >
-                            {label}
-                          </Link>
+                          >{label}</Link>
                         </span>
                       ))}
                     </span>
@@ -414,42 +394,38 @@ export default function DesktopProfileHeader({
 
                 {/* Row 2: location */}
                 {location && (
-                  <div style={{ marginTop: "0.45rem" }}>
+                  <div style={{ marginTop: "0.5rem" }}>
                     <LocationDisplay size="1.05rem" />
                   </div>
                 )}
               </>
             ) : (
-              /* ── No currentTitle: big DAT role links, location below ── */
               <>
+                {/* Big DAT role links (no currentTitle) */}
                 {titleLinks.length > 0 && (
                   <div className="flex flex-row items-center flex-wrap gap-y-1">
                     <span className="flex items-center flex-wrap">
                       {titleLinks.map(({ label, href }, idx) => (
                         <span key={`${href}-${label}`} className="flex items-center">
-                          <Link
-                            href={href}
-                            prefetch
-                            className="no-underline hover:no-underline transition-all duration-200 inline-block"
+                          <Link href={href} prefetch
+                            className="ls-hover no-underline hover:no-underline"
+                            data-text={label}
                             style={{
+                              "--ls-base": "2px",
+                              "--ls-hover": "4.5px",
                               fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                               fontSize: "1.7rem",
                               color: "#241123",
                               textTransform: "uppercase",
-                              letterSpacing: "2px",
                               fontWeight: 700,
                               opacity: 0.9,
-                              paddingRight: "1rem",
-                              transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.letterSpacing = "4.5px"; e.currentTarget.style.paddingRight = "0"; e.currentTarget.style.color = "#6C00AF"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.letterSpacing = "2px"; e.currentTarget.style.paddingRight = "1rem"; e.currentTarget.style.color = "#241123"; }}
+                            } as WithLSVars}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.9"; }}
                             aria-label={`View ${label}`}
-                          >
-                            {label}
-                          </Link>
+                          >{label}</Link>
                           {idx < titleLinks.length - 1 && (
-                            <span style={{ fontSize: "1.7rem", color: "#241123", opacity: 0.7, margin: "0 0.6rem", fontWeight: 400 }}>–</span>
+                            <span style={{ fontSize: "1.7rem", color: "#241123", opacity: 0.5, margin: "0 0.6rem", fontWeight: 300 }}>–</span>
                           )}
                         </span>
                       ))}

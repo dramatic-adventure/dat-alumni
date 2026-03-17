@@ -749,3 +749,45 @@ footer .footer-cta {
   outline: none;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.28), 0 10px 30px rgba(0, 0, 0, 0.16);
 }
+
+
+/* ──────────────────────────────────────────────────────────────────────────
+   .ls-hover — letter-spacing hover with ZERO layout shift.
+
+   How it works: the ::after ghost renders the same text with the expanded
+   letter-spacing but at height 0 / invisible. This forces the element to
+   always occupy the hover-state width, so when the real text expands on
+   hover nothing around it moves.
+
+   Usage:
+     <Link className="ls-hover" data-text="YOUR LABEL"
+       style={{ "--ls-base": "2px", "--ls-hover": "4.5px" }}>
+       YOUR LABEL
+     </Link>
+
+   Only color / opacity changes should be applied via onMouseEnter/Leave.
+   Letter-spacing is handled entirely by this class + CSS custom properties.
+────────────────────────────────────────────────────────────────────────── */
+.ls-hover {
+  display: inline-block;
+  letter-spacing: var(--ls-base, 2px);
+  transition: letter-spacing 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.ls-hover::after {
+  display: block;
+  content: attr(data-text);
+  letter-spacing: var(--ls-hover, 4.5px);
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  font-weight: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  text-transform: inherit;
+}
+
+.ls-hover:hover {
+  letter-spacing: var(--ls-hover, 4.5px);
+}

@@ -456,6 +456,11 @@ export function buildTitleBuckets(alumni: AlumniRow[]) {
   for (const a of alumni) {
     const tokens = new Set(splitTitles(a.role).map((t) => t.trim()).filter(Boolean));
 
+    // Also include currentTitle so alumni are findable by their life role
+    // (e.g., "Social Worker" → /title/social-workers shows this alumni)
+    const ct = (a as any).currentTitle ?? (a as any)["current title"];
+    if (ct && typeof ct === "string" && ct.trim()) tokens.add(ct.trim());
+
     for (const rawToken of tokens) {
       const keys = bucketsForTitleToken(rawToken);
       if (!keys.length) continue;

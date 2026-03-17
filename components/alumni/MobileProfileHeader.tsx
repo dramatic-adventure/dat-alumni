@@ -12,6 +12,9 @@ import NameStack from "@/components/shared/NameStack";
 import { splitTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
 import { getLocationHrefForToken, normalizeLocation } from "@/lib/locations";
 
+// CSS custom properties for .ls-hover — TypeScript needs the cast
+type WithLSVars = React.CSSProperties & { "--ls-base"?: string; "--ls-hover"?: string };
+
 interface MobileProfileHeaderProps {
   alumniId: string;
   slug?: string;
@@ -176,80 +179,92 @@ export default function MobileProfileHeader({
   const displayLocation = location ? (normalizeLocation(location) ?? location) : null;
   const displaySecondLocation = secondLocation ? (normalizeLocation(secondLocation) ?? secondLocation) : null;
 
-  // ─── shared style helpers ────────────────────────────────────────────────
-
-  const cityLinkStyle = (size: string): React.CSSProperties => ({
-    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-    fontSize: size,
-    color: "#241123",
-    fontWeight: 700,
-    letterSpacing: "1.5px",
-    opacity: 0.5,
-    textTransform: "uppercase",
-    paddingRight: "0.35rem",
-    transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease",
-  });
-
-  const cityLinkHover = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.currentTarget.style.color = "#6C00AF";
-    e.currentTarget.style.opacity = "1";
-    e.currentTarget.style.letterSpacing = "3px";
-    e.currentTarget.style.paddingRight = "0";
-  };
-  const cityLinkLeave = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.currentTarget.style.color = "#241123";
-    e.currentTarget.style.opacity = "0.5";
-    e.currentTarget.style.letterSpacing = "1.5px";
-    e.currentTarget.style.paddingRight = "0.35rem";
-  };
-
+  // ─── Location sub-component ─────────────────────────────────────────────
+  // .ls-hover handles letter-spacing expansion with zero layout shift.
+  // Only color + opacity change in JS handlers.
   function LocationDisplay({ size, textSize }: { size: string; textSize?: string }) {
     if (!location) return null;
-    const fs = size;
     const ts = textSize ?? size;
+
+    const cityStyle: WithLSVars = {
+      "--ls-base": "1.5px",
+      "--ls-hover": "3px",
+      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+      fontSize: size,
+      color: "#241123",
+      fontWeight: 700,
+      opacity: 0.5,
+      textTransform: "uppercase",
+    };
+
+    // Plain version (no CSS custom props) for non-interactive spans
+    const cityPlainStyle: React.CSSProperties = {
+      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+      fontSize: size,
+      color: "#241123",
+      fontWeight: 700,
+      opacity: 0.5,
+      textTransform: "uppercase",
+    };
+
+    const onEnter = (e: React.MouseEvent<HTMLAnchorElement>) => {
+      e.currentTarget.style.color = "#6C00AF";
+      e.currentTarget.style.opacity = "1";
+    };
+    const onLeave = (e: React.MouseEvent<HTMLAnchorElement>) => {
+      e.currentTarget.style.color = "#241123";
+      e.currentTarget.style.opacity = "0.5";
+    };
 
     if (secondLocation) {
       return (
         <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
           {locationHref ? (
-            <Link href={locationHref} prefetch className="no-underline hover:no-underline inline-block"
-              style={cityLinkStyle(fs)}
+            <Link href={locationHref} prefetch
+              className="ls-hover no-underline hover:no-underline"
+              data-text={displayLocation ?? ""}
+              style={cityStyle}
               aria-label={`View artists based in ${displayLocation}`}
-              onMouseEnter={cityLinkHover}
-              onMouseLeave={cityLinkLeave}
+              onMouseEnter={onEnter}
+              onMouseLeave={onLeave}
             >{displayLocation?.toUpperCase()}</Link>
           ) : (
-            <span style={{ ...cityLinkStyle(fs), paddingRight: 0, transition: "none" }}>{displayLocation?.toUpperCase()}</span>
+            <span style={cityPlainStyle}>{displayLocation?.toUpperCase()}</span>
           )}
-          <span style={{ color: "#241123", opacity: 0.3, fontSize: fs, fontWeight: 300 }}>|</span>
+          <span style={{ color: "#241123", opacity: 0.3, fontSize: size, fontWeight: 200, lineHeight: 1 }}>|</span>
           {secondLocationHref ? (
-            <Link href={secondLocationHref} prefetch className="no-underline hover:no-underline inline-block"
-              style={cityLinkStyle(fs)}
+            <Link href={secondLocationHref} prefetch
+              className="ls-hover no-underline hover:no-underline"
+              data-text={displaySecondLocation ?? ""}
+              style={cityStyle}
               aria-label={`View artists based in ${displaySecondLocation}`}
-              onMouseEnter={cityLinkHover}
-              onMouseLeave={cityLinkLeave}
+              onMouseEnter={onEnter}
+              onMouseLeave={onLeave}
             >{displaySecondLocation?.toUpperCase()}</Link>
           ) : (
-            <span style={{ ...cityLinkStyle(fs), paddingRight: 0, transition: "none" }}>{displaySecondLocation?.toUpperCase()}</span>
+            <span style={cityPlainStyle}>{displaySecondLocation?.toUpperCase()}</span>
           )}
         </span>
       );
     }
 
+    // Single city — "Based in CITY"
     return (
       <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
         <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: ts, color: "#241123", fontWeight: 400, opacity: 0.4, letterSpacing: "0.5px" }}>
           Based in
         </span>
         {locationHref ? (
-          <Link href={locationHref} prefetch className="no-underline hover:no-underline inline-block"
-            style={cityLinkStyle(fs)}
+          <Link href={locationHref} prefetch
+            className="ls-hover no-underline hover:no-underline"
+            data-text={displayLocation ?? ""}
+            style={cityStyle}
             aria-label={`View artists based in ${displayLocation}`}
-            onMouseEnter={cityLinkHover}
-            onMouseLeave={cityLinkLeave}
+            onMouseEnter={onEnter}
+            onMouseLeave={onLeave}
           >{displayLocation?.toUpperCase()}</Link>
         ) : (
-          <span style={{ ...cityLinkStyle(fs), paddingRight: 0, transition: "none" }}>{displayLocation?.toUpperCase()}</span>
+          <span style={cityPlainStyle}>{displayLocation?.toUpperCase()}</span>
         )}
       </span>
     );
@@ -306,20 +321,20 @@ export default function MobileProfileHeader({
                     <Link
                       href={currentTitleHref}
                       prefetch
-                      className="no-underline hover:no-underline inline-block"
+                      className="ls-hover no-underline hover:no-underline"
+                      data-text={currentTitle}
                       style={{
+                        "--ls-base": "2px",
+                        "--ls-hover": "4.5px",
                         fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                         fontSize: "clamp(1rem, 4vw, 1.35rem)",
                         color: "#241123",
                         textTransform: "uppercase",
-                        letterSpacing: "2px",
                         fontWeight: 800,
                         lineHeight: 1.2,
-                        paddingRight: "0.75rem",
-                        transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease",
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.letterSpacing = "4px"; e.currentTarget.style.paddingRight = "0"; e.currentTarget.style.color = "#6C00AF"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.letterSpacing = "2px"; e.currentTarget.style.paddingRight = "0.75rem"; e.currentTarget.style.color = "#241123"; }}
+                      } as WithLSVars}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
                       aria-label={`View ${currentTitle}`}
                     >
                       {currentTitle}
@@ -342,20 +357,20 @@ export default function MobileProfileHeader({
                           <Link
                             href={href}
                             prefetch
-                            className="no-underline hover:no-underline inline-block"
+                            className="ls-hover no-underline hover:no-underline"
+                            data-text={label}
                             style={{
+                              "--ls-base": "2px",
+                              "--ls-hover": "3.5px",
                               fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                               fontSize: "clamp(0.7rem, 2.5vw, 0.82rem)",
                               color: "#ffcc00",
                               opacity: 0.75,
                               textTransform: "uppercase",
-                              letterSpacing: "2px",
                               fontWeight: 700,
-                              paddingRight: "0.35rem",
-                              transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease, opacity 0.2s ease",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.letterSpacing = "3px"; e.currentTarget.style.paddingRight = "0"; e.currentTarget.style.color = "#f23359"; e.currentTarget.style.opacity = "1"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.letterSpacing = "2px"; e.currentTarget.style.paddingRight = "0.35rem"; e.currentTarget.style.color = "#ffcc00"; e.currentTarget.style.opacity = "0.75"; }}
+                            } as WithLSVars}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = "#f23359"; e.currentTarget.style.opacity = "1"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = "#ffcc00"; e.currentTarget.style.opacity = "0.75"; }}
                             aria-label={`View ${label}`}
                           >
                             {label}
@@ -384,22 +399,22 @@ export default function MobileProfileHeader({
                           <Link
                             href={href}
                             prefetch
-                            className="no-underline hover:no-underline inline-block"
+                            className="ls-hover no-underline hover:no-underline"
+                            data-text={label}
                             style={{
+                              "--ls-base": "2px",
+                              "--ls-hover": "4.5px",
                               fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                               fontSize: "clamp(1rem, 4vw, 1.35rem)",
                               color: "#241123",
                               textTransform: "uppercase",
-                              letterSpacing: "2px",
                               fontWeight: 800,
                               opacity: 0.95,
                               whiteSpace: "nowrap",
-                              paddingRight: "0.75rem",
-                              transition: "letter-spacing 0.2s ease, padding-right 0.2s ease, color 0.2s ease",
                               cursor: "pointer",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.letterSpacing = "4px"; e.currentTarget.style.paddingRight = "0"; e.currentTarget.style.color = "#6C00AF"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.letterSpacing = "2px"; e.currentTarget.style.paddingRight = "0.75rem"; e.currentTarget.style.color = "#241123"; }}
+                            } as WithLSVars}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.95"; }}
                             aria-label={`View ${label}`}
                           >
                             {label}
