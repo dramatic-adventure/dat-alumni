@@ -30,9 +30,6 @@ interface DesktopProfileHeaderProps {
   isBiCoastal?: boolean;
 }
 
-// CSS custom properties for .ls-hover — TypeScript needs the cast
-type WithLSVars = React.CSSProperties & { "--ls-base"?: string; "--ls-hover"?: string };
-
 // Priority order for DAT role display (lower number = shown first).
 // Tier 1: actual DAT staff/company roles (from dramaticadventure.com/company)
 // Tier 2: general DAT participation roles (actor, playwright, etc.)
@@ -270,21 +267,9 @@ export default function DesktopProfileHeader({
   function LocationDisplay({ size }: { size: string }) {
     if (!location) return null;
 
-    // City link: .ls-hover handles letter-spacing with no layout shift.
-    // Only color + opacity change in JS handlers.
-    const cityStyle: WithLSVars = {
-      "--ls-base": "1.5px",
-      "--ls-hover": "2.2px",
-      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-      fontSize: size,
-      color: "#241123",
-      fontWeight: 700,
-      opacity: 0.5,
-      textTransform: "uppercase",
-    };
-
-    // Plain version (no CSS custom props) for non-interactive spans
-    const cityPlainStyle: React.CSSProperties = {
+    // Shared style for both interactive (Link) and plain (span) city display.
+    // .ls-hover on the Link handles the scaleX animation; span uses same style statically.
+    const cityStyle: React.CSSProperties = {
       fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
       fontSize: size,
       color: "#241123",
@@ -308,25 +293,23 @@ export default function DesktopProfileHeader({
           {locationHref ? (
             <Link href={locationHref} prefetch
               className="ls-hover no-underline hover:no-underline"
-              data-text={displayLocation ?? ""}
               style={cityStyle}
               aria-label={`View artists in ${displayLocation}`}
               onMouseEnter={onEnter} onMouseLeave={onLeave}
             >{displayLocation?.toUpperCase()}</Link>
           ) : (
-            <span style={cityPlainStyle}>{displayLocation?.toUpperCase()}</span>
+            <span style={cityStyle}>{displayLocation?.toUpperCase()}</span>
           )}
           <span style={{ color: "#241123", opacity: 0.25, fontSize: size, fontWeight: 200, lineHeight: 1 }}>|</span>
           {secondLocationHref ? (
             <Link href={secondLocationHref} prefetch
               className="ls-hover no-underline hover:no-underline"
-              data-text={displaySecondLocation ?? ""}
               style={cityStyle}
               aria-label={`View artists in ${displaySecondLocation}`}
               onMouseEnter={onEnter} onMouseLeave={onLeave}
             >{displaySecondLocation?.toUpperCase()}</Link>
           ) : (
-            <span style={cityPlainStyle}>{displaySecondLocation?.toUpperCase()}</span>
+            <span style={cityStyle}>{displaySecondLocation?.toUpperCase()}</span>
           )}
         </span>
       );
@@ -341,13 +324,12 @@ export default function DesktopProfileHeader({
         {locationHref ? (
           <Link href={locationHref} prefetch
             className="ls-hover no-underline hover:no-underline"
-            data-text={displayLocation ?? ""}
             style={cityStyle}
             aria-label={`View artists in ${displayLocation}`}
             onMouseEnter={onEnter} onMouseLeave={onLeave}
           >{displayLocation?.toUpperCase()}</Link>
         ) : (
-          <span style={cityPlainStyle}>{displayLocation?.toUpperCase()}</span>
+          <span style={cityStyle}>{displayLocation?.toUpperCase()}</span>
         )}
       </span>
     );
@@ -395,17 +377,14 @@ export default function DesktopProfileHeader({
                     {currentTitleHref ? (
                       <Link href={currentTitleHref} prefetch
                         className="ls-hover no-underline hover:no-underline"
-                        data-text={primaryCurrentTitle}
                         style={{
-                          "--ls-base": "2px",
-                          "--ls-hover": "3px",
                           fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                           fontSize: "1.7rem",
                           color: "#241123",
                           textTransform: "uppercase",
                           fontWeight: 700,
                           lineHeight: 1.15,
-                        } as WithLSVars}
+                        }}
                         onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
                         onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
                         aria-label={`View ${primaryCurrentTitle}`}
@@ -445,17 +424,14 @@ export default function DesktopProfileHeader({
                         </span>
                         <Link href={titleLinks[0].href} prefetch
                           className="ls-hover no-underline hover:no-underline"
-                          data-text={titleLinks[0].label}
                           style={{
-                            "--ls-base": "2px",
-                            "--ls-hover": "2.8px",
                             fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                             fontSize: "0.9rem",
                             color: "#ffcc00",
                             opacity: 0.75,
                             textTransform: "uppercase",
                             fontWeight: 700,
-                          } as WithLSVars}
+                          }}
                           onMouseEnter={(e) => { e.currentTarget.style.color = "#f23359"; e.currentTarget.style.opacity = "1"; }}
                           onMouseLeave={(e) => { e.currentTarget.style.color = "#ffcc00"; e.currentTarget.style.opacity = "0.75"; }}
                           aria-label={`View ${titleLinks[0].label}`}
@@ -475,17 +451,14 @@ export default function DesktopProfileHeader({
                         <span key={`${href}-${label}`} style={{ paddingLeft: "2.05rem" }}>
                           <Link href={href} prefetch
                             className="ls-hover no-underline hover:no-underline"
-                            data-text={label}
                             style={{
-                              "--ls-base": "2px",
-                              "--ls-hover": "2.8px",
                               fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                               fontSize: "0.9rem",
                               color: "#ffcc00",
                               opacity: 0.75,
                               textTransform: "uppercase",
                               fontWeight: 700,
-                            } as WithLSVars}
+                            }}
                             onMouseEnter={(e) => { e.currentTarget.style.color = "#f23359"; e.currentTarget.style.opacity = "1"; }}
                             onMouseLeave={(e) => { e.currentTarget.style.color = "#ffcc00"; e.currentTarget.style.opacity = "0.75"; }}
                             aria-label={`View ${label}`}
@@ -502,17 +475,14 @@ export default function DesktopProfileHeader({
                     {href ? (
                       <Link href={href} prefetch
                         className="ls-hover no-underline hover:no-underline"
-                        data-text={label}
                         style={{
-                          "--ls-base": "2px",
-                          "--ls-hover": "3px",
                           fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                           fontSize: "1.7rem",
                           color: "#241123",
                           textTransform: "uppercase",
                           fontWeight: 700,
                           lineHeight: 1.15,
-                        } as WithLSVars}
+                        }}
                         onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
                         onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
                         aria-label={`View ${label}`}
@@ -541,17 +511,14 @@ export default function DesktopProfileHeader({
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "0.55rem" }}>
                       <Link href={titleLinks[0].href} prefetch
                         className="ls-hover no-underline hover:no-underline"
-                        data-text={titleLinks[0].label}
                         style={{
-                          "--ls-base": "2px",
-                          "--ls-hover": "3px",
                           fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                           fontSize: "1.7rem",
                           color: "#241123",
                           textTransform: "uppercase",
                           fontWeight: 700,
                           opacity: 0.9,
-                        } as WithLSVars}
+                        }}
                         onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
                         onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.9"; }}
                         aria-label={`View ${titleLinks[0].label}`}
@@ -570,17 +537,14 @@ export default function DesktopProfileHeader({
                     {rolesExpanded && titleLinks.slice(1).map(({ label, href }) => (
                       <Link key={`${href}-${label}`} href={href} prefetch
                         className="ls-hover no-underline hover:no-underline"
-                        data-text={label}
                         style={{
-                          "--ls-base": "2px",
-                          "--ls-hover": "3px",
                           fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                           fontSize: "1.7rem",
                           color: "#241123",
                           textTransform: "uppercase",
                           fontWeight: 700,
                           opacity: 0.9,
-                        } as WithLSVars}
+                        }}
                         onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
                         onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.9"; }}
                         aria-label={`View ${label}`}
