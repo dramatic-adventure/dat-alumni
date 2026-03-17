@@ -267,10 +267,10 @@ export default function TheatreIndexPage() {
                   style={{
                     fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                     fontSize: "0.62rem",
-                    fontWeight: 700,
+                    fontWeight: 800,
                     textTransform: "uppercase",
                     letterSpacing: "0.2em",
-                    color: C.inkMid,
+                    color: C.ink,
                     margin: 0,
                   }}
                 >
@@ -297,14 +297,14 @@ export default function TheatreIndexPage() {
                       style={{
                         fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                         fontSize: "0.78rem",
-                        color: C.inkMid,
+                        color: C.ink,
                         margin: 0,
                         lineHeight: 1.5,
                       }}
                     >
                       {event}
                       {venue && (
-                        <span style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: C.inkLight, marginTop: "0.2rem" }}>
+                        <span style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: C.inkMid, marginTop: "0.2rem" }}>
                           {venue}
                         </span>
                       )}
@@ -339,11 +339,11 @@ export default function TheatreIndexPage() {
                 className="theatre-text-link"
                 style={{
                   fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                  fontSize: "0.65rem",
-                  fontWeight: 700,
+                  fontSize: "0.7rem",
+                  fontWeight: 800,
                   textTransform: "uppercase",
-                  letterSpacing: "0.18em",
-                  color: C.inkMid,
+                  letterSpacing: "0.16em",
+                  color: C.ink,
                   textDecoration: "none",
                 }}
               >
@@ -413,14 +413,22 @@ export default function TheatreIndexPage() {
       <section style={{ padding: "4rem 0 5rem" }}>
         <div style={{ width: "90vw", maxWidth: "1120px", margin: "0 auto" }}>
 
-          <div style={{ marginBottom: "3rem" }}>
-            <p style={eyebrowOnKraft}>The Full Archive</p>
+          <div
+            style={{
+              marginBottom: "3rem",
+              backgroundColor: "rgba(255,255,255,0.35)",
+              borderRadius: "10px",
+              padding: "1.1rem 1.4rem",
+              display: "inline-block",
+            }}
+          >
+            <p style={{ ...eyebrowOnKraft, margin: "0 0 0.4rem" }}>The Full Archive</p>
             <h2
               style={{
                 fontFamily: "var(--font-anton), system-ui, sans-serif",
                 fontSize: "clamp(2.2rem, 5vw, 3.6rem)",
                 textTransform: "uppercase",
-                color: C.purple,
+                color: C.ink,
                 margin: 0,
                 lineHeight: 1.0,
               }}
@@ -437,7 +445,7 @@ export default function TheatreIndexPage() {
 
               return (
                 <div key={sn} id={`season-${sn}`}>
-                  {/* Season chapter heading */}
+                  {/* Season chapter heading — light scrim so text reads on kraft */}
                   <div
                     style={{
                       display: "flex",
@@ -462,7 +470,15 @@ export default function TheatreIndexPage() {
                       {sn}
                     </span>
 
-                    <div style={{ minWidth: 0 }}>
+                    {/* Text block on its own scrim so small text survives the kraft */}
+                    <div
+                      style={{
+                        minWidth: 0,
+                        backgroundColor: "rgba(255,255,255,0.32)",
+                        borderRadius: "8px",
+                        padding: "0.5rem 0.85rem",
+                      }}
+                    >
                       <Link
                         href={`/season/${sn}`}
                         className="theatre-season-chapter-link"
@@ -486,11 +502,11 @@ export default function TheatreIndexPage() {
                         <span
                           style={{
                             fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                            fontSize: "0.6rem",
-                            fontWeight: 700,
+                            fontSize: "0.65rem",
+                            fontWeight: 800,
                             textTransform: "uppercase",
                             letterSpacing: "0.14em",
-                            color: C.inkMid,
+                            color: C.ink,
                           }}
                         >
                           Full season ↗
@@ -500,11 +516,11 @@ export default function TheatreIndexPage() {
                       <p
                         style={{
                           fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                          fontSize: "0.65rem",
-                          fontWeight: 600,
+                          fontSize: "0.68rem",
+                          fontWeight: 700,
                           textTransform: "uppercase",
-                          letterSpacing: "0.12em",
-                          color: C.inkMid,
+                          letterSpacing: "0.1em",
+                          color: C.ink,
                           margin: "0.4rem 0 0",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -577,9 +593,9 @@ export default function TheatreIndexPage() {
             <p
               style={{
                 fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                fontSize: "0.6rem",
-                fontWeight: 600,
-                color: C.inkMid,
+                fontSize: "0.65rem",
+                fontWeight: 800,
+                color: C.ink,
                 margin: 0,
               }}
             >
@@ -664,12 +680,12 @@ const eyebrowOnDark: React.CSSProperties = {
   margin: 0,
 };
 
-// Eyebrow directly on the kraft paper — SOLID ink, no opacity dilution
+// Eyebrow directly on the kraft paper — max weight, max contrast
 const eyebrowOnKraft: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-  fontSize: "0.68rem",
-  fontWeight: 700,
-  letterSpacing: "0.26em",
+  fontSize: "0.72rem",
+  fontWeight: 800,
+  letterSpacing: "0.22em",
   textTransform: "uppercase",
   color: "#241123",
   margin: "0 0 1.1rem",
@@ -751,10 +767,10 @@ function ProductionCard({ p }: { p: Production }) {
             style={{
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
               fontSize: "0.6rem",
-              fontWeight: 700,
+              fontWeight: 800,
               textTransform: "uppercase",
               letterSpacing: "0.14em",
-              color: C.inkMid,
+              color: C.ink,
             }}
           >
             {p.year}{p.season ? ` · S${p.season}` : ""}
@@ -763,8 +779,8 @@ function ProductionCard({ p }: { p: Production }) {
             style={{
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
               fontSize: "0.56rem",
-              fontWeight: 500,
-              color: C.inkLight,
+              fontWeight: 600,
+              color: C.inkMid,
               textAlign: "right",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -796,7 +812,8 @@ function ProductionCard({ p }: { p: Production }) {
             style={{
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
               fontSize: "0.6rem",
-              color: C.inkMid,
+              fontWeight: 500,
+              color: C.ink,
               margin: 0,
               lineHeight: 1.45,
               overflow: "hidden",
@@ -818,7 +835,7 @@ function ProductionCard({ p }: { p: Production }) {
               fontWeight: 700,
               textTransform: "uppercase",
               letterSpacing: "0.1em",
-              color: C.inkLight,
+              color: C.inkMid,
               margin: "auto 0 0",
               paddingTop: "0.4rem",
             }}
