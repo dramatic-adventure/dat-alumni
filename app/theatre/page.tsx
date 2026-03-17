@@ -150,7 +150,7 @@ export default function TheatreIndexPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
               backgroundColor: "rgba(36, 17, 35, 0.16)",
               borderRadius: "18px",
               border: `1px solid rgba(36,17,35,0.22)`,
@@ -159,25 +159,27 @@ export default function TheatreIndexPage() {
             }}
           >
             {[
-              { n: String(seasonNums.length),        label: "Seasons",        sub: `${earliestYear}–${latestYear}` },
-              { n: String(allProductions.length),    label: "Productions",    sub: "original works & adaptations" },
-              { n: `${uniqueArtists.size}+`,         label: "Alumni Artists", sub: "directors, actors, designers" },
-              { n: String(latestYear - earliestYear),label: "Years of Work",  sub: `${earliestYear} to ${latestYear}` },
+              { n: String(seasonNums.length),         label: "Seasons",        sub: `${earliestYear}–${latestYear}` },
+              { n: String(allProductions.length),     label: "Productions",    sub: "original works & adaptations" },
+              { n: String(uniqueArtists.size),        label: "Alumni Artists", sub: "directors, actors & designers" },
+              { n: String(latestYear - earliestYear), label: "Years of Work",  sub: `${earliestYear} to ${latestYear}` },
             ].map(({ n, label, sub }, i, arr) => (
               <div
                 key={label}
                 style={{
-                  padding: "1.5rem 1.75rem",
+                  padding: "1.75rem 2rem",
                   borderRight: i < arr.length - 1 ? `1px solid rgba(36,17,35,0.12)` : "none",
+                  textAlign: "center",
                 }}
               >
                 <div
                   style={{
                     fontFamily: "var(--font-anton), system-ui, sans-serif",
-                    fontSize: "clamp(2rem, 5vw, 2.9rem)",
+                    fontSize: "clamp(2.8rem, 6vw, 4rem)",
                     color: C.gold,
                     lineHeight: 1,
-                    marginBottom: "0.3rem",
+                    marginBottom: "0.35rem",
+                    letterSpacing: "-0.01em",
                   }}
                 >
                   {n}
@@ -185,10 +187,10 @@ export default function TheatreIndexPage() {
                 <div
                   style={{
                     fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                    fontSize: "0.72rem",
+                    fontSize: "0.95rem",
                     fontWeight: 700,
                     textTransform: "uppercase",
-                    letterSpacing: "0.14em",
+                    letterSpacing: "0.1em",
                     color: C.ink,
                   }}
                 >
@@ -197,10 +199,11 @@ export default function TheatreIndexPage() {
                 <div
                   style={{
                     fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                    fontSize: "0.63rem",
-                    fontWeight: 600,
+                    fontSize: "0.78rem",
+                    fontWeight: 500,
                     color: C.inkMid,
-                    marginTop: "0.2rem",
+                    marginTop: "0.25rem",
+                    lineHeight: 1.4,
                   }}
                 >
                   {sub}
@@ -267,10 +270,10 @@ export default function TheatreIndexPage() {
                 <p
                   style={{
                     fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                    fontSize: "0.62rem",
+                    fontSize: "0.78rem",
                     fontWeight: 800,
                     textTransform: "uppercase",
-                    letterSpacing: "0.2em",
+                    letterSpacing: "0.18em",
                     color: C.ink,
                     margin: 0,
                   }}
@@ -319,13 +322,13 @@ export default function TheatreIndexPage() {
                     alignSelf: "flex-start",
                     marginTop: "0.5rem",
                     fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                    fontSize: "0.62rem",
+                    fontSize: "0.75rem",
                     fontWeight: 800,
                     textTransform: "uppercase",
-                    letterSpacing: "0.18em",
+                    letterSpacing: "0.16em",
                     color: C.ink,
                     backgroundColor: C.gold,
-                    padding: "0.45em 1.1em",
+                    padding: "0.5em 1.2em",
                     borderRadius: "6px",
                   }}
                 >
@@ -371,10 +374,10 @@ export default function TheatreIndexPage() {
             <span
               style={{
                 fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                fontSize: "0.6rem",
+                fontSize: "0.72rem",
                 fontWeight: 700,
                 textTransform: "uppercase",
-                letterSpacing: "0.22em",
+                letterSpacing: "0.2em",
                 color: "#9c7ab0",
                 marginRight: "0.6rem",
                 flexShrink: 0,
@@ -389,13 +392,13 @@ export default function TheatreIndexPage() {
                 className="theatre-nav-pill"
                 style={{
                   fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                  fontSize: "0.62rem",
+                  fontSize: "0.72rem",
                   fontWeight: 700,
                   textTransform: "uppercase",
-                  letterSpacing: "0.12em",
+                  letterSpacing: "0.1em",
                   color: C.white,
                   textDecoration: "none",
-                  padding: "0.35em 0.8em",
+                  padding: "0.4em 0.9em",
                   borderRadius: "6px",
                   flexShrink: 0,
                   border: "1px solid rgba(255,255,255,0.15)",
@@ -446,91 +449,95 @@ export default function TheatreIndexPage() {
 
               return (
                 <div key={sn} id={`season-${sn}`}>
-                  {/* Season chapter heading — light scrim so text reads on kraft */}
+                  {/* Season chapter heading */}
                   <div
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "1.25rem",
                       marginBottom: "1.5rem",
-                      paddingBottom: "1rem",
+                      paddingBottom: "1.25rem",
                       borderBottom: `2.5px solid ${C.divider}`,
                     }}
                   >
+                    {/* Row 1: ghost number */}
                     <span
                       aria-hidden
                       style={{
                         fontFamily: "var(--font-anton), system-ui, sans-serif",
-                        fontSize: "clamp(4rem, 9vw, 6rem)",
-                        color: "rgba(36,17,35,0.13)",
-                        lineHeight: 1,
+                        fontSize: "clamp(4.5rem, 10vw, 7rem)",
+                        color: "rgba(36,17,35,0.11)",
+                        lineHeight: 0.85,
                         userSelect: "none",
-                        flexShrink: 0,
+                        display: "block",
+                        marginBottom: "0.5rem",
                       }}
                     >
                       {sn}
                     </span>
 
-                    {/* Text block on its own scrim so small text survives the kraft */}
+                    {/* Row 2: full-width white scrim strip */}
                     <div
                       style={{
-                        flex: 1,
-                        minWidth: 0,
-                        backgroundColor: "rgba(255,255,255,0.32)",
-                        borderRadius: "8px",
-                        padding: "0.5rem 0.85rem",
+                        backgroundColor: "rgba(255,255,255,0.35)",
+                        borderRadius: "10px",
+                        padding: "0.7rem 1.1rem",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "1rem",
+                        flexWrap: "wrap",
                       }}
                     >
-                      <Link
-                        href={`/season/${sn}`}
-                        className="theatre-season-chapter-link"
-                        style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.75rem" }}
-                      >
+                      {/* Left: season pill + year · location */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
                         <span
                           style={{
                             fontFamily: "var(--font-anton), system-ui, sans-serif",
-                            fontSize: "1rem",
+                            fontSize: "1.05rem",
                             textTransform: "uppercase",
-                            letterSpacing: "0.2em",
+                            letterSpacing: "0.18em",
                             color: C.ink,
                             backgroundColor: C.gold,
-                            padding: "0.15em 0.6em",
+                            padding: "0.18em 0.65em",
                             borderRadius: "0.3em",
                             display: "inline-block",
+                            flexShrink: 0,
                           }}
                         >
                           Season {sn}
                         </span>
                         <span
                           style={{
-                            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                            fontSize: "0.65rem",
-                            fontWeight: 800,
+                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                            fontSize: "0.9rem",
+                            fontWeight: 700,
                             textTransform: "uppercase",
-                            letterSpacing: "0.14em",
+                            letterSpacing: "0.08em",
                             color: C.ink,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
                           }}
                         >
-                          Full season ↗
+                          {year} · {locs}
                         </span>
-                      </Link>
+                      </div>
 
-                      <p
+                      {/* Right: full season link */}
+                      <Link
+                        href={`/season/${sn}`}
+                        className="theatre-season-chapter-link"
                         style={{
+                          textDecoration: "none",
                           fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                          fontSize: "0.68rem",
-                          fontWeight: 700,
+                          fontSize: "0.8rem",
+                          fontWeight: 800,
                           textTransform: "uppercase",
-                          letterSpacing: "0.1em",
+                          letterSpacing: "0.16em",
                           color: C.ink,
-                          margin: "0.4rem 0 0",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
+                          flexShrink: 0,
                         }}
                       >
-                        {year} · {locs}
-                      </p>
+                        Full Season ↗
+                      </Link>
                     </div>
                   </div>
 
@@ -576,33 +583,22 @@ export default function TheatreIndexPage() {
                   style={{
                     display: "inline-block",
                     fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                    fontSize: "0.68rem",
+                    fontSize: "0.8rem",
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.14em",
-                    color: C.ink,
+                    color: "#f2f2f2",
                     textDecoration: "none",
-                    border: `1.5px solid ${C.divider}`,
-                    padding: "0.55em 1.2em",
+                    padding: "0.6em 1.4em",
                     borderRadius: "99px",
-                    backgroundColor: CARD_BG,
+                    backgroundColor: "#2493A9",
+                    border: "none",
                   }}
                 >
                   {label}
                 </Link>
               ))}
             </div>
-            <p
-              style={{
-                fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                fontSize: "0.65rem",
-                fontWeight: 800,
-                color: C.ink,
-                margin: 0,
-              }}
-            >
-              {earliestYear}–{latestYear} · {allProductions.length} productions · {uniqueArtists.size}+ artists
-            </p>
           </div>
         </div>
       </section>
@@ -639,11 +635,11 @@ export default function TheatreIndexPage() {
           color: #530087 !important;
         }
         .theatre-bottom-link {
-          transition: box-shadow 0.2s ease, border-color 0.2s ease;
+          transition: box-shadow 0.2s ease, filter 0.2s ease;
         }
         .theatre-bottom-link:hover {
-          box-shadow: 0 3px 12px rgba(36,17,35,0.15);
-          border-color: rgba(36,17,35,0.55) !important;
+          box-shadow: 0 4px 16px rgba(36,73,169,0.3);
+          filter: brightness(1.1);
         }
         .theatre-prod-card {
           box-shadow: 0 2px 10px rgba(36,17,35,0.15), 0 1px 3px rgba(36,17,35,0.1);
@@ -674,9 +670,9 @@ export default function TheatreIndexPage() {
 // Eyebrow on the dark stat box / hero (white text)
 const eyebrowOnDark: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-  fontSize: "0.68rem",
+  fontSize: "0.8rem",
   fontWeight: 700,
-  letterSpacing: "0.26em",
+  letterSpacing: "0.24em",
   textTransform: "uppercase",
   color: "#FFCC00",
   margin: 0,
@@ -685,9 +681,9 @@ const eyebrowOnDark: React.CSSProperties = {
 // Eyebrow directly on the kraft paper — max weight, max contrast
 const eyebrowOnKraft: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-  fontSize: "0.72rem",
+  fontSize: "0.85rem",
   fontWeight: 800,
-  letterSpacing: "0.22em",
+  letterSpacing: "0.2em",
   textTransform: "uppercase",
   color: "#241123",
   margin: "0 0 1.1rem",
@@ -768,10 +764,10 @@ function ProductionCard({ p }: { p: Production }) {
           <span
             style={{
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: "0.6rem",
+              fontSize: "0.72rem",
               fontWeight: 800,
               textTransform: "uppercase",
-              letterSpacing: "0.14em",
+              letterSpacing: "0.12em",
               color: C.ink,
             }}
           >
@@ -780,7 +776,7 @@ function ProductionCard({ p }: { p: Production }) {
           <span
             style={{
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: "0.56rem",
+              fontSize: "0.68rem",
               fontWeight: 600,
               color: C.inkMid,
               textAlign: "right",
@@ -798,10 +794,10 @@ function ProductionCard({ p }: { p: Production }) {
         <h3
           style={{
             fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-            fontSize: "0.9rem",
+            fontSize: "1.05rem",
             fontWeight: 700,
             color: C.ink,
-            lineHeight: 1.3,
+            lineHeight: 1.25,
             margin: 0,
           }}
         >
@@ -813,7 +809,7 @@ function ProductionCard({ p }: { p: Production }) {
           <p
             style={{
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: "0.6rem",
+              fontSize: "0.72rem",
               fontWeight: 500,
               color: C.ink,
               margin: 0,
@@ -833,7 +829,7 @@ function ProductionCard({ p }: { p: Production }) {
           <p
             style={{
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: "0.58rem",
+              fontSize: "0.68rem",
               fontWeight: 700,
               textTransform: "uppercase",
               letterSpacing: "0.1em",
