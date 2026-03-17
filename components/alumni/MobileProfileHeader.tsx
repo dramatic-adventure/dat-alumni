@@ -394,7 +394,7 @@ export default function MobileProfileHeader({
                       flexDirection: rolesExpanded ? "column" : "row",
                       alignItems: rolesExpanded ? "flex-start" : "center",
                       gap: rolesExpanded ? "0.25rem" : "0.45rem",
-                      backgroundColor: "rgba(36, 17, 35, 0.7)",
+                      backgroundColor: "rgba(36, 17, 35, 0.5)",
                       padding: "4px 11px 4px 9px",
                       borderRadius: "4px",
                       flexShrink: 0,

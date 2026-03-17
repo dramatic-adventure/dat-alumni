@@ -412,7 +412,7 @@ export default function DesktopProfileHeader({
                       flexDirection: rolesExpanded ? "column" : "row",
                       alignItems: rolesExpanded ? "flex-start" : "center",
                       gap: rolesExpanded ? "0.28rem" : "0.55rem",
-                      backgroundColor: "rgba(36, 17, 35, 0.7)",
+                      backgroundColor: "rgba(36, 17, 35, 0.5)",
                       padding: "5px 13px 5px 11px",
                       borderRadius: "4px",
                       flexShrink: 0,
