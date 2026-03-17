@@ -412,9 +412,16 @@ export default function MobileProfileHeader({
                   </div>
                 ))}
 
-                {/* DAT pill — always below all currentTitle rows */}
+                {/* Location row — sits between titles and DAT pill */}
+                {location && (
+                  <div style={{ marginTop: "0.6rem", display: "flex", justifyContent: "center" }}>
+                    <LocationDisplay size="clamp(0.7rem, 2.5vw, 0.85rem)" textSize="clamp(0.65rem, 2.5vw, 0.8rem)" />
+                  </div>
+                )}
+
+                {/* DAT pill — closing tag, always last */}
                 {titleLinks.length > 0 && (
-                  <div style={{ marginTop: "0.35rem", display: "flex", justifyContent: "center" }}>
+                  <div style={{ marginTop: "0.6rem", display: "flex", justifyContent: "center" }}>
                     <span style={{
                       display: "inline-flex",
                       flexDirection: rolesExpanded ? "column" : "row",
@@ -427,7 +434,7 @@ export default function MobileProfileHeader({
                     }}>
                       {/* Always-visible row: DAT + primary role + toggle */}
                       <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
-                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.72rem", letterSpacing: "3.5px", fontWeight: 900, color: "#C49200", textTransform: "uppercase" }}>
+                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.72rem", letterSpacing: "3.5px", fontWeight: 900, color: "#ffcc00", textTransform: "uppercase" }}>
                           DAT
                         </span>
                         <Link
@@ -482,13 +489,6 @@ export default function MobileProfileHeader({
                         </span>
                       ))}
                     </span>
-                  </div>
-                )}
-
-                {/* Location row */}
-                {location && (
-                  <div style={{ marginTop: "0.45rem", display: "flex", justifyContent: "center" }}>
-                    <LocationDisplay size="clamp(0.7rem, 2.5vw, 0.85rem)" textSize="clamp(0.65rem, 2.5vw, 0.8rem)" />
                   </div>
                 )}
               </>

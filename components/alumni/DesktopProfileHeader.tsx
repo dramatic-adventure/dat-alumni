@@ -429,9 +429,16 @@ export default function DesktopProfileHeader({
                   </div>
                 ))}
 
-                {/* DAT pill — always below all currentTitle rows */}
+                {/* Location row — sits between titles and DAT pill */}
+                {location && (
+                  <div style={{ marginTop: "0.65rem" }}>
+                    <LocationDisplay size="1.05rem" />
+                  </div>
+                )}
+
+                {/* DAT pill — closing tag, always last */}
                 {titleLinks.length > 0 && (
-                  <div style={{ marginTop: "0.35rem" }}>
+                  <div style={{ marginTop: "0.65rem" }}>
                     <span style={{
                       display: "inline-flex",
                       flexDirection: rolesExpanded ? "column" : "row",
@@ -444,7 +451,7 @@ export default function DesktopProfileHeader({
                     }}>
                       {/* Always-visible row: DAT + primary role + toggle */}
                       <span style={{ display: "inline-flex", alignItems: "center", gap: "0.55rem" }}>
-                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.82rem", letterSpacing: "3.5px", fontWeight: 900, color: "#C49200", textTransform: "uppercase" }}>
+                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.82rem", letterSpacing: "3.5px", fontWeight: 900, color: "#ffcc00", textTransform: "uppercase" }}>
                           DAT
                         </span>
                         <Link href={titleLinks[0].href} prefetch
@@ -491,13 +498,6 @@ export default function DesktopProfileHeader({
                         </span>
                       ))}
                     </span>
-                  </div>
-                )}
-
-                {/* Location row */}
-                {location && (
-                  <div style={{ marginTop: "0.5rem" }}>
-                    <LocationDisplay size="1.05rem" />
                   </div>
                 )}
               </>
