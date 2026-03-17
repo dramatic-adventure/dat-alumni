@@ -400,9 +400,11 @@ export default function DesktopProfileHeader({
                     {extraCurrentTitles.length > 0 && (
                       <button
                         onClick={(e) => { e.preventDefault(); setCurrentTitlesExpanded((r) => !r); }}
-                        style={{ background: "none", border: "none", cursor: "pointer", color: "#241123", opacity: currentTitlesExpanded ? 0.5 : 0.3, fontSize: "1rem", fontWeight: 900, padding: 0, lineHeight: 1, fontFamily: "var(--font-dm-sans), system-ui, sans-serif" }}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "#241123", opacity: currentTitlesExpanded ? 0.55 : 0.35, fontSize: "1.5rem", fontWeight: 900, padding: 0, lineHeight: 1, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.15s ease, opacity 0.15s ease" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = currentTitlesExpanded ? "0.55" : "0.35"; }}
                         aria-label={currentTitlesExpanded ? "Collapse titles" : "Show more titles"}
-                      >{currentTitlesExpanded ? "×" : "+"}</button>
+                      >{currentTitlesExpanded ? "−" : "+"}</button>
                     )}
                   </span>
 
@@ -443,9 +445,11 @@ export default function DesktopProfileHeader({
                         {titleLinks.length > 1 && (
                           <button
                             onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
-                            style={{ background: "none", border: "none", cursor: "pointer", color: "#ffcc00", opacity: rolesExpanded ? 0.65 : 0.4, fontSize: "0.78rem", fontWeight: 900, padding: 0, lineHeight: 1, fontFamily: "var(--font-dm-sans), system-ui, sans-serif" }}
+                            style={{ background: "none", border: "none", cursor: "pointer", color: "#ffcc00", opacity: rolesExpanded ? 0.75 : 0.45, fontSize: "1.1rem", fontWeight: 900, padding: 0, lineHeight: 1, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.15s ease, opacity 0.15s ease" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = "#f23359"; e.currentTarget.style.opacity = "1"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = "#ffcc00"; e.currentTarget.style.opacity = rolesExpanded ? "0.75" : "0.45"; }}
                             aria-label={rolesExpanded ? "Collapse roles" : "Show more roles"}
-                          >{rolesExpanded ? "×" : "+"}</button>
+                          >{rolesExpanded ? "−" : "+"}</button>
                         )}
                       </span>
                       {/* Extra roles — revealed on expand */}
@@ -537,9 +541,11 @@ export default function DesktopProfileHeader({
                       {titleLinks.length > 1 && (
                         <button
                           onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
-                          style={{ background: "none", border: "none", cursor: "pointer", color: "#241123", opacity: rolesExpanded ? 0.5 : 0.3, fontSize: "1rem", fontWeight: 900, padding: 0, lineHeight: 1, fontFamily: "var(--font-dm-sans), system-ui, sans-serif" }}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: "#241123", opacity: rolesExpanded ? 0.55 : 0.35, fontSize: "1.5rem", fontWeight: 900, padding: 0, lineHeight: 1, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.15s ease, opacity 0.15s ease" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = rolesExpanded ? "0.55" : "0.35"; }}
                           aria-label={rolesExpanded ? "Collapse roles" : "Show more roles"}
-                        >{rolesExpanded ? "×" : "+"}</button>
+                        >{rolesExpanded ? "−" : "+"}</button>
                       )}
                     </span>
                     {/* Extra roles revealed on expand */}
