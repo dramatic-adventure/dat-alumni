@@ -23,6 +23,9 @@ interface MobileProfileHeaderProps {
   publicEmail?: string;
   website?: string;
   socials?: string[];
+  currentTitle?: string;
+  secondLocation?: string;
+  isBiCoastal?: boolean;
 }
 
 export default function MobileProfileHeader({
@@ -36,6 +39,9 @@ export default function MobileProfileHeader({
   publicEmail,
   website,
   socials,
+  currentTitle,
+  secondLocation,
+  isBiCoastal,
 }: MobileProfileHeaderProps) {
 
   const fallbackImage = "/images/default-headshot.png";
@@ -189,6 +195,9 @@ export default function MobileProfileHeader({
 
   const locationHref = location ? getLocationHrefForToken(location) : null;
 
+  // Multi-city: show "City1 · City2" when a second location is present
+  const displayLocation = secondLocation ? `${location} · ${secondLocation}` : location;
+
   return (
     <div ref={headerRef} style={{ backgroundColor: "#C39B6C", position: "relative" }}>
       {hasContactInfo && (
@@ -284,143 +293,154 @@ export default function MobileProfileHeader({
       >
         <NameStack firstName={firstName} lastName={lastName} containerWidth={320} gapRem={0.6} />
 
-        {(allRoles.length > 0 || location) && (
+        {(allRoles.length > 0 || currentTitle || location) && (
           <div
-            className="flex flex-wrap justify-center items-center gap-x-3 mt-2"
             style={{ marginBottom: "2rem", textAlign: "center", wordBreak: "break-word" }}
           >
-            {/* Titles */}
+            {/* Row 1: DAT role links */}
             {titleLinks.length > 0 && (
-              <span className="flex items-center flex-wrap justify-center">
-                {titleLinks.map(({ label, href }, idx) => (
-                  <span key={`${href}-${label}`} className="flex items-center">
-                    <Link
-                      href={href}
-                      prefetch
-                      className="no-underline hover:no-underline transition-all duration-200 inline-block"
-                      style={{
-                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                        fontSize: "clamp(1rem, 4vw, 1.35rem)",
-                        color: "#241123",
-                        textTransform: "uppercase",
-                        letterSpacing: "2px",
-                        fontWeight: 800,
-                        opacity: 0.95,
-                        whiteSpace: "nowrap",
-                        transformOrigin: "left center",
-                        transition: "transform 0.2s ease, color 0.2s ease",
-                        cursor: "pointer",
-                      }}
+              <div className="flex flex-wrap justify-center items-center gap-x-3 mt-2">
+                <span className="flex items-center flex-wrap justify-center">
+                  {titleLinks.map(({ label, href }, idx) => (
+                    <span key={`${href}-${label}`} className="flex items-center">
+                      <Link
+                        href={href}
+                        prefetch
+                        className="no-underline hover:no-underline transition-all duration-200 inline-block"
+                        style={{
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                          color: "#241123",
+                          textTransform: "uppercase",
+                          letterSpacing: "2px",
+                          fontWeight: 800,
+                          opacity: 0.95,
+                          whiteSpace: "nowrap",
+                          transformOrigin: "left center",
+                          transition: "transform 0.2s ease, color 0.2s ease",
+                          cursor: "pointer",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "scaleX(1.05)";
+                          e.currentTarget.style.color = "#6C00AF";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "scaleX(1)";
+                          e.currentTarget.style.color = "#241123";
+                        }}
+                        aria-label={`View ${label}`}
+                      >
+                        {label}
+                      </Link>
+                      {idx < titleLinks.length - 1 && (
+                        <span
+                          style={{
+                            fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                            color: "#241123",
+                            opacity: 0.7,
+                            margin: "0 0.5rem",
+                            fontWeight: 400,
+                          }}
+                          aria-hidden="true"
+                        >
+                          –
+                        </span>
+                      )}
+                    </span>
+                  ))}
+                </span>
+              </div>
+            )}
+
+            {/* Row 2: Current professional title (outside DAT) */}
+            {currentTitle && (
+              <div
+                style={{
+                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                  fontSize: "clamp(0.85rem, 3.5vw, 1.05rem)",
+                  color: "#241123",
+                  textTransform: "uppercase",
+                  letterSpacing: "2px",
+                  fontWeight: 600,
+                  opacity: 0.65,
+                  marginTop: "0.3rem",
+                  textAlign: "center",
+                }}
+              >
+                {currentTitle}
+              </div>
+            )}
+
+            {/* Row 3: Location */}
+            {location && (
+              <div
+                className="flex justify-center mt-2"
+              >
+                {locationHref ? (
+                  <Link
+                    href={locationHref}
+                    prefetch
+                    className="no-underline hover:no-underline transition-all duration-200"
+                    style={{
+                      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                      fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
+                      fontWeight: 900,
+                      letterSpacing: "2px",
+                      opacity: 0.5,
+                      display: "inline-block",
+                      cursor: "pointer",
+                      transformOrigin: "left center",
+                      transition: "transform 0.2s ease, color 0.2s ease, opacity 0.2s ease",
+                      color: "#241123",
+                    }}
+                    aria-label={`View artists based in ${location}`}
+                  >
+                    <span
                       onMouseEnter={(e) => {
                         e.currentTarget.style.transform = "scaleX(1.05)";
-                        e.currentTarget.style.color = "#6C00AF";
+                        (e.currentTarget.parentElement as HTMLElement).style.color = "#6C00AF";
+                        (e.currentTarget.parentElement as HTMLElement).style.opacity = "1";
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.transform = "scaleX(1)";
-                        e.currentTarget.style.color = "#241123";
+                        (e.currentTarget.parentElement as HTMLElement).style.color = "#241123";
+                        (e.currentTarget.parentElement as HTMLElement).style.opacity = "0.5";
                       }}
-                      aria-label={`View ${label}`}
+                      style={{ display: "inline-block" }}
                     >
-                      {label}
-                    </Link>
-                    {idx < titleLinks.length - 1 && (
-                      <span
-                        style={{
-                          fontSize: "clamp(1rem, 4vw, 1.35rem)",
-                          color: "#241123",
-                          opacity: 0.7,
-                          margin: "0 0.5rem",
-                          fontWeight: 400,
-                        }}
-                        aria-hidden="true"
-                      >
-                        –
-                      </span>
-                    )}
-                  </span>
-                ))}
-              </span>
-            )}
-
-            {titleLinks.length > 0 && location && (
-              <span
-                style={{
-                  fontSize: "1rem",
-                  color: "#241123",
-                  padding: "0 10px",
-                  opacity: 0.5,
-                }}
-                aria-hidden="true"
-              >
-                •
-              </span>
-            )}
-
-            {/* Location */}
-            {location &&
-              (locationHref ? (
-                <Link
-                  href={locationHref}
-                  prefetch
-                  className="no-underline hover:no-underline transition-all duration-200"
-                  style={{
-                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                    fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
-                    fontWeight: 900,
-                    letterSpacing: "2px",
-                    opacity: 0.5,
-                    display: "inline-block",
-                    cursor: "pointer",
-                    transformOrigin: "left center",
-                    transition: "transform 0.2s ease, color 0.2s ease, opacity 0.2s ease",
-                    color: "#241123",
-                  }}
-                  aria-label={`View artists based in ${location}`}
-                >
+                      Based in {(displayLocation ?? "").toUpperCase()}
+                    </span>
+                  </Link>
+                ) : (
                   <span
+                    style={{
+                      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                      fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
+                      fontWeight: 900,
+                      letterSpacing: "2px",
+                      opacity: 0.5,
+                      display: "inline-block",
+                      cursor: "pointer",
+                      transformOrigin: "left center",
+                      transition: "transform 0.2s ease, color 0.2s ease, opacity 0.2s ease",
+                      color: "#241123",
+                    }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "scaleX(1.05)";
-                      (e.currentTarget.parentElement as HTMLElement).style.color = "#6C00AF";
-                      (e.currentTarget.parentElement as HTMLElement).style.opacity = "1";
+                      e.currentTarget.style.color = "#6C00AF";
+                      e.currentTarget.style.opacity = "1";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = "scaleX(1)";
-                      (e.currentTarget.parentElement as HTMLElement).style.color = "#241123";
-                      (e.currentTarget.parentElement as HTMLElement).style.opacity = "0.5";
+                      e.currentTarget.style.color = "#241123";
+                      e.currentTarget.style.opacity = "0.5";
                     }}
-                    style={{ display: "inline-block" }}
                   >
-                    Based in {location.toUpperCase()}
+                    Based in {(displayLocation ?? "").toUpperCase()}
                   </span>
-                </Link>
-              ) : (
-                <span
-                  style={{
-                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                    fontSize: "clamp(0.8rem, 3vw, 0.95rem)",
-                    fontWeight: 900,
-                    letterSpacing: "2px",
-                    opacity: 0.5,
-                    display: "inline-block",
-                    cursor: "pointer",
-                    transformOrigin: "left center",
-                    transition: "transform 0.2s ease, color 0.2s ease, opacity 0.2s ease",
-                    color: "#241123",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "scaleX(1.05)";
-                    e.currentTarget.style.color = "#6C00AF";
-                    e.currentTarget.style.opacity = "1";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "scaleX(1)";
-                    e.currentTarget.style.color = "#241123";
-                    e.currentTarget.style.opacity = "0.5";
-                  }}
-                >
-                  Based in {location.toUpperCase()}
-                </span>
-              ))}
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

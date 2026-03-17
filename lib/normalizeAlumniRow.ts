@@ -107,6 +107,14 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
   // Current Work
   const currentWork = getFirstCI(row, ["currentwork", "current work", "currentWork", "current_work"]);
 
+  // Dual title: present-day professional title (outside DAT)
+  const currentTitle = getFirstCI(row, ["current title", "currenttitle", "currentTitle", "current_title"]);
+
+  // Multi-city location
+  const secondLocation = getFirstCI(row, ["second location", "secondlocation", "secondLocation", "second_location"]);
+  const isBiCoastalRaw = getFirstCI(row, ["isbicoastal", "is bi-coastal", "bicoastal", "isBiCoastal", "is bicoastal"]);
+  const isBiCoastal = truthy(isBiCoastalRaw);
+
   // Website
   const website = getFirstCI(row, ["website", "artist url", "profile url", "url"]);
 
@@ -194,6 +202,9 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
     programSeasons,
 
     currentWork: currentWork || "",
+    currentTitle: currentTitle || undefined,
+    secondLocation: secondLocation || undefined,
+    isBiCoastal,
 
     lastModifiedRaw: lastModifiedRaw || "",
     lastModified,

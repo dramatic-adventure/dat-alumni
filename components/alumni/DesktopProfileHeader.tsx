@@ -25,6 +25,9 @@ interface DesktopProfileHeaderProps {
   publicEmail?: string;
   website?: string;
   socials?: string[];
+  currentTitle?: string;
+  secondLocation?: string;
+  isBiCoastal?: boolean;
 }
 
 
@@ -40,6 +43,9 @@ export default function DesktopProfileHeader({
   publicEmail,
   website,
   socials,
+  currentTitle,
+  secondLocation,
+  isBiCoastal,
 }: DesktopProfileHeaderProps) {
 
   const router = useRouter();
@@ -209,6 +215,9 @@ export default function DesktopProfileHeader({
 
   const locationHref = location ? getLocationHrefForToken(location) : null;
 
+  // Multi-city: show "City1 · City2" when a second location is present
+  const displayLocation = secondLocation ? `${location} · ${secondLocation}` : location;
+
   // Extra prefetching: when the header is visible, prefetch all target pages.
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") {
@@ -323,75 +332,81 @@ export default function DesktopProfileHeader({
           gapRem={0.6}
         />
 
-        {(titleLinks.length > 0 || location) && (
-          <div
-            className="flex flex-row items-center flex-wrap gap-y-2"
-            style={{ marginTop: "0.5rem", marginBottom: "0.5rem" }}
-          >
+        {(titleLinks.length > 0 || currentTitle || location) && (
+          <div style={{ marginTop: "0.5rem", marginBottom: "0.5rem" }}>
+
+            {/* Row 1: DAT role links */}
             {titleLinks.length > 0 && (
-              <span className="flex items-center flex-wrap">
-                {titleLinks.map(({ label, href }, idx) => (
-                  <span key={`${href}-${label}`} className="flex items-center">
-                    <Link
-                      href={href}
-                      prefetch
-                      className="no-underline hover:no-underline transition-all duration-200 inline-block"
-                      style={{
-                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                        fontSize: "1.7rem",
-                        color: "#241123",
-                        textTransform: "uppercase",
-                        letterSpacing: "2px",
-                        fontWeight: 700,
-                        opacity: 0.9,
-                        transformOrigin: "left",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "scaleX(1.05)";
-                        e.currentTarget.style.color = "#6C00AF";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "scaleX(1)";
-                        e.currentTarget.style.color = "#241123";
-                      }}
-                      aria-label={`View ${label}`}
-                    >
-                      {label}
-                    </Link>
-                    {idx < titleLinks.length - 1 && (
-                      <span
+              <div className="flex flex-row items-center flex-wrap gap-y-1">
+                <span className="flex items-center flex-wrap">
+                  {titleLinks.map(({ label, href }, idx) => (
+                    <span key={`${href}-${label}`} className="flex items-center">
+                      <Link
+                        href={href}
+                        prefetch
+                        className="no-underline hover:no-underline transition-all duration-200 inline-block"
                         style={{
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                           fontSize: "1.7rem",
                           color: "#241123",
-                          opacity: 0.7,
-                          margin: "0 0.6rem",
-                          fontWeight: 400,
+                          textTransform: "uppercase",
+                          letterSpacing: "2px",
+                          fontWeight: 700,
+                          opacity: 0.9,
+                          transformOrigin: "left",
                         }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "scaleX(1.05)";
+                          e.currentTarget.style.color = "#6C00AF";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "scaleX(1)";
+                          e.currentTarget.style.color = "#241123";
+                        }}
+                        aria-label={`View ${label}`}
                       >
-                        –
-                      </span>
-                    )}
-                  </span>
-                ))}
-              </span>
+                        {label}
+                      </Link>
+                      {idx < titleLinks.length - 1 && (
+                        <span
+                          style={{
+                            fontSize: "1.7rem",
+                            color: "#241123",
+                            opacity: 0.7,
+                            margin: "0 0.6rem",
+                            fontWeight: 400,
+                          }}
+                        >
+                          –
+                        </span>
+                      )}
+                    </span>
+                  ))}
+                </span>
+              </div>
             )}
 
-            {titleLinks.length > 0 && location && (
-              <span
+            {/* Row 2: Current professional title (outside DAT) */}
+            {currentTitle && (
+              <div
                 style={{
-                  fontSize: "1.2rem",
+                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                  fontSize: "1.15rem",
                   color: "#241123",
-                  padding: "0 14px",
-                  opacity: 0.5,
+                  textTransform: "uppercase",
+                  letterSpacing: "2px",
+                  fontWeight: 600,
+                  opacity: 0.65,
+                  marginTop: "0.3rem",
                 }}
-                aria-hidden="true"
               >
-                •
-              </span>
+                {currentTitle}
+              </div>
             )}
 
+            {/* Row 3: Location */}
             {location && (
-              <>
+              <div style={{ marginTop: currentTitle || titleLinks.length > 0 ? "0.35rem" : "0" }}>
                 {locationHref ? (
                   <Link
                     href={locationHref}
@@ -423,7 +438,7 @@ export default function DesktopProfileHeader({
                         (e.currentTarget.parentElement as HTMLElement).style.opacity = "0.5";
                       }}
                     >
-                      Based in <span style={{ textTransform: "uppercase" }}>{location}</span>
+                      Based in <span style={{ textTransform: "uppercase" }}>{displayLocation}</span>
                     </span>
                   </Link>
                 ) : (
@@ -454,11 +469,11 @@ export default function DesktopProfileHeader({
                         (e.currentTarget.parentElement as HTMLElement).style.opacity = "0.5";
                       }}
                     >
-                      Based in <span style={{ textTransform: "uppercase" }}>{location}</span>
+                      Based in <span style={{ textTransform: "uppercase" }}>{displayLocation}</span>
                     </span>
                   </span>
                 )}
-              </>
+              </div>
             )}
           </div>
         )}

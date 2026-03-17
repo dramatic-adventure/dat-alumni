@@ -295,6 +295,9 @@ interface ProfileCardProps {
   socials?: any;
   updates?: RawRow[];
   slugAliases?: string[];
+  currentTitle?: string;
+  secondLocation?: string;
+  isBiCoastal?: boolean;
 }
 
 const scaleCache = new Map<string, { first: number; last: number }>();
@@ -663,6 +666,9 @@ const hasStories = storiesForFeatured.length > 0;
           website={website}
           socials={socials}
           statusFlags={statusFlags}
+          currentTitle={props.currentTitle}
+          secondLocation={props.secondLocation}
+          isBiCoastal={props.isBiCoastal}
         />
       ) : (
         <DesktopProfileHeader
@@ -677,6 +683,9 @@ const hasStories = storiesForFeatured.length > 0;
           website={website}
           socials={socials}
           statusFlags={statusFlags}
+          currentTitle={props.currentTitle}
+          secondLocation={props.secondLocation}
+          isBiCoastal={props.isBiCoastal}
         />
       )}
 

@@ -66,6 +66,13 @@ export interface AlumniRow {
   imageUrls?: string[];
   posterUrls?: string[];
   currentWork?: string;
+
+  // Multi-city location
+  secondLocation?: string;
+  isBiCoastal?: boolean;
+
+  // Dual title: currentTitle = present-day professional title outside DAT
+  currentTitle?: string;
   legacyProductions?: string;
 
   storyTitle?: string;

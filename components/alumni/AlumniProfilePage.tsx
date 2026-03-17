@@ -110,6 +110,11 @@ export default function AlumniProfilePage({
   const backgroundChoice =
     cleanStr(d.backgroundChoice ?? d.backgroundStyle ?? d.backgroundKey) ?? "kraft";
 
+  // Dual title + multi-city
+  const currentTitle = cleanStr(d.currentTitle) ?? "";
+  const secondLocation = cleanStr(d.secondLocation) ?? "";
+  const isBiCoastal = !!d.isBiCoastal;
+
   // Contact fields: accept multiple worlds
   const location = cleanStr(d.location) ?? "";
   const publicEmail = cleanStr((d as any).publicEmail);
@@ -268,6 +273,9 @@ alumniId={alumniId || undefined}
                 website={website}
                 socials={socials}
                 updates={updates}
+                currentTitle={currentTitle || undefined}
+                secondLocation={secondLocation || undefined}
+                isBiCoastal={isBiCoastal}
               />
             </div>
           </section>

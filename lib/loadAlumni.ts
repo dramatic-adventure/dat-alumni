@@ -272,6 +272,11 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
   // Optional
   const backgroundIdx = idxOf(header, ["background choice", "background", "background style", "background key"]);
 
+  // Dual title + multi-city
+  const currentTitleIdx = idxOf(header, ["current title", "currenttitle", "currentTitle", "current_title"]);
+  const secondLocationIdx = idxOf(header, ["second location", "secondlocation", "secondLocation", "second_location", "second location (city)"]);
+  const isBiCoastalIdx = idxOf(header, ["isbicoastal", "is bi-coastal", "bicoastal", "bi-coastal", "is bicoastal", "isBiCoastal"]);
+
   const out: AlumniRow[] = [];
   let skipped = 0;
 
@@ -329,6 +334,14 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
 
       // optional but harmless if your normalizer supports it
       "background choice": cell(r, backgroundIdx),
+
+      // Dual title + multi-city
+      "current title": cell(r, currentTitleIdx),
+      currentTitle: cell(r, currentTitleIdx),
+      "second location": cell(r, secondLocationIdx),
+      secondLocation: cell(r, secondLocationIdx),
+      "is bi-coastal": cell(r, isBiCoastalIdx),
+      isBiCoastal: cell(r, isBiCoastalIdx),
     };
 
     const normalizedKeys = Object.fromEntries(
