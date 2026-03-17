@@ -104,6 +104,18 @@ export default function TheatreIndexPage() {
             background: "linear-gradient(to top, rgba(36,17,35,0.85) 0%, rgba(36,17,35,0.3) 42%, transparent 70%)",
           }}
         />
+        {/* Invisible ink bleed — no visible box, just darkness bleeding behind the text */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            right: 0,
+            width: "65%",
+            height: "75%",
+            background: "radial-gradient(ellipse 90% 80% at 85% 80%, rgba(36,17,35,0.52) 0%, rgba(36,17,35,0.18) 45%, transparent 72%)",
+            pointerEvents: "none",
+          }}
+        />
         <div
           style={{
             position: "absolute",
@@ -111,9 +123,6 @@ export default function TheatreIndexPage() {
             right: "5%",
             maxWidth: "90vw",
             textAlign: "right",
-            background: "radial-gradient(ellipse at 80% 60%, rgba(36,17,35,0.55) 0%, transparent 72%)",
-            padding: "2rem 1.5rem 1.5rem 4rem",
-            borderRadius: "12px",
           }}
         >
           <p style={{ ...eyebrowOnDark, marginBottom: "0.5rem" }}>
