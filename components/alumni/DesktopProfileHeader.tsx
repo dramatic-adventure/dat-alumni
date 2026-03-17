@@ -397,9 +397,9 @@ export default function DesktopProfileHeader({
                     {extraCurrentTitles.length > 0 && (
                       <button
                         onClick={(e) => { e.preventDefault(); setCurrentTitlesExpanded((r) => !r); }}
-                        style={{ background: "none", border: "1.5px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: currentTitlesExpanded ? 0.55 : 0.35, fontSize: "1.5rem", fontWeight: 700, padding: 0, width: "1.5em", height: "1.5em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.15s ease, opacity 0.15s ease" }}
+                        style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: currentTitlesExpanded ? 0.3 : 0.16, fontSize: "1.5rem", fontWeight: 700, padding: 0, width: "1.5em", height: "1.5em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
                         onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = currentTitlesExpanded ? "0.55" : "0.35"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = currentTitlesExpanded ? "0.3" : "0.16"; }}
                         aria-label={currentTitlesExpanded ? "Collapse titles" : "Show more titles"}
                       >{currentTitlesExpanded ? "−" : "+"}</button>
                     )}
@@ -439,9 +439,9 @@ export default function DesktopProfileHeader({
                         {titleLinks.length > 1 && (
                           <button
                             onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
-                            style={{ background: "none", border: "1.5px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#ffcc00", opacity: rolesExpanded ? 0.75 : 0.45, fontSize: "1.1rem", fontWeight: 700, padding: 0, width: "1.5em", height: "1.5em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.15s ease, opacity 0.15s ease" }}
+                            style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#ffcc00", opacity: rolesExpanded ? 0.45 : 0.22, fontSize: "1.1rem", fontWeight: 700, padding: 0, width: "1.5em", height: "1.5em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
                             onMouseEnter={(e) => { e.currentTarget.style.color = "#f23359"; e.currentTarget.style.opacity = "1"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = "#ffcc00"; e.currentTarget.style.opacity = rolesExpanded ? "0.75" : "0.45"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = "#ffcc00"; e.currentTarget.style.opacity = rolesExpanded ? "0.45" : "0.22"; }}
                             aria-label={rolesExpanded ? "Collapse roles" : "Show more roles"}
                           >{rolesExpanded ? "−" : "+"}</button>
                         )}
@@ -526,9 +526,9 @@ export default function DesktopProfileHeader({
                       {titleLinks.length > 1 && (
                         <button
                           onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
-                          style={{ background: "none", border: "1.5px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: rolesExpanded ? 0.55 : 0.35, fontSize: "1.5rem", fontWeight: 700, padding: 0, width: "1.5em", height: "1.5em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.15s ease, opacity 0.15s ease" }}
+                          style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: rolesExpanded ? 0.3 : 0.16, fontSize: "1.5rem", fontWeight: 700, padding: 0, width: "1.5em", height: "1.5em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
                           onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = rolesExpanded ? "0.55" : "0.35"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = rolesExpanded ? "0.3" : "0.16"; }}
                           aria-label={rolesExpanded ? "Collapse roles" : "Show more roles"}
                         >{rolesExpanded ? "−" : "+"}</button>
                       )}
