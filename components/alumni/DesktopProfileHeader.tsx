@@ -370,43 +370,42 @@ export default function DesktopProfileHeader({
             {primaryCurrentTitle ? (
               <>
                 {/* Row 1: primary currentTitle (+ toggle if extras) + DAT pill inline */}
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+                {/* Row 1: primary currentTitle + expand toggle */}
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
+                  {currentTitleHref ? (
+                    <Link href={currentTitleHref} prefetch
+                      className="ls-hover no-underline hover:no-underline"
+                      style={{
+                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                        fontSize: "1.7rem",
+                        color: "#241123",
+                        textTransform: "uppercase",
+                        fontWeight: 700,
+                        lineHeight: 1.15,
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
+                      aria-label={`View ${primaryCurrentTitle}`}
+                    >{primaryCurrentTitle}</Link>
+                  ) : (
+                    <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "1.7rem", color: "#241123", textTransform: "uppercase", fontWeight: 700, lineHeight: 1.15, letterSpacing: "2px" }}>
+                      {primaryCurrentTitle}
+                    </span>
+                  )}
+                  {extraCurrentTitles.length > 0 && (
+                    <button
+                      onClick={(e) => { e.preventDefault(); setCurrentTitlesExpanded((r) => !r); }}
+                      style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: currentTitlesExpanded ? 0.3 : 0.16, fontSize: "1.5rem", fontWeight: 700, padding: 0, width: "1.1em", height: "1.1em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = currentTitlesExpanded ? "0.3" : "0.16"; }}
+                      aria-label={currentTitlesExpanded ? "Collapse titles" : "Show more titles"}
+                    >{currentTitlesExpanded ? "−" : "+"}</button>
+                  )}
+                </div>
 
-                  {/* Primary currentTitle + expand toggle */}
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
-                    {currentTitleHref ? (
-                      <Link href={currentTitleHref} prefetch
-                        className="ls-hover no-underline hover:no-underline"
-                        style={{
-                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                          fontSize: "1.7rem",
-                          color: "#241123",
-                          textTransform: "uppercase",
-                          fontWeight: 700,
-                          lineHeight: 1.15,
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
-                        aria-label={`View ${primaryCurrentTitle}`}
-                      >{primaryCurrentTitle}</Link>
-                    ) : (
-                      <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "1.7rem", color: "#241123", textTransform: "uppercase", fontWeight: 700, lineHeight: 1.15, letterSpacing: "2px" }}>
-                        {primaryCurrentTitle}
-                      </span>
-                    )}
-                    {extraCurrentTitles.length > 0 && (
-                      <button
-                        onClick={(e) => { e.preventDefault(); setCurrentTitlesExpanded((r) => !r); }}
-                        style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: currentTitlesExpanded ? 0.3 : 0.16, fontSize: "1.5rem", fontWeight: 700, padding: 0, width: "1.5em", height: "1.5em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = currentTitlesExpanded ? "0.3" : "0.16"; }}
-                        aria-label={currentTitlesExpanded ? "Collapse titles" : "Show more titles"}
-                      >{currentTitlesExpanded ? "−" : "+"}</button>
-                    )}
-                  </span>
-
-                  {/* DAT pill: primary role + expand/collapse for extras */}
-                  {titleLinks.length > 0 && (
+                {/* Row 2: DAT pill — own line below currentTitle */}
+                {titleLinks.length > 0 && (
+                  <div style={{ marginTop: "0.35rem" }}>
                     <span style={{
                       display: "inline-flex",
                       flexDirection: rolesExpanded ? "column" : "row",
@@ -416,11 +415,10 @@ export default function DesktopProfileHeader({
                       border: "1px solid rgba(36, 17, 35, 0.28)",
                       padding: "5px 13px 5px 11px",
                       borderRadius: "4px",
-                      flexShrink: 0,
                     }}>
                       {/* Always-visible row: DAT + primary role + toggle */}
                       <span style={{ display: "inline-flex", alignItems: "center", gap: "0.55rem" }}>
-                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.82rem", letterSpacing: "3.5px", fontWeight: 900, color: "#241123", opacity: 0.45, textTransform: "uppercase" }}>
+                        <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.82rem", letterSpacing: "3.5px", fontWeight: 900, color: "#C49200", textTransform: "uppercase" }}>
                           DAT
                         </span>
                         <Link href={titleLinks[0].href} prefetch
@@ -440,7 +438,7 @@ export default function DesktopProfileHeader({
                         {titleLinks.length > 1 && (
                           <button
                             onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
-                            style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: rolesExpanded ? 0.3 : 0.16, fontSize: "1.1rem", fontWeight: 700, padding: 0, width: "1.5em", height: "1.5em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
+                            style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: rolesExpanded ? 0.3 : 0.16, fontSize: "1.1rem", fontWeight: 700, padding: 0, width: "1.1em", height: "1.1em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
                             onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
                             onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = rolesExpanded ? "0.3" : "0.16"; }}
                             aria-label={rolesExpanded ? "Collapse roles" : "Show more roles"}
@@ -467,8 +465,8 @@ export default function DesktopProfileHeader({
                         </span>
                       ))}
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Extra currentTitles — revealed when expanded */}
                 {currentTitlesExpanded && extraCurrentTitles.map(({ label, href }) => (
@@ -527,7 +525,7 @@ export default function DesktopProfileHeader({
                       {titleLinks.length > 1 && (
                         <button
                           onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
-                          style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: rolesExpanded ? 0.3 : 0.16, fontSize: "1.5rem", fontWeight: 700, padding: 0, width: "1.5em", height: "1.5em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
+                          style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: rolesExpanded ? 0.3 : 0.16, fontSize: "1.5rem", fontWeight: 700, padding: 0, width: "1.1em", height: "1.1em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
                           onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
                           onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = rolesExpanded ? "0.3" : "0.16"; }}
                           aria-label={rolesExpanded ? "Collapse roles" : "Show more roles"}
