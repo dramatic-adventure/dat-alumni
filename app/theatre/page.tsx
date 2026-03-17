@@ -324,6 +324,7 @@ export default function TheatreIndexPage() {
                 })()}
 
                 <span
+                  className="theatre-explore-btn"
                   style={{
                     display: "inline-block",
                     alignSelf: "flex-start",
@@ -344,23 +345,6 @@ export default function TheatreIndexPage() {
               </div>
             </Link>
 
-            <div style={{ marginTop: "0.75rem" }}>
-              <Link
-                href={`/season/${featured.season}`}
-                className="theatre-text-link"
-                style={{
-                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                  fontSize: "0.7rem",
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.16em",
-                  color: C.ink,
-                  textDecoration: "none",
-                }}
-              >
-                Season {featured.season} Archive ↗
-              </Link>
-            </div>
           </div>
         </section>
       )}
@@ -492,7 +476,7 @@ export default function TheatreIndexPage() {
                         </span>
                       </div>
 
-                      {/* Right panel: season pill + year/location + link */}
+                      {/* Right panel: stacked season pill + year, then full season link */}
                       <div
                         style={{
                           flex: 1,
@@ -504,9 +488,13 @@ export default function TheatreIndexPage() {
                           flexWrap: "wrap",
                         }}
                       >
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.9rem", flexWrap: "wrap" }}>
-                          <span
+                        {/* Stacked: Season N pill (link) above school year */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                          <Link
+                            href={`/season/${sn}`}
+                            className="theatre-season-pill-link"
                             style={{
+                              textDecoration: "none",
                               fontFamily: "var(--font-anton), system-ui, sans-serif",
                               fontSize: "1.05rem",
                               textTransform: "uppercase",
@@ -516,23 +504,22 @@ export default function TheatreIndexPage() {
                               padding: "0.2em 0.7em",
                               borderRadius: "0.3em",
                               display: "inline-block",
-                              flexShrink: 0,
+                              alignSelf: "flex-start",
+                              transition: "letter-spacing 0.2s ease, color 0.2s ease",
                             }}
                           >
                             Season {sn}
-                          </span>
+                          </Link>
                           <span
                             style={{
                               fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                              fontSize: "0.9rem",
+                              fontSize: "0.88rem",
                               fontWeight: 600,
                               color: C.ink,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
+                              paddingLeft: "0.1em",
                             }}
                           >
-                            {schoolYear(year)} · {locs}
+                            {schoolYear(year)}
                           </span>
                         </div>
 
@@ -626,8 +613,16 @@ export default function TheatreIndexPage() {
           transition: box-shadow 0.28s ease, border-color 0.28s ease;
         }
         .theatre-featured-card:hover {
-          box-shadow: 0 12px 48px rgba(36,17,35,0.24) !important;
-          border-color: rgba(36,17,35,0.5) !important;
+          box-shadow: 0 12px 48px rgba(83,0,135,0.2) !important;
+          border-color: rgba(83,0,135,0.35) !important;
+        }
+        .theatre-featured-card:hover .theatre-explore-btn {
+          background-color: #530087 !important;
+          color: #f2f2f2 !important;
+          letter-spacing: 0.24em !important;
+        }
+        .theatre-explore-btn {
+          transition: background-color 0.2s ease, color 0.2s ease, letter-spacing 0.2s ease;
         }
         .theatre-poster-img {
           transition: transform 0.5s ease;
@@ -635,35 +630,57 @@ export default function TheatreIndexPage() {
         .theatre-featured-card:hover .theatre-poster-img {
           transform: scale(1.04);
         }
-        .theatre-text-link { transition: color 0.18s ease; }
-        .theatre-text-link:hover { color: #530087 !important; }
+        .theatre-text-link {
+          transition: color 0.18s ease, letter-spacing 0.18s ease;
+        }
+        .theatre-text-link:hover {
+          color: #530087 !important;
+          letter-spacing: 0.22em !important;
+        }
 
         .theatre-nav-pill {
-          transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+          transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, letter-spacing 0.15s ease;
         }
         .theatre-nav-pill:hover {
           background: #FFCC00 !important;
           border-color: rgba(36,17,35,0.4) !important;
           color: #241123 !important;
+          letter-spacing: 0.16em !important;
         }
-        .theatre-season-chapter-link:hover span:last-child {
+
+        .theatre-season-chapter-link {
+          transition: color 0.18s ease, letter-spacing 0.18s ease;
+        }
+        .theatre-season-chapter-link:hover {
           color: #530087 !important;
+          letter-spacing: 0.22em !important;
         }
+
+        .theatre-season-pill-link {
+          transition: color 0.18s ease, background-color 0.18s ease, letter-spacing 0.18s ease;
+        }
+        .theatre-season-pill-link:hover {
+          color: #f2f2f2 !important;
+          background-color: #530087 !important;
+          letter-spacing: 0.24em !important;
+        }
+
         .theatre-bottom-link {
-          transition: box-shadow 0.2s ease, filter 0.2s ease;
+          transition: box-shadow 0.2s ease, filter 0.2s ease, letter-spacing 0.2s ease;
         }
         .theatre-bottom-link:hover {
-          box-shadow: 0 4px 16px rgba(36,73,169,0.3);
-          filter: brightness(1.1);
+          box-shadow: 0 4px 16px rgba(83,0,135,0.3);
+          filter: brightness(0.9) saturate(1.3);
+          letter-spacing: 0.2em !important;
         }
         .theatre-prod-card {
           box-shadow: 0 2px 10px rgba(36,17,35,0.15), 0 1px 3px rgba(36,17,35,0.1);
           transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
         }
         .theatre-prod-card:hover {
-          box-shadow: 0 8px 32px rgba(36,17,35,0.24), 0 2px 6px rgba(36,17,35,0.12);
+          box-shadow: 0 8px 32px rgba(83,0,135,0.18), 0 2px 6px rgba(83,0,135,0.1);
           transform: translateY(-3px);
-          border-color: rgba(36,17,35,0.35) !important;
+          border-color: rgba(83,0,135,0.3) !important;
         }
         .theatre-prod-card:hover .theatre-card-poster {
           transform: scale(1.05);
