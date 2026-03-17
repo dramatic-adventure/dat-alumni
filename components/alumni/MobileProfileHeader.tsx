@@ -240,7 +240,7 @@ export default function MobileProfileHeader({
 
     const cityStyle: WithLSVars = {
       "--ls-base": "1.5px",
-      "--ls-hover": "3px",
+      "--ls-hover": "2.2px",
       fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
       fontSize: size,
       color: "#241123",
@@ -378,7 +378,7 @@ export default function MobileProfileHeader({
                         data-text={primaryCurrentTitle}
                         style={{
                           "--ls-base": "2px",
-                          "--ls-hover": "4.5px",
+                          "--ls-hover": "3px",
                           fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                           fontSize: "clamp(1rem, 4vw, 1.35rem)",
                           color: "#241123",
@@ -432,7 +432,7 @@ export default function MobileProfileHeader({
                           data-text={titleLinks[0].label}
                           style={{
                             "--ls-base": "2px",
-                            "--ls-hover": "3.5px",
+                            "--ls-hover": "2.8px",
                             fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                             fontSize: "clamp(0.7rem, 2.5vw, 0.82rem)",
                             color: "#ffcc00",
@@ -466,7 +466,7 @@ export default function MobileProfileHeader({
                             data-text={label}
                             style={{
                               "--ls-base": "2px",
-                              "--ls-hover": "3.5px",
+                              "--ls-hover": "2.8px",
                               fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                               fontSize: "clamp(0.7rem, 2.5vw, 0.82rem)",
                               color: "#ffcc00",
@@ -497,7 +497,7 @@ export default function MobileProfileHeader({
                         data-text={label}
                         style={{
                           "--ls-base": "2px",
-                          "--ls-hover": "4.5px",
+                          "--ls-hover": "3px",
                           fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                           fontSize: "clamp(1rem, 4vw, 1.35rem)",
                           color: "#241123",
@@ -539,7 +539,7 @@ export default function MobileProfileHeader({
                         data-text={titleLinks[0].label}
                         style={{
                           "--ls-base": "2px",
-                          "--ls-hover": "4.5px",
+                          "--ls-hover": "3px",
                           fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                           fontSize: "clamp(1rem, 4vw, 1.35rem)",
                           color: "#241123",
@@ -575,7 +575,7 @@ export default function MobileProfileHeader({
                         data-text={label}
                         style={{
                           "--ls-base": "2px",
-                          "--ls-hover": "4.5px",
+                          "--ls-hover": "3px",
                           fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                           fontSize: "clamp(1rem, 4vw, 1.35rem)",
                           color: "#241123",

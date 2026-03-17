@@ -274,7 +274,7 @@ export default function DesktopProfileHeader({
     // Only color + opacity change in JS handlers.
     const cityStyle: WithLSVars = {
       "--ls-base": "1.5px",
-      "--ls-hover": "3px",
+      "--ls-hover": "2.2px",
       fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
       fontSize: size,
       color: "#241123",
@@ -398,7 +398,7 @@ export default function DesktopProfileHeader({
                         data-text={primaryCurrentTitle}
                         style={{
                           "--ls-base": "2px",
-                          "--ls-hover": "4.5px",
+                          "--ls-hover": "3px",
                           fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                           fontSize: "1.7rem",
                           color: "#241123",
@@ -448,7 +448,7 @@ export default function DesktopProfileHeader({
                           data-text={titleLinks[0].label}
                           style={{
                             "--ls-base": "2px",
-                            "--ls-hover": "3.5px",
+                            "--ls-hover": "2.8px",
                             fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                             fontSize: "0.9rem",
                             color: "#ffcc00",
@@ -478,7 +478,7 @@ export default function DesktopProfileHeader({
                             data-text={label}
                             style={{
                               "--ls-base": "2px",
-                              "--ls-hover": "3.5px",
+                              "--ls-hover": "2.8px",
                               fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                               fontSize: "0.9rem",
                               color: "#ffcc00",
@@ -505,7 +505,7 @@ export default function DesktopProfileHeader({
                         data-text={label}
                         style={{
                           "--ls-base": "2px",
-                          "--ls-hover": "4.5px",
+                          "--ls-hover": "3px",
                           fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                           fontSize: "1.7rem",
                           color: "#241123",
@@ -544,7 +544,7 @@ export default function DesktopProfileHeader({
                         data-text={titleLinks[0].label}
                         style={{
                           "--ls-base": "2px",
-                          "--ls-hover": "4.5px",
+                          "--ls-hover": "3px",
                           fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                           fontSize: "1.7rem",
                           color: "#241123",
@@ -573,7 +573,7 @@ export default function DesktopProfileHeader({
                         data-text={label}
                         style={{
                           "--ls-base": "2px",
-                          "--ls-hover": "4.5px",
+                          "--ls-hover": "3px",
                           fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                           fontSize: "1.7rem",
                           color: "#241123",

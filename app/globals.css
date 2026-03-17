@@ -777,7 +777,7 @@ footer .footer-cta {
 .ls-hover::after {
   display: block;
   content: attr(data-text);
-  letter-spacing: var(--ls-hover, 4.5px);
+  letter-spacing: var(--ls-hover, 3px);
   height: 0;
   overflow: hidden;
   visibility: hidden;
@@ -789,5 +789,5 @@ footer .footer-cta {
 }
 
 .ls-hover:hover {
-  letter-spacing: var(--ls-hover, 4.5px);
+  letter-spacing: var(--ls-hover, 3px);
 }
