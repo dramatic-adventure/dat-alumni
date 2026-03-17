@@ -15,21 +15,39 @@ import { getLocationHrefForToken, normalizeLocation } from "@/lib/locations";
 // CSS custom properties for .ls-hover — TypeScript needs the cast
 type WithLSVars = React.CSSProperties & { "--ls-base"?: string; "--ls-hover"?: string };
 
-// Priority order for DAT role display (lower number = shown first)
+// Priority order for DAT role display (lower number = shown first).
+// Tier 1: actual DAT staff/company roles (from dramaticadventure.com/company)
+// Tier 2: general DAT participation roles (actor, playwright, etc.)
 const ROLE_DISPLAY_PRIORITY: Record<string, number> = {
-  "executive director": 1,
-  "artistic director": 2,
-  "director": 3,
-  "partner": 4,
-  "playwright": 5,
-  "travel writer": 6,
-  "designer": 7,
-  "stage manager": 8,
-  "teaching artist": 9,
-  "actor": 10,
-  "performer": 11,
-  "special event host": 12,
-  "manager": 13,
+  // ── Tier 1: DAT Company / Staff roles ───────────────────
+  "co-founder": 1,
+  "executive director": 2,
+  "artistic director": 3,
+  "director of creative learning": 4,
+  "director of global community partnerships": 5,
+  "general counsel": 6,
+  "manager of community partnerships": 7,
+  "engagement manager": 8,
+  "board president": 9,
+  "president": 10,
+  "board secretary": 11,
+  "secretary": 12,
+  "board treasurer": 13,
+  "treasurer": 14,
+  "board member": 15,
+  // ── Tier 2: DAT Artistic / Program participation roles ───
+  "resident playwright": 16,
+  "playwright": 17,
+  "travel writer": 18,
+  "designer": 19,
+  "stage manager": 20,
+  "teaching artist": 21,
+  "special event host": 22,
+  "actor": 23,
+  "actress": 23,
+  "performer": 24,
+  "partner": 25,
+  "manager": 26,
 };
 
 interface MobileProfileHeaderProps {
