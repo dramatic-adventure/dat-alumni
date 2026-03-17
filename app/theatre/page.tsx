@@ -151,9 +151,9 @@ export default function TheatreIndexPage() {
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))",
-              backgroundColor: "rgba(36, 17, 35, 0.72)",
+              backgroundColor: "rgba(36, 17, 35, 0.16)",
               borderRadius: "18px",
-              border: `1px solid rgba(36,17,35,0.85)`,
+              border: `1px solid rgba(36,17,35,0.22)`,
               overflow: "hidden",
               boxShadow: "0 4px 24px rgba(36, 17, 35, 0.18)",
             }}
@@ -168,7 +168,7 @@ export default function TheatreIndexPage() {
                 key={label}
                 style={{
                   padding: "1.5rem 1.75rem",
-                  borderRight: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.1)" : "none",
+                  borderRight: i < arr.length - 1 ? `1px solid rgba(36,17,35,0.12)` : "none",
                 }}
               >
                 <div
@@ -189,7 +189,7 @@ export default function TheatreIndexPage() {
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.14em",
-                    color: C.white,
+                    color: C.ink,
                   }}
                 >
                   {label}
@@ -198,7 +198,8 @@ export default function TheatreIndexPage() {
                   style={{
                     fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                     fontSize: "0.63rem",
-                    color: "#c8b8d4",
+                    fontWeight: 600,
+                    color: C.inkMid,
                     marginTop: "0.2rem",
                   }}
                 >
@@ -473,6 +474,7 @@ export default function TheatreIndexPage() {
                     {/* Text block on its own scrim so small text survives the kraft */}
                     <div
                       style={{
+                        flex: 1,
                         minWidth: 0,
                         backgroundColor: "rgba(255,255,255,0.32)",
                         borderRadius: "8px",
