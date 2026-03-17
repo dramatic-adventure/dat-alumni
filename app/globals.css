@@ -772,6 +772,8 @@ footer .footer-cta {
   display: inline-block;
   letter-spacing: var(--ls-base, 2px);
   transition: letter-spacing 0.3s ease-out, color 0.2s ease, opacity 0.2s ease;
+  will-change: letter-spacing;
+  transform: translateZ(0); /* promote to GPU compositor layer */
 }
 
 .ls-hover::after {
