@@ -4,8 +4,19 @@ import Image from "next/image";
 import { productionMap, type Production, getSortYear } from "@/lib/productionMap";
 
 const FALLBACK_POSTER = "/posters/fallback-16x9.jpg";
-// Solid cream card body — no gradient tricks, no transparency games
-const CARD_BG = "#fdf8f0";
+const CARD_BG = "#f2f2f2";
+
+// Colour palette — no opacity games, everything is a solid value
+const C = {
+  ink:       "#241123",   // primary text
+  inkMid:    "#4a2a56",   // secondary text (readable on kraft + #f2f2f2)
+  inkLight:  "#6b3f7a",   // tertiary text
+  gold:      "#FFCC00",
+  purple:    "#530087",
+  white:     "#f2f2f2",
+  divider:   "rgba(36,17,35,0.30)",   // strong rule
+  dividerSm: "rgba(36,17,35,0.20)",   // card border / light rule
+} as const;
 
 function posterSrc(p: Production): string {
   return p.posterUrl && p.posterUrl.trim() ? p.posterUrl : FALLBACK_POSTER;
@@ -77,12 +88,13 @@ export default function TheatreIndexPage() {
           fill
           priority
           className="object-cover object-center"
+          style={{ filter: "brightness(1.12) contrast(1.06) saturate(1.08)" }}
         />
         <div
           style={{
             position: "absolute",
             inset: 0,
-            background: "linear-gradient(to top, rgba(36,17,35,0.82) 0%, rgba(36,17,35,0.35) 40%, transparent 70%)",
+            background: "linear-gradient(to top, rgba(36,17,35,0.85) 0%, rgba(36,17,35,0.3) 42%, transparent 70%)",
           }}
         />
         <div
@@ -94,16 +106,7 @@ export default function TheatreIndexPage() {
             textAlign: "right",
           }}
         >
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: "0.68rem",
-              letterSpacing: "0.28em",
-              textTransform: "uppercase",
-              color: "#FFCC00",
-              margin: "0 0 0.5rem",
-            }}
-          >
+          <p style={{ ...eyebrowOnDark, marginBottom: "0.5rem" }}>
             Dramatic Adventure Theatre
           </p>
           <h1
@@ -111,7 +114,7 @@ export default function TheatreIndexPage() {
               fontFamily: "var(--font-anton), system-ui, sans-serif",
               fontSize: "clamp(3.4rem, 10vw, 7.5rem)",
               textTransform: "uppercase",
-              color: "#f2f2f2",
+              color: C.white,
               lineHeight: 1.0,
               textShadow: "0 8px 24px rgba(0,0,0,0.8)",
               margin: 0,
@@ -119,14 +122,14 @@ export default function TheatreIndexPage() {
           >
             Theatre
             <br />
-            <span style={{ color: "#FFCC00" }}>Archive</span>
+            <span style={{ color: C.gold }}>Archive</span>
           </h1>
           <p
             style={{
               fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
               fontSize: "clamp(1rem, 2vw, 1.45rem)",
-              color: "#f2f2f2",
-              opacity: 0.65,
+              color: C.white,
+              opacity: 0.7,
               margin: "0.6rem 0 0",
               fontWeight: 400,
               textShadow: "0 3px 10px rgba(0,0,0,0.9)",
@@ -142,37 +145,37 @@ export default function TheatreIndexPage() {
       ═══════════════════════════════════════════ */}
       <section style={{ padding: "3.5rem 0 3rem" }}>
         <div style={{ width: "90vw", maxWidth: "1120px", margin: "0 auto" }}>
-          <p style={eyebrow}>A lifetime of making theatre</p>
+          <p style={eyebrowOnKraft}>A lifetime of making theatre</p>
 
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(175px, 1fr))",
-              backgroundColor: "rgba(36, 17, 35, 0.16)",
+              backgroundColor: "rgba(36, 17, 35, 0.72)",
               borderRadius: "18px",
-              border: "1px solid rgba(36, 17, 35, 0.22)",
+              border: `1px solid rgba(36,17,35,0.85)`,
               overflow: "hidden",
-              boxShadow: "0 4px 20px rgba(36, 17, 35, 0.12)",
+              boxShadow: "0 4px 24px rgba(36, 17, 35, 0.18)",
             }}
           >
             {[
-              { n: String(seasonNums.length), label: "Seasons", sub: `${earliestYear}–${latestYear}` },
-              { n: String(allProductions.length), label: "Productions", sub: "original works & adaptations" },
-              { n: `${uniqueArtists.size}+`, label: "Alumni Artists", sub: "directors, actors, designers" },
-              { n: String(latestYear - earliestYear), label: "Years of Work", sub: `${earliestYear} to ${latestYear}` },
+              { n: String(seasonNums.length),        label: "Seasons",        sub: `${earliestYear}–${latestYear}` },
+              { n: String(allProductions.length),    label: "Productions",    sub: "original works & adaptations" },
+              { n: `${uniqueArtists.size}+`,         label: "Alumni Artists", sub: "directors, actors, designers" },
+              { n: String(latestYear - earliestYear),label: "Years of Work",  sub: `${earliestYear} to ${latestYear}` },
             ].map(({ n, label, sub }, i, arr) => (
               <div
                 key={label}
                 style={{
                   padding: "1.5rem 1.75rem",
-                  borderRight: i < arr.length - 1 ? "1px solid rgba(36,17,35,0.14)" : "none",
+                  borderRight: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.1)" : "none",
                 }}
               >
                 <div
                   style={{
                     fontFamily: "var(--font-anton), system-ui, sans-serif",
                     fontSize: "clamp(2rem, 5vw, 2.9rem)",
-                    color: "#FFCC00",
+                    color: C.gold,
                     lineHeight: 1,
                     marginBottom: "0.3rem",
                   }}
@@ -186,7 +189,7 @@ export default function TheatreIndexPage() {
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.14em",
-                    color: "#f2f2f2",
+                    color: C.white,
                   }}
                 >
                   {label}
@@ -195,8 +198,7 @@ export default function TheatreIndexPage() {
                   style={{
                     fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                     fontSize: "0.63rem",
-                    color: "#f2f2f2",
-                    opacity: 0.65,
+                    color: "#c8b8d4",
                     marginTop: "0.2rem",
                   }}
                 >
@@ -214,7 +216,7 @@ export default function TheatreIndexPage() {
       {featured && (
         <section style={{ padding: "0 0 3.5rem" }}>
           <div style={{ width: "90vw", maxWidth: "1120px", margin: "0 auto" }}>
-            <p style={eyebrow}>Most Recent Production</p>
+            <p style={eyebrowOnKraft}>Most Recent Production</p>
 
             <Link
               href={`/theatre/${featured.slug}`}
@@ -223,20 +225,20 @@ export default function TheatreIndexPage() {
                 display: "flex",
                 borderRadius: "14px",
                 overflow: "hidden",
-                border: "1px solid rgba(36,17,35,0.2)",
+                border: `1px solid ${C.divider}`,
                 textDecoration: "none",
                 minHeight: "300px",
                 boxShadow: "0 4px 24px rgba(36,17,35,0.16)",
               }}
             >
-              {/* Poster — no gradient overlay, clean hard edge */}
+              {/* Poster */}
               <div
                 style={{
                   position: "relative",
                   flex: "0 0 42%",
                   minHeight: "260px",
                   overflow: "hidden",
-                  backgroundColor: "#241123",
+                  backgroundColor: C.ink,
                 }}
               >
                 <Image
@@ -245,6 +247,7 @@ export default function TheatreIndexPage() {
                   fill
                   className="object-cover object-top theatre-poster-img"
                   priority
+                  style={{ filter: "brightness(1.1) contrast(1.05) saturate(1.1)" }}
                 />
               </div>
 
@@ -267,8 +270,7 @@ export default function TheatreIndexPage() {
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.2em",
-                    color: "#241123",
-                    opacity: 0.6,
+                    color: C.inkMid,
                     margin: 0,
                   }}
                 >
@@ -280,7 +282,7 @@ export default function TheatreIndexPage() {
                     fontFamily: "var(--font-anton), system-ui, sans-serif",
                     fontSize: "clamp(1.8rem, 4vw, 3.2rem)",
                     textTransform: "uppercase",
-                    color: "#241123",
+                    color: C.ink,
                     lineHeight: 1.0,
                     margin: 0,
                   }}
@@ -295,15 +297,14 @@ export default function TheatreIndexPage() {
                       style={{
                         fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                         fontSize: "0.78rem",
-                        color: "#241123",
-                        opacity: 0.65,
+                        color: C.inkMid,
                         margin: 0,
                         lineHeight: 1.5,
                       }}
                     >
                       {event}
                       {venue && (
-                        <span style={{ display: "block", fontSize: "0.68rem", fontWeight: 600, marginTop: "0.2rem" }}>
+                        <span style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: C.inkLight, marginTop: "0.2rem" }}>
                           {venue}
                         </span>
                       )}
@@ -321,8 +322,8 @@ export default function TheatreIndexPage() {
                     fontWeight: 800,
                     textTransform: "uppercase",
                     letterSpacing: "0.18em",
-                    color: "#241123",
-                    backgroundColor: "#FFCC00",
+                    color: C.ink,
+                    backgroundColor: C.gold,
                     padding: "0.45em 1.1em",
                     borderRadius: "6px",
                   }}
@@ -342,8 +343,7 @@ export default function TheatreIndexPage() {
                   fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.18em",
-                  color: "#241123",
-                  opacity: 0.5,
+                  color: C.inkMid,
                   textDecoration: "none",
                 }}
               >
@@ -355,14 +355,14 @@ export default function TheatreIndexPage() {
       )}
 
       {/* ═══════════════════════════════════════════
-          SEASON QUICK-NAV
+          SEASON QUICK-NAV  — dark band, fully readable
       ═══════════════════════════════════════════ */}
       <div
         style={{
-          borderTop: "1.5px solid rgba(36,17,35,0.18)",
-          borderBottom: "1.5px solid rgba(36,17,35,0.18)",
-          backgroundColor: "rgba(36,17,35,0.09)",
-          padding: "0.8rem 0",
+          backgroundColor: C.ink,
+          borderTop: `2px solid rgba(36,17,35,0.9)`,
+          borderBottom: `2px solid rgba(36,17,35,0.9)`,
+          padding: "0.85rem 0",
         }}
       >
         <div style={{ width: "90vw", maxWidth: "1120px", margin: "0 auto", overflowX: "auto" }}>
@@ -373,10 +373,9 @@ export default function TheatreIndexPage() {
                 fontSize: "0.6rem",
                 fontWeight: 700,
                 textTransform: "uppercase",
-                letterSpacing: "0.2em",
-                color: "#241123",
-                opacity: 0.45,
-                marginRight: "0.5rem",
+                letterSpacing: "0.22em",
+                color: "#9c7ab0",
+                marginRight: "0.6rem",
                 flexShrink: 0,
               }}
             >
@@ -393,12 +392,12 @@ export default function TheatreIndexPage() {
                   fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.12em",
-                  color: "#241123",
+                  color: C.white,
                   textDecoration: "none",
-                  padding: "0.35em 0.75em",
+                  padding: "0.35em 0.8em",
                   borderRadius: "6px",
                   flexShrink: 0,
-                  opacity: 0.65,
+                  border: "1px solid rgba(255,255,255,0.15)",
                 }}
               >
                 S{sn}
@@ -415,13 +414,13 @@ export default function TheatreIndexPage() {
         <div style={{ width: "90vw", maxWidth: "1120px", margin: "0 auto" }}>
 
           <div style={{ marginBottom: "3rem" }}>
-            <p style={eyebrow}>The Full Archive</p>
+            <p style={eyebrowOnKraft}>The Full Archive</p>
             <h2
               style={{
                 fontFamily: "var(--font-anton), system-ui, sans-serif",
                 fontSize: "clamp(2.2rem, 5vw, 3.6rem)",
                 textTransform: "uppercase",
-                color: "#530087",
+                color: C.purple,
                 margin: 0,
                 lineHeight: 1.0,
               }}
@@ -446,7 +445,7 @@ export default function TheatreIndexPage() {
                       gap: "1.25rem",
                       marginBottom: "1.5rem",
                       paddingBottom: "1rem",
-                      borderBottom: "2px solid rgba(36,17,35,0.18)",
+                      borderBottom: `2.5px solid ${C.divider}`,
                     }}
                   >
                     <span
@@ -454,7 +453,7 @@ export default function TheatreIndexPage() {
                       style={{
                         fontFamily: "var(--font-anton), system-ui, sans-serif",
                         fontSize: "clamp(4rem, 9vw, 6rem)",
-                        color: "rgba(36,17,35,0.1)",
+                        color: "rgba(36,17,35,0.13)",
                         lineHeight: 1,
                         userSelect: "none",
                         flexShrink: 0,
@@ -475,8 +474,8 @@ export default function TheatreIndexPage() {
                             fontSize: "1rem",
                             textTransform: "uppercase",
                             letterSpacing: "0.2em",
-                            color: "#241123",
-                            backgroundColor: "#FFCC00",
+                            color: C.ink,
+                            backgroundColor: C.gold,
                             padding: "0.15em 0.6em",
                             borderRadius: "0.3em",
                             display: "inline-block",
@@ -491,8 +490,7 @@ export default function TheatreIndexPage() {
                             fontWeight: 700,
                             textTransform: "uppercase",
                             letterSpacing: "0.14em",
-                            color: "#241123",
-                            opacity: 0.5,
+                            color: C.inkMid,
                           }}
                         >
                           Full season ↗
@@ -506,8 +504,7 @@ export default function TheatreIndexPage() {
                           fontWeight: 600,
                           textTransform: "uppercase",
                           letterSpacing: "0.12em",
-                          color: "#241123",
-                          opacity: 0.55,
+                          color: C.inkMid,
                           margin: "0.4rem 0 0",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -541,7 +538,7 @@ export default function TheatreIndexPage() {
             style={{
               marginTop: "4rem",
               paddingTop: "2.5rem",
-              borderTop: "2px solid rgba(36,17,35,0.18)",
+              borderTop: `2.5px solid ${C.divider}`,
               display: "flex",
               flexWrap: "wrap",
               alignItems: "center",
@@ -565,9 +562,9 @@ export default function TheatreIndexPage() {
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.14em",
-                    color: "#241123",
+                    color: C.ink,
                     textDecoration: "none",
-                    border: "1.5px solid rgba(36,17,35,0.28)",
+                    border: `1.5px solid ${C.divider}`,
                     padding: "0.55em 1.2em",
                     borderRadius: "99px",
                     backgroundColor: CARD_BG,
@@ -582,8 +579,7 @@ export default function TheatreIndexPage() {
                 fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                 fontSize: "0.6rem",
                 fontWeight: 600,
-                color: "#241123",
-                opacity: 0.45,
+                color: C.inkMid,
                 margin: 0,
               }}
             >
@@ -602,7 +598,7 @@ export default function TheatreIndexPage() {
         }
         .theatre-featured-card:hover {
           box-shadow: 0 12px 48px rgba(36,17,35,0.24) !important;
-          border-color: rgba(36,17,35,0.35) !important;
+          border-color: rgba(36,17,35,0.5) !important;
         }
         .theatre-poster-img {
           transition: transform 0.5s ease;
@@ -610,27 +606,35 @@ export default function TheatreIndexPage() {
         .theatre-featured-card:hover .theatre-poster-img {
           transform: scale(1.04);
         }
-        .theatre-text-link:hover { opacity: 0.9 !important; }
-        .theatre-nav-pill:hover {
-          background: rgba(36,17,35,0.1) !important;
-          opacity: 1 !important;
+        .theatre-text-link { transition: color 0.18s ease; }
+        .theatre-text-link:hover { color: #530087 !important; }
+
+        .theatre-nav-pill {
+          transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
         }
-        .theatre-season-chapter-link:hover span:last-child { opacity: 0.75 !important; }
+        .theatre-nav-pill:hover {
+          background: rgba(255,255,255,0.12) !important;
+          border-color: rgba(255,255,255,0.4) !important;
+          color: #FFCC00 !important;
+        }
+        .theatre-season-chapter-link:hover span:last-child {
+          color: #530087 !important;
+        }
         .theatre-bottom-link {
           transition: box-shadow 0.2s ease, border-color 0.2s ease;
         }
         .theatre-bottom-link:hover {
-          box-shadow: 0 2px 8px rgba(36,17,35,0.12);
-          border-color: rgba(36,17,35,0.45) !important;
+          box-shadow: 0 3px 12px rgba(36,17,35,0.15);
+          border-color: rgba(36,17,35,0.55) !important;
         }
         .theatre-prod-card {
-          box-shadow: 0 2px 10px rgba(36,17,35,0.14), 0 1px 3px rgba(36,17,35,0.1);
+          box-shadow: 0 2px 10px rgba(36,17,35,0.15), 0 1px 3px rgba(36,17,35,0.1);
           transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
         }
         .theatre-prod-card:hover {
-          box-shadow: 0 8px 32px rgba(36,17,35,0.22), 0 2px 6px rgba(36,17,35,0.12);
+          box-shadow: 0 8px 32px rgba(36,17,35,0.24), 0 2px 6px rgba(36,17,35,0.12);
           transform: translateY(-3px);
-          border-color: rgba(36,17,35,0.3) !important;
+          border-color: rgba(36,17,35,0.35) !important;
         }
         .theatre-prod-card:hover .theatre-card-poster {
           transform: scale(1.05);
@@ -647,15 +651,27 @@ export default function TheatreIndexPage() {
   );
 }
 
-// ─── Shared eyebrow style ──────────────────────────────────────────────────────
-const eyebrow: React.CSSProperties = {
+// ─── Shared text styles ────────────────────────────────────────────────────────
+
+// Eyebrow on the dark stat box / hero (white text)
+const eyebrowOnDark: React.CSSProperties = {
+  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+  fontSize: "0.68rem",
+  fontWeight: 700,
+  letterSpacing: "0.26em",
+  textTransform: "uppercase",
+  color: "#FFCC00",
+  margin: 0,
+};
+
+// Eyebrow directly on the kraft paper — SOLID ink, no opacity dilution
+const eyebrowOnKraft: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
   fontSize: "0.68rem",
   fontWeight: 700,
   letterSpacing: "0.26em",
   textTransform: "uppercase",
   color: "#241123",
-  opacity: 0.55,
   margin: "0 0 1.1rem",
 };
 
@@ -675,19 +691,19 @@ function ProductionCard({ p }: { p: Production }) {
         flexDirection: "column",
         overflow: "hidden",
         borderRadius: "12px",
-        border: "1px solid rgba(36,17,35,0.16)",
+        border: `1px solid rgba(36,17,35,0.2)`,
         textDecoration: "none",
         backgroundColor: CARD_BG,
       }}
     >
-      {/* ── Poster image — no gradient, clean cut to card body ── */}
+      {/* Poster — solid dark bg, brightness-boosted image */}
       <div
         style={{
           position: "relative",
           height: "160px",
           flexShrink: 0,
           overflow: "hidden",
-          backgroundColor: "#241123",
+          backgroundColor: C.ink,
         }}
       >
         <Image
@@ -695,8 +711,8 @@ function ProductionCard({ p }: { p: Production }) {
           alt={shortTitle(p.title)}
           fill
           className="object-cover object-top theatre-card-poster"
+          style={{ filter: "brightness(1.12) contrast(1.05) saturate(1.1)" }}
         />
-        {/* Season badge only for fallback-image cards */}
         {!hasPoster && (
           <span
             style={{
@@ -707,8 +723,8 @@ function ProductionCard({ p }: { p: Production }) {
               fontSize: "0.65rem",
               textTransform: "uppercase",
               letterSpacing: "0.15em",
-              color: "#241123",
-              backgroundColor: "#FFCC00",
+              color: C.ink,
+              backgroundColor: C.gold,
               padding: "0.2em 0.55em",
               borderRadius: "4px",
             }}
@@ -718,7 +734,7 @@ function ProductionCard({ p }: { p: Production }) {
         )}
       </div>
 
-      {/* ── Text panel — solid, not translucent ── */}
+      {/* Text panel */}
       <div
         style={{
           flex: 1,
@@ -726,10 +742,10 @@ function ProductionCard({ p }: { p: Production }) {
           flexDirection: "column",
           gap: "0.3rem",
           padding: "0.8rem 1rem 1rem",
-          borderTop: "1px solid rgba(36,17,35,0.1)",
+          borderTop: `1.5px solid rgba(36,17,35,0.18)`,
         }}
       >
-        {/* Year + season */}
+        {/* Year + season + location */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem" }}>
           <span
             style={{
@@ -738,8 +754,7 @@ function ProductionCard({ p }: { p: Production }) {
               fontWeight: 700,
               textTransform: "uppercase",
               letterSpacing: "0.14em",
-              color: "#241123",
-              opacity: 0.65,
+              color: C.inkMid,
             }}
           >
             {p.year}{p.season ? ` · S${p.season}` : ""}
@@ -749,8 +764,7 @@ function ProductionCard({ p }: { p: Production }) {
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
               fontSize: "0.56rem",
               fontWeight: 500,
-              color: "#241123",
-              opacity: 0.5,
+              color: C.inkLight,
               textAlign: "right",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -768,7 +782,7 @@ function ProductionCard({ p }: { p: Production }) {
             fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
             fontSize: "0.9rem",
             fontWeight: 700,
-            color: "#241123",
+            color: C.ink,
             lineHeight: 1.3,
             margin: 0,
           }}
@@ -782,8 +796,7 @@ function ProductionCard({ p }: { p: Production }) {
             style={{
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
               fontSize: "0.6rem",
-              color: "#241123",
-              opacity: 0.55,
+              color: C.inkMid,
               margin: 0,
               lineHeight: 1.45,
               overflow: "hidden",
@@ -805,8 +818,7 @@ function ProductionCard({ p }: { p: Production }) {
               fontWeight: 700,
               textTransform: "uppercase",
               letterSpacing: "0.1em",
-              color: "#241123",
-              opacity: 0.55,
+              color: C.inkLight,
               margin: "auto 0 0",
               paddingTop: "0.4rem",
             }}
