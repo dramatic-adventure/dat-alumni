@@ -3,6 +3,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { productionMap, type Production, getSortYear } from "@/lib/productionMap";
 
+const FALLBACK_POSTER = "/posters/fallback-16x9.jpg";
+
+function posterSrc(p: Production): string {
+  return p.posterUrl && p.posterUrl.trim() ? p.posterUrl : FALLBACK_POSTER;
+}
+
 function sortProductions(a: Production, b: Production) {
   const yearA = getSortYear(a);
   const yearB = getSortYear(b);
@@ -11,16 +17,19 @@ function sortProductions(a: Production, b: Production) {
   return a.title.localeCompare(b.title);
 }
 
-function festivalShort(festival: string | undefined): string | null {
-  if (!festival) return null;
-  const clean = festival.split("--")[0].trim();
-  return clean || null;
+// "Blackfish -- Workshop Production" → "Blackfish"
+function shortTitle(title: string): string {
+  return title.split(" -- ")[0].trim();
 }
 
-function festivalVenue(festival: string | undefined): string | null {
-  if (!festival) return null;
+// "ACTion Fest 2015: Tu a Teraz / Here and Now -- IATI Theatre" → event / venue
+function parseFestival(festival: string | undefined): { event: string | null; venue: string | null } {
+  if (!festival || !festival.trim()) return { event: null, venue: null };
   const parts = festival.split("--");
-  return parts[1]?.trim() || null;
+  return {
+    event: parts[0].trim() || null,
+    venue: parts[1]?.trim() || null,
+  };
 }
 
 export default function TheatreIndexPage() {
@@ -39,24 +48,22 @@ export default function TheatreIndexPage() {
   const years = allProductions.map(getSortYear).filter(Boolean);
   const earliestYear = Math.min(...years);
   const latestYear = Math.max(...years);
-  const uniqueLocations = new Set(
+  const uniqueCountries = new Set(
     allProductions.map((p) => {
       const parts = p.location.split(",");
       return parts[parts.length - 1].trim();
     })
   );
 
-  // Featured: most recent production that has a poster
-  const featured = allProductions.find((p) => p.posterUrl && p.posterUrl.trim());
+  // Featured: most recent production
+  const featured = allProductions[0];
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "transparent",
-      }}
-    >
-      {/* ── HERO ──────────────────────────────────────────────────────────── */}
+    <div style={{ minHeight: "100vh", background: "transparent" }}>
+
+      {/* ═══════════════════════════════════════════
+          HERO
+      ═══════════════════════════════════════════ */}
       <section
         style={{
           position: "relative",
@@ -73,19 +80,16 @@ export default function TheatreIndexPage() {
           priority
           className="object-cover object-center"
         />
-
-        {/* Gradient overlay — darkens bottom-left for text legibility */}
+        {/* Gradient: darkens bottom for legibility */}
         <div
           style={{
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(135deg, rgba(36,17,35,0.72) 0%, rgba(36,17,35,0.35) 45%, transparent 75%), " +
-              "linear-gradient(to top, rgba(36,17,35,0.6) 0%, transparent 50%)",
+              "linear-gradient(to top, rgba(36,17,35,0.75) 0%, rgba(36,17,35,0.35) 40%, transparent 70%)",
           }}
         />
-
-        {/* Title block — bottom right, Anton style */}
+        {/* Title block — bottom right */}
         <div
           style={{
             position: "absolute",
@@ -98,13 +102,12 @@ export default function TheatreIndexPage() {
           <p
             style={{
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: "0.7rem",
+              fontSize: "0.68rem",
               letterSpacing: "0.28em",
               textTransform: "uppercase",
               color: "#FFCC00",
               opacity: 0.9,
-              margin: 0,
-              marginBottom: "0.5rem",
+              margin: "0 0 0.5rem",
             }}
           >
             Dramatic Adventure Theatre
@@ -115,7 +118,6 @@ export default function TheatreIndexPage() {
               fontSize: "clamp(3.4rem, 10vw, 7.5rem)",
               textTransform: "uppercase",
               color: "#f2f2f2",
-              opacity: 0.95,
               lineHeight: 1.0,
               textShadow: "0 8px 24px rgba(0,0,0,0.8)",
               margin: 0,
@@ -128,7 +130,7 @@ export default function TheatreIndexPage() {
           <p
             style={{
               fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-              fontSize: "clamp(1rem, 2vw, 1.5rem)",
+              fontSize: "clamp(1rem, 2vw, 1.45rem)",
               color: "#f2f2f2",
               opacity: 0.65,
               margin: "0.6rem 0 0",
@@ -141,20 +143,11 @@ export default function TheatreIndexPage() {
         </div>
       </section>
 
-      {/* ── STATS STRIP ───────────────────────────────────────────────────── */}
-      <section
-        style={{
-          padding: "3.5rem 0 3rem",
-        }}
-      >
-        <div
-          style={{
-            width: "90vw",
-            maxWidth: "1120px",
-            margin: "0 auto",
-          }}
-        >
-          {/* Eyebrow */}
+      {/* ═══════════════════════════════════════════
+          STATS
+      ═══════════════════════════════════════════ */}
+      <section style={{ padding: "3.5rem 0 3rem" }}>
+        <div style={{ width: "90vw", maxWidth: "1120px", margin: "0 auto" }}>
           <p
             style={{
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
@@ -162,45 +155,42 @@ export default function TheatreIndexPage() {
               letterSpacing: "0.26em",
               textTransform: "uppercase",
               color: "#6C00AF",
-              opacity: 0.8,
               margin: "0 0 1.25rem",
             }}
           >
             A lifetime of making theatre
           </p>
 
-          {/* Stats box */}
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-              gap: "0.1rem",
-              backgroundColor: "rgba(36, 17, 35, 0.1)",
+              backgroundColor: "rgba(36, 17, 35, 0.12)",
               borderRadius: "18px",
-              padding: "2rem 2.5rem",
-              border: "1px solid rgba(36, 17, 35, 0.12)",
+              border: "1px solid rgba(36, 17, 35, 0.14)",
+              overflow: "hidden",
             }}
           >
             {[
               { n: `${seasonNums.length}`, label: "Seasons", sub: `${earliestYear}–${latestYear}` },
               { n: `${allProductions.length}+`, label: "Productions", sub: "original works & adaptations" },
-              { n: `${uniqueLocations.size}+`, label: "Countries & Regions", sub: "across 5 continents" },
+              { n: `${uniqueCountries.size}+`, label: "Countries & Regions", sub: "across 5 continents" },
               { n: `${latestYear - earliestYear}+`, label: "Years of Work", sub: `since ${earliestYear}` },
-            ].map(({ n, label, sub }) => (
+            ].map(({ n, label, sub }, i) => (
               <div
                 key={label}
                 style={{
-                  padding: "1rem",
-                  borderRight: "1px solid rgba(36,17,35,0.1)",
+                  padding: "1.5rem 1.75rem",
+                  borderRight: i < 3 ? "1px solid rgba(36,17,35,0.1)" : "none",
                 }}
               >
                 <div
                   style={{
                     fontFamily: "var(--font-anton), system-ui, sans-serif",
-                    fontSize: "clamp(2.2rem, 5vw, 3.2rem)",
+                    fontSize: "clamp(2rem, 5vw, 3rem)",
                     color: "#FFCC00",
                     lineHeight: 1,
-                    marginBottom: "0.2rem",
+                    marginBottom: "0.3rem",
                   }}
                 >
                   {n}
@@ -208,12 +198,12 @@ export default function TheatreIndexPage() {
                 <div
                   style={{
                     fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                    fontSize: "0.72rem",
+                    fontSize: "0.7rem",
                     fontWeight: 700,
                     textTransform: "uppercase",
-                    letterSpacing: "0.16em",
+                    letterSpacing: "0.14em",
                     color: "#241123",
-                    opacity: 0.8,
+                    opacity: 0.85,
                   }}
                 >
                   {label}
@@ -221,9 +211,9 @@ export default function TheatreIndexPage() {
                 <div
                   style={{
                     fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                    fontSize: "0.65rem",
+                    fontSize: "0.62rem",
                     color: "#241123",
-                    opacity: 0.45,
+                    opacity: 0.55,
                     marginTop: "0.15rem",
                   }}
                 >
@@ -235,20 +225,12 @@ export default function TheatreIndexPage() {
         </div>
       </section>
 
-      {/* ── FEATURED PRODUCTION ───────────────────────────────────────────── */}
+      {/* ═══════════════════════════════════════════
+          FEATURED PRODUCTION
+      ═══════════════════════════════════════════ */}
       {featured && (
-        <section
-          style={{
-            padding: "0 0 3.5rem",
-          }}
-        >
-          <div
-            style={{
-              width: "90vw",
-              maxWidth: "1120px",
-              margin: "0 auto",
-            }}
-          >
+        <section style={{ padding: "0 0 3.5rem" }}>
+          <div style={{ width: "90vw", maxWidth: "1120px", margin: "0 auto" }}>
             <p
               style={{
                 fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
@@ -256,56 +238,50 @@ export default function TheatreIndexPage() {
                 letterSpacing: "0.26em",
                 textTransform: "uppercase",
                 color: "#6C00AF",
-                opacity: 0.8,
                 margin: "0 0 1.1rem",
               }}
             >
               Most Recent Production
             </p>
 
-            {/* Featured card */}
             <Link
               href={`/theatre/${featured.slug}`}
+              className="theatre-featured-card"
               style={{
                 display: "flex",
                 borderRadius: "16px",
                 overflow: "hidden",
-                border: "1px solid rgba(36,17,35,0.15)",
-                backgroundColor: "rgba(36, 17, 35, 0.06)",
+                border: "1px solid rgba(36,17,35,0.18)",
                 textDecoration: "none",
-                transition: "box-shadow 0.3s ease, border-color 0.3s ease",
-                minHeight: "320px",
-                position: "relative",
+                minHeight: "300px",
               }}
-              className="theatre-featured-card"
             >
-              {/* Poster image */}
+              {/* Poster */}
               <div
                 style={{
                   position: "relative",
                   flex: "0 0 42%",
-                  minHeight: "280px",
+                  minHeight: "260px",
                   overflow: "hidden",
                 }}
               >
                 <Image
-                  src={featured.posterUrl!}
+                  src={posterSrc(featured)}
                   alt={featured.title}
                   fill
-                  className="object-cover object-top"
+                  className="object-cover object-top theatre-poster-img"
                   priority
                 />
                 <div
                   style={{
                     position: "absolute",
                     inset: 0,
-                    background:
-                      "linear-gradient(to right, transparent 60%, rgba(36,17,35,0.15) 100%)",
+                    background: "linear-gradient(to right, transparent 55%, rgba(255,250,240,0.15) 100%)",
                   }}
                 />
               </div>
 
-              {/* Text content */}
+              {/* Text panel — white/cream for readability */}
               <div
                 style={{
                   flex: 1,
@@ -313,7 +289,8 @@ export default function TheatreIndexPage() {
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "center",
-                  gap: "0.75rem",
+                  gap: "0.65rem",
+                  backgroundColor: "rgba(255, 250, 240, 0.85)",
                 }}
               >
                 <p
@@ -322,7 +299,7 @@ export default function TheatreIndexPage() {
                     fontSize: "0.62rem",
                     fontWeight: 700,
                     textTransform: "uppercase",
-                    letterSpacing: "0.22em",
+                    letterSpacing: "0.2em",
                     color: "#6C00AF",
                     margin: 0,
                   }}
@@ -333,61 +310,66 @@ export default function TheatreIndexPage() {
                 <h2
                   style={{
                     fontFamily: "var(--font-anton), system-ui, sans-serif",
-                    fontSize: "clamp(2rem, 4vw, 3.6rem)",
+                    fontSize: "clamp(1.8rem, 4vw, 3.2rem)",
                     textTransform: "uppercase",
                     color: "#241123",
                     lineHeight: 1.0,
                     margin: 0,
                   }}
                 >
-                  {featured.title}
+                  {shortTitle(featured.title)}
                 </h2>
 
-                {featured.festival && (
-                  <p
-                    style={{
-                      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                      fontSize: "0.8rem",
-                      color: "#241123",
-                      opacity: 0.5,
-                      margin: 0,
-                    }}
-                  >
-                    {festivalShort(featured.festival)}
-                  </p>
-                )}
+                {featured.festival && (() => {
+                  const { event, venue } = parseFestival(featured.festival);
+                  return event ? (
+                    <p
+                      style={{
+                        fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                        fontSize: "0.78rem",
+                        color: "#241123",
+                        opacity: 0.6,
+                        margin: 0,
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {event}
+                      {venue ? (
+                        <span style={{ display: "block", fontSize: "0.68rem", opacity: 0.75, marginTop: "0.2rem" }}>
+                          {venue}
+                        </span>
+                      ) : null}
+                    </p>
+                  ) : null;
+                })()}
 
-                <div style={{ marginTop: "0.5rem" }}>
-                  <span
-                    style={{
-                      display: "inline-block",
-                      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                      fontSize: "0.65rem",
-                      fontWeight: 800,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.2em",
-                      color: "#241123",
-                      backgroundColor: "#FFCC00",
-                      opacity: 0.75,
-                      padding: "0.4em 1em",
-                      borderRadius: "6px",
-                    }}
-                    className="theatre-explore-btn"
-                  >
-                    Explore Production →
-                  </span>
-                </div>
+                <span
+                  style={{
+                    display: "inline-block",
+                    alignSelf: "flex-start",
+                    marginTop: "0.5rem",
+                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                    fontSize: "0.62rem",
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.18em",
+                    color: "#241123",
+                    backgroundColor: "#FFCC00",
+                    padding: "0.45em 1.1em",
+                    borderRadius: "6px",
+                  }}
+                >
+                  Explore Production →
+                </span>
               </div>
             </Link>
 
-            {/* Season archive link — outside the card to avoid nested anchors */}
+            {/* Season archive link — outside card (avoids nested <a>) */}
             <div style={{ marginTop: "0.75rem" }}>
               <Link
                 href={`/season/${featured.season}`}
+                className="theatre-season-link"
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.4rem",
                   fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                   fontSize: "0.65rem",
                   fontWeight: 700,
@@ -396,9 +378,7 @@ export default function TheatreIndexPage() {
                   color: "#6C00AF",
                   textDecoration: "none",
                   opacity: 0.7,
-                  transition: "opacity 0.2s ease",
                 }}
-                className="theatre-season-link"
               >
                 Season {featured.season} Archive ↗
               </Link>
@@ -407,40 +387,28 @@ export default function TheatreIndexPage() {
         </section>
       )}
 
-      {/* ── SEASON QUICK-NAV ──────────────────────────────────────────────── */}
+      {/* ═══════════════════════════════════════════
+          SEASON QUICK-NAV
+      ═══════════════════════════════════════════ */}
       <div
         style={{
           borderTop: "1px solid rgba(36,17,35,0.1)",
           borderBottom: "1px solid rgba(36,17,35,0.1)",
-          backgroundColor: "rgba(36, 17, 35, 0.05)",
+          backgroundColor: "rgba(36, 17, 35, 0.07)",
           padding: "0.75rem 0",
         }}
       >
-        <div
-          style={{
-            width: "90vw",
-            maxWidth: "1120px",
-            margin: "0 auto",
-            overflowX: "auto",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.4rem",
-              whiteSpace: "nowrap",
-            }}
-          >
+        <div style={{ width: "90vw", maxWidth: "1120px", margin: "0 auto", overflowX: "auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", whiteSpace: "nowrap" }}>
             <span
               style={{
                 fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                 fontSize: "0.58rem",
                 fontWeight: 700,
                 textTransform: "uppercase",
-                letterSpacing: "0.2em",
+                letterSpacing: "0.18em",
                 color: "#241123",
-                opacity: 0.3,
+                opacity: 0.35,
                 marginRight: "0.5rem",
                 flexShrink: 0,
               }}
@@ -451,66 +419,35 @@ export default function TheatreIndexPage() {
               <a
                 key={sn}
                 href={`#season-${sn}`}
+                className="theatre-nav-pill"
                 style={{
                   fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                   fontSize: "0.62rem",
                   fontWeight: 700,
                   textTransform: "uppercase",
-                  letterSpacing: "0.15em",
+                  letterSpacing: "0.12em",
                   color: "#241123",
-                  opacity: 0.5,
+                  opacity: 0.55,
                   textDecoration: "none",
                   padding: "0.35em 0.75em",
                   borderRadius: "6px",
-                  transition: "background 0.15s ease, opacity 0.15s ease",
                   flexShrink: 0,
                 }}
-                className="theatre-nav-pill"
               >
                 S{sn}
               </a>
-            ))}
-            <span style={{ margin: "0 0.5rem", color: "rgba(36,17,35,0.2)", flexShrink: 0 }}>·</span>
-            {seasonNums.map((sn) => (
-              <Link
-                key={sn}
-                href={`/season/${sn}`}
-                style={{
-                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                  fontSize: "0.6rem",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.1em",
-                  color: "#6C00AF",
-                  textDecoration: "none",
-                  padding: "0.3em 0.5em",
-                  flexShrink: 0,
-                  opacity: 0.7,
-                  transition: "opacity 0.15s ease",
-                }}
-                className="theatre-season-nav-link"
-              >
-                Season {sn} ↗
-              </Link>
             ))}
           </div>
         </div>
       </div>
 
-      {/* ── PRODUCTIONS BY SEASON ─────────────────────────────────────────── */}
-      <section
-        style={{
-          padding: "4rem 0 5rem",
-        }}
-      >
-        <div
-          style={{
-            width: "90vw",
-            maxWidth: "1120px",
-            margin: "0 auto",
-          }}
-        >
-          {/* Section heading */}
+      {/* ═══════════════════════════════════════════
+          PRODUCTIONS BY SEASON
+      ═══════════════════════════════════════════ */}
+      <section style={{ padding: "4rem 0 5rem" }}>
+        <div style={{ width: "90vw", maxWidth: "1120px", margin: "0 auto" }}>
+
+          {/* Heading */}
           <div style={{ marginBottom: "3rem" }}>
             <p
               style={{
@@ -519,7 +456,6 @@ export default function TheatreIndexPage() {
                 letterSpacing: "0.26em",
                 textTransform: "uppercase",
                 color: "#6C00AF",
-                opacity: 0.8,
                 margin: "0 0 0.5rem",
               }}
             >
@@ -530,8 +466,7 @@ export default function TheatreIndexPage() {
                 fontFamily: "var(--font-anton), system-ui, sans-serif",
                 fontSize: "clamp(2.2rem, 5vw, 3.6rem)",
                 textTransform: "uppercase",
-                color: "#241123",
-                opacity: 0.85,
+                color: "#530087",
                 margin: 0,
                 lineHeight: 1.0,
               }}
@@ -553,19 +488,19 @@ export default function TheatreIndexPage() {
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "1.5rem",
+                      gap: "1.25rem",
                       marginBottom: "1.5rem",
                       paddingBottom: "1rem",
-                      borderBottom: "1px solid rgba(36,17,35,0.1)",
+                      borderBottom: "1px solid rgba(36,17,35,0.12)",
                     }}
                   >
-                    {/* Big season watermark number */}
+                    {/* Watermark number */}
                     <span
                       aria-hidden
                       style={{
                         fontFamily: "var(--font-anton), system-ui, sans-serif",
-                        fontSize: "clamp(4rem, 9vw, 6.5rem)",
-                        color: "rgba(36,17,35,0.06)",
+                        fontSize: "clamp(4rem, 9vw, 6rem)",
+                        color: "rgba(36,17,35,0.07)",
                         lineHeight: 1,
                         userSelect: "none",
                         flexShrink: 0,
@@ -575,12 +510,17 @@ export default function TheatreIndexPage() {
                     </span>
 
                     <div style={{ minWidth: 0 }}>
-                      {/* Yellow pill season label */}
                       <Link
                         href={`/season/${sn}`}
-                        style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "0.6rem" }}
                         className="theatre-season-chapter-link"
+                        style={{
+                          textDecoration: "none",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.75rem",
+                        }}
                       >
+                        {/* Yellow pill */}
                         <span
                           style={{
                             fontFamily: "var(--font-anton), system-ui, sans-serif",
@@ -589,11 +529,10 @@ export default function TheatreIndexPage() {
                             letterSpacing: "0.2em",
                             color: "#241123",
                             backgroundColor: "#FFCC00",
-                            opacity: 0.65,
+                            opacity: 0.7,
                             padding: "0.15em 0.6em",
                             borderRadius: "0.3em",
                             display: "inline-block",
-                            transition: "opacity 0.2s ease",
                           }}
                         >
                           Season {sn}
@@ -601,26 +540,26 @@ export default function TheatreIndexPage() {
                         <span
                           style={{
                             fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                            fontSize: "0.6rem",
-                            color: "#241123",
-                            opacity: 0.3,
+                            fontSize: "0.58rem",
+                            fontWeight: 700,
                             textTransform: "uppercase",
-                            letterSpacing: "0.15em",
+                            letterSpacing: "0.14em",
+                            color: "#6C00AF",
+                            opacity: 0.6,
                           }}
                         >
-                          View full season ↗
+                          Full season ↗
                         </span>
                       </Link>
 
-                      {/* Year + Locations */}
                       <p
                         style={{
                           fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                           fontSize: "0.62rem",
                           textTransform: "uppercase",
-                          letterSpacing: "0.14em",
+                          letterSpacing: "0.12em",
                           color: "#241123",
-                          opacity: 0.4,
+                          opacity: 0.5,
                           margin: "0.4rem 0 0",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -636,7 +575,7 @@ export default function TheatreIndexPage() {
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
                       gap: "1rem",
                     }}
                   >
@@ -654,7 +593,7 @@ export default function TheatreIndexPage() {
             style={{
               marginTop: "4rem",
               paddingTop: "2.5rem",
-              borderTop: "1px solid rgba(36,17,35,0.1)",
+              borderTop: "1px solid rgba(36,17,35,0.12)",
               display: "flex",
               flexWrap: "wrap",
               alignItems: "center",
@@ -665,43 +604,41 @@ export default function TheatreIndexPage() {
             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
               <Link
                 href="/alumni"
+                className="theatre-bottom-link"
                 style={{
                   display: "inline-block",
                   fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                  fontSize: "0.7rem",
+                  fontSize: "0.68rem",
                   fontWeight: 700,
                   textTransform: "uppercase",
-                  letterSpacing: "0.15em",
+                  letterSpacing: "0.14em",
                   color: "#241123",
-                  opacity: 0.55,
                   textDecoration: "none",
-                  border: "1px solid rgba(36,17,35,0.2)",
+                  border: "1px solid rgba(36,17,35,0.22)",
                   padding: "0.55em 1.2em",
                   borderRadius: "99px",
-                  transition: "opacity 0.2s ease, border-color 0.2s ease",
+                  backgroundColor: "rgba(255,250,240,0.55)",
                 }}
-                className="theatre-bottom-link"
               >
                 ← Alumni Directory
               </Link>
               <Link
                 href="/story-map"
+                className="theatre-bottom-link"
                 style={{
                   display: "inline-block",
                   fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                  fontSize: "0.7rem",
+                  fontSize: "0.68rem",
                   fontWeight: 700,
                   textTransform: "uppercase",
-                  letterSpacing: "0.15em",
+                  letterSpacing: "0.14em",
                   color: "#241123",
-                  opacity: 0.55,
                   textDecoration: "none",
-                  border: "1px solid rgba(36,17,35,0.2)",
+                  border: "1px solid rgba(36,17,35,0.22)",
                   padding: "0.55em 1.2em",
                   borderRadius: "99px",
-                  transition: "opacity 0.2s ease, border-color 0.2s ease",
+                  backgroundColor: "rgba(255,250,240,0.55)",
                 }}
-                className="theatre-bottom-link"
               >
                 Story Map →
               </Link>
@@ -709,61 +646,82 @@ export default function TheatreIndexPage() {
             <p
               style={{
                 fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                fontSize: "0.62rem",
+                fontSize: "0.6rem",
                 color: "#241123",
-                opacity: 0.3,
+                opacity: 0.4,
                 margin: 0,
               }}
             >
-              {earliestYear}–{latestYear} · {allProductions.length} productions across{" "}
-              {uniqueLocations.size} locations
+              {earliestYear}–{latestYear} · {allProductions.length} productions · {uniqueCountries.size} locations
             </p>
           </div>
         </div>
       </section>
 
-      {/* ── PAGE STYLES ───────────────────────────────────────────────────── */}
+      {/* ═══════════════════════════════════════════
+          PAGE STYLES
+      ═══════════════════════════════════════════ */}
       <style>{`
+        /* Featured card */
+        .theatre-featured-card {
+          transition: box-shadow 0.28s ease, border-color 0.28s ease;
+        }
         .theatre-featured-card:hover {
-          box-shadow: 0 8px 40px rgba(36, 17, 35, 0.18);
-          border-color: rgba(108, 0, 175, 0.35) !important;
+          box-shadow: 0 10px 44px rgba(36, 17, 35, 0.18);
+          border-color: rgba(108, 0, 175, 0.38) !important;
         }
-        .theatre-featured-card:hover .theatre-explore-btn {
-          opacity: 1 !important;
+        .theatre-poster-img {
+          transition: transform 0.5s ease;
         }
+        .theatre-featured-card:hover .theatre-poster-img {
+          transform: scale(1.04);
+        }
+
+        /* Season / nav links */
+        .theatre-season-link:hover { opacity: 1 !important; }
         .theatre-nav-pill:hover {
-          background: rgba(36, 17, 35, 0.08) !important;
+          background: rgba(36, 17, 35, 0.09) !important;
           opacity: 0.85 !important;
         }
-        .theatre-season-link:hover {
-          opacity: 1 !important;
-        }
-        .theatre-season-nav-link:hover {
-          opacity: 1 !important;
-        }
         .theatre-season-chapter-link:hover span:first-child {
-          opacity: 0.9 !important;
+          opacity: 0.95 !important;
+        }
+
+        /* Bottom nav links */
+        .theatre-bottom-link {
+          transition: opacity 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+          opacity: 0.8;
         }
         .theatre-bottom-link:hover {
-          opacity: 0.9 !important;
-          border-color: rgba(108, 0, 175, 0.45) !important;
+          opacity: 1;
+          border-color: rgba(108, 0, 175, 0.4) !important;
+          background: rgba(255, 250, 240, 0.85) !important;
         }
-        .theatre-prod-card:hover {
-          box-shadow: 0 6px 28px rgba(36, 17, 35, 0.15);
-          border-color: rgba(255, 204, 0, 0.45) !important;
-          transform: translateY(-2px);
-        }
+
+        /* Production card */
         .theatre-prod-card {
           transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
         }
+        .theatre-prod-card:hover {
+          box-shadow: 0 6px 28px rgba(36, 17, 35, 0.16);
+          border-color: rgba(255, 204, 0, 0.5) !important;
+          transform: translateY(-2px);
+        }
+        .theatre-prod-card:hover .theatre-card-poster {
+          transform: scale(1.05);
+        }
+        .theatre-card-poster {
+          transition: transform 0.5s ease;
+        }
 
+        /* Mobile: featured card stacks vertically */
         @media (max-width: 640px) {
           .theatre-featured-card {
             flex-direction: column !important;
           }
           .theatre-featured-card > div:first-child {
-            flex: 0 0 220px !important;
-            min-height: 220px !important;
+            flex: 0 0 200px !important;
+            min-height: 200px !important;
           }
         }
       `}</style>
@@ -771,12 +729,13 @@ export default function TheatreIndexPage() {
   );
 }
 
-// ── PRODUCTION CARD ──────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+// PRODUCTION CARD
+// ═══════════════════════════════════════════════════════════════
 
 function ProductionCard({ p }: { p: Production }) {
   const hasPoster = Boolean(p.posterUrl && p.posterUrl.trim());
-  const short = festivalShort(p.festival ?? undefined);
-  const venue = festivalVenue(p.festival ?? undefined);
+  const { event, venue } = parseFestival(p.festival ?? undefined);
 
   return (
     <Link
@@ -787,97 +746,69 @@ function ProductionCard({ p }: { p: Production }) {
         flexDirection: "column",
         overflow: "hidden",
         borderRadius: "12px",
-        border: "1px solid rgba(36,17,35,0.12)",
-        backgroundColor: "rgba(36, 17, 35, 0.06)",
+        border: "1px solid rgba(36,17,35,0.14)",
         textDecoration: "none",
       }}
     >
-      {/* Poster or typographic fill */}
+      {/* Poster image — always shown, fallback if no real poster */}
       <div
         style={{
           position: "relative",
-          height: "176px",
+          height: "160px",
           flexShrink: 0,
           overflow: "hidden",
+          backgroundColor: "rgba(36,17,35,0.12)",
         }}
       >
-        {hasPoster ? (
-          <>
-            <Image
-              src={p.posterUrl!}
-              alt={p.title}
-              fill
-              className="object-cover object-top"
-              style={{ transition: "transform 0.5s ease" }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background:
-                  "linear-gradient(to top, rgba(36,17,35,0.65) 0%, transparent 50%)",
-              }}
-            />
-          </>
-        ) : (
-          /* Typographic fill for no-poster productions */
-          <div
+        <Image
+          src={posterSrc(p)}
+          alt={shortTitle(p.title)}
+          fill
+          className="object-cover object-top theatre-card-poster"
+        />
+        {/* Fade-to-card-body at bottom */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(to top, rgba(255,250,240,0.9) 0%, transparent 45%)",
+          }}
+        />
+        {/* Season badge — top left */}
+        {!hasPoster && (
+          <span
             style={{
               position: "absolute",
-              inset: 0,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-end",
-              padding: "1rem",
-              background:
-                "linear-gradient(135deg, rgba(108,0,175,0.18) 0%, rgba(36,17,35,0.4) 55%, rgba(36,17,35,0.7) 100%)",
+              top: "0.6rem",
+              left: "0.6rem",
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
+              fontSize: "0.65rem",
+              textTransform: "uppercase",
+              letterSpacing: "0.15em",
+              color: "#241123",
+              backgroundColor: "#FFCC00",
+              opacity: 0.8,
+              padding: "0.2em 0.55em",
+              borderRadius: "4px",
             }}
           >
-            {/* Season watermark */}
-            <span
-              aria-hidden
-              style={{
-                position: "absolute",
-                right: "0.75rem",
-                top: "0.5rem",
-                fontFamily: "var(--font-anton), system-ui, sans-serif",
-                fontSize: "4.5rem",
-                color: "rgba(255,255,255,0.06)",
-                lineHeight: 1,
-                userSelect: "none",
-              }}
-            >
-              {p.season}
-            </span>
-            <p
-              style={{
-                position: "relative",
-                zIndex: 1,
-                fontFamily: "var(--font-anton), system-ui, sans-serif",
-                fontSize: "clamp(1rem, 3vw, 1.4rem)",
-                textTransform: "uppercase",
-                color: "rgba(242,242,242,0.85)",
-                lineHeight: 1.15,
-                margin: 0,
-              }}
-            >
-              {p.title}
-            </p>
-          </div>
+            S{p.season}
+          </span>
         )}
       </div>
 
-      {/* Card body */}
+      {/* Text panel — cream white for readability off kraft */}
       <div
         style={{
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          gap: "0.35rem",
-          padding: "0.85rem 1rem 0.9rem",
+          gap: "0.3rem",
+          padding: "0.75rem 1rem 0.9rem",
+          backgroundColor: "rgba(255, 250, 240, 0.85)",
         }}
       >
-        {/* Meta row */}
+        {/* Year + season meta */}
         <div
           style={{
             display: "flex",
@@ -892,9 +823,9 @@ function ProductionCard({ p }: { p: Production }) {
               fontSize: "0.58rem",
               fontWeight: 700,
               textTransform: "uppercase",
-              letterSpacing: "0.16em",
-              color: "#241123",
-              opacity: 0.4,
+              letterSpacing: "0.14em",
+              color: "#6C00AF",
+              opacity: 0.8,
             }}
           >
             {p.year}{p.season ? ` · S${p.season}` : ""}
@@ -902,10 +833,9 @@ function ProductionCard({ p }: { p: Production }) {
           <span
             style={{
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: "0.58rem",
-              fontWeight: 600,
+              fontSize: "0.56rem",
               color: "#241123",
-              opacity: 0.35,
+              opacity: 0.45,
               textAlign: "right",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -921,49 +851,49 @@ function ProductionCard({ p }: { p: Production }) {
         <h3
           style={{
             fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-            fontSize: "0.9rem",
+            fontSize: "0.88rem",
             fontWeight: 700,
             color: "#241123",
-            opacity: 0.85,
             lineHeight: 1.3,
             margin: 0,
           }}
         >
-          {p.title}
+          {shortTitle(p.title)}
         </h3>
 
-        {/* Festival context */}
-        {short && (
+        {/* Festival event */}
+        {event && (
           <p
             style={{
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: "0.6rem",
+              fontSize: "0.58rem",
               color: "#241123",
-              opacity: 0.38,
+              opacity: 0.5,
               margin: 0,
+              lineHeight: 1.4,
               overflow: "hidden",
               display: "-webkit-box",
-              WebkitLineClamp: 1,
+              WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
             } as React.CSSProperties}
           >
-            {short}
+            {event}
           </p>
         )}
 
-        {/* Venue tag */}
+        {/* Venue — pinned to bottom */}
         {venue && (
           <p
             style={{
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: "0.57rem",
+              fontSize: "0.56rem",
               fontWeight: 600,
               textTransform: "uppercase",
-              letterSpacing: "0.12em",
+              letterSpacing: "0.1em",
               color: "#6C00AF",
-              opacity: 0.55,
+              opacity: 0.65,
               margin: "auto 0 0",
-              paddingTop: "0.5rem",
+              paddingTop: "0.4rem",
             }}
           >
             {venue}

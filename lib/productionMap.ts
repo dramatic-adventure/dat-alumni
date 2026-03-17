@@ -39,7 +39,7 @@ export const productionMap: Record<string, Production> = {
     venue: "Plaza Civica",
     festival: "",
     url: "",
-    posterUrl: "/posters/the-rainbow-of-san-luis.jpg",
+    posterUrl: "/posters/the-rainbow-of-san-luis-landscape.jpg",
     artists: {
       "jesse-baxter": ["Director"],
       "peter-petkovsek": ["Director"],
@@ -67,7 +67,7 @@ export const productionMap: Record<string, Production> = {
     venue: "",
     festival: "Spinal: MFA New Works in Theatre -- Towson University",
     url: "",
-    posterUrl: "/posters/blackfish.jpg",
+    posterUrl: "/posters/blackfish-landscape.jpg",
     artists: {
       "jesse-baxter": ["Director"],
       "jason-williamson": ["Playwright"],
@@ -98,7 +98,7 @@ export const productionMap: Record<string, Production> = {
     venue: "",
     festival: "ACTion Fest 2017: Juntos, Mano a Mano / Hand in Hand -- IATI Theatre",
     url: "",
-    posterUrl: "/posters/miracles-are-soft-in-the-jungle.jpg",
+    posterUrl: "/posters/miracles-are-soft-in-the-jungle-landscape.jpg",
     artists: {
       "peter-petkovsek": ["Director", "Actor"],
       "erin-jones": ["Lighting Design"],
@@ -123,7 +123,7 @@ export const productionMap: Record<string, Production> = {
     venue: "",
     festival: "ACTion Fest 2017: Juntos, Mano a Mano / Hand in Hand -- IATI Theatre",
     url: "",
-    posterUrl: "/posters/whispers-of-floreana.jpg",
+    posterUrl: "/posters/whispers-of-floreana-landscape.jpg",
     artists: {
       "amy-e-witting": ["Director", "Actor"],
       "erin-jones": ["Lighting Design"],
@@ -149,7 +149,7 @@ export const productionMap: Record<string, Production> = {
     venue: "",
     festival: "ACTion Fest 2016: Shangaa / Shock and Awe -- IATI Theatre",
     url: "",
-    posterUrl: "/posters/tembo.jpg",
+    posterUrl: "/posters/tembo-landscape.jpg",
     artists: {
       "candis-c-jones": ["Director"],
       "erin-jones": ["Lighting Design"],
@@ -174,7 +174,7 @@ export const productionMap: Record<string, Production> = {
     venue: "",
     festival: "ACTion Fest 2016: Shangaa / Shock and Awe -- IATI Theatre",
     url: "",
-    posterUrl: "/posters/travelogues.jpg",
+    posterUrl: "/posters/travelogues-landscape.jpg",
     artists: {
       "christen-madrazo": ["Director"],
       "erin-jones": ["Lighting Design"],
@@ -202,7 +202,7 @@ export const productionMap: Record<string, Production> = {
     venue: "",
     festival: "ACTion Fest 2016: Shangaa / Shock and Awe -- IATI Theatre",
     url: "",
-    posterUrl: "/posters/ubinadamu.jpg",
+    posterUrl: "/posters/ubinadamu-landscape.jpg",
     artists: {
       "michael-herman": ["Director"],
       "asha-musa-dibuga": ["Inspiration"],
@@ -229,7 +229,7 @@ export const productionMap: Record<string, Production> = {
     venue: "",
     festival: "ACTion Fest 2016: Shangaa / Shock and Awe -- IATI Theatre",
     url: "",
-    posterUrl: "/posters/nisikilize.jpg",
+    posterUrl: "/posters/nisikilize-landscape.jpg",
     artists: {
       "jason-williamson": ["Director"],
       "erin-jones": ["Lighting Design"],
@@ -255,7 +255,7 @@ export const productionMap: Record<string, Production> = {
     venue: "",
     festival: "Workshop Production 2015 -- Divadlo Andreja Bagara",
     url: "",
-    posterUrl: "/posters/the-rebel-bird.jpg",
+    posterUrl: "/posters/the-rebel-bird-landscape.jpg",
     artists: {
       "kathleen-amshoff": ["Director"],
       "jason-williamson": ["Resident Playwright"],
@@ -284,7 +284,7 @@ export const productionMap: Record<string, Production> = {
     venue: "",
     festival: "ACTion Fest 2015: Tu a Teraz / Here and Now -- IATI Theatre",
     url: "",
-    posterUrl: "/posters/stop-stay-leave.jpg",
+    posterUrl: "/posters/stop-stay-leave-landscape.jpg",
     artists: {
       "danya-taymor": ["Director"],
       "erin-jones": ["Lighting Design"],
@@ -310,7 +310,7 @@ export const productionMap: Record<string, Production> = {
     venue: "",
     festival: "ACTion Fest 2015: Tu a Teraz / Here and Now -- IATI Theatre",
     url: "",
-    posterUrl: "/posters/porajmos-the-devouring.jpg",
+    posterUrl: "/posters/porajmos-the-devouring-landscape.jpg",
     artists: {
       "bryce-britton": ["Director"],
       "erin-jones": ["Lighting Design"],
@@ -339,7 +339,7 @@ export const productionMap: Record<string, Production> = {
     venue: "",
     festival: "ACTion Fest 2015: Tu a Teraz / Here and Now -- IATI Theatre",
     url: "",
-    posterUrl: "/posters/sunflower.jpg",
+    posterUrl: "/posters/sunflower-landscape.jpg",
     artists: {
       "ryan-whinnem": ["Director"],
       "erin-jones": ["Lighting Design"],
@@ -368,7 +368,7 @@ export const productionMap: Record<string, Production> = {
     venue: "",
     festival: "ACTion Fest 2015: Tu a Teraz / Here and Now -- IATI Theatre",
     url: "",
-    posterUrl: "/posters/little-light.jpg",
+    posterUrl: "/posters/little-light-landscape.jpg",
     artists: {
       "tom-costello": ["Director"],
       "erin-jones": ["Lighting Design"],
@@ -393,7 +393,7 @@ export const productionMap: Record<string, Production> = {
     venue: "",
     festival: "Off-Off-Broadway Production 2013 -- IATI Theater",
     url: "",
-    posterUrl: "/posters/a-girl-without-wings.jpg",
+    posterUrl: "/posters/a-girl-without-wings-landscape.jpg",
     artists: {
       "jason-williamson": ["Playwright"],
       "kathleen-amshoff": ["Director"],
@@ -499,7 +499,7 @@ export const productionMap: Record<string, Production> = {
   season: 7,
   festival: "",
   url: "",
-  posterUrl: "",
+  posterUrl: "/posters/a-girl-without-wings-workshop-production-landscape.jpg",
   artists: {
     "paul-huelo": ["Actor"],
     "elisha-lawson": ["Actor"],
@@ -523,7 +523,7 @@ export const productionMap: Record<string, Production> = {
   season: 7,
   festival: "",
   url: "",
-  posterUrl: "",
+  posterUrl: "/posters/travelogue-season-two-landscape.jpg",
   artists: {
     "jason-williamson": ["Producer"],
     "christen-madrazo": ["Producer"],
@@ -543,7 +543,7 @@ export const productionMap: Record<string, Production> = {
   season: 6,
   festival: "",
   url: "",
-  posterUrl: "",
+  posterUrl: "/posters/travelogue-season-one-landscape.jpg",
   artists: {
     "jason-williamson": ["Producer"],
     "christen-madrazo": ["Producer"],
@@ -563,7 +563,7 @@ export const productionMap: Record<string, Production> = {
   venue: "",
   festival: "5 Year Anniversary Party",
   url: "",
-  posterUrl: "",
+  posterUrl: "/posters/a-girl-without-wings-party-landscape.jpg",
   artists: {
     "jaime-carillo": ["Actor"],
     "masha-mendieta": ["Actor"],
@@ -668,7 +668,7 @@ export const productionMap: Record<string, Production> = {
     venue: "Gene Frankel Theatre",
     festival: "ACTion Fest 2010: Poco a Poco / Little by Little",
     url: "",
-    posterUrl: "/posters/esperanza.jpg",
+    posterUrl: "/posters/esperanza-landscape.jpg",
     artists: {
       "jesse-baxter": ["Director"],
       "kaitlin-kaufman": ["Production Stage Manager"],
@@ -746,7 +746,7 @@ export const productionMap: Record<string, Production> = {
     venue: "IATI Theatre & Richmond Shepard Theatre",
     festival: "Performing Arts Marathon 2009 Festival & ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador",
     url: "",
-    posterUrl: "/posters/hotel-millionaire.jpg",
+    posterUrl: "/posters/hotel-millionaire-landscape.jpg",
     artists: {
       "kathleen-amshoff": ["Assoc. Artistic Director", "Director"],
       "rachael-palmer-jones": ["Actor"],
@@ -924,7 +924,7 @@ export const productionMap: Record<string, Production> = {
     venue: "IATI Theatre & Red Room Theater",
     festival: "Performing Arts Marathon 2008 Festival & Off-Off-Broadway Production", 
     url: "",
-    posterUrl: "/posters/flight-360.jpg",
+    posterUrl: "/posters/flight-360-landscape.jpg",
     artists: {
       "leslie-fields": ["Playwright"],
       "jesse-baxter": ["Director"],
@@ -948,7 +948,7 @@ export const productionMap: Record<string, Production> = {
     venue: "Load of Fun (Baltimore), Bricolage Production Co. (Pittsburgh), and more",
     festival: "North East US Tour",
     url: "",
-    posterUrl: "/posters/voices-from-zimbabwe.jpg",
+    posterUrl: "/posters/voices-from-zimbabwe-landscape.jpg",
     artists: {
       "oscar-manzini": ["Road Manager", "Local Dramaturg"],
       "lisa-bearpark": ["Actor"],
