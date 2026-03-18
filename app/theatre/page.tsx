@@ -501,7 +501,6 @@ export default function TheatreIndexPage() {
                 color: C.ink,
                 lineHeight: 1.75,
                 margin: "0 0 1.25rem",
-                maxWidth: "72ch",
                 opacity: 0.88,
               }}
             >
@@ -518,7 +517,6 @@ export default function TheatreIndexPage() {
                 gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))",
                 gap: "0.65rem 2.5rem",
                 marginBottom: "1.75rem",
-                maxWidth: "68ch",
               }}
             >
               {[
