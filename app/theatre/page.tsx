@@ -105,7 +105,7 @@ const ERAS: EraConfig[] = [
     geography: "Ecuador · Slovakia · Hudson Valley",
     src: "/images/theatre/archive/the-rainbow-of-san-luis-puppets.jpeg",
     alt: "The Rainbow of San Luis — DAT Season 16, Ecuador",
-    objectPosition: "60% 18%",      // subject upper-right of frame
+    objectPosition: "60% 30%",      // subject upper-right of frame
     filter: "contrast(1.18) saturate(1.3) brightness(1.04)", // sharpen and enrich the image
   },
   {
