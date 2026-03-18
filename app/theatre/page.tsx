@@ -284,7 +284,7 @@ export default function TheatreIndexPage() {
       ════════════════════════════════════════════ */}
       <section style={{ padding: "3.5rem 0 3rem" }}>
         <div style={{ width: "90vw", maxWidth: "1120px", margin: "0 auto" }}>
-          <p style={eyebrowOnKraft}>A lifetime of making theatre</p>
+          <p style={eyebrowOnKraft}>The adventure, by the numbers</p>
           <div
             style={{
               display: "grid",
@@ -1051,9 +1051,9 @@ export default function TheatreIndexPage() {
 // ─── Shared text styles ────────────────────────────────────────────────────────
 const eyebrowOnDark: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-  fontSize: "0.8rem",
-  fontWeight: 700,
-  letterSpacing: "0.24em",
+  fontSize: "0.95rem",
+  fontWeight: 900,
+  letterSpacing: "0.18em",
   textTransform: "uppercase",
   color: "#FFCC00",
   margin: 0,
