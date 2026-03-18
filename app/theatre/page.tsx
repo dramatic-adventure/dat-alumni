@@ -33,6 +33,7 @@ interface EraConfig {
   src: string | null;
   alt: string;
   objectPosition: string;
+  filter?: string;          // optional CSS filter for per-image tone correction
 }
 
 const ERAS: EraConfig[] = [
@@ -42,9 +43,9 @@ const ERAS: EraConfig[] = [
     seasons: [1, 2],
     years: "2006–2008",
     geography: "Zimbabwe · Ecuador · USA",
-    src: "/posters/flight-360-portrait.jpg",
+    src: "/posters/flight-360-landscape.jpg",
     alt: "Flight 360 — DAT Season 2, Ecuador",
-    objectPosition: "center",
+    objectPosition: "top",          // subject sits high in the frame
   },
   {
     id: "era-2",
@@ -104,7 +105,8 @@ const ERAS: EraConfig[] = [
     geography: "Ecuador · Slovakia · Hudson Valley",
     src: "/images/theatre/archive/the-rainbow-of-san-luis-puppets.jpeg",
     alt: "The Rainbow of San Luis — DAT Season 16, Ecuador",
-    objectPosition: "center",
+    objectPosition: "60% 18%",      // subject upper-right of frame
+    filter: "contrast(1.18) saturate(1.3) brightness(1.04)", // sharpen and enrich the image
   },
   {
     id: "era-8",
@@ -295,7 +297,7 @@ export default function TheatreIndexPage() {
             }}
           >
             {[
-              { n: String(totalSeasons),         label: "Seasons",        sub: `${earliestYear}–present` },
+              { n: String(totalSeasons),         label: "Seasons",        sub: "2006–present" },
               { n: String(allProductions.length), label: "Productions",    sub: "original works & adaptations" },
               { n: String(uniqueArtists.size),    label: "Alumni Artists", sub: "directors, actors & designers" },
               { n: String(uniqueCountries.size),  label: "Countries",      sub: "where the work was born" },
@@ -498,41 +500,47 @@ export default function TheatreIndexPage() {
                 fontWeight: 500,
                 color: C.ink,
                 lineHeight: 1.75,
-                margin: "0 0 1.1rem",
+                margin: "0 0 1.25rem",
                 maxWidth: "72ch",
                 opacity: 0.88,
               }}
             >
-              All DAT plays are born abroad — inspired by unique landscapes, moved by local and global
+              All DAT works are born abroad — inspired by unique landscapes, moved by local and global
               concerns, devised with a diverse ensemble, and developed through cross-cultural partnership.
-              Each play is researched, rehearsed in the field, and brought home to share with New York
-              audiences and the world.
+              Whether a play, a community collaboration, or an immersive experience, each production is
+              researched in the field and brought home to share with New York audiences and the world.
             </p>
 
-            {/* Mission chips */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1.5rem" }}>
+            {/* Mission pillars — typographic, not interactive */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))",
+                gap: "0.65rem 2.5rem",
+                marginBottom: "1.75rem",
+                maxWidth: "68ch",
+              }}
+            >
               {[
                 "Connect communities",
                 "Amplify local concerns",
                 "Explore global implications",
                 "Move audiences to act",
               ].map((line) => (
-                <span
+                <div
                   key={line}
                   style={{
                     fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                    fontSize: "0.72rem",
-                    fontWeight: 800,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.14em",
+                    fontSize: "0.88rem",
+                    fontWeight: 700,
                     color: C.ink,
-                    backgroundColor: C.gold,
-                    padding: "0.3em 0.85em",
-                    borderRadius: "5px",
+                    borderLeft: `3px solid ${C.gold}`,
+                    paddingLeft: "0.75em",
+                    lineHeight: 1.4,
                   }}
                 >
                   {line}
-                </span>
+                </div>
               ))}
             </div>
 
@@ -600,19 +608,19 @@ export default function TheatreIndexPage() {
                         style={{
                           padding: "0.4em 1.4em",
                           borderRadius: "999px",
-                          backgroundColor: "rgba(36,17,35,0.08)",
-                          border: `1px solid rgba(36,17,35,0.18)`,
+                          backgroundColor: "rgba(36,17,35,0.13)",
+                          border: `1px solid rgba(36,17,35,0.32)`,
                           flexShrink: 0,
                         }}
                       >
                         <span
                           style={{
                             fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                            fontSize: "0.7rem",
-                            fontWeight: 800,
+                            fontSize: "0.72rem",
+                            fontWeight: 900,
                             textTransform: "uppercase",
                             letterSpacing: "0.22em",
-                            color: C.inkMid,
+                            color: C.ink,
                           }}
                         >
                           {era.years}
@@ -646,7 +654,11 @@ export default function TheatreIndexPage() {
                             alt={era.alt}
                             fill
                             className="theatre-era-photo"
-                            style={{ objectFit: "cover", objectPosition: era.objectPosition }}
+                            style={{
+                              objectFit: "cover",
+                              objectPosition: era.objectPosition,
+                              ...(era.filter ? { filter: era.filter } : {}),
+                            }}
                             sizes="(max-width: 860px) 90vw, 38vw"
                           />
                         ) : (
@@ -1049,9 +1061,9 @@ const eyebrowOnDark: React.CSSProperties = {
 
 const eyebrowOnKraft: React.CSSProperties = {
   fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-  fontSize: "0.85rem",
-  fontWeight: 800,
-  letterSpacing: "0.2em",
+  fontSize: "0.95rem",
+  fontWeight: 900,
+  letterSpacing: "0.18em",
   textTransform: "uppercase",
   color: "#241123",
   margin: "0 0 1.1rem",
