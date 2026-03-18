@@ -507,7 +507,7 @@ export default function TheatreIndexPage() {
               All DAT works are born abroad — inspired by unique landscapes, moved by local and global
               concerns, devised with a diverse ensemble, and developed through cross-cultural partnership.
               Whether a play, a community collaboration, or an immersive experience, each production is
-              researched in the field and brought home to share with New York audiences and the world.
+              researched in the field and shared with audiences near and far.
             </p>
 
             {/* Mission pillars — typographic, not interactive */}
