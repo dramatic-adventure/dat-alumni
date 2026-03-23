@@ -36,9 +36,9 @@ const programs = [
     credits: "Credit-eligible",
   },
   {
-    code: "THE SCENE",
-    name: "The Scene",
-    desc: "A curated weekend in a city where great theatre is being made. Students see two or three productions together, share meals, and meet working artists — plus a minga: preparing gift boxes for DAT drama clubs around the world. A powerful entry point, or an add-on to any longer program. The Scene: NYC. The Scene: Edinburgh.",
+    code: "PLACES",
+    name: "Places",
+    desc: "A curated weekend in a city where great theatre is being made. Students see two or three productions together, share meals at restaurants connected to DAT's international communities, meet working artists, and do a minga — preparing gift boxes for DAT drama clubs around the world. The last moment before everything becomes real. Places: Chicago. Places: Edinburgh. Places: New York.",
     length: "1 weekend",
     credits: "Standalone or add-on",
   },
