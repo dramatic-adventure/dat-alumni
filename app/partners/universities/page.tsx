@@ -89,9 +89,6 @@ export default function UniversityPartnersPage() {
           <h1 style={{ margin: 0, fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "clamp(2.5rem, 6vw, 5.5rem)", fontWeight: 800, lineHeight: 1.05, color: "#f2f2f2", textShadow: "0 4px 24px rgba(0,0,0,0.5)" }}>
             Your students don't just<br />study the world. They change it.
           </h1>
-          <p style={{ margin: "1.25rem 0 0", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "clamp(0.95rem, 1.8vw, 1.2rem)", fontWeight: 500, color: "rgba(242,242,242,0.88)", maxWidth: 620, lineHeight: 1.6 }}>
-            Build a credit-eligible study abroad that lets your students devise, teach, produce, and perform theatre addressing real-world issues — in collaboration with communities around the globe.
-          </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.85rem", marginTop: "2rem" }}>
             <Link href="/partners/propose-project?type=university" className="u-btn-yellow">Propose a Partnership</Link>
             <a href="#programs" className="u-btn-ghost">See Our Programs</a>
