@@ -54,6 +54,7 @@ const featuredPartners = [
   { name: "Amakhosi Theatre", src: "/images/partners/amakhosi.jpg" },
   { name: "CEDENMA", src: "/images/partners/cedenma.jpg" },
   { name: "Forgotten Voices", src: "/images/partners/forgotten-voices.png" },
+  { name: "Daigle Tours", src: "/images/partners/daigle-tours.jpg" },
 ];
 
 /* ─── Why DAT pillars ─────────────────────────────────────── */
