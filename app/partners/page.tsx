@@ -50,7 +50,7 @@ const pathways = [
 
 /* ─── Partners to feature ────────────────────────────────── */
 const featuredPartners = [
-  { name: "ETP Slovensko", src: "/images/partners/amakhosi.jpg" },
+  { name: "ETP Slovensko", src: "/images/partners/etp-slovensko.jpg" },
   { name: "Amakhosi Theatre", src: "/images/partners/amakhosi.jpg" },
   { name: "CEDENMA", src: "/images/partners/cedenma.jpg" },
   { name: "Forgotten Voices", src: "/images/partners/forgotten-voices.png" },
@@ -95,7 +95,7 @@ export default function PartnersPage() {
   }, []);
 
   return (
-    <main style={{ background: "#f6e4c1", overflowX: "hidden" }}>
+    <main className="kraft-bg" style={{ overflowX: "hidden" }}>
 
       {/* ── HERO ────────────────────────────────────────────── */}
       <section style={{ position: "relative", height: "88vh", minHeight: 560, overflow: "hidden", display: "flex", alignItems: "flex-end" }}>
@@ -138,7 +138,7 @@ export default function PartnersPage() {
       </section>
 
       {/* ── PATHWAY CARDS ─────────────────────────────────────── */}
-      <section id="pathways" style={{ padding: "4rem 2rem", background: "#f6e4c1" }}>
+      <section id="pathways" className="kraft-bg" style={{ padding: "4rem 2rem" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }}>
           <div style={{ marginBottom: "2.5rem", maxWidth: 680 }}>
             <span style={{ display: "inline-block", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "#6C00AF", marginBottom: "0.6rem" }}>PARTNERSHIP PATHWAYS</span>
@@ -170,7 +170,7 @@ export default function PartnersPage() {
       </section>
 
       {/* ── WHY DAT ───────────────────────────────────────────── */}
-      <section style={{ padding: "4rem 2rem", background: "#f6e4c1" }}>
+      <section className="kraft-bg" style={{ padding: "4rem 2rem" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ marginBottom: "2.5rem", maxWidth: 640 }}>
             <span style={{ display: "inline-block", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "#6C00AF", marginBottom: "0.6rem" }}>WHY DAT</span>
@@ -194,7 +194,7 @@ export default function PartnersPage() {
       </section>
 
       {/* ── COMMUNITY PARTNERS ─────────────────────────────────── */}
-      <section style={{ padding: "4rem 2rem", background: "#f6e4c1" }}>
+      <section className="kraft-bg" style={{ padding: "4rem 2rem" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <span style={{ display: "block", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "#6C00AF", marginBottom: "0.6rem" }}>OUR COMMUNITY</span>
           <h2 style={{ margin: "0 0 0.6rem", fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "clamp(2rem, 4vw, 3rem)", fontWeight: 800, color: "#241123", lineHeight: 1.15 }}>
@@ -238,7 +238,7 @@ export default function PartnersPage() {
       </section>
 
       {/* ── PHOTO STACK + CTA ─────────────────────────────────── */}
-      <section style={{ background: "#f6e4c1", paddingTop: "1rem", paddingBottom: "0" }}>
+      <section className="kraft-bg" style={{ paddingTop: "1rem", paddingBottom: "0" }}>
         <JoinTheJourneyPanel variant="photos-only" />
       </section>
       <section style={{ background: "#6C00AF", padding: "3.5rem 2rem" }}>
@@ -259,6 +259,12 @@ export default function PartnersPage() {
       </section>
 
       <style>{`
+        .kraft-bg {
+          background-color: #f6e4c1;
+          background-image: url('/texture/kraft-paper.jpg');
+          background-repeat: repeat;
+          background-size: 800px auto;
+        }
         .p-stats-grid {
           max-width: 1100px;
           margin: 0 auto;
