@@ -21,10 +21,26 @@ const PARTNER_TYPES = [
 
 /* ─── What happens after ─── */
 const nextSteps = [
-  { icon: "📬", step: "We read your proposal", desc: "Every submission is read personally by DAT's partnership team — usually within 3–5 business days." },
-  { icon: "☎️", step: "We reach out", desc: "If there's a good fit, we'll schedule a call to learn more about your vision, your community, and what you're hoping to build." },
-  { icon: "✏️", step: "We co-design", desc: "Together, we shape a program, initiative, or partnership that works for both our organizations." },
-  { icon: "🚀", step: "We launch", desc: "We handle the logistics. You get to be part of something unforgettable." },
+  {
+    icon: "📬",
+    step: "We read your proposal",
+    desc: "Every submission is read personally by DAT's partnership team — usually within 3–5 business days.",
+  },
+  {
+    icon: "☎️",
+    step: "We reach out",
+    desc: "If there's a good fit, we'll schedule a call to learn more about your vision, your community, and what you're hoping to build.",
+  },
+  {
+    icon: "✏️",
+    step: "We co-design",
+    desc: "Together, we shape a program, initiative, or partnership that works for both our organizations.",
+  },
+  {
+    icon: "🚀",
+    step: "We launch",
+    desc: "We handle the logistics. You get to be part of something unforgettable.",
+  },
 ];
 
 /* ─── Inner form component (needs useSearchParams) ─── */
@@ -47,7 +63,11 @@ function ProposeForm() {
     hear: "",
   });
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
+  function handleChange(
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   }
@@ -76,7 +96,9 @@ function ProposeForm() {
       if (!res.ok) throw new Error("Submission failed");
       setSubmitted(true);
     } catch {
-      setError("Something went wrong. Please email us directly at hello@dramaticadventure.com");
+      setError(
+        "Something went wrong. Please email us directly at hello@dramaticadventure.com"
+      );
     } finally {
       setSubmitting(false);
     }
@@ -84,13 +106,51 @@ function ProposeForm() {
 
   if (submitted) {
     return (
-      <div className="pp-success">
-        <span className="pp-success__icon" aria-hidden="true">✨</span>
-        <h2 className="pp-success__title">We received your proposal.</h2>
-        <p className="pp-success__body">
-          Thank you, {form.name || "friend"}. We'll read your message and be in touch within 3–5 business days. We're looking forward to learning more about what you're imagining.
+      <div
+        style={{
+          textAlign: "center",
+          padding: "2.5rem 1rem",
+        }}
+      >
+        <span
+          style={{ display: "block", fontSize: "3rem", marginBottom: "1rem" }}
+          aria-hidden="true"
+        >
+          ✨
+        </span>
+        <h2
+          style={{
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+            fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
+            fontWeight: 800,
+            color: "#6c00af",
+            margin: "0 0 0.75rem",
+          }}
+        >
+          We received your proposal.
+        </h2>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+            fontSize: "1rem",
+            lineHeight: 1.7,
+            color: "rgba(36,17,35,0.75)",
+            maxWidth: "520px",
+            margin: "0 auto 2rem",
+          }}
+        >
+          Thank you, {form.name || "friend"}. We'll read your message and be in
+          touch within 3–5 business days. We're looking forward to learning more
+          about what you're imagining.
         </p>
-        <div className="pp-success__actions">
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap" as const,
+            gap: "0.85rem",
+            justifyContent: "center",
+          }}
+        >
           <Link href="/partners" className="pp-btn pp-btn--purple">
             Explore Other Partnerships
           </Link>
@@ -107,7 +167,9 @@ function ProposeForm() {
       {/* Row 1: Name + Email */}
       <div className="pp-row">
         <div className="pp-field">
-          <label htmlFor="name" className="pp-label">Your Name <span aria-hidden="true">*</span></label>
+          <label htmlFor="name" className="pp-label">
+            Your Name <span aria-hidden="true" style={{ color: "#f23359" }}>*</span>
+          </label>
           <input
             id="name"
             name="name"
@@ -121,7 +183,9 @@ function ProposeForm() {
           />
         </div>
         <div className="pp-field">
-          <label htmlFor="email" className="pp-label">Email Address <span aria-hidden="true">*</span></label>
+          <label htmlFor="email" className="pp-label">
+            Email Address <span aria-hidden="true" style={{ color: "#f23359" }}>*</span>
+          </label>
           <input
             id="email"
             name="email"
@@ -139,7 +203,9 @@ function ProposeForm() {
       {/* Row 2: Org + Partnership Type */}
       <div className="pp-row">
         <div className="pp-field">
-          <label htmlFor="org" className="pp-label">Organization Name</label>
+          <label htmlFor="org" className="pp-label">
+            Organization Name
+          </label>
           <input
             id="org"
             name="org"
@@ -151,7 +217,9 @@ function ProposeForm() {
           />
         </div>
         <div className="pp-field">
-          <label htmlFor="orgType" className="pp-label">Partnership Type <span aria-hidden="true">*</span></label>
+          <label htmlFor="orgType" className="pp-label">
+            Partnership Type <span aria-hidden="true" style={{ color: "#f23359" }}>*</span>
+          </label>
           <select
             id="orgType"
             name="orgType"
@@ -160,9 +228,13 @@ function ProposeForm() {
             value={form.orgType}
             onChange={handleChange}
           >
-            <option value="" disabled>Select the closest fit…</option>
+            <option value="" disabled>
+              Select the closest fit…
+            </option>
             {PARTNER_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
             ))}
           </select>
         </div>
@@ -170,7 +242,9 @@ function ProposeForm() {
 
       {/* Vision */}
       <div className="pp-field pp-field--full">
-        <label htmlFor="vision" className="pp-label">What are you imagining? <span aria-hidden="true">*</span></label>
+        <label htmlFor="vision" className="pp-label">
+          What are you imagining? <span aria-hidden="true" style={{ color: "#f23359" }}>*</span>
+        </label>
         <textarea
           id="vision"
           name="vision"
@@ -186,7 +260,9 @@ function ProposeForm() {
       {/* Row 3: Community + Timeline */}
       <div className="pp-row">
         <div className="pp-field">
-          <label htmlFor="community" className="pp-label">Where is your community or audience?</label>
+          <label htmlFor="community" className="pp-label">
+            Where is your community or audience?
+          </label>
           <input
             id="community"
             name="community"
@@ -198,13 +274,15 @@ function ProposeForm() {
           />
         </div>
         <div className="pp-field">
-          <label htmlFor="timeline" className="pp-label">Hoped-for timeline</label>
+          <label htmlFor="timeline" className="pp-label">
+            Hoped-for timeline
+          </label>
           <input
             id="timeline"
             name="timeline"
             type="text"
             className="pp-input"
-            placeholder="e.g. Fall 2025, ASAP, flexible…"
+            placeholder="e.g. Fall 2026, ASAP, flexible…"
             value={form.timeline}
             onChange={handleChange}
           />
@@ -213,7 +291,9 @@ function ProposeForm() {
 
       {/* How did you hear */}
       <div className="pp-field pp-field--full">
-        <label htmlFor="hear" className="pp-label">How did you find DAT?</label>
+        <label htmlFor="hear" className="pp-label">
+          How did you find DAT?
+        </label>
         <input
           id="hear"
           name="hear"
@@ -225,21 +305,57 @@ function ProposeForm() {
         />
       </div>
 
+      {/* Honeypot — hidden from humans */}
+      <div style={{ display: "none" }} aria-hidden="true">
+        <label htmlFor="website">Website</label>
+        <input
+          id="website"
+          name="website"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+        />
+      </div>
+
       {/* Error state */}
       {error && (
-        <p className="pp-error" role="alert">{error}</p>
+        <p
+          style={{
+            margin: 0,
+            padding: "0.9rem 1.1rem",
+            borderRadius: "10px",
+            background: "rgba(242,51,89,0.08)",
+            border: "1px solid rgba(242,51,89,0.3)",
+            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+            fontSize: "0.86rem",
+            color: "#b01d3c",
+            lineHeight: 1.5,
+          }}
+          role="alert"
+        >
+          {error}
+        </p>
       )}
 
       <div className="pp-form__footer">
         <button
           type="submit"
-          className="pp-btn pp-btn--submit"
+          className="pp-btn-submit"
           disabled={submitting}
           aria-busy={submitting}
         >
           {submitting ? "Sending…" : "Send My Proposal →"}
         </button>
-        <p className="pp-form__note">
+        <p
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+            fontSize: "0.78rem",
+            color: "rgba(36,17,35,0.5)",
+            textAlign: "center",
+            fontStyle: "italic",
+          }}
+        >
           We read every proposal personally. You'll hear from a human.
         </p>
       </div>
@@ -250,13 +366,22 @@ function ProposeForm() {
 /* ─── Page component ─── */
 export default function ProposeProjectPage() {
   return (
-    <main style={{ background: "transparent", overflowX: "hidden" }}>
+    <main style={{ background: "#fff", overflowX: "hidden" }}>
 
       {/* ══════════════════════════════════════════════════
           HERO
       ══════════════════════════════════════════════════ */}
-      <section className="pp-hero" aria-label="Propose a partnership hero">
-        <div className="pp-hero__img-wrap">
+      <section
+        style={{
+          position: "relative",
+          minHeight: "68vh",
+          display: "flex",
+          alignItems: "flex-end",
+          overflow: "hidden",
+        }}
+        aria-label="Propose a partnership hero"
+      >
+        <div style={{ position: "absolute", inset: 0 }}>
           <Image
             src="/images/alumni-hero.jpg"
             alt="DAT artists in performance"
@@ -266,15 +391,34 @@ export default function ProposeProjectPage() {
             style={{ objectFit: "cover", objectPosition: "center 25%" }}
           />
         </div>
-        <div className="pp-hero__overlay" aria-hidden="true" />
-        <div className="pp-hero__stack">
-          <Link href="/partners" className="pp-breadcrumb">← All Partnerships</Link>
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(to bottom, rgba(36,17,35,0.1) 0%, rgba(36,17,35,0.5) 45%, rgba(36,17,35,0.92) 100%)",
+          }}
+        />
+        <div
+          style={{
+            position: "relative",
+            zIndex: 2,
+            width: "90vw",
+            maxWidth: "900px",
+            margin: "0 auto 6vh",
+            padding: "0 1rem",
+          }}
+        >
+          <Link href="/partners" className="pp-breadcrumb">
+            ← All Partnerships
+          </Link>
           <span className="pp-eyebrow">Co-create with DAT</span>
-          <h1 className="pp-hero__title">
-            Bring your bold idea.
-          </h1>
-          <p className="pp-hero__sub">
-            We don't do off-the-shelf. Every DAT partnership is built from scratch — shaped around your community, your vision, and what theatre can do in that specific place and time.
+          <h1 className="pp-hero-title">Bring your bold idea.</h1>
+          <p className="pp-hero-sub">
+            We don't do off-the-shelf. Every DAT partnership is built from scratch
+            — shaped around your community, your vision, and what theatre can do in
+            that specific place and time.
           </p>
         </div>
       </section>
@@ -283,64 +427,260 @@ export default function ProposeProjectPage() {
       {/* ══════════════════════════════════════════════════
           MAIN LAYOUT: FORM + SIDEBAR
       ══════════════════════════════════════════════════ */}
-      <section className="pp-main" aria-labelledby="pp-form-heading">
-        <div className="pp-main__inner">
+      <section
+        style={{ background: "#fff", padding: "4rem 2rem 5rem" }}
+        aria-labelledby="pp-form-heading"
+      >
+        <div className="pp-main-inner">
 
-          {/* Left: form */}
-          <div className="pp-main__form-col">
-            <div className="pp-form-header">
-              <span className="pp-eyebrow pp-eyebrow--purple">YOUR PROPOSAL</span>
-              <h2 id="pp-form-heading" className="pp-form-header__title">
-                Start the conversation.
-              </h2>
-              <p className="pp-form-header__sub">
-                Tell us who you are and what you're imagining. We'll take it from there.
-              </p>
+          {/* Left: form card */}
+          <div className="pp-form-col">
+            <div
+              style={{
+                background: "#fff",
+                border: "1.5px solid rgba(36,17,35,0.1)",
+                borderRadius: "20px",
+                padding: "2.25rem 2rem",
+                boxShadow: "0 4px 32px rgba(36,17,35,0.07)",
+              }}
+            >
+              <div style={{ marginBottom: "2rem" }}>
+                <span
+                  style={{
+                    display: "block",
+                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                    fontSize: "0.7rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.22em",
+                    textTransform: "uppercase" as const,
+                    color: "#6c00af",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  YOUR PROPOSAL
+                </span>
+                <h2
+                  id="pp-form-heading"
+                  style={{
+                    margin: "0 0 0.5rem",
+                    fontFamily:
+                      "var(--font-space-grotesk), system-ui, sans-serif",
+                    fontSize: "clamp(1.8rem, 3vw, 2.4rem)",
+                    fontWeight: 800,
+                    color: "#241123",
+                    lineHeight: 1.15,
+                  }}
+                >
+                  Start the conversation.
+                </h2>
+                <p
+                  style={{
+                    margin: 0,
+                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                    fontSize: "0.98rem",
+                    lineHeight: 1.65,
+                    color: "rgba(36,17,35,0.65)",
+                  }}
+                >
+                  Tell us who you are and what you're imagining. We'll take it from there.
+                </p>
+              </div>
+
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      color: "rgba(36,17,35,0.5)",
+                      fontSize: "0.9rem",
+                      padding: "2rem 0",
+                    }}
+                  >
+                    Loading form…
+                  </div>
+                }
+              >
+                <ProposeForm />
+              </Suspense>
             </div>
-
-            <Suspense fallback={<div className="pp-form-loading">Loading form…</div>}>
-              <ProposeForm />
-            </Suspense>
           </div>
 
           {/* Right: sidebar */}
-          <aside className="pp-sidebar" aria-label="What happens next">
-            <div className="pp-sidebar__block">
-              <span className="pp-eyebrow pp-eyebrow--purple">WHAT HAPPENS NEXT</span>
-              <h3 className="pp-sidebar__title">From submission to partnership.</h3>
-              <div className="pp-next-steps">
+          <aside
+            className="pp-sidebar"
+            aria-label="What happens next"
+          >
+            {/* What happens next */}
+            <div
+              style={{
+                background: "#fff",
+                border: "1.5px solid rgba(36,17,35,0.1)",
+                borderRadius: "18px",
+                padding: "1.5rem 1.4rem 1.6rem",
+                boxShadow: "0 2px 16px rgba(36,17,35,0.05)",
+              }}
+            >
+              <span
+                style={{
+                  display: "block",
+                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                  fontSize: "0.68rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase" as const,
+                  color: "#6c00af",
+                  marginBottom: "0.4rem",
+                }}
+              >
+                WHAT HAPPENS NEXT
+              </span>
+              <h3
+                style={{
+                  margin: "0 0 1.25rem",
+                  fontFamily:
+                    "var(--font-space-grotesk), system-ui, sans-serif",
+                  fontSize: "1.1rem",
+                  fontWeight: 800,
+                  color: "#241123",
+                }}
+              >
+                From submission to partnership.
+              </h3>
+              <div
+                style={{ display: "flex", flexDirection: "column" as const, gap: "1rem" }}
+              >
                 {nextSteps.map((ns, i) => (
-                  <div key={i} className="pp-next-step">
-                    <span className="pp-next-step__icon" aria-hidden="true">{ns.icon}</span>
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      gap: "0.85rem",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <span
+                      style={{
+                        flexShrink: 0,
+                        fontSize: "1.35rem",
+                        marginTop: "0.05rem",
+                      }}
+                      aria-hidden="true"
+                    >
+                      {ns.icon}
+                    </span>
                     <div>
-                      <h4 className="pp-next-step__title">{ns.step}</h4>
-                      <p className="pp-next-step__desc">{ns.desc}</p>
+                      <h4
+                        style={{
+                          margin: "0 0 0.2rem",
+                          fontFamily:
+                            "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontSize: "0.88rem",
+                          fontWeight: 800,
+                          color: "#241123",
+                        }}
+                      >
+                        {ns.step}
+                      </h4>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontFamily:
+                            "var(--font-dm-sans), system-ui, sans-serif",
+                          fontSize: "0.82rem",
+                          lineHeight: 1.6,
+                          color: "rgba(36,17,35,0.62)",
+                        }}
+                      >
+                        {ns.desc}
+                      </p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="pp-sidebar__block pp-sidebar__block--teal">
-              <span className="pp-sidebar__block-label">Already have a program in mind?</span>
-              <p className="pp-sidebar__block-body">
-                Explore our university and corporate pathways for more detail on what a structured DAT partnership might look like for you.
+            {/* Already have a program in mind */}
+            <div
+              style={{
+                background: "rgba(36,147,169,0.07)",
+                border: "1.5px solid rgba(36,147,169,0.2)",
+                borderRadius: "18px",
+                padding: "1.4rem 1.25rem 1.5rem",
+              }}
+            >
+              <span
+                style={{
+                  display: "block",
+                  fontFamily:
+                    "var(--font-space-grotesk), system-ui, sans-serif",
+                  fontSize: "0.68rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase" as const,
+                  color: "#2493a9",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                Already have a program in mind?
+              </span>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                  fontSize: "0.86rem",
+                  lineHeight: 1.65,
+                  color: "#241123",
+                  margin: "0 0 0.85rem",
+                }}
+              >
+                Explore our university and corporate pathways for more detail on
+                what a structured DAT partnership might look like for you.
               </p>
-              <div className="pp-sidebar__links">
-                <Link href="/partners/universities" className="pp-link">University Programs →</Link>
-                <Link href="/partners/corporate-giving" className="pp-link">Corporate Giving →</Link>
+              <div
+                style={{ display: "flex", flexDirection: "column" as const, gap: "0.4rem" }}
+              >
+                <Link href="/partners/universities" className="pp-sidebar-link">
+                  University Programs →
+                </Link>
+                <Link href="/partners/corporate-giving" className="pp-sidebar-link">
+                  Corporate Giving →
+                </Link>
               </div>
             </div>
 
-            <div className="pp-sidebar__block pp-sidebar__block--dark">
-              <span className="pp-sidebar__block-label pp-sidebar__block-label--yellow">Prefer to email directly?</span>
-              <p className="pp-sidebar__block-body" style={{ color: "rgba(242,242,242,0.7)" }}>
+            {/* Email directly */}
+            <div
+              style={{
+                background: "#241123",
+                borderRadius: "18px",
+                padding: "1.4rem 1.25rem 1.5rem",
+              }}
+            >
+              <span
+                style={{
+                  display: "block",
+                  fontFamily:
+                    "var(--font-space-grotesk), system-ui, sans-serif",
+                  fontSize: "0.68rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase" as const,
+                  color: "#ffcc00",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                Prefer to email directly?
+              </span>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                  fontSize: "0.86rem",
+                  lineHeight: 1.65,
+                  color: "rgba(242,242,242,0.72)",
+                  margin: "0 0 0.6rem",
+                }}
+              >
                 Reach our partnership team at:
               </p>
-              <a
-                href="mailto:hello@dramaticadventure.com"
-                className="pp-email-link"
-              >
+              <a href="mailto:hello@dramaticadventure.com" className="pp-email-link">
                 hello@dramaticadventure.com
               </a>
             </div>
@@ -350,45 +690,132 @@ export default function ProposeProjectPage() {
 
 
       {/* ══════════════════════════════════════════════════
-          INSPIRATION BAND
+          SEEDS OF WHAT'S POSSIBLE
+          Kraft paper background — distinct from CTA footer
       ══════════════════════════════════════════════════ */}
-      <section className="pp-inspiration" aria-label="Partnership examples">
-        <div className="pp-inspiration__inner">
-          <span className="pp-eyebrow" style={{ color: "rgba(242,242,242,0.55)" }}>WHAT'S BEEN DONE</span>
-          <h2 className="pp-inspiration__title">Some of what we've built with partners.</h2>
-          <p className="pp-inspiration__sub">
-            These are real programs that started with a conversation like the one you're about to have.
+      <section
+        style={{
+          background: "#f6e4c1",
+          padding: "5rem 2rem",
+          borderTop: "1px solid rgba(36,17,35,0.08)",
+        }}
+        aria-label="Partnership seeds"
+      >
+        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+          <span
+            style={{
+              display: "block",
+              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              letterSpacing: "0.22em",
+              textTransform: "uppercase" as const,
+              color: "rgba(36,17,35,0.45)",
+              marginBottom: "0.6rem",
+            }}
+          >
+            SEEDS OF WHAT'S POSSIBLE
+          </span>
+          <h2
+            style={{
+              margin: "0 0 0.6rem",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+              fontSize: "clamp(1.7rem, 3vw, 2.5rem)",
+              fontWeight: 800,
+              color: "#241123",
+              lineHeight: 1.15,
+            }}
+          >
+            Partnerships that started with a conversation.
+          </h2>
+          <p
+            style={{
+              margin: "0 0 2.75rem",
+              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+              fontSize: "1rem",
+              lineHeight: 1.7,
+              color: "rgba(36,17,35,0.7)",
+              maxWidth: "580px",
+            }}
+          >
+            These are real things that have grown from a simple reach-out — just
+            like the one you're about to make.
           </p>
 
-          <div className="pp-inspiration__cards">
+          <div className="pp-seeds-grid">
             {[
               {
                 label: "University Partnership",
-                headline: "A semester-long devised theatre program in Ecuador",
-                body: "Students from a US university spent a full semester in the Amazon working with Shuar youth artists — devising, performing, and co-creating a play about environmental justice.",
-                color: "#6c00af",
+                headline: "A faculty-led study abroad embedded in ACTion",
+                body: "A US university professor co-designed a three-week intensive with DAT, embedding students in our ACTion program in Central Europe. Students earned academic credit and co-facilitated workshops alongside DAT teaching artists in local schools.",
+                accent: "#6c00af",
+                border: "rgba(108,0,175,0.15)",
               },
               {
-                label: "Corporate CSR",
-                headline: "An Adventure Day with a mid-size tech company in NYC",
-                body: "Fifty employees spent a day creating short plays alongside young artists from the Bronx, exploring themes of belonging, ambition, and neighborhood pride.",
-                color: "#2493a9",
+                label: "Independent Research",
+                headline: "A doctoral dissertation built around a Creative Trek",
+                body: "A doctoral student embedded their ethnographic fieldwork in a DAT Creative Trek — interviewing artists, youth participants, and community members across two countries. The experience became the methodological core of their thesis on applied theatre in international contexts.",
+                accent: "#2493a9",
+                border: "rgba(36,147,169,0.15)",
               },
               {
-                label: "Foundation Partnership",
-                headline: "Multi-year Drama Club funding in Central Europe",
-                body: "A family foundation funded Drama Clubs in Slovakia and Kosovo for three years, with annual site visits and annual impact reports for board presentations.",
-                color: "#2fa873",
+                label: "Independent Study & Internship",
+                headline: "Students embedded in active DAT programming",
+                body: "DAT has mentored individual students through independent study arrangements and internships — embedding them in ongoing workshops, rehearsals, and community programs as junior teaching artists or project coordinators, with faculty approval and academic oversight.",
+                accent: "#2fa873",
+                border: "rgba(47,168,115,0.15)",
               },
             ].map((ex) => (
               <div
                 key={ex.label}
-                className="pp-inspiration__card"
-                style={{ ["--insp-color" as any]: ex.color }}
+                style={{
+                  background: "#fff",
+                  border: `1.5px solid ${ex.border}`,
+                  borderTop: `4px solid ${ex.accent}`,
+                  borderRadius: "16px",
+                  padding: "1.6rem 1.4rem 1.8rem",
+                  transition: "transform 180ms ease, box-shadow 180ms ease",
+                }}
+                className="pp-seed-card"
               >
-                <span className="pp-inspiration__card-label">{ex.label}</span>
-                <h3 className="pp-inspiration__card-headline">{ex.headline}</h3>
-                <p className="pp-inspiration__card-body">{ex.body}</p>
+                <span
+                  style={{
+                    display: "block",
+                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                    fontSize: "0.65rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.16em",
+                    textTransform: "uppercase" as const,
+                    color: ex.accent,
+                    marginBottom: "0.65rem",
+                  }}
+                >
+                  {ex.label}
+                </span>
+                <h3
+                  style={{
+                    margin: "0 0 0.7rem",
+                    fontFamily:
+                      "var(--font-space-grotesk), system-ui, sans-serif",
+                    fontSize: "1.05rem",
+                    fontWeight: 700,
+                    color: "#241123",
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {ex.headline}
+                </h3>
+                <p
+                  style={{
+                    margin: 0,
+                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                    fontSize: "0.87rem",
+                    lineHeight: 1.7,
+                    color: "rgba(36,17,35,0.72)",
+                  }}
+                >
+                  {ex.body}
+                </p>
               </div>
             ))}
           </div>
@@ -397,36 +824,90 @@ export default function ProposeProjectPage() {
 
 
       {/* ══════════════════════════════════════════════════
+          CTA FOOTER — purple band
+      ══════════════════════════════════════════════════ */}
+      <section
+        style={{
+          background: "#6c00af",
+          padding: "4rem 2rem",
+          textAlign: "center",
+        }}
+        aria-label="Partnership call to action"
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+            fontSize: "0.72rem",
+            fontWeight: 700,
+            letterSpacing: "0.2em",
+            textTransform: "uppercase" as const,
+            color: "rgba(255,255,255,0.55)",
+            margin: "0 0 0.75rem",
+          }}
+        >
+          READY TO ACT?
+        </p>
+        <h2
+          style={{
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+            fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)",
+            fontWeight: 800,
+            color: "#fff",
+            margin: "0 0 1rem",
+            lineHeight: 1.12,
+          }}
+        >
+          Your vision is the starting point.
+        </h2>
+        <p
+          style={{
+            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+            fontSize: "1rem",
+            lineHeight: 1.65,
+            color: "rgba(255,255,255,0.78)",
+            maxWidth: "480px",
+            margin: "0 auto 2.25rem",
+          }}
+        >
+          Scroll back up and send us your proposal. Or reach us directly at{" "}
+          <a
+            href="mailto:hello@dramaticadventure.com"
+            style={{ color: "#ffcc00", textDecoration: "underline" }}
+          >
+            hello@dramaticadventure.com
+          </a>
+          .
+        </p>
+        <a
+          href="#pp-form-heading"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "1rem 2.25rem",
+            background: "#ffcc00",
+            color: "#241123",
+            borderRadius: "14px",
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+            fontSize: "0.82rem",
+            fontWeight: 800,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase" as const,
+            textDecoration: "none",
+            transition: "transform 150ms ease, background 150ms ease",
+          }}
+          className="pp-cta-anchor"
+        >
+          Start the Conversation →
+        </a>
+      </section>
+
+
+      {/* ══════════════════════════════════════════════════
           STYLES
       ══════════════════════════════════════════════════ */}
-      <style jsx>{`
-        /* ── HERO ───────────────────────────────────────── */
-        .pp-hero {
-          position: relative;
-          min-height: 70vh;
-          display: flex;
-          align-items: flex-end;
-          overflow: hidden;
-        }
-        .pp-hero__img-wrap { position: absolute; inset: 0; }
-        .pp-hero__overlay {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(
-            to bottom,
-            rgba(36,17,35,0.15) 0%,
-            rgba(36,17,35,0.55) 50%,
-            rgba(36,17,35,0.88) 100%
-          );
-        }
-        .pp-hero__stack {
-          position: relative;
-          z-index: 2;
-          width: 90vw;
-          max-width: 900px;
-          margin: 0 auto 6vh;
-          padding: 0 1rem;
-        }
+      <style>{`
+        /* ── Breadcrumb + eyebrow ─────────────────────── */
         .pp-breadcrumb {
           display: inline-block;
           font-family: var(--font-dm-sans), system-ui, sans-serif;
@@ -451,8 +932,9 @@ export default function ProposeProjectPage() {
           margin-bottom: 0.65rem;
           opacity: 0.85;
         }
-        .pp-eyebrow--purple { color: #6c00af !important; opacity: 1 !important; }
-        .pp-hero__title {
+
+        /* ── Hero text ───────────────────────────────── */
+        .pp-hero-title {
           margin: 0;
           font-family: var(--font-space-grotesk), system-ui, sans-serif;
           font-size: clamp(2.8rem, 6.5vw, 6rem);
@@ -461,18 +943,131 @@ export default function ProposeProjectPage() {
           color: #f2f2f2;
           text-shadow: 0 4px 24px rgba(0,0,0,0.45);
         }
-        .pp-hero__sub {
+        .pp-hero-sub {
           margin: 1.25rem 0 0;
           font-family: var(--font-dm-sans), system-ui, sans-serif;
-          font-size: clamp(0.95rem, 1.8vw, 1.2rem);
+          font-size: clamp(0.95rem, 1.8vw, 1.18rem);
           color: rgba(242,242,242,0.85);
           max-width: 560px;
-          line-height: 1.6;
+          line-height: 1.65;
           font-weight: 500;
         }
 
-        /* ── BUTTONS ─────────────────────────────────────── */
-        .pp-btn {
+        /* ── Main inner grid ─────────────────────────── */
+        .pp-main-inner {
+          max-width: 1100px;
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: 1fr 360px;
+          gap: 3rem;
+          align-items: flex-start;
+        }
+        @media (max-width: 900px) {
+          .pp-main-inner { grid-template-columns: 1fr; }
+        }
+
+        /* ── Form column ─────────────────────────────── */
+        .pp-form-col { min-width: 0; }
+
+        /* ── Sidebar ─────────────────────────────────── */
+        .pp-sidebar {
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+          position: sticky;
+          top: 6rem;
+        }
+
+        /* ── Form internals ──────────────────────────── */
+        .pp-form {
+          display: flex;
+          flex-direction: column;
+          gap: 1.4rem;
+        }
+        .pp-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.25rem;
+        }
+        @media (max-width: 600px) {
+          .pp-row { grid-template-columns: 1fr; }
+        }
+        .pp-field {
+          display: flex;
+          flex-direction: column;
+          gap: 0.35rem;
+        }
+        .pp-field--full { grid-column: 1 / -1; }
+        .pp-label {
+          font-family: var(--font-space-grotesk), system-ui, sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: rgba(36,17,35,0.65);
+        }
+        .pp-input {
+          width: 100%;
+          padding: 0.8rem 1rem;
+          border-radius: 12px;
+          border: 1.5px solid rgba(36,17,35,0.16);
+          background: #fafaf9;
+          font-family: var(--font-dm-sans), system-ui, sans-serif;
+          font-size: 0.94rem;
+          color: #241123;
+          transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+          outline: none;
+          -webkit-appearance: none;
+          appearance: none;
+          box-sizing: border-box;
+        }
+        .pp-input:focus {
+          border-color: #6c00af;
+          box-shadow: 0 0 0 3px rgba(108,0,175,0.12);
+          background: #fff;
+        }
+        .pp-input::placeholder { color: rgba(36,17,35,0.35); }
+        .pp-select {
+          cursor: pointer;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%23241123' fill-opacity='0.45' d='M5 7l5 5 5-5z'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 0.75rem center;
+          background-size: 1.25em;
+          padding-right: 2.5rem;
+        }
+        .pp-textarea { resize: vertical; min-height: 144px; }
+        .pp-form__footer {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+
+        /* ── Submit button ───────────────────────────── */
+        .pp-btn-submit {
+          width: 100%;
+          background: #6c00af;
+          color: #f2f2f2;
+          padding: 1.1rem 2rem;
+          font-family: var(--font-space-grotesk), system-ui, sans-serif;
+          font-size: 0.85rem;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          border-radius: 14px;
+          border: none;
+          cursor: pointer;
+          box-shadow: 0 6px 24px rgba(108,0,175,0.25);
+          transition: background 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+        }
+        .pp-btn-submit:hover:not(:disabled) {
+          background: #530088;
+          transform: translateY(-1px);
+          box-shadow: 0 10px 30px rgba(108,0,175,0.32);
+        }
+        .pp-btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* ── Link buttons (success state) ────────────── */
+        .pp-btn--purple {
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -484,311 +1079,74 @@ export default function ProposeProjectPage() {
           letter-spacing: 0.16em;
           text-transform: uppercase;
           text-decoration: none;
-          border: 2px solid transparent;
-          cursor: pointer;
-          transition: transform 150ms ease, opacity 140ms ease, background-color 140ms ease;
-        }
-        .pp-btn:hover { transform: translateY(-2px); }
-        .pp-btn--purple { background: #6c00af; color: #f2f2f2; }
-        .pp-btn--purple:hover { background: #530088; }
-        .pp-btn--submit {
-          width: 100%;
           background: #6c00af;
           color: #f2f2f2;
-          padding: 1.1rem 2rem;
-          font-size: 0.85rem;
-          border-radius: 14px;
-          border: none;
-          box-shadow: 0 6px 24px rgba(108,0,175,0.28);
-          transition: background 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+          transition: background 150ms ease, transform 150ms ease;
         }
-        .pp-btn--submit:hover:not(:disabled) {
-          background: #530088;
-          transform: translateY(-1px);
-          box-shadow: 0 10px 30px rgba(108,0,175,0.35);
-        }
-        .pp-btn--submit:disabled { opacity: 0.6; cursor: not-allowed; }
+        .pp-btn--purple:hover { background: #530088; transform: translateY(-2px); }
         .pp-btn--outline {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.9rem 1.75rem;
+          border-radius: 14px;
+          font-family: var(--font-space-grotesk), system-ui, sans-serif;
+          font-size: 0.8rem;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          text-decoration: none;
           background: transparent;
           color: #241123;
-          border-color: rgba(36,17,35,0.3);
+          border: 2px solid rgba(36,17,35,0.25);
+          transition: background 150ms ease, transform 150ms ease;
         }
-        .pp-btn--outline:hover { background: rgba(36,17,35,0.06); }
+        .pp-btn--outline:hover { background: rgba(36,17,35,0.06); transform: translateY(-2px); }
 
-        /* ── MAIN LAYOUT ─────────────────────────────────── */
-        .pp-main { padding: 4rem 2rem 5rem; }
-        .pp-main__inner {
-          max-width: 1100px;
-          margin: 0 auto;
-          display: grid;
-          grid-template-columns: 1fr 360px;
-          gap: 3.5rem;
-          align-items: flex-start;
-        }
-        @media (max-width: 900px) {
-          .pp-main__inner { grid-template-columns: 1fr; }
-        }
-
-        /* ── FORM HEADER ─────────────────────────────────── */
-        .pp-form-header { margin-bottom: 2rem; }
-        .pp-form-header__title {
-          margin: 0.4rem 0 0.6rem;
-          font-family: var(--font-space-grotesk), system-ui, sans-serif;
-          font-size: clamp(1.8rem, 3vw, 2.4rem);
-          font-weight: 800;
-          color: #6c00af;
-          line-height: 1.15;
-        }
-        .pp-form-header__sub {
-          margin: 0;
+        /* ── Sidebar links ───────────────────────────── */
+        .pp-sidebar-link {
           font-family: var(--font-dm-sans), system-ui, sans-serif;
-          font-size: 0.96rem;
-          line-height: 1.65;
-          color: rgba(36,17,35,0.72);
-        }
-
-        /* ── FORM ────────────────────────────────────────── */
-        .pp-form { display: flex; flex-direction: column; gap: 1.4rem; }
-        .pp-form-loading { color: rgba(36,17,35,0.5); font-size: 0.9rem; padding: 2rem 0; }
-        .pp-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1.25rem;
-        }
-        @media (max-width: 600px) { .pp-row { grid-template-columns: 1fr; } }
-        .pp-field { display: flex; flex-direction: column; gap: 0.35rem; }
-        .pp-field--full { grid-column: 1 / -1; }
-        .pp-label {
-          font-family: var(--font-space-grotesk), system-ui, sans-serif;
-          font-size: 0.72rem;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: rgba(36,17,35,0.72);
-        }
-        .pp-label span { color: #f23359; }
-        .pp-input {
-          width: 100%;
-          padding: 0.75rem 1rem;
-          border-radius: 12px;
-          border: 1.5px solid rgba(36,17,35,0.18);
-          background: rgba(255,255,255,0.7);
-          font-family: var(--font-dm-sans), system-ui, sans-serif;
-          font-size: 0.92rem;
-          color: #241123;
-          transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
-          outline: none;
-          -webkit-appearance: none;
-          appearance: none;
-        }
-        .pp-input:focus {
-          border-color: #6c00af;
-          box-shadow: 0 0 0 3px rgba(108,0,175,0.12);
-          background: #fff;
-        }
-        .pp-input::placeholder { color: rgba(36,17,35,0.38); }
-        .pp-select { cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='%23241123' fill-opacity='0.5' d='M5 7l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1.25em; padding-right: 2.5rem; }
-        .pp-textarea { resize: vertical; min-height: 140px; }
-        .pp-form__footer { display: flex; flex-direction: column; gap: 0.75rem; }
-        .pp-form__note {
-          margin: 0;
-          font-family: var(--font-dm-sans), system-ui, sans-serif;
-          font-size: 0.78rem;
-          color: rgba(36,17,35,0.5);
-          text-align: center;
-          font-style: italic;
-        }
-        .pp-error {
-          margin: 0;
-          padding: 0.9rem 1.1rem;
-          border-radius: 10px;
-          background: rgba(242,51,89,0.08);
-          border: 1px solid rgba(242,51,89,0.3);
-          font-family: var(--font-dm-sans), system-ui, sans-serif;
-          font-size: 0.86rem;
-          color: #b01d3c;
-          line-height: 1.5;
-        }
-
-        /* ── SUCCESS ─────────────────────────────────────── */
-        .pp-success {
-          text-align: center;
-          padding: 2.5rem 1rem;
-        }
-        .pp-success__icon {
-          display: block;
-          font-size: 3rem;
-          margin-bottom: 1rem;
-        }
-        .pp-success__title {
-          font-family: var(--font-space-grotesk), system-ui, sans-serif;
-          font-size: clamp(1.6rem, 3vw, 2.2rem);
-          font-weight: 800;
-          color: #6c00af;
-          margin: 0 0 0.75rem;
-        }
-        .pp-success__body {
-          font-family: var(--font-dm-sans), system-ui, sans-serif;
-          font-size: 1rem;
-          line-height: 1.7;
-          color: rgba(36,17,35,0.75);
-          max-width: 520px;
-          margin: 0 auto 2rem;
-        }
-        .pp-success__actions { display: flex; flex-wrap: wrap; gap: 0.85rem; justify-content: center; }
-
-        /* ── SIDEBAR ─────────────────────────────────────── */
-        .pp-sidebar {
-          display: flex;
-          flex-direction: column;
-          gap: 1.25rem;
-          position: sticky;
-          top: 6rem;
-        }
-        .pp-sidebar__block {
-          background: rgba(255,255,255,0.55);
-          border: 1px solid rgba(36,17,35,0.1);
-          border-radius: 18px;
-          padding: 1.4rem 1.25rem 1.5rem;
-        }
-        .pp-sidebar__block--teal {
-          background: rgba(36,147,169,0.07);
-          border-color: rgba(36,147,169,0.2);
-        }
-        .pp-sidebar__block--dark {
-          background: #241123;
-          border-color: transparent;
-        }
-        .pp-sidebar__title {
-          margin: 0.35rem 0 1.1rem;
-          font-family: var(--font-space-grotesk), system-ui, sans-serif;
-          font-size: 1.1rem;
-          font-weight: 800;
-          color: #241123;
-        }
-        .pp-sidebar__block-label {
-          display: block;
-          font-family: var(--font-space-grotesk), system-ui, sans-serif;
-          font-size: 0.7rem;
-          font-weight: 700;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: #2493a9;
-          margin-bottom: 0.5rem;
-        }
-        .pp-sidebar__block-label--yellow { color: #ffcc00 !important; }
-        .pp-sidebar__block-body {
-          font-family: var(--font-dm-sans), system-ui, sans-serif;
-          font-size: 0.86rem;
-          line-height: 1.65;
-          color: rgba(36,17,35,0.72);
-          margin: 0 0 0.75rem;
-        }
-        .pp-sidebar__links { display: flex; flex-direction: column; gap: 0.4rem; }
-        .pp-link {
-          font-family: var(--font-dm-sans), system-ui, sans-serif;
-          font-size: 0.82rem;
+          font-size: 0.85rem;
           font-weight: 600;
           color: #2493a9;
           text-decoration: none;
           transition: color 130ms ease;
         }
-        .pp-link:hover { color: #6c00af; }
+        .pp-sidebar-link:hover { color: #6c00af; }
+
+        /* ── Email link (dark card) ───────────────────── */
         .pp-email-link {
           display: block;
           font-family: var(--font-space-grotesk), system-ui, sans-serif;
-          font-size: 0.88rem;
+          font-size: 0.9rem;
           font-weight: 700;
           color: #ffcc00;
           text-decoration: none;
-          transition: color 130ms ease;
           letter-spacing: 0.04em;
+          transition: color 130ms ease;
         }
         .pp-email-link:hover { color: #f23359; }
 
-        /* ── NEXT STEPS ──────────────────────────────────── */
-        .pp-next-steps { display: flex; flex-direction: column; gap: 1rem; }
-        .pp-next-step { display: flex; gap: 0.9rem; align-items: flex-start; }
-        .pp-next-step__icon {
-          flex-shrink: 0;
-          font-size: 1.4rem;
-          margin-top: 0.1rem;
-        }
-        .pp-next-step__title {
-          margin: 0 0 0.2rem;
-          font-family: var(--font-space-grotesk), system-ui, sans-serif;
-          font-size: 0.88rem;
-          font-weight: 800;
-          color: #241123;
-        }
-        .pp-next-step__desc {
-          margin: 0;
-          font-family: var(--font-dm-sans), system-ui, sans-serif;
-          font-size: 0.82rem;
-          line-height: 1.6;
-          color: rgba(36,17,35,0.65);
-        }
-
-        /* ── INSPIRATION ─────────────────────────────────── */
-        .pp-inspiration { background: #241123; padding: 4rem 2rem; }
-        .pp-inspiration__inner { max-width: 1100px; margin: 0 auto; }
-        .pp-inspiration__title {
-          margin: 0.4rem 0 0.65rem;
-          font-family: var(--font-space-grotesk), system-ui, sans-serif;
-          font-size: clamp(1.6rem, 3vw, 2.4rem);
-          font-weight: 800;
-          color: #f2f2f2;
-        }
-        .pp-inspiration__sub {
-          margin: 0 0 2.5rem;
-          font-family: var(--font-dm-sans), system-ui, sans-serif;
-          font-size: 0.96rem;
-          line-height: 1.65;
-          color: rgba(242,242,242,0.65);
-          max-width: 560px;
-        }
-        .pp-inspiration__cards {
+        /* ── Seeds grid ──────────────────────────────── */
+        .pp-seeds-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 1.25rem;
+          gap: 1.4rem;
         }
-        @media (max-width: 900px) { .pp-inspiration__cards { grid-template-columns: 1fr; } }
-        .pp-inspiration__card {
-          background: rgba(255,255,255,0.05);
-          border: 1.5px solid rgba(255,255,255,0.1);
-          border-radius: 16px;
-          padding: 1.5rem 1.3rem 1.6rem;
-          transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+        @media (max-width: 900px) {
+          .pp-seeds-grid { grid-template-columns: 1fr; }
         }
-        .pp-inspiration__card:hover {
-          border-color: var(--insp-color);
-          background: rgba(255,255,255,0.08);
-          transform: translateY(-3px);
+
+        /* ── Seed card hover ─────────────────────────── */
+        .pp-seed-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 36px rgba(36,17,35,0.1);
         }
-        .pp-inspiration__card-label {
-          display: block;
-          font-family: var(--font-dm-sans), system-ui, sans-serif;
-          font-size: 0.65rem;
-          font-weight: 700;
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
-          color: var(--insp-color);
-          margin-bottom: 0.6rem;
-        }
-        .pp-inspiration__card-headline {
-          margin: 0 0 0.65rem;
-          font-family: var(--font-space-grotesk), system-ui, sans-serif;
-          font-size: 1rem;
-          font-weight: 700;
-          color: #f2f2f2;
-          line-height: 1.3;
-        }
-        .pp-inspiration__card-body {
-          margin: 0;
-          font-family: var(--font-dm-sans), system-ui, sans-serif;
-          font-size: 0.85rem;
-          line-height: 1.65;
-          color: rgba(242,242,242,0.65);
+
+        /* ── CTA anchor hover ────────────────────────── */
+        .pp-cta-anchor:hover {
+          background: #fff;
+          transform: translateY(-2px);
         }
       `}</style>
     </main>
