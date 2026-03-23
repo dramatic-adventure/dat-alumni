@@ -4,12 +4,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, useEffect } from "react";
-import { dramaClubs } from "@/lib/dramaClubMap";
 import JoinTheJourneyPanel from "@/components/shared/JoinTheJourneyPanel";
-
-/* ─── Dynamic stats from live data ───────────────────────── */
-const COUNTRY_COUNT = new Set(dramaClubs.map((c) => c.country).filter(Boolean)).size;
-const CLUB_COUNT    = dramaClubs.length;
+import { COUNTRY_COUNT, CLUB_COUNT, SEASON_COUNT, ALUMNI_COUNT_DISPLAY } from "@/lib/datStats";
 
 /* ─── Partnership pathways ───────────────────────────────── */
 const pathways = [
@@ -126,8 +122,8 @@ export default function PartnersPage() {
           {[
             { value: `${COUNTRY_COUNT}`, label: "Countries" },
             { value: `${CLUB_COUNT}+`, label: "Drama Clubs Created" },
-            { value: "350+", label: "DAT Alumni Artists" },
-            { value: "20", label: "Seasons of Global Work" },
+            { value: ALUMNI_COUNT_DISPLAY, label: "DAT Alumni Artists" },
+            { value: `${SEASON_COUNT}`, label: "Seasons of Global Work" },
           ].map((s) => (
             <div key={s.label} style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
               <span style={{ fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 700, color: "#FFCC00", lineHeight: 1 }}>{s.value}</span>

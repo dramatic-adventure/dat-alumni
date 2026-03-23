@@ -3,9 +3,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { dramaClubs } from "@/lib/dramaClubMap";
-
-const COUNTRY_COUNT = new Set(dramaClubs.map((c) => c.country).filter(Boolean)).size;
+import { COUNTRY_COUNT } from "@/lib/datStats";
 
 /* ─── Programs ─────────────────────────────────────────── */
 const programs = [
