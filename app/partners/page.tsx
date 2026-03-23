@@ -94,7 +94,7 @@ export default function PartnersPage() {
   }, []);
 
   return (
-    <main style={{ background: "transparent", overflowX: "hidden" }}>
+    <main style={{ background: "#f6e4c1", overflowX: "hidden" }}>
 
       {/* ── HERO ────────────────────────────────────────────── */}
       <section style={{ position: "relative", height: "88vh", minHeight: 560, overflow: "hidden", display: "flex", alignItems: "flex-end" }}>
@@ -121,7 +121,7 @@ export default function PartnersPage() {
 
       {/* ── STAT BAND ────────────────────────────────────────── */}
       <section style={{ background: "#241123", padding: "2.25rem 2rem" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "1.5rem", textAlign: "center" }}>
+        <div className="p-stats-grid">
           {[
             { value: `${COUNTRY_COUNT}`, label: "Countries" },
             { value: `${CLUB_COUNT}+`, label: "Drama Clubs Created" },
@@ -169,7 +169,7 @@ export default function PartnersPage() {
       </section>
 
       {/* ── WHY DAT ───────────────────────────────────────────── */}
-      <section style={{ padding: "4rem 2rem", background: "#fff" }}>
+      <section style={{ padding: "4rem 2rem", background: "#f6e4c1" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ marginBottom: "2.5rem", maxWidth: 640 }}>
             <span style={{ display: "inline-block", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "#6C00AF", marginBottom: "0.6rem" }}>WHY DAT</span>
@@ -258,11 +258,16 @@ export default function PartnersPage() {
       </section>
 
       <style>{`
-        @media (max-width: 640px) {
-          section > div > div[style*="grid-template-columns: repeat(4"] {
-            grid-template-columns: repeat(2, 1fr) !important;
-          }
+        .p-stats-grid {
+          max-width: 1100px;
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 1.5rem;
+          text-align: center;
         }
+        @media (max-width: 640px) { .p-stats-grid { grid-template-columns: repeat(2, 1fr); } }
+
         .p-cards-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);

@@ -261,7 +261,7 @@ function ProposeForm() {
       <div className="pp-row">
         <div className="pp-field">
           <label htmlFor="community" className="pp-label">
-            Where is your community or audience?
+            Where is your community, audience, or team?
           </label>
           <input
             id="community"
@@ -366,7 +366,7 @@ function ProposeForm() {
 /* ─── Page component ─── */
 export default function ProposeProjectPage() {
   return (
-    <main style={{ background: "#fff", overflowX: "hidden" }}>
+    <main style={{ background: "#f6e4c1", overflowX: "hidden" }}>
 
       {/* ══════════════════════════════════════════════════
           HERO
@@ -428,7 +428,7 @@ export default function ProposeProjectPage() {
           MAIN LAYOUT: FORM + SIDEBAR
       ══════════════════════════════════════════════════ */}
       <section
-        style={{ background: "#fff", padding: "4rem 2rem 5rem" }}
+        style={{ background: "#f6e4c1", padding: "4rem 2rem 5rem" }}
         aria-labelledby="pp-form-heading"
       >
         <div className="pp-main-inner">
@@ -976,6 +976,9 @@ export default function ProposeProjectPage() {
           gap: 1.25rem;
           position: sticky;
           top: 6rem;
+        }
+        @media (max-width: 900px) {
+          .pp-sidebar { position: static; }
         }
 
         /* ── Form internals ──────────────────────────── */

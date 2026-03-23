@@ -38,11 +38,11 @@ const programs = [
     credits: "Credit-eligible",
   },
   {
-    code: "NYC WEEKEND",
-    name: "NYC Weekend",
-    desc: "An intensive weekend in New York City — deep-diving into DAT's methodology through workshops, community encounters, and artistic exchange with the city's extraordinary theatre ecosystem.",
+    code: "DAT WEEKEND",
+    name: "DAT Weekend",
+    desc: "A boutique cultural weekend — donors, alumni, emerging artists, and close supporters gathered around excellent theatre, shared meals, and reflective conversation. Launched as a NYC edition; portable to any city where great work is being made.",
     length: "1 weekend",
-    credits: "Standalone or add-on",
+    credits: "Alumni & donor program",
   },
   {
     code: "DAT LAB",
@@ -73,7 +73,7 @@ const benefits = [
 
 export default function UniversityPartnersPage() {
   return (
-    <main style={{ background: "transparent", overflowX: "hidden" }}>
+    <main style={{ background: "#f6e4c1", overflowX: "hidden" }}>
 
       {/* ── HERO ────────────────────────────────────────────── */}
       <section style={{ position: "relative", minHeight: "82vh", display: "flex", alignItems: "flex-end", overflow: "hidden" }}>
@@ -103,7 +103,7 @@ export default function UniversityPartnersPage() {
 
       {/* ── THE DAT DIFFERENCE ─────────────────────────────────── */}
       <section style={{ padding: "4.5rem 2rem", background: "#fff" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3.5rem", alignItems: "center" }} className="u-two-col">
+        <div style={{ maxWidth: 1100, margin: "0 auto" }} className="u-two-col">
           <div>
             <span style={{ display: "block", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "#6C00AF", marginBottom: "0.5rem" }}>THE DAT DIFFERENCE</span>
             <h2 style={{ margin: "0 0 1rem", fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "clamp(1.6rem, 3vw, 2.4rem)", fontWeight: 800, color: "#6C00AF", lineHeight: 1.2 }}>
@@ -181,7 +181,7 @@ export default function UniversityPartnersPage() {
       </section>
 
       {/* ── BENEFITS ─────────────────────────────────────────── */}
-      <section style={{ padding: "4rem 2rem", background: "#fff" }}>
+      <section style={{ padding: "4rem 2rem", background: "#f6e4c1" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <span style={{ display: "block", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "#6C00AF", marginBottom: "0.5rem" }}>FOR YOUR INSTITUTION</span>
           <h2 style={{ margin: "0 0 2rem", fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)", fontWeight: 800, color: "#241123", lineHeight: 1.15 }}>

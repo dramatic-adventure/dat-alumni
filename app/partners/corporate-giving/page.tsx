@@ -25,8 +25,8 @@ const partnershipTypes = [
     icon: "⚡",
     title: "Adventure Day",
     tagline: "Team building that actually builds something",
-    desc: "A curated day (or weekend) of creativity, cross-cultural exchange, and youth mentorship — led by DAT artists. Your team works alongside young artists to create, perform, and reflect. No trust falls. No ropes courses. Just the transformative power of making something together, with real people, around real stories.",
-    bestFor: "Companies looking for meaningful team building, leadership retreats, or employee engagement.",
+    desc: "A curated day (or weekend) of creativity, cross-cultural exchange, and youth mentorship — led by DAT artists. Your team works alongside young artists to create, perform, and reflect. No trust falls. No ropes courses. Just the transformative power of making something together, with real people, around real stories. And if your team is already retreating somewhere — Barcelona, Prague, Lisbon — give us a heads-up. We can develop an Adventure Day wherever you are, especially in countries where we already work.",
+    bestFor: "Companies planning leadership retreats or team off-sites, anywhere in the world.",
     accent: "#FFCC00",
     border: "rgba(217,169,25,0.45)",
     bg: "rgba(217,169,25,0.06)",
@@ -35,8 +35,8 @@ const partnershipTypes = [
     icon: "🎭",
     title: "Artist Sponsorship",
     tagline: "Fund the artist. Change the story.",
-    desc: "DAT offers several forms of artist sponsorship: equitable access grants (ensuring artists from underserved communities can participate fully), sustained participation support (multi-season creative journeys), creative breakthrough funding (for bold new work), artist leadership development, and long-term fellowship support. Your company's name becomes part of the story.",
-    bestFor: "Companies interested in creative philanthropy, patron-level impact, and visible alignment with the arts.",
+    desc: "Your sponsorship puts an artist in the room who couldn't otherwise be there. Some sponsorships unlock a single residency. Others fund a multi-season journey, a fellowship, or a creative breakthrough that shifts the trajectory of a career. Either way: your company's name is woven into the work — and into the life that made it.",
+    bestFor: "Companies drawn to patron-level creative impact and direct alignment with a living artistic practice.",
     accent: "#F23359",
     border: "rgba(242,51,89,0.3)",
     bg: "rgba(242,51,89,0.06)",
@@ -74,7 +74,7 @@ const sdgs = [
 
 export default function CorporateGivingPage() {
   return (
-    <main style={{ background: "transparent", overflowX: "hidden" }}>
+    <main style={{ background: "#f6e4c1", overflowX: "hidden" }}>
 
       {/* ── HERO ─────────────────────────────────────────────── */}
       <section style={{ position: "relative", minHeight: "82vh", display: "flex", alignItems: "flex-end", overflow: "hidden" }}>
@@ -121,7 +121,7 @@ export default function CorporateGivingPage() {
       </section>
 
       {/* ── WHY THEATRE / INTRO ──────────────────────────────── */}
-      <section style={{ padding: "4.5rem 2rem", background: "#fff" }}>
+      <section style={{ padding: "4.5rem 2rem", background: "#f6e4c1" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }} className="cg-two-col">
           <div>
             <span style={{ display: "block", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "#2FA873", marginBottom: "0.5rem" }}>WHY THEATRE? WHY DAT?</span>
@@ -190,8 +190,11 @@ export default function CorporateGivingPage() {
             <p style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.96rem", lineHeight: 1.75, color: "rgba(36,17,35,0.82)", margin: "0 0 0.75rem" }}>
               An Adventure Day brings your entire team — from C-suite to frontline — into a shared creative experience that builds empathy, communication, and purpose.
             </p>
-            <p style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.96rem", lineHeight: 1.75, color: "rgba(36,17,35,0.82)", margin: "0 0 1.75rem" }}>
+            <p style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.96rem", lineHeight: 1.75, color: "rgba(36,17,35,0.82)", margin: "0 0 0.75rem" }}>
               No trust falls. No ropes courses. Just the transformative power of making something together, with real people, around real stories.
+            </p>
+            <p style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.96rem", lineHeight: 1.75, color: "rgba(36,17,35,0.82)", margin: "0 0 1.75rem" }}>
+              Already planning a retreat abroad? With a little lead time — and if you're covering travel — we can bring an Adventure Day to you anywhere in the world. We're particularly well-placed in the countries where we already work.
             </p>
             <Link href="/partners/propose-project?type=adventure-day" className="cg-btn-teal">Plan an Adventure Day</Link>
           </div>
