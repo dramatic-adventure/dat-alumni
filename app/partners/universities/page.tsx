@@ -44,8 +44,8 @@ const programs = [
   },
   {
     code: "DAT LAB",
-    name: "Applied Theatre Pedagogy",
-    desc: "A research-centered intensive for faculty, advanced students, and departments exploring DAT's community-rooted methodology. Structured around your institution's specific questions — about applied theatre, international pedagogy, or community engagement. Can be brought to your campus or hosted internationally. A strong fit for drama education graduate programs and faculty development.",
+    name: "Devising Theatre Laboratory",
+    desc: "A theatre-making intensive built around the devising process — no script, no predetermined outcome, just artists in a room making something from the ground up. DAT Lab can be embedded in an existing course, run as a standalone workshop, or hosted internationally. Ideal for advanced students and departments ready to push past interpretation and into creation.",
     length: "Custom",
     credits: "Negotiable",
   },
