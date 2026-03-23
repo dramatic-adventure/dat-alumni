@@ -40,9 +40,9 @@ const programs = [
   {
     code: "DAT WEEKEND",
     name: "DAT Weekend",
-    desc: "A boutique cultural weekend — donors, alumni, emerging artists, and close supporters gathered around excellent theatre, shared meals, and reflective conversation. Launched as a NYC edition; portable to any city where great work is being made.",
+    desc: "A curated cultural weekend for student groups — two or three productions seen together, shared meals, salon-style reflection, and direct encounters with working artists. Launched as a NYC edition (Broadway and Off-Broadway), and portable to any city where excellent theatre is being made. A high-impact, low-commitment entry point before — or alongside — a longer program.",
     length: "1 weekend",
-    credits: "Alumni & donor program",
+    credits: "Standalone or add-on",
   },
   {
     code: "DAT LAB",
