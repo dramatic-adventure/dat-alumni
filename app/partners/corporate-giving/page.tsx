@@ -74,7 +74,7 @@ const sdgs = [
 
 export default function CorporateGivingPage() {
   return (
-    <main className="kraft-bg" style={{ overflowX: "hidden" }}>
+    <main style={{ background: "transparent", overflowX: "hidden" }}>
 
       {/* ── HERO ─────────────────────────────────────────────── */}
       <section style={{ position: "relative", minHeight: "82vh", display: "flex", alignItems: "flex-end", overflow: "hidden" }}>
@@ -121,7 +121,7 @@ export default function CorporateGivingPage() {
       </section>
 
       {/* ── WHY THEATRE / INTRO ──────────────────────────────── */}
-      <section className="kraft-bg" style={{ padding: "4.5rem 2rem" }}>
+      <section style={{ padding: "4.5rem 2rem" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }} className="cg-two-col">
           <div>
             <span style={{ display: "block", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "#2FA873", marginBottom: "0.5rem" }}>WHY THEATRE? WHY DAT?</span>
@@ -284,7 +284,7 @@ export default function CorporateGivingPage() {
       </section>
 
       {/* ── ESG ALIGNMENT ─────────────────────────────────────── */}
-      <section className="kraft-bg" style={{ padding: "4rem 2rem" }}>
+      <section style={{ padding: "4rem 2rem" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ marginBottom: "2.5rem", maxWidth: 600 }}>
             <span style={{ display: "block", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "#2FA873", marginBottom: "0.5rem" }}>ESG &amp; CSR ALIGNMENT</span>
@@ -308,7 +308,7 @@ export default function CorporateGivingPage() {
       </section>
 
       {/* ── PHOTO STACK + CTA ─────────────────────────────────── */}
-      <section className="kraft-bg" style={{ paddingTop: "1rem", paddingBottom: "0" }}>
+      <section style={{ paddingTop: "1rem", paddingBottom: "0" }}>
         <JoinTheJourneyPanel variant="photos-only" />
       </section>
       <section style={{ background: "#2FA873", padding: "3.5rem 2rem" }}>
@@ -328,12 +328,6 @@ export default function CorporateGivingPage() {
       </section>
 
       <style>{`
-        .kraft-bg {
-          background-color: #f6e4c1;
-          background-image: url('/texture/kraft-paper.jpg');
-          background-repeat: repeat;
-          background-size: 800px auto;
-        }
         .cg-stats-grid {
           max-width: 1100px;
           margin: 0 auto;

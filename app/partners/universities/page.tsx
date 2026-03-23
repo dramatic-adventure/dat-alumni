@@ -73,7 +73,7 @@ const benefits = [
 
 export default function UniversityPartnersPage() {
   return (
-    <main className="kraft-bg" style={{ overflowX: "hidden" }}>
+    <main style={{ background: "transparent", overflowX: "hidden" }}>
 
       {/* ── HERO ────────────────────────────────────────────── */}
       <section style={{ position: "relative", minHeight: "82vh", display: "flex", alignItems: "flex-end", overflow: "hidden" }}>
@@ -124,7 +124,7 @@ export default function UniversityPartnersPage() {
       </section>
 
       {/* ── HOW IT WORKS ─────────────────────────────────────── */}
-      <section className="kraft-bg" style={{ padding: "4rem 2rem" }}>
+      <section style={{ padding: "4rem 2rem" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <div style={{ marginBottom: "2.5rem" }}>
             <span style={{ display: "block", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "#6C00AF", marginBottom: "0.5rem" }}>HOW IT WORKS</span>
@@ -181,7 +181,7 @@ export default function UniversityPartnersPage() {
       </section>
 
       {/* ── BENEFITS ─────────────────────────────────────────── */}
-      <section className="kraft-bg" style={{ padding: "4rem 2rem" }}>
+      <section style={{ padding: "4rem 2rem" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <span style={{ display: "block", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "#6C00AF", marginBottom: "0.5rem" }}>FOR YOUR INSTITUTION</span>
           <h2 style={{ margin: "0 0 2rem", fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)", fontWeight: 800, color: "#241123", lineHeight: 1.15 }}>
@@ -237,12 +237,6 @@ export default function UniversityPartnersPage() {
       </section>
 
       <style>{`
-        .kraft-bg {
-          background-color: #f6e4c1;
-          background-image: url('/texture/kraft-paper.jpg');
-          background-repeat: repeat;
-          background-size: 800px auto;
-        }
         .u-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5rem; align-items: center; }
         @media (max-width: 900px) { .u-two-col { grid-template-columns: 1fr; } }
 

@@ -366,7 +366,7 @@ function ProposeForm() {
 /* ─── Page component ─── */
 export default function ProposeProjectPage() {
   return (
-    <main className="kraft-bg" style={{ overflowX: "hidden" }}>
+    <main style={{ background: "transparent", overflowX: "hidden" }}>
 
       {/* ══════════════════════════════════════════════════
           HERO
@@ -428,7 +428,6 @@ export default function ProposeProjectPage() {
           MAIN LAYOUT: FORM + SIDEBAR
       ══════════════════════════════════════════════════ */}
       <section
-        className="kraft-bg"
         style={{ padding: "4rem 2rem 5rem" }}
         aria-labelledby="pp-form-heading"
       >
@@ -695,7 +694,6 @@ export default function ProposeProjectPage() {
           Kraft paper background — distinct from CTA footer
       ══════════════════════════════════════════════════ */}
       <section
-        className="kraft-bg"
         style={{
           padding: "5rem 2rem",
           borderTop: "1px solid rgba(36,17,35,0.08)",
@@ -908,12 +906,6 @@ export default function ProposeProjectPage() {
           STYLES
       ══════════════════════════════════════════════════ */}
       <style>{`
-        .kraft-bg {
-          background-color: #f6e4c1;
-          background-image: url('/texture/kraft-paper.jpg');
-          background-repeat: repeat;
-          background-size: 800px auto;
-        }
         /* ── Breadcrumb + eyebrow ─────────────────────── */
         .pp-breadcrumb {
           display: inline-block;
