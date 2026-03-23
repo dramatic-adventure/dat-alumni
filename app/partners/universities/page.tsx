@@ -32,7 +32,7 @@ const programs = [
   },
   {
     code: "TREKS",
-    name: "Creative Treks",
+    name: "Creative Trek",
     desc: "Short, high-impact cultural immersion experiences pairing theatre practice with community observation, storytelling, and artistic exchange. From doctoral fieldwork to interdisciplinary seminars.",
     length: "1–3 weeks",
     credits: "Credit-eligible",
@@ -40,7 +40,7 @@ const programs = [
   {
     code: "THE SCENE",
     name: "The Scene",
-    desc: "Two or three productions seen together, shared meals, and direct encounters with working artists. A high-impact entry point into DAT's world — in NYC, Edinburgh, or wherever great theatre is being made.",
+    desc: "Two or three productions seen together, shared meals, and direct encounters with working artists — plus a minga: students prepare gift boxes for DAT drama clubs around the world, connecting the weekend to DAT's global community. A high-impact entry point into DAT's world, in NYC, Edinburgh, or wherever great theatre is being made.",
     length: "1 weekend",
     credits: "Standalone or add-on",
   },
