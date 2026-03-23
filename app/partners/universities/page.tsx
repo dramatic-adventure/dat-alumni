@@ -11,8 +11,8 @@ const COUNTRY_COUNT = new Set(dramaClubs.map((c) => c.country).filter(Boolean)).
 const programs = [
   {
     code: "RAW",
-    name: "Residency & Workshop",
-    desc: "Intensive devised-theatre residencies embedded in partner communities. Students collaborate with local artists to create original work from the ground up — with a minimum 9-day commitment and sessions running anywhere from 3 to 6 weeks.",
+    name: "Rugged Artist Workshops",
+    desc: "DAT's immersive artist-development intensive — place-based, cross-cultural, and community-rooted. Students train alongside working artists in inspiring landscapes abroad: Ecuador, Slovakia, and beyond. Rugged, rigorous, and alive. A natural fit for spring break or semester programs.",
     length: "9 days – 6 weeks",
     credits: "Credit-eligible",
   },
