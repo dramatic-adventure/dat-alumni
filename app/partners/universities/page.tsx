@@ -19,8 +19,8 @@ const programs = [
   {
     code: "PASSAGE",
     name: "Community Passage",
-    desc: "A guided intensive that takes students through the full arc of a DAT project — community listening, devising, producing, and performing original work. Rich, focused, and transformative.",
-    length: "2–3 weeks",
+    desc: "A three-week immersive journey for artists of any discipline. Students travel to partner communities around the world — taking part in professional workshops, international performances, and deep cross-cultural collaboration. It culminates in a shared performance born from the encounter. Open to theatre students and beyond.",
+    length: "3 weeks",
     credits: "Credit-eligible",
   },
   {
@@ -38,9 +38,9 @@ const programs = [
     credits: "Credit-eligible",
   },
   {
-    code: "DAT WEEKEND",
-    name: "DAT Weekend",
-    desc: "A curated cultural weekend for student groups — two or three productions seen together, shared meals, salon-style reflection, and direct encounters with working artists. Launched as a NYC edition (Broadway and Off-Broadway), and portable to any city where excellent theatre is being made. A high-impact, low-commitment entry point before — or alongside — a longer program.",
+    code: "THE SCENE",
+    name: "The Scene",
+    desc: "Two or three productions seen together, shared meals, and direct encounters with working artists. A high-impact entry point into DAT's world — in NYC, Edinburgh, or wherever great theatre is being made.",
     length: "1 weekend",
     credits: "Standalone or add-on",
   },
