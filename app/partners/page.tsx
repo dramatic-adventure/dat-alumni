@@ -326,7 +326,7 @@ export default function PartnersPage() {
         @media (max-width: 540px) { .p-pillars-grid { grid-template-columns: 1fr; } }
 
         .p-pillar {
-          background: rgba(255,255,255,0.72);
+          background: rgba(255,255,255,0.70);
           border: 1px solid rgba(108,0,175,0.15);
           border-radius: 16px;
           padding: 1.5rem 1.25rem;

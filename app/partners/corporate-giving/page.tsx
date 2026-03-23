@@ -341,7 +341,7 @@ export default function CorporateGivingPage() {
         @media (max-width: 900px) { .cg-two-col { grid-template-columns: 1fr; } }
 
         .cg-aside-card {
-          background: rgba(255,255,255,0.72);
+          background: rgba(255,255,255,0.70);
           border: 1px solid rgba(47,168,115,0.25);
           border-radius: 18px;
           padding: 1.5rem 1.4rem;

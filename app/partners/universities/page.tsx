@@ -296,7 +296,7 @@ export default function UniversityPartnersPage() {
         @media (max-width: 540px) { .u-benefits-grid { grid-template-columns: 1fr; } }
 
         .u-benefit {
-          background: rgba(255,255,255,0.72);
+          background: rgba(255,255,255,0.70);
           border: 1px solid rgba(108,0,175,0.15);
           border-radius: 16px;
           padding: 1.4rem 1.25rem;
