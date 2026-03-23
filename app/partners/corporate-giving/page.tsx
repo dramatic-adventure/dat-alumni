@@ -212,6 +212,60 @@ export default function CorporateGivingPage() {
         </div>
       </section>
 
+      {/* ── REAL PARTNERSHIP: DAIGLE TOURS ───────────────────── */}
+      <section style={{ background: "#241123", padding: "4.5rem 2rem" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }} className="cg-two-col">
+          <div>
+            <span style={{ display: "block", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "#FFCC00", marginBottom: "0.5rem" }}>CSR IN ACTION</span>
+            <h2 style={{ margin: "0 0 1rem", fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "clamp(1.6rem, 3vw, 2.4rem)", fontWeight: 800, color: "#f2f2f2", lineHeight: 1.15 }}>
+              Daigle Tours &amp; DAT in Tanzania.
+            </h2>
+            <p style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.96rem", lineHeight: 1.75, color: "rgba(242,242,242,0.82)", margin: "0 0 0.75rem" }}>
+              When Dramatic Adventure Theatre arrived in Kigamboni to scout potential partners and social projects across Tanzania, Daigle Tours stepped in as DAT's corporate CSR partner — handling all logistics on the ground and hosting a press conference to formally introduce DAT to the community.
+            </p>
+            <p style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.96rem", lineHeight: 1.75, color: "rgba(242,242,242,0.82)", margin: "0 0 0.75rem" }}>
+              Daigle Tours introduced DAT to the Kigamboni Community Centre (KCC), who welcomed the visiting artists with a full community performance. Lunch followed at Kijiji Beach, with a live marimba set from a UK-based collaborator — the kind of spontaneous cultural exchange that defines what DAT means by "adventure."
+            </p>
+            <p style={{ fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.96rem", lineHeight: 1.75, color: "rgba(242,242,242,0.82)", margin: "0 0 1.75rem" }}>
+              Under their "Supporting the Arts" programme, Daigle Tours helped DAT identify communities and social projects across Tanzania that could benefit from long-term creative partnership. This is what corporate CSR with DAT looks like in practice.
+            </p>
+            <Link href="/partners/propose-project?type=corporate" className="cg-btn-yellow">Start a Conversation Like This</Link>
+          </div>
+          <div style={{
+            background: "rgba(255,204,0,0.05)",
+            border: "1.5px solid rgba(255,204,0,0.18)",
+            borderRadius: "18px",
+            padding: "1.75rem 1.5rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "1rem",
+          }}>
+            <span style={{ display: "block", fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "0.68rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "#FFCC00", opacity: 0.7 }}>
+              What this partnership looked like
+            </span>
+            {[
+              { icon: "📋", label: "Press Conference", desc: "Daigle Tours hosted a formal welcome for DAT in Kigamboni — introducing the company to local press and community leaders." },
+              { icon: "🎭", label: "Kigamboni Community Centre", desc: "KCC prepared a full community show for the visiting DAT artists — art as welcome, connection as protocol." },
+              { icon: "🏖️", label: "Kijiji Beach Lunch", desc: "Community lunch with live marimba — warm, informal, and full of the cross-cultural exchange that DAT lives by." },
+              { icon: "🗺️", label: "Scouting & Site Visits", desc: "Daigle Tours guided DAT to communities and social projects across Tanzania that could benefit from creative partnership." },
+            ].map((item) => (
+              <div key={item.label} style={{ display: "flex", gap: "0.9rem", alignItems: "flex-start" }}>
+                <span style={{ flexShrink: 0, fontSize: "1.3rem", marginTop: "0.1rem" }} aria-hidden="true">{item.icon}</span>
+                <div>
+                  <h4 style={{ margin: "0 0 0.2rem", fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "0.88rem", fontWeight: 700, color: "rgba(242,242,242,0.9)" }}>{item.label}</h4>
+                  <p style={{ margin: 0, fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.82rem", lineHeight: 1.6, color: "rgba(242,242,242,0.58)" }}>{item.desc}</p>
+                </div>
+              </div>
+            ))}
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "0.85rem", marginTop: "0.25rem" }}>
+              <span style={{ display: "block", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "#FFCC00", opacity: 0.6, marginBottom: "0.25rem" }}>Corporate Partner</span>
+              <span style={{ fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "1rem", fontWeight: 700, color: "rgba(242,242,242,0.85)" }}>Daigle Tours — Tanzania</span>
+              <span style={{ display: "block", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.8rem", color: "rgba(242,242,242,0.45)", marginTop: "0.15rem" }}>Supporting the Arts programme · Kigamboni, Tanzania</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── QUOTE ─────────────────────────────────────────────── */}
       <section style={{ position: "relative", minHeight: 360, display: "flex", alignItems: "center", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0 }}>

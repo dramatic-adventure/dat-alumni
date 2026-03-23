@@ -199,8 +199,8 @@ export default function PartnersPage() {
           <h2 style={{ margin: "0 0 0.6rem", fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "clamp(2rem, 4vw, 3rem)", fontWeight: 800, color: "#241123", lineHeight: 1.15 }}>
             Built on real relationships.
           </h2>
-          <p style={{ margin: "0 0 2rem", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "clamp(0.95rem, 1.6vw, 1.1rem)", color: "rgba(36,17,35,0.72)", lineHeight: 1.65, maxWidth: 600 }}>
-            DAT's partnerships are rooted in communities — not transactions. A few of the organizations we've built long-term creative relationships with:
+          <p style={{ margin: "0 0 2rem", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "clamp(0.95rem, 1.6vw, 1.1rem)", color: "rgba(36,17,35,0.72)", lineHeight: 1.65, maxWidth: 640 }}>
+            DAT's partnerships are rooted in communities — not transactions. From Amakhosi's stages in Zimbabwe to ETP Slovensko's schools in Central Europe to Daigle Tours' on-the-ground support for our Tanzania scouting work, every relationship is built on shared purpose and long-term commitment.
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "1.5rem", alignItems: "center" }}>
             {featuredPartners.map((logo) => (

@@ -759,9 +759,9 @@ export default function ProposeProjectPage() {
                 border: "rgba(36,147,169,0.15)",
               },
               {
-                label: "Independent Study & Internship",
-                headline: "Students embedded in active DAT programming",
-                body: "DAT has mentored individual students through independent study arrangements and internships — embedding them in ongoing workshops, rehearsals, and community programs as junior teaching artists or project coordinators, with faculty approval and academic oversight.",
+                label: "Corporate CSR Partnership",
+                headline: "Daigle Tours & DAT in Tanzania",
+                body: "Daigle Tours served as DAT's CSR partner for our Tanzania scouting work — handling logistics, hosting a press conference in Kigamboni, and introducing DAT to the Kigamboni Community Centre. Under their Supporting the Arts programme, they helped identify communities across Tanzania ready for long-term creative partnership. Logistical expertise turned into arts access.",
                 accent: "#2fa873",
                 border: "rgba(47,168,115,0.15)",
               },
