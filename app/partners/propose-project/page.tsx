@@ -601,8 +601,8 @@ export default function ProposeProjectPage() {
             {/* Already have a program in mind */}
             <div
               style={{
-                background: "rgba(36,147,169,0.07)",
-                border: "1.5px solid rgba(36,147,169,0.2)",
+                background: "rgba(255,255,255,0.72)",
+                border: "1.5px solid rgba(36,147,169,0.25)",
                 borderRadius: "18px",
                 padding: "1.4rem 1.25rem 1.5rem",
               }}
