@@ -1,6 +1,6 @@
 # netlify.toml
 [build]
-  command = "DATABASE_URL=file:./dev.db npm run prisma:generate && npm run build"
+  command = "export NODE_OPTIONS=--max-old-space-size=4096 && DATABASE_URL=file:./dev.db npm run prisma:generate && npm run build"
   publish  = ".next"
 
 [[plugins]]
