@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ALUMNI_COUNT_DISPLAY, SEASON_COUNT } from "@/lib/datStats";
+import { ALUMNI_COUNT_DISPLAY, SEASON_COUNT, PRODUCTION_COUNT, CLUB_COUNT } from "@/lib/datStats";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shows once per calendar day. Once dismissed, localStorage records today's
@@ -110,9 +110,15 @@ export default function ComingSoonModal() {
 
             {/* Body */}
             <p className="csm-body">
-              We&apos;re building the home our stories deserve — alumni pages, live production
-              archives, an interactive story map, and a platform for the{" "}
-              <strong>{ALUMNI_COUNT_DISPLAY} artists across {SEASON_COUNT} seasons</strong> who&apos;ve made the adventure.
+              <strong>{SEASON_COUNT} seasons.</strong>{" "}
+              <strong>{PRODUCTION_COUNT} original plays.</strong>{" "}
+              <strong>{CLUB_COUNT} drama clubs</strong> for young people in communities
+              around the world. And <strong>{ALUMNI_COUNT_DISPLAY} artists</strong> who gave
+              everything to make it happen.
+            </p>
+            <p className="csm-body">
+              We&apos;re building the platform their stories deserve. Alumni pages, production
+              archives, an interactive story map — coming soon.
             </p>
             <p className="csm-body csm-body--em">
               It&apos;s almost showtime. Look around — much is already here.
