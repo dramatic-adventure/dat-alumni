@@ -96,6 +96,7 @@ export default function ProgramStamps({ artistSlug, slugAliases = [] }: ProgramS
             program={program.program}
             location={program.location}
             year={program.year}
+            season={program.season}
             color={getProgramColor(program.program)}
             panelHeight={panelHeight}
             hoveredSlug={hoveredSlug}

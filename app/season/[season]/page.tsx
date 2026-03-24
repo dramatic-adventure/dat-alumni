@@ -9,6 +9,7 @@ import type { AlumniRow } from "@/lib/types";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import Collapsible from "@/components/ui/Collapsible";
+import HashScrollOpener from "@/components/shared/HashScrollOpener";
 import { seasons } from "@/lib/seasonData";
 
 export const runtime = "nodejs";
@@ -238,7 +239,7 @@ export default async function SeasonPage(
         <div style={{ width: "90%", margin: "0 auto" }}>
           {/* PROGRAMS */}
           {programs.length > 0 && (
-            <Collapsible title="Programs" defaultOpen={false}>
+            <Collapsible id="programs-section" title="Programs" defaultOpen={false}>
               {Object.entries(programsByGroup).map(([label, group]) => (
                 <div key={label}>
                   <h3 style={{ margin: "3rem 0 1rem" }}>
@@ -252,6 +253,7 @@ export default async function SeasonPage(
                     return (
                       <div
                         key={program.slug}
+                        id={program.slug}
                         style={{
                           textAlign: "left",
                           marginBottom: "3rem",
@@ -373,6 +375,9 @@ export default async function SeasonPage(
             </Collapsible>
           )}
         </div>
+
+        {/* Auto-open Programs collapsible and scroll to the targeted program when arriving via a stamp link */}
+        <HashScrollOpener collapsibleBtnId="programs-section__btn" />
 
         {/* SEASON NAV */}
         <section

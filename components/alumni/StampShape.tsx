@@ -10,6 +10,7 @@ type StampShapeProps = {
   program: string;
   location: string;
   year: number;
+  season: number;
   color: string;
   panelHeight: number;
   hoveredSlug: string | null;
@@ -21,6 +22,7 @@ export default function StampShape({
   program,
   location,
   year,
+  season,
   color,
   panelHeight,
   hoveredSlug,
@@ -217,7 +219,7 @@ useEffect(() => {
       onMouseLeave={() => setHoveredSlug(null)}
     >
       {isReady && (
-      <Link href={programSlug ? `/programs/${programSlug}` : "#"} passHref>
+      <Link href={programSlug && season ? `/season/${season}#${programSlug}` : "#"} passHref>
         <svg
           width="20vw"
           height="20vw"
@@ -230,7 +232,7 @@ useEffect(() => {
             left: position?.left ?? 0,
             overflow: "visible",
             zIndex: position?.zIndex ?? 1,
-            cursor: programSlug ? "pointer" : "default",
+            cursor: programSlug && season ? "pointer" : "default",
             transition: "all 0.3s ease",
             opacity: hoveredSlug && hoveredSlug !== mySlug ? 0.33 : 1,
             transform: hoveredSlug === mySlug ? "scale(1.1)" : "scale(1)",
