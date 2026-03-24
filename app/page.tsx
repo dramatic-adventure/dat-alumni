@@ -173,7 +173,7 @@ export default function Page() {
     <main style={{ background: "transparent" }}>
 
       {/* ════════════════════════════════════════════════
-          HERO — full-bleed image, let it breathe
+          HERO — full-bleed, headline overlaid in lower third
       ════════════════════════════════════════════════ */}
       <div className="hp-hero">
         <Image
@@ -181,111 +181,86 @@ export default function Page() {
           alt="DAT artists performing in the field"
           fill
           priority
-          style={{ objectFit: "cover", objectPosition: "center" }}
+          style={{ objectFit: "cover", objectPosition: "center 30%" }}
         />
-        <div className="hp-hero-fade" aria-hidden="true" />
+        <div className="hp-hero-overlay" aria-hidden="true" />
+        <div className="hp-hero-content-outer">
+          <div className="hp-hero-content-inner">
+            <p className="hp-hero-eyebrow">Dramatic Adventure Theatre</p>
+            <h1
+              className="hp-hero-title"
+              style={{ fontFamily: '"Anton", sans-serif' }}
+            >
+              EVERY STORY<br />STARTS SOMEWHERE.
+            </h1>
+            <p
+              className="hp-hero-sub"
+              style={{ fontFamily: 'var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif' }}
+            >
+              We develop artists, travel the world, and make theatre that matters.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* ════════════════════════════════════════════════
-          HEADLINE — big, gold, slightly faded
+          CTA — three doors, editorial card treatment
       ════════════════════════════════════════════════ */}
-      <header className="hp-headline-area" aria-labelledby="landing-headline">
-        <div className="hp-headline-wrap">
-          <h1
-            id="landing-headline"
-            className="hp-headline-title"
-            style={{
-              fontFamily: '"Anton", sans-serif',
-              fontSize: "14vw",
-              color: "#d9a919",
-              opacity: 0.55,
-            }}
-          >
-            EVERY STORY STARTS SOMEWHERE.
-          </h1>
-          <p
-            className="hp-headline-subtitle"
-            style={{
-              fontFamily: 'var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif',
-              fontWeight: 500,
-              color: "#241123",
-              opacity: 0.9,
-            }}
-          >
-            We develop artists, travel the world, and make theatre that matters.
-          </p>
-        </div>
-      </header>
+      <section className="hp-cta-section" aria-label="Find your path">
+        <div className="hp-cta-inner">
 
-      {/* ════════════════════════════════════════════════
-          CTA — three doors for three audiences
-      ════════════════════════════════════════════════ */}
-      <section className="hp-cta-section" aria-label="Who are you?">
-        <div className="hp-cta-wrapper">
-
-          {/* Artists */}
-          <div className="hp-cta-block">
-            <div className="hp-cta-box">
-              <div className="hp-cta-content">
-                <div className="hp-text-elements">
-                  <div className="hp-cta-label">Artists</div>
-                  <h3 className="hp-cta-h3">Take the Stage</h3>
-                  <p className="hp-cta-p">
-                    Join residencies, expeditions, and workshops that spark meaningful new work — onstage and beyond.
-                  </p>
-                </div>
-                <button
-                  className="hp-dat-btn"
-                  onClick={() => router.push("/partners/universities")}
-                >
-                  Join the Adventure
-                </button>
-              </div>
-            </div>
+          <div className="hp-cta-intro">
+            <p className="hp-eyebrow-label hp-eyebrow-ink">Find Your Path</p>
           </div>
 
-          {/* Audiences */}
-          <div className="hp-cta-block">
-            <div className="hp-cta-box">
-              <div className="hp-cta-content">
-                <div className="hp-text-elements">
-                  <div className="hp-cta-label">Audiences</div>
-                  <h3 className="hp-cta-h3">Follow the Journey</h3>
-                  <p className="hp-cta-p">
-                    Explore a season of bold journeys, deep listening, unique collaborations, and daring creativity.
-                  </p>
-                </div>
-                <button
-                  className="hp-dat-btn"
-                  onClick={() => router.push("/story-map")}
-                >
-                  Experience the Work
-                </button>
-              </div>
-            </div>
-          </div>
+          <div className="hp-cta-wrapper">
 
-          {/* Supporters */}
-          <div className="hp-cta-block hp-cta-block--supporters">
-            <div className="hp-cta-box">
-              <div className="hp-cta-content">
-                <div className="hp-text-elements">
-                  <div className="hp-cta-label">Supporters &amp; Funders</div>
-                  <h3 className="hp-cta-h3">Make Magic Possible</h3>
-                  <p className="hp-cta-p">
-                    Support responsive, community-powered theatre — where story is needed most.
-                  </p>
-                </div>
-                <button
-                  className="hp-dat-btn"
-                  onClick={() => router.push("/donate")}
-                >
-                  Sponsor the Story
-                </button>
-              </div>
+            {/* Artists */}
+            <div className="hp-cta-card hp-cta-card--pink">
+              <p className="hp-cta-card-label">For Artists</p>
+              <h3 className="hp-cta-card-h3">Take the Stage</h3>
+              <p className="hp-cta-card-p">
+                Join residencies, expeditions, and workshops that spark meaningful new work — onstage and beyond.
+              </p>
+              <button
+                className="hp-cta-card-btn hp-cta-card-btn--pink"
+                onClick={() => router.push("/partners/universities")}
+              >
+                Join the Adventure
+              </button>
             </div>
-          </div>
 
+            {/* Audiences */}
+            <div className="hp-cta-card hp-cta-card--teal">
+              <p className="hp-cta-card-label">For Audiences</p>
+              <h3 className="hp-cta-card-h3">Follow the Journey</h3>
+              <p className="hp-cta-card-p">
+                Explore a season of bold journeys, deep listening, unique collaborations, and daring creativity.
+              </p>
+              <button
+                className="hp-cta-card-btn hp-cta-card-btn--teal"
+                onClick={() => router.push("/story-map")}
+              >
+                Experience the Work
+              </button>
+            </div>
+
+            {/* Supporters */}
+            <div className="hp-cta-card hp-cta-card--gold">
+              <p className="hp-cta-card-label">Supporters &amp; Funders</p>
+              <h3 className="hp-cta-card-h3">Make Magic Possible</h3>
+              <p className="hp-cta-card-p">
+                Support responsive, community-powered theatre — where story is needed most.
+              </p>
+              <button
+                className="hp-cta-card-btn hp-cta-card-btn--gold"
+                onClick={() => router.push("/donate")}
+              >
+                Sponsor the Story
+              </button>
+            </div>
+
+          </div>
         </div>
       </section>
 
@@ -515,7 +490,7 @@ export default function Page() {
       )}
 
       {/* ════════════════════════════════════════════════
-          COMMUNITY ACCORDION — kraft, four doors
+          COMMUNITY — kraft, four constituent doors
       ════════════════════════════════════════════════ */}
       <section
         className="hp-community-band"
@@ -523,85 +498,86 @@ export default function Page() {
         style={{ background: "transparent" }}
       >
         <div className="hp-community-wrap">
-          <h3 className="hp-band-heading">COMMUNITY</h3>
 
-          <div className="hp-community-container">
-            <div className="hp-community-head">
-              <h2 id="hp-community-heading">Moved to Act.</h2>
-              <p className="hp-sub">
-                Alumni, partners, and friends who carry the work forward — on stage, in the field, at home, online, and around the world.
-              </p>
-            </div>
+          <div className="hp-community-band-header">
+            <p className="hp-eyebrow-label hp-eyebrow-ink">Community</p>
+            <h2 id="hp-community-heading" className="hp-community-band-title">
+              Moved to Act.
+            </h2>
+            <p className="hp-community-band-sub">
+              Alumni, partners, and friends who carry the work forward — on stage, in the field, at home, and around the world.
+            </p>
+          </div>
 
-            <div className="hp-community-grid">
-              {cards.map((card, i) => {
-                const expanded = openIndex === i;
-                return (
-                  <div
-                    key={card.title}
-                    className="hp-community-card"
+          <div className="hp-community-grid">
+            {cards.map((card, i) => {
+              const expanded = openIndex === i;
+              return (
+                <div
+                  key={card.title}
+                  className="hp-community-card"
+                  data-open={expanded ? "true" : "false"}
+                >
+                  {/* Colored pill — navigates to section */}
+                  <button
+                    className={`hp-card-cta-bar hp-card-cta-bar--${card.tone}`}
+                    type="button"
+                    onClick={() => router.push(card.ctaHref)}
+                    aria-label={`Open ${card.title} portal`}
+                  >
+                    <span className="hp-card-cta-text">{card.title}</span>
+                  </button>
+
+                  {/* Description (clamps when closed) */}
+                  <p
+                    className="hp-card-desc"
                     data-open={expanded ? "true" : "false"}
                   >
-                    {/* Colored pill — navigates to section */}
-                    <button
-                      className={`hp-card-cta-bar hp-card-cta-bar--${card.tone}`}
-                      type="button"
-                      onClick={() => router.push(card.ctaHref)}
-                      aria-label={`Open ${card.title} portal`}
-                    >
-                      <span className="hp-card-cta-text">{card.title}</span>
-                    </button>
+                    {card.desc}
+                  </p>
 
-                    {/* Description (clamps when closed) */}
-                    <p
-                      className="hp-card-desc"
-                      data-open={expanded ? "true" : "false"}
-                    >
-                      {card.desc}
-                    </p>
+                  {/* Chevron toggle */}
+                  <button
+                    className="hp-chev-toggle"
+                    type="button"
+                    aria-expanded={expanded}
+                    aria-controls={`hp-reveal-${i}`}
+                    onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                  >
+                    <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+                      <path d="M4 7.5 L10 13 L16 7.5" />
+                    </svg>
+                  </button>
 
-                    {/* Chevron toggle */}
-                    <button
-                      className="hp-chev-toggle"
-                      type="button"
-                      aria-expanded={expanded}
-                      aria-controls={`hp-reveal-${i}`}
-                      onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                    >
-                      <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-                        <path d="M4 7.5 L10 13 L16 7.5" />
-                      </svg>
-                    </button>
-
-                    {/* Animated reveal zone */}
+                  {/* Animated reveal zone */}
+                  <div
+                    className="hp-reveal-wrap"
+                    id={`hp-reveal-${i}`}
+                    ref={setRevealRef(i)}
+                    style={{ maxHeight: expanded ? (panelHeights[i] ?? 0) : 0 }}
+                  >
                     <div
-                      className="hp-reveal-wrap"
-                      id={`hp-reveal-${i}`}
-                      ref={setRevealRef(i)}
-                      style={{ maxHeight: expanded ? (panelHeights[i] ?? 0) : 0 }}
+                      className="hp-mini-buttons-row"
+                      role="group"
+                      aria-label={`${card.title} links`}
                     >
-                      <div
-                        className="hp-mini-buttons-row"
-                        role="group"
-                        aria-label={`${card.title} links`}
-                      >
-                        {card.links.map((lnk) => (
-                          <button
-                            key={`${lnk.href}-${lnk.label}`}
-                            className={`hp-mini-btn hp-mini-btn--${lnk.tone}`}
-                            onClick={() => router.push(lnk.href)}
-                            type="button"
-                          >
-                            <span>{lnk.label}</span>
-                          </button>
-                        ))}
-                      </div>
+                      {card.links.map((lnk) => (
+                        <button
+                          key={`${lnk.href}-${lnk.label}`}
+                          className={`hp-mini-btn hp-mini-btn--${lnk.tone}`}
+                          onClick={() => router.push(lnk.href)}
+                          type="button"
+                        >
+                          <span>{lnk.label}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
+
         </div>
       </section>
 
@@ -637,179 +613,214 @@ main a:active { text-decoration: none !important; }
 }
 
 /* ══════════════════════════════════════════════════════════
-   HERO
+   HERO — full-bleed, headline in lower third
 ══════════════════════════════════════════════════════════ */
 .hp-hero {
   position: relative;
-  height: 55vh;
+  height: 70vh;
+  min-height: 520px;
   overflow: hidden;
   z-index: 0;
-  box-shadow: 0 0 33px rgba(0,0,0,.5);
 }
-.hp-hero-fade {
+@media (max-width: 1024px) { .hp-hero { height: 65vh; min-height: 460px; } }
+@media (max-width: 767px)  { .hp-hero { height: 56vh; min-height: 380px; } }
+
+/* Gradient: near-clear at top, strong dark at bottom for legibility */
+.hp-hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, transparent 55%, rgba(246,228,193,.25) 100%);
+  background: linear-gradient(
+    to bottom,
+    rgba(36, 17, 35, 0.18) 0%,
+    rgba(36, 17, 35, 0.0)  22%,
+    rgba(36, 17, 35, 0.42) 62%,
+    rgba(36, 17, 35, 0.92) 100%
+  );
   pointer-events: none;
+  z-index: 1;
 }
-@media (max-width: 1024px) { .hp-hero { height: 50vh; } }
-@media (max-width: 767px)  { .hp-hero { height: 42vh; } }
 
-/* ══════════════════════════════════════════════════════════
-   HEADLINE
-══════════════════════════════════════════════════════════ */
-.hp-headline-area { background: transparent; margin-top: -.35rem; }
-.hp-headline-wrap {
+/* Headline block anchored to bottom of hero */
+.hp-hero-content-outer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  padding-bottom: 2.75rem;
+}
+.hp-hero-content-inner {
   max-width: 1200px;
   margin: 0 auto;
-  padding: .75rem 2rem 0;
-  text-align: left;
+  padding: 0 2rem;
 }
-.hp-headline-title {
-  margin: 0;
-  line-height: 1.02;
+.hp-hero-eyebrow {
+  font-family: var(--font-dm-sans), "DM Sans", system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 0.68rem;
   text-transform: uppercase;
-  text-shadow: 0 8px 20px rgba(0,0,0,.08);
-  /* color + fontSize set inline */
+  letter-spacing: 0.35em;
+  color: rgba(246, 228, 193, 0.58);
+  margin: 0 0 0.55rem;
 }
-.hp-headline-subtitle {
-  margin: .25rem 0 0;
-  font-size: clamp(1rem, 2.4vw, 1.75rem);
-  /* fontFamily + color set inline */
+.hp-hero-title {
+  /* fontFamily set inline */
+  font-size: clamp(3.2rem, 8vw, 6.5rem);
+  line-height: 1.0;
+  text-transform: uppercase;
+  color: #D9A919;
+  opacity: 0.92;
+  margin: 0 0 0.65rem;
+  letter-spacing: 0.01em;
+  text-shadow: 0 4px 28px rgba(0,0,0,0.35);
+}
+.hp-hero-sub {
+  /* fontFamily set inline */
+  font-weight: 500;
+  font-size: clamp(0.9rem, 1.9vw, 1.25rem);
+  color: rgba(246, 228, 193, 0.85);
+  margin: 0;
+  line-height: 1.45;
+}
+@media (max-width: 540px) {
+  .hp-hero-content-outer { padding-bottom: 1.75rem; }
+  .hp-hero-title { font-size: clamp(2.6rem, 11vw, 4rem); }
 }
 
 /* ══════════════════════════════════════════════════════════
-   CTA SECTION
+   SHARED EYEBROW LABEL
+══════════════════════════════════════════════════════════ */
+.hp-eyebrow-label {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  color: #FFCC00;
+  margin: 0;
+}
+.hp-eyebrow-muted {
+  color: rgba(255, 255, 255, 0.52) !important;
+}
+.hp-eyebrow-ink {
+  color: rgba(36, 17, 35, 0.45) !important;
+}
+
+/* ══════════════════════════════════════════════════════════
+   CTA SECTION — three editorial doors
 ══════════════════════════════════════════════════════════ */
 .hp-cta-section {
   background: transparent;
-  padding: 1.5rem 2rem 2.5rem;
+  padding: 2.75rem 2rem 3.25rem;
+}
+.hp-cta-inner {
   max-width: 1200px;
   margin: 0 auto;
 }
+.hp-cta-intro {
+  margin-bottom: 1.4rem;
+}
+
+/* Three-column card grid */
 .hp-cta-wrapper {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  width: 100%;
-  box-sizing: border-box;
+  gap: 1.5rem;
 }
-.hp-cta-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  box-sizing: border-box;
-  min-width: 0;
-  padding: 1rem;
+@media (max-width: 960px) {
+  .hp-cta-wrapper { grid-template-columns: repeat(2, 1fr); }
+  .hp-cta-wrapper > .hp-cta-card:last-child { grid-column: 1 / -1; max-width: 480px; }
+}
+@media (max-width: 580px) {
+  .hp-cta-wrapper { grid-template-columns: 1fr; }
+  .hp-cta-wrapper > .hp-cta-card:last-child { max-width: none; }
 }
 
 /* Card shell */
-.hp-cta-box {
-  position: relative;
-  overflow: hidden;
-  border-radius: 15px;
-  background: rgba(255,255,255,.25);
-  box-shadow: 0 8px 20px rgba(0,0,0,.2);
-  min-height: 500px;
-  text-align: center;
-  width: 100%;
-  transition: background .5s ease;
-}
-.hp-cta-box::before {
-  content: "";
-  background: url("/images/masked-adjustment.png") center / cover no-repeat;
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 1s ease;
-  z-index: 1;
-}
-.hp-cta-box:hover::before { opacity: 1; }
-
-.hp-cta-content {
-  position: relative;
-  z-index: 2;
-  padding: 2rem;
+.hp-cta-card {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 500px;
+  padding: 1.75rem 1.75rem 1.5rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.52);
+  box-shadow:
+    0 2px 8px  rgba(36, 17, 35, 0.07),
+    0 8px 24px rgba(36, 17, 35, 0.10);
+  border-top: 5px solid transparent;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  box-sizing: border-box;
 }
-.hp-text-elements {
-  flex: 1 1 auto;
-  transition: opacity .6s ease;
+.hp-cta-card:hover {
+  transform: translateY(-5px);
+  box-shadow:
+    0 4px 12px rgba(36, 17, 35, 0.1),
+    0 16px 40px rgba(36, 17, 35, 0.18);
 }
-.hp-cta-box:hover .hp-text-elements { opacity: 0; }
+.hp-cta-card--pink { border-top-color: #F23359; }
+.hp-cta-card--teal { border-top-color: #2493A9; }
+.hp-cta-card--gold { border-top-color: #D9A919; }
 
-.hp-cta-label {
+/* Label / eyebrow */
+.hp-cta-card-label {
   font-family: var(--font-dm-sans), "DM Sans", system-ui, sans-serif;
   font-weight: 900;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  font-size: 1.2rem;
-  margin-bottom: .5rem;
-  color: var(--hp-purple);
+  letter-spacing: 0.24em;
+  margin: 0 0 0.55rem;
 }
-.hp-cta-h3 {
+.hp-cta-card--pink .hp-cta-card-label { color: #c4163d; }
+.hp-cta-card--teal .hp-cta-card-label { color: #1a7a8f; }
+.hp-cta-card--gold .hp-cta-card-label { color: #9e7900; }
+
+/* Headline */
+.hp-cta-card-h3 {
   font-family: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif !important;
-  font-size: 2.2rem;
-  margin-bottom: 1rem;
-  color: var(--hp-pink);
   font-weight: 800;
-  line-height: 1.18;
-}
-.hp-cta-p {
-  font-family: var(--font-dm-sans), "DM Sans", system-ui, sans-serif;
-  font-size: 1rem;
-  line-height: 1.5;
-  font-weight: 500;
-  margin-bottom: 2.5rem;
-  color: var(--hp-deep);
-  text-align: center;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  color: #241123;
+  margin: 0 0 0.7rem;
+  line-height: 1.12;
 }
 
-/* CTA button */
-.hp-dat-btn {
-  position: relative;
-  z-index: 3;
+/* Body */
+.hp-cta-card-p {
+  font-family: var(--font-dm-sans), "DM Sans", system-ui, sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.62;
+  color: rgba(36, 17, 35, 0.72);
+  margin: 0 0 1.6rem;
+  flex: 1 1 auto;
+}
+
+/* Button */
+.hp-cta-card-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  max-width: 100%;
-  box-sizing: border-box;
-  text-align: center;
-  margin-top: 2rem;
-  padding: 1.1rem 2.2rem;
-  font-family: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif;
-  font-size: 1.1rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .35em;
-  background-color: #2493a9;
-  color: #f2f2f2;
+  align-self: flex-start;
+  padding: 0.8rem 1.65rem;
   border: none;
-  border-radius: 15px;
+  border-radius: 10px;
+  font-family: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
   cursor: pointer;
-  transition: transform .3s ease, box-shadow .3s ease;
-  box-shadow: 0 8px 20px rgba(0,0,0,.18);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.14);
 }
-.hp-dat-btn:hover { transform: translateY(-1px); }
-.hp-cta-box:hover .hp-dat-btn { animation: hp-pulse-glow 1.2s infinite; }
-@keyframes hp-pulse-glow {
-  0%   { transform: scale(1);    box-shadow: 0 0 0   rgba(255,204,0,0); }
-  50%  { transform: scale(1.05); box-shadow: 0 0 15px rgba(255,204,0,.6); }
-  100% { transform: scale(1);    box-shadow: 0 0 0   rgba(255,204,0,0); }
+.hp-cta-card-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 22px rgba(0,0,0,0.22);
 }
-
-/* Responsive CTA */
-@media (max-width: 1024px) {
-  .hp-cta-wrapper { grid-template-columns: repeat(2, 1fr); }
-  .hp-cta-block--supporters { grid-column: 1 / -1; }
-}
-@media (max-width: 768px) {
-  .hp-cta-wrapper { grid-template-columns: 1fr; }
-  .hp-cta-block { width: 100%; }
-}
+.hp-cta-card-btn--pink { background: #F23359; color: #fff; }
+.hp-cta-card-btn--pink:hover { background: #d42248; }
+.hp-cta-card-btn--teal { background: #2493A9; color: #fff; }
+.hp-cta-card-btn--teal:hover { background: #1a7a8f; }
+.hp-cta-card-btn--gold { background: #D9A919; color: #241123; }
+.hp-cta-card-btn--gold:hover { background: #c09610; }
 
 /* ══════════════════════════════════════════════════════════
    STATS BAND
@@ -839,44 +850,28 @@ main a:active { text-decoration: none !important; }
   font-size: clamp(2.8rem, 5vw, 4.5rem);
   color: #FFCC00;
   line-height: 1;
-  letter-spacing: .02em;
+  letter-spacing: 0.02em;
 }
 .hp-stat-label {
   font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
-  font-size: .8rem;
+  font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: .2em;
-  color: rgba(246,228,193,.65);
-  margin-top: .5rem;
+  letter-spacing: 0.2em;
+  color: rgba(246, 228, 193, 0.65);
+  margin-top: 0.5rem;
 }
 .hp-stat-sep {
   width: 1px;
   height: 2.5rem;
-  background: rgba(255,255,255,.15);
+  background: rgba(255, 255, 255, 0.15);
   flex: 0 0 auto;
   align-self: center;
 }
 @media (max-width: 600px) {
   .hp-stat-sep { display: none; }
-  .hp-stat { padding: .75rem 1.25rem; flex: 1 1 100px; }
-  .hp-stat-label { font-size: .7rem; letter-spacing: .12em; }
-}
-
-/* ══════════════════════════════════════════════════════════
-   SHARED EYEBROW LABEL
-══════════════════════════════════════════════════════════ */
-.hp-eyebrow-label {
-  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
-  font-size: .72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .28em;
-  color: #FFCC00;
-  margin: 0;
-}
-.hp-eyebrow-muted {
-  color: rgba(255,255,255,.55) !important;
+  .hp-stat { padding: 0.75rem 1.25rem; flex: 1 1 100px; }
+  .hp-stat-label { font-size: 0.7rem; letter-spacing: 0.12em; }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -895,15 +890,15 @@ main a:active { text-decoration: none !important; }
   align-items: baseline;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: .5rem;
+  gap: 0.5rem;
   margin-bottom: 1.75rem;
 }
 .hp-see-all-link {
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
-  font-size: .88rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  color: rgba(246,228,193,.6) !important;
-  transition: color .18s ease;
+  color: rgba(246, 228, 193, 0.6) !important;
+  transition: color 0.18s ease;
 }
 .hp-see-all-link:hover { color: #FFCC00 !important; }
 
@@ -921,15 +916,15 @@ main a:active { text-decoration: none !important; }
   display: block;
   border-radius: 12px;
   overflow: hidden;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.09);
-  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   cursor: pointer;
 }
 .hp-story-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 16px 40px rgba(0,0,0,.5);
-  background: rgba(255,255,255,.1);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* Image shell */
@@ -945,7 +940,7 @@ main a:active { text-decoration: none !important; }
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform .4s ease;
+  transition: transform 0.4s ease;
 }
 .hp-story-card:hover .hp-story-img { transform: scale(1.04); }
 .hp-story-img-placeholder {
@@ -955,28 +950,28 @@ main a:active { text-decoration: none !important; }
 }
 
 /* Story text */
-.hp-story-body { padding: .9rem 1rem 1.1rem; }
+.hp-story-body { padding: 0.9rem 1rem 1.1rem; }
 .hp-story-location {
   font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
-  font-size: .65rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: .15em;
+  letter-spacing: 0.15em;
   color: #2493A9;
-  margin: 0 0 .35rem;
+  margin: 0 0 0.35rem;
 }
 .hp-story-title {
   font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif !important;
   font-size: 1rem;
   font-weight: 700;
-  color: rgba(246,228,193,.95);
-  margin: 0 0 .4rem;
+  color: rgba(246, 228, 193, 0.95);
+  margin: 0 0 0.4rem;
   line-height: 1.3;
 }
 .hp-story-author {
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
-  font-size: .78rem;
-  color: rgba(246,228,193,.45);
+  font-size: 0.78rem;
+  color: rgba(246, 228, 193, 0.45);
   font-style: italic;
   margin: 0;
 }
@@ -987,9 +982,9 @@ main a:active { text-decoration: none !important; }
   min-height: 220px;
   background: linear-gradient(
     90deg,
-    rgba(255,255,255,.04) 0%,
-    rgba(255,255,255,.09) 50%,
-    rgba(255,255,255,.04) 100%
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.04) 100%
   );
   background-size: 200% 100%;
   animation: hp-shimmer 1.5s infinite linear;
@@ -1001,7 +996,7 @@ main a:active { text-decoration: none !important; }
 
 .hp-stories-empty {
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
-  color: rgba(246,228,193,.55);
+  color: rgba(246, 228, 193, 0.55);
   text-align: center;
   padding: 2.5rem 1rem;
   font-size: 1rem;
@@ -1032,22 +1027,22 @@ main a:active { text-decoration: none !important; }
   font-size: clamp(1.8rem, 3.5vw, 2.7rem);
   font-weight: 800;
   color: #fff;
-  margin: .6rem 0 .35rem;
+  margin: 0.6rem 0 0.35rem;
   line-height: 1.15;
 }
 .hp-club-location {
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
-  font-size: .95rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: rgba(255,255,255,.7);
+  color: rgba(255, 255, 255, 0.7);
   margin: 0 0 1rem;
-  letter-spacing: .04em;
+  letter-spacing: 0.04em;
 }
 .hp-club-desc {
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
   font-size: 1rem;
   line-height: 1.65;
-  color: rgba(255,255,255,.88);
+  color: rgba(255, 255, 255, 0.88);
   margin: 0 0 1.75rem;
 }
 .hp-club-actions {
@@ -1059,34 +1054,34 @@ main a:active { text-decoration: none !important; }
 .hp-club-btn {
   display: inline-flex;
   align-items: center;
-  padding: .9rem 2rem;
+  padding: 0.9rem 2rem;
   background: #241123;
   color: #fff;
   font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
-  font-size: .92rem;
+  font-size: 0.92rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: .2em;
+  letter-spacing: 0.2em;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  transition: background .2s ease, transform .2s ease;
-  box-shadow: 0 6px 20px rgba(0,0,0,.25);
+  transition: background 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 .hp-club-btn:hover { background: #3a0055; transform: translateY(-1px); }
 .hp-club-alt-link {
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
-  font-size: .88rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  color: rgba(255,255,255,.75) !important;
-  transition: color .18s ease;
+  color: rgba(255, 255, 255, 0.75) !important;
+  transition: color 0.18s ease;
 }
 .hp-club-alt-link:hover { color: #fff !important; }
 
 .hp-club-img-wrap {
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   aspect-ratio: 4 / 3;
 }
 .hp-club-img {
@@ -1121,8 +1116,8 @@ main a:active { text-decoration: none !important; }
   border-radius: 12px;
   overflow: hidden;
   box-shadow:
-    0 20px 60px rgba(0,0,0,.55),
-    0 4px 12px  rgba(0,0,0,.3);
+    0 20px 60px rgba(0, 0, 0, 0.55),
+    0 4px 12px  rgba(0, 0, 0, 0.3);
 }
 @media (max-width: 780px) {
   .hp-prod-poster-wrap { width: 100%; max-width: 260px; margin: 0 auto; }
@@ -1133,7 +1128,7 @@ main a:active { text-decoration: none !important; }
   font-family: "Anton", var(--font-anton), sans-serif !important;
   font-size: clamp(2rem, 4.5vw, 3.4rem);
   color: #FFCC00;
-  margin: .75rem 0 .5rem;
+  margin: 0.75rem 0 0.5rem;
   line-height: 1.05;
   text-transform: uppercase;
 }
@@ -1141,15 +1136,15 @@ main a:active { text-decoration: none !important; }
   font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
   font-size: 1rem;
   font-weight: 600;
-  color: rgba(246,228,193,.7);
-  margin: 0 0 .4rem;
-  letter-spacing: .05em;
+  color: rgba(246, 228, 193, 0.7);
+  margin: 0 0 0.4rem;
+  letter-spacing: 0.05em;
 }
 .hp-prod-sub {
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
-  font-size: .88rem;
-  color: rgba(246,228,193,.5);
-  margin: 0 0 .3rem;
+  font-size: 0.88rem;
+  color: rgba(246, 228, 193, 0.5);
+  margin: 0 0 0.3rem;
 }
 .hp-prod-italic { font-style: italic; }
 .hp-prod-actions {
@@ -1162,86 +1157,69 @@ main a:active { text-decoration: none !important; }
 .hp-prod-btn {
   display: inline-flex;
   align-items: center;
-  padding: .9rem 2rem;
+  padding: 0.9rem 2rem;
   background: #FFCC00;
   color: #241123;
   font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
-  font-size: .92rem;
+  font-size: 0.92rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: .2em;
+  letter-spacing: 0.2em;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  transition: background .2s ease, transform .2s ease;
-  box-shadow: 0 6px 20px rgba(0,0,0,.25);
+  transition: background 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 .hp-prod-btn:hover { background: #ffe033; transform: translateY(-1px); }
 .hp-prod-alt-link {
   font-family: var(--font-dm-sans), "DM Sans", sans-serif;
-  font-size: .88rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  color: rgba(246,228,193,.55) !important;
-  transition: color .18s ease;
+  color: rgba(246, 228, 193, 0.55) !important;
+  transition: color 0.18s ease;
 }
-.hp-prod-alt-link:hover { color: rgba(246,228,193,.9) !important; }
+.hp-prod-alt-link:hover { color: rgba(246, 228, 193, 0.9) !important; }
 
 /* ══════════════════════════════════════════════════════════
    COMMUNITY ACCORDION
 ══════════════════════════════════════════════════════════ */
 .hp-community-band {
   /* background: transparent set inline */
-  padding: 2.5rem 0 3.25rem;
+  padding: 3rem 0 4rem;
 }
 .hp-community-wrap {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 2rem;
 }
-.hp-band-heading {
-  font-family: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif;
-  font-size: 2.4rem;
-  margin: 0 0 1rem;
-  text-transform: uppercase;
-  letter-spacing: .2rem;
-  color: #241123;
-  background-color: #ffcc00;
-  opacity: .6;
-  padding: .1em .5em;
-  border-radius: .3em;
-  display: inline-block;
+
+/* Section header */
+.hp-community-band-header {
+  margin-bottom: 2rem;
 }
-.hp-community-container {
-  background: rgba(36,17,35,.20);
-  border-radius: 8px;
-  padding: clamp(16px, 2.2vw, 32px);
-}
-.hp-community-head { margin-bottom: 1rem; text-align: left; }
-.hp-community-head h2 {
-  margin: 0;
+.hp-community-band-title {
   font-family: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif !important;
+  font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 800;
-  font-size: clamp(1.4rem, 3vw, 2rem);
   color: #D9A919;
-  opacity: .95;
-  line-height: 1.15;
-  text-align: left;
+  margin: 0.4rem 0 0.5rem;
+  line-height: 1.1;
 }
-.hp-sub {
-  margin: .25rem 0 0;
+.hp-community-band-sub {
   font-family: var(--font-dm-sans), "DM Sans", system-ui, sans-serif;
-  color: rgba(234,222,170,.6);
-  font-weight: 600;
   font-size: 1rem;
-  text-align: left;
-  line-height: 1.5;
+  font-weight: 500;
+  color: rgba(36, 17, 35, 0.6);
+  margin: 0;
+  line-height: 1.55;
+  max-width: 600px;
 }
 
 /* FLEX grid — CSS-var-driven column count */
 .hp-community-grid {
   position: relative;
   z-index: 1;
-  margin-top: 1rem;
   display: flex;
   flex-wrap: wrap;
   --hp-gap: clamp(14px, 1.6vw, 24px);
@@ -1256,18 +1234,18 @@ main a:active { text-decoration: none !important; }
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding: 1rem 1.1rem .3rem;
+  padding: 1rem 1.1rem 0.3rem;
   border-radius: 12px;
-  background: rgba(255,255,255,.30);
-  border: 1px solid rgba(0,0,0,.08);
-  box-shadow: 0 6px 16px rgba(0,0,0,.14);
-  transition: background .2s ease, box-shadow .2s ease;
+  background: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
   text-align: left;
   overflow: visible;
   min-height: auto;
 }
 .hp-community-card[data-open="true"]  { padding-bottom: 1rem; }
-.hp-community-card[data-open="false"] { padding-bottom: .3rem !important; }
+.hp-community-card[data-open="false"] { padding-bottom: 0.3rem !important; }
 
 @media (max-width: 1000px) { .hp-community-grid { --hp-cols: 2; } }
 @media (max-width: 540px)  { .hp-community-grid { --hp-cols: 1; } }
@@ -1278,35 +1256,35 @@ main a:active { text-decoration: none !important; }
   width: 100%;
   box-sizing: border-box;
   border-radius: 12px;
-  padding: .7rem .9rem;
-  margin: 0 0 .75rem;
-  border: 1px solid rgba(0,0,0,.08);
+  padding: 0.7rem 0.9rem;
+  margin: 0 0 0.75rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   font-family: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif;
   font-weight: 700;
-  font-size: .82rem;
+  font-size: 0.82rem;
   line-height: 1.2;
-  letter-spacing: .14em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   text-align: center;
   cursor: pointer;
   transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
 }
-.hp-card-cta-bar:hover { transform: translateY(-1px); box-shadow: 0 2px 10px rgba(0,0,0,.12); }
-.hp-card-cta-bar--pink   { background: rgba(242,51,89,1);  color: #f2f2f2; }
-.hp-card-cta-bar--purple { background: rgba(108,0,175,1);  color: #f2f2f2; }
-.hp-card-cta-bar--green  { background: rgba(47,168,115,1); color: #f2f2f2; }
-.hp-card-cta-bar--yellow { background: rgba(217,169,25,1); color: #241123; }
-.hp-card-cta-bar--pink:hover   { background: rgba(164,2,35,.92); }
-.hp-card-cta-bar--purple:hover { background: rgba(62,0,101,.92); }
-.hp-card-cta-bar--green:hover  { background: rgba(13,111,68,.92); }
-.hp-card-cta-bar--yellow:hover { background: rgba(187,141,3,.92); }
+.hp-card-cta-bar:hover { transform: translateY(-1px); box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
+.hp-card-cta-bar--pink   { background: rgba(242, 51, 89, 1);   color: #f2f2f2; }
+.hp-card-cta-bar--purple { background: rgba(108, 0, 175, 1);   color: #f2f2f2; }
+.hp-card-cta-bar--green  { background: rgba(47, 168, 115, 1);  color: #f2f2f2; }
+.hp-card-cta-bar--yellow { background: rgba(217, 169, 25, 1);  color: #241123; }
+.hp-card-cta-bar--pink:hover   { background: rgba(164, 2, 35, 0.92); }
+.hp-card-cta-bar--purple:hover { background: rgba(62, 0, 101, 0.92); }
+.hp-card-cta-bar--green:hover  { background: rgba(13, 111, 68, 0.92); }
+.hp-card-cta-bar--yellow:hover { background: rgba(187, 141, 3, 0.92); }
 
 /* Description */
 .hp-card-desc {
-  margin: .3rem 0 .1rem;
+  margin: 0.3rem 0 0.1rem;
   font-family: var(--font-dm-sans), "DM Sans", system-ui, sans-serif;
   color: #241123;
-  font-size: .95rem;
+  font-size: 0.95rem;
   line-height: 1.5;
   text-align: left;
   display: -webkit-box;
@@ -1325,7 +1303,7 @@ main a:active { text-decoration: none !important; }
 .hp-chev-toggle {
   align-self: flex-end;
   margin: 0;
-  margin-top: .15rem;
+  margin-top: 0.15rem;
   margin-right: -6px;
   padding: 0;
   background: transparent;
@@ -1336,8 +1314,8 @@ main a:active { text-decoration: none !important; }
   width: 30px;
   height: 30px;
   display: block;
-  opacity: .9;
-  transition: transform .2s ease, opacity .2s ease;
+  opacity: 0.9;
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
 .hp-chev-toggle path {
   fill: none;
@@ -1358,7 +1336,7 @@ main a:active { text-decoration: none !important; }
 }
 .hp-community-card[data-open="true"] .hp-mini-buttons-row {
   padding-right: 36px;
-  padding-bottom: .75px;
+  padding-bottom: 0.75px;
   margin-bottom: 0;
 }
 
@@ -1375,9 +1353,9 @@ main a:active { text-decoration: none !important; }
 
 /* Mini link buttons */
 .hp-mini-buttons-row {
-  margin-top: .75rem;
+  margin-top: 0.75rem;
   display: flex;
-  gap: .6rem;
+  gap: 0.6rem;
   flex-wrap: wrap;
   justify-content: flex-start;
 }
@@ -1385,7 +1363,7 @@ main a:active { text-decoration: none !important; }
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
-  padding: .55rem .9rem;
+  padding: 0.55rem 0.9rem;
   border-radius: 12px;
   border: 1px solid transparent;
   background: transparent;
@@ -1393,22 +1371,22 @@ main a:active { text-decoration: none !important; }
   font-family: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .16em;
-  font-size: .7rem;
+  letter-spacing: 0.16em;
+  font-size: 0.7rem;
   line-height: 1.1;
   color: inherit;
   transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, transform 120ms ease;
 }
 .hp-mini-btn span { text-align: left; }
-.hp-mini-btn--pink   { color: rgba(168,2,35,1);  background-color: rgba(242,51,89,.20);  border-color: rgba(242,51,89,1); }
-.hp-mini-btn--purple { color: rgba(80,0,130,1);  background-color: rgba(108,0,175,.20);  border-color: rgba(108,0,175,1); }
-.hp-mini-btn--green  { color: rgba(3,37,22,1);   background-color: rgba(47,168,115,.28); border-color: rgba(26,209,130,1); }
-.hp-mini-btn--yellow { color: rgba(52,39,0,1);   background-color: rgba(217,169,25,.32); border-color: rgba(243,183,5,1); }
-.hp-mini-btn:hover { transform: translateY(-.5px); color: #fff; }
-.hp-mini-btn--pink:hover   { background-color: rgba(231,44,81,.60);  border-color: rgba(242,51,89,1); }
-.hp-mini-btn--purple:hover { background-color: rgba(97,2,156,.60);   border-color: rgba(108,0,175,1); }
-.hp-mini-btn--green:hover  { background-color: rgba(47,168,115,.68); border-color: rgba(26,209,130,1); }
-.hp-mini-btn--yellow:hover { background-color: rgba(217,169,25,.88); border-color: rgba(243,183,5,1); }
+.hp-mini-btn--pink   { color: rgba(168, 2, 35, 1);   background-color: rgba(242, 51, 89, 0.20);   border-color: rgba(242, 51, 89, 1); }
+.hp-mini-btn--purple { color: rgba(80, 0, 130, 1);   background-color: rgba(108, 0, 175, 0.20);   border-color: rgba(108, 0, 175, 1); }
+.hp-mini-btn--green  { color: rgba(3, 37, 22, 1);    background-color: rgba(47, 168, 115, 0.28);  border-color: rgba(26, 209, 130, 1); }
+.hp-mini-btn--yellow { color: rgba(52, 39, 0, 1);    background-color: rgba(217, 169, 25, 0.32);  border-color: rgba(243, 183, 5, 1); }
+.hp-mini-btn:hover { transform: translateY(-0.5px); color: #fff; }
+.hp-mini-btn--pink:hover   { background-color: rgba(231, 44, 81, 0.60);  border-color: rgba(242, 51, 89, 1); }
+.hp-mini-btn--purple:hover { background-color: rgba(97, 2, 156, 0.60);   border-color: rgba(108, 0, 175, 1); }
+.hp-mini-btn--green:hover  { background-color: rgba(47, 168, 115, 0.68); border-color: rgba(26, 209, 130, 1); }
+.hp-mini-btn--yellow:hover { background-color: rgba(217, 169, 25, 0.88); border-color: rgba(243, 183, 5, 1); }
 
       `}</style>
 
