@@ -112,16 +112,15 @@ export default function ComingSoonModal() {
             <p className="csm-body">
               <strong>{SEASON_COUNT} seasons.</strong>{" "}
               <strong>{PRODUCTION_COUNT} original plays.</strong>{" "}
-              <strong>{CLUB_COUNT} drama clubs</strong> for young people in communities
-              around the world. And <strong>{ALUMNI_COUNT_DISPLAY} artists</strong> who gave
-              everything to make it happen.
+              <strong>{CLUB_COUNT} drama clubs</strong> around the world. More than{" "}
+              <strong>{ALUMNI_COUNT_DISPLAY} artists</strong> have helped shape this story.
             </p>
             <p className="csm-body">
-              We&apos;re building the platform their stories deserve. Alumni pages, production
-              archives, an interactive story map — coming soon.
+              We&apos;re building the platform these stories deserve: alumni pages, production
+              archives, and an interactive story map — coming soon.
             </p>
             <p className="csm-body csm-body--em">
-              It&apos;s almost showtime. Look around — much is already here.
+              For now, take a look around. Much is already here, and more will soon take the stage.
             </p>
 
             {/* Actions */}
