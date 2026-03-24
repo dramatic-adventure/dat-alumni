@@ -1,0 +1,745 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  upcomingEvents,
+  upcomingByCategory,
+  categoryMeta,
+  formatDateRange,
+  shortMonth,
+  dayOfMonth,
+  type DatEvent,
+  type EventCategory,
+} from "@/lib/events";
+
+// ── Mini event card ───────────────────────────────────────────────────────────
+
+function EventCard({ event, accent }: { event: DatEvent; accent: string }) {
+  const router = useRouter();
+  const meta = categoryMeta[event.category];
+  return (
+    <div
+      className="evhub-card"
+      onClick={() => router.push(meta.href)}
+      style={{ cursor: "pointer" }}
+    >
+      {event.image && (
+        <div
+          className="evhub-card-img"
+          style={{ backgroundImage: `url('${event.image}')` }}
+        />
+      )}
+      <div className="evhub-card-overlay" />
+      <div className="evhub-card-body">
+        <div className="evhub-card-date-badge" style={{ background: accent }}>
+          <span className="evhub-date-day">{dayOfMonth(event.date)}</span>
+          <span className="evhub-date-month">{shortMonth(event.date)}</span>
+        </div>
+        <div className="evhub-card-content">
+          <span className="evhub-card-cat" style={{ color: accent }}>
+            {meta.eyebrow}
+          </span>
+          <h3 className="evhub-card-title">{event.title}</h3>
+          <p className="evhub-card-venue">
+            {event.venue} · {event.city}
+          </p>
+          <p className="evhub-card-desc">{event.description}</p>
+          {event.ticketPrice && (
+            <p className="evhub-card-price">{event.ticketPrice}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Featured event (hero card) ────────────────────────────────────────────────
+
+function FeaturedEventCard({ event }: { event: DatEvent }) {
+  const meta = categoryMeta[event.category];
+  const accent = meta.color;
+  return (
+    <div
+      className="evhub-featured"
+      style={{
+        backgroundImage: event.image ? `url('${event.image}')` : undefined,
+      }}
+    >
+      <div className="evhub-featured-overlay" />
+      <div className="evhub-featured-body">
+        <div className="evhub-featured-left">
+          <div className="evhub-featured-date-block" style={{ borderColor: accent }}>
+            <span className="evhub-featured-day">{dayOfMonth(event.date)}</span>
+            <span className="evhub-featured-month">{shortMonth(event.date)}</span>
+          </div>
+        </div>
+        <div className="evhub-featured-right">
+          <span className="evhub-featured-eyebrow" style={{ color: accent }}>
+            {meta.eyebrow} — Next Up
+          </span>
+          <h2 className="evhub-featured-title">{event.title}</h2>
+          {event.subtitle && (
+            <p className="evhub-featured-subtitle">{event.subtitle}</p>
+          )}
+          <p className="evhub-featured-meta">
+            <span>{event.venue}</span>
+            <span className="evhub-dot">·</span>
+            <span>{event.city}, {event.country}</span>
+            {event.time && (
+              <>
+                <span className="evhub-dot">·</span>
+                <span>{event.time}</span>
+              </>
+            )}
+          </p>
+          <p className="evhub-featured-desc">{event.description}</p>
+          <div className="evhub-featured-actions">
+            {event.ticketUrl && (
+              <a
+                href={event.ticketUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="evhub-btn-primary"
+                style={{ background: accent, color: event.category === "fundraiser" ? "#241123" : "#fff" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {event.ticketType === "free" ? "Register Free" : "Get Tickets"}
+              </a>
+            )}
+            <Link
+              href={meta.href}
+              className="evhub-btn-ghost"
+              style={{ borderColor: "rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.75)" }}
+            >
+              See All {meta.plural} →
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Category row ──────────────────────────────────────────────────────────────
+
+function CategoryRow({
+  category,
+  events,
+}: {
+  category: EventCategory;
+  events: DatEvent[];
+}) {
+  const meta = categoryMeta[category];
+  const accent = meta.color;
+
+  return (
+    <section className="evhub-category-row">
+      <div className="evhub-container">
+        <div className="evhub-cat-header">
+          <div>
+            <p className="evhub-cat-eyebrow" style={{ color: accent }}>
+              {meta.eyebrow}
+            </p>
+            <h2 className="evhub-cat-title">{meta.plural}</h2>
+          </div>
+          <Link href={meta.href} className="evhub-see-all" style={{ color: accent }}>
+            See all →
+          </Link>
+        </div>
+
+        {events.length === 0 ? (
+          <div className="evhub-empty">
+            <p>No upcoming {meta.plural.toLowerCase()} announced yet.</p>
+            <Link href={meta.href} style={{ color: accent }}>
+              Check back soon →
+            </Link>
+          </div>
+        ) : (
+          <div className="evhub-cards-scroll">
+            {events.slice(0, 3).map((ev) => (
+              <EventCard key={ev.id} event={ev} accent={accent} />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
+export default function EventsHubPage() {
+  const nextUp = upcomingEvents[0];
+  const performances = upcomingByCategory("performance");
+  const festivals = upcomingByCategory("festival");
+  const fundraisers = upcomingByCategory("fundraiser");
+
+  return (
+    <>
+      {/* ── Hero ───────────────────────────────────────────────────────── */}
+      <div className="evhub-hero">
+        <div className="evhub-hero-bg" />
+        <div className="evhub-hero-grid-lines" aria-hidden="true" />
+        <div className="evhub-hero-content">
+          <p className="evhub-hero-eyebrow">Events</p>
+          <h1 className="evhub-hero-headline">
+            THE STAGE<br />IS EVERYWHERE.
+          </h1>
+          <p className="evhub-hero-sub">
+            Performances, festivals, and community nights — live and in the room with you.
+            Find DAT near you, or join us from wherever you are.
+          </p>
+          <div className="evhub-hero-cats">
+            <Link href="/events/performances" className="evhub-hero-cat evhub-cat-pink">
+              <span className="evhub-hero-cat-count">{performances.length}</span>
+              Performances
+            </Link>
+            <Link href="/events/festivals" className="evhub-hero-cat evhub-cat-teal">
+              <span className="evhub-hero-cat-count">{festivals.length}</span>
+              Festivals
+            </Link>
+            <Link href="/events/fundraisers" className="evhub-hero-cat evhub-cat-gold">
+              <span className="evhub-hero-cat-count">{fundraisers.length}</span>
+              Community Nights
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Featured / Next Up ─────────────────────────────────────────── */}
+      {nextUp && (
+        <section className="evhub-featured-section">
+          <div className="evhub-container">
+            <p className="evhub-section-label">Next Up</p>
+          </div>
+          <div className="evhub-container">
+            <FeaturedEventCard event={nextUp} />
+          </div>
+        </section>
+      )}
+
+      {/* ── Category rows ──────────────────────────────────────────────── */}
+      <div className="evhub-rows">
+        <CategoryRow category="performance" events={performances} />
+        <CategoryRow category="festival" events={festivals} />
+        <CategoryRow category="fundraiser" events={fundraisers} />
+      </div>
+
+      {/* ── Bottom band ────────────────────────────────────────────────── */}
+      <section className="evhub-bottom-band">
+        <div className="evhub-container evhub-bottom-inner">
+          <div>
+            <p className="evhub-bottom-eyebrow">Stay in the Loop</p>
+            <h2 className="evhub-bottom-title">Never miss a curtain.</h2>
+            <p className="evhub-bottom-body">
+              Events are announced first to our community list. Follow DAT, sign up for updates,
+              or reach out directly.
+            </p>
+          </div>
+          <div className="evhub-bottom-links">
+            <a
+              href="https://dramaticadventure.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="evhub-btn-gold"
+            >
+              Join Our Mailing List →
+            </a>
+            <Link href="/donate" className="evhub-btn-outline-light">
+              Support the Work
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Styles ─────────────────────────────────────────────────────── */}
+      <style>{`
+        /* ── Base ─────────────────────────────────────────────────────── */
+        .evhub-container {
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 0 clamp(1.25rem, 5vw, 3rem);
+        }
+
+        /* ── Hero ─────────────────────────────────────────────────────── */
+        .evhub-hero {
+          position: relative;
+          min-height: 70vh;
+          background: #0d0812;
+          display: flex;
+          align-items: center;
+          overflow: hidden;
+        }
+        .evhub-hero-bg {
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(ellipse 80% 60% at 70% 50%, rgba(242,51,89,0.08) 0%, transparent 70%),
+            radial-gradient(ellipse 60% 80% at 20% 80%, rgba(36,147,169,0.07) 0%, transparent 60%),
+            radial-gradient(ellipse 50% 50% at 80% 20%, rgba(217,169,25,0.06) 0%, transparent 60%);
+        }
+        .evhub-hero-grid-lines {
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+          background-size: 80px 80px;
+          pointer-events: none;
+        }
+        .evhub-hero-content {
+          position: relative;
+          z-index: 2;
+          padding: clamp(4rem, 10vw, 7rem) clamp(1.5rem, 6vw, 5rem);
+          max-width: 800px;
+        }
+        .evhub-hero-eyebrow {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.28em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.4);
+          margin: 0 0 1rem;
+        }
+        .evhub-hero-headline {
+          font-family: "Anton", sans-serif;
+          font-size: clamp(3.5rem, 9vw, 8rem);
+          font-weight: 400;
+          line-height: 0.92;
+          color: #fff;
+          margin: 0 0 1.5rem;
+          letter-spacing: 0.01em;
+        }
+        .evhub-hero-sub {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: clamp(1rem, 2vw, 1.2rem);
+          color: rgba(255,255,255,0.65);
+          line-height: 1.65;
+          max-width: 520px;
+          margin: 0 0 2.5rem;
+        }
+        .evhub-hero-cats {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+        }
+        .evhub-hero-cat {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          text-decoration: none;
+          padding: 0.6rem 1.25rem;
+          border-radius: 50px;
+          transition: transform 0.2s, opacity 0.2s;
+        }
+        .evhub-hero-cat:hover { transform: translateY(-2px); opacity: 0.88; }
+        .evhub-hero-cat-count {
+          font-family: "Anton", sans-serif;
+          font-size: 1.1rem;
+          font-weight: 400;
+          margin-right: 0.1rem;
+        }
+        .evhub-cat-pink { background: rgba(242,51,89,0.15); color: #F23359; border: 1px solid rgba(242,51,89,0.3); }
+        .evhub-cat-teal { background: rgba(36,147,169,0.15); color: #2493A9; border: 1px solid rgba(36,147,169,0.3); }
+        .evhub-cat-gold { background: rgba(217,169,25,0.15); color: #D9A919; border: 1px solid rgba(217,169,25,0.3); }
+
+        /* ── Featured section ─────────────────────────────────────────── */
+        .evhub-featured-section {
+          background: #0d0812;
+          padding: 0 0 clamp(2.5rem, 5vw, 4rem);
+        }
+        .evhub-section-label {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.28em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.3);
+          margin: 0 0 1.25rem;
+          padding: clamp(1.5rem, 3vw, 2.5rem) 0 0;
+        }
+        .evhub-featured {
+          position: relative;
+          border-radius: 16px;
+          overflow: hidden;
+          min-height: 380px;
+          background: #1a0d1a;
+          background-size: cover;
+          background-position: center;
+          display: flex;
+          align-items: flex-end;
+        }
+        .evhub-featured-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            135deg,
+            rgba(10,5,14,0.88) 0%,
+            rgba(10,5,14,0.6) 50%,
+            rgba(10,5,14,0.3) 100%
+          );
+        }
+        .evhub-featured-body {
+          position: relative;
+          z-index: 2;
+          display: grid;
+          grid-template-columns: auto 1fr;
+          gap: 2.5rem;
+          align-items: end;
+          padding: clamp(1.75rem, 4vw, 3rem);
+          width: 100%;
+        }
+        @media (max-width: 640px) {
+          .evhub-featured-body { grid-template-columns: 1fr; gap: 1rem; }
+          .evhub-featured-left { display: none; }
+        }
+        .evhub-featured-date-block {
+          border-left: 3px solid;
+          padding-left: 1rem;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0;
+          min-width: 56px;
+        }
+        .evhub-featured-day {
+          font-family: "Anton", sans-serif;
+          font-size: 4.5rem;
+          font-weight: 400;
+          color: #fff;
+          line-height: 1;
+        }
+        .evhub-featured-month {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          font-weight: 700;
+          letter-spacing: 0.18em;
+          color: rgba(255,255,255,0.6);
+          margin-top: 0.2rem;
+        }
+        .evhub-featured-eyebrow {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.28em;
+          text-transform: uppercase;
+          display: block;
+          margin-bottom: 0.6rem;
+        }
+        .evhub-featured-title {
+          font-family: "Anton", sans-serif;
+          font-size: clamp(2rem, 4vw, 3.5rem);
+          font-weight: 400;
+          color: #fff;
+          margin: 0 0 0.35rem;
+          line-height: 1;
+        }
+        .evhub-featured-subtitle {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          font-weight: 600;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.5);
+          margin: 0 0 0.85rem;
+        }
+        .evhub-featured-meta {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.88rem;
+          color: rgba(255,255,255,0.6);
+          margin: 0 0 0.85rem;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.4rem;
+          align-items: center;
+        }
+        .evhub-dot { opacity: 0.4; }
+        .evhub-featured-desc {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.95rem;
+          color: rgba(255,255,255,0.72);
+          line-height: 1.65;
+          margin: 0 0 1.5rem;
+          max-width: 520px;
+        }
+        .evhub-featured-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+          align-items: center;
+        }
+        .evhub-btn-primary {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          text-decoration: none;
+          padding: 0.8rem 1.75rem;
+          border-radius: 10px;
+          transition: opacity 0.2s, transform 0.15s;
+        }
+        .evhub-btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+        .evhub-btn-ghost {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          text-decoration: none;
+          padding: 0.8rem 1.75rem;
+          border-radius: 10px;
+          border: 1.5px solid;
+          transition: opacity 0.2s, transform 0.15s;
+        }
+        .evhub-btn-ghost:hover { opacity: 0.75; transform: translateY(-1px); }
+
+        /* ── Category rows ─────────────────────────────────────────────── */
+        .evhub-rows {
+          background: #f6e4c1;
+        }
+        .evhub-category-row {
+          padding: clamp(3rem, 6vw, 5rem) 0;
+          border-bottom: 1px solid rgba(36,17,35,0.08);
+        }
+        .evhub-category-row:last-child { border-bottom: none; }
+        .evhub-cat-header {
+          display: flex;
+          align-items: flex-end;
+          justify-content: space-between;
+          margin-bottom: 1.75rem;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+        }
+        .evhub-cat-eyebrow {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.28em;
+          text-transform: uppercase;
+          margin: 0 0 0.4rem;
+        }
+        .evhub-cat-title {
+          font-family: "Anton", sans-serif;
+          font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+          font-weight: 400;
+          color: #241123;
+          margin: 0;
+          line-height: 1;
+        }
+        .evhub-see-all {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          text-decoration: none;
+          transition: opacity 0.2s;
+          white-space: nowrap;
+        }
+        .evhub-see-all:hover { opacity: 0.7; }
+        .evhub-empty {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.95rem;
+          color: #7a5e80;
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        .evhub-empty a { font-weight: 600; text-decoration: none; }
+
+        /* Cards scroll row */
+        .evhub-cards-scroll {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 1.25rem;
+        }
+        .evhub-card {
+          position: relative;
+          border-radius: 14px;
+          overflow: hidden;
+          min-height: 340px;
+          background: #1a0d1a;
+          display: flex;
+          flex-direction: column;
+          transition: transform 0.25s, box-shadow 0.25s;
+        }
+        .evhub-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+        }
+        .evhub-card-img {
+          position: absolute;
+          inset: 0;
+          background-size: cover;
+          background-position: center;
+          opacity: 0.45;
+          transition: opacity 0.3s, transform 0.4s;
+        }
+        .evhub-card:hover .evhub-card-img {
+          opacity: 0.62;
+          transform: scale(1.04);
+        }
+        .evhub-card-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to top, rgba(10,5,14,0.92) 0%, rgba(10,5,14,0.3) 60%, transparent 100%);
+        }
+        .evhub-card-body {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-end;
+          flex: 1;
+          padding: 1.5rem;
+          gap: 0.75rem;
+        }
+        .evhub-card-date-badge {
+          align-self: flex-start;
+          display: flex;
+          align-items: baseline;
+          gap: 0.3rem;
+          padding: 0.35rem 0.7rem;
+          border-radius: 6px;
+        }
+        .evhub-date-day {
+          font-family: "Anton", sans-serif;
+          font-size: 1.4rem;
+          color: #fff;
+          line-height: 1;
+        }
+        .evhub-date-month {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.68rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          color: rgba(255,255,255,0.85);
+        }
+        .evhub-card-content { display: flex; flex-direction: column; gap: 0.3rem; }
+        .evhub-card-cat {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.68rem;
+          font-weight: 700;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+        }
+        .evhub-card-title {
+          font-family: "Anton", sans-serif;
+          font-size: 1.4rem;
+          font-weight: 400;
+          color: #fff;
+          margin: 0;
+          line-height: 1.1;
+        }
+        .evhub-card-venue {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.8rem;
+          color: rgba(255,255,255,0.55);
+          margin: 0;
+        }
+        .evhub-card-desc {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.82rem;
+          color: rgba(255,255,255,0.65);
+          line-height: 1.55;
+          margin: 0;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        .evhub-card-price {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.78rem;
+          font-weight: 600;
+          color: rgba(255,255,255,0.45);
+          margin: 0;
+          letter-spacing: 0.04em;
+        }
+
+        /* ── Bottom band ───────────────────────────────────────────────── */
+        .evhub-bottom-band {
+          background: #241123;
+          padding: clamp(3rem, 6vw, 5rem) 0;
+        }
+        .evhub-bottom-inner {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 3rem;
+          align-items: center;
+        }
+        @media (max-width: 700px) {
+          .evhub-bottom-inner { grid-template-columns: 1fr; gap: 2rem; }
+        }
+        .evhub-bottom-eyebrow {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.28em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.35);
+          margin: 0 0 0.6rem;
+        }
+        .evhub-bottom-title {
+          font-family: "Anton", sans-serif;
+          font-size: clamp(2rem, 4vw, 3rem);
+          font-weight: 400;
+          color: #fff;
+          margin: 0 0 0.75rem;
+        }
+        .evhub-bottom-body {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.95rem;
+          color: rgba(255,255,255,0.55);
+          line-height: 1.65;
+          margin: 0;
+          max-width: 480px;
+        }
+        .evhub-bottom-links {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          align-items: flex-start;
+        }
+        .evhub-btn-gold {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          text-decoration: none;
+          background: #D9A919;
+          color: #241123;
+          padding: 0.8rem 1.75rem;
+          border-radius: 10px;
+          transition: opacity 0.2s, transform 0.15s;
+          white-space: nowrap;
+        }
+        .evhub-btn-gold:hover { opacity: 0.88; transform: translateY(-1px); }
+        .evhub-btn-outline-light {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          text-decoration: none;
+          color: rgba(255,255,255,0.5);
+          border: 1.5px solid rgba(255,255,255,0.2);
+          padding: 0.8rem 1.75rem;
+          border-radius: 10px;
+          transition: opacity 0.2s;
+          white-space: nowrap;
+        }
+        .evhub-btn-outline-light:hover { opacity: 0.7; }
+      `}</style>
+    </>
+  );
+}
