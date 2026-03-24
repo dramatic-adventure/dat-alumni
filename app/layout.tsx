@@ -11,6 +11,7 @@ import ChunkErrorReload from "./ChunkErrorReload";
 import localFont from "next/font/local";
 import Header from "@/components/ui/Header";
 import Footer from "@/components/ui/Footer";
+import ComingSoonModal from "@/components/ui/ComingSoonModal";
 
 import {
   anton,
@@ -109,6 +110,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {enableChunkRecovery ? <ChunkErrorReload /> : null}
 
         <Providers>
+          <ComingSoonModal />
           <Header />
 
           {/* give bottom clearance so in-page footer nav can't hide behind Footer */}
