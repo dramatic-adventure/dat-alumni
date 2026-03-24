@@ -67,3 +67,4 @@ netlify.env
 *.log
 dev.log
 service-account.json
+.claude/
