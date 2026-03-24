@@ -82,7 +82,7 @@ const ERAS: EraConfig[] = [
     label: "The Wide World",
     seasons: [9, 10],
     years: "2014–2016",
-    geography: "Tanzania · Slovakia · Ecuador",
+    geography: "Tanzania · Zanzibar · Slovakia · Ecuador",
     src: "/images/theatre/archive/tembo.webp",
     alt: "Tembo — DAT Season 10, Tanzania",
     objectPosition: "center",
@@ -909,43 +909,63 @@ export default function TheatreIndexPage() {
             })}
           </div>
 
-          {/* Bottom cross-nav */}
-          <div
-            style={{
-              marginTop: "5rem",
-              paddingTop: "2.5rem",
-              borderTop: `2.5px solid ${C.divider}`,
-              display: "flex",
-              flexWrap: "wrap",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "1rem",
-            }}
-          >
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
+          {/* ── Bottom cross-nav ── */}
+          <div style={{ marginTop: "5rem", paddingTop: "2.5rem", borderTop: `2.5px solid ${C.divider}` }}>
+            <p style={{ ...eyebrowOnKraft, marginBottom: "1.5rem" }}>Explore More</p>
+            <div style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap" }}>
               {[
-                { href: "/alumni", label: "← Alumni Directory" },
-                { href: "/story-map", label: "Story Map →" },
-              ].map(({ href, label }) => (
+                {
+                  href:  "/projects",
+                  title: "Project Archive →",
+                  sub:   "Every trek, residency, and retreat",
+                },
+                {
+                  href:  "/alumni",
+                  title: "Alumni Directory →",
+                  sub:   "The artists who made it happen",
+                },
+              ].map(({ href, title, sub }) => (
                 <Link
                   key={href}
                   href={href}
                   className="theatre-bottom-link"
                   style={{
-                    display: "inline-block",
-                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                    fontSize: "0.8rem",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.14em",
-                    color: "#f2f2f2",
-                    textDecoration: "none",
-                    padding: "0.6em 1.4em",
-                    borderRadius: "99px",
-                    backgroundColor: "#2493A9",
+                    flex:            "1 1 260px",
+                    display:         "flex",
+                    flexDirection:   "column",
+                    justifyContent:  "center",
+                    gap:             "0.4rem",
+                    padding:         "1.6rem 2rem",
+                    borderRadius:    "14px",
+                    border:          `1.5px solid ${C.divider}`,
+                    backgroundColor: "rgba(36,17,35,0.06)",
+                    textDecoration:  "none",
+                    minHeight:       "110px",
                   }}
                 >
-                  {label}
+                  <span
+                    style={{
+                      fontFamily:    "var(--font-anton), system-ui, sans-serif",
+                      fontSize:      "clamp(1.4rem, 3vw, 2rem)",
+                      textTransform: "uppercase",
+                      color:         C.ink,
+                      lineHeight:    1,
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    {title}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                      fontSize:   "0.82rem",
+                      color:      "rgba(36,17,35,0.72)",
+                      fontWeight: 600,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {sub}
+                  </span>
                 </Link>
               ))}
             </div>
@@ -1016,12 +1036,11 @@ export default function TheatreIndexPage() {
           transition: transform 0.5s ease;
         }
         .theatre-bottom-link {
-          transition: box-shadow 0.2s ease, filter 0.2s ease, letter-spacing 0.2s ease;
+          transition: box-shadow 0.2s ease, filter 0.2s ease;
         }
         .theatre-bottom-link:hover {
-          box-shadow: 0 4px 16px rgba(108,0,175,0.3);
-          filter: brightness(0.9) saturate(1.3);
-          letter-spacing: 0.2em !important;
+          box-shadow: 0 4px 20px rgba(36,17,35,0.22);
+          filter: brightness(0.96);
         }
 
         /* ── Responsive ── */

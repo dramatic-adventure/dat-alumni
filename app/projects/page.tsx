@@ -66,7 +66,7 @@ const ERAS: EraConfig[] = [
     geography:      "Ecuador · NYC",
     src:            "/images/projects/archive/creative-trek-ecuador-teatro-la-catanga.webp",
     alt:            "Creative Trek: Ecuador — Teatro La Catanga",
-    objectPosition: "center",
+    objectPosition: "50% 20%",   // subject in upper portion of frame
   },
   {
     id:             "era-3",
@@ -86,17 +86,18 @@ const ERAS: EraConfig[] = [
     geography:      "Slovakia · Ecuador · NYC",
     src:            "/images/projects/archive/action-heart-of-europe-street-theatre.webp",
     alt:            "ACTion: Heart of Europe — Street Theatre, Slovakia",
-    objectPosition: "center",
+    objectPosition: "50% 80%",   // crop top, focus lower half of frame
+    filter:         "brightness(1.08) contrast(1.22) saturate(1.3)",  // sharpen dull tones
   },
   {
     id:             "era-5",
     label:          "The Wide World",
     seasons:        [9, 10],
     years:          "2014–2016",
-    geography:      "Tanzania · Slovakia · Ecuador",
+    geography:      "Tanzania · Zanzibar · Slovakia · Ecuador",
     src:            "/images/projects/archive/ACTion-Tanzania-7-kids.webp",
     alt:            "ACTion: Tanzania — Season 10",
-    objectPosition: "center",
+    objectPosition: "50% 60%",   // slightly lower than center
   },
   {
     id:             "era-6",
@@ -106,7 +107,7 @@ const ERAS: EraConfig[] = [
     geography:      "Ecuador · Galápagos · Slovakia · USA",
     src:            "/images/projects/archive/teaching-artist-residency-slovakia-camp.webp",
     alt:            "Teaching Artist Residency: Slovakia — Season 12",
-    objectPosition: "center",
+    objectPosition: "50% 60%",   // slightly lower than center
   },
   {
     id:             "era-7",
@@ -116,7 +117,7 @@ const ERAS: EraConfig[] = [
     geography:      "Ecuador · Slovakia · Hudson Valley",
     src:            "/images/projects/archive/travelogue-on-clubhouse-4-17-21.webp",
     alt:            "Travelogue on Clubhouse — Season 15/16",
-    objectPosition: "center",
+    objectPosition: "50% 20%",   // subject in upper portion of frame
     filter:         "brightness(1.08) contrast(1.06) saturate(1.05)",
   },
   {
@@ -148,6 +149,16 @@ const LOCATION_TO_COUNTRIES: Record<string, string[]> = {
   "Esmeraldas, Ecuador":            ["Ecuador"],
   "Galápagos":                      ["Ecuador"],
   "Moldava nad Bodvou, Slovakia":   ["Slovakia"],
+};
+
+// Maps each country to its continent (for the Continents stat)
+const COUNTRY_TO_CONTINENT: Record<string, string> = {
+  "Zimbabwe":      "Africa",
+  "Tanzania":      "Africa",
+  "Ecuador":       "South America",
+  "Slovakia":      "Europe",
+  "Czechia":       "Europe",
+  "United States": "North America",
 };
 
 // Project-string prefixes that carry geographic context
@@ -200,12 +211,15 @@ function extractAllCountries(allSeasons: typeof seasonData): Set<string> {
   return countries;
 }
 
-// A season counts as "field work" if it includes a Creative Trek or ACTion trip
-// (ACTion Fest, DAT Retreats, and Teaching Artist Residencies are separate types)
-function hasFieldWork(projects: string[]): boolean {
-  return projects.some(
-    (p) => p.startsWith("Creative Trek:") || /^ACTion:/.test(p)
-  );
+// Derives the set of continents represented across all season field work
+function extractAllContinents(allSeasons: typeof seasonData): Set<string> {
+  const countries = extractAllCountries(allSeasons);
+  const continents = new Set<string>();
+  for (const country of countries) {
+    const continent = COUNTRY_TO_CONTINENT[country];
+    if (continent) continents.add(continent);
+  }
+  return continents;
 }
 
 // All season numbers from seasonData, newest → oldest
@@ -247,7 +261,7 @@ export default function ProjectsIndexPage() {
     0
   );
   const allCountries    = extractAllCountries(seasonData);
-  const fieldWorkSeasons = seasonData.filter((s) => hasFieldWork(s.projects)).length;
+  const allContinents   = extractAllContinents(seasonData);
   const jumpSeasons     = allSeasonNums();
 
   return (
@@ -266,8 +280,8 @@ export default function ProjectsIndexPage() {
         }}
       >
         <Image
-          src="/images/projects/archive/Creative-Trek-Zimbabwe.webp"
-          alt="Creative Trek: Zimbabwe — DAT Season 1"
+          src="/images/projects/archive/ACTion-Tanzania-3-hike.webp"
+          alt="ACTion: Tanzania — company hiking in the field"
           fill
           priority
           className="object-cover object-center"
@@ -368,9 +382,9 @@ export default function ProjectsIndexPage() {
                 sub:   "across four continents",
               },
               {
-                n:     String(fieldWorkSeasons),
-                label: "Field Seasons",
-                sub:   "Creative Treks & ACTion programs",
+                n:     String(allContinents.size),
+                label: "Continents",
+                sub:   "Africa · Europe · the Americas",
               },
             ].map(({ n, label, sub }, i, arr) => (
               <div
@@ -910,7 +924,7 @@ export default function ProjectsIndexPage() {
                             </div>
 
                             {/* Project list — each entry a line in the journal */}
-                            <ProjectList projects={sdEntry.projects} />
+                            <ProjectList projects={sdEntry.projects} seasonNum={sn} />
 
                           </div>
                         );
@@ -965,18 +979,6 @@ export default function ProjectsIndexPage() {
             >
               <span
                 style={{
-                  fontFamily:    "var(--font-dm-sans), system-ui, sans-serif",
-                  fontSize:      "0.72rem",
-                  fontWeight:    800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.2em",
-                  color:         C.inkMid,
-                }}
-              >
-                Also on this site
-              </span>
-              <span
-                style={{
                   fontFamily:    "var(--font-anton), system-ui, sans-serif",
                   fontSize:      "clamp(1.4rem, 3vw, 2rem)",
                   textTransform: "uppercase",
@@ -991,8 +993,8 @@ export default function ProjectsIndexPage() {
                 style={{
                   fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                   fontSize:   "0.82rem",
-                  color:      C.inkMid,
-                  fontWeight: 500,
+                  color:      "rgba(36,17,35,0.72)",
+                  fontWeight: 600,
                   lineHeight: 1.4,
                 }}
               >
@@ -1019,18 +1021,6 @@ export default function ProjectsIndexPage() {
             >
               <span
                 style={{
-                  fontFamily:    "var(--font-dm-sans), system-ui, sans-serif",
-                  fontSize:      "0.72rem",
-                  fontWeight:    800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.2em",
-                  color:         C.inkMid,
-                }}
-              >
-                Also on this site
-              </span>
-              <span
-                style={{
                   fontFamily:    "var(--font-anton), system-ui, sans-serif",
                   fontSize:      "clamp(1.4rem, 3vw, 2rem)",
                   textTransform: "uppercase",
@@ -1045,8 +1035,8 @@ export default function ProjectsIndexPage() {
                 style={{
                   fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                   fontSize:   "0.82rem",
-                  color:      C.inkMid,
-                  fontWeight: 500,
+                  color:      "rgba(36,17,35,0.72)",
+                  fontWeight: 600,
                   lineHeight: 1.4,
                 }}
               >
@@ -1066,8 +1056,9 @@ export default function ProjectsIndexPage() {
           transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
         }
         .project-nav-pill:hover {
-          background-color: rgba(36,17,35,0.12) !important;
-          border-color: rgba(36,17,35,0.5) !important;
+          background-color: #FFCC00 !important;
+          border-color: rgba(36,17,35,0.4) !important;
+          color: #241123 !important;
         }
 
         /* ── Season header links ── */
@@ -1092,6 +1083,9 @@ export default function ProjectsIndexPage() {
         }
 
         /* ── Project list entries ── */
+        .project-entry-text:hover {
+          color: #6C00AF !important;
+        }
         .project-entry-line {
           position:    relative;
           padding:     0.55rem 0 0.55rem 1.05rem;
@@ -1173,7 +1167,7 @@ export default function ProjectsIndexPage() {
 // but preserved — they're real company history, just not featured projects.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function ProjectList({ projects }: { projects: string[] }) {
+function ProjectList({ projects, seasonNum }: { projects: string[]; seasonNum: number }) {
   const regular      = projects.filter((p) => !isHousekeeping(p));
   const housekeeping = projects.filter(isHousekeeping);
 
@@ -1198,18 +1192,21 @@ function ProjectList({ projects }: { projects: string[] }) {
         >
           {regular.map((proj) => (
             <li key={proj} className="project-entry-line">
-              <span
+              <Link
+                href={`/season/${seasonNum}#projects-section`}
+                className="project-entry-text"
                 style={{
-                  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                  fontSize:   "0.97rem",
-                  fontWeight: 500,
-                  color:      C.ink,
-                  lineHeight: 1.55,
-                  display:    "block",
+                  fontFamily:     "var(--font-space-grotesk), system-ui, sans-serif",
+                  fontSize:       "0.97rem",
+                  fontWeight:     500,
+                  color:          C.ink,
+                  lineHeight:     1.55,
+                  display:        "block",
+                  textDecoration: "none",
                 }}
               >
                 {proj}
-              </span>
+              </Link>
             </li>
           ))}
         </ul>

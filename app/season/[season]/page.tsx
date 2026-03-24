@@ -237,13 +237,13 @@ export default async function SeasonPage(
         }}
       >
         <div style={{ width: "90%", margin: "0 auto" }}>
-          {/* PROGRAMS */}
+          {/* PROJECTS */}
           {programs.length > 0 && (
-            <Collapsible id="programs-section" title="Programs" defaultOpen={false}>
+            <Collapsible id="projects-section" title="Projects" defaultOpen={false}>
               {Object.entries(programsByGroup).map(([label, group]) => (
                 <div key={label}>
                   <h3 style={{ margin: "3rem 0 1rem" }}>
-                    {renderMaybeLink((group as any)[0].url, label, "program-link")}
+                    {renderMaybeLink((group as any)[0].url, label, "project-link")}
                   </h3>
 
                   {(group as any).map((program: any) => {
@@ -376,8 +376,8 @@ export default async function SeasonPage(
           )}
         </div>
 
-        {/* Auto-open Programs collapsible and scroll to the targeted program when arriving via a stamp link */}
-        <HashScrollOpener collapsibleBtnId="programs-section__btn" />
+        {/* Open Projects section and scroll to the targeted item when arriving via a stamp or archive link */}
+        <HashScrollOpener collapsibleBtnId="projects-section__btn" />
 
         {/* SEASON NAV */}
         <section
@@ -412,9 +412,9 @@ export default async function SeasonPage(
         }
         .explore-alumni-btn:hover { color: #FFCC00 !important; opacity: 0.9 }
 
-        .program-link, .production-link { cursor: pointer; text-decoration: none !important; }
+        .project-link, .production-link { cursor: pointer; text-decoration: none !important; }
 
-        .program-link {
+        .project-link {
           font-family: var(--font-anton), system-ui, sans-serif;
           font-size: 2.4rem;
           text-transform: uppercase;
@@ -428,7 +428,7 @@ export default async function SeasonPage(
           border-radius: 0.3em;
           transition: color 0.3s ease, letter-spacing 0.3s ease;
         }
-        .program-link:hover { color: #6C00AF !important; letter-spacing: 0.4rem; }
+        .project-link:hover { color: #6C00AF !important; letter-spacing: 0.4rem; }
 
         .production-link {
           font-family: var(--font-space-grotesk), system-ui, sans-serif;
