@@ -73,6 +73,11 @@ function FundCard({ event, index }: { event: DatEvent; index: number }) {
               {event.ticketPrice && (
                 <span className="fund-price-tag">{event.ticketPrice}</span>
               )}
+              {event.production && (
+                <Link href={`/theatre/${event.production}`} className="fund-production-link">
+                  Full Production →
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -130,6 +135,11 @@ function FundCard({ event, index }: { event: DatEvent; index: number }) {
             )}
             {event.ticketPrice && (
               <span className="fund-price-tag">{event.ticketPrice}</span>
+            )}
+            {event.production && (
+              <Link href={`/theatre/${event.production}`} className="fund-production-link">
+                Full Production →
+              </Link>
             )}
           </div>
         </div>
@@ -615,6 +625,21 @@ export default function FundraisersPage() {
           font-size: 0.82rem;
           color: rgba(255,255,255,0.4);
         }
+        .fund-production-link,
+        .fund-production-link:link,
+        .fund-production-link:visited,
+        .fund-production-link:hover,
+        .fund-production-link:focus,
+        .fund-production-link:focus-visible,
+        .fund-production-link:active {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.72rem; font-weight: 700; letter-spacing: 0.18em;
+          text-transform: uppercase; color: rgba(255,204,0,0.75) !important;
+          text-decoration: none !important;
+          transition: color 150ms ease;
+        }
+        .fund-production-link:hover,
+        .fund-production-link:focus-visible { color: #FFCC00 !important; }
 
         /* Empty state */
         .fund-empty {

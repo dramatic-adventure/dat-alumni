@@ -62,6 +62,12 @@ export interface DatEvent {
   /** Slug of a related production in productionMap */
   production?: string;
 
+  /**
+   * Medium — for future filtering across theatre / film / workshop.
+   * Defaults to "theatre" when omitted.
+   */
+  medium?: "theatre" | "film" | "workshop" | "installation";
+
   /** Email for questions/bookings (falls back to hello@dramaticadventure.com) */
   contactEmail?: string;
 }
@@ -402,4 +408,32 @@ export function dayOfMonth(date: string): string {
 /** Year: "2026" */
 export function eventYear(date: string): string {
   return String(new Date(date + "T12:00:00Z").getUTCFullYear());
+}
+
+/**
+ * Return all events linked to a given production slug.
+ * Sorted ascending by date (soonest first).
+ */
+export function eventsByProduction(productionSlug: string): DatEvent[] {
+  return sortedEvents.filter((e) => e.production === productionSlug);
+}
+
+/**
+ * Derive a human-readable status label for a production, given its linked events.
+ * Returns: "NOW PLAYING" | "UPCOMING" | "ARCHIVE" | null
+ */
+export function productionEventStatus(
+  events: DatEvent[],
+): "NOW PLAYING" | "UPCOMING" | "ARCHIVE" | null {
+  if (events.length === 0) return null;
+  const now = new Date();
+  const isNowPlaying = events.some((e) => {
+    if (e.status !== "upcoming") return false;
+    const start = new Date(e.date + "T00:00:00Z");
+    const end = e.endDate ? new Date(e.endDate + "T23:59:59Z") : start;
+    return now >= start && now <= end;
+  });
+  if (isNowPlaying) return "NOW PLAYING";
+  if (events.some((e) => e.status === "upcoming")) return "UPCOMING";
+  return "ARCHIVE";
 }

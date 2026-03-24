@@ -62,6 +62,11 @@ function FestCard({ event, index }: { event: DatEvent; index: number }) {
               {event.ticketPrice && (
                 <span className="fest-price-tag">{event.ticketPrice}</span>
               )}
+              {event.production && (
+                <Link href={`/theatre/${event.production}`} className="fest-production-link">
+                  Full Production →
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -122,6 +127,11 @@ function FestCard({ event, index }: { event: DatEvent; index: number }) {
             )}
             {event.ticketPrice && (
               <span className="fest-price-tag">{event.ticketPrice}</span>
+            )}
+            {event.production && (
+              <Link href={`/theatre/${event.production}`} className="fest-production-link">
+                Full Production →
+              </Link>
             )}
           </div>
         </div>
@@ -592,6 +602,21 @@ export default function FestivalsPage() {
           font-size: 0.82rem;
           color: rgba(255,255,255,0.4);
         }
+        .fest-production-link,
+        .fest-production-link:link,
+        .fest-production-link:visited,
+        .fest-production-link:hover,
+        .fest-production-link:focus,
+        .fest-production-link:focus-visible,
+        .fest-production-link:active {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.72rem; font-weight: 700; letter-spacing: 0.18em;
+          text-transform: uppercase; color: rgba(255,204,0,0.75) !important;
+          text-decoration: none !important;
+          transition: color 150ms ease;
+        }
+        .fest-production-link:hover,
+        .fest-production-link:focus-visible { color: #FFCC00 !important; }
         .fest-empty {
           text-align: center;
           padding: 5rem 1rem;

@@ -4,6 +4,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState, type ReactNode, type CSSProperties } from "react";
+import type { DatEvent } from "@/lib/events";
+import {
+  formatDateRange,
+  shortMonth,
+  dayOfMonth,
+  eventYear,
+  categoryMeta,
+  productionEventStatus,
+} from "@/lib/events";
 
 import { DATButtonLink } from "@/components/ui/DATButton";
 import ProductionTagButtons from "@/components/ui/ProductionTagButtons";
@@ -151,6 +160,9 @@ export interface ProductionPageTemplateProps {
   resources?: ResourceLink[];
   autoLinkPeopleBase?: string;
   renderAfterHero?: ReactNode;
+
+  /** Events linked to this production via lib/events.ts (production field = slug) */
+  productionEvents?: DatEvent[];
 }
 
 /* ----------------------- Utilities ------------------------- */
@@ -613,6 +625,159 @@ function hasRenderableProcess(sections?: ProcessSlice[]) {
 }
 
 
+/* ===================== PROD EVENTS SECTION ================= */
+function ProdEventCard({ event }: { event: DatEvent }) {
+  const meta = categoryMeta[event.category];
+  const hasImage = !!event.image;
+  const upcomingPerfs = event.status === "upcoming";
+  const dateLabel = formatDateRange(event.date, event.endDate);
+  const day = dayOfMonth(event.date);
+  const mon = shortMonth(event.date);
+  const yr = eventYear(event.date);
+  const endDay = event.endDate ? dayOfMonth(event.endDate) : null;
+  const endMon = event.endDate ? shortMonth(event.endDate) : null;
+  const sameMonth =
+    event.endDate &&
+    shortMonth(event.date) === shortMonth(event.endDate) &&
+    eventYear(event.date) === eventYear(event.endDate);
+
+  return (
+    <div className="pev-card">
+      {hasImage && (
+        <div className="pev-card-img-shell">
+          <Image
+            src={event.image!}
+            alt={event.title}
+            fill
+            sizes="(max-width: 700px) 100vw, 400px"
+            className="pev-card-img object-cover"
+          />
+          <div className="pev-card-img-gradient" />
+        </div>
+      )}
+
+      <div className="pev-card-body">
+        {/* Date stamp */}
+        <div className="pev-date-block">
+          <span className="pev-date-day">{day}</span>
+          {endDay && !sameMonth ? (
+            <span className="pev-date-mon">{mon} – {endMon}</span>
+          ) : endDay && sameMonth ? (
+            <span className="pev-date-mon">{mon} {day}–{endDay}</span>
+          ) : (
+            <span className="pev-date-mon">{mon}</span>
+          )}
+          <span className="pev-date-yr">{yr}</span>
+        </div>
+
+        {/* Category pill */}
+        <div className="pev-cat-pill" style={{ background: `${meta.color}22`, borderColor: `${meta.color}55`, color: meta.color }}>
+          {meta.eyebrow}
+        </div>
+
+        {/* Venue */}
+        <p className="pev-venue">{event.venue}</p>
+        <p className="pev-city">{event.city}{event.country !== "Online" ? `, ${event.country}` : ""}</p>
+
+        {event.time && <p className="pev-time">{event.doors ?? event.time}</p>}
+
+        <p className="pev-desc">{event.description}</p>
+
+        <div className="pev-card-footer">
+          {event.ticketUrl && upcomingPerfs ? (
+            <a
+              href={event.ticketUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="pev-ticket-btn"
+            >
+              {event.ticketPrice ? `Tickets · ${event.ticketPrice}` : "Get Tickets →"}
+            </a>
+          ) : (
+            <span className="pev-ticket-pill">
+              {event.ticketType === "free" ? "Free" : event.ticketType === "pay-what-you-can" ? "Pay What You Can" : event.ticketPrice ?? ""}
+            </span>
+          )}
+          <Link href={`/events/${event.category === "performance" ? "performances" : event.category === "festival" ? "festivals" : "fundraisers"}`} className="pev-cat-link">
+            All {meta.label}s →
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProdEventsSection({
+  events,
+  productionTitle,
+}: {
+  events: DatEvent[];
+  productionTitle: string;
+}) {
+  const upcoming = events.filter((e) => e.status === "upcoming");
+  const past = events.filter((e) => e.status === "past");
+  const hasUpcoming = upcoming.length > 0;
+
+  return (
+    <section className="pev-section">
+      {/* Atmospheric glow */}
+      <div className="pev-glow pev-glow-left" />
+      <div className="pev-glow pev-glow-right" />
+
+      <div className="pev-inner">
+        <div className="pev-head">
+          <p className="pev-eyebrow">SEE IT LIVE</p>
+          <h2 className="pev-title">
+            {hasUpcoming ? "Catch It Live" : "Performance History"}
+          </h2>
+          {hasUpcoming && (
+            <p className="pev-subtitle">
+              {productionTitle} is on stage. Book your place.
+            </p>
+          )}
+        </div>
+
+        {/* Upcoming event cards */}
+        {upcoming.length > 0 && (
+          <div className="pev-grid">
+            {upcoming.map((e) => (
+              <ProdEventCard key={e.id} event={e} />
+            ))}
+          </div>
+        )}
+
+        {/* Past runs — compact list */}
+        {past.length > 0 && (
+          <div className="pev-past-wrap">
+            <p className="pev-past-head">
+              {hasUpcoming ? "Past Runs" : "Where It's Been"}
+            </p>
+            <ul className="pev-past-list">
+              {past.map((e) => (
+                <li key={e.id} className="pev-past-item">
+                  <span className="pev-past-year">{eventYear(e.date)}</span>
+                  <span className="pev-past-info">
+                    {e.venue} · {e.city}
+                    {e.endDate
+                      ? ` · ${formatDateRange(e.date, e.endDate)}`
+                      : ` · ${formatDateRange(e.date)}`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="pev-footer-link">
+          <Link href="/events" className="pev-all-events-link">
+            Browse All DAT Events →
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ======================= COMPONENT ========================= */
 export default function ProductionPageTemplate(props: ProductionPageTemplateProps) {
   const {
@@ -682,6 +847,7 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
     resources,
     autoLinkPeopleBase = "/alumni",
     renderAfterHero,
+    productionEvents,
   } = props;
 
   const titleText = cleanStr(title) ?? "";
@@ -937,6 +1103,17 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
     : hasValidRunStart
       ? parsedRunStart >= now || !inferIsPastRun(datesText)
       : !runIsPast;
+
+  // ── Production event status (from linked events) ──────────────────────────
+  const safeProductionEvents = productionEvents ?? [];
+  const eventStatusLabel = productionEventStatus(safeProductionEvents);
+  // Badge colour: NOW PLAYING = green, UPCOMING = gold, ARCHIVE = muted
+  const eventStatusColor =
+    eventStatusLabel === "NOW PLAYING"
+      ? "#2FA873"
+      : eventStatusLabel === "UPCOMING"
+        ? "#FFCC00"
+        : "#6a6a6a";
 
   const pastProductionDonateHref =
     "/donate?mode=new-work&freq=monthly";
@@ -1235,12 +1412,42 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                   {creditNodes}
                 </p>
               )}
+
+              {/* ── Production status badge (from linked events) ── */}
+              {eventStatusLabel && (
+                <div className="hero-status-badge" style={{ marginTop: "0.75rem" }}>
+                  <span
+                    className="status-pill"
+                    style={{
+                      background:
+                        eventStatusLabel === "ARCHIVE"
+                          ? "rgba(255,255,255,0.12)"
+                          : `${eventStatusColor}22`,
+                      borderColor:
+                        eventStatusLabel === "ARCHIVE"
+                          ? "rgba(255,255,255,0.18)"
+                          : `${eventStatusColor}66`,
+                      color: eventStatusLabel === "ARCHIVE" ? "#aaa" : eventStatusColor,
+                    }}
+                  >
+                    {eventStatusLabel !== "ARCHIVE" && (
+                      <span className="status-dot" style={{ background: eventStatusColor }} />
+                    )}
+                    {eventStatusLabel}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </section>
 
       {renderAfterHero ?? null}
+
+      {/* ── Linked events band (dark, full-width) ─────────────────────────── */}
+      {safeProductionEvents.length > 0 && (
+        <ProdEventsSection events={safeProductionEvents} productionTitle={displayTitle} />
+      )}
 
       {/* ===================== WHITE CARD ====================== */}
       <section style={{ display: "grid", placeItems: "center" }}>
@@ -2318,6 +2525,285 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           .fieldgrid-track{ gap: 10px; }
           .prodrow-footer{ flex-wrap: wrap; }
           .prodrow-footer-right{ width: 100%; margin-left: 0; text-align: right; }
+        }
+
+        /* ── Status badge pill (hero) ───────────────────────────────── */
+        .status-pill{
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 0.25rem 0.75rem 0.25rem 0.55rem;
+          border-radius: 999px;
+          border: 1px solid;
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.68rem;
+          font-weight: 700;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          backdrop-filter: blur(6px);
+        }
+        .status-dot{
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          flex-shrink: 0;
+          animation: status-pulse 2s ease-in-out infinite;
+        }
+        @keyframes status-pulse{
+          0%,100%{ opacity: 1; transform: scale(1); }
+          50%{ opacity: 0.6; transform: scale(0.85); }
+        }
+
+        /* ── Production Events Section ─────────────────────────────── */
+        .pev-section{
+          position: relative;
+          background: #0d0812;
+          padding: clamp(2.5rem, 6vw, 5rem) 0;
+          overflow: hidden;
+        }
+        .pev-glow{
+          position: absolute;
+          width: 600px;
+          height: 600px;
+          border-radius: 50%;
+          pointer-events: none;
+          opacity: 0.12;
+          filter: blur(100px);
+        }
+        .pev-glow-left{
+          top: -150px; left: -180px;
+          background: radial-gradient(circle, #F23359 0%, transparent 70%);
+        }
+        .pev-glow-right{
+          bottom: -200px; right: -180px;
+          background: radial-gradient(circle, #2493A9 0%, transparent 70%);
+        }
+
+        .pev-inner{
+          position: relative;
+          z-index: 1;
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 clamp(1.25rem, 6vw, 3rem);
+        }
+
+        .pev-head{ margin-bottom: clamp(1.5rem, 3vw, 2.5rem); }
+        .pev-eyebrow{
+          margin: 0 0 0.5rem;
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.68rem; font-weight: 700; letter-spacing: 0.28em;
+          text-transform: uppercase; color: #FFCC00;
+        }
+        .pev-title{
+          margin: 0;
+          font-family: var(--font-anton, system-ui, sans-serif);
+          font-size: clamp(2rem, 5vw, 3.8rem);
+          color: #f2f2f2; text-transform: uppercase; letter-spacing: 0.04em; line-height: 1;
+        }
+        .pev-subtitle{
+          margin: 0.6rem 0 0;
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 1rem; color: rgba(255,255,255,0.55); font-weight: 400;
+        }
+
+        /* Cards grid */
+        .pev-grid{
+          display: grid;
+          gap: clamp(14px, 2.2vw, 20px);
+          grid-template-columns: 1fr;
+        }
+        @media(min-width: 640px){ .pev-grid{ grid-template-columns: repeat(2, 1fr); } }
+        @media(min-width: 1000px){ .pev-grid{ grid-template-columns: repeat(3, 1fr); } }
+
+        /* Card */
+        .pev-card{
+          position: relative;
+          background: #1a0f1e;
+          border: 1px solid rgba(255,204,0,0.12);
+          border-radius: 14px;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+        }
+        .pev-card:hover{
+          transform: translateY(-3px);
+          box-shadow: 0 16px 36px rgba(0,0,0,0.5);
+          border-color: rgba(255,204,0,0.28);
+        }
+
+        .pev-card-img-shell{
+          position: relative;
+          width: 100%;
+          height: 190px;
+          flex-shrink: 0;
+        }
+        .pev-card-img{ object-position: center 30%; opacity: 0.38; }
+        .pev-card-img-gradient{
+          position: absolute; inset: 0;
+          background: linear-gradient(to bottom, transparent 30%, #1a0f1e 100%);
+        }
+
+        .pev-card-body{
+          padding: clamp(14px, 2vw, 20px);
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          flex: 1;
+        }
+
+        .pev-date-block{
+          display: flex;
+          align-items: baseline;
+          gap: 6px;
+          margin-bottom: 6px;
+        }
+        .pev-date-day{
+          font-family: var(--font-anton, system-ui, sans-serif);
+          font-size: clamp(2.2rem, 4vw, 3rem);
+          color: #FFCC00;
+          line-height: 1;
+        }
+        .pev-date-mon{
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.72rem; font-weight: 700; letter-spacing: 0.22em;
+          text-transform: uppercase; color: rgba(255,255,255,0.55);
+        }
+        .pev-date-yr{
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.72rem; font-weight: 400; letter-spacing: 0.12em;
+          color: rgba(255,255,255,0.35);
+          margin-left: 2px;
+        }
+
+        .pev-cat-pill{
+          display: inline-flex;
+          align-items: center;
+          padding: 0.15rem 0.55rem;
+          border-radius: 999px;
+          border: 1px solid;
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.6rem; font-weight: 700; letter-spacing: 0.18em;
+          text-transform: uppercase;
+          width: fit-content;
+          margin-bottom: 4px;
+        }
+
+        .pev-venue{
+          margin: 0;
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.92rem; font-weight: 700; color: #f2f2f2; letter-spacing: 0.04em;
+        }
+        .pev-city{
+          margin: 0;
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.76rem; font-weight: 500; color: rgba(255,255,255,0.5);
+          text-transform: uppercase; letter-spacing: 0.12em;
+        }
+        .pev-time{
+          margin: 0;
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.74rem; color: rgba(255,255,255,0.4); letter-spacing: 0.08em;
+        }
+        .pev-desc{
+          margin: 6px 0 0;
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.84rem; line-height: 1.5; color: rgba(255,255,255,0.62);
+          flex: 1;
+        }
+
+        .pev-card-footer{
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 12px;
+          padding-top: 12px;
+          border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        .pev-ticket-btn{
+          display: inline-block;
+          padding: 0.4rem 1rem;
+          background: #F23359;
+          color: #fff !important;
+          border-radius: 6px;
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.74rem; font-weight: 700; letter-spacing: 0.12em;
+          text-transform: uppercase;
+          text-decoration: none !important;
+          transition: background 150ms ease, transform 150ms ease;
+        }
+        .pev-ticket-btn:hover{ background: #c9273f; transform: translateY(-1px); }
+
+        .pev-ticket-pill{
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.72rem; color: rgba(255,255,255,0.45); letter-spacing: 0.1em;
+        }
+
+        .pev-cat-link,
+        .pev-cat-link:link,
+        .pev-cat-link:visited,
+        .pev-cat-link:hover,
+        .pev-cat-link:focus,
+        .pev-cat-link:focus-visible,
+        .pev-cat-link:active{
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.68rem; font-weight: 600; letter-spacing: 0.16em;
+          text-transform: uppercase; color: rgba(255,204,0,0.7) !important;
+          text-decoration: none !important;
+          transition: color 150ms ease;
+        }
+        .pev-cat-link:hover, .pev-cat-link:focus-visible{ color: #FFCC00 !important; }
+
+        /* Past runs list */
+        .pev-past-wrap{
+          margin-top: clamp(2rem, 4vw, 3rem);
+          padding-top: 1.5rem;
+          border-top: 1px solid rgba(255,255,255,0.07);
+        }
+        .pev-past-head{
+          margin: 0 0 1rem;
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.68rem; font-weight: 700; letter-spacing: 0.22em;
+          text-transform: uppercase; color: rgba(255,255,255,0.4);
+        }
+        .pev-past-list{
+          list-style: none; margin: 0; padding: 0;
+          display: flex; flex-direction: column; gap: 8px;
+        }
+        .pev-past-item{
+          display: flex; align-items: baseline; gap: 12px;
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.84rem;
+        }
+        .pev-past-year{
+          flex-shrink: 0;
+          font-weight: 700; color: rgba(255,204,0,0.7);
+          letter-spacing: 0.08em;
+        }
+        .pev-past-info{ color: rgba(255,255,255,0.5); }
+
+        .pev-footer-link{
+          margin-top: clamp(1.5rem, 3vw, 2.5rem);
+          display: flex;
+          justify-content: flex-end;
+        }
+        .pev-all-events-link,
+        .pev-all-events-link:link,
+        .pev-all-events-link:visited,
+        .pev-all-events-link:hover,
+        .pev-all-events-link:focus,
+        .pev-all-events-link:focus-visible,
+        .pev-all-events-link:active{
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.78rem; font-weight: 700; letter-spacing: 0.18em;
+          text-transform: uppercase; color: rgba(255,255,255,0.45) !important;
+          text-decoration: none !important;
+          transition: color 150ms ease;
+        }
+        .pev-all-events-link:hover, .pev-all-events-link:focus-visible{
+          color: #FFCC00 !important;
         }
       `}</style>
     </main>

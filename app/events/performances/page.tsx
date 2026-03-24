@@ -79,6 +79,11 @@ function PerfCard({ event, index }: { event: DatEvent; index: number }) {
               {event.ticketPrice && (
                 <span className="perf-price-tag">{event.ticketPrice}</span>
               )}
+              {event.production && (
+                <Link href={`/theatre/${event.production}`} className="perf-production-link">
+                  Full Production →
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -132,6 +137,11 @@ function PerfCard({ event, index }: { event: DatEvent; index: number }) {
             )}
             {event.ticketPrice && (
               <span className="perf-price-tag">{event.ticketPrice}</span>
+            )}
+            {event.production && (
+              <Link href={`/theatre/${event.production}`} className="perf-production-link">
+                Full Production →
+              </Link>
             )}
           </div>
         </div>
@@ -625,6 +635,21 @@ export default function PerformancesPage() {
           font-size: 0.82rem;
           color: rgba(255,255,255,0.45);
         }
+        .perf-production-link,
+        .perf-production-link:link,
+        .perf-production-link:visited,
+        .perf-production-link:hover,
+        .perf-production-link:focus,
+        .perf-production-link:focus-visible,
+        .perf-production-link:active {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.72rem; font-weight: 700; letter-spacing: 0.18em;
+          text-transform: uppercase; color: rgba(255,204,0,0.75) !important;
+          text-decoration: none !important;
+          transition: color 150ms ease;
+        }
+        .perf-production-link:hover,
+        .perf-production-link:focus-visible { color: #FFCC00 !important; }
 
         /* ── Empty state ──────────────────────────────────────────────── */
         .perf-empty {

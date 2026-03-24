@@ -12,6 +12,7 @@ import ProductionPageTemplate, {
 } from "@/components/productions/ProductionPageTemplate";
 import { buildRelated } from "@/lib/buildRelated";
 import { loadAlumniNameBySlug } from "@/lib/loadAlumni";
+import { eventsByProduction } from "@/lib/events";
 
 // NOTE: params is now a Promise in Next 15 for some routes
 type PageProps = { params: Promise<{ slug: string }> };
@@ -272,6 +273,7 @@ export default async function TheatreProductionPage({ params }: PageProps) {
     }) ?? undefined;
 
   // --- Related productions/projects (dynamic) ---
+  const prodEvents = eventsByProduction(slug);
   const related = buildRelated(slug, 8);
   const relatedItems = Array.isArray(related.items) ? related.items : [];
 
@@ -341,6 +343,8 @@ export default async function TheatreProductionPage({ params }: PageProps) {
       /* Related plays/projects row */
       relatedItems={relatedItems}
       relatedTitle={relatedTitle}
+      /* Linked events (from lib/events.ts) */
+      productionEvents={prodEvents.length > 0 ? prodEvents : undefined}
     />
   );
 }
