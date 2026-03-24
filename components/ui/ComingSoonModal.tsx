@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ALUMNI_COUNT_DISPLAY, SEASON_COUNT } from "@/lib/datStats";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shows once per calendar day. Once dismissed, localStorage records today's
@@ -111,7 +112,7 @@ export default function ComingSoonModal() {
             <p className="csm-body">
               We&apos;re building the home our stories deserve — alumni pages, live production
               archives, an interactive story map, and a platform for the{" "}
-              <strong>350+ artists from 24 countries</strong> who&apos;ve made the adventure.
+              <strong>{ALUMNI_COUNT_DISPLAY} artists across {SEASON_COUNT} seasons</strong> who&apos;ve made the adventure.
             </p>
             <p className="csm-body csm-body--em">
               It&apos;s almost showtime. Look around — much is already here.
