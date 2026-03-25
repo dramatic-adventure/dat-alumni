@@ -1084,6 +1084,15 @@ export default function ProjectsIndexPage() {
           letter-spacing: 0.3em !important;
           opacity: 0.82;
         }
+        .project-showcase-card {
+          box-shadow: 0 2px 10px rgba(36,17,35,0.13), 0 1px 3px rgba(36,17,35,0.08);
+          transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+        }
+        .project-showcase-card:hover {
+          box-shadow: 0 8px 28px rgba(47,168,115,0.18), 0 2px 6px rgba(47,168,115,0.1);
+          transform: translateY(-3px);
+          border-color: rgba(47,168,115,0.5) !important;
+        }
 
         /* ── Era photo ── */
         .project-era-photo {
@@ -1195,25 +1204,8 @@ const SUBCATEGORY_BADGE: Record<string, { label: string; color: string; border: 
 function ShowcaseArchiveRows({ showcases }: { showcases?: DatEvent[] }) {
   if (!showcases || showcases.length === 0) return null;
 
-  const firstBadge = SUBCATEGORY_BADGE[showcases[0].subcategory ?? "community-showcase"]
-    ?? SUBCATEGORY_BADGE["community-showcase"];
-
   return (
     <div style={{ marginTop: "1.25rem" }}>
-      <p
-        style={{
-          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-          fontSize: "0.62rem",
-          fontWeight: 800,
-          letterSpacing: "0.22em",
-          textTransform: "uppercase",
-          color: firstBadge.color,
-          margin: "0 0 0.75rem 0.1rem",
-        }}
-      >
-        Community Events
-      </p>
-
       <div
         style={{
           display: "grid",
@@ -1244,7 +1236,7 @@ function ShowcaseArchiveRows({ showcases }: { showcases?: DatEvent[] }) {
                 textDecoration: "none",
                 backgroundColor: "#f2f2f2",
               }}
-              className="project-season-pill-link"
+              className="project-showcase-card"
             >
               {/* Image */}
               <div

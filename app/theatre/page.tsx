@@ -1118,26 +1118,8 @@ const SUBCATEGORY_BADGE: Record<string, { label: string; color: string; border: 
 function ShowcaseArchiveRows({ showcases }: { showcases?: DatEvent[] }) {
   if (!showcases || showcases.length === 0) return null;
 
-  // Section eyebrow label — use badge of first event's subcategory, pluralised
-  const firstBadge = SUBCATEGORY_BADGE[showcases[0].subcategory ?? "community-showcase"]
-    ?? SUBCATEGORY_BADGE["community-showcase"];
-
   return (
     <div style={{ marginTop: "1.25rem" }}>
-      <p
-        style={{
-          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-          fontSize: "0.62rem",
-          fontWeight: 800,
-          letterSpacing: "0.22em",
-          textTransform: "uppercase",
-          color: firstBadge.color,
-          margin: "0 0 0.75rem 0.1rem",
-        }}
-      >
-        Community Events
-      </p>
-
       <div
         style={{
           display: "grid",

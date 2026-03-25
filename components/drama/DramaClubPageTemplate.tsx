@@ -630,9 +630,15 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
     clubEvents = [],
   } = props;
 
-  // Upcoming community showcases for this drama club
+  // Upcoming community showcases for this drama club (shown near top)
   const upcomingShowcases = useMemo(
     () => clubEvents.filter((e) => isCommunityShowcase(e) && !isElapsed(e)),
+    [clubEvents]
+  );
+
+  // Events for the bottom band — exclude upcoming showcases (already shown at top)
+  const bandEvents = useMemo(
+    () => clubEvents.filter((e) => !(isCommunityShowcase(e) && !isElapsed(e))),
     [clubEvents]
   );
 
@@ -1982,7 +1988,17 @@ const voicesHeading = `Voices from ${voicesFrom}`;
                             >
                               {ev.ticketPrice ?? "Get Tickets →"}
                             </DATButtonLink>
-                          ) : (
+                          ) : null}
+                          {ev.contactEmail && (
+                            <DATButtonLink
+                              href={`mailto:${ev.contactEmail}?subject=${encodeURIComponent(`Attendance Request: ${ev.title}`)}`}
+                              variant="teal"
+                              size="md"
+                            >
+                              Request an Invite →
+                            </DATButtonLink>
+                          )}
+                          {!ev.ticketUrl && !ev.contactEmail && (
                             <DATButtonLink href="/events" variant="teal" size="md">
                               See All Events →
                             </DATButtonLink>
@@ -2751,8 +2767,8 @@ const voicesHeading = `Voices from ${voicesFrom}`;
           </article>
         </section>
 
-        {/* BELOW THE CARD (on kraft paper): linked events */}
-        {clubEvents.length > 0 && (
+        {/* BELOW THE CARD (on kraft paper): linked events (upcoming showcases excluded — shown near top) */}
+        {bandEvents.length > 0 && (
           <section className="dc-events-band" aria-label="Linked events">
             <div className="dc-kraft-container">
               <div className="dc-events-heading-group">
@@ -2760,7 +2776,7 @@ const voicesHeading = `Voices from ${voicesFrom}`;
                 <h2 className="dc-events-title">Events Featuring This Club</h2>
               </div>
               <div className="dc-events-list">
-                {clubEvents.map((ev) => {
+                {bandEvents.map((ev) => {
                   const meta = categoryMeta[ev.category];
                   const isPast = ev.status !== "upcoming";
                   const img = getEventImage(ev);
