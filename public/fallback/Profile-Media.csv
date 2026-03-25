@@ -1,0 +1,7 @@
+alumniId,kind,collectionId,collectionTitle,fileId,externalUrl,uploadedByEmail,uploadedAt,isCurrent,isFeatured,sortIndex,note
+isabel-martinez,headshot,,,1AbcDEF...,,jesse@dramaticadventure.com,2025-09-27T20:02:05.939Z,TRUE,,,stub from /api/media/feature
+isabel-martinez,album,,,ALBUM_FILE_ID,,jesse@dramaticadventure.com,2025-09-27T20:02:44.460Z,,TRUE,,stub from /api/media/feature
+isabel-martinez,reel,,,REEL_FILE_ID,,jesse@dramaticadventure.com,2025-09-27T20:10:30.571Z,,TRUE,,stub from /api/media/feature
+isabel-martinez,event,,,EVENT_FILE_ID,,jesse@dramaticadventure.com,2025-09-27T20:12:00.789Z,,TRUE,,stub from /api/media/feature
+jesse-baxter,headshot,,,,http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613108073697-W65WKM6ZX1IL902DB0UT/jesse.jpg,,2026-01-23T01:04:03.855Z,FALSE,,,legacy currentHeadshotUrl import
+jesse-baxter,headshot,,,1hJub4ie8VaXRbJTav-nPgrdhv_RatIrx,,jesse@dramaticadventure.com,2026-01-24T21:37:07.380Z,TRUE,,,

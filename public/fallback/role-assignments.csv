@@ -1,0 +1,6 @@
+profileId,roleCode,scopeType,scopeKey,startDate,endDate,statusSignifier,displayOrder,showOnProfile
+alexis-floyd,TAIR,CLUB,shuar-drama-club,2025-03-01,,Artist-in-Residence,5,TRUE
+natalie-benally,BOARD,GLOBAL,dat,2021-01-01,2023-12-31,Board Member,10,TRUE
+gustavo-redin,MCP,COUNTRY,ecuador,2025-01-01,,Staff,20,TRUE
+christen-madrazo,DCL,GLOBAL,dat,2025-01-01,,Staff,30,TRUE
+natalie-benally,TAIR,CLUB,gualaquiza-warriors,2025-03-01,,Artist-in-Residence,5,TRUE

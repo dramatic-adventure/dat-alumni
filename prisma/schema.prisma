@@ -1,0 +1,161 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum DonationKind {
+  one_time
+  monthly
+}
+
+enum PaymentStatus {
+  succeeded
+  failed
+  pending
+  canceled
+}
+
+enum AmountType {
+  tier
+  custom
+}
+
+enum ContextType {
+  campaign
+  drama_club
+  cause
+  production
+  special_project
+  artist
+}
+
+model StripeWebhookEvent {
+  id        String   @id
+  type      String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model RecurringGift {
+  id                   String  @id @default(cuid())
+
+  donorKey             String?
+  donorEmail           String?
+  donorName            String?
+
+  stripeCustomerId     String?
+  stripeSubscriptionId String  @unique
+
+  status      String
+  currency    String
+  amountMinor Int
+
+  // ✅ REQUIRED: reportable attribution (never null)
+  campaignSlug String
+  contextType  ContextType
+  contextId    String
+
+  // ✅ readable snapshots
+  contextLabel String?
+  tierId       String?
+  tierLabel    String?
+  amountType   AmountType
+
+  // ✅ attribution (optional but valuable)
+  utmSource    String?
+  utmMedium    String?
+  utmCampaign  String?
+  utmContent   String?
+  utmTerm      String?
+  referrer     String?
+  landingPath  String?
+
+  // ✅ recurring lifecycle
+  canceledAt       DateTime?
+  currentPeriodEnd DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+
+  @@index([donorKey])
+  @@index([status])
+  @@index([createdAt])
+
+  // ✅ high-ROI reporting indexes
+  @@index([campaignSlug])
+  @@index([contextType, contextId])
+  @@index([tierId])
+}
+
+model DonationPayment {
+  id     String       @id @default(cuid())
+  kind   DonationKind
+  status PaymentStatus
+
+  donorKey    String?
+  donorEmail  String?
+  donorName   String?
+  billingCountry String?
+
+  amountMinor Int
+  currency    String
+
+  // ✅ REQUIRED: reportable attribution (never null)
+  campaignSlug String
+  contextType  ContextType
+  contextId    String
+
+  // ✅ readable snapshots
+  contextLabel String?
+  tierId       String?
+  tierLabel    String?
+  amountType   AmountType
+
+  // ✅ attribution
+  utmSource    String?
+  utmMedium    String?
+  utmCampaign  String?
+  utmContent   String?
+  utmTerm      String?
+  referrer     String?
+  landingPath  String?
+
+  // ✅ refunds/disputes
+  refundedAmountMinor Int?
+  refundedAt          DateTime?
+  disputeStatus       String?
+
+  stripeEventId    String
+  stripeSessionId  String?
+  stripeCustomerId String?
+
+  stripePaymentIntentId String? @unique
+  stripeSubscriptionId  String?
+  stripeInvoiceId       String? @unique
+
+  periodStart DateTime?
+  periodEnd   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+
+  @@index([donorKey])
+  @@index([createdAt])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+  @@index([status])
+
+  // ✅ high-ROI reporting indexes
+  @@index([campaignSlug])
+  @@index([contextType, contextId])
+  @@index([tierId])
+}

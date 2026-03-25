@@ -1,0 +1,80 @@
+.rolesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Do NOT scale the link itself; keeps label size fixed */
+.roleLink {
+  display: block;
+  text-decoration: none !important;
+}
+
+/* Icon tile wrapper: creates a stacking context for bg + emoji */
+.iconBox {
+  position: relative;              /* required for absolute bg */
+  display: flex;                   /* block-level; fills row */
+  width: 100%;                     /* restore full grid width */
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  padding: 1.5rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  will-change: transform, box-shadow;
+  transform-origin: center;
+}
+
+/* The background layer (gets the color + opacity ONLY) */
+.iconBg {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  opacity: 1;                   
+  z-index: 0;
+  pointer-events: none;            /* click goes to link */
+}
+
+/* The emoji/icon sits ABOVE the bg at full opacity */
+.icon {
+  position: relative;
+  z-index: 1;
+  font-size: 2rem;                 /* icon size */
+  color: #f6e4c1;                  /* your original emoji color */
+  opacity: 1;                      /* always full opacity */
+}
+
+/* Enlarge ONLY the button (bg + container), not the label */
+.roleLink:hover .iconBox,
+.roleLink:focus-visible .iconBox {
+  transform: scale(1.08);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Brighten ONLY the background on hover (emoji stays 1.0) */
+.roleLink:hover .iconBg,
+.roleLink:focus-visible .iconBg {
+  opacity: 1.0;                    
+}
+
+/* Label text (never scales) */
+.roleLabel {
+  margin-top: 0.5rem;
+  display: block;
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 500;
+  opacity: 0.8;
+  text-transform: uppercase;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  color: #f2f2f2;                  /* default label color */
+  text-align: center;
+  line-height: 1.15;
+  transition: color 200ms ease;
+}
+
+.roleLink:hover .roleLabel,
+.roleLink:focus-visible .roleLabel {
+  color: #ffcc00;                  /* only color changes on hover */
+  opacity: 0.8;
+}

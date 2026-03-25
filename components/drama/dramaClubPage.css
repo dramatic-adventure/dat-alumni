@@ -1,0 +1,5986 @@
+@font-face {
+  font-family: "DAT-Anton-Extended";
+  src:
+    url("/fonts/anton-v27-latin_latin-ext_vietnamese-regular.woff2") format("woff2"),
+    url("/fonts/Anton-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Font helpers */
+.font-sans {
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.font-display,
+.dc-hero-title,
+.dc-impact-title,
+.dc-quote-block blockquote,
+.dc-hero-metric-value,
+.dc-impact-metric-value {
+  font-family: "DAT-Anton-Extended", var(--font-anton, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-clickable-img {
+  cursor: zoom-in;
+}
+
+.dc-page-shell {
+  color: #241123;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+
+  /* Prevent tiny 100vw overflow causing horizontal drift */
+  overflow-x: clip; /* use hidden if Safari gives you grief */
+  background-position: center top; /* helps the kraft feel "centered" */
+}
+
+/* ────────────────────────────────────────────── */
+/* HERO                                          */
+/* ────────────────────────────────────────────── */
+
+.dc-hero {
+  position: relative;
+  width: 100%;
+  height: 68vh;
+  max-height: 640px;
+  box-shadow: 0 0 33px rgba(0, 0, 0, 0.65);
+  overflow: hidden;
+}
+
+.dc-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.35)),
+    linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+}
+
+/* ✅ HERO: pin content low + align left/right baselines */
+.dc-hero-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+
+  justify-content: flex-end; /* sit low on the image */
+  padding: 0 6vw 4.5vh; /* bottom safety */
+}
+
+.dc-back-row {
+  margin-bottom: 0.75rem;
+}
+
+.dc-hero-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: clamp(18px, 4vw, 42px);
+
+  align-items: flex-end; /* baseline align with CTA block */
+}
+
+@media (max-width: 900px) {
+  .dc-hero-main {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: flex-start;
+  }
+}
+
+.dc-hero-left {
+  max-width: 640px;
+}
+
+.dc-eyebrow {
+  margin: 0 0 1.7rem;
+  opacity: 0.9;
+  font-size: 0.7rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(242, 242, 242, 0.78);
+  text-shadow: 0 3px 9px rgba(0, 0, 0, 0.9);
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-hero-title {
+  margin: 0;
+  font-size: clamp(2.8rem, 5.5vw, 4.6rem);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f2f2f2;
+  opacity: 1;
+  text-shadow: 0 8px 20px rgba(0, 0, 0, 0.9);
+  line-height: 1;
+}
+
+.dc-hero-title span {
+  display: block;
+}
+
+/* Tighten: title ↔ local line, but keep some air before location */
+.dc-local-name {
+  margin: 0.18rem 0 0.65rem;
+  padding-right: 4rem;
+  font-size: 0.95rem;
+  color: #ffe478;
+  opacity: 0.9;
+  text-shadow: 0 3px 8px rgba(0, 0, 0, 0.95);
+  text-align: right;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-local-label {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.68rem;
+  opacity: 0.7;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-local-text {
+  font-weight: 600;
+}
+
+.dc-hero-location {
+  margin: 0;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: rgba(242, 242, 242, 0.8);
+  text-shadow: 0 3px 8px rgba(0, 0, 0, 1);
+  opacity: 1;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-hero-location + .dc-hero-location {
+  margin-top: 0.35rem;
+}
+
+.dc-hero-status-row {
+  margin-top: 0.65rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.8rem;
+  align-items: center;
+}
+
+.dc-hero-tagline {
+  font-size: 0.7rem;
+  letter-spacing: 0.19em;
+  padding-bottom: 30px;
+  opacity: 0.9;
+  text-transform: uppercase;
+  color: rgba(242, 242, 242, 0.85);
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-hero-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+@media (max-width: 900px) {
+  .dc-hero-right {
+    align-items: flex-start;
+  }
+}
+
+.dc-badge-shell {
+  filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.85));
+}
+
+/* Stats (optional) */
+.dc-hero-metrics {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.45rem;
+  width: 100%;
+  max-width: 260px;
+}
+
+.dc-hero-metric {
+  padding: 0.4rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(4px);
+}
+
+.dc-hero-metric-label {
+  display: block;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(242, 242, 242, 0.78);
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-hero-metric-value {
+  display: block;
+  font-size: 1.35rem;
+  letter-spacing: 0.05em;
+  color: #ffcc00;
+}
+
+/* ✅ Buffer under CTA */
+.dc-hero-cta-row {
+  margin-top: 0.3rem;
+  padding-bottom: 22px; /* was 18px */
+}
+
+.dc-hero-cta {
+  background-color: #f23359 !important;
+  border-color: #f23359 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(242, 51, 89, 0.35);
+}
+
+.dc-hero-cta:hover {
+  background-color: #d62c4f !important;
+  border-color: #d62c4f !important;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(242, 51, 89, 0.45);
+}
+
+/* ✅ MOBILE: truly bottom-anchor + bring back eyebrow + IN SHUAR label */
+@media (max-width: 900px) {
+  .dc-hero {
+    height: 74vh;
+    max-height: none;
+  }
+
+  .dc-hero-content {
+    inset: auto 0 0 0 !important;
+    top: auto !important;
+    bottom: 0 !important;
+    justify-content: flex-end !important;
+    padding: 0 6vw 44px !important;
+  }
+
+  .dc-back-row {
+    display: block !important;
+  }
+  .dc-eyebrow {
+    display: block !important;
+  }
+  .dc-local-label {
+    display: inline !important;
+  }
+
+  .dc-hero-main {
+    align-items: flex-end;
+    gap: 14px;
+  }
+
+  /* OPTIONAL: hide stats on mobile for clarity */
+  .dc-hero-metrics {
+    display: none !important;
+  }
+}
+
+/* OPTIONAL: if you want stats gone everywhere, uncomment this */
+/* .dc-hero-metrics { display: none !important; } */
+
+/* ────────────────────────────────────────────── */
+/* CARD WRAPPER                                  */
+/* ────────────────────────────────────────────── */
+
+.dc-card-shell {
+  display: grid;
+  place-items: center;
+  padding: 2.5rem 0 4rem;
+}
+
+.dc-card {
+  width: 90vw;
+  max-width: 1200px;
+  background: rgba(255, 255, 255, 0.62);
+  border-radius: 18px;
+  box-shadow: 0 18px 48px rgba(36, 17, 35, 0.12);
+  backdrop-filter: saturate(1.05);
+  padding: clamp(1.3rem, 3vw, 2.4rem);
+  --dc-card-pad: clamp(1.3rem, 3vw, 2.4rem);
+  border: 1px solid rgba(36, 17, 35, 0.08);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+/* Legacy variants – kept for backwards-compat */
+.dc-card--new {
+  border-color: rgba(242, 51, 89, 0.55);
+  box-shadow: 0 20px 52px rgba(242, 51, 89, 0.18);
+}
+.dc-card--ongoing {
+  border-color: rgba(255, 204, 0, 0.7);
+  box-shadow: 0 20px 52px rgba(255, 204, 0, 0.18);
+}
+.dc-card--legacy {
+  border-color: rgba(108, 0, 175, 0.6);
+  box-shadow: 0 20px 52px rgba(108, 0, 175, 0.22);
+  background: rgba(250, 247, 255, 0.86);
+}
+
+/* ────────────────────────────────────────────── */
+/* STATUS PILL                                   */
+/* ────────────────────────────────────────────── */
+
+.dc-status-pill {
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 700;
+  border: 1px solid transparent; /* actual color comes from inline style */
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  backdrop-filter: blur(3px);
+  pointer-events: none;
+}
+
+/* Positioning on top of the image, like the micro card */
+.dc-status-pill--card {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+/* Right-side status pill variant (no shadow) */
+.dc-status-pill--snapshot {
+  box-shadow: none;
+  backdrop-filter: none;
+  pointer-events: none;
+}
+
+/* Per-status colors – legacy contexts */
+.dc-status-pill--new {
+  background: rgba(242, 51, 89, 0.15);
+  border-color: rgba(242, 51, 89, 0.55);
+  color: #f23359;
+}
+.dc-status-pill--ongoing {
+  background: rgba(255, 204, 0, 0.18);
+  border-color: #8a6400;
+  color: #8a6400;
+}
+.dc-status-pill--legacy {
+  background: rgba(108, 0, 175, 0.22);
+  border-color: rgba(108, 0, 175, 0.7);
+  color: #3b1d59;
+}
+
+/* ────────────────────────────────────────────── */
+/* SNAPSHOT HEADER PILL (Club snapshot + status) */
+/* ────────────────────────────────────────────── */
+
+.dc-snapshot-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+
+.dc-snapshot-strip-label {
+  margin: 0;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  color: #24112399;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-snapshot-strip-status {
+  margin: 0;
+  margin-left: auto;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+/* Optional ombre presets */
+.dc-snapshot-pill--new {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.97) 0%,
+    rgba(255, 255, 255, 0.97) 42%,
+    rgba(242, 51, 89, 0.18) 100%
+  );
+  border-color: rgba(242, 51, 89, 0.55);
+}
+.dc-snapshot-pill--new .dc-snapshot-strip-status {
+  color: #f23359;
+}
+
+.dc-snapshot-pill--ongoing {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.97) 0%,
+    rgba(255, 255, 255, 0.97) 42%,
+    rgba(255, 204, 0, 0.24) 100%
+  );
+  border-color: rgba(255, 204, 0, 0.7);
+}
+.dc-snapshot-pill--ongoing .dc-snapshot-strip-status {
+  color: #8a6400;
+}
+
+.dc-snapshot-pill--legacy {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.97) 0%,
+    rgba(255, 255, 255, 0.97) 42%,
+    rgba(108, 0, 175, 0.22) 100%
+  );
+  border-color: rgba(108, 0, 175, 0.7);
+}
+.dc-snapshot-pill--legacy .dc-snapshot-strip-status {
+  color: #3b1d59;
+}
+
+.dc-microcard-shell .dc-snapshot-pill {
+  margin-bottom: 0.35rem;
+}
+
+@media (max-width: 640px) {
+  .dc-snapshot-pill {
+    flex-wrap: wrap;
+    white-space: normal;
+    row-gap: 0.2rem;
+  }
+
+  .dc-snapshot-pill .dc-snapshot-strip-status {
+    margin-left: 0;
+    text-align: left;
+  }
+}
+
+/* ────────────────────────────────────────────── */
+/* SNAPSHOT / PASSPORT PANEL – BASE              */
+/* ────────────────────────────────────────────── */
+
+.dc-snapshot-panel {
+  position: relative;
+  border-radius: 16px;
+  background: radial-gradient(circle at top left, #fffaf2 0, #f8f7f4 52%, #f4f1ea 100%);
+  border: 1px solid rgba(36, 17, 35, 0.12);
+  padding: 0.9rem 1.2rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.55rem;
+  box-sizing: border-box;
+}
+
+.dc-snapshot-panel--new {
+  border-color: rgba(242, 51, 89, 0.55);
+  box-shadow: 0 16px 32px rgba(242, 51, 89, 0.18);
+}
+.dc-snapshot-panel--ongoing {
+  border-color: rgba(255, 204, 0, 0.7);
+  box-shadow: 0 16px 32px rgba(255, 204, 0, 0.18);
+}
+.dc-snapshot-panel--legacy {
+  border-color: rgba(108, 0, 175, 0.6);
+  box-shadow: 0 16px 32px rgba(108, 0, 175, 0.2);
+}
+
+/* v1 “who band” + fact grid (kept for backwards compatibility) */
+.dc-snapshot-who {
+  margin-top: 0.5rem;
+  padding: 0.55rem 0.75rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px dashed rgba(36, 17, 35, 0.12);
+}
+
+.dc-snapshot-who-eyebrow {
+  margin: 0 0 0.18rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #24112399;
+  font-weight: 600;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-snapshot-who-value {
+  margin: 0;
+  font-size: 1.28rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #241123e6;
+}
+
+.dc-fact-grid {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.65rem 0.75rem;
+}
+
+.dc-fact-grid--snapshot {
+  margin-top: 0.55rem;
+}
+
+@media (min-width: 720px) {
+  .dc-fact-grid--snapshot {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.dc-fact-item {
+  padding: 0.5rem 0.55rem 0.55rem;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(36, 17, 35, 0.06);
+}
+
+.dc-fact-item dt {
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #24112399;
+  margin: 0 0 0.14rem;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-fact-item dd {
+  margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.5;
+  color: #241123e6;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+/* Bottom block (older: roomtone / donor) */
+.dc-snapshot-bottom-block {
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed rgba(36, 17, 35, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.dc-snapshot-roomtone-label,
+.dc-snapshot-donor-label {
+  margin: 0 0 0.12rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #24112399;
+  font-weight: 600;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-snapshot-roomtone-text {
+  margin: 0;
+  font-size: 0.94rem;
+  line-height: 1.5;
+  color: #241123de;
+}
+
+.dc-snapshot-donor-text {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #6c00af;
+}
+
+/* ────────────────────────────────────────────── */
+/* SNAPSHOT / PASSPORT PANEL – STRIPS / STAMPS   */
+/* ────────────────────────────────────────────── */
+
+.dc-snapshot-strip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.18rem;
+}
+
+.dc-snapshot-strip-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+/* WHO strip container */
+.dc-snapshot-strip-who {
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.8rem 0.7rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px dashed rgba(36, 17, 35, 0.12);
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dc-snapshot-who-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.dc-snapshot-who-eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #24112399;
+  font-weight: 600;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-snapshot-who-main {
+  margin: 0 0 0.25rem;
+  font-size: 1.35rem;
+  line-height: 1.28;
+  color: #241123e6;
+  letter-spacing: 0.01em;
+}
+
+.dc-snapshot-who-lowbrow {
+  margin: 0;
+  font-size: 0.65rem;
+  color: #6f5a72;
+  opacity: 0.75;
+  text-transform: uppercase;
+}
+
+/* Tiny age range box on the right */
+.dc-snapshot-who-age-card {
+  flex-shrink: 0;
+  align-self: flex-start;
+  min-width: 80px;
+
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(154, 136, 156, 0.35);
+  background: rgba(255, 255, 255, 0.96);
+
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dc-snapshot-who-age-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #a392a6;
+}
+
+.dc-snapshot-who-age-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #241123;
+}
+
+/* legacy age pill */
+.dc-snapshot-who-age-pill,
+.dc-snapshot-who-age {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(36, 17, 35, 0.16);
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.96);
+  color: #6c00af;
+}
+
+@media (max-width: 720px) {
+  .dc-snapshot-strip-who {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dc-snapshot-who-main {
+    font-size: 1.15rem;
+  }
+
+  .dc-snapshot-who-age-card,
+  .dc-age-card {
+    align-self: flex-start;
+  }
+}
+
+.dc-snapshot-strip-cause {
+  margin-top: 0.7rem;
+}
+
+.dc-snapshot-strip-cause-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dc-snapshot-cause-row {
+  margin-top: 0.3rem;
+}
+
+/* Slight tightening inside the microcard shell */
+.dc-microcard-shell .dc-snapshot-strip-who {
+  padding: 0.45rem 0.65rem 0.5rem;
+}
+.dc-microcard-shell .dc-snapshot-who-text {
+  font-size: 1.15rem;
+}
+
+/* Fact stamps grid */
+.dc-snapshot-stamps {
+  margin: 0.55rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.65rem 0.75rem;
+}
+
+@media (min-width: 720px) {
+  .dc-snapshot-stamps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .dc-snapshot-stamps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .dc-snapshot-stamp--span2 {
+    grid-column: 1 / -1;
+  }
+}
+
+.dc-snapshot-stamp {
+  padding: 0.5rem 0.55rem 0.55rem;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(36, 17, 35, 0.06);
+}
+
+.dc-snapshot-stamp--meta {
+  background: rgba(255, 255, 255, 0.96);
+  border-style: dashed;
+}
+
+.dc-snapshot-stamp--span2 {
+  grid-column: 1 / -1;
+}
+
+.dc-snapshot-stamp dt {
+  margin: 0 0 0.14rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #24112399;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-snapshot-stamp dd {
+  margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.5;
+  color: #241123e6;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-snapshot-stamp--primary {
+  background: rgba(255, 204, 0, 0.08);
+  border-color: rgba(255, 204, 0, 0.7);
+}
+.dc-snapshot-stamp--primary dt {
+  color: #8a6400;
+}
+.dc-snapshot-stamp--primary dd {
+  font-weight: 600;
+}
+
+.dc-snapshot-stamp--meta dd {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Footer: Story map link + donor copy */
+.dc-snapshot-footer {
+  margin-top: 0.7rem;
+  padding-top: 0.55rem;
+  border-top: 1px dashed rgba(36, 17, 35, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.dc-snapshot-footer-link {
+  align-self: flex-end;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f23359;
+  text-decoration: none;
+  font-family: var(--font-rock-salt, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", cursive);
+}
+
+.dc-snapshot-footer-link:hover {
+  color: #6c00af;
+}
+
+.dc-snapshot-footer-donor {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #241123e6;
+}
+
+/* Core Focus + Local Challenge block */
+.dc-snapshot-focus-wrap {
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed rgba(36, 17, 35, 0.16);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 720px) {
+  .dc-snapshot-focus-wrap {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+  }
+}
+
+.dc-snapshot-focus,
+.dc-snapshot-local {
+  padding: 0.55rem 0.65rem 0.6rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px dashed rgba(36, 17, 35, 0.12);
+}
+
+.dc-snapshot-focus-label,
+.dc-snapshot-local-label {
+  margin: 0 0 0.2rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #24112399;
+  font-weight: 600;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-snapshot-focus-text,
+.dc-snapshot-local-text {
+  margin: 0;
+  font-size: 0.94rem;
+  line-height: 1.5;
+  color: #241123e6;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-snapshot-all-causes {
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #ce7eff;
+  white-space: nowrap;
+}
+
+.dc-snapshot-all-causes:hover {
+  color: #ffcc00;
+}
+
+/* ────────────────────────────────────────────── */
+/* BODY / LAYOUT                                 */
+/* ────────────────────────────────────────────── */
+
+.dc-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.9fr);
+  gap: clamp(20px, 3.8vw, 40px);
+  align-items: flex-start;
+}
+
+@media (max-width: 960px) {
+  .dc-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.dc-layout + .dc-layout {
+  margin-top: clamp(28px, 3.6vw, 36px);
+}
+
+.dc-section {
+  border-top: 1px solid rgba(36, 17, 35, 0.12);
+  padding-top: 12px;
+}
+
+.dc-section--right {
+  padding-left: clamp(0px, 1vw, 6px);
+}
+
+.dc-section-head {
+  margin: 0 0 10px;
+  font-size: 0.86rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 300;
+  color: #241123b3;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-body {
+  margin: 0 0 0.9rem;
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: #241123e6;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-body--placeholder {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+/* Cultural exchange */
+.dc-exchange-block {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: rgba(36, 17, 35, 0.04);
+}
+
+.dc-exchange-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #2493a9;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-exchange-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.dc-exchange-col {
+  min-width: 0;
+}
+
+.dc-exchange-subhead {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #0f3440;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-exchange-body {
+  margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.6;
+  color: #0f3440;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-inline-cta {
+  margin-top: 1rem;
+}
+
+/* Quotes */
+.dc-quote-block {
+  margin: 1.3rem 0 0;
+  padding: 0.9rem 1rem 1rem;
+  border-radius: 14px;
+  background: #0f0a10;
+  color: #f2f2f2;
+}
+
+.dc-quote-block blockquote {
+  margin: 0;
+  font-size: 1.4rem;
+  line-height: 1.2;
+}
+
+.dc-quote-block figcaption {
+  margin-top: 0.45rem;
+  font-size: 0.8rem;
+  opacity: 0.8;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-quote-block--alumni {
+  margin-top: 0.9rem;
+  background: #f2e6ff;
+  color: #241123;
+}
+
+.dc-alumni-quote-role {
+  font-size: 0.78rem;
+  opacity: 0.85;
+}
+
+.dc-layout--community {
+  align-items: stretch;
+}
+
+/* Gallery */
+.dc-gallery-item {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #24112312;
+}
+
+.dc-gallery-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+/* Needs / community card */
+.dc-mini-label {
+  margin: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #24112399;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-needs-list {
+  margin: 0.45rem 0 0;
+  padding-left: 1.15rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #241123de;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-community-card {
+  border-radius: 16px;
+  border: 1px solid rgba(36, 17, 35, 0.12);
+  background: rgba(248, 247, 244, 0.85);
+  padding: 1.1rem 1.3rem 1.3rem;
+}
+
+.dc-partner-list {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dc-partner-link {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.dc-partner-logo-shell {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 5px;
+  background: #24112312;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.dc-partner-logo {
+  max-width: 46px;
+  max-height: 46px;
+  object-fit: contain;
+}
+
+.dc-partner-text {
+  min-width: 0;
+}
+
+.dc-partner-name {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #241123e6;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-partner-kind {
+  display: block;
+  font-size: 0.75rem;
+  color: #24112399;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+/* ────────────────────────────────────────────── */
+/* ELDER QUOTE PHOTO BLOCK                       */
+/* ────────────────────────────────────────────── */
+
+.elder-quote-block {
+  margin-top: 24px;
+}
+
+.elder-quote-shell {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  border-radius: 18px;
+  overflow: hidden;
+  min-height: 444px;
+  background: radial-gradient(circle at top left, rgba(108, 0, 175, 0.18), rgba(36, 17, 35, 0.85));
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+}
+
+.elder-quote-shell--has-image {
+  cursor: zoom-in;
+}
+
+.elder-quote-shell--has-image .elder-quote-bg {
+  opacity: 1;
+}
+
+.elder-quote-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(1.1) contrast(1.05);
+  transform: scale(1.03);
+}
+
+.elder-quote-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.95) 0%,
+      rgba(0, 0, 0, 0.82) 0%,
+      rgba(0, 0, 0, 0.45) 32%,
+      rgba(0, 0, 0, 0.12) 65%,
+      rgba(0, 0, 0, 0) 100%
+    ),
+    radial-gradient(
+      circle at 20% 82%,
+      rgba(0, 0, 0, 0.95) 0%,
+      rgba(0, 0, 0, 0.75) 0%,
+      rgba(0, 0, 0, 0) 65%
+    ),
+    radial-gradient(circle at 88% 12%, rgba(108, 0, 175, 0.35), transparent 55%);
+}
+
+.elder-quote-content {
+  position: relative;
+  padding: 1.2rem 1.3rem 1.4rem;
+  color: #f5f2ff;
+  max-width: 90%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .elder-quote-content {
+    padding: 1rem 1rem 1.1rem;
+    max-width: 100%;
+  }
+}
+
+.elder-quote-label {
+  margin: 0 0 0.3rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.85;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.elder-quote-text {
+  margin: 0;
+  font-size: 1.6rem;
+  line-height: 1.55;
+  text-shadow: 0 5px 16px rgba(0, 0, 0, 0.9);
+}
+
+.elder-quote-meta {
+  margin-top: 0.45rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.92;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.elder-name {
+  font-weight: 600;
+}
+
+.elder-role {
+  font-weight: 400;
+}
+
+/* ────────────────────────────────────────────── */
+/* CAUSES / CHIPS                                */
+/* ────────────────────────────────────────────── */
+
+.dc-cause-block {
+  margin-top: 1rem;
+}
+
+.dc-cause-block--snapshot {
+  margin-top: 0.9rem;
+}
+
+.dc-cause-chips {
+  margin-top: 0.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.dc-cause-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(36, 17, 35, 0.16);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  background: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  color: #241123;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 130ms ease,
+    box-shadow 130ms ease,
+    border-color 130ms ease,
+    opacity 130ms ease;
+}
+
+.dc-cause-chip:hover {
+  background-color: #ffcc00;
+  border-color: #ffcc00;
+  color: #241123;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
+  opacity: 0.97;
+}
+
+/* ────────────────────────────────────────────── */
+/* ARTIST PATHWAYS                               */
+/* ────────────────────────────────────────────── */
+
+.dc-artist-section {
+  margin-top: clamp(30px, 3.8vw, 40px);
+  border-top: 1px solid rgba(36, 17, 35, 0.12);
+  padding-top: 16px;
+}
+
+.dc-artist-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.9fr);
+  gap: clamp(18px, 3.4vw, 34px);
+  align-items: flex-start;
+}
+
+@media (max-width: 960px) {
+  .dc-artist-inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.dc-artist-right {
+  border-radius: 16px;
+  background: rgba(248, 247, 244, 0.92);
+  border: 1px solid rgba(36, 17, 35, 0.12);
+  padding: 1rem 1.2rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0rem;
+}
+
+.dc-avatar-row {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.dc-avatar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dc-avatar-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: #24112312;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.dc-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dc-avatar-initial {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #241123cc;
+}
+
+.dc-avatar-name {
+  font-size: 0.78rem;
+  text-align: center;
+  max-width: 80px;
+  color: #241123de;
+}
+
+.dc-alumni-chips {
+  margin-top: 0.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.dc-alumni-chip {
+  display: inline-flex;
+  flex-direction: column;
+  padding: 0.3rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid rgba(108, 0, 175, 0.24);
+  text-decoration: none;
+  background: #f7f0ff;
+}
+
+.dc-alumni-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #241123;
+}
+
+.dc-alumni-role {
+  font-size: 0.72rem;
+  color: #6c00af;
+}
+
+/* ============================================
+   Artist Pathways (RIGHT) — stewardship + how
+   Fix: top padding too tall + tighten gap
+   + remove shading from Local stewardship block
+   ============================================ */
+
+/* 1) Make the outer container padding even (top == bottom) */
+.dc-artist-right {
+  padding-top: 5px;
+  padding-bottom: 20px;
+}
+
+/* 4) Give “Local stewardship” heading the same eyebrow vibe as “Causes we champion” */
+.dc-artist-right .dc-needs-block:first-of-type .dc-mini-label {
+  margin-bottom: 8px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 800;
+  /* keep your existing teal/brand color if dc-mini-label already sets it */
+}
+
+/* 5) (Optional) If the “How it works here” block needs a touch less top breathing room */
+.dc-artist-right .dc-needs-block:nth-of-type(2) .dc-mini-label {
+  margin-bottom: 10px;
+}
+
+/* ============================================
+   Artist Pathways → “Local stewardship” eyebrow weight
+   (make it punchier)
+   ============================================ */
+
+.dc-artist-right .dc-needs-block:first-of-type .dc-mini-label {
+  font-weight: 900;          /* heavier */
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 1;             /* less washed out */
+}
+
+/* Optional: if your dc-mini-label is generally light everywhere,
+   but you ONLY want Local stewardship heavier, keep the selector above. */
+
+/* ============================================
+   Visiting Artists marquee — make it feel like
+   part of Artist Pathways (eyebrow + left margin)
+   ============================================ */
+
+.dc-lineage--artist-pathways {
+  /* tighten spacing so it reads like the next block in the section */
+  margin-top: 0px !important;
+}
+
+/* Match the left indent of Artist Pathways content */
+.dc-lineage--artist-pathways .dc-lineage-head {
+  /* This should mirror whatever your Artist Pathways inner padding is */
+  padding-left: 0; /* start at 0… */
+  margin-left: 0;
+}
+
+/* If your Artist Pathways left column is indented inside a padded container,
+   set this to match that same inset value (common values: 18px / 20px / 24px). */
+@media (max-width: 9999px) {
+  .dc-lineage--artist-pathways .dc-lineage-head {
+    padding-left: 0;
+  }
+}
+
+/* Subtitle should sit like a normal “body” line under an eyebrow */
+.dc-lineage--artist-pathways .dc-lineage-subtitle {
+  margin: 6px 0 0 0;
+  opacity: 0.78;
+  line-height: 1.35;
+}
+
+/* Also indent the scroller start so the cards begin where the text begins */
+.dc-lineage--artist-pathways .dc-lineage-viewport--bleed {
+  /* This is the important one for “same left margin” feel */
+  padding-left: 0;  /* set to same inset as Artist Pathways left column */
+  padding-right: 0; /* keep clean */
+}
+
+/* ============================================
+   Visiting Artists — make it feel like Artist Pathways
+   ============================================ */
+
+.dc-lineage {
+  /* too much air above */
+  margin-top: 0px; /* adjust to taste: 12–22 */
+}
+
+/* Make the header align with the Artist Pathways text column */
+.dc-lineage-head {
+  padding-left: 0;
+  margin-bottom: 0px;
+}
+
+/* Eyebrow: slightly stronger */
+.dc-lineage-eyebrow {
+  margin: 0 0 8px 0;
+  font-weight: 800; /* yes: a touch heavier reads better */
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+/* Subtitle spacing (tight + consistent with other body copy) */
+.dc-lineage-subtitle {
+  margin: 0 0 0px 0;
+  opacity: 0.78;
+  line-height: 1.35;
+}
+
+/* If your bleed viewport uses negative margins, keep only the scroller bleeding,
+   not the header. (Header stays aligned, cards can bleed.) */
+.dc-lineage-viewport--bleed {
+  margin-top: -15px; /* prevents extra stacking gap */
+}
+
+/* ============================================
+   Visiting Artists (ArtistLineageMarquee)
+   Make it feel like part of Artist Pathways:
+   - tighter top spacing
+   - remove extra space under carousel
+   ============================================ */
+
+/* 1) Kill the big gap above the whole section */
+.dc-lineage {
+  margin-top: 10px !important;   /* reduce space above */
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* If something above it is adding bottom margin, this helps too */
+.dc-artist-section + .dc-lineage {
+  margin-top: 30px !important;
+}
+
+/* 2) Head alignment + tighten vertical rhythm */
+.dc-lineage-head {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* 3) Eyebrow styling (match "Causes we champion") */
+.dc-lineage-title {
+  margin: 0 0 8px 0 !important;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 900;              /* stronger */
+  font-size: 12px;
+  line-height: 1.15;
+  /* keep your existing color if already set elsewhere */
+}
+
+/* Subtitle spacing */
+.dc-lineage-subtitle {
+  margin: 0 0 14px 0 !important;
+}
+
+/* 4) Remove the dead space UNDER the carousel */
+.dc-lineage-viewport,
+.dc-lineage-scroller,
+.dc-lineage-track {
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* If you used any "min-height" tricks for the viewport, disable them */
+.dc-lineage-viewport {
+  min-height: unset !important;
+}
+
+
+/* ────────────────────────────────────────────── */
+/* IMPACT SECTION                                */
+/* ────────────────────────────────────────────── */
+
+.dc-impact-section {
+  margin-top: clamp(30px, 4vw, 40px);
+  padding: 2.4rem 2rem 2.9rem;
+  border-radius: 18px;
+  background-color: #2493a9;
+}
+
+@media (max-width: 720px) {
+  .dc-impact-section {
+    padding: 1.9rem 1.4rem 2.4rem;
+  }
+}
+
+.dc-impact-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.95fr);
+  gap: clamp(20px, 3.8vw, 40px);
+  align-items: flex-start;
+}
+
+@media (max-width: 960px) {
+  .dc-impact-inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.dc-impact-left {
+  max-width: 620px;
+}
+
+.dc-impact-eyebrow {
+  color: rgba(253, 249, 241, 0.82);
+}
+
+.dc-impact-title {
+  margin: 0.35rem 0 0;
+  font-size: clamp(2.1rem, 4.6vw, 3.3rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #002129ff;
+  opacity: 0.92;
+}
+
+.dc-impact-body {
+  margin: 0.9rem 0 0;
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: #eaf7fa;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+/* IMPACT SECTION CTA (original white-blur button) */
+.dc-impact-cta-row {
+  margin-top: 1.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.dc-cta {
+  --dc-cta-bg: #00313bff;
+  --dc-cta-bg-hover: #00313baf;
+  --dc-cta-text: #f2f2f2;
+
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.85rem 1.15rem;
+  border-radius: 14px;
+  background-color: var(--dc-cta-bg);
+  color: var(--dc-cta-text);
+  border: none;
+  text-decoration: none;
+
+  font-size: 0.78rem;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+
+  /* 👉 White blur glow under the button */
+  box-shadow: 0 0px 44px rgba(255, 255, 255, 0.75);
+
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 120ms ease,
+    opacity 120ms ease;
+
+  font-family: var(
+    --font-space-grotesk,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif
+  );
+}
+
+.dc-cta:hover {
+  background-color: var(--dc-cta-bg-hover);
+  transform: translateY(-1px);
+
+  /* 👉 Stronger white blur on hover */
+  box-shadow: 0 0px 44px rgba(255, 255, 255, 1);
+  opacity: 0.98;
+}
+
+
+.dc-impact-card {
+  max-width: 580px;
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid rgba(192, 236, 248, 0.35);
+  background-color: #003e4bff;
+  opacity: 0.95;
+  padding: 1.3rem 1.7rem 1.6rem;
+}
+
+.dc-impact-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.85rem;
+}
+
+.dc-impact-metric-item {
+  padding: 0.65rem 0.7rem;
+  border-radius: 12px;
+  background-color: #032c34ff;
+  color: #c4f3ff;
+}
+
+.dc-impact-metric-value {
+  display: block;
+  font-size: 1.5rem;
+  letter-spacing: 0.05em;
+  color: #ffcc00;
+}
+
+.dc-impact-metric-label {
+  display: block;
+  margin-top: 0.12rem;
+  font-size: 0.76rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-impact-metric-helper {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.75rem;
+  color: #9eddea;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-impact-resources {
+  margin-top: 1rem;
+}
+
+.dc-impact-resources ul {
+  margin: 0.4rem 0 0.2rem;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: #9eddea;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-resource-link {
+  color: #c4f3ff;
+  text-decoration: none;
+}
+
+.dc-resource-link:hover {
+  color: #ffcc00;
+}
+
+/* Links */
+.dc-link,
+.dc-link:visited {
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transform-origin: left center;
+  transition:
+    color 150ms ease-out,
+    opacity 150ms ease-out,
+    transform 130ms ease-out,
+    letter-spacing 130ms ease-out;
+}
+
+.dc-link--back {
+  color: #f2f2f2;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.19em;
+  opacity: 0.9;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+.dc-link--back:hover {
+  color: #ffcc00;
+  letter-spacing: 0.22em;
+}
+
+.dc-link--purple {
+  color: #6c00af;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+.dc-link--purple:hover {
+  color: #ffcc00;
+  letter-spacing: 0.19em;
+}
+
+.dc-link--light {
+  color: #6c00af;
+  opacity: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+.dc-link--light:hover {
+  color: #ffcc00;
+  letter-spacing: 0.19em;
+  opacity: 1;
+}
+
+.dc-link--teal {
+  display: inline-flex;
+  margin-top: 0rem;
+  color: #ce7effff;
+  opacity: 1;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+.dc-link--teal:hover {
+  color: #ffcc00;
+  letter-spacing: 0.21em;
+}
+
+/* Alumni link helpers */
+.namecell {
+  display: inline-block;
+  color: inherit;
+}
+.no-underline {
+  text-decoration: none;
+}
+.no-underline:hover {
+  text-decoration: underline;
+}
+
+/* ────────────────────────────────────────────── */
+/* SUPER-SIZED MICRO CARD (v2)                   */
+/* ────────────────────────────────────────────── */
+
+.dc-microcard-shell {
+  margin: clamp(22px, 2.4vw, 30px) auto clamp(26px, 3vw, 34px);
+  max-width: min(1100px, 100%);
+  border-radius: 26px;
+  border: 1px solid rgba(36, 17, 35, 0.22);
+  box-shadow: none;
+  background-color: rgba(253, 249, 241, 1);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: clamp(16px, 2.4vw, 24px);
+  padding: 16px;
+  box-sizing: border-box;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .dc-microcard-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Status-driven border colors (legacy) */
+.dc-microcard-shell--new {
+  border-color: rgba(242, 51, 89, 0.65);
+}
+.dc-microcard-shell--ongoing {
+  border-color: rgba(255, 204, 0, 0.85);
+}
+.dc-microcard-shell--legacy {
+  border-color: rgba(108, 0, 175, 0.62);
+}
+
+.dc-microcard-inner {
+  display: contents;
+}
+
+.dc-microcard-shell .dc-card-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: clamp(16px, 2.4vw, 24px);
+  box-sizing: border-box;
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .dc-microcard-shell .dc-card-top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.dc-microcard-media {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+}
+
+.dc-microcard-media-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #24112312;
+}
+
+.dc-microcard-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Older class names still supported */
+.dc-microcard-shell .dc-club-hero {
+  margin: 0;
+  padding: 0;
+  border-radius: 18px;
+  box-shadow: none;
+  display: flex;
+  height: 100%;
+}
+
+.dc-microcard-shell .dc-club-hero-media {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 18px;
+  background-color: #24112312;
+  box-shadow: none;
+}
+
+.dc-microcard-shell .dc-club-hero-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Status pill – on image */
+.dc-microcard-shell .dc-status-pill--card {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 4px 11px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  border-radius: 999px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+/* Right column – snapshot rides on same card surface */
+.dc-microcard-shell .dc-snapshot-panel {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 4px 4px 6px 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* MICROCARD SNAPSHOT TIGHTENING */
+.dc-microcard-shell .dc-snapshot-stamps {
+  margin-top: 0.4rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 10px;
+}
+
+.dc-microcard-shell .dc-snapshot-stamp {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(230, 219, 198, 0.95);
+}
+
+.dc-microcard-shell .dc-snapshot-footer {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(196, 178, 149, 0.65);
+}
+
+.dc-microcard-shell .dc-snapshot-panel--new,
+.dc-microcard-shell .dc-snapshot-panel--ongoing,
+.dc-microcard-shell .dc-snapshot-panel--legacy {
+  border-color: rgba(36, 17, 35, 0.12) !important;
+  box-shadow: none !important;
+}
+
+/* GLOBAL WRAPPING FIXES */
+.dc-fact-item dd,
+.dc-snapshot-stamp dd {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  -webkit-line-clamp: initial;
+  line-clamp: initial;
+  -webkit-box-orient: initial;
+  display: block !important;
+}
+
+/* Room tone caption */
+.dc-roomtone-caption {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #241123e6;
+}
+
+.dc-roomtone-label {
+  font-size: 0.66rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #24112399;
+  font-weight: 600;
+  margin-right: 0.35rem;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-roomtone-text {
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+/* ============ COMMUNITY & IMPACT LAYOUT ============ */
+
+.dc-community-row {
+  margin-top: clamp(40px, 4vw, 56px);
+  padding-top: clamp(16px, 2vw, 24px);
+  border-top: 1px solid rgba(36, 17, 35, 0.16);
+
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1.1fr);
+  gap: clamp(24px, 3vw, 40px);
+  align-items: flex-start;
+}
+
+.dc-community-main {
+  min-width: 0;
+}
+
+.dc-community-main > .dc-section {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.dc-impact-col {
+  min-width: 0;
+}
+
+@media (max-width: 960px) {
+  .dc-community-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dc-impact-col {
+    margin-top: clamp(20px, 3vw, 28px);
+  }
+}
+
+/* ============ IMPACT PARTNERS CARD ============ */
+
+.support-eyebrow-tight {
+  margin: 12px 0 8px;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #24112399;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.partner-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.partner-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 3px;
+  background: #f2f2f2;
+  border: 1px solid rgba(36, 17, 35, 0.08);
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.partner-bar:hover {
+  background: #ffcc00;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.partner-no-logo {
+  padding-left: 16px;
+}
+
+/* Logo sizing: stop the gigantic images */
+.partner-logo-shell {
+  flex: 0 0 80px;
+  width: 80px;
+  height: 80px;
+  border: 0px solid #706a50;
+  border-radius: 3px;
+  background: #f2f2f2;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.partner-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.partner-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.partner-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #241123;
+}
+
+.partner-kind {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(36, 17, 35, 0.64);
+}
+
+/* COMMUNITY + ARTIST SECTIONS */
+.dc-community-row,
+.dc-artist-section {
+  margin-top: 2rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(36, 17, 35, 0.12);
+}
+
+.dc-community-row .dc-section,
+.dc-artist-section .dc-section {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* ✅ Make “Shared Community Needs” match Cultural Exchange styling */
+.dc-needs-block {
+  margin-top: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: rgba(36, 17, 35, 0.04);
+}
+
+.dc-needs-block .dc-mini-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #2493a9;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+}
+
+.dc-needs-block .dc-needs-list {
+  margin: 0.35rem 0 0;
+  font-size: 0.96rem;
+  line-height: 1.6;
+  color: #0f3440;
+}
+
+/* ────────────────────────────────────────────── */
+/* KRAFT NAVIGATION (top + footer)                */
+/* ────────────────────────────────────────────── */
+
+/* Match the card’s left/right edges: 90vw / max 1200 */
+.dc-kraft-topnav {
+  width: 90vw;
+  max-width: 1200px;
+  margin: 22px auto 10px;
+
+  /* more space above, less below */
+  padding-top: 26px;
+  padding-bottom: 0;
+}
+
+/* ✅ Top “All Drama Clubs” link — base #ffcc00, hover #6c00af */
+.dc-page-shell .dc-kraft-backlink {
+  color: #ffcc00 !important;
+  text-decoration: none;
+  font-size: clamp(1.1rem, 1.75vw, 1.75rem);
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  letter-spacing: 0.1rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  opacity: 0.85 !important;
+  text-shadow: 0px 0px 30px rgba(255, 245, 214, 0.5) !important;
+  display: inline-block;
+  line-height: 1.1;
+  transition:
+    color 0.3s ease,
+    letter-spacing 0.3s ease,
+    transform 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.dc-page-shell .dc-kraft-backlink:hover {
+  color: #6c00af !important;
+  letter-spacing: 0.18rem;
+  transform: translateY(-1px);
+}
+
+/* Footer nav BELOW the card (full-bleed band, centered like Seasons) */
+.dc-kraft-footer-nav {
+  position: relative;
+  width: 100%;
+  margin-top: 0rem; /* less space above */
+  padding: 0 0 2rem; /* more space below */
+}
+
+.dc-kraft-footer-nav::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  left: 50%;
+  width: 100vw; /* full bleed */
+  transform: translateX(-50%); /* centered */
+
+  /* subtle shaded band */
+  background: linear-gradient(
+    to bottom,
+    rgba(36, 17, 35, 0) 0%,
+    rgba(36, 17, 35, 0.08) 30%,
+    rgba(36, 17, 35, 0.1) 100%
+  );
+
+  pointer-events: none; /* ✅ don’t block links */
+  z-index: 0;
+}
+
+.dc-kraft-footer-inner {
+  position: relative;
+  z-index: 1;
+  width: min(92%, 1200px);
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: clamp(0rem, 0vw, 2rem);
+  align-items: center;
+}
+
+/* Left / right items */
+.dc-kraft-nav-item {
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dc-kraft-nav-item--prev {
+  justify-self: start;
+  text-align: left;
+}
+
+.dc-kraft-nav-item--next {
+  justify-self: end;
+  text-align: right;
+}
+
+/* “Play title link” vibe */
+.dc-kraft-nav-pill {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  letter-spacing: 0.05rem;
+  font-size: clamp(1rem, 2.5vw, 2rem);
+  font-weight: 500;
+
+  color: #ffcc00;
+  opacity: 0.9; /* ✅ visible by default */
+  background: rgba(36, 17, 35, 0.9);
+  padding: 0.12em 0.55em;
+  border-radius: 0.45em;
+  display: inline-block;
+  max-width: 100%;
+
+  transition:
+    color 0.3s ease,
+    letter-spacing 0.3s ease,
+    transform 0.3s ease,
+    opacity 0.3s ease,
+    background-color 0.3s ease;
+}
+
+.dc-kraft-nav-item:hover .dc-kraft-nav-pill {
+  color: #241123;
+  background: #ffcc00;
+  opacity: 1;
+  letter-spacing: 0.05rem;
+  transform: translateY(0);
+}
+
+.dc-kraft-nav-geo {
+  font-size: clamp(0.5rem, 1.5vw, 1.5rem);
+  color: transparent;
+  opacity: 0;
+  text-shadow: 0 0px 0px rgba(0, 0, 0, 0.45);
+  text-align: center;
+  transition: opacity 0.25s ease, color 0.25s ease, font-size 0.25s ease;
+}
+
+.dc-kraft-nav-item:hover .dc-kraft-nav-geo {
+  font-size: clamp(0.9rem, 1.5vw, 1.5rem);
+  color: #f2f2f2;
+  opacity: 0.55;
+}
+
+/* Center “All Drama Clubs” (footer index) */
+.dc-kraft-nav-index {
+  justify-self: center;
+  text-decoration: none;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  letter-spacing: 0.1rem;
+  font-size: clamp(0.9rem, 2vw, 2.25rem);
+  font-weight: 650;
+  text-transform: uppercase;
+
+  color: #241123 !important;
+  opacity: 0.68 !important;
+  text-shadow: 0px 0px 30px rgba(255, 245, 214, 0.5) !important;
+  transition: color 0.3s ease, letter-spacing 0.3s ease, opacity 0.3s ease;
+}
+
+.dc-kraft-nav-index:hover {
+  color: #ffcc00 !important;
+  opacity: 0.78 !important;
+  letter-spacing: 0.18rem;
+}
+
+/* Legacy footer grid (kept if you still have old markup somewhere) */
+.dc-kraft-footer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 920px) {
+  .dc-kraft-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+/* ────────────────────────────────────────────── */
+/* LEAD TEAM (current + legacy)                   */
+/* ────────────────────────────────────────────── */
+
+
+
+/* Legacy: framed cards */
+.dc-lead-grid {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .dc-lead-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dc-lead-frameLink {
+  text-decoration: none;
+  color: inherit;
+  display: inline-flex;
+}
+
+.dc-lead-frameCard {
+  width: 220px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  box-shadow: 4px 8px 16px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+  border: 1px solid rgba(36, 17, 35, 0.12);
+}
+
+.dc-lead-frameImg {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  position: relative;
+  overflow: hidden;
+}
+
+.dc-lead-frameMeta {
+  padding: 12px 12px 14px 12px;
+}
+
+.dc-lead-frameName {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: #241123;
+  margin: 0;
+  line-height: 1.15;
+}
+
+.dc-lead-frameRole {
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 0.92rem;
+  color: #6c00af;
+  margin: 6px 0 0 0;
+  opacity: 0.8;
+  line-height: 1.2;
+}
+
+.dc-lead-frameLink:hover .dc-lead-frameCard {
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+  transform: translateY(-3px);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Legacy: mini grid */
+.dc-lead-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .dc-lead-mini-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Legacy: horizontal scroll row (keep only if you ever re-enable it) */
+.dc-lead-mini-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 6px;
+}
+
+.dc-lead-mini-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 260px;
+  gap: 28px;
+  align-items: start;
+}
+
+@media (min-width: 520px) {
+  .dc-lead-mini-row {
+    grid-auto-columns: 374px;
+    gap: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .dc-lead-mini-row {
+    grid-auto-columns: 300px;
+    gap: 40px;
+  }
+}
+/* =========================================================
+   SAFE PATCH — no 100vw pseudo-element band, no global overflow
+   Fixes: weird overlay + click/enlarge weirdness + keeps hero low
+   Paste at VERY END
+   ========================================================= */
+
+/* Keep your page from tiny horizontal drift without breaking modals/lightbox */
+.dc-page-shell {
+  overflow-x: hidden; /* safer than clip */
+}
+
+/* --------------------------
+   FOOTER: full-bleed band
+   (NO ::before, NO 100vw hacks)
+   -------------------------- */
+
+/* Kill the old full-bleed pseudo element if it still exists anywhere */
+.dc-kraft-footer-nav::before {
+  content: none !important;
+  display: none !important;
+}
+
+/* Make the footer band full-width the normal way */
+.dc-kraft-footer-nav {
+  width: 100%;
+  margin: 0;                 /* avoids weird left “band” artifacts */
+  padding: 18px 0 28px;      /* adjust to taste */
+  background: rgba(36, 17, 35, 0.08);
+}
+
+/* Keep your inner grid centered like Seasons */
+.dc-kraft-footer-inner {
+  width: min(92%, 1200px);
+  margin: 0 auto;
+}
+
+/* Also: your old CSS had pointer-events: true (invalid).
+   If anything similar remains, force pseudo layers to never eat clicks. */
+.dc-kraft-footer-nav::before,
+.dc-kraft-footer-nav::after {
+  pointer-events: none !important;
+}
+
+/* --------------------------
+   HERO: stay low on tablet/mobile
+   (NO inset:auto hacks, no dvh/env stuff)
+   -------------------------- */
+
+.dc-hero-content {
+  justify-content: flex-end !important;
+  padding: 0 6vw 4.5vh !important;  /* low, with bottom safety */
+}
+
+.dc-hero-main {
+  align-items: flex-end !important; /* align left block with CTA block */
+}
+
+/* Tighten title ↔ local name spacing */
+.dc-local-name {
+  margin: 0.18rem 0 0.65rem !important;
+}
+
+/* Buffer under CTA */
+.dc-hero-cta-row {
+  padding-bottom: 22px !important; /* slight bump */
+}
+
+/* Tablet/mobile: give hero a bit more height so “bottom” actually feels bottom */
+@media (max-width: 1100px) {
+  .dc-hero {
+    height: 76vh;
+    max-height: none;
+  }
+
+  .dc-hero-main {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    align-items: flex-end !important;
+  }
+
+  .dc-hero-right {
+    align-items: flex-start !important;
+  }
+
+  /* Optional (recommended): stats tend to push everything upward */
+  .dc-hero-metrics {
+    display: none !important;
+  }
+}
+
+/* Ensure eyebrow + “IN SHUAR:” label never disappear */
+.dc-back-row,
+.dc-eyebrow {
+  display: block !important;
+}
+.dc-local-label {
+  display: inline !important;
+}
+
+/* ===== NO bottom overlay / band at all ===== */
+.dc-kraft-footer-nav {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 22px auto 24px !important; /* or whatever spacing you want */
+}
+
+.dc-kraft-footer-nav::before,
+.dc-kraft-footer-nav::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* ────────────────────────────────────────────── */
+/* PAGE SHELL BACKGROUND (moved from inline)      */
+/* ────────────────────────────────────────────── */
+.dc-page-shell {
+  min-height: 100vh;
+  background-image: url("/texture/kraft-paper.png");
+  background-size: cover;
+  background-attachment: fixed;
+  background-repeat: repeat;
+}
+
+/* ────────────────────────────────────────────── */
+/* KRAFT TOP NAV + FOOTER NAV (moved from styled-jsx global) */
+/* ────────────────────────────────────────────── */
+.dc-kraft-topnav {
+  position: relative;
+  z-index: 2;
+  padding-top: 18px;  /* more space above the link */
+  padding-bottom: 8px; /* less space below the link */
+}
+
+.dc-kraft-container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.dc-kraft-backlink {
+  display: inline-block;
+  color: #ffcc00;
+  text-decoration: none !important;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.dc-kraft-backlink:hover {
+  color: #6c00af;
+  transform: translateY(1px);
+}
+
+.dc-kraft-footer-nav {
+  position: relative;
+  z-index: 2;
+  padding: 18px 0 28px;
+}
+
+.dc-kraft-footer-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 520px) {
+  .dc-kraft-container,
+  .dc-kraft-footer-inner {
+    padding: 0 18px;
+  }
+}
+
+/* If you already have these elsewhere, keep whichever version you prefer */
+.dc-kraft-nav-item {
+  text-decoration: none;
+  color: #241123;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dc-kraft-nav-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(36, 17, 35, 0.14);
+  backdrop-filter: blur(4px);
+  font-weight: 700;
+}
+
+.dc-kraft-nav-geo {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.dc-kraft-nav-index {
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  color: #6c00af;
+}
+
+.dc-kraft-nav-index:hover {
+  color: #ffcc00;
+}
+
+
+
+/* ────────────────────────────────────────────── */
+/* ARTIST PATHWAYS ASIDE TWEAKS (moved from nested styled-jsx) */
+/* ────────────────────────────────────────────── */
+.dc-avatar-item--taller {
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.dc-avatar-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dc-artist-tag {
+  font-size: 12px;
+  line-height: 1.1;
+  opacity: 0.78;
+  letter-spacing: 0.02em;
+}
+
+.dc-how-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.dc-how-subhead {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  opacity: 0.9;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 720px) {
+  .dc-how-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+.dc-showall {
+  margin-top: 8px;
+}
+
+.dc-showall-summary {
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  opacity: 0.9;
+}
+
+.dc-showall-body {
+  margin-top: 10px;
+}
+
+/* --- Artist lineage marquee --- */
+.dc-lineage-marquee {
+  margin-top: 18px;
+  margin-bottom: 6px;
+}
+
+.dc-marquee {
+  overflow: hidden;
+  border-radius: 18px;
+  padding: 8px 0;
+  position: relative;
+}
+
+.dc-marquee-track {
+  display: flex;
+  gap: 12px;
+  width: max-content;
+  animation: dc-marquee-scroll 36s linear infinite;
+  padding: 6px 6px 6px 2px;
+}
+
+.dc-marquee-item {
+  flex: 0 0 auto;
+  min-width: 210px; /* adjust if you want tighter */
+}
+
+@keyframes dc-marquee-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dc-marquee-track {
+    animation: none;
+  }
+}
+/* =========================
+   Artist lineage carousel
+   ========================= */
+
+.dc-lineage {
+  position: relative;
+  margin-top: 2.5rem;
+  padding: 2rem 0;
+}
+
+.dc-lineage-header {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.dc-lineage-title {
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  font-size: clamp(1.35rem, 2.8vw, 2.2rem);
+  margin: 0;
+  color: #241123;
+  text-transform: uppercase;
+}
+
+.dc-lineage-subtitle {
+  margin-top: 0.6rem;
+  margin-bottom: 1.25rem;
+  opacity: 0.78;
+  color: #241123;
+  max-width: 780px;
+}
+
+.dc-lineage-track {
+  display: flex;
+  gap: clamp(18px, 2.6vw, 34px);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 1.25rem 1.25rem;
+  scroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+
+  cursor: grab;
+  user-select: none;
+  touch-action: pan-x;
+}
+
+.dc-lineage-track::-webkit-scrollbar {
+  display: none;
+}
+
+.dc-lineage-track--dragging {
+  cursor: grabbing;
+}
+
+.dc-lineage-card {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+/* subtle arrows */
+.dc-lineage-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  color: rgba(36, 17, 35, 0.82);
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid rgba(36, 17, 35, 0.14);
+  box-shadow: 0 10px 24px rgba(36, 17, 35, 0.18);
+
+  opacity: 0.72;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.dc-lineage-arrow:hover {
+  opacity: 1;
+  transform: translateY(-50%) scale(1.03);
+}
+
+.dc-lineage-arrow:active {
+  transform: translateY(-50%) scale(0.98);
+}
+
+.dc-lineage-arrow--left {
+  left: 10px;
+}
+
+.dc-lineage-arrow--right {
+  right: 10px;
+}
+
+/* On touch-only devices, keep arrows but slightly quieter */
+@media (hover: none) {
+  .dc-lineage-arrow {
+    opacity: 0.6;
+  }
+}
+/* =========================
+   Artist lineage (carousel)
+   ========================= */
+
+.dc-lineage {
+  position: relative;
+  margin-top: 2.5rem;
+  padding: 2rem 0;
+}
+
+/* Text stays aligned with the rest of the card */
+.dc-lineage__head {
+  padding: 0 var(--dc-card-pad, 28px);
+}
+
+.dc-lineage__title {
+  font-family: var(--font-anton, system-ui, sans-serif);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  font-size: clamp(1.35rem, 2.8vw, 2.2rem);
+  margin: 0;
+  color: #241123;
+  text-transform: uppercase;
+}
+
+.dc-lineage__sub {
+  margin-top: 0.6rem;
+  margin-bottom: 1.25rem;
+  font-family: var(--font-dm-sans, system-ui, sans-serif);
+  opacity: 0.75;
+  color: #241123;
+  max-width: 780px;
+}
+
+/* ✅ This is the key: carousel bleeds to the card edges */
+.dc-lineage__viewport {
+  position: relative;
+  margin-left: calc(-1 * var(--dc-card-pad, 28px));
+  margin-right: calc(-1 * var(--dc-card-pad, 28px));
+}
+
+/* ✅ No side fade (kills mask-image / gradient fade if you had one) */
+.dc-lineage__scroller {
+  display: flex;
+  gap: clamp(18px, 2.6vw, 34px);
+
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  padding: 1.25rem 0; /* ✅ no left/right padding */
+  scroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+
+  /* ✅ hard-disable any fade mask */
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+
+  cursor: grab;
+}
+.dc-lineage__scroller::-webkit-scrollbar {
+  display: none;
+}
+.dc-lineage__scroller:active {
+  cursor: grabbing;
+}
+
+.dc-lineage__item {
+  flex: 0 0 auto;
+}
+
+/* Subtle arrows (optional but matches your screenshot vibe) */
+.dc-lineage__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+
+  border: 0;
+  cursor: pointer;
+
+  display: grid;
+  place-items: center;
+
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+  color: #241123;
+
+  opacity: 0.9;
+}
+
+.dc-lineage__arrow--left {
+  left: 10px;
+}
+.dc-lineage__arrow--right {
+  right: 10px;
+}
+
+/* Don’t clutter small screens */
+@media (max-width: 640px) {
+  .dc-lineage__arrow {
+    display: none;
+  }
+}
+.dc-lineage-scroller {
+  padding-left: 0;
+  padding-right: 0;
+}
+.dc-lineage-viewport {
+  position: relative;
+  margin-left: -28px;
+  margin-right: -28px;
+}
+/* Header text aligns with the card padding */
+.dc-lineage {
+  margin-top: 2.5rem;
+  padding: 2rem 0;
+}
+
+.dc-lineage-head {
+  /* keep whatever your card text alignment is */
+  padding: 0 var(--dc-card-pad, 28px);
+}
+
+.dc-lineage-title {
+  font-family: var(--font-anton), system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  font-size: clamp(1.35rem, 2.8vw, 2.2rem);
+  margin: 0;
+  color: #241123;
+  text-transform: uppercase;
+}
+
+.dc-lineage-subtitle {
+  margin-top: 0.6rem;
+  margin-bottom: 1.25rem;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  opacity: 0.75;
+  color: #241123;
+  max-width: 780px;
+}
+
+/* ✅ THIS is the full-bleed fix (carousel only) */
+.dc-lineage-viewport--bleed {
+  position: relative;
+
+  /* Cancel the card’s inner padding so the viewport reaches the edges */
+  margin-left: calc(var(--dc-card-pad, 28px) * -1);
+  margin-right: calc(var(--dc-card-pad, 28px) * -1);
+
+  overflow: hidden;
+}
+
+/* ✅ Remove the padding that creates the “gutters” */
+.dc-lineage-scroller {
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  /* NO left/right padding so cards hit the edge */
+  padding-left: 0;
+  padding-right: 0;
+
+  /* keep some vertical breathing room */
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.dc-lineage-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.dc-lineage-track {
+  display: flex;
+  gap: clamp(18px, 2.6vw, 34px);
+  width: max-content;
+}
+
+.dc-lineage-item {
+  flex: 0 0 auto;
+}
+
+/* Subtle overlay arrows (don’t affect layout) */
+.dc-lineage-arrow {
+  position: absolute;
+  top: 40%;
+  transform: translateY(-50%);
+  z-index: 5;
+
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+
+  border: 1px solid rgba(36, 17, 35, 0.18);
+  background: rgba(242, 237, 228, 0.72);
+  backdrop-filter: blur(6px);
+
+  display: grid;
+  place-items: center;
+
+  color: #241123;
+  cursor: pointer;
+}
+
+.dc-lineage-arrow--left {
+  left: 12px;
+}
+.dc-lineage-arrow--right {
+  right: 12px;
+}
+
+/* Optional: make arrows show mainly on hover (desktop) */
+@media (hover: hover) {
+  .dc-lineage-arrow {
+    opacity: 0;
+    transition: opacity 160ms ease;
+  }
+  .dc-lineage-viewport:hover .dc-lineage-arrow {
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   DRAMA CLUB KRAFT NAV – FINAL CLEAN PASS
+   (Paste at the very bottom of the file)
+   ============================================ */
+
+/* Top nav: line up with the big card (90vw / 1200px) */
+.dc-kraft-topnav {
+  width: 90vw;
+  max-width: 1200px;
+
+  /* More space above, less below */
+  margin: 40px auto 10px;
+  padding: 0;
+
+  position: relative;
+  z-index: 2;
+}
+
+/* Single source of truth for the “All Drama Clubs” link */
+.dc-page-shell .dc-kraft-backlink {
+  display: inline-block;
+  text-decoration: none !important;
+
+  color: #ffcc00 !important;
+  font-size: clamp(1.1rem, 1.75vw, 1.75rem);
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  letter-spacing: 0.1rem;
+  font-weight: 650;
+  text-transform: uppercase;
+
+  opacity: 0.9 !important;
+  text-shadow: 0 0 30px rgba(255, 245, 214, 0.2);
+
+  line-height: 1.1;
+  transition:
+    color 0.25s ease,
+    letter-spacing 0.25s ease,
+    transform 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.dc-page-shell .dc-kraft-backlink:hover {
+  color: #241123 !important;
+  letter-spacing: 0.18rem;
+  transform: translateY(-1px);
+}
+
+/* Tiny breathing tweaks on smaller screens */
+@media (max-width: 640px) {
+  .dc-kraft-topnav {
+    margin: 32px auto 8px;
+  }
+
+  .dc-page-shell .dc-kraft-backlink {
+    font-size: clamp(1rem, 4vw, 1.4rem);
+    letter-spacing: 0.08rem;
+  }
+}
+
+/* ============================================
+   FOOTER NAV – VISIBLE + SIMPLE
+   ============================================ */
+
+/* Kill any old pseudo overlays/bands */
+.dc-kraft-footer-nav::before,
+.dc-kraft-footer-nav::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* Footer band itself */
+.dc-kraft-footer-nav {
+  width: 100%;
+  margin: 28px 0 36px;
+  padding: 0;
+
+  position: relative;
+  z-index: 2;
+  background: transparent;
+}
+
+/* Inner grid centered like the card */
+.dc-kraft-footer-inner {
+  width: min(92%, 1200px);
+  margin: 0 auto;
+
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: clamp(8px, 2vw, 16px);
+  align-items: center;
+}
+
+/* Stack on small screens */
+@media (max-width: 720px) {
+  .dc-kraft-footer-inner {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+}
+
+/* Prev / next wrappers */
+.dc-kraft-nav-item {
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.dc-kraft-nav-item--prev {
+  justify-self: flex-start;
+  text-align: left;
+}
+
+.dc-kraft-nav-item--next {
+  justify-self: flex-end;
+  text-align: right;
+}
+
+@media (max-width: 720px) {
+  .dc-kraft-nav-item--prev,
+  .dc-kraft-nav-item--next {
+    justify-self: center;
+    text-align: center;
+  }
+}
+
+/* Pill that looks like a play title link */
+.dc-kraft-nav-pill {
+  font-family: var(--font-space-grotesk, system-ui, sans-serif);
+  letter-spacing: 0.05rem;
+  font-size: clamp(1rem, 2.2vw, 1.8rem);
+  font-weight: 500;
+
+  color: #ffcc00;
+  opacity: 0.4;
+  background: rgba(36, 17, 35, 0.5);
+
+  padding: 0.12em 0.7em;
+  border-radius: 0.45em;
+  display: inline-block;
+  max-width: 100%;
+
+  transition:
+    color 0.25s ease,
+    background-color 0.25s ease,
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.dc-kraft-nav-item:hover .dc-kraft-nav-pill {
+  color: #241123;
+  background: #ffcc00;
+  transform: translateY(-1px);
+  opacity: 1;
+}
+
+/* BEFORE */
+.dc-kraft-nav-geo {
+  font-size: 0.8rem;
+  color: #f2f2f2;
+  opacity: 0.6;
+  text-align: inherit;
+}
+
+.dc-kraft-nav-item:hover .dc-kraft-nav-geo {
+  opacity: 0.8;
+}
+
+/* AFTER (same behavior, just explicit + smooth) */
+.dc-kraft-nav-geo {
+  font-size: 0.8rem;
+  color: #f2f2f2;
+  opacity: 0.6;
+  text-align: inherit;
+  transition: opacity 160ms ease;
+}
+
+.dc-kraft-nav-item:hover .dc-kraft-nav-geo {
+  opacity: 0.8;
+}
+
+
+
+
+/* Center “All Drama Clubs” index link in footer */
+.dc-kraft-nav-index {
+  justify-self: center;
+  text-decoration: none;
+
+  font-family: var(--font-space-grotesk, system-ui, sans-serif);
+  letter-spacing: 0.1rem;
+  font-size: clamp(0.9rem, 2vw, 1.4rem);
+  font-weight: 650;
+  text-transform: uppercase;
+
+  color: #320053 !important;
+  opacity: 0.72 !important;
+  text-shadow: 0 0 30px rgba(255, 245, 214, 0.5);
+
+  transition:
+    color 0.25s ease,
+    letter-spacing 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.dc-kraft-nav-index:hover {
+  color: #ffcc00 !important;
+  opacity: 0.82 !important;
+  letter-spacing: 0.18rem;
+}
+
+/* ============================================
+   KRAFT TOP NAV – ALIGN + COLOR OVERRIDE
+   (Paste at the very bottom)
+   ============================================ */
+
+/* Match the card’s left margin: 90vw / max 1200px, centered */
+.dc-page-shell .dc-kraft-topnav {
+  width: 90vw;
+  max-width: 1200px;
+  margin: 40px auto 4px; /* more space above, less below */
+  padding: 0;
+  position: relative;
+  z-index: 2;
+}
+
+/* Cancel any inner padding that was shifting the text */
+.dc-page-shell .dc-kraft-topnav .dc-kraft-container {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Style ANY link inside the kraft top nav as the big label */
+.dc-page-shell .dc-kraft-topnav a {
+  display: inline-block;
+  text-decoration: none;
+
+  color: #ffcc00;
+  font-size: clamp(1.1rem, 1.75vw, 1.75rem);
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  letter-spacing: 0.1rem;
+  font-weight: 650;
+  text-transform: uppercase;
+
+  opacity: 0.9;
+  text-shadow: 0 0 30px rgba(255, 245, 214, 0.5);
+  line-height: 1.1;
+
+  transition:
+    color 0.25s ease,
+    letter-spacing 0.25s ease,
+    transform 0.25s ease,
+    opacity 0.25s ease;
+}
+
+/* Hover: purple */
+.dc-page-shell .dc-kraft-topnav a:hover {
+  color: #6c00af;
+  letter-spacing: 0.18rem;
+  transform: translateY(-1px);
+}
+
+/* Small screens – keep the same relationship but a bit tighter */
+@media (max-width: 640px) {
+  .dc-page-shell .dc-kraft-topnav {
+    margin: 32px auto 4px;
+  }
+
+  .dc-page-shell .dc-kraft-topnav a {
+    font-size: clamp(1rem, 4vw, 1.4rem);
+    letter-spacing: 0.08rem;
+  }
+}
+
+/* ============================================
+   Hero stats – visible on desktop again
+   ============================================ */
+
+/* Ensure metrics are ON whenever we’re in “desktop-ish” widths */
+@media (min-width: 900px) {
+  .dc-hero-metrics {
+    display: grid !important;
+  }
+}
+
+/* Keep them OFF on small screens so the hero doesn’t get too busy */
+@media (max-width: 899px) {
+  .dc-hero-metrics {
+    display: none !important;
+  }
+}
+
+/* Stand with this Drama Club – hero-esque glowing CTA */
+.dc-impact-cta-row {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Base button hook */
+.dc-impact-cta {
+  position: relative;
+  z-index: 1;
+}
+
+/* White blur underneath */
+.dc-impact-cta::before {
+  content: "";
+  position: absolute;
+  inset: 60% -18px -18px -18px; /* under the button only */
+  border-radius: 999px;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.9) 0%,
+    rgba(255, 255, 255, 0.0) 70%
+  );
+  opacity: 0.7;
+  filter: blur(18px);
+  z-index: -1;
+  transition:
+    opacity 180ms ease-out,
+    filter 180ms ease-out;
+}
+
+/* Stronger glow on hover/focus */
+.dc-impact-cta:hover::before,
+.dc-impact-cta:focus-visible::before {
+  opacity: 1;
+  filter: blur(22px);
+}
+
+/* Optional: slightly punchier before/after colors */
+.dc-impact-cta:hover,
+.dc-impact-cta:focus-visible {
+  transform: translateY(-1px);
+}
+
+/* Teal "Stand with this Drama Club" card */
+.dc-impact-card {
+  position: relative;
+  border-radius: 32px;
+  padding: clamp(24px, 4vw, 40px);
+  background: var(--dat-teal-500);
+  color: #fdfaf5;
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  /* On mobile the card drops under the copy with a bit of room */
+  margin-top: 24px;
+}
+
+@media (min-width: 900px) {
+  .dc-impact-card {
+    /* Sit flush with the left column on desktop */
+    margin-top: 0;
+    align-self: flex-start;
+  }
+
+  /* If you’re using this mini wrapper inside the card,
+     keep it hugged to the right edge */
+  .dc-impact-card-mini {
+    margin-left: auto;
+    align-self: flex-start;
+    max-width: 480px; /* keeps the stats box from getting too wide */
+  }
+}
+
+/* Blocks for "Right now" / "With your sponsorship" */
+.dc-impact-band-block {
+  margin-bottom: 16px; /* a bit more breathing room under the top block */
+}
+
+.dc-impact-band-block--bottom {
+  margin-top: 20px; /* slightly tighter so both rows feel like one unit */
+}
+
+/* Eyebrow + title */
+.dc-impact-band-eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  opacity: 0.9;
+}
+
+.dc-impact-band-title {
+  font-size: 1.4rem;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+
+/* Grid: 1-up on mobile, 3-up on tablet/desktop */
+.dc-impact-band-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .dc-impact-band-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Stat cards */
+.dc-impact-band-card {
+  border-radius: 20px;
+  background: #012933;
+  padding: 14px 16px 16px;
+  color: #fefcf7;
+}
+
+.dc-impact-band-value {
+  font-size: 2.1rem;
+  line-height: 0.9;
+  letter-spacing: 0.06em;
+  color: #ffcc00; /* DAT yellow */
+}
+
+.dc-impact-band-label {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+.dc-impact-band-helper {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+/* Impact card background — slightly darker than #2493A9,
+   but lighter than the stat tiles */
+.dc-impact-card {
+  background-color: #1c7f93; /* darker sibling of #2493A9 */
+  border-radius: 28px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  padding: 18px 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---- Unified stat card styling (top pair + all band cards) ---- */
+
+/* Card containers */
+.dc-impact-metric-item,
+.dc-impact-band-card {
+  background-color: #032b34;       /* same as the first two tiles */
+  border-radius: 20px;
+  padding: 14px 16px 16px;         /* reduced padding */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
+/* Number */
+.dc-impact-metric-value,
+.dc-impact-band-value {
+  font-size: 2rem;                 /* smaller number */
+  line-height: 1.05;
+  letter-spacing: 0.08em;
+  text-transform: none;
+  color: #ffcc00;                  /* DAT yellow */
+}
+
+/* Label (CLUB ARTISTS SERVED, etc.) */
+.dc-impact-metric-label,
+.dc-impact-band-label {
+  font-size: 0.82rem;              /* slightly smaller label */
+  line-height: 1.3;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(210, 235, 245, 0.9); /* blue-ish / lower-opacity text */
+}
+
+/* Helper text (Across workshops…, School and community…, etc.) */
+.dc-impact-metric-helper,
+.dc-impact-band-helper {
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: rgba(190, 220, 235, 0.75); /* softer, blue-leaning helper text */
+}
+
+/* Tighten up grids so the smaller cards don’t feel too airy */
+.dc-impact-metric-grid,
+.dc-impact-band-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+/* Small breathing room between the headline metrics and the band */
+.dc-impact-band {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* ---------- IMPACT CARD (right side teal panel) ---------- */
+
+.dc-impact-card {
+  /* slightly darker sibling of #2493A9, but lighter than the stat tiles */
+  background-color: #025264;
+  border-radius: 20px;
+  padding: 18px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  /* no border / no shadow – clean + simple */
+  border: none;
+  box-shadow: none;
+}
+
+/* ---------- UNIFIED STAT TILE STYLING ---------- */
+
+/* Make the top pair and the "Right now / With your sponsorship"
+   tiles literally share the same card styling */
+.dc-impact-metric-item,
+.dc-impact-band-card {
+  background-color: #032b34;
+  border-radius: 20px;
+  padding: 12.5px 12.5px;      /* same padding for both tiles */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
+/* Numbers */
+.dc-impact-metric-value,
+.dc-impact-band-value {
+  font-size: 2.1rem;
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  color: #ffcc00;
+}
+
+/* LABELS: CLUB ARTISTS SERVED, etc. */
+.dc-impact-metric-label,
+.dc-impact-band-label {
+  font-size: 0.82rem;
+  line-height: 1.3;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(210, 235, 245, 0.95);
+}
+
+/* Helper lines */
+.dc-impact-metric-helper,
+.dc-impact-band-helper {
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: rgba(190, 220, 235, 0.65);
+}
+
+/* 🔑 Kill default <p> margins in the band cards so they match the <span>-based ones */
+.dc-impact-band-card p {
+  margin: 0;
+}
+
+/* ---------- Stat grids: 3 per row on desktop ---------- */
+
+.dc-impact-metric-grid,
+.dc-impact-band-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)); /* 3 across */
+  gap: 12px;
+}
+
+/* Medium screens: 2 per row */
+@media (max-width: 1024px) {
+  .dc-impact-metric-grid,
+  .dc-impact-band-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Small screens: stack */
+@media (max-width: 900px) {
+  .dc-impact-metric-grid,
+  .dc-impact-band-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)); /* 3 across */
+  }
+}
+
+/* Small screens: stack */
+@media (max-width: 640px) {
+  .dc-impact-metric-grid,
+  .dc-impact-band-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Make the right "Stand with..." column wider on desktop */
+/* Make the left/right split 30% / 70% and let the card fill its column */
+@media (min-width: 1024px) {
+  .dc-impact-inner {
+    display: grid;
+    grid-template-columns: 4fr 6fr;  /* ≈ 40% / 60% */
+    column-gap: 2.5rem;
+    align-items: flex-start;
+  }
+
+  .dc-impact-left {
+    max-width: none;        /* let it use its full 40% */
+  }
+
+  .dc-impact-card {
+    max-width: none;        /* let it use its full 60% */
+  }
+}
+
+
+@media (max-width: 1024px) {
+  .dc-impact-inner {
+    display: grid;
+    grid-template-columns: 4fr 6fr; 
+    align-items: flex-start;
+  }
+
+  .dc-impact-left {
+    max-width: none;        
+  }
+
+  .dc-impact-card {
+    max-width: none;        
+  }
+}
+
+@media (max-width: 900px) {
+  .dc-impact-inner {
+    display: grid;
+    grid-template-columns: 1fr;  
+    column-gap: 2.5rem;
+    align-items: flex-start;
+  }
+
+  .dc-impact-left {
+    max-width: none;        
+  }
+
+  .dc-impact-card {
+    max-width: none;        
+  }
+}
+
+/* =========================
+   HERO — responsive cleanup
+   ========================= */
+
+.dc-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0;
+  min-height: clamp(520px, 72vh, 860px);
+}
+
+.dc-hero-content {
+  position: relative;
+  z-index: 2;
+  padding: clamp(18px, 3vw, 44px);
+  height: 100%;
+  display: flex;
+  align-items: flex-end; /* keep content low on the image */
+}
+
+.dc-hero-main {
+  width: 100%;
+  display: grid;
+  gap: clamp(14px, 2.2vw, 28px);
+  align-items: end;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+}
+
+/* left column: keep it readable, prevent weird wraps */
+.dc-hero-left {
+  min-width: 0;
+}
+
+.dc-hero-title {
+  margin: 8px 0 10px;
+  line-height: 0.95;
+}
+
+.dc-hero-location {
+  margin-top: 6px;
+}
+
+.dc-hero-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+/* Hero metrics: clean, compact */
+.dc-hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.dc-hero-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dc-hero-metric-value {
+  font-size: clamp(22px, 2.2vw, 28px);
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+
+.dc-hero-metric-label {
+  font-size: 10.5px;
+  opacity: 0.92;
+
+  /* ✅ keep each label to one line (hero only) */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Safety: if helper exists anywhere, hide it in hero */
+.dc-hero .dc-hero-metric-helper {
+  display: none !important;
+}
+
+.dc-hero-cta-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.dc-hero-cta {
+  width: 100%;
+  max-width: 360px;
+}
+
+.dc-hero-cta-buffer {
+  height: 12px;
+}
+
+/* =========================
+   Mobile: hide metrics (and stamp)
+   ========================= */
+
+@media (max-width: 719px) {
+  .dc-hero {
+    min-height: clamp(460px, 70vh, 640px);
+  }
+
+  .dc-hero-main {
+    grid-template-columns: 1fr;
+    align-items: end;
+  }
+
+  .dc-hero-right {
+    align-items: flex-start;
+  }
+
+  .dc-hero-metrics {
+    display: none !important; /* ✅ stats disappear on mobile */
+  }
+
+  .dc-hero-cta {
+    max-width: 520px;
+  }
+}
+
+/* =========================
+   Tablet tuning (optional but sane)
+   ========================= */
+
+@media (min-width: 720px) and (max-width: 1023px) {
+  .dc-hero-main {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+  }
+
+  .dc-hero-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: 320px;
+  }
+}
+
+/* =========================
+   Snapshot “Visa Stamp” badge
+   ========================= */
+
+.dc-snapshot-panel {
+  position: relative; /* required for stamp positioning */
+}
+
+.dc-snapshot-badge-stamp {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  pointer-events: none;
+  opacity: 0.92;
+  transform: rotate(-10deg);
+  filter: saturate(1.05) contrast(1.05);
+  mix-blend-mode: multiply;
+  z-index: 3;
+}
+
+/* If your snapshot pill overlaps, tuck the stamp behind it slightly */
+.dc-snapshot-pill {
+  position: relative;
+  z-index: 4;
+}
+
+/* Hide the stamp on mobile (logo disappears on mobile) */
+@media (max-width: 719px) {
+  .dc-snapshot-badge-stamp {
+    display: none !important;
+  }
+}
+
+/* ============================================
+   Photo stamp (DramaClubBadge) — top-right overlay
+   ============================================ */
+
+.dc-microcard-media-inner {
+  position: relative; /* needed for absolute stamp */
+}
+
+.dc-photo-stamp {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 4;
+  pointer-events: none;
+
+  /* “stamp” vibe */
+  transform: rotate(10deg);
+  opacity: 0.82;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.32));
+}
+
+/* Tablet: slightly smaller so it doesn't crowd the composition */
+@media (max-width: 980px) {
+  .dc-photo-stamp {
+    top: 12px;
+    right: 12px;
+    transform: rotate(10deg) scale(0.88);
+  }
+}
+
+/* Mobile only: tuck the stamp closer to the image edge */
+@media (max-width: 640px) {
+  .dc-microcard-media-inner .dc-photo-stamp {
+    inset: auto !important;          /* defeats any earlier `inset:` */
+    top: 13px !important;
+    right: 1px !important;
+
+    transform: rotate(10deg) scale(0.6) !important;
+    transform-origin: top right;
+  }
+}
+
+
+/* ============================================
+   Moments gallery — HARD CONTAIN next/image fill
+   Prevents a thumbnail from “escaping” and covering the whole card.
+   ============================================ */
+
+.dc-moments-card {
+  position: relative;
+}
+
+.dc-moments-img-shell {
+  position: relative !important;   /* key: makes fill anchor here */
+  width: 100%;
+  aspect-ratio: 1 / 1;             /* key: gives the fill a height */
+  overflow: hidden;                 /* key: prevents bleed */
+  isolation: isolate;               /* prevents weird stacking leaks */
+}
+
+/* next/image renders a wrapper span; fallback <img> is direct */
+.dc-moments-img-shell > span,
+.dc-moments-img-shell > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ensure fallback <img> behaves like the next/image version */
+.dc-moments-img-shell > img.dc-moments-img {
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+/* ============================================
+   HERO: stack stats vertically above CTA
+   (touches HERO ONLY)
+   ============================================ */
+
+@media (min-width: 900px) {
+  /* Make the whole right column a vertical stack */
+  .dc-hero-right {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch; /* lets metrics + CTA share width */
+    gap: 12px;
+  }
+
+  /* Keep the badge tucked to the right (optional) */
+  .dc-badge-shell {
+    align-self: flex-end;
+  }
+
+  /* Stats should always be stacked (one per line) */
+  .dc-hero-metrics {
+    display: grid !important;
+    grid-template-columns: 1fr !important; /* <- stacked */
+    gap: 10px;
+    width: 100%;
+  }
+
+  /* Ensure CTA sits under stats and matches width */
+  .dc-hero-cta-row {
+    width: 100%;
+  }
+
+  .dc-hero-cta {
+    width: 100%;
+  }
+}
+
+/* Still hide hero metrics on mobile/tablet (keep your current rule) */
+@media (max-width: 899px) {
+  .dc-hero-metrics {
+    display: none !important;
+  }
+}
+
+/* ============================================
+   HERO — tablet/landscape fix
+   - stats stacked ABOVE CTA
+   - hero text sits LOWER in the image
+   HERO ONLY
+   ============================================ */
+
+@media (min-width: 900px) and (max-width: 1200px) {
+  /* Give the hero enough height so “bottom anchoring” actually has room */
+  .dc-hero {
+    min-height: clamp(520px, 72vh, 760px);
+  }
+
+  /* Push the whole content block toward the bottom of the hero */
+  .dc-hero-content {
+    display: flex !important;
+    align-items: flex-end !important;
+    padding-top: 0 !important;
+    padding-bottom: clamp(28px, 6vh, 72px) !important;
+  }
+
+  /* Ensure the two-column wrapper aligns toward the bottom too */
+  .dc-hero-main {
+    width: 100%;
+    align-items: flex-end !important;
+  }
+
+  /* ✅ Critical: right side must be a vertical stack (badge → stats → CTA) */
+  .dc-hero-right {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 12px;
+  }
+
+  /* ✅ Critical: stats are one-column (stacked) and same “block” width as CTA */
+  .dc-hero-metrics {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+    width: min(440px, 100%);
+    margin-left: auto;
+  }
+
+  .dc-hero-cta-row {
+    width: min(440px, 100%);
+    margin-left: auto;
+  }
+
+  .dc-hero-cta {
+    width: 100%;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1200px) {
+  /* ✅ Make the content wrapper actually fill the hero so bottom-alignment works */
+  .dc-hero-content {
+    height: 100%;
+  }
+
+  /* ✅ If dc-hero-main is grid (likely), make its items align to bottom */
+  .dc-hero-main {
+    height: 100%;
+    align-items: end !important;     /* grid-friendly */
+    align-content: end !important;
+  }
+
+  /* ✅ Force LEFT column to bottom-align even if it has its own default alignment */
+  .dc-hero-left {
+    align-self: end !important;
+  }
+}
+
+/* ============================
+   HERO: push title block DOWN
+   (tablet + small desktop)
+   ============================ */
+
+@media (max-width: 1200px) {
+  /* Make the hero a true positioning context */
+  .dc-hero {
+    position: relative;
+  }
+
+  /* Force the content layer to fill the hero,
+     then bottom-anchor everything inside it. */
+  .dc-hero-content {
+    position: absolute !important;
+    inset: 0 !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-end !important;
+
+    /* tune these two numbers to taste */
+    padding-top: clamp(72px, 10vh, 120px) !important;
+    padding-bottom: clamp(44px, 8vh, 96px) !important;
+  }
+
+  /* Extra insurance: even if hero-main is grid, this pushes it down */
+  .dc-hero-main {
+    margin-top: auto !important;
+  }
+}
+/* =========================================================
+   HERO: two-column sizing (make right column narrower)
+   ========================================================= */
+
+/* Tablet + Desktop: force a true 2-col grid and shrink the right */
+@media (min-width: 760px) {
+  .dc-hero-main {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) clamp(240px, 28vw, 420px) !important;
+    gap: clamp(16px, 3vw, 44px) !important;
+    align-items: end !important;
+  }
+
+  /* Make the right column a contained “stack” */
+  .dc-hero-right {
+    width: 100%;
+    max-width: 420px;
+    justify-self: end;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* ✅ Stats stacked, always above CTA */
+  .dc-hero-metrics {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .dc-hero-cta-row {
+    margin-top: 0 !important;
+  }
+}
+
+/* Mobile: hide badge + hero metrics (you said they should disappear) */
+@media (max-width: 759px) {
+  .dc-badge-shell,
+  .dc-hero-metrics {
+    display: none !important;
+  }
+}
+
+/* =========================================================
+   HERO (desktop): fix right-column alignment (stats + CTA)
+   ========================================================= */
+
+@media (min-width: 900px) {
+  /* Ensure the whole right stack shares ONE width */
+  .dc-hero-right {
+    width: 100%;
+    max-width: 420px; /* keep this in sync with your clamp if you want */
+    justify-self: end;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch; /* ⬅️ everything should align to same edges */
+  }
+
+  /* Stats stack should be full width */
+  .dc-hero-metrics {
+    width: 100%;
+  }
+
+  .dc-hero-metric {
+    width: 100%;
+  }
+
+  /* CTA row should also stretch full width */
+  .dc-hero-cta-row {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Kill “center me” styles and match the metric card edges */
+  .dc-hero-cta {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    align-self: stretch !important;
+  }
+}
+
+/* ============================================
+   HERO: stack stats + align CTA with stat cards
+   ============================================ */
+
+/* Make the RIGHT hero column a vertical stack */
+.dc-hero-right {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch; /* key: prevents centering weirdness */
+  gap: 14px;
+}
+
+/* Stats should be stacked whenever they’re visible */
+@media (min-width: 900px) {
+  .dc-hero-metrics {
+    display: grid !important;
+    grid-template-columns: 1fr !important; /* stacked */
+    gap: 12px !important;
+    width: 100%;
+  }
+}
+
+/* Ensure stats are above CTA (only matters if parent is flex) */
+.dc-hero-metrics {
+  order: 0;
+}
+.dc-hero-cta-row {
+  order: 1;
+}
+
+/* CTA row should NOT center its contents */
+.dc-hero-cta-row {
+  width: 100%;
+  display: flex;
+  justify-content: stretch;
+}
+
+/* Cover whatever your DATButtonLink renders (wrapper + anchor/button) */
+.dc-hero-cta-row > * {
+  width: 100%;
+}
+
+/* Force the actual CTA element to match the stat card width */
+.dc-hero-cta,
+.dc-hero-cta-row a,
+.dc-hero-cta-row button {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 !important; /* kills margin:auto centering */
+  align-self: stretch;
+
+  /* keeps label centered inside the button */
+  display: flex;
+  justify-content: center;
+}
+
+/* Optional: keep the whole right stack a bit narrower on wide desktop */
+@media (min-width: 1100px) {
+  .dc-hero-right {
+    width: min(520px, 100%);
+    margin-left: auto; /* hug the right side of the hero grid */
+  }
+}
+
+/* =========================================================
+   HERO: lock stats bars + CTA to the exact same width
+   (only affects the HERO section)
+   ========================================================= */
+
+.dc-hero .dc-hero-right {
+  /* tweak this one value if you want the whole right rail narrower/wider */
+  --dc-hero-rail: 560px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  /* right-rail alignment */
+  align-items: flex-end;
+}
+
+/* ✅ SAME WIDTH for: stats container + CTA row */
+.dc-hero .dc-hero-right .dc-hero-metrics,
+.dc-hero .dc-hero-right .dc-hero-cta-row {
+  width: min(100%, var(--dc-hero-rail)) !important;
+  max-width: var(--dc-hero-rail) !important;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+/* ✅ Stats stacked (one per row) whenever visible */
+@media (min-width: 900px) {
+  .dc-hero .dc-hero-right .dc-hero-metrics {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* each bar fills the rail */
+  .dc-hero .dc-hero-right .dc-hero-metric {
+    width: 100% !important;
+  }
+
+  /* CTA row behaves like a full-width block */
+  .dc-hero .dc-hero-right .dc-hero-cta-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* kill any “button max-width / centered” styling coming from DATButtonLink */
+  .dc-hero .dc-hero-right .dc-hero-cta-row .dc-hero-cta,
+  .dc-hero .dc-hero-right .dc-hero-cta-row a,
+  .dc-hero .dc-hero-right .dc-hero-cta-row button {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    align-self: stretch !important;
+  }
+}
+
+/* =========================
+   Kraft topnav backlink — eyebrow style (single source of truth)
+   ========================= */
+
+/* Base */
+.dc-kraft-topnav .dc-kraft-container a.dc-kraft-backlink {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45rem;
+
+  /* eyebrow vibe */
+  font-size: clamp(0.82rem, 1.6vw, 0.96rem) !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+
+  /* dark purple */
+  color: #31044d !important;
+
+  /* no underline / no “fake underline” */
+  text-decoration: none !important;
+  background-image: none !important;
+
+  padding: 0 !important;
+  border: 0 !important;
+  background-color: transparent !important;
+
+  transition:
+    color 160ms ease,
+    letter-spacing 220ms ease,
+    transform 160ms ease;
+}
+
+.dc-kraft-topnav .dc-kraft-container a.dc-kraft-backlink::before {
+  content: "←";
+  opacity: 0.6;
+  transform: translateY(-0.5px);
+}
+
+/* Hover */
+.dc-kraft-topnav .dc-kraft-container a.dc-kraft-backlink:hover {
+  color: #ffcc00 !important;
+  letter-spacing: 0.19em !important; /* subtle expand */
+  transform: translateY(-1px);
+  text-decoration: none !important;
+  background-image: none !important;
+}
+
+/* Active */
+.dc-kraft-topnav .dc-kraft-container a.dc-kraft-backlink:active {
+  transform: translateY(0);
+}
+
+/* Focus */
+.dc-kraft-topnav .dc-kraft-container a.dc-kraft-backlink:focus-visible {
+  outline: 2px solid #31044d !important;
+  outline-offset: 3px;
+  text-decoration: none !important;
+}
+
+/* Tighter top/bottom spacing around the backlink row */
+.dc-kraft-topnav {
+  padding-top: 1px !important;
+  padding-bottom: 1px !important;
+}
+
+/* If there’s still extra space, it’s usually the container */
+.dc-kraft-topnav .dc-kraft-container {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* And remove any default margins that might be coming from surrounding elements */
+.dc-kraft-topnav .dc-kraft-container a.dc-kraft-backlink {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+}
+
+/* =========================================
+   HARD OVERRIDE: tighten "All Drama Clubs" row
+   Put at VERY BOTTOM of dramaClubPage.css
+   ========================================= */
+
+/* Kill any gap between hero and the topnav row */
+.dc-hero + .dc-kraft-topnav {
+  margin-top: 2.5rem !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Tighten the topnav wrapper itself */
+.dc-kraft-topnav {
+  margin: 0 !important;
+  padding-block: 0px !important; /* 👈 tighten here */
+  margin-left: 4.5rem !important;
+
+}
+
+/* Containers often carry the real padding */
+.dc-kraft-topnav .dc-kraft-container {
+  margin: 0 !important;
+  padding-block: 0px !important; /* 👈 tighten here */
+}
+
+/* Tight eyebrow-style link (no underline) */
+.dc-kraft-topnav .dc-kraft-backlink {
+  margin: 0 !important;
+  padding: 0 !important;
+  text-decoration: none !important;
+
+  color: #241123 !important; /* dark purple */
+  font-size: 0.78rem !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  font-weight: 800 !important;
+  line-height: 1 !important;
+
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45rem;
+
+  transition: color 160ms ease, letter-spacing 180ms ease, transform 160ms ease;
+}
+
+.dc-kraft-topnav .dc-kraft-backlink::before {
+  content: "←";
+  opacity: 0.7;
+  transform: translateY(-0.5px);
+}
+
+/* Yellow hover + subtle tracking expansion */
+.dc-kraft-topnav .dc-kraft-backlink:hover {
+  color: #ffcc00 !important;
+  letter-spacing: 0.18em !important;
+  transform: translateY(-1px);
+}
+
+/* Tighten the space BELOW the link by pulling up the next section */
+.dc-kraft-topnav + .dc-card-shell {
+  margin-top: 8px !important;  /* 👈 tighten here (try 4px if you want tighter) */
+  padding-top: 0 !important;
+}
+
+/* =========================================
+   Tighten space ABOVE the Club Snapshot card
+   (Put at VERY BOTTOM of dramaClubPage.css)
+   ========================================= */
+
+/* Reduce gap between the kraft backlink row and the white card */
+.dc-card-shell {
+  margin-top: 0.5rem !important;  /* try 4px if you want it tighter */
+  padding-top: 0 !important;
+}
+
+/* Kill any margin the microcard itself might have */
+.dc-microcard-shell {
+  margin-top: 0.5rem !important;
+}
+
+/* ============================================
+   Moments Gallery (restore sizing + layout)
+   ============================================ */
+
+.dc-moments-section {
+  margin-top: clamp(20px, 3vw, 28px);
+  border-top: 1px solid rgba(36, 17, 35, 0.12);
+  padding-top: 12px;
+  padding-bottom: 1.8rem;
+}
+
+.dc-moments-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dc-moments-subhead {
+  margin: 0;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(36, 17, 35, 0.5);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.dc-moments-club {
+  font-weight: 700;
+  color: rgba(36, 17, 35, 0.8);
+}
+
+/* Use GRID so tiles never collapse */
+.dc-moments-track {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 220px));
+  gap: 10px;
+  justify-content: start;
+}
+
+/* Buttons must be block + full width */
+.dc-moments-card {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  text-align: left;
+}
+
+/* THIS is the critical sizing box for next/image fill */
+.dc-moments-img-shell {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fdfaf7;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.10), 0 1px 3px rgba(0,0,0,0.06);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+/* fallback for older browsers */
+@supports not (aspect-ratio: 1 / 1) {
+  .dc-moments-img-shell {
+    height: 220px;
+  }
+}
+
+/* sheen */
+.dc-moments-img-shell::after {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: linear-gradient(
+    120deg,
+    transparent 45%,
+    rgba(255, 255, 255, 0.10) 50%,
+    transparent 55%
+  );
+  transform: translateX(-60%) rotate(8deg);
+  opacity: 0;
+  transition: transform 500ms ease, opacity 300ms ease;
+  pointer-events: none;
+}
+
+/* For the <img> fallback only */
+.dc-moments-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.dc-moments-card:hover .dc-moments-img-shell {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 14px 28px rgba(0,0,0,0.18), 0 3px 8px rgba(0,0,0,0.12);
+}
+
+.dc-moments-card:hover .dc-moments-img-shell::after {
+  opacity: 0.6;
+  transform: translateX(60%) rotate(8deg);
+}
+
+.dc-moments-footer {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-family: var(--font-space-grotesk, system-ui, sans-serif);
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: rgba(36, 17, 35, 0.6);
+}
+
+.dc-moments-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  font: inherit;
+  color: #6c00af;
+  transition: color 150ms ease, transform 150ms ease, letter-spacing 150ms ease, opacity 150ms ease;
+}
+
+.dc-moments-toggle:hover {
+  color: #f23359;
+  transform: translateY(-1px);
+  letter-spacing: 0.14em;
+  opacity: 0.96;
+}
+
+@media (max-width: 900px) {
+  .dc-moments-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dc-moments-card {
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .dc-moments-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .dc-moments-subhead {
+    text-align: left;
+    white-space: normal;
+  }
+  .dc-moments-track {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
+   Fix: never let Drama Club page become a scroll container
+   (restores global header autohide behavior)
+   ============================================ */
+
+.dc-page-shell,
+.dc-page-shell > main,
+.dc-card-shell {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* Keep only horizontal clipping if needed */
+.dc-page-shell {
+  overflow-x: hidden !important;
+}
+
+/* =========================================================
+   DRAMA CLUB — SINGLE SOURCE OVERRIDES (PASTE LAST)
+   ========================================================= */
+
+/* ---------- Microcard: 30% / 70% + right side stretches ---------- */
+.dc-microcard-shell {
+  grid-template-columns: minmax(0, 5fr) minmax(0, 5fr) !important; 
+  align-items: stretch !important;
+}
+
+.dc-microcard-shell .dc-card-top {
+  grid-template-columns: minmax(0, 5fr) minmax(0, 5fr) !important; 
+  align-items: stretch !important;
+}
+
+@media (max-width: 900px) {
+  .dc-microcard-shell,
+  .dc-microcard-shell .dc-card-top {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Ensure BOTH sides can grow full height of the row */
+.dc-microcard-media,
+.dc-microcard-media-inner,
+.dc-microcard-shell .dc-snapshot-panel {
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* ---------- Right column “eyebrows” (dt) = ONE LINE ---------- */
+.dc-snapshot-stamp dt,
+.dc-fact-item dt {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Slightly tighter eyebrow styling inside microcard to prevent wrapping */
+.dc-microcard-shell .dc-snapshot-stamp dt {
+  font-size: 0.62rem !important;
+  letter-spacing: 0.16em !important;
+}
+
+/* ---------- Lead team: restore NO SCROLL flex wrap ---------- */
+.dc-lead-mini-wrap {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 19px 18px !important;
+  align-items: stretch !important;
+}
+
+.dc-lead-mini-wrap > * {
+  flex: 1 1 240px !important; /* shrink before wrap */
+  min-width: 210px !important;
+  max-width: 340px !important;
+}
+
+/* ---------- Footer nav: visible + no overlays eating clicks ---------- */
+.dc-kraft-footer-nav::before,
+.dc-kraft-footer-nav::after {
+  content: none !important;
+  display: none !important;
+}
+
+.dc-kraft-footer-nav {
+  width: 100% !important;
+  margin: 28px 0 36px !important;
+  padding: 18px 0 28px !important;
+  background: transparent !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.dc-kraft-footer-inner {
+  width: min(92%, 1200px) !important;
+  margin: 0 auto !important;
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+/* Just in case anything above left a bad pointer-events rule behind */
+.dc-kraft-footer-nav,
+.dc-kraft-footer-inner,
+.dc-kraft-footer-nav * {
+  pointer-events: auto !important;
+}
+
+/* ============================================
+   Footer nav: sit tight under the white card
+   ============================================ */
+
+/* 1) Remove the “air” under the card shell */
+.dc-card-shell {
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* 2) Make sure the card itself isn’t adding bottom space */
+.dc-card {
+  margin-bottom: 0 !important;
+}
+
+/* 3) Kill margin-collapse from the last child inside the card
+      (common culprit: last section has margin-bottom) */
+.dc-card::after {
+  content: "";
+  display: block;
+  height: 0;
+  clear: both;
+}
+
+/* Alternative / extra safety if needed: */
+/* .dc-card { overflow: auto; } */
+
+/* 4) Pull footer nav up snug to the card */
+.dc-kraft-footer-nav {
+  margin-top: 0 !important;
+  padding-top: 16px; /* adjust: 8–18px depending on taste */
+}
+
+
+/* ============================================
+   Lead team mini cards — 3-up through tablets, full-width stacked on mobile
+   ============================================ */
+
+.dc-lead-mini-wrap{
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 10px !important;              /* tighter spacing */
+  align-items: start;
+  justify-items: center;             /* prevents weird stretching when there’s extra room */
+}
+
+/* Make each grid item choose a "real" card width (not stretched),
+   but still able to shrink if the column is tight. */
+.dc-lead-mini-wrap > *{
+  width: 100% !important;
+  max-width: 320px;                  /* “actual” card width target — tweak 300–360 if you want */
+  min-width: 0 !important;
+}
+
+/* If the immediate child is a Link (<a>), ensure it doesn’t constrain the card */
+.dc-lead-mini-wrap > a{
+  width: 100% !important;
+  max-width: 320px;
+}
+
+/* And if the card inside the link has a fixed width, force it to fill the wrapper */
+.dc-lead-mini-wrap > * > *{
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Mobile: stacked, full width (true "full size") */
+@media (max-width: 374px){
+  .dc-lead-mini-wrap{
+    grid-template-columns: 1fr !important;
+    justify-items: stretch;          /* now they should span the full container */
+    gap: 12px !important;
+  }
+
+  .dc-lead-mini-wrap > *,
+  .dc-lead-mini-wrap > a{
+    max-width: none !important;      /* remove the “actual size” cap so it can go full width */
+  }
+}
+
+/* ============================================================
+   MiniProfileCard: smooth shrink (NO breakpoint snap)
+   Keeps your perfect desktop/tablet/mobile layout,
+   but prevents overlap in the in-between zone.
+   ============================================================ */
+
+.dc-lead-mini-wrap {
+  /* smooth spacing so there isn’t a “jump” */
+  gap: clamp(6px, 1vw, 14px);
+}
+
+/* Critical: let items + their contents shrink instead of overflowing */
+.dc-lead-mini-wrap > * {
+  min-width: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.dc-lead-mini-wrap > * * {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* Prevent one long name/role from forcing the whole card wider */
+.dc-lead-mini-wrap :where(h1, h2, h3, p, span) {
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  white-space: normal !important;
+}
+
+/* ============================================
+   IMPACT SECTION — FINAL OVERRIDES
+   Paste at VERY END of dramaClubPage.css
+   ============================================ */
+
+/* 30% / 70% on desktop */
+.dc-impact-inner {
+  grid-template-columns: minmax(320px, 0.9fr) minmax(0, 2.1fr);
+  align-items: stretch;
+}
+
+/* Collapse cleanly */
+@media (max-width: 960px) {
+  .dc-impact-inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Left column: don’t cap too early if you want it to breathe */
+.dc-impact-left {
+  max-width: none;
+}
+
+/* Right card MUST fill the full 70% column */
+.dc-impact-card {
+  width: 100%;
+  max-width: none;      /* <-- this is what was preventing full stretch */
+  opacity: 1;           /* avoid washing out children */
+  align-self: stretch;
+
+  background-color: #0c5361; /* darker sibling of #2493a9 */
+  border-radius: 28px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+
+  padding: clamp(18px, 2.2vw, 26px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Section bg stays as your teal */
+.dc-impact-section {
+  background-color: #2493a9;
+}
+
+/* ---- “Eyebrows” / headings: force single line ---- */
+.dc-impact-band-eyebrow,
+.dc-impact-resources .dc-mini-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Band grids ---- */
+.dc-impact-band-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .dc-impact-band-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---- Unified tile styling (top pair + band cards) ---- */
+.dc-impact-metric-item,
+.dc-impact-band-card {
+  background-color: #032b34; /* your stat-tile color */
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 20px;
+  padding: 14px 16px 16px;
+  color: #fefcf7;
+}
+
+/* Big number */
+.dc-impact-metric-value,
+.dc-impact-band-value {
+  display: block;
+  font-size: 2.05rem;
+  line-height: 0.95;
+  letter-spacing: 0.06em;
+  color: #ffcc00;
+}
+
+/* Label: ONE LINE (no wrapping) */
+.dc-impact-metric-label,
+.dc-impact-band-label {
+  margin-top: 8px;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1.25;
+
+  white-space: wrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Helper can wrap */
+.dc-impact-metric-helper,
+.dc-impact-band-helper {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+/* ✅ Force any CTA glow pseudo-layer BEHIND the button, never on top */
+.dc-impact-cta,
+.dc-cta {
+  position: relative;
+  isolation: isolate; /* creates a stacking context so z-index:-1 behaves */
+  z-index: 0;
+}
+
+.dc-impact-cta::before,
+.dc-impact-cta::after,
+.dc-cta::before,
+.dc-cta::after {
+  z-index: -1 !important;
+  pointer-events: none;
+}
+
+/* ============================================================
+   FIX: CTA glow MUST live UNDER the button (not over the face)
+   Put this at the VERY BOTTOM of dramaClubPage.css
+   ============================================================ */
+
+/* Make sure the button is an isolated stacking context */
+.dc-impact-cta {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  overflow: visible;
+
+  /* Critical: keep the button face opaque so nothing "shines through" */
+  --dc-cta-bg: #00313bff;
+  --dc-cta-bg-hover: #0a3a42ff;
+
+  /* Kill any old face-level glow */
+  box-shadow: none !important;
+}
+
+/* If you have generic .dc-cta glow elsewhere, prevent it on THIS one */
+.dc-impact-cta.dc-cta {
+  box-shadow: none !important;
+}
+
+/* Both glow layers sit BELOW the button */
+.dc-impact-cta::before,
+.dc-impact-cta::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+
+  /* This is the key: start below the button, not behind its face */
+  top: calc(100% + 8px);
+
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: -1;
+
+  border-radius: 999px;
+  filter: blur(18px);
+}
+
+/* Soft white underglow */
+.dc-impact-cta::before {
+  width: 150%;
+  height: 26px;
+  opacity: 0.75;
+  background: radial-gradient(
+    closest-side,
+    rgba(255, 255, 255, 0.85),
+    rgba(255, 255, 255, 0)
+  );
+}
+
+/* Subtle purple depth underglow */
+.dc-impact-cta::after {
+  top: calc(100% + 12px);
+  width: 170%;
+  height: 34px;
+  opacity: 0.35;
+  background: radial-gradient(
+    closest-side,
+    rgba(108, 0, 175, 0.55),
+    rgba(108, 0, 175, 0)
+  );
+}
+
+/* Hover/focus: stronger, still ONLY underneath */
+.dc-impact-cta:hover::before,
+.dc-impact-cta:focus-visible::before {
+  opacity: 1;
+}
+
+.dc-impact-cta:hover::after,
+.dc-impact-cta:focus-visible::after {
+  opacity: 0.5;
+}
+
+/* ============================================================
+   CTA HALO: glow wraps around the button, but stays BEHIND it
+   Put this at the VERY BOTTOM of dramaClubPage.css
+   ============================================================ */
+
+.dc-impact-cta-row { overflow: visible; } /* ensure nothing clips the halo */
+
+.dc-impact-cta {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;   /* keeps z-index:-1 inside this element */
+  overflow: visible;
+
+  /* IMPORTANT: button face must be opaque so the glow can't "sit on" it */
+  background-color: #00313bff !important;
+}
+
+/* Kill any old face-level glow that may be coming from .dc-cta defaults */
+.dc-impact-cta.dc-cta {
+  box-shadow: none !important;
+}
+
+/* The halo layer (white) */
+.dc-impact-cta::before {
+  content: "";
+  position: absolute;
+  inset: -14px;           /* <-- this creates glow above/below/around */
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: -1;
+
+  background: radial-gradient(
+    closest-side,
+    rgba(255,255,255,0.85),
+    rgba(255,255,255,0)
+  );
+  filter: blur(16px);
+  opacity: 0.85;
+  transform: translateZ(0);
+}
+
+/* The depth/accent layer (purple) */
+.dc-impact-cta::after {
+  content: "";
+  position: absolute;
+  inset: -20px;          /* slightly larger than ::before */
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: -1;
+
+  background: radial-gradient(
+    closest-side,
+    rgba(108,0,175,0.55),
+    rgba(108,0,175,0)
+  );
+  filter: blur(22px);
+  opacity: 0.45;
+  transform: translateZ(0);
+}
+
+/* Hover/focus: stronger halo, still behind */
+.dc-impact-cta:hover::before,
+.dc-impact-cta:focus-visible::before { opacity: 1; }
+
+.dc-impact-cta:hover::after,
+.dc-impact-cta:focus-visible::after { opacity: 0.65; }
+
+
+
+/* ✅ Surgical override: keep glow ONLY underneath + centered + bigger */
+.dc-impact-cta::before{
+  inset: auto !important;
+  left: 50% !important;
+  top: calc(100% + 10px) !important;
+  transform: translateX(-24%) !important;
+  width: 190% !important; height: 64px !important;
+  opacity: 0.95 !important; filter: blur(26px) !important;
+}
+
+/* FIX: center the halo on the button (behind it), not “below it” */
+.dc-impact-cta::before {
+  inset: 0px !important;     /* was 60% ... : this recenters the glow */
+}
+
+.dc-impact-cta { isolation: isolate; }
+.dc-impact-cta::before,
+.dc-impact-cta::after { z-index: -1 !important; }
+
+/* ✅ Drama Club Impact CTA: halo BEHIND the button (not on the face) */
+a.dc-cta.dc-impact-cta::before,
+a.dc-cta.dc-impact-cta::after { content: none !important; }
+
+a.dc-cta.dc-impact-cta {
+  filter: drop-shadow(0 0 26px rgba(255,255,255,1))
+
+}
+
+a.dc-cta.dc-impact-cta:hover,
+a.dc-cta.dc-impact-cta:focus-visible {
+  filter: drop-shadow(0 0 34px rgba(255,255,255,1))
+
+}
+
+/* Glow color: use #f2f2f2 instead of pure white */
+.dc-impact-cta::before {
+  background: radial-gradient(
+    closest-side,
+    rgba(242, 242, 242, 0.85)
+  );
+}
+
+/* Hover: ONLY dark blue button face changes (not text, not glow) */
+.dc-impact-cta:hover,
+.dc-impact-cta:focus-visible {
+  background-color: rgba(0, 49, 59, 0.86) !important; /* same color, lower alpha */
+}
+
+/* Hover: glow gets brighter (no opacity on the button element itself) */
+.dc-impact-cta:hover::before,
+.dc-impact-cta:focus-visible::before {
+  opacity: 1;
+}
+
+.dc-impact-cta:hover::after,
+.dc-impact-cta:focus-visible::after {
+  opacity: 0.45;
+}
+
+/* ============================================================
+   Lead team (mobile): make MiniProfileCards fill the container
+   ============================================================ */
+
+@media (max-width: 700px) {
+  .dc-lead-mini-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+  }
+
+  .dc-lead-mini-item {
+    width: 100%;
+  }
+
+  /* 🔑 Force whatever MiniProfileCard renders first to be full width */
+  .dc-lead-mini-item > * {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* If MiniProfileCard is a Link (<a>) or wrapped by one */
+  .dc-lead-mini-item a {
+    display: block;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* If the card is “shrunk” by a transform somewhere */
+  .dc-lead-mini-item * {
+    transform: none !important;
+  }
+}
+
+/* ============================================================
+   LEAD TEAM — Mobile: stacked + FULL WIDTH (no scaling)
+   Put at VERY BOTTOM of dramaClubPage.css
+   ============================================================ */
+
+/* Let grid items stretch to fill the column */
+.dc-lead-mini-wrap {
+  justify-items: stretch; /* instead of start */
+}
+
+.dc-lead-mini-item {
+  width: 100%;
+  transform: none !important; /* kill the scale shrink */
+}
+
+/* Force whatever MiniProfileCard renders to behave like a full-width block */
+.dc-lead-mini-item > * {
+  width: 100%;
+  max-width: none;
+  display: block;
+}
+
+/* Mobile: 1 column stack, full width */
+@media (max-width: 374px) {
+  .dc-lead-mini-wrap {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ────────────────────────────────────────────── */
+/* LEAD TEAM — mobile: stacked + FULL WIDTH cards */
+/* ────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  /* force a single column stack */
+  .dc-lead-mini-wrap {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  /* kill the desktop flex sizing caps */
+  .dc-lead-mini-wrap > * {
+    flex: none;
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+
+  /* ensure your wrapper doesn’t shrink it */
+  .dc-lead-mini-item {
+    width: 100%;
+    transform: none; /* in case any older scale rule is still winning */
+  }
+
+  /* whatever MiniProfileCard renders as the first child: make it fill */
+  .dc-lead-mini-item > * {
+    width: 100%;
+    max-width: none;
+    display: block;
+  }
+
+  /* if the card is wrapped in a link, make the link fill too */
+  .dc-lead-mini-item a {
+    display: block;
+    width: 100%;
+  }
+}
+
+/* ✅ Lead team: full-width stacked cards on mobile */
+@media (max-width: 720px) {
+  .dc-lead-mini-wrap {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dc-lead-mini-wrap > * {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  /* In case the wrapper inside MiniProfileCard is inline-flex */
+  .dc-lead-mini-item,
+  .dc-lead-mini-item > * {
+    width: 100%;
+  }
+}
+
+/* ────────────────────────────────────────────── */
+/* Lead team — MOBILE: make MiniProfileCards ~200% */
+/* ────────────────────────────────────────────── */
+@media (max-width: 374px) {
+  /* force a clean vertical stack */
+  .dc-lead-mini-wrap {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 16px !important; /* bigger gap because cards are bigger */
+  }
+
+  /* each item spans the container */
+  .dc-lead-mini-wrap > * {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
+/* ────────────────────────────────────────────── */
+/* Lead team — MOBILE: make MiniProfileCards ~200% */
+/* ────────────────────────────────────────────── */
+@media (max-width: 374px) {
+  /* force a clean vertical stack */
+  .dc-lead-mini-wrap {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 16px !important; /* bigger gap because cards are bigger */
+  }
+
+  /* each item spans the container */
+  .dc-lead-mini-wrap > * {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
+  /*
+    200% bigger:
+    - zoom enlarges the rendered card
+    - width:50% compensates so the enlarged card still fits the container width
+  */
+  .dc-lead-mini-item {
+    width: 50% !important;
+    zoom: 1.2;
+  }
+
+  /* keep the actual card/link from having an internal max-width cap */
+  .dc-lead-mini-item > *,
+  .dc-lead-mini-item a,
+  .dc-lead-mini-item div {
+    max-width: none !important;
+  }
+}
+
+}
+
+/* ────────────────────────────────────────────── */
+/* LEAD TEAM — responsive rules (single source)   */
+/* ────────────────────────────────────────────── */
+
+/* Base: your “NO SCROLL, shrink before wrap” */
+.dc-lead-mini-wrap {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  align-items: stretch;
+}
+
+.dc-lead-mini-item {
+  flex: 1 1 240px;
+  min-width: 210px;
+  max-width: 340px;
+  width: 100%;
+  transform: none; /* kill old shrink */
+}
+
+/* 374–640: force 3 across */
+@media (min-width: 374px) and (max-width: 640px) {
+  .dc-lead-mini-wrap {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    align-items: start;
+  }
+
+  .dc-lead-mini-item {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    transform: scale(0.86);         /* fit 3 across */
+    transform-origin: top left;
+  }
+}
+
+/* <374: single column, full width, ~200% bigger than your old 0.81 shrink */
+@media (max-width: 373px) {
+  .dc-lead-mini-wrap {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .dc-lead-mini-item {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    transform: scale(1.62);         /* ~2x your previous 0.81 */
+    transform-origin: top left;
+  }
+}
+
+/* Local stewardship — unshaded (heading matches "Causes we champion") */
+.dc-stewardship-block {
+  margin-top: 14px; /* keep rhythm similar to other blocks */
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.dc-stewardship-body {
+  margin-top: 8px; /* replaces the inline style */
+}
+
+/* ============================================
+   Spotlight blocks (ONLY these two)
+   - Shared community needs
+   - Current projects
+   ============================================ */
+
+.dc-needs-block--community-needs,
+.dc-needs-block--current-projects {
+  /* deep DAT purple with a subtle pink “bloom” */
+  background:
+    radial-gradient(900px 240px at 18% 0%, rgba(242, 51, 89, 0.18), transparent 62%),
+    #241123;
+
+  border: 1px solid rgba(242, 51, 89, 0.28);
+  border-radius: 18px;
+  padding: 16px 16px 14px;
+
+  box-shadow: 0 18px 50px rgba(36, 17, 35, 0.35);
+}
+
+/* Heading */
+.dc-needs-block--community-needs .dc-mini-label,
+.dc-needs-block--current-projects .dc-mini-label {
+  color: #f23359;
+  letter-spacing: 0.12em;
+}
+
+/* Body copy + list text */
+.dc-needs-block--community-needs,
+.dc-needs-block--current-projects {
+  color: #ff9bb3; /* light DAT pink for body */
+}
+
+.dc-needs-block--community-needs .dc-needs-list,
+.dc-needs-block--current-projects .dc-needs-list {
+  color: inherit;
+}
+
+/* Bullet markers pop */
+.dc-needs-block--community-needs .dc-needs-list li::marker,
+.dc-needs-block--current-projects .dc-needs-list li::marker {
+  color: rgba(242, 51, 89, 0.95);
+}
+
+/* Links inside these blocks should read on dark bg */
+.dc-needs-block--community-needs .dc-link--purple,
+.dc-needs-block--current-projects .dc-link--purple {
+  color: #ffcc00; /* DAT yellow for contrast */
+}
+
+.dc-needs-block--community-needs .dc-link--purple:hover,
+.dc-needs-block--current-projects .dc-link--purple:hover {
+  color: #f23359;
+}
+
+/* =========================================================
+   5.2 refinements — link variants, visible story-map pulse,
+   smaller updates form, footer nav alignment, graceful one-col
+   Paste at the BOTTOM of components/drama/dramaClubPage.css
+   ========================================================= */
+
+/* ---------- Global link behavior (no underline; subtle hover) ---------- */
+.dc-link,
+.dc-resource-link,
+.dc-snapshot-footer-link,
+.dc-kraft-backlink,
+.dc-kraft-nav-index {
+  text-decoration: none;
+  letter-spacing: normal;
+  display: inline-block;
+  transition: color 180ms ease, letter-spacing 180ms ease, filter 180ms ease,
+    transform 180ms ease;
+}
+
+.dc-link:hover,
+.dc-resource-link:hover,
+.dc-snapshot-footer-link:hover,
+.dc-kraft-backlink:hover,
+.dc-kraft-nav-index:hover {
+  letter-spacing: 0.03em;
+}
+
+/* Only apply brightness hover to “unclassified” links */
+.dc-link:not(.dc-link--yellow):not(.dc-link--purple-pink):not(.dc-link--teal):hover,
+.dc-resource-link:hover,
+.dc-kraft-backlink:hover,
+.dc-kraft-nav-index:hover {
+  filter: brightness(1.08);
+}
+
+/* ---------- Link variants (your exact color notes) ---------- */
+
+/* Needs + Projects CTA: yellow → pink hover */
+.dc-link--yellow-pink {
+  color: #ffcc00;
+}
+.dc-link--yellow-pink:hover {
+  color: #f23359;
+}
+
+/* Partners / Voices / Alumni: #6c00af → #f23359 on hover */
+.dc-link--purple-pink {
+  color: #6c00af;
+}
+.dc-link--pink:hover {
+  color: #f23359;
+  filter: none;
+}
+
+/* ---------- Inline CTA wrapper — subtle spacing ---------- */
+.dc-inline-cta {
+  margin-top: 10px;
+}
+.dc-inline-cta--voices {
+  margin-top: 14px;
+}
+.dc-inline-cta--partners {
+  margin-top: 12px;
+}
+.dc-inline-cta--alumni {
+  margin-top: 10px;
+}
+
+/* Explore the Story Map — pulse (NO bounce) */
+.dc-snapshot-footer-link--pulse {
+  display: inline-block;
+  animation: dcStoryMapPulse 1.15s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+@keyframes dcStoryMapPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.62;
+
+  }
+}
+
+
+/* ---------- Fine print under the glowing sponsor button (subtle) ---------- */
+.dc-impact-fineprint {
+  margin-top: 8px;
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+  opacity: 0.68;
+}
+
+/* ---------- Email capture — smaller + more subtle; button stays right ---------- */
+.dc-impact-updates-form {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.dc-impact-updates-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.82rem;
+  opacity: 0.75;
+}
+
+.dc-impact-updates-fields {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap; /* keep “Sign up” to the right */
+}
+
+@media (max-width: 420px) {
+  .dc-impact-updates-fields {
+    flex-wrap: wrap; /* avoid overflow on tiny screens */
+  }
+}
+
+.dc-impact-email-input {
+  flex: 1 1 auto;
+  min-width: 170px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: rgba(255, 255, 255, 0.7);
+  outline: none;
+  font-size: 0.88rem;
+}
+
+.dc-impact-email-input:focus {
+  border-color: rgba(0, 0, 0, 0.18);
+}
+
+.dc-impact-email-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  background: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0.85;
+  transition: opacity 180ms ease, filter 180ms ease, border-color 180ms ease;
+}
+
+.dc-impact-email-button:hover {
+  opacity: 1;
+  filter: brightness(1.04);
+  border-color: rgba(0, 0, 0, 0.16);
+}
+
+/* Ensure the “text CTA under community needs / projects / etc” stays body-scale */
+.dc-inline-cta .dc-link {
+  font-size: inherit;
+}
+
+/* ---------- Graceful skip: if Voices column isn't rendered, go true one-col ---------- */
+.dc-layout.dc-layout--onecol {
+  grid-template-columns: 1fr !important;
+}
+
+/* ---------- Footer kraft nav: centered container; prev/next align to card corners ---------- */
+.dc-kraft-footer-inner {
+  width: min(1100px, calc(100% - 40px));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.dc-kraft-nav-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dc-kraft-nav-item--prev {
+  justify-self: start;
+  text-align: left;
+}
+
+.dc-kraft-nav-item--next {
+  justify-self: end;
+  text-align: right;
+}
+
+.dc-kraft-nav-index {
+  justify-self: center;
+}
+
+/* Ensure this teal link is NOT forced to uppercase */
+.dc-link--teal {
+  text-transform: none !important;
+  letter-spacing: normal;
+}
+
+/* Email capture in RIGHT column (under footprint blocks) */
+.dc-impact-updates-form--right {
+  margin-top: 12px;   /* space under the dark blocks */
+  opacity: 0.65;      /* overall subtle */
+}
+
+.dc-impact-updates-form--compact .dc-impact-updates-label {
+  font-size: 0.78rem;
+  opacity: 0.82;
+  margin-bottom: 6px;
+}
+
+.dc-impact-updates-form--compact .dc-impact-updates-fields {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.dc-impact-updates-form--compact .dc-impact-email-input {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  border-radius: 10px;
+}
+
+.dc-impact-updates-form--compact .dc-impact-email-button {
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+/* CTA stack + centered fineprint */
+.dc-impact-cta-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px; /* space between button + fineprint */
+}
+
+.dc-impact-fineprint {
+  margin: 0;
+  text-align: center;
+}
+
+/* Right column wrapper so email can sit below the card (light teal) */
+.dc-impact-right {
+  display: flex;
+  flex-direction: column;
+  gap: 40px; /* space between dark card and email form */
+  min-width: 0;
+}
+
+/* Add a little breathing room UNDER the headings */
+.dc-impact-band-eyebrow {
+  margin-bottom: 12px;
+  margin-top: 0px
+}
+
+/* Reduce space ABOVE "What your sponsorship makes possible" */
+.dc-impact-band-block--bottom {
+  margin-top: -5px; /* lower this if it's still too big */
+}
+
+/* Ensure the contact link is the same size as other inline links */
+.dc-impact-card .dc-link--teal {
+  font-size: inherit;
+  font-weight: 400;
+  letter-spacing: inherit;
+  text-transform: none;
+  margin-top: -20px;
+  margin-bottom: 0;
+}
+
+/* Email form below card should feel small/subtle and belong to the light teal */
+.dc-impact-updates-form--below-card {
+  margin: 0;
+  padding: 10px;
+}
+
+/* Make the email row compact */
+.dc-impact-updates-form--below-card .dc-impact-updates-fields {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Optional: slightly tighter controls if yours look too big */
+.dc-impact-updates-form--below-card .dc-impact-email-input,
+.dc-impact-updates-form--below-card .dc-impact-email-button {
+  height: 35px; /* tweak if you want smaller */
+}
+
+/* 1) Give ~40px ABOVE the CTA (and glow) */
+.dc-impact-body {
+  margin-bottom: 0; /* so spacing is controlled by the CTA stack */
+}
+
+.dc-impact-cta-stack {
+  margin-top: 40px; /* ✅ this is the space you’re asking for */
+}
+
+/* If your button has its own margin, kill it so the 40px is accurate */
+.dc-impact-cta {
+  margin-top: 0;
+}
+
+/* 2) Tighten “Stand with …” line spacing */
+.dc-impact-title {
+  line-height: 1.6;   /* much tighter */
+  margin-top: 4px;
+  margin-bottom: 14px; /* optional: keeps it from feeling cramped */
+}
+
+/* Email signup: Space Grotesk + heavier weight */
+.dc-impact-updates-label--grotesk,
+.dc-impact-email-button--grotesk {
+  font-family: var(--font-space-grotesk, var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif));
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #03252bce
+}
+
+.dc-impact-updates-label--grotesk {
+  margin-left: 9px;
+}
+
+/* Force all caps even if someone changes the button text later */
+.dc-impact-email-button--grotesk {
+  text-transform: uppercase;
+  letter-spacing: 0.06em; /* optional: feels good with Grotesk in caps */
+}
+/* Artist CTA link: FORCE purple baseline, pink on hover */
+a.dc-link.dc-link--artist {
+  color: #6c00af; /* purple */
+}
+
+a.dc-link.dc-link--artist:hover {
+  color: #f23359; /* pink */
+}
+
+/* Teal CTA link — ensure hover letterspacing actually applies */
+a.dc-link.dc-link--teal {
+  display: inline-block; /* makes letter-spacing transition reliable */
+}
+
+a.dc-link.dc-link--teal:hover {
+  letter-spacing: 0.02em;
+}
+
+/* Base (before hover) */
+.dc-snapshot-footer-link {
+  color: #f23359;
+}
+
+/* Hover (keep DAT purple) */
+.dc-snapshot-footer-link:hover {
+  color: #6c00af;
+}
+
+/* Optional: prevent “visited” from turning purple/blue */
+.dc-snapshot-footer-link:visited {
+  color: #f23359;
+}
+
+/* Base + visited = DAT pink */
+.dc-snapshot-footer-link,
+.dc-snapshot-footer-link:visited {
+  color: #f23359;
+}
+
+/* Hover (including visited+hover) = DAT purple */
+.dc-snapshot-footer-link:hover,
+.dc-snapshot-footer-link:visited:hover {
+  color: #6c00af;
+}
+
+/* Force Space Grotesk on the city/country + region lines only */
+.dc-hero-location {
+  font-family: var(--font-space-grotesk), var(--font-dm-sans), system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
