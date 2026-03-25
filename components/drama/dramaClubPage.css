@@ -121,7 +121,7 @@
   margin: 0.18rem 0 0.65rem;
   padding-right: 4rem;
   font-size: 0.95rem;
-  color: #ffe478;
+  color: #ffcc00;
   opacity: 0.9;
   text-shadow: 0 3px 8px rgba(0, 0, 0, 0.95);
   text-align: right;
@@ -318,9 +318,9 @@
   box-shadow: 0 20px 52px rgba(255, 204, 0, 0.18);
 }
 .dc-card--legacy {
-  border-color: rgba(108, 0, 175, 0.6);
-  box-shadow: 0 20px 52px rgba(108, 0, 175, 0.22);
-  background: rgba(250, 247, 255, 0.86);
+  border-color: rgba(36, 17, 35, 0.45);
+  box-shadow: 0 20px 52px rgba(36, 17, 35, 0.12);
+  background: rgba(248, 245, 240, 0.92);
 }
 
 /* ────────────────────────────────────────────── */
@@ -366,9 +366,9 @@
   color: #8a6400;
 }
 .dc-status-pill--legacy {
-  background: rgba(108, 0, 175, 0.22);
-  border-color: rgba(108, 0, 175, 0.7);
-  color: #3b1d59;
+  background: rgba(36, 17, 35, 0.08);
+  border-color: rgba(36, 17, 35, 0.45);
+  color: #241123;
 }
 
 /* ────────────────────────────────────────────── */
@@ -437,12 +437,12 @@
     90deg,
     rgba(255, 255, 255, 0.97) 0%,
     rgba(255, 255, 255, 0.97) 42%,
-    rgba(108, 0, 175, 0.22) 100%
+    rgba(36, 17, 35, 0.08) 100%
   );
-  border-color: rgba(108, 0, 175, 0.7);
+  border-color: rgba(36, 17, 35, 0.45);
 }
 .dc-snapshot-pill--legacy .dc-snapshot-strip-status {
-  color: #3b1d59;
+  color: #241123;
 }
 
 .dc-microcard-shell .dc-snapshot-pill {
@@ -488,8 +488,8 @@
   box-shadow: 0 16px 32px rgba(255, 204, 0, 0.18);
 }
 .dc-snapshot-panel--legacy {
-  border-color: rgba(108, 0, 175, 0.6);
-  box-shadow: 0 16px 32px rgba(108, 0, 175, 0.2);
+  border-color: rgba(36, 17, 35, 0.35);
+  box-shadow: 0 16px 32px rgba(36, 17, 35, 0.10);
 }
 
 /* v1 “who band” + fact grid (kept for backwards compatibility) */
@@ -593,7 +593,7 @@
   margin: 0;
   font-size: 0.88rem;
   line-height: 1.45;
-  color: #6c00af;
+  color: #2493a9;
 }
 
 /* ────────────────────────────────────────────── */
@@ -700,7 +700,7 @@
   letter-spacing: 0.16em;
   text-transform: uppercase;
   background: rgba(255, 255, 255, 0.96);
-  color: #6c00af;
+  color: #2493a9;
 }
 
 @media (max-width: 720px) {
@@ -827,15 +827,16 @@
 
 .dc-snapshot-footer-link {
   align-self: flex-end;
-  font-size: 1rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: #f23359;
   text-decoration: none;
-  font-family: var(--font-rock-salt, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", cursive);
+  letter-spacing: 0.04em;
+  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
 }
 
 .dc-snapshot-footer-link:hover {
-  color: #6c00af;
+  color: #241123;
 }
 
 .dc-snapshot-footer-donor {
@@ -894,12 +895,12 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   font-weight: 700;
-  color: #ce7eff;
+  color: #2493a9;
   white-space: nowrap;
 }
 
 .dc-snapshot-all-causes:hover {
-  color: #ffcc00;
+  color: #241123;
 }
 
 /* ────────────────────────────────────────────── */
@@ -934,12 +935,12 @@
 
 .dc-section-head {
   margin: 0 0 10px;
-  font-size: 0.86rem;
+  font-size: 0.72rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  font-weight: 300;
-  color: #241123b3;
-  font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  font-weight: 700;
+  color: #241123cc;
+  font-family: var(--font-dm-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
 }
 
 .dc-body {
@@ -1029,8 +1030,9 @@
 
 .dc-quote-block--alumni {
   margin-top: 0.9rem;
-  background: #f2e6ff;
+  background: rgba(36, 17, 35, 0.04);
   color: #241123;
+  border: 1px solid rgba(36, 17, 35, 0.08);
 }
 
 .dc-alumni-quote-role {
@@ -1383,9 +1385,17 @@
   flex-direction: column;
   padding: 0.3rem 0.6rem;
   border-radius: 10px;
-  border: 1px solid rgba(108, 0, 175, 0.24);
+  border: 1px solid rgba(36, 17, 35, 0.16);
   text-decoration: none;
-  background: #f7f0ff;
+  background: rgba(255, 255, 255, 0.9);
+  transition: background-color 150ms ease, border-color 150ms ease, transform 130ms ease, box-shadow 130ms ease;
+}
+
+.dc-alumni-chip:hover {
+  background: rgba(255, 204, 0, 0.12);
+  border-color: rgba(36, 17, 35, 0.24);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(36, 17, 35, 0.08);
 }
 
 .dc-alumni-name {
@@ -1396,7 +1406,7 @@
 
 .dc-alumni-role {
   font-size: 0.72rem;
-  color: #6c00af;
+  color: #2493a9;
 }
 
 /* ============================================
@@ -1783,7 +1793,7 @@
 }
 
 .dc-link--purple {
-  color: #6c00af;
+  color: #2493a9;
   text-transform: uppercase;
   letter-spacing: 0.16em;
   font-size: 0.75rem;
@@ -1791,12 +1801,12 @@
   font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
 }
 .dc-link--purple:hover {
-  color: #ffcc00;
+  color: #241123;
   letter-spacing: 0.19em;
 }
 
 .dc-link--light {
-  color: #6c00af;
+  color: #2493a9;
   opacity: 1;
   text-transform: uppercase;
   letter-spacing: 0.16em;
@@ -1805,7 +1815,7 @@
   font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
 }
 .dc-link--light:hover {
-  color: #ffcc00;
+  color: #241123;
   letter-spacing: 0.19em;
   opacity: 1;
 }
@@ -1813,17 +1823,17 @@
 .dc-link--teal {
   display: inline-flex;
   margin-top: 0rem;
-  color: #ce7effff;
+  color: #2493a9;
   opacity: 1;
   text-transform: uppercase;
   font-size: 0.78rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
   font-family: var(--font-space-grotesk, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
 }
 .dc-link--teal:hover {
-  color: #ffcc00;
-  letter-spacing: 0.21em;
+  color: #241123;
+  letter-spacing: 0.17em;
 }
 
 /* Alumni link helpers */
@@ -1872,7 +1882,7 @@
   border-color: rgba(255, 204, 0, 0.85);
 }
 .dc-microcard-shell--legacy {
-  border-color: rgba(108, 0, 175, 0.62);
+  border-color: rgba(36, 17, 35, 0.45);
 }
 
 .dc-microcard-inner {
@@ -2091,20 +2101,22 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
-  border-radius: 3px;
-  background: #f2f2f2;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.88);
   border: 1px solid rgba(36, 17, 35, 0.08);
   text-decoration: none;
   transition:
+    background-color 160ms ease,
     border-color 160ms ease,
     transform 160ms ease,
     box-shadow 160ms ease;
 }
 
 .partner-bar:hover {
-  background: #ffcc00;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 204, 0, 0.12);
+  border-color: rgba(36, 17, 35, 0.16);
+  box-shadow: 0 4px 12px rgba(36, 17, 35, 0.08);
   transform: translateY(-1px);
 }
 
@@ -2206,7 +2218,7 @@
   padding-bottom: 0;
 }
 
-/* ✅ Top “All Drama Clubs” link — base #ffcc00, hover #6c00af */
+/* Top “All Drama Clubs” link — base #ffcc00, hover Pink */
 .dc-page-shell .dc-kraft-backlink {
   color: #ffcc00 !important;
   text-decoration: none;
@@ -2227,7 +2239,7 @@
 }
 
 .dc-page-shell .dc-kraft-backlink:hover {
-  color: #6c00af !important;
+  color: #f23359 !important;
   letter-spacing: 0.18rem;
   transform: translateY(-1px);
 }
@@ -2431,16 +2443,19 @@
 .dc-lead-frameRole {
   font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-size: 0.92rem;
-  color: #6c00af;
+  color: #2493a9;
   margin: 6px 0 0 0;
-  opacity: 0.8;
+  opacity: 0.9;
   line-height: 1.2;
+}
+
+.dc-lead-frameCard {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .dc-lead-frameLink:hover .dc-lead-frameCard {
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
   transform: translateY(-3px);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 /* Legacy: mini grid */
@@ -2636,8 +2651,8 @@
 }
 
 .dc-kraft-backlink:hover {
-  color: #6c00af;
-  transform: translateY(1px);
+  color: #f23359;
+  transform: translateY(-1px);
 }
 
 .dc-kraft-footer-nav {
@@ -2698,11 +2713,13 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-size: 0.78rem;
-  color: #6c00af;
+  color: #241123;
+  opacity: 0.7;
 }
 
 .dc-kraft-nav-index:hover {
-  color: #ffcc00;
+  color: #241123;
+  opacity: 1;
 }
 
 
@@ -3402,9 +3419,9 @@
     opacity 0.25s ease;
 }
 
-/* Hover: purple */
+/* Hover: pink */
 .dc-page-shell .dc-kraft-topnav a:hover {
-  color: #6c00af;
+  color: #f23359;
   letter-spacing: 0.18rem;
   transform: translateY(-1px);
 }
@@ -4705,7 +4722,7 @@
   text-transform: inherit;
   letter-spacing: inherit;
   font: inherit;
-  color: #6c00af;
+  color: #2493a9;
   transition: color 150ms ease, transform 150ms ease, letter-spacing 150ms ease, opacity 150ms ease;
 }
 
@@ -5642,9 +5659,9 @@ a.dc-cta.dc-impact-cta:focus-visible {
   color: #f23359;
 }
 
-/* Partners / Voices / Alumni: #6c00af → #f23359 on hover */
+/* Partners / Voices / Alumni: teal baseline → #f23359 on hover */
 .dc-link--purple-pink {
-  color: #6c00af;
+  color: #2493a9;
 }
 .dc-link--pink:hover {
   color: #f23359;
@@ -5934,9 +5951,9 @@ a.dc-cta.dc-impact-cta:focus-visible {
   text-transform: uppercase;
   letter-spacing: 0.06em; /* optional: feels good with Grotesk in caps */
 }
-/* Artist CTA link: FORCE purple baseline, pink on hover */
+/* Artist CTA link: teal baseline, pink on hover */
 a.dc-link.dc-link--artist {
-  color: #6c00af; /* purple */
+  color: #2493a9;
 }
 
 a.dc-link.dc-link--artist:hover {
@@ -5957,9 +5974,9 @@ a.dc-link.dc-link--teal:hover {
   color: #f23359;
 }
 
-/* Hover (keep DAT purple) */
+/* Hover — deep ink */
 .dc-snapshot-footer-link:hover {
-  color: #6c00af;
+  color: #241123;
 }
 
 /* Optional: prevent “visited” from turning purple/blue */
@@ -5973,10 +5990,10 @@ a.dc-link.dc-link--teal:hover {
   color: #f23359;
 }
 
-/* Hover (including visited+hover) = DAT purple */
+/* Hover (including visited+hover) = deep ink */
 .dc-snapshot-footer-link:hover,
 .dc-snapshot-footer-link:visited:hover {
-  color: #6c00af;
+  color: #241123;
 }
 
 /* Force Space Grotesk on the city/country + region lines only */

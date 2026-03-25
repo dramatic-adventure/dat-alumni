@@ -1817,7 +1817,7 @@ const voicesHeading = `Voices from ${voicesFrom}`;
             <div
               className="dc-microcard-shell"
               style={{
-                border: `0.25px solid ${statusMeta.border}`,
+                border: `1px solid ${statusMeta.border}`,
               }}
             >
               <div className="dc-microcard-inner">
@@ -2898,9 +2898,9 @@ const voicesHeading = `Voices from ${voicesFrom}`;
             letter-spacing: 0.02em;
           }
 
-          /* “DAT purple → pink hover” CTAs */
+          /* “teal → pink hover” CTAs */
           .dc-link--purple-pink {
-            color: #6c00af;
+            color: #2493a9;
           }
           .dc-link--pink:hover,
           .dc-link--purple-pink:hover {
