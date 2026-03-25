@@ -696,7 +696,7 @@ export default function EventsHubPage() {
         .evhub-cards-scroll {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 1rem;
+          gap: 1.75rem;
           max-width: 960px;
           margin: 0 auto;
           padding: 0 clamp(1.5rem, 6vw, 3.5rem);

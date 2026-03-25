@@ -1570,14 +1570,6 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                   </>
                 )}
 
-                {/* Archive-only header — shown when past but no individual event records */}
-                {safeProductionEvents.length === 0 && runIsPast && (
-                  <div className="prod-backstage-header">
-                    <span className="prod-backstage-label">Historical Record</span>
-                    <span className="prod-backstage-archive-badge">ARCHIVE</span>
-                  </div>
-                )}
-
                 <Link href="/events" className="prod-backstage-all-link">All DAT Events →</Link>
               </div>
             )}

@@ -337,7 +337,7 @@ export default function FestivalsPage() {
         }
         .fest-hero-content {
           position: relative;
-          z-index: 2;
+          z-index: 4;
           padding: clamp(6rem, 12vw, 10rem) clamp(1.5rem, 6vw, 5rem) clamp(2.5rem, 5vw, 4.5rem);
           max-width: 700px;
         }
