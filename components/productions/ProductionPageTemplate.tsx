@@ -1484,8 +1484,9 @@ if (ageRecText) metaValues.push({ value: ageRecText });
               )}
             </div>
 
-            {/* BACKSTAGE PASS — full-width with production meta + events */}
-            {safeProductionEvents.length > 0 && (
+            {/* BACKSTAGE PASS — full-width with production meta + events
+                Shows for any production that has event records OR is a past/archive production */}
+            {(safeProductionEvents.length > 0 || runIsPast) && (
               <div className={`prod-backstage-pass${runIsPast ? " prod-backstage-pass--archive" : ""}`}>
                 {/* Production meta grid */}
                 <div className="prod-backstage-meta">
@@ -1523,47 +1524,60 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                   </div>
                 </div>
 
-                {/* Events header + rows */}
-                <div className="prod-backstage-header">
-                  <span className="prod-backstage-label">
-                    {safeProductionEvents.filter((e) => e.status === "upcoming").length > 0
-                      ? "Where to See It"
-                      : "Where It\u2019s Been"}
-                  </span>
-                  {runIsPast && (
+                {/* Events header + rows — only rendered when event records exist */}
+                {safeProductionEvents.length > 0 && (
+                  <>
+                    <div className="prod-backstage-header">
+                      <span className="prod-backstage-label">
+                        {safeProductionEvents.filter((e) => e.status === "upcoming").length > 0
+                          ? "Where to See It"
+                          : "Where It\u2019s Been"}
+                      </span>
+                      {runIsPast && (
+                        <span className="prod-backstage-archive-badge">ARCHIVE</span>
+                      )}
+                    </div>
+                    <div className="prod-backstage-events">
+                      <div className="prod-events-list">
+                        {safeProductionEvents.map((e) => {
+                          const isPast = e.status !== "upcoming";
+                          return (
+                            <div key={e.id} className={`prod-event-row ${isPast ? "prod-event-row--past" : ""}`}>
+                              <div className="prod-event-date">
+                                {e.endDate
+                                  ? `${shortMonth(e.date)} ${dayOfMonth(e.date)}–${dayOfMonth(e.endDate)}, ${eventYear(e.date)}`
+                                  : `${shortMonth(e.date)} ${dayOfMonth(e.date)}, ${eventYear(e.date)}`}
+                              </div>
+                              <div className="prod-event-venue">
+                                <span className="prod-event-name">{e.venue}</span>
+                                <span className="prod-event-city"> · {e.city}, {e.country}</span>
+                              </div>
+                              {e.ticketUrl && !isPast && (
+                                <a
+                                  href={e.ticketUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="prod-event-ticket"
+                                >
+                                  {e.ticketPrice ? e.ticketPrice : "Tickets →"}
+                                </a>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Archive-only header — shown when past but no individual event records */}
+                {safeProductionEvents.length === 0 && runIsPast && (
+                  <div className="prod-backstage-header">
+                    <span className="prod-backstage-label">Historical Record</span>
                     <span className="prod-backstage-archive-badge">ARCHIVE</span>
-                  )}
-                </div>
-                <div className="prod-backstage-events">
-                  <div className="prod-events-list">
-                    {safeProductionEvents.map((e) => {
-                      const isPast = e.status !== "upcoming";
-                      return (
-                        <div key={e.id} className={`prod-event-row ${isPast ? "prod-event-row--past" : ""}`}>
-                          <div className="prod-event-date">
-                            {e.endDate
-                              ? `${shortMonth(e.date)} ${dayOfMonth(e.date)}–${dayOfMonth(e.endDate)}, ${eventYear(e.date)}`
-                              : `${shortMonth(e.date)} ${dayOfMonth(e.date)}, ${eventYear(e.date)}`}
-                          </div>
-                          <div className="prod-event-venue">
-                            <span className="prod-event-name">{e.venue}</span>
-                            <span className="prod-event-city"> · {e.city}, {e.country}</span>
-                          </div>
-                          {e.ticketUrl && !isPast && (
-                            <a
-                              href={e.ticketUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="prod-event-ticket"
-                            >
-                              {e.ticketPrice ? e.ticketPrice : "Tickets →"}
-                            </a>
-                          )}
-                        </div>
-                      );
-                    })}
                   </div>
-                </div>
+                )}
+
                 <Link href="/events" className="prod-backstage-all-link">All DAT Events →</Link>
               </div>
             )}
