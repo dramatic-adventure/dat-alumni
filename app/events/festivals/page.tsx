@@ -288,6 +288,9 @@ export default function FestivalsPage() {
             <Link href="/events/fundraisers" className="fest-bottom-link fest-gold">
               Fundraisers &amp; Community Nights →
             </Link>
+            <Link href="/theatre" className="fest-bottom-link fest-muted">
+              Theatre Archive →
+            </Link>
             <Link href="/events" className="fest-bottom-link fest-muted">
               ← All Events
             </Link>
@@ -330,7 +333,7 @@ export default function FestivalsPage() {
         .fest-hero-content {
           position: relative;
           z-index: 2;
-          padding: 0 clamp(1.5rem, 6vw, 5rem) clamp(2.5rem, 5vw, 4.5rem);
+          padding: clamp(6rem, 12vw, 10rem) clamp(1.5rem, 6vw, 5rem) clamp(2.5rem, 5vw, 4.5rem);
           max-width: 700px;
         }
         .fest-breadcrumb {
@@ -416,7 +419,7 @@ export default function FestivalsPage() {
         }
         .fest-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(min(100%, 480px), 1fr));
           gap: 1.5rem;
         }
 
@@ -759,7 +762,7 @@ export default function FestivalsPage() {
 
         /* ── Bottom band ──────────────────────────────────────────────── */
         .fest-bottom-band {
-          background: #241123;
+          background: #0d1218;
           padding: clamp(2.5rem, 5vw, 4rem) 0;
         }
         .fest-bottom-inner { display: flex; flex-direction: column; gap: 1.25rem; }

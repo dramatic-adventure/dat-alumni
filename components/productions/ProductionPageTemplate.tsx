@@ -1104,14 +1104,17 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
       ? parsedRunStart >= now || !inferIsPastRun(datesText)
       : !runIsPast;
 
-  // ── Production event status (from linked events) ──────────────────────────
+  // ── Production event status (events-first, date-based fallback) ─────────────
   const safeProductionEvents = productionEvents ?? [];
   const eventStatusLabel = productionEventStatus(safeProductionEvents);
-  // Badge colour: NOW PLAYING = green, UPCOMING = gold, ARCHIVE = muted
-  const eventStatusColor =
-    eventStatusLabel === "NOW PLAYING"
+  // Derive display status: events take priority, then fall back to date inference
+  const displayStatus: "NOW PLAYING" | "UPCOMING" | "ARCHIVE" | null =
+    eventStatusLabel ??
+    (runIsUpcomingOrCurrent ? "UPCOMING" : runIsPast ? "ARCHIVE" : null);
+  const displayStatusColor =
+    displayStatus === "NOW PLAYING"
       ? "#2FA873"
-      : eventStatusLabel === "UPCOMING"
+      : displayStatus === "UPCOMING"
         ? "#FFCC00"
         : "#6a6a6a";
 
@@ -1336,13 +1339,7 @@ if (ageRecText) metaValues.push({ value: ageRecText });
   return (
     <main
       className="min-h-screen"
-      style={{
-        color: "#241123",
-        backgroundImage: 'url("/texture/kraft-paper.png")',
-        backgroundSize: "cover",
-        backgroundAttachment: "fixed",
-        backgroundRepeat: "repeat",
-      }}
+      style={{ color: "#241123" }}
     >
       {/* ========================= HERO ========================= */}
       <section className="relative isolate">
@@ -1413,41 +1410,12 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                 </p>
               )}
 
-              {/* ── Production status badge (from linked events) ── */}
-              {eventStatusLabel && (
-                <div className="hero-status-badge" style={{ marginTop: "0.75rem" }}>
-                  <span
-                    className="status-pill"
-                    style={{
-                      background:
-                        eventStatusLabel === "ARCHIVE"
-                          ? "rgba(255,255,255,0.12)"
-                          : `${eventStatusColor}22`,
-                      borderColor:
-                        eventStatusLabel === "ARCHIVE"
-                          ? "rgba(255,255,255,0.18)"
-                          : `${eventStatusColor}66`,
-                      color: eventStatusLabel === "ARCHIVE" ? "#aaa" : eventStatusColor,
-                    }}
-                  >
-                    {eventStatusLabel !== "ARCHIVE" && (
-                      <span className="status-dot" style={{ background: eventStatusColor }} />
-                    )}
-                    {eventStatusLabel}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
         </div>
       </section>
 
       {renderAfterHero ?? null}
-
-      {/* ── Linked events band (dark, full-width) ─────────────────────────── */}
-      {safeProductionEvents.length > 0 && (
-        <ProdEventsSection events={safeProductionEvents} productionTitle={displayTitle} />
-      )}
 
       {/* ===================== WHITE CARD ====================== */}
       <section style={{ display: "grid", placeItems: "center" }}>
@@ -1465,9 +1433,34 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           }}
         >
           <section className="rows">
-            {/* ROW 1: Dates/Festival/Venue + CTA */}
+            {/* ROW 1: Meta + status badge top-right + CTA + linked events */}
             <div className="row row70">
               <div>
+                {/* Status badge — top of the meta column */}
+                {displayStatus && (
+                  <div style={{ marginBottom: "0.85rem" }}>
+                    <span
+                      className="status-pill"
+                      style={{
+                        background:
+                          displayStatus === "ARCHIVE"
+                            ? "rgba(36,17,35,0.08)"
+                            : `${displayStatusColor}18`,
+                        borderColor:
+                          displayStatus === "ARCHIVE"
+                            ? "rgba(36,17,35,0.18)"
+                            : `${displayStatusColor}55`,
+                        color: displayStatus === "ARCHIVE" ? "#7a6a7a" : displayStatusColor,
+                      }}
+                    >
+                      {displayStatus !== "ARCHIVE" && (
+                        <span className="status-dot" style={{ background: displayStatusColor }} />
+                      )}
+                      {displayStatus}
+                    </span>
+                  </div>
+                )}
+
                 <div className="meta-stack">
                   <h2 className="meta-title">{displayTitle}</h2>
                   {metaValues.map(({ value, hero }, i) => (
@@ -1476,6 +1469,47 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                     </div>
                   ))}
                 </div>
+
+                {/* Linked events — woven into the meta column */}
+                {safeProductionEvents.length > 0 && (
+                  <div className="prod-events-inline">
+                    {safeProductionEvents.filter((e) => e.status === "upcoming").length > 0 && (
+                      <p className="prod-events-eyebrow">Where to See It</p>
+                    )}
+                    {safeProductionEvents.filter((e) => e.status === "upcoming").length === 0 && (
+                      <p className="prod-events-eyebrow">Where It&apos;s Been</p>
+                    )}
+                    <div className="prod-events-list">
+                      {safeProductionEvents.map((e) => {
+                        const isPast = e.status !== "upcoming";
+                        return (
+                          <div key={e.id} className={`prod-event-row ${isPast ? "prod-event-row--past" : ""}`}>
+                            <div className="prod-event-date">
+                              {e.endDate
+                                ? `${shortMonth(e.date)} ${dayOfMonth(e.date)}–${dayOfMonth(e.endDate)}, ${eventYear(e.date)}`
+                                : `${shortMonth(e.date)} ${dayOfMonth(e.date)}, ${eventYear(e.date)}`}
+                            </div>
+                            <div className="prod-event-venue">
+                              <span className="prod-event-name">{e.venue}</span>
+                              <span className="prod-event-city"> · {e.city}, {e.country}</span>
+                            </div>
+                            {e.ticketUrl && !isPast && (
+                              <a
+                                href={e.ticketUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="prod-event-ticket"
+                              >
+                                {e.ticketPrice ? e.ticketPrice : "Tickets →"}
+                              </a>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <Link href="/events" className="prod-events-all-link">All DAT Events →</Link>
+                  </div>
+                )}
               </div>
 
               <div className="r1-tickets">
@@ -2552,6 +2586,90 @@ if (ageRecText) metaValues.push({ value: ageRecText });
         @keyframes status-pulse{
           0%,100%{ opacity: 1; transform: scale(1); }
           50%{ opacity: 0.6; transform: scale(0.85); }
+        }
+
+        /* ── Inline events (inside white card meta column) ──────────── */
+        .prod-events-inline{
+          margin-top: clamp(1.25rem, 3vw, 2rem);
+          padding-top: clamp(1rem, 2.5vw, 1.5rem);
+          border-top: 1px solid rgba(36,17,35,0.12);
+        }
+        .prod-events-eyebrow{
+          font-family: var(--font-dm-sans, system-ui, sans-serif);
+          font-size: 0.68rem;
+          font-weight: 700;
+          letter-spacing: 0.28em;
+          text-transform: uppercase;
+          color: #D9A919;
+          margin: 0 0 0.85rem;
+        }
+        .prod-events-list{
+          display: flex;
+          flex-direction: column;
+          gap: 0.6rem;
+        }
+        .prod-event-row{
+          display: grid;
+          grid-template-columns: 9rem 1fr auto;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.6rem 0.75rem;
+          border-radius: 8px;
+          background: rgba(36,17,35,0.04);
+          border: 1px solid rgba(36,17,35,0.07);
+        }
+        .prod-event-row--past{
+          opacity: 0.6;
+        }
+        .prod-event-date{
+          font-family: var(--font-dm-sans, system-ui, sans-serif);
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: #241123;
+          white-space: nowrap;
+        }
+        .prod-event-venue{
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.82rem;
+          color: #241123cc;
+          min-width: 0;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .prod-event-name{ font-weight: 600; }
+        .prod-event-city{ opacity: 0.7; }
+        .prod-event-ticket{
+          font-family: var(--font-dm-sans, system-ui, sans-serif);
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #fff;
+          background: #D9A919;
+          padding: 0.3rem 0.7rem;
+          border-radius: 6px;
+          text-decoration: none !important;
+          white-space: nowrap;
+          flex-shrink: 0;
+          transition: opacity 0.15s;
+        }
+        .prod-event-ticket:hover{ opacity: 0.85; }
+        .prod-events-all-link{
+          display: inline-block;
+          margin-top: 0.75rem;
+          font-family: var(--font-dm-sans, system-ui, sans-serif);
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #7a5e80;
+          text-decoration: none !important;
+        }
+        .prod-events-all-link:hover{ color: #241123; }
+        @media (max-width: 600px){
+          .prod-event-row{ grid-template-columns: 1fr; gap: 0.3rem; }
+          .prod-event-venue{ white-space: normal; }
         }
 
         /* ── Production Events Section ─────────────────────────────── */

@@ -305,6 +305,9 @@ export default function FundraisersPage() {
             <Link href="/events/festivals" className="fund-bottom-link fund-teal">
               Festivals &amp; Showcases →
             </Link>
+            <Link href="/projects" className="fund-bottom-link fund-muted">
+              Projects Archive →
+            </Link>
             <Link href="/events" className="fund-bottom-link fund-muted">
               ← All Events
             </Link>
@@ -347,7 +350,7 @@ export default function FundraisersPage() {
         .fund-hero-content {
           position: relative;
           z-index: 2;
-          padding: 0 clamp(1.5rem, 6vw, 5rem) clamp(2.5rem, 5vw, 4.5rem);
+          padding: clamp(6rem, 12vw, 10rem) clamp(1.5rem, 6vw, 5rem) clamp(2.5rem, 5vw, 4.5rem);
           max-width: 720px;
         }
         .fund-breadcrumb {
@@ -412,7 +415,7 @@ export default function FundraisersPage() {
         }
         .fund-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(min(100%, 480px), 1fr));
           gap: 1.5rem;
         }
 
@@ -814,7 +817,7 @@ export default function FundraisersPage() {
 
         /* ── Bottom band ──────────────────────────────────────────────── */
         .fund-bottom-band {
-          background: #241123;
+          background: #1a140d;
           padding: clamp(2.5rem, 5vw, 4rem) 0;
         }
         .fund-bottom-inner { display: flex; flex-direction: column; gap: 1.25rem; }

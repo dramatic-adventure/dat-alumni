@@ -157,7 +157,7 @@ function CategoryRow({
           </div>
         ) : (
           <div className="evhub-cards-scroll">
-            {events.slice(0, 3).map((ev) => (
+            {events.slice(0, 2).map((ev) => (
               <EventCard key={ev.id} event={ev} accent={accent} />
             ))}
           </div>
@@ -178,7 +178,8 @@ export default function EventsHubPage() {
   return (
     <>
       {/* ── Hero ───────────────────────────────────────────────────────── */}
-      <div className="evhub-hero">
+      <div className="evhub-hero" style={{ backgroundImage: "url('/images/performing-zanzibar.jpg')" }}>
+        <div className="evhub-hero-img-overlay" />
         <div className="evhub-hero-bg" />
         <div className="evhub-hero-grid-lines" aria-hidden="true" />
         <div className="evhub-hero-content">
@@ -239,15 +240,16 @@ export default function EventsHubPage() {
           </div>
           <div className="evhub-bottom-links">
             <a
-              href="https://dramaticadventure.com"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="mailto:hello@dramaticadventure.com?subject=Mailing%20List"
               className="evhub-btn-gold"
             >
               Join Our Mailing List →
             </a>
             <Link href="/donate" className="evhub-btn-outline-light">
               Support the Work
+            </Link>
+            <Link href="/theatre" className="evhub-btn-outline-light">
+              Theatre Archive →
             </Link>
           </div>
         </div>
@@ -267,30 +269,45 @@ export default function EventsHubPage() {
           position: relative;
           min-height: 70vh;
           background: #0d0812;
+          background-size: cover;
+          background-position: center 30%;
           display: flex;
           align-items: center;
           overflow: hidden;
         }
+        .evhub-hero-img-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            to right,
+            rgba(8,3,12,0.92) 0%,
+            rgba(8,3,12,0.75) 45%,
+            rgba(8,3,12,0.4) 100%
+          );
+          z-index: 1;
+        }
         .evhub-hero-bg {
           position: absolute;
           inset: 0;
+          z-index: 1;
           background:
-            radial-gradient(ellipse 80% 60% at 70% 50%, rgba(242,51,89,0.08) 0%, transparent 70%),
-            radial-gradient(ellipse 60% 80% at 20% 80%, rgba(36,147,169,0.07) 0%, transparent 60%),
-            radial-gradient(ellipse 50% 50% at 80% 20%, rgba(217,169,25,0.06) 0%, transparent 60%);
+            radial-gradient(ellipse 80% 60% at 70% 50%, rgba(242,51,89,0.06) 0%, transparent 70%),
+            radial-gradient(ellipse 60% 80% at 20% 80%, rgba(36,147,169,0.05) 0%, transparent 60%),
+            radial-gradient(ellipse 50% 50% at 80% 20%, rgba(217,169,25,0.04) 0%, transparent 60%);
         }
         .evhub-hero-grid-lines {
           position: absolute;
           inset: 0;
+          z-index: 1;
           background-image:
-            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
           background-size: 80px 80px;
           pointer-events: none;
         }
         .evhub-hero-content {
           position: relative;
-          z-index: 2;
+          z-index: 3;
           padding: clamp(4rem, 10vw, 7rem) clamp(1.5rem, 6vw, 5rem);
           max-width: 800px;
         }
@@ -667,7 +684,7 @@ export default function EventsHubPage() {
 
         /* ── Bottom band ───────────────────────────────────────────────── */
         .evhub-bottom-band {
-          background: #241123;
+          background: #0d1a14;
           padding: clamp(3rem, 6vw, 5rem) 0;
         }
         .evhub-bottom-inner {

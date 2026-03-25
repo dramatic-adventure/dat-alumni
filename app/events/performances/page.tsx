@@ -214,14 +214,9 @@ export default function PerformancesPage() {
             you. These are stories that travelled a long way to reach you.
           </p>
           {upcoming.length > 0 && (
-            <div className="perf-hero-count" style={{ borderColor: accent }}>
-              <span className="perf-hero-count-num" style={{ color: accent }}>
-                {upcoming.length}
-              </span>
-              <span className="perf-hero-count-label">
-                upcoming performance{upcoming.length !== 1 ? "s" : ""}
-              </span>
-            </div>
+            <p className="perf-hero-season-note" style={{ color: accent }}>
+              {upcoming.length} production{upcoming.length !== 1 ? "s" : ""} announced this season ↓
+            </p>
           )}
         </div>
       </div>
@@ -319,6 +314,9 @@ export default function PerformancesPage() {
             <Link href="/events/fundraisers" className="perf-bottom-link perf-gold">
               Fundraisers &amp; Community Nights →
             </Link>
+            <Link href="/theatre" className="perf-bottom-link perf-muted">
+              Theatre Archive →
+            </Link>
             <Link href="/events" className="perf-bottom-link perf-muted">
               ← All Events
             </Link>
@@ -362,7 +360,7 @@ export default function PerformancesPage() {
         .perf-hero-content {
           position: relative;
           z-index: 2;
-          padding: 0 clamp(1.5rem, 6vw, 5rem) clamp(2.5rem, 5vw, 4.5rem);
+          padding: clamp(6rem, 12vw, 10rem) clamp(1.5rem, 6vw, 5rem) clamp(2.5rem, 5vw, 4.5rem);
           max-width: 760px;
         }
         .perf-breadcrumb {
@@ -405,25 +403,13 @@ export default function PerformancesPage() {
           margin: 0 0 2rem;
           max-width: 500px;
         }
-        .perf-hero-count {
-          display: inline-flex;
-          align-items: baseline;
-          gap: 0.65rem;
-          border-left: 3px solid;
-          padding-left: 1rem;
-        }
-        .perf-hero-count-num {
-          font-family: "Anton", sans-serif;
-          font-size: 2.5rem;
-          line-height: 1;
-        }
-        .perf-hero-count-label {
+        .perf-hero-season-note {
           font-family: "DM Sans", sans-serif;
           font-size: 0.82rem;
           font-weight: 600;
-          color: rgba(255,255,255,0.55);
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          letter-spacing: 0.1em;
+          margin: 0;
         }
 
         /* ── Listing ──────────────────────────────────────────────────── */
@@ -789,7 +775,7 @@ export default function PerformancesPage() {
 
         /* ── Bottom band ──────────────────────────────────────────────── */
         .perf-bottom-band {
-          background: #241123;
+          background: #0d1a14;
           padding: clamp(2.5rem, 5vw, 4rem) 0;
         }
         .perf-bottom-inner {

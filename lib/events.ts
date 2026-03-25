@@ -98,7 +98,7 @@ export const events: DatEvent[] = [
       "An original DAT production born in the Ecuadorian Amazon — performed live at the Edinburgh Festival Fringe. Puppetry, music, and community storytelling cross borders and languages.",
     longDescription:
       "Created with and for the communities of Gualaquiza, Ecuador, The Rainbow of San Luis is DAT's award-winning production making its UK debut at the world's largest arts festival. Expect live music, extraordinary puppetry, and a story about what happens when a community decides to tell its own truth.",
-    image: "/images/theatre/the-rainbow-of-san-luis-puppets.jpeg",
+    image: "/posters/the-rainbow-of-san-luis-landscape.jpg",
     ticketUrl: "https://tickets.summerhall.co.uk",
     ticketPrice: "£14 / £10 concessions",
     ticketType: "ticketed",
