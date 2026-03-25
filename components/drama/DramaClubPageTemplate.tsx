@@ -42,6 +42,8 @@ import {
   dayOfMonth,
   eventYear,
   getEventImage,
+  isCommunityShowcase,
+  isElapsed,
 } from "@/lib/events";
 
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
@@ -627,6 +629,12 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
     lineageArtists = [],
     clubEvents = [],
   } = props;
+
+  // Upcoming community showcases for this drama club
+  const upcomingShowcases = useMemo(
+    () => clubEvents.filter((e) => isCommunityShowcase(e) && !isElapsed(e)),
+    [clubEvents]
+  );
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -1931,6 +1939,62 @@ const voicesHeading = `Voices from ${voicesFrom}`;
               </div>
             </div>
 
+            {/* UPCOMING COMMUNITY SHOWCASES — near-top callout */}
+            {upcomingShowcases.length > 0 && (
+              <div className="dc-upcoming-showcases">
+                {upcomingShowcases.map((ev) => {
+                  const img = getEventImage(ev);
+                  return (
+                    <div
+                      key={ev.id}
+                      className="dc-showcase-callout"
+                      style={img ? { "--showcase-bg": `url('${img}')` } as React.CSSProperties : {}}
+                    >
+                      {img && (
+                        <div className="dc-showcase-callout__bg" aria-hidden="true" />
+                      )}
+                      <div className="dc-showcase-callout__inner">
+                        <div className="dc-showcase-callout__label-row">
+                          <span className="dc-showcase-callout__eyebrow">Community Showcase</span>
+                          <span className="dc-showcase-callout__date">
+                            {ev.endDate
+                              ? `${shortMonth(ev.date)} ${dayOfMonth(ev.date)}–${dayOfMonth(ev.endDate)}, ${eventYear(ev.date)}`
+                              : `${shortMonth(ev.date)} ${dayOfMonth(ev.date)}, ${eventYear(ev.date)}`}
+                          </span>
+                        </div>
+                        <h2 className="dc-showcase-callout__title font-display">{ev.title}</h2>
+                        {(ev.venue || ev.city) && (
+                          <p className="dc-showcase-callout__venue font-sans">
+                            {[ev.venue, ev.city, ev.country].filter(Boolean).join(" · ")}
+                          </p>
+                        )}
+                        {ev.description && (
+                          <p className="dc-showcase-callout__desc font-sans">{ev.description}</p>
+                        )}
+                        <div className="dc-showcase-callout__actions">
+                          {ev.ticketUrl ? (
+                            <DATButtonLink
+                              href={ev.ticketUrl}
+                              variant="yellow"
+                              size="md"
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              {ev.ticketPrice ?? "Get Tickets →"}
+                            </DATButtonLink>
+                          ) : (
+                            <DATButtonLink href="/events" variant="teal" size="md">
+                              See All Events →
+                            </DATButtonLink>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {/* SECTION A + B */}
             <div className={layoutClass}>
               <section className="dc-section">
@@ -2095,8 +2159,14 @@ const voicesHeading = `Voices from ${voicesFrom}`;
               )}
             </div>
 
-            {/* GALLERY moved below events band — see below the card */}
-
+            {/* GALLERY — moments from this drama club */}
+            {hasGallery && (
+              <DramaClubMomentsGallery
+                images={gallery}
+                clubName={club.name}
+                headline={momentsHeading}
+              />
+            )}
 
             {/* COMMUNITY & CONTEXT + IMPACT PARTNERS */}
             {(hasCommunityPartners ||
@@ -2743,15 +2813,6 @@ const voicesHeading = `Voices from ${voicesFrom}`;
           </section>
         )}
 
-        {/* GALLERY — below events, above footer nav */}
-        {hasGallery && (
-          <DramaClubMomentsGallery
-            images={gallery}
-            clubName={club.name}
-            headline={momentsHeading}
-          />
-        )}
-
         {/* BELOW THE CARD (on kraft paper): footer nav */}
         {navTriplet && (
           <section
@@ -2897,6 +2958,84 @@ const voicesHeading = `Voices from ${voicesFrom}`;
           .dc-kraft-nav-item:hover .dc-kraft-nav-geo,
           .dc-kraft-nav-item:focus-visible .dc-kraft-nav-geo {
             opacity: 0.65;
+          }
+
+          /* ── Upcoming community showcase callout ──────────────── */
+          .dc-upcoming-showcases {
+            margin: 2rem 0 0;
+          }
+          .dc-showcase-callout {
+            position: relative;
+            overflow: hidden;
+            background: #1a0d1a;
+            border-top: 3px solid #2FA873;
+            border-bottom: 3px solid #2FA873;
+          }
+          .dc-showcase-callout__bg {
+            position: absolute;
+            inset: 0;
+            background-image: var(--showcase-bg);
+            background-size: cover;
+            background-position: center;
+            opacity: 0.18;
+          }
+          .dc-showcase-callout__inner {
+            position: relative;
+            z-index: 1;
+            max-width: 780px;
+            margin: 0 auto;
+            padding: clamp(1.75rem, 4vw, 3rem) clamp(1.25rem, 5vw, 2.5rem);
+          }
+          .dc-showcase-callout__label-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.5rem;
+          }
+          .dc-showcase-callout__eyebrow {
+            font-family: var(--font-dm-sans, 'DM Sans', sans-serif);
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #2FA873;
+            background: rgba(47,168,115,0.12);
+            border: 1px solid rgba(47,168,115,0.4);
+            padding: 0.2em 0.7em;
+            border-radius: 999px;
+          }
+          .dc-showcase-callout__date {
+            font-family: var(--font-dm-sans, 'DM Sans', sans-serif);
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: rgba(246,228,193,0.75);
+            text-transform: uppercase;
+          }
+          .dc-showcase-callout__title {
+            font-size: clamp(1.4rem, 3.5vw, 2rem);
+            font-weight: 900;
+            color: #f6e4c1;
+            margin: 0 0 0.4rem;
+            line-height: 1.1;
+          }
+          .dc-showcase-callout__venue {
+            font-size: 0.85rem;
+            color: rgba(246,228,193,0.65);
+            margin: 0 0 0.75rem;
+          }
+          .dc-showcase-callout__desc {
+            font-size: 0.9rem;
+            color: rgba(246,228,193,0.8);
+            margin: 0 0 1rem;
+            max-width: 55ch;
+            line-height: 1.55;
+          }
+          .dc-showcase-callout__actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
           }
 
           /* ── Club events band ─────────────────────────────────── */

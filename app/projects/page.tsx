@@ -16,6 +16,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { seasons as seasonData } from "@/lib/seasonData";
 import { showcasesBySeason, type DatEvent } from "@/lib/events";
+import { dramaClubs } from "@/lib/dramaClubMap";
 
 // ─── Colour palette ────────────────────────────────────────────────────────────
 const C = {
@@ -1174,19 +1175,31 @@ export default function ProjectsIndexPage() {
 // but preserved — they're real company history, just not featured projects.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// ─── Community Showcase rows — shown under each season that has archived showcases ─
+// Badge config — mirrors theatre/page.tsx
+const SUBCATEGORY_BADGE: Record<string, { label: string; color: string; border: string; bg: string }> = {
+  "community-showcase": {
+    label: "Community Showcase",
+    color: "rgba(47,168,115,0.9)",
+    border: "rgba(47,168,115,0.35)",
+    bg:    "rgba(47,168,115,0.07)",
+  },
+  "commission": {
+    label: "Commission",
+    color: "rgba(36,147,169,0.9)",
+    border: "rgba(36,147,169,0.35)",
+    bg:    "rgba(36,147,169,0.07)",
+  },
+};
+
+// ─── Community Showcase cards — shown under each season that has archived showcases ─
 function ShowcaseArchiveRows({ showcases }: { showcases?: DatEvent[] }) {
   if (!showcases || showcases.length === 0) return null;
 
+  const firstBadge = SUBCATEGORY_BADGE[showcases[0].subcategory ?? "community-showcase"]
+    ?? SUBCATEGORY_BADGE["community-showcase"];
+
   return (
-    <div
-      style={{
-        marginTop: "1rem",
-        display: "flex",
-        flexDirection: "column",
-        gap: "0.5rem",
-      }}
-    >
+    <div style={{ marginTop: "1.25rem" }}>
       <p
         style={{
           fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
@@ -1194,93 +1207,154 @@ function ShowcaseArchiveRows({ showcases }: { showcases?: DatEvent[] }) {
           fontWeight: 800,
           letterSpacing: "0.22em",
           textTransform: "uppercase",
-          color: "rgba(47,168,115,0.75)",
-          margin: "0 0 0.35rem 0.1rem",
+          color: firstBadge.color,
+          margin: "0 0 0.75rem 0.1rem",
         }}
       >
-        Community Showcases
+        Community Events
       </p>
 
-      {showcases.map((ev) => {
-        const month = new Date(ev.date + "T12:00:00Z").toLocaleString("en-US", { month: "short", timeZone: "UTC" });
-        const day   = new Date(ev.date + "T12:00:00Z").getUTCDate();
-        const year  = new Date(ev.date + "T12:00:00Z").getUTCFullYear();
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(185px, 1fr))",
+          gap: "1rem",
+        }}
+      >
+        {showcases.map((ev) => {
+          const club   = dramaClubs.find((c) => c.slug === ev.dramaClub);
+          const imgSrc = club?.heroImage ?? ev.image ?? "/images/Andean_Mask_Work.jpg";
+          const href   = club ? `/drama-club/${club.slug}` : "/drama-club";
+          const badge  = SUBCATEGORY_BADGE[ev.subcategory ?? "community-showcase"]
+            ?? SUBCATEGORY_BADGE["community-showcase"];
+          const d      = new Date(ev.date + "T12:00:00Z");
+          const dateStr = d.toLocaleString("en-US", { month: "short", timeZone: "UTC" })
+            + " " + d.getUTCDate() + ", " + d.getUTCFullYear();
 
-        return (
-          <div
-            key={ev.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.75rem",
-              padding: "0.55rem 0.9rem",
-              borderRadius: "8px",
-              backgroundColor: "rgba(47,168,115,0.06)",
-              border: "1px solid rgba(47,168,115,0.18)",
-            }}
-          >
-            <span
+          return (
+            <Link
+              key={ev.id}
+              href={href}
               style={{
-                fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                fontSize: "0.65rem",
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                color: "rgba(47,168,115,0.85)",
-                whiteSpace: "nowrap",
-                flexShrink: 0,
-                minWidth: "5.5rem",
-              }}
-            >
-              {month} {day}, {year}
-            </span>
-
-            <span
-              style={{
-                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                fontSize: "0.82rem",
-                fontWeight: 600,
-                color: "#241123",
-                flex: 1,
-                minWidth: 0,
+                display: "flex",
+                flexDirection: "column",
+                borderRadius: "12px",
                 overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
+                border: `1.5px solid ${badge.border}`,
+                textDecoration: "none",
+                backgroundColor: "#f2f2f2",
               }}
+              className="project-season-pill-link"
             >
-              {ev.title}
-            </span>
+              {/* Image */}
+              <div
+                style={{
+                  position: "relative",
+                  height: "140px",
+                  flexShrink: 0,
+                  overflow: "hidden",
+                  backgroundColor: "#241123",
+                }}
+              >
+                <Image
+                  src={imgSrc}
+                  alt={club?.name ?? ev.title}
+                  fill
+                  className="object-cover object-center"
+                  sizes="(max-width: 860px) 50vw, 200px"
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: "linear-gradient(to top, rgba(36,17,35,0.55) 0%, transparent 55%)",
+                  }}
+                />
+                <span
+                  style={{
+                    position: "absolute",
+                    bottom: "0.5rem",
+                    left: "0.6rem",
+                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                    fontSize: "0.56rem",
+                    fontWeight: 800,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "#fff",
+                    background: badge.color,
+                    borderRadius: "4px",
+                    padding: "0.18rem 0.5rem",
+                  }}
+                >
+                  {badge.label}
+                </span>
+              </div>
 
-            <span
-              style={{
-                fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                fontSize: "0.7rem",
-                color: "rgba(36,17,35,0.45)",
-                whiteSpace: "nowrap",
-                flexShrink: 0,
-              }}
-            >
-              {ev.city}, {ev.country}
-            </span>
-
-            <span
-              style={{
-                fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                fontSize: "0.58rem",
-                fontWeight: 800,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "rgba(47,168,115,0.85)",
-                border: "1px solid rgba(47,168,115,0.3)",
-                borderRadius: "4px",
-                padding: "0.15rem 0.45rem",
-                flexShrink: 0,
-              }}
-            >
-              Showcase
-            </span>
-          </div>
-        );
-      })}
+              {/* Info */}
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.25rem",
+                  padding: "0.7rem 0.9rem 0.85rem",
+                  borderTop: `1.5px solid ${badge.border}`,
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                    fontSize: "0.64rem",
+                    fontWeight: 700,
+                    color: badge.color,
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  {dateStr}
+                </span>
+                <h4
+                  style={{
+                    fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                    fontSize: "0.9rem",
+                    fontWeight: 700,
+                    color: "#241123",
+                    margin: 0,
+                    lineHeight: 1.25,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  } as React.CSSProperties}
+                >
+                  {ev.title}
+                </h4>
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                    fontSize: "0.7rem",
+                    color: "rgba(36,17,35,0.5)",
+                  }}
+                >
+                  {ev.city}, {ev.country}
+                </span>
+                {club && (
+                  <span
+                    style={{
+                      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                      fontSize: "0.68rem",
+                      fontWeight: 600,
+                      color: badge.color,
+                      marginTop: "0.1rem",
+                    }}
+                  >
+                    {club.name} →
+                  </span>
+                )}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }

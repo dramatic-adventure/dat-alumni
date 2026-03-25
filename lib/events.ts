@@ -74,11 +74,16 @@ export interface DatEvent {
 
   /**
    * Subcategory for more specific classification within a category.
-   * "community-showcase" — a performance tied to a drama club visit
-   * "benefit"           — fundraiser that includes a performance
-   * "screening"         — film / documentary screening
+   * "community-showcase" — a public sharing tied to a drama club
+   * "commission"         — a piece commissioned from an external artist or company
+   * "benefit"            — fundraiser that includes a performance
+   * "screening"          — film / documentary screening
+   *
+   * In the Theatre & Project archives:
+   *   community-showcase → green "Community Showcase" badge, links to drama club
+   *   commission         → teal "Commission" badge, links to production or drama club
    */
-  subcategory?: "community-showcase" | "benefit" | "screening";
+  subcategory?: "community-showcase" | "commission" | "benefit" | "screening";
 
   /**
    * Medium — for future filtering across theatre / film / workshop.
