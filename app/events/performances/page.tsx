@@ -216,7 +216,7 @@ export default function PerformancesPage() {
           </p>
           {upcoming.length > 0 && (
             <p className="perf-hero-season-note" style={{ color: accent }}>
-              {upcoming.length} production{upcoming.length !== 1 ? "s" : ""} announced this season ↓
+              On stage now — scroll to find your seat ↓
             </p>
           )}
         </div>
@@ -256,10 +256,12 @@ export default function PerformancesPage() {
       {/* ── What to expect band ──────────────────────────────────────────── */}
       <section className="perf-expect-band">
         <div className="perf-container">
-          <p className="perf-expect-eyebrow" style={{ color: accent }}>
-            What to Expect
-          </p>
-          <h2 className="perf-expect-title">Theatre Made in the World</h2>
+          <div className="perf-expect-heading-box">
+            <p className="perf-expect-eyebrow" style={{ color: accent }}>
+              What to Expect
+            </p>
+            <h2 className="perf-expect-title">Theatre Made in the World</h2>
+          </div>
           <div className="perf-expect-grid">
             <div className="perf-expect-item">
               <span className="perf-expect-icon">🌍</span>
@@ -349,9 +351,9 @@ export default function PerformancesPage() {
           background: linear-gradient(
             to top,
             rgba(13,8,18,1.0) 0%,
-            rgba(13,8,18,1.0) 6%,
-            rgba(8,3,12,0.88) 30%,
-            rgba(8,3,12,0.5) 60%,
+            rgba(13,8,18,1.0) 12%,
+            rgba(8,3,12,0.88) 35%,
+            rgba(8,3,12,0.5) 65%,
             rgba(8,3,12,0.15) 100%
           );
         }
@@ -419,6 +421,7 @@ export default function PerformancesPage() {
         .perf-listing {
           background: #0d0812;
           padding: clamp(3rem, 6vw, 5rem) 0;
+          margin-top: -2px;
         }
         .perf-grid {
           display: grid;
@@ -678,19 +681,27 @@ export default function PerformancesPage() {
           background: transparent;
           padding: clamp(3.5rem, 7vw, 6rem) 0;
         }
+        .perf-expect-heading-box {
+          display: inline-block;
+          background: rgba(246,228,193,0.82);
+          border-left: 4px solid #F23359;
+          padding: 0.75rem 1.5rem 0.75rem 1rem;
+          border-radius: 0 10px 10px 0;
+          margin-bottom: 2.5rem;
+        }
         .perf-expect-eyebrow {
           font-family: "DM Sans", sans-serif;
           font-size: 0.72rem;
           font-weight: 700;
           letter-spacing: 0.28em;
           text-transform: uppercase;
-          margin: 0 0 0.6rem;
+          margin: 0 0 0.4rem;
         }
         .perf-expect-title {
           font-family: "Anton", sans-serif;
           font-size: clamp(2rem, 4vw, 3.2rem);
           color: #241123;
-          margin: 0 0 2.5rem;
+          margin: 0;
           line-height: 1;
         }
         .perf-expect-grid {
@@ -823,8 +834,8 @@ export default function PerformancesPage() {
           transition: opacity 0.2s, transform 0.15s;
         }
         .perf-bottom-link:hover { opacity: 0.8; transform: translateY(-1px); }
-        .perf-teal { background: #2493A9; color: #fff; }
-        .perf-gold { background: #D9A919; color: #241123; }
+        .perf-teal { background: #1a6d7d; color: #fff; }
+        .perf-gold { background: #8a6200; color: #fff; }
         .perf-muted { color: rgba(255,255,255,0.4); border: 1.5px solid rgba(255,255,255,0.15); }
       `}</style>
     </>

@@ -35,6 +35,14 @@ import {
 import DramaClubMomentsGallery from "@/components/drama/DramaClubMomentsGallery";
 
 import type { PersonRef } from "@/lib/buildDramaClubLeadTeam";
+import {
+  type DatEvent,
+  categoryMeta,
+  shortMonth,
+  dayOfMonth,
+  eventYear,
+  getEventImage,
+} from "@/lib/events";
 
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
 
@@ -158,6 +166,9 @@ export interface DramaClubPageTemplateProps {
    * Use this for the Artist Lineage marquee so it can be “right artists → right club”.
    */
   lineageArtists?: PersonRef[];
+
+  /** Events linked to this drama club via lib/events.ts (dramaClub field = slug) */
+  clubEvents?: DatEvent[];
 }
 
 /* ---------- Helpers ---------- */
@@ -614,6 +625,7 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
 
     dramaClubLeadTeam = [],
     lineageArtists = [],
+    clubEvents = [],
   } = props;
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -2656,6 +2668,70 @@ const voicesHeading = `Voices from ${voicesFrom}`;
           </article>
         </section>
 
+        {/* BELOW THE CARD (on kraft paper): linked events */}
+        {clubEvents.length > 0 && (
+          <section className="dc-events-band" aria-label="Linked events">
+            <div className="dc-kraft-container">
+              <div className="dc-events-heading-group">
+                <p className="dc-events-eyebrow">On Stage</p>
+                <h2 className="dc-events-title">Events Featuring This Club</h2>
+              </div>
+              <div className="dc-events-list">
+                {clubEvents.map((ev) => {
+                  const meta = categoryMeta[ev.category];
+                  const isPast = ev.status !== "upcoming";
+                  const img = getEventImage(ev);
+                  return (
+                    <div key={ev.id} className={`dc-event-row ${isPast ? "dc-event-row--past" : ""}`}>
+                      {img && (
+                        <div
+                          className="dc-event-thumb"
+                          style={{ backgroundImage: `url('${img}')` }}
+                          aria-hidden="true"
+                        />
+                      )}
+                      <div className="dc-event-body">
+                        <div className="dc-event-meta">
+                          <span className="dc-event-cat" style={{ color: meta.color }}>{meta.eyebrow}</span>
+                          <span className="dc-event-date-str">
+                            {ev.endDate
+                              ? `${shortMonth(ev.date)} ${dayOfMonth(ev.date)}–${dayOfMonth(ev.endDate)}, ${eventYear(ev.date)}`
+                              : `${shortMonth(ev.date)} ${dayOfMonth(ev.date)}, ${eventYear(ev.date)}`}
+                          </span>
+                        </div>
+                        <h3 className="dc-event-name">{ev.title}</h3>
+                        <p className="dc-event-loc">{ev.venue} · {ev.city}, {ev.country}</p>
+                        {ev.description && (
+                          <p className="dc-event-desc">{ev.description}</p>
+                        )}
+                      </div>
+                      <div className="dc-event-actions">
+                        {ev.ticketUrl && !isPast && (
+                          <a
+                            href={ev.ticketUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="dc-event-ticket-btn"
+                            style={{ background: meta.color }}
+                          >
+                            {ev.ticketPrice ?? "Tickets →"}
+                          </a>
+                        )}
+                        {isPast && (
+                          <span className="dc-event-past-badge">Past</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <Link href="/events" className="dc-events-all-link">
+                All DAT Events →
+              </Link>
+            </div>
+          </section>
+        )}
+
         {/* BELOW THE CARD (on kraft paper): footer nav */}
         {navTriplet && (
           <section
@@ -2801,6 +2877,151 @@ const voicesHeading = `Voices from ${voicesFrom}`;
           .dc-kraft-nav-item:hover .dc-kraft-nav-geo,
           .dc-kraft-nav-item:focus-visible .dc-kraft-nav-geo {
             opacity: 0.65;
+          }
+
+          /* ── Club events band ─────────────────────────────────── */
+          .dc-events-band {
+            padding: clamp(2.5rem, 5vw, 4rem) 0;
+            background: transparent;
+          }
+          .dc-events-heading-group {
+            display: inline-block;
+            background: rgba(246,228,193,0.82);
+            border-left: 4px solid #F23359;
+            padding: 0.65rem 1.5rem 0.65rem 0.9rem;
+            border-radius: 0 10px 10px 0;
+            margin-bottom: 1.75rem;
+          }
+          .dc-events-eyebrow {
+            font-family: "DM Sans", sans-serif;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: #F23359;
+            margin: 0 0 0.3rem;
+          }
+          .dc-events-title {
+            font-family: "Anton", sans-serif;
+            font-size: clamp(1.6rem, 3vw, 2.4rem);
+            color: #241123;
+            margin: 0;
+            line-height: 1;
+          }
+          .dc-events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1.5px solid rgba(242,51,89,0.15);
+            background: rgba(255,255,255,0.55);
+            margin-bottom: 1rem;
+          }
+          .dc-event-row {
+            display: grid;
+            grid-template-columns: 80px 1fr auto;
+            align-items: center;
+            gap: 1.25rem;
+            padding: 1rem 1.25rem 1rem 0;
+            border-bottom: 1px solid rgba(36,17,35,0.07);
+            transition: background 0.15s;
+          }
+          .dc-event-row:last-child { border-bottom: none; }
+          .dc-event-row:hover { background: rgba(242,51,89,0.03); }
+          .dc-event-row--past { opacity: 0.55; }
+          .dc-event-thumb {
+            width: 80px;
+            height: 70px;
+            background-size: cover;
+            background-position: center;
+            flex-shrink: 0;
+          }
+          .dc-event-body { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+          .dc-event-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+          }
+          .dc-event-cat {
+            font-family: "DM Sans", sans-serif;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+          }
+          .dc-event-date-str {
+            font-family: "DM Sans", sans-serif;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: rgba(36,17,35,0.55);
+          }
+          .dc-event-name {
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #241123;
+            margin: 0;
+            line-height: 1.3;
+          }
+          .dc-event-loc {
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 0.8rem;
+            color: rgba(36,17,35,0.55);
+            margin: 0;
+          }
+          .dc-event-desc {
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 0.8rem;
+            color: rgba(36,17,35,0.65);
+            margin: 0;
+            line-height: 1.55;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+          .dc-event-actions { flex-shrink: 0; }
+          .dc-event-ticket-btn {
+            font-family: "DM Sans", sans-serif;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #fff;
+            text-decoration: none;
+            padding: 0.45rem 0.9rem;
+            border-radius: 6px;
+            white-space: nowrap;
+            transition: opacity 0.15s;
+          }
+          .dc-event-ticket-btn:hover { opacity: 0.85; }
+          .dc-event-past-badge {
+            font-family: "DM Sans", sans-serif;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: rgba(36,17,35,0.35);
+            border: 1px solid rgba(36,17,35,0.15);
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+          }
+          .dc-events-all-link {
+            font-family: "DM Sans", sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(242,51,89,0.7);
+            text-decoration: none;
+            transition: color 0.15s;
+          }
+          .dc-events-all-link:hover { color: #F23359; }
+          @media (max-width: 600px) {
+            .dc-event-row { grid-template-columns: 1fr auto; }
+            .dc-event-thumb { display: none; }
           }
         `}</style>
       </main>

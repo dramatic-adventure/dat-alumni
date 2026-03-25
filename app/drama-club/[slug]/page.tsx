@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { dramaClubs } from "@/lib/dramaClubMap";
 import type { DramaClub } from "@/lib/dramaClubMap";
+import { eventsByDramaClub } from "@/lib/events";
 import DramaClubPageTemplate from "@/components/drama/DramaClubPageTemplate";
 
 import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
@@ -521,6 +522,8 @@ export default async function DramaClubPage({ params }: PageProps) {
     creativeLeadTeam,
   });
 
+  const clubEventsData = eventsByDramaClub(club.slug);
+
   return (
     <DramaClubPageTemplate
       club={club}
@@ -534,6 +537,7 @@ export default async function DramaClubPage({ params }: PageProps) {
       dramaClubLeadTeam={creativeLeadTeam}
       // ✅ THIS is what makes the marquee draw from programMap
       lineageArtists={lineageArtists}
+      clubEvents={clubEventsData}
     />
   );
 }

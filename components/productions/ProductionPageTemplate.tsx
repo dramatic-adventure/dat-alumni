@@ -1477,7 +1477,7 @@ if (ageRecText) metaValues.push({ value: ageRecText });
               )}
             </div>
 
-            {/* ROW 1: Meta + events | primary CTA */}
+            {/* ROW 1: Meta | primary CTA */}
             <div className="row row70">
               <div className="meta-col">
                 <div className="meta-stack">
@@ -1488,51 +1488,6 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                     </div>
                   ))}
                 </div>
-
-                {/* Backstage-pass events container */}
-                {safeProductionEvents.length > 0 && (
-                  <div className="prod-backstage-pass">
-                    <div className="prod-backstage-header">
-                      <span className="prod-backstage-label">
-                        {safeProductionEvents.filter((e) => e.status === "upcoming").length > 0
-                          ? "Where to See It"
-                          : "Where It\u2019s Been"}
-                      </span>
-                      <span className="prod-backstage-stamp" aria-hidden="true">🎫</span>
-                    </div>
-                    <div className="prod-backstage-events">
-                      <div className="prod-events-list">
-                        {safeProductionEvents.map((e) => {
-                          const isPast = e.status !== "upcoming";
-                          return (
-                            <div key={e.id} className={`prod-event-row ${isPast ? "prod-event-row--past" : ""}`}>
-                              <div className="prod-event-date">
-                                {e.endDate
-                                  ? `${shortMonth(e.date)} ${dayOfMonth(e.date)}–${dayOfMonth(e.endDate)}, ${eventYear(e.date)}`
-                                  : `${shortMonth(e.date)} ${dayOfMonth(e.date)}, ${eventYear(e.date)}`}
-                              </div>
-                              <div className="prod-event-venue">
-                                <span className="prod-event-name">{e.venue}</span>
-                                <span className="prod-event-city"> · {e.city}, {e.country}</span>
-                              </div>
-                              {e.ticketUrl && !isPast && (
-                                <a
-                                  href={e.ticketUrl}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="prod-event-ticket"
-                                >
-                                  {e.ticketPrice ? e.ticketPrice : "Tickets →"}
-                                </a>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <Link href="/events" className="prod-backstage-all-link">All DAT Events →</Link>
-                  </div>
-                )}
               </div>{/* /meta-col */}
 
               <div className="r1-tickets">
@@ -1552,6 +1507,87 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                 )}
               </div>
             </div>
+
+            {/* BACKSTAGE PASS — full-width with production meta + events */}
+            {safeProductionEvents.length > 0 && (
+              <div className="prod-backstage-pass">
+                {/* Production meta grid */}
+                <div className="prod-backstage-meta">
+                  <div className="prod-backstage-meta-left">
+                    <p className="prod-backstage-meta-title">{displayTitle}</p>
+                    {subtitleText && <p className="prod-backstage-meta-sub">{subtitleText}</p>}
+                    {festivalText && <p className="prod-backstage-meta-detail">{festivalText}</p>}
+                    {dramaClubNameText && (
+                      <p className="prod-backstage-meta-detail prod-backstage-meta-club">
+                        {dramaClubNameText}{dramaClubLocationText ? ` · ${dramaClubLocationText}` : ""}
+                      </p>
+                    )}
+                  </div>
+                  <div className="prod-backstage-meta-right">
+                    {(venueText || (cityText ?? locationText)) && (
+                      <div className="prod-backstage-chip">
+                        <span className="prod-bp-chip-label">Location</span>
+                        <span className="prod-bp-chip-value">
+                          {[venueText, cityText ?? locationText].filter(Boolean).join(" · ")}
+                        </span>
+                      </div>
+                    )}
+                    {runtimeText && (
+                      <div className="prod-backstage-chip">
+                        <span className="prod-bp-chip-label">Runtime</span>
+                        <span className="prod-bp-chip-value">{runtimeText}</span>
+                      </div>
+                    )}
+                    {ageRecText && (
+                      <div className="prod-backstage-chip">
+                        <span className="prod-bp-chip-label">Ages</span>
+                        <span className="prod-bp-chip-value">{ageRecText}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Events header + rows */}
+                <div className="prod-backstage-header">
+                  <span className="prod-backstage-label">
+                    {safeProductionEvents.filter((e) => e.status === "upcoming").length > 0
+                      ? "Where to See It"
+                      : "Where It\u2019s Been"}
+                  </span>
+                </div>
+                <div className="prod-backstage-events">
+                  <div className="prod-events-list">
+                    {safeProductionEvents.map((e) => {
+                      const isPast = e.status !== "upcoming";
+                      return (
+                        <div key={e.id} className={`prod-event-row ${isPast ? "prod-event-row--past" : ""}`}>
+                          <div className="prod-event-date">
+                            {e.endDate
+                              ? `${shortMonth(e.date)} ${dayOfMonth(e.date)}–${dayOfMonth(e.endDate)}, ${eventYear(e.date)}`
+                              : `${shortMonth(e.date)} ${dayOfMonth(e.date)}, ${eventYear(e.date)}`}
+                          </div>
+                          <div className="prod-event-venue">
+                            <span className="prod-event-name">{e.venue}</span>
+                            <span className="prod-event-city"> · {e.city}, {e.country}</span>
+                          </div>
+                          {e.ticketUrl && !isPast && (
+                            <a
+                              href={e.ticketUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="prod-event-ticket"
+                            >
+                              {e.ticketPrice ? e.ticketPrice : "Tickets →"}
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <Link href="/events" className="prod-backstage-all-link">All DAT Events →</Link>
+              </div>
+            )}
 
             {/* Quote band */}
             {pullQuote?.quote && cleanStr(pullQuote.quote) && (
@@ -2663,13 +2699,13 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           grid-template-columns: 9rem 1fr auto;
           align-items: center;
           gap: 0.75rem;
-          padding: 0.65rem 1rem 0.65rem 1.25rem;
+          padding: 0.65rem 1rem 0.65rem 1.5rem;
           background: transparent;
-          border-bottom: 1px solid rgba(217,169,25,0.1);
+          border-bottom: 1px solid rgba(242,51,89,0.08);
           transition: background 0.15s;
         }
         .prod-event-row:last-child{ border-bottom: none; }
-        .prod-event-row:hover{ background: rgba(217,169,25,0.04); }
+        .prod-event-row:hover{ background: rgba(242,51,89,0.03); }
         .prod-event-row--past{
           opacity: 0.52;
         }
@@ -2698,7 +2734,7 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           letter-spacing: 0.08em;
           text-transform: uppercase;
           color: #fff;
-          background: #D9A919;
+          background: #F23359;
           padding: 0.3rem 0.7rem;
           border-radius: 6px;
           text-decoration: none !important;
@@ -2742,8 +2778,8 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           letter-spacing: 0.1em;
           text-transform: uppercase;
           text-decoration: none;
-          color: #241123;
-          background: #D9A919;
+          color: #fff;
+          background: #F23359;
           padding: 0.5rem 1rem;
           border-radius: 8px;
           transition: opacity 0.2s, transform 0.15s;
@@ -2754,8 +2790,8 @@ if (ageRecText) metaValues.push({ value: ageRecText });
         /* ── Backstage pass ─────────────────────────────────────────── */
         .prod-backstage-pass{
           margin-top: 1.5rem;
-          background: rgba(255,204,0,0.04);
-          border: 1.5px solid rgba(217,169,25,0.22);
+          background: rgba(242,51,89,0.03);
+          border: 1.5px solid rgba(242,51,89,0.18);
           border-radius: 14px;
           overflow: hidden;
           position: relative;
@@ -2765,16 +2801,83 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           position: absolute;
           left: 0; top: 0; bottom: 0;
           width: 4px;
-          background: linear-gradient(to bottom, #D9A919, rgba(217,169,25,0.35));
+          background: linear-gradient(to bottom, #F23359, rgba(242,51,89,0.3));
           border-radius: 4px 0 0 4px;
         }
+
+        /* Meta grid — production info at top */
+        .prod-backstage-meta{
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem 2rem;
+          padding: 1rem 1.25rem 1rem 1.5rem;
+          border-bottom: 1px dashed rgba(242,51,89,0.15);
+          background: rgba(242,51,89,0.04);
+        }
+        @media (max-width: 600px){
+          .prod-backstage-meta{ grid-template-columns: 1fr; }
+        }
+        .prod-backstage-meta-left{ display: flex; flex-direction: column; gap: 0.25rem; }
+        .prod-backstage-meta-title{
+          font-family: var(--font-dm-sans, system-ui, sans-serif);
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: #241123;
+          margin: 0;
+          line-height: 1.3;
+        }
+        .prod-backstage-meta-sub{
+          font-family: var(--font-dm-sans, system-ui, sans-serif);
+          font-size: 0.78rem;
+          font-weight: 600;
+          color: rgba(36,17,35,0.6);
+          margin: 0;
+          font-style: italic;
+        }
+        .prod-backstage-meta-detail{
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.78rem;
+          color: rgba(36,17,35,0.55);
+          margin: 0;
+        }
+        .prod-backstage-meta-club{
+          font-size: 0.75rem;
+          color: rgba(242,51,89,0.7);
+          font-weight: 600;
+        }
+        .prod-backstage-meta-right{
+          display: flex;
+          flex-direction: column;
+          gap: 0.4rem;
+        }
+        .prod-backstage-chip{
+          display: flex;
+          align-items: baseline;
+          gap: 0.5rem;
+        }
+        .prod-bp-chip-label{
+          font-family: var(--font-dm-sans, system-ui, sans-serif);
+          font-size: 0.62rem;
+          font-weight: 700;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: rgba(242,51,89,0.65);
+          white-space: nowrap;
+          flex-shrink: 0;
+          min-width: 4.5rem;
+        }
+        .prod-bp-chip-value{
+          font-family: var(--font-space-grotesk, system-ui, sans-serif);
+          font-size: 0.8rem;
+          color: rgba(36,17,35,0.75);
+        }
+
         .prod-backstage-header{
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          padding: 0.6rem 1rem 0.6rem 1.25rem;
-          border-bottom: 1px dashed rgba(217,169,25,0.22);
-          background: rgba(217,169,25,0.05);
+          padding: 0.55rem 1rem 0.55rem 1.5rem;
+          border-bottom: 1px dashed rgba(242,51,89,0.15);
+          background: rgba(242,51,89,0.04);
         }
         .prod-backstage-label{
           font-family: var(--font-dm-sans, system-ui, sans-serif);
@@ -2782,24 +2885,23 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           font-weight: 700;
           letter-spacing: 0.26em;
           text-transform: uppercase;
-          color: rgba(217,169,25,0.9);
+          color: rgba(242,51,89,0.75);
         }
-        .prod-backstage-stamp{ font-size: 0.95rem; opacity: 0.55; }
         .prod-backstage-events{ padding: 0.35rem 0 0.1rem; }
         .prod-backstage-all-link{
           display: block;
-          padding: 0.6rem 1rem 0.6rem 1.25rem;
-          border-top: 1px dashed rgba(217,169,25,0.18);
+          padding: 0.6rem 1rem 0.6rem 1.5rem;
+          border-top: 1px dashed rgba(242,51,89,0.15);
           font-family: var(--font-dm-sans, system-ui, sans-serif);
           font-size: 0.7rem;
           font-weight: 700;
           letter-spacing: 0.12em;
           text-transform: uppercase;
-          color: rgba(217,169,25,0.8);
+          color: rgba(242,51,89,0.7);
           text-decoration: none;
           transition: color 0.15s;
         }
-        .prod-backstage-all-link:hover{ color: #D9A919; }
+        .prod-backstage-all-link:hover{ color: #F23359; }
 
         /* ── Production Events Section ─────────────────────────────── */
         .pev-section{

@@ -46,7 +46,7 @@ export interface DatEvent {
   /** Longer detail shown on full-page views */
   longDescription?: string;
 
-  /** Path in /public, e.g. "/images/theatre/agwow-condor.webp" */
+  /** Path in /public, e.g. "/images/theatre/archive/agwow-condor.webp" */
   image?: string;
 
   ticketUrl?: string;
@@ -196,7 +196,7 @@ export const events: DatEvent[] = [
       "DAT presents at the world's premier international performing arts festival for young audiences — joining theatre-makers from 90+ countries.",
     longDescription:
       "ASSITEJ (International Association of Theatre for Children and Young People) gathers the global field in Reykjavík. DAT will present a work-in-progress showing of its newest production and lead a workshop on cross-cultural devising methodologies.",
-    image: "/images/theatre/flakes.webp",
+    image: "/images/theatre/archive/flakes.webp",
     ticketUrl: "https://www.assitej-international.org",
     ticketPrice: "Festival pass / delegate registration",
     ticketType: "ticketed",
@@ -220,7 +220,7 @@ export const events: DatEvent[] = [
       "Three weeks. The world's biggest arts festival. DAT returns to Summerhall with The Rainbow of San Luis and a programme of community events, workshops, and late-night conversations.",
     longDescription:
       "DAT's Edinburgh residency at Summerhall spans three weeks of the Fringe. Beyond the main production, we're hosting an open studio, a post-show Q&A series, and a free community workshop for Edinburgh-based young artists.",
-    image: "/images/theatre/esmeraldas_dumbshow.webp",
+    image: "/images/theatre/archive/esmeraldas_dumbshow.webp",
     ticketUrl: "https://www.edfringe.com",
     ticketPrice: "Varies by event — from Free",
     ticketType: "ticketed",
@@ -244,7 +244,7 @@ export const events: DatEvent[] = [
       "DAT joins one of Latin America's most celebrated theatre festivals — performing, collaborating, and connecting with the broader community of Ibero-American theatremakers.",
     longDescription:
       "The Iberoamerican Theatre Festival of Bogotá is one of the largest performing arts events in Latin America. DAT has deep roots in the region — in Ecuador, Colombia, and Peru — and returns to Colombia to perform, participate in symposia, and reconnect with our South American community.",
-    image: "/images/theatre/agwow-condor.webp",
+    image: "/images/theatre/archive/agwow-condor.webp",
     ticketUrl: "https://festivaldeteatro.com.co",
     ticketPrice: "Most events free or low cost",
     ticketType: "free",
@@ -272,7 +272,7 @@ export const events: DatEvent[] = [
       "An evening of performance, live music, and community — raising funds for DAT's next field season. Drinks. Stories. Dancing. The people who make this work matter.",
     longDescription:
       "Act III is DAT's annual Spring Benefit — a night to celebrate another season of field work and raise funds for the next. Expect: short performances by DAT alumni artists, a live auction, catered dinner, and a late-night dance floor. Proceeds fund artist stipends, drama club materials, and community partnerships for DAT Season 17.",
-    image: "/images/theatre/hotel_millionaire.webp",
+    image: "/images/theatre/archive/hotel_millionaire.webp",
     ticketUrl: "https://dramaticadventure.com/gala",
     ticketPrice: "£75 full / £45 supporters / Pay what you can",
     ticketType: "sliding-scale",
@@ -298,7 +298,7 @@ export const events: DatEvent[] = [
       "Documentary footage, live storytelling, and conversation from DAT's most recent field seasons — followed by a community reception and live music.",
     longDescription:
       "An intimate evening at Brooklyn's beloved Pioneer Works: documentary films from four DAT field seasons, live storytelling by returning artists, and a catered reception to follow. Pay what you can. All proceeds support drama club operations in Tanzania and Ecuador.",
-    image: "/images/theatre/tembo.webp",
+    image: "/images/theatre/archive/tembo.webp",
     ticketUrl: "https://pioneerworks.org",
     ticketPrice: "Pay what you can — suggested $25",
     ticketType: "pay-what-you-can",
@@ -322,7 +322,7 @@ export const events: DatEvent[] = [
       "DAT announces Season 17 live — with a performance excerpt, artist introductions, and a community conversation open to everyone, everywhere.",
     longDescription:
       "We're announcing DAT Season 17 live — streaming globally. Join us to hear where we're going, who's going, and how you can be part of it. Expect: a live performance excerpt, artist introductions, Q&A, and a year-end giving campaign with matching gifts. Free to attend. Donations warmly welcomed.",
-    image: "/images/theatre/blackfish_mommy.webp",
+    image: "/images/theatre/archive/blackfish_mommy.webp",
     ticketUrl: "https://dramaticadventure.com/season17",
     ticketPrice: "Free — donations welcome",
     ticketType: "free",

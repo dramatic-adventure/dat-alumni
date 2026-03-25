@@ -222,12 +222,14 @@ export default function FestivalsPage() {
       <section className="fest-about-band">
         <div className="fest-container fest-about-grid">
           <div>
-            <p className="fest-about-eyebrow" style={{ color: accent }}>
-              DAT &amp; The Festival Circuit
-            </p>
-            <h2 className="fest-about-title">
-              The Whole World<br />Is a Stage
-            </h2>
+            <div className="fest-about-heading-box">
+              <p className="fest-about-eyebrow" style={{ color: accent }}>
+                DAT &amp; The Festival Circuit
+              </p>
+              <h2 className="fest-about-title">
+                The Whole World<br />Is a Stage
+              </h2>
+            </div>
           </div>
           <div className="fest-about-content-box">
             <p className="fest-about-body">
@@ -322,9 +324,9 @@ export default function FestivalsPage() {
           background: linear-gradient(
             to top,
             rgba(5,20,26,1.0) 0%,
-            rgba(5,20,26,1.0) 6%,
-            rgba(5,15,20,0.85) 30%,
-            rgba(5,15,20,0.45) 60%,
+            rgba(5,20,26,1.0) 12%,
+            rgba(5,15,20,0.85) 35%,
+            rgba(5,15,20,0.45) 65%,
             rgba(5,15,20,0.15) 100%
           );
         }
@@ -411,6 +413,7 @@ export default function FestivalsPage() {
         .fest-listing {
           background: #05141a;
           padding: clamp(3rem, 6vw, 5rem) 0;
+          margin-top: -2px;
         }
         .fest-section-eyebrow {
           font-family: "DM Sans", sans-serif;
@@ -668,13 +671,20 @@ export default function FestivalsPage() {
         @media (max-width: 700px) {
           .fest-about-grid { grid-template-columns: 1fr; }
         }
+        .fest-about-heading-box {
+          display: inline-block;
+          background: rgba(246,228,193,0.82);
+          border-left: 4px solid #2493A9;
+          padding: 0.75rem 1.5rem 0.75rem 1rem;
+          border-radius: 0 10px 10px 0;
+        }
         .fest-about-eyebrow {
           font-family: "DM Sans", sans-serif;
           font-size: 0.72rem;
           font-weight: 700;
           letter-spacing: 0.28em;
           text-transform: uppercase;
-          margin: 0 0 0.6rem;
+          margin: 0 0 0.4rem;
         }
         .fest-about-title {
           font-family: "Anton", sans-serif;
@@ -803,8 +813,8 @@ export default function FestivalsPage() {
           transition: opacity 0.2s, transform 0.15s;
         }
         .fest-bottom-link:hover { opacity: 0.8; transform: translateY(-1px); }
-        .fest-pink { background: #F23359; color: #fff; }
-        .fest-gold { background: #D9A919; color: #241123; }
+        .fest-pink { background: #b8194a; color: #fff; }
+        .fest-gold { background: #8a6200; color: #fff; }
         .fest-muted { color: rgba(255,255,255,0.4); border: 1.5px solid rgba(255,255,255,0.15); }
       `}</style>
     </>

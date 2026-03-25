@@ -144,30 +144,29 @@ function CategoryRow({
               {meta.eyebrow}
             </p>
             <h2 className="evhub-cat-title">{meta.plural}</h2>
+            <Link href={meta.href} className="evhub-see-all" style={{ color: accent }}>
+              See all →
+            </Link>
           </div>
-          <Link href={meta.href} className="evhub-see-all" style={{ color: accent }}>
-            See all →
-          </Link>
         </div>
+      </div>
 
-        {events.length === 0 ? (
+      {events.length === 0 ? (
+        <div className="evhub-container">
           <div className="evhub-empty">
             <p>No upcoming {meta.plural.toLowerCase()} announced yet.</p>
             <Link href={meta.href} style={{ color: accent }}>
               Check back soon →
             </Link>
           </div>
-        ) : (
-          <div
-            className="evhub-cards-scroll"
-            style={events.length <= 2 ? { gridTemplateColumns: `repeat(${events.length}, 1fr)` } : undefined}
-          >
-            {events.slice(0, 2).map((ev) => (
-              <EventCard key={ev.id} event={ev} accent={accent} />
-            ))}
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="evhub-cards-scroll">
+          {events.slice(0, 2).map((ev) => (
+            <EventCard key={ev.id} event={ev} accent={accent} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -320,19 +319,22 @@ export default function EventsHubPage() {
         <CategoryRow category="fundraiser" events={fundraisers} />
       </div>
 
-      {/* ── Oscar Wilde quote + theatre photo ──────────────────────────── */}
+      {/* ── Oscar Wilde quote overlaid on theatre photo ─────────────── */}
       <section className="evhub-quote-band">
-        <div className="evhub-container">
-          <blockquote className="evhub-quote">
-            <p className="evhub-quote-text">
-              &ldquo;I regard the theatre as the greatest of all art forms, the most immediate
-              way in which a human being can share with another the sense of what it is
-              to be a human being.&rdquo;
-            </p>
-            <footer className="evhub-quote-attribution">— Oscar Wilde</footer>
-          </blockquote>
+        <div className="evhub-quote-photo-wrap">
+          <div className="evhub-quote-photo" aria-hidden="true" />
+          <div className="evhub-quote-photo-overlay" />
+          <div className="evhub-quote-photo-content">
+            <blockquote className="evhub-quote">
+              <p className="evhub-quote-text">
+                &ldquo;I regard the theatre as the greatest of all art forms, the most immediate
+                way in which a human being can share with another the sense of what it is
+                to be a human being.&rdquo;
+              </p>
+              <footer className="evhub-quote-attribution">— Oscar Wilde</footer>
+            </blockquote>
+          </div>
         </div>
-        <div className="evhub-quote-photo" aria-hidden="true" />
       </section>
 
       {/* ── Bottom band ────────────────────────────────────────────────── */}
@@ -634,24 +636,21 @@ export default function EventsHubPage() {
           background: transparent;
         }
         .evhub-category-row {
-          padding: clamp(3rem, 6vw, 5rem) 0;
+          padding: clamp(2.5rem, 5vw, 4rem) 0 clamp(2.5rem, 5vw, 4rem);
           border-bottom: 1px solid rgba(36,17,35,0.1);
         }
         .evhub-category-row:last-child { border-bottom: none; }
         .evhub-cat-header {
-          display: flex;
-          align-items: flex-end;
-          justify-content: space-between;
-          margin-bottom: 1.75rem;
-          flex-wrap: wrap;
-          gap: 0.75rem;
+          margin-bottom: 1.5rem;
         }
         .evhub-cat-heading-group {
-          display: inline-block;
-          background: rgba(36,17,35,0.06);
+          display: inline-flex;
+          flex-direction: column;
+          gap: 0.2rem;
+          background: rgba(36,17,35,0.1);
           border-left: 4px solid currentColor;
-          padding: 0.5rem 1rem 0.5rem 0.9rem;
-          border-radius: 0 8px 8px 0;
+          padding: 0.6rem 1.25rem 0.6rem 0.9rem;
+          border-radius: 0 10px 10px 0;
         }
         .evhub-cat-eyebrow {
           font-family: "DM Sans", sans-serif;
@@ -659,7 +658,7 @@ export default function EventsHubPage() {
           font-weight: 700;
           letter-spacing: 0.28em;
           text-transform: uppercase;
-          margin: 0 0 0.3rem;
+          margin: 0;
         }
         .evhub-cat-title {
           font-family: "Anton", sans-serif;
@@ -671,15 +670,17 @@ export default function EventsHubPage() {
         }
         .evhub-see-all {
           font-family: "DM Sans", sans-serif;
-          font-size: 0.82rem;
+          font-size: 0.72rem;
           font-weight: 700;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
           text-decoration: none;
           transition: opacity 0.2s;
           white-space: nowrap;
+          margin-top: 0.45rem;
+          opacity: 0.85;
         }
-        .evhub-see-all:hover { opacity: 0.7; }
+        .evhub-see-all:hover { opacity: 1; }
         .evhub-empty {
           font-family: "Space Grotesk", sans-serif;
           font-size: 0.95rem;
@@ -690,25 +691,35 @@ export default function EventsHubPage() {
         }
         .evhub-empty a { font-weight: 600; text-decoration: none; }
 
-        /* Cards scroll row */
+        /* Cards scroll row — 50vw per card */
         .evhub-cards-scroll {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          gap: 1.25rem;
+          grid-template-columns: repeat(2, calc(50vw - 2rem));
+          gap: 1rem;
+          padding: 0 clamp(1.25rem, 5vw, 3rem);
+          overflow-x: auto;
+          scrollbar-width: none;
+        }
+        .evhub-cards-scroll::-webkit-scrollbar { display: none; }
+        @media (max-width: 600px) {
+          .evhub-cards-scroll {
+            grid-template-columns: calc(100vw - 2.5rem);
+          }
         }
         .evhub-card {
           position: relative;
           border-radius: 14px;
           overflow: hidden;
-          min-height: 340px;
+          min-height: 360px;
           background: #1a0d1a;
           display: flex;
           flex-direction: column;
           transition: transform 0.25s, box-shadow 0.25s;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.18), 0 8px 28px rgba(0,0,0,0.14);
         }
         .evhub-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+          transform: translateY(-5px);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.32), 0 24px 60px rgba(0,0,0,0.38), 0 2px 6px rgba(0,0,0,0.22);
         }
         .evhub-card-img {
           position: absolute;
@@ -802,13 +813,9 @@ export default function EventsHubPage() {
 
         /* ── Bottom band ───────────────────────────────────────────────── */
         .evhub-bottom-band {
-          background: #0d0812;
+          background: #1d0a36;
           padding: clamp(3rem, 6vw, 5rem) 0;
-          max-width: 680px;
-          margin-left: auto;
-          margin-right: auto;
-          padding-left: clamp(1.25rem, 5vw, 3rem);
-          padding-right: clamp(1.25rem, 5vw, 3rem);
+          width: 100%;
         }
         .evhub-bottom-eyebrow {
           font-family: "DM Sans", sans-serif;
@@ -979,20 +986,51 @@ export default function EventsHubPage() {
           padding: clamp(2.5rem, 5vw, 4rem) 0 0;
           background: transparent;
         }
+        .evhub-quote-photo-wrap {
+          position: relative;
+          height: clamp(260px, 38vw, 480px);
+          overflow: hidden;
+        }
+        .evhub-quote-photo {
+          position: absolute;
+          inset: 0;
+          background-image: url('/images/performing-zanzibar.jpg');
+          background-size: cover;
+          background-position: center 35%;
+        }
+        .evhub-quote-photo-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            to right,
+            rgba(10,5,14,0.82) 0%,
+            rgba(10,5,14,0.6) 50%,
+            rgba(10,5,14,0.35) 100%
+          );
+        }
+        .evhub-quote-photo-content {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          padding: 0 clamp(1.5rem, 6vw, 5rem);
+          max-width: 860px;
+        }
         .evhub-quote {
           margin: 0;
           padding: 0;
-          border-left: 3px solid rgba(217,169,25,0.45);
+          border-left: 3px solid rgba(217,169,25,0.6);
           padding-left: clamp(1.25rem, 3vw, 2.5rem);
         }
         .evhub-quote-text {
           font-family: "Space Grotesk", sans-serif;
-          font-size: clamp(1rem, 2.2vw, 1.35rem);
+          font-size: clamp(1.05rem, 2.2vw, 1.45rem);
           font-style: italic;
-          color: rgba(36,17,35,0.72);
+          color: rgba(255,255,255,0.9);
           line-height: 1.7;
           margin: 0 0 0.75rem;
-          max-width: 700px;
+          max-width: 660px;
+          text-shadow: 0 1px 8px rgba(0,0,0,0.5);
         }
         .evhub-quote-attribution {
           font-family: "DM Sans", sans-serif;
@@ -1000,21 +1038,7 @@ export default function EventsHubPage() {
           font-weight: 700;
           letter-spacing: 0.12em;
           text-transform: uppercase;
-          color: rgba(36,17,35,0.42);
-        }
-        .evhub-quote-photo {
-          margin-top: clamp(2rem, 4vw, 3.5rem);
-          height: clamp(200px, 30vw, 380px);
-          background-image: url('/images/performing-zanzibar.jpg');
-          background-size: cover;
-          background-position: center 35%;
-          position: relative;
-        }
-        .evhub-quote-photo::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(to bottom, transparent 40%, rgba(246,228,193,0.7) 100%);
+          color: rgba(255,255,255,0.5);
         }
       `}</style>
     </>

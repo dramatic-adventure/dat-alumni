@@ -339,9 +339,9 @@ export default function FundraisersPage() {
           background: linear-gradient(
             to top,
             rgba(20,12,4,1.0) 0%,
-            rgba(20,12,4,1.0) 6%,
-            rgba(20,12,4,0.82) 30%,
-            rgba(20,12,4,0.45) 60%,
+            rgba(20,12,4,1.0) 12%,
+            rgba(20,12,4,0.82) 35%,
+            rgba(20,12,4,0.45) 65%,
             rgba(20,12,4,0.15) 100%
           );
         }
@@ -415,6 +415,7 @@ export default function FundraisersPage() {
         .fund-listing {
           background: #140c04;
           padding: clamp(3rem, 6vw, 5rem) 0;
+          margin-top: -2px;
         }
         .fund-grid {
           display: grid;
@@ -854,8 +855,8 @@ export default function FundraisersPage() {
           transition: opacity 0.2s, transform 0.15s;
         }
         .fund-bottom-link:hover { opacity: 0.8; transform: translateY(-1px); }
-        .fund-pink { background: #F23359; color: #fff; }
-        .fund-teal { background: #2493A9; color: #fff; }
+        .fund-pink { background: #b8194a; color: #fff; }
+        .fund-teal { background: #1a6d7d; color: #fff; }
         .fund-muted { color: rgba(255,255,255,0.4); border: 1.5px solid rgba(255,255,255,0.15); }
       `}</style>
     </>
