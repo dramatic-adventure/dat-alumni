@@ -348,9 +348,11 @@ export default function PerformancesPage() {
           inset: 0;
           background: linear-gradient(
             to top,
-            rgba(8,3,12,0.96) 0%,
-            rgba(8,3,12,0.65) 40%,
-            rgba(8,3,12,0.2) 100%
+            rgba(13,8,18,1.0) 0%,
+            rgba(13,8,18,1.0) 6%,
+            rgba(8,3,12,0.88) 30%,
+            rgba(8,3,12,0.5) 60%,
+            rgba(8,3,12,0.15) 100%
           );
         }
         .perf-hero-pink-glow {
@@ -440,6 +442,7 @@ export default function PerformancesPage() {
         .perf-card--featured {
           min-height: 520px;
           grid-column: 1 / -1;
+          margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
         }
         @media (min-width: 900px) {
           .perf-card--featured { min-height: 480px; }
@@ -672,7 +675,7 @@ export default function PerformancesPage() {
 
         /* ── What to expect ───────────────────────────────────────────── */
         .perf-expect-band {
-          background: #f6e4c1;
+          background: transparent;
           padding: clamp(3.5rem, 7vw, 6rem) 0;
         }
         .perf-expect-eyebrow {
@@ -699,6 +702,9 @@ export default function PerformancesPage() {
           display: flex;
           flex-direction: column;
           gap: 0.6rem;
+          background: rgba(242,242,242,0.70);
+          border-radius: 14px;
+          padding: 1.25rem 1.5rem;
         }
         .perf-expect-icon { font-size: 2rem; }
         .perf-expect-item h3 {
@@ -783,7 +789,7 @@ export default function PerformancesPage() {
 
         /* ── Bottom band ──────────────────────────────────────────────── */
         .perf-bottom-band {
-          background: #0d1a14;
+          background: #0d0812;
           padding: clamp(2.5rem, 5vw, 4rem) 0;
         }
         .perf-bottom-inner {

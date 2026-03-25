@@ -139,7 +139,7 @@ function CategoryRow({
     <section className="evhub-category-row">
       <div className="evhub-container">
         <div className="evhub-cat-header">
-          <div>
+          <div className="evhub-cat-heading-group" style={{ borderColor: accent }}>
             <p className="evhub-cat-eyebrow" style={{ color: accent }}>
               {meta.eyebrow}
             </p>
@@ -158,7 +158,10 @@ function CategoryRow({
             </Link>
           </div>
         ) : (
-          <div className="evhub-cards-scroll">
+          <div
+            className="evhub-cards-scroll"
+            style={events.length <= 2 ? { gridTemplateColumns: `repeat(${events.length}, 1fr)` } : undefined}
+          >
             {events.slice(0, 2).map((ev) => (
               <EventCard key={ev.id} event={ev} accent={accent} />
             ))}
@@ -317,7 +320,7 @@ export default function EventsHubPage() {
         <CategoryRow category="fundraiser" events={fundraisers} />
       </div>
 
-      {/* ── Oscar Wilde quote ──────────────────────────────────────────── */}
+      {/* ── Oscar Wilde quote + theatre photo ──────────────────────────── */}
       <section className="evhub-quote-band">
         <div className="evhub-container">
           <blockquote className="evhub-quote">
@@ -329,25 +332,24 @@ export default function EventsHubPage() {
             <footer className="evhub-quote-attribution">— Oscar Wilde</footer>
           </blockquote>
         </div>
+        <div className="evhub-quote-photo" aria-hidden="true" />
       </section>
 
       {/* ── Bottom band ────────────────────────────────────────────────── */}
       <section className="evhub-bottom-band">
-        <div className="evhub-container evhub-bottom-inner">
-          <div className="evhub-bottom-copy">
-            <p className="evhub-bottom-eyebrow">Stay in the Loop</p>
-            <h2 className="evhub-bottom-title">Never miss a curtain.</h2>
-            <p className="evhub-bottom-body">
-              Events are announced first to our community list. Be the first to know
-              when new shows, festivals, and community nights are announced.
-            </p>
-            <MailingListForm />
-          </div>
+        <div className="evhub-container">
+          <p className="evhub-bottom-eyebrow">Stay in the Loop</p>
+          <h2 className="evhub-bottom-title">Never miss a curtain.</h2>
+          <p className="evhub-bottom-body">
+            Events are announced first to our community list. Be the first to know
+            when new shows, festivals, and community nights are announced.
+          </p>
+          <MailingListForm />
           <div className="evhub-bottom-links">
-            <Link href="/donate" className="evhub-btn-outline-light">
+            <Link href="/donate" className="evhub-btn-bottom-link">
               Support the Work
             </Link>
-            <Link href="/theatre" className="evhub-btn-outline-light">
+            <Link href="/theatre" className="evhub-btn-bottom-link">
               Theatre Archive →
             </Link>
           </div>
@@ -629,11 +631,11 @@ export default function EventsHubPage() {
 
         /* ── Category rows ─────────────────────────────────────────────── */
         .evhub-rows {
-          background: #f6e4c1;
+          background: transparent;
         }
         .evhub-category-row {
           padding: clamp(3rem, 6vw, 5rem) 0;
-          border-bottom: 1px solid rgba(36,17,35,0.08);
+          border-bottom: 1px solid rgba(36,17,35,0.1);
         }
         .evhub-category-row:last-child { border-bottom: none; }
         .evhub-cat-header {
@@ -644,13 +646,20 @@ export default function EventsHubPage() {
           flex-wrap: wrap;
           gap: 0.75rem;
         }
+        .evhub-cat-heading-group {
+          display: inline-block;
+          background: rgba(36,17,35,0.06);
+          border-left: 4px solid currentColor;
+          padding: 0.5rem 1rem 0.5rem 0.9rem;
+          border-radius: 0 8px 8px 0;
+        }
         .evhub-cat-eyebrow {
           font-family: "DM Sans", sans-serif;
           font-size: 0.72rem;
           font-weight: 700;
           letter-spacing: 0.28em;
           text-transform: uppercase;
-          margin: 0 0 0.4rem;
+          margin: 0 0 0.3rem;
         }
         .evhub-cat-title {
           font-family: "Anton", sans-serif;
@@ -793,17 +802,13 @@ export default function EventsHubPage() {
 
         /* ── Bottom band ───────────────────────────────────────────────── */
         .evhub-bottom-band {
-          background: #0d1a14;
+          background: #0d0812;
           padding: clamp(3rem, 6vw, 5rem) 0;
-        }
-        .evhub-bottom-inner {
-          display: grid;
-          grid-template-columns: 1fr auto;
-          gap: 3rem;
-          align-items: center;
-        }
-        @media (max-width: 700px) {
-          .evhub-bottom-inner { grid-template-columns: 1fr; gap: 2rem; }
+          max-width: 680px;
+          margin-left: auto;
+          margin-right: auto;
+          padding-left: clamp(1.25rem, 5vw, 3rem);
+          padding-right: clamp(1.25rem, 5vw, 3rem);
         }
         .evhub-bottom-eyebrow {
           font-family: "DM Sans", sans-serif;
@@ -826,15 +831,30 @@ export default function EventsHubPage() {
           font-size: 0.95rem;
           color: rgba(255,255,255,0.55);
           line-height: 1.65;
-          margin: 0;
+          margin: 0 0 1.5rem;
           max-width: 480px;
         }
         .evhub-bottom-links {
           display: flex;
-          flex-direction: column;
+          flex-wrap: wrap;
           gap: 0.75rem;
-          align-items: flex-start;
+          margin-top: 1.25rem;
         }
+        .evhub-btn-bottom-link {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          text-decoration: none;
+          color: rgba(255,255,255,0.6);
+          border: 1.5px solid rgba(255,255,255,0.18);
+          padding: 0.7rem 1.5rem;
+          border-radius: 10px;
+          transition: color 0.2s, border-color 0.2s;
+          white-space: nowrap;
+        }
+        .evhub-btn-bottom-link:hover { color: #fff; border-color: rgba(255,255,255,0.45); }
         .evhub-btn-gold {
           font-family: "DM Sans", sans-serif;
           font-size: 0.82rem;
@@ -868,7 +888,6 @@ export default function EventsHubPage() {
 
         /* ── Bottom copy column ────────────────────────────────────────── */
         .evhub-bottom-copy { display: flex; flex-direction: column; gap: 0; }
-        .evhub-bottom-body { margin: 0 0 1.5rem; }
 
         /* ── Mailing list form ─────────────────────────────────────────── */
         .evhub-ml-form { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -957,7 +976,7 @@ export default function EventsHubPage() {
 
         /* ── Oscar Wilde quote band ─────────────────────────────────────── */
         .evhub-quote-band {
-          padding: clamp(2.5rem, 5vw, 4rem) 0;
+          padding: clamp(2.5rem, 5vw, 4rem) 0 0;
           background: transparent;
         }
         .evhub-quote {
@@ -982,6 +1001,20 @@ export default function EventsHubPage() {
           letter-spacing: 0.12em;
           text-transform: uppercase;
           color: rgba(36,17,35,0.42);
+        }
+        .evhub-quote-photo {
+          margin-top: clamp(2rem, 4vw, 3.5rem);
+          height: clamp(200px, 30vw, 380px);
+          background-image: url('/images/performing-zanzibar.jpg');
+          background-size: cover;
+          background-position: center 35%;
+          position: relative;
+        }
+        .evhub-quote-photo::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to bottom, transparent 40%, rgba(246,228,193,0.7) 100%);
         }
       `}</style>
     </>

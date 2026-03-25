@@ -1428,57 +1428,58 @@ if (ageRecText) metaValues.push({ value: ageRecText });
             margin: "clamp(1.25rem, 3vw, 2.25rem) 0 clamp(3.2rem, 8vw, 6rem)",
             ["--card-pad" as any]: "clamp(1.2rem, 3.2vw, 2.4rem)",
             padding: "var(--card-pad)",
-            boxShadow: "0 24px 64px rgba(36,17,35,0.14), 0 4px 16px rgba(36,17,35,0.08)",
+            boxShadow: "0 2px 8px rgba(36,17,35,0.06), 0 20px 60px rgba(36,17,35,0.22), 0 8px 80px rgba(0,0,0,0.14)",
             backdropFilter: "blur(12px) saturate(1.1)",
             borderTop: `3px solid ${displayStatus === "NOW PLAYING" ? "#2FA873" : displayStatus === "UPCOMING" ? "#D9A919" : "rgba(36,17,35,0.14)"}`,
           }}
         >
           <section className="rows">
-            {/* ROW 1: Poster | Meta + status badge + events | CTA */}
-            <div className="row row70">
-              <div className="meta-with-poster">
-                {/* Poster image — if available and not fallback */}
-                {heroSrc && heroSrc !== "/posters/fallback-16x9.jpg" && (
-                  <div className="card-poster">
-                    <img src={heroSrc} alt={displayTitle} className="card-poster-img" />
-                  </div>
-                )}
-                <div className="meta-col">
-                {/* Status badge — top of the meta column */}
-                {displayStatus && (
-                  <div style={{ marginBottom: "0.85rem" }}>
+            {/* TOPBAR: status badge (left) + sponsor CTA (right) */}
+            <div className="card-topbar">
+              {displayStatus ? (
+                <span
+                  className="status-pill"
+                  style={{
+                    background:
+                      displayStatus === "NOW PLAYING" ? "#2FA873"
+                      : displayStatus === "UPCOMING"   ? "#D9A919"
+                      : "rgba(36,17,35,0.12)",
+                    borderColor:
+                      displayStatus === "NOW PLAYING" ? "#2FA873"
+                      : displayStatus === "UPCOMING"   ? "#D9A919"
+                      : "rgba(36,17,35,0.22)",
+                    color:
+                      displayStatus === "NOW PLAYING" ? "#fff"
+                      : displayStatus === "UPCOMING"   ? "#241123"
+                      : "#7a6a7a",
+                  }}
+                >
+                  {displayStatus !== "ARCHIVE" && (
                     <span
-                      className="status-pill"
+                      className="status-dot"
                       style={{
                         background:
-                          displayStatus === "NOW PLAYING" ? "#2FA873"
-                          : displayStatus === "UPCOMING"   ? "#D9A919"
-                          : "rgba(36,17,35,0.12)",
-                        borderColor:
-                          displayStatus === "NOW PLAYING" ? "#2FA873"
-                          : displayStatus === "UPCOMING"   ? "#D9A919"
-                          : "rgba(36,17,35,0.22)",
-                        color:
-                          displayStatus === "NOW PLAYING" ? "#fff"
-                          : displayStatus === "UPCOMING"   ? "#241123"
-                          : "#7a6a7a",
+                          displayStatus === "NOW PLAYING" ? "rgba(255,255,255,0.7)"
+                          : "rgba(36,17,35,0.35)",
                       }}
-                    >
-                      {displayStatus !== "ARCHIVE" && (
-                        <span
-                          className="status-dot"
-                          style={{
-                            background:
-                              displayStatus === "NOW PLAYING" ? "rgba(255,255,255,0.7)"
-                              : "rgba(36,17,35,0.35)",
-                          }}
-                        />
-                      )}
-                      {displayStatus}
-                    </span>
-                  </div>
-                )}
+                    />
+                  )}
+                  {displayStatus}
+                </span>
+              ) : <span />}
+              {(runIsUpcomingOrCurrent || runIsPast) && (
+                <a
+                  href={runIsPast ? pastProductionDonateHref : currentProductionDonateHref}
+                  className="card-topbar-sponsor"
+                >
+                  {runIsPast ? "Sponsor Stories Like This" : "Sponsor This New Work"} ↗
+                </a>
+              )}
+            </div>
 
+            {/* ROW 1: Meta + events | primary CTA */}
+            <div className="row row70">
+              <div className="meta-col">
                 <div className="meta-stack">
                   <h2 className="meta-title">{displayTitle}</h2>
                   {metaValues.map(({ value, hero }, i) => (
@@ -1488,48 +1489,51 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                   ))}
                 </div>
 
-                {/* Linked events — woven into the meta column */}
+                {/* Backstage-pass events container */}
                 {safeProductionEvents.length > 0 && (
-                  <div className="prod-events-inline">
-                    {safeProductionEvents.filter((e) => e.status === "upcoming").length > 0 && (
-                      <p className="prod-events-eyebrow">Where to See It</p>
-                    )}
-                    {safeProductionEvents.filter((e) => e.status === "upcoming").length === 0 && (
-                      <p className="prod-events-eyebrow">Where It&apos;s Been</p>
-                    )}
-                    <div className="prod-events-list">
-                      {safeProductionEvents.map((e) => {
-                        const isPast = e.status !== "upcoming";
-                        return (
-                          <div key={e.id} className={`prod-event-row ${isPast ? "prod-event-row--past" : ""}`}>
-                            <div className="prod-event-date">
-                              {e.endDate
-                                ? `${shortMonth(e.date)} ${dayOfMonth(e.date)}–${dayOfMonth(e.endDate)}, ${eventYear(e.date)}`
-                                : `${shortMonth(e.date)} ${dayOfMonth(e.date)}, ${eventYear(e.date)}`}
-                            </div>
-                            <div className="prod-event-venue">
-                              <span className="prod-event-name">{e.venue}</span>
-                              <span className="prod-event-city"> · {e.city}, {e.country}</span>
-                            </div>
-                            {e.ticketUrl && !isPast && (
-                              <a
-                                href={e.ticketUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="prod-event-ticket"
-                              >
-                                {e.ticketPrice ? e.ticketPrice : "Tickets →"}
-                              </a>
-                            )}
-                          </div>
-                        );
-                      })}
+                  <div className="prod-backstage-pass">
+                    <div className="prod-backstage-header">
+                      <span className="prod-backstage-label">
+                        {safeProductionEvents.filter((e) => e.status === "upcoming").length > 0
+                          ? "Where to See It"
+                          : "Where It\u2019s Been"}
+                      </span>
+                      <span className="prod-backstage-stamp" aria-hidden="true">🎫</span>
                     </div>
-                    <Link href="/events" className="prod-events-all-link">All DAT Events →</Link>
+                    <div className="prod-backstage-events">
+                      <div className="prod-events-list">
+                        {safeProductionEvents.map((e) => {
+                          const isPast = e.status !== "upcoming";
+                          return (
+                            <div key={e.id} className={`prod-event-row ${isPast ? "prod-event-row--past" : ""}`}>
+                              <div className="prod-event-date">
+                                {e.endDate
+                                  ? `${shortMonth(e.date)} ${dayOfMonth(e.date)}–${dayOfMonth(e.endDate)}, ${eventYear(e.date)}`
+                                  : `${shortMonth(e.date)} ${dayOfMonth(e.date)}, ${eventYear(e.date)}`}
+                              </div>
+                              <div className="prod-event-venue">
+                                <span className="prod-event-name">{e.venue}</span>
+                                <span className="prod-event-city"> · {e.city}, {e.country}</span>
+                              </div>
+                              {e.ticketUrl && !isPast && (
+                                <a
+                                  href={e.ticketUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="prod-event-ticket"
+                                >
+                                  {e.ticketPrice ? e.ticketPrice : "Tickets →"}
+                                </a>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <Link href="/events" className="prod-backstage-all-link">All DAT Events →</Link>
                   </div>
                 )}
-                </div>{/* /meta-col */}
-              </div>{/* /meta-with-poster */}
+              </div>{/* /meta-col */}
 
               <div className="r1-tickets">
                 {primaryCtaHref && primaryCtaLabel && (
@@ -2659,17 +2663,15 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           grid-template-columns: 9rem 1fr auto;
           align-items: center;
           gap: 0.75rem;
-          padding: 0.65rem 0.85rem 0.65rem 1rem;
-          border-radius: 8px;
-          background: rgba(36,17,35,0.04);
-          border: 1px solid rgba(36,17,35,0.08);
-          border-left: 3px solid #D9A919;
+          padding: 0.65rem 1rem 0.65rem 1.25rem;
+          background: transparent;
+          border-bottom: 1px solid rgba(217,169,25,0.1);
           transition: background 0.15s;
         }
-        .prod-event-row:hover{ background: rgba(36,17,35,0.07); }
+        .prod-event-row:last-child{ border-bottom: none; }
+        .prod-event-row:hover{ background: rgba(217,169,25,0.04); }
         .prod-event-row--past{
-          opacity: 0.55;
-          border-left-color: rgba(36,17,35,0.2);
+          opacity: 0.52;
         }
         .prod-event-date{
           font-family: var(--font-dm-sans, system-ui, sans-serif);
@@ -2721,6 +2723,83 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           .prod-event-row{ grid-template-columns: 1fr; gap: 0.3rem; }
           .prod-event-venue{ white-space: normal; }
         }
+
+        /* ── Card topbar ────────────────────────────────────────────── */
+        .card-topbar{
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+          padding-bottom: 1.25rem;
+          border-bottom: 1px solid rgba(36,17,35,0.08);
+          flex-wrap: wrap;
+        }
+        .card-topbar-sponsor{
+          font-family: var(--font-dm-sans, system-ui, sans-serif);
+          font-size: 0.75rem;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          text-decoration: none;
+          color: #241123;
+          background: #D9A919;
+          padding: 0.5rem 1rem;
+          border-radius: 8px;
+          transition: opacity 0.2s, transform 0.15s;
+          white-space: nowrap;
+        }
+        .card-topbar-sponsor:hover{ opacity: 0.88; transform: translateY(-1px); }
+
+        /* ── Backstage pass ─────────────────────────────────────────── */
+        .prod-backstage-pass{
+          margin-top: 1.5rem;
+          background: rgba(255,204,0,0.04);
+          border: 1.5px solid rgba(217,169,25,0.22);
+          border-radius: 14px;
+          overflow: hidden;
+          position: relative;
+        }
+        .prod-backstage-pass::before{
+          content: '';
+          position: absolute;
+          left: 0; top: 0; bottom: 0;
+          width: 4px;
+          background: linear-gradient(to bottom, #D9A919, rgba(217,169,25,0.35));
+          border-radius: 4px 0 0 4px;
+        }
+        .prod-backstage-header{
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0.6rem 1rem 0.6rem 1.25rem;
+          border-bottom: 1px dashed rgba(217,169,25,0.22);
+          background: rgba(217,169,25,0.05);
+        }
+        .prod-backstage-label{
+          font-family: var(--font-dm-sans, system-ui, sans-serif);
+          font-size: 0.63rem;
+          font-weight: 700;
+          letter-spacing: 0.26em;
+          text-transform: uppercase;
+          color: rgba(217,169,25,0.9);
+        }
+        .prod-backstage-stamp{ font-size: 0.95rem; opacity: 0.55; }
+        .prod-backstage-events{ padding: 0.35rem 0 0.1rem; }
+        .prod-backstage-all-link{
+          display: block;
+          padding: 0.6rem 1rem 0.6rem 1.25rem;
+          border-top: 1px dashed rgba(217,169,25,0.18);
+          font-family: var(--font-dm-sans, system-ui, sans-serif);
+          font-size: 0.7rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: rgba(217,169,25,0.8);
+          text-decoration: none;
+          transition: color 0.15s;
+        }
+        .prod-backstage-all-link:hover{ color: #D9A919; }
 
         /* ── Production Events Section ─────────────────────────────── */
         .pev-section{

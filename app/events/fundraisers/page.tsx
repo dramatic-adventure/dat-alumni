@@ -338,9 +338,11 @@ export default function FundraisersPage() {
           inset: 0;
           background: linear-gradient(
             to top,
-            rgba(20,12,4,0.96) 0%,
-            rgba(20,12,4,0.6) 42%,
-            rgba(20,12,4,0.18) 100%
+            rgba(20,12,4,1.0) 0%,
+            rgba(20,12,4,1.0) 6%,
+            rgba(20,12,4,0.82) 30%,
+            rgba(20,12,4,0.45) 60%,
+            rgba(20,12,4,0.15) 100%
           );
         }
         .fund-hero-gold-glow {
@@ -436,6 +438,7 @@ export default function FundraisersPage() {
         .fund-card--featured {
           min-height: 500px;
           grid-column: 1 / -1;
+          margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
         }
         .fund-card:hover {
           transform: translateY(-5px);
@@ -693,7 +696,7 @@ export default function FundraisersPage() {
 
         /* ── Why band ─────────────────────────────────────────────────── */
         .fund-why-band {
-          background: #f6e4c1;
+          background: transparent;
           padding: clamp(3.5rem, 7vw, 6rem) 0;
         }
         .fund-why-grid {
@@ -743,8 +746,8 @@ export default function FundraisersPage() {
           gap: 1.25rem;
         }
         .fund-impact-card {
-          background: #fff;
-          border: 1px solid #e8d9bc;
+          background: rgba(242,242,242,0.70);
+          border: 1px solid rgba(36,17,35,0.08);
           border-radius: 12px;
           padding: 1.5rem;
           display: flex;
@@ -825,7 +828,7 @@ export default function FundraisersPage() {
 
         /* ── Bottom band ──────────────────────────────────────────────── */
         .fund-bottom-band {
-          background: #1a140d;
+          background: #0d0812;
           padding: clamp(2.5rem, 5vw, 4rem) 0;
         }
         .fund-bottom-inner { display: flex; flex-direction: column; gap: 1.25rem; }

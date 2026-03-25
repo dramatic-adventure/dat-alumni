@@ -229,7 +229,7 @@ export default function FestivalsPage() {
               The Whole World<br />Is a Stage
             </h2>
           </div>
-          <div>
+          <div className="fest-about-content-box">
             <p className="fest-about-body">
               Festivals are where theatre communities find each other. For DAT, the festival
               circuit is how we take work made in rural Ecuador or coastal Tanzania to audiences
@@ -321,9 +321,11 @@ export default function FestivalsPage() {
           inset: 0;
           background: linear-gradient(
             to top,
-            rgba(5,15,20,0.96) 0%,
-            rgba(5,15,20,0.6) 40%,
-            rgba(5,15,20,0.2) 100%
+            rgba(5,20,26,1.0) 0%,
+            rgba(5,20,26,1.0) 6%,
+            rgba(5,15,20,0.85) 30%,
+            rgba(5,15,20,0.45) 60%,
+            rgba(5,15,20,0.15) 100%
           );
         }
         .fest-hero-teal-glow {
@@ -440,6 +442,7 @@ export default function FestivalsPage() {
         .fest-card--featured {
           min-height: 500px;
           grid-column: 1 / -1;
+          margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
         }
         .fest-card:hover {
           transform: translateY(-5px);
@@ -653,7 +656,7 @@ export default function FestivalsPage() {
 
         /* ── About band ───────────────────────────────────────────────── */
         .fest-about-band {
-          background: #f6e4c1;
+          background: transparent;
           padding: clamp(3.5rem, 7vw, 6rem) 0;
         }
         .fest-about-grid {
@@ -679,6 +682,11 @@ export default function FestivalsPage() {
           color: #241123;
           margin: 0;
           line-height: 1;
+        }
+        .fest-about-content-box {
+          background: rgba(242,242,242,0.70);
+          border-radius: 16px;
+          padding: 1.75rem 2rem;
         }
         .fest-about-body {
           font-family: "Space Grotesk", sans-serif;
@@ -769,7 +777,7 @@ export default function FestivalsPage() {
 
         /* ── Bottom band ──────────────────────────────────────────────── */
         .fest-bottom-band {
-          background: #0d1218;
+          background: #0d0812;
           padding: clamp(2.5rem, 5vw, 4rem) 0;
         }
         .fest-bottom-inner { display: flex; flex-direction: column; gap: 1.25rem; }
