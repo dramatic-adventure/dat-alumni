@@ -1470,7 +1470,8 @@ if (ageRecText) metaValues.push({ value: ageRecText });
               {primaryCtaHref && primaryCtaLabel && (
                 <DATButtonLink
                   href={primaryCtaHref}
-                  size="sm"
+                  size="md"
+                  variant="pink"
                   className="card-topbar-cta"
                   aria-label={
                     primaryCtaLabel === "Purchase Tickets"
@@ -1529,6 +1530,9 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                       ? "Where to See It"
                       : "Where It\u2019s Been"}
                   </span>
+                  {runIsPast && (
+                    <span className="prod-backstage-archive-badge">ARCHIVE</span>
+                  )}
                 </div>
                 <div className="prod-backstage-events">
                   <div className="prod-events-list">
@@ -2750,7 +2754,7 @@ if (ageRecText) metaValues.push({ value: ageRecText });
 
         /* ── Backstage pass ─────────────────────────────────────────── */
         .prod-backstage-pass{
-          margin-top: 1.5rem;
+          margin-top: 0.5rem;
           background: rgba(242,51,89,0.03);
           border: 1.5px solid rgba(242,51,89,0.18);
           border-radius: 14px;
@@ -2836,9 +2840,21 @@ if (ageRecText) metaValues.push({ value: ageRecText });
         .prod-backstage-header{
           display: flex;
           align-items: center;
+          justify-content: space-between;
           padding: 0.55rem 1rem 0.55rem 1.5rem;
           border-bottom: 1px dashed rgba(242,51,89,0.15);
           background: rgba(242,51,89,0.04);
+        }
+        .prod-backstage-archive-badge{
+          font-family: var(--font-dm-sans, system-ui, sans-serif);
+          font-size: 0.6rem;
+          font-weight: 700;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: rgba(36,17,35,0.35);
+          border: 1px solid rgba(36,17,35,0.18);
+          padding: 0.2rem 0.5rem;
+          border-radius: 4px;
         }
         .prod-backstage-label{
           font-family: var(--font-dm-sans, system-ui, sans-serif);

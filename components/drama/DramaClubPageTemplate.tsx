@@ -1053,7 +1053,7 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
   const hasCommunityNeeds = needsSafe.length > 0;
   const hasLocalContext = localContextParas.length > 0;
 
-  // ✅ Impact metrics – intentionally capped at TWO headline stats
+  // ✅ Impact metrics – capped at FOUR headline stats (youth, audience, showcases, plays)
   const defaultImpactMetrics: DramaClubMetric[] = [];
 
   // 1) Club artists served (primary stat)
@@ -1078,6 +1078,26 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
     defaultImpactMetrics.push({
       label: "Local audience reached",
       value: approxAudience,
+    });
+  }
+
+  // 3) Community showcases (separate from plays)
+  const showcasesForMetric = showcasesCount ?? undefined;
+  if (typeof showcasesForMetric === "number" && showcasesForMetric > 0) {
+    defaultImpactMetrics.push({
+      label: "Community showcases",
+      value: showcasesForMetric,
+      helper: "Public sharings for the whole community",
+    });
+  }
+
+  // 4) Original plays staged
+  const playsForMetric = (club as unknown as { playsCount?: number }).playsCount;
+  if (typeof playsForMetric === "number" && playsForMetric > 0) {
+    defaultImpactMetrics.push({
+      label: "Original plays",
+      value: playsForMetric,
+      helper: "Full productions created and performed",
     });
   }
 
@@ -1124,7 +1144,7 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
     impactMetrics ?? (statsFromClub.length ? statsFromClub : defaultImpactMetrics)
   ).filter((m) => !!m?.label && !!m?.value);
 
-  const effectiveImpactMetrics = rawImpactMetrics.slice(0, 2);
+  const effectiveImpactMetrics = rawImpactMetrics.slice(0, 4);
   const hasImpactMetrics = effectiveImpactMetrics.length > 0;
 
   // ✅ hero metrics (subset of impact metrics, for the hero band)
@@ -2075,14 +2095,7 @@ const voicesHeading = `Voices from ${voicesFrom}`;
               )}
             </div>
 
-            {/* GALLERY */}
-            {hasGallery && (
-  <DramaClubMomentsGallery
-    images={gallery}
-    clubName={club.name}
-    headline={momentsHeading}
-  />
-)}
+            {/* GALLERY moved below events band — see below the card */}
 
 
             {/* COMMUNITY & CONTEXT + IMPACT PARTNERS */}
@@ -2698,27 +2711,25 @@ const voicesHeading = `Voices from ${voicesFrom}`;
                               ? `${shortMonth(ev.date)} ${dayOfMonth(ev.date)}–${dayOfMonth(ev.endDate)}, ${eventYear(ev.date)}`
                               : `${shortMonth(ev.date)} ${dayOfMonth(ev.date)}, ${eventYear(ev.date)}`}
                           </span>
+                          {isPast && <span className="dc-event-past-badge">Past</span>}
                         </div>
                         <h3 className="dc-event-name">{ev.title}</h3>
-                        <p className="dc-event-loc">{ev.venue} · {ev.city}, {ev.country}</p>
+                        <p className="dc-event-loc">{[ev.venue, ev.city, ev.country].filter(Boolean).join(" · ")}</p>
                         {ev.description && (
                           <p className="dc-event-desc">{ev.description}</p>
                         )}
-                      </div>
-                      <div className="dc-event-actions">
                         {ev.ticketUrl && !isPast && (
-                          <a
-                            href={ev.ticketUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="dc-event-ticket-btn"
-                            style={{ background: meta.color }}
-                          >
-                            {ev.ticketPrice ?? "Tickets →"}
-                          </a>
-                        )}
-                        {isPast && (
-                          <span className="dc-event-past-badge">Past</span>
+                          <div className="dc-event-actions">
+                            <a
+                              href={ev.ticketUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="dc-event-ticket-btn"
+                              style={{ background: meta.color }}
+                            >
+                              {ev.ticketPrice ?? "Get Tickets →"}
+                            </a>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -2730,6 +2741,15 @@ const voicesHeading = `Voices from ${voicesFrom}`;
               </Link>
             </div>
           </section>
+        )}
+
+        {/* GALLERY — below events, above footer nav */}
+        {hasGallery && (
+          <DramaClubMomentsGallery
+            images={gallery}
+            clubName={club.name}
+            headline={momentsHeading}
+          />
         )}
 
         {/* BELOW THE CARD (on kraft paper): footer nav */}
@@ -2885,8 +2905,10 @@ const voicesHeading = `Voices from ${voicesFrom}`;
             background: transparent;
           }
           .dc-events-heading-group {
-            display: inline-block;
-            background: rgba(246,228,193,0.82);
+            display: inline-flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            background: rgba(36,17,35,0.28);
             border-left: 4px solid #F23359;
             padding: 0.65rem 1.5rem 0.65rem 0.9rem;
             border-radius: 0 10px 10px 0;
@@ -2899,7 +2921,7 @@ const voicesHeading = `Voices from ${voicesFrom}`;
             letter-spacing: 0.28em;
             text-transform: uppercase;
             color: #F23359;
-            margin: 0 0 0.3rem;
+            margin: 0;
           }
           .dc-events-title {
             font-family: "Anton", sans-serif;
@@ -2911,33 +2933,49 @@ const voicesHeading = `Voices from ${voicesFrom}`;
           .dc-events-list {
             display: flex;
             flex-direction: column;
-            gap: 0;
-            border-radius: 12px;
+            gap: 1.25rem;
+            border-radius: 0;
+            background: transparent;
+            border: none;
             overflow: hidden;
             border: 1.5px solid rgba(242,51,89,0.15);
             background: rgba(255,255,255,0.55);
             margin-bottom: 1rem;
           }
+          /* ── Event row — poster/card style ───────────────────────── */
           .dc-event-row {
             display: grid;
-            grid-template-columns: 80px 1fr auto;
-            align-items: center;
-            gap: 1.25rem;
-            padding: 1rem 1.25rem 1rem 0;
-            border-bottom: 1px solid rgba(36,17,35,0.07);
-            transition: background 0.15s;
+            grid-template-columns: 220px 1fr;
+            border-radius: 14px;
+            overflow: hidden;
+            background: rgba(255,255,255,0.7);
+            border: 1.5px solid rgba(242,51,89,0.15);
+            box-shadow: 0 2px 16px rgba(36,17,35,0.07);
+            transition: box-shadow 0.18s, transform 0.18s;
+            position: relative;
           }
-          .dc-event-row:last-child { border-bottom: none; }
-          .dc-event-row:hover { background: rgba(242,51,89,0.03); }
-          .dc-event-row--past { opacity: 0.55; }
+          .dc-event-row:hover { box-shadow: 0 6px 28px rgba(36,17,35,0.14); transform: translateY(-2px); }
+          .dc-event-row--past { opacity: 0.6; }
           .dc-event-thumb {
-            width: 80px;
-            height: 70px;
+            width: 100%;
+            min-height: 200px;
             background-size: cover;
             background-position: center;
-            flex-shrink: 0;
+            position: relative;
           }
-          .dc-event-body { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+          .dc-event-thumb::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to right, transparent 60%, rgba(255,255,255,0.15) 100%);
+          }
+          .dc-event-body {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 1.5rem 1.5rem 1.25rem;
+            min-width: 0;
+          }
           .dc-event-meta {
             display: flex;
             align-items: center;
@@ -2955,34 +2993,33 @@ const voicesHeading = `Voices from ${voicesFrom}`;
             font-family: "DM Sans", sans-serif;
             font-size: 0.72rem;
             font-weight: 600;
-            color: rgba(36,17,35,0.55);
+            color: rgba(36,17,35,0.45);
           }
           .dc-event-name {
-            font-family: "Space Grotesk", sans-serif;
-            font-size: 0.95rem;
-            font-weight: 700;
+            font-family: "Anton", sans-serif;
+            font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+            font-weight: 400;
             color: #241123;
             margin: 0;
-            line-height: 1.3;
+            line-height: 1.05;
           }
           .dc-event-loc {
             font-family: "Space Grotesk", sans-serif;
-            font-size: 0.8rem;
-            color: rgba(36,17,35,0.55);
+            font-size: 0.82rem;
+            color: rgba(36,17,35,0.5);
             margin: 0;
           }
           .dc-event-desc {
             font-family: "Space Grotesk", sans-serif;
-            font-size: 0.8rem;
-            color: rgba(36,17,35,0.65);
+            font-size: 0.88rem;
+            color: rgba(36,17,35,0.72);
             margin: 0;
-            line-height: 1.55;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            line-height: 1.6;
           }
-          .dc-event-actions { flex-shrink: 0; }
+          .dc-event-actions {
+            margin-top: auto;
+            padding-top: 0.75rem;
+          }
           .dc-event-ticket-btn {
             font-family: "DM Sans", sans-serif;
             font-size: 0.72rem;
@@ -3020,8 +3057,8 @@ const voicesHeading = `Voices from ${voicesFrom}`;
           }
           .dc-events-all-link:hover { color: #F23359; }
           @media (max-width: 600px) {
-            .dc-event-row { grid-template-columns: 1fr auto; }
-            .dc-event-thumb { display: none; }
+            .dc-event-row { grid-template-columns: 1fr; }
+            .dc-event-thumb { min-height: 160px; width: 100%; }
           }
         `}</style>
       </main>

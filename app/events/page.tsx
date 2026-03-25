@@ -58,14 +58,14 @@ function EventCard({ event, accent }: { event: DatEvent; accent: string }) {
 
 // ── Featured event (hero card) ────────────────────────────────────────────────
 
-function FeaturedEventCard({ event }: { event: DatEvent }) {
+function FeaturedEventCard({ event, backgroundFromParent }: { event: DatEvent; backgroundFromParent?: boolean }) {
   const meta = categoryMeta[event.category];
   const accent = meta.color;
   return (
     <div
       className="evhub-featured"
       style={{
-        backgroundImage: getEventImage(event) ? `url('${getEventImage(event)}')` : undefined,
+        backgroundImage: !backgroundFromParent && getEventImage(event) ? `url('${getEventImage(event)}')` : undefined,
       }}
     >
       <div className="evhub-featured-overlay" />
@@ -220,7 +220,7 @@ function MailingListForm() {
         style={{ display: "none" }}
         autoComplete="off"
       />
-      <div className="evhub-ml-fields">
+      <div className="evhub-ml-inputs-row">
         <input
           type="text"
           placeholder="Your name (optional)"
@@ -238,14 +238,14 @@ function MailingListForm() {
           className="evhub-ml-input evhub-ml-input--email"
           autoComplete="email"
         />
-        <button
-          type="submit"
-          className="evhub-ml-btn"
-          disabled={status === "loading"}
-        >
-          {status === "loading" ? "Signing up…" : "Join the List →"}
-        </button>
       </div>
+      <button
+        type="submit"
+        className="evhub-ml-btn"
+        disabled={status === "loading"}
+      >
+        {status === "loading" ? "Signing up…" : "Join the List →"}
+      </button>
       {status === "error" && (
         <p className="evhub-ml-error">
           Something went wrong — email us at{" "}
@@ -302,11 +302,16 @@ export default function EventsHubPage() {
 
       {/* ── Featured / Next Up ─────────────────────────────────────────── */}
       {nextUp && (
-        <section className="evhub-featured-section">
+        <section
+          className="evhub-featured-section"
+          style={{
+            backgroundImage: getEventImage(nextUp) ? `url('${getEventImage(nextUp)}')` : undefined,
+          }}
+        >
           <div className="evhub-container">
             <p className="evhub-section-label">Next Up</p>
           </div>
-          <FeaturedEventCard event={nextUp} />
+          <FeaturedEventCard event={nextUp} backgroundFromParent />
         </section>
       )}
 
@@ -338,26 +343,20 @@ export default function EventsHubPage() {
       {/* ── Bottom band ────────────────────────────────────────────────── */}
       <section className="evhub-bottom-band">
         <div className="evhub-container">
-          <div className="evhub-bottom-inner">
-            <div className="evhub-bottom-copy-col">
-              <p className="evhub-bottom-eyebrow">Stay in the Loop</p>
-              <h2 className="evhub-bottom-title">Never miss a curtain.</h2>
-              <p className="evhub-bottom-body">
-                Events are announced first to our community list. Be the first to know
-                when new shows, festivals, and community nights are announced.
-              </p>
-            </div>
-            <div className="evhub-bottom-form-col">
-              <MailingListForm />
-              <div className="evhub-bottom-links">
-                <Link href="/donate" className="evhub-btn-bottom-link">
-                  Support the Work
-                </Link>
-                <Link href="/theatre" className="evhub-btn-bottom-link">
-                  Theatre Archive →
-                </Link>
-              </div>
-            </div>
+          <p className="evhub-bottom-eyebrow">Stay in the Loop</p>
+          <h2 className="evhub-bottom-title">Never miss a curtain.</h2>
+          <p className="evhub-bottom-body">
+            Events are announced first to our community list. Be the first to know
+            when new shows, festivals, and community nights are announced.
+          </p>
+          <MailingListForm />
+          <div className="evhub-bottom-links">
+            <Link href="/donate" className="evhub-btn-bottom-link">
+              Support the Work
+            </Link>
+            <Link href="/theatre" className="evhub-btn-bottom-link">
+              Theatre Archive →
+            </Link>
           </div>
         </div>
       </section>
@@ -477,7 +476,10 @@ export default function EventsHubPage() {
         /* ── Featured section ─────────────────────────────────────────── */
         .evhub-featured-section {
           background: #0d0812;
-          padding: 0 0 clamp(2.5rem, 5vw, 4rem);
+          background-size: cover;
+          background-position: center;
+          padding: 0;
+          position: relative;
         }
         .evhub-section-label {
           font-family: "DM Sans", sans-serif;
@@ -695,11 +697,14 @@ export default function EventsHubPage() {
         }
         .evhub-empty a { font-weight: 600; text-decoration: none; }
 
-        /* Cards grid — two equal columns inside container */
+        /* Cards grid — two equal columns with side padding */
         .evhub-cards-scroll {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 1rem;
+          max-width: 960px;
+          margin: 0 auto;
+          padding: 0 clamp(1.5rem, 6vw, 3.5rem);
         }
         @media (max-width: 600px) {
           .evhub-cards-scroll {
@@ -838,19 +843,9 @@ export default function EventsHubPage() {
           font-size: 0.95rem;
           color: rgba(255,255,255,0.55);
           line-height: 1.65;
-          margin: 0;
+          margin: 0 0 1.5rem;
+          max-width: 540px;
         }
-        .evhub-bottom-inner {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 2rem clamp(2rem, 6vw, 4rem);
-          align-items: start;
-        }
-        @media (max-width: 680px) {
-          .evhub-bottom-inner { grid-template-columns: 1fr; }
-        }
-        .evhub-bottom-copy-col { display: flex; flex-direction: column; }
-        .evhub-bottom-form-col { display: flex; flex-direction: column; gap: 0; }
         .evhub-bottom-links {
           display: flex;
           flex-wrap: wrap;
@@ -908,8 +903,8 @@ export default function EventsHubPage() {
         .evhub-bottom-copy { display: flex; flex-direction: column; gap: 0; }
 
         /* ── Mailing list form ─────────────────────────────────────────── */
-        .evhub-ml-form { display: flex; flex-direction: column; gap: 0.5rem; }
-        .evhub-ml-fields {
+        .evhub-ml-form { display: flex; flex-direction: column; gap: 0.75rem; align-items: flex-start; }
+        .evhub-ml-inputs-row {
           display: flex;
           flex-wrap: wrap;
           gap: 0.5rem;

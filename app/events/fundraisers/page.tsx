@@ -426,9 +426,9 @@ export default function FundraisersPage() {
           position: absolute;
           left: 0;
           right: 0;
-          bottom: -1px;
-          height: 6px;
-          background: #140c04;
+          bottom: 0;
+          height: 35%;
+          background: linear-gradient(to bottom, transparent 0%, #140c04 100%);
           z-index: 3;
           pointer-events: none;
         }
@@ -745,7 +745,7 @@ export default function FundraisersPage() {
         .fund-why-title {
           font-family: "Anton", sans-serif;
           font-size: clamp(2rem, 4vw, 3.2rem);
-          color: rgba(255,255,255,0.92);
+          color: #241123;
           margin: 0;
           line-height: 1;
         }
@@ -854,7 +854,7 @@ export default function FundraisersPage() {
 
         /* ── Bottom band ──────────────────────────────────────────────── */
         .fund-bottom-band {
-          background: #130e00;
+          background: #2e2000;
           padding: clamp(2.5rem, 5vw, 4rem) 0;
         }
         .fund-bottom-inner { display: flex; flex-direction: column; gap: 1.25rem; }

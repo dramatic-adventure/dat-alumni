@@ -422,9 +422,9 @@ export default function FestivalsPage() {
           position: absolute;
           left: 0;
           right: 0;
-          bottom: -1px;
-          height: 6px;
-          background: #05141a;
+          bottom: 0;
+          height: 35%;
+          background: linear-gradient(to bottom, transparent 0%, #05141a 100%);
           z-index: 3;
           pointer-events: none;
         }
@@ -704,7 +704,7 @@ export default function FestivalsPage() {
         .fest-about-title {
           font-family: "Anton", sans-serif;
           font-size: clamp(2rem, 4vw, 3.2rem);
-          color: rgba(255,255,255,0.92);
+          color: #241123;
           margin: 0;
           line-height: 1;
         }
@@ -802,7 +802,7 @@ export default function FestivalsPage() {
 
         /* ── Bottom band ──────────────────────────────────────────────── */
         .fest-bottom-band {
-          background: #021419;
+          background: #052f3d;
           padding: clamp(2.5rem, 5vw, 4rem) 0;
         }
         .fest-bottom-inner { display: flex; flex-direction: column; gap: 1.25rem; }

@@ -117,6 +117,7 @@ export type DramaClubDraft = {
   showcasesCount?: number;
   communityShowcases?: number;
   approxCommunityAudience?: number;
+  playsCount?: number;
 
   currentImpactStats: DramaClubImpactStat[];
   sponsorshipUnlockStats: DramaClubImpactStat[];
@@ -320,6 +321,12 @@ export type DramaClub = {
    * Cumulative audience members across showcases / share-backs.
    */
   approxCommunityAudience?: number;
+
+  /**
+   * Approximate number of original plays / full productions staged by the club.
+   * Separate from community showcases — this counts finished, performed plays.
+   */
+  playsCount?: number;
 
   // ========================
   // Community / relationships
@@ -586,6 +593,7 @@ export const dramaClubMap = {
     showcasesCount: 8,
     communityShowcases: 8,
     approxCommunityAudience: 800,
+    playsCount: 3,
 
     communityPartners: [
       { name: "Local cultural centers", logoSrc: SAMPLE_IMAGE },

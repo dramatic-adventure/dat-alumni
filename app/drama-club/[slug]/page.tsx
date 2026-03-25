@@ -522,7 +522,16 @@ export default async function DramaClubPage({ params }: PageProps) {
     creativeLeadTeam,
   });
 
-  const clubEventsData = eventsByDramaClub(club.slug);
+  // Only show upcoming events on the drama club page — past ones remain in theatre/project archive
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const clubEventsData = eventsByDramaClub(club.slug).filter((ev) => {
+    if (ev.status === "cancelled") return false;
+    const dateStr = ev.endDate ?? ev.date;
+    if (!dateStr) return ev.status === "upcoming";
+    const evDate = new Date(dateStr);
+    return !isNaN(evDate.getTime()) ? evDate >= today : ev.status === "upcoming";
+  });
 
   return (
     <DramaClubPageTemplate

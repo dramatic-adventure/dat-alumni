@@ -216,7 +216,7 @@ export default function PerformancesPage() {
           </p>
           {upcoming.length > 0 && (
             <p className="perf-hero-season-note" style={{ color: accent }}>
-              Live performances coming up — find your show below ↓
+              Come for the story. Stay for the world it opens. ↓
             </p>
           )}
         </div>
@@ -430,9 +430,9 @@ export default function PerformancesPage() {
           position: absolute;
           left: 0;
           right: 0;
-          bottom: -1px;
-          height: 6px;
-          background: #0d0812;
+          bottom: 0;
+          height: 35%;
+          background: linear-gradient(to bottom, transparent 0%, #0d0812 100%);
           z-index: 3;
           pointer-events: none;
         }
@@ -715,7 +715,7 @@ export default function PerformancesPage() {
         .perf-expect-title {
           font-family: "Anton", sans-serif;
           font-size: clamp(2rem, 4vw, 3.2rem);
-          color: rgba(255,255,255,0.92);
+          color: #241123;
           margin: 0;
           line-height: 1;
         }
@@ -815,7 +815,7 @@ export default function PerformancesPage() {
 
         /* ── Bottom band ──────────────────────────────────────────────── */
         .perf-bottom-band {
-          background: #200008;
+          background: #3a0013;
           padding: clamp(2.5rem, 5vw, 4rem) 0;
         }
         .perf-bottom-inner {
