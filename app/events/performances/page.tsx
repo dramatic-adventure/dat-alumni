@@ -453,9 +453,10 @@ export default function PerformancesPage() {
           inset: 0;
           background: linear-gradient(
             to top,
-            rgba(8,3,12,0.95) 0%,
-            rgba(8,3,12,0.6) 40%,
-            rgba(8,3,12,0.15) 100%
+            rgba(8,3,12,0.97) 0%,
+            rgba(8,3,12,0.82) 35%,
+            rgba(8,3,12,0.45) 65%,
+            rgba(8,3,12,0.18) 100%
           );
           transition: opacity 0.3s;
         }
@@ -556,6 +557,7 @@ export default function PerformancesPage() {
           color: #fff;
           margin: 0;
           line-height: 1;
+          text-shadow: 0 2px 12px rgba(0,0,0,0.7);
         }
         .perf-card-title {
           font-family: "Anton", sans-serif;
@@ -564,6 +566,7 @@ export default function PerformancesPage() {
           color: #fff;
           margin: 0;
           line-height: 1;
+          text-shadow: 0 2px 10px rgba(0,0,0,0.65);
         }
         .perf-card-subtitle {
           font-family: "DM Sans", sans-serif;
@@ -571,30 +574,34 @@ export default function PerformancesPage() {
           font-weight: 600;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: rgba(255,255,255,0.45);
+          color: rgba(255,255,255,0.72);
           margin: 0;
+          text-shadow: 0 1px 6px rgba(0,0,0,0.6);
         }
         .perf-card-loc {
           font-family: "Space Grotesk", sans-serif;
           font-size: 0.85rem;
-          color: rgba(255,255,255,0.55);
+          color: rgba(255,255,255,0.75);
           margin: 0;
+          text-shadow: 0 1px 6px rgba(0,0,0,0.55);
         }
         .perf-card-doors,
         .perf-card-time {
           font-family: "DM Sans", sans-serif;
           font-size: 0.78rem;
-          color: rgba(255,255,255,0.4);
+          color: rgba(255,255,255,0.62);
           margin: 0;
           letter-spacing: 0.04em;
+          text-shadow: 0 1px 6px rgba(0,0,0,0.5);
         }
         .perf-card-desc {
           font-family: "Space Grotesk", sans-serif;
           font-size: 0.88rem;
-          color: rgba(255,255,255,0.68);
+          color: rgba(255,255,255,0.82);
           line-height: 1.6;
           margin: 0.25rem 0 0;
           max-width: 540px;
+          text-shadow: 0 1px 6px rgba(0,0,0,0.5);
         }
         .perf-card-actions {
           display: flex;

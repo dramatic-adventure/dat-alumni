@@ -65,6 +65,22 @@ export interface DatEvent {
   production?: string;
 
   /**
+   * Slug of a related drama club in dramaClubMap.
+   * Set this for community showcases that are part of a drama club visit —
+   * the drama club page will list the event, and the Theatre Archive will
+   * show a "Community Showcase" badge.
+   */
+  dramaClub?: string;
+
+  /**
+   * Subcategory for more specific classification within a category.
+   * "community-showcase" — a performance tied to a drama club visit
+   * "benefit"           — fundraiser that includes a performance
+   * "screening"         — film / documentary screening
+   */
+  subcategory?: "community-showcase" | "benefit" | "screening";
+
+  /**
    * Medium — for future filtering across theatre / film / workshop.
    * Defaults to "theatre" when omitted.
    */
@@ -432,6 +448,20 @@ export function getEventImage(event: DatEvent): string | undefined {
  */
 export function eventsByProduction(productionSlug: string): DatEvent[] {
   return sortedEvents.filter((e) => e.production === productionSlug);
+}
+
+/**
+ * Return all events linked to a given drama club slug.
+ * Sorted ascending by date. Use this on drama club pages to list
+ * community showcases and other events tied to that club.
+ */
+export function eventsByDramaClub(dramaClubSlug: string): DatEvent[] {
+  return sortedEvents.filter((e) => e.dramaClub === dramaClubSlug);
+}
+
+/** Whether an event is a community showcase */
+export function isCommunityShowcase(event: DatEvent): boolean {
+  return event.subcategory === "community-showcase";
 }
 
 /**

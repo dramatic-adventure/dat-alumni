@@ -1423,19 +1423,27 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           style={{
             width: "90vw",
             maxWidth: "1200px",
-            background: "rgba(255,255,255,0.60)",
+            background: "rgba(255,255,255,0.80)",
             borderRadius: 18,
             margin: "clamp(1.25rem, 3vw, 2.25rem) 0 clamp(3.2rem, 8vw, 6rem)",
             ["--card-pad" as any]: "clamp(1.2rem, 3.2vw, 2.4rem)",
             padding: "var(--card-pad)",
-            boxShadow: "0 18px 48px rgba(36,17,35,0.10)",
-            backdropFilter: "saturate(1.05)",
+            boxShadow: "0 24px 64px rgba(36,17,35,0.14), 0 4px 16px rgba(36,17,35,0.08)",
+            backdropFilter: "blur(12px) saturate(1.1)",
+            borderTop: `3px solid ${displayStatus === "NOW PLAYING" ? "#2FA873" : displayStatus === "UPCOMING" ? "#D9A919" : "rgba(36,17,35,0.14)"}`,
           }}
         >
           <section className="rows">
-            {/* ROW 1: Meta + status badge top-right + CTA + linked events */}
+            {/* ROW 1: Poster | Meta + status badge + events | CTA */}
             <div className="row row70">
-              <div>
+              <div className="meta-with-poster">
+                {/* Poster image — if available and not fallback */}
+                {heroSrc && heroSrc !== "/posters/fallback-16x9.jpg" && (
+                  <div className="card-poster">
+                    <img src={heroSrc} alt={displayTitle} className="card-poster-img" />
+                  </div>
+                )}
+                <div className="meta-col">
                 {/* Status badge — top of the meta column */}
                 {displayStatus && (
                   <div style={{ marginBottom: "0.85rem" }}>
@@ -1443,18 +1451,28 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                       className="status-pill"
                       style={{
                         background:
-                          displayStatus === "ARCHIVE"
-                            ? "rgba(36,17,35,0.08)"
-                            : `${displayStatusColor}18`,
+                          displayStatus === "NOW PLAYING" ? "#2FA873"
+                          : displayStatus === "UPCOMING"   ? "#D9A919"
+                          : "rgba(36,17,35,0.12)",
                         borderColor:
-                          displayStatus === "ARCHIVE"
-                            ? "rgba(36,17,35,0.18)"
-                            : `${displayStatusColor}55`,
-                        color: displayStatus === "ARCHIVE" ? "#7a6a7a" : displayStatusColor,
+                          displayStatus === "NOW PLAYING" ? "#2FA873"
+                          : displayStatus === "UPCOMING"   ? "#D9A919"
+                          : "rgba(36,17,35,0.22)",
+                        color:
+                          displayStatus === "NOW PLAYING" ? "#fff"
+                          : displayStatus === "UPCOMING"   ? "#241123"
+                          : "#7a6a7a",
                       }}
                     >
                       {displayStatus !== "ARCHIVE" && (
-                        <span className="status-dot" style={{ background: displayStatusColor }} />
+                        <span
+                          className="status-dot"
+                          style={{
+                            background:
+                              displayStatus === "NOW PLAYING" ? "rgba(255,255,255,0.7)"
+                              : "rgba(36,17,35,0.35)",
+                          }}
+                        />
                       )}
                       {displayStatus}
                     </span>
@@ -1510,7 +1528,8 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                     <Link href="/events" className="prod-events-all-link">All DAT Events →</Link>
                   </div>
                 )}
-              </div>
+                </div>{/* /meta-col */}
+              </div>{/* /meta-with-poster */}
 
               <div className="r1-tickets">
                 {primaryCtaHref && primaryCtaLabel && (
@@ -2020,6 +2039,33 @@ if (ageRecText) metaValues.push({ value: ageRecText });
         .row50{ grid-template-columns: 1fr 1fr; }
         .rowFull{ grid-template-columns: 1fr; }
         .r1-tickets{ justify-self: end; align-self: flex-start; }
+
+        /* ── Poster column inside white card ───────────────────────── */
+        .meta-with-poster{
+          display: flex;
+          gap: clamp(1rem, 2.5vw, 2rem);
+          align-items: flex-start;
+        }
+        .card-poster{
+          flex-shrink: 0;
+          width: clamp(120px, 18vw, 200px);
+          border-radius: 10px;
+          overflow: hidden;
+          box-shadow: 0 8px 28px rgba(36,17,35,0.22), 0 2px 6px rgba(36,17,35,0.12);
+        }
+        .card-poster-img{
+          width: 100%;
+          height: auto;
+          display: block;
+          aspect-ratio: 16 / 9;
+          object-fit: cover;
+        }
+        .meta-col{ flex: 1; min-width: 0; }
+        @media (max-width: 600px){
+          .meta-with-poster{ flex-direction: column; }
+          .card-poster{ width: 100%; max-width: 320px; aspect-ratio: 16/9; }
+          .card-poster-img{ aspect-ratio: 16/9; }
+        }
 
         .section-block{
           border-top: 1px solid #2411231F;
@@ -2613,13 +2659,17 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           grid-template-columns: 9rem 1fr auto;
           align-items: center;
           gap: 0.75rem;
-          padding: 0.6rem 0.75rem;
+          padding: 0.65rem 0.85rem 0.65rem 1rem;
           border-radius: 8px;
           background: rgba(36,17,35,0.04);
-          border: 1px solid rgba(36,17,35,0.07);
+          border: 1px solid rgba(36,17,35,0.08);
+          border-left: 3px solid #D9A919;
+          transition: background 0.15s;
         }
+        .prod-event-row:hover{ background: rgba(36,17,35,0.07); }
         .prod-event-row--past{
-          opacity: 0.6;
+          opacity: 0.55;
+          border-left-color: rgba(36,17,35,0.2);
         }
         .prod-event-date{
           font-family: var(--font-dm-sans, system-ui, sans-serif);

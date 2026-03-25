@@ -1,6 +1,0 @@
-{
-  // Tell VS Code’s built-in CSS/SCSS/Less linters to ignore unknown at-rules
-  "css.lint.unknownAtRules": "ignore",
-  "scss.lint.unknownAtRules": "ignore",
-  "less.lint.unknownAtRules": "ignore"
-}

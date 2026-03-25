@@ -495,12 +495,18 @@ export default function EventsHubPage() {
         .evhub-featured-overlay {
           position: absolute;
           inset: 0;
-          background: linear-gradient(
-            135deg,
-            rgba(10,5,14,0.88) 0%,
-            rgba(10,5,14,0.6) 50%,
-            rgba(10,5,14,0.3) 100%
-          );
+          background:
+            linear-gradient(
+              to right,
+              rgba(10,5,14,0.95) 0%,
+              rgba(10,5,14,0.75) 55%,
+              rgba(10,5,14,0.35) 100%
+            ),
+            linear-gradient(
+              to top,
+              rgba(10,5,14,0.85) 0%,
+              rgba(10,5,14,0.0) 50%
+            );
         }
         .evhub-featured-body {
           position: relative;
@@ -556,6 +562,7 @@ export default function EventsHubPage() {
           color: #fff;
           margin: 0 0 0.35rem;
           line-height: 1;
+          text-shadow: 0 2px 14px rgba(0,0,0,0.7);
         }
         .evhub-featured-subtitle {
           font-family: "DM Sans", sans-serif;
@@ -563,27 +570,30 @@ export default function EventsHubPage() {
           font-weight: 600;
           letter-spacing: 0.06em;
           text-transform: uppercase;
-          color: rgba(255,255,255,0.5);
+          color: rgba(255,255,255,0.75);
           margin: 0 0 0.85rem;
+          text-shadow: 0 1px 6px rgba(0,0,0,0.65);
         }
         .evhub-featured-meta {
           font-family: "Space Grotesk", sans-serif;
           font-size: 0.88rem;
-          color: rgba(255,255,255,0.6);
+          color: rgba(255,255,255,0.75);
           margin: 0 0 0.85rem;
           display: flex;
           flex-wrap: wrap;
           gap: 0.4rem;
           align-items: center;
+          text-shadow: 0 1px 6px rgba(0,0,0,0.55);
         }
-        .evhub-dot { opacity: 0.4; }
+        .evhub-dot { opacity: 0.5; }
         .evhub-featured-desc {
           font-family: "Space Grotesk", sans-serif;
           font-size: 0.95rem;
-          color: rgba(255,255,255,0.72);
+          color: rgba(255,255,255,0.85);
           line-height: 1.65;
           margin: 0 0 1.5rem;
           max-width: 520px;
+          text-shadow: 0 1px 6px rgba(0,0,0,0.5);
         }
         .evhub-featured-actions {
           display: flex;

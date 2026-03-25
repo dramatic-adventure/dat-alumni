@@ -450,9 +450,10 @@ export default function FestivalsPage() {
           inset: 0;
           background: linear-gradient(
             to top,
-            rgba(5,15,20,0.96) 0%,
-            rgba(5,15,20,0.55) 45%,
-            rgba(5,15,20,0.12) 100%
+            rgba(5,15,20,0.97) 0%,
+            rgba(5,15,20,0.82) 35%,
+            rgba(5,15,20,0.45) 65%,
+            rgba(5,15,20,0.18) 100%
           );
         }
         .fest-card-inner {
@@ -549,6 +550,7 @@ export default function FestivalsPage() {
           color: #fff;
           margin: 0;
           line-height: 1;
+          text-shadow: 0 2px 12px rgba(0,0,0,0.7);
         }
         .fest-card-title {
           font-family: "Anton", sans-serif;
@@ -556,6 +558,7 @@ export default function FestivalsPage() {
           color: #fff;
           margin: 0;
           line-height: 1;
+          text-shadow: 0 2px 10px rgba(0,0,0,0.65);
         }
         .fest-card-subtitle {
           font-family: "DM Sans", sans-serif;
@@ -563,22 +566,25 @@ export default function FestivalsPage() {
           font-weight: 600;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: rgba(255,255,255,0.4);
+          color: rgba(255,255,255,0.72);
           margin: 0;
+          text-shadow: 0 1px 6px rgba(0,0,0,0.6);
         }
         .fest-card-loc {
           font-family: "Space Grotesk", sans-serif;
           font-size: 0.85rem;
-          color: rgba(255,255,255,0.5);
+          color: rgba(255,255,255,0.75);
           margin: 0;
+          text-shadow: 0 1px 6px rgba(0,0,0,0.55);
         }
         .fest-card-desc {
           font-family: "Space Grotesk", sans-serif;
           font-size: 0.88rem;
-          color: rgba(255,255,255,0.65);
+          color: rgba(255,255,255,0.82);
           line-height: 1.6;
           margin: 0.25rem 0 0;
           max-width: 520px;
+          text-shadow: 0 1px 6px rgba(0,0,0,0.5);
         }
         .fest-card-actions {
           display: flex;
