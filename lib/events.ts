@@ -88,6 +88,17 @@ export interface DatEvent {
 
   /** Email for questions/bookings (falls back to hello@dramaticadventure.com) */
   contactEmail?: string;
+
+  /**
+   * Override the auto-calculated DAT season number for archive placement.
+   * By default the season is derived from the event date (Sept–Aug cutoff,
+   * Season 1 = Sept 2006). Set this only if the automatic calculation would
+   * place the event in the wrong season — e.g. a showcase that was planned
+   * for one season but actually performed in another.
+   *
+   * Example: seasonOverride: 19  → forces archive placement in Season 19
+   */
+  seasonOverride?: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -332,6 +343,35 @@ export const events: DatEvent[] = [
   },
 
   // ── COMMUNITY SHOWCASES ──────────────────────────────────────────────────────
+  //
+  // Add a new block here for each community showcase. The event will:
+  //   • Appear on the drama club page while upcoming (disappears once date passes)
+  //   • Auto-flow into the Theatre Archive and Project Archive under the correct
+  //     DAT season (Sept–Aug) once the date has passed or status is set to "past"
+  //   • Show on the Performances page and home page as a performance event
+  //
+  // To override the auto-calculated season, add:  seasonOverride: <number>
+  //
+  {
+    id: "quito-collective-community-showcase-2025",
+    title: "Quito Collective Community Showcase",
+    subtitle: "Season Closing Showcase",
+    category: "performance",
+    subcategory: "community-showcase",
+    status: "past",
+    date: "2025-03-08",
+    venue: "Casa de la Cultura Ecuatoriana",
+    city: "Quito",
+    country: "Ecuador",
+    dramaClub: "quito-collective",
+    description:
+      "The Quito Collective's closing showcase of the season — an evening of six original short works devised by their youth ensemble, rooted in Andean myth and contemporary Quito life.",
+    image: "/images/Andean_Mask_Work.jpg",
+    ticketPrice: "Free — donations welcome",
+    ticketType: "free",
+    tags: ["community showcase", "youth", "Quito", "Ecuador", "Andean", "original work", "quito-collective"],
+    contactEmail: "hello@dramaticadventure.com",
+  },
   {
     id: "quito-collective-community-showcase-2026",
     title: "Quito Collective Community Showcase",
@@ -506,4 +546,64 @@ export function productionEventStatus(
   if (isNowPlaying) return "NOW PLAYING";
   if (events.some((e) => e.status === "upcoming")) return "UPCOMING";
   return "ARCHIVE";
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEASON HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Map a calendar date to a DAT season number.
+ *
+ * DAT seasons run September → August.  Season 1 started in September 2006.
+ *   Sept 2006 – Aug 2007  =  Season 1
+ *   Sept 2007 – Aug 2008  =  Season 2
+ *   …
+ *   Sept 2025 – Aug 2026  =  Season 20
+ *
+ * If `seasonOverride` is set on the event, that value is returned directly
+ * without any date arithmetic.
+ */
+export function seasonNumberFor(dateStr: string): number {
+  const d = new Date(dateStr + "T12:00:00Z"); // noon UTC avoids timezone edge cases
+  const year  = d.getUTCFullYear();
+  const month = d.getUTCMonth() + 1; // 1–12
+  const seasonStartYear = month >= 9 ? year : year - 1;
+  return seasonStartYear - 2005; // Season 1 anchor: 2006 - 2005 = 1
+}
+
+/**
+ * Whether an event's date has elapsed (regardless of `status`).
+ * Uses today's date at midnight local time so an event on today's date
+ * is still considered live.
+ */
+export function isElapsed(event: DatEvent): boolean {
+  if (event.status === "past") return true;
+  const dateStr = event.endDate ?? event.date;
+  const evDate  = new Date(dateStr + "T23:59:59");
+  const today   = new Date();
+  return evDate < today;
+}
+
+/**
+ * All community showcase events that have elapsed (date passed or status="past"),
+ * sorted chronologically (oldest first) so archives read like a timeline.
+ */
+export const archivedShowcases: DatEvent[] = sortedEvents.filter(
+  (e) => isCommunityShowcase(e) && isElapsed(e)
+);
+
+/**
+ * Community showcases grouped by DAT season number.
+ * Uses `event.seasonOverride` when present, otherwise derives from the date.
+ * Returns a Map keyed by season number; values are arrays sorted oldest→newest.
+ */
+export function showcasesBySeason(): Map<number, DatEvent[]> {
+  const map = new Map<number, DatEvent[]>();
+  for (const ev of archivedShowcases) {
+    const sn = ev.seasonOverride ?? seasonNumberFor(ev.date);
+    if (!map.has(sn)) map.set(sn, []);
+    map.get(sn)!.push(ev);
+  }
+  return map;
 }

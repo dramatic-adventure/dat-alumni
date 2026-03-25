@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { productionMap, type Production, getSortYear } from "@/lib/productionMap";
 import { seasons as seasonData } from "@/lib/seasonData";
+import { showcasesBySeason, type DatEvent } from "@/lib/events";
 
 const FALLBACK_POSTER = "/posters/fallback-16x9.jpg";
 const CARD_BG = "#f2f2f2";
@@ -169,6 +170,9 @@ export default function TheatreIndexPage() {
     if (!bySeason.has(s)) bySeason.set(s, []);
     bySeason.get(s)!.push(p);
   }
+
+  // Community showcases grouped by season — auto-derived from events data
+  const showcaseMap = showcasesBySeason();
 
   // Stats — all derived dynamically from data
   const years = allProductions.map(getSortYear).filter(Boolean);
@@ -899,6 +903,9 @@ export default function TheatreIndexPage() {
                             ) : sdEntry ? (
                               <SeasonActivities projects={sdEntry.projects as unknown as string[]} />
                             ) : null}
+
+                            {/* Community Showcases — auto-populated from events data */}
+                            <ShowcaseArchiveRows showcases={showcaseMap.get(sn)} />
                           </div>
                         );
                       })}
@@ -1090,6 +1097,122 @@ const eyebrowOnKraft: React.CSSProperties = {
 // SEASON ACTIVITIES — seasons without productions show their
 // project list from seasonData
 // ═══════════════════════════════════════════════════════════════
+// ─── Community Showcase rows — shown under each season that has archived showcases ─
+function ShowcaseArchiveRows({ showcases }: { showcases?: DatEvent[] }) {
+  if (!showcases || showcases.length === 0) return null;
+
+  return (
+    <div
+      style={{
+        marginTop: "1rem",
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.5rem",
+      }}
+    >
+      {/* Section eyebrow */}
+      <p
+        style={{
+          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+          fontSize: "0.62rem",
+          fontWeight: 800,
+          letterSpacing: "0.22em",
+          textTransform: "uppercase",
+          color: "rgba(47,168,115,0.75)",
+          margin: "0 0 0.35rem 0.1rem",
+        }}
+      >
+        Community Showcases
+      </p>
+
+      {showcases.map((ev) => {
+        const month = new Date(ev.date + "T12:00:00Z").toLocaleString("en-US", { month: "short", timeZone: "UTC" });
+        const day   = new Date(ev.date + "T12:00:00Z").getUTCDate();
+        const year  = new Date(ev.date + "T12:00:00Z").getUTCFullYear();
+
+        return (
+          <div
+            key={ev.id}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              padding: "0.55rem 0.9rem",
+              borderRadius: "8px",
+              backgroundColor: "rgba(47,168,115,0.06)",
+              border: "1px solid rgba(47,168,115,0.18)",
+            }}
+          >
+            {/* Date badge */}
+            <span
+              style={{
+                fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                fontSize: "0.65rem",
+                fontWeight: 700,
+                letterSpacing: "0.06em",
+                color: "rgba(47,168,115,0.85)",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+                minWidth: "5.5rem",
+              }}
+            >
+              {month} {day}, {year}
+            </span>
+
+            {/* Title */}
+            <span
+              style={{
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                fontSize: "0.82rem",
+                fontWeight: 600,
+                color: "#241123",
+                flex: 1,
+                minWidth: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {ev.title}
+            </span>
+
+            {/* City · Country */}
+            <span
+              style={{
+                fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                fontSize: "0.7rem",
+                color: "rgba(36,17,35,0.45)",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+              }}
+            >
+              {ev.city}, {ev.country}
+            </span>
+
+            {/* Badge */}
+            <span
+              style={{
+                fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                fontSize: "0.58rem",
+                fontWeight: 800,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: "rgba(47,168,115,0.85)",
+                border: "1px solid rgba(47,168,115,0.3)",
+                borderRadius: "4px",
+                padding: "0.15rem 0.45rem",
+                flexShrink: 0,
+              }}
+            >
+              Showcase
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function SeasonActivities({ projects }: { projects: string[] }) {
   return (
     <div
