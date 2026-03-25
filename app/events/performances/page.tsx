@@ -216,7 +216,7 @@ export default function PerformancesPage() {
           </p>
           {upcoming.length > 0 && (
             <p className="perf-hero-season-note" style={{ color: accent }}>
-              On stage now — scroll to find your seat ↓
+              Live performances coming up — find your show below ↓
             </p>
           )}
         </div>
@@ -421,7 +421,20 @@ export default function PerformancesPage() {
         .perf-listing {
           background: #0d0812;
           padding: clamp(3rem, 6vw, 5rem) 0;
-          margin-top: -2px;
+          margin-top: 0;
+          position: relative;
+          z-index: 1;
+        }
+        .perf-hero::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: -1px;
+          height: 6px;
+          background: #0d0812;
+          z-index: 3;
+          pointer-events: none;
         }
         .perf-grid {
           display: grid;
@@ -682,8 +695,10 @@ export default function PerformancesPage() {
           padding: clamp(3.5rem, 7vw, 6rem) 0;
         }
         .perf-expect-heading-box {
-          display: inline-block;
-          background: rgba(246,228,193,0.82);
+          display: inline-flex;
+          flex-direction: column;
+          gap: 0.2rem;
+          background: rgba(36,17,35,0.28);
           border-left: 4px solid #F23359;
           padding: 0.75rem 1.5rem 0.75rem 1rem;
           border-radius: 0 10px 10px 0;
@@ -700,7 +715,7 @@ export default function PerformancesPage() {
         .perf-expect-title {
           font-family: "Anton", sans-serif;
           font-size: clamp(2rem, 4vw, 3.2rem);
-          color: #241123;
+          color: rgba(255,255,255,0.92);
           margin: 0;
           line-height: 1;
         }
@@ -800,7 +815,7 @@ export default function PerformancesPage() {
 
         /* ── Bottom band ──────────────────────────────────────────────── */
         .perf-bottom-band {
-          background: #0d0812;
+          background: #200008;
           padding: clamp(2.5rem, 5vw, 4rem) 0;
         }
         .perf-bottom-inner {
@@ -834,8 +849,8 @@ export default function PerformancesPage() {
           transition: opacity 0.2s, transform 0.15s;
         }
         .perf-bottom-link:hover { opacity: 0.8; transform: translateY(-1px); }
-        .perf-teal { background: #1a6d7d; color: #fff; }
-        .perf-gold { background: #8a6200; color: #fff; }
+        .perf-teal { background: #2493A9; color: #fff; }
+        .perf-gold { background: #D9A919; color: #241123; }
         .perf-muted { color: rgba(255,255,255,0.4); border: 1.5px solid rgba(255,255,255,0.15); }
       `}</style>
     </>

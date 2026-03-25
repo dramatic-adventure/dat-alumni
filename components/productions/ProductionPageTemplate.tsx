@@ -1467,50 +1467,25 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                   {displayStatus}
                 </span>
               ) : <span />}
-              {(runIsUpcomingOrCurrent || runIsPast) && (
-                <a
-                  href={runIsPast ? pastProductionDonateHref : currentProductionDonateHref}
-                  className="card-topbar-sponsor"
+              {primaryCtaHref && primaryCtaLabel && (
+                <DATButtonLink
+                  href={primaryCtaHref}
+                  size="sm"
+                  className="card-topbar-cta"
+                  aria-label={
+                    primaryCtaLabel === "Purchase Tickets"
+                      ? `Purchase tickets for ${displayTitle}`
+                      : primaryCtaLabel
+                  }
                 >
-                  {runIsPast ? "Sponsor Stories Like This" : "Sponsor This New Work"} ↗
-                </a>
+                  {primaryCtaLabel}
+                </DATButtonLink>
               )}
-            </div>
-
-            {/* ROW 1: Meta | primary CTA */}
-            <div className="row row70">
-              <div className="meta-col">
-                <div className="meta-stack">
-                  <h2 className="meta-title">{displayTitle}</h2>
-                  {metaValues.map(({ value, hero }, i) => (
-                    <div key={i} className={`meta-line ${hero ? "meta-hero" : "meta-sub"}`}>
-                      {value}
-                    </div>
-                  ))}
-                </div>
-              </div>{/* /meta-col */}
-
-              <div className="r1-tickets">
-                {primaryCtaHref && primaryCtaLabel && (
-                  <DATButtonLink
-                    href={primaryCtaHref}
-                    size="lg"
-                    className="tickets-btn"
-                    aria-label={
-                      primaryCtaLabel === "Purchase Tickets"
-                        ? `Purchase tickets for ${displayTitle}`
-                        : primaryCtaLabel
-                    }
-                  >
-                    {primaryCtaLabel}
-                  </DATButtonLink>
-                )}
-              </div>
             </div>
 
             {/* BACKSTAGE PASS — full-width with production meta + events */}
             {safeProductionEvents.length > 0 && (
-              <div className="prod-backstage-pass">
+              <div className={`prod-backstage-pass${runIsPast ? " prod-backstage-pass--archive" : ""}`}>
                 {/* Production meta grid */}
                 <div className="prod-backstage-meta">
                   <div className="prod-backstage-meta-left">
@@ -2771,21 +2746,7 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           border-bottom: 1px solid rgba(36,17,35,0.08);
           flex-wrap: wrap;
         }
-        .card-topbar-sponsor{
-          font-family: var(--font-dm-sans, system-ui, sans-serif);
-          font-size: 0.75rem;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          text-decoration: none;
-          color: #fff;
-          background: #F23359;
-          padding: 0.5rem 1rem;
-          border-radius: 8px;
-          transition: opacity 0.2s, transform 0.15s;
-          white-space: nowrap;
-        }
-        .card-topbar-sponsor:hover{ opacity: 0.88; transform: translateY(-1px); }
+        .card-topbar-cta{ white-space: nowrap; flex-shrink: 0; }
 
         /* ── Backstage pass ─────────────────────────────────────────── */
         .prod-backstage-pass{
@@ -2902,6 +2863,44 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           transition: color 0.15s;
         }
         .prod-backstage-all-link:hover{ color: #F23359; }
+
+        /* ── Backstage pass — ARCHIVE variant ───────────────────────── */
+        .prod-backstage-pass--archive{
+          background: rgba(36,17,35,0.03);
+          border-color: rgba(36,17,35,0.14);
+        }
+        .prod-backstage-pass--archive::before{
+          background: rgba(36,17,35,0.12);
+        }
+        .prod-backstage-pass--archive .prod-backstage-meta{
+          background: rgba(36,17,35,0.04);
+        }
+        .prod-backstage-pass--archive .prod-backstage-meta-title{
+          color: rgba(36,17,35,0.55);
+        }
+        .prod-backstage-pass--archive .prod-backstage-meta-club{
+          color: rgba(36,17,35,0.4);
+        }
+        .prod-backstage-pass--archive .prod-backstage-header{
+          background: rgba(36,17,35,0.04);
+          border-bottom-color: rgba(36,17,35,0.10);
+        }
+        .prod-backstage-pass--archive .prod-backstage-label{
+          color: rgba(36,17,35,0.40);
+        }
+        .prod-backstage-pass--archive .prod-backstage-all-link{
+          border-top-color: rgba(36,17,35,0.10);
+          color: rgba(36,17,35,0.45);
+        }
+        .prod-backstage-pass--archive .prod-backstage-all-link:hover{
+          color: rgba(36,17,35,0.70);
+        }
+        .prod-backstage-pass--archive .prod-bp-chip-label{
+          color: rgba(36,17,35,0.35);
+        }
+        .prod-backstage-pass--archive .prod-bp-chip-value{
+          color: rgba(36,17,35,0.55);
+        }
 
         /* ── Production Events Section ─────────────────────────────── */
         .pev-section{

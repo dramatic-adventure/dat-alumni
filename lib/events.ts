@@ -330,6 +330,30 @@ export const events: DatEvent[] = [
     tags: ["online", "live stream", "Season 17", "global", "free"],
     contactEmail: "hello@dramaticadventure.com",
   },
+
+  // ── COMMUNITY SHOWCASES ──────────────────────────────────────────────────────
+  {
+    id: "quito-collective-community-showcase-2026",
+    title: "Quito Collective Community Showcase",
+    category: "performance",
+    subcategory: "community-showcase",
+    status: "upcoming",
+    date: "2026-05-15",
+    venue: "Casa de la Cultura Ecuatoriana",
+    city: "Quito",
+    country: "Ecuador",
+    dramaClub: "quito-collective",
+    description:
+      "The Quito Collective presents an evening of original short works created by their youth ensemble — stories rooted in Andean myth, contemporary Quito, and the drama club's own two-year journey.",
+    longDescription:
+      "After two years of developing original stories through DAT's drama club program, the Quito Collective takes the stage at the Casa de la Cultura Ecuatoriana for their first full community showcase. The evening features six short original works — devised collaboratively by young artists aged 14–22 — exploring themes of identity, heritage, and belonging in contemporary Ecuador. Performed in Spanish with some Kichwa. All ages welcome. Tickets are free; donations support the club's ongoing work.",
+    image: "/images/Andean_Mask_Work.jpg",
+    ticketPrice: "Free — donations welcome",
+    ticketType: "free",
+    featured: true,
+    tags: ["community showcase", "youth", "Quito", "Ecuador", "Andean", "original work", "quito-collective"],
+    contactEmail: "hello@dramaticadventure.com",
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

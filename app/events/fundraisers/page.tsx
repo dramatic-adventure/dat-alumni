@@ -236,8 +236,10 @@ export default function FundraisersPage() {
       <section className="fund-why-band">
         <div className="fund-container fund-why-grid">
           <div className="fund-why-text">
-            <p className="fund-why-eyebrow" style={{ color: accent }}>Why It Matters</p>
-            <h2 className="fund-why-title">Your Night Out<br />Funds the Work</h2>
+            <div className="fund-why-heading-box" style={{ borderColor: accent }}>
+              <p className="fund-why-eyebrow" style={{ color: accent }}>Why It Matters</p>
+              <h2 className="fund-why-title">Your Night Out<br />Funds the Work</h2>
+            </div>
             <p className="fund-why-body">
               DAT fundraisers are not galas for galas&apos; sake. They&apos;re how we tell the story of
               what we do — and how we raise the resources to keep doing it.
@@ -415,7 +417,20 @@ export default function FundraisersPage() {
         .fund-listing {
           background: #140c04;
           padding: clamp(3rem, 6vw, 5rem) 0;
-          margin-top: -2px;
+          margin-top: 0;
+          position: relative;
+          z-index: 1;
+        }
+        .fund-hero::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: -1px;
+          height: 6px;
+          background: #140c04;
+          z-index: 3;
+          pointer-events: none;
         }
         .fund-grid {
           display: grid;
@@ -709,6 +724,16 @@ export default function FundraisersPage() {
         @media (max-width: 700px) {
           .fund-why-grid { grid-template-columns: 1fr; }
         }
+        .fund-why-heading-box {
+          display: inline-flex;
+          flex-direction: column;
+          gap: 0.2rem;
+          background: rgba(36,17,35,0.28);
+          border-left: 4px solid;
+          padding: 0.75rem 1.5rem 0.75rem 1rem;
+          border-radius: 0 10px 10px 0;
+          margin-bottom: 1.5rem;
+        }
         .fund-why-eyebrow {
           font-family: "DM Sans", sans-serif;
           font-size: 0.72rem;
@@ -720,8 +745,8 @@ export default function FundraisersPage() {
         .fund-why-title {
           font-family: "Anton", sans-serif;
           font-size: clamp(2rem, 4vw, 3.2rem);
-          color: #241123;
-          margin: 0 0 1.5rem;
+          color: rgba(255,255,255,0.92);
+          margin: 0;
           line-height: 1;
         }
         .fund-why-body {
@@ -829,7 +854,7 @@ export default function FundraisersPage() {
 
         /* ── Bottom band ──────────────────────────────────────────────── */
         .fund-bottom-band {
-          background: #0d0812;
+          background: #130e00;
           padding: clamp(2.5rem, 5vw, 4rem) 0;
         }
         .fund-bottom-inner { display: flex; flex-direction: column; gap: 1.25rem; }
@@ -855,8 +880,8 @@ export default function FundraisersPage() {
           transition: opacity 0.2s, transform 0.15s;
         }
         .fund-bottom-link:hover { opacity: 0.8; transform: translateY(-1px); }
-        .fund-pink { background: #b8194a; color: #fff; }
-        .fund-teal { background: #1a6d7d; color: #fff; }
+        .fund-pink { background: #F23359; color: #fff; }
+        .fund-teal { background: #2493A9; color: #fff; }
         .fund-muted { color: rgba(255,255,255,0.4); border: 1.5px solid rgba(255,255,255,0.15); }
       `}</style>
     </>

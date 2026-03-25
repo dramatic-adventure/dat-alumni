@@ -413,7 +413,20 @@ export default function FestivalsPage() {
         .fest-listing {
           background: #05141a;
           padding: clamp(3rem, 6vw, 5rem) 0;
-          margin-top: -2px;
+          margin-top: 0;
+          position: relative;
+          z-index: 1;
+        }
+        .fest-hero::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: -1px;
+          height: 6px;
+          background: #05141a;
+          z-index: 3;
+          pointer-events: none;
         }
         .fest-section-eyebrow {
           font-family: "DM Sans", sans-serif;
@@ -672,8 +685,10 @@ export default function FestivalsPage() {
           .fest-about-grid { grid-template-columns: 1fr; }
         }
         .fest-about-heading-box {
-          display: inline-block;
-          background: rgba(246,228,193,0.82);
+          display: inline-flex;
+          flex-direction: column;
+          gap: 0.2rem;
+          background: rgba(36,17,35,0.28);
           border-left: 4px solid #2493A9;
           padding: 0.75rem 1.5rem 0.75rem 1rem;
           border-radius: 0 10px 10px 0;
@@ -689,7 +704,7 @@ export default function FestivalsPage() {
         .fest-about-title {
           font-family: "Anton", sans-serif;
           font-size: clamp(2rem, 4vw, 3.2rem);
-          color: #241123;
+          color: rgba(255,255,255,0.92);
           margin: 0;
           line-height: 1;
         }
@@ -787,7 +802,7 @@ export default function FestivalsPage() {
 
         /* ── Bottom band ──────────────────────────────────────────────── */
         .fest-bottom-band {
-          background: #0d0812;
+          background: #021419;
           padding: clamp(2.5rem, 5vw, 4rem) 0;
         }
         .fest-bottom-inner { display: flex; flex-direction: column; gap: 1.25rem; }
@@ -813,8 +828,8 @@ export default function FestivalsPage() {
           transition: opacity 0.2s, transform 0.15s;
         }
         .fest-bottom-link:hover { opacity: 0.8; transform: translateY(-1px); }
-        .fest-pink { background: #b8194a; color: #fff; }
-        .fest-gold { background: #8a6200; color: #fff; }
+        .fest-pink { background: #F23359; color: #fff; }
+        .fest-gold { background: #D9A919; color: #241123; }
         .fest-muted { color: rgba(255,255,255,0.4); border: 1.5px solid rgba(255,255,255,0.15); }
       `}</style>
     </>

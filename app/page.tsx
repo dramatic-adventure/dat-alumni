@@ -603,7 +603,7 @@ export default function Page() {
             </div>
 
             <div className="hp-events-grid">
-              {upcomingEvents.slice(0, 3).map((ev) => {
+              {upcomingEvents.slice(0, 2).map((ev) => {
                 const meta = categoryMeta[ev.category];
                 const img = getEventImage(ev);
                 return (
@@ -1645,10 +1645,10 @@ main a:active { text-decoration: none !important; }
 }
 .hp-events-see-all:hover { color: #FFCC00 !important; }
 
-/* Card grid */
+/* Card grid — 2 cards at ~50% viewport */
 .hp-events-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.25rem;
 }
 @media (max-width: 640px) {
