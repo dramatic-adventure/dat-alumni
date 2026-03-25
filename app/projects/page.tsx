@@ -1093,6 +1093,12 @@ export default function ProjectsIndexPage() {
           transform: translateY(-3px);
           border-color: rgba(47,168,115,0.5) !important;
         }
+        .showcase-card-img {
+          transition: transform 0.5s ease;
+        }
+        .project-showcase-card:hover .showcase-card-img {
+          transform: scale(1.05);
+        }
 
         /* ── Era photo ── */
         .project-era-photo {
@@ -1252,7 +1258,7 @@ function ShowcaseArchiveRows({ showcases }: { showcases?: DatEvent[] }) {
                   src={imgSrc}
                   alt={club?.name ?? ev.title}
                   fill
-                  className="object-cover object-center"
+                  className="object-cover object-center showcase-card-img"
                   sizes="(max-width: 860px) 50vw, 200px"
                 />
                 <div

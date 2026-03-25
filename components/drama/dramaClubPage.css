@@ -924,8 +924,8 @@
 }
 
 .dc-section {
-  border-top: 1px solid rgba(36, 17, 35, 0.12);
-  padding-top: 12px;
+  border-top: 1.5px solid rgba(36, 17, 35, 0.22);
+  padding-top: 14px;
 }
 
 .dc-section--right {

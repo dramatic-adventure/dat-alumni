@@ -1043,6 +1043,12 @@ export default function TheatreIndexPage() {
         .theatre-card-poster {
           transition: transform 0.5s ease;
         }
+        .showcase-card-img {
+          transition: transform 0.5s ease;
+        }
+        .theatre-prod-card:hover .showcase-card-img {
+          transform: scale(1.05);
+        }
         .theatre-bottom-link {
           transition: box-shadow 0.2s ease, filter 0.2s ease;
         }
@@ -1167,7 +1173,7 @@ function ShowcaseArchiveRows({ showcases }: { showcases?: DatEvent[] }) {
                   src={imgSrc}
                   alt={club?.name ?? ev.title}
                   fill
-                  className="object-cover object-center"
+                  className="object-cover object-center showcase-card-img"
                   sizes="(max-width: 860px) 50vw, 200px"
                 />
                 {/* Subtle tint overlay so badge is legible */}

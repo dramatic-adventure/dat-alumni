@@ -11,6 +11,7 @@ import {
   shortMonth,
   dayOfMonth,
   getEventImage,
+  isCommunityShowcase,
   type DatEvent,
   type EventCategory,
 } from "@/lib/events";
@@ -107,6 +108,16 @@ function FeaturedEventCard({ event, backgroundFromParent }: { event: DatEvent; b
                 onClick={(e) => e.stopPropagation()}
               >
                 {event.ticketType === "free" ? "Register Free" : "Get Tickets"}
+              </a>
+            )}
+            {isCommunityShowcase(event) && event.contactEmail && (
+              <a
+                href={`mailto:${event.contactEmail}?subject=${encodeURIComponent(`Attendance Request: ${event.title}`)}`}
+                className="evhub-btn-primary"
+                style={{ background: "#2FA873", color: "#fff" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                Request an Invite →
               </a>
             )}
             <Link

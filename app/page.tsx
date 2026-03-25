@@ -21,6 +21,7 @@ import {
   shortMonth,
   dayOfMonth,
   formatDateRange,
+  isCommunityShowcase,
 } from "@/lib/events";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
@@ -606,56 +607,83 @@ export default function Page() {
               {upcomingEvents.slice(0, 2).map((ev) => {
                 const meta = categoryMeta[ev.category];
                 const img = getEventImage(ev);
+                const isShowcase = isCommunityShowcase(ev);
+                // Community showcases: link to the drama club page (invite button lives there)
+                const cardHref = isShowcase && ev.dramaClub
+                  ? `/drama-club/${ev.dramaClub}`
+                  : meta.href;
+                const hasInvite = isShowcase && !!ev.contactEmail;
                 return (
-                  <Link
-                    key={ev.id}
-                    href={meta.href}
-                    className="hp-event-card"
-                    aria-label={`${ev.title} — ${ev.city}`}
-                  >
-                    <div
-                      className="hp-event-card-img"
-                      style={img ? { backgroundImage: `url('${img}')` } : undefined}
-                    />
-                    <div className="hp-event-card-overlay" />
-                    <div className="hp-event-card-body">
+                  <div key={ev.id} className="hp-event-card-wrap">
+                    <Link
+                      href={cardHref}
+                      className="hp-event-card"
+                      aria-label={`${ev.title} — ${ev.city}`}
+                    >
                       <div
-                        className="hp-event-date-badge"
-                        style={{ background: meta.color }}
-                      >
-                        <span className="hp-event-badge-day">{dayOfMonth(ev.date)}</span>
-                        <span className="hp-event-badge-mo">{shortMonth(ev.date)}</span>
-                      </div>
-                      <div className="hp-event-card-text">
-                        <span
-                          className="hp-event-cat-label"
-                          style={{ color: meta.color }}
+                        className="hp-event-card-img"
+                        style={img ? { backgroundImage: `url('${img}')` } : undefined}
+                      />
+                      <div className="hp-event-card-overlay" />
+                      <div className="hp-event-card-body">
+                        <div
+                          className="hp-event-date-badge"
+                          style={{ background: meta.color }}
                         >
-                          {meta.eyebrow}
-                        </span>
-                        <p className="hp-event-card-title">{ev.title}</p>
-                        <p className="hp-event-card-venue">
-                          {ev.venue}
-                          {ev.city ? ` · ${ev.city}` : ""}
-                        </p>
-                        {ev.endDate ? (
-                          <p className="hp-event-card-dates">
-                            {formatDateRange(ev.date, ev.endDate)}
+                          <span className="hp-event-badge-day">{dayOfMonth(ev.date)}</span>
+                          <span className="hp-event-badge-mo">{shortMonth(ev.date)}</span>
+                        </div>
+                        <div className="hp-event-card-text">
+                          <span
+                            className="hp-event-cat-label"
+                            style={{ color: meta.color }}
+                          >
+                            {meta.eyebrow}
+                          </span>
+                          <p className="hp-event-card-title">{ev.title}</p>
+                          <p className="hp-event-card-venue">
+                            {ev.venue}
+                            {ev.city ? ` · ${ev.city}` : ""}
                           </p>
+                          {ev.endDate ? (
+                            <p className="hp-event-card-dates">
+                              {formatDateRange(ev.date, ev.endDate)}
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                    </Link>
+                    {/* CTA bar lives outside the Link so invite anchors are valid HTML */}
+                    {(ev.ticketUrl || hasInvite) && (
+                      <div className="hp-event-card-ticket-bar" style={{ borderTopColor: meta.color }}>
+                        {ev.ticketUrl ? (
+                          <>
+                            <span style={{ color: meta.color }}>
+                              {ev.ticketType === "free" ? "Free" : ev.ticketPrice ?? "Tickets"}
+                            </span>
+                            <a
+                              href={ev.ticketUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hp-event-ticket-cta hp-event-ticket-cta--link"
+                            >
+                              {ev.ticketType === "free" ? "Register →" : "Get Tickets →"}
+                            </a>
+                          </>
+                        ) : hasInvite ? (
+                          <>
+                            <span style={{ color: meta.color }}>Community Showcase</span>
+                            <a
+                              href={`mailto:${ev.contactEmail}?subject=${encodeURIComponent(`Attendance Request: ${ev.title}`)}`}
+                              className="hp-event-ticket-cta hp-event-ticket-cta--link"
+                            >
+                              Request an Invite →
+                            </a>
+                          </>
                         ) : null}
                       </div>
-                    </div>
-                    {ev.ticketUrl && (
-                      <div className="hp-event-card-ticket-bar" style={{ borderTopColor: meta.color }}>
-                        <span style={{ color: meta.color }}>
-                          {ev.ticketType === "free" ? "Free" : ev.ticketPrice ?? "Tickets"}
-                        </span>
-                        <span className="hp-event-ticket-cta">
-                          {ev.ticketType === "free" ? "Register →" : "Get Tickets →"}
-                        </span>
-                      </div>
                     )}
-                  </Link>
+                  </div>
                 );
               })}
             </div>
@@ -1656,23 +1684,31 @@ main a:active { text-decoration: none !important; }
 }
 
 /* Individual event card */
-.hp-event-card {
-  position: relative;
+.hp-event-card-wrap {
   display: flex;
   flex-direction: column;
   border-radius: 14px;
   overflow: hidden;
-  background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
-  text-decoration: none !important;
-  color: #fff;
-  transition: transform 0.22s ease, box-shadow 0.22s ease;
-  min-height: 220px;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
 }
-.hp-event-card:hover {
+.hp-event-card-wrap:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 40px rgba(0,0,0,0.4);
   border-color: rgba(255,255,255,0.14);
+}
+.hp-event-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(255,255,255,0.04);
+  text-decoration: none !important;
+  color: #fff;
+  flex: 1;
+  min-height: 220px;
+  border-radius: 0;
+  border: none;
 }
 .hp-event-card-img {
   position: absolute;
@@ -1777,7 +1813,13 @@ main a:active { text-decoration: none !important; }
   text-transform: uppercase;
   color: rgba(255,255,255,0.7);
 }
-.hp-event-card:hover .hp-event-ticket-cta { color: #fff; }
+.hp-event-ticket-cta--link {
+  text-decoration: none;
+  color: rgba(255,255,255,0.7);
+  transition: color 0.18s ease;
+}
+.hp-event-card-wrap:hover .hp-event-ticket-cta { color: #fff; }
+.hp-event-card-wrap:hover .hp-event-ticket-cta--link { color: #fff; }
 
       `}</style>
 

@@ -11,6 +11,7 @@ import {
   eventYear,
   categoryMeta,
   getEventImage,
+  isCommunityShowcase,
   type DatEvent,
 } from "@/lib/events";
 
@@ -77,6 +78,15 @@ function PerfCard({ event, index }: { event: DatEvent; index: number }) {
                   {event.ticketType === "free" ? "Register Free →" : "Get Tickets →"}
                 </a>
               )}
+              {isCommunityShowcase(event) && event.contactEmail && (
+                <a
+                  href={`mailto:${event.contactEmail}?subject=${encodeURIComponent(`Attendance Request: ${event.title}`)}`}
+                  className="perf-btn-ticket"
+                  style={{ background: "#2FA873" }}
+                >
+                  Request an Invite →
+                </a>
+              )}
               {event.ticketPrice && (
                 <span className="perf-price-tag">{event.ticketPrice}</span>
               )}
@@ -134,6 +144,15 @@ function PerfCard({ event, index }: { event: DatEvent; index: number }) {
                 style={{ background: accent }}
               >
                 {event.ticketType === "free" ? "Register Free →" : "Get Tickets →"}
+              </a>
+            )}
+            {isCommunityShowcase(event) && event.contactEmail && (
+              <a
+                href={`mailto:${event.contactEmail}?subject=${encodeURIComponent(`Attendance Request: ${event.title}`)}`}
+                className="perf-btn-ticket"
+                style={{ background: "#2FA873" }}
+              >
+                Request an Invite →
               </a>
             )}
             {event.ticketPrice && (

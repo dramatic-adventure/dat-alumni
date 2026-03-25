@@ -1488,7 +1488,8 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
   const hasEldersQuote = !!effectiveEldersQuote?.text;
 
   // ✅ Voices section should be skipped entirely if there’s nothing to show
-  const hasVoicesSection = hasEldersQuote || hasAlumniQuote || !!sponsorLink;
+  // Only show Voices column if there are actual quotes — sponsor link lives elsewhere on the page
+  const hasVoicesSection = hasEldersQuote || hasAlumniQuote;
 
   // ======================
   // Kraft-paper footer nav
@@ -2978,7 +2979,7 @@ const voicesHeading = `Voices from ${voicesFrom}`;
 
           /* ── Upcoming community showcase callout ──────────────── */
           .dc-upcoming-showcases {
-            margin: 2rem 0 0;
+            margin: 2rem 0 2.5rem;
           }
           .dc-showcase-callout {
             position: relative;
