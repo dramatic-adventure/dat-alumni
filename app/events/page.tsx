@@ -308,9 +308,6 @@ export default function EventsHubPage() {
             backgroundImage: getEventImage(nextUp) ? `url('${getEventImage(nextUp)}')` : undefined,
           }}
         >
-          <div className="evhub-container">
-            <p className="evhub-section-label">Next Up</p>
-          </div>
           <FeaturedEventCard event={nextUp} backgroundFromParent />
         </section>
       )}
@@ -496,9 +493,7 @@ export default function EventsHubPage() {
           border-radius: 0;
           overflow: hidden;
           min-height: 380px;
-          background: #1a0d1a;
-          background-size: cover;
-          background-position: center;
+          background: transparent;
           display: flex;
           align-items: flex-end;
         }
