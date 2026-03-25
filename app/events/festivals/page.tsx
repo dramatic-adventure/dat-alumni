@@ -10,6 +10,7 @@ import {
   dayOfMonth,
   eventYear,
   categoryMeta,
+  getEventImage,
   type DatEvent,
 } from "@/lib/events";
 
@@ -23,7 +24,7 @@ function FestCard({ event, index }: { event: DatEvent; index: number }) {
     return (
       <div
         className="fest-card fest-card--featured"
-        style={{ backgroundImage: event.image ? `url('${event.image}')` : undefined }}
+        style={{ backgroundImage: getEventImage(event) ? `url('${getEventImage(event)}')` : undefined }}
       >
         <div className="fest-card-overlay" />
         <div className="fest-card-inner">
@@ -78,7 +79,7 @@ function FestCard({ event, index }: { event: DatEvent; index: number }) {
     <div
       className="fest-card"
       style={{
-        backgroundImage: event.image ? `url('${event.image}')` : undefined,
+        backgroundImage: getEventImage(event) ? `url('${getEventImage(event)}')` : undefined,
         animationDelay: `${index * 80}ms`,
       }}
     >

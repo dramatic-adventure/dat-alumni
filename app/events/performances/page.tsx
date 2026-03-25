@@ -10,6 +10,7 @@ import {
   dayOfMonth,
   eventYear,
   categoryMeta,
+  getEventImage,
   type DatEvent,
 } from "@/lib/events";
 
@@ -24,7 +25,7 @@ function PerfCard({ event, index }: { event: DatEvent; index: number }) {
       <div
         className="perf-card perf-card--featured"
         style={{
-          backgroundImage: event.image ? `url('${event.image}')` : undefined,
+          backgroundImage: getEventImage(event) ? `url('${getEventImage(event)}')` : undefined,
         }}
       >
         <div className="perf-card-overlay" />
@@ -95,7 +96,7 @@ function PerfCard({ event, index }: { event: DatEvent; index: number }) {
     <div
       className="perf-card"
       style={{
-        backgroundImage: event.image ? `url('${event.image}')` : undefined,
+        backgroundImage: getEventImage(event) ? `url('${getEventImage(event)}')` : undefined,
         animationDelay: `${index * 60}ms`,
       }}
     >

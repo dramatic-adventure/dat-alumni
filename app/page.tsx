@@ -14,6 +14,14 @@ import {
 } from "@/lib/datStats";
 import { dramaClubs } from "@/lib/dramaClubMap";
 import { productionMap, getSortYear } from "@/lib/productionMap";
+import {
+  upcomingEvents,
+  categoryMeta,
+  getEventImage,
+  shortMonth,
+  dayOfMonth,
+  formatDateRange,
+} from "@/lib/events";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 
@@ -570,6 +578,86 @@ export default function Page() {
                   Full archive →
                 </Link>
               </div>
+            </div>
+
+          </div>
+        </section>
+      )}
+
+      {/* ════════════════════════════════════════════════
+          EVENTS — upcoming events strip
+      ════════════════════════════════════════════════ */}
+      {upcomingEvents.length > 0 && (
+        <section className="hp-events-section" aria-labelledby="hp-events-heading">
+          <div className="hp-events-stage-texture" aria-hidden="true" />
+          <div className="hp-events-inner">
+
+            <div className="hp-events-header">
+              <div>
+                <p className="hp-eyebrow-label hp-eyebrow-gold-muted">Live &amp; Coming Up</p>
+                <h2 id="hp-events-heading" className="hp-events-title">What&apos;s On</h2>
+              </div>
+              <Link href="/events" className="hp-events-see-all">
+                All Events →
+              </Link>
+            </div>
+
+            <div className="hp-events-grid">
+              {upcomingEvents.slice(0, 3).map((ev) => {
+                const meta = categoryMeta[ev.category];
+                const img = getEventImage(ev);
+                return (
+                  <Link
+                    key={ev.id}
+                    href={meta.href}
+                    className="hp-event-card"
+                    aria-label={`${ev.title} — ${ev.city}`}
+                  >
+                    <div
+                      className="hp-event-card-img"
+                      style={img ? { backgroundImage: `url('${img}')` } : undefined}
+                    />
+                    <div className="hp-event-card-overlay" />
+                    <div className="hp-event-card-body">
+                      <div
+                        className="hp-event-date-badge"
+                        style={{ background: meta.color }}
+                      >
+                        <span className="hp-event-badge-day">{dayOfMonth(ev.date)}</span>
+                        <span className="hp-event-badge-mo">{shortMonth(ev.date)}</span>
+                      </div>
+                      <div className="hp-event-card-text">
+                        <span
+                          className="hp-event-cat-label"
+                          style={{ color: meta.color }}
+                        >
+                          {meta.eyebrow}
+                        </span>
+                        <p className="hp-event-card-title">{ev.title}</p>
+                        <p className="hp-event-card-venue">
+                          {ev.venue}
+                          {ev.city ? ` · ${ev.city}` : ""}
+                        </p>
+                        {ev.endDate ? (
+                          <p className="hp-event-card-dates">
+                            {formatDateRange(ev.date, ev.endDate)}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                    {ev.ticketUrl && (
+                      <div className="hp-event-card-ticket-bar" style={{ borderTopColor: meta.color }}>
+                        <span style={{ color: meta.color }}>
+                          {ev.ticketType === "free" ? "Free" : ev.ticketPrice ?? "Tickets"}
+                        </span>
+                        <span className="hp-event-ticket-cta">
+                          {ev.ticketType === "free" ? "Register →" : "Get Tickets →"}
+                        </span>
+                      </div>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
 
           </div>
@@ -1506,6 +1594,190 @@ main a:active { text-decoration: none !important; }
 .hp-mini-btn--purple:hover { background: rgba(97,2,156,0.60);   border-color: rgba(108,0,175,1); }
 .hp-mini-btn--green:hover  { background: rgba(47,168,115,0.66); border-color: rgba(26,209,130,1); }
 .hp-mini-btn--yellow:hover { background: rgba(217,169,25,0.86); border-color: rgba(243,183,5,1); }
+
+/* ══════════════════════════════════════════════════════════
+   EVENTS STRIP — dark theatrical band, up to 3 cards
+══════════════════════════════════════════════════════════ */
+.hp-events-section {
+  position: relative;
+  background: #0d0a14;
+  padding: 4rem 2rem 4.5rem;
+  overflow: hidden;
+}
+.hp-events-stage-texture {
+  position: absolute;
+  inset: 0;
+  background: url("/images/theatre/esmeraldas_dumbshow.webp") center 30% / cover no-repeat;
+  opacity: 0.07;
+  z-index: 0;
+}
+.hp-events-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.hp-events-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.hp-events-title {
+  font-family: "Anton", sans-serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 400;
+  color: #fff;
+  margin: 0.4rem 0 0;
+  line-height: 1;
+}
+.hp-events-see-all {
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,204,0,0.7) !important;
+  white-space: nowrap;
+  transition: color 0.18s;
+  padding-bottom: 0.25rem;
+}
+.hp-events-see-all:hover { color: #FFCC00 !important; }
+
+/* Card grid */
+.hp-events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 1.25rem;
+}
+@media (max-width: 640px) {
+  .hp-events-grid { grid-template-columns: 1fr; }
+}
+
+/* Individual event card */
+.hp-event-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  text-decoration: none !important;
+  color: #fff;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  min-height: 220px;
+}
+.hp-event-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  border-color: rgba(255,255,255,0.14);
+}
+.hp-event-card-img {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-color: #1a0f22;
+}
+.hp-event-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(10,5,18,0.35) 0%,
+    rgba(10,5,18,0.72) 60%,
+    rgba(10,5,18,0.93) 100%
+  );
+}
+.hp-event-card-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  padding: 1.1rem 1.1rem 0.9rem;
+  flex: 1;
+}
+.hp-event-date-badge {
+  flex-shrink: 0;
+  width: 44px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.35rem 0.2rem;
+  line-height: 1;
+}
+.hp-event-badge-day {
+  font-family: "Anton", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #fff;
+  display: block;
+}
+.hp-event-badge-mo {
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.85);
+  display: block;
+  margin-top: 1px;
+}
+.hp-event-card-text { flex: 1; min-width: 0; }
+.hp-event-cat-label {
+  display: block;
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+.hp-event-card-title {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 0.2rem;
+  line-height: 1.3;
+}
+.hp-event-card-venue {
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.55);
+  margin: 0;
+}
+.hp-event-card-dates {
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+  margin: 0.2rem 0 0;
+}
+
+/* Ticket info bar at bottom of card */
+.hp-event-card-ticket-bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1.1rem;
+  border-top: 1px solid;
+  border-top-color: rgba(255,255,255,0.12);
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-size: 0.75rem;
+}
+.hp-event-ticket-cta {
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.7);
+}
+.hp-event-card:hover .hp-event-ticket-cta { color: #fff; }
 
       `}</style>
 

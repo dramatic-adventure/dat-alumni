@@ -15,6 +15,8 @@
 //                Theatre archive images live at  "/images/theatre/[filename]"
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { productionMap } from "@/lib/productionMap";
+
 export type EventCategory = "performance" | "festival" | "fundraiser";
 export type EventStatus = "upcoming" | "past" | "cancelled";
 
@@ -408,6 +410,20 @@ export function dayOfMonth(date: string): string {
 /** Year: "2026" */
 export function eventYear(date: string): string {
   return String(new Date(date + "T12:00:00Z").getUTCFullYear());
+}
+
+/**
+ * Resolve the best available image for an event.
+ * Prefers the event's own `image` field; falls back to the linked production's
+ * `posterUrl` when `event.production` is set and no image is specified.
+ */
+export function getEventImage(event: DatEvent): string | undefined {
+  if (event.image) return event.image;
+  if (event.production) {
+    const poster = productionMap[event.production]?.posterUrl;
+    if (poster) return poster;
+  }
+  return undefined;
 }
 
 /**

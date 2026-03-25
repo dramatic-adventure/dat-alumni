@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   upcomingEvents,
   upcomingByCategory,
@@ -9,6 +10,7 @@ import {
   formatDateRange,
   shortMonth,
   dayOfMonth,
+  getEventImage,
   type DatEvent,
   type EventCategory,
 } from "@/lib/events";
@@ -24,10 +26,10 @@ function EventCard({ event, accent }: { event: DatEvent; accent: string }) {
       onClick={() => router.push(meta.href)}
       style={{ cursor: "pointer" }}
     >
-      {event.image && (
+      {getEventImage(event) && (
         <div
           className="evhub-card-img"
-          style={{ backgroundImage: `url('${event.image}')` }}
+          style={{ backgroundImage: `url('${getEventImage(event)}')` }}
         />
       )}
       <div className="evhub-card-overlay" />
@@ -63,7 +65,7 @@ function FeaturedEventCard({ event }: { event: DatEvent }) {
     <div
       className="evhub-featured"
       style={{
-        backgroundImage: event.image ? `url('${event.image}')` : undefined,
+        backgroundImage: getEventImage(event) ? `url('${getEventImage(event)}')` : undefined,
       }}
     >
       <div className="evhub-featured-overlay" />
@@ -167,6 +169,94 @@ function CategoryRow({
   );
 }
 
+// ── Mailing list inline form ──────────────────────────────────────────────────
+
+function MailingListForm() {
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [honey, setHoney] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setStatus("loading");
+    try {
+      const res = await fetch("/api/mailing-list", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name, source: "events-page", website: honey }),
+      });
+      if (!res.ok) throw new Error("submit-failed");
+      setStatus("success");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  if (status === "success") {
+    return (
+      <div className="evhub-ml-success">
+        <span className="evhub-ml-check">✓</span>
+        <div>
+          <p className="evhub-ml-success-title">You&apos;re on the list.</p>
+          <p className="evhub-ml-success-sub">We&apos;ll be in touch when something exciting is happening.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form className="evhub-ml-form" onSubmit={handleSubmit} noValidate>
+      {/* Honeypot — hidden from humans */}
+      <input
+        aria-hidden="true"
+        tabIndex={-1}
+        name="website"
+        value={honey}
+        onChange={(e) => setHoney(e.target.value)}
+        style={{ display: "none" }}
+        autoComplete="off"
+      />
+      <div className="evhub-ml-fields">
+        <input
+          type="text"
+          placeholder="Your name (optional)"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="evhub-ml-input"
+          autoComplete="name"
+        />
+        <input
+          type="email"
+          required
+          placeholder="your@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="evhub-ml-input evhub-ml-input--email"
+          autoComplete="email"
+        />
+        <button
+          type="submit"
+          className="evhub-ml-btn"
+          disabled={status === "loading"}
+        >
+          {status === "loading" ? "Signing up…" : "Join the List →"}
+        </button>
+      </div>
+      {status === "error" && (
+        <p className="evhub-ml-error">
+          Something went wrong — email us at{" "}
+          <a href="mailto:hello@dramaticadventure.com">hello@dramaticadventure.com</a>
+        </p>
+      )}
+      <p className="evhub-ml-fine">
+        No spam, ever. Unsubscribe any time by replying to any email.
+      </p>
+    </form>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function EventsHubPage() {
@@ -227,24 +317,33 @@ export default function EventsHubPage() {
         <CategoryRow category="fundraiser" events={fundraisers} />
       </div>
 
+      {/* ── Oscar Wilde quote ──────────────────────────────────────────── */}
+      <section className="evhub-quote-band">
+        <div className="evhub-container">
+          <blockquote className="evhub-quote">
+            <p className="evhub-quote-text">
+              &ldquo;I regard the theatre as the greatest of all art forms, the most immediate
+              way in which a human being can share with another the sense of what it is
+              to be a human being.&rdquo;
+            </p>
+            <footer className="evhub-quote-attribution">— Oscar Wilde</footer>
+          </blockquote>
+        </div>
+      </section>
+
       {/* ── Bottom band ────────────────────────────────────────────────── */}
       <section className="evhub-bottom-band">
         <div className="evhub-container evhub-bottom-inner">
-          <div>
+          <div className="evhub-bottom-copy">
             <p className="evhub-bottom-eyebrow">Stay in the Loop</p>
             <h2 className="evhub-bottom-title">Never miss a curtain.</h2>
             <p className="evhub-bottom-body">
-              Events are announced first to our community list. Follow DAT, sign up for updates,
-              or reach out directly.
+              Events are announced first to our community list. Be the first to know
+              when new shows, festivals, and community nights are announced.
             </p>
+            <MailingListForm />
           </div>
           <div className="evhub-bottom-links">
-            <a
-              href="mailto:hello@dramaticadventure.com?subject=Mailing%20List"
-              className="evhub-btn-gold"
-            >
-              Join Our Mailing List →
-            </a>
             <Link href="/donate" className="evhub-btn-outline-light">
               Support the Work
             </Link>
@@ -756,6 +855,124 @@ export default function EventsHubPage() {
           white-space: nowrap;
         }
         .evhub-btn-outline-light:hover { opacity: 0.7; }
+
+        /* ── Bottom copy column ────────────────────────────────────────── */
+        .evhub-bottom-copy { display: flex; flex-direction: column; gap: 0; }
+        .evhub-bottom-body { margin: 0 0 1.5rem; }
+
+        /* ── Mailing list form ─────────────────────────────────────────── */
+        .evhub-ml-form { display: flex; flex-direction: column; gap: 0.5rem; }
+        .evhub-ml-fields {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          align-items: stretch;
+        }
+        .evhub-ml-input {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.9rem;
+          background: rgba(255,255,255,0.08);
+          border: 1.5px solid rgba(255,255,255,0.18);
+          color: #fff;
+          padding: 0.7rem 1rem;
+          border-radius: 8px;
+          flex: 1 1 160px;
+          min-width: 0;
+          outline: none;
+          transition: border-color 0.18s;
+        }
+        .evhub-ml-input::placeholder { color: rgba(255,255,255,0.35); }
+        .evhub-ml-input:focus { border-color: rgba(255,204,0,0.6); }
+        .evhub-ml-input--email { flex: 2 1 200px; }
+        .evhub-ml-btn {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          background: #D9A919;
+          color: #241123;
+          border: none;
+          padding: 0.7rem 1.4rem;
+          border-radius: 8px;
+          cursor: pointer;
+          white-space: nowrap;
+          flex-shrink: 0;
+          transition: opacity 0.18s, transform 0.15s;
+        }
+        .evhub-ml-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+        .evhub-ml-btn:disabled { opacity: 0.55; cursor: default; }
+        .evhub-ml-fine {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          color: rgba(255,255,255,0.28);
+          margin: 0;
+          line-height: 1.5;
+        }
+        .evhub-ml-error {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          color: #F23359;
+          margin: 0;
+        }
+        .evhub-ml-error a { color: #F23359; text-decoration: underline; }
+        .evhub-ml-success {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.75rem;
+          padding: 1rem 1.25rem;
+          background: rgba(47,168,115,0.12);
+          border: 1.5px solid rgba(47,168,115,0.3);
+          border-radius: 10px;
+        }
+        .evhub-ml-check {
+          font-size: 1.1rem;
+          color: #2FA873;
+          flex-shrink: 0;
+          line-height: 1.4;
+        }
+        .evhub-ml-success-title {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: #2FA873;
+          margin: 0 0 0.2rem;
+        }
+        .evhub-ml-success-sub {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          color: rgba(255,255,255,0.55);
+          margin: 0;
+        }
+
+        /* ── Oscar Wilde quote band ─────────────────────────────────────── */
+        .evhub-quote-band {
+          padding: clamp(2.5rem, 5vw, 4rem) 0;
+          background: transparent;
+        }
+        .evhub-quote {
+          margin: 0;
+          padding: 0;
+          border-left: 3px solid rgba(217,169,25,0.45);
+          padding-left: clamp(1.25rem, 3vw, 2.5rem);
+        }
+        .evhub-quote-text {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: clamp(1rem, 2.2vw, 1.35rem);
+          font-style: italic;
+          color: rgba(36,17,35,0.72);
+          line-height: 1.7;
+          margin: 0 0 0.75rem;
+          max-width: 700px;
+        }
+        .evhub-quote-attribution {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: rgba(36,17,35,0.42);
+        }
       `}</style>
     </>
   );
