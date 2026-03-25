@@ -167,6 +167,11 @@ export default function FundraisersPage() {
   const past = pastEvents.filter((e) => e.category === "fundraiser");
   const accent = categoryMeta.fundraiser.color;
 
+  // 1 featured + up to 2 smaller
+  const featuredEvent = upcoming.find((e) => e.featured) ?? upcoming[0];
+  const otherEvents   = upcoming.filter((e) => e !== featuredEvent).slice(0, 2);
+  const displayEvents = featuredEvent ? [featuredEvent, ...otherEvents] : [];
+
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
@@ -224,7 +229,7 @@ export default function FundraisersPage() {
             </div>
           ) : (
             <div className="fund-grid">
-              {upcoming.map((ev, i) => (
+              {displayEvents.map((ev, i) => (
                 <FundCard key={ev.id} event={ev} index={i} />
               ))}
             </div>

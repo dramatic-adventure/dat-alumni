@@ -188,6 +188,11 @@ export default function PerformancesPage() {
   const past = pastEvents.filter((e) => e.category === "performance");
   const accent = categoryMeta.performance.color; // #F23359
 
+  // 1 featured + up to 2 smaller — feature flag wins, else first event is featured
+  const featuredEvent = upcoming.find((e) => e.featured) ?? upcoming[0];
+  const otherEvents   = upcoming.filter((e) => e !== featuredEvent).slice(0, 2);
+  const displayEvents = featuredEvent ? [featuredEvent, ...otherEvents] : [];
+
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
@@ -245,7 +250,7 @@ export default function PerformancesPage() {
             </div>
           ) : (
             <div className="perf-grid">
-              {upcoming.map((ev, i) => (
+              {displayEvents.map((ev, i) => (
                 <PerfCard key={ev.id} event={ev} index={i} />
               ))}
             </div>
