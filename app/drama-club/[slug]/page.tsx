@@ -420,7 +420,13 @@ function buildLineageArtistsForClub(opts: {
       continue; // don’t guess names (accuracy > completeness)
     }
 
-    const subtitle = Array.from(rolesSet).join(", ").trim();
+    // Normalize roles: split any comma-separated composite strings, deduplicate parts
+    const subtitle = Array.from(rolesSet)
+      .flatMap((r) => r.split(",").map((s) => s.trim()))
+      .filter(Boolean)
+      .filter((r, i, arr) => arr.indexOf(r) === i)
+      .join(", ")
+      .trim();
 
     out.push({
       ...person,
