@@ -1385,10 +1385,70 @@ export const dramaClubMap = {
   lng: 21.2611,
 },
 
-  "lunik-ix-youth-ensemble": {
+  "zemplinska-teplica-youth-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
-    slug: "lunik-ix-youth-ensemble",
-    name: "Luník IX Youth Ensemble",
+    slug: "zemplinska-teplica-youth-ensemble",
+    name: "Zemplínska Teplica Youth Ensemble",
+    country: "Slovakia",
+    region: "Eastern Slovakia",
+    city: "Zemplínska Teplica",
+
+    heroTextureTagline: "Eastern Slovakia • Zemplínska Teplica",
+    location: "Housing estate courtyards & partner community spaces",
+    meetingPlace: "Community center and outdoor courtyards in Zemplínska Teplica",
+    shortBlurb:
+      "Where small town youth in Eastern Slovakia use theatre to share their stories and bridge divides.",
+    cardImage: FALLBACK_IMAGE,
+
+    heroImage: FALLBACK_IMAGE,
+    gallery: [{ src: FALLBACK_IMAGE, alt: "Zemplínska Teplica youth performing" }],
+
+    description:
+      "A youth ensemble in Zemplínska Teplica where young people build theatre that reflects their lives, challenges stigma, and creates space for new stories about their community.",
+    whatHappens:
+      "Youth gather in courtyards and community rooms to create scenes that weave together family stories, local legends, and the humor of daily life in a small town.",
+    originStory:
+      "Emerging from residencies with ETP Slovensko, the ensemble formed to provide a regular space for youth to gather, create, and share stories that often go unheard in larger regional narratives.",
+    language: "Romani / Slovak",
+
+    culturalExchangeLearn:
+      "We learn how to build theatre that is both shield and megaphone—protecting youth while amplifying their voice.",
+    culturalExchangeShare:
+      "We share ensemble-building methods that protect dignity and make space for truthful humor.",
+
+    statusOverride: "new",
+
+    communityPartners: [{ name: "ETP Slovensko", logoSrc: SAMPLE_IMAGE }],
+    partners: ["ETP Slovensko"],
+    communityNeeds: [
+      "Support for storytelling and facilitation mentorship for emerging youth leaders",
+      "Resources to document and preserve stories created by the club",
+    ],
+    localContext:
+      "Zemplínska Teplica is a small town with a significant Roma population, often overshadowed by larger cities in the region. The club offers a space for youth to tell their own stories and build community pride.",
+
+    currentProjects: ["Neighborhood story archive", "Courtyard performance routes"],
+
+    artistPathwaysBlurb:
+      "Artists learn how to build theatre that is both shield and megaphone—protecting youth while amplifying their voice.",
+
+    causes: [
+      { category: "social-justice-human-rights-equity", subcategory: "anti-racism" },
+      { category: "social-justice-human-rights-equity", subcategory: "poverty-reduction-social-inclusion" },
+      { category: "education-access-equity-opportunity", subcategory: "reducing-barriers-to-education" },
+      { category: "arts-culture-storytelling-representation", subcategory: "community-creative-expression" },
+    ],
+
+    // Use Košice city anchor unless/until you set an exact estate pin
+    lat: 48.7166,
+    lng: 21.2611,
+  },
+
+
+  "lunik-ix-collective": {
+    ...DRAMA_CLUB_TEMPLATE,
+    slug: "lunik-ix-collective",
+    name: "Luník IX Collective",
     country: "Slovakia",
     region: "Eastern Slovakia",
     city: "Košice – Luník IX",
@@ -1416,7 +1476,7 @@ export const dramaClubMap = {
     culturalExchangeShare:
       "We share ensemble-building methods that protect dignity and make space for truthful humor.",
 
-    statusOverride: "legacy",
+    statusOverride: "ongoing",
 
     communityPartners: [{ name: "ETP Slovensko", logoSrc: SAMPLE_IMAGE }],
     partners: ["ETP Slovensko"],

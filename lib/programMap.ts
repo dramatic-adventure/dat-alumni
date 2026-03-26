@@ -127,6 +127,66 @@ export interface ActiveProgram {
  */
 
 export const programMap: Record<string, ProgramData> = {
+  // Season 20 entry:
+  "passage-slovakia-2026": {
+    title: "PASSAGE: Slovakia 2026",
+    slug: "passage-slovakia-2026",
+    program: "PASSAGE",
+    location: "Slovakia",
+    country: "Slovakia",
+    year: 2026,
+    season: 20,
+    dramaClubSlugs: ["lunik-ix-collective", "zemplinska-teplica-youth-ensemble"],
+    externalUrl: "https://www.dramaticadventure.com/passage",
+    url: "/passage",
+    artists: {
+      "jesse-baxter": ["Artistic Director"],
+      "christen-madrazo": ["Director of Creative Learning"],
+      "jason-williamson": ["Resident Playwright"],
+      "asa-williamson": ["Artist Apprentice"],
+      "vida-williamson": ["Artist Apprentice"],
+    },
+  },
+
+  "dat-lab-slovakia-2026": {
+    title: "DAT Lab: Slovakia 2026",
+    slug: "dat-lab-slovakia-2026",
+    program: "DAT Lab Creative Residency",
+    location: "Slovakia",
+    country: "Slovakia",
+    year: 2026,
+    season: 20,
+    dramaClubSlugs: ["lunik-ix-collective", "zemplinska-teplica-youth-ensemble"],
+    externalUrl: "https://www.dramaticadventure.com/passage",
+    url: "/passage",
+    artists: {
+      "jesse-baxter": ["Artistic Director"],
+      "christen-madrazo": ["Director of Creative Learning"],
+      "jason-williamson": ["Resident Playwright"],
+      "asa-williamson": ["Artist Apprentice"],
+      "vida-williamson": ["Artist Apprentice"],
+    },
+  },
+
+    "teaching-artist-residency-slovakia-2026": {
+    title: "Teaching Artist Residency: Slovakia 2026",
+    slug: "teaching-artist-residency-slovakia-2026",
+    program: "Teaching Artist Residency",
+    location: "Slovakia",
+    year: 2026,
+    season: 20,
+    dramaClubSlugs: ["lunik-ix-collective", "zemplinska-teplica-youth-ensemble"],
+    externalUrl: "https://www.dramaticadventure.com/passage",
+    url: "/teaching-artist-residency",
+    artists: {
+      "jesse-baxter": ["Artistic Director, Teaching Artist"],
+      "christen-madrazo": ["Director of Creative Learning, Teaching Artist"],
+      "jason-williamson": ["Resident Playwright, Teaching Artist"],
+      "asa-williamson": ["Artist Apprentice"],
+      "vida-williamson": ["Artist Apprentice"],
+    },
+  },
+
   // Season 19 entry:
   "creative-trek-ecuador-2025": {
     title: "Creative Trek: Ecuador (refresh) 2025",
@@ -150,7 +210,7 @@ export const programMap: Record<string, ProgramData> = {
     location: "Slovakia",
     year: 2024,
     season: 18,
-    url: "/residencies",
+    url: "/teaching-artist-residency",
     artists: {
       "christen-madrazo": ["Director of Creative Learning, Teaching Artist"],
       "jason-williamson": ["Resident Playwright, Teaching Artist"],
@@ -367,7 +427,7 @@ export const programMap: Record<string, ProgramData> = {
     location: "Esmeraldas, Ecuador",
     year: 2011,
     season: 5,
-    url: "/residencies",
+    url: "/teaching-artist-residency",
     artists: {
       "isabel-martinez": ["Actor"],
       "dionne-audain": ["Teaching Artist"],
