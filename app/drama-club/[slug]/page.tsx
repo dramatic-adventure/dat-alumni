@@ -509,25 +509,29 @@ async function getActiveProgramsForClub(
     candidates.map(async (p) => {
       const isPast = p.year < currentYear;
       const displayUrl = isPast ? rootProgramUrl(p.externalUrl) : p.externalUrl;
-      try {
-        const res = await fetch(displayUrl, {
-          method: "HEAD",
-          next: { revalidate: 3600 },
-        });
-        if (!res.ok) return null;
-        return {
-          title: p.title,
-          slug: p.slug,
-          program: p.program,
-          year: p.year,
-          season: p.season,
-          externalUrl: p.externalUrl,
-          displayUrl,
-          isPast,
-        } satisfies ActiveProgram;
-      } catch {
-        return null;
+      // Active/future programs: trust the data, skip the HEAD check.
+      // Past programs: verify the root URL is still live before showing.
+      if (isPast) {
+        try {
+          const res = await fetch(displayUrl, {
+            method: "HEAD",
+            next: { revalidate: 3600 },
+          });
+          if (!res.ok) return null;
+        } catch {
+          return null;
+        }
       }
+      return {
+        title: p.title,
+        slug: p.slug,
+        program: p.program,
+        year: p.year,
+        season: p.season,
+        externalUrl: p.externalUrl,
+        displayUrl,
+        isPast,
+      } satisfies ActiveProgram;
     })
   );
 
