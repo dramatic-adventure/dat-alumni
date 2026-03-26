@@ -599,8 +599,11 @@ export const programMap: Record<string, ProgramData> = {
     slug: "creative-trek-zimbabwe-2007",
     program: "Creative Trek",
     location: "Zimbabwe",
+    country: "Zimbabwe",
     year: 2007,
     season: 1,
+    dramaClubSlugs: ["bulawayo-young-company"],
+    externalUrl: "https://www.dramaticadventure.com/creative-trek",
     url: "/creative-trek",
     artists: {
       "isabel-martinez": ["Actor"],
