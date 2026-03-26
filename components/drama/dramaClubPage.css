@@ -6114,3 +6114,31 @@ a.dc-link.dc-link--teal:hover {
   opacity: 1 !important;
   letter-spacing: 0.2em !important;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   CARD SHADOW — richer depth, consistent with /donate
+   ══════════════════════════════════════════════════════════════ */
+
+.dc-card {
+  box-shadow:
+    0 4px 14px rgba(36, 17, 35, 0.08),
+    0 22px 60px rgba(36, 17, 35, 0.22) !important;
+}
+
+.dc-card--new {
+  box-shadow:
+    0 4px 14px rgba(242, 51, 89, 0.08),
+    0 22px 60px rgba(242, 51, 89, 0.20) !important;
+}
+
+.dc-card--ongoing {
+  box-shadow:
+    0 4px 14px rgba(255, 204, 0, 0.08),
+    0 22px 60px rgba(255, 204, 0, 0.18) !important;
+}
+
+.dc-card--legacy {
+  box-shadow:
+    0 4px 14px rgba(36, 17, 35, 0.06),
+    0 22px 60px rgba(36, 17, 35, 0.16) !important;
+}

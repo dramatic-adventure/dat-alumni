@@ -2317,7 +2317,7 @@ const voicesHeading = `Voices from ${voicesFrom}`;
                       {/* ✅ partnership CTA (purple → pink hover) */}
                       <div className="dc-inline-cta dc-inline-cta--partners">
                         <Link
-                          href="/contact"
+                          href="/partners/propose-project"
                           className="dc-link dc-link--artist font-sans"
                         >
                           Institution, foundation, or community leader? Start a
@@ -2451,7 +2451,7 @@ const voicesHeading = `Voices from ${voicesFrom}`;
 
                         {/* keep in the dark teal card; just normalize size via CSS below */}
                         <Link
-                          href="/contact"
+                          href="/partners/propose-project?type=drama-club"
                           className="dc-link dc-link--teal font-sans"
                         >
                           Start a conversation about Drama Club sponsorship →
@@ -2536,14 +2536,12 @@ const voicesHeading = `Voices from ${voicesFrom}`;
 
                     {/* ✅ MOVED + UPDATED: artist CTA under intro paragraph and ABOVE Lead Team */}
                     <div className="dc-inline-cta dc-inline-cta--artists">
-                      <a
-                        href="https://www.dramaticadventure.com/get-involved"
-                        target="_blank"
-                        rel="noreferrer"
+                      <Link
+                        href="/friends/volunteer"
                         className="dc-link dc-link--artist font-sans"
                       >
                         Artists — see how you can work with DAT’s Drama Clubs →
-                      </a>
+                      </Link>
                     </div>
 
                     {/* Lead team */}
