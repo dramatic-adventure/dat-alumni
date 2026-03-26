@@ -31,9 +31,9 @@ const NAV_ITEMS = [
     label: 'ABOUT',
     submenu: [
       { label: 'Our Mission & Ethos', href: '/about/mission' },
-      { label: 'Meet the Team', href: '/about/team' },
-      { label: 'Partners & Supporters', href: '/about/partners' },
       { label: 'Timeline & History', href: '/about/history' },
+      { label: 'Meet the Team', href: '/about/team' },
+      { label: 'Partners & Supporters', href: '/partners' },
       { label: 'Financials', href: '/about/financials' },
       { label: 'Contact', href: '/about/contact' },
     ],
@@ -42,45 +42,50 @@ const NAV_ITEMS = [
   {
     label: 'STORIES',
     submenu: [
-      { label: 'This Season', href: '/stories/season' },
-      { label: 'Past Productions', href: '/stories/productions' },
-      { label: 'Past Projects', href: '/stories/projects' },
+      { label: 'This Season', href: '/season/season-20' },
+      { label: 'Theatre Archive', href: '/theatre' },
+      { label: 'Project Archive', href: '/projects' },
+      { label: 'Drama Clubs', href: '/drama-club' },
       { label: 'Community Impact', href: '/stories/impact' },
-      { label: 'Our Artists', href: '/stories/artists' },
+      { label: 'Alumni Artists', href: '/alumni' },
       { label: 'Alumni Directory', href: '/directory' },
     ],
   },
   {
     label: 'PROGRAMS',
     submenu: [
-      { label: 'RAW', href: '/programs/raw' },
-      { label: 'ACTion', href: '/programs/action' },
-      { label: 'CASTAWAY', href: '/programs/castaway' },
-      { label: 'SceneShift', href: '/programs/sceneshift' },
-      { label: 'PASSAGE', href: '/programs/passage' },
-      { label: 'Creative Treks', href: '/programs/treks' },
-      { label: 'NYC Weekend', href: '/programs/nyc' },
-      { label: 'Drama Clubs', href: '/programs/clubs' },
-      { label: 'Global Play Initiative', href: '/programs/global-play' },
-      { label: 'Teaching Artist Residencies', href: '/programs/residencies' },
-      { label: 'Adventure Days', href: '/programs/adventure-days' },
-      { label: 'DAT LAB', href: '/programs/lab' },
+      { label: 'Travel Opportunities', href: 'https://www.dramaticadventure.com/travel-opportunities', external: true },
+      { label: 'PASSAGE', href: 'https://www.dramaticadventure.com/passage', external: true },
+      { label: 'DAT LAB', href: 'https://www.dramaticadventure.com/dat-lab', external: true },
+      { label: 'RAW', href: 'https://www.dramaticadventure.com/raw', external: true },
+      { label: 'ACTion', href: 'https://www.dramaticadventure.com/action', external: true },
+      { label: 'Creative Treks', href: 'https://www.dramaticadventure.com/creative-trek', external: true },
+      { label: 'Teaching Artist Residencies', href: 'https://www.dramaticadventure.com/teaching-artist-residency', external: true },
+      { label: 'CASTAWAY', href: 'https://www.dramaticadventure.com/castaway', external: true },
+      { label: 'SceneShift', href: 'https://www.dramaticadventure.com/sceneshift', external: true },
+      { label: 'NYC Weekend', href: 'https://www.dramaticadventure.com/nyc-weekend', external: true },
+      { label: 'Drama Clubs', href: 'https://www.dramaticadventure.com/drama-clubs', external: true },
+      { label: 'Global Play Initiative', href: 'https://www.dramaticadventure.com/global-play', external: true },
+      { label: 'Adventure Days', href: 'https://www.dramaticadventure.com/adventure-days', external: true },
     ],
   },
   {
     label: 'GET INVOLVED',
     submenu: [
-      { label: 'Travel With Us', href: '/get-involved/travel' },
+      { label: 'Alumni Network', href: '/alumni/update' },
+      { label: 'Friends of DAT', href: '/friends' },
+      { label: 'Join the Team', href: '/get-involved/join' },
+      { label: 'Join as an Ambassador', href: '/friends/ambassador' },
       { label: 'Make a Donation', href: '/donate' },
-      { label: 'Corporate Sponsorship', href: '/get-involved/sponsorship' },
-      { label: 'Join the Team', href: '/get-involved/team' },
-      { label: 'Alumni Network', href: '/get-involved/alumni' },
+      { label: 'University Partnerships', href: '/partners/universities' },
+      { label: 'Corporate Giving', href: '/partners/corporate-giving' },
+      { label: 'Propose a Project', href: '/partners/propose-project' },
     ],
   },
   {
     label: 'EVENTS',
     submenu: [
-      { label: 'Upcoming Performances', href: '/events/upcoming' },
+      { label: 'Upcoming Performances', href: '/events/performances' },
       { label: 'Festivals & Showcases', href: '/events/festivals' },
       { label: 'Fundraisers & Community Nights', href: '/events/fundraisers' },
     ],
@@ -374,14 +379,8 @@ export default function Header() {
 
                 {/* Submenu list */}
                 {NAV_ITEMS.find((item) => item.label === showSubmenu)?.submenu?.map(
-                  (sub) => (
-                    <Link
-                      key={sub.label}
-                      href={sub.href}
-                      onClick={() => setIsOpen(false)}
-                      className="w-full"
-                      style={subItemStyle()}
-                    >
+                  (sub) => {
+                    const inner = (
                       <div
                         className="force-grotesk transition"
                         style={subItemInnerStyle()}
@@ -397,8 +396,32 @@ export default function Header() {
                       >
                         {sub.label}
                       </div>
-                    </Link>
-                  )
+                    );
+                    if ((sub as any).external) {
+                      return (
+                        <a
+                          key={sub.label}
+                          href={sub.href}
+                          onClick={() => setIsOpen(false)}
+                          className="w-full"
+                          style={subItemStyle()}
+                        >
+                          {inner}
+                        </a>
+                      );
+                    }
+                    return (
+                      <Link
+                        key={sub.label}
+                        href={sub.href}
+                        onClick={() => setIsOpen(false)}
+                        className="w-full"
+                        style={subItemStyle()}
+                      >
+                        {inner}
+                      </Link>
+                    );
+                  }
                 )}
               </>
             ) : (
