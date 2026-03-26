@@ -14,6 +14,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { DramaClub } from "@/lib/dramaClubMap";
+import type { ActiveProgram } from "@/lib/programMap";
 
 import {
   computeDramaClubStatus,
@@ -171,6 +172,12 @@ export interface DramaClubPageTemplateProps {
 
   /** Events linked to this drama club via lib/events.ts (dramaClub field = slug) */
   clubEvents?: DatEvent[];
+
+  /**
+   * URL-verified programs directly associated with this club.
+   * Computed server-side via getActiveProgramsForClub() — renders nothing when empty.
+   */
+  activePrograms?: ActiveProgram[];
 }
 
 /* ---------- Helpers ---------- */
@@ -628,6 +635,7 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
     dramaClubLeadTeam = [],
     lineageArtists = [],
     clubEvents = [],
+    activePrograms = [],
   } = props;
 
   // Upcoming community showcases for this drama club (shown near top)
@@ -2545,6 +2553,34 @@ const voicesHeading = `Voices from ${voicesFrom}`;
                         Artists — see how you can work with DAT’s Drama Clubs →
                       </a>
                     </div>
+
+                    {/* Active program invitations — only renders when programs are live */}
+                    {activePrograms.length > 0 && (
+                      <div className="dc-active-programs">
+                        {activePrograms.map((prog) => (
+                          <a
+                            key={prog.slug}
+                            href={prog.externalUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="dc-active-program-card"
+                          >
+                            <span className="dc-active-program-tag">
+                              Now Accepting
+                            </span>
+                            <span className="dc-active-program-title font-display">
+                              {prog.title}
+                            </span>
+                            <span className="dc-active-program-meta font-sans">
+                              Season {prog.season} · {prog.year}
+                            </span>
+                            <span className="dc-active-program-cta font-sans">
+                              Learn more &amp; apply ↗
+                            </span>
+                          </a>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Lead team */}
                     {dramaClubLeadTeam.length > 0 && (

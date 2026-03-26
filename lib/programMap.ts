@@ -49,6 +49,38 @@ export interface ProgramData {
 
   color?: string;
   stampIcon?: string;
+
+  /**
+   * Direct drama club associations for "get involved" CTAs.
+   * List the slug(s) of clubs this program is actively working with.
+   * When populated, a "ways to get involved" block appears on those
+   * drama club pages linking artists to this program.
+   *
+   * Example:
+   *   dramaClubSlugs: ["amazon-shuar-youth-ensemble", "galapagos-youth-theatre"]
+   */
+  dramaClubSlugs?: string[];
+
+  /**
+   * Full external URL where artists can learn more and apply.
+   * e.g. "https://www.dramaticadventure.com/action/ecuador"
+   * Leave empty until the page is live — the block won't render
+   * if the URL is missing or returns a non-2xx response.
+   */
+  externalUrl?: string;
+}
+
+/**
+ * A resolved, URL-verified program entry safe to pass to the drama club
+ * page template as a "ways to get involved" CTA.
+ */
+export interface ActiveProgram {
+  title: string;
+  slug: string;
+  program: string;
+  year: number;
+  season: number;
+  externalUrl: string;
 }
 
 /**
@@ -77,6 +109,9 @@ export interface ProgramData {
  * //   season: 20,
  * //   url: "/action",
  * //   artists: { "jesse-baxter": ["Artistic Director"] },
+ * //   // "Get involved" CTA on drama club pages:
+ * //   dramaClubSlugs: ["amazon-shuar-youth-ensemble", "galapagos-youth-theatre"],
+ * //   externalUrl: "https://www.dramaticadventure.com/action/ecuador",
  * // },
  *
  * ============================================================

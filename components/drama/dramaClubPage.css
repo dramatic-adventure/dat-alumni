@@ -6142,3 +6142,84 @@ a.dc-link.dc-link--teal:hover {
     0 4px 14px rgba(36, 17, 35, 0.06),
     0 22px 60px rgba(36, 17, 35, 0.16) !important;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   ACTIVE PROGRAM INVITATIONS
+   ══════════════════════════════════════════════════════════════ */
+
+.dc-active-programs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.dc-active-program-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.85rem 1rem 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(47, 168, 115, 0.28);
+  border-left: 3px solid #2FA873;
+  background: rgba(47, 168, 115, 0.05);
+  text-decoration: none;
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.dc-active-program-card:hover {
+  background: rgba(47, 168, 115, 0.10);
+  border-color: rgba(47, 168, 115, 0.5);
+  border-left-color: #2FA873;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(47, 168, 115, 0.14);
+}
+
+.dc-active-program-tag {
+  font-family: var(--font-dm-sans, 'DM Sans', sans-serif);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #2FA873;
+  display: block;
+  margin-bottom: 0.1rem;
+}
+
+.dc-active-program-title {
+  font-family: var(--font-anton, 'Anton', sans-serif);
+  font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+  font-weight: 400;
+  color: #241123;
+  line-height: 1.1;
+  display: block;
+}
+
+.dc-active-program-meta {
+  font-family: var(--font-dm-sans, 'DM Sans', sans-serif);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: rgba(36, 17, 35, 0.45);
+  letter-spacing: 0.04em;
+  display: block;
+  margin-top: 0.1rem;
+}
+
+.dc-active-program-cta {
+  font-family: var(--font-dm-sans, 'DM Sans', sans-serif);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #2493a9;
+  display: block;
+  margin-top: 0.45rem;
+  transition: color 150ms ease;
+}
+
+.dc-active-program-card:hover .dc-active-program-cta {
+  color: #241123;
+}

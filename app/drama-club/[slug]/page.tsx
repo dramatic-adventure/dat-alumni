@@ -18,6 +18,7 @@ import {
   programMap,
   type ProgramData,
   type ProgramFootprint,
+  type ActiveProgram,
 } from "@/lib/programMap";
 
 type PageProps = {
@@ -464,6 +465,60 @@ function buildLineageArtistsForClub(opts: {
   return out;
 }
 
+/* ------------------ Active programs ("get involved" CTAs) ------------------ */
+
+/**
+ * Returns programs in programMap that list this club's slug in dramaClubSlugs
+ * AND have an externalUrl that responds with a 2xx status.
+ *
+ * The HEAD check is cached for 1 hour (matching the page's revalidate interval).
+ * Any network error or non-2xx response (including 404) silently drops the entry
+ * — so you can populate externalUrl before the page is fully live without risk.
+ */
+async function getActiveProgramsForClub(
+  clubSlug: string
+): Promise<ActiveProgram[]> {
+  const candidates = Object.values(programMap).filter(
+    (p): p is ProgramData & { externalUrl: string } =>
+      Array.isArray(p.dramaClubSlugs) &&
+      p.dramaClubSlugs.includes(clubSlug) &&
+      typeof p.externalUrl === "string" &&
+      p.externalUrl.trim().length > 0
+  );
+
+  if (candidates.length === 0) return [];
+
+  const results = await Promise.allSettled(
+    candidates.map(async (p) => {
+      try {
+        const res = await fetch(p.externalUrl, {
+          method: "HEAD",
+          next: { revalidate: 3600 },
+        });
+        if (!res.ok) return null;
+        return {
+          title: p.title,
+          slug: p.slug,
+          program: p.program,
+          year: p.year,
+          season: p.season,
+          externalUrl: p.externalUrl,
+        } satisfies ActiveProgram;
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  return results
+    .filter(
+      (r): r is PromiseFulfilledResult<ActiveProgram> =>
+        r.status === "fulfilled" && r.value !== null
+    )
+    .map((r) => r.value)
+    .sort((a, b) => b.year - a.year);
+}
+
 /* ------------------ Page ------------------ */
 
 export default async function DramaClubPage({ params }: PageProps) {
@@ -484,9 +539,10 @@ export default async function DramaClubPage({ params }: PageProps) {
 
   const sponsorLink = `/cause/drama-clubs?club=${encodeURIComponent(club.slug)}`;
 
-  const [alumniRows, roleAssignments] = await Promise.all([
+  const [alumniRows, roleAssignments, activePrograms] = await Promise.all([
     loadVisibleAlumni(),
     loadRoleAssignments(),
+    getActiveProgramsForClub(club.slug),
   ]);
 
   const peopleById = buildPeopleById(alumniRows as unknown[]);
@@ -547,6 +603,7 @@ export default async function DramaClubPage({ params }: PageProps) {
       // ✅ THIS is what makes the marquee draw from programMap
       lineageArtists={lineageArtists}
       clubEvents={clubEventsData}
+      activePrograms={activePrograms}
     />
   );
 }
