@@ -2536,12 +2536,14 @@ const voicesHeading = `Voices from ${voicesFrom}`;
 
                     {/* ✅ MOVED + UPDATED: artist CTA under intro paragraph and ABOVE Lead Team */}
                     <div className="dc-inline-cta dc-inline-cta--artists">
-                      <Link
-                        href="/friends/volunteer"
+                      <a
+                        href="https://www.dramaticadventure.com/get-involved"
+                        target="_blank"
+                        rel="noreferrer"
                         className="dc-link dc-link--artist font-sans"
                       >
                         Artists — see how you can work with DAT’s Drama Clubs →
-                      </Link>
+                      </a>
                     </div>
 
                     {/* Lead team */}
