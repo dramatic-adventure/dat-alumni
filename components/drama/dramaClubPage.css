@@ -6223,3 +6223,21 @@ a.dc-link.dc-link--teal:hover {
 .dc-active-program-card:hover .dc-active-program-cta {
   color: #241123;
 }
+
+/* Past program variant — teal accent instead of green */
+.dc-active-program-card--past {
+  border-color: rgba(36, 147, 169, 0.22);
+  border-left-color: #2493a9;
+  background: rgba(36, 147, 169, 0.04);
+}
+
+.dc-active-program-card--past:hover {
+  background: rgba(36, 147, 169, 0.09);
+  border-color: rgba(36, 147, 169, 0.4);
+  border-left-color: #2493a9;
+  box-shadow: 0 6px 20px rgba(36, 147, 169, 0.12);
+}
+
+.dc-active-program-tag--past {
+  color: #2493a9;
+}

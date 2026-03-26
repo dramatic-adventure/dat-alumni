@@ -2560,13 +2560,13 @@ const voicesHeading = `Voices from ${voicesFrom}`;
                         {activePrograms.map((prog) => (
                           <a
                             key={prog.slug}
-                            href={prog.externalUrl}
+                            href={prog.displayUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="dc-active-program-card"
+                            className={`dc-active-program-card${prog.isPast ? " dc-active-program-card--past" : ""}`}
                           >
-                            <span className="dc-active-program-tag">
-                              Now Accepting
+                            <span className={`dc-active-program-tag${prog.isPast ? " dc-active-program-tag--past" : ""}`}>
+                              {prog.isPast ? "Past Program" : "Now Accepting"}
                             </span>
                             <span className="dc-active-program-title font-display">
                               {prog.title}
@@ -2575,7 +2575,9 @@ const voicesHeading = `Voices from ${voicesFrom}`;
                               Season {prog.season} · {prog.year}
                             </span>
                             <span className="dc-active-program-cta font-sans">
-                              Learn more &amp; apply ↗
+                              {prog.isPast
+                                ? "Find a similar program ↗"
+                                : "Learn more & apply ↗"}
                             </span>
                           </a>
                         ))}

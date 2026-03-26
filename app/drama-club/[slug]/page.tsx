@@ -467,17 +467,34 @@ function buildLineageArtistsForClub(opts: {
 
 /* ------------------ Active programs ("get involved" CTAs) ------------------ */
 
+/** Strips a URL to its first path segment: /creative-trek/zimbabwe → /creative-trek */
+function rootProgramUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    const first = u.pathname.split("/").filter(Boolean)[0];
+    return first ? `${u.origin}/${first}` : u.origin;
+  } catch {
+    return url;
+  }
+}
+
 /**
  * Returns programs in programMap that list this club's slug in dramaClubSlugs
- * AND have an externalUrl that responds with a 2xx status.
+ * AND have a reachable URL (2xx HEAD check, cached 1 hr).
  *
- * The HEAD check is cached for 1 hour (matching the page's revalidate interval).
- * Any network error or non-2xx response (including 404) silently drops the entry
- * — so you can populate externalUrl before the page is fully live without risk.
+ * Past programs (year < current year) link to the root program-type page
+ * (e.g. /creative-trek) so artists discover any new iteration rather than
+ * a country-specific archive page. The HEAD check also uses the root URL
+ * for past programs so a dead country page never suppresses the card.
+ *
+ * Any network error or non-2xx silently drops the entry — safe to populate
+ * externalUrl before the destination page is fully live.
  */
 async function getActiveProgramsForClub(
   clubSlug: string
 ): Promise<ActiveProgram[]> {
+  const currentYear = new Date().getFullYear();
+
   const candidates = Object.values(programMap).filter(
     (p): p is ProgramData & { externalUrl: string } =>
       Array.isArray(p.dramaClubSlugs) &&
@@ -490,8 +507,10 @@ async function getActiveProgramsForClub(
 
   const results = await Promise.allSettled(
     candidates.map(async (p) => {
+      const isPast = p.year < currentYear;
+      const displayUrl = isPast ? rootProgramUrl(p.externalUrl) : p.externalUrl;
       try {
-        const res = await fetch(p.externalUrl, {
+        const res = await fetch(displayUrl, {
           method: "HEAD",
           next: { revalidate: 3600 },
         });
@@ -503,6 +522,8 @@ async function getActiveProgramsForClub(
           year: p.year,
           season: p.season,
           externalUrl: p.externalUrl,
+          displayUrl,
+          isPast,
         } satisfies ActiveProgram;
       } catch {
         return null;

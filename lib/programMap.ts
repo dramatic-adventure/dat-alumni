@@ -81,6 +81,15 @@ export interface ActiveProgram {
   year: number;
   season: number;
   externalUrl: string;
+  /**
+   * The URL actually linked from the card.
+   * Active programs: the specific externalUrl (e.g. /action/ecuador).
+   * Past programs: root-stripped to the program type page (e.g. /creative-trek)
+   * so the card points artists toward any new iteration of that program.
+   */
+  displayUrl: string;
+  /** True when prog.year < current year at build/revalidation time. */
+  isPast: boolean;
 }
 
 /**
