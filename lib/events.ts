@@ -284,7 +284,7 @@ export const events: DatEvent[] = [
     city: "Worldwide",
     country: "Online",
     description:
-      "Join DAT live for a first look at this summer’s projects, with artist introductions, program highlights, and a chance to learn how to be part of the journeys, communities, and creative work ahead.",
+      "Join DAT live for a look at this summer’s projects, with artist introductions, program highlights, and a chance to learn how to be part of the journeys, communities, and creative work ahead.",
     longDescription:
       "DAT Summer 2026 Launch is an online community gathering designed to introduce this summer’s projects and invite audiences, artists, and supporters into what comes next. Join us for artist introductions, program highlights, stories behind the work, and a look at the places, partnerships, and creative adventures shaping DAT’s summer season. Whether you are hoping to participate, collaborate, follow along, or support the work, this is a chance to connect early and learn how to be part of the journey ahead.",
     image: "/images/theatre/archive/blackfish_mommy.webp",

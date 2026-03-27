@@ -263,79 +263,114 @@ export default async function EventDetailPage({ params }: PageProps) {
       </div>
 
         <section className="evd-meta-band">
-        <div className="evd-container">
-            <div className="evd-meta-shell">
-            <div className="evd-meta-grid">
-                <div className="evd-meta-card">
-                <p className="evd-meta-label">Dates</p>
-                <p className="evd-meta-value">{formatDateRange(event.date, event.endDate)}</p>
-                </div>
+            <div className="evd-container">
+                {linkedDramaClubs.length > 0 ? (
+                <div className="evd-clubs-inline">
+                    <div className="evd-clubs-inline-head">
+                    <p className="evd-clubs-inline-eyebrow">Featuring DAT Drama Clubs</p>
+                    <h2 className="evd-clubs-inline-title">
+                        {linkedDramaClubs.length > 1 ? "Participating Ensembles" : "Participating Ensemble"}
+                    </h2>
+                    </div>
 
-                {event.time ? (
-                <div className="evd-meta-card">
-                    <p className="evd-meta-label">Time</p>
-                    <p className="evd-meta-value">{event.time}</p>
+                    <div className="evd-clubs-inline-grid">
+                    {linkedDramaClubs.map((club) => (
+                        <Link key={club.slug} href={`/drama-club/${club.slug}`} className="evd-clubs-inline-card">
+                        {club.logoSrc ? (
+                            <div className="evd-clubs-inline-logo-wrap">
+                            <img
+                                src={club.logoSrc}
+                                alt={club.logoAlt ?? club.name}
+                                className="evd-clubs-inline-logo"
+                            />
+                            </div>
+                        ) : null}
+
+                        <div className="evd-clubs-inline-copy">
+                            <h3 className="evd-clubs-inline-name">{club.name}</h3>
+                            {club.location ? (
+                            <p className="evd-clubs-inline-location">{club.location}</p>
+                            ) : null}
+                            <span className="evd-clubs-inline-link">Visit Drama Club →</span>
+                        </div>
+                        </Link>
+                    ))}
+                    </div>
                 </div>
                 ) : null}
 
-                {event.doors ? (
-                <div className="evd-meta-card">
-                    <p className="evd-meta-label">Doors</p>
-                    <p className="evd-meta-value">{event.doors}</p>
-                </div>
-                ) : null}
+                <div className="evd-meta-shell">
+                <div className="evd-meta-grid">
+                    <div className="evd-meta-card">
+                    <p className="evd-meta-label">Dates</p>
+                    <p className="evd-meta-value">{formatDateRange(event.date, event.endDate)}</p>
+                    </div>
 
-                <div className="evd-meta-card">
-                <p className="evd-meta-label">Venue</p>
-                <p className="evd-meta-value">{event.venue}</p>
-                {event.address ? <p className="evd-meta-sub">{event.address}</p> : null}
+                    {event.time ? (
+                    <div className="evd-meta-card">
+                        <p className="evd-meta-label">Time</p>
+                        <p className="evd-meta-value">{event.time}</p>
+                    </div>
+                    ) : null}
+
+                    {event.doors ? (
+                    <div className="evd-meta-card">
+                        <p className="evd-meta-label">Doors</p>
+                        <p className="evd-meta-value">{event.doors}</p>
+                    </div>
+                    ) : null}
+
+                    <div className="evd-meta-card">
+                    <p className="evd-meta-label">Venue</p>
+                    <p className="evd-meta-value">{event.venue}</p>
+                    {event.address ? <p className="evd-meta-sub">{event.address}</p> : null}
+                    </div>
+
+                    <div className="evd-meta-card">
+                    <p className="evd-meta-label">Location</p>
+                    <p className="evd-meta-value">
+                        {event.city}
+                        {event.country ? `, ${event.country}` : ""}
+                    </p>
+                    </div>
+
+                    {(event.ticketPrice || primaryAction) ? (
+                    <div className="evd-meta-card">
+                        <p className="evd-meta-label">Tickets</p>
+                        <p className="evd-meta-value">{event.ticketPrice ?? "Details below"}</p>
+                    </div>
+                    ) : null}
                 </div>
 
-                <div className="evd-meta-card">
-                <p className="evd-meta-label">Location</p>
-                <p className="evd-meta-value">
-                    {event.city}
-                    {event.country ? `, ${event.country}` : ""}
-                </p>
-                </div>
+                <div className="evd-actions">
+                    {primaryAction ? (
+                    <a
+                        href={primaryAction.href}
+                        target={primaryAction.external ? "_blank" : undefined}
+                        rel={primaryAction.external ? "noopener noreferrer" : undefined}
+                        className={`evd-btn ${primaryAction.tone === "invite" ? "evd-btn-invite" : "evd-btn-primary"}`}
+                    >
+                        {primaryAction.label}
+                    </a>
+                    ) : null}
 
-                {(event.ticketPrice || primaryAction) ? (
-                <div className="evd-meta-card">
-                    <p className="evd-meta-label">Tickets</p>
-                    <p className="evd-meta-value">{event.ticketPrice ?? "Details below"}</p>
+                    {relatedProduction ? (
+                    <Link href={`/theatre/${event.production}`} className="evd-btn-ghost">
+                        Full Production →
+                    </Link>
+                    ) : null}
+
+                    <a
+                    href={`mailto:?subject=${shareSubject}&body=${shareBody}`}
+                    className="evd-btn-ghost"
+                    >
+                    Share by Email →
+                    </a>
+
+                    <CopyEventLinkButton className="evd-btn-ghost" />
                 </div>
-                ) : null}
+                </div>
             </div>
-
-            <div className="evd-actions">
-                {primaryAction ? (
-                <a
-                    href={primaryAction.href}
-                    target={primaryAction.external ? "_blank" : undefined}
-                    rel={primaryAction.external ? "noopener noreferrer" : undefined}
-                    className={`evd-btn ${primaryAction.tone === "invite" ? "evd-btn-invite" : "evd-btn-primary"}`}
-                >
-                    {primaryAction.label}
-                </a>
-                ) : null}
-
-                {relatedProduction ? (
-                <Link href={`/theatre/${event.production}`} className="evd-btn-ghost">
-                    Full Production →
-                </Link>
-                ) : null}
-
-                <a
-                href={`mailto:?subject=${shareSubject}&body=${shareBody}`}
-                className="evd-btn-ghost"
-                >
-                Share by Email →
-                </a>
-
-                <CopyEventLinkButton className="evd-btn-ghost" />
-            </div>
-            </div>
-        </div>
         </section>
 
       <section className="evd-body-band">
@@ -354,42 +389,6 @@ export default async function EventDetailPage({ params }: PageProps) {
           </div>
         </div>
       </section>
-
-      {linkedDramaClubs.length > 0 ? (
-        <section className="evd-clubs-band">
-          <div className="evd-container">
-            <div className="evd-section-head">
-              <p className="evd-section-eyebrow">Featuring DAT Drama Clubs</p>
-              <h2 className="evd-section-title">
-                {linkedDramaClubs.length > 1 ? "Participating Ensembles" : "Participating Ensemble"}
-              </h2>
-            </div>
-
-            <div className="evd-club-grid">
-              {linkedDramaClubs.map((club) => (
-                <Link key={club.slug} href={`/drama-club/${club.slug}`} className="evd-club-card">
-                  {club.logoSrc ? (
-                    <div className="evd-club-logo-wrap">
-                      <img
-                        src={club.logoSrc}
-                        alt={club.logoAlt ?? club.name}
-                        className="evd-club-logo"
-                      />
-                    </div>
-                  ) : null}
-                  <div className="evd-club-copy">
-                    <h3 className="evd-club-name">{club.name}</h3>
-                    {club.location ? (
-                      <p className="evd-club-location">{club.location}</p>
-                    ) : null}
-                    <span className="evd-club-link">Visit Drama Club →</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      ) : null}
 
       {relatedProduction ? (
         <section className="evd-related-band">
@@ -422,28 +421,25 @@ export default async function EventDetailPage({ params }: PageProps) {
         </section>
       ) : null}
 
-      <section className="evd-bottom-band">
+        <section className="evd-bottom-band">
         <div className="evd-container evd-bottom-inner">
-          <p className="evd-bottom-label">Explore More</p>
-          <div className="evd-bottom-links">
-            <Link href={meta.href} className="evd-bottom-link evd-bottom-link--accent">
-              {meta.plural} →
+            <p className="evd-bottom-label">Explore More</p>
+            <div className="evd-bottom-links">
+            <Link href="/events/performances" className="evd-bottom-link evd-bottom-link--pink">
+                Upcoming Performances →
             </Link>
-            {event.production ? (
-              <Link href={`/theatre/${event.production}`} className="evd-bottom-link evd-bottom-link--muted">
-                Theatre Archive →
-              </Link>
-            ) : (
-              <Link href="/projects" className="evd-bottom-link evd-bottom-link--muted">
-                Projects Archive →
-              </Link>
-            )}
+            <Link href="/events/fundraisers" className="evd-bottom-link evd-bottom-link--gold">
+                Fundraisers &amp; Community Nights →
+            </Link>
+            <Link href="/events/festivals" className="evd-bottom-link evd-bottom-link--teal">
+                Festivals &amp; Showcases →
+            </Link>
             <Link href="/events" className="evd-bottom-link evd-bottom-link--muted">
-              ← All Events
+                ← All Events
             </Link>
-          </div>
+            </div>
         </div>
-      </section>
+        </section>
 
       <style>{`
         :root {
@@ -579,24 +575,108 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
 
         .evd-meta-band {
-        background: var(--evd-surface);
-        padding: clamp(2rem, 4vw, 3rem) 0 clamp(2.5rem, 5vw, 3.5rem);
+          background: var(--evd-surface);
+          padding: clamp(2rem, 4vw, 3rem) 0 clamp(2.5rem, 5vw, 3.5rem);
+        }
+  
+        .evd-clubs-inline {
+          margin-bottom: 1.35rem;
+        }
+        .evd-clubs-inline-head {
+          margin-bottom: 1rem;
+        }        
+
+        .evd-clubs-inline-eyebrow {
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.42);
+        margin: 0 0 0.45rem;
+        }
+        .evd-clubs-inline-title {
+        font-family: "Anton", sans-serif;
+        font-size: clamp(1.9rem, 4vw, 3rem);
+        line-height: 1;
+        color: #fff;
+        margin: 0;
+        }
+        .evd-clubs-inline-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+        }
+        .evd-clubs-inline-card {
+        display: grid;
+        grid-template-columns: 82px 1fr;
+        gap: 1rem;
+        align-items: center;
+        text-decoration: none;
+        background: rgba(247,239,229,0.96);
+        border-radius: 18px;
+        padding: 1rem 1.1rem;
+        box-shadow: none;
+        }
+        .evd-clubs-inline-logo-wrap {
+        width: 82px;
+        height: 82px;
+        border-radius: 16px;
+        background: rgba(36,17,35,0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        }
+        .evd-clubs-inline-logo {
+        max-width: 86%;
+        max-height: 86%;
+        object-fit: contain;
+        }
+        .evd-clubs-inline-copy {
+        min-width: 0;
+        }
+        .evd-clubs-inline-name {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #241123;
+        margin: 0 0 0.2rem;
+        }
+        .evd-clubs-inline-location {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 0.92rem;
+        color: rgba(36,17,35,0.62);
+        line-height: 1.5;
+        margin: 0 0 0.45rem;
+        }
+        .evd-clubs-inline-link {
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--evd-accent);
         }
 
         .evd-meta-shell {
-        background: rgba(26, 20, 28, 0.4);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.08);
         border-radius: 18px;
-        padding: clamp(1rem, 2vw, 1.3rem);
-        box-shadow:
-            0 18px 40px rgba(0, 0, 0, 0.18),
-            inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        padding: 1.05rem 1.05rem 1.15rem;
+        box-shadow: none;
         }
 
         .evd-meta-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 1rem;
+        }
+        .evd-meta-card {
+        background: rgba(255,255,255,0.035);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 14px;
+        padding: 1rem 1rem 1.05rem;
         }
 
         .evd-actions {
@@ -615,28 +695,36 @@ export default async function EventDetailPage({ params }: PageProps) {
         padding: 1rem 1rem 1.05rem;
         }
         .evd-meta-label {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.68rem;
-          font-weight: 700;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.38);
-          margin: 0 0 0.5rem;
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.38);
+        margin: 0 0 0.5rem;
         }
         .evd-meta-value {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: 0.98rem;
-          font-weight: 700;
-          color: #fff;
-          line-height: 1.45;
-          margin: 0;
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 0.98rem;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.45;
+        margin: 0;
         }
         .evd-meta-sub {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: 0.86rem;
-          color: rgba(255,255,255,0.5);
-          line-height: 1.5;
-          margin: 0.4rem 0 0;
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 0.86rem;
+        color: rgba(255,255,255,0.5);
+        line-height: 1.5;
+        margin: 0.4rem 0 0;
+        }
+        .evd-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255,255,255,0.08);
         }
 
         .evd-btn,
@@ -663,31 +751,31 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
 
         .evd-btn-primary {
-          background: var(--evd-accent);
-          color: var(--evd-button-text);
-          border: none;
+        background: var(--evd-accent);
+        color: var(--evd-button-text);
+        border: none;
+        box-shadow: none;
         }
         .evd-btn-invite {
-          background: #2FA873;
-          color: #fff;
-          border: none;
+        background: #2FA873;
+        color: #fff;
+        border: none;
+        box-shadow: none;
         }
         .evd-btn-ghost {
-          color: rgba(255,255,255,0.78);
-          background: transparent;
-          border: 1.5px solid rgba(255,255,255,0.16);
-          cursor: pointer;
+        color: rgba(255,255,255,0.78);
+        background: transparent;
+        border: 1.5px solid rgba(255,255,255,0.16);
+        cursor: pointer;
         }
 
         .evd-body-band {
         background: transparent;
         padding: clamp(3.5rem, 7vw, 6rem) 0;
-        border-top: none;
         }
-
         .evd-body-grid {
         display: grid;
-        grid-template-columns: minmax(280px, 0.92fr) minmax(0, 1.42fr);
+        grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.45fr);
         gap: clamp(2rem, 5vw, 4.75rem);
         align-items: start;
         }
@@ -696,51 +784,40 @@ export default async function EventDetailPage({ params }: PageProps) {
             grid-template-columns: 1fr;
         }
         }
-
         .evd-body-heading-box {
         display: inline-flex;
         flex-direction: column;
-        gap: 0.35rem;
-        background: rgba(66, 45, 24, 0.28);
-        border-left: 6px solid var(--evd-accent);
+        gap: 0.3rem;
+        background: rgba(36,17,35,0.22);
+        border-left: 6px solid #2493A9;
         border-radius: 0 18px 18px 0;
-        padding: 1.15rem 1.6rem 1.25rem 1.3rem;
-        max-width: 640px;
+        padding: 1rem 1.55rem 1.1rem 1.2rem;
+        max-width: 760px;
         }
-
         .evd-body-eyebrow {
-        color: var(--evd-accent);
+        color: rgba(255,255,255,0.92);
         margin: 0 0 0.35rem;
-        font-family: "DM Sans", sans-serif;
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 0.22em;
-        text-transform: uppercase;
         }
-
         .evd-body-title {
         font-family: "Anton", sans-serif;
-        font-size: clamp(2.8rem, 6vw, 5.6rem);
+        font-size: clamp(3rem, 6vw, 5.9rem);
         line-height: 0.92;
         color: #241123;
         margin: 0;
-        max-width: 8ch;
+        max-width: 7.5ch;
         }
-
         .evd-body-copy {
-        background: rgba(247, 239, 229, 0.96);
+        background: rgba(247,239,229,0.96);
         border-radius: 26px;
-        padding: clamp(1.6rem, 3vw, 2.8rem);
-        box-shadow: 0 8px 26px rgba(36, 17, 35, 0.08);
+        padding: clamp(1.6rem, 3vw, 2.6rem);
+        box-shadow: none;
         }
-
         .evd-body-paragraph {
         font-family: "Space Grotesk", sans-serif;
         font-size: clamp(1rem, 1.4vw, 1.08rem);
         line-height: 1.85;
         color: #241123;
-        margin: 0 0 1.35rem;
-        text-shadow: none;
+        margin: 0 0 1.25rem;
         }
         .evd-body-paragraph:last-child {
         margin-bottom: 0;
@@ -749,10 +826,9 @@ export default async function EventDetailPage({ params }: PageProps) {
           margin-bottom: 0;
         }
 
-        .evd-clubs-band,
         .evd-related-band {
-          background: var(--evd-surface);
-          padding: clamp(3rem, 6vw, 4.5rem) 0;
+        background: var(--evd-surface);
+        padding: clamp(3rem, 6vw, 4.5rem) 0;
         }
 
         .evd-section-head {
@@ -884,51 +960,62 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
 
         .evd-bottom-band {
-        background: linear-gradient(
-            180deg,
-            color-mix(in srgb, var(--evd-accent) 88%, #000 12%) 0%,
-            var(--evd-accent) 100%
-        );
+        position: relative;
+        background: var(--evd-surface-2);
         padding: clamp(2.75rem, 5vw, 4rem) 0;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+        }
+        .evd-bottom-band::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--evd-surface-2);
         }
         .evd-bottom-inner {
-          display: flex;
-          flex-direction: column;
-          gap: 1.2rem;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
         }
         .evd-bottom-label {
-        color: rgba(36, 17, 35, 0.62);
+        color: rgba(255,255,255,0.35);
         margin: 0;
         }
         .evd-bottom-links {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.75rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
         }
         .evd-bottom-link {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.82rem;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          text-decoration: none;
-          padding: 0.65rem 1.35rem;
-          border-radius: 8px;
-          transition: opacity 0.2s, transform 0.15s;
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        text-decoration: none;
+        padding: 0.7rem 1.4rem;
+        border-radius: 8px;
+        transition: opacity 0.2s, transform 0.15s;
         }
         .evd-bottom-link:hover {
-          opacity: 0.85;
-          transform: translateY(-1px);
+        opacity: 0.85;
+        transform: translateY(-1px);
         }
-        .evd-bottom-link--accent {
-        background: rgba(36, 17, 35, 0.92);
+        .evd-bottom-link--pink {
+        background: #F23359;
+        color: #fff;
+        }
+        .evd-bottom-link--gold {
+        background: #D9A919;
+        color: #241123;
+        }
+        .evd-bottom-link--teal {
+        background: #2493A9;
         color: #fff;
         }
         .evd-bottom-link--muted {
-        color: rgba(36, 17, 35, 0.74);
-        border: 1.5px solid rgba(36, 17, 35, 0.18);
-        background: rgba(255, 255, 255, 0.12);
+        color: rgba(255,255,255,0.42);
+        border: 1.5px solid rgba(255,255,255,0.14);
         }
 
         @media (max-width: 640px) {
