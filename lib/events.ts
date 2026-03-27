@@ -320,7 +320,7 @@ export const events: DatEvent[] = [
     tags: ["anniversary", "alumni", "performance", "music", "community", "fundraiser"],
     contactEmail: "hello@dramaticadventure.com",
   },
-  
+
   {
     id: "travelogue-stories-from-passage-2026",
     title: "Travelogue: Stories from PASSAGE",
@@ -342,56 +342,6 @@ export const events: DatEvent[] = [
     ticketType: "free",
     featured: false,
     tags: ["Travelogue", "storytelling", "cabaret", "music", "online", "PASSAGE"],
-    contactEmail: "hello@dramaticadventure.com",
-  },
-
-  {
-    id: "stories-from-field-brooklyn-2026",
-    title: "Stories from the Field",
-    subtitle: "A Community Screening Night",
-    category: "fundraiser",
-    status: "upcoming",
-    date: "2026-06-19",
-    time: "7:00 PM",
-    doors: "Doors at 6:30 PM",
-    venue: "Pioneer Works",
-    address: "159 Pioneer St, Brooklyn, NY 11231",
-    city: "Brooklyn, NY",
-    country: "USA",
-    description:
-      "Documentary footage, live storytelling, and conversation from DAT's most recent field seasons — followed by a community reception and live music.",
-    longDescription:
-      "An intimate evening at Brooklyn's beloved Pioneer Works: documentary films from four DAT field seasons, live storytelling by returning artists, and a catered reception to follow. Pay what you can. All proceeds support drama club operations in Tanzania and Ecuador.",
-    image: "/images/theatre/archive/tembo.webp",
-    ticketUrl: "https://pioneerworks.org",
-    ticketPrice: "Pay what you can — suggested $25",
-    ticketType: "pay-what-you-can",
-    featured: false,
-    tags: ["Brooklyn", "screening", "documentary", "community", "pay what you can"],
-    contactEmail: "hello@dramaticadventure.com",
-  },
-
-  {
-    id: "season17-launch-online-2026",
-    title: "Season 17 Launch: Live Stream",
-    subtitle: "Announcement + Community Celebration",
-    category: "fundraiser",
-    status: "upcoming",
-    date: "2026-12-04",
-    time: "7:00 PM GMT",
-    venue: "Online — YouTube Live + Zoom",
-    city: "Worldwide",
-    country: "Online",
-    description:
-      "DAT announces Season 17 live — with a performance excerpt, artist introductions, and a community conversation open to everyone, everywhere.",
-    longDescription:
-      "We're announcing DAT Season 17 live — streaming globally. Join us to hear where we're going, who's going, and how you can be part of it. Expect: a live performance excerpt, artist introductions, Q&A, and a year-end giving campaign with matching gifts. Free to attend. Donations warmly welcomed.",
-    image: "/images/theatre/archive/blackfish_mommy.webp",
-    ticketUrl: "https://dramaticadventure.com/season17",
-    ticketPrice: "Free — donations welcome",
-    ticketType: "free",
-    featured: false,
-    tags: ["online", "live stream", "Season 17", "global", "free"],
     contactEmail: "hello@dramaticadventure.com",
   },
 
