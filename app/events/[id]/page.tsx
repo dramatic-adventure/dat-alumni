@@ -3,6 +3,8 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import DramaClubBadge from "@/components/ui/DramaClubBadge";
+
 import CopyEventLinkButton from "@/components/events/CopyEventLinkButton";
 import { productionMap } from "@/lib/productionMap";
 import { dramaClubs as rawDramaClubs } from "@/lib/dramaClubMap";
@@ -265,33 +267,42 @@ export default async function EventDetailPage({ params }: PageProps) {
         <section className="evd-meta-band">
             <div className="evd-container">
                 {linkedDramaClubs.length > 0 ? (
-                <div className="evd-clubs-inline">
+                <div className="evd-clubs-inline" aria-label="Participating DAT Drama Clubs">
                     <div className="evd-clubs-inline-head">
-                    <p className="evd-clubs-inline-eyebrow">Featuring DAT Drama Clubs</p>
-                    <h2 className="evd-clubs-inline-title">
-                        {linkedDramaClubs.length > 1 ? "Participating Ensembles" : "Participating Ensemble"}
-                    </h2>
+                    <p className="evd-clubs-inline-eyebrow">
+                        {linkedDramaClubs.length > 1
+                        ? "Featuring DAT Drama Clubs"
+                        : "Featuring a DAT Drama Club"}
+                    </p>
+                    <p className="evd-clubs-inline-title">
+                        {linkedDramaClubs.length > 1
+                        ? "Participating ensembles connected to this event"
+                        : "The ensemble connected to this event"}
+                    </p>
                     </div>
 
                     <div className="evd-clubs-inline-grid">
                     {linkedDramaClubs.map((club) => (
-                        <Link key={club.slug} href={`/drama-club/${club.slug}`} className="evd-clubs-inline-card">
-                        {club.logoSrc ? (
-                            <div className="evd-clubs-inline-logo-wrap">
-                            <img
-                                src={club.logoSrc}
-                                alt={club.logoAlt ?? club.name}
-                                className="evd-clubs-inline-logo"
+                        <Link
+                        key={club.slug}
+                        href={`/drama-club/${club.slug}`}
+                        className="evd-clubs-inline-card"
+                        >
+                        <div className="evd-clubs-inline-badge">
+                            <DramaClubBadge
+                            name={club.name}
+                            location={club.location}
+                            size={72}
+                            wrappedByParentLink
                             />
-                            </div>
-                        ) : null}
+                        </div>
 
                         <div className="evd-clubs-inline-copy">
                             <h3 className="evd-clubs-inline-name">{club.name}</h3>
                             {club.location ? (
                             <p className="evd-clubs-inline-location">{club.location}</p>
                             ) : null}
-                            <span className="evd-clubs-inline-link">Visit Drama Club →</span>
+                            <span className="evd-clubs-inline-link">View Drama Club →</span>
                         </div>
                         </Link>
                     ))}
@@ -425,18 +436,21 @@ export default async function EventDetailPage({ params }: PageProps) {
         <div className="evd-container evd-bottom-inner">
             <p className="evd-bottom-label">Explore More</p>
             <div className="evd-bottom-links">
-            <Link href="/events/performances" className="evd-bottom-link evd-bottom-link--pink">
-                Upcoming Performances →
-            </Link>
-            <Link href="/events/fundraisers" className="evd-bottom-link evd-bottom-link--gold">
-                Fundraisers &amp; Community Nights →
-            </Link>
-            <Link href="/events/festivals" className="evd-bottom-link evd-bottom-link--teal">
-                Festivals &amp; Showcases →
-            </Link>
-            <Link href="/events" className="evd-bottom-link evd-bottom-link--muted">
-                ← All Events
-            </Link>
+                <Link href="/events/performances" className="evd-bottom-link evd-bottom-link--pink">
+                    Upcoming Performances →
+                </Link>
+                <Link href="/events/fundraisers" className="evd-bottom-link evd-bottom-link--gold">
+                    Fundraisers &amp; Community Nights →
+                </Link>
+                <Link href="/events/festivals" className="evd-bottom-link evd-bottom-link--teal">
+                    Festivals &amp; Showcases →
+                </Link>
+                <Link href="/theatre" className="evd-bottom-link evd-bottom-link--archive">
+                    Theatre Archive →
+                </Link>
+                <Link href="/events" className="evd-bottom-link evd-bottom-link--muted">
+                    ← All Events
+                </Link>
             </div>
         </div>
         </section>
@@ -580,85 +594,114 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
   
         .evd-clubs-inline {
-          margin-bottom: 1.35rem;
+        margin-bottom: 1.1rem;
         }
+
         .evd-clubs-inline-head {
-          margin-bottom: 1rem;
-        }        
+        margin-bottom: 0.8rem;
+        }
 
         .evd-clubs-inline-eyebrow {
         font-family: "DM Sans", sans-serif;
         font-size: 0.72rem;
         font-weight: 700;
-        letter-spacing: 0.28em;
+        letter-spacing: 0.24em;
         text-transform: uppercase;
-        color: rgba(255,255,255,0.42);
-        margin: 0 0 0.45rem;
+        color: var(--evd-accent);
+        margin: 0 0 0.2rem;
         }
+
         .evd-clubs-inline-title {
-        font-family: "Anton", sans-serif;
-        font-size: clamp(1.9rem, 4vw, 3rem);
-        line-height: 1;
-        color: #fff;
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 0.98rem;
+        font-weight: 500;
+        line-height: 1.45;
+        color: rgba(255,255,255,0.7);
         margin: 0;
+        max-width: 42rem;
         }
+
         .evd-clubs-inline-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 1rem;
+        gap: 0.8rem;
         }
+
         .evd-clubs-inline-card {
         display: grid;
-        grid-template-columns: 82px 1fr;
-        gap: 1rem;
+        grid-template-columns: 72px minmax(0, 1fr);
+        gap: 0.9rem;
         align-items: center;
         text-decoration: none;
-        background: rgba(247,239,229,0.96);
-        border-radius: 18px;
-        padding: 1rem 1.1rem;
-        box-shadow: none;
-        }
-        .evd-clubs-inline-logo-wrap {
-        width: 82px;
-        height: 82px;
+        background: linear-gradient(
+            180deg,
+            rgba(255,255,255,0.06) 0%,
+            rgba(255,255,255,0.025) 100%
+        );
+        border: 1px solid rgba(255,255,255,0.09);
         border-radius: 16px;
-        background: rgba(36,17,35,0.05);
+        padding: 0.85rem 0.95rem;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.14);
+        transition:
+            transform 0.18s ease,
+            border-color 0.18s ease,
+            background 0.18s ease,
+            box-shadow 0.18s ease;
+        }
+
+        .evd-clubs-inline-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(255,255,255,0.18);
+        background: linear-gradient(
+            180deg,
+            rgba(255,255,255,0.075) 0%,
+            rgba(255,255,255,0.035) 100%
+        );
+        box-shadow: 0 14px 30px rgba(0,0,0,0.2);
+        }
+
+        .evd-clubs-inline-card:focus-visible {
+        outline: 2px solid var(--evd-accent);
+        outline-offset: 3px;
+        }
+
+        .evd-clubs-inline-badge {
         display: flex;
         align-items: center;
         justify-content: center;
-        overflow: hidden;
+        width: 72px;
+        min-width: 72px;
         }
-        .evd-clubs-inline-logo {
-        max-width: 86%;
-        max-height: 86%;
-        object-fit: contain;
-        }
+
         .evd-clubs-inline-copy {
         min-width: 0;
         }
+
         .evd-clubs-inline-name {
         font-family: "Space Grotesk", sans-serif;
         font-size: 1rem;
         font-weight: 700;
-        color: #241123;
+        line-height: 1.15;
+        color: #fff;
         margin: 0 0 0.2rem;
         }
+
         .evd-clubs-inline-location {
         font-family: "Space Grotesk", sans-serif;
-        font-size: 0.92rem;
-        color: rgba(36,17,35,0.62);
-        line-height: 1.5;
-        margin: 0 0 0.45rem;
+        font-size: 0.87rem;
+        color: rgba(255,255,255,0.58);
+        line-height: 1.45;
+        margin: 0 0 0.38rem;
         }
+
         .evd-clubs-inline-link {
         font-family: "DM Sans", sans-serif;
-        font-size: 0.76rem;
+        font-size: 0.72rem;
         font-weight: 700;
         letter-spacing: 0.1em;
         text-transform: uppercase;
         color: var(--evd-accent);
         }
-
         .evd-meta-shell {
         background: rgba(255,255,255,0.03);
         border: 1px solid rgba(255,255,255,0.08);
@@ -671,21 +714,6 @@ export default async function EventDetailPage({ params }: PageProps) {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 1rem;
-        }
-        .evd-meta-card {
-        background: rgba(255,255,255,0.035);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 14px;
-        padding: 1rem 1rem 1.05rem;
-        }
-
-        .evd-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        margin-top: 1.1rem;
-        padding-top: 1rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
         .evd-meta-card {
@@ -789,7 +817,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         flex-direction: column;
         gap: 0.3rem;
         background: rgba(36,17,35,0.22);
-        border-left: 6px solid #2493A9;
+        border-left: 6px solid var(--evd-accent);
         border-radius: 0 18px 18px 0;
         padding: 1rem 1.55rem 1.1rem 1.2rem;
         max-width: 760px;
@@ -822,9 +850,6 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-body-paragraph:last-child {
         margin-bottom: 0;
         }
-        .evd-body-paragraph:last-child {
-          margin-bottom: 0;
-        }
 
         .evd-related-band {
         background: var(--evd-surface);
@@ -844,69 +869,6 @@ export default async function EventDetailPage({ params }: PageProps) {
           line-height: 1;
           color: #fff;
           margin: 0;
-        }
-
-        .evd-club-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-          gap: 1rem;
-        }
-        .evd-club-card {
-          display: grid;
-          grid-template-columns: auto 1fr;
-          gap: 1rem;
-          align-items: center;
-          text-decoration: none;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 14px;
-          padding: 1rem;
-          transition: transform 0.18s, border-color 0.18s, background 0.18s;
-        }
-        .evd-club-card:hover {
-          transform: translateY(-2px);
-          border-color: rgba(255,255,255,0.16);
-          background: rgba(255,255,255,0.06);
-        }
-        .evd-club-logo-wrap {
-          width: 72px;
-          height: 72px;
-          border-radius: 14px;
-          background: rgba(255,255,255,0.05);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-          flex-shrink: 0;
-        }
-        .evd-club-logo {
-          max-width: 84%;
-          max-height: 84%;
-          object-fit: contain;
-        }
-        .evd-club-copy {
-          min-width: 0;
-        }
-        .evd-club-name {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: 1rem;
-          font-weight: 700;
-          color: #fff;
-          margin: 0 0 0.25rem;
-        }
-        .evd-club-location {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: 0.9rem;
-          color: rgba(255,255,255,0.55);
-          margin: 0 0 0.45rem;
-        }
-        .evd-club-link {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.78rem;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: var(--evd-accent);
         }
 
         .evd-production-card {
@@ -961,14 +923,15 @@ export default async function EventDetailPage({ params }: PageProps) {
 
         .evd-bottom-band {
         position: relative;
-        background: var(--evd-surface-2);
+        background: #2FA873;
         padding: clamp(2.75rem, 5vw, 4rem) 0;
         }
+
         .evd-bottom-band::before {
         content: "";
         position: absolute;
         inset: 0;
-        background: var(--evd-surface-2);
+        background: #2FA873;
         }
         .evd-bottom-inner {
         position: relative;
@@ -1016,6 +979,10 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-bottom-link--muted {
         color: rgba(255,255,255,0.42);
         border: 1.5px solid rgba(255,255,255,0.14);
+        }
+        .evd-bottom-link--archive {
+        background: rgba(36,17,35,0.9);
+        color: #fff;
         }
 
         @media (max-width: 640px) {
