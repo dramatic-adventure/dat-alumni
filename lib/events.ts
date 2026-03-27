@@ -71,6 +71,7 @@ export interface DatEvent {
    * show a "Community Showcase" badge.
    */
   dramaClub?: string;
+  dramaClubs?: string[];
 
   /**
    * Subcategory for more specific classification within a category.
@@ -375,26 +376,37 @@ export const events: DatEvent[] = [
     tags: ["community showcase", "youth", "Quito", "Ecuador", "Andean", "original work", "quito-collective"],
     contactEmail: "hello@dramaticadventure.com",
   },
+
   {
-    id: "quito-collective-community-showcase-2026",
-    title: "Quito Collective Community Showcase",
+    id: "joint-drama-club-showcase-slovakia-2026",
+    title: "Joint Community Showcase",
+    subtitle: "Zemplínska Teplica Youth Ensemble + Luník IX Collective",
     category: "performance",
     subcategory: "community-showcase",
     status: "upcoming",
-    date: "2026-05-15",
-    venue: "Casa de la Cultura Ecuatoriana",
-    city: "Quito",
-    country: "Ecuador",
-    dramaClub: "quito-collective",
+    date: "2026-07-24",
+    time: "Afternoon",
+    venue: "TBD",
+    city: "Slovakia",
+    country: "Slovakia",
+    dramaClubs: ["zemplinska-teplica-youth-ensemble", "lunik-ix-collective"],
     description:
-      "The Quito Collective presents an evening of original short works created by their youth ensemble — stories rooted in Andean myth, contemporary Quito, and the drama club's own two-year journey.",
+      "A special daytime community showcase featuring the Zemplínska Teplica Youth Ensemble and the Luník IX Collective in an afternoon of performance, storytelling, and celebration.",
     longDescription:
-      "After two years of developing original stories through DAT's drama club program, the Quito Collective takes the stage at the Casa de la Cultura Ecuatoriana for their first full community showcase. The evening features six short original works — devised collaboratively by young artists aged 14–22 — exploring themes of identity, heritage, and belonging in contemporary Ecuador. Performed in Spanish with some Kichwa. All ages welcome. Tickets are free; donations support the club's ongoing work.",
-    image: "/images/Andean_Mask_Work.jpg",
+      "This joint community showcase brings together young artists from DAT’s Zemplínska Teplica Youth Ensemble and Luník IX Collective for a shared afternoon of performance, storytelling, and connection. Created through workshops, collaboration, and community-based theatre-making, the event celebrates the creativity, courage, and collective spirit of these young artists while honoring the relationships built across both communities. Join us for a joyful daytime gathering that highlights the power of young people finding their voice through theatre.",
+    image: "/images/theatre/archive/tembo.webp",
+    ticketUrl: "https://dramaticadventure.com",
     ticketPrice: "Free — donations welcome",
     ticketType: "free",
-    featured: true,
-    tags: ["community showcase", "youth", "Quito", "Ecuador", "Andean", "original work", "quito-collective"],
+    featured: false,
+    tags: [
+      "community showcase",
+      "drama clubs",
+      "Slovakia",
+      "youth theatre",
+      "Luník IX",
+      "Zemplínska Teplica",
+    ],
     contactEmail: "hello@dramaticadventure.com",
   },
 ];
@@ -523,7 +535,11 @@ export function eventsByProduction(productionSlug: string): DatEvent[] {
  * community showcases and other events tied to that club.
  */
 export function eventsByDramaClub(dramaClubSlug: string): DatEvent[] {
-  return sortedEvents.filter((e) => e.dramaClub === dramaClubSlug);
+  return sortedEvents.filter(
+    (e) =>
+      e.dramaClub === dramaClubSlug ||
+      e.dramaClubs?.includes(dramaClubSlug)
+  );
 }
 
 /** Whether an event is a community showcase */
