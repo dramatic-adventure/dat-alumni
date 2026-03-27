@@ -2,6 +2,7 @@
 import "server-only";
 
 import { Suspense } from "react";
+import { connection } from "next/server";
 import AlumniPage from "@/components/alumni/AlumniPage";
 import { getFeaturedAlumni } from "@/lib/featuredAlumni";
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
@@ -13,12 +14,6 @@ import {
 import { enrichAlumniData } from "@/components/alumni/AlumniSearch/enrichAlumniData.server";
 import type { EnrichedProfileLiveRow } from "@/components/alumni/AlumniSearch/enrichAlumniData.server";
 
-/**
- * ✅ Let this page use ISR so Next can prefetch and cache
- *    the RSC payloads for detail routes. This makes client
- *    navigation feel instant.
- */
-export const revalidate = 60; // cache RSC payload; reduces Sheets quota hits
 
 // Shape AlumniPage expects
 type HighlightItem = {
@@ -51,6 +46,8 @@ function isLegacySquarespaceUrl(u: unknown) {
 }
 
 export default async function Alumni() {
+  await connection();
+
   const { highlights } = await getFeaturedAlumni();
   const alumni = await loadVisibleAlumni();
 

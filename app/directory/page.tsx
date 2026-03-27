@@ -2,6 +2,7 @@
 import "server-only";
 
 import { Suspense } from "react";
+import { connection } from "next/server";
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
 import DirectoryPageClient from "@/components/alumni/DirectoryPageClient";
 
@@ -13,10 +14,10 @@ import {
 
 import type { EnrichedProfileLiveRow } from "@/components/alumni/AlumniSearch/enrichAlumniData.server";
 
-// ✅ Let Next cache the RSC payload to reduce Sheets quota hits
-export const revalidate = 60; // bump to 300+ if you want even fewer reads
 
 export default async function DirectoryPage() {
+  await connection();
+
   const [alumni, profileLiveRows, profileMediaRows] = await Promise.all([
     loadVisibleAlumni(),
     loadProfileLiveRowsPublic(),
