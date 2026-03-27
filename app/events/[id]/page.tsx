@@ -342,7 +342,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         <div className="evd-container evd-body-grid">
           <div className="evd-body-heading-box">
             <p className="evd-body-eyebrow">About the Event</p>
-            <h2 className="evd-body-title">What to Expect</h2>
+            <h2 className="evd-body-title">Inside the Event</h2>
           </div>
 
           <div className="evd-body-copy">
@@ -584,7 +584,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
 
         .evd-meta-shell {
-        background: rgba(26, 20, 28, 0.7);
+        background: rgba(26, 20, 28, 0.4);
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 18px;
         padding: clamp(1rem, 2vw, 1.3rem);
@@ -681,53 +681,69 @@ export default async function EventDetailPage({ params }: PageProps) {
 
         .evd-body-band {
         background: transparent;
-        padding: clamp(3rem, 6vw, 5rem) 0;
-        border-top: 8px solid var(--evd-accent);
+        padding: clamp(3.5rem, 7vw, 6rem) 0;
+        border-top: none;
         }
+
         .evd-body-grid {
-          display: grid;
-          grid-template-columns: 1fr 1.6fr;
-          gap: clamp(2rem, 5vw, 4.5rem);
-          align-items: start;
+        display: grid;
+        grid-template-columns: minmax(280px, 0.92fr) minmax(0, 1.42fr);
+        gap: clamp(2rem, 5vw, 4.75rem);
+        align-items: start;
         }
-        @media (max-width: 800px) {
-          .evd-body-grid {
+        @media (max-width: 900px) {
+        .evd-body-grid {
             grid-template-columns: 1fr;
-          }
         }
+        }
+
         .evd-body-heading-box {
         display: inline-flex;
         flex-direction: column;
-        gap: 0.2rem;
-        background: rgba(36, 17, 35, 0.22);
-        border-radius: 10px;
-        padding: 0.8rem 1.2rem 0.8rem 1rem;
+        gap: 0.35rem;
+        background: rgba(66, 45, 24, 0.28);
+        border-left: 6px solid var(--evd-accent);
+        border-radius: 0 18px 18px 0;
+        padding: 1.15rem 1.6rem 1.25rem 1.3rem;
+        max-width: 640px;
         }
+
         .evd-body-eyebrow {
-        color: rgba(255, 248, 236, 0.9);
+        color: var(--evd-accent);
         margin: 0 0 0.35rem;
+        font-family: "DM Sans", sans-serif;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
         }
+
         .evd-body-title {
-          font-family: "Anton", sans-serif;
-          font-size: clamp(2rem, 4vw, 3.2rem);
-          line-height: 1;
-          color: #241123;
-          margin: 0;
+        font-family: "Anton", sans-serif;
+        font-size: clamp(2.8rem, 6vw, 5.6rem);
+        line-height: 0.92;
+        color: #241123;
+        margin: 0;
+        max-width: 8ch;
         }
+
         .evd-body-copy {
-        background: rgba(255, 248, 236, 0.78);
-        border-left: 4px solid var(--evd-accent);
-        border-radius: 0 14px 14px 0;
-        padding: 1.4rem 1.5rem 1.45rem;
-        box-shadow: 0 8px 24px rgba(36, 17, 35, 0.08);
+        background: rgba(247, 239, 229, 0.96);
+        border-radius: 26px;
+        padding: clamp(1.6rem, 3vw, 2.8rem);
+        box-shadow: 0 8px 26px rgba(36, 17, 35, 0.08);
         }
+
         .evd-body-paragraph {
         font-family: "Space Grotesk", sans-serif;
-        font-size: 1rem;
-        line-height: 1.8;
+        font-size: clamp(1rem, 1.4vw, 1.08rem);
+        line-height: 1.85;
         color: #241123;
-        margin: 0 0 1rem;
-        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.15);
+        margin: 0 0 1.35rem;
+        text-shadow: none;
+        }
+        .evd-body-paragraph:last-child {
+        margin-bottom: 0;
         }
         .evd-body-paragraph:last-child {
           margin-bottom: 0;
@@ -868,8 +884,13 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
 
         .evd-bottom-band {
-        background: var(--evd-accent);
-        padding: clamp(2.5rem, 5vw, 4rem) 0;
+        background: linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--evd-accent) 88%, #000 12%) 0%,
+            var(--evd-accent) 100%
+        );
+        padding: clamp(2.75rem, 5vw, 4rem) 0;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
         }
         .evd-bottom-inner {
           display: flex;
