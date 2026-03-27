@@ -3,7 +3,7 @@
 // /components/alumni/AlumniSearch/AlumniSearch.tsx
 
 import React, { useEffect, useMemo } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useSearchParams, usePathname } from "next/navigation";
 import { useAlumniSearch } from "./useAlumniSearch";
 
 import type { Filters } from "@/types/alumni";
@@ -45,7 +45,6 @@ export default function AlumniSearch({
   showAllIfEmpty = false,
   debug = true,
 }: AlumniSearchProps) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -76,13 +75,14 @@ export default function AlumniSearch({
     if (q.trim()) current.set("q", q);
     else current.delete("q");
 
-    // keep filters in URL too (optional)
     Object.entries(filters).forEach(([k, v]) =>
       v ? current.set(k, String(v)) : current.delete(k)
     );
 
     const qs = current.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    const nextUrl = qs ? `${pathname}?${qs}` : pathname;
+
+    window.history.replaceState(null, "", nextUrl);
   };
 
   /** ✅ Clear search input and reset URL */
