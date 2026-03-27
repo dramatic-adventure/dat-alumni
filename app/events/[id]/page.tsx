@@ -457,13 +457,13 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
 
         .evd-hero {
-          position: relative;
-          min-height: 78vh;
-          background-size: cover;
-          background-position: center 34%;
-          display: flex;
-          align-items: flex-end;
-          overflow: hidden;
+        position: relative;
+        min-height: 78vh;
+        background-size: cover;
+        background-position: center 34%;
+        display: flex;
+        align-items: flex-end;
+        overflow: visible;
         }
         .evd-hero-overlay {
           position: absolute;
@@ -480,10 +480,10 @@ export default async function EventDetailPage({ params }: PageProps) {
         position: absolute;
         left: 0;
         right: 0;
-        bottom: 0;
-        height: 35%;
+        bottom: -18px;
+        height: 38%;
         background: linear-gradient(to bottom, transparent 0%, var(--evd-surface) 100%);
-        box-shadow: 0 18px 30px rgba(0, 0, 0, 0.22);
+        box-shadow: 0 22px 34px rgba(0, 0, 0, 0.28);
         z-index: 3;
         pointer-events: none;
         }
@@ -584,15 +584,13 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
 
         .evd-meta-shell {
-        background: rgba(20, 16, 22, 0.52);
+        background: rgba(26, 20, 28, 0.7);
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 18px;
         padding: clamp(1rem, 2vw, 1.3rem);
         box-shadow:
-            0 18px 40px rgba(0, 0, 0, 0.2),
-            inset 0 1px 0 rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+            0 18px 40px rgba(0, 0, 0, 0.18),
+            inset 0 1px 0 rgba(255, 255, 255, 0.04);
         }
 
         .evd-meta-grid {
@@ -702,13 +700,12 @@ export default async function EventDetailPage({ params }: PageProps) {
         flex-direction: column;
         gap: 0.2rem;
         background: rgba(36, 17, 35, 0.22);
-        border-left: 4px solid var(--evd-accent);
-        border-radius: 0 10px 10px 0;
-        padding: 0.8rem 1.5rem 0.8rem 1rem;
+        border-radius: 10px;
+        padding: 0.8rem 1.2rem 0.8rem 1rem;
         }
         .evd-body-eyebrow {
-          color: #5a4060;
-          margin: 0 0 0.35rem;
+        color: rgba(255, 248, 236, 0.9);
+        margin: 0 0 0.35rem;
         }
         .evd-body-title {
           font-family: "Anton", sans-serif;
@@ -718,9 +715,11 @@ export default async function EventDetailPage({ params }: PageProps) {
           margin: 0;
         }
         .evd-body-copy {
-        background: transparent;
-        border-radius: 0;
-        padding: 0;
+        background: rgba(255, 248, 236, 0.78);
+        border-left: 4px solid var(--evd-accent);
+        border-radius: 0 14px 14px 0;
+        padding: 1.4rem 1.5rem 1.45rem;
+        box-shadow: 0 8px 24px rgba(36, 17, 35, 0.08);
         }
         .evd-body-paragraph {
         font-family: "Space Grotesk", sans-serif;
@@ -869,8 +868,8 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
 
         .evd-bottom-band {
-          background: var(--evd-surface-2);
-          padding: clamp(2.5rem, 5vw, 4rem) 0;
+        background: var(--evd-accent);
+        padding: clamp(2.5rem, 5vw, 4rem) 0;
         }
         .evd-bottom-inner {
           display: flex;
@@ -878,8 +877,8 @@ export default async function EventDetailPage({ params }: PageProps) {
           gap: 1.2rem;
         }
         .evd-bottom-label {
-          color: rgba(255,255,255,0.35);
-          margin: 0;
+        color: rgba(36, 17, 35, 0.62);
+        margin: 0;
         }
         .evd-bottom-links {
           display: flex;
@@ -902,12 +901,13 @@ export default async function EventDetailPage({ params }: PageProps) {
           transform: translateY(-1px);
         }
         .evd-bottom-link--accent {
-          background: var(--evd-accent);
-          color: var(--evd-button-text);
+        background: rgba(36, 17, 35, 0.92);
+        color: #fff;
         }
         .evd-bottom-link--muted {
-          color: rgba(255,255,255,0.42);
-          border: 1.5px solid rgba(255,255,255,0.14);
+        color: rgba(36, 17, 35, 0.74);
+        border: 1.5px solid rgba(36, 17, 35, 0.18);
+        background: rgba(255, 255, 255, 0.12);
         }
 
         @media (max-width: 640px) {
