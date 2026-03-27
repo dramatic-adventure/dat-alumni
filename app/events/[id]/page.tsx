@@ -262,85 +262,87 @@ export default async function EventDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      <section className="evd-meta-band">
+        <section className="evd-meta-band">
         <div className="evd-container">
-          <div className="evd-meta-grid">
-            <div className="evd-meta-card">
-              <p className="evd-meta-label">Dates</p>
-              <p className="evd-meta-value">{formatDateRange(event.date, event.endDate)}</p>
+            <div className="evd-meta-shell">
+            <div className="evd-meta-grid">
+                <div className="evd-meta-card">
+                <p className="evd-meta-label">Dates</p>
+                <p className="evd-meta-value">{formatDateRange(event.date, event.endDate)}</p>
+                </div>
+
+                {event.time ? (
+                <div className="evd-meta-card">
+                    <p className="evd-meta-label">Time</p>
+                    <p className="evd-meta-value">{event.time}</p>
+                </div>
+                ) : null}
+
+                {event.doors ? (
+                <div className="evd-meta-card">
+                    <p className="evd-meta-label">Doors</p>
+                    <p className="evd-meta-value">{event.doors}</p>
+                </div>
+                ) : null}
+
+                <div className="evd-meta-card">
+                <p className="evd-meta-label">Venue</p>
+                <p className="evd-meta-value">{event.venue}</p>
+                {event.address ? <p className="evd-meta-sub">{event.address}</p> : null}
+                </div>
+
+                <div className="evd-meta-card">
+                <p className="evd-meta-label">Location</p>
+                <p className="evd-meta-value">
+                    {event.city}
+                    {event.country ? `, ${event.country}` : ""}
+                </p>
+                </div>
+
+                {(event.ticketPrice || primaryAction) ? (
+                <div className="evd-meta-card">
+                    <p className="evd-meta-label">Tickets</p>
+                    <p className="evd-meta-value">{event.ticketPrice ?? "Details below"}</p>
+                </div>
+                ) : null}
             </div>
 
-            {event.time ? (
-              <div className="evd-meta-card">
-                <p className="evd-meta-label">Time</p>
-                <p className="evd-meta-value">{event.time}</p>
-              </div>
-            ) : null}
+            <div className="evd-actions">
+                {primaryAction ? (
+                <a
+                    href={primaryAction.href}
+                    target={primaryAction.external ? "_blank" : undefined}
+                    rel={primaryAction.external ? "noopener noreferrer" : undefined}
+                    className={`evd-btn ${primaryAction.tone === "invite" ? "evd-btn-invite" : "evd-btn-primary"}`}
+                >
+                    {primaryAction.label}
+                </a>
+                ) : null}
 
-            {event.doors ? (
-              <div className="evd-meta-card">
-                <p className="evd-meta-label">Doors</p>
-                <p className="evd-meta-value">{event.doors}</p>
-              </div>
-            ) : null}
+                {relatedProduction ? (
+                <Link href={`/theatre/${event.production}`} className="evd-btn-ghost">
+                    Full Production →
+                </Link>
+                ) : null}
 
-            <div className="evd-meta-card">
-              <p className="evd-meta-label">Venue</p>
-              <p className="evd-meta-value">{event.venue}</p>
-              {event.address ? <p className="evd-meta-sub">{event.address}</p> : null}
+                <a
+                href={`mailto:?subject=${shareSubject}&body=${shareBody}`}
+                className="evd-btn-ghost"
+                >
+                Share by Email →
+                </a>
+
+                <CopyEventLinkButton className="evd-btn-ghost" />
             </div>
-
-            <div className="evd-meta-card">
-              <p className="evd-meta-label">Location</p>
-              <p className="evd-meta-value">
-                {event.city}
-                {event.country ? `, ${event.country}` : ""}
-              </p>
             </div>
-
-            {(event.ticketPrice || primaryAction) ? (
-              <div className="evd-meta-card">
-                <p className="evd-meta-label">Tickets</p>
-                <p className="evd-meta-value">{event.ticketPrice ?? "Details below"}</p>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="evd-actions">
-            {primaryAction ? (
-              <a
-                href={primaryAction.href}
-                target={primaryAction.external ? "_blank" : undefined}
-                rel={primaryAction.external ? "noopener noreferrer" : undefined}
-                className={`evd-btn ${primaryAction.tone === "invite" ? "evd-btn-invite" : "evd-btn-primary"}`}
-              >
-                {primaryAction.label}
-              </a>
-            ) : null}
-
-            {relatedProduction ? (
-              <Link href={`/theatre/${event.production}`} className="evd-btn-ghost">
-                Full Production →
-              </Link>
-            ) : null}
-
-            <a
-              href={`mailto:?subject=${shareSubject}&body=${shareBody}`}
-              className="evd-btn-ghost"
-            >
-              Share by Email →
-            </a>
-
-            <CopyEventLinkButton className="evd-btn-ghost" />
-          </div>
         </div>
-      </section>
+        </section>
 
       <section className="evd-body-band">
         <div className="evd-container evd-body-grid">
           <div className="evd-body-heading-box">
             <p className="evd-body-eyebrow">About the Event</p>
-            <h2 className="evd-body-title">What You’re Walking Into</h2>
+            <h2 className="evd-body-title">What to Expect</h2>
           </div>
 
           <div className="evd-body-copy">
@@ -474,15 +476,16 @@ export default async function EventDetailPage({ params }: PageProps) {
           background: radial-gradient(ellipse 70% 55% at 12% 88%, var(--evd-glow) 0%, transparent 62%);
         }
         .evd-hero::after {
-          content: "";
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          height: 35%;
-          background: linear-gradient(to bottom, transparent 0%, var(--evd-surface) 100%);
-          z-index: 3;
-          pointer-events: none;
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 35%;
+        background: linear-gradient(to bottom, transparent 0%, var(--evd-surface) 100%);
+        box-shadow: 0 18px 30px rgba(0, 0, 0, 0.22);
+        z-index: 3;
+        pointer-events: none;
         }
         .evd-hero-content {
           position: relative;
@@ -576,20 +579,42 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
 
         .evd-meta-band {
-          background: var(--evd-surface);
-          padding: clamp(2rem, 4vw, 3rem) 0 clamp(2.5rem, 5vw, 3.5rem);
+        background: var(--evd-surface);
+        padding: clamp(2rem, 4vw, 3rem) 0 clamp(2.5rem, 5vw, 3.5rem);
+        }
+
+        .evd-meta-shell {
+        background: rgba(20, 16, 22, 0.52);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        padding: clamp(1rem, 2vw, 1.3rem);
+        box-shadow:
+            0 18px 40px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         }
 
         .evd-meta-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-          gap: 1rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
         }
+
+        .evd-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
         .evd-meta-card {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 14px;
-          padding: 1rem 1rem 1.05rem;
+        background: rgba(255, 255, 255, 0.045);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 14px;
+        padding: 1rem 1rem 1.05rem;
         }
         .evd-meta-label {
           font-family: "DM Sans", sans-serif;
@@ -614,13 +639,6 @@ export default async function EventDetailPage({ params }: PageProps) {
           color: rgba(255,255,255,0.5);
           line-height: 1.5;
           margin: 0.4rem 0 0;
-        }
-
-        .evd-actions {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.75rem;
-          margin-top: 1.25rem;
         }
 
         .evd-btn,
@@ -664,8 +682,9 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
 
         .evd-body-band {
-          background: #f2f2f2;
-          padding: clamp(3rem, 6vw, 5rem) 0;
+        background: transparent;
+        padding: clamp(3rem, 6vw, 5rem) 0;
+        border-top: 8px solid var(--evd-accent);
         }
         .evd-body-grid {
           display: grid;
@@ -679,13 +698,13 @@ export default async function EventDetailPage({ params }: PageProps) {
           }
         }
         .evd-body-heading-box {
-          display: inline-flex;
-          flex-direction: column;
-          gap: 0.2rem;
-          background: rgba(36,17,35,0.08);
-          border-left: 4px solid var(--evd-accent);
-          border-radius: 0 10px 10px 0;
-          padding: 0.8rem 1.5rem 0.8rem 1rem;
+        display: inline-flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        background: rgba(36, 17, 35, 0.22);
+        border-left: 4px solid var(--evd-accent);
+        border-radius: 0 10px 10px 0;
+        padding: 0.8rem 1.5rem 0.8rem 1rem;
         }
         .evd-body-eyebrow {
           color: #5a4060;
@@ -699,16 +718,17 @@ export default async function EventDetailPage({ params }: PageProps) {
           margin: 0;
         }
         .evd-body-copy {
-          background: rgba(255,255,255,0.78);
-          border-radius: 16px;
-          padding: 1.6rem 1.8rem;
+        background: transparent;
+        border-radius: 0;
+        padding: 0;
         }
         .evd-body-paragraph {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: 1rem;
-          line-height: 1.8;
-          color: #241123;
-          margin: 0 0 1rem;
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 1rem;
+        line-height: 1.8;
+        color: #241123;
+        margin: 0 0 1rem;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.15);
         }
         .evd-body-paragraph:last-child {
           margin-bottom: 0;
