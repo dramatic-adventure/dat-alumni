@@ -163,8 +163,6 @@ export const programMap: Record<string, ProgramData> = {
       "jesse-baxter": ["Artistic Director"],
       "christen-madrazo": ["Director of Creative Learning"],
       "jason-williamson": ["Resident Playwright"],
-      "asa-williamson": ["Artist Apprentice"],
-      "vida-williamson": ["Artist Apprentice"],
     },
   },
 
@@ -540,15 +538,9 @@ export const programMap: Record<string, ProgramData> = {
       "zoe-reiniger": ["Actor"],
       "eugene-michael-santiago": ["Actor"],
       "jon-kevin-lazarus": ["Actor"],
-      "jason-williamson": [
-        "Resident Playwright",
-        "Director",
-        "Teaching Artist",
-      ],
-      "christen-madrazo": [
-        "Director of Creative Learning",
-        "Teaching Artist",
-      ],
+      "drew-ernst": ["Director"],
+      "jason-williamson": ["Resident Playwright"],
+      "christen-madrazo": ["Director of Creative Learning",],
       "kathleen-amshoff": ["Assoc. Artistic Director"],
       "mary-k-baxter": ["Executive Director"],
       "jesse-baxter": ["Artistic Director"],
@@ -563,6 +555,8 @@ export const programMap: Record<string, ProgramData> = {
     location: "Ecuador",
     year: 2009,
     season: 3,
+    dramaClubSlugs: ["quiolotoa-collective", "esmeraldas-youth-ensemble", "la-selva-lab", "san-cristobal-collective"],
+    externalUrl: "https://www.dramaticadventure.com/action",
     url: "/action",
     artists: {
       "isabel-martinez": ["Actor"],
@@ -650,6 +644,8 @@ export const programMap: Record<string, ProgramData> = {
     country: "Ecuador",
     year: 2008,
     season: 2,
+    dramaClubSlugs: ["quiolotoa-collective", "esmeraldas-youth-ensemble", "la-selva-lab", "san-cristobal-collective"],
+    externalUrl: "https://www.dramaticadventure.com/creative-trek",
     url: "/creative-trek",
     artists: {
       "rachel-wiese": ["Actor"],

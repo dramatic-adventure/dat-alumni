@@ -418,12 +418,8 @@ export const productionDetailsMap: Record<string, ProductionExtra> = {
     },
     quoteImageUrl: "/images/Andean_Mask_Work.jpg",
 
-    /** Community / causes / partners */
-    // you can optionally add dramaClubSlug here if you create one in dramaClubs
-    dramaClubName: "The Pachaysana Drama Club",
-    dramaClubLocation: "Quilotoa, Ecuador",
-    dramaClubLink:
-      "https://dramaticadventuretheatre.org/drama-clubs/pachaysana",
+    /** Community / causes */
+    dramaClubSlug: "quilotoa-collective",
 
     causes: [
       {
@@ -692,12 +688,8 @@ creditPeople: [
     },
     quoteImageUrl: "",
 
-    /** Community / causes / partners */
-    // you can optionally add dramaClubSlug here if you create one in dramaClubs
-    dramaClubName: "Bulawayo Young Company",
-    dramaClubLocation: "Bulawayo, Zimbabwe",
-    dramaClubLink:
-      "/drama-club/bulawayo-young-company",
+    /** Community / causes */
+    dramaClubSlug: "bulawayo-young-company",
 
     causes: [
       {

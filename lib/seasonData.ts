@@ -10,7 +10,12 @@ export const seasons: SeasonInfo[] = [
     slug: "season-20",
     seasonTitle: "Season 20",
     years: "2025 / 2026",
-    projects: ["TBA"]
+    projects: [
+      "PASSAGE: Slovakia", 
+      "DAT Lab: Slovakia", 
+      "Teaching Artist Residency: Slovakia",
+      "DAT Retreat: Bratislava"
+    ]
   },
   {
     slug: "season-19",
