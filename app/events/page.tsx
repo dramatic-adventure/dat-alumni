@@ -24,7 +24,7 @@ function EventCard({ event, accent }: { event: DatEvent; accent: string }) {
   return (
     <div
       className="evhub-card"
-      onClick={() => router.push(meta.href)}
+      onClick={() => router.push(`/events/${event.id}`)}
       style={{ cursor: "pointer" }}
     >
       {getEventImage(event) && (
@@ -121,11 +121,11 @@ function FeaturedEventCard({ event, backgroundFromParent }: { event: DatEvent; b
               </a>
             )}
             <Link
-              href={meta.href}
+              href={`/events/${event.id}`}
               className="evhub-btn-ghost"
               style={{ borderColor: "rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.75)" }}
             >
-              See All {meta.plural} →
+              Event Details →
             </Link>
           </div>
         </div>

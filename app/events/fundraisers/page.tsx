@@ -74,6 +74,9 @@ function FundCard({ event, index }: { event: DatEvent; index: number }) {
               {event.ticketPrice && (
                 <span className="fund-price-tag">{event.ticketPrice}</span>
               )}
+              <Link href={`/events/${event.id}`} className="fund-production-link">
+                Event Details →
+              </Link>
               {event.production && (
                 <Link href={`/theatre/${event.production}`} className="fund-production-link">
                   Full Production →
@@ -137,6 +140,9 @@ function FundCard({ event, index }: { event: DatEvent; index: number }) {
             {event.ticketPrice && (
               <span className="fund-price-tag">{event.ticketPrice}</span>
             )}
+            <Link href={`/events/${event.id}`} className="fund-production-link">
+              Event Details →
+            </Link>
             {event.production && (
               <Link href={`/theatre/${event.production}`} className="fund-production-link">
                 Full Production →

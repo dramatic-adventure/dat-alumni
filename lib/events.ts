@@ -433,6 +433,14 @@ export const upcomingByCategory = (category: EventCategory): DatEvent[] =>
 /** Next single event (soonest upcoming across all categories) */
 export const nextEvent: DatEvent | undefined = upcomingEvents[0];
 
+export function eventById(id: string): DatEvent | undefined {
+  return events.find((e) => e.id === id);
+}
+
+export function allEventIds(): string[] {
+  return events.map((e) => e.id);
+}
+
 /** Category display metadata */
 export const categoryMeta: Record<
   EventCategory,

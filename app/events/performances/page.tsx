@@ -90,6 +90,9 @@ function PerfCard({ event, index }: { event: DatEvent; index: number }) {
               {event.ticketPrice && (
                 <span className="perf-price-tag">{event.ticketPrice}</span>
               )}
+              <Link href={`/events/${event.id}`} className="perf-production-link">
+                Event Details →
+              </Link>
               {event.production && (
                 <Link href={`/theatre/${event.production}`} className="perf-production-link">
                   Full Production →
@@ -158,6 +161,9 @@ function PerfCard({ event, index }: { event: DatEvent; index: number }) {
             {event.ticketPrice && (
               <span className="perf-price-tag">{event.ticketPrice}</span>
             )}
+            <Link href={`/events/${event.id}`} className="perf-production-link">
+              Event Details →
+            </Link>
             {event.production && (
               <Link href={`/theatre/${event.production}`} className="perf-production-link">
                 Full Production →

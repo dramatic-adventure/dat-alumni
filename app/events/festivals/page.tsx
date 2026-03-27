@@ -63,6 +63,9 @@ function FestCard({ event, index }: { event: DatEvent; index: number }) {
               {event.ticketPrice && (
                 <span className="fest-price-tag">{event.ticketPrice}</span>
               )}
+              <Link href={`/events/${event.id}`} className="fest-production-link">
+                Event Details →
+              </Link>
               {event.production && (
                 <Link href={`/theatre/${event.production}`} className="fest-production-link">
                   Full Production →
@@ -129,6 +132,9 @@ function FestCard({ event, index }: { event: DatEvent; index: number }) {
             {event.ticketPrice && (
               <span className="fest-price-tag">{event.ticketPrice}</span>
             )}
+            <Link href={`/events/${event.id}`} className="fest-production-link">
+              Event Details →
+            </Link>
             {event.production && (
               <Link href={`/theatre/${event.production}`} className="fest-production-link">
                 Full Production →
