@@ -72,6 +72,49 @@ function buildStructuredQualifierTokenSet(item: EnrichedProfileLiveRow): Set<str
   ]);
 }
 
+function hasStructuredQualifierMatch(
+  qualifierTerms: string[],
+  qualifierPhrase: string,
+  qualifierTokens: Set<string>,
+  structuredSearchText: string
+): boolean {
+  if (qualifierTerms.length === 0) return true;
+
+  const hasPhrase =
+    !!qualifierPhrase && structuredSearchText.includes(qualifierPhrase);
+
+  const hasAllTerms = qualifierTerms.every((term) =>
+    qualifierTokens.has(term)
+  );
+
+  return hasAllTerms || hasPhrase;
+}
+
+function stripQualifierNoiseTerms(terms: string[]) {
+  return terms.filter((term) => term && !["of", "the", "and"].includes(term));
+}
+
+function splitNormalizedTerms(value: string) {
+  return normalizeText(value).split(" ").filter(Boolean);
+}
+
+function matchesCoreProjectIntent(
+  coreTerms: string[],
+  strongCoreTokenHits: number,
+  strongStructuredCoreHits: number,
+  projectPhraseMatch: boolean
+): boolean {
+  if (coreTerms.length === 0) return true;
+
+  const minHits = Math.max(1, Math.min(2, coreTerms.length));
+
+  return (
+    projectPhraseMatch ||
+    strongStructuredCoreHits >= minHits ||
+    strongCoreTokenHits >= minHits
+  );
+}
+
 export function useAlumniSearch(
   enrichedData: EnrichedProfileLiveRow[] | undefined,
   filters: Filters,
@@ -144,63 +187,178 @@ export function useAlumniSearch(
       const quotedRaw = extractQuotedPhrase(cleanedQuery);
       const quoted = quotedRaw ? normalizeText(quotedRaw) : "";
 
+      const rawQueryTerms = splitNormalizedTerms(cleanedQuery.replace(/:/g, " "));
       const queryTerms = expandQueryTerms(cleanedQuery.replace(/:/g, " "));
-      const yearTerms = queryTerms.filter((term) => /^(19|20)\d{2}$/.test(term));
-      const nonYearTerms = queryTerms.filter((term) => !/^(19|20)\d{2}$/.test(term));
+      const yearTerms = rawQueryTerms.filter((term) => /^(19|20)\d{2}$/.test(term));
+      const nonYearTerms = rawQueryTerms.filter((term) => !/^(19|20)\d{2}$/.test(term));
 
-      const colonQualifierTerms =
-        rawSegments.length > 1
-          ? expandQueryTerms(rawSegments.slice(1).join(" ")).filter(
-              (term) => !/^(19|20)\d{2}$/.test(term)
-            )
-          : [];
+      const rawColonQualifierText =
+        rawSegments.length > 1 ? rawSegments.slice(1).join(" ") : "";
 
-      /**
-       * Only infer a strict qualifier from the final term when that term looks like
-       * a real project/location/festival qualifier in the dataset — not just a name token.
-       */
+      const colonQualifierTerms = rawColonQualifierText
+        ? splitNormalizedTerms(rawColonQualifierText).filter(
+            (term) => !/^(19|20)\d{2}$/.test(term)
+          )
+        : [];
+
+      const normalizedColonQualifierTerms =
+        stripQualifierNoiseTerms(colonQualifierTerms);
+
+      const colonQualifierBasePhrase = normalizeText(
+        colonQualifierTerms.join(" ")
+      );
+
+      const hasExplicitColonQualifier = normalizedColonQualifierTerms.length > 0;
+
       const knownQualifierTokens = new Set<string>();
+      const knownProgramTokens = new Set<string>();
+      const knownProductionTokens = new Set<string>();
+
       (enrichedData ?? []).forEach((row) => {
-        [
-          ...(row.locationTokens || []),
-          ...(row.programTokens || []),
-          ...(row.productionTokens || []),
-          ...(row.festivalTokens || []),
-          ...(row.seasonTokens || []),
-        ].forEach((token) => knownQualifierTokens.add(token));
+        (row.locationTokens || []).forEach((token) => knownQualifierTokens.add(token));
+        (row.programTokens || []).forEach((token) => {
+          knownQualifierTokens.add(token);
+          knownProgramTokens.add(token);
+        });
+        (row.productionTokens || []).forEach((token) => {
+          knownQualifierTokens.add(token);
+          knownProductionTokens.add(token);
+        });
+        (row.festivalTokens || []).forEach((token) => knownQualifierTokens.add(token));
+        (row.seasonTokens || []).forEach((token) => knownQualifierTokens.add(token));
       });
 
-      const inferredQualifierTerms =
-        colonQualifierTerms.length === 0 &&
-        nonYearTerms.length >= 3 &&
-        knownQualifierTokens.has(nonYearTerms[nonYearTerms.length - 1])
+      /**
+       * If the full phrase after ":" exists as a known structured qualifier,
+       * treat the whole phrase as a strict named qualifier.
+       * This supports:
+       *   ACTion: Heart of Europe
+       *   Creative Trek: Zimbabwe
+       */
+      const hasKnownColonQualifierPhrase =
+        !!colonQualifierBasePhrase &&
+        knownQualifierTokens.has(colonQualifierBasePhrase);
+
+      const inferredQualifierPhrase =
+        !hasExplicitColonQualifier
+          ? (() => {
+              for (let start = 1; start < nonYearTerms.length; start += 1) {
+                const rawCandidateTerms = nonYearTerms.slice(start);
+                const candidateTerms = stripQualifierNoiseTerms(rawCandidateTerms);
+                const candidatePhrase = normalizeText(rawCandidateTerms.join(" "));
+
+                if (candidatePhrase && knownQualifierTokens.has(candidatePhrase)) {
+                  return candidatePhrase;
+                }
+
+                if (candidateTerms.length === 0) continue;
+
+                const structuredMatchCount = (enrichedData ?? []).filter((row) => {
+                  const qualifierTokens = buildStructuredQualifierTokenSet(row);
+                  return candidateTerms.every((term) => qualifierTokens.has(term));
+                }).length;
+
+                if (structuredMatchCount >= 3) {
+                  return candidatePhrase;
+                }
+              }
+
+              return "";
+            })()
+          : "";
+
+      const inferredQualifierTerms = inferredQualifierPhrase
+        ? stripQualifierNoiseTerms(
+            expandQueryTerms(inferredQualifierPhrase).filter(
+              (term) => !/^(19|20)\d{2}$/.test(term)
+            )
+          )
+        : !hasExplicitColonQualifier &&
+            nonYearTerms.length >= 3 &&
+            knownQualifierTokens.has(nonYearTerms[nonYearTerms.length - 1])
           ? [nonYearTerms[nonYearTerms.length - 1]]
           : [];
 
-      const strictQualifierTerms =
-        colonQualifierTerms.length > 0 ? colonQualifierTerms : inferredQualifierTerms;
+      const strictQualifierTerms = hasExplicitColonQualifier
+        ? normalizedColonQualifierTerms
+        : inferredQualifierTerms;
 
-      const coreTerms = nonYearTerms.filter(
-        (term) => !strictQualifierTerms.includes(term)
+      const strictQualifierPhrase = hasExplicitColonQualifier
+        ? colonQualifierTerms.length >= 2 || hasKnownColonQualifierPhrase
+          ? colonQualifierBasePhrase
+          : ""
+        : inferredQualifierPhrase;
+      const coreTerms = stripQualifierNoiseTerms(
+        nonYearTerms.filter((term) => !strictQualifierTerms.includes(term))
       );
+
+      const fuzzyCoreTerms = stripQualifierNoiseTerms(
+        queryTerms.filter(
+          (term) =>
+            !/^(19|20)\d{2}$/.test(term) &&
+            !strictQualifierTerms.includes(term)
+        )
+      );
+
+      const corePhrase = normalizeText(coreTerms.join(" "));
+      const minCoreHits = Math.max(1, Math.min(2, coreTerms.length || fuzzyCoreTerms.length));
 
       const phraseWithoutYearsOrQualifiers = normalizeText(coreTerms.join(" "));
       const hasYearIntent = yearTerms.length > 0;
       const hasStrictQualifierIntent = strictQualifierTerms.length > 0;
       const multiTerm = queryTerms.length > 1;
 
+      const standaloneStructuredQualifierPhrase =
+        !hasStrictQualifierIntent &&
+        nonYearTerms.length >= 2 &&
+        (enrichedData ?? []).some((row) => {
+          const qualifierTokens = buildStructuredQualifierTokenSet(row);
+          return nonYearTerms.every((term) => qualifierTokens.has(term));
+        })
+          ? normalizeText(nonYearTerms.join(" "))
+          : "";
+
+      const effectiveQualifierPhrase =
+        strictQualifierPhrase || standaloneStructuredQualifierPhrase;
+
+      const treatAsStandaloneQualifierYearSearch =
+        hasYearIntent &&
+        !hasExplicitColonQualifier &&
+        !!standaloneStructuredQualifierPhrase &&
+        coreTerms.length <= 1;
+
       const searchBase: SearchRow[] = gated.filter((item) => {
         const flatTokens = buildFlatTokenSet(item);
 
-        if (yearTerms.length > 0 && !yearTerms.every((term) => flatTokens.has(term))) {
+        const structuredSearchText = normalizeText(
+          [
+            ...(item.locationTokens || []),
+            ...(item.programTokens || []),
+            ...(item.productionTokens || []),
+            ...(item.festivalTokens || []),
+            ...(item.seasonTokens || []),
+          ].join(" ")
+        );
+
+        if (
+          yearTerms.length > 0 &&
+          !yearTerms.every(
+            (term) => flatTokens.has(term) || structuredSearchText.includes(term)
+          )
+        ) {
           return false;
         }
 
         const qualifierTokens = buildStructuredQualifierTokenSet(item);
 
         if (
-          strictQualifierTerms.length > 0 &&
-          !strictQualifierTerms.every((term) => qualifierTokens.has(term))
+          hasStrictQualifierIntent &&
+          !hasStructuredQualifierMatch(
+            strictQualifierTerms,
+            strictQualifierPhrase,
+            qualifierTokens,
+            structuredSearchText
+          )
         ) {
           return false;
         }
@@ -238,31 +396,73 @@ export function useAlumniSearch(
 
         const flatTokenSet = buildFlatTokenSet(item);
 
-        const hasFullQueryExact =
-          aliasSet.has(qLower) ||
-          programTokens.includes(qLower) ||
-          productionTokens.includes(qLower) ||
-          festivalTokens.includes(qLower) ||
-          seasonTokens.includes(qLower) ||
-          locationTokens.includes(qLower) ||
-          nameNorm === qLower;
+        const structuredExactQuery = quoted || qLower;
 
-        const hasAllYearTerms =
-          yearTerms.length > 0 && yearTerms.every((term) => flatTokenSet.has(term));
+        const hasFullQueryExact =
+          aliasSet.has(structuredExactQuery) ||
+          programTokens.includes(structuredExactQuery) ||
+          productionTokens.includes(structuredExactQuery) ||
+          festivalTokens.includes(structuredExactQuery) ||
+          seasonTokens.includes(structuredExactQuery) ||
+          locationTokens.includes(structuredExactQuery) ||
+          nameNorm === structuredExactQuery;
+
+        const hasExactStructuredFieldMatch =
+          programTokens.includes(structuredExactQuery) ||
+          productionTokens.includes(structuredExactQuery) ||
+          festivalTokens.includes(structuredExactQuery) ||
+          locationTokens.includes(structuredExactQuery) ||
+          seasonTokens.includes(structuredExactQuery);
 
         const qualifierTokenSet = buildStructuredQualifierTokenSet(item);
 
-        const hasAllStrictQualifierTerms =
-          strictQualifierTerms.length > 0 &&
-          strictQualifierTerms.every((term) => qualifierTokenSet.has(term));
+        const qualifierSearchText = normalizeText(
+          [
+            ...(item.locationTokens || []),
+            ...(item.programTokens || []),
+            ...(item.productionTokens || []),
+            ...(item.festivalTokens || []),
+            ...(item.seasonTokens || []),
+          ].join(" ")
+        );
+
+        const hasAllYearTerms =
+          yearTerms.length > 0 &&
+          yearTerms.every(
+            (term) => flatTokenSet.has(term) || qualifierSearchText.includes(term)
+          );
+
+        const hasAllStrictQualifierTerms = hasStructuredQualifierMatch(
+          strictQualifierTerms,
+          strictQualifierPhrase,
+          qualifierTokenSet,
+          qualifierSearchText
+        );
+
+        const projectSearchText = normalizeText(
+          [
+            ...(item.aliasTokens || []),
+            ...(item.programTokens || []),
+            ...(item.productionTokens || []),
+            ...(item.festivalTokens || []),
+            ...(item.locationTokens || []),
+            ...(item.seasonTokens || []),
+            ...(item.bioTokens || []),
+          ].join(" ")
+        );
 
         const projectPhraseMatch =
           !!phraseWithoutYearsOrQualifiers &&
-          (aliasSet.has(phraseWithoutYearsOrQualifiers) ||
+          (
+            aliasSet.has(phraseWithoutYearsOrQualifiers) ||
             programTokens.includes(phraseWithoutYearsOrQualifiers) ||
             productionTokens.includes(phraseWithoutYearsOrQualifiers) ||
             festivalTokens.includes(phraseWithoutYearsOrQualifiers) ||
-            bioTokens.includes(phraseWithoutYearsOrQualifiers));
+            locationTokens.includes(phraseWithoutYearsOrQualifiers) ||
+            seasonTokens.includes(phraseWithoutYearsOrQualifiers) ||
+            bioTokens.includes(phraseWithoutYearsOrQualifiers) ||
+            projectSearchText.includes(phraseWithoutYearsOrQualifiers)
+          );
 
         const strongCoreTokenHits = coreTerms.filter(
           (term) =>
@@ -273,6 +473,39 @@ export function useAlumniSearch(
             bioTokens.includes(term) ||
             locationTokens.includes(term) ||
             nameParts.includes(term)
+        ).length;
+
+        const strongStructuredCoreHits = coreTerms.filter(
+          (term) =>
+            aliasSet.has(term) ||
+            programTokens.includes(term) ||
+            productionTokens.includes(term) ||
+            festivalTokens.includes(term) ||
+            nameParts.includes(term)
+        ).length;
+
+        const coreProgramHits = fuzzyCoreTerms.filter(
+          (term) => aliasSet.has(term) || programTokens.includes(term)
+        ).length;
+
+        const coreProductionHits = fuzzyCoreTerms.filter(
+          (term) => aliasSet.has(term) || productionTokens.includes(term)
+        ).length;
+
+        const coreFestivalHits = fuzzyCoreTerms.filter(
+          (term) => festivalTokens.includes(term)
+        ).length;
+
+        const coreLocationHits = fuzzyCoreTerms.filter(
+          (term) => locationTokens.includes(term)
+        ).length;
+
+        const coreRoleHits = fuzzyCoreTerms.filter(
+          (term) => roleTokens.includes(term)
+        ).length;
+
+        const coreNameHits = fuzzyCoreTerms.filter(
+          (term) => nameParts.includes(term) || aliasSet.has(term)
         ).length;
 
         if (
@@ -371,14 +604,14 @@ export function useAlumniSearch(
           reasons.push("Missing Qualifier Penalty");
         } else if (
           hasStrictQualifierIntent &&
-          strongCoreTokenHits >= Math.max(1, Math.min(2, coreTerms.length)) &&
+          strongStructuredCoreHits >= Math.max(1, Math.min(2, coreTerms.length)) &&
           hasAllStrictQualifierTerms
         ) {
           score += 180;
           reasons.push("Project Tokens + Qualifier Match");
         } else if (
           hasStrictQualifierIntent &&
-          strongCoreTokenHits >= Math.max(1, Math.min(2, coreTerms.length)) &&
+          strongStructuredCoreHits >= Math.max(1, Math.min(2, coreTerms.length)) &&
           !hasAllStrictQualifierTerms
         ) {
           score -= 120;
@@ -455,8 +688,12 @@ export function useAlumniSearch(
           }
         });
 
-        const tokensMatched = queryTerms.filter(
-          (term) =>
+        const matchedQueryTerms = queryTerms.filter((term) => {
+          if (yearTerms.includes(term)) {
+            return flatTokenSet.has(term) || qualifierSearchText.includes(term);
+          }
+
+          return (
             nameParts.includes(term) ||
             aliasSet.has(term) ||
             roleTokens.includes(term) ||
@@ -469,20 +706,21 @@ export function useAlumniSearch(
             locationTokens.includes(term) ||
             languageTokens.includes(term) ||
             seasonTokens.includes(term)
-        ).length;
+          );
+        }).length;
 
         const coverage =
-          queryTerms.length > 0 ? tokensMatched / queryTerms.length : 0;
+          queryTerms.length > 0 ? matchedQueryTerms / queryTerms.length : 0;
 
         const allTermsPresent =
-          queryTerms.length > 0 && tokensMatched === queryTerms.length;
+          queryTerms.length > 0 && matchedQueryTerms === queryTerms.length;
 
-        if (tokensMatched > 1) {
-          score += (tokensMatched - 1) * 50;
+        if (matchedQueryTerms > 1) {
+          score += (matchedQueryTerms - 1) * 50;
           reasons.push("Multi-term Bonus");
         }
 
-        if (tokensMatched === queryTerms.length) {
+        if (matchedQueryTerms === queryTerms.length) {
           score += 150;
           reasons.push("Full Coverage Bonus");
         }
@@ -492,23 +730,170 @@ export function useAlumniSearch(
           reasons.push("Low Coverage Penalty");
         }
 
+        const qualifiesStrictQualifierPrimary =
+          !hasStrictQualifierIntent ||
+          hasFullQueryExact ||
+          (
+            hasAllStrictQualifierTerms &&
+            matchesCoreProjectIntent(
+              coreTerms,
+              strongCoreTokenHits,
+              strongStructuredCoreHits,
+              projectPhraseMatch
+            )
+          );
+
+        const hasKnownProgramCorePhrase =
+          !!corePhrase && knownProgramTokens.has(corePhrase);
+
+        const hasKnownProductionCorePhrase =
+          !!corePhrase && knownProductionTokens.has(corePhrase);
+
+        const includeStructuredProjectPrimary =
+          (
+            hasYearIntent &&
+            (hasStrictQualifierIntent || !!standaloneStructuredQualifierPhrase)
+              ? (
+                  (coreTerms.length === 0 || treatAsStandaloneQualifierYearSearch)
+                    ? (
+                        !!effectiveQualifierPhrase &&
+                        (
+                          programTokens.includes(effectiveQualifierPhrase) ||
+                          productionTokens.includes(effectiveQualifierPhrase) ||
+                          festivalTokens.includes(effectiveQualifierPhrase) ||
+                          locationTokens.includes(effectiveQualifierPhrase) ||
+                          seasonTokens.includes(effectiveQualifierPhrase)
+                        )
+                      )
+                    : (
+                        !!effectiveQualifierPhrase &&
+                        (
+                          programTokens.includes(effectiveQualifierPhrase) ||
+                          productionTokens.includes(effectiveQualifierPhrase) ||
+                          festivalTokens.includes(effectiveQualifierPhrase) ||
+                          locationTokens.includes(effectiveQualifierPhrase) ||
+                          seasonTokens.includes(effectiveQualifierPhrase)
+                        ) &&
+                        (
+                          hasKnownProgramCorePhrase
+                            ? coreProgramHits >= minCoreHits
+                            : hasKnownProductionCorePhrase
+                              ? coreProductionHits >= minCoreHits
+                              : (
+                                  coreProgramHits >= minCoreHits ||
+                                  coreProductionHits >= minCoreHits ||
+                                  coreFestivalHits >= minCoreHits ||
+                                  coreLocationHits >= minCoreHits ||
+                                  coreRoleHits >= minCoreHits ||
+                                  coreNameHits >= minCoreHits
+                                )
+                        )
+                      )
+                )
+              : (
+                  (hasStrictQualifierIntent || !!standaloneStructuredQualifierPhrase) &&
+                  coreTerms.length > 0
+                    ? (
+                        !!effectiveQualifierPhrase &&
+                        (
+                          programTokens.includes(effectiveQualifierPhrase) ||
+                          productionTokens.includes(effectiveQualifierPhrase) ||
+                          festivalTokens.includes(effectiveQualifierPhrase) ||
+                          locationTokens.includes(effectiveQualifierPhrase) ||
+                          seasonTokens.includes(effectiveQualifierPhrase)
+                        ) &&
+                        (
+                          hasKnownProgramCorePhrase
+                            ? coreProgramHits >= minCoreHits
+                            : hasKnownProductionCorePhrase
+                              ? coreProductionHits >= minCoreHits
+                              : (
+                                  coreProgramHits >= minCoreHits ||
+                                  coreProductionHits >= minCoreHits ||
+                                  coreFestivalHits >= minCoreHits ||
+                                  coreLocationHits >= minCoreHits ||
+                                  coreRoleHits >= minCoreHits ||
+                                  coreNameHits >= minCoreHits
+                                )
+                        )
+                      )
+                    : (
+                        matchesCoreProjectIntent(
+                          coreTerms,
+                          strongCoreTokenHits,
+                          strongStructuredCoreHits,
+                          projectPhraseMatch
+                        ) ||
+                        (
+                          hasKnownProgramCorePhrase
+                            ? coreProgramHits >= minCoreHits && hasYearIntent && coreTerms.length <= 1
+                            : hasKnownProductionCorePhrase
+                              ? coreProductionHits >= minCoreHits && hasYearIntent && coreTerms.length <= 1
+                              : strongStructuredCoreHits >= 1 && hasYearIntent && coreTerms.length <= 1
+                        ) ||
+                        (
+                          coverage >= 0.75 &&
+                          (hasYearIntent || hasStrictQualifierIntent) &&
+                          coreTerms.length <= 1
+                        )
+                      )
+                )
+          ) &&
+          (!hasYearIntent || hasAllYearTerms) &&
+          (!hasStrictQualifierIntent || hasAllStrictQualifierTerms);
+
+        const requiresExplicitStructuredProjectPrimary =
+          (
+            hasYearIntent &&
+            (
+              hasExplicitColonQualifier ||
+              hasStrictQualifierIntent ||
+              !!standaloneStructuredQualifierPhrase
+            )
+          ) ||
+          (
+            (hasStrictQualifierIntent || !!standaloneStructuredQualifierPhrase) &&
+            coreTerms.length > 0
+          );
+
+        const hasKnownStructuredQueryPhrase =
+          !!structuredExactQuery && knownQualifierTokens.has(structuredExactQuery);
+
         const includeAsPrimary =
-          queryTerms.length === 1
-            ? (score >= 120 || coverage >= 0.6) &&
-              (!hasYearIntent || hasAllYearTerms || hasFullQueryExact) &&
-              (!hasStrictQualifierIntent ||
-                hasAllStrictQualifierTerms ||
-                hasFullQueryExact)
-            : (
-                allTermsPresent ||
-                hasFullQueryExact ||
-                nameNorm === qLower ||
-                aliasSet.has(qLower)
-              ) &&
-              (!hasYearIntent || hasAllYearTerms || hasFullQueryExact) &&
-              (!hasStrictQualifierIntent ||
-                hasAllStrictQualifierTerms ||
-                hasFullQueryExact);
+          hasKnownStructuredQueryPhrase &&
+          !hasYearIntent &&
+          !requiresExplicitStructuredProjectPrimary
+            ? (
+                hasExactStructuredFieldMatch ||
+                aliasSet.has(qLower) ||
+                nameNorm === qLower
+              )
+            : queryTerms.length === 1
+              ? (score >= 120 || coverage >= 0.6) &&
+                (!hasYearIntent || hasAllYearTerms || hasFullQueryExact) &&
+                qualifiesStrictQualifierPrimary
+              : (
+                  requiresExplicitStructuredProjectPrimary
+                    ? includeStructuredProjectPrimary
+                    : (
+                        hasKnownStructuredQueryPhrase
+                          ? (
+                              hasExactStructuredFieldMatch ||
+                              aliasSet.has(qLower) ||
+                              nameNorm === qLower ||
+                              includeStructuredProjectPrimary
+                            )
+                          : (
+                              allTermsPresent ||
+                              hasFullQueryExact ||
+                              nameNorm === qLower ||
+                              aliasSet.has(qLower) ||
+                              includeStructuredProjectPrimary
+                            )
+                      )
+                ) &&
+                (!hasYearIntent || hasAllYearTerms || hasFullQueryExact) &&
+                qualifiesStrictQualifierPrimary;
 
         if (includeAsPrimary) {
           scoredResults.push({
@@ -534,9 +919,16 @@ export function useAlumniSearch(
           [
             cleanedQuery,
             qLower,
-            ...queryTerms,
+            strictQualifierPhrase || standaloneStructuredQualifierPhrase,
             queryTerms.join(" "),
             coreTerms.join(" "),
+            ...(
+              strictQualifierPhrase
+                ? coreTerms
+                : standaloneStructuredQualifierPhrase
+                  ? []
+                  : queryTerms
+            ),
           ]
             .map((q) => q.trim())
             .filter(Boolean)
@@ -568,22 +960,89 @@ export function useAlumniSearch(
           return;
         }
 
-        const flatTokens = buildFlatTokenSet(it);
-        const qualifierTokenSet = buildStructuredQualifierTokenSet(it);
+const flatTokens = buildFlatTokenSet(it);
+const qualifierTokenSet = buildStructuredQualifierTokenSet(it);
 
-        if (yearTerms.length > 0 && !yearTerms.every((term) => flatTokens.has(term))) {
-          return;
-        }
+const qualifierSearchText = normalizeText(
+  [
+    ...(it.locationTokens || []),
+    ...(it.programTokens || []),
+    ...(it.productionTokens || []),
+    ...(it.festivalTokens || []),
+    ...(it.seasonTokens || []),
+  ].join(" ")
+);
 
         if (
-          strictQualifierTerms.length > 0 &&
-          !strictQualifierTerms.every((term) => qualifierTokenSet.has(term))
+          yearTerms.length > 0 &&
+          !yearTerms.every(
+            (term) => flatTokens.has(term) || qualifierSearchText.includes(term)
+          )
+        ) {
+          return;
+        }
+        if (
+          hasStrictQualifierIntent &&
+          !hasStructuredQualifierMatch(
+            strictQualifierTerms,
+            strictQualifierPhrase,
+            qualifierTokenSet,
+            qualifierSearchText
+          )
         ) {
           return;
         }
 
+        const secondaryProjectSearchText = normalizeText(
+          [
+            ...(it.aliasTokens || []),
+            ...(it.programTokens || []),
+            ...(it.productionTokens || []),
+            ...(it.festivalTokens || []),
+            ...(it.locationTokens || []),
+            ...(it.seasonTokens || []),
+            ...(it.bioTokens || []),
+          ].join(" ")
+        );
+
         const matchedTerms = queryTerms.filter((term) => flatTokens.has(term));
-        const coreMatchedTerms = coreTerms.filter((term) => flatTokens.has(term));
+        const coreMatchedTerms = coreTerms.filter(
+          (term) => flatTokens.has(term) || secondaryProjectSearchText.includes(term)
+        );
+        const structuredCoreMatchedTerms = coreTerms.filter(
+          (term) =>
+            (it.aliasTokens || []).includes(term) ||
+            (it.programTokens || []).includes(term) ||
+            (it.productionTokens || []).includes(term) ||
+            (it.festivalTokens || []).includes(term) ||
+            (it.locationTokens || []).includes(term) ||
+            (it.seasonTokens || []).includes(term) ||
+            secondaryProjectSearchText.includes(term) ||
+            normalizeText(it.name || "").split(" ").includes(term)
+        );
+
+        if (
+          standaloneStructuredQualifierPhrase &&
+          stripQualifierNoiseTerms(nonYearTerms).length > 0 &&
+          stripQualifierNoiseTerms(nonYearTerms).some(
+            (term) => !qualifierTokenSet.has(term)
+          )
+        ) {
+          return;
+        }
+
+        if (
+          hasStrictQualifierIntent &&
+          coreTerms.length > 0 &&
+          !matchesCoreProjectIntent(
+            coreTerms,
+            coreMatchedTerms.length,
+            structuredCoreMatchedTerms.length,
+            false
+          )
+        ) {
+          return;
+        }
 
         if (queryTerms.length >= 3 && coreTerms.length > 0 && coreMatchedTerms.length === 0) {
           return;
