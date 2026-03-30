@@ -27,6 +27,7 @@ function PerfCard({ event, index }: { event: DatEvent; index: number }) {
         className="perf-card perf-card--featured"
         style={{
           backgroundImage: getEventImage(event) ? `url('${getEventImage(event)}')` : undefined,
+          backgroundPosition: event.imageFocus ?? "center",
         }}
       >
         <div className="perf-card-overlay" />
@@ -110,6 +111,7 @@ function PerfCard({ event, index }: { event: DatEvent; index: number }) {
       className="perf-card"
       style={{
         backgroundImage: getEventImage(event) ? `url('${getEventImage(event)}')` : undefined,
+        backgroundPosition: event.imageFocus ?? "center",
         animationDelay: `${index * 60}ms`,
       }}
     >

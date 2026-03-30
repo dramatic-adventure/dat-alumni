@@ -24,7 +24,7 @@ function FundCard({ event, index }: { event: DatEvent; index: number }) {
     return (
       <div
         className="fund-card fund-card--featured"
-        style={{ backgroundImage: getEventImage(event) ? `url('${getEventImage(event)}')` : undefined }}
+        style={{ backgroundImage: getEventImage(event) ? `url('${getEventImage(event)}')` : undefined, backgroundPosition: event.imageFocus ?? "center" }}
       >
         <div className="fund-card-overlay" />
         <div className="fund-glow" />
@@ -94,6 +94,7 @@ function FundCard({ event, index }: { event: DatEvent; index: number }) {
       className="fund-card"
       style={{
         backgroundImage: getEventImage(event) ? `url('${getEventImage(event)}')` : undefined,
+        backgroundPosition: event.imageFocus ?? "center",
         animationDelay: `${index * 80}ms`,
       }}
     >

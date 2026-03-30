@@ -24,7 +24,7 @@ function FestCard({ event, index }: { event: DatEvent; index: number }) {
     return (
       <div
         className="fest-card fest-card--featured"
-        style={{ backgroundImage: getEventImage(event) ? `url('${getEventImage(event)}')` : undefined }}
+        style={{ backgroundImage: getEventImage(event) ? `url('${getEventImage(event)}')` : undefined, backgroundPosition: event.imageFocus ?? "center" }}
       >
         <div className="fest-card-overlay" />
         <div className="fest-card-inner">
@@ -83,6 +83,7 @@ function FestCard({ event, index }: { event: DatEvent; index: number }) {
       className="fest-card"
       style={{
         backgroundImage: getEventImage(event) ? `url('${getEventImage(event)}')` : undefined,
+        backgroundPosition: event.imageFocus ?? "center",
         animationDelay: `${index * 80}ms`,
       }}
     >

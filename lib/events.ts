@@ -49,6 +49,24 @@ export interface DatEvent {
   /** Path in /public, e.g. "/images/theatre/archive/agwow-condor.webp" */
   image?: string;
 
+  /**
+   * Nudge the focal point of the event card image.
+   * Accepts any CSS background-position value — use compass directions and
+   * combinations to shift what part of the image stays in frame.
+   *
+   * Examples:
+   *   imageFocus: "top"          → anchors the top edge (good for tall faces)
+   *   imageFocus: "bottom"       → anchors the bottom edge
+   *   imageFocus: "left"         → anchors the left side
+   *   imageFocus: "right"        → anchors the right side
+   *   imageFocus: "top left"     → anchors the top-left corner
+   *   imageFocus: "bottom right" → anchors the bottom-right corner
+   *   imageFocus: "center"       → default centred crop (same as omitting this)
+   *
+   * Omit the field (or set to "center") to get the default centred crop.
+   */
+  imageFocus?: string;
+
   ticketUrl?: string;
   /** Human-readable price, e.g. "£15 / £10 concessions" or "Free" */
   ticketPrice?: string;
@@ -105,6 +123,98 @@ export interface DatEvent {
    * Example: seasonOverride: 19  → forces archive placement in Season 19
    */
   seasonOverride?: number;
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // RICH CONTENT  (all optional — sections are hidden when not set)
+  // Falls back to the linked production's data where noted.
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Production photo gallery.
+   * Falls back to the linked production's galleryImages if not set.
+   *
+   * Example:
+   *   photoGallery: [
+   *     { src: "/images/theatre/show-name/rehearsal-1.jpg", alt: "The cast in act one" },
+   *     { src: "/images/theatre/show-name/performance-2.jpg" },
+   *   ]
+   */
+  photoGallery?: { src: string; alt?: string }[];
+
+  /**
+   * Optional credit line for the photo gallery.
+   * Falls back to the linked production's productionPhotographer.
+   */
+  photoCredit?: string;
+
+  /**
+   * YouTube or Vimeo URL for an embedded video section.
+   * Falls back to the first videoUrl found in the production's processSections.
+   *
+   * Examples:
+   *   videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+   *   videoUrl: "https://vimeo.com/123456789"
+   */
+  videoUrl?: string;
+
+  /** Optional title shown above the video embed (e.g., "Watch the Trailer"). */
+  videoTitle?: string;
+
+  /**
+   * Director / creator note shown as an editorial pull-quote section.
+   * Falls back to the linked production's pullQuote.quote if not set.
+   *
+   * Example:
+   *   artistNote: "This piece was born in the jungle. It still smells like it.",
+   *   artistNoteBy: "Jesse Baxter, Director",
+   */
+  artistNote?: string;
+
+  /** Attribution for the artist note (e.g., "Jesse Baxter, Director"). */
+  artistNoteBy?: string;
+
+  /**
+   * Cast and creative team for the Credits section.
+   * Falls back to the linked production's creativeTeamOverride + castOverride.
+   *
+   * Example:
+   *   credits: [
+   *     { role: "Director", name: "Jesse Baxter" },
+   *     { role: "Playwright", name: "Jane Smith", href: "/alumni/jane-smith" },
+   *     { role: "Actor", name: "Maria García" },
+   *   ]
+   */
+  credits?: { role: string; name: string; href?: string }[];
+
+  /**
+   * Press or audience quotes shown in the Quotes section.
+   *
+   * Example:
+   *   pressQuotes: [
+   *     { text: "Genuinely moving.", attribution: "The Guardian" },
+   *     { text: "Theatre at its most alive.", attribution: "Time Out London" },
+   *   ]
+   */
+  pressQuotes?: { text: string; attribution: string }[];
+
+  /**
+   * Accessibility details shown in the meta band.
+   * Keep concise — one line is ideal.
+   *
+   * Example:
+   *   accessibility: "Step-free access · BSL-interpreted performance on 14 Aug · Age guidance: 12+"
+   */
+  accessibility?: string;
+
+  /**
+   * If set, shows a "Bring a Group" CTA in the actions row.
+   * The mailto opens pre-filled with the event name.
+   * Defaults to hello@dramaticadventure.com if set to true (or provide a specific address).
+   *
+   * Example:
+   *   groupBookingEmail: "groups@summerhall.co.uk"
+   */
+  groupBookingEmail?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -193,6 +303,117 @@ export const events: DatEvent[] = [
     featured: false,
     tags: ["North America", "alumni showcase", "new work", "La MaMa"],
     contactEmail: "hello@dramaticadventure.com",
+  },
+
+  // ── DEMO EVENT: everything activated — A Girl Without Wings revival ──────────
+  // This event is a full showcase of every optional field so you can see
+  // every section of the event detail page rendered at once.
+  // Fields marked [EXPLICIT] are set directly on the event.
+  // Fields marked [PRODUCTION FALLBACK] would auto-populate from the linked
+  // production even if removed — they're shown here so you can see the shape.
+
+  {
+    id: "agwow-iati-revival-2027",
+    title: "A Girl Without Wings",
+    subtitle: "The Revival — IATI Theater NYC",
+    category: "performance",
+    status: "upcoming",
+    date: "2027-03-14",
+    endDate: "2027-04-06",
+    time: "7:30 PM",
+    doors: "Doors at 7:00 PM",
+    venue: "IATI Theater",
+    address: "64 E 4th St, New York, NY 10003",
+    city: "New York City",
+    country: "USA",
+    description:
+      "The New York Times called it 'Poignant. Sensitively directed. Magical.' — and now it's back. DAT's landmark Andean love story returns to IATI for a three-week run, fourteen years on.",
+    longDescription:
+      "A lonely Condor and the beautiful Chaska fall hopelessly in love. Fortune, however, is not these lovers' friend — because Chaska is not another bird but a wingless shepherd girl.\n\nIn the merciless but beautiful Andes, the joy and pain of first love between a demigod who yearns for companionship and a girl who must leave her poverty-stricken family to ascend to the skies unfolds.\n\nA Girl Without Wings immerses audiences in a whimsical puppet world where a Native-Andean folktale is reborn amidst wicked hummingbirds darting through the air, brightly colored threads of prayer reaching for the gods, and a storm of shoes that rains from the sky.\n\nThe original 2013 production was a New York Times Critics' Pick. This revival brings back the original creative team alongside new voices from DAT's global network.",
+    image: "/posters/a-girl-without-wings-landscape.jpg",
+    imageFocus: "center 40%",
+    ticketUrl: "https://www.iatitheater.org/tickets",
+    ticketPrice: "$28 / $18 concessions",
+    ticketType: "ticketed",
+    featured: true,
+    tags: ["New York Times Critics Pick", "revival", "IATI", "Andean myth", "puppetry"],
+    production: "a-girl-without-wings",
+    contactEmail: "hello@dramaticadventure.com",
+
+    // ── [EXPLICIT] Rich content — every optional field set ────────────────────
+
+    // Photo gallery
+    // (Falls back to production galleryImages if removed)
+    photoGallery: [
+      {
+        src: "/images/Andean_Mask_Work.jpg",
+        alt: "The cast in a mask-work rehearsal",
+      },
+      {
+        src: "/images/teaching-andes.jpg",
+        alt: "DAT artists in the Andes during community research",
+      },
+      {
+        src: "/images/teaching-amazon.jpg",
+        alt: "Sharing a story circle with youth in the Amazon",
+      },
+      {
+        src: "/images/performing-zanzibar.jpg",
+        alt: "Performance moment — physical theatre",
+      },
+    ],
+    photoCredit: "María López",
+
+    // Video embed (YouTube or Vimeo — both auto-detected)
+    // (Falls back to production processSections[0].videoUrl if removed)
+    videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    videoTitle: "Watch: Community Workshop Reel",
+
+    // Artist's note
+    // (Falls back to production pullQuote if removed)
+    artistNote:
+      "This piece was born in the Andes, carried across the Atlantic, and rebuilt from scratch for every community it visited. What you see tonight isn't a revival so much as a re-rooting. The condor still flies. The girl is still brave. That never changes.",
+    artistNoteBy: "Kathleen Amshoff, Director",
+
+    // Cast & creative team
+    // (Falls back to production creativeTeamOverride + castOverride if removed)
+    credits: [
+      { role: "Director", name: "Kathleen Amshoff" },
+      { role: "Playwright", name: "Jason Williamson" },
+      { role: "Artistic Director", name: "Jesse Baxter", href: "/alumni/jesse-baxter" },
+      { role: "Composer", name: "Ana María Torres" },
+      { role: "Set Design", name: "Brittany Vasta" },
+      { role: "Lighting Design", name: "Carl Wiemann" },
+      { role: "Costume Design", name: "Angela Harner" },
+      { role: "Stage Manager", name: "Maxwell Waters" },
+      { role: "Chaska", name: "Lucille Baxter" },
+      { role: "Condor", name: "Seamus Baxter" },
+      { role: "Mother", name: "Christen Madrazo" },
+      { role: "Musician", name: "Thomas Burns Scully" },
+    ],
+
+    // Press & audience quotes
+    pressQuotes: [
+      {
+        text: "Not much is typical about 'A Girl without Wings.' Poignant. Sensitively directed. Magical.",
+        attribution: "Laurel Graeber, The New York Times",
+      },
+      {
+        text: "A heartfelt, breathtaking story. Theatre at its most alive.",
+        attribution: "The Village Voice",
+      },
+      {
+        text: "Pure theatrical imagination. I cried twice and I don't cry.",
+        attribution: "Audience member, IATI Theater",
+      },
+    ],
+
+    // Accessibility information
+    accessibility:
+      "Step-free access via main entrance · Audio-described performance on 22 Mar · BSL-interpreted performance on 29 Mar · Age guidance: 12+ · Runtime approx. 2 hrs with interval",
+
+    // Group booking — enables "Bring a Group →" button in the actions row
+    groupBookingEmail: "groups@iatitheater.org",
   },
 
   // ── FESTIVALS & SHOWCASES ────────────────────────────────────────────────────
@@ -288,6 +509,7 @@ export const events: DatEvent[] = [
     longDescription:
       "DAT Summer 2026 Launch is an online community gathering designed to introduce this summer’s projects and invite audiences, artists, and supporters into what comes next. Join us for artist introductions, program highlights, stories behind the work, and a look at the places, partnerships, and creative adventures shaping DAT’s summer season. Whether you are hoping to participate, collaborate, follow along, or support the work, this is a chance to connect early and learn how to be part of the journey ahead.",
     image: "/images/theatre/archive/blackfish_mommy.webp",
+    imageFocus: "center 25%",
     ticketUrl: "https://dramaticadventure.com/summer-2026",
     ticketPrice: "Free — registration encouraged",
     ticketType: "free",

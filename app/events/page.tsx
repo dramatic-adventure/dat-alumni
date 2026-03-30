@@ -30,7 +30,7 @@ function EventCard({ event, accent }: { event: DatEvent; accent: string }) {
       {getEventImage(event) && (
         <div
           className="evhub-card-img"
-          style={{ backgroundImage: `url('${getEventImage(event)}')` }}
+          style={{ backgroundImage: `url('${getEventImage(event)}')`, backgroundPosition: event.imageFocus ?? "center" }}
         />
       )}
       <div className="evhub-card-overlay" />
@@ -67,6 +67,7 @@ function FeaturedEventCard({ event, backgroundFromParent }: { event: DatEvent; b
       className="evhub-featured"
       style={{
         backgroundImage: !backgroundFromParent && getEventImage(event) ? `url('${getEventImage(event)}')` : undefined,
+        backgroundPosition: event.imageFocus ?? "center",
       }}
     >
       <div className="evhub-featured-overlay" />
@@ -317,6 +318,7 @@ export default function EventsHubPage() {
           className="evhub-featured-section"
           style={{
             backgroundImage: getEventImage(nextUp) ? `url('${getEventImage(nextUp)}')` : undefined,
+            backgroundPosition: nextUp.imageFocus ?? "center",
           }}
         >
           <FeaturedEventCard event={nextUp} backgroundFromParent />
