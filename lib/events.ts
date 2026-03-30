@@ -184,7 +184,7 @@ export interface DatEvent {
    *     { role: "Actor", name: "Maria García" },
    *   ]
    */
-  credits?: { role: string; name: string; href?: string }[];
+  credits?: { role: string; name: string; href?: string; group?: "creative" | "cast" }[];
 
   /**
    * Press or audience quotes shown in the Quotes section.
@@ -377,19 +377,20 @@ export const events: DatEvent[] = [
 
     // Cast & creative team
     // (Falls back to production creativeTeamOverride + castOverride if removed)
+    // group: "creative" → Creative Team section; group: "cast" → Cast section
     credits: [
-      { role: "Director", name: "Kathleen Amshoff" },
-      { role: "Playwright", name: "Jason Williamson" },
-      { role: "Artistic Director", name: "Jesse Baxter", href: "/alumni/jesse-baxter" },
-      { role: "Composer", name: "Ana María Torres" },
-      { role: "Set Design", name: "Brittany Vasta" },
-      { role: "Lighting Design", name: "Carl Wiemann" },
-      { role: "Costume Design", name: "Angela Harner" },
-      { role: "Stage Manager", name: "Maxwell Waters" },
-      { role: "Chaska", name: "Lucille Baxter" },
-      { role: "Condor", name: "Seamus Baxter" },
-      { role: "Mother", name: "Christen Madrazo" },
-      { role: "Musician", name: "Thomas Burns Scully" },
+      { group: "creative", role: "Director", name: "Kathleen Amshoff" },
+      { group: "creative", role: "Playwright", name: "Jason Williamson" },
+      { group: "creative", role: "Artistic Director", name: "Jesse Baxter", href: "/alumni/jesse-baxter" },
+      { group: "creative", role: "Composer", name: "Ana María Torres" },
+      { group: "creative", role: "Set Design", name: "Brittany Vasta" },
+      { group: "creative", role: "Lighting Design", name: "Carl Wiemann" },
+      { group: "creative", role: "Costume Design", name: "Angela Harner" },
+      { group: "creative", role: "Stage Manager", name: "Maxwell Waters" },
+      { group: "cast", role: "Chaska", name: "Lucille Baxter" },
+      { group: "cast", role: "Condor", name: "Seamus Baxter" },
+      { group: "cast", role: "Mother", name: "Christen Madrazo" },
+      { group: "cast", role: "Musician", name: "Thomas Burns Scully", href: "/alumni/thomas-burns-scully" },
     ],
 
     // Press & audience quotes

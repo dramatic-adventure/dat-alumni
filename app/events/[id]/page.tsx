@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import DramaClubBadge from "@/components/ui/DramaClubBadge";
 import EventShareButton from "@/components/events/EventShareButton";
+import EventGallery from "@/components/events/EventGallery";
 import MailingListForm from "@/components/events/MailingListForm";
 import { productionMap } from "@/lib/productionMap";
 import { productionDetailsMap, type ProductionExtra } from "@/lib/productionDetailsMap";
@@ -23,6 +24,8 @@ import {
 type PageProps = { params: Promise<{ id: string }> };
 
 const SITE_URL = "https://dramaticadventure.com";
+/** Share links use the stories subdomain for a cleaner social presence. */
+const SHARE_URL = "https://stories.dramaticadventure.com";
 
 type DramaClubRef = {
   slug: string;
@@ -246,7 +249,7 @@ function buildEventJsonLd(event: DatEvent): Record<string, unknown> {
 // linked production's data, then returns undefined (section stays hidden).
 
 type GalleryItem = { src: string; alt?: string };
-type CreditItem = { role: string; name: string; href?: string };
+type CreditItem = { role: string; name: string; href?: string; group?: "creative" | "cast" };
 
 function resolvePhotoGallery(
   event: DatEvent,
@@ -287,13 +290,19 @@ function resolveCredits(
   extra?: ProductionExtra,
 ): CreditItem[] | undefined {
   if (event.credits?.length) return event.credits;
-  const team = extra?.creativeTeamOverride ?? [];
-  const cast = extra?.castOverride ?? [];
-  const combined = [...team, ...cast].map((p) => ({
+  const team = (extra?.creativeTeamOverride ?? []).map((p) => ({
+    group: "creative" as const,
     role: p.role,
     name: p.name,
     href: p.href,
   }));
+  const cast = (extra?.castOverride ?? []).map((p) => ({
+    group: "cast" as const,
+    role: p.role,
+    name: p.name,
+    href: p.href,
+  }));
+  const combined = [...team, ...cast];
   return combined.length ? combined : undefined;
 }
 
@@ -311,6 +320,46 @@ function relatedUpcomingEvents(current: DatEvent): DatEvent[] {
   return events
     .filter((e) => e.status === "upcoming" && e.id !== current.id && e.category === current.category)
     .slice(0, 3);
+}
+
+type CycleEntry = { slug: string; title: string; posterUrl?: string; location?: string; festival?: string };
+
+/**
+ * Finds all productions that share the same relatedBaseTitle as the given
+ * productionSlug — i.e., every iteration of a production cycle (revivals,
+ * workshop versions, etc). Returns the list excluding the current slug.
+ */
+function relatedProductionCycle(productionSlug?: string): CycleEntry[] {
+  if (!productionSlug) return [];
+
+  const currentProd = productionMap[productionSlug];
+  if (!currentProd) return [];
+
+  const currentExtra = productionDetailsMap[productionSlug];
+  const rawBase =
+    currentExtra?.relatedBaseTitle ??
+    currentProd.title?.split("--")[0]?.trim() ??
+    "";
+  const baseTitle = rawBase.replace(/\s+/g, " ").trim().toLowerCase();
+  if (!baseTitle) return [];
+
+  return Object.entries(productionMap)
+    .filter(([slug, prod]) => {
+      if (slug === productionSlug) return false;
+      const extra = productionDetailsMap[slug];
+      const thisRaw =
+        extra?.relatedBaseTitle ?? prod.title?.split("--")[0]?.trim() ?? "";
+      return thisRaw.replace(/\s+/g, " ").trim().toLowerCase() === baseTitle;
+    })
+    .map(([slug, prod]) => ({
+      slug,
+      title: prod.title,
+      posterUrl: normalizeImagePath(
+        productionDetailsMap[slug]?.heroImageUrl ?? prod.posterUrl,
+      ),
+      location: prod.location,
+      festival: prod.festival,
+    }));
 }
 
 export async function generateStaticParams() {
@@ -385,8 +434,9 @@ export default async function EventDetailPage({ params }: PageProps) {
   const artistNote = resolveArtistNote(event, productionExtra);
   const credits = resolveCredits(event, productionExtra);
   const relatedEvents = relatedUpcomingEvents(event);
+  const productionCycle = relatedProductionCycle(event.production);
 
-  const eventUrl = `${SITE_URL}/events/${event.id}`;
+  const eventUrl = `${SHARE_URL}/events/${event.id}`;
   const gcalUrl = googleCalendarUrl(event);
   const outlookUrl = outlookCalendarUrl(event);
   const jsonLd = buildEventJsonLd(event);
@@ -532,18 +582,22 @@ export default async function EventDetailPage({ params }: PageProps) {
                     ) : null}
                 </div>
 
-                <div className="evd-actions">
-                    {primaryAction ? (
+                {/* ── Primary CTA — full-width, accent-colored ───────────── */}
+                {primaryAction ? (
+                  <div className="evd-actions-primary">
                     <a
-                        href={primaryAction.href}
-                        target={primaryAction.external ? "_blank" : undefined}
-                        rel={primaryAction.external ? "noopener noreferrer" : undefined}
-                        className={`evd-btn ${primaryAction.tone === "invite" ? "evd-btn-invite" : "evd-btn-primary"}`}
+                      href={primaryAction.href}
+                      target={primaryAction.external ? "_blank" : undefined}
+                      rel={primaryAction.external ? "noopener noreferrer" : undefined}
+                      className={`evd-btn-cta ${primaryAction.tone === "invite" ? "evd-btn-cta--invite" : ""}`}
                     >
-                        {primaryAction.label}
+                      {primaryAction.label}
                     </a>
-                    ) : null}
+                  </div>
+                ) : null}
 
+                {/* ── Secondary actions ──────────────────────────────────── */}
+                <div className="evd-actions">
                     {relatedProduction ? (
                     <Link href={`/theatre/${event.production}`} className="evd-btn-ghost">
                         Full Production →
@@ -634,30 +688,11 @@ export default async function EventDetailPage({ params }: PageProps) {
         </section>
       ) : null}
 
-      {/* ── Photo Gallery ───────────────────────────────────────────────── */}
+      {/* ── Photo Gallery (with lightbox) ───────────────────────────────── */}
       {photoGallery?.length ? (
         <section className="evd-gallery-band">
           <div className="evd-container">
-            <div className="evd-gallery-head">
-              <p className="evd-gallery-eyebrow">Gallery</p>
-              {photoCredit ? (
-                <p className="evd-gallery-credit">Photos: {photoCredit}</p>
-              ) : null}
-            </div>
-          </div>
-          <div className="evd-gallery-scroll" role="list" aria-label="Production photos">
-            {photoGallery.map((img, i) => (
-              <div key={i} className="evd-gallery-item" role="listitem">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img.src}
-                  alt={img.alt ?? `Production photo ${i + 1}`}
-                  className="evd-gallery-img"
-                  loading="lazy"
-                  decoding="async"
-                />
-              </div>
-            ))}
+            <EventGallery images={photoGallery} photoCredit={photoCredit} />
           </div>
         </section>
       ) : null}
@@ -666,11 +701,9 @@ export default async function EventDetailPage({ params }: PageProps) {
       {videoEmbedUrl ? (
         <section className="evd-video-band">
           <div className="evd-container evd-video-inner">
-            {videoData?.title ? (
-              <p className="evd-video-title">{videoData.title}</p>
-            ) : (
-              <p className="evd-video-eyebrow">Watch</p>
-            )}
+            <p className="evd-video-eyebrow">
+              {videoData?.title ?? "Watch"}
+            </p>
             <div className="evd-video-frame-wrap">
               <iframe
                 src={videoEmbedUrl}
@@ -684,31 +717,55 @@ export default async function EventDetailPage({ params }: PageProps) {
         </section>
       ) : null}
 
-      {/* ── Cast & Credits ──────────────────────────────────────────────── */}
-      {credits?.length ? (
-        <section className="evd-credits-band">
-          <div className="evd-container">
-            <div className="evd-section-head">
-              <p className="evd-section-eyebrow">The Company</p>
-              <h2 className="evd-section-title">Cast &amp; Creative Team</h2>
-            </div>
-            <div className="evd-credits-grid">
-              {credits.map((c, i) => (
-                <div key={i} className="evd-credit-item">
-                  <p className="evd-credit-role">{c.role}</p>
-                  {c.href ? (
-                    <Link href={c.href} className="evd-credit-name evd-credit-link">
-                      {c.name}
-                    </Link>
-                  ) : (
-                    <p className="evd-credit-name">{c.name}</p>
-                  )}
-                </div>
-              ))}
-            </div>
+      {/* ── Cast & Creative Team ────────────────────────────────────────── */}
+      {credits?.length ? (() => {
+        const creativeTeam = credits.filter((c) => !c.group || c.group === "creative");
+        const cast = credits.filter((c) => c.group === "cast");
+        const renderCreditItem = (c: CreditItem, i: number) => (
+          <div key={i} className="evd-credit-item">
+            <p className="evd-credit-role">{c.role}</p>
+            {c.href ? (
+              <Link href={c.href} className="evd-credit-name evd-credit-link">
+                {c.name}
+              </Link>
+            ) : (
+              <p className="evd-credit-name">{c.name}</p>
+            )}
           </div>
-        </section>
-      ) : null}
+        );
+        return (
+          <section className="evd-credits-band">
+            <div className="evd-container">
+              <div className="evd-section-head">
+                <p className="evd-section-eyebrow">The Company</p>
+                <h2 className="evd-section-title">Cast &amp; Creative Team</h2>
+              </div>
+              {creativeTeam.length > 0 ? (
+                <div className="evd-credits-group">
+                  <h3 className="evd-credits-group-label">Creative Team</h3>
+                  <div className="evd-credits-grid">
+                    {creativeTeam.map(renderCreditItem)}
+                  </div>
+                </div>
+              ) : null}
+              {cast.length > 0 ? (
+                <div className="evd-credits-group">
+                  <h3 className="evd-credits-group-label">Cast</h3>
+                  <div className="evd-credits-grid">
+                    {cast.map(renderCreditItem)}
+                  </div>
+                </div>
+              ) : null}
+              {/* Fallback: render all without grouping if no group fields set */}
+              {creativeTeam.length === 0 && cast.length === 0 ? (
+                <div className="evd-credits-grid">
+                  {credits.map(renderCreditItem)}
+                </div>
+              ) : null}
+            </div>
+          </section>
+        );
+      })() : null}
 
       {/* ── Press & Audience Quotes ─────────────────────────────────────── */}
       {event.pressQuotes?.length ? (
@@ -753,6 +810,41 @@ export default async function EventDetailPage({ params }: PageProps) {
                   Full Production →
                 </Link>
               </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {/* ── Related Productions Cycle ────────────────────────────────── */}
+      {productionCycle.length > 0 ? (
+        <section className="evd-cycle-band">
+          <div className="evd-container">
+            <div className="evd-section-head">
+              <p className="evd-section-eyebrow">Production History</p>
+              <h2 className="evd-section-title">The Full Cycle</h2>
+            </div>
+            <div className="evd-cycle-grid">
+              {productionCycle.map((p) => (
+                <Link key={p.slug} href={`/theatre/${p.slug}`} className="evd-cycle-card">
+                  <div
+                    className="evd-cycle-img"
+                    style={{
+                      backgroundImage: p.posterUrl
+                        ? `url('${p.posterUrl}')`
+                        : undefined,
+                    }}
+                  />
+                  <div className="evd-cycle-body">
+                    <p className="evd-cycle-title">{p.title}</p>
+                    {(p.location || p.festival) ? (
+                      <p className="evd-cycle-meta">
+                        {p.location}{p.festival ? ` · ${p.festival}` : ""}
+                      </p>
+                    ) : null}
+                    <span className="evd-cycle-link">View Archive →</span>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
         </section>
@@ -1092,11 +1184,13 @@ export default async function EventDetailPage({ params }: PageProps) {
         color: var(--evd-accent);
         }
         .evd-meta-shell {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(0,0,0,0.60);
+        border: 1px solid rgba(255,255,255,0.10);
         border-radius: 18px;
-        padding: 1.05rem 1.05rem 1.15rem;
-        box-shadow: none;
+        padding: 1.25rem 1.25rem 1.35rem;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
         }
 
         .evd-meta-grid {
@@ -1135,12 +1229,46 @@ export default async function EventDetailPage({ params }: PageProps) {
         line-height: 1.5;
         margin: 0.4rem 0 0;
         }
+        /* Primary CTA — big standout full-width button */
+        .evd-actions-primary {
+          margin-top: 1.1rem;
+        }
+        .evd-btn-cta {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          padding: 1rem 1.5rem;
+          border-radius: 12px;
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.95rem;
+          font-weight: 800;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          text-decoration: none;
+          background: var(--evd-accent);
+          color: var(--evd-button-text);
+          border: none;
+          box-shadow: 0 6px 24px rgba(0,0,0,0.32);
+          transition: transform 0.18s, box-shadow 0.18s, opacity 0.18s;
+        }
+        .evd-btn-cta:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 32px rgba(0,0,0,0.42);
+          opacity: 0.95;
+        }
+        .evd-btn-cta--invite {
+          background: #2FA873;
+          color: #fff;
+        }
+
+        /* Secondary actions row */
         .evd-actions {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.75rem;
-        margin-top: 1rem;
-        padding-top: 1rem;
+        gap: 0.65rem;
+        margin-top: 0.9rem;
+        padding-top: 0.9rem;
         border-top: 1px solid rgba(255,255,255,0.08);
         }
 
@@ -1150,11 +1278,11 @@ export default async function EventDetailPage({ params }: PageProps) {
           align-items: center;
           justify-content: center;
           gap: 0.45rem;
-          min-height: 46px;
-          padding: 0.8rem 1.2rem;
-          border-radius: 10px;
+          min-height: 40px;
+          padding: 0.65rem 1.05rem;
+          border-radius: 9px;
           font-family: "DM Sans", sans-serif;
-          font-size: 0.82rem;
+          font-size: 0.78rem;
           font-weight: 700;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -1180,9 +1308,9 @@ export default async function EventDetailPage({ params }: PageProps) {
         box-shadow: none;
         }
         .evd-btn-ghost {
-        color: rgba(255,255,255,0.78);
-        background: transparent;
-        border: 1.5px solid rgba(255,255,255,0.16);
+        color: rgba(255,255,255,0.72);
+        background: rgba(255,255,255,0.05);
+        border: 1.5px solid rgba(255,255,255,0.14);
         cursor: pointer;
         }
 
@@ -1241,8 +1369,9 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
 
         .evd-related-band {
-        background: var(--evd-surface);
+        background: var(--evd-surface-2);
         padding: clamp(3rem, 6vw, 4.5rem) 0;
+        border-top: 2px solid rgba(255,255,255,0.04);
         }
 
         .evd-section-head {
@@ -1380,6 +1509,9 @@ export default async function EventDetailPage({ params }: PageProps) {
           .evd-btn-ghost {
             width: 100%;
           }
+          .evd-btn-cta {
+            padding: 1rem 1.25rem;
+          }
         }
 
         /* ── Accessibility meta card ───────────────────────────────────── */
@@ -1395,7 +1527,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-note-band {
           background: var(--evd-surface);
           padding: clamp(3.5rem, 7vw, 5.5rem) 0;
-          border-top: 1px solid rgba(255,255,255,0.06);
+          border-top: 1px solid rgba(255,255,255,0.05);
         }
         .evd-note-eyebrow {
           font-family: "DM Sans", sans-serif;
@@ -1444,8 +1576,9 @@ export default async function EventDetailPage({ params }: PageProps) {
 
         /* ── Photo Gallery ─────────────────────────────────────────────── */
         .evd-gallery-band {
-          background: var(--evd-surface-2);
+          background: var(--evd-surface);
           padding: clamp(2.5rem, 5vw, 4rem) 0;
+          border-top: 1px solid rgba(255,255,255,0.05);
           overflow: hidden;
         }
         .evd-gallery-head {
@@ -1472,7 +1605,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
         .evd-gallery-scroll {
           display: flex;
-          gap: 0.6rem;
+          gap: 0.65rem;
           overflow-x: auto;
           padding: 0 clamp(1.25rem, 5vw, 3rem) 1rem;
           scrollbar-width: thin;
@@ -1482,11 +1615,27 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-gallery-scroll::-webkit-scrollbar { height: 4px; }
         .evd-gallery-scroll::-webkit-scrollbar-track { background: transparent; }
         .evd-gallery-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 999px; }
-        .evd-gallery-item {
+        .evd-gallery-item--btn {
           flex-shrink: 0;
           height: clamp(200px, 30vw, 320px);
           border-radius: 10px;
           overflow: hidden;
+          background: none;
+          border: none;
+          padding: 0;
+          cursor: zoom-in;
+          position: relative;
+        }
+        .evd-gallery-item--btn::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: rgba(0,0,0,0);
+          border-radius: 10px;
+          transition: background 0.18s;
+        }
+        .evd-gallery-item--btn:hover::after {
+          background: rgba(0,0,0,0.18);
         }
         .evd-gallery-img {
           height: 100%;
@@ -1495,14 +1644,17 @@ export default async function EventDetailPage({ params }: PageProps) {
           display: block;
           object-fit: cover;
           border-radius: 10px;
-          transition: opacity 0.2s;
+          transition: transform 0.3s ease;
         }
-        .evd-gallery-img:hover { opacity: 0.88; }
+        .evd-gallery-item--btn:hover .evd-gallery-img {
+          transform: scale(1.03);
+        }
 
         /* ── Video ─────────────────────────────────────────────────────── */
         .evd-video-band {
           background: var(--evd-surface);
           padding: clamp(3rem, 6vw, 5rem) 0;
+          border-top: 1px solid rgba(255,255,255,0.05);
         }
         .evd-video-inner {
           display: flex;
@@ -1546,22 +1698,36 @@ export default async function EventDetailPage({ params }: PageProps) {
           border: none;
         }
 
-        /* ── Cast & Credits ────────────────────────────────────────────── */
+        /* ── Cast & Creative Team ──────────────────────────────────────── */
         .evd-credits-band {
-          background: var(--evd-surface-2);
+          background: var(--evd-surface);
           padding: clamp(3rem, 6vw, 5rem) 0;
+          border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .evd-credits-group {
+          margin-top: 1.75rem;
+        }
+        .evd-credits-group:first-of-type {
+          margin-top: 1.25rem;
+        }
+        .evd-credits-group-label {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.24em;
+          text-transform: uppercase;
+          color: var(--evd-accent);
+          margin: 0 0 0.6rem;
         }
         .evd-credits-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
           gap: 0;
-          margin-top: 1.5rem;
           border-top: 1px solid rgba(255,255,255,0.07);
         }
         .evd-credit-item {
-          padding: 0.85rem 0;
+          padding: 0.85rem 1rem 0.85rem 0;
           border-bottom: 1px solid rgba(255,255,255,0.07);
-          padding-right: 1rem;
         }
         .evd-credit-role {
           font-family: "DM Sans", sans-serif;
@@ -1590,7 +1756,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-quotes-band {
           background: var(--evd-surface);
           padding: clamp(3rem, 6vw, 5rem) 0;
-          border-top: 1px solid rgba(255,255,255,0.06);
+          border-top: 1px solid rgba(255,255,255,0.05);
         }
         .evd-quotes-eyebrow {
           color: rgba(255,255,255,0.32) !important;
@@ -1630,6 +1796,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-related-events-band {
           background: var(--evd-surface-2);
           padding: clamp(3rem, 6vw, 5rem) 0;
+          border-top: 2px solid rgba(255,255,255,0.04);
         }
         .evd-rel-events-grid {
           display: grid;
@@ -1695,6 +1862,71 @@ export default async function EventDetailPage({ params }: PageProps) {
           margin-top: 1.5rem;
           display: flex;
           justify-content: flex-end;
+        }
+
+        /* ── Production Cycle ──────────────────────────────────────────── */
+        .evd-cycle-band {
+          background: var(--evd-surface-2);
+          padding: clamp(2.5rem, 5vw, 4rem) 0;
+          border-top: 1px solid rgba(255,255,255,0.04);
+        }
+        .evd-cycle-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          gap: 1rem;
+          margin-top: 1.5rem;
+        }
+        .evd-cycle-card {
+          text-decoration: none;
+          border-radius: 12px;
+          overflow: hidden;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          display: flex;
+          flex-direction: column;
+          transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+        }
+        .evd-cycle-card:hover {
+          transform: translateY(-3px);
+          border-color: rgba(255,255,255,0.16);
+          box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+        }
+        .evd-cycle-img {
+          height: 150px;
+          background-size: cover;
+          background-position: center;
+          background-color: rgba(255,255,255,0.05);
+        }
+        .evd-cycle-body {
+          padding: 1rem 1.1rem 1.1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.3rem;
+          flex: 1;
+        }
+        .evd-cycle-title {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: #fff;
+          line-height: 1.25;
+          margin: 0;
+        }
+        .evd-cycle-meta {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.82rem;
+          color: rgba(255,255,255,0.42);
+          margin: 0;
+          line-height: 1.45;
+        }
+        .evd-cycle-link {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--evd-accent);
+          margin-top: 0.35rem;
         }
 
         /* ── Share button dropdown ─────────────────────────────────────── */
