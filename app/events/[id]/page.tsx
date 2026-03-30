@@ -784,6 +784,14 @@ export default async function EventDetailPage({ params }: PageProps) {
         </section>
       ) : null}
 
+      {/* ── Archive zone separator ──────────────────────────────────── */}
+      {(relatedProduction || productionCycle.length > 0 || relatedEvents.length > 0) ? (
+        <div className="evd-archive-zone-label" aria-hidden="true">
+          <span className="evd-archive-zone-label-text">More to Explore</span>
+          <span className="evd-archive-zone-label-line" />
+        </div>
+      ) : null}
+
       {relatedProduction ? (
         <section className="evd-related-band">
           <div className="evd-container">
@@ -1188,9 +1196,6 @@ export default async function EventDetailPage({ params }: PageProps) {
         border: 1px solid rgba(255,255,255,0.10);
         border-radius: 18px;
         padding: 1.25rem 1.25rem 1.35rem;
-        box-shadow: 0 12px 40px rgba(0,0,0,0.35);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
         }
 
         .evd-meta-grid {
@@ -1333,11 +1338,12 @@ export default async function EventDetailPage({ params }: PageProps) {
         display: inline-flex;
         flex-direction: column;
         gap: 0.3rem;
-        background: rgba(36,17,35,0.22);
-        border-left: 6px solid var(--evd-accent);
+        background: rgba(0,0,0,0.28);
+        border-left: 8px solid var(--evd-accent);
         border-radius: 0 18px 18px 0;
-        padding: 1rem 1.55rem 1.1rem 1.2rem;
+        padding: 1.1rem 1.75rem 1.2rem 1.4rem;
         max-width: 760px;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
         }
         .evd-body-eyebrow {
         color: rgba(255,255,255,0.92);
@@ -1368,10 +1374,37 @@ export default async function EventDetailPage({ params }: PageProps) {
         margin-bottom: 0;
         }
 
+        /* ─────────────────────────────────────────────────────────────────
+           Archival zone — visually separate from the editorial magazine run.
+           Intentionally cooler / more muted than the editorial surface.
+           ───────────────────────────────────────────────────────────────── */
+        .evd-archive-zone-label {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 0.9rem clamp(1.25rem, 5vw, 3rem);
+          background: rgba(255,255,255,0.03);
+          border-top: 1px solid rgba(255,255,255,0.07);
+          border-bottom: 1px solid rgba(255,255,255,0.07);
+        }
+        .evd-archive-zone-label-text {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.68rem;
+          font-weight: 700;
+          letter-spacing: 0.30em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.24);
+          white-space: nowrap;
+        }
+        .evd-archive-zone-label-line {
+          flex: 1;
+          height: 1px;
+          background: rgba(255,255,255,0.06);
+        }
+
         .evd-related-band {
-        background: var(--evd-surface-2);
+        background: #111118;
         padding: clamp(3rem, 6vw, 4.5rem) 0;
-        border-top: 2px solid rgba(255,255,255,0.04);
         }
 
         .evd-section-head {
@@ -1802,9 +1835,9 @@ export default async function EventDetailPage({ params }: PageProps) {
 
         /* ── Related Upcoming Events ───────────────────────────────────── */
         .evd-related-events-band {
-          background: var(--evd-surface-2);
+          background: #111118;
           padding: clamp(3rem, 6vw, 5rem) 0;
-          border-top: 2px solid rgba(255,255,255,0.04);
+          border-top: 1px solid rgba(255,255,255,0.05);
         }
         .evd-rel-events-grid {
           display: grid;
@@ -1874,9 +1907,9 @@ export default async function EventDetailPage({ params }: PageProps) {
 
         /* ── Production Cycle ──────────────────────────────────────────── */
         .evd-cycle-band {
-          background: var(--evd-surface-2);
+          background: #111118;
           padding: clamp(2.5rem, 5vw, 4rem) 0;
-          border-top: 1px solid rgba(255,255,255,0.04);
+          border-top: 1px solid rgba(255,255,255,0.05);
         }
         .evd-cycle-grid {
           display: grid;

@@ -196,6 +196,22 @@ export interface ProductionExtra {
    * "A Girl Without Wings — Workshop Production", etc.
    */
   relatedBaseTitle?: string;
+
+  /**
+   * Forces the production page to display as "ARCHIVE" status regardless of
+   * linked events. Use on original/archive productions when a revival has its
+   * own page — the revival event will still be shown in the events section,
+   * but the hero badge stays "ARCHIVE".
+   */
+  forceArchive?: boolean;
+
+  /**
+   * ID of an upcoming event (from lib/events.ts) that is a revival or
+   * continuation of this production but lives on a different production page.
+   * Surfacing it here lets the archive page show "see the revival" without
+   * linking the event to this production slug.
+   */
+  relatedUpcomingEventId?: string;
 }
 
 /** Per-slug details. Keep show-specific content here—page remains generic. */
@@ -640,9 +656,75 @@ export const productionDetailsMap: Record<string, ProductionExtra> = {
     /** Related config (optional – used by buildRelated/page.tsx) */
     relatedBaseTitle: "A Girl Without Wings",
     // relatedTitle: "More from the Girl Without Wings cycle",
+
+    /**
+     * Archive mode: this is the original 2013 production — keep the ARCHIVE
+     * status badge even though we're surfacing the 2027 revival below.
+     */
+    forceArchive: true,
+
+    /**
+     * The revival event (linked to a different production page) should still
+     * appear in the events section of this archive so visitors can find it.
+     */
+    relatedUpcomingEventId: "agwow-iati-revival-2027",
   },
 
   
+  // ── Revival production page ──────────────────────────────────────────────────
+  "a-girl-without-wings-revival-2027": {
+    heroImageUrl: "posters/a-girl-without-wings-landscape.jpg",
+
+    subtitle: "The Revival — IATI Theater, NYC",
+
+    creditPrefix: "DIRECTED BY",
+    creditPeople: [
+      { name: "Kathleen Amshoff", href: "/alumni/kathleen-amshoff" },
+    ],
+
+    dates: "14 March – 6 April 2027",
+    festival: "Off-Off-Broadway Revival",
+    venue: "IATI Theater",
+    city: "New York City",
+    runtime: "Approx. 2 hours with interval",
+    ageRecommendation: "12+",
+
+    synopsis: [
+      "A lonely Condor and the beautiful Chaska fall hopelessly in love. Fortune, however, is not these lovers' friend — because Chaska is not another bird but a wingless shepherd girl.",
+      "Fourteen years on from the original New York Times Critics' Pick, DAT's landmark Andean love story returns to IATI for a three-week run. The original creative team is joined by new voices from DAT's global network.",
+      "A world of wicked hummingbirds, brightly colored threads of prayer reaching for the gods, and a storm of shoes that rains from the sky.",
+    ],
+
+    ticketsLink: "https://www.iatitheater.org/tickets",
+
+    creativeTeamOverride: [
+      { role: "Director", name: "Kathleen Amshoff", href: "/alumni/kathleen-amshoff" },
+      { role: "Playwright", name: "Jason Williamson" },
+      { role: "Artistic Director", name: "Jesse Baxter", href: "/alumni/jesse-baxter" },
+      { role: "Composer", name: "Ana María Torres" },
+      { role: "Set Design", name: "Brittany Vasta" },
+      { role: "Lighting Design", name: "Carl Wiemann" },
+      { role: "Costume Design", name: "Angela Harner" },
+      { role: "Stage Manager", name: "Maxwell Waters" },
+    ],
+
+    castOverride: [
+      { role: "Chaska", name: "Lucille Baxter" },
+      { role: "Condor", name: "Seamus Baxter" },
+      { role: "Mother", name: "Christen Madrazo" },
+      { role: "Musician", name: "Thomas Burns Scully", href: "/alumni/thomas-burns-scully" },
+    ],
+
+    pullQuote: {
+      quote:
+        "This piece was born in the Andes, carried across the Atlantic, and rebuilt from scratch for every community it visited. The condor still flies. The girl is still brave. That never changes.",
+      attribution: "Kathleen Amshoff, Director",
+    },
+
+    relatedBaseTitle: "A Girl Without Wings",
+    relatedTitle: "The Full Production Cycle",
+  },
+
   "voices-from-zimbabwe": {
     /** Hero image for the theatre page (adjust the path if needed) */
     heroImageUrl: "posters/voices-from-zimbabwe-landscape.jpg",

@@ -163,6 +163,13 @@ export interface ProductionPageTemplateProps {
 
   /** Events linked to this production via lib/events.ts (production field = slug) */
   productionEvents?: DatEvent[];
+
+  /**
+   * When true, forces the status badge to display as "ARCHIVE" even if
+   * upcoming events are present (e.g. an archive page that shows a revival
+   * event in the events section without changing the page's own status).
+   */
+  forceArchive?: boolean;
 }
 
 /* ----------------------- Utilities ------------------------- */
@@ -1107,10 +1114,14 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
   // ── Production event status (events-first, date-based fallback) ─────────────
   const safeProductionEvents = productionEvents ?? [];
   const eventStatusLabel = productionEventStatus(safeProductionEvents);
-  // Derive display status: events take priority, then fall back to date inference
+  // Derive display status: events take priority, then fall back to date inference.
+  // forceArchive overrides everything — use on archive pages that surface a revival
+  // event in the events section without changing the page's own status badge.
   const displayStatus: "NOW PLAYING" | "UPCOMING" | "ARCHIVE" | null =
-    eventStatusLabel ??
-    (runIsUpcomingOrCurrent ? "UPCOMING" : runIsPast ? "ARCHIVE" : null);
+    props.forceArchive
+      ? "ARCHIVE"
+      : eventStatusLabel ??
+        (runIsUpcomingOrCurrent ? "UPCOMING" : runIsPast ? "ARCHIVE" : null);
   const displayStatusColor =
     displayStatus === "NOW PLAYING"
       ? "#2FA873"

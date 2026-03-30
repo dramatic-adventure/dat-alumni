@@ -337,7 +337,7 @@ export const events: DatEvent[] = [
     ticketType: "ticketed",
     featured: true,
     tags: ["New York Times Critics Pick", "revival", "IATI", "Andean myth", "puppetry"],
-    production: "a-girl-without-wings",
+    production: "a-girl-without-wings-revival-2027",
     contactEmail: "hello@dramaticadventure.com",
 
     // ── [EXPLICIT] Rich content — every optional field set ────────────────────

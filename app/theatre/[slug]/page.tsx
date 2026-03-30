@@ -12,7 +12,7 @@ import ProductionPageTemplate, {
 } from "@/components/productions/ProductionPageTemplate";
 import { buildRelated } from "@/lib/buildRelated";
 import { loadAlumniNameBySlug } from "@/lib/loadAlumni";
-import { eventsByProduction } from "@/lib/events";
+import { eventsByProduction, eventById } from "@/lib/events";
 
 // NOTE: params is now a Promise in Next 15 for some routes
 type PageProps = { params: Promise<{ slug: string }> };
@@ -273,7 +273,16 @@ export default async function TheatreProductionPage({ params }: PageProps) {
     }) ?? undefined;
 
   // --- Related productions/projects (dynamic) ---
-  const prodEvents = eventsByProduction(slug);
+  let prodEvents = eventsByProduction(slug);
+
+  // If this production has a relatedUpcomingEventId, surface that event too
+  // (used for archive pages that want to show a revival without changing status)
+  if (extra?.relatedUpcomingEventId) {
+    const revivalEvent = eventById(extra.relatedUpcomingEventId);
+    if (revivalEvent && revivalEvent.status === "upcoming") {
+      prodEvents = [...prodEvents, revivalEvent];
+    }
+  }
   const related = buildRelated(slug, 8);
   const relatedItems = Array.isArray(related.items) ? related.items : [];
 
@@ -345,6 +354,8 @@ export default async function TheatreProductionPage({ params }: PageProps) {
       relatedTitle={relatedTitle}
       /* Linked events (from lib/events.ts) */
       productionEvents={prodEvents.length > 0 ? prodEvents : undefined}
+      /* Archive pages with revival events keep their ARCHIVE status badge */
+      forceArchive={extra?.forceArchive ?? false}
     />
   );
 }

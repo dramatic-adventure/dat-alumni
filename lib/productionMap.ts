@@ -490,6 +490,31 @@ export const productionMap: Record<string, Production> = {
     }
   },
 
+  // ── Revival production page (2027 IATI run) — separate from the 2013 archive
+  "a-girl-without-wings-revival-2027": {
+    title: "A Girl Without Wings -- The Revival",
+    slug: "a-girl-without-wings-revival-2027",
+    year: 2027,
+    season: 0,
+    location: "New York City",
+    venue: "IATI Theater",
+    festival: "Off-Off-Broadway Revival 2027",
+    posterUrl: "/posters/a-girl-without-wings-landscape.jpg",
+    artists: {
+      "kathleen-amshoff": ["Director"],
+      "jason-williamson": ["Playwright"],
+      "jesse-baxter": ["Artistic Director"],
+      "maxwell-waters": ["Stage Manager"],
+      "carl-wiemann": ["Lighting Design"],
+      "brittany-vasta": ["Set Design"],
+      "angela-harner": ["Costume Design"],
+      "lucille-baxter": ["Actor"],
+      "seamus-baxter": ["Actor"],
+      "christen-madrazo": ["Actor"],
+      "thomas-burns-scully": ["Musician"],
+    },
+  },
+
   "a-girl-without-wings-workshop-production": {
   title: "A Girl without Wings -- Workshop Production",
   slug: "a-girl-without-wings-workshop-production",
