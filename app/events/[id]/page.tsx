@@ -436,6 +436,10 @@ export default async function EventDetailPage({ params }: PageProps) {
   const relatedEvents = relatedUpcomingEvents(event);
   const productionCycle = relatedProductionCycle(event.production);
 
+  // Images for editorial overlays — photo gallery is the primary source
+  const editorialImg1 = photoGallery?.[0]?.src ?? null;   // About bg
+  const editorialImg2 = photoGallery?.[1]?.src ?? photoGallery?.[0]?.src ?? null; // Note bg
+
   const eventUrl = `${SHARE_URL}/events/${event.id}`;
   const gcalUrl = googleCalendarUrl(event);
   const outlookUrl = outlookCalendarUrl(event);
@@ -655,18 +659,19 @@ export default async function EventDetailPage({ params }: PageProps) {
             </div>
         </section>
 
-      <section className="evd-body-band">
+      <section
+        className="evd-body-band"
+        style={editorialImg1 ? { backgroundImage: `url('${editorialImg1}')` } : undefined}
+      >
+        {editorialImg1 ? <div className="evd-body-photo-overlay" aria-hidden="true" /> : null}
         <div className="evd-container evd-body-grid">
           <div className="evd-body-heading-box">
             <p className="evd-body-eyebrow">About the Event</p>
             <h2 className="evd-body-title">Inside the Event</h2>
           </div>
-
           <div className="evd-body-copy">
             {paragraphs.map((p, i) => (
-              <p key={i} className="evd-body-paragraph">
-                {p}
-              </p>
+              <p key={i} className="evd-body-paragraph">{p}</p>
             ))}
           </div>
         </div>
@@ -674,8 +679,12 @@ export default async function EventDetailPage({ params }: PageProps) {
 
       {/* ── Artist's Note ──────────────────────────────────────────────── */}
       {artistNote ? (
-        <section className="evd-note-band">
-          <div className="evd-container">
+        <section
+          className="evd-note-band"
+          style={editorialImg2 ? { backgroundImage: `url('${editorialImg2}')` } : undefined}
+        >
+          {editorialImg2 ? <div className="evd-note-photo-overlay" aria-hidden="true" /> : null}
+          <div className="evd-container evd-note-inner">
             <p className="evd-note-eyebrow">Artist&apos;s Note</p>
             <blockquote className="evd-note-quote">
               <span className="evd-note-mark" aria-hidden="true">&ldquo;</span>
@@ -772,14 +781,23 @@ export default async function EventDetailPage({ params }: PageProps) {
         <section className="evd-quotes-band">
           <div className="evd-container">
             <p className="evd-section-eyebrow evd-quotes-eyebrow">What People Are Saying</p>
-            <div className="evd-quotes-grid">
-              {event.pressQuotes.map((q, i) => (
-                <blockquote key={i} className="evd-press-quote">
-                  <p className="evd-press-quote-text">&ldquo;{q.text}&rdquo;</p>
-                  <footer className="evd-press-quote-attr">— {q.attribution}</footer>
-                </blockquote>
-              ))}
-            </div>
+            {/* Hero quote — first one, full-width editorial treatment */}
+            <blockquote className="evd-quote-hero">
+              <span className="evd-quote-hero-mark" aria-hidden="true">&ldquo;</span>
+              <p className="evd-quote-hero-text">{event.pressQuotes[0].text}&rdquo;</p>
+              <footer className="evd-quote-hero-attr">— {event.pressQuotes[0].attribution}</footer>
+            </blockquote>
+            {/* Supporting quotes — compact grid */}
+            {event.pressQuotes.length > 1 ? (
+              <div className="evd-quotes-grid">
+                {event.pressQuotes.slice(1).map((q, i) => (
+                  <blockquote key={i} className="evd-press-quote">
+                    <p className="evd-press-quote-text">&ldquo;{q.text}&rdquo;</p>
+                    <footer className="evd-press-quote-attr">— {q.attribution}</footer>
+                  </blockquote>
+                ))}
+              </div>
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -1315,10 +1333,29 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
 
         .evd-body-band {
-        background: transparent;
+        position: relative;
+        background: var(--evd-surface);
+        background-size: cover;
+        background-position: center;
         padding: clamp(3.5rem, 7vw, 6rem) 0;
+        overflow: hidden;
+        }
+        .evd-body-photo-overlay {
+        position: absolute;
+        inset: 0;
+        /* Left side stays very dark for text legibility; right side reveals the photo */
+        background: linear-gradient(
+            100deg,
+            rgba(0,0,0,0.93) 0%,
+            rgba(0,0,0,0.86) 30%,
+            rgba(0,0,0,0.62) 60%,
+            rgba(0,0,0,0.32) 100%
+        );
+        z-index: 0;
         }
         .evd-body-grid {
+        position: relative;
+        z-index: 1;
         display: grid;
         grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.45fr);
         gap: clamp(2rem, 5vw, 4.75rem);
@@ -1353,17 +1390,17 @@ export default async function EventDetailPage({ params }: PageProps) {
         max-width: 7.5ch;
         }
         .evd-body-copy {
-        background: rgba(247,239,229,0.96);
-        border-radius: 26px;
-        padding: clamp(1.6rem, 3vw, 2.6rem);
-        box-shadow: none;
+        /* No card background — text floats over the editorial photo */
+        background: transparent;
+        padding: 0;
         }
         .evd-body-paragraph {
         font-family: "Space Grotesk", sans-serif;
-        font-size: clamp(1rem, 1.4vw, 1.08rem);
+        font-size: clamp(1rem, 1.4vw, 1.12rem);
         line-height: 1.85;
-        color: #241123;
+        color: rgba(255,255,255,0.85);
         margin: 0 0 1.25rem;
+        text-shadow: 0 1px 8px rgba(0,0,0,0.55);
         }
         .evd-body-paragraph:last-child {
         margin-bottom: 0;
@@ -1553,9 +1590,24 @@ export default async function EventDetailPage({ params }: PageProps) {
 
         /* ── Artist's Note ─────────────────────────────────────────────── */
         .evd-note-band {
+          position: relative;
           background: var(--evd-surface);
+          background-size: cover;
+          background-position: center;
           padding: clamp(3.5rem, 7vw, 5.5rem) 0;
-          border-top: 1px solid rgba(255,255,255,0.05);
+          overflow: hidden;
+        }
+        .evd-note-photo-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0,0,0,0.82);
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+          z-index: 0;
+        }
+        .evd-note-inner {
+          position: relative;
+          z-index: 1;
         }
         .evd-note-eyebrow {
           font-family: "DM Sans", sans-serif;
@@ -1631,11 +1683,69 @@ export default async function EventDetailPage({ params }: PageProps) {
           color: rgba(255,255,255,0.28);
           margin: 0;
         }
+        /* Featured (first) gallery image — large editorial 16:9 */
+        .evd-gallery-featured {
+          display: block;
+          width: 100%;
+          aspect-ratio: 16 / 9;
+          border-radius: 16px;
+          overflow: hidden;
+          background: none;
+          border: none;
+          padding: 0;
+          cursor: zoom-in;
+          position: relative;
+          margin: 0 0 0.75rem;
+        }
+        .evd-gallery-featured-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          border-radius: 16px;
+          transition: transform 0.4s ease;
+        }
+        .evd-gallery-featured:hover .evd-gallery-featured-img {
+          transform: scale(1.025);
+        }
+        /* "View all photos" hint — fades in on hover */
+        .evd-gallery-featured-hint {
+          position: absolute;
+          bottom: 1rem;
+          right: 1.25rem;
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.78rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.9);
+          background: rgba(0,0,0,0.52);
+          border-radius: 999px;
+          padding: 0.35rem 0.9rem;
+          opacity: 0;
+          transition: opacity 0.22s;
+          pointer-events: none;
+        }
+        .evd-gallery-featured:hover .evd-gallery-featured-hint {
+          opacity: 1;
+        }
+        /* Dim overlay on featured hover */
+        .evd-gallery-featured::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: 16px;
+          background: rgba(0,0,0,0);
+          transition: background 0.22s;
+        }
+        .evd-gallery-featured:hover::after {
+          background: rgba(0,0,0,0.14);
+        }
         .evd-gallery-scroll {
           display: flex;
           gap: 0.65rem;
           overflow-x: auto;
-          padding: 0 clamp(1.25rem, 5vw, 3rem) 1rem;
+          padding: 0 0 1rem;
           scrollbar-width: thin;
           scrollbar-color: rgba(255,255,255,0.12) transparent;
           -webkit-overflow-scrolling: touch;
@@ -1645,7 +1755,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-gallery-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 999px; }
         .evd-gallery-item--btn {
           flex-shrink: 0;
-          height: clamp(200px, 30vw, 320px);
+          height: clamp(160px, 22vw, 240px);
           border-radius: 10px;
           overflow: hidden;
           background: none;
@@ -1798,6 +1908,58 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-quotes-eyebrow {
           color: rgba(255,255,255,0.32) !important;
           margin-bottom: 2rem !important;
+        }
+        /* Hero pull-quote — first quote, full-width, very large */
+        .evd-quote-hero {
+          position: relative;
+          margin: 0 0 clamp(2rem, 4vw, 3.5rem);
+          padding: clamp(2rem, 4vw, 3rem) clamp(1.5rem, 4vw, 3rem) clamp(2rem, 4vw, 3rem) clamp(2rem, 5vw, 4rem);
+          border-left: 6px solid var(--evd-accent);
+          background: rgba(255,255,255,0.03);
+          border-radius: 0 20px 20px 0;
+          overflow: hidden;
+        }
+        .evd-quote-hero::before {
+          /* Decorative large accent glow behind the quote mark */
+          content: "";
+          position: absolute;
+          top: -20px;
+          left: -20px;
+          width: 160px;
+          height: 160px;
+          background: var(--evd-glow);
+          border-radius: 50%;
+          filter: blur(40px);
+          pointer-events: none;
+        }
+        .evd-quote-hero-mark {
+          display: block;
+          font-family: "Anton", sans-serif;
+          font-size: clamp(5rem, 14vw, 10rem);
+          line-height: 0.65;
+          color: var(--evd-accent);
+          opacity: 0.30;
+          margin-bottom: 0.4rem;
+          pointer-events: none;
+          user-select: none;
+        }
+        .evd-quote-hero-text {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: clamp(1.3rem, 3vw, 2rem);
+          font-weight: 600;
+          font-style: italic;
+          line-height: 1.55;
+          color: rgba(255,255,255,0.92);
+          margin: 0 0 1.25rem;
+          max-width: 820px;
+        }
+        .evd-quote-hero-attr {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          font-weight: 700;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          color: var(--evd-accent);
         }
         .evd-quotes-grid {
           display: grid;
