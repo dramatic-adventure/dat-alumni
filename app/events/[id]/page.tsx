@@ -740,19 +740,19 @@ export default async function EventDetailPage({ params }: PageProps) {
                 <p className="evd-section-eyebrow">The Company</p>
                 <h2 className="evd-section-title">Cast &amp; Creative Team</h2>
               </div>
-              {creativeTeam.length > 0 ? (
-                <div className="evd-credits-group">
-                  <h3 className="evd-credits-group-label">Creative Team</h3>
-                  <div className="evd-credits-grid">
-                    {creativeTeam.map(renderCreditItem)}
-                  </div>
-                </div>
-              ) : null}
               {cast.length > 0 ? (
                 <div className="evd-credits-group">
                   <h3 className="evd-credits-group-label">Cast</h3>
                   <div className="evd-credits-grid">
                     {cast.map(renderCreditItem)}
+                  </div>
+                </div>
+              ) : null}
+              {creativeTeam.length > 0 ? (
+                <div className="evd-credits-group">
+                  <h3 className="evd-credits-group-label">Creative Team</h3>
+                  <div className="evd-credits-grid">
+                    {creativeTeam.map(renderCreditItem)}
                   </div>
                 </div>
               ) : null}
@@ -1746,11 +1746,19 @@ export default async function EventDetailPage({ params }: PageProps) {
           margin: 0;
           line-height: 1.3;
         }
-        .evd-credit-link {
+        .evd-credit-link,
+        .evd-credit-link:link,
+        .evd-credit-link:visited {
           text-decoration: none;
-          transition: color 0.15s;
+          color: rgba(255,255,255,0.9);
+          transition: color 160ms ease, transform 160ms ease, letter-spacing 160ms ease;
         }
-        .evd-credit-link:hover { color: var(--evd-accent); }
+        .evd-credit-link:hover,
+        .evd-credit-link:focus-visible {
+          color: var(--evd-accent);
+          transform: translateX(-2px);
+          letter-spacing: 0.02em;
+        }
 
         /* ── Press Quotes ──────────────────────────────────────────────── */
         .evd-quotes-band {
