@@ -784,20 +784,12 @@ export default async function EventDetailPage({ params }: PageProps) {
         </section>
       ) : null}
 
-      {/* ── Archive zone separator ──────────────────────────────────── */}
-      {(relatedProduction || productionCycle.length > 0 || relatedEvents.length > 0) ? (
-        <div className="evd-archive-zone-label" aria-hidden="true">
-          <span className="evd-archive-zone-label-text">More to Explore</span>
-          <span className="evd-archive-zone-label-line" />
-        </div>
-      ) : null}
-
       {relatedProduction ? (
         <section className="evd-related-band">
           <div className="evd-container">
             <div className="evd-section-head">
-              <p className="evd-section-eyebrow">Related Production</p>
-              <h2 className="evd-section-title">Go Deeper into the Work</h2>
+              <p className="evd-section-eyebrow">Explore</p>
+              <h2 className="evd-section-title">More to Explore</h2>
             </div>
 
             <div className="evd-production-card">
@@ -808,7 +800,7 @@ export default async function EventDetailPage({ params }: PageProps) {
                 }}
               />
               <div className="evd-production-copy">
-                <p className="evd-production-label">From the Theatre Archive</p>
+                <p className="evd-production-label">Full Production</p>
                 <h3 className="evd-production-title">{relatedProduction.title}</h3>
                 <p className="evd-production-meta">
                   {relatedProduction.location}
@@ -1192,7 +1184,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         color: var(--evd-accent);
         }
         .evd-meta-shell {
-        background: rgba(0,0,0,0.60);
+        background: rgba(0,0,0,0.4);
         border: 1px solid rgba(255,255,255,0.10);
         border-radius: 18px;
         padding: 1.25rem 1.25rem 1.35rem;
@@ -1234,7 +1226,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         line-height: 1.5;
         margin: 0.4rem 0 0;
         }
-        /* Primary CTA — big standout full-width button */
+        /* Primary CTA — always DAT pink, full-width, commanding */
         .evd-actions-primary {
           margin-top: 1.1rem;
         }
@@ -1243,28 +1235,31 @@ export default async function EventDetailPage({ params }: PageProps) {
           align-items: center;
           justify-content: center;
           width: 100%;
-          padding: 1rem 1.5rem;
+          padding: 1.1rem 1.5rem;
           border-radius: 12px;
           font-family: "DM Sans", sans-serif;
-          font-size: 0.95rem;
+          font-size: 1rem;
           font-weight: 800;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
           text-decoration: none;
-          background: var(--evd-accent);
-          color: var(--evd-button-text);
+          background: #F23359;
+          color: #ffffff;
           border: none;
-          box-shadow: 0 6px 24px rgba(0,0,0,0.32);
-          transition: transform 0.18s, box-shadow 0.18s, opacity 0.18s;
+          box-shadow: 0 4px 20px rgba(242, 51, 89, 0.45);
+          transition: transform 0.18s, box-shadow 0.18s;
         }
         .evd-btn-cta:hover {
           transform: translateY(-2px);
-          box-shadow: 0 10px 32px rgba(0,0,0,0.42);
-          opacity: 0.95;
+          box-shadow: 0 8px 32px rgba(242, 51, 89, 0.55);
         }
         .evd-btn-cta--invite {
           background: #2FA873;
           color: #fff;
+          box-shadow: 0 4px 20px rgba(47, 168, 115, 0.4);
+        }
+        .evd-btn-cta--invite:hover {
+          box-shadow: 0 8px 32px rgba(47, 168, 115, 0.5);
         }
 
         /* Secondary actions row */
@@ -1779,18 +1774,19 @@ export default async function EventDetailPage({ params }: PageProps) {
           margin: 0;
           line-height: 1.3;
         }
+        /* Alumni credit links — DAT purple base, DAT pink on hover */
         .evd-credit-link,
         .evd-credit-link:link,
         .evd-credit-link:visited {
           text-decoration: none;
-          color: rgba(255,255,255,0.9);
-          transition: color 160ms ease, transform 160ms ease, letter-spacing 160ms ease;
+          color: #6c00af;
+          transition: color 160ms ease, letter-spacing 160ms ease;
+          display: inline-block;
         }
         .evd-credit-link:hover,
         .evd-credit-link:focus-visible {
-          color: var(--evd-accent);
-          transform: translateX(-2px);
-          letter-spacing: 0.02em;
+          color: #F23359;
+          letter-spacing: 0.04em;
         }
 
         /* ── Press Quotes ──────────────────────────────────────────────── */
@@ -1835,9 +1831,9 @@ export default async function EventDetailPage({ params }: PageProps) {
 
         /* ── Related Upcoming Events ───────────────────────────────────── */
         .evd-related-events-band {
-          background: #111118;
+          background: #0c0c14;
           padding: clamp(3rem, 6vw, 5rem) 0;
-          border-top: 1px solid rgba(255,255,255,0.05);
+          border-top: 3px solid var(--evd-accent);
         }
         .evd-rel-events-grid {
           display: grid;
@@ -1857,8 +1853,11 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
         .evd-rel-card:hover {
           transform: translateY(-3px);
-          border-color: rgba(255,255,255,0.16);
-          box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+          border-color: var(--evd-accent);
+          box-shadow:
+            0 12px 32px rgba(0,0,0,0.4),
+            0 0 0 1px var(--evd-accent),
+            0 0 28px -4px var(--evd-accent);
         }
         .evd-rel-card-img {
           height: 160px;
@@ -1907,7 +1906,7 @@ export default async function EventDetailPage({ params }: PageProps) {
 
         /* ── Production Cycle ──────────────────────────────────────────── */
         .evd-cycle-band {
-          background: #111118;
+          background: #2493A9;
           padding: clamp(2.5rem, 5vw, 4rem) 0;
           border-top: 1px solid rgba(255,255,255,0.05);
         }
