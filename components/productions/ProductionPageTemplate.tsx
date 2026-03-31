@@ -18,6 +18,7 @@ import { DATButtonLink } from "@/components/ui/DATButton";
 import ProductionTagButtons from "@/components/ui/ProductionTagButtons";
 import DramaClubBadge from "@/components/ui/DramaClubBadge";
 import ProcessBand from "@/components/productions/ProcessBand";
+import ProductionGallery from "@/components/productions/ProductionGallery";
 import type { RelatedItem } from "@/lib/buildRelated";
 import Lightbox from "@/components/shared/Lightbox";
 
@@ -1622,15 +1623,18 @@ if (ageRecText) metaValues.push({ value: ageRecText });
 
       {renderAfterHero ?? null}
 
-      {/* ===================== EDITORIAL CONTENT COLUMN ====================== */}
+      {/* ===================== WHITE CARD ====================== */}
       <section style={{ display: "grid", placeItems: "center" }}>
         <article
           style={{
-            width: "clamp(90vw, 100%, min(860px, 95vw))",
-            maxWidth: "860px",
-            background: "transparent",
-            margin: "clamp(2.5rem, 6vw, 4rem) auto",
-            padding: "0 clamp(1.5rem, 6vw, 3rem)",
+            width: "90vw",
+            maxWidth: "1200px",
+            background: "rgba(255,255,255,0.60)",
+            borderRadius: 18,
+            margin: "clamp(1.25rem, 3vw, 2.25rem) auto",
+            padding: "clamp(1.2rem, 3.2vw, 2.4rem)",
+            boxShadow: "0 18px 48px rgba(36,17,35,0.10)",
+            backdropFilter: "saturate(1.05)",
           }}
         >
           <section className="rows">
@@ -1747,17 +1751,18 @@ if (ageRecText) metaValues.push({ value: ageRecText });
             {/* PRODUCTION GALLERY - Full-bleed breakout */}
             {hasMainGallery && gallery && gallery.length > 0 && (
               <div className="ppt-breakout-wrapper">
-                <div className="row rowFull prodrow-block">
-                  <PhotoRowGallery
-                    title="Production Gallery"
-                    images={gallery}
-                    photographer={photographerDisplay ?? null}
-                    photographerHref={photographerHref ?? null}
-                    albumHref={albumHrefDisplay}
-                    albumLabel={albumLabelDisplay}
-                    maxVisible={9}
-                  />
-                </div>
+                <ProductionGallery
+                  images={gallery.flatMap((img) => {
+                    const src = cleanStr(img?.src);
+                    if (!src) return [];
+                    return [{ src, alt: cleanStr(img?.alt) ?? "" }];
+                  })}
+                  photographer={photographerDisplay ?? null}
+                  photographerHref={photographerHref ?? undefined}
+                  albumHref={albumHrefDisplay ?? null}
+                  albumLabel={albumLabelDisplay ?? undefined}
+                  title={displayTitle}
+                />
               </div>
             )}
 
@@ -2008,12 +2013,9 @@ if (ageRecText) metaValues.push({ value: ageRecText });
         }
 
         .ppt-breakout-wrapper {
-          width: 100vw;
-          position: relative;
-          left: 50%;
-          transform: translateX(-50%);
-          margin-left: calc(-1 * clamp(1.5rem, 6vw, 3rem));
-          margin-right: calc(-1 * clamp(1.5rem, 6vw, 3rem));
+          margin-left: calc(-1 * clamp(1.2rem, 3.2vw, 2.4rem));
+          margin-right: calc(-1 * clamp(1.2rem, 3.2vw, 2.4rem));
+          overflow: hidden;
         }
 
         /* ────────────────────────────────────────────────────────────── */

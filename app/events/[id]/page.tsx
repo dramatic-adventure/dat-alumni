@@ -650,181 +650,178 @@ export default async function EventDetailPage({ params }: PageProps) {
               ) : null}
           </div>
         </div>
+      </section>
 
-        {/* ── Two-column content: LEFT description+video / RIGHT club+photo+quotes ── */}
+      {/* ── White Content Card: description → creative team ─────────────── */}
+      <section className="evd-content-section">
         <div className="evd-container">
-          <div className={`evd-dashboard-grid${editorialImg1 || videoEmbedUrl || event.pressQuotes?.length || linkedDramaClubs.length > 0 ? "" : " evd-dashboard-grid--single"}`}>
+          <div className="evd-content-card">
 
-            {/* LEFT: description text (first para bold, Rock Salt subtitle) + video */}
-            <div className="evd-dashboard-left">
-              {paragraphs.length > 0 ? (
-                <div className="evd-dash-description">
-                  {event.subtitle ? (
-                    <p className="evd-dash-tagline">{event.subtitle}</p>
-                  ) : null}
-                  {paragraphs.map((p, i) => (
-                    <p key={i} className={`evd-body-paragraph${i === 0 ? " evd-body-paragraph--lead" : ""}`}>{p}</p>
-                  ))}
-                </div>
-              ) : null}
+            {/* Two-column content: LEFT description+video / RIGHT club+photo+quotes */}
+            <div className={`evd-dashboard-grid${editorialImg1 || videoEmbedUrl || event.pressQuotes?.length || linkedDramaClubs.length > 0 ? "" : " evd-dashboard-grid--single"}`}>
 
-              {videoEmbedUrl ? (
-                <div className="evd-dash-video">
-                  <p className="evd-video-eyebrow">{videoData?.title ?? "Watch"}</p>
-                  <div className="evd-video-frame-wrap">
-                    <iframe
-                      src={videoEmbedUrl}
-                      title={videoData?.title ?? `${event.title} video`}
-                      className="evd-video-frame"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            {/* RIGHT: drama club badge + snapshot photo with quote + press quotes */}
-            {(linkedDramaClubs.length > 0 || editorialImg1 || event.pressQuotes?.length) ? (
-              <div className="evd-dashboard-right">
-                {/* Drama club "in support of" */}
-                {linkedDramaClubs.length > 0 ? (
-                  <div className="evd-dash-club-support">
-                    <p className="evd-dash-club-support-label">
-                      {linkedDramaClubs.length > 1 ? "Featuring DAT Drama Clubs" : "In Support of a DAT Drama Club"}
-                    </p>
-                    <div className="evd-dash-club-support-links">
-                      {linkedDramaClubs.map((club) => (
-                        <Link key={club.slug} href={`/drama-club/${club.slug}`} className="evd-dash-club-support-card">
-                          <DramaClubBadge
-                            name={club.name}
-                            location={club.location}
-                            size={48}
-                            wrappedByParentLink
-                          />
-                          <div className="evd-dash-club-support-copy">
-                            <p className="evd-dash-club-support-name">{club.name}</p>
-                            {club.location ? <p className="evd-dash-club-support-loc">{club.location}</p> : null}
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
-                {/* Production snapshot with quote overlay */}
-                {editorialImg1 ? (
-                  <div
-                    className="evd-dash-snapshot"
-                    style={{ backgroundImage: `url('${editorialImg1}')` }}
-                  >
-                    <div className="evd-dash-snapshot-overlay" aria-hidden="true" />
-                    {artistNote ? (
-                      <blockquote className="evd-dash-quote">
-                        <p className="evd-dash-quote-text">&ldquo;{artistNote.note}&rdquo;</p>
-                        {artistNote.by ? (
-                          <footer className="evd-dash-quote-attr">— {artistNote.by}</footer>
-                        ) : null}
-                      </blockquote>
+              {/* LEFT: description text + video */}
+              <div className="evd-dashboard-left">
+                {paragraphs.length > 0 ? (
+                  <div className="evd-dash-description">
+                    {event.subtitle ? (
+                      <p className="evd-dash-tagline">{event.subtitle}</p>
                     ) : null}
-                  </div>
-                ) : null}
-
-                {/* Press quotes — drama club style */}
-                {event.pressQuotes?.length ? (
-                  <div className="evd-dash-press-quotes">
-                    {event.pressQuotes.map((q, i) => (
-                      <blockquote key={i} className="evd-dash-press-quote">
-                        <p className="evd-dash-press-quote-text">&ldquo;{q.text}&rdquo;</p>
-                        <footer className="evd-dash-press-quote-attr">— {q.attribution}</footer>
-                      </blockquote>
+                    {paragraphs.map((p, i) => (
+                      <p key={i} className={`evd-body-paragraph${i === 0 ? " evd-body-paragraph--lead" : ""}`}>{p}</p>
                     ))}
                   </div>
                 ) : null}
+
+                {videoEmbedUrl ? (
+                  <div className="evd-dash-video">
+                    <div className="evd-video-frame-wrap">
+                      <iframe
+                        src={videoEmbedUrl}
+                        title={videoData?.title ?? `${event.title} video`}
+                        className="evd-video-frame"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* RIGHT: drama club badge + snapshot photo with quote + press quotes */}
+              {(linkedDramaClubs.length > 0 || editorialImg1 || event.pressQuotes?.length) ? (
+                <div className="evd-dashboard-right">
+                  {linkedDramaClubs.length > 0 ? (
+                    <div className="evd-dash-club-support">
+                      <p className="evd-dash-club-support-label">
+                        {linkedDramaClubs.length > 1 ? "Featuring DAT Drama Clubs" : "In Support of a DAT Drama Club"}
+                      </p>
+                      <div className="evd-dash-club-support-links">
+                        {linkedDramaClubs.map((club) => (
+                          <Link key={club.slug} href={`/drama-club/${club.slug}`} className="evd-dash-club-support-card">
+                            <DramaClubBadge
+                              name={club.name}
+                              location={club.location}
+                              size={48}
+                              wrappedByParentLink
+                            />
+                            <div className="evd-dash-club-support-copy">
+                              <p className="evd-dash-club-support-name">{club.name}</p>
+                              {club.location ? <p className="evd-dash-club-support-loc">{club.location}</p> : null}
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {editorialImg1 ? (
+                    <div
+                      className="evd-dash-snapshot"
+                      style={{ backgroundImage: `url('${editorialImg1}')` }}
+                    >
+                      <div className="evd-dash-snapshot-overlay" aria-hidden="true" />
+                      {artistNote ? (
+                        <blockquote className="evd-dash-quote">
+                          <p className="evd-dash-quote-text">&ldquo;{artistNote.note}&rdquo;</p>
+                          {artistNote.by ? (
+                            <footer className="evd-dash-quote-attr">— {artistNote.by}</footer>
+                          ) : null}
+                        </blockquote>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {event.pressQuotes?.length ? (
+                    <div className="evd-dash-press-quotes">
+                      {event.pressQuotes.map((q, i) => (
+                        <blockquote key={i} className="evd-dash-press-quote">
+                          <p className="evd-dash-press-quote-text">&ldquo;{q.text}&rdquo;</p>
+                          <footer className="evd-dash-press-quote-attr">— {q.attribution}</footer>
+                        </blockquote>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
+            {/* Photo Gallery */}
+            {photoGallery?.length ? (
+              <div className="evd-card-gallery">
+                <EventGallery images={photoGallery} photoCredit={photoCredit} />
               </div>
             ) : null}
+
+            {/* Cast */}
+            {castCredits.length > 0 ? (
+              <div className="evd-card-cast">
+                <div className="evd-cast-head">
+                  <span className="evd-cast-head-rule" aria-hidden="true" />
+                  <p className="evd-cast-head-label">Cast</p>
+                  <span className="evd-cast-head-rule" aria-hidden="true" />
+                </div>
+                <div className="evd-cast-grid" role="list" aria-label="Cast members">
+                  {castCredits.map((c, i) => {
+                    const card = (
+                      <div key={i} className="evd-cast-card" role="listitem">
+                        <div className="evd-cast-photo-wrap">
+                          {c.photo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={c.photo.replace(/^http:\/\//, "https://")}
+                              alt={c.name}
+                              className="evd-cast-photo"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ) : (
+                            <div className="evd-cast-photo-placeholder" aria-hidden="true">
+                              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                          )}
+                        </div>
+                        <p className="evd-cast-role">{c.role}</p>
+                        <p className="evd-cast-name">{c.name}</p>
+                      </div>
+                    );
+                    return c.href ? (
+                      <Link key={i} href={c.href} className="evd-cast-card-link">
+                        {card}
+                      </Link>
+                    ) : card;
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {/* Creative Team */}
+            {creativeCredits.length > 0 ? (
+              <div className="evd-card-creative">
+                <div className="evd-creative-head">
+                  <h3 className="evd-creative-label">
+                    {castCredits.length > 0 ? "Creative Team" : "The Company"}
+                  </h3>
+                  <span className="evd-creative-rule" aria-hidden="true" />
+                </div>
+                <div className="evd-creative-grid">
+                  {creativeCredits.map((c, i) => (
+                    <div key={i} className="evd-credit-item">
+                      <p className="evd-credit-role">{c.role}</p>
+                      {c.href ? (
+                        <Link href={c.href} className="evd-credit-name evd-credit-link">{c.name}</Link>
+                      ) : (
+                        <p className="evd-credit-name">{c.name}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
           </div>
         </div>
       </section>
-
-      {/* ── Photo Gallery (with lightbox) ───────────────────────────────── */}
-      {photoGallery?.length ? (
-        <section className="evd-gallery-band">
-          <div className="evd-container">
-            <EventGallery images={photoGallery} photoCredit={photoCredit} />
-          </div>
-        </section>
-      ) : null}
-
-      {/* ── Cast — horizontal scroll with headshots ─────────────────────── */}
-      {castCredits.length > 0 ? (
-        <section className="evd-cast-band">
-          <div className="evd-container">
-            <div className="evd-cast-head">
-              <span className="evd-cast-head-rule" aria-hidden="true" />
-              <p className="evd-cast-head-label">Cast</p>
-              <span className="evd-cast-head-rule" aria-hidden="true" />
-            </div>
-            <div className="evd-cast-grid" role="list" aria-label="Cast members">
-              {castCredits.map((c, i) => {
-                const card = (
-                  <div key={i} className="evd-cast-card" role="listitem">
-                    <div className="evd-cast-photo-wrap">
-                      {c.photo ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={c.photo.replace(/^http:\/\//, "https://")}
-                          alt={c.name}
-                          className="evd-cast-photo"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      ) : (
-                        <div className="evd-cast-photo-placeholder" aria-hidden="true">
-                          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        </div>
-                      )}
-                    </div>
-                    <p className="evd-cast-role">{c.role}</p>
-                    <p className="evd-cast-name">{c.name}</p>
-                  </div>
-                );
-                return c.href ? (
-                  <Link key={i} href={c.href} className="evd-cast-card-link">
-                    {card}
-                  </Link>
-                ) : card;
-              })}
-            </div>
-          </div>
-        </section>
-      ) : null}
-
-      {/* ── Creative Team ────────────────────────────────────────────────── */}
-      {creativeCredits.length > 0 ? (
-        <section className="evd-creative-band">
-          <div className="evd-container">
-            <div className="evd-creative-head">
-              <h3 className="evd-creative-label">
-                {castCredits.length > 0 ? "Creative Team" : "The Company"}
-              </h3>
-              <span className="evd-creative-rule" aria-hidden="true" />
-            </div>
-            <div className="evd-creative-grid">
-              {creativeCredits.map((c, i) => (
-                <div key={i} className="evd-credit-item">
-                  <p className="evd-credit-role">{c.role}</p>
-                  {c.href ? (
-                    <Link href={c.href} className="evd-credit-name evd-credit-link">{c.name}</Link>
-                  ) : (
-                    <p className="evd-credit-name">{c.name}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      ) : null}
 
       {/* Production archive link — simple, unobtrusive */}
       {relatedProduction ? (
@@ -928,34 +925,44 @@ export default async function EventDetailPage({ params }: PageProps) {
         <section className="evd-related-events-band">
           <div className="evd-container">
             <div className="evd-section-head">
-              <p className="evd-section-eyebrow">More {meta.label}s</p>
+              <p className="evd-section-eyebrow">More Events</p>
               <h2 className="evd-section-title">Also Coming Up</h2>
             </div>
             <div className="evd-rel-events-grid">
-              {relatedEvents.map((re) => (
-                <Link key={re.id} href={`/events/${re.id}`} className="evd-rel-card">
-                  {getEventImage(re) ? (
-                    <div
-                      className="evd-rel-card-img"
-                      style={{
-                        backgroundImage: `url('${getEventImage(re)}')`,
-                        backgroundPosition: re.imageFocus ?? "center",
-                      }}
-                    />
-                  ) : (
-                    <div className="evd-rel-card-img evd-rel-card-img--blank" />
-                  )}
-                  <div className="evd-rel-card-body">
-                    <p className="evd-rel-card-date">{formatDateRange(re.date, re.endDate)}</p>
-                    <p className="evd-rel-card-title">{re.title}</p>
-                    <p className="evd-rel-card-venue">{re.venue} · {re.city}</p>
-                  </div>
-                </Link>
-              ))}
+              {relatedEvents.map((re) => {
+                const relGlow = re.category === "performance" ? "#F23359"
+                  : re.category === "festival" ? "#2493A9"
+                  : "#D9A919";
+                return (
+                  <Link
+                    key={re.id}
+                    href={`/events/${re.id}`}
+                    className="evd-rel-card"
+                    style={{ "--evd-rel-glow": relGlow } as CSSProperties}
+                  >
+                    {getEventImage(re) ? (
+                      <div
+                        className="evd-rel-card-img"
+                        style={{
+                          backgroundImage: `url('${getEventImage(re)}')`,
+                          backgroundPosition: re.imageFocus ?? "center",
+                        }}
+                      />
+                    ) : (
+                      <div className="evd-rel-card-img evd-rel-card-img--blank" />
+                    )}
+                    <div className="evd-rel-card-body">
+                      <p className="evd-rel-card-date">{formatDateRange(re.date, re.endDate)}</p>
+                      <p className="evd-rel-card-title">{re.title}</p>
+                      <p className="evd-rel-card-venue">{re.venue} · {re.city}</p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
             <div className="evd-rel-events-footer">
-              <Link href={meta.href} className="evd-btn-ghost">
-                All {meta.label}s →
+              <Link href="/events" className="evd-btn-ghost">
+                All Events →
               </Link>
             </div>
           </div>
@@ -966,13 +973,6 @@ export default async function EventDetailPage({ params }: PageProps) {
       <section className="evd-newsletter-band">
         <div className="evd-container evd-newsletter-inner">
           <div className="evd-newsletter-copy">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/images/dat-logo7.svg"
-              alt=""
-              className="evd-newsletter-logo"
-              aria-hidden="true"
-            />
             <p className="evd-newsletter-eyebrow">Stay Connected</p>
             <h2 className="evd-newsletter-title">Never miss a show.</h2>
             <p className="evd-newsletter-body">
@@ -1174,7 +1174,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           margin: 0 0 0.9rem;
           letter-spacing: 0.01em;
           text-shadow: 0 2px 24px rgba(0,0,0,0.5);
-          white-space: nowrap;
+          padding-right: clamp(2rem, 12vw, 8rem);
         }
 
         .evd-subtitle {
@@ -1245,6 +1245,9 @@ export default async function EventDetailPage({ params }: PageProps) {
           background: rgba(0,0,0,0.50);
           border-top: 2px solid var(--evd-accent);
           border-bottom: 1px solid rgba(255,255,255,0.07);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.55);
+          position: relative;
+          z-index: 10;
         }
         .evd-ticket-bar-inner {
           max-width: 1200px;
@@ -1314,16 +1317,13 @@ export default async function EventDetailPage({ params }: PageProps) {
           color: #fff;
           border: none;
           white-space: nowrap;
-          box-shadow: 0 4px 24px rgba(242,51,89,0.40);
-          transition: transform 0.18s ease, box-shadow 0.18s ease;
+          transition: opacity 0.18s ease;
         }
         .evd-btn-ticket:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 32px rgba(242,51,89,0.58);
+          opacity: 0.82;
         }
         .evd-btn-ticket--invite {
           background: #2FA873;
-          box-shadow: 0 4px 24px rgba(47,168,115,0.38);
         }
 
         /* Accessibility note — subtle single line below secondary actions */
@@ -1432,26 +1432,16 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-dash-video {
           display: flex;
           flex-direction: column;
-          gap: 0.75rem;
-        }
-        .evd-video-eyebrow {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.72rem;
-          font-weight: 700;
-          letter-spacing: 0.28em;
-          text-transform: uppercase;
-          color: var(--evd-accent);
-          margin: 0;
-          align-self: flex-start;
+          gap: 0;
+          margin-top: 18px;
         }
         .evd-video-frame-wrap {
           position: relative;
           width: 100%;
           aspect-ratio: 16 / 9;
-          border-radius: 14px;
+          border-radius: 16px;
           overflow: hidden;
           background: #000;
-          box-shadow: 0 24px 60px rgba(0,0,0,0.5);
         }
         .evd-video-frame {
           position: absolute;
@@ -1593,8 +1583,103 @@ export default async function EventDetailPage({ params }: PageProps) {
           color: rgba(255,255,255,0.32);
         }
 
+        /* ── 3b. White Content Card ────────────────────────────────────── */
+        .evd-content-section {
+          background: var(--evd-surface);
+          padding: clamp(1.5rem, 3vw, 2.5rem) 0 clamp(3rem, 6vw, 5rem);
+        }
+        .evd-content-card {
+          background: rgba(255,255,255,0.62);
+          border-radius: 18px;
+          box-shadow: 0 18px 48px rgba(36,17,35,0.12);
+          border: 1px solid rgba(36,17,35,0.08);
+          backdrop-filter: saturate(1.05);
+          padding: clamp(1.5rem, 3.5vw, 2.8rem) clamp(1.5rem, 3.5vw, 2.8rem);
+          overflow: hidden;
+        }
+
+        /* Text color overrides inside white card */
+        .evd-content-card .evd-body-paragraph {
+          color: rgba(36,17,35,0.82);
+        }
+        .evd-content-card .evd-body-paragraph--lead {
+          color: #241123;
+        }
+        .evd-content-card .evd-dash-tagline {
+          color: var(--evd-accent);
+        }
+        .evd-content-card .evd-dash-club-support {
+          background: rgba(36,17,35,0.05);
+          border-color: rgba(36,17,35,0.10);
+        }
+        .evd-content-card .evd-dash-club-support-name {
+          color: #241123;
+        }
+        .evd-content-card .evd-dash-club-support-loc {
+          color: rgba(36,17,35,0.52);
+        }
+        .evd-content-card .evd-dash-press-quote {
+          background: rgba(36,17,35,0.04);
+        }
+        .evd-content-card .evd-dash-press-quote-text {
+          color: rgba(36,17,35,0.85);
+        }
+        .evd-content-card .evd-dash-press-quote-attr {
+          color: rgba(36,17,35,0.42);
+        }
+
+        /* Gallery inside card */
+        .evd-card-gallery {
+          margin-top: clamp(2rem, 4vw, 3rem);
+          padding-top: clamp(2rem, 4vw, 3rem);
+          border-top: 1px solid rgba(36,17,35,0.08);
+        }
+
+        /* Cast inside card */
+        .evd-card-cast {
+          margin-top: clamp(2rem, 4vw, 3rem);
+          padding-top: clamp(2rem, 4vw, 3rem);
+          border-top: 1px solid rgba(36,17,35,0.08);
+        }
+        .evd-content-card .evd-cast-head-rule {
+          background: linear-gradient(to right, transparent, rgba(36,17,35,0.12) 40%, rgba(36,17,35,0.12) 60%, transparent);
+        }
+        .evd-content-card .evd-cast-head-label {
+          color: rgba(36,17,35,0.4);
+        }
+
+        /* Creative team inside card */
+        .evd-card-creative {
+          margin-top: clamp(2rem, 4vw, 3rem);
+          padding-top: clamp(2rem, 4vw, 3rem);
+          border-top: 1px solid rgba(36,17,35,0.08);
+        }
+        .evd-content-card .evd-creative-label {
+          color: rgba(36,17,35,0.45);
+        }
+        .evd-content-card .evd-creative-rule {
+          background: rgba(36,17,35,0.10);
+        }
+        .evd-content-card .evd-credit-item {
+          border-bottom-color: rgba(36,17,35,0.07);
+        }
+        .evd-content-card .evd-credit-role {
+          color: rgba(36,17,35,0.45);
+        }
+        .evd-content-card .evd-credit-name {
+          color: #241123;
+        }
+        .evd-content-card .evd-credit-link,
+        .evd-content-card .evd-credit-link:link,
+        .evd-content-card .evd-credit-link:visited {
+          color: #6c00af;
+        }
+        .evd-content-card .evd-credit-link:hover {
+          color: #F23359;
+        }
+
         /* ── 4. Photo Gallery ──────────────────────────────────────────── */
-        /* Band wrapper */
+        /* Legacy band (kept for possible standalone use) */
         .evd-gallery-band {
           background: var(--evd-surface);
           padding: clamp(2.5rem, 5vw, 4rem) 0;
@@ -1837,11 +1922,11 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
         .evd-creative-label {
           font-family: "DM Sans", sans-serif;
-          font-size: 0.68rem;
-          font-weight: 700;
-          letter-spacing: 0.30em;
+          font-size: 0.72rem;
+          font-weight: 800;
+          letter-spacing: 0.28em;
           text-transform: uppercase;
-          color: rgba(255,255,255,0.35);
+          color: rgba(255,255,255,0.45);
           margin: 0;
           white-space: nowrap;
         }
@@ -1858,22 +1943,23 @@ export default async function EventDetailPage({ params }: PageProps) {
 
         /* Shared credit item (used by both Creative Team and cast grid) */
         .evd-credit-item {
-          padding: 1rem 1.25rem 1rem 0;
+          padding: 1.1rem 1.25rem 1.1rem 0;
           border-bottom: 1px solid rgba(255,255,255,0.055);
+          text-align: center;
         }
         .evd-credit-role {
           font-family: "DM Sans", sans-serif;
-          font-size: 0.63rem;
+          font-size: 0.68rem;
           font-weight: 700;
           letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: rgba(255,255,255,0.28);
-          margin: 0 0 0.3rem;
+          color: rgba(255,255,255,0.35);
+          margin: 0 0 0.35rem;
         }
         .evd-credit-name {
           font-family: "Space Grotesk", sans-serif;
-          font-size: 0.98rem;
-          font-weight: 700;
+          font-size: 1.08rem;
+          font-weight: 800;
           color: #fff;
           margin: 0;
           line-height: 1.25;
@@ -2020,13 +2106,25 @@ export default async function EventDetailPage({ params }: PageProps) {
           line-height: 1.45;
         }
         .evd-cycle-link {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
           font-family: "DM Sans", sans-serif;
-          font-size: 0.72rem;
+          font-size: 0.68rem;
           font-weight: 700;
           letter-spacing: 0.1em;
           text-transform: uppercase;
-          color: var(--evd-accent);
-          margin-top: 0.35rem;
+          color: rgba(255,255,255,0.65);
+          background: transparent;
+          border: 1.5px solid rgba(255,255,255,0.18);
+          border-radius: 9px;
+          padding: 0.42rem 0.9rem;
+          margin-top: 0.6rem;
+          transition: border-color 0.18s, color 0.18s;
+        }
+        .evd-cycle-card:hover .evd-cycle-link {
+          border-color: rgba(242,51,89,0.45);
+          color: #fff;
         }
         /* Status badge — sits on the card image */
         .evd-cycle-badge {
@@ -2102,11 +2200,11 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
         .evd-rel-card:hover {
           transform: translateY(-3px);
-          border-color: var(--evd-accent);
+          border-color: var(--evd-rel-glow, var(--evd-accent));
           box-shadow:
             0 12px 32px rgba(0,0,0,0.4),
-            0 0 0 1px var(--evd-accent),
-            0 0 28px -4px var(--evd-accent);
+            0 0 0 1px var(--evd-rel-glow, var(--evd-accent)),
+            0 0 28px -4px var(--evd-rel-glow, var(--evd-accent));
         }
         .evd-rel-card:focus-visible {
           outline: 2px solid var(--evd-accent);
@@ -2134,7 +2232,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           font-weight: 700;
           letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: var(--evd-accent);
+          color: var(--evd-rel-glow, var(--evd-accent));
           margin: 0;
         }
         .evd-rel-card-title {
