@@ -414,6 +414,8 @@ export function useAlumniSearch(
           locationTokens.includes(structuredExactQuery) ||
           seasonTokens.includes(structuredExactQuery);
 
+          
+
         const qualifierTokenSet = buildStructuredQualifierTokenSet(item);
 
         const qualifierSearchText = normalizeText(
@@ -881,7 +883,7 @@ export function useAlumniSearch(
                               hasExactStructuredFieldMatch ||
                               aliasSet.has(qLower) ||
                               nameNorm === qLower ||
-                              includeStructuredProjectPrimary
+                              (!hasYearIntent && includeStructuredProjectPrimary)
                             )
                           : (
                               allTermsPresent ||
