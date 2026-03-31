@@ -518,45 +518,47 @@ export default async function EventDetailPage({ params }: PageProps) {
         <div className="evd-ticket-bar">
           <div className="evd-ticket-bar-inner">
 
-            {/* Left: key info chips */}
-            <div className="evd-ticket-meta">
-              {event.runtime ? (
-                <span className="evd-tmeta-chip">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  {event.runtime}
-                </span>
-              ) : null}
-              {event.language ? (
-                <span className="evd-tmeta-chip">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                  {event.language}
-                </span>
-              ) : null}
-              {event.suitability ? (
-                <span className="evd-tmeta-chip">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                  {event.suitability}
-                </span>
-              ) : null}
-              {event.ticketPrice ? (
-                <span className="evd-tmeta-price">{event.ticketPrice}</span>
-              ) : null}
+            {/* Row 1: info chips + price + CTA all on one line */}
+            <div className="evd-ticket-row1">
+              <div className="evd-ticket-chips">
+                {event.runtime ? (
+                  <span className="evd-tmeta-chip">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    {event.runtime}
+                  </span>
+                ) : null}
+                {event.language ? (
+                  <span className="evd-tmeta-chip">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    {event.language}
+                  </span>
+                ) : null}
+                {event.suitability ? (
+                  <span className="evd-tmeta-chip">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    {event.suitability}
+                  </span>
+                ) : null}
+              </div>
+              <div className="evd-ticket-purchase">
+                {event.ticketPrice ? (
+                  <span className="evd-tmeta-price">{event.ticketPrice}</span>
+                ) : null}
+                {primaryAction ? (
+                  <a
+                    href={primaryAction.href}
+                    target={primaryAction.external ? "_blank" : undefined}
+                    rel={primaryAction.external ? "noopener noreferrer" : undefined}
+                    className={`evd-btn-ticket${primaryAction.tone === "invite" ? " evd-btn-ticket--invite" : ""}`}
+                  >
+                    {primaryAction.label}
+                  </a>
+                ) : null}
+              </div>
             </div>
 
-            {/* Right: primary CTA + secondary actions */}
-            <div className="evd-ticket-right">
-              {primaryAction ? (
-                <a
-                  href={primaryAction.href}
-                  target={primaryAction.external ? "_blank" : undefined}
-                  rel={primaryAction.external ? "noopener noreferrer" : undefined}
-                  className={`evd-btn-ticket${primaryAction.tone === "invite" ? " evd-btn-ticket--invite" : ""}`}
-                >
-                  {primaryAction.label}
-                </a>
-              ) : null}
-
-              <div className="evd-actions">
+            {/* Row 2: secondary actions */}
+            <div className="evd-actions">
                 {relatedProduction ? (
                   <Link href={`/theatre/${event.production}`} className="evd-btn-ghost">
                     Explore the Production →
@@ -604,7 +606,6 @@ export default async function EventDetailPage({ params }: PageProps) {
                   </a>
                 ) : null}
               </div>
-            </div>
           </div>
         </div>
 
@@ -1150,7 +1151,7 @@ export default async function EventDetailPage({ params }: PageProps) {
 
         /* Full-bleed ticket bar — spans viewport edge to edge */
         .evd-ticket-bar {
-          background: rgba(0,0,0,0.45);
+          background: rgba(0,0,0,0.50);
           border-top: 2px solid var(--evd-accent);
           border-bottom: 1px solid rgba(255,255,255,0.07);
           backdrop-filter: blur(24px);
@@ -1159,20 +1160,32 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-ticket-bar-inner {
           max-width: 1200px;
           margin: 0 auto;
-          padding: 1.4rem clamp(1.75rem, 4vw, 3rem);
+          padding: 1.1rem clamp(1.75rem, 4vw, 3rem);
           display: flex;
-          align-items: center;
-          gap: 2rem;
-          justify-content: space-between;
-          flex-wrap: wrap;
+          flex-direction: column;
+          gap: 0.6rem;
         }
 
-        /* Left: runtime / language / suitability / price chips */
-        .evd-ticket-meta {
+        /* Row 1: chips left, price + CTA right — all on one line */
+        .evd-ticket-row1 {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1.5rem;
+          flex-wrap: wrap;
+        }
+        .evd-ticket-chips {
           display: flex;
           align-items: center;
           gap: 1.75rem;
           flex-wrap: wrap;
+          flex: 1;
+        }
+        .evd-ticket-purchase {
+          display: flex;
+          align-items: center;
+          gap: 1.25rem;
+          flex-shrink: 0;
         }
         .evd-tmeta-chip {
           display: inline-flex;
@@ -1181,28 +1194,18 @@ export default async function EventDetailPage({ params }: PageProps) {
           font-family: "DM Sans", sans-serif;
           font-size: 0.82rem;
           font-weight: 600;
-          color: rgba(255,255,255,0.60);
+          color: rgba(255,255,255,0.55);
           letter-spacing: 0.03em;
           white-space: nowrap;
         }
-        .evd-tmeta-chip svg { opacity: 0.5; }
+        .evd-tmeta-chip svg { opacity: 0.45; }
         .evd-tmeta-price {
           font-family: "Space Grotesk", sans-serif;
           font-size: 1.05rem;
           font-weight: 700;
           color: #fff;
           white-space: nowrap;
-          padding-left: 0.5rem;
-          border-left: 1px solid rgba(255,255,255,0.15);
-        }
-
-        /* Right: CTA + secondary actions stacked */
-        .evd-ticket-right {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-          gap: 0.75rem;
-          flex-shrink: 0;
+          padding-right: 0.25rem;
         }
 
         /* THE ticket button — always DAT pink, always prominent */
@@ -2380,9 +2383,10 @@ export default async function EventDetailPage({ params }: PageProps) {
             align-items: flex-start;
             gap: 1.25rem;
           }
-          .evd-ticket-right {
+          .evd-ticket-purchase {
             align-items: stretch;
             width: 100%;
+            flex-wrap: wrap;
           }
           .evd-btn-ticket {
             width: 100%;
