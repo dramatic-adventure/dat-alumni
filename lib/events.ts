@@ -41,6 +41,13 @@ export interface DatEvent {
   city: string;
   country: string;
 
+  /** e.g. "Approx. 75 min · No interval" */
+  runtime?: string;
+  /** e.g. "Performed in Spanish & Kichwa" */
+  language?: string;
+  /** e.g. "Suitable for ages 10+" */
+  suitability?: string;
+
   /** Short teaser (1–2 sentences) shown on cards */
   description: string;
   /** Longer detail shown on full-page views */
@@ -335,6 +342,9 @@ export const events: DatEvent[] = [
     ticketUrl: "https://www.ticketshow.com.ec",
     venueUrl: "https://www.teatromalayerba.com",
     ticketPrice: "$15 / $8 estudiantes",
+    runtime: "Approx. 80 min · No interval",
+    language: "Spanish & Kichwa",
+    suitability: "Ages 10+",
     ticketType: "ticketed",
     featured: true,
     tags: ["New York Times Critics Pick", "kichwa", "español", "Quito", "Andes", "Malayerba", "títeres", "co-producción"],

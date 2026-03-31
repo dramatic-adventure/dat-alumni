@@ -513,88 +513,113 @@ export default async function EventDetailPage({ params }: PageProps) {
 
       {/* ── Ticket Dashboard ─────────────────────────────────────────────── */}
       <section className="evd-dashboard-band">
-        <div className="evd-container">
-          {/* ── Top: info grid + CTA + secondary actions ────────────── */}
-          <div className="evd-dash-top">
-            <div className="evd-dash-info-grid">
-              {(event.ticketPrice || primaryAction) ? (
-                <div className="evd-dash-info-card">
-                  <p className="evd-dash-info-label">Tickets</p>
-                  <p className="evd-dash-info-value">{event.ticketPrice ?? "Details below"}</p>
-                </div>
+
+        {/* ── Full-bleed Ticket Bar ────────────────────────────────────── */}
+        <div className="evd-ticket-bar">
+          <div className="evd-ticket-bar-inner">
+
+            {/* Left: key info chips */}
+            <div className="evd-ticket-meta">
+              {event.runtime ? (
+                <span className="evd-tmeta-chip">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  {event.runtime}
+                </span>
               ) : null}
-              {event.accessibility ? (
-                <div className="evd-dash-info-card evd-dash-info-card--full">
-                  <p className="evd-dash-info-label">Accessibility</p>
-                  <p className="evd-dash-info-value evd-dash-info-value--sm">{event.accessibility}</p>
-                </div>
+              {event.language ? (
+                <span className="evd-tmeta-chip">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  {event.language}
+                </span>
+              ) : null}
+              {event.suitability ? (
+                <span className="evd-tmeta-chip">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  {event.suitability}
+                </span>
+              ) : null}
+              {event.ticketPrice ? (
+                <span className="evd-tmeta-price">{event.ticketPrice}</span>
               ) : null}
             </div>
 
-            {primaryAction ? (
-              <div className="evd-dash-cta-wrap">
+            {/* Right: primary CTA + secondary actions */}
+            <div className="evd-ticket-right">
+              {primaryAction ? (
                 <a
                   href={primaryAction.href}
                   target={primaryAction.external ? "_blank" : undefined}
                   rel={primaryAction.external ? "noopener noreferrer" : undefined}
-                  className={`evd-btn-cta ${primaryAction.tone === "invite" ? "evd-btn-cta--invite" : ""}`}
+                  className={`evd-btn-ticket${primaryAction.tone === "invite" ? " evd-btn-ticket--invite" : ""}`}
                 >
                   {primaryAction.label}
                 </a>
-              </div>
-            ) : null}
+              ) : null}
 
-            <div className="evd-actions">
-              {relatedProduction ? (
-                <Link href={`/theatre/${event.production}`} className="evd-btn-ghost">
-                  Full Production →
-                </Link>
-              ) : null}
-              <EventShareButton
-                url={eventUrl}
-                title={`${event.title} — Dramatic Adventure Theatre`}
-                description={event.description}
-              />
-              <div className="evd-cal-wrap">
-                <button type="button" className="evd-btn-ghost evd-cal-btn" aria-haspopup="true">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                    aria-hidden="true" style={{ flexShrink: 0 }}>
-                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/>
-                    <line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
-                  Add to Calendar
-                </button>
-                <div className="evd-cal-dropdown">
-                  <a href={gcalUrl} target="_blank" rel="noopener noreferrer" className="evd-cal-option">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    Google Calendar
-                  </a>
-                  <a href={`/api/events/${event.id}/ics`} className="evd-cal-option">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
-                    Apple Calendar
-                  </a>
-                  <a href={`/api/events/${event.id}/ics`} className="evd-cal-option">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    Outlook / Other
-                  </a>
+              <div className="evd-actions">
+                {relatedProduction ? (
+                  <Link href={`/theatre/${event.production}`} className="evd-btn-ghost">
+                    Explore the Production →
+                  </Link>
+                ) : null}
+                <EventShareButton
+                  url={eventUrl}
+                  title={`${event.title} — Dramatic Adventure Theatre`}
+                  description={event.description}
+                />
+                <div className="evd-cal-wrap">
+                  <button type="button" className="evd-btn-ghost evd-cal-btn" aria-haspopup="true">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                      aria-hidden="true" style={{ flexShrink: 0 }}>
+                      <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    Add to Calendar
+                  </button>
+                  <div className="evd-cal-dropdown">
+                    <a href={gcalUrl} target="_blank" rel="noopener noreferrer" className="evd-cal-option">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      Google Calendar
+                    </a>
+                    <a href={`/api/events/${event.id}/ics`} className="evd-cal-option">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
+                      Apple Calendar
+                    </a>
+                    <a href={`/api/events/${event.id}/ics`} className="evd-cal-option">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      Outlook / Other
+                    </a>
+                  </div>
                 </div>
+                {event.groupBookingEmail ? (
+                  <a
+                    href={`mailto:${event.groupBookingEmail}?subject=${encodeURIComponent(`Group Booking: ${event.title}`)}&body=${encodeURIComponent(`Hi,\n\nI'm interested in booking a group for:\n\n${event.title}\n${formatDateRange(event.date, event.endDate)} · ${event.venue}, ${event.city}\n\nGroup size:\nPreferred date(s):\nAny questions:\n`)}`}
+                    className="evd-btn-ghost evd-btn-group"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Bring a Group →
+                  </a>
+                ) : null}
               </div>
-              {event.groupBookingEmail ? (
-                <a
-                  href={`mailto:${event.groupBookingEmail}?subject=${encodeURIComponent(`Group Booking: ${event.title}`)}&body=${encodeURIComponent(`Hi,\n\nI'm interested in booking a group for:\n\n${event.title}\n${formatDateRange(event.date, event.endDate)} · ${event.venue}, ${event.city}\n\nGroup size:\nPreferred date(s):\nAny questions:\n`)}`}
-                  className="evd-btn-ghost evd-btn-group"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                  Bring a Group →
-                </a>
-              ) : null}
             </div>
           </div>
+        </div>
 
-          {/* ── Two-column content: LEFT description+video / RIGHT club+photo+quotes ── */}
+        {/* ── Accessibility note (full-bleed subtle strip) ─────────────── */}
+        {event.accessibility ? (
+          <div className="evd-a11y-bar">
+            <div className="evd-ticket-bar-inner">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+              <span>{event.accessibility}</span>
+            </div>
+          </div>
+        ) : null}
+
+        {/* ── Two-column content: LEFT description+video / RIGHT club+photo+quotes ── */}
+        <div className="evd-container">
           <div className={`evd-dashboard-grid${editorialImg1 || videoEmbedUrl || event.pressQuotes?.length || linkedDramaClubs.length > 0 ? "" : " evd-dashboard-grid--single"}`}>
 
             {/* LEFT: description text (first para bold, Rock Salt subtitle) + video */}
@@ -1119,93 +1144,112 @@ export default async function EventDetailPage({ params }: PageProps) {
         /* ── 3. Ticket Dashboard ───────────────────────────────────────── */
         .evd-dashboard-band {
           background: var(--evd-surface);
-          padding: clamp(2.5rem, 5vw, 4rem) 0 clamp(3rem, 6vw, 5rem);
           position: relative;
           z-index: 5;
         }
 
-        /* Top row: info grid, CTA, secondary actions */
-        .evd-dash-top {
-          margin-bottom: clamp(2rem, 4vw, 3rem);
-          padding-bottom: clamp(1.5rem, 3vw, 2rem);
+        /* Full-bleed ticket bar — spans viewport edge to edge */
+        .evd-ticket-bar {
+          background: rgba(0,0,0,0.45);
+          border-top: 2px solid var(--evd-accent);
           border-bottom: 1px solid rgba(255,255,255,0.07);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
         }
-
-        .evd-dash-info-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-          gap: 0.75rem;
-          margin-bottom: 1.1rem;
-        }
-        .evd-dash-info-card {
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 12px;
-          padding: 0.85rem 1rem;
-        }
-        .evd-dash-info-card--full {
-          grid-column: 1 / -1;
-        }
-        .evd-dash-info-label {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.65rem;
-          font-weight: 700;
-          letter-spacing: 0.2em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.35);
-          margin: 0 0 0.4rem;
-        }
-        .evd-dash-info-value {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: 0.95rem;
-          font-weight: 700;
-          color: #fff;
-          line-height: 1.35;
-          margin: 0;
-        }
-        .evd-dash-info-value--sm {
-          font-size: 0.88rem;
-          font-weight: 500;
-        }
-        .evd-dash-info-sub {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: 0.82rem;
-          color: rgba(255,255,255,0.46);
-          margin: 0.35rem 0 0;
-        }
-
-        .evd-dash-cta-wrap {
-          margin-bottom: 0.9rem;
-        }
-
-        /* Primary CTA — uses category accent color (not hardcoded pink) */
-        .evd-btn-cta {
+        .evd-ticket-bar-inner {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 1.4rem clamp(1.75rem, 4vw, 3rem);
           display: flex;
           align-items: center;
-          justify-content: center;
-          width: 100%;
-          padding: 1.1rem 1.5rem;
-          border-radius: 12px;
+          gap: 2rem;
+          justify-content: space-between;
+          flex-wrap: wrap;
+        }
+
+        /* Left: runtime / language / suitability / price chips */
+        .evd-ticket-meta {
+          display: flex;
+          align-items: center;
+          gap: 1.75rem;
+          flex-wrap: wrap;
+        }
+        .evd-tmeta-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
           font-family: "DM Sans", sans-serif;
-          font-size: 1rem;
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: rgba(255,255,255,0.60);
+          letter-spacing: 0.03em;
+          white-space: nowrap;
+        }
+        .evd-tmeta-chip svg { opacity: 0.5; }
+        .evd-tmeta-price {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 1.05rem;
+          font-weight: 700;
+          color: #fff;
+          white-space: nowrap;
+          padding-left: 0.5rem;
+          border-left: 1px solid rgba(255,255,255,0.15);
+        }
+
+        /* Right: CTA + secondary actions stacked */
+        .evd-ticket-right {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 0.75rem;
+          flex-shrink: 0;
+        }
+
+        /* THE ticket button — always DAT pink, always prominent */
+        .evd-btn-ticket {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.85rem 2.75rem;
+          border-radius: 999px;
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.92rem;
           font-weight: 800;
-          letter-spacing: 0.12em;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
           text-decoration: none;
-          background: var(--evd-accent);
-          color: var(--evd-button-text);
-          border: none;
-          transition: transform 0.18s, opacity 0.18s;
-        }
-        .evd-btn-cta:hover {
-          transform: translateY(-2px);
-          opacity: 0.92;
-        }
-        /* Invite-only variant (community showcases) */
-        .evd-btn-cta--invite {
-          background: #2FA873;
+          background: #F23359;
           color: #fff;
+          border: none;
+          white-space: nowrap;
+          box-shadow: 0 4px 28px rgba(242,51,89,0.45);
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
         }
+        .evd-btn-ticket:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 8px 36px rgba(242,51,89,0.60);
+        }
+        .evd-btn-ticket--invite {
+          background: #2FA873;
+          box-shadow: 0 4px 28px rgba(47,168,115,0.40);
+        }
+
+        /* Accessibility note strip */
+        .evd-a11y-bar {
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+          padding: 0;
+        }
+        .evd-a11y-bar .evd-ticket-bar-inner {
+          padding-top: 0.7rem;
+          padding-bottom: 0.7rem;
+          gap: 0.6rem;
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.78rem;
+          color: rgba(255,255,255,0.38);
+          flex-wrap: nowrap;
+          align-items: flex-start;
+        }
+        .evd-a11y-bar .evd-ticket-bar-inner svg { margin-top: 1px; flex-shrink: 0; }
 
         /* Secondary actions row */
         .evd-actions {
@@ -1253,6 +1297,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           grid-template-columns: 1fr 1fr;
           gap: clamp(1.75rem, 4vw, 3.5rem);
           align-items: start;
+          padding: clamp(2.5rem, 5vw, 4rem) 0 clamp(3rem, 6vw, 5rem);
         }
         .evd-dashboard-grid--single {
           grid-template-columns: 1fr;
@@ -1676,6 +1721,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           font-weight: 600;
           color: #6C00AF;
           margin: 0 0 0.2rem;
+          text-align: center;
         }
         .evd-cast-name {
           font-family: "Space Grotesk", sans-serif;
@@ -1684,6 +1730,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           color: #241123;
           margin: 0;
           line-height: 1.25;
+          text-align: center;
         }
 
         /* ── 6. Creative Team ──────────────────────────────────────────── */
@@ -2328,6 +2375,19 @@ export default async function EventDetailPage({ params }: PageProps) {
             white-space: normal;
             word-break: break-word;
           }
+          .evd-ticket-bar-inner {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1.25rem;
+          }
+          .evd-ticket-right {
+            align-items: stretch;
+            width: 100%;
+          }
+          .evd-btn-ticket {
+            width: 100%;
+            justify-content: center;
+          }
           .evd-actions {
             flex-direction: column;
             align-items: stretch;
@@ -2335,9 +2395,6 @@ export default async function EventDetailPage({ params }: PageProps) {
           .evd-btn,
           .evd-btn-ghost {
             width: 100%;
-          }
-          .evd-btn-cta {
-            padding: 1rem 1.25rem;
           }
         }
       `}</style>
