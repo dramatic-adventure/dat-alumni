@@ -184,7 +184,7 @@ export interface DatEvent {
    *     { role: "Actor", name: "Maria García" },
    *   ]
    */
-  credits?: { role: string; name: string; href?: string; group?: "creative" | "cast" }[];
+  credits?: { role: string; name: string; href?: string; group?: "creative" | "cast"; photo?: string }[];
 
   /**
    * Press or audience quotes shown in the Quotes section.
@@ -387,10 +387,10 @@ export const events: DatEvent[] = [
       { group: "creative", role: "Lighting Design", name: "Carl Wiemann" },
       { group: "creative", role: "Costume Design", name: "Angela Harner" },
       { group: "creative", role: "Stage Manager", name: "Maxwell Waters" },
-      { group: "cast", role: "Chaska", name: "Lucille Baxter" },
-      { group: "cast", role: "Condor", name: "Seamus Baxter" },
-      { group: "cast", role: "Mother", name: "Christen Madrazo" },
-      { group: "cast", role: "Musician", name: "Thomas Burns Scully", href: "/alumni/thomas-burns-scully" },
+      { group: "cast", role: "Chaska", name: "Lucille Baxter", photo: "/images/teaching-andes.jpg" },
+      { group: "cast", role: "Condor", name: "Seamus Baxter", photo: "/images/performing-zanzibar.jpg" },
+      { group: "cast", role: "Mother", name: "Christen Madrazo", photo: "/images/Andean_Mask_Work.jpg" },
+      { group: "cast", role: "Musician", name: "Thomas Burns Scully", href: "/alumni/thomas-burns-scully", photo: "/images/teaching-amazon.jpg" },
     ],
 
     // Press & audience quotes

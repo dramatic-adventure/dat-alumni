@@ -163,6 +163,9 @@ export interface ProductionPageTemplateProps {
 
   /** Events linked to this production via lib/events.ts (production field = slug) */
   productionEvents?: DatEvent[];
+
+  /** Force the production to display as archived even if dates are in the future */
+  forceArchive?: boolean;
 }
 
 /* ----------------------- Utilities ------------------------- */
