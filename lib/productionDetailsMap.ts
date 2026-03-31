@@ -667,7 +667,7 @@ export const productionDetailsMap: Record<string, ProductionExtra> = {
      * The revival event (linked to a different production page) should still
      * appear in the events section of this archive so visitors can find it.
      */
-    relatedUpcomingEventId: "agwow-iati-revival-2027",
+    relatedUpcomingEventId: "agwow-malayerba-quito-2026",
   },
 
   

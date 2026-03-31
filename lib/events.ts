@@ -305,116 +305,147 @@ export const events: DatEvent[] = [
     contactEmail: "hello@dramaticadventure.com",
   },
 
-  // ── DEMO EVENT: everything activated — A Girl Without Wings revival ──────────
-  // This event is a full showcase of every optional field so you can see
-  // every section of the event detail page rendered at once.
-  // Fields marked [EXPLICIT] are set directly on the event.
-  // Fields marked [PRODUCTION FALLBACK] would auto-populate from the linked
-  // production even if removed — they're shown here so you can see the shape.
+  // ── DEMO EVENT: everything activated — Una Niña Sin Alas, Quito co-production ─
+  // Full showcase of every optional field on the event detail page.
+  // Spanish + Kichwa language co-production with Malayerba Teatro, Quito.
+  // Uses actual DAT alumni with real headshot URLs and /alumni/ profile links.
 
   {
-    id: "agwow-iati-revival-2027",
-    title: "A Girl Without Wings",
-    subtitle: "The Revival — IATI Theater NYC",
+    id: "agwow-malayerba-quito-2026",
+    title: "Una Niña Sin Alas",
+    subtitle: "Co-producción DAT × Malayerba Teatro — Quito, Ecuador",
     category: "performance",
     status: "upcoming",
-    date: "2027-03-14",
-    endDate: "2027-04-06",
-    time: "7:30 PM",
-    doors: "Doors at 7:00 PM",
-    venue: "IATI Theater",
-    address: "64 E 4th St, New York, NY 10003",
-    city: "New York City",
-    country: "USA",
+    date: "2026-09-24",
+    endDate: "2026-10-11",
+    time: "20:00",
+    doors: "Puertas a las 19:30",
+    venue: "Teatro Malayerba",
+    address: "Lizardo García N4-30 y Reina Victoria, La Floresta",
+    city: "Quito",
+    country: "Ecuador",
     description:
-      "The New York Times called it 'Poignant. Sensitively directed. Magical.' — and now it's back. DAT's landmark Andean love story returns to IATI for a three-week run, fourteen years on.",
+      "En español y kichwa. DAT y Malayerba Teatro traen de vuelta la historia de amor más premiada de la compañía — un cóndor solitario y la pastora sin alas que robó su corazón.",
     longDescription:
-      "A lonely Condor and the beautiful Chaska fall hopelessly in love. Fortune, however, is not these lovers' friend — because Chaska is not another bird but a wingless shepherd girl.\n\nIn the merciless but beautiful Andes, the joy and pain of first love between a demigod who yearns for companionship and a girl who must leave her poverty-stricken family to ascend to the skies unfolds.\n\nA Girl Without Wings immerses audiences in a whimsical puppet world where a Native-Andean folktale is reborn amidst wicked hummingbirds darting through the air, brightly colored threads of prayer reaching for the gods, and a storm of shoes that rains from the sky.\n\nThe original 2013 production was a New York Times Critics' Pick. This revival brings back the original creative team alongside new voices from DAT's global network.",
+      "Un cóndor solitario y la hermosa Chaska se enamoran perdidamente. Pero la fortuna no sonríe a estos amantes: Chaska no es un pájaro más, sino una pastora sin alas, atada a la tierra.\n\nEn los despiadados y bellos Andes, el amor y el dolor entre un semidiós que anhela compañía y una muchacha que debe dejar su familia para ascender al cielo toman vida en un mundo de títeres y leyenda kichwa.\n\nUna Niña Sin Alas sumerge al público en un universo donde un cuento del altiplano andino renace entre picaflores traviesos, hilos de oración de colores y una tormenta de zapatos que llueve del cielo.\n\nCelebrada por The New York Times en su estreno en inglés, esta co-producción con Malayerba Teatro la presenta por primera vez en español y kichwa. Una historia nacida en las montañas que regresa a ellas.",
     image: "/posters/a-girl-without-wings-landscape.jpg",
-    imageFocus: "center 40%",
-    ticketUrl: "https://www.iatitheater.org/tickets",
-    ticketPrice: "$28 / $18 concessions",
+    imageFocus: "center 35%",
+    ticketUrl: "https://www.ticketshow.com.ec",
+    ticketPrice: "$15 / $8 estudiantes",
     ticketType: "ticketed",
     featured: true,
-    tags: ["New York Times Critics Pick", "revival", "IATI", "Andean myth", "puppetry"],
+    tags: ["New York Times Critics Pick", "kichwa", "español", "Quito", "Andes", "Malayerba", "títeres", "co-producción"],
     production: "a-girl-without-wings-revival-2027",
     contactEmail: "hello@dramaticadventure.com",
 
-    // ── [EXPLICIT] Rich content — every optional field set ────────────────────
+    // ── Rich content: every section fully populated ───────────────────────────
 
-    // Photo gallery
-    // (Falls back to production galleryImages if removed)
     photoGallery: [
       {
         src: "/images/Andean_Mask_Work.jpg",
-        alt: "The cast in a mask-work rehearsal",
+        alt: "Trabajo de máscaras con el elenco — residencia de creación en Quito",
+      },
+      {
+        src: "/images/theatre/archive/agwow-condor.webp",
+        alt: "El Cóndor — imagen de archivo de la producción original",
       },
       {
         src: "/images/teaching-andes.jpg",
-        alt: "DAT artists in the Andes during community research",
+        alt: "Artistas de DAT en los Andes durante la investigación comunitaria",
       },
       {
         src: "/images/teaching-amazon.jpg",
-        alt: "Sharing a story circle with youth in the Amazon",
+        alt: "Taller de narración con jóvenes en la Amazonía ecuatoriana",
       },
       {
         src: "/images/performing-zanzibar.jpg",
-        alt: "Performance moment — physical theatre",
+        alt: "Momento de actuación en gira internacional",
       },
     ],
-    photoCredit: "María López",
+    photoCredit: "Archivo DAT / Malayerba Teatro",
 
-    // Video embed (YouTube or Vimeo — both auto-detected)
-    // (Falls back to production processSections[0].videoUrl if removed)
     videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    videoTitle: "Watch: Community Workshop Reel",
+    videoTitle: "Mira: Tráiler — Una Niña Sin Alas",
 
-    // Artist's note
-    // (Falls back to production pullQuote if removed)
     artistNote:
-      "This piece was born in the Andes, carried across the Atlantic, and rebuilt from scratch for every community it visited. What you see tonight isn't a revival so much as a re-rooting. The condor still flies. The girl is still brave. That never changes.",
-    artistNoteBy: "Kathleen Amshoff, Director",
+      "Esta pieza nació en los Andes, viajó por tres continentes y fue reconstruida desde cero para cada comunidad que la recibió. Lo que ven esta noche no es un simple revival — es un re-enraizamiento. El cóndor todavía vuela. La niña todavía es valiente. Eso nunca cambia.",
+    artistNoteBy: "Kathleen Amshoff, Directora",
 
-    // Cast & creative team
-    // (Falls back to production creativeTeamOverride + castOverride if removed)
-    // group: "creative" → Creative Team section; group: "cast" → Cast section
+    // Cast & creative team — actual DAT alumni with headshots and profile links.
+    // group: "creative" → Creative Team section; group: "cast" → Cast section (with photos)
     credits: [
-      { group: "creative", role: "Director", name: "Kathleen Amshoff" },
-      { group: "creative", role: "Playwright", name: "Jason Williamson" },
-      { group: "creative", role: "Artistic Director", name: "Jesse Baxter", href: "/alumni/jesse-baxter" },
-      { group: "creative", role: "Composer", name: "Ana María Torres" },
-      { group: "creative", role: "Set Design", name: "Brittany Vasta" },
-      { group: "creative", role: "Lighting Design", name: "Carl Wiemann" },
-      { group: "creative", role: "Costume Design", name: "Angela Harner" },
-      { group: "creative", role: "Stage Manager", name: "Maxwell Waters" },
-      { group: "cast", role: "Chaska", name: "Lucille Baxter", photo: "/images/teaching-andes.jpg" },
-      { group: "cast", role: "Condor", name: "Seamus Baxter", photo: "/images/performing-zanzibar.jpg" },
-      { group: "cast", role: "Mother", name: "Christen Madrazo", photo: "/images/Andean_Mask_Work.jpg" },
-      { group: "cast", role: "Musician", name: "Thomas Burns Scully", href: "/alumni/thomas-burns-scully", photo: "/images/teaching-amazon.jpg" },
+      // Creative Team
+      { group: "creative", role: "Dirección",            name: "Kathleen Amshoff",       href: "/alumni/kathleen-amshoff" },
+      { group: "creative", role: "Dirección Artística",  name: "Jesse Baxter",            href: "/alumni/jesse-baxter" },
+      { group: "creative", role: "Dramaturgia",          name: "Jason Williamson",         href: "/alumni/jason-williamson" },
+      { group: "creative", role: "Traducción al Español",name: "Karina Vélez",             href: "/alumni/karina-velez" },
+      { group: "creative", role: "Traducción al Kichwa", name: "Edward Serrate Yujo",      href: "/alumni/edward-serrate-yujo" },
+      { group: "creative", role: "Diseño de Títeres",    name: "Maria-Isabel Rojas",       href: "/alumni/maria-isabel-rojas" },
+      { group: "creative", role: "Producción",           name: 'Juliana "Juice" Franco',   href: "/alumni/juliana-franco" },
+      // Cast (with real alumni headshots)
+      {
+        group: "cast",
+        role: "Chaska",
+        name: "Isabel Martínez",
+        href: "/alumni/isa-martinez",
+        photo: "https://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1688754593745-N9E8YZU0VE49QMQIOG4J/Marisa+Puller+007.jpg",
+      },
+      {
+        group: "cast",
+        role: "El Cóndor",
+        name: "Javier Spivey",
+        href: "/alumni/javier-spivey",
+        photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613937012050-7HWDMXIJ72U50MKM7JSQ/javier.PNG",
+      },
+      {
+        group: "cast",
+        role: "La Madre",
+        name: "Ana Arellano",
+        href: "/alumni/ana-arellano",
+        photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1616727468148-OBFR2IM4WPQ43JVPXH13/21728911_10156595589829056_8394607501235178776_o.jpg",
+      },
+      {
+        group: "cast",
+        role: "Picaflor",
+        name: "Yan Rey",
+        href: "/alumni/yan-rey",
+        photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1688752206990-AL7Y5GAW3AMGR71JYRJD/Yan_foto-perfil.jpg",
+      },
+      {
+        group: "cast",
+        role: "Narradora",
+        name: "Daniela Garzón-Silva",
+        href: "/alumni/daniela-garzon-silva",
+        photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1688755665448-6R1OMNYCMKOS8G1CZMPH/IMG_2761.jpg",
+      },
+      {
+        group: "cast",
+        role: "Músico Principal",
+        name: "Thomas Burns Scully",
+        href: "/alumni/thomas-burns-scully",
+        photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613454794191-W20YLPVCQ2ZLXOAR79HU/thomas.jpg",
+      },
     ],
 
-    // Press & audience quotes
     pressQuotes: [
       {
         text: "Not much is typical about 'A Girl without Wings.' Poignant. Sensitively directed. Magical.",
         attribution: "Laurel Graeber, The New York Times",
       },
       {
-        text: "A heartfelt, breathtaking story. Theatre at its most alive.",
-        attribution: "The Village Voice",
+        text: "Una historia de amor que pertenece al cielo y a la tierra. Teatro en su estado más vivo.",
+        attribution: "El Comercio, Quito",
       },
       {
-        text: "Pure theatrical imagination. I cried twice and I don't cry.",
-        attribution: "Audience member, IATI Theater",
+        text: "Imaginación teatral pura. Lloré dos veces. Y no soy de las que lloran.",
+        attribution: "Espectadora, Teatro Malayerba",
       },
     ],
 
-    // Accessibility information
     accessibility:
-      "Step-free access via main entrance · Audio-described performance on 22 Mar · BSL-interpreted performance on 29 Mar · Age guidance: 12+ · Runtime approx. 2 hrs with interval",
+      "Acceso sin escalones por entrada principal · Función audiodescrita: 3 oct · Función con interpretación LSEC: 10 oct · Subtítulos en inglés disponibles · Duración aprox. 2 hrs con intermedio · Recomendado mayores de 12 años",
 
-    // Group booking — enables "Bring a Group →" button in the actions row
-    groupBookingEmail: "groups@iatitheater.org",
+    groupBookingEmail: "produccion@malayerba.org",
   },
 
   // ── FESTIVALS & SHOWCASES ────────────────────────────────────────────────────

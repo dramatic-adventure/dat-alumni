@@ -443,8 +443,7 @@ export default async function EventDetailPage({ params }: PageProps) {
   const creativeCredits = (credits ?? []).filter((c) => !c.group || c.group === "creative");
 
   // Images for editorial overlays — photo gallery is the primary source
-  const editorialImg1 = photoGallery?.[0]?.src ?? null;   // About bg
-  const editorialImg2 = photoGallery?.[1]?.src ?? photoGallery?.[0]?.src ?? null; // Note bg
+  const editorialImg1 = photoGallery?.[0]?.src ?? null;
 
   const eventUrl = `${SHARE_URL}/events/${event.id}`;
   const gcalUrl = googleCalendarUrl(event);
@@ -935,25 +934,57 @@ export default async function EventDetailPage({ params }: PageProps) {
       />
 
       <style>{`
+        /* ═══════════════════════════════════════════════════════════════════
+           EVENT DETAIL PAGE — Dramatic Adventure Theatre
+           Inline <style> scoped to this server component.
+
+           CSS custom properties (--evd-accent, --evd-surface, etc.) are
+           injected via heroVars on the root .evd-hero element and cascade
+           to all children — this is why we stay inline rather than using
+           a CSS module.
+
+           Section index:
+             0.  Global / color-scheme
+             1.  Layout: container
+             2.  Hero
+             3.  Ticket Dashboard (info, CTA, two-col: description, video,
+                   drama club, snapshot, press quotes)
+             4.  Photo Gallery (EventGallery component styles)
+             5.  Cast
+             6.  Creative Team
+             7.  Production Archive Link
+             8.  Production Cycle
+             9.  Related Upcoming Events (section-head shared)
+            10.  Newsletter + Mailing List Form
+            11.  Bottom Navigation
+            12.  Dropdowns: Share & Calendar (EventShareButton component)
+            13.  Shared scrollbar utility
+            14.  Responsive overrides
+           ═══════════════════════════════════════════════════════════════════ */
+
+        /* ── 0. Global ─────────────────────────────────────────────────── */
         :root {
           color-scheme: dark;
         }
 
+        /* ── 1. Layout: container ──────────────────────────────────────── */
         .evd-container {
           max-width: 1100px;
           margin: 0 auto;
           padding: 0 clamp(1.25rem, 5vw, 3rem);
         }
 
+        /* ── 2. Hero ───────────────────────────────────────────────────── */
         .evd-hero {
-        position: relative;
-        min-height: 92vh;
-        background-size: cover;
-        background-position: center;
-        display: flex;
-        align-items: flex-end;
-        overflow: visible;
+          position: relative;
+          min-height: 92vh;
+          background-size: cover;
+          background-position: center;
+          display: flex;
+          align-items: flex-end;
+          overflow: visible;
         }
+
         /* Subtle film grain texture */
         .evd-hero::before {
           content: "";
@@ -967,18 +998,22 @@ export default async function EventDetailPage({ params }: PageProps) {
           mix-blend-mode: overlay;
           opacity: 0.35;
         }
+
         .evd-hero-overlay {
           position: absolute;
           inset: 0;
           background: var(--evd-hero-overlay);
           z-index: 1;
         }
+
         .evd-hero-glow {
           position: absolute;
           inset: 0;
           background: radial-gradient(ellipse 80% 60% at 10% 92%, var(--evd-glow) 0%, transparent 58%);
           z-index: 1;
         }
+
+        /* Bleed fade from hero into dashboard */
         .evd-hero::after {
           content: "";
           position: absolute;
@@ -990,13 +1025,14 @@ export default async function EventDetailPage({ params }: PageProps) {
           z-index: 3;
           pointer-events: none;
         }
+
         .evd-hero-content {
           position: relative;
           z-index: 4;
           padding: clamp(6rem, 12vw, 10rem) clamp(1.5rem, 6vw, 5rem) clamp(3.5rem, 7vw, 6rem);
           max-width: 820px;
         }
-        /* DAT logo badge in hero */
+
         .evd-hero-logo {
           display: block;
           width: 52px;
@@ -1024,12 +1060,10 @@ export default async function EventDetailPage({ params }: PageProps) {
           text-decoration: none;
           transition: color 0.2s;
         }
-        .evd-breadcrumb a:hover {
-          color: var(--evd-accent);
-        }
+        .evd-breadcrumb a:hover { color: var(--evd-accent); }
 
+        /* Shared eyebrow/label utility — DM Sans caps tracking */
         .evd-eyebrow,
-        .evd-body-eyebrow,
         .evd-section-eyebrow,
         .evd-bottom-label {
           font-family: "DM Sans", sans-serif;
@@ -1038,7 +1072,6 @@ export default async function EventDetailPage({ params }: PageProps) {
           letter-spacing: 0.28em;
           text-transform: uppercase;
         }
-
         .evd-eyebrow {
           color: var(--evd-accent);
           margin: 0 0 0.8rem;
@@ -1099,7 +1132,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           color: #fff;
         }
 
-        /* ── Ticket Dashboard ──────────────────────────────────────────── */
+        /* ── 3. Ticket Dashboard ───────────────────────────────────────── */
         .evd-dashboard-band {
           background: var(--evd-surface);
           padding: clamp(2.5rem, 5vw, 4rem) 0 clamp(3rem, 6vw, 5rem);
@@ -1108,7 +1141,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           margin-top: -80px;
         }
 
-        /* Top area: info grid + CTA + actions (full-width) */
+        /* Top row: info grid, CTA, secondary actions */
         .evd-dash-top {
           margin-bottom: clamp(2rem, 4vw, 3rem);
           padding-bottom: clamp(1.5rem, 3vw, 2rem);
@@ -1157,8 +1190,78 @@ export default async function EventDetailPage({ params }: PageProps) {
           color: rgba(255,255,255,0.46);
           margin: 0.35rem 0 0;
         }
+
         .evd-dash-cta-wrap {
           margin-bottom: 0.9rem;
+        }
+
+        /* Primary CTA — uses category accent color (not hardcoded pink) */
+        .evd-btn-cta {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          padding: 1.1rem 1.5rem;
+          border-radius: 12px;
+          font-family: "DM Sans", sans-serif;
+          font-size: 1rem;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          text-decoration: none;
+          background: var(--evd-accent);
+          color: var(--evd-button-text);
+          border: none;
+          transition: transform 0.18s, opacity 0.18s;
+        }
+        .evd-btn-cta:hover {
+          transform: translateY(-2px);
+          opacity: 0.92;
+        }
+        /* Invite-only variant (community showcases) */
+        .evd-btn-cta--invite {
+          background: #2FA873;
+          color: #fff;
+        }
+
+        /* Secondary actions row */
+        .evd-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.65rem;
+          margin-top: 0.9rem;
+          padding-top: 0.9rem;
+          border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        /* Ghost button base — shared by all secondary actions */
+        .evd-btn,
+        .evd-btn-ghost {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.45rem;
+          min-height: 40px;
+          padding: 0.65rem 1.05rem;
+          border-radius: 9px;
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.78rem;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          text-decoration: none;
+          transition: transform 0.18s, opacity 0.18s, border-color 0.18s;
+        }
+        .evd-btn:hover,
+        .evd-btn-ghost:hover {
+          transform: translateY(-1px);
+          opacity: 0.92;
+        }
+        .evd-btn-ghost {
+          color: rgba(255,255,255,0.72);
+          background: rgba(255,255,255,0.05);
+          border: 1.5px solid rgba(255,255,255,0.14);
+          cursor: pointer;
         }
 
         /* Two-column body grid */
@@ -1171,13 +1274,13 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-dashboard-grid--single {
           grid-template-columns: 1fr;
         }
-        @media (max-width: 860px) {
-          .evd-dashboard-grid {
-            grid-template-columns: 1fr;
-          }
-        }
 
-        /* Left: description + video */
+        /* Left column: description text */
+        .evd-dashboard-left {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
         .evd-dash-description {
           margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
         }
@@ -1189,6 +1292,17 @@ export default async function EventDetailPage({ params }: PageProps) {
           margin: 0 0 1.25rem;
           opacity: 0.85;
         }
+
+        /* Event description paragraphs */
+        .evd-body-paragraph {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: clamp(1rem, 1.4vw, 1.12rem);
+          line-height: 1.85;
+          color: rgba(255,255,255,0.85);
+          margin: 0 0 1.25rem;
+        }
+        .evd-body-paragraph:last-child { margin-bottom: 0; }
+        /* First paragraph is bold — acts as a standfirst */
         .evd-body-paragraph--lead {
           font-size: clamp(1.05rem, 1.6vw, 1.2rem);
           font-weight: 700;
@@ -1196,11 +1310,37 @@ export default async function EventDetailPage({ params }: PageProps) {
           line-height: 1.65;
         }
 
-        /* Video inside dashboard (drama club style) */
+        /* Video embed inside the dashboard left column */
         .evd-dash-video {
           display: flex;
           flex-direction: column;
           gap: 0.75rem;
+        }
+        .evd-video-eyebrow {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.28em;
+          text-transform: uppercase;
+          color: var(--evd-accent);
+          margin: 0;
+          align-self: flex-start;
+        }
+        .evd-video-frame-wrap {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 16 / 9;
+          border-radius: 14px;
+          overflow: hidden;
+          background: #000;
+          box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+        }
+        .evd-video-frame {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          border: none;
         }
 
         /* Right column */
@@ -1210,7 +1350,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           gap: 1.25rem;
         }
 
-        /* Drama club "in support of" badge */
+        /* Drama club "in support of" */
         .evd-dash-club-support {
           background: rgba(255,255,255,0.04);
           border: 1px solid rgba(255,255,255,0.08);
@@ -1238,12 +1378,8 @@ export default async function EventDetailPage({ params }: PageProps) {
           text-decoration: none;
           transition: opacity 0.18s;
         }
-        .evd-dash-club-support-card:hover {
-          opacity: 0.8;
-        }
-        .evd-dash-club-support-copy {
-          min-width: 0;
-        }
+        .evd-dash-club-support-card:hover { opacity: 0.8; }
+        .evd-dash-club-support-copy { min-width: 0; }
         .evd-dash-club-support-name {
           font-family: "Space Grotesk", sans-serif;
           font-size: 0.95rem;
@@ -1259,7 +1395,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           margin: 0;
         }
 
-        /* Production snapshot — drama club style: image panel with gradient + quote at bottom */
+        /* Production snapshot — image panel with gradient + quote */
         .evd-dash-snapshot {
           position: relative;
           border-radius: 16px;
@@ -1308,7 +1444,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           color: var(--evd-accent);
         }
 
-        /* Press quotes in right column (drama club style) */
+        /* Press quotes in right column */
         .evd-dash-press-quotes {
           display: flex;
           flex-direction: column;
@@ -1339,13 +1475,140 @@ export default async function EventDetailPage({ params }: PageProps) {
           color: rgba(255,255,255,0.32);
         }
 
-        /* ── Cast — horizontal scroll with photo cards ─────────────────── */
+        /* ── 4. Photo Gallery ──────────────────────────────────────────── */
+        /* Band wrapper */
+        .evd-gallery-band {
+          background: var(--evd-surface);
+          padding: clamp(2.5rem, 5vw, 4rem) 0;
+          border-top: 1px solid rgba(255,255,255,0.05);
+          overflow: hidden;
+        }
+
+        /* EventGallery component styles */
+        .evd-gallery-head {
+          display: flex;
+          align-items: baseline;
+          gap: 1.5rem;
+          flex-wrap: wrap;
+          margin-bottom: 1.5rem;
+        }
+        .evd-gallery-eyebrow {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.28em;
+          text-transform: uppercase;
+          color: var(--evd-accent);
+          margin: 0;
+        }
+        .evd-gallery-credit {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.75rem;
+          color: rgba(255,255,255,0.28);
+          margin: 0;
+        }
+
+        /* Featured (first) gallery image — large editorial 16:9 */
+        .evd-gallery-featured {
+          display: block;
+          width: 100%;
+          aspect-ratio: 16 / 9;
+          border-radius: 16px;
+          overflow: hidden;
+          background: none;
+          border: none;
+          padding: 0;
+          cursor: zoom-in;
+          position: relative;
+          margin: 0 0 0.75rem;
+        }
+        .evd-gallery-featured-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          border-radius: 16px;
+          transition: transform 0.4s ease;
+        }
+        .evd-gallery-featured:hover .evd-gallery-featured-img {
+          transform: scale(1.025);
+        }
+        /* "View all photos" hint — fades in on hover */
+        .evd-gallery-featured-hint {
+          position: absolute;
+          bottom: 1rem;
+          right: 1.25rem;
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.78rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.9);
+          background: rgba(0,0,0,0.52);
+          border-radius: 999px;
+          padding: 0.35rem 0.9rem;
+          opacity: 0;
+          transition: opacity 0.22s;
+          pointer-events: none;
+        }
+        .evd-gallery-featured:hover .evd-gallery-featured-hint { opacity: 1; }
+        .evd-gallery-featured::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          border-radius: 16px;
+          background: rgba(0,0,0,0);
+          transition: background 0.22s;
+        }
+        .evd-gallery-featured:hover::after { background: rgba(0,0,0,0.14); }
+
+        /* Scrollable thumbnail strip */
+        .evd-gallery-scroll {
+          display: flex;
+          gap: 0.65rem;
+          overflow-x: auto;
+          padding: 0 0 1rem;
+        }
+        .evd-gallery-item--btn {
+          flex-shrink: 0;
+          height: clamp(160px, 22vw, 240px);
+          border-radius: 10px;
+          overflow: hidden;
+          background: none;
+          border: none;
+          padding: 0;
+          cursor: zoom-in;
+          position: relative;
+        }
+        .evd-gallery-item--btn::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: rgba(0,0,0,0);
+          border-radius: 10px;
+          transition: background 0.18s;
+        }
+        .evd-gallery-item--btn:hover::after { background: rgba(0,0,0,0.18); }
+        .evd-gallery-img {
+          height: 100%;
+          width: auto;
+          max-width: none;
+          display: block;
+          object-fit: cover;
+          border-radius: 10px;
+          transition: transform 0.3s ease;
+        }
+        .evd-gallery-item--btn:hover .evd-gallery-img { transform: scale(1.03); }
+
+        /* ── 5. Cast ───────────────────────────────────────────────────── */
         .evd-cast-band {
           background: var(--evd-surface);
           padding: clamp(2.5rem, 5vw, 4rem) 0;
           border-top: 1px solid rgba(255,255,255,0.06);
           overflow: hidden;
         }
+
+        /* "Cast" header: label flanked by fading rules */
         .evd-cast-head {
           display: flex;
           align-items: center;
@@ -1367,18 +1630,14 @@ export default async function EventDetailPage({ params }: PageProps) {
           margin: 0;
           white-space: nowrap;
         }
+
+        /* Horizontal portrait card scroll */
         .evd-cast-scroll {
           display: flex;
           gap: 1.25rem;
           overflow-x: auto;
           padding: 0 0 1.25rem;
-          scrollbar-width: thin;
-          scrollbar-color: rgba(255,255,255,0.10) transparent;
-          -webkit-overflow-scrolling: touch;
         }
-        .evd-cast-scroll::-webkit-scrollbar { height: 4px; }
-        .evd-cast-scroll::-webkit-scrollbar-track { background: transparent; }
-        .evd-cast-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 999px; }
         .evd-cast-card {
           flex-shrink: 0;
           width: 175px;
@@ -1436,6 +1695,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           margin: 0;
           line-height: 1.25;
         }
+        /* Alumni links — DAT purple base, DAT pink on hover */
         .evd-cast-link,
         .evd-cast-link:link,
         .evd-cast-link:visited {
@@ -1443,11 +1703,12 @@ export default async function EventDetailPage({ params }: PageProps) {
           color: #8b10d9;
           transition: color 160ms ease;
         }
-        .evd-cast-link:hover {
+        .evd-cast-link:hover,
+        .evd-cast-link:focus-visible {
           color: #F23359;
         }
 
-        /* ── Creative Team ─────────────────────────────────────────────── */
+        /* ── 6. Creative Team ──────────────────────────────────────────── */
         .evd-creative-band {
           background: var(--evd-surface);
           padding: clamp(2rem, 4vw, 3.5rem) 0;
@@ -1480,7 +1741,44 @@ export default async function EventDetailPage({ params }: PageProps) {
           gap: 0;
         }
 
-        /* ── Production archive link (simple) ─────────────────────────── */
+        /* Shared credit item (used by both Creative Team and cast grid) */
+        .evd-credit-item {
+          padding: 1rem 1.25rem 1rem 0;
+          border-bottom: 1px solid rgba(255,255,255,0.055);
+        }
+        .evd-credit-role {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.63rem;
+          font-weight: 700;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.28);
+          margin: 0 0 0.3rem;
+        }
+        .evd-credit-name {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.98rem;
+          font-weight: 700;
+          color: #fff;
+          margin: 0;
+          line-height: 1.25;
+        }
+        /* Alumni credit links — DAT purple base, DAT pink on hover */
+        .evd-credit-link,
+        .evd-credit-link:link,
+        .evd-credit-link:visited {
+          text-decoration: none;
+          color: #8b10d9;
+          transition: color 160ms ease, letter-spacing 160ms ease;
+          display: inline-block;
+        }
+        .evd-credit-link:hover,
+        .evd-credit-link:focus-visible {
+          color: #F23359;
+          letter-spacing: 0.04em;
+        }
+
+        /* ── 7. Production Archive Link ────────────────────────────────── */
         .evd-production-link-band {
           background: var(--evd-surface);
           padding: clamp(1rem, 2vw, 1.5rem) 0;
@@ -1521,397 +1819,84 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
         .evd-production-link-cta:hover { opacity: 0.75; }
 
-        /* ── Production Cycle — horizontal scroll ─────────────────────── */
+        /* ── 8. Production Cycle ───────────────────────────────────────── */
+        .evd-cycle-band {
+          background: #111118;
+          padding: clamp(2.5rem, 5vw, 4rem) 0;
+          border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        /* Horizontal scroll of production cards */
         .evd-cycle-scroll {
           display: flex;
           gap: 1rem;
           overflow-x: auto;
           padding: 0 0 1rem;
-          scrollbar-width: thin;
-          scrollbar-color: rgba(255,255,255,0.10) transparent;
-          -webkit-overflow-scrolling: touch;
           margin-top: 1.5rem;
         }
-        .evd-cycle-scroll::-webkit-scrollbar { height: 4px; }
-        .evd-cycle-scroll::-webkit-scrollbar-track { background: transparent; }
-        .evd-cycle-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 999px; }
-        /* evd-cycle-card is reused — just needs flex-shrink: 0 and fixed width */
         .evd-cycle-scroll .evd-cycle-card {
           flex-shrink: 0;
           width: 240px;
         }
-
-        .evd-meta-band {
-          background: var(--evd-surface);
-          padding: clamp(2rem, 4vw, 3rem) 0 clamp(2.5rem, 5vw, 3.5rem);
-          position: relative;
-          z-index: 5;
-          margin-top: -80px;
-        }
-  
-        .evd-clubs-inline {
-        margin-bottom: 1.1rem;
-        }
-
-        .evd-clubs-inline-head {
-        margin-bottom: 0.8rem;
-        }
-
-        .evd-clubs-inline-eyebrow {
-        font-family: "DM Sans", sans-serif;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.24em;
-        text-transform: uppercase;
-        color: var(--evd-accent);
-        margin: 0 0 0.2rem;
-        }
-
-        .evd-clubs-inline-title {
-        font-family: "Space Grotesk", sans-serif;
-        font-size: 0.98rem;
-        font-weight: 500;
-        line-height: 1.45;
-        color: rgba(255,255,255,0.7);
-        margin: 0;
-        max-width: 42rem;
-        }
-
-        .evd-clubs-inline-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 0.8rem;
-        }
-
-        .evd-clubs-inline-card {
-        display: grid;
-        grid-template-columns: 72px minmax(0, 1fr);
-        gap: 0.9rem;
-        align-items: center;
-        text-decoration: none;
-        background: linear-gradient(
-            180deg,
-            rgba(255,255,255,0.06) 0%,
-            rgba(255,255,255,0.025) 100%
-        );
-        border: 1px solid rgba(255,255,255,0.09);
-        border-radius: 16px;
-        padding: 0.85rem 0.95rem;
-        box-shadow: 0 10px 24px rgba(0,0,0,0.14);
-        transition:
-            transform 0.18s ease,
-            border-color 0.18s ease,
-            background 0.18s ease,
-            box-shadow 0.18s ease;
-        }
-
-        .evd-clubs-inline-card:hover {
-        transform: translateY(-2px);
-        border-color: rgba(255,255,255,0.18);
-        background: linear-gradient(
-            180deg,
-            rgba(255,255,255,0.075) 0%,
-            rgba(255,255,255,0.035) 100%
-        );
-        box-shadow: 0 14px 30px rgba(0,0,0,0.2);
-        }
-
-        .evd-clubs-inline-card:focus-visible {
-        outline: 2px solid var(--evd-accent);
-        outline-offset: 3px;
-        }
-
-        .evd-clubs-inline-badge {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 72px;
-        min-width: 72px;
-        }
-
-        .evd-clubs-inline-copy {
-        min-width: 0;
-        }
-
-        .evd-clubs-inline-name {
-        font-family: "Space Grotesk", sans-serif;
-        font-size: 1rem;
-        font-weight: 700;
-        line-height: 1.15;
-        color: #fff;
-        margin: 0 0 0.2rem;
-        }
-
-        .evd-clubs-inline-location {
-        font-family: "Space Grotesk", sans-serif;
-        font-size: 0.87rem;
-        color: rgba(255,255,255,0.58);
-        line-height: 1.45;
-        margin: 0 0 0.38rem;
-        }
-
-        .evd-clubs-inline-link {
-        font-family: "DM Sans", sans-serif;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--evd-accent);
-        }
-        .evd-meta-shell {
-          position: relative;
-          background: rgba(0,0,0,0.40);
-          border: 1px solid rgba(255,255,255,0.10);
-          border-radius: 20px;
-          padding: 1.35rem 1.35rem 1.45rem;
-          /* Accent top border via gradient background trick */
-          box-shadow:
-            inset 0 1px 0 var(--evd-accent),
-            0 32px 80px rgba(0,0,0,0.35);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
-        }
-
-        .evd-meta-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 1rem;
-        }
-
-        .evd-meta-card {
-        background: rgba(255, 255, 255, 0.045);
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        border-radius: 14px;
-        padding: 1rem 1rem 1.05rem;
-        }
-        .evd-meta-label {
-        font-family: "DM Sans", sans-serif;
-        font-size: 0.68rem;
-        font-weight: 700;
-        letter-spacing: 0.18em;
-        text-transform: uppercase;
-        color: rgba(255,255,255,0.38);
-        margin: 0 0 0.5rem;
-        }
-        .evd-meta-value {
-        font-family: "Space Grotesk", sans-serif;
-        font-size: 0.98rem;
-        font-weight: 700;
-        color: #fff;
-        line-height: 1.45;
-        margin: 0;
-        }
-        .evd-meta-sub {
-        font-family: "Space Grotesk", sans-serif;
-        font-size: 0.86rem;
-        color: rgba(255,255,255,0.5);
-        line-height: 1.5;
-        margin: 0.4rem 0 0;
-        }
-        /* Primary CTA — always DAT pink, full-width, commanding */
-        .evd-actions-primary {
-          margin-top: 1.1rem;
-        }
-        .evd-btn-cta {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          padding: 1.1rem 1.5rem;
+        .evd-cycle-card {
+          text-decoration: none;
           border-radius: 12px;
-          font-family: "DM Sans", sans-serif;
-          font-size: 1rem;
-          font-weight: 800;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          text-decoration: none;
-          background: #F23359;
-          color: #ffffff;
-          border: none;
-          box-shadow: none;
-          transition: transform 0.18s, opacity 0.18s;
-        }
-        .evd-btn-cta:hover {
-          transform: translateY(-2px);
-          opacity: 0.92;
-        }
-        .evd-btn-cta--invite {
-          background: #2FA873;
-          color: #fff;
-          box-shadow: none;
-        }
-
-        /* Secondary actions row */
-        .evd-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.65rem;
-        margin-top: 0.9rem;
-        padding-top: 0.9rem;
-        border-top: 1px solid rgba(255,255,255,0.08);
-        }
-
-        .evd-btn,
-        .evd-btn-ghost {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.45rem;
-          min-height: 40px;
-          padding: 0.65rem 1.05rem;
-          border-radius: 9px;
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.78rem;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          text-decoration: none;
-          transition: transform 0.18s, opacity 0.18s, border-color 0.18s;
-        }
-        .evd-btn:hover,
-        .evd-btn-ghost:hover {
-          transform: translateY(-1px);
-          opacity: 0.92;
-        }
-
-        .evd-btn-primary {
-        background: var(--evd-accent);
-        color: var(--evd-button-text);
-        border: none;
-        box-shadow: none;
-        }
-        .evd-btn-invite {
-        background: #2FA873;
-        color: #fff;
-        border: none;
-        box-shadow: none;
-        }
-        .evd-btn-ghost {
-        color: rgba(255,255,255,0.72);
-        background: rgba(255,255,255,0.05);
-        border: 1.5px solid rgba(255,255,255,0.14);
-        cursor: pointer;
-        }
-
-        .evd-body-band {
-        position: relative;
-        background: var(--evd-surface);
-        background-size: cover;
-        background-position: center;
-        padding: clamp(3.5rem, 7vw, 6rem) 0;
-        overflow: hidden;
-        }
-        .evd-body-photo-overlay {
-        position: absolute;
-        inset: 0;
-        /* Left side stays very dark for text legibility; right side reveals the photo */
-        background: linear-gradient(
-            100deg,
-            rgba(0,0,0,0.93) 0%,
-            rgba(0,0,0,0.86) 30%,
-            rgba(0,0,0,0.62) 60%,
-            rgba(0,0,0,0.32) 100%
-        );
-        z-index: 0;
-        }
-        .evd-body-grid {
-        position: relative;
-        z-index: 1;
-        display: grid;
-        grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.45fr);
-        gap: clamp(2rem, 5vw, 4.75rem);
-        align-items: start;
-        }
-        @media (max-width: 900px) {
-        .evd-body-grid {
-            grid-template-columns: 1fr;
-        }
-        }
-        .evd-body-heading-box {
-        display: inline-flex;
-        flex-direction: column;
-        gap: 0.3rem;
-        background: rgba(0,0,0,0.28);
-        border-left: 8px solid var(--evd-accent);
-        border-radius: 0 18px 18px 0;
-        padding: 1.1rem 1.75rem 1.2rem 1.4rem;
-        max-width: 760px;
-        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
-        }
-        .evd-body-eyebrow {
-          color: var(--evd-accent);
-          margin: 0 0 0.5rem;
-          letter-spacing: 0.22em;
-        }
-        .evd-body-title {
-          font-family: "Anton", sans-serif;
-          font-size: clamp(2.6rem, 6vw, 6rem);
-          line-height: 0.9;
-          color: #fff;
-          margin: 0 0 0.45rem;
-          text-shadow: 0 2px 20px rgba(0,0,0,0.6);
-          word-break: break-word;
-          hyphens: auto;
-        }
-        .evd-body-subtitle-small {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: clamp(0.88rem, 1.6vw, 1.05rem);
-          font-weight: 600;
-          color: rgba(255,255,255,0.62);
-          margin: 0.4rem 0 0;
-          line-height: 1.35;
-          font-style: italic;
-        }
-        .evd-body-copy {
-        /* No card background — text floats over the editorial photo */
-        background: transparent;
-        padding: 0;
-        }
-        .evd-body-paragraph {
-        font-family: "Space Grotesk", sans-serif;
-        font-size: clamp(1rem, 1.4vw, 1.12rem);
-        line-height: 1.85;
-        color: rgba(255,255,255,0.85);
-        margin: 0 0 1.25rem;
-        text-shadow: 0 1px 8px rgba(0,0,0,0.55);
-        }
-        .evd-body-paragraph:last-child {
-        margin-bottom: 0;
-        }
-
-        /* ─────────────────────────────────────────────────────────────────
-           Archival zone — visually separate from the editorial magazine run.
-           Intentionally cooler / more muted than the editorial surface.
-           ───────────────────────────────────────────────────────────────── */
-        .evd-archive-zone-label {
+          overflow: hidden;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
           display: flex;
-          align-items: center;
-          gap: 1rem;
-          padding: 0.9rem clamp(1.25rem, 5vw, 3rem);
-          background: rgba(255,255,255,0.03);
-          border-top: 1px solid rgba(255,255,255,0.07);
-          border-bottom: 1px solid rgba(255,255,255,0.07);
+          flex-direction: column;
+          transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
         }
-        .evd-archive-zone-label-text {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.68rem;
-          font-weight: 700;
-          letter-spacing: 0.30em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.24);
-          white-space: nowrap;
+        .evd-cycle-card:hover {
+          transform: translateY(-3px);
+          border-color: rgba(255,255,255,0.16);
+          box-shadow: 0 12px 32px rgba(0,0,0,0.3);
         }
-        .evd-archive-zone-label-line {
+        .evd-cycle-card:focus-visible {
+          outline: 2px solid var(--evd-accent);
+          outline-offset: 3px;
+        }
+        .evd-cycle-img {
+          height: 150px;
+          background-size: cover;
+          background-position: center;
+          background-color: rgba(255,255,255,0.05);
+        }
+        .evd-cycle-body {
+          padding: 1rem 1.1rem 1.1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.3rem;
           flex: 1;
-          height: 1px;
-          background: rgba(255,255,255,0.06);
+        }
+        .evd-cycle-title {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: #fff;
+          line-height: 1.25;
+          margin: 0;
+        }
+        .evd-cycle-meta {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.82rem;
+          color: rgba(255,255,255,0.42);
+          margin: 0;
+          line-height: 1.45;
+        }
+        .evd-cycle-link {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--evd-accent);
+          margin-top: 0.35rem;
         }
 
-        .evd-related-band {
-        background: #111118;
-        padding: clamp(3rem, 6vw, 4.5rem) 0;
-        }
-
+        /* ── 9. Related Upcoming Events ────────────────────────────────── */
+        /* Shared section header (used by cycle + related events) */
         .evd-section-head {
           margin-bottom: 1.4rem;
         }
@@ -1927,710 +1912,6 @@ export default async function EventDetailPage({ params }: PageProps) {
           margin: 0;
         }
 
-        .evd-production-card {
-          display: grid;
-          grid-template-columns: minmax(280px, 380px) 1fr;
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 20px;
-          overflow: hidden;
-          transition: border-color 0.22s, box-shadow 0.22s;
-        }
-        .evd-production-card:hover {
-          border-color: rgba(255,255,255,0.14);
-          box-shadow: 0 24px 60px rgba(0,0,0,0.4);
-        }
-        @media (max-width: 760px) {
-          .evd-production-card {
-            grid-template-columns: 1fr;
-          }
-        }
-        .evd-production-image {
-          min-height: 280px;
-          background-size: cover;
-          background-position: center;
-          position: relative;
-        }
-        /* Accent left border on the image */
-        .evd-production-image::after {
-          content: "";
-          position: absolute;
-          left: 0;
-          top: 0;
-          bottom: 0;
-          width: 4px;
-          background: var(--evd-accent);
-        }
-        .evd-production-copy {
-          padding: clamp(1.75rem, 3vw, 2.5rem);
-          display: flex;
-          flex-direction: column;
-          gap: 0.65rem;
-          justify-content: center;
-        }
-        .evd-production-label {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.68rem;
-          font-weight: 700;
-          letter-spacing: 0.28em;
-          text-transform: uppercase;
-          color: var(--evd-accent);
-          margin: 0;
-        }
-        .evd-production-title {
-          font-family: "Anton", sans-serif;
-          font-size: clamp(2rem, 4.5vw, 3.25rem);
-          line-height: 0.9;
-          color: #fff;
-          margin: 0;
-        }
-        .evd-production-meta {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: 0.92rem;
-          color: rgba(255,255,255,0.48);
-          line-height: 1.55;
-          margin: 0 0 0.5rem;
-        }
-
-        .evd-bottom-band {
-          position: relative;
-          background: #0e3d25;
-          padding: clamp(2.75rem, 5vw, 4.5rem) 0;
-          border-top: 1px solid rgba(255,255,255,0.06);
-          overflow: hidden;
-        }
-        /* Subtle accent glow behind the links */
-        .evd-bottom-band::before {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: radial-gradient(ellipse 60% 100% at 50% 100%, rgba(30,120,70,0.15) 0%, transparent 70%);
-          pointer-events: none;
-        }
-        .evd-bottom-inner {
-          position: relative;
-          z-index: 1;
-          display: flex;
-          flex-direction: column;
-          gap: 1.25rem;
-        }
-        .evd-bottom-label {
-          color: rgba(255,255,255,0.28);
-          margin: 0;
-        }
-        .evd-bottom-links {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.65rem;
-          align-items: center;
-        }
-        .evd-bottom-link {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.8rem;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          text-decoration: none;
-          padding: 0.72rem 1.4rem;
-          border-radius: 9px;
-          transition: opacity 0.2s, transform 0.18s, box-shadow 0.2s;
-        }
-        .evd-bottom-link:hover {
-          opacity: 0.9;
-          transform: translateY(-2px);
-        }
-        .evd-bottom-link--pink {
-          background: #F23359;
-          color: #fff;
-          box-shadow: 0 4px 20px rgba(242,51,89,0.3);
-        }
-        .evd-bottom-link--pink:hover {
-          box-shadow: 0 8px 28px rgba(242,51,89,0.45);
-        }
-        .evd-bottom-link--gold {
-          background: #D9A919;
-          color: #241123;
-          box-shadow: 0 4px 20px rgba(217,169,25,0.25);
-        }
-        .evd-bottom-link--teal {
-          background: #2493A9;
-          color: #fff;
-          box-shadow: 0 4px 20px rgba(36,147,169,0.25);
-        }
-        .evd-bottom-link--muted {
-          color: rgba(255,255,255,0.42);
-          border: 1.5px solid rgba(255,255,255,0.12);
-        }
-        .evd-bottom-link--archive {
-          background: rgba(108,0,175,0.18);
-          color: rgba(255,255,255,0.7);
-          border: 1px solid rgba(108,0,175,0.35);
-        }
-        .evd-bottom-link--archive:hover {
-          background: rgba(108,0,175,0.28);
-          color: #fff;
-        }
-
-        @media (max-width: 640px) {
-          .evd-title {
-            word-break: break-word;
-          }
-          .evd-actions {
-            flex-direction: column;
-            align-items: stretch;
-          }
-          .evd-btn,
-          .evd-btn-ghost {
-            width: 100%;
-          }
-          .evd-btn-cta {
-            padding: 1rem 1.25rem;
-          }
-        }
-
-        /* ── Accessibility meta card ───────────────────────────────────── */
-        .evd-meta-card--full {
-          grid-column: 1 / -1;
-        }
-        .evd-meta-value--sm {
-          font-size: 0.9rem;
-          font-weight: 500;
-        }
-
-        /* ── Artist's Note — full cinematic section ────────────────────── */
-        .evd-note-band {
-          position: relative;
-          background: var(--evd-surface);
-          background-size: cover;
-          background-position: center;
-          padding: clamp(5rem, 10vw, 9rem) 0;
-          overflow: hidden;
-          text-align: center;
-        }
-        .evd-note-photo-overlay {
-          position: absolute;
-          inset: 0;
-          background: rgba(0,0,0,0.78);
-          backdrop-filter: blur(5px);
-          -webkit-backdrop-filter: blur(5px);
-          z-index: 0;
-        }
-        /* Left + right edge darkening vignette */
-        .evd-note-vignette {
-          position: absolute;
-          inset: 0;
-          background:
-            radial-gradient(ellipse 80% 100% at 50% 50%, transparent 30%, rgba(0,0,0,0.55) 100%);
-          z-index: 0;
-          pointer-events: none;
-        }
-        .evd-note-inner {
-          position: relative;
-          z-index: 1;
-        }
-        /* "Artist's Note" eyebrow with flanking rules */
-        .evd-note-header {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 1.25rem;
-          margin-bottom: 2.5rem;
-        }
-        .evd-note-rule-left,
-        .evd-note-rule-right {
-          flex: 1;
-          max-width: 180px;
-          height: 1px;
-          background: linear-gradient(
-            to right,
-            transparent,
-            var(--evd-accent)
-          );
-        }
-        .evd-note-rule-right {
-          background: linear-gradient(
-            to left,
-            transparent,
-            var(--evd-accent)
-          );
-        }
-        .evd-note-eyebrow {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.72rem;
-          font-weight: 700;
-          letter-spacing: 0.32em;
-          text-transform: uppercase;
-          color: var(--evd-accent);
-          margin: 0;
-          white-space: nowrap;
-        }
-        .evd-note-quote {
-          max-width: 820px;
-          margin: 0 auto;
-          padding: 0;
-          border: none;
-          position: relative;
-        }
-        /* Giant typographic quote mark centered above */
-        .evd-note-mark {
-          display: block;
-          font-family: "Anton", sans-serif;
-          font-size: clamp(7rem, 18vw, 14rem);
-          line-height: 0.6;
-          color: var(--evd-accent);
-          opacity: 0.18;
-          margin-bottom: 0.5rem;
-          pointer-events: none;
-          user-select: none;
-        }
-        .evd-note-text {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: clamp(1.25rem, 3vw, 1.75rem);
-          font-weight: 500;
-          line-height: 1.65;
-          color: rgba(255,255,255,0.92);
-          margin: 0 0 1.75rem;
-          font-style: italic;
-          text-shadow: 0 2px 12px rgba(0,0,0,0.4);
-        }
-        .evd-note-attribution {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.82rem;
-          font-weight: 700;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: var(--evd-accent);
-        }
-        .evd-note-dash {
-          opacity: 0.5;
-        }
-
-        /* ── Photo Gallery ─────────────────────────────────────────────── */
-        .evd-gallery-band {
-          background: var(--evd-surface);
-          padding: clamp(2.5rem, 5vw, 4rem) 0;
-          border-top: 1px solid rgba(255,255,255,0.05);
-          overflow: hidden;
-        }
-        .evd-gallery-head {
-          display: flex;
-          align-items: baseline;
-          gap: 1.5rem;
-          flex-wrap: wrap;
-          margin-bottom: 1.5rem;
-        }
-        .evd-gallery-eyebrow {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.72rem;
-          font-weight: 700;
-          letter-spacing: 0.28em;
-          text-transform: uppercase;
-          color: var(--evd-accent);
-          margin: 0;
-        }
-        .evd-gallery-credit {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.75rem;
-          color: rgba(255,255,255,0.28);
-          margin: 0;
-        }
-        /* Featured (first) gallery image — large editorial 16:9 */
-        .evd-gallery-featured {
-          display: block;
-          width: 100%;
-          aspect-ratio: 16 / 9;
-          border-radius: 16px;
-          overflow: hidden;
-          background: none;
-          border: none;
-          padding: 0;
-          cursor: zoom-in;
-          position: relative;
-          margin: 0 0 0.75rem;
-        }
-        .evd-gallery-featured-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          display: block;
-          border-radius: 16px;
-          transition: transform 0.4s ease;
-        }
-        .evd-gallery-featured:hover .evd-gallery-featured-img {
-          transform: scale(1.025);
-        }
-        /* "View all photos" hint — fades in on hover */
-        .evd-gallery-featured-hint {
-          position: absolute;
-          bottom: 1rem;
-          right: 1.25rem;
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.78rem;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.9);
-          background: rgba(0,0,0,0.52);
-          border-radius: 999px;
-          padding: 0.35rem 0.9rem;
-          opacity: 0;
-          transition: opacity 0.22s;
-          pointer-events: none;
-        }
-        .evd-gallery-featured:hover .evd-gallery-featured-hint {
-          opacity: 1;
-        }
-        /* Dim overlay on featured hover */
-        .evd-gallery-featured::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          border-radius: 16px;
-          background: rgba(0,0,0,0);
-          transition: background 0.22s;
-        }
-        .evd-gallery-featured:hover::after {
-          background: rgba(0,0,0,0.14);
-        }
-        .evd-gallery-scroll {
-          display: flex;
-          gap: 0.65rem;
-          overflow-x: auto;
-          padding: 0 0 1rem;
-          scrollbar-width: thin;
-          scrollbar-color: rgba(255,255,255,0.12) transparent;
-          -webkit-overflow-scrolling: touch;
-        }
-        .evd-gallery-scroll::-webkit-scrollbar { height: 4px; }
-        .evd-gallery-scroll::-webkit-scrollbar-track { background: transparent; }
-        .evd-gallery-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 999px; }
-        .evd-gallery-item--btn {
-          flex-shrink: 0;
-          height: clamp(160px, 22vw, 240px);
-          border-radius: 10px;
-          overflow: hidden;
-          background: none;
-          border: none;
-          padding: 0;
-          cursor: zoom-in;
-          position: relative;
-        }
-        .evd-gallery-item--btn::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: rgba(0,0,0,0);
-          border-radius: 10px;
-          transition: background 0.18s;
-        }
-        .evd-gallery-item--btn:hover::after {
-          background: rgba(0,0,0,0.18);
-        }
-        .evd-gallery-img {
-          height: 100%;
-          width: auto;
-          max-width: none;
-          display: block;
-          object-fit: cover;
-          border-radius: 10px;
-          transition: transform 0.3s ease;
-        }
-        .evd-gallery-item--btn:hover .evd-gallery-img {
-          transform: scale(1.03);
-        }
-
-        /* ── Video ─────────────────────────────────────────────────────── */
-        .evd-video-band {
-          background: var(--evd-surface);
-          padding: clamp(3rem, 6vw, 5rem) 0;
-          border-top: 1px solid rgba(255,255,255,0.05);
-        }
-        .evd-video-inner {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 1.25rem;
-        }
-        .evd-video-eyebrow {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.72rem;
-          font-weight: 700;
-          letter-spacing: 0.28em;
-          text-transform: uppercase;
-          color: var(--evd-accent);
-          margin: 0;
-          align-self: flex-start;
-        }
-        .evd-video-title {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: clamp(1.1rem, 2vw, 1.3rem);
-          font-weight: 700;
-          color: rgba(255,255,255,0.9);
-          margin: 0;
-          align-self: flex-start;
-        }
-        .evd-video-frame-wrap {
-          position: relative;
-          width: 100%;
-          max-width: 820px;
-          aspect-ratio: 16 / 9;
-          border-radius: 14px;
-          overflow: hidden;
-          background: #000;
-          box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-        }
-        .evd-video-frame {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          border: none;
-        }
-
-        /* ── Cast & Creative Team — theatre programme aesthetic ─────────── */
-        .evd-credits-band {
-          background: var(--evd-surface);
-          padding: clamp(3.5rem, 7vw, 6rem) 0;
-          border-top: 1px solid rgba(255,255,255,0.05);
-          position: relative;
-        }
-        /* Programme header: title flanked by double rules */
-        .evd-credits-programme-head {
-          display: flex;
-          align-items: center;
-          gap: 1.5rem;
-          margin-bottom: clamp(2rem, 4vw, 3rem);
-        }
-        .evd-credits-programme-rule {
-          flex: 1;
-          height: 2px;
-          background: linear-gradient(
-            to right,
-            rgba(255,255,255,0.04),
-            rgba(255,255,255,0.10) 30%,
-            rgba(255,255,255,0.10) 70%,
-            rgba(255,255,255,0.04)
-          );
-          border-radius: 999px;
-        }
-        .evd-credits-programme-title-wrap {
-          text-align: center;
-          flex-shrink: 0;
-        }
-        .evd-credits-programme-eyebrow {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.68rem;
-          font-weight: 700;
-          letter-spacing: 0.32em;
-          text-transform: uppercase;
-          color: var(--evd-accent);
-          margin: 0 0 0.3rem;
-        }
-        .evd-credits-programme-title {
-          font-family: "Anton", sans-serif;
-          font-size: clamp(1.4rem, 3vw, 2.2rem);
-          line-height: 1;
-          color: #fff;
-          margin: 0;
-          letter-spacing: 0.02em;
-        }
-        /* Group: Cast / Creative Team */
-        .evd-credits-group {
-          margin-bottom: clamp(2rem, 4vw, 3rem);
-        }
-        .evd-credits-group-header {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          margin-bottom: 1.25rem;
-        }
-        .evd-credits-group-label {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.68rem;
-          font-weight: 700;
-          letter-spacing: 0.30em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.35);
-          margin: 0;
-          white-space: nowrap;
-        }
-        .evd-credits-group-line {
-          flex: 1;
-          height: 1px;
-          background: rgba(255,255,255,0.07);
-        }
-        .evd-credits-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-          gap: 0;
-        }
-        /* Cast grid has wider columns */
-        .evd-credits-grid--cast {
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        }
-        .evd-credit-item {
-          padding: 1rem 1.25rem 1rem 0;
-          border-bottom: 1px solid rgba(255,255,255,0.055);
-        }
-        .evd-credit-role {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.63rem;
-          font-weight: 700;
-          letter-spacing: 0.22em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.28);
-          margin: 0 0 0.3rem;
-        }
-        /* Cast names are slightly bigger — they're the stars */
-        .evd-credits-grid--cast .evd-credit-name {
-          font-size: 1.05rem;
-        }
-        .evd-credit-name {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: 0.98rem;
-          font-weight: 700;
-          color: #fff;
-          margin: 0;
-          line-height: 1.25;
-        }
-        /* Alumni credit links — DAT purple base, DAT pink on hover */
-        .evd-credit-link,
-        .evd-credit-link:link,
-        .evd-credit-link:visited {
-          text-decoration: none;
-          color: #8b10d9;
-          transition: color 160ms ease, letter-spacing 160ms ease;
-          display: inline-block;
-        }
-        .evd-credit-link:hover,
-        .evd-credit-link:focus-visible {
-          color: #F23359;
-          letter-spacing: 0.04em;
-        }
-        /* Bottom double rule after credits */
-        .evd-credits-footer-rule {
-          height: 1px;
-          background: linear-gradient(
-            to right,
-            transparent,
-            rgba(255,255,255,0.10) 30%,
-            rgba(255,255,255,0.10) 70%,
-            transparent
-          );
-          margin-top: 0.5rem;
-        }
-
-        /* ── Press Quotes ──────────────────────────────────────────────── */
-        .evd-quotes-band {
-          background: var(--evd-surface);
-          padding: clamp(3.5rem, 7vw, 6rem) 0;
-          border-top: 1px solid rgba(255,255,255,0.05);
-        }
-        .evd-quotes-band-head {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 0.75rem;
-          margin-bottom: 2rem;
-        }
-        .evd-quotes-eyebrow {
-          color: rgba(255,255,255,0.32) !important;
-          margin: 0 !important;
-        }
-        .evd-quote-stars {
-          font-size: 1rem;
-          color: var(--evd-accent);
-          letter-spacing: 0.15em;
-          margin: 0;
-          opacity: 0.82;
-        }
-        /* Hero pull-quote — first quote, full-width, very large */
-        .evd-quote-hero {
-          position: relative;
-          margin: 0 0 clamp(2rem, 4vw, 3.5rem);
-          padding: clamp(2rem, 4vw, 3rem) clamp(1.5rem, 4vw, 3rem) clamp(2rem, 4vw, 3rem) clamp(2rem, 5vw, 4rem);
-          border-left: 6px solid var(--evd-accent);
-          background: rgba(255,255,255,0.03);
-          border-radius: 0 20px 20px 0;
-          overflow: hidden;
-        }
-        .evd-quote-hero::before {
-          /* Decorative large accent glow behind the quote mark */
-          content: "";
-          position: absolute;
-          top: -20px;
-          left: -20px;
-          width: 160px;
-          height: 160px;
-          background: var(--evd-glow);
-          border-radius: 50%;
-          filter: blur(40px);
-          pointer-events: none;
-        }
-        .evd-quote-hero-mark {
-          display: block;
-          font-family: "Anton", sans-serif;
-          font-size: clamp(5rem, 14vw, 10rem);
-          line-height: 0.65;
-          color: var(--evd-accent);
-          opacity: 0.30;
-          margin-bottom: 0.4rem;
-          pointer-events: none;
-          user-select: none;
-        }
-        .evd-quote-hero-text {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: clamp(1.3rem, 3vw, 2rem);
-          font-weight: 600;
-          font-style: italic;
-          line-height: 1.55;
-          color: rgba(255,255,255,0.92);
-          margin: 0 0 1.25rem;
-          max-width: 820px;
-        }
-        .evd-quote-hero-attr {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.82rem;
-          font-weight: 700;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: var(--evd-accent);
-        }
-        .evd-quotes-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          gap: 1.5rem;
-        }
-        .evd-press-quote {
-          margin: 0;
-          padding: 1.5rem 1.5rem 1.5rem 1.75rem;
-          border-left: 3px solid var(--evd-accent);
-          background: rgba(255,255,255,0.03);
-          border-radius: 0 12px 12px 0;
-        }
-        .evd-press-quote-text {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: clamp(1rem, 1.8vw, 1.15rem);
-          font-weight: 500;
-          font-style: italic;
-          color: rgba(255,255,255,0.88);
-          line-height: 1.65;
-          margin: 0 0 0.85rem;
-        }
-        .evd-press-quote-attr {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.75rem;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.32);
-        }
-
-        /* ── Related Upcoming Events ───────────────────────────────────── */
         .evd-related-events-band {
           background: #0c0c14;
           padding: clamp(3rem, 6vw, 5rem) 0;
@@ -2659,6 +1940,10 @@ export default async function EventDetailPage({ params }: PageProps) {
             0 12px 32px rgba(0,0,0,0.4),
             0 0 0 1px var(--evd-accent),
             0 0 28px -4px var(--evd-accent);
+        }
+        .evd-rel-card:focus-visible {
+          outline: 2px solid var(--evd-accent);
+          outline-offset: 3px;
         }
         .evd-rel-card-img {
           height: 160px;
@@ -2705,179 +1990,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           justify-content: flex-end;
         }
 
-        /* ── Production Cycle ──────────────────────────────────────────── */
-        .evd-cycle-band {
-          background: #111118;
-          padding: clamp(2.5rem, 5vw, 4rem) 0;
-          border-top: 1px solid rgba(255,255,255,0.06);
-        }
-        .evd-cycle-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-          gap: 1rem;
-          margin-top: 1.5rem;
-        }
-        .evd-cycle-card {
-          text-decoration: none;
-          border-radius: 12px;
-          overflow: hidden;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
-          display: flex;
-          flex-direction: column;
-          transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
-        }
-        .evd-cycle-card:hover {
-          transform: translateY(-3px);
-          border-color: rgba(255,255,255,0.16);
-          box-shadow: 0 12px 32px rgba(0,0,0,0.3);
-        }
-        .evd-cycle-img {
-          height: 150px;
-          background-size: cover;
-          background-position: center;
-          background-color: rgba(255,255,255,0.05);
-        }
-        .evd-cycle-body {
-          padding: 1rem 1.1rem 1.1rem;
-          display: flex;
-          flex-direction: column;
-          gap: 0.3rem;
-          flex: 1;
-        }
-        .evd-cycle-title {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: 0.95rem;
-          font-weight: 700;
-          color: #fff;
-          line-height: 1.25;
-          margin: 0;
-        }
-        .evd-cycle-meta {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: 0.82rem;
-          color: rgba(255,255,255,0.42);
-          margin: 0;
-          line-height: 1.45;
-        }
-        .evd-cycle-link {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.72rem;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: var(--evd-accent);
-          margin-top: 0.35rem;
-        }
-
-        /* ── Share button dropdown ─────────────────────────────────────── */
-        .evd-share-wrap {
-          position: relative;
-        }
-        .evd-share-trigger {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.45rem;
-        }
-        .evd-share-dropdown {
-          position: absolute;
-          top: calc(100% + 8px);
-          left: 0;
-          z-index: 300;
-          background: #1a0f1e;
-          border: 1px solid rgba(255,255,255,0.13);
-          border-radius: 14px;
-          padding: 0.45rem;
-          min-width: 196px;
-          box-shadow: 0 20px 56px rgba(0,0,0,0.55);
-          display: flex;
-          flex-direction: column;
-          gap: 1px;
-        }
-        .evd-share-item {
-          display: flex;
-          align-items: center;
-          gap: 0.65rem;
-          padding: 0.6rem 0.9rem;
-          border-radius: 9px;
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.84rem;
-          font-weight: 600;
-          color: rgba(255,255,255,0.78);
-          text-decoration: none;
-          transition: background 0.14s, color 0.14s;
-          cursor: pointer;
-          white-space: nowrap;
-        }
-        .evd-share-item:hover {
-          background: rgba(255,255,255,0.09);
-          color: #fff;
-        }
-        .evd-share-item--btn {
-          background: none;
-          border: none;
-          text-align: left;
-          width: 100%;
-        }
-        .evd-share-divider {
-          height: 1px;
-          background: rgba(255,255,255,0.08);
-          margin: 0.3rem 0.5rem;
-        }
-
-        /* ── Add to Calendar ───────────────────────────────────────────── */
-        .evd-cal-wrap {
-          position: relative;
-        }
-        .evd-cal-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.45rem;
-        }
-        .evd-cal-dropdown {
-          display: none;
-          position: absolute;
-          top: calc(100% + 8px);
-          left: 0;
-          z-index: 300;
-          background: #1a0f1e;
-          border: 1px solid rgba(255,255,255,0.13);
-          border-radius: 12px;
-          padding: 0.4rem;
-          min-width: 170px;
-          box-shadow: 0 16px 40px rgba(0,0,0,0.5);
-          flex-direction: column;
-          gap: 1px;
-        }
-        .evd-cal-wrap:hover .evd-cal-dropdown,
-        .evd-cal-wrap:focus-within .evd-cal-dropdown {
-          display: flex;
-        }
-        .evd-cal-option {
-          display: flex;
-          align-items: center;
-          gap: 0.55rem;
-          padding: 0.55rem 0.85rem;
-          border-radius: 8px;
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.83rem;
-          font-weight: 600;
-          color: rgba(255,255,255,0.78);
-          text-decoration: none;
-          white-space: nowrap;
-          transition: background 0.13s, color 0.13s;
-        }
-        .evd-cal-option:hover {
-          background: rgba(255,255,255,0.09);
-          color: #fff;
-        }
-        .evd-btn-group {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.45rem;
-        }
-
-        /* ── Newsletter band — VIP invitation feel ─────────────────────── */
+        /* ── 10. Newsletter ────────────────────────────────────────────── */
         .evd-newsletter-band {
           background: #145c37;
           background-image:
@@ -2888,7 +2001,6 @@ export default async function EventDetailPage({ params }: PageProps) {
           position: relative;
           overflow: hidden;
         }
-        /* Decorative radial glow */
         .evd-newsletter-band::before {
           content: "";
           position: absolute;
@@ -2907,15 +2019,11 @@ export default async function EventDetailPage({ params }: PageProps) {
           position: relative;
           z-index: 1;
         }
-        @media (max-width: 760px) {
-          .evd-newsletter-inner { grid-template-columns: 1fr; }
-        }
         .evd-newsletter-logo {
           display: block;
           width: 58px;
           height: 58px;
           margin-bottom: 1.5rem;
-          /* Logo is yellow — show in its true color against dark green */
           opacity: 0.85;
         }
         .evd-newsletter-eyebrow {
@@ -2943,7 +2051,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           max-width: 420px;
         }
 
-        /* ── Mailing list form (shared with events hub) ────────────────── */
+        /* Mailing list form (rendered inside MailingListForm component) */
         .evhub-ml-form { display: flex; flex-direction: column; gap: 0.75rem; align-items: flex-start; }
         .evhub-ml-inputs-row {
           display: flex;
@@ -3025,6 +2133,237 @@ export default async function EventDetailPage({ params }: PageProps) {
           font-size: 0.87rem;
           color: rgba(255,255,255,0.5);
           margin: 0;
+        }
+
+        /* ── 11. Bottom Navigation ─────────────────────────────────────── */
+        .evd-bottom-band {
+          position: relative;
+          background: #0e3d25;
+          padding: clamp(2.75rem, 5vw, 4.5rem) 0;
+          border-top: 1px solid rgba(255,255,255,0.06);
+          overflow: hidden;
+        }
+        .evd-bottom-band::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(ellipse 60% 100% at 50% 100%, rgba(30,120,70,0.15) 0%, transparent 70%);
+          pointer-events: none;
+        }
+        .evd-bottom-inner {
+          position: relative;
+          z-index: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+        }
+        .evd-bottom-label {
+          color: rgba(255,255,255,0.28);
+          margin: 0;
+        }
+        .evd-bottom-links {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.65rem;
+          align-items: center;
+        }
+        .evd-bottom-link {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.8rem;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          text-decoration: none;
+          padding: 0.72rem 1.4rem;
+          border-radius: 9px;
+          transition: opacity 0.2s, transform 0.18s, box-shadow 0.2s;
+        }
+        .evd-bottom-link:hover {
+          opacity: 0.9;
+          transform: translateY(-2px);
+        }
+        .evd-bottom-link--pink {
+          background: #F23359;
+          color: #fff;
+          box-shadow: 0 4px 20px rgba(242,51,89,0.3);
+        }
+        .evd-bottom-link--pink:hover { box-shadow: 0 8px 28px rgba(242,51,89,0.45); }
+        .evd-bottom-link--gold {
+          background: #D9A919;
+          color: #241123;
+          box-shadow: 0 4px 20px rgba(217,169,25,0.25);
+        }
+        .evd-bottom-link--teal {
+          background: #2493A9;
+          color: #fff;
+          box-shadow: 0 4px 20px rgba(36,147,169,0.25);
+        }
+        .evd-bottom-link--muted {
+          color: rgba(255,255,255,0.42);
+          border: 1.5px solid rgba(255,255,255,0.12);
+        }
+        .evd-bottom-link--archive {
+          background: rgba(108,0,175,0.18);
+          color: rgba(255,255,255,0.7);
+          border: 1px solid rgba(108,0,175,0.35);
+        }
+        .evd-bottom-link--archive:hover {
+          background: rgba(108,0,175,0.28);
+          color: #fff;
+        }
+
+        /* ── 12. Dropdowns: Share & Calendar ───────────────────────────── */
+        /* EventShareButton component */
+        .evd-share-wrap { position: relative; }
+        .evd-share-trigger {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+        }
+        .evd-share-dropdown {
+          position: absolute;
+          top: calc(100% + 8px);
+          left: 0;
+          z-index: 300;
+          background: #1a0f1e;
+          border: 1px solid rgba(255,255,255,0.13);
+          border-radius: 14px;
+          padding: 0.45rem;
+          min-width: 196px;
+          box-shadow: 0 20px 56px rgba(0,0,0,0.55);
+          display: flex;
+          flex-direction: column;
+          gap: 1px;
+        }
+        .evd-share-item {
+          display: flex;
+          align-items: center;
+          gap: 0.65rem;
+          padding: 0.6rem 0.9rem;
+          border-radius: 9px;
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.84rem;
+          font-weight: 600;
+          color: rgba(255,255,255,0.78);
+          text-decoration: none;
+          transition: background 0.14s, color 0.14s;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+        .evd-share-item:hover {
+          background: rgba(255,255,255,0.09);
+          color: #fff;
+        }
+        .evd-share-item--btn {
+          background: none;
+          border: none;
+          text-align: left;
+          width: 100%;
+        }
+        .evd-share-divider {
+          height: 1px;
+          background: rgba(255,255,255,0.08);
+          margin: 0.3rem 0.5rem;
+        }
+
+        /* Add to Calendar dropdown */
+        .evd-cal-wrap { position: relative; }
+        .evd-cal-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+        }
+        .evd-cal-dropdown {
+          display: none;
+          position: absolute;
+          top: calc(100% + 8px);
+          left: 0;
+          z-index: 300;
+          background: #1a0f1e;
+          border: 1px solid rgba(255,255,255,0.13);
+          border-radius: 12px;
+          padding: 0.4rem;
+          min-width: 170px;
+          box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+          flex-direction: column;
+          gap: 1px;
+        }
+        .evd-cal-wrap:hover .evd-cal-dropdown,
+        .evd-cal-wrap:focus-within .evd-cal-dropdown {
+          display: flex;
+        }
+        .evd-cal-option {
+          display: flex;
+          align-items: center;
+          gap: 0.55rem;
+          padding: 0.55rem 0.85rem;
+          border-radius: 8px;
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.83rem;
+          font-weight: 600;
+          color: rgba(255,255,255,0.78);
+          text-decoration: none;
+          white-space: nowrap;
+          transition: background 0.13s, color 0.13s;
+        }
+        .evd-cal-option:hover {
+          background: rgba(255,255,255,0.09);
+          color: #fff;
+        }
+        .evd-btn-group {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+        }
+
+        /* ── 13. Shared scrollbar utility ─────────────────────────────── */
+        /* All three horizontal scroll containers use identical thin scrollbars */
+        .evd-cast-scroll,
+        .evd-cycle-scroll,
+        .evd-gallery-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255,255,255,0.10) transparent;
+          -webkit-overflow-scrolling: touch;
+        }
+        .evd-cast-scroll::-webkit-scrollbar,
+        .evd-cycle-scroll::-webkit-scrollbar,
+        .evd-gallery-scroll::-webkit-scrollbar { height: 4px; }
+        .evd-cast-scroll::-webkit-scrollbar-track,
+        .evd-cycle-scroll::-webkit-scrollbar-track,
+        .evd-gallery-scroll::-webkit-scrollbar-track { background: transparent; }
+        .evd-cast-scroll::-webkit-scrollbar-thumb,
+        .evd-cycle-scroll::-webkit-scrollbar-thumb,
+        .evd-gallery-scroll::-webkit-scrollbar-thumb {
+          background: rgba(255,255,255,0.12);
+          border-radius: 999px;
+        }
+
+        /* ── 14. Responsive overrides ──────────────────────────────────── */
+        @media (max-width: 860px) {
+          .evd-dashboard-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+        @media (max-width: 760px) {
+          .evd-newsletter-inner {
+            grid-template-columns: 1fr;
+          }
+        }
+        @media (max-width: 640px) {
+          .evd-title {
+            word-break: break-word;
+          }
+          .evd-actions {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .evd-btn,
+          .evd-btn-ghost {
+            width: 100%;
+          }
+          .evd-btn-cta {
+            padding: 1rem 1.25rem;
+          }
         }
       `}</style>
     </>
