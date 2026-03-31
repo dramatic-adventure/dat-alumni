@@ -163,6 +163,9 @@ export interface ProductionPageTemplateProps {
 
   /** Events linked to this production via lib/events.ts (production field = slug) */
   productionEvents?: DatEvent[];
+
+  /** Manual override to force the ARCHIVE status badge */
+  forceArchive?: boolean;
 }
 
 /* ----------------------- Utilities ------------------------- */
@@ -848,6 +851,7 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
     autoLinkPeopleBase = "/alumni",
     renderAfterHero,
     productionEvents,
+    forceArchive = false,
   } = props;
 
   const titleText = cleanStr(title) ?? "";
