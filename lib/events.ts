@@ -68,6 +68,8 @@ export interface DatEvent {
   imageFocus?: string;
 
   ticketUrl?: string;
+  /** URL for the venue's own website (used for the venue pill link in the hero) */
+  venueUrl?: string;
   /** Human-readable price, e.g. "£15 / £10 concessions" or "Free" */
   ticketPrice?: string;
   /** "sliding-scale" | "pay-what-you-can" | "free" | "ticketed" */
@@ -331,6 +333,7 @@ export const events: DatEvent[] = [
     image: "/posters/a-girl-without-wings-landscape.jpg",
     imageFocus: "center 35%",
     ticketUrl: "https://www.ticketshow.com.ec",
+    venueUrl: "https://www.teatromalayerba.com",
     ticketPrice: "$15 / $8 estudiantes",
     ticketType: "ticketed",
     featured: true,

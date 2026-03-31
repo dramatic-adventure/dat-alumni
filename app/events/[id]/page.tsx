@@ -466,7 +466,7 @@ export default async function EventDetailPage({ params }: PageProps) {
       <div className="evd-hero" style={heroVars}>
         <div className="evd-hero-overlay" />
         <div className="evd-hero-glow" />
-        <div className="evd-container evd-hero-content">
+        <div className="evd-hero-content">
           <nav className="evd-breadcrumb" aria-label="Breadcrumb">
             <Link href="/events">Events</Link>
             <span aria-hidden="true">/</span>
@@ -485,15 +485,28 @@ export default async function EventDetailPage({ params }: PageProps) {
           <p className="evd-standfirst">{event.description}</p>
 
           <div className="evd-hero-pills">
-            <span className="evd-pill evd-pill--date">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              {formatDateRange(event.date, event.endDate)}
-            </span>
-            {event.time ? <span className="evd-pill">{event.time}</span> : null}
-            <span className="evd-pill evd-pill--venue">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 13-8 13S4 16 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              {event.venue}{event.city !== "Worldwide" ? ` · ${event.city}` : ""}
-            </span>
+            {event.ticketUrl ? (
+              <a href={event.ticketUrl} target="_blank" rel="noopener noreferrer" className="evd-pill evd-pill--date evd-pill--link">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                {formatDateRange(event.date, event.endDate)}
+              </a>
+            ) : (
+              <span className="evd-pill evd-pill--date">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                {formatDateRange(event.date, event.endDate)}
+              </span>
+            )}
+            {event.venueUrl ? (
+              <a href={event.venueUrl} target="_blank" rel="noopener noreferrer" className="evd-pill evd-pill--venue evd-pill--link">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 13-8 13S4 16 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                {event.venue}{event.city !== "Worldwide" ? ` · ${event.city}` : ""}
+              </a>
+            ) : (
+              <span className="evd-pill evd-pill--venue">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 13-8 13S4 16 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                {event.venue}{event.city !== "Worldwide" ? ` · ${event.city}` : ""}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -504,33 +517,6 @@ export default async function EventDetailPage({ params }: PageProps) {
           {/* ── Top: info grid + CTA + secondary actions ────────────── */}
           <div className="evd-dash-top">
             <div className="evd-dash-info-grid">
-              <div className="evd-dash-info-card">
-                <p className="evd-dash-info-label">Dates</p>
-                <p className="evd-dash-info-value">{formatDateRange(event.date, event.endDate)}</p>
-              </div>
-              {event.time ? (
-                <div className="evd-dash-info-card">
-                  <p className="evd-dash-info-label">Time</p>
-                  <p className="evd-dash-info-value">{event.time}</p>
-                </div>
-              ) : null}
-              {event.doors ? (
-                <div className="evd-dash-info-card">
-                  <p className="evd-dash-info-label">Doors</p>
-                  <p className="evd-dash-info-value">{event.doors}</p>
-                </div>
-              ) : null}
-              <div className="evd-dash-info-card">
-                <p className="evd-dash-info-label">Venue</p>
-                <p className="evd-dash-info-value">{event.venue}</p>
-                {event.address ? <p className="evd-dash-info-sub">{event.address}</p> : null}
-              </div>
-              <div className="evd-dash-info-card">
-                <p className="evd-dash-info-label">Location</p>
-                <p className="evd-dash-info-value">
-                  {event.city}{event.country ? `, ${event.country}` : ""}
-                </p>
-              </div>
               {(event.ticketPrice || primaryAction) ? (
                 <div className="evd-dash-info-card">
                   <p className="evd-dash-info-label">Tickets</p>
@@ -721,33 +707,36 @@ export default async function EventDetailPage({ params }: PageProps) {
               <p className="evd-cast-head-label">Cast</p>
               <span className="evd-cast-head-rule" aria-hidden="true" />
             </div>
-            <div className="evd-cast-scroll" role="list" aria-label="Cast members">
-              {castCredits.map((c, i) => (
-                <div key={i} className="evd-cast-card" role="listitem">
-                  <div className="evd-cast-photo-wrap">
-                    {c.photo ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={c.photo}
-                        alt={c.name}
-                        className="evd-cast-photo"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    ) : (
-                      <div className="evd-cast-photo-placeholder" aria-hidden="true">
-                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                      </div>
-                    )}
-                  </div>
-                  <p className="evd-cast-role">{c.role}</p>
-                  {c.href ? (
-                    <Link href={c.href} className="evd-cast-name evd-cast-link">{c.name}</Link>
-                  ) : (
+            <div className="evd-cast-grid" role="list" aria-label="Cast members">
+              {castCredits.map((c, i) => {
+                const card = (
+                  <div key={i} className="evd-cast-card" role="listitem">
+                    <div className="evd-cast-photo-wrap">
+                      {c.photo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={c.photo.replace(/^http:\/\//, "https://")}
+                          alt={c.name}
+                          className="evd-cast-photo"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      ) : (
+                        <div className="evd-cast-photo-placeholder" aria-hidden="true">
+                          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </div>
+                      )}
+                    </div>
+                    <p className="evd-cast-role">{c.role}</p>
                     <p className="evd-cast-name">{c.name}</p>
-                  )}
-                </div>
-              ))}
+                  </div>
+                );
+                return c.href ? (
+                  <Link key={i} href={c.href} className="evd-cast-card-link">
+                    {card}
+                  </Link>
+                ) : card;
+              })}
             </div>
           </div>
         </section>
@@ -1020,7 +1009,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-hero-content {
           position: relative;
           z-index: 4;
-          padding: clamp(5rem, 10vw, 8rem) clamp(1rem, 3vw, 2rem) clamp(1.5rem, 2.5vw, 2.5rem);
+          padding: clamp(5rem, 10vw, 8rem) clamp(1.75rem, 4vw, 3rem) clamp(1.5rem, 2.5vw, 2.5rem);
           max-width: 960px;
           width: 100%;
         }
@@ -1114,6 +1103,17 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-pill--date {
           border-color: var(--evd-accent);
           color: #fff;
+        }
+        /* Linked pills — pink border + letter-spacing on hover */
+        a.evd-pill--link {
+          text-decoration: none;
+          transition: border-color 0.2s ease, letter-spacing 0.22s ease, color 0.2s ease;
+        }
+        a.evd-pill--link:hover,
+        a.evd-pill--link:focus-visible {
+          border-color: #F23359;
+          color: #fff;
+          letter-spacing: 0.14em;
         }
 
         /* ── 3. Ticket Dashboard ───────────────────────────────────────── */
@@ -1614,37 +1614,46 @@ export default async function EventDetailPage({ params }: PageProps) {
           white-space: nowrap;
         }
 
-        /* Horizontal portrait card scroll */
-        .evd-cast-scroll {
+        /* Portrait card grid — FeaturedAlumni style */
+        .evd-cast-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+          gap: 2.5rem;
+          justify-items: center;
+        }
+        .evd-cast-card-link {
+          text-decoration: none;
+          color: inherit;
           display: flex;
-          gap: 1.25rem;
-          overflow-x: auto;
-          padding: 0 0 1.25rem;
+          justify-content: center;
+          width: 100%;
         }
         .evd-cast-card {
-          flex-shrink: 0;
-          width: 175px;
+          background: #f2f2f2;
+          border-radius: 8px;
+          box-shadow: 4px 8px 16px rgba(0,0,0,0.30);
+          overflow: hidden;
+          width: 100%;
+          max-width: 240px;
           display: flex;
           flex-direction: column;
-          align-items: center;
-          text-align: center;
-          gap: 0.55rem;
+          padding: 0.75rem;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
           cursor: default;
         }
-        .evd-cast-photo-wrap {
-          width: 175px;
-          aspect-ratio: 4 / 5;
-          border-radius: 12px;
-          overflow: hidden;
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.08);
-          flex-shrink: 0;
-          box-shadow: 4px 8px 20px rgba(0,0,0,0.35);
-          transition: transform 0.28s ease, box-shadow 0.28s ease;
+        .evd-cast-card-link:hover .evd-cast-card,
+        .evd-cast-card-link:focus-visible .evd-cast-card {
+          transform: translateY(-10px) rotate(-1.5deg) scale(1.05);
+          box-shadow: 0 22px 44px rgba(0,0,0,0.40);
+          cursor: pointer;
         }
-        .evd-cast-card:hover .evd-cast-photo-wrap {
-          transform: translateY(-6px) rotate(-1deg) scale(1.03);
-          box-shadow: 0 18px 36px rgba(0,0,0,0.45);
+        .evd-cast-photo-wrap {
+          width: 100%;
+          aspect-ratio: 4 / 5;
+          overflow: hidden;
+          position: relative;
+          border-radius: 4px;
+          margin-bottom: 0.75rem;
         }
         .evd-cast-photo {
           width: 100%;
@@ -1658,37 +1667,23 @@ export default async function EventDetailPage({ params }: PageProps) {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: rgba(255,255,255,0.2);
-          background: linear-gradient(135deg, var(--evd-surface-2), var(--evd-surface));
+          background: #d8d8d8;
+          color: rgba(0,0,0,0.2);
         }
         .evd-cast-role {
           font-family: "DM Sans", sans-serif;
-          font-size: 0.63rem;
-          font-weight: 700;
-          letter-spacing: 0.2em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.32);
-          margin: 0;
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: #6C00AF;
+          margin: 0 0 0.2rem;
         }
         .evd-cast-name {
           font-family: "Space Grotesk", sans-serif;
-          font-size: 0.95rem;
-          font-weight: 700;
-          color: #fff;
+          font-size: 1.05rem;
+          font-weight: 600;
+          color: #241123;
           margin: 0;
           line-height: 1.25;
-        }
-        /* Alumni links — DAT purple base, DAT pink on hover */
-        .evd-cast-link,
-        .evd-cast-link:link,
-        .evd-cast-link:visited {
-          text-decoration: none;
-          color: #8b10d9;
-          transition: color 160ms ease;
-        }
-        .evd-cast-link:hover,
-        .evd-cast-link:focus-visible {
-          color: #F23359;
         }
 
         /* ── 6. Creative Team ──────────────────────────────────────────── */
@@ -2300,21 +2295,17 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
 
         /* ── 13. Shared scrollbar utility ─────────────────────────────── */
-        /* All three horizontal scroll containers use identical thin scrollbars */
-        .evd-cast-scroll,
+        /* Gallery and cycle scroll containers */
         .evd-cycle-scroll,
         .evd-gallery-scroll {
           scrollbar-width: thin;
           scrollbar-color: rgba(255,255,255,0.10) transparent;
           -webkit-overflow-scrolling: touch;
         }
-        .evd-cast-scroll::-webkit-scrollbar,
         .evd-cycle-scroll::-webkit-scrollbar,
         .evd-gallery-scroll::-webkit-scrollbar { height: 4px; }
-        .evd-cast-scroll::-webkit-scrollbar-track,
         .evd-cycle-scroll::-webkit-scrollbar-track,
         .evd-gallery-scroll::-webkit-scrollbar-track { background: transparent; }
-        .evd-cast-scroll::-webkit-scrollbar-thumb,
         .evd-cycle-scroll::-webkit-scrollbar-thumb,
         .evd-gallery-scroll::-webkit-scrollbar-thumb {
           background: rgba(255,255,255,0.12);
