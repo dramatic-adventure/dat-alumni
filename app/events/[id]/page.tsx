@@ -54,7 +54,7 @@ const THEME_BY_CATEGORY: Record<
     surface2: "#3a0013",
     glow: "rgba(242, 51, 89, 0.18)",
     heroOverlay:
-      "linear-gradient(to top, rgba(13,8,18,1) 0%, rgba(13,8,18,0.95) 12%, rgba(13,8,18,0.78) 38%, rgba(13,8,18,0.35) 70%, rgba(13,8,18,0.12) 100%)",
+      "linear-gradient(to top, rgba(13,8,18,1) 0%, rgba(13,8,18,0.90) 20%, rgba(13,8,18,0.45) 48%, rgba(13,8,18,0.08) 75%, rgba(13,8,18,0) 100%)",
     buttonText: "#ffffff",
   },
   festival: {
@@ -63,7 +63,7 @@ const THEME_BY_CATEGORY: Record<
     surface2: "#052f3d",
     glow: "rgba(36, 147, 169, 0.18)",
     heroOverlay:
-      "linear-gradient(to top, rgba(5,20,26,1) 0%, rgba(5,20,26,0.95) 12%, rgba(5,20,26,0.82) 38%, rgba(5,20,26,0.4) 70%, rgba(5,20,26,0.12) 100%)",
+      "linear-gradient(to top, rgba(5,20,26,1) 0%, rgba(5,20,26,0.90) 20%, rgba(5,20,26,0.46) 48%, rgba(5,20,26,0.08) 75%, rgba(5,20,26,0) 100%)",
     buttonText: "#ffffff",
   },
   fundraiser: {
@@ -72,7 +72,7 @@ const THEME_BY_CATEGORY: Record<
     surface2: "#2e2000",
     glow: "rgba(217, 169, 25, 0.18)",
     heroOverlay:
-      "linear-gradient(to top, rgba(20,12,4,1) 0%, rgba(20,12,4,0.95) 12%, rgba(20,12,4,0.82) 38%, rgba(20,12,4,0.42) 70%, rgba(20,12,4,0.12) 100%)",
+      "linear-gradient(to top, rgba(20,12,4,1) 0%, rgba(20,12,4,0.90) 20%, rgba(20,12,4,0.46) 48%, rgba(20,12,4,0.08) 75%, rgba(20,12,4,0) 100%)",
     buttonText: "#241123",
   },
 };
@@ -467,15 +467,6 @@ export default async function EventDetailPage({ params }: PageProps) {
         <div className="evd-hero-overlay" />
         <div className="evd-hero-glow" />
         <div className="evd-container evd-hero-content">
-          {/* DAT badge — small logo stamp above breadcrumb */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/images/dat-logo7.svg"
-            alt="Dramatic Adventure Theatre"
-            className="evd-hero-logo"
-            aria-hidden="true"
-          />
-
           <nav className="evd-breadcrumb" aria-label="Breadcrumb">
             <Link href="/events">Events</Link>
             <span aria-hidden="true">/</span>
@@ -1009,7 +1000,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-hero-glow {
           position: absolute;
           inset: 0;
-          background: radial-gradient(ellipse 80% 60% at 10% 92%, var(--evd-glow) 0%, transparent 58%);
+          background: radial-gradient(ellipse 55% 35% at 8% 100%, var(--evd-glow) 0%, transparent 70%);
           z-index: 1;
         }
 
@@ -1031,15 +1022,6 @@ export default async function EventDetailPage({ params }: PageProps) {
           z-index: 4;
           padding: clamp(6rem, 12vw, 10rem) clamp(1.5rem, 6vw, 5rem) clamp(3.5rem, 7vw, 6rem);
           max-width: 820px;
-        }
-
-        .evd-hero-logo {
-          display: block;
-          width: 52px;
-          height: 52px;
-          margin-bottom: 1.5rem;
-          opacity: 0.78;
-          filter: brightness(0) invert(1);
         }
 
         .evd-breadcrumb {
