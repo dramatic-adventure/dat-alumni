@@ -489,7 +489,7 @@ export const events: DatEvent[] = [
     ],
 
     accessibility:
-      "Acceso sin escalones por entrada principal · Función audiodescrita: 3 oct · Función con interpretación LSEC: 10 oct · Subtítulos en inglés disponibles · Duración aprox. 2 hrs con intermedio · Recomendado mayores de 12 años",
+      "Acceso sin escalones por entrada principal · Función audiodescrita: 3 oct · Función con interpretación LSEC: 10 oct · Subtítulos en inglés disponibles",
 
     groupBookingEmail: "produccion@malayerba.org",
 

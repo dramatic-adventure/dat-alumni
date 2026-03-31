@@ -3,7 +3,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, useRef, useEffect, type ReactNode, type CSSProperties } from "react";
+import { useMemo, useState, type ReactNode, type CSSProperties } from "react";
 import type { DatEvent } from "@/lib/events";
 import {
   formatDateRange,
@@ -18,7 +18,6 @@ import { DATButtonLink } from "@/components/ui/DATButton";
 import ProductionTagButtons from "@/components/ui/ProductionTagButtons";
 import DramaClubBadge from "@/components/ui/DramaClubBadge";
 import ProcessBand from "@/components/productions/ProcessBand";
-import ProductionGallery from "@/components/productions/ProductionGallery";
 import type { RelatedItem } from "@/lib/buildRelated";
 import Lightbox from "@/components/shared/Lightbox";
 
@@ -852,6 +851,7 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
     autoLinkPeopleBase = "/alumni",
     renderAfterHero,
     productionEvents,
+    forceArchive = false,
   } = props;
 
   const titleText = cleanStr(title) ?? "";
@@ -888,21 +888,6 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
   const [heroBroken, setHeroBroken] = useState(false);
   const heroSrc: string =
     !heroBroken && heroImageUrlText ? heroImageUrlText : "/posters/fallback-16x9.jpg";
-
-  // Sticky booking rail: appears once hero scrolls out of view
-  const heroRef = useRef<HTMLDivElement>(null);
-  const [railVisible, setRailVisible] = useState(false);
-
-  useEffect(() => {
-    const el = heroRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => setRailVisible(!entry.isIntersecting),
-      { threshold: 0.05 },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
 
   const { main: heroTitleMain, variant: heroTitleVariant } = parseHeroTitle(titleText);
   const displayTitle = heroTitleMain;
@@ -1113,9 +1098,10 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
   const hasValidRunEnd = !!parsedRunEnd && !Number.isNaN(parsedRunEnd.getTime());
   const hasValidRunStart = !!parsedRunStart && !Number.isNaN(parsedRunStart.getTime());
 
-  const runIsPast = hasValidRunEnd
+  const runIsPastRaw = hasValidRunEnd
     ? parsedRunEnd < now
     : inferIsPastRun(datesText);
+  const runIsPast = forceArchive || runIsPastRaw;
 
   const runIsUpcomingOrCurrent = hasValidRunEnd
     ? parsedRunEnd >= now
@@ -1130,9 +1116,15 @@ export default function ProductionPageTemplate(props: ProductionPageTemplateProp
   // Derive display status: events take priority, then fall back to date inference
   const displayStatus: "NOW PLAYING" | "UPCOMING" | "ARCHIVE" | null =
     eventStatusLabel ??
-    (runIsUpcomingOrCurrent ? "UPCOMING" : runIsPast ? "ARCHIVE" : null);
+    (runIsUpcomingOrCurrent && !forceArchive ? "UPCOMING" : runIsPast ? "ARCHIVE" : null);
 
   // Badge colour: NOW PLAYING = green, UPCOMING = gold, ARCHIVE = muted
+  const eventStatusColor =
+    eventStatusLabel === "NOW PLAYING"
+      ? "#2FA873"
+      : eventStatusLabel === "UPCOMING"
+        ? "#FFCC00"
+        : "#6a6a6a";
   const displayStatusColor =
     displayStatus === "NOW PLAYING"
       ? "#2FA873"
@@ -1369,156 +1361,41 @@ if (ageRecText) metaValues.push({ value: ageRecText });
         backgroundRepeat: "repeat",
       }}
     >
-      {/* ========================= STICKY BOOKING RAIL ========================= */}
-      <div
-        className={`ppt-sticky-rail ${railVisible ? "ppt-sticky-rail--visible" : ""}`}
-      >
+      {/* ========================= HERO ========================= */}
+      <section className="relative isolate">
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "16px",
-            height: "56px",
-            paddingLeft: "clamp(1rem, 3vw, 2rem)",
-            paddingRight: "clamp(1rem, 3vw, 2rem)",
-            background: "#241123",
-            borderBottom: "2px solid #FFCC00",
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p
-              style={{
-                margin: 0,
-                fontSize: "0.9rem",
-                fontWeight: 700,
-                color: "#f2f2f2",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {displayTitle}
-            </p>
-          </div>
-
-          {displayStatus && (
-            <span
-              className="status-pill"
-              style={{
-                background:
-                  displayStatus === "ARCHIVE"
-                    ? "rgba(255,255,255,0.12)"
-                    : `${displayStatusColor}22`,
-                borderColor:
-                  displayStatus === "ARCHIVE"
-                    ? "rgba(255,255,255,0.18)"
-                    : `${displayStatusColor}66`,
-                color: displayStatus === "ARCHIVE" ? "#aaa" : displayStatusColor,
-                flexShrink: 0,
-              }}
-            >
-              {displayStatus !== "ARCHIVE" && (
-                <span className="status-dot" style={{ background: displayStatusColor }} />
-              )}
-              {displayStatus}
-            </span>
-          )}
-
-          {primaryCtaHref && primaryCtaLabel && (
-            <DATButtonLink
-              href={primaryCtaHref}
-              size="sm"
-              className="tickets-btn"
-              style={{ flexShrink: 0 }}
-              aria-label={
-                primaryCtaLabel === "Purchase Tickets"
-                  ? `Purchase tickets for ${displayTitle}`
-                  : primaryCtaLabel
-              }
-            >
-              {primaryCtaLabel}
-            </DATButtonLink>
-          )}
-        </div>
-      </div>
-
-      {/* ========================= CINEMATIC HERO (100vh) ========================= */}
-      <section
-        ref={heroRef}
-        className="relative isolate overflow-hidden"
-        style={{
-          position: "relative",
-          width: "100%",
-          minHeight: "100vh",
-          background: "#000",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
+            position: "relative",
+            width: "100%",
+            aspectRatio: "16 / 9",
             overflow: "hidden",
+            zIndex: 0,
+            boxShadow: "0 18px 38px rgba(0,0,0,0.18)",
           }}
         >
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              animation: "ppt-kenburns 28s ease-in-out infinite alternate",
-            }}
-          >
-            <Image
-              src={!heroBroken && heroSrc ? heroSrc : "/posters/fallback-16x9.jpg"}
-              alt={heroImageAltText || displayTitle || "Production hero image"}
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover object-center"
-              onError={() => setHeroBroken(true)}
-            />
-          </div>
+          <Image
+            src={!heroBroken && heroImageUrlText ? heroImageUrlText : "/posters/fallback-16x9.jpg"}
+            alt={heroImageAltText || displayTitle || "Production hero image"}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center"
+            onError={() => setHeroBroken(true)}
+          />
 
-          {/* Deep gradient overlays for cinematic effect */}
           <div className="pointer-events-none absolute inset-0">
-            {/* Radial vignette from bottom */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(ellipse at 50% 100%, transparent 40%, rgba(0,0,0,0.3) 100%)",
-              }}
-            />
-            {/* Left side gradient */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(to right, rgba(36,17,35,0.7) 0%, transparent 55%)",
-              }}
-            />
-            {/* Bottom gradient for title lockup */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(to top, rgba(36,17,35,0.95) 0%, rgba(36,17,35,0.6) 30%, transparent 60%)",
-              }}
-            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/70 to-black/35" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
           </div>
 
-          {/* Hero content lockup - bottom-left */}
           <div
             className="hero-stack"
             style={{
               position: "absolute",
-              bottom: "clamp(2rem, 8vw, 4rem)",
-              left: "clamp(1.5rem, 6vw, 3rem)",
-              right: "clamp(1.5rem, 6vw, 3rem)",
-              maxWidth: "min(90vw, 800px)",
-              zIndex: 10,
+              bottom: "clamp(1.5rem, 5vw, 3rem)",
+              left: "clamp(1.25rem, 7vw, 7%)",
+              right: "clamp(1.25rem, 7vw, 7%)",
+              zIndex: 2,
             }}
           >
             <div className="hero-text-shade" />
@@ -1536,7 +1413,7 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                 <h1 className="hero-title">{displayTitle}</h1>
 
                 {originalTitleText && (
-                  <p className="hero-original-title">
+                  <p className="hero-original-title font-sans">
                     <span className="hero-original-text" lang="es">
                       {originalTitleText}
                     </span>
@@ -1553,6 +1430,7 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                 </p>
               )}
 
+              {/* ── Production status badge (events → date fallback) ── */}
               {displayStatus && (
                 <div className="hero-status-badge" style={{ marginTop: "0.75rem" }}>
                   <span
@@ -1578,50 +1456,15 @@ if (ageRecText) metaValues.push({ value: ageRecText });
               )}
             </div>
           </div>
-
-          {/* Meta strip at very bottom of hero */}
-          {metaValues.length > 0 && (
-            <div
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                background: "rgba(36, 17, 35, 0.88)",
-                backdropFilter: "blur(8px)",
-                padding: "clamp(0.6rem, 1.2vw, 1rem) clamp(1.5rem, 6vw, 3rem)",
-                zIndex: 8,
-              }}
-            >
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "0.85rem",
-                  fontFamily: "var(--font-space-grotesk, system-ui, sans-serif)",
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  color: "rgba(255, 255, 255, 0.8)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  flexWrap: "wrap",
-                }}
-              >
-                {metaValues
-                  .slice(0, 3)
-                  .map(({ value }, idx, arr) => (
-                    <span key={idx}>
-                      {value}
-                      {idx < Math.min(arr.length - 1, 2) && <span>•</span>}
-                    </span>
-                  ))}
-              </p>
-            </div>
-          )}
         </div>
       </section>
 
       {renderAfterHero ?? null}
+
+      {/* ── Linked events band (dark, full-width) ─────────────────────────── */}
+      {safeProductionEvents.length > 0 && (
+        <ProdEventsSection events={safeProductionEvents} productionTitle={displayTitle} />
+      )}
 
       {/* ===================== WHITE CARD ====================== */}
       <section style={{ display: "grid", placeItems: "center" }}>
@@ -1631,199 +1474,268 @@ if (ageRecText) metaValues.push({ value: ageRecText });
             maxWidth: "1200px",
             background: "rgba(255,255,255,0.60)",
             borderRadius: 18,
-            margin: "clamp(1.25rem, 3vw, 2.25rem) auto",
-            padding: "clamp(1.2rem, 3.2vw, 2.4rem)",
+            margin: "clamp(1.25rem, 3vw, 2.25rem) 0 clamp(3.2rem, 8vw, 6rem)",
+            ["--card-pad" as any]: "clamp(1.2rem, 3.2vw, 2.4rem)",
+            padding: "var(--card-pad)",
             boxShadow: "0 18px 48px rgba(36,17,35,0.10)",
             backdropFilter: "saturate(1.05)",
           }}
         >
           <section className="rows">
-            {/* ABOUT SECTION */}
-            {(hasSynopsis || hasThemes) && (
-              <div className="row rowFull section-block">
-                {hasSynopsis && (
-                  <div>
+            {/* ROW 1: Dates/Festival/Venue + CTA */}
+            <div className="row row70">
+              <div>
+                <div className="meta-stack">
+                  <h2 className="meta-title">{displayTitle}</h2>
+                  {metaValues.map(({ value, hero }, i) => (
+                    <div key={i} className={`meta-line ${hero ? "meta-hero" : "meta-sub"}`}>
+                      {value}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="r1-tickets">
+                {primaryCtaHref && primaryCtaLabel && (
+                  <DATButtonLink
+                    href={primaryCtaHref}
+                    size="lg"
+                    className="tickets-btn"
+                    aria-label={
+                      primaryCtaLabel === "Purchase Tickets"
+                        ? `Purchase tickets for ${displayTitle}`
+                        : primaryCtaLabel
+                    }
+                  >
+                    {primaryCtaLabel}
+                  </DATButtonLink>
+                )}
+              </div>
+            </div>
+
+            {/* Quote band */}
+            {pullQuote?.quote && cleanStr(pullQuote.quote) && (
+              <div className="row rowFull section-block quote-wrap">
+                <div className="quote-band">
+                  <div className="quote-img">
+                    <Image
+                      src={cleanHref(quoteImageUrl) ?? heroSrc ?? "/images/teaching-amazon.jpg"}
+                      alt={cleanStr(pullQuote.attribution) ?? displayTitle}
+                      fill
+                      sizes="(max-width: 900px) 90vw, 600px"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="quote-copy">
+                    <blockquote className="big-quote">“{pullQuote.quote}”</blockquote>
+                    {cleanStr(pullQuote.attribution) && (
+                      <p className="big-quote-source">
+                        {cleanHref(pullQuote.attributionHref) ? (
+                          <SmartLink
+                            href={pullQuote.attributionHref!}
+                            className="quote-source-link"
+                            newTabIfExternal
+                          >
+                            — {pullQuote.attribution}
+                          </SmartLink>
+                        ) : (
+                          <>— {pullQuote.attribution}</>
+                        )}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* PRIMARY NARRATIVE GRID */}
+            {showPrimaryNarrativeGrid && (
+              <div className={narrativeGridClass}>
+                {showAboutSection && (
+                  <section className="section-block section-block-indent pn-about">
                     <h2 id="about-heading" className="section-head">
                       About
                     </h2>
-                    <div className="section-block-indent">
-                      {inlineSynopsisNodes}
-                    </div>
-                  </div>
+
+                    {inlineSynopsisNodes}
+
+                    {hasThemes && (
+                      <div className="mt-5 production-tags">
+                        <ProductionTagButtons tags={safeThemes} dense hrefBase="/theme" />
+                      </div>
+                    )}
+                  </section>
                 )}
 
-                {hasThemes && safeThemes.length > 0 && (
-                  <div
-                    style={{
-                      marginTop: hasSynopsis ? "1.5rem" : 0,
-                    }}
-                  >
-                    <ProductionTagButtons tags={safeThemes} />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* CAST & CREATIVE TEAM SECTION */}
-            {(hasCast || hasCreativeTeam) && (
-              <div className="row rowFull section-block">
-                <div className="primary-narrative-grid">
-                  {hasCast && (
-                    <div className="pn-about">
-                      <h2 className="section-head">Cast</h2>
-                      <div className="section-block-indent">
-                        {safeCast.map((person, idx) => (
-                          <div key={idx} className="credit-row border-top-soft">
-                            <div className="role-label">{person.role}</div>
-                            <div className="credit-name">
-                              <NameCell
-                                name={person.name}
-                                href={person.href}
-                                base={autoLinkPeopleBase}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {hasCreativeTeam && (
-                    <div className="pn-sidebar">
-                      <h2 className="section-head">Creative Team</h2>
-                      <div className="section-block-indent">
-                        {safeCreativeTeam.map((person, idx) => (
-                          <div key={idx} className="credit-row border-top-soft">
-                            <div className="role-label">{person.role}</div>
-                            <div className="credit-name">
-                              <NameCell
-                                name={person.name}
-                                href={person.href}
-                                base={autoLinkPeopleBase}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* PULL QUOTE - Full-bleed breakout */}
-            {pullQuote?.quote && cleanStr(pullQuote.quote) && (
-              <div className="ppt-breakout-wrapper">
-                <div className="row rowFull section-block quote-wrap">
-                  <div className="quote-band">
-                    <div className="quote-img">
-                      <Image
-                        src={cleanHref(quoteImageUrl) ?? heroSrc ?? "/images/teaching-amazon.jpg"}
-                        alt={cleanStr(pullQuote.attribution) ?? displayTitle}
-                        fill
-                        sizes="(max-width: 900px) 90vw, 600px"
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="quote-copy">
-                      <blockquote className="big-quote">"{pullQuote.quote}"</blockquote>
-                      {cleanStr(pullQuote.attribution) && (
-                        <p className="big-quote-source">
-                          {cleanHref(pullQuote.attributionHref) ? (
-                            <SmartLink
-                              href={pullQuote.attributionHref!}
-                              className="quote-source-link"
-                              newTabIfExternal
+                {showSidebarCol && (
+                  <div className="pn-sidebar">
+                    {hasCast && (
+                      <section className="section-block pn-block pn-cast" aria-labelledby="cast-heading">
+                        <h2 id="cast-heading" className="section-head">
+                          Cast
+                        </h2>
+                        <ul className="mt-4">
+                          {safeCast.map((member, i) => (
+                            <li
+                              key={`${member.role}-${member.name}-${i}`}
+                              className="credit-row border-top-soft"
                             >
-                              — {pullQuote.attribution}
-                            </SmartLink>
-                          ) : (
-                            <>— {pullQuote.attribution}</>
-                          )}
-                        </p>
-                      )}
-                    </div>
+                              <span className="role-label">{member.role}</span>
+                              <span className="credit-name">
+                                <NameCell
+                                  name={member.name}
+                                  href={member.href}
+                                  dramaClubSlug={member.dramaClubSlug}
+                                  base={autoLinkPeopleBase}
+                                />
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+
+                    {hasCreativeTeam && (
+                      <section className="section-block pn-block pn-team" aria-labelledby="team-heading">
+                        <h2 id="team-heading" className="section-head">
+                          Creative Team
+                        </h2>
+                        <ul className="mt-4">
+                          {safeCreativeTeam.map((person, i) => (
+                            <li
+                              key={`${person.role}-${person.name}-${i}`}
+                              className="credit-row border-top-soft"
+                            >
+                              <span className="role-label">{person.role}</span>
+                              <span className="credit-name">
+                                <NameCell
+                                  name={person.name}
+                                  href={person.href}
+                                  dramaClubSlug={person.dramaClubSlug}
+                                  base={autoLinkPeopleBase}
+                                />
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+
+                    {/* Resources */}
+                    {showResourcesSection && (
+                      <section
+                        className="section-block section-block-indent pn-block pn-resources-right pn-resources"
+                        aria-labelledby="resources-heading"
+                      >
+                        <h2 id="resources-heading" className="section-head">
+                          Resources
+                        </h2>
+
+                        {hasResources && (
+                          <ul className="resources-list">
+  {safeResources.map((item, idx) => (
+    <li key={idx} className="resource-item">
+      {item.href ? (
+        <SmartLink href={item.href} className="resource-link" newTabIfExternal>
+          {item.label}
+        </SmartLink>
+      ) : (
+        <span className="resource-link" style={{ color: "#241123CC" }}>
+          {item.label}
+        </span>
+      )}
+    </li>
+  ))}
+</ul>
+                        )}
+                      </section>
+                    )}
                   </div>
-                </div>
+                )}
               </div>
             )}
 
-            {/* PRODUCTION GALLERY - Full-bleed breakout */}
-            {hasMainGallery && gallery && gallery.length > 0 && (
-              <div className="ppt-breakout-wrapper">
-                <ProductionGallery
-                  images={gallery.flatMap((img) => {
-                    const src = cleanStr(img?.src);
-                    if (!src) return [];
-                    return [{ src, alt: cleanStr(img?.alt) ?? "" }];
-                  })}
-                  photographer={photographerDisplay ?? null}
-                  photographerHref={photographerHref ?? undefined}
-                  albumHref={albumHrefDisplay ?? null}
-                  albumLabel={albumLabelDisplay ?? undefined}
-                  title={displayTitle}
+            {/* ✅ PRODUCTION GALLERY (full width of the card) */}
+            {hasMainGallery && (
+              <div className="row rowFull prodgallery-row" aria-label="Production Gallery row">
+                <PhotoRowGallery
+                  title="Production Gallery"
+                  images={gallery}
+                  photographer={
+                    typeof productionPhotographer === "string" && productionPhotographer.trim()
+                      ? productionPhotographer.trim()
+                      : null
+                  }
+                  photographerHref={photographerHref ?? null}
+                  albumHref={albumHrefDisplay}
+                  albumLabel={albumLabelDisplay}
+                  maxVisible={9}
                 />
               </div>
             )}
 
-            {/* PRODUCTION EVENTS - Woven into flow with warm dark background */}
-            {safeProductionEvents.length > 0 && (
-              <div className="ppt-breakout-wrapper">
-                <ProdEventsSection
-                  events={safeProductionEvents}
-                  productionTitle={displayTitle}
-                />
-              </div>
-            )}
-
-            {/* PROCESS BAND */}
-            {hasProcess && safeProcessSections.length > 0 && (
-              <div className="row rowFull section-block process-wrap">
+            {/* ✅ PROCESS (only when contentful) */}
+            {hasProcess && (
+              <div className="row rowFull section-block process-wrap" id="process">
                 <ProcessBand slides={safeProcessSections} title="Process" />
               </div>
             )}
+          </section>
 
-            {/* IMPACT & COMMUNITY SECTION */}
-            {showImpactBlock && (
-              <div className="row rowFull section-block">
-                <div className={impactRowClass}>
-                  <div>
-                    <h2 id="impact-cta-heading" className="section-head">
-                      Support DAT
-                    </h2>
-                    <div className="section-block-indent">
-                      {impactBlurb && (
-                        <p className="body-text">{impactBlurb}</p>
-                      )}
+          {/* Impact row */}
+          {showImpactBlock && (
+            <div className={impactRowClass}>
+              {/* left column */}
+              <section className="section-block section-block-indent impact-left" aria-labelledby="impact-cta-heading">
+                <h2 id="impact-cta-heading" className="section-head">
+                  Impact & Community
+                </h2>
+                <p className="body-text" style={{ marginTop: 8, maxWidth: 680 }}>
+                  {impactBlurb}
+                </p>
 
-                      {hasImpactCTA && (
-                        <div className="impact-cta-stack" style={{ marginTop: "1.2rem" }}>
-                          {(runIsPast || runIsUpcomingOrCurrent) && (
-                            <DATButtonLink
-                              href={
-                                runIsPast
-                                  ? pastProductionDonateHref
-                                  : currentProductionDonateHref
-                              }
-                              size="md"
-                              className="sponsor-btn"
-                            >
-                              {runIsPast ? "Honor This Production" : "Support This Show"}
-                            </DATButtonLink>
-                          )}
-                          {getInvolvedLinkText && (
-                            <SmartLink
-                              href={`/get-involved`}
-                              className="involved-link"
-                              newTabIfExternal
-                            >
-                              {getInvolvedLinkText}
-                            </SmartLink>
-                          )}
-                        </div>
-                      )}
+                <div className="impact-cta-stack" style={{ marginTop: 10 }}>
+                  {(runIsUpcomingOrCurrent || runIsPast) && (
+                    <DATButtonLink
+                      href={runIsPast ? pastProductionDonateHref : currentProductionDonateHref}
+                      size="lg"
+                      className="sponsor-btn"
+                    >
+                      {runIsPast ? "Sponsor Stories Like This" : "Sponsor This New Work"}
+                    </DATButtonLink>
+                  )}
+                  {getInvolvedLinkText && (
+                    <Link href={getInvolvedLinkText} className="involved-link under-btn">
+                      Volunteer / Get Involved
+                    </Link>
+                  )}
+                </div>
 
-                      {showDramaClubBlock && (
+                {/* From the Field */}
+                {hasFieldGallery && (
+                  <div className="impact-field-slot">
+                    <FieldGridGallery
+                      title={cleanStr(fieldGalleryTitle)}
+                      images={fieldGallery}
+                      albumHref={fieldAlbumHrefDisplay}
+                      albumLabel={fieldAlbumLabelDisplay}
+                    />
+                  </div>
+                )}
+              </section>
+
+              {/* right column */}
+              {(showDramaClubBlock || hasCauses || hasPartners) && (
+                <section className="section-block impact-right">
+                  <div
+                    className="grid items-start"
+                    style={{
+                      gridTemplateColumns: "auto 1fr",
+                      gap: "clamp(20px, 3.5vw, 44px)",
+                    }}
+                  >
+                    {showDramaClubBlock && (
+                      <>
                         <div className="drama-club-wrapper">
                           {dramaClubLinkText ? (
                             <Link
@@ -1842,186 +1754,117 @@ if (ageRecText) metaValues.push({ value: ageRecText });
                               <DramaClubBadge name={dramaClubNameText ?? ""} size={150} />
                             </div>
                           )}
-
-                          {(dramaClubNameText || dramaClubLocationText) && (
-                            <div style={{ alignSelf: "center" }}>
-                              <p className="support-eyebrow-tight">THIS PRODUCTION SUPPORTS</p>
-                              {dramaClubNameText && (
-                                <h3 className="club-name" style={{ marginTop: 6 }}>
-                                  {dramaClubLinkText ? (
-                                    <Link href={dramaClubLinkText} className="club-link-black no-underline">
-                                      {dramaClubNameText}
-                                    </Link>
-                                  ) : (
-                                    dramaClubNameText
-                                  )}
-                                </h3>
-                              )}
-                              {dramaClubLocationText && <p className="club-loc">{dramaClubLocationText}</p>}
-                            </div>
-                          )}
                         </div>
-                      )}
 
-                      {hasCauses && safeCauses.length > 0 && (
-                        <div>
-                          <p className="support-eyebrow-tight">CAUSES WE CHAMPION</p>
-                          <div className="cause-row">
-                            {safeCauses.map((c) => {
-                              const causeHref = c.href ?? `/cause/${slugify(c.label)}`;
-                              return (
-                                <Link key={c.label} href={causeHref} className="cause-chip no-underline">
-                                  {c.label}
-                                </Link>
-                              );
-                            })}
+                        {(dramaClubNameText || dramaClubLocationText) && (
+                          <div style={{ alignSelf: "center" }}>
+                            <p className="support-eyebrow-tight">THIS PRODUCTION SUPPORTS</p>
+                            {dramaClubNameText && (
+                              <h3 className="club-name" style={{ marginTop: 6 }}>
+                                {dramaClubLinkText ? (
+                                  <Link href={dramaClubLinkText} className="club-link-black no-underline">
+                                    {dramaClubNameText}
+                                  </Link>
+                                ) : (
+                                  dramaClubNameText
+                                )}
+                              </h3>
+                            )}
+                            {dramaClubLocationText && <p className="club-loc">{dramaClubLocationText}</p>}
                           </div>
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </>
+                    )}
                   </div>
 
-                  {showImpactRight && (
-                    <div style={{ minWidth: 0 }}>
-                      {hasPartners && safePartners.length > 0 && (
-                        <div className="impact-partners-block section-block-indent">
-                          <p className="support-eyebrow-tight">IMPACT PARTNERS</p>
-                          <div className="partner-list">
-                            {safePartners.map((p) => {
-                              const hasLogo = !!p.logoSrc;
-                              const href = cleanHref(p.href);
-                              const className = `partner-bar ${hasLogo ? "" : "partner-no-logo"}`;
-
-                              if (!href) {
-                                return (
-                                  <div key={p.name} className={className}>
-                                    {hasLogo && <PartnerLogoShell src={p.logoSrc} alt={p.logoAlt ?? p.name} />}
-                                    <div className="partner-text">
-                                      <span className="partner-name">{p.name}</span>
-                                    </div>
-                                  </div>
-                                );
-                              }
-
-                              return isExternal(href) ? (
-                                <a key={p.name} href={href} className={className} target="_blank" rel="noreferrer">
-                                  {hasLogo && <PartnerLogoShell src={p.logoSrc} alt={p.logoAlt ?? p.name} />}
-                                  <div className="partner-text">
-                                    <span className="partner-name">{p.name}</span>
-                                  </div>
-                                </a>
-                              ) : (
-                                <Link key={p.name} href={href} className={className}>
-                                  {hasLogo && <PartnerLogoShell src={p.logoSrc} alt={p.logoAlt ?? p.name} />}
-                                  <div className="partner-text">
-                                    <span className="partner-name">{p.name}</span>
-                                  </div>
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
+                  {hasCauses && (
+                    <div className="mt-5 mb-6 section-block-indent">
+                      <p className="support-eyebrow-tight">CAUSES WE CHAMPION</p>
+                      <div className="cause-row">
+                        {safeCauses.map((c) => {
+                          const causeHref = c.href ?? `/cause/${slugify(c.label)}`;
+                          return (
+                            <Link key={c.label} href={causeHref} className="cause-chip no-underline">
+                              {c.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
-                </div>
+
+                  {hasPartners && (
+                    <div className="impact-partners-block section-block-indent">
+                      <p className="support-eyebrow-tight">IMPACT PARTNERS</p>
+
+                      <div className="partner-list">
+                        {safePartners.map((p) => {
+  const hasLogo = !!p.logoSrc;
+  const href = cleanHref(p.href); // ✅ might be undefined
+  const className = `partner-bar ${hasLogo ? "" : "partner-no-logo"}`;
+
+  // No link → render as plain row (keep text + optional logo)
+  if (!href) {
+    return (
+      <div key={p.name} className={className}>
+        {hasLogo && <PartnerLogoShell src={p.logoSrc} alt={p.logoAlt ?? p.name} />}
+        <div className="partner-text">
+          <span className="partner-name">{p.name}</span>
+        </div>
+      </div>
+    );
+  }
+
+  const external = isExternal(href);
+
+  if (!external) {
+    return (
+      <Link key={p.name} href={href} className={className}>
+        {hasLogo && <PartnerLogoShell src={p.logoSrc} alt={p.logoAlt ?? p.name} />}
+        <div className="partner-text">
+          <span className="partner-name">{p.name}</span>
+        </div>
+      </Link>
+    );
+  }
+
+  return (
+    <a key={p.name} href={href} className={className} target="_blank" rel="noreferrer">
+      {hasLogo && <PartnerLogoShell src={p.logoSrc} alt={p.logoAlt ?? p.name} />}
+      <div className="partner-text">
+        <span className="partner-name">{p.name}</span>
+      </div>
+    </a>
+  );
+})}
+
+                      </div>
+                    </div>
+                  )}
+                </section>
+              )}
+            </div>
+          )}
+
+          {/* RELATED swipe row */}
+          {hasRelated && (
+            <section className="row rowFull section-block related-block">
+              <div className="related-head">
+                <h2 className="section-head">{relatedTitle}</h2>
               </div>
-            )}
 
-            {/* FIELD GALLERY */}
-            {hasFieldGallery && (
-              <div className="ppt-breakout-wrapper">
-                <FieldGridGallery
-                  title={cleanStr(fieldGalleryTitle)}
-                  images={fieldGallery}
-                  albumHref={fieldAlbumHrefDisplay}
-                  albumLabel={fieldAlbumLabelDisplay}
-                />
+              <div className="related-row" aria-label="Related Plays & Projects">
+                <div className="related-spacer" aria-hidden="true" />
+                {relatedList.map((ri) => (
+                  <RelatedCard key={ri.slug} item={ri} />
+                ))}
               </div>
-            )}
-
-            {/* RESOURCES SECTION */}
-            {showResourcesSection && safeResources && safeResources.length > 0 && (
-              <div className="row rowFull section-block pn-resources">
-                <div>
-                  <h2 id="resources-heading" className="section-head">
-                    Resources
-                  </h2>
-                  <div className="section-block-indent">
-                    <ul className="resources-list">
-                      {safeResources.map((resource) => (
-                        <li key={resource.label} className="resource-item">
-                          {resource.href ? (
-                            <SmartLink
-                              href={resource.href}
-                              className="resource-link"
-                              newTabIfExternal
-                            >
-                              {resource.label}
-                            </SmartLink>
-                          ) : (
-                            <span>{resource.label}</span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* RELATED PRODUCTIONS */}
-            {hasRelated && (
-              <section className="row rowFull section-block related-block">
-                <div className="related-head">
-                  <h2 className="section-head">{relatedTitle}</h2>
-                </div>
-
-                <div className="related-row" aria-label="Related Plays & Projects">
-                  <div className="related-spacer" aria-hidden="true" />
-                  {relatedList.map((ri) => (
-                    <RelatedCard key={ri.slug} item={ri} />
-                  ))}
-                </div>
-              </section>
-            )}
-          </section>
+            </section>
+          )}
         </article>
       </section>
 
       <style>{`
-        /* ────────────────────────────────────────────────────────────── */
-        /* PPT: PRODUCTION PAGE TEMPLATE - NEW DESIGN                     */
-        /* ────────────────────────────────────────────────────────────── */
-
-        @keyframes ppt-kenburns {
-          0% { transform: scale(1); }
-          100% { transform: scale(1.07); }
-        }
-
-        .ppt-sticky-rail {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          z-index: 900;
-          transform: translateY(-100%);
-          transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .ppt-sticky-rail--visible {
-          transform: translateY(0);
-        }
-
-        .ppt-breakout-wrapper {
-          margin-left: calc(-1 * clamp(1.2rem, 3.2vw, 2.4rem));
-          margin-right: calc(-1 * clamp(1.2rem, 3.2vw, 2.4rem));
-          overflow: hidden;
-        }
-
-        /* ────────────────────────────────────────────────────────────── */
-        /* PRESERVED INTERNAL COMPONENT STYLES                            */
-        /* ────────────────────────────────────────────────────────────── */
-
         .eyebrow,.hero-title,.hero-subtitle,.hero-byline{
           text-shadow:
             0 0 4px rgba(0,0,0,0.82),
@@ -2053,11 +1896,11 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           width: max-content;
           max-width: 100%;
           font-family: var(--font-anton, system-ui, sans-serif);
-          font-size: clamp(2.4rem, 7.5vw, 5.5rem);
+          font-size: clamp(2.8rem, 7vw, 7rem);
           color: #f2f2f2;
           text-transform: uppercase;
           margin: 0;
-          line-height: 0.95;
+          line-height: 1;
           letter-spacing: 0.06em;
           opacity: .9;
         }
@@ -2089,12 +1932,11 @@ if (ageRecText) metaValues.push({ value: ageRecText });
 
         .hero-original-text{
           color: inherit;
-          font-style: italic;
         }
         .hero-title-lockup{
           display: inline-flex;
           flex-direction: column;
-          align-items: flex-start;
+          align-items: flex-end;
           width: max-content;
           max-width: 100%;
         }
@@ -2173,8 +2015,8 @@ if (ageRecText) metaValues.push({ value: ageRecText });
 
         .section-head{
           font-family: var(--font-dm-sans, system-ui, sans-serif);
-          font-size: .72rem; text-transform: uppercase; letter-spacing: .28em;
-          color: #D9A919; font-weight: 700; margin: 0 0 12px 0;
+          font-size: .86rem; text-transform: uppercase; letter-spacing: .22em;
+          color: #241123B3; font-weight: 300; margin: 0 0 12px 0;
         }
 
         .meta-stack{ display:flex; flex-direction:column; gap:6px; }
@@ -2213,7 +2055,7 @@ if (ageRecText) metaValues.push({ value: ageRecText });
 
         .body-text{
           font-family: var(--font-space-grotesk, system-ui, sans-serif);
-          font-size: 1.05rem; line-height: 1.72; color: #241123E6;
+          font-size: 1.05rem; line-height: 1.66; color: #241123E6;
         }
         .about-body{ font-weight: 500; letter-spacing: .005em; }
 

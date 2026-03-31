@@ -120,7 +120,7 @@ export default function EventHeroText({
           border: 1px solid rgba(255, 255, 255, 0.22);
           border-radius: 999px;
           overflow: hidden;
-          margin-bottom: 0.9rem;
+          margin-bottom: 1.75rem;
         }
         .evd-lang-btn {
           background: transparent;

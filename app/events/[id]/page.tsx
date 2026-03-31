@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 
 import DramaClubBadge from "@/components/ui/DramaClubBadge";
 import EventShareButton from "@/components/events/EventShareButton";
-import EventGallery from "@/components/events/EventGallery";
+import EventProdrowGallery from "@/components/events/EventProdrowGallery";
 import EventHeroText from "@/components/events/EventHeroText";
 import MailingListForm from "@/components/events/MailingListForm";
 import { productionMap } from "@/lib/productionMap";
@@ -457,6 +457,11 @@ export default async function EventDetailPage({ params }: PageProps) {
   // Rich-content resolution (event-first, production fallback)
   const photoGallery = resolvePhotoGallery(event, productionExtra);
   const photoCredit = resolvePhotoCredit(event, productionExtra);
+  const fieldGalleryImages = productionExtra?.fieldGalleryImages?.length
+    ? (productionExtra.fieldGalleryImages as GalleryItem[])
+    : undefined;
+  const fieldGalleryTitle = productionExtra?.fieldGalleryTitle;
+  const fieldAlbumHref = productionExtra?.fieldAlbumHref ?? undefined;
   const videoData = resolveVideoUrl(event, productionExtra);
   const videoEmbedUrl = videoData ? getVideoEmbedUrl(videoData.url) : undefined;
   const artistNote = resolveArtistNote(event, productionExtra);
@@ -663,13 +668,16 @@ export default async function EventDetailPage({ params }: PageProps) {
               {/* LEFT: description text + video */}
               <div className="evd-dashboard-left">
                 {paragraphs.length > 0 ? (
-                  <div className="evd-dash-description">
-                    {event.subtitle ? (
-                      <p className="evd-dash-tagline">{event.subtitle}</p>
-                    ) : null}
-                    {paragraphs.map((p, i) => (
-                      <p key={i} className={`evd-body-paragraph${i === 0 ? " evd-body-paragraph--lead" : ""}`}>{p}</p>
-                    ))}
+                  <div className="evd-dash-description evd-about-block">
+                    <h2 className="evd-about-head">About</h2>
+                    <div className="evd-about-indent">
+                      {event.subtitle ? (
+                        <p className="evd-tagline-inline">{event.subtitle}</p>
+                      ) : null}
+                      {paragraphs.map((p, i) => (
+                        <p key={i} className="evd-body-text evd-about-body">{p}</p>
+                      ))}
+                    </div>
                   </div>
                 ) : null}
 
@@ -747,9 +755,15 @@ export default async function EventDetailPage({ params }: PageProps) {
             </div>
 
             {/* Photo Gallery */}
-            {photoGallery?.length ? (
+            {(photoGallery?.length || fieldGalleryImages?.length) ? (
               <div className="evd-card-gallery">
-                <EventGallery images={photoGallery} photoCredit={photoCredit} />
+                <EventProdrowGallery
+                  images={photoGallery ?? []}
+                  photoCredit={photoCredit}
+                  fieldImages={fieldGalleryImages}
+                  fieldGalleryTitle={fieldGalleryTitle}
+                  fieldAlbumHref={fieldAlbumHref}
+                />
               </div>
             ) : null}
 
@@ -798,11 +812,12 @@ export default async function EventDetailPage({ params }: PageProps) {
             {/* Creative Team */}
             {creativeCredits.length > 0 ? (
               <div className="evd-card-creative">
-                <div className="evd-creative-head">
-                  <h3 className="evd-creative-label">
+                <div className="evd-cast-head">
+                  <span className="evd-cast-head-rule" aria-hidden="true" />
+                  <p className="evd-cast-head-label">
                     {castCredits.length > 0 ? "Creative Team" : "The Company"}
-                  </h3>
-                  <span className="evd-creative-rule" aria-hidden="true" />
+                  </p>
+                  <span className="evd-cast-head-rule" aria-hidden="true" />
                 </div>
                 <div className="evd-creative-grid">
                   {creativeCredits.map((c, i) => (
@@ -823,26 +838,14 @@ export default async function EventDetailPage({ params }: PageProps) {
         </div>
       </section>
 
-      {/* Production archive link — simple, unobtrusive */}
-      {relatedProduction ? (
-        <div className="evd-production-link-band">
-          <div className="evd-container">
-            <p className="evd-production-link-text">
-              <span className="evd-production-link-eyebrow">Archive</span>
-              {relatedProduction.title}
-              {relatedProduction.location ? ` · ${relatedProduction.location}` : ""}
-              {relatedProduction.festival ? ` · ${relatedProduction.festival}` : ""}
-              <Link href={`/theatre/${event.production}`} className="evd-production-link-cta">
-                Full Production →
-              </Link>
-            </p>
-          </div>
-        </div>
-      ) : null}
-
       {/* ── Related Productions Cycle ────────────────────────────────── */}
       {(relatedProduction || productionCycle.length > 0) ? (
         <section className="evd-cycle-band">
+          {/* DAT logo sticker — half above section top edge */}
+          <div className="evd-cycle-logo-sticker" aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/dat-logo7.svg" alt="" className="evd-cycle-logo-img" />
+          </div>
           <div className="evd-container">
             <div className="evd-section-head">
               <p className="evd-section-eyebrow">Production History</p>
@@ -1000,7 +1003,7 @@ export default async function EventDetailPage({ params }: PageProps) {
             <Link href="/events/festivals" className="evd-bottom-link evd-bottom-link--teal">
               Festivals &amp; Showcases →
             </Link>
-            <Link href="/theatre" className="evd-bottom-link evd-bottom-link--archive">
+            <Link href="/theatre" className="evd-bottom-link evd-bottom-link--muted">
               Theatre Archive →
             </Link>
             <Link href="/events" className="evd-bottom-link evd-bottom-link--muted">
@@ -1676,6 +1679,180 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
         .evd-content-card .evd-credit-link:hover {
           color: #F23359;
+        }
+
+        /* ── 3c. About section (stolen from /theatre/[slug]) ───────────── */
+        .evd-about-head {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.86rem;
+          text-transform: uppercase;
+          letter-spacing: 0.22em;
+          color: rgba(36,17,35,0.55);
+          font-weight: 300;
+          margin: 0 0 10px;
+        }
+        .evd-about-indent {
+          padding-left: 2.5rem;
+        }
+        .evd-tagline-inline {
+          font-family: var(--font-rock-salt, cursive);
+          font-weight: 400;
+          line-height: 1.25;
+          color: #F23359;
+          font-size: clamp(1rem, 2.5vw, 1.65rem);
+          word-break: break-word;
+          margin: 0 0 1.25rem;
+        }
+        .evd-body-text {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 1.05rem;
+          line-height: 1.66;
+          color: rgba(36,17,35,0.88);
+          margin: 0 0 1.1rem;
+        }
+        .evd-about-body {
+          font-weight: 500;
+          letter-spacing: 0.005em;
+        }
+        .evd-body-text:last-child { margin-bottom: 0; }
+
+        /* ── 3d. Gallery inside card (PhotoRowGallery style) ───────────── */
+        .evd-card-gallery-inner {
+          /* intentionally no extra wrapper — prodrow styles handle everything */
+        }
+        /* prodrow-* styles (from ProductionPageTemplate, adapted for event card) */
+        .evd-prodrow-block {
+          margin-top: 0;
+        }
+        .evd-prodrow-head {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 1rem;
+          flex-wrap: wrap;
+          margin-bottom: 0.85rem;
+        }
+        .evd-prodrow-title {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.86rem;
+          text-transform: uppercase;
+          letter-spacing: 0.22em;
+          color: rgba(36,17,35,0.55);
+          font-weight: 300;
+          margin: 0;
+        }
+        .evd-prodrow-credit {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          color: rgba(36,17,35,0.38);
+          margin: 0;
+        }
+        .evd-prodrow-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
+        }
+        .evd-prodrow-card {
+          border: none;
+          background: transparent;
+          padding: 0;
+          cursor: zoom-in;
+          border-radius: 8px;
+          overflow: hidden;
+          position: relative;
+          aspect-ratio: 4 / 3;
+        }
+        .evd-prodrow-card::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: rgba(0,0,0,0);
+          transition: background 0.18s;
+          border-radius: 8px;
+        }
+        .evd-prodrow-card:hover::after { background: rgba(0,0,0,0.14); }
+        .evd-prodrow-img-shell {
+          width: 100%;
+          height: 100%;
+          position: relative;
+          border-radius: 8px;
+          overflow: hidden;
+        }
+        .evd-prodrow-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 0.65rem;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        .evd-prodrow-toggle,
+        .evd-prodrow-album {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #6c00af;
+          background: none;
+          border: none;
+          padding: 0;
+          cursor: pointer;
+          text-decoration: none;
+          transition: color 0.18s;
+        }
+        .evd-prodrow-toggle:hover, .evd-prodrow-album:hover { color: #F23359; }
+
+        /* Field gallery inside card (2-column) */
+        .evd-fieldgrid-block {
+          margin-top: 0;
+        }
+        .evd-fieldgrid-track {
+          margin-top: 10px;
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+        .evd-fieldgrid-card {
+          border: none;
+          background: transparent;
+          padding: 0;
+          cursor: zoom-in;
+          border-radius: 8px;
+          overflow: hidden;
+          position: relative;
+        }
+        .evd-fieldgrid-img-shell {
+          width: 100%;
+          aspect-ratio: 4 / 3;
+          position: relative;
+          border-radius: 8px;
+          overflow: hidden;
+          transition: transform 0.22s ease;
+        }
+        .evd-fieldgrid-card:hover .evd-fieldgrid-img-shell { transform: scale(1.03); }
+        .evd-fieldgrid-footer {
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 0.65rem;
+        }
+
+        /* ── 8b. Cycle band: DAT logo sticker ──────────────────────────── */
+        .evd-cycle-band { position: relative; }
+        .evd-cycle-logo-sticker {
+          position: absolute;
+          top: -22px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 20;
+          pointer-events: none;
+        }
+        .evd-cycle-logo-img {
+          display: block;
+          width: 44px;
+          height: 44px;
+          filter: drop-shadow(0 2px 8px rgba(0,0,0,0.35));
+          opacity: 0.92;
         }
 
         /* ── 4. Photo Gallery ──────────────────────────────────────────── */
