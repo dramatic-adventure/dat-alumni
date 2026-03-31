@@ -328,6 +328,31 @@ function relatedUpcomingEvents(current: DatEvent): DatEvent[] {
 type CycleEntry = { slug: string; title: string; posterUrl?: string; location?: string; festival?: string };
 
 /**
+ * Derives a dynamic status badge for the current event's production card.
+ * Returns label, color class, and whether it's still upcoming (for link text).
+ */
+function getEventBadge(startDate: string, endDate?: string): {
+  label: string;
+  cls: "upcoming" | "nowplaying" | "archive";
+  isUpcoming: boolean;
+} {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const start = new Date(startDate);
+  const end = endDate ? new Date(endDate) : new Date(startDate);
+  // Give end date until EOD
+  end.setHours(23, 59, 59, 999);
+
+  if (today < start) {
+    return { label: "Upcoming", cls: "upcoming", isUpcoming: true };
+  }
+  if (today <= end) {
+    return { label: "Now Playing", cls: "nowplaying", isUpcoming: false };
+  }
+  return { label: "Archive", cls: "archive", isUpcoming: false };
+}
+
+/**
  * Finds all productions that share the same relatedBaseTitle as the given
  * productionSlug — i.e., every iteration of a production cycle (revivals,
  * workshop versions, etc). Returns the list excluding the current slug.
@@ -476,11 +501,10 @@ export default async function EventDetailPage({ params }: PageProps) {
             <span>{event.title}</span>
           </nav>
 
-          <p className="evd-eyebrow">{getEventEyebrow(event)}</p>
-
           {event.translations ? (
             <EventHeroText
               defaultLang={event.defaultLang ?? "es"}
+              eyebrow={getEventEyebrow(event)}
               base={{
                 title: event.title,
                 subtitle: event.subtitle,
@@ -490,6 +514,7 @@ export default async function EventDetailPage({ params }: PageProps) {
             />
           ) : (
             <>
+              <p className="evd-eyebrow">{getEventEyebrow(event)}</p>
               <h1 className="evd-title">{event.title}</h1>
               {event.subtitle ? (
                 <p className="evd-subtitle">{event.subtitle}</p>
@@ -573,11 +598,6 @@ export default async function EventDetailPage({ params }: PageProps) {
 
             {/* Row 2: secondary actions */}
             <div className="evd-actions">
-                {relatedProduction ? (
-                  <Link href={`/theatre/${event.production}`} className="evd-btn-ghost">
-                    Explore the Production →
-                  </Link>
-                ) : null}
                 <EventShareButton
                   url={eventUrl}
                   title={`${event.title} — Dramatic Adventure Theatre`}
@@ -620,18 +640,16 @@ export default async function EventDetailPage({ params }: PageProps) {
                   </a>
                 ) : null}
               </div>
+
+              {/* Accessibility note — inline, below secondary actions */}
+              {event.accessibility ? (
+                <div className="evd-a11y-inline">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0, opacity: 0.4 }}><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+                  <span>{event.accessibility}</span>
+                </div>
+              ) : null}
           </div>
         </div>
-
-        {/* ── Accessibility note (full-bleed subtle strip) ─────────────── */}
-        {event.accessibility ? (
-          <div className="evd-a11y-bar">
-            <div className="evd-ticket-bar-inner">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
-              <span>{event.accessibility}</span>
-            </div>
-          </div>
-        ) : null}
 
         {/* ── Two-column content: LEFT description+video / RIGHT club+photo+quotes ── */}
         <div className="evd-container">
@@ -833,62 +851,73 @@ export default async function EventDetailPage({ params }: PageProps) {
               <p className="evd-section-eyebrow">Production History</p>
               <h2 className="evd-section-title">The Full Cycle</h2>
             </div>
-            <div className="evd-cycle-scroll" role="list" aria-label="Production history">
+            <div className="evd-cycle-scroll-outer">
+              <div className="evd-cycle-scroll" role="list" aria-label="Production history">
 
-              {/* ── Current linked production — shown first with ARCHIVE badge ── */}
-              {relatedProduction && event.production ? (
-                <Link
-                  href={`/theatre/${event.production}`}
-                  className="evd-cycle-card evd-cycle-card--featured"
-                  role="listitem"
-                >
-                  <div
-                    className="evd-cycle-img"
-                    style={{
-                      backgroundImage: (normalizeImagePath(
-                        productionExtra?.heroImageUrl ?? relatedProduction.posterUrl
-                      ))
-                        ? `url('${normalizeImagePath(productionExtra?.heroImageUrl ?? relatedProduction.posterUrl)}')`
-                        : undefined,
-                    }}
-                  >
-                    <span className="evd-cycle-badge">Archive</span>
-                  </div>
-                  <div className="evd-cycle-body">
-                    <p className="evd-cycle-title">{relatedProduction.title}</p>
-                    {(relatedProduction.location || relatedProduction.festival) ? (
-                      <p className="evd-cycle-meta">
-                        {relatedProduction.location}
-                        {relatedProduction.festival ? ` · ${relatedProduction.festival}` : ""}
-                      </p>
-                    ) : null}
-                    <span className="evd-cycle-link">Explore the Production →</span>
-                  </div>
-                </Link>
-              ) : null}
+                {/* ── Current linked production — dynamic status badge ── */}
+                {relatedProduction && event.production ? (() => {
+                  const badge = getEventBadge(event.date, event.endDate);
+                  return (
+                    <Link
+                      href={`/theatre/${event.production}`}
+                      className="evd-cycle-card"
+                      role="listitem"
+                    >
+                      <div
+                        className="evd-cycle-img"
+                        style={{
+                          backgroundImage: (normalizeImagePath(
+                            productionExtra?.heroImageUrl ?? relatedProduction.posterUrl
+                          ))
+                            ? `url('${normalizeImagePath(productionExtra?.heroImageUrl ?? relatedProduction.posterUrl)}')`
+                            : undefined,
+                        }}
+                      >
+                        <span className={`evd-cycle-badge evd-cycle-badge--${badge.cls}`}>
+                          {badge.label}
+                        </span>
+                      </div>
+                      <div className="evd-cycle-body">
+                        <p className="evd-cycle-title">{relatedProduction.title}</p>
+                        {(relatedProduction.location || relatedProduction.festival) ? (
+                          <p className="evd-cycle-meta">
+                            {relatedProduction.location}
+                            {relatedProduction.festival ? ` · ${relatedProduction.festival}` : ""}
+                          </p>
+                        ) : null}
+                        <span className="evd-cycle-link">
+                          {badge.isUpcoming ? "Explore Production →" : "View Archive →"}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })() : null}
 
-              {/* ── Other productions in the same cycle ──────────────────────── */}
-              {productionCycle.map((p) => (
-                <Link key={p.slug} href={`/theatre/${p.slug}`} className="evd-cycle-card" role="listitem">
-                  <div
-                    className="evd-cycle-img"
-                    style={{
-                      backgroundImage: p.posterUrl
-                        ? `url('${p.posterUrl}')`
-                        : undefined,
-                    }}
-                  />
-                  <div className="evd-cycle-body">
-                    <p className="evd-cycle-title">{p.title}</p>
-                    {(p.location || p.festival) ? (
-                      <p className="evd-cycle-meta">
-                        {p.location}{p.festival ? ` · ${p.festival}` : ""}
-                      </p>
-                    ) : null}
-                    <span className="evd-cycle-link">View Archive →</span>
-                  </div>
-                </Link>
-              ))}
+                {/* ── Other productions in the same cycle — always ARCHIVE ── */}
+                {productionCycle.map((p) => (
+                  <Link key={p.slug} href={`/theatre/${p.slug}`} className="evd-cycle-card" role="listitem">
+                    <div
+                      className="evd-cycle-img"
+                      style={{
+                        backgroundImage: p.posterUrl
+                          ? `url('${p.posterUrl}')`
+                          : undefined,
+                      }}
+                    >
+                      <span className="evd-cycle-badge evd-cycle-badge--archive">Archive</span>
+                    </div>
+                    <div className="evd-cycle-body">
+                      <p className="evd-cycle-title">{p.title}</p>
+                      {(p.location || p.festival) ? (
+                        <p className="evd-cycle-meta">
+                          {p.location}{p.festival ? ` · ${p.festival}` : ""}
+                        </p>
+                      ) : null}
+                      <span className="evd-cycle-link">View Archive →</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         </section>
@@ -1080,6 +1109,20 @@ export default async function EventDetailPage({ params }: PageProps) {
           pointer-events: none;
         }
 
+        /* Subtle shadow from hero casting down onto dashboard */
+        .evd-hero::before {
+          content: "";
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: -18px;
+          height: 18px;
+          background: transparent;
+          box-shadow: 0 -2px 24px 8px rgba(0, 0, 0, 0.55);
+          z-index: 6;
+          pointer-events: none;
+        }
+
         .evd-hero-content {
           position: relative;
           z-index: 4;
@@ -1202,8 +1245,6 @@ export default async function EventDetailPage({ params }: PageProps) {
           background: rgba(0,0,0,0.50);
           border-top: 2px solid var(--evd-accent);
           border-bottom: 1px solid rgba(255,255,255,0.07);
-          backdrop-filter: blur(24px);
-          -webkit-backdrop-filter: blur(24px);
         }
         .evd-ticket-bar-inner {
           max-width: 1200px;
@@ -1261,46 +1302,44 @@ export default async function EventDetailPage({ params }: PageProps) {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          padding: 0.85rem 2.75rem;
-          border-radius: 999px;
+          padding: 0.8rem 2.25rem;
+          border-radius: 10px;
           font-family: "DM Sans", sans-serif;
-          font-size: 0.92rem;
+          font-size: 0.88rem;
           font-weight: 800;
-          letter-spacing: 0.14em;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
           text-decoration: none;
           background: #F23359;
           color: #fff;
           border: none;
           white-space: nowrap;
-          box-shadow: 0 4px 28px rgba(242,51,89,0.45);
+          box-shadow: 0 4px 24px rgba(242,51,89,0.40);
           transition: transform 0.18s ease, box-shadow 0.18s ease;
         }
         .evd-btn-ticket:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 8px 36px rgba(242,51,89,0.60);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 32px rgba(242,51,89,0.58);
         }
         .evd-btn-ticket--invite {
           background: #2FA873;
-          box-shadow: 0 4px 28px rgba(47,168,115,0.40);
+          box-shadow: 0 4px 24px rgba(47,168,115,0.38);
         }
 
-        /* Accessibility note strip */
-        .evd-a11y-bar {
-          border-bottom: 1px solid rgba(255,255,255,0.05);
-          padding: 0;
-        }
-        .evd-a11y-bar .evd-ticket-bar-inner {
-          padding-top: 0.7rem;
-          padding-bottom: 0.7rem;
-          gap: 0.6rem;
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.78rem;
-          color: rgba(255,255,255,0.38);
-          flex-wrap: nowrap;
+        /* Accessibility note — subtle single line below secondary actions */
+        .evd-a11y-inline {
+          display: flex;
           align-items: flex-start;
+          gap: 0.5rem;
+          margin-top: 0.85rem;
+          padding-top: 0.75rem;
+          border-top: 1px solid rgba(255,255,255,0.06);
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.74rem;
+          color: rgba(255,255,255,0.32);
+          line-height: 1.5;
         }
-        .evd-a11y-bar .evd-ticket-bar-inner svg { margin-top: 1px; flex-shrink: 0; }
+        .evd-a11y-inline svg { margin-top: 2px; }
 
         /* Secondary actions row */
         .evd-actions {
@@ -1902,13 +1941,23 @@ export default async function EventDetailPage({ params }: PageProps) {
           border-top: 1px solid rgba(255,255,255,0.06);
         }
 
+        /* Outer wrapper — gives vertical room for card lift + glow without clipping */
+        .evd-cycle-scroll-outer {
+          overflow-x: auto;
+          overflow-y: visible;
+          margin-top: 1.5rem;
+          /* Negative vertical margins so the padding doesn't shift layout */
+          padding-top: 0.75rem;
+          margin-top: calc(1.5rem - 0.75rem);
+          padding-bottom: 2.5rem;
+          margin-bottom: -2.5rem;
+        }
         /* Horizontal scroll of production cards */
         .evd-cycle-scroll {
           display: flex;
-          gap: 1rem;
-          overflow-x: auto;
-          padding: 0 0 1rem;
-          margin-top: 1.5rem;
+          gap: 1.25rem;
+          padding: 0.25rem 0.25rem 0.25rem;
+          min-width: max-content;
         }
         .evd-cycle-scroll .evd-cycle-card {
           flex-shrink: 0;
@@ -1917,17 +1966,25 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-cycle-card {
           text-decoration: none;
           border-radius: 12px;
-          overflow: hidden;
+          overflow: visible;
           background: rgba(255,255,255,0.04);
           border: 1px solid rgba(255,255,255,0.08);
           display: flex;
           flex-direction: column;
-          transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+          transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+        }
+        /* Clip image corners without clipping outer glow */
+        .evd-cycle-img {
+          border-radius: 11px 11px 0 0;
+          overflow: hidden;
+        }
+        .evd-cycle-body {
+          border-radius: 0 0 11px 11px;
         }
         .evd-cycle-card:hover {
-          transform: translateY(-3px);
-          border-color: rgba(255,255,255,0.16);
-          box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+          transform: translateY(-6px);
+          border-color: rgba(242,51,89,0.35);
+          box-shadow: 0 16px 48px rgba(242,51,89,0.28), 0 4px 16px rgba(0,0,0,0.4);
         }
         .evd-cycle-card:focus-visible {
           outline: 2px solid var(--evd-accent);
@@ -1938,6 +1995,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           background-size: cover;
           background-position: center;
           background-color: rgba(255,255,255,0.05);
+          position: relative;
         }
         .evd-cycle-body {
           padding: 1rem 1.1rem 1.1rem;
@@ -1970,29 +2028,38 @@ export default async function EventDetailPage({ params }: PageProps) {
           color: var(--evd-accent);
           margin-top: 0.35rem;
         }
-        /* Featured card — the current production archive entry */
-        .evd-cycle-card--featured {
-          border-color: rgba(255,255,255,0.14);
-        }
-        .evd-cycle-card--featured .evd-cycle-img {
-          position: relative;
-        }
-        /* ARCHIVE badge */
+        /* Status badge — sits on the card image */
         .evd-cycle-badge {
           position: absolute;
-          top: 0.6rem;
-          left: 0.6rem;
+          top: 0.55rem;
+          left: 0.55rem;
           font-family: "DM Sans", sans-serif;
-          font-size: 0.6rem;
+          font-size: 0.58rem;
           font-weight: 800;
           letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: rgba(255,255,255,0.85);
-          background: rgba(0,0,0,0.52);
-          border: 1px solid rgba(255,255,255,0.2);
           padding: 0.2rem 0.55rem;
           border-radius: 999px;
+          border: 1px solid;
           backdrop-filter: blur(4px);
+        }
+        /* ARCHIVE — muted */
+        .evd-cycle-badge--archive {
+          color: rgba(255,255,255,0.7);
+          background: rgba(0,0,0,0.48);
+          border-color: rgba(255,255,255,0.18);
+        }
+        /* UPCOMING — amber/gold */
+        .evd-cycle-badge--upcoming {
+          color: #D9A919;
+          background: rgba(217,169,25,0.14);
+          border-color: rgba(217,169,25,0.5);
+        }
+        /* NOW PLAYING — green */
+        .evd-cycle-badge--nowplaying {
+          color: #2FA873;
+          background: rgba(47,168,115,0.14);
+          border-color: rgba(47,168,115,0.5);
         }
 
         /* ── 9. Related Upcoming Events ────────────────────────────────── */
@@ -2418,17 +2485,17 @@ export default async function EventDetailPage({ params }: PageProps) {
 
         /* ── 13. Shared scrollbar utility ─────────────────────────────── */
         /* Gallery and cycle scroll containers */
-        .evd-cycle-scroll,
+        .evd-cycle-scroll-outer,
         .evd-gallery-scroll {
           scrollbar-width: thin;
           scrollbar-color: rgba(255,255,255,0.10) transparent;
           -webkit-overflow-scrolling: touch;
         }
-        .evd-cycle-scroll::-webkit-scrollbar,
+        .evd-cycle-scroll-outer::-webkit-scrollbar,
         .evd-gallery-scroll::-webkit-scrollbar { height: 4px; }
-        .evd-cycle-scroll::-webkit-scrollbar-track,
+        .evd-cycle-scroll-outer::-webkit-scrollbar-track,
         .evd-gallery-scroll::-webkit-scrollbar-track { background: transparent; }
-        .evd-cycle-scroll::-webkit-scrollbar-thumb,
+        .evd-cycle-scroll-outer::-webkit-scrollbar-thumb,
         .evd-gallery-scroll::-webkit-scrollbar-thumb {
           background: rgba(255,255,255,0.12);
           border-radius: 999px;

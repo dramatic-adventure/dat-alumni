@@ -11,6 +11,8 @@ interface LangData {
 interface EventHeroTextProps {
   /** The base (default) language code — e.g. "es" */
   defaultLang: string;
+  /** The eyebrow label (e.g. "Live Theatre") — rendered between toggle and title */
+  eyebrow: string;
   /** Base text in the default language */
   base: {
     title: string;
@@ -38,6 +40,7 @@ const STORAGE_KEY = "evd-lang-pref";
 
 export default function EventHeroText({
   defaultLang,
+  eyebrow,
   base,
   translations,
 }: EventHeroTextProps) {
@@ -82,7 +85,7 @@ export default function EventHeroText({
 
   return (
     <>
-      {/* Language toggle — only visible once mounted (avoids hydration flash) */}
+      {/* Language toggle — above the eyebrow */}
       {mounted && langCodes.length > 1 && (
         <div className="evd-lang-toggle" aria-label="Select language">
           {langCodes.map((code) => (
@@ -98,6 +101,9 @@ export default function EventHeroText({
         </div>
       )}
 
+      {/* Eyebrow — below toggle, above title */}
+      <p className="evd-eyebrow">{eyebrow}</p>
+
       <h1 className="evd-title">{title}</h1>
 
       {subtitle ? (
@@ -111,32 +117,32 @@ export default function EventHeroText({
           display: inline-flex;
           align-items: center;
           gap: 0;
-          border: 1px solid rgba(255, 255, 255, 0.28);
+          border: 1px solid rgba(255, 255, 255, 0.22);
           border-radius: 999px;
           overflow: hidden;
-          margin-bottom: 1.25rem;
+          margin-bottom: 0.9rem;
         }
         .evd-lang-btn {
           background: transparent;
           border: none;
-          color: rgba(255, 255, 255, 0.5);
+          color: rgba(255, 255, 255, 0.45);
           font-family: "DM Sans", sans-serif;
-          font-size: 0.7rem;
+          font-size: 0.65rem;
           font-weight: 700;
           letter-spacing: 0.12em;
-          padding: 0.3rem 0.75rem;
+          padding: 0.25rem 0.65rem;
           cursor: pointer;
           transition: color 0.2s ease, background 0.2s ease;
           line-height: 1;
         }
         .evd-lang-btn + .evd-lang-btn {
-          border-left: 1px solid rgba(255, 255, 255, 0.28);
+          border-left: 1px solid rgba(255, 255, 255, 0.22);
         }
         .evd-lang-btn:hover {
           color: rgba(255, 255, 255, 0.85);
         }
         .evd-lang-btn--active {
-          background: rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 0.12);
           color: #ffffff;
         }
       `}</style>
