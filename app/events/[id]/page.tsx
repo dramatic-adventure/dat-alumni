@@ -968,12 +968,12 @@ export default async function EventDetailPage({ params }: PageProps) {
         /* ── 2. Hero ───────────────────────────────────────────────────── */
         .evd-hero {
           position: relative;
-          min-height: 92vh;
+          min-height: 100vh;
           background-size: cover;
           background-position: center;
           display: flex;
           align-items: flex-end;
-          overflow: visible;
+          overflow: hidden;
         }
 
         /* Subtle film grain texture */
@@ -1004,14 +1004,14 @@ export default async function EventDetailPage({ params }: PageProps) {
           z-index: 1;
         }
 
-        /* Bleed fade from hero into dashboard */
+        /* Fade hero into dashboard */
         .evd-hero::after {
           content: "";
           position: absolute;
           left: 0;
           right: 0;
-          bottom: -22px;
-          height: 42%;
+          bottom: 0;
+          height: 28%;
           background: linear-gradient(to bottom, transparent 0%, var(--evd-surface) 100%);
           z-index: 3;
           pointer-events: none;
@@ -1020,8 +1020,9 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-hero-content {
           position: relative;
           z-index: 4;
-          padding: clamp(6rem, 12vw, 10rem) clamp(1.5rem, 6vw, 5rem) clamp(3.5rem, 7vw, 6rem);
-          max-width: 820px;
+          padding: clamp(5rem, 10vw, 8rem) clamp(1rem, 3vw, 2rem) clamp(1.5rem, 2.5vw, 2.5rem);
+          max-width: 960px;
+          width: 100%;
         }
 
         .evd-breadcrumb {
@@ -1061,12 +1062,13 @@ export default async function EventDetailPage({ params }: PageProps) {
 
         .evd-title {
           font-family: "Anton", sans-serif;
-          font-size: clamp(3.1rem, 9vw, 7.75rem);
-          line-height: 0.9;
+          font-size: clamp(2.8rem, 7vw, 6rem);
+          line-height: 0.92;
           color: #fff;
           margin: 0 0 0.9rem;
           letter-spacing: 0.01em;
           text-shadow: 0 2px 24px rgba(0,0,0,0.5);
+          white-space: nowrap;
         }
 
         .evd-subtitle {
@@ -1084,7 +1086,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           color: rgba(255,255,255,0.72);
           line-height: 1.7;
           margin: 0 0 2rem;
-          max-width: 560px;
+          max-width: 760px;
         }
 
         .evd-hero-pills {
@@ -1120,7 +1122,6 @@ export default async function EventDetailPage({ params }: PageProps) {
           padding: clamp(2.5rem, 5vw, 4rem) 0 clamp(3rem, 6vw, 5rem);
           position: relative;
           z-index: 5;
-          margin-top: -80px;
         }
 
         /* Top row: info grid, CTA, secondary actions */
@@ -2333,6 +2334,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
         @media (max-width: 640px) {
           .evd-title {
+            white-space: normal;
             word-break: break-word;
           }
           .evd-actions {
