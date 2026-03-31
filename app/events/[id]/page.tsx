@@ -321,7 +321,8 @@ function getVideoEmbedUrl(url: string): string | undefined {
 /** Returns up to 3 upcoming events in the same category, excluding the current one. */
 function relatedUpcomingEvents(current: DatEvent): DatEvent[] {
   return events
-    .filter((e) => e.status === "upcoming" && e.id !== current.id && e.category === current.category)
+    .filter((e) => e.status === "upcoming" && e.id !== current.id)
+    .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 3);
 }
 
@@ -696,7 +697,7 @@ export default async function EventDetailPage({ params }: PageProps) {
                 ) : null}
               </div>
 
-              {/* RIGHT: drama club badge + snapshot photo with quote + press quotes */}
+              {/* RIGHT: drama club badge + voices from [city]: image card + press quotes */}
               {(linkedDramaClubs.length > 0 || editorialImg1 || event.pressQuotes?.length) ? (
                 <div className="evd-dashboard-right">
                   {linkedDramaClubs.length > 0 ? (
@@ -723,30 +724,53 @@ export default async function EventDetailPage({ params }: PageProps) {
                     </div>
                   ) : null}
 
+                  {/* "Voices from" heading — matches dc-section-head / evd-about-head */}
+                  {(editorialImg1 || event.pressQuotes?.length) ? (
+                    <h2 className="evd-about-head evd-voices-head">
+                      Voices from {event.city || "the company"}
+                    </h2>
+                  ) : null}
+
+                  {/* Elder-quote shell: full-bleed image + gradient overlay + Anton quote */}
                   {editorialImg1 ? (
-                    <div
-                      className="evd-dash-snapshot"
-                      style={{ backgroundImage: `url('${editorialImg1}')` }}
-                    >
-                      <div className="evd-dash-snapshot-overlay" aria-hidden="true" />
-                      {artistNote ? (
-                        <blockquote className="evd-dash-quote">
-                          <p className="evd-dash-quote-text">&ldquo;{artistNote.note}&rdquo;</p>
-                          {artistNote.by ? (
-                            <footer className="evd-dash-quote-attr">— {artistNote.by}</footer>
-                          ) : null}
-                        </blockquote>
-                      ) : null}
+                    <div className="evd-elder-shell evd-elder-shell--has-image">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={editorialImg1}
+                        alt={artistNote?.by || event.title}
+                        className="evd-elder-bg"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <div className="evd-elder-overlay" aria-hidden="true" />
+                      <div className="evd-elder-content">
+                        <p className="evd-elder-label">From the artist</p>
+                        {artistNote ? (
+                          <>
+                            <p className="evd-elder-text">&ldquo;{artistNote.note}&rdquo;</p>
+                            {artistNote.by ? (
+                              <p className="evd-elder-meta">
+                                <span className="evd-elder-name">{artistNote.by}</span>
+                              </p>
+                            ) : null}
+                          </>
+                        ) : null}
+                      </div>
                     </div>
                   ) : null}
 
+                  {/* Press quotes — dc-quote-block--alumni style */}
                   {event.pressQuotes?.length ? (
-                    <div className="evd-dash-press-quotes">
+                    <div className="evd-voices-quotes">
                       {event.pressQuotes.map((q, i) => (
-                        <blockquote key={i} className="evd-dash-press-quote">
-                          <p className="evd-dash-press-quote-text">&ldquo;{q.text}&rdquo;</p>
-                          <footer className="evd-dash-press-quote-attr">— {q.attribution}</footer>
-                        </blockquote>
+                        <figure key={i} className="evd-voices-quote">
+                          <blockquote className="evd-voices-blockquote">
+                            &ldquo;{q.text}&rdquo;
+                          </blockquote>
+                          <figcaption className="evd-voices-figcaption">
+                            {q.attribution}
+                          </figcaption>
+                        </figure>
                       ))}
                     </div>
                   ) : null}
@@ -1387,7 +1411,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         /* Two-column body grid */
         .evd-dashboard-grid {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: 3fr 2fr;
           gap: clamp(1.75rem, 4vw, 3.5rem);
           align-items: start;
           padding: clamp(2.5rem, 5vw, 4rem) 0 clamp(3rem, 6vw, 5rem);
@@ -1506,84 +1530,114 @@ export default async function EventDetailPage({ params }: PageProps) {
           margin: 0;
         }
 
-        /* Production snapshot — image panel with gradient + quote */
-        .evd-dash-snapshot {
-          position: relative;
-          border-radius: 16px;
-          overflow: hidden;
-          background-size: cover;
-          background-position: center;
-          aspect-ratio: 4 / 3;
-        }
-        .evd-dash-snapshot-overlay {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(
-            to top,
-            rgba(0,0,0,0.88) 0%,
-            rgba(0,0,0,0.42) 42%,
-            rgba(0,0,0,0.10) 100%
-          );
-        }
-        .evd-dash-quote {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          padding: clamp(1rem, 2.5vw, 1.75rem);
-          margin: 0;
-          border: none;
-          z-index: 1;
-        }
-        .evd-dash-quote-text {
-          font-family: "Space Grotesk", sans-serif;
-          font-size: clamp(0.88rem, 1.5vw, 1.05rem);
-          font-weight: 500;
-          font-style: italic;
-          line-height: 1.6;
-          color: rgba(255,255,255,0.9);
-          margin: 0 0 0.55rem;
-          text-shadow: 0 1px 8px rgba(0,0,0,0.5);
-        }
-        .evd-dash-quote-attr {
-          display: block;
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.72rem;
-          font-weight: 700;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: var(--evd-accent);
+        /* ── Voices-from section (mirrors drama-club elder + alumni quotes) ─── */
+        .evd-voices-head {
+          margin: 0.3rem 0 0.1rem;
         }
 
-        /* Press quotes in right column */
-        .evd-dash-press-quotes {
+        /* Elder-quote shell (full-bleed image card with overlay + Anton quote) */
+        .evd-elder-shell {
+          position: relative;
+          display: flex;
+          align-items: flex-end;
+          border-radius: 18px;
+          overflow: hidden;
+          min-height: 444px;
+          background: radial-gradient(circle at top left, rgba(108,0,175,0.18), rgba(36,17,35,0.85));
+          box-shadow: 0 14px 30px rgba(0,0,0,0.35);
+        }
+        .evd-elder-shell--has-image {
+          cursor: default;
+        }
+        .evd-elder-bg {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          filter: saturate(1.1) contrast(1.05);
+          transform: scale(1.03);
+        }
+        .evd-elder-overlay {
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(
+              to top,
+              rgba(0,0,0,0.95) 0%,
+              rgba(0,0,0,0.82) 0%,
+              rgba(0,0,0,0.45) 32%,
+              rgba(0,0,0,0.12) 65%,
+              rgba(0,0,0,0) 100%
+            ),
+            radial-gradient(
+              circle at 20% 82%,
+              rgba(0,0,0,0.95) 0%,
+              rgba(0,0,0,0.75) 0%,
+              rgba(0,0,0,0) 65%
+            ),
+            radial-gradient(circle at 88% 12%, rgba(108,0,175,0.35), transparent 55%);
+        }
+        .evd-elder-content {
+          position: relative;
+          padding: 1.2rem 1.3rem 1.4rem;
+          color: #f5f2ff;
+          max-width: 90%;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .evd-elder-label {
+          margin: 0 0 0.3rem;
+          font-size: 0.68rem;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          opacity: 0.85;
+          font-family: "Space Grotesk", sans-serif;
+        }
+        .evd-elder-text {
+          margin: 0;
+          font-size: 1.6rem;
+          line-height: 1.55;
+          text-shadow: 0 5px 16px rgba(0,0,0,0.9);
+          font-family: var(--font-anton, "Anton", sans-serif);
+        }
+        .evd-elder-meta {
+          margin-top: 0.45rem;
+          font-size: 0.82rem;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          opacity: 0.92;
+          font-family: "Space Grotesk", sans-serif;
+        }
+        .evd-elder-name {
+          font-weight: 600;
+        }
+
+        /* Press/alumni quotes — dc-quote-block--alumni style */
+        .evd-voices-quotes {
           display: flex;
           flex-direction: column;
-          gap: 0.75rem;
+          gap: 0.9rem;
         }
-        .evd-dash-press-quote {
+        .evd-voices-quote {
           margin: 0;
-          padding: 1rem 1.1rem 1rem 1.25rem;
-          border-left: 3px solid var(--evd-accent);
-          background: rgba(255,255,255,0.03);
-          border-radius: 0 10px 10px 0;
+          padding: 0.9rem 1rem 1rem;
+          border-radius: 14px;
+          background: rgba(36,17,35,0.04);
+          color: #241123;
+          border: 1px solid rgba(36,17,35,0.08);
         }
-        .evd-dash-press-quote-text {
+        .evd-voices-blockquote {
+          margin: 0;
+          font-size: 1.4rem;
+          line-height: 1.2;
+          font-family: var(--font-anton, "Anton", sans-serif);
+        }
+        .evd-voices-figcaption {
+          margin-top: 0.45rem;
+          font-size: 0.8rem;
+          opacity: 0.8;
           font-family: "Space Grotesk", sans-serif;
-          font-size: 0.95rem;
-          font-weight: 500;
-          font-style: italic;
-          color: rgba(255,255,255,0.88);
-          line-height: 1.65;
-          margin: 0 0 0.5rem;
-        }
-        .evd-dash-press-quote-attr {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.7rem;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.32);
         }
 
         /* ── 3b. White Content Card ────────────────────────────────────── */
@@ -1621,16 +1675,6 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-content-card .evd-dash-club-support-loc {
           color: rgba(36,17,35,0.52);
         }
-        .evd-content-card .evd-dash-press-quote {
-          background: rgba(36,17,35,0.04);
-        }
-        .evd-content-card .evd-dash-press-quote-text {
-          color: rgba(36,17,35,0.85);
-        }
-        .evd-content-card .evd-dash-press-quote-attr {
-          color: rgba(36,17,35,0.42);
-        }
-
         /* Gallery inside card */
         .evd-card-gallery {
           margin-top: clamp(2rem, 4vw, 3rem);
