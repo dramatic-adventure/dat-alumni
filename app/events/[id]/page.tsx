@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import DramaClubBadge from "@/components/ui/DramaClubBadge";
 import EventShareButton from "@/components/events/EventShareButton";
 import EventGallery from "@/components/events/EventGallery";
+import EventHeroText from "@/components/events/EventHeroText";
 import MailingListForm from "@/components/events/MailingListForm";
 import { productionMap } from "@/lib/productionMap";
 import { productionDetailsMap, type ProductionExtra } from "@/lib/productionDetailsMap";
@@ -476,13 +477,26 @@ export default async function EventDetailPage({ params }: PageProps) {
           </nav>
 
           <p className="evd-eyebrow">{getEventEyebrow(event)}</p>
-          <h1 className="evd-title">{event.title}</h1>
 
-          {event.subtitle ? (
-            <p className="evd-subtitle">{event.subtitle}</p>
-          ) : null}
-
-          <p className="evd-standfirst">{event.description}</p>
+          {event.translations ? (
+            <EventHeroText
+              defaultLang={event.defaultLang ?? "es"}
+              base={{
+                title: event.title,
+                subtitle: event.subtitle,
+                description: event.description,
+              }}
+              translations={event.translations}
+            />
+          ) : (
+            <>
+              <h1 className="evd-title">{event.title}</h1>
+              {event.subtitle ? (
+                <p className="evd-subtitle">{event.subtitle}</p>
+              ) : null}
+              <p className="evd-standfirst">{event.description}</p>
+            </>
+          )}
 
           <div className="evd-hero-pills">
             {event.ticketUrl ? (
@@ -812,7 +826,7 @@ export default async function EventDetailPage({ params }: PageProps) {
       ) : null}
 
       {/* ── Related Productions Cycle ────────────────────────────────── */}
-      {productionCycle.length > 0 ? (
+      {(relatedProduction || productionCycle.length > 0) ? (
         <section className="evd-cycle-band">
           <div className="evd-container">
             <div className="evd-section-head">
@@ -820,6 +834,40 @@ export default async function EventDetailPage({ params }: PageProps) {
               <h2 className="evd-section-title">The Full Cycle</h2>
             </div>
             <div className="evd-cycle-scroll" role="list" aria-label="Production history">
+
+              {/* ── Current linked production — shown first with ARCHIVE badge ── */}
+              {relatedProduction && event.production ? (
+                <Link
+                  href={`/theatre/${event.production}`}
+                  className="evd-cycle-card evd-cycle-card--featured"
+                  role="listitem"
+                >
+                  <div
+                    className="evd-cycle-img"
+                    style={{
+                      backgroundImage: (normalizeImagePath(
+                        productionExtra?.heroImageUrl ?? relatedProduction.posterUrl
+                      ))
+                        ? `url('${normalizeImagePath(productionExtra?.heroImageUrl ?? relatedProduction.posterUrl)}')`
+                        : undefined,
+                    }}
+                  >
+                    <span className="evd-cycle-badge">Archive</span>
+                  </div>
+                  <div className="evd-cycle-body">
+                    <p className="evd-cycle-title">{relatedProduction.title}</p>
+                    {(relatedProduction.location || relatedProduction.festival) ? (
+                      <p className="evd-cycle-meta">
+                        {relatedProduction.location}
+                        {relatedProduction.festival ? ` · ${relatedProduction.festival}` : ""}
+                      </p>
+                    ) : null}
+                    <span className="evd-cycle-link">Explore the Production →</span>
+                  </div>
+                </Link>
+              ) : null}
+
+              {/* ── Other productions in the same cycle ──────────────────────── */}
               {productionCycle.map((p) => (
                 <Link key={p.slug} href={`/theatre/${p.slug}`} className="evd-cycle-card" role="listitem">
                   <div
@@ -1921,6 +1969,30 @@ export default async function EventDetailPage({ params }: PageProps) {
           text-transform: uppercase;
           color: var(--evd-accent);
           margin-top: 0.35rem;
+        }
+        /* Featured card — the current production archive entry */
+        .evd-cycle-card--featured {
+          border-color: rgba(255,255,255,0.14);
+        }
+        .evd-cycle-card--featured .evd-cycle-img {
+          position: relative;
+        }
+        /* ARCHIVE badge */
+        .evd-cycle-badge {
+          position: absolute;
+          top: 0.6rem;
+          left: 0.6rem;
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.6rem;
+          font-weight: 800;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.85);
+          background: rgba(0,0,0,0.52);
+          border: 1px solid rgba(255,255,255,0.2);
+          padding: 0.2rem 0.55rem;
+          border-radius: 999px;
+          backdrop-filter: blur(4px);
         }
 
         /* ── 9. Related Upcoming Events ────────────────────────────────── */

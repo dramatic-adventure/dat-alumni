@@ -224,6 +224,39 @@ export interface DatEvent {
    *   groupBookingEmail: "groups@summerhall.co.uk"
    */
   groupBookingEmail?: string;
+
+  /**
+   * Translations for the hero text (title, subtitle, standfirst).
+   * When set, a language toggle (e.g. ES | EN) appears in the hero.
+   * Keys are ISO 639-1 language codes. The base event text is treated
+   * as the "default" language — add keys for every alternate.
+   *
+   * Example:
+   *   translations: {
+   *     en: {
+   *       title: "A Girl Without Wings",
+   *       subtitle: "DAT × Malayerba Teatro Co-production — Quito, Ecuador",
+   *       description: "In Spanish & Kichwa. DAT and Malayerba Teatro revive the company's most celebrated love story.",
+   *     },
+   *   }
+   */
+  translations?: Record<
+    string,
+    {
+      title?: string;
+      subtitle?: string;
+      description?: string;
+    }
+  >;
+
+  /**
+   * ISO 639-1 code for the primary language of the event page text.
+   * Defaults to "es" if translations are present and field is omitted.
+   * Used by the language toggle to label the default language.
+   *
+   * Example: defaultLang: "es"
+   */
+  defaultLang?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -459,6 +492,16 @@ export const events: DatEvent[] = [
       "Acceso sin escalones por entrada principal · Función audiodescrita: 3 oct · Función con interpretación LSEC: 10 oct · Subtítulos en inglés disponibles · Duración aprox. 2 hrs con intermedio · Recomendado mayores de 12 años",
 
     groupBookingEmail: "produccion@malayerba.org",
+
+    defaultLang: "es",
+    translations: {
+      en: {
+        title: "A Girl Without Wings",
+        subtitle: "DAT × Malayerba Teatro Co-production — Quito, Ecuador",
+        description:
+          "In Spanish & Kichwa. DAT and Malayerba Teatro revive the company's most celebrated love story — a solitary condor and the wingless shepherdess who stole his heart.",
+      },
+    },
   },
 
   // ── FESTIVALS & SHOWCASES ────────────────────────────────────────────────────
