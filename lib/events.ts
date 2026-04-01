@@ -275,6 +275,12 @@ export interface DatEvent {
       videoTitle?: string;
       /** Translated press / audience quotes */
       pressQuotes?: { text: string; attribution: string }[];
+      /**
+       * Translated credits (cast + creative team) for the language.
+       * Roles are translated; names and hrefs/photos stay the same.
+       * Order should match the base credits array.
+       */
+      credits?: { role: string; name: string; href?: string; group?: "creative" | "cast"; photo?: string }[];
     }
   >;
 
@@ -509,7 +515,8 @@ export const events: DatEvent[] = [
 
     pressQuotes: [
       {
-        text: "Not much is typical about 'A Girl without Wings.' Poignant. Sensitively directed. Magical.",
+        // Spanish-language paraphrase of the NYT review for the Spanish-default page
+        text: "Nada en 'Una Niña sin Alas' es usual. Emotiva, sensitivamente dirigida. Mágica.",
         attribution: "Laurel Graeber, The New York Times",
       },
       {
@@ -555,6 +562,23 @@ export const events: DatEvent[] = [
             text: "Pure theatrical imagination. I cried twice. And I am not one who cries.",
             attribution: "Audience member, Teatro Malayerba (translated)",
           },
+        ],
+        credits: [
+          // Creative Team — translated roles, same names/links
+          { group: "creative", role: "Direction",            name: "Kathleen Amshoff",       href: "/alumni/kathleen-amshoff" },
+          { group: "creative", role: "Artistic Direction",   name: "Jesse Baxter",            href: "/alumni/jesse-baxter" },
+          { group: "creative", role: "Dramaturgy",           name: "Jason Williamson",         href: "/alumni/jason-williamson" },
+          { group: "creative", role: "Spanish Translation",  name: "Karina Vélez",             href: "/alumni/karina-velez" },
+          { group: "creative", role: "Kichwa Translation",   name: "Edward Serrate Yujo",      href: "/alumni/edward-serrate-yujo" },
+          { group: "creative", role: "Puppet Design",        name: "Maria-Isabel Rojas",       href: "/alumni/maria-isabel-rojas" },
+          { group: "creative", role: "Production",           name: 'Juliana "Juice" Franco',   href: "/alumni/juliana-franco" },
+          // Cast — translated roles, same headshots/links
+          { group: "cast", role: "Chaska",        name: "Isabel Martínez",       href: "/alumni/isa-martinez",            photo: "https://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1688754593745-N9E8YZU0VE49QMQIOG4J/Marisa+Puller+007.jpg" },
+          { group: "cast", role: "The Condor",    name: "Javier Spivey",         href: "/alumni/javier-spivey",           photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613937012050-7HWDMXIJ72U50MKM7JSQ/javier.PNG" },
+          { group: "cast", role: "The Mother",    name: "Ana Arellano",          href: "/alumni/ana-arellano",            photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1616727468148-OBFR2IM4WPQ43JVPXH13/21728911_10156595589829056_8394607501235178776_o.jpg" },
+          { group: "cast", role: "Hummingbird",   name: "Yan Rey",               href: "/alumni/yan-rey",                 photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1688752206990-AL7Y5GAW3AMGR71JYRJD/Yan_foto-perfil.jpg" },
+          { group: "cast", role: "Narrator",      name: "Daniela Garzón-Silva",  href: "/alumni/daniela-garzon-silva",    photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1688755665448-6R1OMNYCMKOS8G1CZMPH/IMG_2761.jpg" },
+          { group: "cast", role: "Lead Musician", name: "Thomas Burns Scully",   href: "/alumni/thomas-burns-scully",     photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613454794191-W20YLPVCQ2ZLXOAR79HU/thomas.jpg" },
         ],
       },
     },

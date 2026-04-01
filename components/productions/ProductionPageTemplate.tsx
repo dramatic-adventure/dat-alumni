@@ -1477,7 +1477,7 @@ if (ageRecText) metaValues.push({ value: ageRecText });
             margin: "clamp(1.25rem, 3vw, 2.25rem) 0 clamp(3.2rem, 8vw, 6rem)",
             ["--card-pad" as any]: "clamp(1.2rem, 3.2vw, 2.4rem)",
             padding: "var(--card-pad)",
-            boxShadow: "0 18px 48px rgba(36,17,35,0.10)",
+            boxShadow: "0 18px 48px rgba(36,17,35,0.12)",
             backdropFilter: "saturate(1.05)",
           }}
         >

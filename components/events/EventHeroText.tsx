@@ -13,12 +13,6 @@ interface EventHeroTextProps {
   defaultLang: string;
   /** The eyebrow label (e.g. "Live Theatre") — rendered between toggle and title */
   eyebrow: string;
-  /** City name for the Rock Salt location stamp */
-  city?: string;
-  /** Country name for the Rock Salt location stamp */
-  country?: string;
-  /** Category accent colour for the location stamp */
-  accentColor?: string;
   /** Base text in the default language */
   base: {
     title: string;
@@ -47,9 +41,6 @@ const STORAGE_KEY = "evd-lang-pref";
 export default function EventHeroText({
   defaultLang,
   eyebrow,
-  city,
-  country,
-  accentColor,
   base,
   translations,
 }: EventHeroTextProps) {
@@ -122,15 +113,8 @@ export default function EventHeroText({
         </div>
       )}
 
-      {/* Eyebrow + Rock Salt location stamp */}
-      <div className="evd-eyebrow-row">
-        <p className="evd-eyebrow">{eyebrow}</p>
-        {city && (
-          <p className="evd-hero-location-stamp" style={{ color: accentColor }}>
-            {city}{country ? `, ${country}` : ""}
-          </p>
-        )}
-      </div>
+      {/* Eyebrow — category label above title */}
+      <p className="evd-eyebrow">{eyebrow}</p>
 
       <h1 className="evd-title">{title}</h1>
 
@@ -141,25 +125,6 @@ export default function EventHeroText({
       <p className="evd-standfirst">{description}</p>
 
       <style jsx>{`
-        .evd-eyebrow-row {
-          display: flex;
-          align-items: baseline;
-          gap: 1.1rem;
-          margin-bottom: 0.8rem;
-          flex-wrap: wrap;
-        }
-        .evd-eyebrow-row .evd-eyebrow {
-          margin: 0;
-        }
-        .evd-hero-location-stamp {
-          font-family: "Rock Salt", cursive;
-          font-size: 0.7rem;
-          line-height: 1;
-          transform: rotate(-2.5deg);
-          display: inline-block;
-          opacity: 0.88;
-          margin: 0;
-        }
         .evd-lang-toggle {
           display: inline-flex;
           align-items: center;
