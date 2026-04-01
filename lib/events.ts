@@ -156,6 +156,24 @@ export interface DatEvent {
    */
   photoCredit?: string;
 
+  /** Optional URL linking the photo credit name to a photographer profile. */
+  photographerHref?: string;
+
+  /** Optional URL to a full external photo album (shown in gallery footer). */
+  albumHref?: string;
+
+  /**
+   * Optional donate URL for the Community Impact section CTA.
+   * Falls back to "/donate" when not set.
+   */
+  donateLink?: string;
+
+  /**
+   * Optional one-paragraph community impact blurb shown in the
+   * Community Impact section of the event detail page.
+   */
+  impactBlurb?: string;
+
   /**
    * YouTube or Vimeo URL for an embedded video section.
    * Falls back to the first videoUrl found in the production's processSections.
@@ -382,7 +400,10 @@ export const events: DatEvent[] = [
     featured: true,
     tags: ["New York Times Critics Pick", "kichwa", "español", "Quito", "Andes", "Malayerba", "títeres", "co-producción"],
     production: "a-girl-without-wings-revival-2027",
+    dramaClub: "quito-collective",
     contactEmail: "hello@dramaticadventure.com",
+    donateLink: "/donate?mode=new-work&production=agwow-quito-2026",
+    impactBlurb: "Esta co-producción sustenta la red de Drama Clubs de DAT en el Ecuador — formando nuevas generaciones de artistas comunitarios en Quito y más allá. Tu apoyo hace posible el teatro que nace de la comunidad.",
 
     // ── Rich content: every section fully populated ───────────────────────────
 
@@ -409,6 +430,8 @@ export const events: DatEvent[] = [
       },
     ],
     photoCredit: "Archivo DAT / Malayerba Teatro",
+    photographerHref: "https://www.teatromalayerba.com",
+    albumHref: "https://photos.dramaticadventure.com/agwow-quito-2026",
 
     videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     videoTitle: "Mira: Tráiler — Una Niña Sin Alas",

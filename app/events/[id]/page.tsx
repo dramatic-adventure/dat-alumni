@@ -463,6 +463,8 @@ export default async function EventDetailPage({ params }: PageProps) {
     : undefined;
   const fieldGalleryTitle = productionExtra?.fieldGalleryTitle;
   const fieldAlbumHref = productionExtra?.fieldAlbumHref ?? undefined;
+  const photographerHref = event.photographerHref;
+  const albumHref = event.albumHref;
   const videoData = resolveVideoUrl(event, productionExtra);
   const videoEmbedUrl = videoData ? getVideoEmbedUrl(videoData.url) : undefined;
   const artistNote = resolveArtistNote(event, productionExtra);
@@ -663,27 +665,56 @@ export default async function EventDetailPage({ params }: PageProps) {
         <div className="evd-container">
           <div className="evd-content-card">
 
-            {/* Two-column content: LEFT description+video / RIGHT club+photo+quotes */}
+            {/* Two-column content: LEFT quote-image + about + video / RIGHT reviews + community impact */}
             <div className={`evd-dashboard-grid${editorialImg1 || videoEmbedUrl || event.pressQuotes?.length || linkedDramaClubs.length > 0 ? "" : " evd-dashboard-grid--single"}`}>
 
-              {/* LEFT: description text + video */}
+              {/* ── LEFT (60%): horizontal artist image → About → Video ── */}
               <div className="evd-dashboard-left">
-                {paragraphs.length > 0 ? (
-                  <div className="evd-dash-description evd-about-block">
-                    <h2 className="evd-about-head">About</h2>
-                    <div className="evd-about-indent">
-                      {event.subtitle ? (
-                        <p className="evd-tagline-inline">{event.subtitle}</p>
+
+                {/* Horizontal image+artist note — ABOVE About */}
+                {editorialImg1 ? (
+                  <div className="evd-elder-shell evd-elder-shell--horizontal">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={editorialImg1}
+                      alt={artistNote?.by || event.title}
+                      className="evd-elder-bg"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <div className="evd-elder-overlay" aria-hidden="true" />
+                    <div className="evd-elder-content">
+                      <p className="evd-elder-label">From the artist</p>
+                      {artistNote ? (
+                        <>
+                          <p className="evd-elder-text">&ldquo;{artistNote.note}&rdquo;</p>
+                          {artistNote.by ? (
+                            <p className="evd-elder-meta">
+                              <span className="evd-elder-name">{artistNote.by}</span>
+                            </p>
+                          ) : null}
+                        </>
                       ) : null}
-                      {paragraphs.map((p, i) => (
-                        <p key={i} className="evd-body-text evd-about-body">{p}</p>
-                      ))}
                     </div>
                   </div>
                 ) : null}
 
+                {/* About section */}
+                {paragraphs.length > 0 ? (
+                  <div className="evd-dash-description evd-about-block evd-section-block">
+                    <h2 className="evd-about-head">About</h2>
+                    {event.subtitle ? (
+                      <p className="evd-tagline-inline">{event.subtitle}</p>
+                    ) : null}
+                    {paragraphs.map((p, i) => (
+                      <p key={i} className="evd-body-text evd-about-body">{p}</p>
+                    ))}
+                  </div>
+                ) : null}
+
+                {/* Video embed */}
                 {videoEmbedUrl ? (
-                  <div className="evd-dash-video">
+                  <div className="evd-dash-video evd-section-block">
                     <div className="evd-video-frame-wrap">
                       <iframe
                         src={videoEmbedUrl}
@@ -697,71 +728,14 @@ export default async function EventDetailPage({ params }: PageProps) {
                 ) : null}
               </div>
 
-              {/* RIGHT: drama club badge + voices from [city]: image card + press quotes */}
-              {(linkedDramaClubs.length > 0 || editorialImg1 || event.pressQuotes?.length) ? (
+              {/* ── RIGHT (40%): press reviews → Community Impact ── */}
+              {(linkedDramaClubs.length > 0 || event.pressQuotes?.length || event.donateLink) ? (
                 <div className="evd-dashboard-right">
-                  {linkedDramaClubs.length > 0 ? (
-                    <div className="evd-dash-club-support">
-                      <p className="evd-dash-club-support-label">
-                        {linkedDramaClubs.length > 1 ? "Featuring DAT Drama Clubs" : "In Support of a DAT Drama Club"}
-                      </p>
-                      <div className="evd-dash-club-support-links">
-                        {linkedDramaClubs.map((club) => (
-                          <Link key={club.slug} href={`/drama-club/${club.slug}`} className="evd-dash-club-support-card">
-                            <DramaClubBadge
-                              name={club.name}
-                              location={club.location}
-                              size={48}
-                              wrappedByParentLink
-                            />
-                            <div className="evd-dash-club-support-copy">
-                              <p className="evd-dash-club-support-name">{club.name}</p>
-                              {club.location ? <p className="evd-dash-club-support-loc">{club.location}</p> : null}
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
 
-                  {/* "Voices from" heading — matches dc-section-head / evd-about-head */}
-                  {(editorialImg1 || event.pressQuotes?.length) ? (
-                    <h2 className="evd-about-head evd-voices-head">
-                      Voices from {event.city || "the company"}
-                    </h2>
-                  ) : null}
-
-                  {/* Elder-quote shell: full-bleed image + gradient overlay + Anton quote */}
-                  {editorialImg1 ? (
-                    <div className="evd-elder-shell evd-elder-shell--has-image">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={editorialImg1}
-                        alt={artistNote?.by || event.title}
-                        className="evd-elder-bg"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      <div className="evd-elder-overlay" aria-hidden="true" />
-                      <div className="evd-elder-content">
-                        <p className="evd-elder-label">From the artist</p>
-                        {artistNote ? (
-                          <>
-                            <p className="evd-elder-text">&ldquo;{artistNote.note}&rdquo;</p>
-                            {artistNote.by ? (
-                              <p className="evd-elder-meta">
-                                <span className="evd-elder-name">{artistNote.by}</span>
-                              </p>
-                            ) : null}
-                          </>
-                        ) : null}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {/* Press quotes — dc-quote-block--alumni style */}
+                  {/* Press / audience reviews */}
                   {event.pressQuotes?.length ? (
                     <div className="evd-voices-quotes">
+                      <h2 className="evd-about-head evd-voices-head">What They Said</h2>
                       {event.pressQuotes.map((q, i) => (
                         <figure key={i} className="evd-voices-quote">
                           <blockquote className="evd-voices-blockquote">
@@ -774,6 +748,52 @@ export default async function EventDetailPage({ params }: PageProps) {
                       ))}
                     </div>
                   ) : null}
+
+                  {/* Community Impact: drama club badge + impact blurb + donate CTA */}
+                  {(linkedDramaClubs.length > 0 || event.donateLink) ? (
+                    <div className="evd-community-impact evd-section-block">
+                      <h2 className="evd-about-head">Community Impact</h2>
+
+                      {linkedDramaClubs.length > 0 ? (
+                        <div className="evd-impact-clubs">
+                          {linkedDramaClubs.map((club) => (
+                            <Link
+                              key={club.slug}
+                              href={`/drama-club/${club.slug}`}
+                              className="evd-impact-club-row"
+                            >
+                              <DramaClubBadge
+                                name={club.name}
+                                location={club.location}
+                                size={88}
+                                wrappedByParentLink
+                              />
+                              <div className="evd-impact-club-copy">
+                                <p className="evd-impact-support-eyebrow">This production supports</p>
+                                <p className="evd-impact-club-name">{club.name}</p>
+                                {club.location ? (
+                                  <p className="evd-impact-club-loc">{club.location}</p>
+                                ) : null}
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      ) : null}
+
+                      {event.impactBlurb ? (
+                        <p className="evd-body-text evd-about-body evd-impact-blurb">
+                          {event.impactBlurb}
+                        </p>
+                      ) : null}
+
+                      <a
+                        href={event.donateLink || "/donate"}
+                        className="evd-impact-donate-btn"
+                      >
+                        Sponsor This Performance →
+                      </a>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -784,6 +804,8 @@ export default async function EventDetailPage({ params }: PageProps) {
                 <EventProdrowGallery
                   images={photoGallery ?? []}
                   photoCredit={photoCredit}
+                  photographerHref={photographerHref}
+                  albumHref={albumHref}
                   fieldImages={fieldGalleryImages}
                   fieldGalleryTitle={fieldGalleryTitle}
                   fieldAlbumHref={fieldAlbumHref}
@@ -988,7 +1010,21 @@ export default async function EventDetailPage({ params }: PageProps) {
               })}
             </div>
             <div className="evd-rel-events-footer">
-              <Link href="/events" className="evd-btn-ghost">
+              <div className="evd-rel-footer-nav">
+                <Link href="/events/performances" className="evd-bottom-link evd-bottom-link--pink">
+                  Upcoming Performances →
+                </Link>
+                <Link href="/events/fundraisers" className="evd-bottom-link evd-bottom-link--gold">
+                  Fundraisers &amp; Community Nights →
+                </Link>
+                <Link href="/events/festivals" className="evd-bottom-link evd-bottom-link--teal">
+                  Festivals &amp; Showcases →
+                </Link>
+                <Link href="/theatre" className="evd-bottom-link evd-bottom-link--muted">
+                  Theatre Archive →
+                </Link>
+              </div>
+              <Link href="/events" className="evd-btn-ghost evd-rel-all-events-btn">
                 All Events →
               </Link>
             </div>
@@ -1009,30 +1045,6 @@ export default async function EventDetailPage({ params }: PageProps) {
           </div>
           <div className="evd-newsletter-form">
             <MailingListForm source="event-detail" />
-          </div>
-        </div>
-      </section>
-
-      {/* ── Bottom nav ─────────────────────────────────────────────────── */}
-      <section className="evd-bottom-band">
-        <div className="evd-container evd-bottom-inner">
-          <p className="evd-bottom-label">Explore More</p>
-          <div className="evd-bottom-links">
-            <Link href="/events/performances" className="evd-bottom-link evd-bottom-link--pink">
-              Upcoming Performances →
-            </Link>
-            <Link href="/events/fundraisers" className="evd-bottom-link evd-bottom-link--gold">
-              Fundraisers &amp; Community Nights →
-            </Link>
-            <Link href="/events/festivals" className="evd-bottom-link evd-bottom-link--teal">
-              Festivals &amp; Showcases →
-            </Link>
-            <Link href="/theatre" className="evd-bottom-link evd-bottom-link--muted">
-              Theatre Archive →
-            </Link>
-            <Link href="/events" className="evd-bottom-link evd-bottom-link--muted">
-              ← All Events
-            </Link>
           </div>
         </div>
       </section>
@@ -1420,14 +1432,20 @@ export default async function EventDetailPage({ params }: PageProps) {
           grid-template-columns: 1fr;
         }
 
+        /* Section rule — mirrors ProductionPageTemplate .section-block */
+        .evd-section-block {
+          border-top: 1px solid rgba(36,17,35,0.12);
+          padding-top: 14px;
+          margin-top: clamp(1.5rem, 3vw, 2rem);
+        }
+
         /* Left column: description text */
         .evd-dashboard-left {
           display: flex;
           flex-direction: column;
-          gap: 0.75rem;
         }
         .evd-dash-description {
-          margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+          /* spacing via evd-section-block */
         }
         .evd-dash-tagline {
           font-family: var(--font-rock-salt), cursive;
@@ -1546,6 +1564,11 @@ export default async function EventDetailPage({ params }: PageProps) {
           background: radial-gradient(circle at top left, rgba(108,0,175,0.18), rgba(36,17,35,0.85));
           box-shadow: 0 14px 30px rgba(0,0,0,0.35);
         }
+        /* Horizontal variant: landscape aspect ratio for left-column placement */
+        .evd-elder-shell--horizontal {
+          min-height: unset;
+          aspect-ratio: 16 / 7;
+        }
         .evd-elder-shell--has-image {
           cursor: default;
         }
@@ -1640,6 +1663,71 @@ export default async function EventDetailPage({ params }: PageProps) {
           font-family: "Space Grotesk", sans-serif;
         }
 
+        /* ── Community Impact section ───────────────────────────────────── */
+        .evd-impact-clubs {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          margin-bottom: 0.75rem;
+        }
+        .evd-impact-club-row {
+          display: flex;
+          align-items: center;
+          gap: 0.9rem;
+          text-decoration: none;
+          transition: opacity 0.18s;
+        }
+        .evd-impact-club-row:hover { opacity: 0.82; }
+        .evd-impact-club-copy { min-width: 0; }
+        .evd-impact-support-eyebrow {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.6rem;
+          font-weight: 700;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          color: var(--evd-accent, #F23359);
+          margin: 0 0 0.2rem;
+        }
+        .evd-impact-club-name {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 1rem;
+          font-weight: 700;
+          color: #241123;
+          margin: 0 0 0.1rem;
+          line-height: 1.2;
+        }
+        .evd-impact-club-loc {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.82rem;
+          color: rgba(36,17,35,0.5);
+          margin: 0;
+        }
+        .evd-impact-blurb {
+          margin-top: 0.75rem;
+          margin-bottom: 1rem;
+        }
+        .evd-impact-donate-btn {
+          display: inline-block;
+          margin-top: 0.5rem;
+          padding: 0.7rem 1.5rem;
+          background: #6c00af;
+          color: #fff;
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          text-decoration: none;
+          border-radius: 10px;
+          transition: transform 0.16s, box-shadow 0.16s, background 0.16s;
+          box-shadow: 0 4px 18px rgba(108,0,175,0.3);
+        }
+        .evd-impact-donate-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 26px rgba(108,0,175,0.45);
+          background: #8a00d9;
+        }
+
         /* ── 3b. White Content Card ────────────────────────────────────── */
         .evd-content-section {
           background: var(--evd-surface);
@@ -1677,9 +1765,9 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
         /* Gallery inside card */
         .evd-card-gallery {
-          margin-top: clamp(2rem, 4vw, 3rem);
-          padding-top: clamp(2rem, 4vw, 3rem);
-          border-top: 1px solid rgba(36,17,35,0.08);
+          margin-top: clamp(1.5rem, 3vw, 2rem);
+          padding-top: 14px;
+          border-top: 1px solid rgba(36,17,35,0.12);
         }
 
         /* Cast inside card */
@@ -1733,10 +1821,10 @@ export default async function EventDetailPage({ params }: PageProps) {
           letter-spacing: 0.22em;
           color: rgba(36,17,35,0.55);
           font-weight: 300;
-          margin: 0 0 10px;
+          margin: 0 0 0.9rem; /* space between heading and content below */
         }
-        .evd-about-indent {
-          padding-left: 2.5rem;
+        .evd-voices-head {
+          margin-top: 0;
         }
         .evd-tagline-inline {
           font-family: var(--font-rock-salt, cursive);
@@ -1746,6 +1834,8 @@ export default async function EventDetailPage({ params }: PageProps) {
           font-size: clamp(1rem, 2.5vw, 1.65rem);
           word-break: break-word;
           margin: 0 0 1.25rem;
+          text-align: center;
+          display: block;
         }
         .evd-body-text {
           font-family: "Space Grotesk", sans-serif;
@@ -1885,7 +1975,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-cycle-band { position: relative; }
         .evd-cycle-logo-sticker {
           position: absolute;
-          top: -22px;
+          top: -60px;
           left: 50%;
           transform: translateX(-50%);
           z-index: 20;
@@ -1893,9 +1983,9 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
         .evd-cycle-logo-img {
           display: block;
-          width: 44px;
-          height: 44px;
-          filter: drop-shadow(0 2px 8px rgba(0,0,0,0.35));
+          width: 121px;
+          height: 121px;
+          filter: drop-shadow(0 3px 14px rgba(0,0,0,0.45));
           opacity: 0.92;
         }
 
@@ -2245,6 +2335,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-cycle-band {
           background: #111118;
           padding: clamp(2.5rem, 5vw, 4rem) 0;
+          padding-top: calc(clamp(2.5rem, 5vw, 4rem) + 68px); /* extra room for logo sticker overflow */
           border-top: 1px solid rgba(255,255,255,0.06);
         }
 
@@ -2399,9 +2490,12 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
 
         .evd-related-events-band {
-          background: #0c0c14;
+          background: #0e3d25;
+          background-image:
+            radial-gradient(ellipse 80% 80% at 0% 100%, rgba(20,100,55,0.45) 0%, transparent 70%),
+            radial-gradient(ellipse 60% 60% at 100% 0%, rgba(20,100,55,0.25) 0%, transparent 70%);
           padding: clamp(3rem, 6vw, 5rem) 0;
-          border-top: 3px solid var(--evd-accent);
+          border-top: 1px solid rgba(255,255,255,0.06);
         }
         .evd-rel-events-grid {
           display: grid;
@@ -2473,7 +2567,19 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-rel-events-footer {
           margin-top: 1.5rem;
           display: flex;
-          justify-content: flex-end;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+        }
+        .evd-rel-footer-nav {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          flex: 1;
+        }
+        .evd-rel-all-events-btn {
+          flex-shrink: 0;
+          margin-left: auto;
         }
 
         /* ── 10. Newsletter ────────────────────────────────────────────── */
@@ -2655,14 +2761,15 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
         .evd-bottom-link {
           font-family: "DM Sans", sans-serif;
-          font-size: 0.8rem;
+          font-size: 0.72rem;
           font-weight: 700;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           text-decoration: none;
-          padding: 0.72rem 1.4rem;
-          border-radius: 9px;
+          padding: 0.5rem 1rem;
+          border-radius: 8px;
           transition: opacity 0.2s, transform 0.18s, box-shadow 0.2s;
+          white-space: nowrap;
         }
         .evd-bottom-link:hover {
           opacity: 0.9;

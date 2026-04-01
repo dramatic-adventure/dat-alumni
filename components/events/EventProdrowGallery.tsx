@@ -17,7 +17,7 @@ interface EventProdrowGalleryProps {
   /** Link to full album */
   albumHref?: string;
   albumLabel?: string;
-  /** Maximum images shown before "See More" */
+  /** Maximum images shown before "See More" — defaults to 3 (one row) */
   maxVisible?: number;
   /** Optional "From the Field" / BTS second gallery */
   fieldImages?: ProdrowImage[];
@@ -43,7 +43,7 @@ function PhotoRowSection({
   photographerHref,
   albumHref,
   albumLabel,
-  maxVisible = 9,
+  maxVisible = 3,
 }: {
   images: ProdrowImage[];
   photoCredit?: string;
@@ -249,7 +249,7 @@ export default function EventProdrowGallery({
   photographerHref,
   albumHref,
   albumLabel,
-  maxVisible = 9,
+  maxVisible = 3,
   fieldImages,
   fieldGalleryTitle,
   fieldAlbumHref,
