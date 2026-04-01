@@ -13,6 +13,12 @@ interface EventHeroTextProps {
   defaultLang: string;
   /** The eyebrow label (e.g. "Live Theatre") — rendered between toggle and title */
   eyebrow: string;
+  /** City name for the Rock Salt location stamp */
+  city?: string;
+  /** Country name for the Rock Salt location stamp */
+  country?: string;
+  /** Category accent colour for the location stamp */
+  accentColor?: string;
   /** Base text in the default language */
   base: {
     title: string;
@@ -41,6 +47,9 @@ const STORAGE_KEY = "evd-lang-pref";
 export default function EventHeroText({
   defaultLang,
   eyebrow,
+  city,
+  country,
+  accentColor,
   base,
   translations,
 }: EventHeroTextProps) {
@@ -50,21 +59,29 @@ export default function EventHeroText({
 
   useEffect(() => {
     setMounted(true);
+    let resolvedLang = defaultLang;
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved && langCodes.includes(saved)) {
-        setActiveLang(saved);
-        return;
-      }
-      // Auto-detect from browser language on first visit
-      const browserLang = navigator.language?.split("-")[0]?.toLowerCase();
-      if (browserLang && langCodes.includes(browserLang) && browserLang !== defaultLang) {
-        setActiveLang(browserLang);
-        localStorage.setItem(STORAGE_KEY, browserLang);
+        resolvedLang = saved;
+      } else {
+        // Auto-detect from browser language on first visit
+        const browserLang = navigator.language?.split("-")[0]?.toLowerCase();
+        if (browserLang && langCodes.includes(browserLang) && browserLang !== defaultLang) {
+          resolvedLang = browserLang;
+          localStorage.setItem(STORAGE_KEY, browserLang);
+        }
       }
     } catch {
       // localStorage not available
     }
+    setActiveLang(resolvedLang);
+    // Drive CSS-based bilingual content switching
+    document.documentElement.dataset.evdLang = resolvedLang;
+    return () => {
+      // Clean up when navigating away from a bilingual page
+      delete document.documentElement.dataset.evdLang;
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -72,6 +89,10 @@ export default function EventHeroText({
     setActiveLang(code);
     try {
       localStorage.setItem(STORAGE_KEY, code);
+      // Drive CSS-based bilingual content switching across the full page
+      document.documentElement.dataset.evdLang = code;
+      // Also notify any client components listening via custom event
+      window.dispatchEvent(new CustomEvent("evd-lang-change", { detail: { lang: code } }));
     } catch {
       // ignore
     }
@@ -101,8 +122,15 @@ export default function EventHeroText({
         </div>
       )}
 
-      {/* Eyebrow — below toggle, above title */}
-      <p className="evd-eyebrow">{eyebrow}</p>
+      {/* Eyebrow + Rock Salt location stamp */}
+      <div className="evd-eyebrow-row">
+        <p className="evd-eyebrow">{eyebrow}</p>
+        {city && (
+          <p className="evd-hero-location-stamp" style={{ color: accentColor }}>
+            {city}{country ? `, ${country}` : ""}
+          </p>
+        )}
+      </div>
 
       <h1 className="evd-title">{title}</h1>
 
@@ -113,6 +141,25 @@ export default function EventHeroText({
       <p className="evd-standfirst">{description}</p>
 
       <style jsx>{`
+        .evd-eyebrow-row {
+          display: flex;
+          align-items: baseline;
+          gap: 1.1rem;
+          margin-bottom: 0.8rem;
+          flex-wrap: wrap;
+        }
+        .evd-eyebrow-row .evd-eyebrow {
+          margin: 0;
+        }
+        .evd-hero-location-stamp {
+          font-family: "Rock Salt", cursive;
+          font-size: 0.7rem;
+          line-height: 1;
+          transform: rotate(-2.5deg);
+          display: inline-block;
+          opacity: 0.88;
+          margin: 0;
+        }
         .evd-lang-toggle {
           display: inline-flex;
           align-items: center;

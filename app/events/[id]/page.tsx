@@ -7,6 +7,7 @@ import DramaClubBadge from "@/components/ui/DramaClubBadge";
 import EventShareButton from "@/components/events/EventShareButton";
 import EventProdrowGallery from "@/components/events/EventProdrowGallery";
 import EventHeroText from "@/components/events/EventHeroText";
+import EventBilingualContent from "@/components/events/EventBilingualContent";
 import MailingListForm from "@/components/events/MailingListForm";
 import { productionMap } from "@/lib/productionMap";
 import { productionDetailsMap, type ProductionExtra } from "@/lib/productionDetailsMap";
@@ -501,18 +502,13 @@ export default async function EventDetailPage({ params }: PageProps) {
         <div className="evd-hero-overlay" />
         <div className="evd-hero-glow" />
         <div className="evd-hero-content">
-          <nav className="evd-breadcrumb" aria-label="Breadcrumb">
-            <Link href="/events">Events</Link>
-            <span aria-hidden="true">/</span>
-            <Link href={meta.href}>{meta.label}s</Link>
-            <span aria-hidden="true">/</span>
-            <span>{event.title}</span>
-          </nav>
-
           {event.translations ? (
             <EventHeroText
               defaultLang={event.defaultLang ?? "es"}
               eyebrow={getEventEyebrow(event)}
+              city={event.city !== "Worldwide" ? event.city : undefined}
+              country={event.country}
+              accentColor={theme.accent}
               base={{
                 title: event.title,
                 subtitle: event.subtitle,
@@ -522,7 +518,14 @@ export default async function EventDetailPage({ params }: PageProps) {
             />
           ) : (
             <>
-              <p className="evd-eyebrow">{getEventEyebrow(event)}</p>
+              <div className="evd-eyebrow-row">
+                <p className="evd-eyebrow">{getEventEyebrow(event)}</p>
+                {event.city && event.city !== "Worldwide" && (
+                  <p className="evd-location-stamp" style={{ color: theme.accent }}>
+                    {event.city}{event.country ? `, ${event.country}` : ""}
+                  </p>
+                )}
+              </div>
               <h1 className="evd-title">{event.title}</h1>
               {event.subtitle ? (
                 <p className="evd-subtitle">{event.subtitle}</p>
@@ -546,12 +549,12 @@ export default async function EventDetailPage({ params }: PageProps) {
             {event.venueUrl ? (
               <a href={event.venueUrl} target="_blank" rel="noopener noreferrer" className="evd-pill evd-pill--venue evd-pill--link">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 13-8 13S4 16 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                {event.venue}{event.city !== "Worldwide" ? ` · ${event.city}` : ""}
+                {event.venue}{event.city !== "Worldwide" ? ` · ${event.city}${event.country ? `, ${event.country}` : ""}` : ""}
               </a>
             ) : (
               <span className="evd-pill evd-pill--venue">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 13-8 13S4 16 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                {event.venue}{event.city !== "Worldwide" ? ` · ${event.city}` : ""}
+                {event.venue}{event.city !== "Worldwide" ? ` · ${event.city}${event.country ? `, ${event.country}` : ""}` : ""}
               </span>
             )}
           </div>
@@ -661,12 +664,12 @@ export default async function EventDetailPage({ params }: PageProps) {
       </section>
 
       {/* ── White Content Card: description → creative team ─────────────── */}
-      <section className="evd-content-section">
+      <section className="evd-content-section" style={{ "--evd-accent": theme.accent } as CSSProperties}>
         <div className="evd-container">
           <div className="evd-content-card">
 
-            {/* Two-column content: LEFT quote-image + about + video / RIGHT reviews + community impact */}
-            <div className={`evd-dashboard-grid${editorialImg1 || videoEmbedUrl || event.pressQuotes?.length || linkedDramaClubs.length > 0 ? "" : " evd-dashboard-grid--single"}`}>
+            {/* Two-column content: LEFT quote-image + about / RIGHT reviews + community impact */}
+            <div className={`evd-dashboard-grid${editorialImg1 || event.pressQuotes?.length || linkedDramaClubs.length > 0 ? "" : " evd-dashboard-grid--single"}`}>
 
               {/* ── LEFT (60%): horizontal artist image → About → Video ── */}
               <div className="evd-dashboard-left">
@@ -686,14 +689,35 @@ export default async function EventDetailPage({ params }: PageProps) {
                     <div className="evd-elder-content">
                       <p className="evd-elder-label">From the artist</p>
                       {artistNote ? (
-                        <>
-                          <p className="evd-elder-text">&ldquo;{artistNote.note}&rdquo;</p>
-                          {artistNote.by ? (
-                            <p className="evd-elder-meta">
-                              <span className="evd-elder-name">{artistNote.by}</span>
-                            </p>
-                          ) : null}
-                        </>
+                        event.translations ? (
+                          <>
+                            {/* ES artist note */}
+                            <p className="evd-elder-text evd-bilingual-default">&ldquo;{artistNote.note}&rdquo;</p>
+                            {artistNote.by ? (
+                              <p className="evd-elder-meta evd-bilingual-default">
+                                <span className="evd-elder-name">{artistNote.by}</span>
+                              </p>
+                            ) : null}
+                            {/* EN artist note */}
+                            {event.translations["en"]?.artistNote && (
+                              <p className="evd-elder-text evd-bilingual-alt evd-bilingual-en">&ldquo;{event.translations["en"].artistNote}&rdquo;</p>
+                            )}
+                            {event.translations["en"]?.artistNoteBy && (
+                              <p className="evd-elder-meta evd-bilingual-alt evd-bilingual-en">
+                                <span className="evd-elder-name">{event.translations["en"].artistNoteBy}</span>
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <p className="evd-elder-text">&ldquo;{artistNote.note}&rdquo;</p>
+                            {artistNote.by ? (
+                              <p className="evd-elder-meta">
+                                <span className="evd-elder-name">{artistNote.by}</span>
+                              </p>
+                            ) : null}
+                          </>
+                        )
                       ) : null}
                     </div>
                   </div>
@@ -703,29 +727,46 @@ export default async function EventDetailPage({ params }: PageProps) {
                 {paragraphs.length > 0 ? (
                   <div className="evd-dash-description evd-about-block evd-section-block">
                     <h2 className="evd-about-head">About</h2>
-                    {event.subtitle ? (
-                      <p className="evd-tagline-inline">{event.subtitle}</p>
-                    ) : null}
-                    {paragraphs.map((p, i) => (
-                      <p key={i} className="evd-body-text evd-about-body">{p}</p>
-                    ))}
+                    {event.translations ? (
+                      <>
+                        {/* ES subtitle */}
+                        {event.subtitle && (
+                          <p className="evd-tagline-inline evd-bilingual-default">{event.subtitle}</p>
+                        )}
+                        {/* EN subtitle */}
+                        {event.translations["en"]?.subtitle && (
+                          <p className="evd-tagline-inline evd-bilingual-alt evd-bilingual-en">
+                            {event.translations["en"].subtitle}
+                          </p>
+                        )}
+                        {/* ES paragraphs */}
+                        <div className="evd-bilingual-default">
+                          {paragraphs.map((p, i) => (
+                            <p key={i} className="evd-body-text evd-about-body">{p}</p>
+                          ))}
+                        </div>
+                        {/* EN paragraphs */}
+                        {event.translations["en"]?.longDescription && (
+                          <div className="evd-bilingual-alt evd-bilingual-en">
+                            {splitParagraphs(event.translations["en"].longDescription).map((p, i) => (
+                              <p key={i} className="evd-body-text evd-about-body">{p}</p>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {event.subtitle ? (
+                          <p className="evd-tagline-inline">{event.subtitle}</p>
+                        ) : null}
+                        {paragraphs.map((p, i) => (
+                          <p key={i} className="evd-body-text evd-about-body">{p}</p>
+                        ))}
+                      </>
+                    )}
                   </div>
                 ) : null}
 
-                {/* Video embed */}
-                {videoEmbedUrl ? (
-                  <div className="evd-dash-video evd-section-block">
-                    <div className="evd-video-frame-wrap">
-                      <iframe
-                        src={videoEmbedUrl}
-                        title={videoData?.title ?? `${event.title} video`}
-                        className="evd-video-frame"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                    </div>
-                  </div>
-                ) : null}
               </div>
 
               {/* ── RIGHT (40%): press reviews → Community Impact ── */}
@@ -735,17 +776,42 @@ export default async function EventDetailPage({ params }: PageProps) {
                   {/* Press / audience reviews */}
                   {event.pressQuotes?.length ? (
                     <div className="evd-voices-quotes">
-                      <h2 className="evd-about-head evd-voices-head">What They Said</h2>
-                      {event.pressQuotes.map((q, i) => (
-                        <figure key={i} className="evd-voices-quote">
-                          <blockquote className="evd-voices-blockquote">
-                            &ldquo;{q.text}&rdquo;
-                          </blockquote>
-                          <figcaption className="evd-voices-figcaption">
-                            {q.attribution}
-                          </figcaption>
-                        </figure>
-                      ))}
+                      <h2 className="evd-about-head evd-voices-head">The Response</h2>
+                      {event.translations ? (
+                        <>
+                          {/* ES quotes */}
+                          <div className="evd-bilingual-default">
+                            {event.pressQuotes.map((q, i) => (
+                              <figure key={i} className="evd-voices-quote">
+                                <blockquote className="evd-voices-blockquote">&ldquo;{q.text}&rdquo;</blockquote>
+                                <figcaption className="evd-voices-figcaption">{q.attribution}</figcaption>
+                              </figure>
+                            ))}
+                          </div>
+                          {/* EN quotes */}
+                          {event.translations["en"]?.pressQuotes?.length && (
+                            <div className="evd-bilingual-alt evd-bilingual-en">
+                              {event.translations["en"].pressQuotes!.map((q, i) => (
+                                <figure key={i} className="evd-voices-quote">
+                                  <blockquote className="evd-voices-blockquote">&ldquo;{q.text}&rdquo;</blockquote>
+                                  <figcaption className="evd-voices-figcaption">{q.attribution}</figcaption>
+                                </figure>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        event.pressQuotes.map((q, i) => (
+                          <figure key={i} className="evd-voices-quote">
+                            <blockquote className="evd-voices-blockquote">
+                              &ldquo;{q.text}&rdquo;
+                            </blockquote>
+                            <figcaption className="evd-voices-figcaption">
+                              {q.attribution}
+                            </figcaption>
+                          </figure>
+                        ))
+                      )}
                     </div>
                   ) : null}
 
@@ -765,7 +831,7 @@ export default async function EventDetailPage({ params }: PageProps) {
                               <DramaClubBadge
                                 name={club.name}
                                 location={club.location}
-                                size={88}
+                                size={112}
                                 wrappedByParentLink
                               />
                               <div className="evd-impact-club-copy">
@@ -781,22 +847,60 @@ export default async function EventDetailPage({ params }: PageProps) {
                       ) : null}
 
                       {event.impactBlurb ? (
-                        <p className="evd-body-text evd-about-body evd-impact-blurb">
-                          {event.impactBlurb}
-                        </p>
+                        event.translations ? (
+                          <>
+                            <p className="evd-body-text evd-about-body evd-impact-blurb evd-bilingual-default">
+                              {event.impactBlurb}
+                            </p>
+                            {event.translations["en"]?.impactBlurb && (
+                              <p className="evd-body-text evd-about-body evd-impact-blurb evd-bilingual-alt evd-bilingual-en">
+                                {event.translations["en"].impactBlurb}
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <p className="evd-body-text evd-about-body evd-impact-blurb">
+                            {event.impactBlurb}
+                          </p>
+                        )
                       ) : null}
 
                       <a
                         href={event.donateLink || "/donate"}
                         className="evd-impact-donate-btn"
                       >
-                        Sponsor This Performance →
+                        {event.status === "past"
+                          ? "Sponsor New Works Like This →"
+                          : "Sponsor This New Work →"}
                       </a>
+                      {linkedDramaClubs.length > 0 && (
+                        <a
+                          href={`/donate?mode=drama-club&club=${linkedDramaClubs[0].slug}`}
+                          className="evd-impact-donate-btn evd-impact-donate-btn--secondary"
+                        >
+                          Sponsor this Drama Club →
+                        </a>
+                      )}
                     </div>
                   ) : null}
                 </div>
               ) : null}
             </div>
+
+            {/* Full-width video — spans both columns */}
+            {videoEmbedUrl ? (
+              <div className="evd-dash-video evd-dash-video--full">
+                <div className="evd-video-frame-wrap">
+                  <iframe
+                    src={videoEmbedUrl}
+                    title={videoData?.title ?? `${event.title} video`}
+                    className="evd-video-frame"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            ) : null}
 
             {/* Photo Gallery */}
             {(photoGallery?.length || fieldGalleryImages?.length) ? (
@@ -1170,26 +1274,6 @@ export default async function EventDetailPage({ params }: PageProps) {
           width: 100%;
         }
 
-        .evd-breadcrumb {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          flex-wrap: wrap;
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.78rem;
-          font-weight: 600;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.42);
-          margin-bottom: 1.25rem;
-        }
-        .evd-breadcrumb a {
-          color: rgba(255,255,255,0.42);
-          text-decoration: none;
-          transition: color 0.2s;
-        }
-        .evd-breadcrumb a:hover { color: var(--evd-accent); }
-
         /* Shared eyebrow/label utility — DM Sans caps tracking */
         .evd-eyebrow,
         .evd-section-eyebrow,
@@ -1202,7 +1286,23 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
         .evd-eyebrow {
           color: var(--evd-accent);
-          margin: 0 0 0.8rem;
+          margin: 0;
+        }
+        .evd-eyebrow-row {
+          display: flex;
+          align-items: baseline;
+          gap: 1.1rem;
+          margin-bottom: 0.8rem;
+          flex-wrap: wrap;
+        }
+        .evd-location-stamp {
+          font-family: var(--font-rock-salt, "Rock Salt", cursive);
+          font-size: 0.7rem;
+          line-height: 1;
+          transform: rotate(-2.5deg);
+          display: inline-block;
+          opacity: 0.88;
+          margin: 0;
         }
 
         .evd-title {
@@ -1213,7 +1313,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           margin: 0 0 0.9rem;
           letter-spacing: 0.01em;
           text-shadow: 0 2px 24px rgba(0,0,0,0.5);
-          padding-right: clamp(2rem, 12vw, 8rem);
+          padding-right: clamp(0.5rem, 4vw, 2rem);
         }
 
         .evd-subtitle {
@@ -1228,7 +1328,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-standfirst {
           font-family: "Space Grotesk", sans-serif;
           font-size: clamp(0.98rem, 2vw, 1.12rem);
-          color: rgba(255,255,255,0.72);
+          color: rgba(255,255,255,0.52);
           line-height: 1.7;
           margin: 0 0 2rem;
           max-width: 760px;
@@ -1567,7 +1667,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         /* Horizontal variant: landscape aspect ratio for left-column placement */
         .evd-elder-shell--horizontal {
           min-height: unset;
-          aspect-ratio: 16 / 7;
+          aspect-ratio: 16 / 9;
         }
         .evd-elder-shell--has-image {
           cursor: default;
@@ -1641,6 +1741,8 @@ export default async function EventDetailPage({ params }: PageProps) {
           display: flex;
           flex-direction: column;
           gap: 0.9rem;
+          border-top: 1px solid rgba(36,17,35,0.12);
+          padding-top: 14px;
         }
         .evd-voices-quote {
           margin: 0;
@@ -1727,6 +1829,27 @@ export default async function EventDetailPage({ params }: PageProps) {
           box-shadow: 0 8px 26px rgba(108,0,175,0.45);
           background: #8a00d9;
         }
+        .evd-impact-donate-btn--secondary {
+          background: transparent;
+          color: #6c00af;
+          border: 1.5px solid rgba(108,0,175,0.35);
+          box-shadow: none;
+          margin-top: 0.5rem;
+          display: block;
+        }
+        .evd-impact-donate-btn--secondary:hover {
+          background: rgba(108,0,175,0.06);
+          border-color: #6c00af;
+          box-shadow: none;
+          transform: translateY(-1px);
+        }
+
+        /* Full-width video strip — below the two-column grid */
+        .evd-dash-video--full {
+          margin-top: clamp(1.5rem, 3vw, 2rem);
+          padding-top: 14px;
+          border-top: 1px solid rgba(36,17,35,0.12);
+        }
 
         /* ── 3b. White Content Card ────────────────────────────────────── */
         .evd-content-section {
@@ -1741,6 +1864,18 @@ export default async function EventDetailPage({ params }: PageProps) {
           backdrop-filter: saturate(1.05);
           padding: clamp(1.5rem, 3.5vw, 2.8rem) clamp(1.5rem, 3.5vw, 2.8rem);
           overflow: hidden;
+          position: relative;
+        }
+        /* Category accent stripe across the top of the white card */
+        .evd-content-card::before {
+          content: "";
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 5px;
+          background: var(--evd-accent, #F23359);
+          border-radius: 18px 18px 0 0;
         }
 
         /* Text color overrides inside white card */
@@ -1971,11 +2106,18 @@ export default async function EventDetailPage({ params }: PageProps) {
           margin-top: 0.65rem;
         }
 
+        /* ── Bilingual CSS content switching ───────────────────────────── */
+        /* Alternate language content is hidden by default */
+        .evd-bilingual-alt { display: none; }
+        /* When :root[data-evd-lang="en"]: hide default, show EN */
+        :root[data-evd-lang="en"] .evd-bilingual-default { display: none !important; }
+        :root[data-evd-lang="en"] .evd-bilingual-alt.evd-bilingual-en { display: block !important; }
+
         /* ── 8b. Cycle band: DAT logo sticker ──────────────────────────── */
         .evd-cycle-band { position: relative; }
         .evd-cycle-logo-sticker {
           position: absolute;
-          top: -60px;
+          top: -121px;
           left: 50%;
           transform: translateX(-50%);
           z-index: 20;
@@ -1983,8 +2125,8 @@ export default async function EventDetailPage({ params }: PageProps) {
         }
         .evd-cycle-logo-img {
           display: block;
-          width: 121px;
-          height: 121px;
+          width: 242px;
+          height: 242px;
           filter: drop-shadow(0 3px 14px rgba(0,0,0,0.45));
           opacity: 0.92;
         }
@@ -2335,7 +2477,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         .evd-cycle-band {
           background: #111118;
           padding: clamp(2.5rem, 5vw, 4rem) 0;
-          padding-top: calc(clamp(2.5rem, 5vw, 4rem) + 68px); /* extra room for logo sticker overflow */
+          padding-top: calc(1.5rem + 121px); /* extra room for doubled DAT logo sticker */
           border-top: 1px solid rgba(255,255,255,0.06);
         }
 

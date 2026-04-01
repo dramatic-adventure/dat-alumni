@@ -264,6 +264,17 @@ export interface DatEvent {
       title?: string;
       subtitle?: string;
       description?: string;
+      /** Translated long-form body copy (shown in About section) */
+      longDescription?: string;
+      /** Translated director / creator note */
+      artistNote?: string;
+      artistNoteBy?: string;
+      /** Translated community impact blurb */
+      impactBlurb?: string;
+      /** Translated video section title */
+      videoTitle?: string;
+      /** Translated press / audience quotes */
+      pressQuotes?: { text: string; attribution: string }[];
     }
   >;
 
@@ -373,7 +384,7 @@ export const events: DatEvent[] = [
   {
     id: "agwow-malayerba-quito-2026",
     title: "Una Niña Sin Alas",
-    subtitle: "Co-producción DAT × Malayerba Teatro — Quito, Ecuador",
+    subtitle: "Co-producción DAT × Malayerba Teatro",
     category: "performance",
     status: "upcoming",
     date: "2026-09-24",
@@ -520,9 +531,31 @@ export const events: DatEvent[] = [
     translations: {
       en: {
         title: "A Girl Without Wings",
-        subtitle: "DAT × Malayerba Teatro Co-production — Quito, Ecuador",
+        subtitle: "DAT × Malayerba Teatro Co-production",
         description:
           "In Spanish & Kichwa. DAT and Malayerba Teatro revive the company's most celebrated love story — a solitary condor and the wingless shepherdess who stole his heart.",
+        longDescription:
+          "A solitary condor and the beautiful Chaska fall desperately in love. But fortune does not smile on these lovers: Chaska is no ordinary bird — she is a wingless shepherdess, bound to the earth.\n\nIn the merciless and beautiful Andes, the love and sorrow between a demigod who longs for companionship and a girl who must leave her family to ascend to the sky take life in a world of puppets and Kichwa legend.\n\nA Girl Without Wings immerses audiences in a universe where a tale from the Andean highlands is reborn among mischievous hummingbirds, coloured prayer threads, and a storm of shoes raining from the sky.\n\nCelebrated by The New York Times at its English-language premiere, this co-production with Malayerba Teatro presents the work for the first time in Spanish and Kichwa — a story born in the mountains that returns to them.",
+        artistNote:
+          "This piece was born in the Andes, travelled across three continents, and was rebuilt from scratch for every community that received it. What you see tonight is not a simple revival — it is a re-rooting. The condor still flies. The girl is still brave. That never changes.",
+        artistNoteBy: "Kathleen Amshoff, Director",
+        impactBlurb:
+          "This co-production sustains DAT's network of Drama Clubs in Ecuador — forming new generations of community artists in Quito and beyond. Your support makes theatre that is born from community possible.",
+        videoTitle: "Watch: Trailer — A Girl Without Wings",
+        pressQuotes: [
+          {
+            text: "Not much is typical about 'A Girl without Wings.' Poignant. Sensitively directed. Magical.",
+            attribution: "Laurel Graeber, The New York Times",
+          },
+          {
+            text: "A love story that belongs to the sky and the earth. Theatre at its most alive.",
+            attribution: "El Comercio, Quito (translated)",
+          },
+          {
+            text: "Pure theatrical imagination. I cried twice. And I am not one who cries.",
+            attribution: "Audience member, Teatro Malayerba (translated)",
+          },
+        ],
       },
     },
   },
