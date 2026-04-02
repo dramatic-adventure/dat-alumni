@@ -5,7 +5,6 @@ import Link from "next/link";
 import DramaClubBadge from "@/components/ui/DramaClubBadge";
 import EventShareButton from "@/components/events/EventShareButton";
 import EventProdrowGallery from "@/components/events/EventProdrowGallery";
-import EventHeroText from "@/components/events/EventHeroText";
 import EventBilingualContent from "@/components/events/EventBilingualContent";
 import MailingListForm from "@/components/events/MailingListForm";
 import { productionMap } from "@/lib/productionMap";
@@ -659,24 +658,8 @@ export default function EventDetailPageTemplate({
         : getEventImage(event)
     ) ?? "/posters/fallback-16x9.jpg";
 
-  const heroCreditPrefix =
-    event.heroCreditPrefix ??
-    productionExtra?.creditPrefix ??
-    (productionExtra?.playwright ? "By" : undefined);
 
-  const heroCreditPeople =
-    event.heroCreditPeople?.length
-      ? event.heroCreditPeople
-      : productionExtra?.creditPeople?.length
-        ? productionExtra.creditPeople
-        : productionExtra?.playwright
-          ? [{
-              name: productionExtra.playwright,
-              ...(productionExtra.playwrightHref
-                ? { href: productionExtra.playwrightHref }
-                : {}),
-            }]
-          : [];
+
 
   const paragraphs = splitParagraphs(event.longDescription ?? event.description);
   const primaryAction = getPrimaryAction(event);
@@ -727,103 +710,57 @@ export default function EventDetailPageTemplate({
       <div className="evd-hero" style={heroVars}>
         <div className="evd-hero-overlay" />
         <div className="evd-hero-glow" />
-        {routeKind === "theatre" ? (
-        <div className="evd-hero-content evd-hero-content--theatre">
-            <nav className="evd-breadcrumb" aria-label="Breadcrumb">
-            <Link href="/events">Events</Link>
-            <span aria-hidden="true">/</span>
-            <Link href="/events/performances">Performances</Link>
-            <span aria-hidden="true">/</span>
-            <span>{event.title}</span>
-            </nav>
-
-            <p className="evd-season-label">{seasonLabel}</p>
-
-            <h1 className="evd-title evd-title--theatre">{event.title}</h1>
-
-            {event.subtitle ? (
-            <p className="evd-subtitle evd-subtitle--theatre">{event.subtitle}</p>
-            ) : null}
-
-            {heroCreditPrefix || heroCreditPeople.length > 0 ? (
-            <p className="evd-hero-byline">
-                {heroCreditPrefix ? (
-                <span className="evd-hero-byline-prefix">{heroCreditPrefix} </span>
-                ) : null}
-                {heroCreditPeople.map((person, i) => (
-                <span key={`${person.name}-${i}`}>
-                    {person.href ? (
-                    <Link href={person.href} className="evd-hero-byline-link">
-                        {person.name}
-                    </Link>
-                    ) : (
-                    <span className="evd-hero-byline-name">{person.name}</span>
-                    )}
-                    {i < heroCreditPeople.length - 1 ? ", " : ""}
-                </span>
-                ))}
-            </p>
-            ) : null}
-
-            {isArchiveView ? (
-            <div className="evd-archive-badge-wrap">
-                <span className="evd-archive-badge">Archive</span>
-            </div>
-            ) : null}
-        </div>
-        ) : (
         <div className="evd-hero-content">
-            <nav className="evd-breadcrumb" aria-label="Breadcrumb">
+          <nav className="evd-breadcrumb" aria-label="Breadcrumb">
             <Link href="/events">Events</Link>
             <span aria-hidden="true">/</span>
             <Link href={meta.href}>{meta.label}s</Link>
             <span aria-hidden="true">/</span>
             <span>{event.title}</span>
-            </nav>
+          </nav>
 
-            <p className="evd-season-label">{seasonLabel}</p>
-            <p className="evd-eyebrow">{getEventEyebrow(event)}</p>
-            <h1 className="evd-title">{event.title}</h1>
+          <p className="evd-season-label">{seasonLabel}</p>
+          <p className="evd-eyebrow">{getEventEyebrow(event)}</p>
+          <h1 className="evd-title">{event.title}</h1>
 
-            {event.subtitle ? <p className="evd-subtitle">{event.subtitle}</p> : null}
+          {event.subtitle ? <p className="evd-subtitle">{event.subtitle}</p> : null}
 
-            {!isArchiveView ? (
+          {!isArchiveView ? (
             <p className="evd-standfirst">{event.description}</p>
-            ) : event.archiveSummary ? (
+          ) : event.archiveSummary ? (
             <p className="evd-standfirst">{event.archiveSummary}</p>
-            ) : null}
+          ) : null}
 
-            {isArchiveView ? (
+          {isArchiveView ? (
             <div className="evd-archive-badge-wrap">
-                <span className="evd-archive-badge">Archive</span>
+              <span className="evd-archive-badge">Archive</span>
             </div>
-            ) : null}
+          ) : null}
 
-            <div className="evd-hero-pills">
+          <div className="evd-hero-pills">
             {event.ticketUrl ? (
-                <a
+              <a
                 href={event.ticketUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="evd-pill evd-pill--date evd-pill--link"
-                >
+              >
                 {formatDateRange(event.date, event.endDate)}
-                </a>
+              </a>
             ) : (
-                <span className="evd-pill evd-pill--date">
+              <span className="evd-pill evd-pill--date">
                 {formatDateRange(event.date, event.endDate)}
-                </span>
+              </span>
             )}
 
             <span className="evd-pill evd-pill--venue">
-                {event.venue}
-                {event.city !== "Worldwide"
+              {event.venue}
+              {event.city !== "Worldwide"
                 ? ` · ${event.city}${event.country ? `, ${event.country}` : ""}`
                 : ""}
             </span>
-            </div>
+          </div>
         </div>
-        )}
       </div>
 
       {/* ── Ticket Dashboard ─────────────────────────────────────────────── */}
