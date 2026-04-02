@@ -74,6 +74,26 @@ export interface DatEvent {
    */
   imageFocus?: string;
 
+    /**
+   * Optional alternate hero image used once the event is archived.
+   * Falls back to `image` when not set.
+   */
+  archiveHeroImage?: string;
+
+  /**
+   * Optional calmer one-line summary for archived pages.
+   * If omitted, the archive page can simply skip a hero blurb.
+   */
+  archiveSummary?: string;
+
+  /**
+   * Optional hero byline / credit line for theatre pages.
+   * Use this when you want playwright / devised-by / created-by
+   * control at the event level.
+   */
+  heroCreditPrefix?: string;
+  heroCreditPeople?: { name: string; href?: string }[];
+
   ticketUrl?: string;
   /** URL for the venue's own website (used for the venue pill link in the hero) */
   venueUrl?: string;
@@ -281,6 +301,8 @@ export interface DatEvent {
        * Order should match the base credits array.
        */
       credits?: { role: string; name: string; href?: string; group?: "creative" | "cast"; photo?: string }[];
+      /** Translated accessibility note */
+      accessibility?: string;
     }
   >;
 
@@ -549,6 +571,8 @@ export const events: DatEvent[] = [
         impactBlurb:
           "This co-production sustains DAT's network of Drama Clubs in Ecuador — forming new generations of community artists in Quito and beyond. Your support makes theatre that is born from community possible.",
         videoTitle: "Watch: Trailer — A Girl Without Wings",
+        accessibility:
+          "Step-free access via main entrance · Audio-described performance: 3 Oct · BSL-interpreted performance: 10 Oct · English subtitles available",
         pressQuotes: [
           {
             text: "Not much is typical about 'A Girl without Wings.' Poignant. Sensitively directed. Magical.",
@@ -943,6 +967,31 @@ export function eventsByDramaClub(dramaClubSlug: string): DatEvent[] {
 /** Whether an event is a community showcase */
 export function isCommunityShowcase(event: DatEvent): boolean {
   return event.subcategory === "community-showcase";
+}
+
+export type EventRouteKind = "theatre" | "festivals" | "gatherings";
+
+export function eventRouteKind(event: DatEvent): EventRouteKind {
+  switch (event.category) {
+    case "performance":
+      return "theatre";
+    case "festival":
+      return "festivals";
+    case "fundraiser":
+      return "gatherings";
+  }
+}
+
+export function canonicalEventPath(event: DatEvent): string {
+  return `/${eventRouteKind(event)}/${event.id}`;
+}
+
+export function seasonNumberForEvent(event: DatEvent): number {
+  return event.seasonOverride ?? seasonNumberFor(event.date);
+}
+
+export function isArchivedEvent(event: DatEvent): boolean {
+  return event.status === "past";
 }
 
 /**

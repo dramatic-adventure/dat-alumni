@@ -75,10 +75,14 @@ function PhotoRowSection({
   return (
     <div className="evd-prodrow-block" aria-label="Production Gallery">
       <div className="evd-prodrow-head">
-        <h3 className="evd-prodrow-title">Production Gallery</h3>
+        <h3 className="evd-prodrow-title">
+          <span className="evd-bilingual-wrap-default">Galería de Producción</span>
+          <span className="evd-bilingual-wrap-alt evd-bilingual-en">Production Gallery</span>
+        </h3>
         {photographerSafe && (
           <div className="evd-prodrow-credit">
-            Photos by{" "}
+            <span className="evd-bilingual-wrap-default">Fotos por{" "}</span>
+            <span className="evd-bilingual-wrap-alt evd-bilingual-en">Photos by{" "}</span>
             {photographerHrefSafe ? (
               <Link href={photographerHrefSafe} className="evd-prodrow-album">
                 {photographerSafe}

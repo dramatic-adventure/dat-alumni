@@ -11,6 +11,7 @@ import {
   eventYear,
   categoryMeta,
   getEventImage,
+  canonicalEventPath,
   type DatEvent,
 } from "@/lib/events";
 
@@ -63,8 +64,8 @@ function FestCard({ event, index }: { event: DatEvent; index: number }) {
               {event.ticketPrice && (
                 <span className="fest-price-tag">{event.ticketPrice}</span>
               )}
-              <Link href={`/events/${event.id}`} className="fest-production-link">
-                Event Details →
+              <Link href={canonicalEventPath(event)} className="fest-production-link">
+                Details →
               </Link>
               {event.production && (
                 <Link href={`/theatre/${event.production}`} className="fest-production-link">
@@ -133,8 +134,8 @@ function FestCard({ event, index }: { event: DatEvent; index: number }) {
             {event.ticketPrice && (
               <span className="fest-price-tag">{event.ticketPrice}</span>
             )}
-            <Link href={`/events/${event.id}`} className="fest-production-link">
-              Event Details →
+            <Link href={canonicalEventPath(event)} className="fest-production-link">
+              Details →
             </Link>
             {event.production && (
               <Link href={`/theatre/${event.production}`} className="fest-production-link">

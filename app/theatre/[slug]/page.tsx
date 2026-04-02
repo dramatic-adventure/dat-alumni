@@ -14,6 +14,8 @@ import { buildRelated } from "@/lib/buildRelated";
 import { loadAlumniNameBySlug } from "@/lib/loadAlumni";
 import { eventsByProduction, eventById } from "@/lib/events";
 
+import EventDetailPageTemplate from "@/components/events/EventDetailPageTemplate";
+
 // NOTE: params is now a Promise in Next 15 for some routes
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -151,6 +153,17 @@ function getHeroImageUrl(
 
 export default async function TheatreProductionPage({ params }: PageProps) {
   const { slug } = await params;
+
+  const performanceEvent = eventById(slug);
+
+  if (performanceEvent?.category === "performance") {
+    return (
+      <EventDetailPageTemplate
+        event={performanceEvent}
+        routeKind="theatre"
+      />
+    );
+  }
 
   const base = productionMap[slug];
   if (!base) notFound();

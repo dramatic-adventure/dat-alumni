@@ -14,6 +14,7 @@ import {
   isCommunityShowcase,
   type DatEvent,
   type EventCategory,
+  canonicalEventPath,
 } from "@/lib/events";
 
 // ── Mini event card ───────────────────────────────────────────────────────────
@@ -24,7 +25,7 @@ function EventCard({ event, accent }: { event: DatEvent; accent: string }) {
   return (
     <div
       className="evhub-card"
-      onClick={() => router.push(`/events/${event.id}`)}
+      onClick={() => router.push(canonicalEventPath(event))}
       style={{ cursor: "pointer" }}
     >
       {getEventImage(event) && (
@@ -122,11 +123,10 @@ function FeaturedEventCard({ event, backgroundFromParent }: { event: DatEvent; b
               </a>
             )}
             <Link
-              href={`/events/${event.id}`}
+              href={canonicalEventPath(event)}
               className="evhub-btn-ghost"
-              style={{ borderColor: "rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.75)" }}
             >
-              Event Details →
+              Details →
             </Link>
           </div>
         </div>

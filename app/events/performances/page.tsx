@@ -13,6 +13,7 @@ import {
   getEventImage,
   isCommunityShowcase,
   type DatEvent,
+  canonicalEventPath,
 } from "@/lib/events";
 
 // ── Full event card ───────────────────────────────────────────────────────────
@@ -91,8 +92,8 @@ function PerfCard({ event, index }: { event: DatEvent; index: number }) {
               {event.ticketPrice && (
                 <span className="perf-price-tag">{event.ticketPrice}</span>
               )}
-              <Link href={`/events/${event.id}`} className="perf-production-link">
-                Event Details →
+              <Link href={canonicalEventPath(event)} className="perf-production-link">
+                Details →
               </Link>
               {event.production && (
                 <Link href={`/theatre/${event.production}`} className="perf-production-link">
@@ -163,8 +164,8 @@ function PerfCard({ event, index }: { event: DatEvent; index: number }) {
             {event.ticketPrice && (
               <span className="perf-price-tag">{event.ticketPrice}</span>
             )}
-            <Link href={`/events/${event.id}`} className="perf-production-link">
-              Event Details →
+            <Link href={canonicalEventPath(event)} className="perf-production-link">
+              Details →
             </Link>
             {event.production && (
               <Link href={`/theatre/${event.production}`} className="perf-production-link">

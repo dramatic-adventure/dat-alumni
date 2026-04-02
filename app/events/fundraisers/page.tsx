@@ -11,6 +11,7 @@ import {
   eventYear,
   categoryMeta,
   getEventImage,
+  canonicalEventPath,
   type DatEvent,
 } from "@/lib/events";
 
@@ -74,8 +75,8 @@ function FundCard({ event, index }: { event: DatEvent; index: number }) {
               {event.ticketPrice && (
                 <span className="fund-price-tag">{event.ticketPrice}</span>
               )}
-              <Link href={`/events/${event.id}`} className="fund-production-link">
-                Event Details →
+              <Link href={canonicalEventPath(event)} className="fund-production-link">
+                Details →
               </Link>
               {event.production && (
                 <Link href={`/theatre/${event.production}`} className="fund-production-link">
@@ -141,8 +142,8 @@ function FundCard({ event, index }: { event: DatEvent; index: number }) {
             {event.ticketPrice && (
               <span className="fund-price-tag">{event.ticketPrice}</span>
             )}
-            <Link href={`/events/${event.id}`} className="fund-production-link">
-              Event Details →
+            <Link href={canonicalEventPath(event)} className="fund-production-link">
+              Details →
             </Link>
             {event.production && (
               <Link href={`/theatre/${event.production}`} className="fund-production-link">
