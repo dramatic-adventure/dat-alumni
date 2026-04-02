@@ -5,6 +5,7 @@ import Link from "next/link";
 import DramaClubBadge from "@/components/ui/DramaClubBadge";
 import EventShareButton from "@/components/events/EventShareButton";
 import EventProdrowGallery from "@/components/events/EventProdrowGallery";
+import EventHeroText from "@/components/events/EventHeroText";
 import EventBilingualContent from "@/components/events/EventBilingualContent";
 import MailingListForm from "@/components/events/MailingListForm";
 import { productionMap } from "@/lib/productionMap";
@@ -14,13 +15,11 @@ import {
   allEventIds,
   canonicalEventPath,
   categoryMeta,
-  eventYear,
   events,
   formatDateRange,
   getEventImage,
   isCommunityShowcase,
   isElapsed,
-  seasonNumberForEvent,
   type DatEvent,
 } from "@/lib/events";
 
@@ -645,8 +644,7 @@ export default function EventDetailPageTemplate({
 
   const isArchiveView = isElapsed(event);
 
-  const seasonNumber = seasonNumberForEvent(event);
-  const seasonLabel = `Season ${seasonNumber} • ${eventYear(event.date)}`;
+  const heroDefaultLang = event.defaultLang ?? (event.translations ? "es" : "en");
 
   const relatedProduction = event.production ? productionMap[event.production] : undefined;
   const productionExtra = event.production ? productionDetailsMap[event.production] : undefined;
@@ -714,22 +712,25 @@ export default function EventDetailPageTemplate({
           <nav className="evd-breadcrumb" aria-label="Breadcrumb">
             <Link href="/events">Events</Link>
             <span aria-hidden="true">/</span>
-            <Link href={meta.href}>{meta.label}s</Link>
+            <Link href={meta.href}>
+              {routeKind === "theatre" ? "Performances" : routeKind === "festivals" ? "Festivals" : "Gatherings"}
+            </Link>
             <span aria-hidden="true">/</span>
             <span>{event.title}</span>
           </nav>
 
-          <p className="evd-season-label">{seasonLabel}</p>
-          <p className="evd-eyebrow">{getEventEyebrow(event)}</p>
-          <h1 className="evd-title">{event.title}</h1>
-
-          {event.subtitle ? <p className="evd-subtitle">{event.subtitle}</p> : null}
-
-          {!isArchiveView ? (
-            <p className="evd-standfirst">{event.description}</p>
-          ) : event.archiveSummary ? (
-            <p className="evd-standfirst">{event.archiveSummary}</p>
-          ) : null}
+          <EventHeroText
+            defaultLang={heroDefaultLang}
+            eyebrow={getEventEyebrow(event)}
+            base={{
+              title: event.title,
+              subtitle: event.subtitle,
+              description: !isArchiveView
+                ? event.description
+                : event.archiveSummary ?? event.description,
+            }}
+            translations={event.translations ?? {}}
+          />
 
           {isArchiveView ? (
             <div className="evd-archive-badge-wrap">
