@@ -163,7 +163,7 @@ export async function loadRoleAssignments(): Promise<RoleAssignmentRow[]> {
   try {
     const res = await fetch(
       fetchUrl,
-      isDev ? { cache: "no-store" } : { next: { revalidate: 3600 } }
+      isDev ? { cache: "no-store" } : { next: { revalidate: 60 } }
     );
 
     debugLog("=== DEBUG_ROLE_ASSIGNMENTS ===");

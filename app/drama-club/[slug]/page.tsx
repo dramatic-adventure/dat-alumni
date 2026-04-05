@@ -126,12 +126,6 @@ function buildPeopleBySlug(rows: unknown[]): Record<string, PersonRef> {
     const name = String(raw.name ?? raw["Name"] ?? "").trim();
     if (!name) continue;
 
-    const profileUrl = String(raw.profileUrl ?? raw["Profile URL"] ?? "").trim();
-    const artistUrl = String(raw.artistUrl ?? raw["Artist URL"] ?? "").trim();
-
-    // ✅ Fix: don’t use `"/alumni/..." || ...` (it always wins)
-    const href = `/alumni/${slug}` || profileUrl || artistUrl || undefined;
-
     const headshotUrl = String(
       raw.headshotUrl ??
         raw["Headshot URL"] ??
@@ -146,10 +140,36 @@ function buildPeopleBySlug(rows: unknown[]): Record<string, PersonRef> {
       ? headshotUrl.replace(/^http:\/\//i, "https://")
       : "/images/default-headshot.png";
 
-    out[slug.toLowerCase()] = { name, href, avatarSrc };
+    out[slug.toLowerCase()] = {
+      name,
+      href: `/alumni/${slug}`,
+      avatarSrc,
+    };
   }
 
   return out;
+}
+
+function getLeadTeamAsOfForClub(club: DramaClub): Date {
+  const lastYearActive = (club as unknown as { lastYearActive?: number | "present" }).lastYearActive;
+  const firstYearActive = (club as unknown as { firstYearActive?: number }).firstYearActive;
+  const foundedYear = (club as unknown as { foundedYear?: number }).foundedYear;
+  const statusOverride = (club as unknown as { statusOverride?: string }).statusOverride;
+  const status = (club as unknown as { status?: string }).status;
+
+  if (typeof lastYearActive === "number") {
+    return new Date(`${lastYearActive}-12-31T23:59:59.999`);
+  }
+
+  if ((statusOverride === "legacy" || status === "legacy") && typeof firstYearActive === "number") {
+    return new Date(`${firstYearActive}-12-31T23:59:59.999`);
+  }
+
+  if ((statusOverride === "legacy" || status === "legacy") && typeof foundedYear === "number") {
+    return new Date(`${foundedYear}-12-31T23:59:59.999`);
+  }
+
+  return new Date();
 }
 
 /** More robust debug matching (don’t rely on “includes(slug)”). */
@@ -558,10 +578,12 @@ export default async function DramaClubPage({ params }: PageProps) {
   const peopleById = buildPeopleById(alumniRows as unknown[]);
   const peopleBySlug = buildPeopleBySlug(alumniRows as unknown[]);
 
+  const leadTeamAsOf = getLeadTeamAsOfForClub(club);
   const creativeLeadTeam = buildDramaClubLeadTeam(
     club,
     roleAssignments,
-    peopleById
+    peopleById,
+    leadTeamAsOf
   );
 
   const lineageArtists = buildProductionLineageArtistsForClub({
