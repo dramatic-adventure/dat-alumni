@@ -1,17 +1,11 @@
-// lib/buildDramaClubLeadTeam.ts
 import type { DramaClub } from "@/lib/dramaClubMap";
 import type { RoleAssignmentRow } from "@/lib/loadRoleAssignments";
 
 export type PersonRef = {
   name: string;
   href?: string;
-
-  // canonical field your UI expects
   avatarSrc?: string;
-
-  // common aliases upstream might provide
   headshotUrl?: string;
-
   subtitle?: string;
   profileId?: string;
 };
@@ -23,30 +17,26 @@ function normKey(s?: string) {
     .replace(/[^\p{L}\p{N}]+/gu, "");
 }
 
-/**
- * CLUB scope keys are the most error-prone (e.g. "shuar" vs "shuar-drama-club"
- * or someone pastes "/drama-club/shuar-drama-club").
- *
- * This normalizes those so they match either way.
- */
+function splitScopeList(s?: string) {
+  return String(s ?? "")
+    .split(/[,\n;|]+/g)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
 function normClubScopeKey(s?: string) {
   const raw = (s ?? "").toLowerCase().trim();
   if (!raw) return "";
 
-  // Strip route-ish prefixes if someone pastes them
   const noPath = raw
     .replace(/^https?:\/\/[^/]+/i, "")
     .replace(/^\/?drama-?club\/?/i, "");
 
-  // Strip common suffix variants
   const noSuffix = noPath.replace(/-?drama-?club$/i, "");
 
   return normKey(noSuffix);
 }
 
-// Parse inclusive date ranges safely.
-// - startDate = start of that day (local)
-// - endDate = END of that day (local), so "2025-12-19" is active all day
 function parseISOStart(d?: string): Date | null {
   const s = (d ?? "").trim();
   if (!s) return null;
@@ -69,6 +59,16 @@ function isActive(a: RoleAssignmentRow, asOf: Date) {
   return true;
 }
 
+function isFuture(a: RoleAssignmentRow, asOf: Date) {
+  const start = parseISOStart(a.startDate);
+  return !!start && asOf < start;
+}
+
+function isPast(a: RoleAssignmentRow, asOf: Date) {
+  const end = parseISOEnd(a.endDate);
+  return !!end && asOf > end;
+}
+
 function isGlobalScopeKey(scopeKey: string) {
   const k = normKey(scopeKey);
   return k === "" || k === "dat" || k === "global" || k === "all";
@@ -82,6 +82,18 @@ function normRoleCode(v: unknown) {
   return String(v ?? "").trim().toUpperCase();
 }
 
+function scopeKeyMatchesClub(scopeKeyRaw: string, clubScopeKey: string) {
+  return splitScopeList(scopeKeyRaw).some(
+    (part) => normClubScopeKey(part) === clubScopeKey
+  );
+}
+
+function scopeKeyMatchesCountry(scopeKeyRaw: string, countryLabelKey: string) {
+  return splitScopeList(scopeKeyRaw).some(
+    (part) => normKey(part) === countryLabelKey
+  );
+}
+
 function roleSubtitle(roleCodeRaw: string, club: DramaClub, roleLabel?: string) {
   if (roleLabel?.trim()) return roleLabel.trim();
 
@@ -91,34 +103,24 @@ function roleSubtitle(roleCodeRaw: string, club: DramaClub, roleLabel?: string) 
 
   const roleCode = normRoleCode(roleCodeRaw);
 
-  if (roleCode === "RTA")
-    return loc ? `Resident Teaching Artist — ${loc}` : "Resident Teaching Artist";
-  if (roleCode === "TAIR")
-    return loc ? `Teaching Artist-in-Residence — ${loc}` : "Teaching Artist-in-Residence";
-  if (roleCode === "MCP")
+  if (roleCode === "TAIR") {
+    return loc
+      ? `Teaching Artist-in-Residence — ${loc}`
+      : "Teaching Artist-in-Residence";
+  }
+
+  if (roleCode === "MCP") {
     return country
       ? `Manager of Community Partnerships in ${country}`
       : "Manager of Community Partnerships";
+  }
+
+  if (roleCode === "DCP") return "Director of Community Partnerships";
   if (roleCode === "DCL") return "Director of Creative Learning";
 
   return "";
 }
 
-const ROLE_PRIORITY: Record<string, number> = {
-  RTA: 10,
-  TAIR: 20,
-  MCP: 30,
-  DCL: 40,
-};
-
-function scopeBucket(scopeTypeRaw: string) {
-  const scopeType = normScopeType(scopeTypeRaw);
-  if (scopeType === "CLUB") return 0;
-  if (scopeType === "COUNTRY") return 1;
-  return 2; // GLOBAL + anything unknown
-}
-
-// pick avatar from multiple possible keys and normalize URL
 function pickAvatarSrc(p: unknown): string | undefined {
   const rec = (p ?? {}) as Record<string, unknown>;
 
@@ -132,16 +134,92 @@ function pickAvatarSrc(p: unknown): string | undefined {
     rec["photoURL"];
 
   if (typeof raw !== "string") return undefined;
+
   const src = raw.trim();
   if (!src) return undefined;
 
   const withProto = src.startsWith("//") ? `https:${src}` : src;
   const https = withProto.replace(/^http:\/\//i, "https://");
 
-  // If someone stored "images/foo.png" without leading slash, fix it.
   if (!https.startsWith("http") && !https.startsWith("/")) return `/${https}`;
 
   return https;
+}
+
+function compareCoreAssignments(a: RoleAssignmentRow, b: RoleAssignmentRow) {
+  const display = (b.displayOrder ?? -999) - (a.displayOrder ?? -999);
+  if (display !== 0) return display;
+
+  const aStart = parseISOStart(a.startDate)?.getTime() ?? 0;
+  const bStart = parseISOStart(b.startDate)?.getTime() ?? 0;
+  if (aStart !== bStart) return bStart - aStart;
+
+  return String(a.roleLabel ?? "").localeCompare(String(b.roleLabel ?? ""));
+}
+
+function compareCurrentTAIR(a: RoleAssignmentRow, b: RoleAssignmentRow) {
+  const aStart = parseISOStart(a.startDate)?.getTime() ?? 0;
+  const bStart = parseISOStart(b.startDate)?.getTime() ?? 0;
+  if (aStart !== bStart) return bStart - aStart;
+
+  const display = (b.displayOrder ?? -999) - (a.displayOrder ?? -999);
+  if (display !== 0) return display;
+
+  return String(a.profileId ?? "").localeCompare(String(b.profileId ?? ""));
+}
+
+function compareUpcomingTAIR(a: RoleAssignmentRow, b: RoleAssignmentRow) {
+  const aStart = parseISOStart(a.startDate)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+  const bStart = parseISOStart(b.startDate)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+  if (aStart !== bStart) return aStart - bStart;
+
+  return String(a.profileId ?? "").localeCompare(String(b.profileId ?? ""));
+}
+
+function comparePastTAIR(a: RoleAssignmentRow, b: RoleAssignmentRow) {
+  const aEnd = parseISOEnd(a.endDate)?.getTime() ?? 0;
+  const bEnd = parseISOEnd(b.endDate)?.getTime() ?? 0;
+  if (aEnd !== bEnd) return bEnd - aEnd;
+
+  return String(a.profileId ?? "").localeCompare(String(b.profileId ?? ""));
+}
+
+function toPersonRef(
+  assignment: RoleAssignmentRow | undefined,
+  club: DramaClub,
+  peopleById: Record<string, PersonRef>
+): PersonRef | null {
+  if (!assignment) return null;
+
+  const pid = String(assignment.profileId ?? "").trim();
+  if (!pid) return null;
+
+  const person = peopleById[pid];
+  if (!person?.name) return null;
+
+  return {
+    ...person,
+    profileId: pid,
+    avatarSrc: pickAvatarSrc(person) || person.avatarSrc,
+    subtitle: roleSubtitle(assignment.roleCode, club, assignment.roleLabel),
+  };
+}
+
+function dedupePeople(people: Array<PersonRef | null | undefined>) {
+  const out: PersonRef[] = [];
+  const seen = new Set<string>();
+
+  for (const person of people) {
+    if (!person?.name) continue;
+
+    const key = String(person.profileId ?? person.href ?? person.name).trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+
+    seen.add(key);
+    out.push(person);
+  }
+
+  return out;
 }
 
 export function buildDramaClubLeadTeam(
@@ -150,94 +228,71 @@ export function buildDramaClubLeadTeam(
   peopleById: Record<string, PersonRef>,
   asOf: Date = new Date()
 ): PersonRef[] {
-  // Prefer slug/id for matching. For CLUB scope, normalize as a “club scope key”
   const clubSlug = (club as unknown as { slug?: string }).slug;
   const clubId = (club as unknown as { id?: string }).id;
 
   const clubScopeKey = normClubScopeKey(clubSlug || clubId || "");
   const countryLabelKey = normKey(club.country);
 
-  const eligible = assignments
-    // If your sheet includes showOnProfile, respect it (undefined = show)
-    .filter((a) => a.showOnProfile !== false)
-    .filter((a) => isActive(a, asOf))
-    .filter((a) => ["RTA", "TAIR", "MCP", "DCL"].includes(normRoleCode(a.roleCode)))
-    .filter((a) => {
-      const scopeType = normScopeType(a.scopeType);
-      const scopeKeyRaw = String(a.scopeKey ?? "");
+  const visible = assignments.filter((a) => a.showOnProfile !== false);
 
-      if (scopeType === "CLUB") {
-        // ✅ robust match: "shuar" matches "shuar-drama-club"
-        return clubScopeKey.length > 0 && normClubScopeKey(scopeKeyRaw) === clubScopeKey;
-      }
+  const active = visible.filter((a) => isActive(a, asOf));
 
-      if (scopeType === "COUNTRY") return normKey(scopeKeyRaw) === countryLabelKey;
-      if (scopeType === "GLOBAL") return isGlobalScopeKey(scopeKeyRaw);
+  const dcp = active
+    .filter(
+      (a) =>
+        normRoleCode(a.roleCode) === "DCP" &&
+        normScopeType(a.scopeType) === "GLOBAL" &&
+        isGlobalScopeKey(String(a.scopeKey ?? ""))
+    )
+    .sort(compareCoreAssignments)[0];
 
-      return false;
-    });
+  const mcp = active
+    .filter(
+      (a) =>
+        normRoleCode(a.roleCode) === "MCP" &&
+        normScopeType(a.scopeType) === "COUNTRY" &&
+        scopeKeyMatchesCountry(String(a.scopeKey ?? ""), countryLabelKey)
+    )
+    .sort(compareCoreAssignments)[0];
 
-  // one person only once (best role wins)
-  const bestByProfile = new Map<string, RoleAssignmentRow>();
+  const dcl = active
+    .filter(
+      (a) =>
+        normRoleCode(a.roleCode) === "DCL" &&
+        normScopeType(a.scopeType) === "GLOBAL" &&
+        isGlobalScopeKey(String(a.scopeKey ?? ""))
+    )
+    .sort(compareCoreAssignments)[0];
 
-  for (const a of eligible) {
+  const core = dedupePeople([
+    toPersonRef(dcp, club, peopleById),
+    toPersonRef(mcp, club, peopleById),
+    toPersonRef(dcl, club, peopleById),
+  ]);
+
+  const used = new Set(core.map((p) => String(p.profileId ?? "").trim()).filter(Boolean));
+
+  const tairBase = visible.filter((a) => {
     const pid = String(a.profileId ?? "").trim();
-    if (!pid) continue;
+    if (!pid || used.has(pid)) return false;
 
-    const existing = bestByProfile.get(pid);
-
-    const prA = ROLE_PRIORITY[normRoleCode(a.roleCode)] ?? 999;
-    const prE = existing ? (ROLE_PRIORITY[normRoleCode(existing.roleCode)] ?? 999) : 999;
-
-    if (!existing) {
-      bestByProfile.set(pid, a);
-      continue;
-    }
-
-    if (prA < prE) {
-      bestByProfile.set(pid, a);
-      continue;
-    }
-
-    if (prA === prE) {
-      const da = a.displayOrder ?? 999;
-      const de = existing.displayOrder ?? 999;
-      if (da < de) bestByProfile.set(pid, a);
-    }
-  }
-
-  const picked = Array.from(bestByProfile.values());
-
-  picked.sort((a, b) => {
-    const sb = scopeBucket(String(a.scopeType)) - scopeBucket(String(b.scopeType));
-    if (sb !== 0) return sb;
-
-    const pa = ROLE_PRIORITY[normRoleCode(a.roleCode)] ?? 999;
-    const pb = ROLE_PRIORITY[normRoleCode(b.roleCode)] ?? 999;
-    if (pa !== pb) return pa - pb;
-
-    const od = (a.displayOrder ?? 999) - (b.displayOrder ?? 999);
-    if (od !== 0) return od;
-
-    // stable-ish tie-breaker
-    return String(a.profileId).localeCompare(String(b.profileId));
+    return (
+      normRoleCode(a.roleCode) === "TAIR" &&
+      normScopeType(a.scopeType) === "CLUB" &&
+      scopeKeyMatchesClub(String(a.scopeKey ?? ""), clubScopeKey)
+    );
   });
 
-  return picked
-    .map((a) => {
-      const pid = String(a.profileId ?? "").trim();
-      const p = peopleById[pid];
-      if (!p?.name) return null;
+  const tairCurrent = tairBase.filter((a) => isActive(a, asOf)).sort(compareCurrentTAIR);
+  const tairUpcoming = tairBase.filter((a) => isFuture(a, asOf)).sort(compareUpcomingTAIR);
+  const tairPast = tairBase.filter((a) => isPast(a, asOf)).sort(comparePastTAIR);
 
-      // Don’t wipe out an existing avatarSrc if pickAvatarSrc returns undefined
-      const normalizedAvatar = pickAvatarSrc(p) ?? p.avatarSrc;
+  const fillers = dedupePeople([
+    ...tairCurrent.map((a) => toPersonRef(a, club, peopleById)),
+    ...tairUpcoming.map((a) => toPersonRef(a, club, peopleById)),
+    ...tairPast.map((a) => toPersonRef(a, club, peopleById)),
+  ]).filter((person) => !used.has(String(person.profileId ?? "").trim()));
 
-      return {
-        ...p,
-        profileId: pid,
-        avatarSrc: normalizedAvatar,
-        subtitle: roleSubtitle(String(a.roleCode), club, a.roleLabel),
-      };
-    })
-    .filter(Boolean) as PersonRef[];
+  return [...core, ...fillers].slice(0, 3);
 }

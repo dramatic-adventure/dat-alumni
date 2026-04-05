@@ -21,6 +21,8 @@ import {
   type ActiveProgram,
 } from "@/lib/programMap";
 
+import { productionMap } from "@/lib/productionMap";
+
 type PageProps = {
   // ✅ Next 15 “sync dynamic APIs” fix:
   // params is now a Promise in server components routes
@@ -356,57 +358,63 @@ function programMatchesClubSimple(club: DramaClub, prog: ProgramData): boolean {
   return true;
 }
 
-function buildLineageArtistsForClub(opts: {
+function buildProductionLineageArtistsForClub(opts: {
   club: DramaClub;
   peopleBySlug: Record<string, PersonRef>;
 }) {
   const { club, peopleBySlug } = opts;
 
   const roleMap = new Map<string, Set<string>>();
-  const matchedPrograms: Array<{ key: string; title: string }> = [];
   const missingSlugs = new Set<string>();
+
+  const normRole = (s?: string) =>
+    String(s ?? "")
+      .toLowerCase()
+      .replace(/&/g, "and")
+      .replace(/[^\p{L}\p{N}\s-]/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const isAllowedRole = (role: string) => {
+    const r = normRole(role);
+
+    return (
+      r === "actor" ||
+      r === "director" ||
+      r === "road manager" ||
+      r === "teaching artist" ||
+      r === "resident teaching artist" ||
+      r === "teaching artist in residence" ||
+      r === "teaching artist-in-residence"
+    );
+  };
 
   const addArtist = (slug: string, roles: string[] | undefined) => {
     const s = (slug ?? "").trim().toLowerCase();
     if (!s) return;
 
+    if (s.startsWith("[todo-")) return;
+
+    const keptRoles = (roles ?? [])
+      .flatMap((r) => String(r ?? "").split(","))
+      .map((r) => r.trim())
+      .filter(Boolean)
+      .filter(isAllowedRole);
+
+    if (!keptRoles.length) return;
+
     const set = roleMap.get(s) ?? new Set<string>();
-    for (const r of roles ?? []) {
-      const rr = String(r ?? "").trim();
-      if (rr) set.add(rr);
+    for (const role of keptRoles) {
+      set.add(role);
     }
     roleMap.set(s, set);
   };
 
-  for (const [key, prog] of Object.entries(programMap)) {
-    if (!prog) continue;
+  for (const prod of Object.values(productionMap)) {
+    if (!Array.isArray(prod.dramaClubSlugs)) continue;
+    if (!prod.dramaClubSlugs.includes(club.slug)) continue;
 
-    // 1) footprints mode
-    if (Array.isArray(prog.footprints) && prog.footprints.length > 0) {
-      const matching = prog.footprints.filter((fp) =>
-        footprintMatchesClub(club, fp)
-      );
-      if (!matching.length) continue;
-
-      matchedPrograms.push({ key, title: prog.title });
-
-      for (const fp of matching) {
-        const artistsModel =
-          fp.artists && Object.keys(fp.artists).length ? fp.artists : prog.artists;
-
-        for (const [slug, roles] of Object.entries(artistsModel ?? {})) {
-          addArtist(slug, roles);
-        }
-      }
-      continue;
-    }
-
-    // 2) simple mode
-    if (!programMatchesClubSimple(club, prog)) continue;
-
-    matchedPrograms.push({ key, title: prog.title });
-
-    for (const [slug, roles] of Object.entries(prog.artists ?? {})) {
+    for (const [slug, roles] of Object.entries(prod.artists ?? {})) {
       addArtist(slug, roles);
     }
   }
@@ -417,55 +425,26 @@ function buildLineageArtistsForClub(opts: {
     const person = peopleBySlug[slug];
     if (!person?.name) {
       missingSlugs.add(slug);
-      continue; // don’t guess names (accuracy > completeness)
+      continue;
     }
 
-    // Normalize roles: split any comma-separated composite strings, deduplicate parts
-    const subtitle = Array.from(rolesSet)
-      .flatMap((r) => r.split(",").map((s) => s.trim()))
-      .filter(Boolean)
-      .filter((r, i, arr) => arr.indexOf(r) === i)
-      .join(", ")
-      .trim();
+    const subtitle = Array.from(rolesSet).join(", ").trim();
 
     out.push({
       ...person,
       ...(subtitle ? { subtitle } : {}),
-      ...(slug ? ({ profileId: slug } as any) : {}),
+      profileId: slug,
     });
   }
 
-  // stable display order
   out.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
-  if (DEBUG_DRAMA_CLUB) {
-    // eslint-disable-next-line no-console
-    console.log("\n=== DEBUG_DRAMA_CLUB LINEAGE ===");
-    // eslint-disable-next-line no-console
-    console.log("club:", club.slug, "|", club.name);
-    // eslint-disable-next-line no-console
-    console.log("club geo:", {
-      country: club.country,
-      region: clubRegion(club),
-      city: clubCity(club),
-    });
+  if (DEBUG_DRAMA_CLUB && missingSlugs.size) {
     // eslint-disable-next-line no-console
     console.log(
-      "matched programs:",
-      matchedPrograms.length,
-      matchedPrograms.slice(0, 12)
+      "⚠️ production lineage slugs missing in alumni dataset:",
+      Array.from(missingSlugs).slice(0, 40)
     );
-    // eslint-disable-next-line no-console
-    console.log("lineage artists:", out.length);
-    if (missingSlugs.size) {
-      // eslint-disable-next-line no-console
-      console.log(
-        "⚠️ lineage slugs missing in alumni dataset:",
-        Array.from(missingSlugs).slice(0, 40)
-      );
-    }
-    // eslint-disable-next-line no-console
-    console.log("=== /DEBUG_DRAMA_CLUB LINEAGE ===\n");
   }
 
   return out;
@@ -585,7 +564,7 @@ export default async function DramaClubPage({ params }: PageProps) {
     peopleById
   );
 
-  const lineageArtists = buildLineageArtistsForClub({
+  const lineageArtists = buildProductionLineageArtistsForClub({
     club,
     peopleBySlug,
   });

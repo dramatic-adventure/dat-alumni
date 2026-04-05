@@ -55,7 +55,7 @@ export const seasons: SeasonInfo[] = [
     years: "2020 / 2021",
     projects: [
       "Covid-19 Hiatus", 
-      "Travelogue (Season 8) — on Clubhouse"]
+      "Virtual Travelogue (Season 8) — on Clubhouse"]
   },
   {
     slug: "season-14",
@@ -102,7 +102,6 @@ export const seasons: SeasonInfo[] = [
     seasonTitle: "Season 10",
     years: "2015 / 2016",
     projects: [
-      "Teaching Artist Residency: Slovakia",
       "Travelogue (Season 6)",
       "Teaching Artist Residency: Galápagos",
       "Creative Trek: Ecuador (refresh)",
@@ -142,6 +141,7 @@ export const seasons: SeasonInfo[] = [
     seasonTitle: "Season 7",
     years: "2012 / 2013",
     projects: [
+      "DAT Lab: A Girl without Wings, Puppetry and Design Exploration",
       "A Girl without Wings, Workshop Production",
       "Travelogue (Season 3)",
       "ACTion: Heart of Europe",
@@ -156,6 +156,7 @@ export const seasons: SeasonInfo[] = [
     projects: [
       "Travelogue (Season 2)",
       "Creative Trek: Slovakia",
+      "DAT Lab: NYC Series",
       "DAT Retreat: NYC"
     ]
   },
@@ -187,7 +188,8 @@ export const seasons: SeasonInfo[] = [
     years: "2008 / 2009",
     projects: [
       "ACTion: Ecuador",
-      "ACTion Fest I, Hecho en Ecuador: Made in Ecuador"
+      "ACTion Fest I, Hecho en Ecuador: Made in Ecuador",
+      "Invited to present at IATI Theater's Performing Arts Marathon, International Performing Arts Festival"
     ]
   },
   {

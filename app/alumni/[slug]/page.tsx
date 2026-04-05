@@ -22,6 +22,9 @@ import { normalizeEmbeddedRefs } from "@/lib/normalizeEmbeddedRefs";
 import { rateLog, logOnce } from "@/lib/logHelpers";
 import { CanonicalSlugGate } from "@/components/alumni/CanonicalSlugGate";
 
+import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
+import { getOrderedProfileRoles } from "@/lib/profileRoleAssignments";
+
 type PageProps = {
   params: Promise<{ slug: string | string[] }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -380,8 +383,12 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
     },
   );
 
-  // 4) STORIES
-  const allStories = await getAllStories();
+  // 4) STORIES + ROLE ASSIGNMENTS
+  const [allStories, roleAssignments] = await Promise.all([
+    getAllStories(),
+    loadRoleAssignments(),
+  ]);
+
   const storiesForThisAlum = filterRowsByAliases(allStories, aliases, (alumni as any).name, {
     slugFields: ["slug", "alumniSlug", "profileSlug", "authorSlug"],
     nameFields: ["name", "alumniName", "author", "authorName"],
@@ -433,6 +440,24 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
             .join("\n\n")
         : "";
 
+  const profileId = String(
+    (alumni as any).profileId ||
+      (normalizedAlumni as any).profileId ||
+      (normalizedAlumni as any).slug ||
+      (alumni as any).slug ||
+      canonicalOrIncoming ||
+      incoming
+  ).trim();
+
+  const mergedRoles = getOrderedProfileRoles(
+    profileId,
+    Array.isArray((normalizedAlumni as any).roles)
+      ? ((normalizedAlumni as any).roles as string[])
+      : [],
+    roleAssignments
+  );
+
+
   // 7) Render
   return (
     <>
@@ -443,8 +468,8 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
         data={{
           slug: canonicalOrIncoming || (normalizedAlumni as any).slug || incoming,
           name: (normalizedAlumni as any).name,
-          role: (normalizedAlumni as any).roles?.[0] || "",
-          roles: (normalizedAlumni as any).roles || [],
+          role: mergedRoles[0] || "",
+          roles: mergedRoles,
           location: (normalizedAlumni as any).location || "",
           headshotUrl: (normalizedAlumni as any).headshotUrl || "",
           identityTags: (normalizedAlumni as any).identityTags || [],

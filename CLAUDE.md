@@ -88,3 +88,9 @@ Alumni and content pages use a slug forwarding system (`loadSlugForwardMap`) to 
 | `NETLIFY_BLOBS_*` or auto-injected | Netlify Blobs access |
 | `DATABASE_URL` | SQLite path (e.g., `file:./dev.db`) |
 | `MAPBOX_TOKEN` | Mapbox for story map |
+
+## Other Instructions
+
+- Do not make any changes until you have 95% confidence in what you need to build.  Ask me follow-up questions until you reach that confidence.
+- 
+

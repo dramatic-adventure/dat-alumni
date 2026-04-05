@@ -5,10 +5,10 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 export type ScopeType = "GLOBAL" | "COUNTRY" | "CLUB" | "PRODUCTION";
-export type RoleCode = "RTA" | "TAIR" | "MCP" | "DCL" | "BOARD" | string;
+export type RoleCode = "RTA" | "TAIR" | "MCP" | "DCP" | "DCL" | "BOARD" | string;
 
 export type RoleAssignmentRow = {
-  profileId: string;
+  profileId?: string;
   roleCode: RoleCode;
   roleLabel?: string;
 
@@ -27,6 +27,8 @@ const DEFAULT_ROLE_ASSIGNMENTS_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQzkIPStlL2TU7AHySD3Kw9CqBFTi1q6QW7N99ivE3FpofNhHlwWejU0LXeMOmnTawtmLCT71KWMU-F/pub?gid=2095520301&single=true&output=csv";
 
 const ROLE_ASSIGNMENTS_URL =
+  process.env.ROLE_ASSIGNMENTS_CSV_URL ??
+  process.env.NEXT_PUBLIC_ROLE_ASSIGNMENTS_CSV_URL ??
   process.env.DRAMA_CLUB_LEAD_TEAM_CSV_URL ??
   process.env.NEXT_PUBLIC_DRAMA_CLUB_LEAD_TEAM_CSV_URL ??
   DEFAULT_ROLE_ASSIGNMENTS_URL;
@@ -215,10 +217,15 @@ export async function loadRoleAssignments(): Promise<RoleAssignmentRow[]> {
       const scopeType = (r.scopeType || r["Scope Type"] || r.scope || r["Scope"] || "").trim();
       const scopeKey = (r.scopeKey || r["Scope Key"] || r["scopeKey"] || "").trim();
 
-      if (!profileId || !roleCode || !scopeType || !scopeKey) return null;
+      const statusSignifier =
+        (r.statusSignifier || r["Status Signifier"] || "").trim() || undefined;
+
+      const isOpen = (statusSignifier || "").toLowerCase() === "open";
+
+      if ((!profileId && !isOpen) || !roleCode || !scopeType || !scopeKey) return null;
 
       return {
-        profileId,
+        profileId: profileId || undefined,
         roleCode,
         roleLabel: (r.roleLabel || r["Role Label"] || "").trim() || undefined,
         scopeType: scopeType as ScopeType,
@@ -227,9 +234,7 @@ export async function loadRoleAssignments(): Promise<RoleAssignmentRow[]> {
         startDate: (r.startDate || r["Start Date"] || "").trim() || undefined,
         endDate: (r.endDate || r["End Date"] || "").trim() || undefined,
 
-        statusSignifier:
-          (r.statusSignifier || r["Status Signifier"] || "").trim() || undefined,
-
+        statusSignifier,
         displayOrder: toNum(r.displayOrder || r["Display Order"]),
         showOnProfile: toBool(r.showOnProfile || r["Show on Profile?"]),
       };

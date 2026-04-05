@@ -226,15 +226,8 @@ export const programMap: Record<string, ProgramData> = {
     season: 18,
     url: "",
     artists: {
-      "jason-williamson": [
-        "Resident Playwright",
-        "Director",
-        "Teaching Artist",
-      ],
-      "christen-madrazo": [
-        "Director of Creative Learning",
-        "Teaching Artist",
-      ],
+      "jason-williamson": ["Resident Playwright"],
+      "christen-madrazo": ["Director of Creative Learning",],
       "kathleen-amshoff": ["Assoc. Artistic Director"],
       "mary-k-baxter": ["Executive Director"],
       "jesse-baxter": ["Artistic Director"],
@@ -257,10 +250,10 @@ export const programMap: Record<string, ProgramData> = {
     url: "",
     artists: {
       "claudia-toth": ["Artist"],
-      "christen-madrazo": ["Artist"],
-      "jason-williamson": ["Artist"],
-      "mary-k-baxter": ["Artist"],
-      "jesse-baxter": ["Artist"],
+      "christen-madrazo": ["Director of Creative Learning", "Artist"],
+      "jason-williamson": ["Resident Playwright", "Artist"],
+      "mary-k-baxter": ["Executive Director", "Artist"],
+      "jesse-baxter": ["Artistic Director", "Artist"],
       "asa-williamson": ["Artist Apprentice"],
       "vida-williamson": ["Artist Apprentice"],
       "lucille-baxter": ["Artist Apprentice"],
@@ -296,11 +289,11 @@ export const programMap: Record<string, ProgramData> = {
     season: 16,
     url: "/site-lines",
     artists: {
-      "jesse-baxter": ["Director"],
-      "peter-petkovsek": ["Director"],
+      "jesse-baxter": ["Artistic Director", "Director"],
+      "peter-petkovsek": ["Assoc. Artistic Director", "Director"],
       "gustavo-redin": ["Director of Community Partnerships"],
       "carla-rizzo": ["Community Partnerships Coordinator"],
-      "daniela-garzon-silva": ["Documentary Photographer"],
+      "daniela-garzon-silva": ["Documentary Photographer", "Road Manager"],
       "juliana-franco": ["Road Manager"],
       "yan-rey": ["Road Manager"],
       "alexandra-dayka": ["Theatremaker"],
@@ -314,12 +307,103 @@ export const programMap: Record<string, ProgramData> = {
   },
   // Season 15 entry:
   // Season 14 entry:
+      "virtual-teaching-artist-residency-slovakia-2020": {
+      title: "Virtual Teaching Artist Residency: Slovakia 2020",
+      slug: "virtual-teaching-artist-residency-slovakia-2020",
+      program: "Teaching Artist Residency",
+      location: "Online with the Luník IX Collective in Košice, Slovakia",
+      year: 2020,
+      season: 14,
+      dramaClubSlugs: ["lunik-ix-collective"],
+      externalUrl: "https://www.dramaticadventure.com/teaching-artist-residency",
+      url: "/teaching-artist-residency",
+      artists: {
+        "christen-madrazo": ["Director of Creative Learning", "Teaching Artist"],
+        "jesse-baxter": ["Artistic Director", "Teaching Artist"],
+        "barbara-herucova": ["Manager of Community Partnerships in Czechia & Slovakia", "Teaching Artist"],
+      },
+    },
+
   // Season 13 entry:
   // Season 12 entry:
+    "teaching-artist-residency-slovakia-2018": {
+      title: "Teaching Artist Residency: Košice, Slovakia 2018",
+      slug: "teaching-artist-residency-slovakia-2018",
+      program: "Teaching Artist Residency",
+      location: "Košice, Slovakia",
+      year: 2018,
+      season: 12,
+      dramaClubSlugs: ["lunik-ix-collective","camp-etp-slovensko"],
+      externalUrl: "https://www.dramaticadventure.com/teaching-artist-residency",
+      url: "/teaching-artist-residency",
+      artists: {
+        "christen-madrazo": ["Director of Creative Learning", "Teaching Artist"],
+        "jason-williamson": ["Resident Playwright", "Teaching Artist"],
+        "mary-k-baxter": ["Executive Director", "Teaching Artist"],
+        "jesse-baxter": ["Artistic Director", "Teaching Artist"],
+        "lucille-baxter": ["Artist Apprentice"],
+        "karina-sindicich": ["Teaching Artist"],
+        "antonia-lache": ["Teaching Artist"],
+      },
+    },
+
   // Season 11 entry:
+
   // Season 10 entry:
+    "action-tanzania-2016": {
+    title: "ACTion: Tanzania 2016",
+    slug: "action-tanzania-2016",
+    program: "ACTion",
+    location: "Tanzania",
+    year: 2016,
+    season: 10,
+    dramaClubSlugs: ["mloka", "mama-lynns", "Dar"],
+    externalUrl: "https://www.dramaticadventure.com/action",
+    url: "/action",
+    artists: {
+
+          },
+  },
+
+    "teaching-artist-residency-ecuador-2016": {
+    title: "Teaching Artist Residency: Floreana Island, Galápagos, Ecuador 2016",
+    slug: "teaching-artist-residency-ecuador-2016",
+    program: "Teaching Artist Residency",
+    location: "Floreana Island, Galápagos, Ecuador",
+    year: 2016,
+    season: 10,
+    dramaClubSlugs: ["floreana-youth-ensemble"],
+    externalUrl: "https://www.dramaticadventure.com/teaching-artist-residency",
+    url: "/teaching-artist-residency",
+    artists: {
+      "christen-madrazo": ["Director of Creative Learning", "Teaching Artist"],
+      "jason-williamson": ["Resident Playwright", "Teaching Artist"],
+      "mary-k-baxter": ["Executive Director", "Teaching Artist"],
+      "jesse-baxter": ["Artistic Director", "Teaching Artist"],
+      "lucille-baxter": ["Artist Apprentice"],
+      "sarah-cronk": ["Teaching Artist"],
+      "gustavo-redin": ["Road Manager", "Teaching Artist"],
+    },
+  },
   // Season 9 entry:
   // Season 8 entry:
+  "teaching-artist-residency-slovakia-2014": {
+    title: "Teaching Artist Residency: Moldava nad Bodvou, Slovakia 2014",
+    slug: "teaching-artist-residency-slovakia-2014",
+    program: "Teaching Artist Residency",
+    location: "Moldava nad Bodvou, Slovakia",
+    year: 2014,
+    season: 8,
+    dramaClubSlugs: ["slum-dog-theatre"],
+    externalUrl: "https://www.dramaticadventure.com/teaching-artist-residency",
+    url: "/teaching-artist-residency",
+    artists: {
+      "christen-madrazo": ["Director of Creative Learning", "Teaching Artist"],
+      "jason-williamson": ["Resident Playwright", "Teaching Artist"],
+      "katey-parker": ["Teaching Artist"],
+      "tina-valentova": ["Road Manager", "Teaching Artist"],
+    },
+  },
 
   // Season 7 entry:
   "action-heart-of-europe-2013": {
@@ -329,9 +413,11 @@ export const programMap: Record<string, ProgramData> = {
     location: "Heart of Europe",
     year: 2013,
     season: 7,
+    dramaClubSlugs: ["slum-dog-theatre", "stara-lubovna", "??"],
+    externalUrl: "https://www.dramaticadventure.com/action",
     url: "/action",
     artists: {
-      "tom-costello": ["Director"],
+      "tom-costello": ["Interim Manager of Community Partnerships in Czechia and Slovakia", "Director"],
       "nicholas-linnehan": ["Actor"],
       "michael-axelrod": ["Actor"],
       "lacy-allen": ["Actor"],
@@ -379,6 +465,8 @@ export const programMap: Record<string, ProgramData> = {
     location: "Slovakia",
     year: 2012,
     season: 6,
+    dramaClubSlugs: ["slum-dog-theatre", "stara-lubovna"],
+    externalUrl: "https://www.dramaticadventure.com/creative-trek",
     url: "/creative-trek",
     artists: {
       "richard-sipos": ["Road Manager"],
@@ -425,11 +513,13 @@ export const programMap: Record<string, ProgramData> = {
     location: "Esmeraldas, Ecuador",
     year: 2011,
     season: 5,
+    dramaClubSlugs: ["esmeraldas-youth-ensemble"],
+    externalUrl: "https://www.dramaticadventure.com/teaching-artist-residency",
     url: "/teaching-artist-residency",
     artists: {
       "isabel-martinez": ["Actor"],
       "dionne-audain": ["Teaching Artist"],
-      "mabel-demera-grijalva": ["Road Manager"],
+      "mabel-demera-grijalva": ["Road Manager", "Teaching Artist"],
       "hanniel-sindelar": ["Teaching Artist"],
       "kathleen-amshoff": [
         "Assoc. Artistic Director",
@@ -478,11 +568,13 @@ export const programMap: Record<string, ProgramData> = {
     location: "Ecuador",
     year: 2010,
     season: 4,
+    dramaClubSlugs: ["quiolotoa-collective", "esmeraldas-youth-ensemble", "san-cristobal-collective"],
+    externalUrl: "https://www.dramaticadventure.com/action",
     url: "/action",
     artists: {
       "tamara-easton": ["Actor"],
       "natalie-hirsch": ["Actor"],
-      "lauren-ullrich": ["Actor"],
+      "lauren-ullrich": ["Actor"], // NOTE: lauren-ullrich did the project twice in one summer! 
       "jennifer-rodriguez": ["Actor"],
       "jamie-blanek": ["Actor"],
       "garrett-bales": ["Actor"],
@@ -511,13 +603,14 @@ export const programMap: Record<string, ProgramData> = {
         "Director of Creative Learning",
         "Teaching Artist",
       ],
-      "tim-baxter": ["Fixer"],
+      "santi-baxter": ["Fixer"],
+      "sonia-ostaiza": ["Fixer"],
       "kathleen-amshoff": [
-        "Associate Artistic Director",
+        "Assoc. Artistic Director",
         "Director",
         "Teaching Artist",
       ],
-      "mary-k-baxter": ["Executive Director", "Teaching Artist"],
+      "mary-k-baxter": ["Executive Director", "Road Manager", "Teaching Artist"],
       "jesse-baxter": ["Artistic Director", "Director", "Teaching Artist"],
     },
   },
@@ -599,7 +692,7 @@ export const programMap: Record<string, ProgramData> = {
       "jennifer-robideau": ["Actor"],
       "jeanne-lauren-smith": ["Actor"],
       "janel-miley": ["Actor"],
-      "jamil-mangan": ["Director"],
+      "jamil-mangan": ["Director"],  // NOTE: jamil-mangan did the project twice in one summer! 
       "jacob-hellman": ["Actor"],
       "hilary-white": ["Actor"],
       "heather-massie": ["Actor"],
@@ -628,9 +721,10 @@ export const programMap: Record<string, ProgramData> = {
       "christen-madrazo": ["Teaching Artist in Residence"],
       "vince-eaton": ["Actor"],
       "rachel-wiese": ["Director"],
-      "santi-baxter": ["Road Manager"],
+      "santi-baxter": ["Fixer"],
+      "sonia-ostaiza": ["Fixer"],
       "kathleen-amshoff": ["Director"],
-      "mary-k-baxter": ["Executive Director"],
+      "mary-k-baxter": ["Executive Director", "Road Manager"],
       "jesse-baxter": ["Artistic Director"],
     },
   },
@@ -667,7 +761,7 @@ export const programMap: Record<string, ProgramData> = {
     country: "Zimbabwe",
     year: 2007,
     season: 1,
-    dramaClubSlugs: ["bulawayo-young-company"],
+    dramaClubSlugs: ["bulawayo-young-company", "Harare", "Starry", "Matopo", "Church"],
     externalUrl: "https://www.dramaticadventure.com/creative-trek",
     url: "/creative-trek",
     artists: {
