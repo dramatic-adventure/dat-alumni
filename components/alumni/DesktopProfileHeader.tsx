@@ -168,19 +168,10 @@ export default function DesktopProfileHeader({
     () =>
       Array.from(
         new Map(
-          allRoles
-            .map((label) => {
-              const href = hrefForTitleToken(label);
-              return href
-                ? [
-                    `${label.toLowerCase()}|||${href}`,
-                    { label, href },
-                  ] as const
-                : null;
-            })
-            .filter(Boolean) as Array<
-            [string, { label: string; href: string }]
-          >
+          allRoles.map((label) => [
+            label.toLowerCase(),
+            { label, href: hrefForTitleToken(label) },
+          ])
         ).values()
       ),
     [allRoles]
@@ -205,7 +196,9 @@ export default function DesktopProfileHeader({
 
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") {
-      titleLinks.forEach(({ href }) => router.prefetch(href));
+      titleLinks.forEach(({ href }) => {
+        if (href) router.prefetch(href);
+      });
       if (locationHref) router.prefetch(locationHref);
       return;
     }
@@ -215,7 +208,9 @@ export default function DesktopProfileHeader({
       (entries) => {
         for (const e of entries) {
           if (e.isIntersecting) {
-            titleLinks.forEach(({ href }) => router.prefetch(href));
+            titleLinks.forEach(({ href }) => {
+              if (href) router.prefetch(href);
+            });
             if (locationHref) router.prefetch(locationHref);
             io.disconnect();
             break;
@@ -419,20 +414,39 @@ export default function DesktopProfileHeader({
                         <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.82rem", letterSpacing: "3.5px", fontWeight: 900, color: "#ffcc00", textTransform: "uppercase" }}>
                           DAT
                         </span>
-                        <Link href={titleLinks[0].href} prefetch
-                          className="ls-hover no-underline hover:no-underline"
-                          style={{
-                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                            fontSize: "0.9rem",
-                            color: "#241123",
-                            opacity: 0.75,
-                            textTransform: "uppercase",
-                            fontWeight: 700,
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.75"; }}
-                          aria-label={`View ${titleLinks[0].label}`}
-                        >{titleLinks[0].label}</Link>
+                        {titleLinks[0].href ? (
+                          <Link href={titleLinks[0].href} prefetch
+                            className="ls-hover no-underline hover:no-underline"
+                            style={{
+                              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                              fontSize: "0.9rem",
+                              color: "#241123",
+                              opacity: 0.75,
+                              textTransform: "uppercase",
+                              fontWeight: 700,
+                              whiteSpace: "normal",
+                              overflowWrap: "anywhere",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.75"; }}
+                            aria-label={`View ${titleLinks[0].label}`}
+                          >{titleLinks[0].label}</Link>
+                        ) : (
+                          <span
+                            style={{
+                              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                              fontSize: "0.9rem",
+                              color: "#241123",
+                              opacity: 0.75,
+                              textTransform: "uppercase",
+                              fontWeight: 700,
+                              whiteSpace: "normal",
+                              overflowWrap: "anywhere",
+                            }}
+                          >
+                            {titleLinks[0].label}
+                          </span>
+                        )}
                         {titleLinks.length > 1 && (
                           <button
                             onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
@@ -445,21 +459,40 @@ export default function DesktopProfileHeader({
                       </span>
                       {/* Extra roles — revealed on expand */}
                       {rolesExpanded && titleLinks.slice(1).map(({ label, href }) => (
-                        <span key={`${href}-${label}`} style={{ paddingLeft: "2.05rem" }}>
-                          <Link href={href} prefetch
-                            className="ls-hover no-underline hover:no-underline"
-                            style={{
-                              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                              fontSize: "0.9rem",
-                              color: "#241123",
-                              opacity: 0.75,
-                              textTransform: "uppercase",
-                              fontWeight: 700,
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.75"; }}
-                            aria-label={`View ${label}`}
-                          >{label}</Link>
+                        <span key={`${href ?? "nohref"}-${label}`} style={{ paddingLeft: "2.05rem" }}>
+                          {href ? (
+                            <Link href={href} prefetch
+                              className="ls-hover no-underline hover:no-underline"
+                              style={{
+                                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                                fontSize: "0.9rem",
+                                color: "#241123",
+                                opacity: 0.75,
+                                textTransform: "uppercase",
+                                fontWeight: 700,
+                                whiteSpace: "normal",
+                                overflowWrap: "anywhere",
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.75"; }}
+                              aria-label={`View ${label}`}
+                            >{label}</Link>
+                          ) : (
+                            <span
+                              style={{
+                                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                                fontSize: "0.9rem",
+                                color: "#241123",
+                                opacity: 0.75,
+                                textTransform: "uppercase",
+                                fontWeight: 700,
+                                whiteSpace: "normal",
+                                overflowWrap: "anywhere",
+                              }}
+                            >
+                              {label}
+                            </span>
+                          )}
                         </span>
                       ))}
                     </span>
@@ -473,20 +506,41 @@ export default function DesktopProfileHeader({
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.1rem" }}>
                     {/* Primary role row */}
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "0.55rem" }}>
-                      <Link href={titleLinks[0].href} prefetch
-                        className="ls-hover no-underline hover:no-underline"
-                        style={{
-                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                          fontSize: "1.7rem",
-                          color: "#241123",
-                          textTransform: "uppercase",
-                          fontWeight: 700,
-                          opacity: 0.9,
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.9"; }}
-                        aria-label={`View ${titleLinks[0].label}`}
-                      >{titleLinks[0].label}</Link>
+                      {titleLinks[0].href ? (
+                        <Link href={titleLinks[0].href} prefetch
+                          className="ls-hover no-underline hover:no-underline"
+                          style={{
+                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                            fontSize: "1.7rem",
+                            color: "#241123",
+                            textTransform: "uppercase",
+                            fontWeight: 700,
+                            opacity: 0.9,
+                            whiteSpace: "normal",
+                            overflowWrap: "anywhere",
+                            maxWidth: "min(760px, calc(100vw - 520px))",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.9"; }}
+                          aria-label={`View ${titleLinks[0].label}`}
+                        >{titleLinks[0].label}</Link>
+                      ) : (
+                        <span
+                          style={{
+                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                            fontSize: "1.7rem",
+                            color: "#241123",
+                            textTransform: "uppercase",
+                            fontWeight: 700,
+                            opacity: 0.9,
+                            whiteSpace: "normal",
+                            overflowWrap: "anywhere",
+                            maxWidth: "min(760px, calc(100vw - 520px))",
+                          }}
+                        >
+                          {titleLinks[0].label}
+                        </span>
+                      )}
                       {titleLinks.length > 1 && (
                         <button
                           onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
@@ -498,22 +552,44 @@ export default function DesktopProfileHeader({
                       )}
                     </span>
                     {/* Extra roles revealed on expand */}
-                    {rolesExpanded && titleLinks.slice(1).map(({ label, href }) => (
-                      <Link key={`${href}-${label}`} href={href} prefetch
-                        className="ls-hover no-underline hover:no-underline"
-                        style={{
-                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                          fontSize: "1.7rem",
-                          color: "#241123",
-                          textTransform: "uppercase",
-                          fontWeight: 700,
-                          opacity: 0.9,
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.9"; }}
-                        aria-label={`View ${label}`}
-                      >{label}</Link>
-                    ))}
+                    {rolesExpanded && titleLinks.slice(1).map(({ label, href }) =>
+                      href ? (
+                        <Link key={`${href}-${label}`} href={href} prefetch
+                          className="ls-hover no-underline hover:no-underline"
+                          style={{
+                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                            fontSize: "1.7rem",
+                            color: "#241123",
+                            textTransform: "uppercase",
+                            fontWeight: 700,
+                            opacity: 0.9,
+                            whiteSpace: "normal",
+                            overflowWrap: "anywhere",
+                            maxWidth: "min(760px, calc(100vw - 520px))",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.9"; }}
+                          aria-label={`View ${label}`}
+                        >{label}</Link>
+                      ) : (
+                        <span
+                          key={`nohref-${label}`}
+                          style={{
+                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                            fontSize: "1.7rem",
+                            color: "#241123",
+                            textTransform: "uppercase",
+                            fontWeight: 700,
+                            opacity: 0.9,
+                            whiteSpace: "normal",
+                            overflowWrap: "anywhere",
+                            maxWidth: "min(760px, calc(100vw - 520px))",
+                          }}
+                        >
+                          {label}
+                        </span>
+                      )
+                    )}
                   </div>
                 )}
                 {location && (

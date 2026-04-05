@@ -197,7 +197,20 @@ function removeRoles(source: string[], toRemove: string[]) {
   return source.filter((role) => !removeSet.has(normRoleText(role)));
 }
 
+function compareExplicitRolePriority(a?: string, b?: string) {
+  const aa = String(a ?? "").trim().toUpperCase();
+  const bb = String(b ?? "").trim().toUpperCase();
+
+  if (aa === "DCP" && bb === "MCP") return -1;
+  if (aa === "MCP" && bb === "DCP") return 1;
+
+  return 0;
+}
+
 function compareCurrent(a: RoleAssignmentRow, b: RoleAssignmentRow) {
+  const explicitPriority = compareExplicitRolePriority(a.roleCode, b.roleCode);
+  if (explicitPriority !== 0) return explicitPriority;
+
   const display = (b.displayOrder ?? -999) - (a.displayOrder ?? -999);
   if (display !== 0) return display;
 

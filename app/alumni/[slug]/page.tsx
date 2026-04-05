@@ -337,6 +337,28 @@ async function loadCollectionsFor({
 /* -----------------------------------------------------------
  * Page
  * ----------------------------------------------------------*/
+function parseISOStart(d?: string): Date | null {
+  const s = String(d ?? "").trim();
+  if (!s) return null;
+  const dt = new Date(`${s}T00:00:00`);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+function parseISOEnd(d?: string): Date | null {
+  const s = String(d ?? "").trim();
+  if (!s) return null;
+  const dt = new Date(`${s}T23:59:59.999`);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+function isAssignmentActiveNow(a: { startDate?: string; endDate?: string }, asOf: Date) {
+  const start = parseISOStart(a.startDate);
+  const end = parseISOEnd(a.endDate);
+  if (start && asOf < start) return false;
+  if (end && asOf > end) return false;
+  return true;
+}
+
 export default async function AlumniPage({ params, searchParams }: PageProps) {
   const p = await params;
   const sp = searchParams ? await searchParams : undefined;
@@ -457,6 +479,19 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
     roleAssignments
   );
 
+  const mergedStatusFlags = Array.from(
+    new Set([
+      ...((normalizedAlumni as any).statusFlags || []),
+      ...roleAssignments
+        .filter(
+          (a) =>
+            String(a.profileId ?? "").trim() === profileId &&
+            isAssignmentActiveNow(a, new Date()) &&
+            String(a.roleCode ?? "").trim().toUpperCase() === "BOARD"
+        )
+        .map(() => "Board Member"),
+    ])
+  );  
 
   // 7) Render
   return (
@@ -473,7 +508,7 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
           location: (normalizedAlumni as any).location || "",
           headshotUrl: (normalizedAlumni as any).headshotUrl || "",
           identityTags: (normalizedAlumni as any).identityTags || [],
-          statusFlags: (normalizedAlumni as any).statusFlags || [],
+          statusFlags: mergedStatusFlags,
           programBadges: (normalizedAlumni as any).programBadges || [],
           programSeasons: (normalizedAlumni as any).programSeasons || [],
           artistStatement: safeArtistStatement,

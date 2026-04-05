@@ -166,14 +166,10 @@ export default function MobileProfileHeader({
 
   const titleLinks = Array.from(
     new Map(
-      allRoles
-        .map((label) => {
-          const href = hrefForTitleToken(label);
-          return href
-            ? [`${label.toLowerCase()}|||${href}`, { label, href }] as const
-            : null;
-        })
-        .filter(Boolean) as Array<[string, { label: string; href: string }]>
+      allRoles.map((label) => [
+        label.toLowerCase(),
+        { label, href: hrefForTitleToken(label) },
+      ])
     ).values()
   );
 
@@ -406,24 +402,43 @@ export default function MobileProfileHeader({
                         <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.72rem", letterSpacing: "3.5px", fontWeight: 900, color: "#ffcc00", textTransform: "uppercase" }}>
                           DAT
                         </span>
-                        <Link
-                          href={titleLinks[0].href}
-                          prefetch
-                          className="ls-hover no-underline hover:no-underline"
-                          style={{
-                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                            fontSize: "clamp(0.7rem, 2.5vw, 0.82rem)",
-                            color: "#241123",
-                            opacity: 0.75,
-                            textTransform: "uppercase",
-                            fontWeight: 700,
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.75"; }}
-                          aria-label={`View ${titleLinks[0].label}`}
-                        >
-                          {titleLinks[0].label}
-                        </Link>
+                        {titleLinks[0].href ? (
+                          <Link
+                            href={titleLinks[0].href}
+                            prefetch
+                            className="ls-hover no-underline hover:no-underline"
+                            style={{
+                              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                              fontSize: "clamp(0.7rem, 2.5vw, 0.82rem)",
+                              color: "#241123",
+                              opacity: 0.75,
+                              textTransform: "uppercase",
+                              fontWeight: 700,
+                              whiteSpace: "normal",
+                              overflowWrap: "anywhere",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.75"; }}
+                            aria-label={`View ${titleLinks[0].label}`}
+                          >
+                            {titleLinks[0].label}
+                          </Link>
+                        ) : (
+                          <span
+                            style={{
+                              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                              fontSize: "clamp(0.7rem, 2.5vw, 0.82rem)",
+                              color: "#241123",
+                              opacity: 0.75,
+                              textTransform: "uppercase",
+                              fontWeight: 700,
+                              whiteSpace: "normal",
+                              overflowWrap: "anywhere",
+                            }}
+                          >
+                            {titleLinks[0].label}
+                          </span>
+                        )}
                         {titleLinks.length > 1 && (
                           <button
                             onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
@@ -436,25 +451,44 @@ export default function MobileProfileHeader({
                       </span>
                       {/* Extra roles — revealed on expand */}
                       {rolesExpanded && titleLinks.slice(1).map(({ label, href }) => (
-                        <span key={`${href}-${label}`} style={{ paddingLeft: "1.85rem" }}>
-                          <Link
-                            href={href}
-                            prefetch
-                            className="ls-hover no-underline hover:no-underline"
-                            style={{
-                              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                              fontSize: "clamp(0.7rem, 2.5vw, 0.82rem)",
-                              color: "#241123",
-                              opacity: 0.75,
-                              textTransform: "uppercase",
-                              fontWeight: 700,
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.75"; }}
-                            aria-label={`View ${label}`}
-                          >
-                            {label}
-                          </Link>
+                        <span key={`${href ?? "nohref"}-${label}`} style={{ paddingLeft: "1.85rem" }}>
+                          {href ? (
+                            <Link
+                              href={href}
+                              prefetch
+                              className="ls-hover no-underline hover:no-underline"
+                              style={{
+                                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                                fontSize: "clamp(0.7rem, 2.5vw, 0.82rem)",
+                                color: "#241123",
+                                opacity: 0.75,
+                                textTransform: "uppercase",
+                                fontWeight: 700,
+                                whiteSpace: "normal",
+                                overflowWrap: "anywhere",
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.75"; }}
+                              aria-label={`View ${label}`}
+                            >
+                              {label}
+                            </Link>
+                          ) : (
+                            <span
+                              style={{
+                                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                                fontSize: "clamp(0.7rem, 2.5vw, 0.82rem)",
+                                color: "#241123",
+                                opacity: 0.75,
+                                textTransform: "uppercase",
+                                fontWeight: 700,
+                                whiteSpace: "normal",
+                                overflowWrap: "anywhere",
+                              }}
+                            >
+                              {label}
+                            </span>
+                          )}
                         </span>
                       ))}
                     </span>
@@ -469,26 +503,46 @@ export default function MobileProfileHeader({
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.1rem", marginTop: "0.5rem" }}>
                     {/* Primary role row */}
                     <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
-                      <Link
-                        href={titleLinks[0].href}
-                        prefetch
-                        className="ls-hover no-underline hover:no-underline"
-                        style={{
-                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                          fontSize: "clamp(1rem, 4vw, 1.35rem)",
-                          color: "#241123",
-                          textTransform: "uppercase",
-                          fontWeight: 800,
-                          opacity: 0.95,
-                          whiteSpace: "nowrap",
-                          cursor: "pointer",
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.95"; }}
-                        aria-label={`View ${titleLinks[0].label}`}
-                      >
-                        {titleLinks[0].label}
-                      </Link>
+                      {titleLinks[0].href ? (
+                        <Link
+                          href={titleLinks[0].href}
+                          prefetch
+                          className="ls-hover no-underline hover:no-underline"
+                          style={{
+                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                            fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                            color: "#241123",
+                            textTransform: "uppercase",
+                            fontWeight: 800,
+                            opacity: 0.95,
+                            whiteSpace: "normal",
+                            overflowWrap: "anywhere",
+                            maxWidth: "100%",
+                            cursor: "pointer",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.95"; }}
+                          aria-label={`View ${titleLinks[0].label}`}
+                        >
+                          {titleLinks[0].label}
+                        </Link>
+                      ) : (
+                        <span
+                          style={{
+                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                            fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                            color: "#241123",
+                            textTransform: "uppercase",
+                            fontWeight: 800,
+                            opacity: 0.95,
+                            whiteSpace: "normal",
+                            overflowWrap: "anywhere",
+                            maxWidth: "100%",
+                          }}
+                        >
+                          {titleLinks[0].label}
+                        </span>
+                      )}
                       {titleLinks.length > 1 && (
                         <button
                           onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
@@ -500,29 +554,50 @@ export default function MobileProfileHeader({
                       )}
                     </span>
                     {/* Extra roles revealed on expand */}
-                    {rolesExpanded && titleLinks.slice(1).map(({ label, href }) => (
-                      <Link
-                        key={`${href}-${label}`}
-                        href={href}
-                        prefetch
-                        className="ls-hover no-underline hover:no-underline"
-                        style={{
-                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                          fontSize: "clamp(1rem, 4vw, 1.35rem)",
-                          color: "#241123",
-                          textTransform: "uppercase",
-                          fontWeight: 800,
-                          opacity: 0.95,
-                          whiteSpace: "nowrap",
-                          cursor: "pointer",
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.95"; }}
-                        aria-label={`View ${label}`}
-                      >
-                        {label}
-                      </Link>
-                    ))}
+                    {rolesExpanded && titleLinks.slice(1).map(({ label, href }) =>
+                      href ? (
+                        <Link
+                          key={`${href}-${label}`}
+                          href={href}
+                          prefetch
+                          className="ls-hover no-underline hover:no-underline"
+                          style={{
+                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                            fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                            color: "#241123",
+                            textTransform: "uppercase",
+                            fontWeight: 800,
+                            opacity: 0.95,
+                            whiteSpace: "normal",
+                            overflowWrap: "anywhere",
+                            maxWidth: "100%",
+                            cursor: "pointer",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = "0.95"; }}
+                          aria-label={`View ${label}`}
+                        >
+                          {label}
+                        </Link>
+                      ) : (
+                        <span
+                          key={`nohref-${label}`}
+                          style={{
+                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                            fontSize: "clamp(1rem, 4vw, 1.35rem)",
+                            color: "#241123",
+                            textTransform: "uppercase",
+                            fontWeight: 800,
+                            opacity: 0.95,
+                            whiteSpace: "normal",
+                            overflowWrap: "anywhere",
+                            maxWidth: "100%",
+                          }}
+                        >
+                          {label}
+                        </span>
+                      )
+                    )}
                   </div>
                 )}
                 {location && (
