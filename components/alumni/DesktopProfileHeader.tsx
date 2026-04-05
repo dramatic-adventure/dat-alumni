@@ -30,41 +30,6 @@ interface DesktopProfileHeaderProps {
   isBiCoastal?: boolean;
 }
 
-// Priority order for DAT role display (lower number = shown first).
-// Tier 1: actual DAT staff/company roles (from dramaticadventure.com/company)
-// Tier 2: general DAT participation roles (actor, playwright, etc.)
-const ROLE_DISPLAY_PRIORITY: Record<string, number> = {
-  // ── Tier 1: DAT Company / Staff roles ───────────────────
-  "co-founder": 1,
-  "executive director": 2,
-  "artistic director": 3,
-  "director of creative learning": 4,
-  "director of global community partnerships": 5,
-  "general counsel": 6,
-  "manager of community partnerships": 7,
-  "engagement manager": 8,
-  "board president": 9,
-  "president": 10,
-  "board secretary": 11,
-  "secretary": 12,
-  "board treasurer": 13,
-  "treasurer": 14,
-  "board member": 15,
-  // ── Tier 2: DAT Artistic / Program participation roles ───
-  "resident playwright": 16,
-  "playwright": 17,
-  "travel writer": 18,
-  "designer": 19,
-  "stage manager": 20,
-  "teaching artist": 21,
-  "special event host": 22,
-  "actor": 23,
-  "actress": 23,
-  "performer": 24,
-  "partner": 25,
-  "manager": 26,
-};
-
 export default function DesktopProfileHeader({
   alumniId,
   slug,
@@ -200,24 +165,24 @@ export default function DesktopProfileHeader({
   }
 
   const titleLinks = useMemo(
-    () => {
-      const links = Array.from(
+    () =>
+      Array.from(
         new Map(
           allRoles
             .map((label) => {
               const href = hrefForTitleToken(label);
-              return href ? [href, { label, href }] : null;
+              return href
+                ? [
+                    `${label.toLowerCase()}|||${href}`,
+                    { label, href },
+                  ] as const
+                : null;
             })
-            .filter(Boolean) as Array<[string, { label: string; href: string }]>
+            .filter(Boolean) as Array<
+            [string, { label: string; href: string }]
+          >
         ).values()
-      );
-      // Sort by DAT role prominence (Artistic Director before Actor, etc.)
-      return [...links].sort((a, b) => {
-        const pa = ROLE_DISPLAY_PRIORITY[a.label.toLowerCase()] ?? 50;
-        const pb = ROLE_DISPLAY_PRIORITY[b.label.toLowerCase()] ?? 50;
-        return pa - pb;
-      });
-    },
+      ),
     [allRoles]
   );
 

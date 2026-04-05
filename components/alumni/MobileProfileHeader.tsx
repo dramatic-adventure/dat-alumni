@@ -12,46 +12,12 @@ import NameStack from "@/components/shared/NameStack";
 import { splitTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
 import { getLocationHrefForToken, normalizeLocation } from "@/lib/locations";
 
-// Priority order for DAT role display (lower number = shown first).
-// Tier 1: actual DAT staff/company roles (from dramaticadventure.com/company)
-// Tier 2: general DAT participation roles (actor, playwright, etc.)
-const ROLE_DISPLAY_PRIORITY: Record<string, number> = {
-  // ── Tier 1: DAT Company / Staff roles ───────────────────
-  "co-founder": 1,
-  "executive director": 2,
-  "artistic director": 3,
-  "director of creative learning": 4,
-  "director of global community partnerships": 5,
-  "general counsel": 6,
-  "manager of community partnerships": 7,
-  "engagement manager": 8,
-  "board president": 9,
-  "president": 10,
-  "board secretary": 11,
-  "secretary": 12,
-  "board treasurer": 13,
-  "treasurer": 14,
-  "board member": 15,
-  // ── Tier 2: DAT Artistic / Program participation roles ───
-  "resident playwright": 16,
-  "playwright": 17,
-  "travel writer": 18,
-  "designer": 19,
-  "stage manager": 20,
-  "teaching artist": 21,
-  "special event host": 22,
-  "actor": 23,
-  "actress": 23,
-  "performer": 24,
-  "partner": 25,
-  "manager": 26,
-};
-
 interface MobileProfileHeaderProps {
   alumniId: string;
   slug?: string;
   name: string;
   role: string;
+  roles?: string[];
   location?: string;
   headshotUrl?: string;
   statusFlags?: string[];
@@ -68,6 +34,7 @@ export default function MobileProfileHeader({
   slug,
   name,
   role,
+  roles = [],
   location,
   headshotUrl,
   statusFlags = [],
@@ -171,7 +138,9 @@ export default function MobileProfileHeader({
 
   const hasContactInfo = !!(publicEmail || website || (socials && socials.length > 0));
 
-  const allRoles = splitTitles(role).map((r) => r.trim()).filter(Boolean);
+  const allRoles = (roles && roles.length > 0 ? roles : splitTitles(role))
+    .map((r) => r.trim())
+    .filter(Boolean);
 
   function hrefForTitleToken(token: string): string | null {
     const keys = bucketsForTitleToken(token);
@@ -195,22 +164,18 @@ export default function MobileProfileHeader({
     return `/title/${slug}`;
   }
 
-  const titleLinksUnsorted = Array.from(
+  const titleLinks = Array.from(
     new Map(
       allRoles
         .map((label) => {
           const href = hrefForTitleToken(label);
-          return href ? [href, { label, href }] : null;
+          return href
+            ? [`${label.toLowerCase()}|||${href}`, { label, href }] as const
+            : null;
         })
         .filter(Boolean) as Array<[string, { label: string; href: string }]>
     ).values()
   );
-  // Sort by DAT role prominence (Artistic Director before Actor, etc.)
-  const titleLinks = [...titleLinksUnsorted].sort((a, b) => {
-    const pa = ROLE_DISPLAY_PRIORITY[a.label.toLowerCase()] ?? 50;
-    const pb = ROLE_DISPLAY_PRIORITY[b.label.toLowerCase()] ?? 50;
-    return pa - pb;
-  });
 
   // Multi-value currentTitle support: "Social Worker, Teacher" → ["Social Worker", "Teacher"]
   const currentTitles = currentTitle

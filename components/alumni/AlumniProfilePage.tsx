@@ -129,7 +129,7 @@ export default function AlumniProfilePage({
   }
 
   // ✅ Prefer roles[] if available, otherwise fallback to role
-  const displayRole = roles.length > 0 ? roles.join(", ") : role;
+  const primaryRole = roles[0] ?? role;
 
   // ✅ Canonical + alias slugs as a normalized set for robust matching
   const aliasNormSet = useMemo(() => {
@@ -260,7 +260,8 @@ const authorStories = useMemo(() => {
 // If missing, pass nothing so ProfileCard falls back to alias/authorSlug matching.
 alumniId={alumniId || undefined}
                 name={name}
-                role={displayRole}
+                role={primaryRole}
+                roles={roles}
                 headshotUrl={headshotUrl || ""}
                 currentHeadshotId={currentHeadshotId || undefined}
                 location={location}

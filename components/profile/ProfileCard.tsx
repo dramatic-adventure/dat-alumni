@@ -282,6 +282,7 @@ interface ProfileCardProps {
   alumniId?: string;
 
   role: string;
+  roles?: string[];
   headshotUrl?: string;
   currentHeadshotId?: string;
   location?: string;
@@ -660,6 +661,7 @@ const hasStories = storiesForFeatured.length > 0;
           slug={slug}
           name={name}
           role={role}
+          roles={props.roles}
           location={location}
           headshotUrl={derivedHeadshotUrl}
           publicEmail={publicEmail}
@@ -677,6 +679,7 @@ const hasStories = storiesForFeatured.length > 0;
           slug={slug}
           name={name}
           role={role}
+          roles={props.roles}
           location={location}
           headshotUrl={derivedHeadshotUrl}
           publicEmail={publicEmail}

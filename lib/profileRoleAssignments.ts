@@ -121,25 +121,47 @@ function shouldPrefixStatus(status?: string) {
   return s === "interim" || s === "acting" || s === "open" || s === "incoming";
 }
 
+function isPlaceholderRoleLabel(label?: string) {
+  const clean = String(label ?? "").trim();
+  if (!clean) return true;
+
+  if (/^(staff|board)\b/i.test(clean)) return true;
+
+  const upper = clean.toUpperCase();
+  if (clean === upper && clean.length <= 8) return true;
+
+  const pieces = clean.split(/\s+/).filter(Boolean);
+  if (pieces.length <= 2 && pieces.every((p) => p.length <= 4)) return true;
+
+  return false;
+}
+
 function buildAssignmentRoleLabel(a: RoleAssignmentRow): string {
-  const base = (a.roleLabel ?? "").trim() || roleCodeLabel(a.roleCode);
-  const specificity = scopeSpecificity(a);
   const scopeType = String(a.scopeType ?? "").trim().toUpperCase();
+  const explicitRoleLabel = String(a.roleLabel ?? "").trim();
+  const contextual = String(a.roleDetails ?? "").trim() || scopeSpecificity(a);
+
+  const base =
+    explicitRoleLabel && !isPlaceholderRoleLabel(explicitRoleLabel)
+      ? explicitRoleLabel
+      : roleCodeLabel(a.roleCode);
 
   let label = base;
 
-  if (specificity) {
+  if (contextual) {
     const baseLower = base.toLowerCase();
-    const specLower = specificity.toLowerCase();
+    const contextualLower = contextual.toLowerCase();
 
-    if (!baseLower.includes(specLower)) {
-      if (scopeType === "COUNTRY") {
-        label = `${base} in ${specificity}`;
-      } else if (scopeType === "CLUB") {
-        label = `${base} for ${specificity}`;
-      } else {
-        label = `${base} — ${specificity}`;
-      }
+    if (contextualLower.includes(baseLower)) {
+      label = contextual;
+    } else if (String(a.roleCode ?? "").trim().toUpperCase() === "BOARD") {
+      label = `${contextual}, ${base}`;
+    } else if (scopeType === "COUNTRY") {
+      label = `${base} in ${contextual}`;
+    } else if (scopeType === "CLUB") {
+      label = `${base} for ${contextual}`;
+    } else {
+      label = `${base} — ${contextual}`;
     }
   }
 
