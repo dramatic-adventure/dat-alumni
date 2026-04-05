@@ -17,6 +17,7 @@ interface AlumniItem {
   name: string;
   slug: string;
   roles?: string[];
+  primaryRole?: string;
   location?: string;
   programs?: string[];
   seasons?: string[];
@@ -52,7 +53,11 @@ function driveUrlFromId(id?: string | null) {
 }
 
 /** Convert Profile-Live row (string-ish fields) into the directory AlumniItem shape */
-function liveRowToAlumniItem(r: ProfileLiveRow, enrichedBySlug: Map<string, EnrichedProfileLiveRow>): AlumniItem {
+function liveRowToAlumniItem(
+  r: ProfileLiveRow,
+  enrichedBySlug: Map<string, EnrichedProfileLiveRow>,
+  primaryRoleBySlug: Record<string, string>
+): AlumniItem {
   // roles/programs/tags/statusFlags can be stored as CSV-ish strings in Profile-Live
   const roles = splitCsvish(r.roles);
   const programs = splitCsvish((r as any).programs);
@@ -71,6 +76,7 @@ function liveRowToAlumniItem(r: ProfileLiveRow, enrichedBySlug: Map<string, Enri
     name: r.name || "",
     slug: r.slug || "",
     roles,
+    primaryRole: primaryRoleBySlug[r.slug] || roles[0] || "",
     location: r.location || "",
     programs,
     statusFlags,
@@ -101,9 +107,11 @@ function liveRowToAlumniItem(r: ProfileLiveRow, enrichedBySlug: Map<string, Enri
 export default function DirectoryPageClient({
   alumni,
   enrichedData = [],
+  primaryRoleBySlug = {},
 }: {
   alumni: AlumniItem[];
   enrichedData?: EnrichedProfileLiveRow[];
+  primaryRoleBySlug?: Record<string, string>;
 }) {
 
   const [primaryResults, setPrimaryResults] = useState<AlumniItem[]>([]);
@@ -292,8 +300,16 @@ export default function DirectoryPageClient({
                   enrichedData={enrichedData}
                   filters={filters}
                   onResults={(primary: ProfileLiveRow[], secondary: ProfileLiveRow[], q: string) => {
-                    setPrimaryResults(primary.map((r) => liveRowToAlumniItem(r, enrichedBySlug)));
-                    setSecondaryResults(secondary.map((r) => liveRowToAlumniItem(r, enrichedBySlug)));
+                    setPrimaryResults(
+                      primary.map((r) =>
+                        liveRowToAlumniItem(r, enrichedBySlug, primaryRoleBySlug)
+                      )
+                    );
+                    setSecondaryResults(
+                      secondary.map((r) =>
+                        liveRowToAlumniItem(r, enrichedBySlug, primaryRoleBySlug)
+                      )
+                    );
                     setQuery(q);
                   }}
                   showAllIfEmpty={true}
@@ -507,7 +523,7 @@ export default function DirectoryPageClient({
                   <MiniProfileCard
                     key={alum.slug || String(idx)}
                     name={alum.name}
-                    role={alum.roles?.join(", ") ?? ""}
+                    role={alum.primaryRole || alum.roles?.[0] || ""}
                     slug={alum.slug}
                     priority={idx < 12}
                   />
@@ -556,7 +572,7 @@ export default function DirectoryPageClient({
                     <MiniProfileCard
                       key={alum.slug || String(idx)}
                       name={alum.name}
-                      role={alum.roles?.join(", ") ?? ""}
+                      role={alum.primaryRole || alum.roles?.[0] || ""}
                       slug={alum.slug}
                       priority={idx < 12}
                     />

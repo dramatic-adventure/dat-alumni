@@ -191,8 +191,8 @@ export default function DesktopProfileHeader({
   const currentTitles = currentTitle
     ? splitTitles(currentTitle).map((t) => t.trim()).filter(Boolean)
     : [];
-  const primaryCurrentTitle = currentTitles[0] ?? null;
-  const extraCurrentTitles = currentTitles.slice(1).map((label) => ({
+  const primaryCurrentTitle = titleLinks.length > 0 ? null : currentTitles[0] ?? null;
+  const extraCurrentTitles = (titleLinks.length > 0 ? [] : currentTitles.slice(1)).map((label) => ({
     label,
     href: hrefForTitleToken(label),
   }));

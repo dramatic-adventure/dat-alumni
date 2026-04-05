@@ -192,6 +192,11 @@ function dedupeRoles(roles: string[]) {
   return out;
 }
 
+function removeRoles(source: string[], toRemove: string[]) {
+  const removeSet = new Set(toRemove.map((r) => normRoleText(r)));
+  return source.filter((role) => !removeSet.has(normRoleText(role)));
+}
+
 function compareCurrent(a: RoleAssignmentRow, b: RoleAssignmentRow) {
   const display = (b.displayOrder ?? -999) - (a.displayOrder ?? -999);
   if (display !== 0) return display;
@@ -243,8 +248,19 @@ export function getOrderedProfileRoles(
   const historicalLabels = dedupeRoles(historical.map(buildAssignmentRoleLabel));
 
   // If there is a current role in Role-Assignments, it becomes primary.
+  // Historical DAT roles should come next.
+  // Existing leftover roles stay after the DAT role history.
   if (currentLabels.length > 0) {
-    return dedupeRoles([...currentLabels, ...currentExisting, ...historicalLabels]);
+    const remainingExisting = removeRoles(currentExisting, [
+      ...currentLabels,
+      ...historicalLabels,
+    ]);
+
+    return dedupeRoles([
+      ...currentLabels,
+      ...historicalLabels,
+      ...remainingExisting,
+    ]);
   }
 
   // Otherwise preserve the existing primary profile role,
