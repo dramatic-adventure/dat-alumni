@@ -1,5 +1,7 @@
 import { loadAlumni } from "@/lib/loadAlumni";
 import { getRecentUpdates } from "@/lib/getRecentUpdates";
+import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
+import { getPrimaryDatRoleForProfile } from "@/lib/profileRoleAssignments";
 
 /**
  * ✅ VIPs get an extra boost in the weighted lottery.
@@ -68,6 +70,7 @@ function weightedRandom<T>(items: T[], weights: number[]): T {
 
 export async function getFeaturedAlumni() {
   const allAlumni = await loadAlumni();
+  const roleAssignments = await loadRoleAssignments();
 
   // ✅ Filter out "never feature" slugs FIRST so they cannot be picked.
   const alumni = allAlumni.filter((a) => !neverFeatured.has(a.slug));
@@ -107,7 +110,7 @@ export async function getFeaturedAlumni() {
   return {
     highlights: highlights.map((a) => ({
       name: a.name || "Unknown",
-      roles: a.roles || [],
+      role: getPrimaryDatRoleForProfile(a.slug, a.roles || [], roleAssignments),
       slug: a.slug,
       headshotUrl: a.headshotUrl ?? "/images/default-headshot.png",
     })),

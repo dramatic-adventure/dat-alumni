@@ -7,6 +7,7 @@ import Link from "next/link";
 interface FeaturedAlumniProps {
   highlights: {
     name: string;
+    role?: string;
     roles?: string[];
     slug: string;
     headshotUrl?: string;
@@ -142,7 +143,7 @@ export default function FeaturedAlumni({ highlights }: FeaturedAlumniProps) {
                     opacity: 0.8,
                   }}
                 >
-                  {(alum.roles && alum.roles.join(", ")) || "Artist"}
+                  {alum.role || alum.roles?.[0] || "Artist"}
                 </p>
               </div>
             </Link>

@@ -7,6 +7,8 @@ import AlumniPage from "@/components/alumni/AlumniPage";
 import { getFeaturedAlumni } from "@/lib/featuredAlumni";
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
 import { getRecentUpdates } from "@/lib/getRecentUpdates";
+import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
+import { getPrimaryDatRoleForProfile } from "@/lib/profileRoleAssignments";
 import {
   loadProfileLiveRowsPublic,
   loadProfileMediaRows,
@@ -19,7 +21,7 @@ import type { EnrichedProfileLiveRow } from "@/components/alumni/AlumniSearch/en
 type HighlightItem = {
   name: string;
   slug: string;
-  roles?: string[];
+  role?: string;
   headshotUrl?: string;
 };
 
@@ -50,6 +52,7 @@ export default async function Alumni() {
 
   const { highlights } = await getFeaturedAlumni();
   const alumni = await loadVisibleAlumni();
+  const roleAssignments = await loadRoleAssignments();
 
   // ✅ Same authoritative sources used across /alumni + /directory
   const [profileLiveRows, profileMediaRows] = await Promise.all([
@@ -106,7 +109,12 @@ export default async function Alumni() {
     .map((h: any) => ({
       name: String(h?.name ?? h?.title ?? "").trim(),
       slug: norm(h?.slug),
-      roles: Array.isArray(h?.roles) ? (h.roles as string[]) : [],
+      role:
+        typeof h?.role === "string"
+          ? h.role
+          : Array.isArray(h?.roles)
+            ? String(h.roles[0] || "").trim()
+            : "",
       headshotUrl: (() => {
         const k = norm(h?.slug);
 
@@ -155,6 +163,13 @@ export default async function Alumni() {
     author: u.name || "ALUM",
   }));
 
+  const primaryRoleBySlug = Object.fromEntries(
+    alumni.map((a) => [
+      a.slug,
+      getPrimaryDatRoleForProfile(a.slug, a.roles || [], roleAssignments),
+    ])
+  );
+
   return (
     <Suspense fallback={<div className="p-6">Loading…</div>}>
       <AlumniPage
@@ -162,6 +177,7 @@ export default async function Alumni() {
         alumniData={alumniData}
         initialUpdates={initialUpdates.slice(0, 5)}
         enrichedData={enrichedData}
+        primaryRoleBySlug={primaryRoleBySlug}
       />
     </Suspense>
   );

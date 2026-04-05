@@ -51,11 +51,13 @@ export default function AlumniPage({
   alumniData,
   initialUpdates,
   enrichedData,
+  primaryRoleBySlug,
 }: {
-  highlights: { name: string; roles?: string[]; slug: string; headshotUrl?: string }[];
+  highlights: { name: string; role?: string; roles?: string[]; slug: string; headshotUrl?: string }[];
   alumniData: AlumniItem[];
   initialUpdates: UpdateItem[];
   enrichedData: EnrichedProfileLiveRow[];
+  primaryRoleBySlug: Record<string, string>;
 }) {
   const [updates, setUpdates] = useState<UpdateItem[]>(initialUpdates || []);
 
@@ -224,7 +226,7 @@ export default function AlumniPage({
                   >
                     <MiniProfileCard
                       name={alum.name}
-                      role={rolesToArray(alum.roles).join(", ")}
+                      role={primaryRoleBySlug[alum.slug] || rolesToArray(alum.roles)[0] || ""}
                       slug={alum.slug}
                       priority={idx < 6}
                     />
@@ -274,7 +276,7 @@ export default function AlumniPage({
                   >
                     <MiniProfileCard
                       name={alum.name}
-                      role={rolesToArray(alum.roles).join(", ")}
+                      role={primaryRoleBySlug[alum.slug] || rolesToArray(alum.roles)[0] || ""}
                       slug={alum.slug}
                       priority={idx < 6}
                     />
