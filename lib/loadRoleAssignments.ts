@@ -11,6 +11,7 @@ export type RoleAssignmentRow = {
   profileId?: string;
   roleCode: RoleCode;
   roleLabel?: string;
+  roleDetails?: string;
 
   scopeType: ScopeType;
   scopeKey: string;
@@ -228,6 +229,7 @@ export async function loadRoleAssignments(): Promise<RoleAssignmentRow[]> {
         profileId: profileId || undefined,
         roleCode,
         roleLabel: (r.roleLabel || r["Role Label"] || "").trim() || undefined,
+        roleDetails: (r.roleDetails || r["Role Details"] || r["role_details"] || "").trim() || undefined,
         scopeType: scopeType as ScopeType,
         scopeKey,
 

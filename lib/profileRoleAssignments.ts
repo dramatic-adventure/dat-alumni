@@ -40,18 +40,116 @@ function scopeRank(scopeType?: string) {
   return 9;
 }
 
+function roleCodeLabel(roleCode?: string): string {
+  const code = String(roleCode ?? "").trim().toUpperCase();
+
+  switch (code) {
+    case "DCL":
+      return "Director of Creative Learning";
+    case "DCP":
+      return "Director of Community Partnerships";
+    case "MCP":
+      return "Manager of Community Partnerships";
+    case "TAIR":
+      return "Teaching Artist in Residence";
+    case "RTA":
+      return "Resident Teaching Artist";
+    case "BOARD":
+      return "Board of Directors";
+    default:
+      return String(roleCode ?? "").trim();
+  }
+}
+
+function titleCaseWords(s?: string) {
+  return String(s ?? "")
+    .split(/[,\n;|]+/g)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) =>
+      part
+        .split(/\s+/)
+        .map((word) =>
+          word ? word[0]!.toUpperCase() + word.slice(1).toLowerCase() : word
+        )
+        .join(" ")
+    )
+    .join(" and ");
+}
+
+function clubLabelFromScopeKey(scopeKey?: string) {
+  return String(scopeKey ?? "")
+    .split(/[,\n;|]+/g)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) =>
+      part
+        .replace(/^https?:\/\/[^/]+/i, "")
+        .replace(/^\/?drama-?club\/?/i, "")
+        .replace(/-?drama-?club$/i, "")
+        .replace(/-/g, " ")
+        .trim()
+    )
+    .map((part) =>
+      part
+        .split(/\s+/)
+        .map((word) =>
+          word ? word[0]!.toUpperCase() + word.slice(1).toLowerCase() : word
+        )
+        .join(" ")
+    )
+    .join(" and ");
+}
+
+function scopeSpecificity(a: RoleAssignmentRow): string {
+  const details = String(a.roleDetails ?? "").trim();
+  if (details) return details;
+
+  if (String(a.scopeType ?? "").toUpperCase() === "COUNTRY") {
+    return titleCaseWords(a.scopeKey);
+  }
+
+  if (String(a.scopeType ?? "").toUpperCase() === "CLUB") {
+    return clubLabelFromScopeKey(a.scopeKey);
+  }
+
+  return "";
+}
+
+function shouldPrefixStatus(status?: string) {
+  const s = String(status ?? "").trim().toLowerCase();
+  return s === "interim" || s === "acting" || s === "open" || s === "incoming";
+}
+
 function buildAssignmentRoleLabel(a: RoleAssignmentRow): string {
-  const base = (a.roleLabel ?? "").trim() || String(a.roleCode ?? "").trim();
-  const status = (a.statusSignifier ?? "").trim();
+  const base = (a.roleLabel ?? "").trim() || roleCodeLabel(a.roleCode);
+  const specificity = scopeSpecificity(a);
+  const scopeType = String(a.scopeType ?? "").trim().toUpperCase();
 
-  if (!status || !base) return base;
+  let label = base;
 
-  const baseLower = base.toLowerCase();
+  if (specificity) {
+    const baseLower = base.toLowerCase();
+    const specLower = specificity.toLowerCase();
+
+    if (!baseLower.includes(specLower)) {
+      if (scopeType === "COUNTRY") {
+        label = `${base} in ${specificity}`;
+      } else if (scopeType === "CLUB") {
+        label = `${base} for ${specificity}`;
+      } else {
+        label = `${base} — ${specificity}`;
+      }
+    }
+  }
+
+  const status = String(a.statusSignifier ?? "").trim();
+  if (!status || !shouldPrefixStatus(status)) return label;
+
   const statusLower = status.toLowerCase();
+  if (label.toLowerCase().startsWith(statusLower)) return label;
 
-  if (baseLower.startsWith(statusLower)) return base;
-
-  return `${status} ${base}`;
+  return `${status} ${label}`;
 }
 
 function dedupeRoles(roles: string[]) {

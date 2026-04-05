@@ -94,31 +94,46 @@ function scopeKeyMatchesCountry(scopeKeyRaw: string, countryLabelKey: string) {
   );
 }
 
-function roleSubtitle(roleCodeRaw: string, club: DramaClub, roleLabel?: string) {
+function roleSubtitle(
+  roleCodeRaw: string,
+  club: DramaClub,
+  roleLabel?: string,
+  roleDetails?: string
+) {
   if (roleLabel?.trim()) return roleLabel.trim();
 
+  const details = String(roleDetails ?? "").trim();
   const city = club.city?.trim();
   const country = club.country?.trim();
-  const loc = city && country ? `${city}, ${country}` : city || country || "";
+  const fallbackLoc = city && country ? `${city}, ${country}` : city || country || "";
 
   const roleCode = normRoleCode(roleCodeRaw);
 
   if (roleCode === "TAIR") {
-    return loc
-      ? `Teaching Artist-in-Residence — ${loc}`
-      : "Teaching Artist-in-Residence";
+    if (details) return `Teaching Artist in Residence — ${details}`;
+    return fallbackLoc
+      ? `Teaching Artist in Residence — ${fallbackLoc}`
+      : "Teaching Artist in Residence";
   }
 
   if (roleCode === "MCP") {
+    if (details) return `Manager of Community Partnerships in ${details}`;
     return country
       ? `Manager of Community Partnerships in ${country}`
       : "Manager of Community Partnerships";
   }
 
-  if (roleCode === "DCP") return "Director of Community Partnerships";
-  if (roleCode === "DCL") return "Director of Creative Learning";
+  if (roleCode === "DCP") {
+    if (details) return `Director of Community Partnerships in ${details}`;
+    return "Director of Community Partnerships";
+  }
 
-  return "";
+  if (roleCode === "DCL") {
+    if (details) return `Director of Creative Learning — ${details}`;
+    return "Director of Creative Learning";
+  }
+
+  return details || "";
 }
 
 function pickAvatarSrc(p: unknown): string | undefined {
@@ -201,7 +216,12 @@ function toPersonRef(
     ...person,
     profileId: pid,
     avatarSrc: pickAvatarSrc(person) || person.avatarSrc,
-    subtitle: roleSubtitle(assignment.roleCode, club, assignment.roleLabel),
+    subtitle: roleSubtitle(
+      assignment.roleCode,
+      club,
+      assignment.roleLabel,
+      assignment.roleDetails
+    ),
   };
 }
 
