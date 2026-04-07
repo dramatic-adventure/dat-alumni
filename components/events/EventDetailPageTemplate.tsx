@@ -761,6 +761,39 @@ export default function EventDetailPageTemplate({
   const productionCycle = relatedProductionCycle(event.production);
   const relatedUpcomingEvent = isArchiveView ? findRelatedUpcomingEvent(event, productionExtra) : undefined;
 
+  // Archive-enriched eyebrow: "Live Theatre · Season 8 (2013)" with linked season
+  const archiveEyebrowNode =
+    isArchiveView && relatedProduction?.season
+      ? event.translations
+        ? (
+          <>
+            <span className="evd-bilingual-wrap-default">
+              {getEventEyebrowEs(event)}{" · "}
+              <Link href={`/season/${relatedProduction.season}`} className="evd-hero-season-link">
+                {`Temporada ${relatedProduction.season}`}
+              </Link>
+              {relatedProduction.year ? ` (${relatedProduction.year})` : ""}
+            </span>
+            <span className="evd-bilingual-wrap-alt evd-bilingual-en">
+              {getEventEyebrow(event)}{" · "}
+              <Link href={`/season/${relatedProduction.season}`} className="evd-hero-season-link">
+                {`Season ${relatedProduction.season}`}
+              </Link>
+              {relatedProduction.year ? ` (${relatedProduction.year})` : ""}
+            </span>
+          </>
+        )
+        : (
+          <>
+            {getEventEyebrow(event)}{" · "}
+            <Link href={`/season/${relatedProduction.season}`} className="evd-hero-season-link">
+              {`Season ${relatedProduction.season}`}
+            </Link>
+            {relatedProduction.year ? ` (${relatedProduction.year})` : ""}
+          </>
+        )
+      : undefined;
+
   // Pre-filtered credit groups for cast/creative sections
   const castCredits = (credits ?? []).filter((c) => c.group === "cast");
   const creativeCredits = (credits ?? []).filter((c) => !c.group || c.group === "creative");
@@ -829,6 +862,7 @@ export default function EventDetailPageTemplate({
             defaultLang={heroDefaultLang}
             eyebrow={event.translations ? getEventEyebrowEs(event) : getEventEyebrow(event)}
             eyebrowEn={event.translations ? getEventEyebrow(event) : undefined}
+            eyebrowNode={archiveEyebrowNode}
             base={{
               title: event.title,
               subtitle: event.subtitle,
@@ -839,48 +873,23 @@ export default function EventDetailPageTemplate({
             translations={event.translations ?? {}}
           />
 
-          {/* Production-linked enrichment: season + year + playwright — hero */}
-          {relatedProduction && (relatedProduction.season || relatedProduction.year || productionExtra?.creditPrefix) ? (
+          {/* Production-linked playwright credit — hero (both upcoming and archive) */}
+          {productionExtra?.creditPrefix && productionExtra.creditPeople?.length ? (
             <div className="evd-hero-prod-meta">
-              {(relatedProduction.season || relatedProduction.year) ? (
-                <p className="evd-hero-season">
-                  {event.translations ? (
-                    <>
-                      <span className="evd-bilingual-wrap-default">
-                        {[
-                          relatedProduction.season ? `Temporada ${relatedProduction.season}` : null,
-                          relatedProduction.year ? String(relatedProduction.year) : null,
-                        ].filter(Boolean).join(" · ")}
-                      </span>
-                      <span className="evd-bilingual-wrap-alt evd-bilingual-en">
-                        {[
-                          relatedProduction.season ? `Season ${relatedProduction.season}` : null,
-                          relatedProduction.year ? String(relatedProduction.year) : null,
-                        ].filter(Boolean).join(" • ")}
-                      </span>
-                    </>
-                  ) : (
-                    [
-                      relatedProduction.season ? `Season ${relatedProduction.season}` : null,
-                      relatedProduction.year ? String(relatedProduction.year) : null,
-                    ].filter(Boolean).join(" • ")
-                  )}
-                </p>
-              ) : null}
-              {(productionExtra?.creditPrefix && productionExtra.creditPeople?.length) ? (
-                <p className="evd-hero-credit">
-                  {productionExtra.creditPrefix}
-                  {" "}
-                  {productionExtra.creditPeople.map((p, i, arr) => (
-                    <span key={i}>
-                      {i > 0 && i === arr.length - 1 ? " & " : i > 0 ? ", " : ""}
-                      {p.href ? (
-                        <a href={p.href} className="evd-hero-credit-link">{p.name}</a>
-                      ) : p.name}
-                    </span>
-                  ))}
-                </p>
-              ) : null}
+              <p className="evd-hero-credit">
+                <span className="evd-hero-credit-prefix">{productionExtra.creditPrefix}</span>
+                {" "}
+                {productionExtra.creditPeople.map((p, i, arr) => (
+                  <span key={i}>
+                    {i > 0 && i === arr.length - 1 ? " & " : i > 0 ? ", " : ""}
+                    {p.href ? (
+                      <a href={p.href} className="evd-hero-credit-link">{p.name}</a>
+                    ) : (
+                      <span className="evd-hero-credit-name">{p.name}</span>
+                    )}
+                  </span>
+                ))}
+              </p>
             </div>
           ) : null}
 
@@ -1302,15 +1311,31 @@ export default function EventDetailPageTemplate({
                             ) : "Partners"}
                           </p>
                           <div className="evd-partner-list">
-                            {productionExtra.partners.map((p, i) =>
-                              p.href ? (
-                                <a key={i} href={p.href} className="evd-partner-link" target="_blank" rel="noopener noreferrer">
-                                  {p.name} →
+                            {productionExtra.partners.map((p, i) => {
+                              const inner = (
+                                <>
+                                  {p.logoSrc ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={p.logoSrc}
+                                      alt={p.logoAlt ?? p.name}
+                                      className="evd-partner-logo"
+                                      loading="lazy"
+                                      decoding="async"
+                                    />
+                                  ) : null}
+                                  <span className="evd-partner-name">{p.name}</span>
+                                  {p.href ? <span className="evd-partner-arrow"> →</span> : null}
+                                </>
+                              );
+                              return p.href ? (
+                                <a key={i} href={p.href} className="evd-partner-link evd-partner-link--row" target="_blank" rel="noopener noreferrer">
+                                  {inner}
                                 </a>
                               ) : (
-                                <span key={i} className="evd-partner-link">{p.name}</span>
-                              ),
-                            )}
+                                <span key={i} className="evd-partner-link evd-partner-link--row">{inner}</span>
+                              );
+                            })}
                           </div>
                         </div>
                       ) : null}
@@ -2502,7 +2527,7 @@ export default function EventDetailPageTemplate({
         }
         .evd-impact-donate-btn {
           display: inline-block;
-          margin-top: 0.5rem;
+          margin-top: 1.75rem;
           padding: 0.7rem 1.5rem;
           background: #6c00af;
           color: #fff;
@@ -3827,60 +3852,69 @@ export default function EventDetailPageTemplate({
 
         /* ── 14a. Production enrichment elements ──────────────────────── */
 
-        /* Hero: season + playwright line */
+        /* Hero: playwright credit line */
         .evd-hero-prod-meta {
-          margin: 0.6rem 0 0;
-          display: flex;
-          flex-direction: column;
-          gap: 0.25rem;
-        }
-        .evd-hero-season {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.72rem;
-          font-weight: 700;
-          letter-spacing: 0.22em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.5);
-          margin: 0;
+          margin: 0.55rem 0 0;
         }
         .evd-hero-credit {
           font-family: "DM Sans", sans-serif;
-          font-size: 0.78rem;
+          font-size: 0.76rem;
           font-weight: 500;
-          letter-spacing: 0.06em;
-          color: rgba(255,255,255,0.4);
+          letter-spacing: 0.1em;
+          color: rgba(255,255,255,0.55);
           margin: 0;
           text-transform: uppercase;
         }
+        .evd-hero-credit-prefix {
+          color: rgba(255,255,255,0.35);
+        }
+        .evd-hero-credit-name {
+          color: rgba(255,255,255,0.82);
+        }
         .evd-hero-credit-link {
-          color: inherit;
+          color: rgba(255,255,255,0.82);
           text-decoration: none;
-          border-bottom: 1px solid rgba(255,255,255,0.2);
-          transition: color 0.15s, border-color 0.15s;
+          border-bottom: 1px solid rgba(255,255,255,0.25);
+          transition: color 0.16s ease, border-color 0.16s ease, letter-spacing 0.16s ease;
         }
         .evd-hero-credit-link:hover {
-          color: rgba(255,255,255,0.7);
-          border-color: rgba(255,255,255,0.5);
+          color: #ffcc00;
+          border-color: rgba(255,204,0,0.5);
+          letter-spacing: 0.13em;
         }
 
-        /* About: theme pills */
+        /* Archive eyebrow season link */
+        .evd-hero-season-link {
+          color: inherit;
+          text-decoration: none;
+          border-bottom: 1px solid rgba(255,255,255,0.25);
+          transition: color 0.16s ease, border-color 0.16s ease, letter-spacing 0.16s ease;
+        }
+        .evd-hero-season-link:hover {
+          color: #ffcc00;
+          border-color: rgba(255,204,0,0.5);
+          letter-spacing: 0.32em;
+        }
+
+        /* About: theme pills — DAT teal */
         .evd-theme-pills {
           display: flex;
           flex-wrap: wrap;
           gap: 0.5rem;
-          margin-top: 1.25rem;
+          margin-top: 1.4rem;
         }
         .evd-theme-pill {
           display: inline-block;
-          padding: 0.3rem 0.75rem;
-          border: 1px solid rgba(255,255,255,0.15);
+          padding: 0.32rem 0.85rem;
+          background: rgba(36,147,169,0.12);
+          border: 1px solid rgba(36,147,169,0.38);
           border-radius: 999px;
           font-family: "DM Sans", sans-serif;
-          font-size: 0.72rem;
+          font-size: 0.7rem;
           font-weight: 600;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.09em;
           text-transform: uppercase;
-          color: rgba(255,255,255,0.5);
+          color: #2493A9;
           white-space: nowrap;
         }
 
@@ -3928,21 +3962,22 @@ export default function EventDetailPageTemplate({
         }
         .evd-cause-pill {
           display: inline-block;
-          padding: 0.28rem 0.65rem;
-          border: 1px solid rgba(255,255,255,0.18);
+          padding: 0.3rem 0.7rem;
+          border: 1px solid rgba(255,255,255,0.28);
           border-radius: 999px;
           font-family: "DM Sans", sans-serif;
           font-size: 0.7rem;
           font-weight: 600;
           letter-spacing: 0.07em;
           text-transform: uppercase;
-          color: rgba(255,255,255,0.55);
+          color: rgba(255,255,255,0.78);
           text-decoration: none;
-          transition: border-color 0.15s, color 0.15s;
+          transition: border-color 0.15s, color 0.15s, background 0.15s;
         }
         a.evd-cause-pill:hover {
           border-color: var(--evd-accent);
           color: var(--evd-accent);
+          background: rgba(255,255,255,0.04);
         }
 
         /* Community impact: partners */
@@ -3952,18 +3987,42 @@ export default function EventDetailPageTemplate({
         .evd-partner-list {
           display: flex;
           flex-direction: column;
-          gap: 0.4rem;
+          gap: 0.55rem;
           margin-top: 0.6rem;
         }
         .evd-partner-link {
           font-family: "DM Sans", sans-serif;
-          font-size: 0.82rem;
-          color: rgba(255,255,255,0.55);
+          font-size: 0.84rem;
+          color: rgba(255,255,255,0.8);
           text-decoration: none;
           transition: color 0.15s;
         }
+        .evd-partner-link--row {
+          display: flex;
+          align-items: center;
+          gap: 0.55rem;
+        }
         a.evd-partner-link:hover {
-          color: rgba(255,255,255,0.9);
+          color: rgba(255,255,255,1);
+        }
+        a.evd-partner-link:hover .evd-partner-arrow {
+          color: var(--evd-accent);
+        }
+        .evd-partner-logo {
+          width: 22px;
+          height: 22px;
+          object-fit: contain;
+          border-radius: 3px;
+          opacity: 0.85;
+          flex-shrink: 0;
+        }
+        .evd-partner-name {
+          flex: 1;
+        }
+        .evd-partner-arrow {
+          opacity: 0.55;
+          font-size: 0.78rem;
+          transition: color 0.15s;
         }
 
         /* Related upcoming event — archive promo */

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 interface LangData {
   title?: string;
@@ -23,6 +23,11 @@ interface EventHeroTextProps {
   };
   /** Alternate translations keyed by ISO 639-1 code */
   translations: Record<string, LangData>;
+  /**
+   * Optional rich eyebrow node (overrides the plain eyebrow string when set).
+   * Use for archive view to inject a linked season into the eyebrow line.
+   */
+  eyebrowNode?: ReactNode;
 }
 
 const LANG_LABELS: Record<string, string> = {
@@ -46,6 +51,7 @@ export default function EventHeroText({
   eyebrowEn,
   base,
   translations,
+  eyebrowNode,
 }: EventHeroTextProps) {
   const langCodes = [defaultLang, ...Object.keys(translations)];
   const [activeLang, setActiveLang] = useState(defaultLang);
@@ -117,7 +123,7 @@ export default function EventHeroText({
 
       {/* Eyebrow — category label above title */}
       <p className="evd-eyebrow">
-        {eyebrowEn && activeLang !== defaultLang ? eyebrowEn : eyebrow}
+        {eyebrowNode ?? (eyebrowEn && activeLang !== defaultLang ? eyebrowEn : eyebrow)}
       </p>
 
       <h1 className="evd-title">{title}</h1>
