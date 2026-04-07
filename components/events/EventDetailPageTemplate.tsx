@@ -177,8 +177,13 @@ function resolveDramaClubSlugs(event: DatEvent): string[] {
     "dramaClubs" in event && Array.isArray((event as DatEvent & { dramaClubs?: string[] }).dramaClubs)
       ? ((event as DatEvent & { dramaClubs?: string[] }).dramaClubs ?? [])
       : [];
+  // Also check resolver-populated dramaClubSlugs (from productionMap / productionDetailsMap)
+  const fromResolver =
+    "dramaClubSlugs" in event && Array.isArray((event as DatEvent & { dramaClubSlugs?: string[] }).dramaClubSlugs)
+      ? ((event as DatEvent & { dramaClubSlugs?: string[] }).dramaClubSlugs ?? [])
+      : [];
 
-  return Array.from(new Set([...singular, ...plural].filter(Boolean)));
+  return Array.from(new Set([...singular, ...plural, ...fromResolver].filter(Boolean)));
 }
 
 function resolveDramaClubs(event: DatEvent): DramaClubRef[] {
@@ -489,8 +494,8 @@ function ArchivedEventInfoBand({
               <Link href={`/theatre/${relatedProduction.slug}`} className="evd-btn-ticket">
                 {event.translations ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">Ver Archivo de Producción →</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">View Production Archive →</span>
+                    <span className="evd-bilingual-wrap-default">View Production Archive →</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Ver Archivo de Producción →</span>
                   </>
                 ) : "View Production Archive →"}
               </Link>
@@ -498,8 +503,8 @@ function ArchivedEventInfoBand({
               <Link href="/projects" className="evd-btn-ticket">
                 {event.translations ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">Explorar el Archivo →</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">Browse Project Archive →</span>
+                    <span className="evd-bilingual-wrap-default">Browse Project Archive →</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Explorar el Archivo →</span>
                   </>
                 ) : "Browse Project Archive →"}
               </Link>
@@ -530,10 +535,10 @@ function ArchivedEventInfoBand({
             </svg>
             {event.translations ? (
               <>
-                <span className="evd-bilingual-wrap-default">{event.accessibility}</span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-en">
+                <span className="evd-bilingual-wrap-default">
                   {event.translations["en"]?.accessibility ?? event.accessibility}
                 </span>
+                <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.accessibility}</span>
               </>
             ) : (
               <span>{event.accessibility}</span>
@@ -572,8 +577,8 @@ function UpcomingEventInfoBand({
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 {event.translations?.["en"]?.runtime ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">{event.runtime}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">{event.translations["en"].runtime}</span>
+                    <span className="evd-bilingual-wrap-default">{event.translations["en"].runtime}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.runtime}</span>
                   </>
                 ) : event.runtime}
               </span>
@@ -583,8 +588,8 @@ function UpcomingEventInfoBand({
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                 {event.translations?.["en"]?.language ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">{event.language}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">{event.translations["en"].language}</span>
+                    <span className="evd-bilingual-wrap-default">{event.translations["en"].language}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.language}</span>
                   </>
                 ) : event.language}
               </span>
@@ -594,8 +599,8 @@ function UpcomingEventInfoBand({
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 {event.translations?.["en"]?.suitability ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">{event.suitability}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">{event.translations["en"].suitability}</span>
+                    <span className="evd-bilingual-wrap-default">{event.translations["en"].suitability}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.suitability}</span>
                   </>
                 ) : event.suitability}
               </span>
@@ -699,10 +704,10 @@ function UpcomingEventInfoBand({
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0, opacity: 0.4 }}><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
             {event.translations ? (
               <>
-                <span className="evd-bilingual-wrap-default">{event.accessibility}</span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-en">
+                <span className="evd-bilingual-wrap-default">
                   {event.translations["en"]?.accessibility ?? event.accessibility}
                 </span>
+                <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.accessibility}</span>
               </>
             ) : (
               <span>{event.accessibility}</span>
@@ -725,8 +730,6 @@ export default function EventDetailPageTemplate({
 
   const isArchiveView = isElapsed(event);
 
-  const heroDefaultLang = event.defaultLang ?? "en";
-
   const relatedProduction = event.production ? productionMap[event.production] : undefined;
   const productionExtra = event.production ? productionDetailsMap[event.production] : undefined;
 
@@ -737,6 +740,33 @@ export default function EventDetailPageTemplate({
   const resolvedCauses = resolved.causes ?? productionExtra?.causes;
   const resolvedPartners = resolved.partners ?? productionExtra?.partners;
   const resolvedResources = resolved.resources ?? productionExtra?.resources;
+
+  // English-first bilingual: for bilingual performance events, always display
+  // English as the default visible language. Spanish remains available via toggle.
+  // When event.translations.en exists, we pass EN text as the hero base and
+  // reconstruct a { es: ... } translations object so EventHeroText's langCodes
+  // are ["en", "es"] — deduped and correctly ordered.
+  const isBilingual = !!event.translations?.["en"];
+  const heroBase = isBilingual
+    ? {
+        title: event.translations!["en"].title ?? event.title,
+        subtitle: event.translations!["en"].subtitle ?? event.subtitle ?? "",
+        description: isArchiveView
+          ? (event.archiveSummary ?? event.translations!["en"].description ?? event.description)
+          : (event.translations!["en"].description ?? event.description),
+      }
+    : {
+        title: event.title,
+        subtitle: event.subtitle ?? "",
+        description: isArchiveView
+          ? (event.archiveSummary ?? event.description)
+          : event.description,
+      };
+  const heroTranslations = isBilingual
+    ? { es: { title: event.title, subtitle: event.subtitle, description: event.description } }
+    : (event.translations ?? {});
+  // Always use "en" as the display default for bilingual events
+  const heroDefaultLang = isBilingual ? "en" : (event.defaultLang ?? "en");
 
   const heroImage =
     normalizeImagePath(
@@ -860,8 +890,8 @@ export default function EventDetailPageTemplate({
             <span>
               {event.translations?.["en"]?.title ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">{event.title}</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">{event.translations["en"].title}</span>
+                  <span className="evd-bilingual-wrap-default">{event.translations["en"].title}</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.title}</span>
                 </>
               ) : event.title}
             </span>
@@ -869,17 +899,11 @@ export default function EventDetailPageTemplate({
 
           <EventHeroText
             defaultLang={heroDefaultLang}
-            eyebrow={event.translations ? getEventEyebrowEs(event) : getEventEyebrow(event)}
-            eyebrowEn={event.translations ? getEventEyebrow(event) : undefined}
+            eyebrow={getEventEyebrow(event)}
+            eyebrowEn={isBilingual ? getEventEyebrowEs(event) : undefined}
             eyebrowNode={archiveEyebrowNode}
-            base={{
-              title: event.title,
-              subtitle: event.subtitle,
-              description: !isArchiveView
-                ? event.description
-                : event.archiveSummary ?? event.description,
-            }}
-            translations={event.translations ?? {}}
+            base={heroBase}
+            translations={heroTranslations}
           />
 
           {/* Production-linked playwright credit — hero (both upcoming and archive) */}
@@ -1003,12 +1027,12 @@ export default function EventDetailPageTemplate({
               <div className="evd-card-intro">
                 {event.translations ? (
                   <>
-                    <p className="evd-card-intro-text evd-bilingual-default">{event.description}</p>
-                    {event.translations["en"]?.description && (
-                      <p className="evd-card-intro-text evd-bilingual-alt evd-bilingual-en">
-                        {event.translations["en"].description}
-                      </p>
-                    )}
+                    <p className="evd-card-intro-text evd-bilingual-default">
+                      {event.translations["en"]?.description ?? event.description}
+                    </p>
+                    <p className="evd-card-intro-text evd-bilingual-alt evd-bilingual-es">
+                      {event.description}
+                    </p>
                   </>
                 ) : (
                   <p className="evd-card-intro-text">{event.description}</p>
@@ -1038,30 +1062,41 @@ export default function EventDetailPageTemplate({
                       <p className="evd-elder-label">
                         {event.translations ? (
                           <>
-                            <span className="evd-bilingual-wrap-default">Del artista</span>
-                            <span className="evd-bilingual-wrap-alt evd-bilingual-en">From the artist</span>
+                            <span className="evd-bilingual-wrap-default">From the artist</span>
+                            <span className="evd-bilingual-wrap-alt evd-bilingual-es">Del artista</span>
                           </>
                         ) : "From the artist"}
                       </p>
                       {artistNote ? (
                         event.translations ? (
                           <>
-                            {/* ES artist note */}
-                            <p className="evd-elder-text evd-bilingual-default">&ldquo;{artistNote.note}&rdquo;</p>
+                            {/* EN artist note — default */}
+                            {event.translations["en"]?.artistNote ? (
+                              <>
+                                <p className="evd-elder-text evd-bilingual-default">&ldquo;{event.translations["en"].artistNote}&rdquo;</p>
+                                {event.translations["en"]?.artistNoteBy && (
+                                  <p className="evd-elder-meta evd-bilingual-default">
+                                    <span className="evd-elder-name">{event.translations["en"].artistNoteBy}</span>
+                                  </p>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                <p className="evd-elder-text evd-bilingual-default">&ldquo;{artistNote.note}&rdquo;</p>
+                                {artistNote.by && (
+                                  <p className="evd-elder-meta evd-bilingual-default">
+                                    <span className="evd-elder-name">{artistNote.by}</span>
+                                  </p>
+                                )}
+                              </>
+                            )}
+                            {/* ES artist note — alt */}
+                            <p className="evd-elder-text evd-bilingual-alt evd-bilingual-es">&ldquo;{artistNote.note}&rdquo;</p>
                             {artistNote.by ? (
-                              <p className="evd-elder-meta evd-bilingual-default">
+                              <p className="evd-elder-meta evd-bilingual-alt evd-bilingual-es">
                                 <span className="evd-elder-name">{artistNote.by}</span>
                               </p>
                             ) : null}
-                            {/* EN artist note */}
-                            {event.translations["en"]?.artistNote && (
-                              <p className="evd-elder-text evd-bilingual-alt evd-bilingual-en">&ldquo;{event.translations["en"].artistNote}&rdquo;</p>
-                            )}
-                            {event.translations["en"]?.artistNoteBy && (
-                              <p className="evd-elder-meta evd-bilingual-alt evd-bilingual-en">
-                                <span className="evd-elder-name">{event.translations["en"].artistNoteBy}</span>
-                              </p>
-                            )}
                           </>
                         ) : (
                           <>
@@ -1083,38 +1118,39 @@ export default function EventDetailPageTemplate({
                   <div className="evd-dash-description evd-about-block evd-section-block">
                     {event.translations ? (
                       <>
-                        <h2 className="evd-about-head evd-bilingual-default">Sobre la Obra</h2>
-                        <h2 className="evd-about-head evd-bilingual-alt evd-bilingual-en">About</h2>
+                        <h2 className="evd-about-head evd-bilingual-default">About</h2>
+                        <h2 className="evd-about-head evd-bilingual-alt evd-bilingual-es">Sobre la Obra</h2>
                       </>
                     ) : (
                       <h2 className="evd-about-head">About</h2>
                     )}
                     {event.translations ? (
                       <>
-                        {/* ES subtitle */}
-                        {event.subtitle && (
-                          <p className="evd-tagline-inline evd-bilingual-default">{event.subtitle}</p>
-                        )}
-                        {/* EN subtitle */}
-                        {event.translations["en"]?.subtitle && (
-                          <p className="evd-tagline-inline evd-bilingual-alt evd-bilingual-en">
-                            {event.translations["en"].subtitle}
+                        {/* EN subtitle — default (Rock Salt tagline) */}
+                        {(event.translations["en"]?.subtitle ?? event.subtitle) && (
+                          <p className="evd-tagline-inline evd-bilingual-default">
+                            {event.translations["en"]?.subtitle ?? event.subtitle}
                           </p>
                         )}
-                        {/* ES paragraphs */}
+                        {/* ES subtitle — alt */}
+                        {event.subtitle && (
+                          <p className="evd-tagline-inline evd-bilingual-alt evd-bilingual-es">{event.subtitle}</p>
+                        )}
+                        {/* EN paragraphs — default */}
                         <div className="evd-bilingual-default">
                           {paragraphs.map((p, i) => (
                             <p key={i} className="evd-body-text evd-about-body">{p}</p>
                           ))}
                         </div>
-                        {/* EN paragraphs */}
-                        {event.translations["en"]?.longDescription && (
-                          <div className="evd-bilingual-alt evd-bilingual-en">
-                            {splitParagraphs(event.translations["en"].longDescription).map((p, i) => (
-                              <p key={i} className="evd-body-text evd-about-body">{p}</p>
-                            ))}
-                          </div>
-                        )}
+                        {/* ES paragraphs — alt (base event description as fallback) */}
+                        <div className="evd-bilingual-alt evd-bilingual-es">
+                          {(event.description
+                            ? splitParagraphs(event.description)
+                            : []
+                          ).map((p, i) => (
+                            <p key={i} className="evd-body-text evd-about-body">{p}</p>
+                          ))}
+                        </div>
                       </>
                     ) : (
                       <>
@@ -1146,8 +1182,8 @@ export default function EventDetailPageTemplate({
                   <div className="evd-resources-block evd-section-block">
                     {event.translations ? (
                       <>
-                        <h2 className="evd-about-head evd-bilingual-default">Recursos</h2>
-                        <h2 className="evd-about-head evd-bilingual-alt evd-bilingual-en">Resources</h2>
+                        <h2 className="evd-about-head evd-bilingual-default">Resources</h2>
+                        <h2 className="evd-about-head evd-bilingual-alt evd-bilingual-es">Recursos</h2>
                       </>
                     ) : (
                       <h2 className="evd-about-head">Resources</h2>
@@ -1184,34 +1220,40 @@ export default function EventDetailPageTemplate({
                     <div className="evd-voices-quotes">
                       {event.translations ? (
                         <>
-                          <h2 className="evd-about-head evd-voices-head evd-bilingual-default">La Respuesta</h2>
-                          <h2 className="evd-about-head evd-voices-head evd-bilingual-alt evd-bilingual-en">The Response</h2>
+                          <h2 className="evd-about-head evd-voices-head evd-bilingual-default">The Response</h2>
+                          <h2 className="evd-about-head evd-voices-head evd-bilingual-alt evd-bilingual-es">La Respuesta</h2>
                         </>
                       ) : (
                         <h2 className="evd-about-head evd-voices-head">The Response</h2>
                       )}
                       {event.translations ? (
                         <>
-                          {/* ES quotes */}
+                          {/* EN quotes — default */}
                           <div className="evd-bilingual-default">
-                            {event.pressQuotes.map((q, i) => (
+                            {(event.translations["en"]?.pressQuotes ?? event.pressQuotes).map((q, i) => (
                               <figure key={i} className="evd-voices-quote">
                                 <blockquote className="evd-voices-blockquote">&ldquo;{q.text}&rdquo;</blockquote>
-                                <figcaption className="evd-voices-figcaption">{q.attribution}</figcaption>
+                                <figcaption className="evd-voices-figcaption">
+                                  {q.href ? (
+                                    <a href={q.href} target="_blank" rel="noopener noreferrer">{q.attribution}</a>
+                                  ) : q.attribution}
+                                </figcaption>
                               </figure>
                             ))}
                           </div>
-                          {/* EN quotes */}
-                          {event.translations["en"]?.pressQuotes?.length && (
-                            <div className="evd-bilingual-alt evd-bilingual-en">
-                              {event.translations["en"].pressQuotes!.map((q, i) => (
-                                <figure key={i} className="evd-voices-quote">
-                                  <blockquote className="evd-voices-blockquote">&ldquo;{q.text}&rdquo;</blockquote>
-                                  <figcaption className="evd-voices-figcaption">{q.attribution}</figcaption>
-                                </figure>
-                              ))}
-                            </div>
-                          )}
+                          {/* ES quotes — alt */}
+                          <div className="evd-bilingual-alt evd-bilingual-es">
+                            {event.pressQuotes.map((q, i) => (
+                              <figure key={i} className="evd-voices-quote">
+                                <blockquote className="evd-voices-blockquote">&ldquo;{q.text}&rdquo;</blockquote>
+                                <figcaption className="evd-voices-figcaption">
+                                  {q.href ? (
+                                    <a href={q.href} target="_blank" rel="noopener noreferrer">{q.attribution}</a>
+                                  ) : q.attribution}
+                                </figcaption>
+                              </figure>
+                            ))}
+                          </div>
                         </>
                       ) : (
                         event.pressQuotes.map((q, i) => (
@@ -1220,7 +1262,9 @@ export default function EventDetailPageTemplate({
                               &ldquo;{q.text}&rdquo;
                             </blockquote>
                             <figcaption className="evd-voices-figcaption">
-                              {q.attribution}
+                              {q.href ? (
+                                <a href={q.href} target="_blank" rel="noopener noreferrer">{q.attribution}</a>
+                              ) : q.attribution}
                             </figcaption>
                           </figure>
                         ))
@@ -1233,8 +1277,8 @@ export default function EventDetailPageTemplate({
                     <div className="evd-community-impact evd-section-block">
                       {event.translations ? (
                         <>
-                          <h2 className="evd-about-head evd-bilingual-default">Impacto Comunitario</h2>
-                          <h2 className="evd-about-head evd-bilingual-alt evd-bilingual-en">Community Impact</h2>
+                          <h2 className="evd-about-head evd-bilingual-default">Community Impact</h2>
+                          <h2 className="evd-about-head evd-bilingual-alt evd-bilingual-es">Impacto Comunitario</h2>
                         </>
                       ) : (
                         <h2 className="evd-about-head">Community Impact</h2>

@@ -242,7 +242,7 @@ export interface DatEvent {
    *     { text: "Theatre at its most alive.", attribution: "Time Out London" },
    *   ]
    */
-  pressQuotes?: { text: string; attribution: string }[];
+  pressQuotes?: { text: string; attribution: string; href?: string }[];
 
   /**
    * Accessibility details shown in the meta band.
@@ -294,7 +294,7 @@ export interface DatEvent {
       /** Translated video section title */
       videoTitle?: string;
       /** Translated press / audience quotes */
-      pressQuotes?: { text: string; attribution: string }[];
+      pressQuotes?: { text: string; attribution: string; href?: string }[];
       /**
        * Translated credits (cast + creative team) for the language.
        * Roles are translated; names and hrefs/photos stay the same.
@@ -589,6 +589,7 @@ export const events: DatEvent[] = [
           {
             text: "Not much is typical about 'A Girl without Wings.' Poignant. Sensitively directed. Magical.",
             attribution: "Laurel Graeber, The New York Times",
+            href: "https://www.nytimes.com/",
           },
           {
             text: "A love story that belongs to the sky and the earth. Theatre at its most alive.",

@@ -20,6 +20,13 @@
 //   When filling from production (synopsis, subtitle, etc.), the production
 //   field value is used as-is — production data is already in English.
 //   Event-level bilingual structure (translations, defaultLang) is never mutated.
+//
+// Credits resolution rules:
+//   1. If event already has credits → leave them (event wins)
+//   2. If productionDetailsMap has creativeTeamOverride or castOverride → use those
+//   3. Otherwise fall back to productionMap.artists:
+//      - "Actor" / "Theatremaker" roles → group: "cast"
+//      - All other roles → group: "creative"
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { productionMap } from "@/lib/productionMap";
@@ -44,9 +51,23 @@ export interface ResolvedPerformanceEvent extends DatEvent {
   partners?: PartnerLink[];
   /** Resolved from productionDetailsMap when not set on the event. */
   resources?: { label: string; href?: string }[];
+  /**
+   * Resolved drama club slugs from productionMap.dramaClubSlugs +
+   * productionDetailsMap.dramaClubSlug when event has no dramaClub/dramaClubs.
+   * Template reads this to hydrate the Community Impact badge.
+   */
+  dramaClubSlugs?: string[];
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
+
+/** Convert an alumni slug to a display name: "jason-williamson" → "Jason Williamson" */
+function slugToName(slug: string): string {
+  return slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+}
+
+/** Roles whose holders are performers (cast group); everything else is creative. */
+const CAST_ROLE_SET = new Set(["Actor", "Theatremaker"]);
 
 function normalizeImagePath(input?: string | null): string | undefined {
   if (!input) return undefined;
@@ -151,28 +172,75 @@ export function resolvePerformanceEvent(event: DatEvent): ResolvedPerformanceEve
   const partners = extra?.partners;
   const resources = extra?.resources;
 
+  // ── Production photographer + album href ─────────────────────────────────
+  // Event-level fields win; production data fills gaps.
+  const photoCredit = scalar(event.photoCredit, extra?.productionPhotographer);
+  const albumHref = scalar(event.albumHref, extra?.productionAlbumHref);
+
+  // ── Drama club slugs ──────────────────────────────────────────────────────
+  // If the event already declares drama clubs, keep them as-is (no override).
+  // Otherwise pull from productionMap.dramaClubSlugs and/or
+  // productionDetailsMap.dramaClubSlug.
+  const dramaClubSlugs = (() => {
+    const fromEvent: string[] = [];
+    if (event.dramaClub) fromEvent.push(event.dramaClub);
+    // dramaClubs is a non-standard extension field the template type-casts for
+    if ("dramaClubs" in event && Array.isArray((event as Record<string, unknown>).dramaClubs)) {
+      fromEvent.push(...((event as Record<string, unknown>).dramaClubs as string[]));
+    }
+    if (fromEvent.length) return undefined; // event already declares clubs; don't overwrite
+    const fromProd = base.dramaClubSlugs ?? [];
+    const fromDetails = extra?.dramaClubSlug ? [extra.dramaClubSlug] : [];
+    const combined = [...new Set([...fromProd, ...fromDetails])];
+    return combined.length ? combined : undefined;
+  })();
+
   // ── Credits: event wins if non-empty, otherwise production cast+team ───────
-  // Maps production PersonRole arrays (creativeTeamOverride / castOverride) to
-  // DatEvent credit items so the template's resolveCredits helper picks them up
-  // from event.credits without needing to read productionDetailsMap directly.
+  // Resolution order:
+  //   1. event.credits (already on the event)          → event wins, no override
+  //   2. productionDetailsMap creativeTeamOverride / castOverride  → explicit override
+  //   3. productionMap.artists fallback                 → derived from artist roster
   const credits = (() => {
     if (event.credits?.length) return undefined; // event already has credits
-    const team = (extra?.creativeTeamOverride ?? []).map((p) => ({
-      group: "creative" as const,
-      role: p.role,
-      name: p.name,
-      href: p.href,
-      photo: undefined as string | undefined,
-    }));
-    const castItems = (extra?.castOverride ?? []).map((p) => ({
-      group: "cast" as const,
-      role: p.role,
-      name: p.name,
-      href: p.href,
-      photo: undefined as string | undefined,
-    }));
-    const combined = [...team, ...castItems];
-    return combined.length ? combined : undefined;
+
+    // productionDetailsMap explicit overrides take precedence over productionMap
+    const hasDetailsOverride =
+      (extra?.creativeTeamOverride?.length ?? 0) + (extra?.castOverride?.length ?? 0) > 0;
+
+    if (hasDetailsOverride) {
+      const team = (extra?.creativeTeamOverride ?? []).map((p) => ({
+        group: "creative" as const,
+        role: p.role,
+        name: p.name,
+        href: p.href,
+        photo: undefined as string | undefined,
+      }));
+      const castItems = (extra?.castOverride ?? []).map((p) => ({
+        group: "cast" as const,
+        role: p.role,
+        name: p.name,
+        href: p.href,
+        photo: undefined as string | undefined,
+      }));
+      const combined = [...team, ...castItems];
+      return combined.length ? combined : undefined;
+    }
+
+    // Fall back to productionMap.artists
+    if (base.artists && Object.keys(base.artists).length > 0) {
+      const items = Object.entries(base.artists).flatMap(([slug, roles]) =>
+        roles.map((role) => ({
+          group: CAST_ROLE_SET.has(role) ? ("cast" as const) : ("creative" as const),
+          role,
+          name: slugToName(slug),
+          href: `/alumni/${slug}`,
+          photo: undefined as string | undefined,
+        }))
+      );
+      return items.length ? items : undefined;
+    }
+
+    return undefined;
   })();
 
   // ── Artist note: event wins, then production pullQuote ────────────────────
@@ -198,10 +266,13 @@ export function resolvePerformanceEvent(event: DatEvent): ResolvedPerformanceEve
   if (heroCreditPrefix !== undefined) resolved.heroCreditPrefix = heroCreditPrefix;
   if (heroCreditPeople !== undefined) resolved.heroCreditPeople = heroCreditPeople;
   if (photoGallery !== undefined) resolved.photoGallery = photoGallery;
+  if (photoCredit !== undefined) resolved.photoCredit = photoCredit;
+  if (albumHref !== undefined) resolved.albumHref = albumHref;
   if (themes !== undefined) resolved.themes = themes;
   if (causes !== undefined) resolved.causes = causes;
   if (partners !== undefined) resolved.partners = partners;
   if (resources !== undefined) resolved.resources = resources;
+  if (dramaClubSlugs !== undefined) resolved.dramaClubSlugs = dramaClubSlugs;
   if (credits !== undefined) resolved.credits = credits;
   if (artistNote !== undefined) resolved.artistNote = artistNote;
   if (artistNoteBy !== undefined) resolved.artistNoteBy = artistNoteBy;
