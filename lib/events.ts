@@ -412,92 +412,93 @@ export const events: DatEvent[] = [
     contactEmail: "hello@dramaticadventure.com",
   },
 
-  // ── DEMO EVENT: everything activated — Una Niña Sin Alas, Quito co-production ─
+  // ── DEMO EVENT: everything activated — A Girl Without Wings, Quito co-production ─
   // Full showcase of every optional field on the event detail page.
-  // Spanish + Kichwa language co-production with Malayerba Teatro, Quito.
-  // Uses actual DAT alumni with real headshot URLs and /alumni/ profile links.
+  // English-first. Spanish + Kichwa co-production with Malayerba Teatro, Quito.
+  // Base event text is always English; translations.es holds Spanish overrides.
 
   {
     id: "agwow-malayerba-quito-2026",
-    title: "Una Niña Sin Alas",
-    subtitle: "Co-producción DAT × Malayerba Teatro",
+    title: "A Girl Without Wings",
+    subtitle: "DAT × Malayerba Teatro Co-production",
     category: "performance",
     status: "upcoming",
     date: "2026-09-24",
     endDate: "2026-10-11",
     time: "20:00",
-    doors: "Puertas a las 19:30",
+    doors: "Doors at 7:30 PM",
     venue: "Teatro Malayerba",
     address: "Lizardo García N4-30 y Reina Victoria, La Floresta",
     city: "Quito",
     country: "Ecuador",
     description:
-      "En español y kichwa. DAT y Malayerba Teatro traen de vuelta la historia de amor más premiada de la compañía — un cóndor solitario y la pastora sin alas que robó su corazón.",
+      "In Spanish & Kichwa. DAT and Malayerba Teatro revive the company's most celebrated love story — a solitary condor and the wingless shepherdess who stole his heart.",
     longDescription:
-      "Un cóndor solitario y la hermosa Chaska se enamoran perdidamente. Pero la fortuna no sonríe a estos amantes: Chaska no es un pájaro más, sino una pastora sin alas, atada a la tierra.\n\nEn los despiadados y bellos Andes, el amor y el dolor entre un semidiós que anhela compañía y una muchacha que debe dejar su familia para ascender al cielo toman vida en un mundo de títeres y leyenda kichwa.\n\nUna Niña Sin Alas sumerge al público en un universo donde un cuento del altiplano andino renace entre picaflores traviesos, hilos de oración de colores y una tormenta de zapatos que llueve del cielo.\n\nCelebrada por The New York Times en su estreno en inglés, esta co-producción con Malayerba Teatro la presenta por primera vez en español y kichwa. Una historia nacida en las montañas que regresa a ellas.",
+      "A solitary condor and the beautiful Chaska fall desperately in love. But fortune does not smile on these lovers: Chaska is no ordinary bird — she is a wingless shepherdess, bound to the earth.\n\nIn the merciless and beautiful Andes, the love and sorrow between a demigod who longs for companionship and a girl who must leave her family to ascend to the sky take life in a world of puppets and Kichwa legend.\n\nA Girl Without Wings immerses audiences in a universe where a tale from the Andean highlands is reborn among mischievous hummingbirds, coloured prayer threads, and a storm of shoes raining from the sky.\n\nCelebrated by The New York Times at its English-language premiere, this co-production with Malayerba Teatro presents the work for the first time in Spanish and Kichwa — a story born in the mountains that returns to them.",
     image: "/posters/a-girl-without-wings-landscape.jpg",
     imageFocus: "center 35%",
     ticketUrl: "https://www.ticketshow.com.ec",
     venueUrl: "https://www.teatromalayerba.com",
-    ticketPrice: "$15 / $8 estudiantes",
-    runtime: "Aprox. 80 min · Sin intervalo",
-    language: "Español y Kichwa",
-    suitability: "Mayores de 10 años",
+    ticketPrice: "$15 / $8 students",
+    runtime: "Approx. 80 min · No interval",
+    language: "Spanish & Kichwa",
+    suitability: "Ages 10+",
     ticketType: "ticketed",
     featured: true,
-    tags: ["New York Times Critics Pick", "kichwa", "español", "Quito", "Andes", "Malayerba", "títeres", "co-producción"],
+    tags: ["New York Times Critics Pick", "Kichwa", "Spanish", "Quito", "Andes", "Malayerba", "puppetry", "co-production"],
     production: "a-girl-without-wings",
     dramaClub: "quito-collective",
     contactEmail: "hello@dramaticadventure.com",
     donateLink: "/donate?mode=new-work&production=agwow-quito-2026",
-    impactBlurb: "Esta co-producción sustenta la red de Drama Clubs de DAT en el Ecuador — formando nuevas generaciones de artistas comunitarios en Quito y más allá. Tu apoyo hace posible el teatro que nace de la comunidad.",
+    impactBlurb:
+      "This co-production sustains DAT's network of Drama Clubs in Ecuador — forming new generations of community artists in Quito and beyond. Your support makes theatre that is born from community possible.",
 
     // ── Rich content: every section fully populated ───────────────────────────
 
     photoGallery: [
       {
         src: "/images/Andean_Mask_Work.jpg",
-        alt: "Trabajo de máscaras con el elenco — residencia de creación en Quito",
+        alt: "Mask work with the cast — creation residency in Quito",
       },
       {
         src: "/images/theatre/archive/agwow-condor.webp",
-        alt: "El Cóndor — imagen de archivo de la producción original",
+        alt: "The Condor — archive image from the original production",
       },
       {
         src: "/images/teaching-andes.jpg",
-        alt: "Artistas de DAT en los Andes durante la investigación comunitaria",
+        alt: "DAT artists in the Andes during community research",
       },
       {
         src: "/images/teaching-amazon.jpg",
-        alt: "Taller de narración con jóvenes en la Amazonía ecuatoriana",
+        alt: "Storytelling workshop with young people in the Ecuadorian Amazon",
       },
       {
         src: "/images/performing-zanzibar.jpg",
-        alt: "Momento de actuación en gira internacional",
+        alt: "Performance moment on international tour",
       },
     ],
-    photoCredit: "Archivo DAT / Malayerba Teatro",
+    photoCredit: "DAT Archive / Malayerba Teatro",
     photographerHref: "https://www.teatromalayerba.com",
     albumHref: "https://photos.dramaticadventure.com/agwow-quito-2026",
 
     videoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    videoTitle: "Mira: Tráiler — Una Niña Sin Alas",
+    videoTitle: "Watch: Trailer — A Girl Without Wings",
 
     artistNote:
-      "Esta pieza nació en los Andes, viajó por tres continentes y fue reconstruida desde cero para cada comunidad que la recibió. Lo que ven esta noche no es un simple revival — es un re-enraizamiento. El cóndor todavía vuela. La niña todavía es valiente. Eso nunca cambia.",
-    artistNoteBy: "Kathleen Amshoff, Directora",
+      "This piece was born in the Andes, travelled across three continents, and was rebuilt from scratch for every community that received it. What you see tonight is not a simple revival — it is a re-rooting. The condor still flies. The girl is still brave. That never changes.",
+    artistNoteBy: "Kathleen Amshoff, Director",
 
-    // Cast & creative team — actual DAT alumni with headshots and profile links.
+    // Cast & creative team — English roles as base; Spanish roles in translations.es.
     // group: "creative" → Creative Team section; group: "cast" → Cast section (with photos)
     credits: [
       // Creative Team
-      { group: "creative", role: "Dirección",            name: "Kathleen Amshoff",       href: "/alumni/kathleen-amshoff" },
-      { group: "creative", role: "Dirección Artística",  name: "Jesse Baxter",            href: "/alumni/jesse-baxter" },
-      { group: "creative", role: "Dramaturgia",          name: "Jason Williamson",         href: "/alumni/jason-williamson" },
-      { group: "creative", role: "Traducción al Español",name: "Karina Vélez",             href: "/alumni/karina-velez" },
-      { group: "creative", role: "Traducción al Kichwa", name: "Edward Serrate Yujo",      href: "/alumni/edward-serrate-yujo" },
-      { group: "creative", role: "Diseño de Títeres",    name: "Maria-Isabel Rojas",       href: "/alumni/maria-isabel-rojas" },
-      { group: "creative", role: "Producción",           name: 'Juliana "Juice" Franco',   href: "/alumni/juliana-franco" },
+      { group: "creative", role: "Direction",            name: "Kathleen Amshoff",       href: "/alumni/kathleen-amshoff" },
+      { group: "creative", role: "Artistic Direction",   name: "Jesse Baxter",            href: "/alumni/jesse-baxter" },
+      { group: "creative", role: "Dramaturgy",           name: "Jason Williamson",         href: "/alumni/jason-williamson" },
+      { group: "creative", role: "Spanish Translation",  name: "Karina Vélez",             href: "/alumni/karina-velez" },
+      { group: "creative", role: "Kichwa Translation",   name: "Edward Serrate Yujo",      href: "/alumni/edward-serrate-yujo" },
+      { group: "creative", role: "Puppet Design",        name: "Maria-Isabel Rojas",       href: "/alumni/maria-isabel-rojas" },
+      { group: "creative", role: "Production",           name: 'Juliana "Juice" Franco',   href: "/alumni/juliana-franco" },
       // Cast (with real alumni headshots)
       {
         group: "cast",
@@ -508,114 +509,114 @@ export const events: DatEvent[] = [
       },
       {
         group: "cast",
-        role: "El Cóndor",
+        role: "The Condor",
         name: "Javier Spivey",
         href: "/alumni/javier-spivey",
-        photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613937012050-7HWDMXIJ72U50MKM7JSQ/javier.PNG",
+        photo: "https://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613937012050-7HWDMXIJ72U50MKM7JSQ/javier.PNG",
       },
       {
         group: "cast",
-        role: "La Madre",
+        role: "The Mother",
         name: "Ana Arellano",
         href: "/alumni/ana-arellano",
-        photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1616727468148-OBFR2IM4WPQ43JVPXH13/21728911_10156595589829056_8394607501235178776_o.jpg",
+        photo: "https://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1616727468148-OBFR2IM4WPQ43JVPXH13/21728911_10156595589829056_8394607501235178776_o.jpg",
       },
       {
         group: "cast",
-        role: "Picaflor",
+        role: "Hummingbird",
         name: "Yan Rey",
         href: "/alumni/yan-rey",
-        photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1688752206990-AL7Y5GAW3AMGR71JYRJD/Yan_foto-perfil.jpg",
+        photo: "https://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1688752206990-AL7Y5GAW3AMGR71JYRJD/Yan_foto-perfil.jpg",
       },
       {
         group: "cast",
-        role: "Narradora",
+        role: "Narrator",
         name: "Daniela Garzón-Silva",
         href: "/alumni/daniela-garzon-silva",
-        photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1688755665448-6R1OMNYCMKOS8G1CZMPH/IMG_2761.jpg",
+        photo: "https://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1688755665448-6R1OMNYCMKOS8G1CZMPH/IMG_2761.jpg",
       },
       {
         group: "cast",
-        role: "Músico Principal",
+        role: "Lead Musician",
         name: "Thomas Burns Scully",
         href: "/alumni/thomas-burns-scully",
-        photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613454794191-W20YLPVCQ2ZLXOAR79HU/thomas.jpg",
+        photo: "https://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613454794191-W20YLPVCQ2ZLXOAR79HU/thomas.jpg",
       },
     ],
 
     pressQuotes: [
       {
-        // Spanish-language paraphrase of the NYT review for the Spanish-default page
-        text: "Nada en 'Una Niña sin Alas' es usual. Emotiva, sensitivamente dirigida. Mágica.",
+        text: "Not much is typical about 'A Girl without Wings.' Poignant. Sensitively directed. Magical.",
         attribution: "Laurel Graeber, The New York Times",
+        href: "https://www.nytimes.com/",
       },
       {
-        text: "Una historia de amor que pertenece al cielo y a la tierra. Teatro en su estado más vivo.",
-        attribution: "El Comercio, Quito",
+        text: "A love story that belongs to the sky and the earth. Theatre at its most alive.",
+        attribution: "El Comercio, Quito (translated)",
       },
       {
-        text: "Imaginación teatral pura. Lloré dos veces. Y no soy de las que lloran.",
-        attribution: "Espectadora, Teatro Malayerba",
+        text: "Pure theatrical imagination. I cried twice. And I am not one who cries.",
+        attribution: "Audience member, Teatro Malayerba (translated)",
       },
     ],
 
     accessibility:
-      "Acceso sin escalones por entrada principal · Función audiodescrita: 3 oct · Función con interpretación LSEC: 10 oct · Subtítulos en inglés disponibles",
+      "Step-free access via main entrance · Audio-described performance: 3 Oct · BSL-interpreted performance: 10 Oct · English subtitles available",
 
     groupBookingEmail: "produccion@malayerba.org",
 
-    defaultLang: "es",
+    // translations.es — Spanish overrides for all bilingual fields.
+    // Base event is English; this object is shown when the user selects ES.
     translations: {
-      en: {
-        title: "A Girl Without Wings",
-        subtitle: "DAT × Malayerba Teatro Co-production",
+      es: {
+        title: "Una Niña Sin Alas",
+        subtitle: "Co-producción DAT × Malayerba Teatro",
         description:
-          "In Spanish & Kichwa. DAT and Malayerba Teatro revive the company's most celebrated love story — a solitary condor and the wingless shepherdess who stole his heart.",
+          "En español y kichwa. DAT y Malayerba Teatro traen de vuelta la historia de amor más premiada de la compañía — un cóndor solitario y la pastora sin alas que robó su corazón.",
         longDescription:
-          "A solitary condor and the beautiful Chaska fall desperately in love. But fortune does not smile on these lovers: Chaska is no ordinary bird — she is a wingless shepherdess, bound to the earth.\n\nIn the merciless and beautiful Andes, the love and sorrow between a demigod who longs for companionship and a girl who must leave her family to ascend to the sky take life in a world of puppets and Kichwa legend.\n\nA Girl Without Wings immerses audiences in a universe where a tale from the Andean highlands is reborn among mischievous hummingbirds, coloured prayer threads, and a storm of shoes raining from the sky.\n\nCelebrated by The New York Times at its English-language premiere, this co-production with Malayerba Teatro presents the work for the first time in Spanish and Kichwa — a story born in the mountains that returns to them.",
+          "Un cóndor solitario y la hermosa Chaska se enamoran perdidamente. Pero la fortuna no sonríe a estos amantes: Chaska no es un pájaro más, sino una pastora sin alas, atada a la tierra.\n\nEn los despiadados y bellos Andes, el amor y el dolor entre un semidiós que anhela compañía y una muchacha que debe dejar su familia para ascender al cielo toman vida en un mundo de títeres y leyenda kichwa.\n\nUna Niña Sin Alas sumerge al público en un universo donde un cuento del altiplano andino renace entre picaflores traviesos, hilos de oración de colores y una tormenta de zapatos que llueve del cielo.\n\nCelebrada por The New York Times en su estreno en inglés, esta co-producción con Malayerba Teatro la presenta por primera vez en español y kichwa. Una historia nacida en las montañas que regresa a ellas.",
         artistNote:
-          "This piece was born in the Andes, travelled across three continents, and was rebuilt from scratch for every community that received it. What you see tonight is not a simple revival — it is a re-rooting. The condor still flies. The girl is still brave. That never changes.",
-        artistNoteBy: "Kathleen Amshoff, Director",
+          "Esta pieza nació en los Andes, viajó por tres continentes y fue reconstruida desde cero para cada comunidad que la recibió. Lo que ven esta noche no es un simple revival — es un re-enraizamiento. El cóndor todavía vuela. La niña todavía es valiente. Eso nunca cambia.",
+        artistNoteBy: "Kathleen Amshoff, Directora",
         impactBlurb:
-          "This co-production sustains DAT's network of Drama Clubs in Ecuador — forming new generations of community artists in Quito and beyond. Your support makes theatre that is born from community possible.",
-        runtime: "Approx. 80 min · No interval",
-        language: "Spanish & Kichwa",
-        suitability: "Ages 10+",
-        ticketPrice: "$15 / $8 students",
-        videoTitle: "Watch: Trailer — A Girl Without Wings",
+          "Esta co-producción sustenta la red de Drama Clubs de DAT en el Ecuador — formando nuevas generaciones de artistas comunitarios en Quito y más allá. Tu apoyo hace posible el teatro que nace de la comunidad.",
+        runtime: "Aprox. 80 min · Sin intervalo",
+        language: "Español y Kichwa",
+        suitability: "Mayores de 10 años",
+        ticketPrice: "$15 / $8 estudiantes",
+        videoTitle: "Mira: Tráiler — Una Niña Sin Alas",
         accessibility:
-          "Step-free access via main entrance · Audio-described performance: 3 Oct · BSL-interpreted performance: 10 Oct · English subtitles available",
+          "Acceso sin escalones por entrada principal · Función audiodescrita: 3 oct · Función con interpretación LSEC: 10 oct · Subtítulos en inglés disponibles",
         pressQuotes: [
           {
-            text: "Not much is typical about 'A Girl without Wings.' Poignant. Sensitively directed. Magical.",
+            text: "Nada en 'Una Niña sin Alas' es usual. Emotiva, sensitivamente dirigida. Mágica.",
             attribution: "Laurel Graeber, The New York Times",
-            href: "https://www.nytimes.com/",
           },
           {
-            text: "A love story that belongs to the sky and the earth. Theatre at its most alive.",
-            attribution: "El Comercio, Quito (translated)",
+            text: "Una historia de amor que pertenece al cielo y a la tierra. Teatro en su estado más vivo.",
+            attribution: "El Comercio, Quito",
           },
           {
-            text: "Pure theatrical imagination. I cried twice. And I am not one who cries.",
-            attribution: "Audience member, Teatro Malayerba (translated)",
+            text: "Imaginación teatral pura. Lloré dos veces. Y no soy de las que lloran.",
+            attribution: "Espectadora, Teatro Malayerba",
           },
         ],
         credits: [
-          // Creative Team — translated roles, same names/links
-          { group: "creative", role: "Direction",            name: "Kathleen Amshoff",       href: "/alumni/kathleen-amshoff" },
-          { group: "creative", role: "Artistic Direction",   name: "Jesse Baxter",            href: "/alumni/jesse-baxter" },
-          { group: "creative", role: "Dramaturgy",           name: "Jason Williamson",         href: "/alumni/jason-williamson" },
-          { group: "creative", role: "Spanish Translation",  name: "Karina Vélez",             href: "/alumni/karina-velez" },
-          { group: "creative", role: "Kichwa Translation",   name: "Edward Serrate Yujo",      href: "/alumni/edward-serrate-yujo" },
-          { group: "creative", role: "Puppet Design",        name: "Maria-Isabel Rojas",       href: "/alumni/maria-isabel-rojas" },
-          { group: "creative", role: "Production",           name: 'Juliana "Juice" Franco',   href: "/alumni/juliana-franco" },
-          // Cast — translated roles, same headshots/links
-          { group: "cast", role: "Chaska",        name: "Isabel Martínez",       href: "/alumni/isa-martinez",            photo: "https://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1688754593745-N9E8YZU0VE49QMQIOG4J/Marisa+Puller+007.jpg" },
-          { group: "cast", role: "The Condor",    name: "Javier Spivey",         href: "/alumni/javier-spivey",           photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613937012050-7HWDMXIJ72U50MKM7JSQ/javier.PNG" },
-          { group: "cast", role: "The Mother",    name: "Ana Arellano",          href: "/alumni/ana-arellano",            photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1616727468148-OBFR2IM4WPQ43JVPXH13/21728911_10156595589829056_8394607501235178776_o.jpg" },
-          { group: "cast", role: "Hummingbird",   name: "Yan Rey",               href: "/alumni/yan-rey",                 photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1688752206990-AL7Y5GAW3AMGR71JYRJD/Yan_foto-perfil.jpg" },
-          { group: "cast", role: "Narrator",      name: "Daniela Garzón-Silva",  href: "/alumni/daniela-garzon-silva",    photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1688755665448-6R1OMNYCMKOS8G1CZMPH/IMG_2761.jpg" },
-          { group: "cast", role: "Lead Musician", name: "Thomas Burns Scully",   href: "/alumni/thomas-burns-scully",     photo: "http://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613454794191-W20YLPVCQ2ZLXOAR79HU/thomas.jpg" },
+          // Creative Team — Spanish roles, same names/links
+          { group: "creative", role: "Dirección",             name: "Kathleen Amshoff",       href: "/alumni/kathleen-amshoff" },
+          { group: "creative", role: "Dirección Artística",   name: "Jesse Baxter",            href: "/alumni/jesse-baxter" },
+          { group: "creative", role: "Dramaturgia",           name: "Jason Williamson",         href: "/alumni/jason-williamson" },
+          { group: "creative", role: "Traducción al Español", name: "Karina Vélez",             href: "/alumni/karina-velez" },
+          { group: "creative", role: "Traducción al Kichwa",  name: "Edward Serrate Yujo",      href: "/alumni/edward-serrate-yujo" },
+          { group: "creative", role: "Diseño de Títeres",     name: "Maria-Isabel Rojas",       href: "/alumni/maria-isabel-rojas" },
+          { group: "creative", role: "Producción",            name: 'Juliana "Juice" Franco',   href: "/alumni/juliana-franco" },
+          // Cast — Spanish roles, same headshots/links
+          { group: "cast", role: "Chaska",          name: "Isabel Martínez",       href: "/alumni/isa-martinez" },
+          { group: "cast", role: "El Cóndor",       name: "Javier Spivey",         href: "/alumni/javier-spivey" },
+          { group: "cast", role: "La Madre",        name: "Ana Arellano",          href: "/alumni/ana-arellano" },
+          { group: "cast", role: "Picaflor",        name: "Yan Rey",               href: "/alumni/yan-rey" },
+          { group: "cast", role: "Narradora",       name: "Daniela Garzón-Silva",  href: "/alumni/daniela-garzon-silva" },
+          { group: "cast", role: "Músico Principal",name: "Thomas Burns Scully",   href: "/alumni/thomas-burns-scully" },
         ],
       },
     },

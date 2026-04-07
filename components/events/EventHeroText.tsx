@@ -76,8 +76,13 @@ export default function EventHeroText({
       // localStorage not available
     }
     setActiveLang(resolvedLang);
-    // Drive CSS-based bilingual content switching
-    document.documentElement.dataset.evdLang = resolvedLang;
+    // English-first CSS model: set data-evd-lang only when a non-EN language is active.
+    // No attribute = English (default); data-evd-lang="es" = Spanish visible.
+    if (resolvedLang !== "en") {
+      document.documentElement.dataset.evdLang = resolvedLang;
+    } else {
+      delete document.documentElement.dataset.evdLang;
+    }
     return () => {
       // Clean up when navigating away from a bilingual page
       delete document.documentElement.dataset.evdLang;
@@ -89,9 +94,13 @@ export default function EventHeroText({
     setActiveLang(code);
     try {
       localStorage.setItem(STORAGE_KEY, code);
-      // Drive CSS-based bilingual content switching across the full page
-      document.documentElement.dataset.evdLang = code;
-      // Also notify any client components listening via custom event
+      // English-first CSS model: attribute present only for non-EN langs
+      if (code !== "en") {
+        document.documentElement.dataset.evdLang = code;
+      } else {
+        delete document.documentElement.dataset.evdLang;
+      }
+      // Notify any client components listening via custom event
       window.dispatchEvent(new CustomEvent("evd-lang-change", { detail: { lang: code } }));
     } catch {
       // ignore

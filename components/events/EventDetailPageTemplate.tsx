@@ -533,12 +533,10 @@ function ArchivedEventInfoBand({
               <circle cx="12" cy="12" r="10" />
               <path d="M12 8v4m0 4h.01" />
             </svg>
-            {event.translations ? (
+            {event.translations?.["es"]?.accessibility ? (
               <>
-                <span className="evd-bilingual-wrap-default">
-                  {event.translations["en"]?.accessibility ?? event.accessibility}
-                </span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.accessibility}</span>
+                <span className="evd-bilingual-wrap-default">{event.accessibility}</span>
+                <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].accessibility}</span>
               </>
             ) : (
               <span>{event.accessibility}</span>
@@ -567,6 +565,7 @@ function UpcomingEventInfoBand({
   outlookUrl,
   eventUrl,
 }: UpcomingEventInfoBandProps) {
+  const isBilingual = !!event.translations && Object.keys(event.translations).length > 0;
   return (
     <div className="evd-ticket-bar">
       <div className="evd-ticket-bar-inner">
@@ -575,10 +574,10 @@ function UpcomingEventInfoBand({
             {event.runtime ? (
               <span className="evd-tmeta-chip">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                {event.translations?.["en"]?.runtime ? (
+                {event.translations?.["es"]?.runtime ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">{event.translations["en"].runtime}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.runtime}</span>
+                    <span className="evd-bilingual-wrap-default">{event.runtime}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].runtime}</span>
                   </>
                 ) : event.runtime}
               </span>
@@ -586,10 +585,10 @@ function UpcomingEventInfoBand({
             {event.language ? (
               <span className="evd-tmeta-chip">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                {event.translations?.["en"]?.language ? (
+                {event.translations?.["es"]?.language ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">{event.translations["en"].language}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.language}</span>
+                    <span className="evd-bilingual-wrap-default">{event.language}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].language}</span>
                   </>
                 ) : event.language}
               </span>
@@ -597,10 +596,10 @@ function UpcomingEventInfoBand({
             {event.suitability ? (
               <span className="evd-tmeta-chip">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                {event.translations?.["en"]?.suitability ? (
+                {event.translations?.["es"]?.suitability ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">{event.translations["en"].suitability}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.suitability}</span>
+                    <span className="evd-bilingual-wrap-default">{event.suitability}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].suitability}</span>
                   </>
                 ) : event.suitability}
               </span>
@@ -610,10 +609,10 @@ function UpcomingEventInfoBand({
           <div className="evd-ticket-purchase">
             {event.ticketPrice ? (
               <span className="evd-tmeta-price">
-                {event.translations?.["en"]?.ticketPrice ? (
+                {event.translations?.["es"]?.ticketPrice ? (
                   <>
                     <span className="evd-bilingual-wrap-default">{event.ticketPrice}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">{event.translations["en"].ticketPrice}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].ticketPrice}</span>
                   </>
                 ) : event.ticketPrice}
               </span>
@@ -625,10 +624,10 @@ function UpcomingEventInfoBand({
                 rel={primaryAction.external ? "noopener noreferrer" : undefined}
                 className={`evd-btn-ticket${primaryAction.tone === "invite" ? " evd-btn-ticket--invite" : ""}`}
               >
-                {event.translations && primaryAction.esLabel ? (
+                {isBilingual && primaryAction.esLabel ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">{primaryAction.esLabel}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">{primaryAction.label}</span>
+                    <span className="evd-bilingual-wrap-default">{primaryAction.label}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{primaryAction.esLabel}</span>
                   </>
                 ) : primaryAction.label}
               </a>
@@ -641,10 +640,10 @@ function UpcomingEventInfoBand({
             url={eventUrl}
             title={`${event.title} — Dramatic Adventure Theatre`}
             description={event.description}
-            shareLabel={event.translations ? (
+            shareLabel={isBilingual ? (
               <>
-                <span className="evd-bilingual-wrap-default">Compartir →</span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-en">Share →</span>
+                <span className="evd-bilingual-wrap-default">Share →</span>
+                <span className="evd-bilingual-wrap-alt evd-bilingual-es">Compartir →</span>
               </>
             ) : undefined}
           />
@@ -659,10 +658,10 @@ function UpcomingEventInfoBand({
                 <line x1="8" y1="2" x2="8" y2="6"/>
                 <line x1="3" y1="10" x2="21" y2="10"/>
               </svg>
-              {event.translations ? (
+              {isBilingual ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">Agregar al Calendario</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">Add to Calendar</span>
+                  <span className="evd-bilingual-wrap-default">Add to Calendar</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Agregar al Calendario</span>
                 </>
               ) : "Add to Calendar"}
             </button>
@@ -689,10 +688,10 @@ function UpcomingEventInfoBand({
               className="evd-btn-ghost evd-btn-group"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              {event.translations ? (
+              {isBilingual ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">Traer un Grupo →</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">Bring a Group →</span>
+                  <span className="evd-bilingual-wrap-default">Bring a Group →</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Traer un Grupo →</span>
                 </>
               ) : "Bring a Group →"}
             </a>
@@ -702,12 +701,12 @@ function UpcomingEventInfoBand({
         {event.accessibility ? (
           <div className="evd-a11y-inline">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0, opacity: 0.4 }}><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
-            {event.translations ? (
+            {isBilingual ? (
               <>
-                <span className="evd-bilingual-wrap-default">
-                  {event.translations["en"]?.accessibility ?? event.accessibility}
+                <span className="evd-bilingual-wrap-default">{event.accessibility}</span>
+                <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                  {event.translations?.["es"]?.accessibility ?? event.accessibility}
                 </span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.accessibility}</span>
               </>
             ) : (
               <span>{event.accessibility}</span>
@@ -741,13 +740,15 @@ export default function EventDetailPageTemplate({
   const resolvedPartners = resolved.partners ?? productionExtra?.partners;
   const resolvedResources = resolved.resources ?? productionExtra?.resources;
 
-  // English-first bilingual: for bilingual performance events, always display
-  // English as the default visible language. Spanish remains available via toggle.
-  // When event.translations.en exists, we pass EN text as the hero base and
-  // reconstruct a { es: ... } translations object so EventHeroText's langCodes
-  // are ["en", "es"] — deduped and correctly ordered.
-  const isBilingual = !!event.translations?.["en"];
-  const heroBase = isBilingual
+  // English-first bilingual: English is always the base/default language.
+  // Alternate languages (e.g. "es") live in event.translations.*.
+  // isBilingual is true whenever any translations key is present.
+  // Legacy compat: if an event still carries translations.en (old convention),
+  // we treat translations.en as the canonical base and derive translations.es
+  // from the original base fields so switching still works.
+  const hasLegacyEnTrans = !!event.translations?.["en"];
+  const isBilingual = !!event.translations && Object.keys(event.translations).length > 0;
+  const heroBase = hasLegacyEnTrans
     ? {
         title: event.translations!["en"].title ?? event.title,
         subtitle: event.translations!["en"].subtitle ?? event.subtitle ?? "",
@@ -762,11 +763,11 @@ export default function EventDetailPageTemplate({
           ? (event.archiveSummary ?? event.description)
           : event.description,
       };
-  const heroTranslations = isBilingual
+  const heroTranslations = hasLegacyEnTrans
     ? { es: { title: event.title, subtitle: event.subtitle, description: event.description } }
     : (event.translations ?? {});
-  // Always use "en" as the display default for bilingual events
-  const heroDefaultLang = isBilingual ? "en" : (event.defaultLang ?? "en");
+  // Always "en" as the display default for bilingual events
+  const heroDefaultLang = "en";
 
   const heroImage =
     normalizeImagePath(
@@ -803,20 +804,20 @@ export default function EventDetailPageTemplate({
   // Archive-enriched eyebrow: "Live Theatre · Season 8 (2013)" with linked season
   const archiveEyebrowNode =
     isArchiveView && relatedProduction?.season
-      ? event.translations
+      ? isBilingual
         ? (
           <>
             <span className="evd-bilingual-wrap-default">
-              {getEventEyebrowEs(event)}{" · "}
-              <Link href={`/season/${relatedProduction.season}`} className="evd-hero-season-link">
-                {`Temporada ${relatedProduction.season}`}
-              </Link>
-              {relatedProduction.year ? ` (${relatedProduction.year})` : ""}
-            </span>
-            <span className="evd-bilingual-wrap-alt evd-bilingual-en">
               {getEventEyebrow(event)}{" · "}
               <Link href={`/season/${relatedProduction.season}`} className="evd-hero-season-link">
                 {`Season ${relatedProduction.season}`}
+              </Link>
+              {relatedProduction.year ? ` (${relatedProduction.year})` : ""}
+            </span>
+            <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+              {getEventEyebrowEs(event)}{" · "}
+              <Link href={`/season/${relatedProduction.season}`} className="evd-hero-season-link">
+                {`Temporada ${relatedProduction.season}`}
               </Link>
               {relatedProduction.year ? ` (${relatedProduction.year})` : ""}
             </span>
@@ -864,22 +865,22 @@ export default function EventDetailPageTemplate({
         <div className="evd-hero-content">
           <nav className="evd-breadcrumb" aria-label="Breadcrumb">
             <Link href="/events">
-              {event.translations ? (
+              {isBilingual ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">Eventos</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">Events</span>
+                  <span className="evd-bilingual-wrap-default">Events</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Eventos</span>
                 </>
               ) : "Events"}
             </Link>
             <span aria-hidden="true">/</span>
             <Link href={meta.href}>
-              {event.translations ? (
+              {isBilingual ? (
                 <>
                   <span className="evd-bilingual-wrap-default">
-                    {routeKind === "theatre" ? "Funciones" : routeKind === "festivals" ? "Festivales" : "Encuentros"}
-                  </span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">
                     {routeKind === "theatre" ? "Performances" : routeKind === "festivals" ? "Festivals" : "Gatherings"}
+                  </span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                    {routeKind === "theatre" ? "Funciones" : routeKind === "festivals" ? "Festivales" : "Encuentros"}
                   </span>
                 </>
               ) : (
@@ -888,10 +889,12 @@ export default function EventDetailPageTemplate({
             </Link>
             <span aria-hidden="true">/</span>
             <span>
-              {event.translations?.["en"]?.title ? (
+              {isBilingual ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">{event.translations["en"].title}</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.title}</span>
+                  <span className="evd-bilingual-wrap-default">{event.title}</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                    {event.translations?.["es"]?.title ?? event.title}
+                  </span>
                 </>
               ) : event.title}
             </span>
@@ -937,10 +940,10 @@ export default function EventDetailPageTemplate({
           {isArchiveView ? (
             <div className="evd-archive-badge-wrap">
               <span className="evd-archive-badge">
-                {event.translations ? (
+                {isBilingual ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">Archivo</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">Archive</span>
+                    <span className="evd-bilingual-wrap-default">Archive</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Archivo</span>
                   </>
                 ) : "Archive"}
               </span>
@@ -1014,10 +1017,10 @@ export default function EventDetailPageTemplate({
 
             {/* Card-level title — frames the whole card */}
             <p className="evd-card-title" aria-hidden="true">
-              {event.translations ? (
+              {isBilingual ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">Dentro de la Obra</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">Inside the Work</span>
+                  <span className="evd-bilingual-wrap-default">Inside the Work</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Dentro de la Obra</span>
                 </>
               ) : "Inside the Work"}
             </p>
@@ -1025,13 +1028,13 @@ export default function EventDetailPageTemplate({
             {/* Event description intro — moved from hero standfirst */}
             {event.description && (
               <div className="evd-card-intro">
-                {event.translations ? (
+                {isBilingual ? (
                   <>
                     <p className="evd-card-intro-text evd-bilingual-default">
-                      {event.translations["en"]?.description ?? event.description}
+                      {event.description}
                     </p>
                     <p className="evd-card-intro-text evd-bilingual-alt evd-bilingual-es">
-                      {event.description}
+                      {event.translations?.["es"]?.description ?? event.description}
                     </p>
                   </>
                 ) : (
@@ -1068,33 +1071,24 @@ export default function EventDetailPageTemplate({
                         ) : "From the artist"}
                       </p>
                       {artistNote ? (
-                        event.translations ? (
+                        isBilingual ? (
                           <>
-                            {/* EN artist note — default */}
-                            {event.translations["en"]?.artistNote ? (
-                              <>
-                                <p className="evd-elder-text evd-bilingual-default">&ldquo;{event.translations["en"].artistNote}&rdquo;</p>
-                                {event.translations["en"]?.artistNoteBy && (
-                                  <p className="evd-elder-meta evd-bilingual-default">
-                                    <span className="evd-elder-name">{event.translations["en"].artistNoteBy}</span>
-                                  </p>
-                                )}
-                              </>
-                            ) : (
-                              <>
-                                <p className="evd-elder-text evd-bilingual-default">&ldquo;{artistNote.note}&rdquo;</p>
-                                {artistNote.by && (
-                                  <p className="evd-elder-meta evd-bilingual-default">
-                                    <span className="evd-elder-name">{artistNote.by}</span>
-                                  </p>
-                                )}
-                              </>
+                            {/* EN artist note — default (base event is always EN) */}
+                            <p className="evd-elder-text evd-bilingual-default">&ldquo;{artistNote.note}&rdquo;</p>
+                            {artistNote.by && (
+                              <p className="evd-elder-meta evd-bilingual-default">
+                                <span className="evd-elder-name">{artistNote.by}</span>
+                              </p>
                             )}
                             {/* ES artist note — alt */}
-                            <p className="evd-elder-text evd-bilingual-alt evd-bilingual-es">&ldquo;{artistNote.note}&rdquo;</p>
-                            {artistNote.by ? (
+                            <p className="evd-elder-text evd-bilingual-alt evd-bilingual-es">
+                              &ldquo;{event.translations?.["es"]?.artistNote ?? artistNote.note}&rdquo;
+                            </p>
+                            {(event.translations?.["es"]?.artistNoteBy ?? artistNote.by) ? (
                               <p className="evd-elder-meta evd-bilingual-alt evd-bilingual-es">
-                                <span className="evd-elder-name">{artistNote.by}</span>
+                                <span className="evd-elder-name">
+                                  {event.translations?.["es"]?.artistNoteBy ?? artistNote.by}
+                                </span>
                               </p>
                             ) : null}
                           </>
@@ -1116,7 +1110,7 @@ export default function EventDetailPageTemplate({
                 {/* About section */}
                 {paragraphs.length > 0 ? (
                   <div className="evd-dash-description evd-about-block evd-section-block">
-                    {event.translations ? (
+                    {isBilingual ? (
                       <>
                         <h2 className="evd-about-head evd-bilingual-default">About</h2>
                         <h2 className="evd-about-head evd-bilingual-alt evd-bilingual-es">Sobre la Obra</h2>
@@ -1124,32 +1118,40 @@ export default function EventDetailPageTemplate({
                     ) : (
                       <h2 className="evd-about-head">About</h2>
                     )}
-                    {event.translations ? (
+                    {isBilingual ? (
                       <>
-                        {/* EN subtitle — default (Rock Salt tagline) */}
-                        {(event.translations["en"]?.subtitle ?? event.subtitle) && (
-                          <p className="evd-tagline-inline evd-bilingual-default">
-                            {event.translations["en"]?.subtitle ?? event.subtitle}
-                          </p>
+                        {/* EN subtitle (tagline) — default; omit if it matches a paragraph verbatim */}
+                        {event.subtitle && (
+                          <p className="evd-tagline-inline evd-bilingual-default">{event.subtitle}</p>
                         )}
                         {/* ES subtitle — alt */}
-                        {event.subtitle && (
-                          <p className="evd-tagline-inline evd-bilingual-alt evd-bilingual-es">{event.subtitle}</p>
+                        {event.translations?.["es"]?.subtitle && (
+                          <p className="evd-tagline-inline evd-bilingual-alt evd-bilingual-es">
+                            {event.translations["es"].subtitle}
+                          </p>
                         )}
-                        {/* EN paragraphs — default */}
+                        {/* EN paragraphs — default; tagline paragraph deduped */}
                         <div className="evd-bilingual-default">
-                          {paragraphs.map((p, i) => (
-                            <p key={i} className="evd-body-text evd-about-body">{p}</p>
-                          ))}
+                          {paragraphs
+                            .filter((p) => event.subtitle ? p !== event.subtitle.trim() : true)
+                            .map((p, i) => (
+                              <p key={i} className="evd-body-text evd-about-body">{p}</p>
+                            ))}
                         </div>
-                        {/* ES paragraphs — alt (base event description as fallback) */}
+                        {/* ES paragraphs — alt */}
                         <div className="evd-bilingual-alt evd-bilingual-es">
-                          {(event.description
-                            ? splitParagraphs(event.description)
-                            : []
-                          ).map((p, i) => (
-                            <p key={i} className="evd-body-text evd-about-body">{p}</p>
-                          ))}
+                          {splitParagraphs(
+                            event.translations?.["es"]?.longDescription ??
+                            event.translations?.["es"]?.description ??
+                            ""
+                          )
+                            .filter((p) => {
+                              const esTagline = event.translations?.["es"]?.subtitle;
+                              return esTagline ? p !== esTagline.trim() : true;
+                            })
+                            .map((p, i) => (
+                              <p key={i} className="evd-body-text evd-about-body">{p}</p>
+                            ))}
                         </div>
                       </>
                     ) : (
@@ -1157,9 +1159,11 @@ export default function EventDetailPageTemplate({
                         {event.subtitle ? (
                           <p className="evd-tagline-inline">{event.subtitle}</p>
                         ) : null}
-                        {paragraphs.map((p, i) => (
-                          <p key={i} className="evd-body-text evd-about-body">{p}</p>
-                        ))}
+                        {paragraphs
+                          .filter((p) => event.subtitle ? p !== event.subtitle.trim() : true)
+                          .map((p, i) => (
+                            <p key={i} className="evd-body-text evd-about-body">{p}</p>
+                          ))}
                       </>
                     )}
                     {/* Theme tags — production enrichment */}
@@ -1226,11 +1230,11 @@ export default function EventDetailPageTemplate({
                       ) : (
                         <h2 className="evd-about-head evd-voices-head">The Response</h2>
                       )}
-                      {event.translations ? (
+                      {isBilingual ? (
                         <>
-                          {/* EN quotes — default */}
+                          {/* EN quotes — default (base event pressQuotes, with hrefs) */}
                           <div className="evd-bilingual-default">
-                            {(event.translations["en"]?.pressQuotes ?? event.pressQuotes).map((q, i) => (
+                            {event.pressQuotes!.map((q, i) => (
                               <figure key={i} className="evd-voices-quote">
                                 <blockquote className="evd-voices-blockquote">&ldquo;{q.text}&rdquo;</blockquote>
                                 <figcaption className="evd-voices-figcaption">
@@ -1241,9 +1245,9 @@ export default function EventDetailPageTemplate({
                               </figure>
                             ))}
                           </div>
-                          {/* ES quotes — alt */}
+                          {/* ES quotes — alt (translations.es.pressQuotes) */}
                           <div className="evd-bilingual-alt evd-bilingual-es">
-                            {event.pressQuotes.map((q, i) => (
+                            {(event.translations?.["es"]?.pressQuotes ?? event.pressQuotes!).map((q, i) => (
                               <figure key={i} className="evd-voices-quote">
                                 <blockquote className="evd-voices-blockquote">&ldquo;{q.text}&rdquo;</blockquote>
                                 <figcaption className="evd-voices-figcaption">
@@ -1256,7 +1260,7 @@ export default function EventDetailPageTemplate({
                           </div>
                         </>
                       ) : (
-                        event.pressQuotes.map((q, i) => (
+                        event.pressQuotes!.map((q, i) => (
                           <figure key={i} className="evd-voices-quote">
                             <blockquote className="evd-voices-blockquote">
                               &ldquo;{q.text}&rdquo;
@@ -1273,9 +1277,9 @@ export default function EventDetailPageTemplate({
                   ) : null}
 
                   {/* Community Impact: drama club badge + impact blurb + donate CTA */}
-                  {(linkedDramaClubs.length > 0 || event.donateLink || resolvedCauses?.length || resolvedPartners?.length) ? (
+                  {(linkedDramaClubs.length > 0 || event.donateLink || event.impactBlurb || resolvedCauses?.length || resolvedPartners?.length) ? (
                     <div className="evd-community-impact evd-section-block">
-                      {event.translations ? (
+                      {isBilingual ? (
                         <>
                           <h2 className="evd-about-head evd-bilingual-default">Community Impact</h2>
                           <h2 className="evd-about-head evd-bilingual-alt evd-bilingual-es">Impacto Comunitario</h2>
@@ -1302,10 +1306,10 @@ export default function EventDetailPageTemplate({
                               />
                               <div className="evd-impact-club-copy">
                                 <p className="evd-impact-support-eyebrow">
-                                  {event.translations ? (
+                                  {isBilingual ? (
                                     <>
-                                      <span className="evd-bilingual-wrap-default">Esta producción apoya</span>
-                                      <span className="evd-bilingual-wrap-alt evd-bilingual-en">This production supports</span>
+                                      <span className="evd-bilingual-wrap-default">This production supports</span>
+                                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Esta producción apoya</span>
                                     </>
                                   ) : "This production supports"}
                                 </p>
@@ -1321,14 +1325,16 @@ export default function EventDetailPageTemplate({
                         })() : null}
 
                       {event.impactBlurb ? (
-                        event.translations ? (
+                        isBilingual ? (
                           <>
+                            {/* EN impact blurb — default (base event is EN) */}
                             <p className="evd-body-text evd-about-body evd-impact-blurb evd-bilingual-default">
                               {event.impactBlurb}
                             </p>
-                            {event.translations["en"]?.impactBlurb && (
-                              <p className="evd-body-text evd-about-body evd-impact-blurb evd-bilingual-alt evd-bilingual-en">
-                                {event.translations["en"].impactBlurb}
+                            {/* ES impact blurb — alt */}
+                            {event.translations?.["es"]?.impactBlurb && (
+                              <p className="evd-body-text evd-about-body evd-impact-blurb evd-bilingual-alt evd-bilingual-es">
+                                {event.translations["es"].impactBlurb}
                               </p>
                             )}
                           </>
@@ -1343,10 +1349,10 @@ export default function EventDetailPageTemplate({
                       {resolvedCauses?.length ? (
                         <div className="evd-causes-block">
                           <p className="evd-impact-support-eyebrow">
-                            {event.translations ? (
+                            {isBilingual ? (
                               <>
-                                <span className="evd-bilingual-wrap-default">Causas que Apoyamos</span>
-                                <span className="evd-bilingual-wrap-alt evd-bilingual-en">Causes We Champion</span>
+                                <span className="evd-bilingual-wrap-default">Causes We Champion</span>
+                                <span className="evd-bilingual-wrap-alt evd-bilingual-es">Causas que Apoyamos</span>
                               </>
                             ) : "Causes We Champion"}
                           </p>
@@ -1368,10 +1374,10 @@ export default function EventDetailPageTemplate({
                       {resolvedPartners?.length ? (
                         <div className="evd-partners-block">
                           <p className="evd-impact-support-eyebrow">
-                            {event.translations ? (
+                            {isBilingual ? (
                               <>
-                                <span className="evd-bilingual-wrap-default">Alianzas y Socios</span>
-                                <span className="evd-bilingual-wrap-alt evd-bilingual-en">Partners</span>
+                                <span className="evd-bilingual-wrap-default">Partners</span>
+                                <span className="evd-bilingual-wrap-alt evd-bilingual-es">Alianzas y Socios</span>
                               </>
                             ) : "Partners"}
                           </p>
@@ -1409,13 +1415,13 @@ export default function EventDetailPageTemplate({
                         href={event.donateLink || "/donate"}
                         className="evd-impact-donate-btn"
                       >
-                        {event.translations ? (
+                        {isBilingual ? (
                           <>
                             <span className="evd-bilingual-wrap-default">
-                              {isArchiveView ? "Apoyar Nuevas Obras →" : "Apoyar Esta Nueva Obra →"}
-                            </span>
-                            <span className="evd-bilingual-wrap-alt evd-bilingual-en">
                               {isArchiveView ? "Sponsor New Works Like This →" : "Sponsor This New Work →"}
+                            </span>
+                            <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                              {isArchiveView ? "Apoyar Nuevas Obras →" : "Apoyar Esta Nueva Obra →"}
                             </span>
                           </>
                         ) : (isArchiveView ? "Sponsor New Works Like This →" : "Sponsor This New Work →")}
@@ -1425,10 +1431,10 @@ export default function EventDetailPageTemplate({
                           href={`/donate?mode=drama-club&club=${linkedDramaClubs[0].slug}`}
                           className="evd-impact-donate-btn evd-impact-donate-btn--secondary"
                         >
-                          {event.translations ? (
+                          {isBilingual ? (
                             <>
-                              <span className="evd-bilingual-wrap-default">Apoyar este Club de Teatro →</span>
-                              <span className="evd-bilingual-wrap-alt evd-bilingual-en">Sponsor this Drama Club →</span>
+                              <span className="evd-bilingual-wrap-default">Sponsor this Drama Club →</span>
+                              <span className="evd-bilingual-wrap-alt evd-bilingual-es">Apoyar este Club de Teatro →</span>
                             </>
                           ) : "Sponsor this Drama Club →"}
                         </a>
@@ -1476,10 +1482,10 @@ export default function EventDetailPageTemplate({
                 <div className="evd-cast-head">
                   <span className="evd-cast-head-rule" aria-hidden="true" />
                   <p className="evd-cast-head-label">
-                    {event.translations ? (
+                    {isBilingual ? (
                       <>
-                        <span className="evd-bilingual-wrap-default">Elenco</span>
-                        <span className="evd-bilingual-wrap-alt evd-bilingual-en">Cast</span>
+                        <span className="evd-bilingual-wrap-default">Cast</span>
+                        <span className="evd-bilingual-wrap-alt evd-bilingual-es">Elenco</span>
                       </>
                     ) : "Cast"}
                   </p>
@@ -1487,8 +1493,9 @@ export default function EventDetailPageTemplate({
                 </div>
                 <div className="evd-cast-grid" role="list" aria-label="Cast members">
                   {castCredits.map((c, i) => {
-                    const enRole = event.translations
-                      ? (event.translations["en"]?.credits ?? []).find(
+                    // Base credits are EN roles; ES roles come from translations.es.credits
+                    const esRole = isBilingual
+                      ? (event.translations?.["es"]?.credits ?? []).find(
                           (ec) => ec.name === c.name && ec.group === "cast"
                         )?.role
                       : undefined;
@@ -1505,16 +1512,21 @@ export default function EventDetailPageTemplate({
                               decoding="async"
                             />
                           ) : (
-                            <div className="evd-cast-photo-placeholder" aria-hidden="true">
-                              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            </div>
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src="/images/default-headshot.png"
+                              alt={c.name}
+                              className="evd-cast-photo"
+                              loading="lazy"
+                              decoding="async"
+                            />
                           )}
                         </div>
                         <p className="evd-cast-role">
-                          {enRole ? (
+                          {esRole ? (
                             <>
                               <span className="evd-bilingual-wrap-default">{c.role}</span>
-                              <span className="evd-bilingual-wrap-alt evd-bilingual-en">{enRole}</span>
+                              <span className="evd-bilingual-wrap-alt evd-bilingual-es">{esRole}</span>
                             </>
                           ) : c.role}
                         </p>
@@ -1537,13 +1549,13 @@ export default function EventDetailPageTemplate({
                 <div className="evd-cast-head">
                   <span className="evd-cast-head-rule" aria-hidden="true" />
                   <p className="evd-cast-head-label">
-                    {event.translations ? (
+                    {isBilingual ? (
                       <>
                         <span className="evd-bilingual-wrap-default">
-                          {castCredits.length > 0 ? "Equipo Creativo" : "La Compañía"}
-                        </span>
-                        <span className="evd-bilingual-wrap-alt evd-bilingual-en">
                           {castCredits.length > 0 ? "Creative Team" : "The Company"}
+                        </span>
+                        <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                          {castCredits.length > 0 ? "Equipo Creativo" : "La Compañía"}
                         </span>
                       </>
                     ) : (
@@ -1554,18 +1566,19 @@ export default function EventDetailPageTemplate({
                 </div>
                 <div className="evd-creative-grid">
                   {creativeCredits.map((c, i) => {
-                    const enRole = event.translations
-                      ? (event.translations["en"]?.credits ?? []).find(
+                    // Base credits are EN roles; ES roles come from translations.es.credits
+                    const esRole = isBilingual
+                      ? (event.translations?.["es"]?.credits ?? []).find(
                           (ec) => ec.name === c.name && (ec.group === "creative" || !ec.group)
                         )?.role
                       : undefined;
                     return (
                       <div key={i} className="evd-credit-item">
                         <p className="evd-credit-role">
-                          {enRole ? (
+                          {esRole ? (
                             <>
                               <span className="evd-bilingual-wrap-default">{c.role}</span>
-                              <span className="evd-bilingual-wrap-alt evd-bilingual-en">{enRole}</span>
+                              <span className="evd-bilingual-wrap-alt evd-bilingual-es">{esRole}</span>
                             </>
                           ) : c.role}
                         </p>
@@ -1586,7 +1599,8 @@ export default function EventDetailPageTemplate({
       </section>
 
       {/* ── Related Productions Cycle ────────────────────────────────── */}
-      {(relatedProduction || productionCycle.length > 0) ? (
+      {/* Show only when there is a cycle (more than 1 entry, or production + cycle entries) */}
+      {(relatedProduction || productionCycle.length > 0) && (relatedProduction || productionCycle.length > 1 || productionCycle.length > 0) ? (
         <section className="evd-cycle-band">
           {/* DAT logo sticker — half above section top edge */}
           <div className="evd-cycle-logo-sticker" aria-hidden="true">
@@ -1594,24 +1608,27 @@ export default function EventDetailPageTemplate({
             <img src="/images/dat-logo7.svg" alt="" className="evd-cycle-logo-img" />
           </div>
           <div className="evd-container">
+            {/* Full cycle header only when there are multiple entries in the cycle */}
+            {productionCycle.length > 0 && (
             <div className="evd-section-head">
               <p className="evd-section-eyebrow">
-                {event.translations ? (
+                {isBilingual ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">Historia de Producción</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">Production History</span>
+                    <span className="evd-bilingual-wrap-default">Production History</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Historia de Producción</span>
                   </>
                 ) : "Production History"}
               </p>
               <h2 className="evd-section-title">
-                {event.translations ? (
+                {isBilingual ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">El Ciclo Completo</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">The Full Cycle</span>
+                    <span className="evd-bilingual-wrap-default">The Full Cycle</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">El Ciclo Completo</span>
                   </>
                 ) : "The Full Cycle"}
               </h2>
             </div>
+            )}
             <div className="evd-cycle-scroll-outer">
               <div className="evd-cycle-scroll" role="list" aria-label="Production history">
 
@@ -1647,13 +1664,13 @@ export default function EventDetailPageTemplate({
                           </p>
                         ) : null}
                         <span className="evd-cycle-link">
-                          {event.translations ? (
+                          {isBilingual ? (
                             <>
                               <span className="evd-bilingual-wrap-default">
-                                {badge.isUpcoming ? "Explorar Producción →" : "Ver Archivo →"}
-                              </span>
-                              <span className="evd-bilingual-wrap-alt evd-bilingual-en">
                                 {badge.isUpcoming ? "Explore Production →" : "View Archive →"}
+                              </span>
+                              <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                                {badge.isUpcoming ? "Explorar Producción →" : "Ver Archivo →"}
                               </span>
                             </>
                           ) : (badge.isUpcoming ? "Explore Production →" : "View Archive →")}
@@ -1675,10 +1692,10 @@ export default function EventDetailPageTemplate({
                       }}
                     >
                       <span className="evd-cycle-badge evd-cycle-badge--archive">
-                        {event.translations ? (
+                        {isBilingual ? (
                           <>
-                            <span className="evd-bilingual-wrap-default">Archivo</span>
-                            <span className="evd-bilingual-wrap-alt evd-bilingual-en">Archive</span>
+                            <span className="evd-bilingual-wrap-default">Archive</span>
+                            <span className="evd-bilingual-wrap-alt evd-bilingual-es">Archivo</span>
                           </>
                         ) : "Archive"}
                       </span>
@@ -1691,10 +1708,10 @@ export default function EventDetailPageTemplate({
                         </p>
                       ) : null}
                       <span className="evd-cycle-link">
-                        {event.translations ? (
+                        {isBilingual ? (
                           <>
-                            <span className="evd-bilingual-wrap-default">Ver Archivo →</span>
-                            <span className="evd-bilingual-wrap-alt evd-bilingual-en">View Archive →</span>
+                            <span className="evd-bilingual-wrap-default">View Archive →</span>
+                            <span className="evd-bilingual-wrap-alt evd-bilingual-es">Ver Archivo →</span>
                           </>
                         ) : "View Archive →"}
                       </span>
@@ -1708,21 +1725,21 @@ export default function EventDetailPageTemplate({
             {isArchiveView && relatedUpcomingEvent ? (
               <div className="evd-related-upcoming">
                 <p className="evd-related-upcoming-eyebrow">
-                  {event.translations ? (
+                  {isBilingual ? (
                     <>
-                      <span className="evd-bilingual-wrap-default">Próxima Función</span>
-                      <span className="evd-bilingual-wrap-alt evd-bilingual-en">Coming Up</span>
+                      <span className="evd-bilingual-wrap-default">Coming Up</span>
+                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Próxima Función</span>
                     </>
                   ) : "Coming Up"}
                 </p>
                 <Link href={canonicalEventPath(relatedUpcomingEvent)} className="evd-related-upcoming-link">
                   <div className="evd-related-upcoming-copy">
                     <p className="evd-related-upcoming-title">
-                      {event.translations ? (
+                      {isBilingual ? (
                         <>
                           <span className="evd-bilingual-wrap-default">{relatedUpcomingEvent.title}</span>
-                          <span className="evd-bilingual-wrap-alt evd-bilingual-en">
-                            {relatedUpcomingEvent.translations?.["en"]?.title ?? relatedUpcomingEvent.title}
+                          <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                            {relatedUpcomingEvent.translations?.["es"]?.title ?? relatedUpcomingEvent.title}
                           </span>
                         </>
                       ) : relatedUpcomingEvent.title}
@@ -1734,10 +1751,10 @@ export default function EventDetailPageTemplate({
                     </p>
                   </div>
                   <span className="evd-related-upcoming-cta">
-                    {event.translations ? (
+                    {isBilingual ? (
                       <>
-                        <span className="evd-bilingual-wrap-default">Ver Función →</span>
-                        <span className="evd-bilingual-wrap-alt evd-bilingual-en">See This Show →</span>
+                        <span className="evd-bilingual-wrap-default">See This Show →</span>
+                        <span className="evd-bilingual-wrap-alt evd-bilingual-es">Ver Función →</span>
                       </>
                     ) : "See This Show →"}
                   </span>
@@ -1761,21 +1778,21 @@ export default function EventDetailPageTemplate({
           <div className="evd-container">
             <div className="evd-section-head">
               <p className="evd-section-eyebrow">
-                {event.translations ? (
+                {isBilingual ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">Más Eventos</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">More Events</span>
+                    <span className="evd-bilingual-wrap-default">More Events</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Más Eventos</span>
                   </>
                 ) : "More Events"}
               </p>
               <h2 className="evd-section-title">
-                {event.translations ? (
+                {isBilingual ? (
                   <>
                     <span className="evd-bilingual-wrap-default">
-                      {isArchiveView ? "Explorar Más" : "Lo Que Viene"}
-                    </span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">
                       {isArchiveView ? "Explore More" : "Also Coming Up"}
+                    </span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                      {isArchiveView ? "Explorar Más" : "Lo Que Viene"}
                     </span>
                   </>
                 ) : (isArchiveView ? "Explore More" : "Also Coming Up")}
@@ -1816,43 +1833,43 @@ export default function EventDetailPageTemplate({
             <div className="evd-rel-events-footer">
               <div className="evd-rel-footer-nav">
                 <Link href="/events/performances" className="evd-bottom-link evd-bottom-link--pink">
-                  {event.translations ? (
+                  {isBilingual ? (
                     <>
-                      <span className="evd-bilingual-wrap-default">Próximas Funciones →</span>
-                      <span className="evd-bilingual-wrap-alt evd-bilingual-en">Upcoming Performances →</span>
+                      <span className="evd-bilingual-wrap-default">Upcoming Performances →</span>
+                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Próximas Funciones →</span>
                     </>
                   ) : "Upcoming Performances →"}
                 </Link>
                 <Link href="/events/fundraisers" className="evd-bottom-link evd-bottom-link--gold">
-                  {event.translations ? (
+                  {isBilingual ? (
                     <>
-                      <span className="evd-bilingual-wrap-default">Recaudaciones y Comunidad →</span>
-                      <span className="evd-bilingual-wrap-alt evd-bilingual-en">Fundraisers &amp; Community Nights →</span>
+                      <span className="evd-bilingual-wrap-default">Fundraisers &amp; Community Nights →</span>
+                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Recaudaciones y Comunidad →</span>
                     </>
                   ) : "Fundraisers & Community Nights →"}
                 </Link>
                 <Link href="/events/festivals" className="evd-bottom-link evd-bottom-link--teal">
-                  {event.translations ? (
+                  {isBilingual ? (
                     <>
-                      <span className="evd-bilingual-wrap-default">Festivales y Exhibiciones →</span>
-                      <span className="evd-bilingual-wrap-alt evd-bilingual-en">Festivals &amp; Showcases →</span>
+                      <span className="evd-bilingual-wrap-default">Festivals &amp; Showcases →</span>
+                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Festivales y Exhibiciones →</span>
                     </>
                   ) : "Festivals & Showcases →"}
                 </Link>
                 <Link href="/theatre" className="evd-bottom-link evd-bottom-link--muted">
-                  {event.translations ? (
+                  {isBilingual ? (
                     <>
-                      <span className="evd-bilingual-wrap-default">Archivo de Teatro →</span>
-                      <span className="evd-bilingual-wrap-alt evd-bilingual-en">Theatre Archive →</span>
+                      <span className="evd-bilingual-wrap-default">Theatre Archive →</span>
+                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Archivo de Teatro →</span>
                     </>
                   ) : "Theatre Archive →"}
                 </Link>
               </div>
               <Link href="/events" className="evd-btn-ghost evd-rel-all-events-btn">
-                {event.translations ? (
+                {isBilingual ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">Todos los Eventos →</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">All Events →</span>
+                    <span className="evd-bilingual-wrap-default">All Events →</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Todos los Eventos →</span>
                   </>
                 ) : "All Events →"}
               </Link>
@@ -1873,25 +1890,25 @@ export default function EventDetailPageTemplate({
         <div className="evd-container evd-newsletter-inner">
           <div className="evd-newsletter-copy">
             <p className="evd-newsletter-eyebrow">
-              {event.translations ? (
+              {isBilingual ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">Mantente Conectado</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">Stay Connected</span>
+                  <span className="evd-bilingual-wrap-default">Stay Connected</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Mantente Conectado</span>
                 </>
               ) : "Stay Connected"}
             </p>
             <h2 className="evd-newsletter-title">
-              {event.translations ? (
+              {isBilingual ? (
                 <>
                   <span className="evd-bilingual-wrap-default">
                     {isArchiveView
-                      ? "Mantente al día con nuevas obras, reposiciones y encuentros."
-                      : "No te pierdas ningún espectáculo."}
-                  </span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">
-                    {isArchiveView
                       ? "Stay connected to new work, revivals, and gatherings."
                       : "Never miss a show."}
+                  </span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                    {isArchiveView
+                      ? "Mantente al día con nuevas obras, reposiciones y encuentros."
+                      : "No te pierdas ningún espectáculo."}
                   </span>
                 </>
               ) : (isArchiveView
@@ -1899,13 +1916,13 @@ export default function EventDetailPageTemplate({
                 : "Never miss a show.")}
             </h2>
             <p className="evd-newsletter-body">
-              {event.translations ? (
+              {isBilingual ? (
                 <>
                   <span className="evd-bilingual-wrap-default">
-                    Los eventos se anuncian primero en nuestra lista comunitaria. Sé la primera persona en saber cuándo llegan nuevos espectáculos, festivales y noches comunitarias.
-                  </span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">
                     Events are announced first to our community list. Be the first to know when new shows, festivals, and community nights land.
+                  </span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                    Los eventos se anuncian primero en nuestra lista comunitaria. Sé la primera persona en saber cuándo llegan nuevos espectáculos, festivales y noches comunitarias.
                   </span>
                 </>
               ) : "Events are announced first to our community list. Be the first to know when new shows, festivals, and community nights land."}
@@ -2927,16 +2944,19 @@ export default function EventDetailPageTemplate({
         }
 
         /* ── Bilingual CSS content switching ───────────────────────────── */
-        /* Block-level: alternate language content hidden by default */
+        /* English-first model: default content is English (no attribute needed).
+           Set data-evd-lang="es" on :root to switch to Spanish.
+           No other language attribute is needed for EN — removing the attr restores EN. */
+        /* Block-level: alternate (non-EN) language content hidden by default */
         .evd-bilingual-alt { display: none; }
-        /* When :root[data-evd-lang="en"]: hide default, show EN */
-        :root[data-evd-lang="en"] .evd-bilingual-default { display: none !important; }
-        :root[data-evd-lang="en"] .evd-bilingual-alt.evd-bilingual-en { display: block !important; }
+        /* When :root[data-evd-lang="es"]: hide English defaults, show Spanish alts */
+        :root[data-evd-lang="es"] .evd-bilingual-default { display: none !important; }
+        :root[data-evd-lang="es"] .evd-bilingual-alt.evd-bilingual-es { display: block !important; }
         /* Inline/flex wrap — use display:contents so text flows naturally */
         .evd-bilingual-wrap-default { display: contents; }
         .evd-bilingual-wrap-alt { display: none; }
-        :root[data-evd-lang="en"] .evd-bilingual-wrap-default { display: none !important; }
-        :root[data-evd-lang="en"] .evd-bilingual-wrap-alt.evd-bilingual-en { display: contents !important; }
+        :root[data-evd-lang="es"] .evd-bilingual-wrap-default { display: none !important; }
+        :root[data-evd-lang="es"] .evd-bilingual-wrap-alt.evd-bilingual-es { display: contents !important; }
 
         /* ── 8b. Cycle band: DAT logo sticker ──────────────────────────── */
         .evd-cycle-band { position: relative; }
