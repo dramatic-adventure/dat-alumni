@@ -126,8 +126,21 @@ function getEventEyebrow(event: DatEvent): string {
   return categoryMeta[event.category].eyebrow;
 }
 
+function getEventEyebrowEs(event: DatEvent): string {
+  if (isCommunityShowcase(event)) return "Exhibición Comunitaria";
+  if (event.subcategory === "benefit") return "Evento Benéfico";
+  if (event.subcategory === "screening") return "Proyección";
+  if (event.subcategory === "commission") return "Encargo";
+  const esMap: Record<DatEvent["category"], string> = {
+    performance: "Teatro En Vivo",
+    festival: "Circuito de Festivales",
+    fundraiser: "Comunidad y Solidaridad",
+  };
+  return esMap[event.category];
+}
+
 function getPrimaryAction(event: DatEvent):
-  | { href: string; label: string; external?: boolean; tone?: "primary" | "invite" }
+  | { href: string; label: string; esLabel?: string; external?: boolean; tone?: "primary" | "invite" }
   | null {
   if (isCommunityShowcase(event) && event.contactEmail) {
     return {
@@ -135,23 +148,26 @@ function getPrimaryAction(event: DatEvent):
         `Attendance Request: ${event.title}`,
       )}`,
       label: "Request an Invite →",
+      esLabel: "Solicitar Invitación →",
       tone: "invite",
     };
   }
 
   if (!event.ticketUrl) return null;
 
-  return {
-    href: event.ticketUrl,
-    label:
-      event.ticketType === "free"
-        ? "Register Free →"
-        : event.ticketType === "pay-what-you-can"
-          ? "Get Your Ticket →"
-          : "Reserve Your Seat →",
-    external: true,
-    tone: "primary",
-  };
+  const label =
+    event.ticketType === "free"
+      ? "Register Free →"
+      : event.ticketType === "pay-what-you-can"
+        ? "Get Your Ticket →"
+        : "Reserve Your Seat →";
+  const esLabel =
+    event.ticketType === "free"
+      ? "Registrarse Gratis →"
+      : event.ticketType === "pay-what-you-can"
+        ? "Obtener tu Entrada →"
+        : "Reservar tu Lugar →";
+  return { href: event.ticketUrl, label, esLabel, external: true, tone: "primary" };
 }
 
 function resolveDramaClubSlugs(event: DatEvent): string[] {
@@ -449,11 +465,21 @@ function ArchivedEventInfoBand({
           <div className="evd-ticket-purchase">
             {routeKind === "theatre" && relatedProduction ? (
               <Link href={`/theatre/${relatedProduction.slug}`} className="evd-btn-ticket">
-                View Production Archive →
+                {event.translations ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">Ver Archivo de Producción →</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">View Production Archive →</span>
+                  </>
+                ) : "View Production Archive →"}
               </Link>
             ) : (
               <Link href="/projects" className="evd-btn-ticket">
-                Browse Project Archive →
+                {event.translations ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">Explorar el Archivo →</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">Browse Project Archive →</span>
+                  </>
+                ) : "Browse Project Archive →"}
               </Link>
             )}
           </div>
@@ -550,7 +576,12 @@ function UpcomingEventInfoBand({
                 rel={primaryAction.external ? "noopener noreferrer" : undefined}
                 className={`evd-btn-ticket${primaryAction.tone === "invite" ? " evd-btn-ticket--invite" : ""}`}
               >
-                {primaryAction.label}
+                {event.translations && primaryAction.esLabel ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">{primaryAction.esLabel}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">{primaryAction.label}</span>
+                  </>
+                ) : primaryAction.label}
               </a>
             ) : null}
           </div>
@@ -710,10 +741,28 @@ export default function EventDetailPageTemplate({
         <div className="evd-hero-glow" />
         <div className="evd-hero-content">
           <nav className="evd-breadcrumb" aria-label="Breadcrumb">
-            <Link href="/events">Events</Link>
+            <Link href="/events">
+              {event.translations ? (
+                <>
+                  <span className="evd-bilingual-wrap-default">Eventos</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">Events</span>
+                </>
+              ) : "Events"}
+            </Link>
             <span aria-hidden="true">/</span>
             <Link href={meta.href}>
-              {routeKind === "theatre" ? "Performances" : routeKind === "festivals" ? "Festivals" : "Gatherings"}
+              {event.translations ? (
+                <>
+                  <span className="evd-bilingual-wrap-default">
+                    {routeKind === "theatre" ? "Funciones" : routeKind === "festivals" ? "Festivales" : "Encuentros"}
+                  </span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">
+                    {routeKind === "theatre" ? "Performances" : routeKind === "festivals" ? "Festivals" : "Gatherings"}
+                  </span>
+                </>
+              ) : (
+                routeKind === "theatre" ? "Performances" : routeKind === "festivals" ? "Festivals" : "Gatherings"
+              )}
             </Link>
             <span aria-hidden="true">/</span>
             <span>{event.title}</span>
@@ -721,7 +770,8 @@ export default function EventDetailPageTemplate({
 
           <EventHeroText
             defaultLang={heroDefaultLang}
-            eyebrow={getEventEyebrow(event)}
+            eyebrow={event.translations ? getEventEyebrowEs(event) : getEventEyebrow(event)}
+            eyebrowEn={event.translations ? getEventEyebrow(event) : undefined}
             base={{
               title: event.title,
               subtitle: event.subtitle,
@@ -734,7 +784,14 @@ export default function EventDetailPageTemplate({
 
           {isArchiveView ? (
             <div className="evd-archive-badge-wrap">
-              <span className="evd-archive-badge">Archive</span>
+              <span className="evd-archive-badge">
+                {event.translations ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">Archivo</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">Archive</span>
+                  </>
+                ) : "Archive"}
+              </span>
             </div>
           ) : null}
 
@@ -754,12 +811,26 @@ export default function EventDetailPageTemplate({
               </span>
             )}
 
-            <span className="evd-pill evd-pill--venue">
-              {event.venue}
-              {event.city !== "Worldwide"
-                ? ` · ${event.city}${event.country ? `, ${event.country}` : ""}`
-                : ""}
-            </span>
+            {event.venueUrl ? (
+              <a
+                href={event.venueUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="evd-pill evd-pill--venue evd-pill--link"
+              >
+                {event.venue}
+                {event.city !== "Worldwide"
+                  ? ` · ${event.city}${event.country ? `, ${event.country}` : ""}`
+                  : ""}
+              </a>
+            ) : (
+              <span className="evd-pill evd-pill--venue">
+                {event.venue}
+                {event.city !== "Worldwide"
+                  ? ` · ${event.city}${event.country ? `, ${event.country}` : ""}`
+                  : ""}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -979,7 +1050,12 @@ export default function EventDetailPageTemplate({
                         <h2 className="evd-about-head">Community Impact</h2>
                       )}
 
-                      {linkedDramaClubs.length > 0 ? (
+                      {linkedDramaClubs.length > 0 ? (() => {
+                          // Unified badge size: compute max diameter bucket across all clubs
+                          // so multi-club events render all badges at the same size.
+                          const maxLen = Math.max(...linkedDramaClubs.map(c => (c.name ?? "").length));
+                          const clubBadgeSize = maxLen > 44 ? 164 : maxLen > 36 ? 146 : maxLen > 26 ? 130 : 112;
+                          return (
                         <div className="evd-impact-clubs">
                           {linkedDramaClubs.map((club) => (
                             <Link
@@ -990,7 +1066,7 @@ export default function EventDetailPageTemplate({
                               <DramaClubBadge
                                 name={club.name}
                                 location={club.location}
-                                size={112}
+                                size={clubBadgeSize}
                                 wrappedByParentLink
                               />
                               <div className="evd-impact-club-copy">
@@ -1010,7 +1086,8 @@ export default function EventDetailPageTemplate({
                             </Link>
                           ))}
                         </div>
-                      ) : null}
+                          );
+                        })() : null}
 
                       {event.impactBlurb ? (
                         event.translations ? (
@@ -1035,14 +1112,28 @@ export default function EventDetailPageTemplate({
                         href={event.donateLink || "/donate"}
                         className="evd-impact-donate-btn"
                       >
-                        {isArchiveView ? "Sponsor New Works Like This →" : "Sponsor This New Work →"}
+                        {event.translations ? (
+                          <>
+                            <span className="evd-bilingual-wrap-default">
+                              {isArchiveView ? "Apoyar Nuevas Obras →" : "Apoyar Esta Nueva Obra →"}
+                            </span>
+                            <span className="evd-bilingual-wrap-alt evd-bilingual-en">
+                              {isArchiveView ? "Sponsor New Works Like This →" : "Sponsor This New Work →"}
+                            </span>
+                          </>
+                        ) : (isArchiveView ? "Sponsor New Works Like This →" : "Sponsor This New Work →")}
                       </a>
                       {linkedDramaClubs.length > 0 && (
                         <a
                           href={`/donate?mode=drama-club&club=${linkedDramaClubs[0].slug}`}
                           className="evd-impact-donate-btn evd-impact-donate-btn--secondary"
                         >
-                          Sponsor this Drama Club →
+                          {event.translations ? (
+                            <>
+                              <span className="evd-bilingual-wrap-default">Apoyar este Club de Teatro →</span>
+                              <span className="evd-bilingual-wrap-alt evd-bilingual-en">Sponsor this Drama Club →</span>
+                            </>
+                          ) : "Sponsor this Drama Club →"}
                         </a>
                       )}
                     </div>
@@ -1206,8 +1297,22 @@ export default function EventDetailPageTemplate({
           </div>
           <div className="evd-container">
             <div className="evd-section-head">
-              <p className="evd-section-eyebrow">Production History</p>
-              <h2 className="evd-section-title">The Full Cycle</h2>
+              <p className="evd-section-eyebrow">
+                {event.translations ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">Historia de Producción</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">Production History</span>
+                  </>
+                ) : "Production History"}
+              </p>
+              <h2 className="evd-section-title">
+                {event.translations ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">El Ciclo Completo</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">The Full Cycle</span>
+                  </>
+                ) : "The Full Cycle"}
+              </h2>
             </div>
             <div className="evd-cycle-scroll-outer">
               <div className="evd-cycle-scroll" role="list" aria-label="Production history">
@@ -1244,7 +1349,16 @@ export default function EventDetailPageTemplate({
                           </p>
                         ) : null}
                         <span className="evd-cycle-link">
-                          {badge.isUpcoming ? "Explore Production →" : "View Archive →"}
+                          {event.translations ? (
+                            <>
+                              <span className="evd-bilingual-wrap-default">
+                                {badge.isUpcoming ? "Explorar Producción →" : "Ver Archivo →"}
+                              </span>
+                              <span className="evd-bilingual-wrap-alt evd-bilingual-en">
+                                {badge.isUpcoming ? "Explore Production →" : "View Archive →"}
+                              </span>
+                            </>
+                          ) : (badge.isUpcoming ? "Explore Production →" : "View Archive →")}
                         </span>
                       </div>
                     </Link>
@@ -1262,7 +1376,14 @@ export default function EventDetailPageTemplate({
                           : undefined,
                       }}
                     >
-                      <span className="evd-cycle-badge evd-cycle-badge--archive">Archive</span>
+                      <span className="evd-cycle-badge evd-cycle-badge--archive">
+                        {event.translations ? (
+                          <>
+                            <span className="evd-bilingual-wrap-default">Archivo</span>
+                            <span className="evd-bilingual-wrap-alt evd-bilingual-en">Archive</span>
+                          </>
+                        ) : "Archive"}
+                      </span>
                     </div>
                     <div className="evd-cycle-body">
                       <p className="evd-cycle-title">{p.title}</p>
@@ -1271,7 +1392,14 @@ export default function EventDetailPageTemplate({
                           {p.location}{p.festival ? ` · ${p.festival}` : ""}
                         </p>
                       ) : null}
-                      <span className="evd-cycle-link">View Archive →</span>
+                      <span className="evd-cycle-link">
+                        {event.translations ? (
+                          <>
+                            <span className="evd-bilingual-wrap-default">Ver Archivo →</span>
+                            <span className="evd-bilingual-wrap-alt evd-bilingual-en">View Archive →</span>
+                          </>
+                        ) : "View Archive →"}
+                      </span>
                     </div>
                   </Link>
                 ))}
@@ -1286,10 +1414,26 @@ export default function EventDetailPageTemplate({
         <section className="evd-related-events-band">
           <div className="evd-container">
             <div className="evd-section-head">
-              <p className="evd-section-eyebrow">More Events</p>
+              <p className="evd-section-eyebrow">
+                {event.translations ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">Más Eventos</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">More Events</span>
+                  </>
+                ) : "More Events"}
+              </p>
               <h2 className="evd-section-title">
-                {isArchiveView ? "Explore More" : "Also Coming Up"}
-                </h2>
+                {event.translations ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">
+                      {isArchiveView ? "Explorar Más" : "Lo Que Viene"}
+                    </span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">
+                      {isArchiveView ? "Explore More" : "Also Coming Up"}
+                    </span>
+                  </>
+                ) : (isArchiveView ? "Explore More" : "Also Coming Up")}
+              </h2>
             </div>
             <div className="evd-rel-events-grid">
               {relatedEvents.map((re) => {
@@ -1326,20 +1470,45 @@ export default function EventDetailPageTemplate({
             <div className="evd-rel-events-footer">
               <div className="evd-rel-footer-nav">
                 <Link href="/events/performances" className="evd-bottom-link evd-bottom-link--pink">
-                  Upcoming Performances →
+                  {event.translations ? (
+                    <>
+                      <span className="evd-bilingual-wrap-default">Próximas Funciones →</span>
+                      <span className="evd-bilingual-wrap-alt evd-bilingual-en">Upcoming Performances →</span>
+                    </>
+                  ) : "Upcoming Performances →"}
                 </Link>
                 <Link href="/events/fundraisers" className="evd-bottom-link evd-bottom-link--gold">
-                  Fundraisers &amp; Community Nights →
+                  {event.translations ? (
+                    <>
+                      <span className="evd-bilingual-wrap-default">Recaudaciones y Comunidad →</span>
+                      <span className="evd-bilingual-wrap-alt evd-bilingual-en">Fundraisers &amp; Community Nights →</span>
+                    </>
+                  ) : "Fundraisers & Community Nights →"}
                 </Link>
                 <Link href="/events/festivals" className="evd-bottom-link evd-bottom-link--teal">
-                  Festivals &amp; Showcases →
+                  {event.translations ? (
+                    <>
+                      <span className="evd-bilingual-wrap-default">Festivales y Exhibiciones →</span>
+                      <span className="evd-bilingual-wrap-alt evd-bilingual-en">Festivals &amp; Showcases →</span>
+                    </>
+                  ) : "Festivals & Showcases →"}
                 </Link>
                 <Link href="/theatre" className="evd-bottom-link evd-bottom-link--muted">
-                  Theatre Archive →
+                  {event.translations ? (
+                    <>
+                      <span className="evd-bilingual-wrap-default">Archivo de Teatro →</span>
+                      <span className="evd-bilingual-wrap-alt evd-bilingual-en">Theatre Archive →</span>
+                    </>
+                  ) : "Theatre Archive →"}
                 </Link>
               </div>
               <Link href="/events" className="evd-btn-ghost evd-rel-all-events-btn">
-                All Events →
+                {event.translations ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">Todos los Eventos →</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">All Events →</span>
+                  </>
+                ) : "All Events →"}
               </Link>
             </div>
           </div>
@@ -1350,15 +1519,43 @@ export default function EventDetailPageTemplate({
       <section className="evd-newsletter-band">
         <div className="evd-container evd-newsletter-inner">
           <div className="evd-newsletter-copy">
-            <p className="evd-newsletter-eyebrow">Stay Connected</p>
+            <p className="evd-newsletter-eyebrow">
+              {event.translations ? (
+                <>
+                  <span className="evd-bilingual-wrap-default">Mantente Conectado</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">Stay Connected</span>
+                </>
+              ) : "Stay Connected"}
+            </p>
             <h2 className="evd-newsletter-title">
-                {isArchiveView
-                    ? "Stay connected to new work, revivals, and gatherings."
-                    : "Never miss a show."}
+              {event.translations ? (
+                <>
+                  <span className="evd-bilingual-wrap-default">
+                    {isArchiveView
+                      ? "Mantente al día con nuevas obras, reposiciones y encuentros."
+                      : "No te pierdas ningún espectáculo."}
+                  </span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">
+                    {isArchiveView
+                      ? "Stay connected to new work, revivals, and gatherings."
+                      : "Never miss a show."}
+                  </span>
+                </>
+              ) : (isArchiveView
+                ? "Stay connected to new work, revivals, and gatherings."
+                : "Never miss a show.")}
             </h2>
             <p className="evd-newsletter-body">
-              Events are announced first to our community list. Be the first
-              to know when new shows, festivals, and community nights land.
+              {event.translations ? (
+                <>
+                  <span className="evd-bilingual-wrap-default">
+                    Los eventos se anuncian primero en nuestra lista comunitaria. Sé la primera persona en saber cuándo llegan nuevos espectáculos, festivales y noches comunitarias.
+                  </span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">
+                    Events are announced first to our community list. Be the first to know when new shows, festivals, and community nights land.
+                  </span>
+                </>
+              ) : "Events are announced first to our community list. Be the first to know when new shows, festivals, and community nights land."}
             </p>
           </div>
           <div className="evd-newsletter-form">
@@ -1527,7 +1724,7 @@ export default function EventDetailPageTemplate({
           transition: color 0.18s ease;
         }
         .evd-breadcrumb a:hover {
-          color: rgba(255,255,255,0.85);
+          color: var(--evd-accent);
         }
         .evd-breadcrumb span[aria-hidden] {
           color: rgba(255,255,255,0.22);
@@ -2387,7 +2584,7 @@ export default function EventDetailPageTemplate({
           width: 242px;
           height: 242px;
           filter: drop-shadow(0 3px 14px rgba(0,0,0,0.45));
-          opacity: 0.92;
+          opacity: 1;
         }
 
         /* ── 4. Photo Gallery ──────────────────────────────────────────── */
@@ -3160,6 +3357,8 @@ export default function EventDetailPageTemplate({
           align-items: center;
         }
         .evd-bottom-link {
+          display: inline-flex;
+          align-items: center;
           font-family: "DM Sans", sans-serif;
           font-size: 0.72rem;
           font-weight: 700;

@@ -11,8 +11,10 @@ interface LangData {
 interface EventHeroTextProps {
   /** The base (default) language code — e.g. "es" */
   defaultLang: string;
-  /** The eyebrow label (e.g. "Live Theatre") — rendered between toggle and title */
+  /** The eyebrow label in the default language (e.g. "Teatro En Vivo") */
   eyebrow: string;
+  /** Alternate-language (EN) eyebrow — shown when user switches away from defaultLang */
+  eyebrowEn?: string;
   /** Base text in the default language */
   base: {
     title: string;
@@ -41,6 +43,7 @@ const STORAGE_KEY = "evd-lang-pref";
 export default function EventHeroText({
   defaultLang,
   eyebrow,
+  eyebrowEn,
   base,
   translations,
 }: EventHeroTextProps) {
@@ -114,7 +117,9 @@ export default function EventHeroText({
       )}
 
       {/* Eyebrow — category label above title */}
-      <p className="evd-eyebrow">{eyebrow}</p>
+      <p className="evd-eyebrow">
+        {eyebrowEn && activeLang !== defaultLang ? eyebrowEn : eyebrow}
+      </p>
 
       <h1 className="evd-title">{title}</h1>
 
