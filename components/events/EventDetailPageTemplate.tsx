@@ -1409,6 +1409,13 @@ export default function EventDetailPageTemplate({
       {/* ── Related Upcoming Events ────────────────────────────────────── */}
       {relatedEvents.length > 0 ? (
         <section className="evd-related-events-band">
+          {/* DAT logo sticker — only shown here when the cycle section is absent */}
+          {!(relatedProduction || productionCycle.length > 0) && (
+            <div className="evd-cycle-logo-sticker" aria-hidden="true">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/dat-logo7.svg" alt="" className="evd-cycle-logo-img" />
+            </div>
+          )}
           <div className="evd-container">
             <div className="evd-section-head">
               <p className="evd-section-eyebrow">
@@ -2279,16 +2286,15 @@ export default function EventDetailPageTemplate({
 
         /* ── 3a. White card top title ──────────────────────────────────── */
         .evd-card-title {
-          font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
-          font-size: clamp(2.5rem, 7vw, 4.84em);
-          font-weight: 800;
-          letter-spacing: 0.24em;
+          font-family: var(--font-anton, "Anton"), sans-serif;
+          font-size: clamp(2.8rem, 8vw, 5.5rem);
+          font-weight: 400;
+          letter-spacing: 0.06em;
           text-transform: uppercase;
           text-align: center;
           color: var(--evd-accent, #F23359);
           margin: 0 0 0.5rem;
-          opacity: 1;
-          text-shadow: 0 0px 1.1px rgba(36, 17, 35, 0.64);
+          text-shadow: 0 2px 16px rgba(242,51,89,0.22), 0 1px 2px rgba(36,17,35,0.55);
         }
 
         /* ── 3b. White Content Card ────────────────────────────────────── */
@@ -2932,7 +2938,7 @@ export default function EventDetailPageTemplate({
         /* ── 8. Production Cycle ───────────────────────────────────────── */
         .evd-cycle-band {
           background: #111118;
-          padding: clamp(2rem, 3vw, 3rem) 0 clamp(2.5rem, 5vw, 4rem);
+          padding: clamp(3rem, 6vw, 5rem) 0 clamp(2.5rem, 5vw, 4rem);
           border-top: 1px solid rgba(255,255,255,0.06);
         }
 
@@ -2940,18 +2946,19 @@ export default function EventDetailPageTemplate({
         .evd-cycle-scroll-outer {
           overflow-x: auto;
           overflow-y: visible;
-          margin-top: 1.5rem;
           /* Negative vertical margins so the padding doesn't shift layout */
           padding-top: 0.75rem;
           margin-top: calc(1.5rem - 0.75rem);
           padding-bottom: 2.5rem;
           margin-bottom: -2.5rem;
+          /* Break out of container right padding so carousel fades off-screen */
+          margin-right: calc(-1 * clamp(1.25rem, 5vw, 3rem));
         }
         /* Horizontal scroll of production cards */
         .evd-cycle-scroll {
           display: flex;
           gap: 1.25rem;
-          padding: 0.25rem 0.25rem 0.25rem;
+          padding: 0.25rem 0 0.25rem 0.25rem;
           min-width: max-content;
         }
         .evd-cycle-scroll .evd-cycle-card {
@@ -2991,6 +2998,22 @@ export default function EventDetailPageTemplate({
           background-position: center;
           background-color: rgba(255,255,255,0.05);
           position: relative;
+          transition: filter 0.22s ease;
+        }
+        .evd-cycle-img::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(155deg, rgba(255,255,255,0.1) 0%, transparent 55%);
+          opacity: 0;
+          transition: opacity 0.22s ease;
+          pointer-events: none;
+        }
+        .evd-cycle-card:hover .evd-cycle-img {
+          filter: brightness(1.14) saturate(1.08);
+        }
+        .evd-cycle-card:hover .evd-cycle-img::after {
+          opacity: 1;
         }
         .evd-cycle-body {
           padding: 1rem 1.1rem 1.1rem;
@@ -3028,7 +3051,7 @@ export default function EventDetailPageTemplate({
           border: 1.5px solid rgba(255,255,255,0.18);
           border-radius: 9px;
           padding: 0.42rem 0.9rem;
-          margin-top: 0.6rem;
+          margin-top: auto;
           transition: border-color 0.18s, color 0.18s;
         }
         .evd-cycle-card:hover .evd-cycle-link {
@@ -3087,6 +3110,7 @@ export default function EventDetailPageTemplate({
         }
 
         .evd-related-events-band {
+          position: relative;
           background: #0e3d25;
           background-image:
             radial-gradient(ellipse 80% 80% at 0% 100%, rgba(20,100,55,0.45) 0%, transparent 70%),
