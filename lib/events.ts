@@ -303,6 +303,14 @@ export interface DatEvent {
       credits?: { role: string; name: string; href?: string; group?: "creative" | "cast"; photo?: string }[];
       /** Translated accessibility note */
       accessibility?: string;
+      /** Translated runtime string (e.g. "Approx. 80 min · No interval") */
+      runtime?: string;
+      /** Translated language string (e.g. "Spanish & Kichwa") */
+      language?: string;
+      /** Translated suitability string (e.g. "Ages 10+") */
+      suitability?: string;
+      /** Translated ticket price string (e.g. "$15 / $8 students") */
+      ticketPrice?: string;
     }
   >;
 
@@ -432,9 +440,9 @@ export const events: DatEvent[] = [
     ticketUrl: "https://www.ticketshow.com.ec",
     venueUrl: "https://www.teatromalayerba.com",
     ticketPrice: "$15 / $8 estudiantes",
-    runtime: "Approx. 80 min · No interval",
-    language: "Spanish & Kichwa",
-    suitability: "Ages 10+",
+    runtime: "Aprox. 80 min · Sin intervalo",
+    language: "Español y Kichwa",
+    suitability: "Mayores de 10 años",
     ticketType: "ticketed",
     featured: true,
     tags: ["New York Times Critics Pick", "kichwa", "español", "Quito", "Andes", "Malayerba", "títeres", "co-producción"],
@@ -570,6 +578,10 @@ export const events: DatEvent[] = [
         artistNoteBy: "Kathleen Amshoff, Director",
         impactBlurb:
           "This co-production sustains DAT's network of Drama Clubs in Ecuador — forming new generations of community artists in Quito and beyond. Your support makes theatre that is born from community possible.",
+        runtime: "Approx. 80 min · No interval",
+        language: "Spanish & Kichwa",
+        suitability: "Ages 10+",
+        ticketPrice: "$15 / $8 students",
         videoTitle: "Watch: Trailer — A Girl Without Wings",
         accessibility:
           "Step-free access via main entrance · Audio-described performance: 3 Oct · BSL-interpreted performance: 10 Oct · English subtitles available",

@@ -22,7 +22,11 @@ interface EventProdrowGalleryProps {
   /** Optional "From the Field" / BTS second gallery */
   fieldImages?: ProdrowImage[];
   fieldGalleryTitle?: string;
+  /** Spanish version of the field gallery title */
+  fieldGalleryTitleEs?: string;
   fieldAlbumHref?: string;
+  /** Whether the page is bilingual (ES/EN toggle active) */
+  bilingual?: boolean;
 }
 
 function cleanStr(val: string | null | undefined): string | undefined {
@@ -44,6 +48,7 @@ function PhotoRowSection({
   albumHref,
   albumLabel,
   maxVisible = 3,
+  bilingual,
 }: {
   images: ProdrowImage[];
   photoCredit?: string;
@@ -51,6 +56,7 @@ function PhotoRowSection({
   albumHref?: string;
   albumLabel?: string;
   maxVisible?: number;
+  bilingual?: boolean;
 }) {
   const [open, setOpen] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -76,13 +82,21 @@ function PhotoRowSection({
     <div className="evd-prodrow-block" aria-label="Production Gallery">
       <div className="evd-prodrow-head">
         <h3 className="evd-prodrow-title">
-          <span className="evd-bilingual-wrap-default">Galería de Producción</span>
-          <span className="evd-bilingual-wrap-alt evd-bilingual-en">Production Gallery</span>
+          {bilingual ? (
+            <>
+              <span className="evd-bilingual-wrap-default">Galería de Producción</span>
+              <span className="evd-bilingual-wrap-alt evd-bilingual-en">Production Gallery</span>
+            </>
+          ) : "Production Gallery"}
         </h3>
         {photographerSafe && (
           <div className="evd-prodrow-credit">
-            <span className="evd-bilingual-wrap-default">Fotos por{" "}</span>
-            <span className="evd-bilingual-wrap-alt evd-bilingual-en">Photos by{" "}</span>
+            {bilingual ? (
+              <>
+                <span className="evd-bilingual-wrap-default">Fotos por{" "}</span>
+                <span className="evd-bilingual-wrap-alt evd-bilingual-en">Photos by{" "}</span>
+              </>
+            ) : "Photos by "}
             {photographerHrefSafe ? (
               <Link href={photographerHrefSafe} className="evd-prodrow-album">
                 {photographerSafe}
@@ -109,7 +123,7 @@ function PhotoRowSection({
                 src={img.src}
                 alt={img.alt || "Production photo"}
                 fill
-                sizes="(max-width: 640px) 92vw, (max-width: 1200px) 30vw, 380px"
+                sizes="(max-width: 640px) 44vw, (max-width: 1200px) 30vw, 380px"
                 className="object-cover"
               />
             </div>
@@ -126,7 +140,19 @@ function PhotoRowSection({
               onClick={() => setExpanded((v) => !v)}
               aria-expanded={expanded}
             >
-              {expanded ? "SEE LESS" : "SEE MORE"}
+              {bilingual ? (
+                expanded ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">VER MENOS</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">SEE LESS</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="evd-bilingual-wrap-default">VER MÁS</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">SEE MORE</span>
+                  </>
+                )
+              ) : (expanded ? "SEE LESS" : "SEE MORE")}
             </button>
           )}
         </div>
@@ -138,7 +164,12 @@ function PhotoRowSection({
               target="_blank"
               rel="noopener noreferrer"
             >
-              {baseLabel} ↗
+              {bilingual ? (
+                <>
+                  <span className="evd-bilingual-wrap-default">ABRIR ÁLBUM COMPLETO ↗</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">{baseLabel} ↗</span>
+                </>
+              ) : `${baseLabel} ↗`}
             </a>
           )}
         </div>
@@ -155,20 +186,25 @@ function PhotoRowSection({
   );
 }
 
-/* ─── Field / BTS gallery (2-col grid) ───────────────────────────────────── */
+/* ─── Field / BTS gallery (3-col desktop, 2-col mobile) ──────────────────── */
 function FieldGridSection({
   images,
   title,
+  titleEs,
   albumHref,
+  bilingual,
 }: {
   images: ProdrowImage[];
   title?: string;
+  titleEs?: string;
   albumHref?: string;
+  bilingual?: boolean;
 }) {
   const [open, setOpen] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
 
   const safeTitle = cleanStr(title) ?? "From the Field";
+  const safeTitleEs = cleanStr(titleEs) ?? "Del Campo";
 
   const safeImages = useMemo(() => {
     return (images ?? []).flatMap((img) => {
@@ -180,13 +216,20 @@ function FieldGridSection({
 
   if (!safeImages.length) return null;
 
-  const hasMore = safeImages.length > 2;
-  const visible = expanded ? safeImages : safeImages.slice(0, 2);
+  const hasMore = safeImages.length > 3;
+  const visible = expanded ? safeImages : safeImages.slice(0, 3);
   const albumHrefSafe = cleanHref(albumHref);
 
   return (
     <div className="evd-fieldgrid-block" aria-label={safeTitle}>
-      <h3 className="evd-about-head" style={{ marginTop: "1.5rem" }}>{safeTitle}</h3>
+      <h3 className="evd-about-head" style={{ marginTop: "1.5rem" }}>
+        {bilingual ? (
+          <>
+            <span className="evd-bilingual-wrap-default">{safeTitleEs}</span>
+            <span className="evd-bilingual-wrap-alt evd-bilingual-en">{safeTitle}</span>
+          </>
+        ) : safeTitle}
+      </h3>
 
       <div className="evd-fieldgrid-track" role="list">
         {visible.map((img, i) => (
@@ -203,7 +246,7 @@ function FieldGridSection({
                 src={img.src}
                 alt={img.alt || safeTitle}
                 fill
-                sizes="(max-width: 640px) 44vw, 260px"
+                sizes="(max-width: 640px) 44vw, (max-width: 1200px) 30vw, 380px"
                 className="object-cover"
               />
             </div>
@@ -220,7 +263,19 @@ function FieldGridSection({
             aria-expanded={expanded}
             style={{ marginRight: "auto" }}
           >
-            {expanded ? "SEE LESS" : "SEE MORE"}
+            {bilingual ? (
+              expanded ? (
+                <>
+                  <span className="evd-bilingual-wrap-default">VER MENOS</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">SEE LESS</span>
+                </>
+              ) : (
+                <>
+                  <span className="evd-bilingual-wrap-default">VER MÁS</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">SEE MORE</span>
+                </>
+              )
+            ) : (expanded ? "SEE LESS" : "SEE MORE")}
           </button>
         )}
         {albumHrefSafe && (
@@ -230,7 +285,12 @@ function FieldGridSection({
             target="_blank"
             rel="noopener noreferrer"
           >
-            OPEN FULL ALBUM ↗
+            {bilingual ? (
+              <>
+                <span className="evd-bilingual-wrap-default">ABRIR ÁLBUM COMPLETO ↗</span>
+                <span className="evd-bilingual-wrap-alt evd-bilingual-en">OPEN FULL ALBUM ↗</span>
+              </>
+            ) : "OPEN FULL ALBUM ↗"}
           </a>
         )}
       </div>
@@ -256,7 +316,9 @@ export default function EventProdrowGallery({
   maxVisible = 3,
   fieldImages,
   fieldGalleryTitle,
+  fieldGalleryTitleEs,
   fieldAlbumHref,
+  bilingual,
 }: EventProdrowGalleryProps) {
   const hasMain = (images?.length ?? 0) > 0;
   const hasField = (fieldImages?.length ?? 0) > 0;
@@ -273,13 +335,16 @@ export default function EventProdrowGallery({
           albumHref={albumHref}
           albumLabel={albumLabel}
           maxVisible={maxVisible}
+          bilingual={bilingual}
         />
       )}
       {hasField && (
         <FieldGridSection
           images={fieldImages!}
           title={fieldGalleryTitle}
+          titleEs={fieldGalleryTitleEs}
           albumHref={fieldAlbumHref}
+          bilingual={bilingual}
         />
       )}
     </>

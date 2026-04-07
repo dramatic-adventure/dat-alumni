@@ -96,7 +96,6 @@ export default function EventHeroText({
   const overrides = activeLang !== defaultLang ? (translations[activeLang] ?? {}) : {};
   const title = overrides.title ?? base.title;
   const subtitle = overrides.subtitle ?? base.subtitle;
-  const description = overrides.description ?? base.description;
 
   return (
     <>
@@ -126,8 +125,6 @@ export default function EventHeroText({
       {subtitle ? (
         <p className="evd-subtitle">{subtitle}</p>
       ) : null}
-
-      <p className="evd-standfirst">{description}</p>
 
       <style jsx>{`
         .evd-lang-toggle {
