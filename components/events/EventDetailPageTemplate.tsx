@@ -2347,7 +2347,7 @@ export default function EventDetailPageTemplate({
 
         /* ── 3a. White card top title ──────────────────────────────────── */
         .evd-card-title {
-          font-family: "Space Grotesk", sans-serif;
+          font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
           font-size: clamp(2.6rem, 7vw, 5rem);
           font-weight: 700;
           letter-spacing: 0.10em;
@@ -3249,7 +3249,7 @@ export default function EventDetailPageTemplate({
           margin: 0;
         }
         .evd-rel-card-title {
-          font-family: "Space Grotesk", sans-serif;
+          font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
           font-size: 1rem;
           font-weight: 700;
           color: #fff;
@@ -3412,14 +3412,14 @@ export default function EventDetailPageTemplate({
           margin-top: 0.1rem;
         }
         .evhub-ml-success-title {
-          font-family: "Space Grotesk", sans-serif;
+          font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
           font-size: 0.98rem;
           font-weight: 700;
           color: #fff;
           margin: 0 0 0.2rem;
         }
         .evhub-ml-success-sub {
-          font-family: "Space Grotesk", sans-serif;
+          font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
           font-size: 0.87rem;
           color: rgba(255,255,255,0.5);
           margin: 0;
