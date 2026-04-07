@@ -1113,7 +1113,11 @@ export default function EventDetailPageTemplate({
                     {productionExtra?.themes?.length ? (
                       <div className="evd-theme-pills">
                         {productionExtra.themes.map((t, i) => (
-                          <span key={i} className="evd-theme-pill">{t}</span>
+                          <a
+                            key={i}
+                            href={`/theme/${t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`}
+                            className="evd-theme-pill"
+                          >{t}</a>
                         ))}
                       </div>
                     ) : null}
@@ -2527,7 +2531,7 @@ export default function EventDetailPageTemplate({
         }
         .evd-impact-donate-btn {
           display: inline-block;
-          margin-top: 1.75rem;
+          margin-top: 2.25rem;
           padding: 0.7rem 1.5rem;
           background: #6c00af;
           color: #fff;
@@ -3854,7 +3858,7 @@ export default function EventDetailPageTemplate({
 
         /* Hero: playwright credit line */
         .evd-hero-prod-meta {
-          margin: 0.55rem 0 0;
+          margin: 0.55rem 0 1.6rem;
         }
         .evd-hero-credit {
           font-family: "DM Sans", sans-serif;
@@ -3916,6 +3920,13 @@ export default function EventDetailPageTemplate({
           text-transform: uppercase;
           color: #2493A9;
           white-space: nowrap;
+          text-decoration: none;
+          transition: background 0.15s, border-color 0.15s, color 0.15s;
+        }
+        a.evd-theme-pill:hover {
+          background: rgba(36,147,169,0.22);
+          border-color: rgba(36,147,169,0.65);
+          color: #1db8d4;
         }
 
         /* Resources section */
@@ -3962,66 +3973,74 @@ export default function EventDetailPageTemplate({
         }
         .evd-cause-pill {
           display: inline-block;
-          padding: 0.3rem 0.7rem;
-          border: 1px solid rgba(255,255,255,0.28);
+          padding: 0.35rem 0.85rem;
+          border: 1px solid rgba(180,100,220,0.45);
           border-radius: 999px;
           font-family: "DM Sans", sans-serif;
-          font-size: 0.7rem;
+          font-size: 0.72rem;
           font-weight: 600;
           letter-spacing: 0.07em;
           text-transform: uppercase;
-          color: rgba(255,255,255,0.78);
+          color: #c97ee8;
+          background: rgba(108,0,175,0.1);
           text-decoration: none;
           transition: border-color 0.15s, color 0.15s, background 0.15s;
         }
         a.evd-cause-pill:hover {
-          border-color: var(--evd-accent);
-          color: var(--evd-accent);
-          background: rgba(255,255,255,0.04);
+          border-color: rgba(180,100,220,0.75);
+          color: #daa8f4;
+          background: rgba(108,0,175,0.18);
         }
 
         /* Community impact: partners */
         .evd-partners-block {
-          margin-top: 1.5rem;
+          margin-top: 1.75rem;
         }
         .evd-partner-list {
           display: flex;
-          flex-direction: column;
-          gap: 0.55rem;
-          margin-top: 0.6rem;
+          flex-wrap: wrap;
+          gap: 0.65rem;
+          margin-top: 0.75rem;
         }
         .evd-partner-link {
           font-family: "DM Sans", sans-serif;
-          font-size: 0.84rem;
-          color: rgba(255,255,255,0.8);
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: rgba(255,255,255,0.92);
           text-decoration: none;
-          transition: color 0.15s;
+          transition: color 0.15s, background 0.15s, border-color 0.15s;
         }
         .evd-partner-link--row {
           display: flex;
           align-items: center;
-          gap: 0.55rem;
+          gap: 0.65rem;
+          padding: 0.55rem 0.85rem 0.55rem 0.6rem;
+          border: 1px solid rgba(255,255,255,0.12);
+          border-radius: 8px;
+          background: rgba(255,255,255,0.04);
         }
         a.evd-partner-link:hover {
           color: rgba(255,255,255,1);
+          background: rgba(255,255,255,0.08);
+          border-color: rgba(255,255,255,0.22);
         }
         a.evd-partner-link:hover .evd-partner-arrow {
           color: var(--evd-accent);
         }
         .evd-partner-logo {
-          width: 22px;
-          height: 22px;
+          width: 44px;
+          height: 44px;
           object-fit: contain;
-          border-radius: 3px;
-          opacity: 0.85;
+          border-radius: 5px;
+          opacity: 0.92;
           flex-shrink: 0;
         }
         .evd-partner-name {
           flex: 1;
         }
         .evd-partner-arrow {
-          opacity: 0.55;
-          font-size: 0.78rem;
+          opacity: 0.6;
+          font-size: 0.85rem;
           transition: color 0.15s;
         }
 
