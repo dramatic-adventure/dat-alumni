@@ -486,6 +486,12 @@ export const productionDetailsMap: Record<string, ProductionExtra> = {
         href: "https://example.org/quechuan-artists",
         type: "artistic",
       },
+      {
+        name: "Malayerba Teatro",
+        href: "https://www.teatromalayerba.com",
+        type: "artistic",
+        logoAlt: "Malayerba Teatro",
+      },
     ],
 
     /** CTAs */
