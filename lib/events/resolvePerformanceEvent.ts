@@ -151,6 +151,40 @@ export function resolvePerformanceEvent(event: DatEvent): ResolvedPerformanceEve
   const partners = extra?.partners;
   const resources = extra?.resources;
 
+  // ── Credits: event wins if non-empty, otherwise production cast+team ───────
+  // Maps production PersonRole arrays (creativeTeamOverride / castOverride) to
+  // DatEvent credit items so the template's resolveCredits helper picks them up
+  // from event.credits without needing to read productionDetailsMap directly.
+  const credits = (() => {
+    if (event.credits?.length) return undefined; // event already has credits
+    const team = (extra?.creativeTeamOverride ?? []).map((p) => ({
+      group: "creative" as const,
+      role: p.role,
+      name: p.name,
+      href: p.href,
+      photo: undefined as string | undefined,
+    }));
+    const castItems = (extra?.castOverride ?? []).map((p) => ({
+      group: "cast" as const,
+      role: p.role,
+      name: p.name,
+      href: p.href,
+      photo: undefined as string | undefined,
+    }));
+    const combined = [...team, ...castItems];
+    return combined.length ? combined : undefined;
+  })();
+
+  // ── Artist note: event wins, then production pullQuote ────────────────────
+  const artistNote = scalar(
+    event.artistNote,
+    extra?.pullQuote?.quote || undefined,
+  );
+  const artistNoteBy = scalar(
+    event.artistNoteBy,
+    extra?.pullQuote?.attribution || undefined,
+  );
+
   // ── Assemble resolved event ────────────────────────────────────────────────
   // Spread base event first, then apply resolved overrides.
   // Only include a key if the resolved value is defined, so we never
@@ -168,6 +202,9 @@ export function resolvePerformanceEvent(event: DatEvent): ResolvedPerformanceEve
   if (causes !== undefined) resolved.causes = causes;
   if (partners !== undefined) resolved.partners = partners;
   if (resources !== undefined) resolved.resources = resources;
+  if (credits !== undefined) resolved.credits = credits;
+  if (artistNote !== undefined) resolved.artistNote = artistNote;
+  if (artistNoteBy !== undefined) resolved.artistNoteBy = artistNoteBy;
 
   return resolved;
 }

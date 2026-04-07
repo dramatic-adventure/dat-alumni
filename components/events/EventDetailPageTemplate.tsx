@@ -10,6 +10,7 @@ import EventBilingualContent from "@/components/events/EventBilingualContent";
 import MailingListForm from "@/components/events/MailingListForm";
 import { productionMap } from "@/lib/productionMap";
 import { productionDetailsMap, type ProductionExtra } from "@/lib/productionDetailsMap";
+import type { ResolvedPerformanceEvent } from "@/lib/events/resolvePerformanceEvent";
 import { dramaClubs as rawDramaClubs } from "@/lib/dramaClubMap";
 import {
   allEventIds,
@@ -724,10 +725,18 @@ export default function EventDetailPageTemplate({
 
   const isArchiveView = isElapsed(event);
 
-  const heroDefaultLang = event.defaultLang ?? (event.translations ? "es" : "en");
+  const heroDefaultLang = event.defaultLang ?? "en";
 
   const relatedProduction = event.production ? productionMap[event.production] : undefined;
   const productionExtra = event.production ? productionDetailsMap[event.production] : undefined;
+
+  // Production-level fields resolved onto the event by resolvePerformanceEvent.
+  // For non-performance events these are undefined; productionExtra is the fallback.
+  const resolved = event as ResolvedPerformanceEvent;
+  const resolvedThemes = resolved.themes ?? productionExtra?.themes;
+  const resolvedCauses = resolved.causes ?? productionExtra?.causes;
+  const resolvedPartners = resolved.partners ?? productionExtra?.partners;
+  const resolvedResources = resolved.resources ?? productionExtra?.resources;
 
   const heroImage =
     normalizeImagePath(
@@ -1118,9 +1127,9 @@ export default function EventDetailPageTemplate({
                       </>
                     )}
                     {/* Theme tags — production enrichment */}
-                    {productionExtra?.themes?.length ? (
+                    {resolvedThemes?.length ? (
                       <div className="evd-theme-pills">
-                        {productionExtra.themes.map((t, i) => (
+                        {resolvedThemes.map((t, i) => (
                           <a
                             key={i}
                             href={`/theme/${t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`}
@@ -1133,7 +1142,7 @@ export default function EventDetailPageTemplate({
                 ) : null}
 
                 {/* Resources — production enrichment */}
-                {productionExtra?.resources?.length ? (
+                {resolvedResources?.length ? (
                   <div className="evd-resources-block evd-section-block">
                     {event.translations ? (
                       <>
@@ -1144,7 +1153,7 @@ export default function EventDetailPageTemplate({
                       <h2 className="evd-about-head">Resources</h2>
                     )}
                     <ul className="evd-resources-list">
-                      {productionExtra.resources.map((r, i) => (
+                      {resolvedResources.map((r, i) => (
                         <li key={i} className="evd-resource-item">
                           {r.href ? (
                             <a
@@ -1167,7 +1176,7 @@ export default function EventDetailPageTemplate({
               </div>
 
               {/* ── RIGHT (40%): press reviews → Community Impact ── */}
-              {(linkedDramaClubs.length > 0 || event.pressQuotes?.length || event.donateLink) ? (
+              {(linkedDramaClubs.length > 0 || event.pressQuotes?.length || event.donateLink || resolvedCauses?.length || resolvedPartners?.length) ? (
                 <div className="evd-dashboard-right">
 
                   {/* Press / audience reviews */}
@@ -1220,7 +1229,7 @@ export default function EventDetailPageTemplate({
                   ) : null}
 
                   {/* Community Impact: drama club badge + impact blurb + donate CTA */}
-                  {(linkedDramaClubs.length > 0 || event.donateLink) ? (
+                  {(linkedDramaClubs.length > 0 || event.donateLink || resolvedCauses?.length || resolvedPartners?.length) ? (
                     <div className="evd-community-impact evd-section-block">
                       {event.translations ? (
                         <>
@@ -1287,7 +1296,7 @@ export default function EventDetailPageTemplate({
                       ) : null}
 
                       {/* Causes — production enrichment */}
-                      {productionExtra?.causes?.length ? (
+                      {resolvedCauses?.length ? (
                         <div className="evd-causes-block">
                           <p className="evd-impact-support-eyebrow">
                             {event.translations ? (
@@ -1298,7 +1307,7 @@ export default function EventDetailPageTemplate({
                             ) : "Causes We Champion"}
                           </p>
                           <div className="evd-cause-pills">
-                            {productionExtra.causes.map((c, i) => {
+                            {resolvedCauses.map((c, i) => {
                               const href = c.href
                                 ?? (c.subcategory ? `/cause/${c.subcategory}` : c.category ? `/cause/${c.category}` : undefined);
                               return href ? (
@@ -1312,7 +1321,7 @@ export default function EventDetailPageTemplate({
                       ) : null}
 
                       {/* Partners — production enrichment */}
-                      {productionExtra?.partners?.length ? (
+                      {resolvedPartners?.length ? (
                         <div className="evd-partners-block">
                           <p className="evd-impact-support-eyebrow">
                             {event.translations ? (
@@ -1323,7 +1332,7 @@ export default function EventDetailPageTemplate({
                             ) : "Partners"}
                           </p>
                           <div className="evd-partner-list">
-                            {productionExtra.partners.map((p, i) => {
+                            {resolvedPartners.map((p, i) => {
                               const inner = (
                                 <>
                                   {p.logoSrc ? (
