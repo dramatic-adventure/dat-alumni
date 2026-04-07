@@ -794,7 +794,7 @@ export const events: DatEvent[] = [
   {
     id: "joint-drama-club-showcase-slovakia-2026",
     title: "Joint Community Showcase",
-    subtitle: "Zemplínska Teplica Youth Ensemble + Luník IX Collective",
+    subtitle: "Zemplínska Teplica Ensemble + Luník IX Collective",
     category: "performance",
     subcategory: "community-showcase",
     status: "upcoming",
@@ -803,11 +803,11 @@ export const events: DatEvent[] = [
     venue: "TBD",
     city: "Slovakia",
     country: "Slovakia",
-    dramaClubs: ["zemplinska-teplica-youth-ensemble", "lunik-ix-collective"],
+    dramaClubs: ["zemplinska-teplica-ensemble", "lunik-ix-collective"],
     description:
-      "A special daytime community showcase featuring the Zemplínska Teplica Youth Ensemble and the Luník IX Collective in an afternoon of performance, storytelling, and celebration.",
+      "A special daytime community showcase featuring the Zemplínska Teplica Ensemble and the Luník IX Collective in an afternoon of performance, storytelling, and celebration.",
     longDescription:
-      "This joint community showcase brings together young artists from DAT’s Zemplínska Teplica Youth Ensemble and Luník IX Collective for a shared afternoon of performance, storytelling, and connection. Created through workshops, collaboration, and community-based theatre-making, the event celebrates the creativity, courage, and collective spirit of these young artists while honoring the relationships built across both communities. Join us for a joyful daytime gathering that highlights the power of young people finding their voice through theatre.",
+      "This joint community showcase brings together young artists from DAT’s Zemplínska Teplica Ensemble and Luník IX Collective for a shared afternoon of performance, storytelling, and connection. Created through workshops, collaboration, and community-based theatre-making, the event celebrates the creativity, courage, and collective spirit of these young artists while honoring the relationships built across both communities. Join us for a joyful daytime gathering that highlights the power of young people finding their voice through theatre.",
     image: "/images/theatre/archive/tembo.webp",
     ticketUrl: "https://dramaticadventure.com",
     ticketPrice: "Free — donations welcome",

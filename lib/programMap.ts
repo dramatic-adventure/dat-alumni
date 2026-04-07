@@ -136,7 +136,7 @@ export const programMap: Record<string, ProgramData> = {
     country: "Slovakia",
     year: 2026,
     season: 20,
-    dramaClubSlugs: ["lunik-ix-collective", "zemplinska-teplica-youth-ensemble"],
+    dramaClubSlugs: ["lunik-ix-collective", "zemplinska-teplica-ensemble"],
     externalUrl: "https://www.dramaticadventure.com/passage",
     url: "/passage",
     artists: {
@@ -156,7 +156,7 @@ export const programMap: Record<string, ProgramData> = {
     country: "Slovakia",
     year: 2026,
     season: 20,
-    dramaClubSlugs: ["lunik-ix-collective", "zemplinska-teplica-youth-ensemble"],
+    dramaClubSlugs: ["lunik-ix-collective", "zemplinska-teplica-ensemble"],
     externalUrl: "https://www.dramaticadventure.com/passage",
     url: "/passage",
     artists: {
@@ -173,7 +173,7 @@ export const programMap: Record<string, ProgramData> = {
     location: "Slovakia",
     year: 2026,
     season: 20,
-    dramaClubSlugs: ["lunik-ix-collective", "zemplinska-teplica-youth-ensemble"],
+    dramaClubSlugs: ["lunik-ix-collective", "zemplinska-teplica-ensemble"],
     externalUrl: "https://www.dramaticadventure.com/passage",
     url: "/teaching-artist-residency",
     artists: {
