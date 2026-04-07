@@ -15,7 +15,7 @@
 //                Theatre archive images live at  "/images/theatre/[filename]"
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { productionMap } from "@/lib/productionMap";
+import { productionMap, type Production, getSortYear } from "@/lib/productionMap";
 
 export type EventCategory = "performance" | "festival" | "fundraiser";
 export type EventStatus = "upcoming" | "past" | "cancelled";
@@ -848,7 +848,64 @@ export const sortedEvents = [...events].sort(
 
 /** Filter helpers */
 export const upcomingEvents = sortedEvents.filter((e) => e.status === "upcoming");
-export const pastEvents = sortedEvents.filter((e) => e.status === "past");
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DERIVED ARCHIVED EVENTS
+// Synthesized from productionMap for past productions lacking an explicit event.
+// Explicit events always win. Duplicate prevention:
+//   1. Skip if an explicit event already has this production slug as its id.
+//   2. Skip if an explicit past event already references this production slug.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function synthesizeFromProduction(slug: string, prod: Production): DatEvent {
+  const year = getSortYear(prod);
+  const date = `${year}-06-01`;
+  const festival =
+    typeof prod.festival === "string" && prod.festival.trim()
+      ? prod.festival.trim()
+      : undefined;
+  return {
+    id: slug,
+    title: prod.title,
+    category: "performance",
+    status: "past",
+    date,
+    venue: prod.venue ?? "",
+    city: prod.location,
+    country: "",
+    description: festival ?? `${prod.location} · ${year}`,
+    ...(prod.posterUrl ? { image: prod.posterUrl } : {}),
+    production: slug,
+    ...(typeof prod.season === "number" && prod.season > 0
+      ? { seasonOverride: prod.season }
+      : {}),
+  };
+}
+
+/**
+ * Derived archived DatEvent objects synthesized from productionMap entries
+ * that have no matching explicit event. Use for archive listings and routing.
+ */
+export const derivedArchivedPerformances: DatEvent[] = (() => {
+  const explicitIds = new Set(events.map((e) => e.id));
+  const explicitPastProds = new Set(
+    events
+      .filter((e) => e.status === "past" && e.production)
+      .map((e) => e.production!),
+  );
+  const derived: DatEvent[] = [];
+  for (const [slug, prod] of Object.entries(productionMap)) {
+    if (explicitIds.has(slug)) continue;
+    if (explicitPastProds.has(slug)) continue;
+    derived.push(synthesizeFromProduction(slug, prod));
+  }
+  return derived;
+})();
+
+export const pastEvents: DatEvent[] = [
+  ...sortedEvents.filter((e) => e.status === "past"),
+  ...derivedArchivedPerformances,
+].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
 export const eventsByCategory = (category: EventCategory): DatEvent[] =>
   sortedEvents.filter((e) => e.category === category);
@@ -860,11 +917,14 @@ export const upcomingByCategory = (category: EventCategory): DatEvent[] =>
 export const nextEvent: DatEvent | undefined = upcomingEvents[0];
 
 export function eventById(id: string): DatEvent | undefined {
-  return events.find((e) => e.id === id);
+  return (
+    events.find((e) => e.id === id) ??
+    derivedArchivedPerformances.find((e) => e.id === id)
+  );
 }
 
 export function allEventIds(): string[] {
-  return events.map((e) => e.id);
+  return [...events, ...derivedArchivedPerformances].map((e) => e.id);
 }
 
 /** Category display metadata */
@@ -960,7 +1020,9 @@ export function getEventImage(event: DatEvent): string | undefined {
  * Sorted ascending by date (soonest first).
  */
 export function eventsByProduction(productionSlug: string): DatEvent[] {
-  return sortedEvents.filter((e) => e.production === productionSlug);
+  return [...sortedEvents, ...derivedArchivedPerformances]
+    .filter((e) => e.production === productionSlug)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 }
 
 /**
