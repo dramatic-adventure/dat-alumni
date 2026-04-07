@@ -383,6 +383,27 @@ function getEventBadge(startDate: string, endDate?: string): {
 }
 
 /**
+ * Finds a related upcoming event for an archived event's linked production.
+ * Tries the production's relatedUpcomingEventId first, then any event sharing
+ * the same production slug.
+ */
+function findRelatedUpcomingEvent(
+  event: DatEvent,
+  extra?: ProductionExtra,
+): DatEvent | undefined {
+  if (extra?.relatedUpcomingEventId) {
+    const found = events.find(
+      (e) => e.id === extra.relatedUpcomingEventId && !isElapsed(e) && e.status !== "cancelled",
+    );
+    if (found) return found;
+  }
+  if (!event.production) return undefined;
+  return events.find(
+    (e) => e.production === event.production && e.id !== event.id && !isElapsed(e) && e.status !== "cancelled",
+  );
+}
+
+/**
  * Finds all productions that share the same relatedBaseTitle as the given
  * productionSlug — i.e., every iteration of a production cycle (revivals,
  * workshop versions, etc). Returns the list excluding the current slug.
@@ -738,6 +759,7 @@ export default function EventDetailPageTemplate({
   const credits = resolveCredits(event, productionExtra);
   const relatedEvents = relatedUpcomingEvents(event);
   const productionCycle = relatedProductionCycle(event.production);
+  const relatedUpcomingEvent = isArchiveView ? findRelatedUpcomingEvent(event, productionExtra) : undefined;
 
   // Pre-filtered credit groups for cast/creative sections
   const castCredits = (credits ?? []).filter((c) => c.group === "cast");
@@ -816,6 +838,51 @@ export default function EventDetailPageTemplate({
             }}
             translations={event.translations ?? {}}
           />
+
+          {/* Production-linked enrichment: season + year + playwright — hero */}
+          {relatedProduction && (relatedProduction.season || relatedProduction.year || productionExtra?.creditPrefix) ? (
+            <div className="evd-hero-prod-meta">
+              {(relatedProduction.season || relatedProduction.year) ? (
+                <p className="evd-hero-season">
+                  {event.translations ? (
+                    <>
+                      <span className="evd-bilingual-wrap-default">
+                        {[
+                          relatedProduction.season ? `Temporada ${relatedProduction.season}` : null,
+                          relatedProduction.year ? String(relatedProduction.year) : null,
+                        ].filter(Boolean).join(" · ")}
+                      </span>
+                      <span className="evd-bilingual-wrap-alt evd-bilingual-en">
+                        {[
+                          relatedProduction.season ? `Season ${relatedProduction.season}` : null,
+                          relatedProduction.year ? String(relatedProduction.year) : null,
+                        ].filter(Boolean).join(" • ")}
+                      </span>
+                    </>
+                  ) : (
+                    [
+                      relatedProduction.season ? `Season ${relatedProduction.season}` : null,
+                      relatedProduction.year ? String(relatedProduction.year) : null,
+                    ].filter(Boolean).join(" • ")
+                  )}
+                </p>
+              ) : null}
+              {(productionExtra?.creditPrefix && productionExtra.creditPeople?.length) ? (
+                <p className="evd-hero-credit">
+                  {productionExtra.creditPrefix}
+                  {" "}
+                  {productionExtra.creditPeople.map((p, i, arr) => (
+                    <span key={i}>
+                      {i > 0 && i === arr.length - 1 ? " & " : i > 0 ? ", " : ""}
+                      {p.href ? (
+                        <a href={p.href} className="evd-hero-credit-link">{p.name}</a>
+                      ) : p.name}
+                    </span>
+                  ))}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
           {isArchiveView ? (
             <div className="evd-archive-badge-wrap">
@@ -1033,6 +1100,46 @@ export default function EventDetailPageTemplate({
                         ))}
                       </>
                     )}
+                    {/* Theme tags — production enrichment */}
+                    {productionExtra?.themes?.length ? (
+                      <div className="evd-theme-pills">
+                        {productionExtra.themes.map((t, i) => (
+                          <span key={i} className="evd-theme-pill">{t}</span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {/* Resources — production enrichment */}
+                {productionExtra?.resources?.length ? (
+                  <div className="evd-resources-block evd-section-block">
+                    {event.translations ? (
+                      <>
+                        <h2 className="evd-about-head evd-bilingual-default">Recursos</h2>
+                        <h2 className="evd-about-head evd-bilingual-alt evd-bilingual-en">Resources</h2>
+                      </>
+                    ) : (
+                      <h2 className="evd-about-head">Resources</h2>
+                    )}
+                    <ul className="evd-resources-list">
+                      {productionExtra.resources.map((r, i) => (
+                        <li key={i} className="evd-resource-item">
+                          {r.href ? (
+                            <a
+                              href={r.href}
+                              className="evd-resource-link"
+                              target={r.href.startsWith("http") ? "_blank" : undefined}
+                              rel={r.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                            >
+                              {r.label}
+                            </a>
+                          ) : (
+                            <span className="evd-resource-label">{r.label}</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 ) : null}
 
@@ -1156,6 +1263,56 @@ export default function EventDetailPageTemplate({
                             {event.impactBlurb}
                           </p>
                         )
+                      ) : null}
+
+                      {/* Causes — production enrichment */}
+                      {productionExtra?.causes?.length ? (
+                        <div className="evd-causes-block">
+                          <p className="evd-impact-support-eyebrow">
+                            {event.translations ? (
+                              <>
+                                <span className="evd-bilingual-wrap-default">Causas que Apoyamos</span>
+                                <span className="evd-bilingual-wrap-alt evd-bilingual-en">Causes We Champion</span>
+                              </>
+                            ) : "Causes We Champion"}
+                          </p>
+                          <div className="evd-cause-pills">
+                            {productionExtra.causes.map((c, i) => {
+                              const href = c.href
+                                ?? (c.subcategory ? `/cause/${c.subcategory}` : c.category ? `/cause/${c.category}` : undefined);
+                              return href ? (
+                                <a key={i} href={href} className="evd-cause-pill">{c.label}</a>
+                              ) : (
+                                <span key={i} className="evd-cause-pill">{c.label}</span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {/* Partners — production enrichment */}
+                      {productionExtra?.partners?.length ? (
+                        <div className="evd-partners-block">
+                          <p className="evd-impact-support-eyebrow">
+                            {event.translations ? (
+                              <>
+                                <span className="evd-bilingual-wrap-default">Alianzas y Socios</span>
+                                <span className="evd-bilingual-wrap-alt evd-bilingual-en">Partners</span>
+                              </>
+                            ) : "Partners"}
+                          </p>
+                          <div className="evd-partner-list">
+                            {productionExtra.partners.map((p, i) =>
+                              p.href ? (
+                                <a key={i} href={p.href} className="evd-partner-link" target="_blank" rel="noopener noreferrer">
+                                  {p.name} →
+                                </a>
+                              ) : (
+                                <span key={i} className="evd-partner-link">{p.name}</span>
+                              ),
+                            )}
+                          </div>
+                        </div>
                       ) : null}
 
                       <a
@@ -1456,6 +1613,47 @@ export default function EventDetailPageTemplate({
                 ))}
               </div>
             </div>
+
+            {/* Related upcoming event — archive promo */}
+            {isArchiveView && relatedUpcomingEvent ? (
+              <div className="evd-related-upcoming">
+                <p className="evd-related-upcoming-eyebrow">
+                  {event.translations ? (
+                    <>
+                      <span className="evd-bilingual-wrap-default">Próxima Función</span>
+                      <span className="evd-bilingual-wrap-alt evd-bilingual-en">Coming Up</span>
+                    </>
+                  ) : "Coming Up"}
+                </p>
+                <Link href={canonicalEventPath(relatedUpcomingEvent)} className="evd-related-upcoming-link">
+                  <div className="evd-related-upcoming-copy">
+                    <p className="evd-related-upcoming-title">
+                      {event.translations ? (
+                        <>
+                          <span className="evd-bilingual-wrap-default">{relatedUpcomingEvent.title}</span>
+                          <span className="evd-bilingual-wrap-alt evd-bilingual-en">
+                            {relatedUpcomingEvent.translations?.["en"]?.title ?? relatedUpcomingEvent.title}
+                          </span>
+                        </>
+                      ) : relatedUpcomingEvent.title}
+                    </p>
+                    <p className="evd-related-upcoming-meta">
+                      {formatDateRange(relatedUpcomingEvent.date, relatedUpcomingEvent.endDate)}
+                      {relatedUpcomingEvent.venue ? ` · ${relatedUpcomingEvent.venue}` : ""}
+                      {relatedUpcomingEvent.city ? `, ${relatedUpcomingEvent.city}` : ""}
+                    </p>
+                  </div>
+                  <span className="evd-related-upcoming-cta">
+                    {event.translations ? (
+                      <>
+                        <span className="evd-bilingual-wrap-default">Ver Función →</span>
+                        <span className="evd-bilingual-wrap-alt evd-bilingual-en">See This Show →</span>
+                      </>
+                    ) : "See This Show →"}
+                  </span>
+                </Link>
+              </div>
+            ) : null}
           </div>
         </section>
       ) : null}
@@ -3625,6 +3823,204 @@ export default function EventDetailPageTemplate({
         .evd-gallery-scroll::-webkit-scrollbar-thumb {
           background: rgba(255,255,255,0.12);
           border-radius: 999px;
+        }
+
+        /* ── 14a. Production enrichment elements ──────────────────────── */
+
+        /* Hero: season + playwright line */
+        .evd-hero-prod-meta {
+          margin: 0.6rem 0 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+        .evd-hero-season {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.5);
+          margin: 0;
+        }
+        .evd-hero-credit {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.78rem;
+          font-weight: 500;
+          letter-spacing: 0.06em;
+          color: rgba(255,255,255,0.4);
+          margin: 0;
+          text-transform: uppercase;
+        }
+        .evd-hero-credit-link {
+          color: inherit;
+          text-decoration: none;
+          border-bottom: 1px solid rgba(255,255,255,0.2);
+          transition: color 0.15s, border-color 0.15s;
+        }
+        .evd-hero-credit-link:hover {
+          color: rgba(255,255,255,0.7);
+          border-color: rgba(255,255,255,0.5);
+        }
+
+        /* About: theme pills */
+        .evd-theme-pills {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          margin-top: 1.25rem;
+        }
+        .evd-theme-pill {
+          display: inline-block;
+          padding: 0.3rem 0.75rem;
+          border: 1px solid rgba(255,255,255,0.15);
+          border-radius: 999px;
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          font-weight: 600;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.5);
+          white-space: nowrap;
+        }
+
+        /* Resources section */
+        .evd-resources-block {
+          margin-top: 2.5rem;
+        }
+        .evd-resources-list {
+          list-style: none;
+          margin: 1rem 0 0;
+          padding: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0.6rem;
+        }
+        .evd-resource-item {
+          line-height: 1.5;
+        }
+        .evd-resource-link {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.875rem;
+          color: var(--evd-accent);
+          text-decoration: none;
+          border-bottom: 1px solid transparent;
+          transition: border-color 0.15s;
+        }
+        .evd-resource-link:hover {
+          border-color: var(--evd-accent);
+        }
+        .evd-resource-label {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.875rem;
+          color: rgba(255,255,255,0.5);
+        }
+
+        /* Community impact: causes */
+        .evd-causes-block {
+          margin-top: 1.5rem;
+        }
+        .evd-cause-pills {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.45rem;
+          margin-top: 0.6rem;
+        }
+        .evd-cause-pill {
+          display: inline-block;
+          padding: 0.28rem 0.65rem;
+          border: 1px solid rgba(255,255,255,0.18);
+          border-radius: 999px;
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.7rem;
+          font-weight: 600;
+          letter-spacing: 0.07em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.55);
+          text-decoration: none;
+          transition: border-color 0.15s, color 0.15s;
+        }
+        a.evd-cause-pill:hover {
+          border-color: var(--evd-accent);
+          color: var(--evd-accent);
+        }
+
+        /* Community impact: partners */
+        .evd-partners-block {
+          margin-top: 1.5rem;
+        }
+        .evd-partner-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.4rem;
+          margin-top: 0.6rem;
+        }
+        .evd-partner-link {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          color: rgba(255,255,255,0.55);
+          text-decoration: none;
+          transition: color 0.15s;
+        }
+        a.evd-partner-link:hover {
+          color: rgba(255,255,255,0.9);
+        }
+
+        /* Related upcoming event — archive promo */
+        .evd-related-upcoming {
+          margin-top: 2.5rem;
+          padding-top: 2rem;
+          border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        .evd-related-upcoming-eyebrow {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.68rem;
+          font-weight: 700;
+          letter-spacing: 0.26em;
+          text-transform: uppercase;
+          color: var(--evd-accent);
+          margin: 0 0 0.85rem;
+        }
+        .evd-related-upcoming-link {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1.5rem;
+          padding: 1.1rem 1.4rem;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 6px;
+          text-decoration: none;
+          background: rgba(255,255,255,0.03);
+          transition: background 0.15s, border-color 0.15s;
+        }
+        .evd-related-upcoming-link:hover {
+          background: rgba(255,255,255,0.06);
+          border-color: rgba(255,255,255,0.18);
+        }
+        .evd-related-upcoming-copy {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+        .evd-related-upcoming-title {
+          font-family: "DM Serif Display", serif;
+          font-size: 1.05rem;
+          color: rgba(255,255,255,0.9);
+          margin: 0;
+        }
+        .evd-related-upcoming-meta {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.78rem;
+          color: rgba(255,255,255,0.45);
+          margin: 0;
+        }
+        .evd-related-upcoming-cta {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: var(--evd-accent);
+          white-space: nowrap;
+          flex-shrink: 0;
         }
 
         /* ── 14. Responsive overrides ──────────────────────────────────── */
