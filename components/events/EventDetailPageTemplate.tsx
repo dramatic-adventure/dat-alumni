@@ -84,7 +84,7 @@ const THEME_BY_CATEGORY: Record<
     accent: "#D9A919",
     surface: "#140c04",
     surface2: "#2e2000",
-    glow: "rgba(217, 169, 25, 0.18)",
+    glow: "rgba(255, 204, 0, 1)",
     heroOverlay:
       "linear-gradient(to top, rgba(20,12,4,0.97) 0%, rgba(20,12,4,0.80) 22%, rgba(20,12,4,0.22) 52%, rgba(20,12,4,0.04) 75%, rgba(20,12,4,0) 100%)",
     buttonText: "#241123",
@@ -1051,10 +1051,7 @@ export default function EventDetailPageTemplate({
                       )}
 
                       {linkedDramaClubs.length > 0 ? (() => {
-                          // Unified badge size: compute max diameter bucket across all clubs
-                          // so multi-club events render all badges at the same size.
-                          const maxLen = Math.max(...linkedDramaClubs.map(c => (c.name ?? "").length));
-                          const clubBadgeSize = maxLen > 44 ? 164 : maxLen > 36 ? 146 : maxLen > 26 ? 130 : 112;
+                          const clubBadgeSize = 110;
                           return (
                         <div className="evd-impact-clubs">
                           {linkedDramaClubs.map((club) => (
@@ -2282,14 +2279,16 @@ export default function EventDetailPageTemplate({
 
         /* ── 3a. White card top title ──────────────────────────────────── */
         .evd-card-title {
-          font-family: "DM Sans", sans-serif;
-          font-size: 0.72rem;
-          font-weight: 700;
-          letter-spacing: 0.22em;
+          font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+          font-size: clamp(2.5rem, 7vw, 4.84em);
+          font-weight: 800;
+          letter-spacing: 0.24em;
           text-transform: uppercase;
+          text-align: center;
           color: var(--evd-accent, #F23359);
-          margin: 0 0 1.5rem;
-          opacity: 0.75;
+          margin: 0 0 0.5rem;
+          opacity: 1;
+          text-shadow: 0 0px 1.1px rgba(36, 17, 35, 0.64);
         }
 
         /* ── 3b. White Content Card ────────────────────────────────────── */
@@ -2332,6 +2331,7 @@ export default function EventDetailPageTemplate({
         }
         .evd-content-card .evd-dash-tagline {
           color: var(--evd-accent);
+          text-shadow: 0 1px 2px rgba(36,17,35,0.18);
         }
         .evd-content-card .evd-dash-club-support {
           background: rgba(36,17,35,0.05);

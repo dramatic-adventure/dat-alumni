@@ -438,7 +438,7 @@ export const events: DatEvent[] = [
     ticketType: "ticketed",
     featured: true,
     tags: ["New York Times Critics Pick", "kichwa", "español", "Quito", "Andes", "Malayerba", "títeres", "co-producción"],
-    production: "a-girl-without-wings-revival-2027",
+    production: "a-girl-without-wings",
     dramaClub: "quito-collective",
     contactEmail: "hello@dramaticadventure.com",
     donateLink: "/donate?mode=new-work&production=agwow-quito-2026",
