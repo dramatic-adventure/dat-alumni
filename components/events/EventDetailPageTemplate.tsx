@@ -548,26 +548,48 @@ function UpcomingEventInfoBand({
             {event.runtime ? (
               <span className="evd-tmeta-chip">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                {event.runtime}
+                {event.translations?.["en"]?.runtime ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">{event.runtime}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">{event.translations["en"].runtime}</span>
+                  </>
+                ) : event.runtime}
               </span>
             ) : null}
             {event.language ? (
               <span className="evd-tmeta-chip">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                {event.language}
+                {event.translations?.["en"]?.language ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">{event.language}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">{event.translations["en"].language}</span>
+                  </>
+                ) : event.language}
               </span>
             ) : null}
             {event.suitability ? (
               <span className="evd-tmeta-chip">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                {event.suitability}
+                {event.translations?.["en"]?.suitability ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">{event.suitability}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">{event.translations["en"].suitability}</span>
+                  </>
+                ) : event.suitability}
               </span>
             ) : null}
           </div>
 
           <div className="evd-ticket-purchase">
             {event.ticketPrice ? (
-              <span className="evd-tmeta-price">{event.ticketPrice}</span>
+              <span className="evd-tmeta-price">
+                {event.translations?.["en"]?.ticketPrice ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">{event.ticketPrice}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">{event.translations["en"].ticketPrice}</span>
+                  </>
+                ) : event.ticketPrice}
+              </span>
             ) : null}
             {primaryAction ? (
               <a
@@ -592,6 +614,12 @@ function UpcomingEventInfoBand({
             url={eventUrl}
             title={`${event.title} — Dramatic Adventure Theatre`}
             description={event.description}
+            shareLabel={event.translations ? (
+              <>
+                <span className="evd-bilingual-wrap-default">Compartir →</span>
+                <span className="evd-bilingual-wrap-alt evd-bilingual-en">Share →</span>
+              </>
+            ) : undefined}
           />
 
           <div className="evd-cal-wrap">
@@ -765,7 +793,14 @@ export default function EventDetailPageTemplate({
               )}
             </Link>
             <span aria-hidden="true">/</span>
-            <span>{event.title}</span>
+            <span>
+              {event.translations?.["en"]?.title ? (
+                <>
+                  <span className="evd-bilingual-wrap-default">{event.title}</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">{event.translations["en"].title}</span>
+                </>
+              ) : event.title}
+            </span>
           </nav>
 
           <EventHeroText
@@ -869,6 +904,24 @@ export default function EventDetailPageTemplate({
                 </>
               ) : "Inside the Work"}
             </p>
+
+            {/* Event description intro — moved from hero standfirst */}
+            {event.description && (
+              <div className="evd-card-intro">
+                {event.translations ? (
+                  <>
+                    <p className="evd-card-intro-text evd-bilingual-default">{event.description}</p>
+                    {event.translations["en"]?.description && (
+                      <p className="evd-card-intro-text evd-bilingual-alt evd-bilingual-en">
+                        {event.translations["en"].description}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="evd-card-intro-text">{event.description}</p>
+                )}
+              </div>
+            )}
 
             {/* Two-column content: LEFT quote-image + about / RIGHT reviews + community impact */}
             <div className={`evd-dashboard-grid${editorialImg1 || event.pressQuotes?.length || linkedDramaClubs.length > 0 ? "" : " evd-dashboard-grid--single"}`}>
@@ -1165,6 +1218,7 @@ export default function EventDetailPageTemplate({
                   fieldImages={fieldGalleryImages}
                   fieldGalleryTitle={fieldGalleryTitle}
                   fieldAlbumHref={fieldAlbumHref}
+                  bilingual={!!event.translations}
                 />
               </div>
             ) : null}
@@ -1521,6 +1575,13 @@ export default function EventDetailPageTemplate({
 
       {/* ── Newsletter ─────────────────────────────────────────────────── */}
       <section className="evd-newsletter-band">
+        {/* DAT logo sticker — only when both cycle and related events are absent */}
+        {!(relatedProduction || productionCycle.length > 0) && relatedEvents.length === 0 && (
+          <div className="evd-cycle-logo-sticker" aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/dat-logo7.svg" alt="" className="evd-cycle-logo-img" />
+          </div>
+        )}
         <div className="evd-container evd-newsletter-inner">
           <div className="evd-newsletter-copy">
             <p className="evd-newsletter-eyebrow">
@@ -2286,21 +2347,36 @@ export default function EventDetailPageTemplate({
 
         /* ── 3a. White card top title ──────────────────────────────────── */
         .evd-card-title {
-          font-family: var(--font-anton, "Anton"), sans-serif;
-          font-size: clamp(2.8rem, 8vw, 5.5rem);
-          font-weight: 400;
-          letter-spacing: 0.06em;
+          font-family: "Space Grotesk", sans-serif;
+          font-size: clamp(2.6rem, 7vw, 5rem);
+          font-weight: 700;
+          letter-spacing: 0.10em;
           text-transform: uppercase;
           text-align: center;
           color: var(--evd-accent, #F23359);
           margin: 0 0 0.5rem;
-          text-shadow: 0 2px 16px rgba(242,51,89,0.22), 0 1px 2px rgba(36,17,35,0.55);
+          text-shadow: 0 2px 16px rgba(242,51,89,0.18), 0 1px 2px rgba(36,17,35,0.45);
+        }
+
+        /* ── 3a-i. Card intro description ─────────────────────────────── */
+        .evd-card-intro {
+          text-align: center;
+          max-width: 720px;
+          margin: 0 auto clamp(1.5rem, 3vw, 2rem);
+        }
+        .evd-card-intro-text {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: clamp(1rem, 1.8vw, 1.12rem);
+          line-height: 1.7;
+          color: rgba(36,17,35,0.58);
+          margin: 0;
+          font-style: italic;
         }
 
         /* ── 3b. White Content Card ────────────────────────────────────── */
         .evd-content-section {
           background: var(--evd-surface);
-          /* Extra bottom padding so white card clears the DAT logo (121px above cycle-band top) */
+          /* Extra bottom padding so white card clears the DAT logo (121px above next section top) */
           padding: clamp(1.5rem, 3vw, 2.5rem) 0 calc(140px + 2rem);
         }
         .evd-content-card {
@@ -2484,19 +2560,15 @@ export default function EventDetailPageTemplate({
           padding: 0;
           cursor: zoom-in;
           border-radius: 8px;
-          overflow: hidden;
+          overflow: visible;
           position: relative;
           aspect-ratio: 4 / 3;
+          transition: transform 0.22s ease, box-shadow 0.22s ease;
         }
-        .evd-prodrow-card::after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          background: rgba(0,0,0,0);
-          transition: background 0.18s;
-          border-radius: 8px;
+        .evd-prodrow-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 10px 28px rgba(0,0,0,0.30);
         }
-        .evd-prodrow-card:hover::after { background: rgba(0,0,0,0.14); }
         .evd-prodrow-img-shell {
           width: 100%;
           height: 100%;
@@ -2536,7 +2608,7 @@ export default function EventDetailPageTemplate({
         .evd-fieldgrid-track {
           margin-top: 10px;
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
+          grid-template-columns: repeat(3, 1fr);
           gap: 10px;
         }
         .evd-fieldgrid-card {
@@ -2545,8 +2617,13 @@ export default function EventDetailPageTemplate({
           padding: 0;
           cursor: zoom-in;
           border-radius: 8px;
-          overflow: hidden;
+          overflow: visible;
           position: relative;
+          transition: transform 0.22s ease, box-shadow 0.22s ease;
+        }
+        .evd-fieldgrid-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 10px 28px rgba(0,0,0,0.30);
         }
         .evd-fieldgrid-img-shell {
           width: 100%;
@@ -2554,9 +2631,7 @@ export default function EventDetailPageTemplate({
           position: relative;
           border-radius: 8px;
           overflow: hidden;
-          transition: transform 0.22s ease;
         }
-        .evd-fieldgrid-card:hover .evd-fieldgrid-img-shell { transform: scale(1.03); }
         .evd-fieldgrid-footer {
           display: flex;
           justify-content: flex-end;
@@ -2951,14 +3026,16 @@ export default function EventDetailPageTemplate({
           margin-top: calc(1.5rem - 0.75rem);
           padding-bottom: 2.5rem;
           margin-bottom: -2.5rem;
-          /* Break out of container right padding so carousel fades off-screen */
+          /* Break out of container on both sides so carousel runs edge-to-edge */
+          margin-left: calc(-1 * clamp(1.25rem, 5vw, 3rem));
           margin-right: calc(-1 * clamp(1.25rem, 5vw, 3rem));
         }
         /* Horizontal scroll of production cards */
         .evd-cycle-scroll {
           display: flex;
           gap: 1.25rem;
-          padding: 0.25rem 0 0.25rem 0.25rem;
+          /* Left padding restores first-card alignment after margin-left break-out */
+          padding: 0.25rem clamp(1.25rem, 5vw, 3rem) 0.25rem clamp(1.25rem, 5vw, 3rem);
           min-width: max-content;
         }
         .evd-cycle-scroll .evd-cycle-card {
@@ -3205,14 +3282,14 @@ export default function EventDetailPageTemplate({
 
         /* ── 10. Newsletter ────────────────────────────────────────────── */
         .evd-newsletter-band {
+          position: relative;
           background: #145c37;
           background-image:
             radial-gradient(ellipse 80% 80% at 0% 100%, rgba(30,120,70,0.55) 0%, transparent 70%),
             radial-gradient(ellipse 60% 60% at 100% 0%, rgba(30,120,70,0.35) 0%, transparent 70%);
           padding: clamp(4rem, 8vw, 7rem) 0;
           border-top: 1px solid rgba(255,255,255,0.05);
-          position: relative;
-          overflow: hidden;
+          /* overflow: hidden removed — required so DAT logo sticker can appear above the band */
         }
         .evd-newsletter-band::before {
           content: "";
@@ -3562,6 +3639,10 @@ export default function EventDetailPageTemplate({
           }
         }
         @media (max-width: 640px) {
+          .evd-prodrow-grid,
+          .evd-fieldgrid-track {
+            grid-template-columns: repeat(2, 1fr);
+          }
           .evd-title {
             white-space: normal;
             word-break: break-word;

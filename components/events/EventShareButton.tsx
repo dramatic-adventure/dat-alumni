@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 
 interface Props {
   url: string;
   title: string;
   description: string;
+  shareLabel?: ReactNode;
 }
 
 let _sharing = false;
 
-export default function EventShareButton({ url, title, description }: Props) {
+export default function EventShareButton({ url, title, description, shareLabel }: Props) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -89,7 +90,7 @@ export default function EventShareButton({ url, title, description }: Props) {
           <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
           <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
         </svg>
-        Share →
+        {shareLabel ?? "Share →"}
       </button>
 
       {open && (
