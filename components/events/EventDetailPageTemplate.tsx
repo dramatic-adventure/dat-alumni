@@ -874,24 +874,32 @@ export default function EventDetailPageTemplate({
           />
 
           {/* Production-linked playwright credit — hero (both upcoming and archive) */}
-          {productionExtra?.creditPrefix && productionExtra.creditPeople?.length ? (
-            <div className="evd-hero-prod-meta">
-              <p className="evd-hero-credit">
-                <span className="evd-hero-credit-prefix">{productionExtra.creditPrefix}</span>
-                {" "}
-                {productionExtra.creditPeople.map((p, i, arr) => (
-                  <span key={i}>
-                    {i > 0 && i === arr.length - 1 ? " & " : i > 0 ? ", " : ""}
-                    {p.href ? (
-                      <a href={p.href} className="evd-hero-credit-link">{p.name}</a>
-                    ) : (
-                      <span className="evd-hero-credit-name">{p.name}</span>
-                    )}
-                  </span>
-                ))}
-              </p>
-            </div>
-          ) : null}
+          {/* Prefer event.heroCreditPrefix (pre-resolved) over productionExtra fallback */}
+          {(event.heroCreditPrefix ?? productionExtra?.creditPrefix) &&
+           (event.heroCreditPeople?.length ?? productionExtra?.creditPeople?.length) ? (() => {
+            const prefix = event.heroCreditPrefix ?? productionExtra?.creditPrefix;
+            const people = event.heroCreditPeople?.length
+              ? event.heroCreditPeople
+              : productionExtra?.creditPeople ?? [];
+            return (
+              <div className="evd-hero-prod-meta">
+                <p className="evd-hero-credit">
+                  <span className="evd-hero-credit-prefix">{prefix}</span>
+                  {" "}
+                  {people.map((p, i, arr) => (
+                    <span key={i}>
+                      {i > 0 && i === arr.length - 1 ? " & " : i > 0 ? ", " : ""}
+                      {p.href ? (
+                        <a href={p.href} className="evd-hero-credit-link">{p.name}</a>
+                      ) : (
+                        <span className="evd-hero-credit-name">{p.name}</span>
+                      )}
+                    </span>
+                  ))}
+                </p>
+              </div>
+            );
+          })() : null}
 
           {isArchiveView ? (
             <div className="evd-archive-badge-wrap">

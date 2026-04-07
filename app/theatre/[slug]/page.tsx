@@ -15,6 +15,7 @@ import { loadAlumniNameBySlug } from "@/lib/loadAlumni";
 import { eventsByProduction, eventById } from "@/lib/events";
 
 import EventDetailPageTemplate from "@/components/events/EventDetailPageTemplate";
+import { resolvePerformanceEvent } from "@/lib/events/resolvePerformanceEvent";
 
 // NOTE: params is now a Promise in Next 15 for some routes
 type PageProps = { params: Promise<{ slug: string }> };
@@ -159,7 +160,7 @@ export default async function TheatreProductionPage({ params }: PageProps) {
   if (performanceEvent?.category === "performance") {
     return (
       <EventDetailPageTemplate
-        event={performanceEvent}
+        event={resolvePerformanceEvent(performanceEvent)}
         routeKind="theatre"
       />
     );
