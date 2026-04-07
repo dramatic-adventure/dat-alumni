@@ -66,6 +66,12 @@ function slugToName(slug: string): string {
   return slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 }
 
+type DatEventWithDramaClubs = DatEvent & { dramaClubs: string[] };
+
+function hasDramaClubs(evt: DatEvent): evt is DatEventWithDramaClubs {
+  return Array.isArray((evt as { dramaClubs?: unknown }).dramaClubs);
+}
+
 /** Roles whose holders are performers (cast group); everything else is creative. */
 const CAST_ROLE_SET = new Set(["Actor", "Theatremaker"]);
 
@@ -184,11 +190,13 @@ export function resolvePerformanceEvent(event: DatEvent): ResolvedPerformanceEve
   const dramaClubSlugs = (() => {
     const fromEvent: string[] = [];
     if (event.dramaClub) fromEvent.push(event.dramaClub);
-    // dramaClubs is a non-standard extension field the template type-casts for
-    if ("dramaClubs" in event && Array.isArray((event as Record<string, unknown>).dramaClubs)) {
-      fromEvent.push(...((event as Record<string, unknown>).dramaClubs as string[]));
+
+    if (hasDramaClubs(event)) {
+      fromEvent.push(...event.dramaClubs);
     }
+
     if (fromEvent.length) return undefined; // event already declares clubs; don't overwrite
+
     const fromProd = base.dramaClubSlugs ?? [];
     const fromDetails = extra?.dramaClubSlug ? [extra.dramaClubSlug] : [];
     const combined = [...new Set([...fromProd, ...fromDetails])];
