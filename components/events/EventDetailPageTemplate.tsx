@@ -1849,14 +1849,10 @@ export default function EventDetailPageTemplate({
               <h2 className="evd-section-title">
                 {isBilingual ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">
-                      {isArchiveView ? "Explore More" : "Also Coming Up"}
-                    </span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">
-                      {isArchiveView ? "Explorar Más" : "Lo Que Viene"}
-                    </span>
+                    <span className="evd-bilingual-wrap-default">The Work Continues</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">La Obra Continúa</span>
                   </>
-                ) : (isArchiveView ? "Explore More" : "Also Coming Up")}
+                ) : "The Work Continues"}
               </h2>
             </div>
             <div className="evd-rel-events-grid">
@@ -1929,10 +1925,10 @@ export default function EventDetailPageTemplate({
               <Link href="/events" className="evd-btn-ghost evd-rel-all-events-btn">
                 {isBilingual ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">All Events →</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Todos los Eventos →</span>
+                    <span className="evd-bilingual-wrap-default">Explore the Season →</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Explora la Temporada →</span>
                   </>
-                ) : "All Events →"}
+                ) : "Explore the Season →"}
               </Link>
             </div>
           </div>
@@ -1953,28 +1949,18 @@ export default function EventDetailPageTemplate({
             <p className="evd-newsletter-eyebrow">
               {isBilingual ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">Stay Connected</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Mantente Conectado</span>
+                  <span className="evd-bilingual-wrap-default">Join the Community</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Únete a la Comunidad</span>
                 </>
-              ) : "Stay Connected"}
+              ) : "Join the Community"}
             </p>
             <h2 className="evd-newsletter-title">
               {isBilingual ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">
-                    {isArchiveView
-                      ? "Follow the work."
-                      : "Never miss a show."}
-                  </span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">
-                    {isArchiveView
-                      ? "Sigue la obra."
-                      : "No te pierdas ningún espectáculo."}
-                  </span>
+                  <span className="evd-bilingual-wrap-default">Be there for every story.</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Sé parte de cada historia.</span>
                 </>
-              ) : (isArchiveView
-                ? "Follow the work."
-                : "Never miss a show.")}
+              ) : "Be there for every story."}
             </h2>
             <p className="evd-newsletter-body">
               {isBilingual ? (
@@ -2788,19 +2774,19 @@ export default function EventDetailPageTemplate({
           background: var(--evd-accent, #F23359);
           border-radius: 18px 18px 0 0;
         }
-        /* Panoramic background image — very low opacity, fades to bottom */
+        /* Panoramic background image — fades smoothly from top, no hard lower edge */
         .evd-content-card::after {
           content: "";
           position: absolute;
-          inset: 5px 0 0 0;
+          inset: 0 0 0 0;
           background-image: var(--evd-card-bg, none);
           background-size: cover;
           background-position: center top;
-          opacity: 0.06;
+          opacity: 0.13;
           pointer-events: none;
-          -webkit-mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);
-          mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);
-          border-radius: 0 0 18px 18px;
+          -webkit-mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,0.85) 20%, rgba(0,0,0,0.45) 50%, transparent 68%);
+          mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,0.85) 20%, rgba(0,0,0,0.45) 50%, transparent 68%);
+          border-radius: 18px 18px 0 0;
           z-index: 0;
         }
 
