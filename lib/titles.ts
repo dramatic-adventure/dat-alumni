@@ -44,6 +44,14 @@ const irregular: Record<string, string> = {
   "resident playwright": "Playwrights",
   writer: "Travel Writers",              // generic "Writer" → Travel Writers
   "legal council": "Legal Council",      // stays singular
+  // ✅ Founding roles — self-referential so they keep clean labels
+  "founding member": "Founding Members",
+  "co-founder": "Co-Founders",
+  "cofounder": "Co-Founders",
+  "co-founders": "Co-Founders",
+  "cofounders": "Co-Founders",
+  // ✅ Board — plural is the same string (it's a collective noun)
+  "board of directors": "Board of Directors",
 };
 
 export function pluralizeToken(token: string): string {
@@ -64,11 +72,6 @@ const EXCLUDED_TITLES = new Set([
   "intern",
   "fellow",
   "volunteer",
-  "founding member",
-  "co-founder",
-  "cofounder",
-  "co-founders",
-  "cofounders",
   "cos", // no COS button
 ]);
 
@@ -78,6 +81,7 @@ export type TitleBucketKey =
   | "partners"
   | "teaching-artists"
   | "executive-directors"
+  | "board-of-directors"
   | "stage-managers"
   | "designers"
   | "travel-writers"
@@ -103,6 +107,12 @@ export const FIXED_BUCKETS: Record<
     label: "Executive Directors",
     icon: "🏛️",
     color: "#8B0000", // dark red
+  },
+  "board-of-directors": {
+    key: "board-of-directors",
+    label: "Board of Directors",
+    icon: "🪑",
+    color: "#4A0080", // deep violet
   },
   "managers-community-partnerships": {
     key: "managers-community-partnerships",
@@ -277,10 +287,17 @@ export function bucketsForTitleToken(tokenRaw: string): TitleBucketKey[] {
 
   /** --- Merge-prone fixed buckets: force to fixed & early return --- */
 
-  // Teaching Artists: singular + plural, and Director of Creative Learning
-  if (/\bteaching artist(s)?\b/i.test(t) || t === "director of creative learning") {
+  // Teaching Artists: singular + plural
+  if (/\bteaching artist(s)?\b/i.test(t)) {
     buckets.push("teaching-artists");
-    return buckets; // ✅ always fixed, no dynamic variant
+    return buckets;
+  }
+
+  // Director of Creative Learning → teaching-artists + executive-directors (specific taxonomy rule)
+  if (t === "director of creative learning") {
+    buckets.push("teaching-artists");
+    buckets.push("executive-directors");
+    return buckets;
   }
 
   // Stage Managers: singular + plural, plus ASM/PSM
@@ -346,11 +363,15 @@ export function bucketsForTitleToken(tokenRaw: string): TitleBucketKey[] {
     return buckets;
   }
 
-  // Executive Directors bucket: other leadership forms
+  // Artistic Director / Associate Artistic Director: executive-directors + broadly directors
+  if (t === "artistic director" || t === "associate artistic director") {
+    buckets.push("executive-directors");
+    buckets.push("title:directors" as TitleBucketKey);
+    return buckets;
+  }
+
+  // Executive Directors bucket: other director-of / X-director forms
   if (
-    t === "artistic director" ||
-    t === "associate artistic director" ||
-    t === "director of creative learning" ||
     /^director of\s+.+/i.test(token) ||
     /^.+\s+director$/i.test(token)
   ) {
@@ -360,11 +381,29 @@ export function bucketsForTitleToken(tokenRaw: string): TitleBucketKey[] {
     }
   }
 
+  // Board of Directors → dedicated fixed bucket
+  if (t === "board of directors" || /\bboard\s+of\s+directors\b/i.test(t)) {
+    buckets.push("board-of-directors");
+    return buckets;
+  }
+
   // Resident <X> → include in the <X>s default bucket as well
   if (/^resident\s+(.+)/i.test(token)) {
     const base = norm(token.replace(/^resident\s+/i, ""));
     const label = pluralizeToken(base);
     buckets.push(`title:${label.toLowerCase()}` as TitleBucketKey);
+    return buckets;
+  }
+
+  // Founding Members: merge co-founder + founding member into one shared bucket
+  if (/\b(founding member|co-?founder)\b/i.test(t)) {
+    buckets.push("title:founding-members" as TitleBucketKey);
+    return buckets;
+  }
+
+  // Producers: normalize all producer variants ("executive producer", "co-producer", etc.) to one bucket
+  if (/\bproducer\b/i.test(t)) {
+    buckets.push("title:producers" as TitleBucketKey);
     return buckets;
   }
 
@@ -456,10 +495,25 @@ export function buildTitleBuckets(alumni: AlumniRow[]) {
   for (const a of alumni) {
     const tokens = new Set(splitTitles(a.role).map((t) => t.trim()).filter(Boolean));
 
+    // Also include merged roles array when pre-populated (e.g. from Role-Assignments)
+    for (const r of a.roles || []) {
+      if (typeof r === "string") {
+        for (const t of splitTitles(r)) {
+          if (t.trim()) tokens.add(t.trim());
+        }
+      }
+    }
+
     // Also include currentTitle so alumni are findable by their life role
-    // (e.g., "Social Worker" → /title/social-workers shows this alumni)
+    // (e.g., "Social Worker" → /title/social-workers shows this alumni).
+    // ✅ Run through splitTitles so comma-separated values ("Actor, Writer") each
+    //    become independent tokens rather than one bad concatenated token.
     const ct = (a as any).currentTitle ?? (a as any)["current title"];
-    if (ct && typeof ct === "string" && ct.trim()) tokens.add(ct.trim());
+    if (ct && typeof ct === "string" && ct.trim()) {
+      for (const t of splitTitles(ct)) {
+        if (t.trim()) tokens.add(t.trim());
+      }
+    }
 
     for (const rawToken of tokens) {
       const keys = bucketsForTitleToken(rawToken);
@@ -521,6 +575,71 @@ export function getBucketSlugsForTitleToken(tokenRaw: string): string[] {
 export function getBucketHrefForTitleToken(tokenRaw: string): string | null {
   const slugs = getBucketSlugsForTitleToken(tokenRaw);
   return slugs.length ? `/title/${slugs[0]}` : null;
+}
+
+/**
+ * When a token broadly matches a dynamic bucket (e.g., "Artistic Director" → title:directors),
+ * return the canonical concept label for the via: display instead of the raw token.
+ * Falls back to the original token for exact/non-broad matches.
+ */
+function canonicalViaLabelForBucket(token: string, bk: TitleBucketKey): string {
+  const t = token.toLowerCase();
+  // "Artistic Director", "Associate Artistic Director", etc. → "Director" when appearing in title:directors
+  if (bk === ("title:directors" as TitleBucketKey) && /\bdirector\b/i.test(t) && t !== "director") {
+    return "Director";
+  }
+  return token;
+}
+
+/**
+ * Given an alumni and a bucket key, returns which token caused them to appear
+ * in that bucket — and whether it was a DAT role or currentTitle.
+ *
+ * Returns null when the match is via the primary role (no via: label needed).
+ */
+export function getViaBucketToken(
+  a: AlumniRow,
+  bucketKey: string
+): { label: string; source: "dat-role" | "current-title" } | null {
+  const bk = bucketKey as TitleBucketKey;
+
+  // If the primary role already maps to this bucket: check if it's a broad match
+  // (e.g., "Artistic Director" broadly matches title:directors → show "via: Director")
+  for (const t of splitTitles(a.role)) {
+    if (!t.trim()) continue;
+    if (bucketsForTitleToken(t).includes(bk)) {
+      const canonical = canonicalViaLabelForBucket(t, bk);
+      // If canonical label differs from raw token, it's a broad match — show via label
+      if (canonical.toLowerCase() !== t.toLowerCase()) {
+        return { label: canonical, source: "dat-role" };
+      }
+      // Exact match → no via label needed
+      return null;
+    }
+  }
+
+  // Check roles array (includes merged Role-Assignment labels)
+  for (const r of a.roles ?? []) {
+    for (const t of splitTitles(r)) {
+      if (!t.trim()) continue;
+      if (bucketsForTitleToken(t).includes(bk)) {
+        return { label: canonicalViaLabelForBucket(t, bk), source: "dat-role" };
+      }
+    }
+  }
+
+  // Check currentTitle (self-defined present-day title)
+  const ct = (a as any).currentTitle ?? (a as any)["current title"];
+  if (ct && typeof ct === "string") {
+    for (const t of splitTitles(ct)) {
+      if (!t.trim()) continue;
+      if (bucketsForTitleToken(t).includes(bk)) {
+        return { label: t, source: "current-title" };
+      }
+    }
+  }
+
+  return null;
 }
 
 /** For a person, produce deduped links for each of their titles */

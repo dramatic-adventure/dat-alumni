@@ -1,7 +1,33 @@
 import type { RoleAssignmentRow } from "@/lib/loadRoleAssignments";
 
+/**
+ * DAT role label substrings. Any Profile-Live role containing one of these is
+ * considered a "DAT-managed" role and will be dropped from `remainingExisting`
+ * when active Role-Assignment entries exist (prevents stale legacy roles from
+ * leaking through after an assignment is removed from the sheet).
+ */
+const DAT_ROLE_FRAGMENTS = [
+  "director of creative learning",
+  "director of community partnerships",
+  "manager of community partnerships",
+  "teaching artist in residence",
+  "resident teaching artist",
+  "board of directors",
+];
+
+function isDatStyleRole(role: string): boolean {
+  const lc = (role ?? "").toLowerCase();
+  return DAT_ROLE_FRAGMENTS.some((frag) => lc.includes(frag));
+}
+
 function normRoleText(s?: string) {
-  return (s ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+  return (s ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\./g, "")       // strip periods: "K." → "K"
+    .replace(/[-_]+/g, " ")  // hyphens/underscores → space: "mary-k-baxter" → "mary k baxter"
+    .replace(/\s+/g, " ")    // collapse whitespace
+    .trim();
 }
 
 function parseISOStart(d?: string): Date | null {
@@ -29,6 +55,28 @@ function isActive(a: RoleAssignmentRow, asOf: Date) {
 function isFuture(a: RoleAssignmentRow, asOf: Date) {
   const start = parseISOStart(a.startDate);
   return !!start && asOf < start;
+}
+
+/**
+ * Sorts a role list to enforce explicit priority rules (e.g. DCP before MCP).
+ * Preserves original order for all other roles.
+ */
+function sortRolesByPriority(roles: string[]): string[] {
+  const dcpIdx = roles.findIndex((r) =>
+    normRoleText(r).includes("director of community partnerships")
+  );
+  const mcpIdx = roles.findIndex((r) =>
+    normRoleText(r).includes("manager of community partnerships")
+  );
+  if (dcpIdx === -1 || mcpIdx === -1 || dcpIdx < mcpIdx) return roles;
+  // DCP appears after MCP — move DCP before MCP
+  const result = [...roles];
+  const [dcpItem] = result.splice(dcpIdx, 1);
+  const newMcpIdx = result.findIndex((r) =>
+    normRoleText(r).includes("manager of community partnerships")
+  );
+  result.splice(newMcpIdx, 0, dcpItem);
+  return result;
 }
 
 function scopeRank(scopeType?: string) {
@@ -165,6 +213,13 @@ function buildAssignmentRoleLabel(a: RoleAssignmentRow): string {
     }
   }
 
+  // For BOARD roles: always append ", Board of Directors" when the specific title
+  // is used as base so the board context is never lost from the displayed label.
+  if (String(a.roleCode ?? "").trim().toUpperCase() === "BOARD" &&
+      !label.toLowerCase().includes("board")) {
+    label = `${label}, Board of Directors`;
+  }
+
   const status = String(a.statusSignifier ?? "").trim();
   if (!status || !shouldPrefixStatus(status)) return label;
 
@@ -239,17 +294,39 @@ export function getOrderedProfileRoles(
   profileId: string | undefined,
   existingRoles: string[] | undefined,
   assignments: RoleAssignmentRow[],
-  asOf: Date = new Date()
+  asOf: Date = new Date(),
+  /** Optional: roles derived from programMap / productionMap for this profile. */
+  projectRoles: string[] = []
 ): string[] {
-  const pid = String(profileId ?? "").trim();
-  const currentExisting = dedupeRoles(Array.isArray(existingRoles) ? existingRoles : []);
+  const pid = normRoleText(String(profileId ?? ""));
+  const rawExisting = dedupeRoles(Array.isArray(existingRoles) ? existingRoles : []);
+  const cleanProjectRoles = dedupeRoles(
+    projectRoles.map((r) => r.trim()).filter(Boolean)
+  );
 
-  if (!pid) return currentExisting;
+  if (!pid) {
+    // No Role-Assignments available; merge project roles into existing.
+    if (rawExisting.length > 0) {
+      const extraProject = removeRoles(cleanProjectRoles, rawExisting);
+      return dedupeRoles([rawExisting[0], ...rawExisting.slice(1), ...extraProject]);
+    }
+    return dedupeRoles(cleanProjectRoles);
+  }
 
   const relevant = assignments.filter(
     (a) =>
-      String(a.profileId ?? "").trim() === pid &&
-      a.showOnProfile !== false
+      normRoleText(String(a.profileId ?? "")) === pid &&
+      // Board roles always surface regardless of showOnProfile — board membership is significant
+      (a.showOnProfile !== false || String(a.roleCode ?? "").trim().toUpperCase() === "BOARD")
+  );
+
+  // When any Role-Assignment history exists for this person, suppress stale
+  // DAT-managed roles from Profile-Live (prevents deleted/ended assignments from
+  // leaking back through the profile). Also enforce DCP > MCP ordering.
+  const currentExisting = sortRolesByPriority(
+    relevant.length > 0
+      ? rawExisting.filter((r) => !isDatStyleRole(r))
+      : rawExisting
   );
 
   const current = relevant.filter((a) => isActive(a, asOf)).sort(compareCurrent);
@@ -261,33 +338,72 @@ export function getOrderedProfileRoles(
   const historicalLabels = dedupeRoles(historical.map(buildAssignmentRoleLabel));
 
   // If there is a current role in Role-Assignments, it becomes primary.
-  // Historical DAT roles should come next.
-  // Existing leftover roles stay after the DAT role history.
+  // Historical DAT roles come next, then project/history roles, then
+  // remaining Profile-Live roles — but stale DAT-pattern Profile-Live
+  // roles are dropped to prevent deleted assignments from leaking back in.
   if (currentLabels.length > 0) {
-    const remainingExisting = removeRoles(currentExisting, [
-      ...currentLabels,
-      ...historicalLabels,
+    const covered = [...currentLabels, ...historicalLabels];
+
+    const remainingExisting = removeRoles(currentExisting, covered).filter(
+      (role) => !isDatStyleRole(role)
+    );
+
+    const remainingProject = removeRoles(cleanProjectRoles, [
+      ...covered,
+      ...remainingExisting,
     ]);
 
     return dedupeRoles([
       ...currentLabels,
       ...historicalLabels,
+      ...remainingProject,
       ...remainingExisting,
     ]);
   }
 
-  // Otherwise preserve the existing primary profile role,
-  // then fold historical sheet roles underneath it.
+  // No current Role-Assignment: preserve Profile-Live primary, fold in
+  // historical assignments and project roles underneath it.
   if (currentExisting.length > 0) {
+    const extraProject = removeRoles(cleanProjectRoles, [
+      ...currentExisting,
+      ...historicalLabels,
+    ]);
     return dedupeRoles([
       currentExisting[0],
       ...historicalLabels,
+      ...extraProject,
       ...currentExisting.slice(1),
     ]);
   }
 
   // Fallback for profiles with no existing roles list.
-  return historicalLabels;
+  const extraProject = removeRoles(cleanProjectRoles, historicalLabels);
+  return dedupeRoles([...historicalLabels, ...extraProject]);
+}
+
+/**
+ * Returns the most specific active board role label for a profile (e.g., "Treasurer, Board of Directors").
+ * Unlike getOrderedProfileRoles, this always surfaces BOARD roles regardless of showOnProfile.
+ * Used to ensure board titles appear in visible role/title output.
+ */
+export function getBoardRoleLabelForProfile(
+  profileId: string | undefined,
+  assignments: RoleAssignmentRow[],
+  asOf: Date = new Date()
+): string | null {
+  const pid = normRoleText(String(profileId ?? ""));
+  if (!pid) return null;
+
+  const boardActive = assignments
+    .filter(
+      (a) =>
+        normRoleText(String(a.profileId ?? "")) === pid &&
+        String(a.roleCode ?? "").trim().toUpperCase() === "BOARD" &&
+        isActive(a, asOf)
+    )
+    .sort(compareCurrent);
+
+  return boardActive.length ? buildAssignmentRoleLabel(boardActive[0]) : null;
 }
 
 export function getPrimaryDatRoleForProfile(
@@ -297,4 +413,24 @@ export function getPrimaryDatRoleForProfile(
   asOf: Date = new Date()
 ): string {
   return getOrderedProfileRoles(profileId, existingRoles, assignments, asOf)[0] || "";
+}
+
+/**
+ * Returns true if the given profileId has an active BOARD assignment in Role-Assignments.
+ * Used to derive "Board Member" status flag automatically without manual Profile-Live duplication.
+ */
+export function deriveBoardStatus(
+  profileId: string | undefined,
+  assignments: RoleAssignmentRow[],
+  asOf: Date = new Date()
+): boolean {
+  const pid = normRoleText(String(profileId ?? ""));
+  if (!pid) return false;
+  return assignments.some(
+    (a) =>
+      normRoleText(String(a.profileId ?? "")) === pid &&
+      String(a.roleCode ?? "").trim().toUpperCase() === "BOARD" &&
+      isActive(a, asOf) &&
+      a.showOnProfile !== false
+  );
 }

@@ -82,7 +82,7 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
   // Roles: accept legacy "role" or new "roles"
   const rolesRaw = getFirstCI(row, ["roles", "role"]);
   const roles = rolesRaw ? splitCsvish(rolesRaw) : [];
-  const role = roles.join(", ");
+  const role = roles[0] || "";
 
   // Location + headshot
   const location = getFirstCI(row, ["location"]);

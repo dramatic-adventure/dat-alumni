@@ -193,15 +193,13 @@ export async function loadRoleAssignments(): Promise<RoleAssignmentRow[]> {
     debugLog("will try fallback");
   }
 
-  // 2) Fallback to local file
+  // 2) Fallback intentionally disabled — stale local CSV must not drive
+  //    runtime role/title/board derivation. Return empty on remote failure.
   if (!csvText) {
-    try {
-      csvText = await fs.readFile(FALLBACK_PATH, "utf8");
-      source = "fallback";
-    } catch {
-      csvText = "";
-      source = "empty";
-    }
+    debugLog("remote unavailable; returning empty (no fallback read)");
+    debugLog("source:", source);
+    debugLog("=== /DEBUG_ROLE_ASSIGNMENTS ===");
+    return [];
   }
 
   debugLog("source:", source);

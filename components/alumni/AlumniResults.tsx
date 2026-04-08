@@ -90,7 +90,7 @@ export default function AlumniResults({ results, compact = false }: AlumniResult
           >
             <MiniProfileCard
               name={alum.name || "No Name"}
-              role={(alum.roles && alum.roles.join(", ")) || alum.role || "No Role"}
+              role={alum.roles?.[0] || alum.role || ""}
               slug={alum.slug}
               headshotUrl={alum.headshotUrl || ""}
             />

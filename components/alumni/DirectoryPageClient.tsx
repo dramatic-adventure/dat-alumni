@@ -17,7 +17,10 @@ interface AlumniItem {
   name: string;
   slug: string;
   roles?: string[];
+  /** Primary DAT role for card display. */
   primaryRole?: string;
+  /** All merged roles (Role-Assignments + programMap/productionMap + Profile-Live). */
+  allRoles?: string[];
   location?: string;
   programs?: string[];
   seasons?: string[];
@@ -28,6 +31,8 @@ interface AlumniItem {
   updatedAt?: number;
   headshotUrl?: string;
   headshotCacheKey?: string | number;
+  /** Present-day professional title outside DAT (from Profile-Live / enrichment). */
+  currentTitle?: string;
 }
 
 type SortOption = "last" | "first" | "recent";
@@ -72,11 +77,14 @@ function liveRowToAlumniItem(
       ? new Date(r.updatedAt).getTime()
       : undefined;
 
+  const enrichedRow = enrichedBySlug.get(r.slug) || enrichedBySlug.get((r as any).canonicalSlug || "");
+
   return {
     name: r.name || "",
     slug: r.slug || "",
     roles,
     primaryRole: primaryRoleBySlug[r.slug] || roles[0] || "",
+    allRoles: enrichedRow?.mergedRoles?.length ? enrichedRow.mergedRoles : roles,
     location: r.location || "",
     programs,
     statusFlags,
@@ -100,6 +108,11 @@ function liveRowToAlumniItem(
 
       // ✅ Cache key should come from Profile-Media uploadedAt via enrichment.
       return bySlug?.headshotCacheKey || byCanon?.headshotCacheKey || undefined;
+    })(),
+    currentTitle: (() => {
+      const bySlug = enrichedBySlug.get(r.slug);
+      const byCanon = enrichedBySlug.get((r as any).canonicalSlug);
+      return bySlug?.currentTitle || byCanon?.currentTitle || (r as any).currentTitle || undefined;
     })(),
   };
 }
@@ -518,14 +531,22 @@ export default function DirectoryPageClient({
               }}
             >
               {mainResults.map((alum, idx) => {
-
+                const primaryRole = alum.primaryRole || alum.roles?.[0] || "";
+                const q = query.trim().toLowerCase();
+                const ct = alum.currentTitle || "";
+                const ctVia = ct && q && ct.toLowerCase().includes(q) && !primaryRole.toLowerCase().includes(q)
+                  ? { viaLabel: ct, viaSource: "current-title" as const }
+                  : undefined;
                 return (
                   <MiniProfileCard
                     key={alum.slug || String(idx)}
                     name={alum.name}
-                    role={alum.primaryRole || alum.roles?.[0] || ""}
+                    role={primaryRole}
+                    allRoles={alum.allRoles}
+                    searchQuery={query}
                     slug={alum.slug}
                     priority={idx < 12}
+                    {...ctVia}
                   />
                 );
               })}
@@ -567,14 +588,22 @@ export default function DirectoryPageClient({
                 }}
               >
                 {extraResults.map((alum, idx) => {
-
+                  const primaryRole = alum.primaryRole || alum.roles?.[0] || "";
+                  const q = query.trim().toLowerCase();
+                  const ct = alum.currentTitle || "";
+                  const ctVia = ct && q && ct.toLowerCase().includes(q) && !primaryRole.toLowerCase().includes(q)
+                    ? { viaLabel: ct, viaSource: "current-title" as const }
+                    : undefined;
                   return (
                     <MiniProfileCard
                       key={alum.slug || String(idx)}
                       name={alum.name}
-                      role={alum.primaryRole || alum.roles?.[0] || ""}
+                      role={primaryRole}
+                      allRoles={alum.allRoles}
+                      searchQuery={query}
                       slug={alum.slug}
                       priority={idx < 12}
+                      {...ctVia}
                     />
                   );
                 })}

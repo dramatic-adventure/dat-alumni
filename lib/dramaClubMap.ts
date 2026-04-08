@@ -1385,10 +1385,10 @@ export const dramaClubMap = {
   lng: 21.2611,
 },
 
-  "zemplinska-teplica-ensemble": {
+  "zemplinska-teplica-youth-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
-    slug: "zemplinska-teplica-ensemble",
-    name: "Zemplínska Teplica Ensemble",
+    slug: "zemplinska-teplica-youth-ensemble",
+    name: "Zemplínska Teplica Youth Ensemble",
     country: "Slovakia",
     region: "Eastern Slovakia",
     city: "Zemplínska Teplica",

@@ -130,6 +130,7 @@ export default function FeaturedAlumni({ highlights }: FeaturedAlumniProps) {
                     fontWeight: 600,
                     color: "#241123",
                     margin: 0,
+                    textAlign: "center",
                   }}
                 >
                   {alum.name}
@@ -141,6 +142,7 @@ export default function FeaturedAlumni({ highlights }: FeaturedAlumniProps) {
                     color: "#6C00AF",
                     margin: 0,
                     opacity: 0.8,
+                    textAlign: "center",
                   }}
                 >
                   {alum.role || alum.roles?.[0] || "Artist"}

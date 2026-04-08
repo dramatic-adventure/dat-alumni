@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
 import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
-import { getPrimaryDatRoleForProfile } from "@/lib/profileRoleAssignments";
+import { getPrimaryDatRoleForProfile, deriveBoardStatus } from "@/lib/profileRoleAssignments";
 import DirectoryPageClient from "@/components/alumni/DirectoryPageClient";
 
 import { enrichAlumniData } from "@/components/alumni/AlumniSearch/enrichAlumniData.server";
@@ -29,7 +29,8 @@ export default async function DirectoryPage() {
 
   const enrichedData: EnrichedProfileLiveRow[] = await enrichAlumniData(
     profileLiveRows,
-    profileMediaRows
+    profileMediaRows,
+    roleAssignments,
   );
 
   const primaryRoleBySlug = Object.fromEntries(
@@ -39,10 +40,19 @@ export default async function DirectoryPage() {
     ])
   );
 
+  const now = new Date();
+  const alumniWithPrimary = alumni.map((a) => ({
+    ...a,
+    primaryRole: primaryRoleBySlug[a.slug] || (a.roles || [])[0] || "",
+    statusFlags: deriveBoardStatus(a.slug, roleAssignments, now)
+      ? Array.from(new Set([...(a.statusFlags || []), "Board Member"]))
+      : a.statusFlags || [],
+  }));
+
   return (
     <Suspense fallback={<div style={{ height: 1 }} />}>
       <DirectoryPageClient
-        alumni={alumni}
+        alumni={alumniWithPrimary}
         enrichedData={enrichedData}
         primaryRoleBySlug={primaryRoleBySlug}
       />

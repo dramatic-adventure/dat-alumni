@@ -225,6 +225,7 @@ export async function loadProfileLiveRowsPublic(): Promise<ProfileLiveRow[]> {
     const rolesIdx = idxOf(header, ["roles", "role", "primary role"]);
     const locationIdx = idxOf(header, ["location", "based in", "currently based in"]);
     const currentWorkIdx = idxOf(header, ["currentwork", "current work"]);
+    const currentTitleIdx = idxOf(header, ["currenttitle", "current title", "currentTitle", "current_title"]);
 
     const bioShortIdx = idxOf(header, ["bioshort", "bio short", "short bio"]);
     const bioLongIdx = idxOf(header, [
@@ -298,6 +299,7 @@ export async function loadProfileLiveRowsPublic(): Promise<ProfileLiveRow[]> {
         roles: cell(r, rolesIdx) || undefined,
         location: cell(r, locationIdx) || undefined,
         currentWork: cell(r, currentWorkIdx) || undefined,
+        currentTitle: cell(r, currentTitleIdx) || undefined,
 
         bioShort: cell(r, bioShortIdx) || undefined,
         bioLong: cell(r, bioLongIdx) || undefined,

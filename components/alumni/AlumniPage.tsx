@@ -1,7 +1,7 @@
 // /components/alumni/AlumniPage.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -64,6 +64,15 @@ export default function AlumniPage({
   const [primaryResults, setPrimaryResults] = useState<ProfileLiveRow[]>([]);
   const [secondaryResults, setSecondaryResults] = useState<ProfileLiveRow[]>([]);
   const [query, setQuery] = useState<string>("");
+
+  const enrichedBySlug = useMemo(() => {
+    const m = new Map<string, EnrichedProfileLiveRow>();
+    enrichedData.forEach((r) => {
+      m.set(r.slug, r);
+      if (r.canonicalSlug) m.set(r.canonicalSlug, r);
+    });
+    return m;
+  }, [enrichedData]);
 
   useEffect(() => {
     setUpdates(initialUpdates || []);
@@ -219,19 +228,31 @@ export default function AlumniPage({
                   background: "rgba(36, 17, 35, 0.2)",
                 }}
               >
-                {primaryResults.map((alum, idx) => (
-                  <div
-                    key={`primary-${alum.slug}-${idx}`}
-                    style={{ flex: "0 0 auto", width: "150px", scrollSnapAlign: "start" }}
-                  >
-                    <MiniProfileCard
-                      name={alum.name}
-                      role={primaryRoleBySlug[alum.slug] || rolesToArray(alum.roles)[0] || ""}
-                      slug={alum.slug}
-                      priority={idx < 6}
-                    />
-                  </div>
-                ))}
+                {primaryResults.map((alum, idx) => {
+                  const enriched = enrichedBySlug.get(alum.slug);
+                  const ct = enriched?.currentTitle ?? (alum as any).currentTitle ?? "";
+                  const q = query.trim().toLowerCase();
+                  const primaryRole = primaryRoleBySlug[alum.slug] || rolesToArray(alum.roles)[0] || "";
+                  const ctVia = ct && q && ct.toLowerCase().includes(q) && !primaryRole.toLowerCase().includes(q)
+                    ? { viaLabel: ct, viaSource: "current-title" as const }
+                    : undefined;
+                  return (
+                    <div
+                      key={`primary-${alum.slug}-${idx}`}
+                      style={{ flex: "0 0 auto", width: "150px", scrollSnapAlign: "start" }}
+                    >
+                      <MiniProfileCard
+                        name={alum.name}
+                        role={primaryRole}
+                        allRoles={enriched?.mergedRoles}
+                        searchQuery={query}
+                        slug={alum.slug}
+                        priority={idx < 6}
+                        {...ctVia}
+                      />
+                    </div>
+                  );
+                })}
                 <div style={{ flex: "0 0 2rem" }} />
               </div>
             </section>
@@ -269,19 +290,31 @@ export default function AlumniPage({
                 }}
               >
                 <div style={{ flex: "0 0 2rem" }} />
-                {secondaryResults.map((alum, idx) => (
-                  <div
-                    key={`secondary-${alum.slug}-${idx}`}
-                    style={{ flex: "0 0 auto", width: "150px", scrollSnapAlign: "start" }}
-                  >
-                    <MiniProfileCard
-                      name={alum.name}
-                      role={primaryRoleBySlug[alum.slug] || rolesToArray(alum.roles)[0] || ""}
-                      slug={alum.slug}
-                      priority={idx < 6}
-                    />
-                  </div>
-                ))}
+                {secondaryResults.map((alum, idx) => {
+                  const enriched = enrichedBySlug.get(alum.slug);
+                  const ct = enriched?.currentTitle ?? (alum as any).currentTitle ?? "";
+                  const q = query.trim().toLowerCase();
+                  const primaryRole = primaryRoleBySlug[alum.slug] || rolesToArray(alum.roles)[0] || "";
+                  const ctVia = ct && q && ct.toLowerCase().includes(q) && !primaryRole.toLowerCase().includes(q)
+                    ? { viaLabel: ct, viaSource: "current-title" as const }
+                    : undefined;
+                  return (
+                    <div
+                      key={`secondary-${alum.slug}-${idx}`}
+                      style={{ flex: "0 0 auto", width: "150px", scrollSnapAlign: "start" }}
+                    >
+                      <MiniProfileCard
+                        name={alum.name}
+                        role={primaryRole}
+                        allRoles={enriched?.mergedRoles}
+                        searchQuery={query}
+                        slug={alum.slug}
+                        priority={idx < 6}
+                        {...ctVia}
+                      />
+                    </div>
+                  );
+                })}
                 <div style={{ flex: "0 0 2rem" }} />
               </div>
 

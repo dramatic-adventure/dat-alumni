@@ -88,6 +88,7 @@ export default async function Alumni() {
   const enrichedData: EnrichedProfileLiveRow[] = await enrichAlumniData(
     profileLiveRows,
     profileMediaRows,
+    roleAssignments,
   );
 
   const liveBySlug = new Map(profileLiveRows.map((r) => [norm(r.slug), r]));

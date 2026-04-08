@@ -6,6 +6,8 @@ import { programMap } from "@/lib/programMap";
 import { productionMap } from "@/lib/productionMap";
 import { seasons } from "@/lib/seasonData";
 import { getSlugAliases, normSlug, resolveCanonicalSlug } from "@/lib/slugAliases";
+import type { RoleAssignmentRow } from "@/lib/loadRoleAssignments";
+import { getOrderedProfileRoles } from "@/lib/profileRoleAssignments";
 
 function devLog(...args: any[]) {
   if (process.env.NODE_ENV !== "development") return;
@@ -38,6 +40,7 @@ export type ProfileLiveRow = {
   roles?: string; // likely CSV/pipe separated string
   location?: string;
   currentWork?: string;
+  currentTitle?: string;  // present-day professional title (outside DAT)
 
   bioShort?: string;
   bioLong?: string;
@@ -85,6 +88,9 @@ export type EnrichedProfileLiveRow = ProfileLiveRow & {
    * Prefer uploadedAt from Profile-Media.
    */
   headshotCacheKey?: string;
+
+  /** All roles merged from Role-Assignments + programMap/productionMap + Profile-Live. */
+  mergedRoles: string[];
 
   // Search fields
   aliasTokens: string[];
@@ -402,7 +408,8 @@ function pickBestHeadshot(media: ProfileMediaRow[] | undefined) {
 
 export async function enrichAlumniData(
   alumni: ProfileLiveRow[],
-  profileMedia: ProfileMediaRow[] = []
+  profileMedia: ProfileMediaRow[] = [],
+  roleAssignments: RoleAssignmentRow[] = []
 ): Promise<EnrichedProfileLiveRow[]> {
   const out: EnrichedProfileLiveRow[] = [];
 
@@ -651,6 +658,50 @@ export async function enrichAlumniData(
     tokenize(item.currentWork).forEach((t: string) => bioTokens.add(t));
     tokenize(item.location).forEach((t: string) => locationTokens.add(t));
 
+    // ── Compute merged roles (Role-Assignments + programMap/productionMap + Profile-Live) ──
+    // Collect project roles from programMap / productionMap (already iterated above).
+    const itemProjectRoles: string[] = [];
+    for (const key in programMap) {
+      const prog = programMap[key] as any;
+      const artists = prog.artists || {};
+      for (const artistSlug of Object.keys(artists)) {
+        if (aliasesNorm.has(normSlug(artistSlug))) {
+          const ar: string[] = Array.isArray(artists[artistSlug])
+            ? artists[artistSlug]
+            : [];
+          itemProjectRoles.push(...ar);
+        }
+      }
+    }
+    for (const key in productionMap) {
+      const prod = productionMap[key] as any;
+      const artists = prod.artists || {};
+      for (const artistSlug of Object.keys(artists)) {
+        if (aliasesNorm.has(normSlug(artistSlug))) {
+          const ar: string[] = Array.isArray(artists[artistSlug])
+            ? artists[artistSlug]
+            : [];
+          itemProjectRoles.push(...ar);
+        }
+      }
+    }
+
+    const profileRolesRaw = (item.roles || "")
+      .split(/[\n,;|]+/)
+      .map((r: string) => r.trim())
+      .filter(Boolean);
+
+    const mergedRoles = getOrderedProfileRoles(
+      canonicalSlug || item.slug,
+      profileRolesRaw,
+      roleAssignments,
+      new Date(),
+      itemProjectRoles
+    );
+
+    // Add all merged roles to roleTokens so search/filter finds them.
+    for (const r of mergedRoles) addPhraseTokens(roleTokens, r);
+
     const safeItem = item;
 
     out.push({
@@ -663,6 +714,8 @@ export async function enrichAlumniData(
        */
       headshotUrl: resolvedHeadshotUrl,
       headshotCacheKey: resolvedHeadshotCacheKey,
+
+      mergedRoles,
 
       aliasTokens: Array.from(aliasTokens),
       programTokens: Array.from(programTokens),

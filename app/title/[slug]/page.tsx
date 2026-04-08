@@ -12,9 +12,33 @@ import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import TitlesGrid from "@/components/alumni/TitlesGrid";
 import { buildTitleBuckets, slugifyTitle } from "@/lib/titles";
+import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
+import { getOrderedProfileRoles } from "@/lib/profileRoleAssignments";
+import { getViaBucketToken, type TitleBucketKey } from "@/lib/titles";
+import { cache } from "react";
 
 // Use ISR instead of force-dynamic
 export const revalidate = 3600;
+
+/**
+ * Loads alumni with Role-Assignment merged roles populated into a.roles.
+ * Cached per render so generateStaticParams / generateMetadata / TitlePage
+ * all share the same computed data.
+ */
+const loadAlumniWithMergedRoles = cache(async (): Promise<AlumniRow[]> => {
+  const [alumni, roleAssignments] = await Promise.all([
+    loadVisibleAlumni(),
+    loadRoleAssignments(),
+  ]);
+  return alumni.map((a) => ({
+    ...a,
+    roles: getOrderedProfileRoles(
+      a.profileId || a.slug,
+      a.roles,
+      roleAssignments
+    ),
+  }));
+});
 
 type ParamsLike<T> = Promise<T> | T;
 
@@ -43,7 +67,7 @@ async function resolveParams(
 }
 
 export async function generateStaticParams() {
-  const alumni: AlumniRow[] = await loadVisibleAlumni();
+  const alumni: AlumniRow[] = await loadAlumniWithMergedRoles();
   const buckets = buildTitleBuckets(alumni);
   const valid = Array.from(buckets.values()).filter((b) => b.people.size > 0);
 
@@ -83,7 +107,7 @@ export async function generateMetadata({
     };
   }
 
-  const alumni: AlumniRow[] = await loadVisibleAlumni();
+  const alumni: AlumniRow[] = await loadAlumniWithMergedRoles();
   const buckets = buildTitleBuckets(alumni);
   const target = slug.toLowerCase();
 
@@ -117,7 +141,7 @@ export default async function TitlePage({
     notFound();
   }
 
-  const alumni: AlumniRow[] = await loadVisibleAlumni();
+  const alumni: AlumniRow[] = await loadAlumniWithMergedRoles();
   const buckets = buildTitleBuckets(alumni);
 
   // Find target bucket by either key or label slug
@@ -189,6 +213,7 @@ export default async function TitlePage({
               textShadow: "0 8px 20px rgba(0,0,0,0.8)",
               margin: 0,
               lineHeight: "1",
+              textAlign: "right",
             }}
           >
             {displayLabel}
@@ -277,16 +302,21 @@ export default async function TitlePage({
                         justifyItems: "center",
                       }}
                     >
-                      {group.people.map((artist) => (
-                        <MiniProfileCard
-                          key={artist.slug}
-                          alumniId={artist.slug}
-                          name={artist.name}
-                          role={artist.role}
-                          slug={artist.slug}
-                          headshotUrl={artist.headshotUrl}
-                        />
-                      ))}
+                      {group.people.map((artist) => {
+                        const via = entry ? getViaBucketToken(artist, entry.meta.key as TitleBucketKey) : null;
+                        return (
+                          <MiniProfileCard
+                            key={artist.slug}
+                            alumniId={artist.slug}
+                            name={artist.name}
+                            role={artist.role}
+                            slug={artist.slug}
+                            headshotUrl={artist.headshotUrl}
+                            viaLabel={via?.label}
+                            viaSource={via?.source}
+                          />
+                        );
+                      })}
                     </div>
                   </section>
                 ))}
@@ -300,16 +330,21 @@ export default async function TitlePage({
                   justifyItems: "center",
                 }}
               >
-                {flatSelected.map((artist) => (
-                  <MiniProfileCard
-                    key={artist.slug}
-                    alumniId={artist.slug}
-                    name={artist.name}
-                    role={artist.role}
-                    slug={artist.slug}
-                    headshotUrl={artist.headshotUrl}
-                  />
-                ))}
+                {flatSelected.map((artist) => {
+                  const via = entry ? getViaBucketToken(artist, entry.meta.key as TitleBucketKey) : null;
+                  return (
+                    <MiniProfileCard
+                      key={artist.slug}
+                      alumniId={artist.slug}
+                      name={artist.name}
+                      role={artist.role}
+                      slug={artist.slug}
+                      headshotUrl={artist.headshotUrl}
+                      viaLabel={via?.label}
+                      viaSource={via?.source}
+                    />
+                  );
+                })}
               </div>
             )}
           </div>

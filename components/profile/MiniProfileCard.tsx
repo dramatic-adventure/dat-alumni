@@ -34,6 +34,16 @@ interface MiniProfileCardProps {
    * Pass EnrichedProfile.headshotCacheKey when available.
    */
   cacheKey?: string | number;
+
+  /** All merged roles for this person (primary + secondary). */
+  allRoles?: string[];
+  /** Active search query — used to show "Matched via" when match is on a secondary role. */
+  searchQuery?: string;
+
+  /** Direct via label (e.g., from /title page bucket matching). */
+  viaLabel?: string;
+  /** Source class for viaLabel: "dat-role" shows "via: X", "current-title" shows "via current title: X". */
+  viaSource?: "dat-role" | "current-title";
 }
 
 function addCacheBust(url: string, cacheKey?: string | number) {
@@ -172,6 +182,11 @@ export default function MiniProfileCard({
   highlightFrame = false,
 
   cacheKey,
+
+  allRoles,
+  searchQuery,
+  viaLabel,
+  viaSource,
 }: MiniProfileCardProps) {
   // ✅ Your real fallback (public/images/default-headshot.png)
   const defaultImage = "/images/default-headshot.png";
@@ -252,6 +267,18 @@ useEffect(() => {
 const handleError = useCallback(() => {
   setImgSrc(defaultImage);
 }, [defaultImage]);
+
+  // "Matched via" — only shown when a search query matches a secondary role, not the primary
+  const matchedViaRole = useMemo(() => {
+    const q = String(searchQuery || "").trim().toLowerCase();
+    if (!q || !allRoles || allRoles.length <= 1) return null;
+    const primaryNorm = String(role || "").trim().toLowerCase();
+    if (primaryNorm.includes(q)) return null; // primary already surfaces the match
+    return allRoles.find((r) => {
+      const rn = String(r || "").trim().toLowerCase();
+      return rn !== primaryNorm && rn.includes(q);
+    }) || null;
+  }, [searchQuery, allRoles, role]);
 
   const isLight = variant === "light";
   const nameColor = isLight ? "#241123" : "#f2f2f2";
@@ -352,6 +379,28 @@ const handleError = useCallback(() => {
         >
           {role}
         </p>
+
+        {/* Matched via — secondary role or currentTitle hint */}
+        {(matchedViaRole || viaLabel) ? (
+          <p
+            style={{
+              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+              fontWeight: 400,
+              opacity: 0.45,
+              fontSize: 11,
+              margin: "3px 0 0 0",
+              textAlign: "left",
+              color: roleColor,
+              fontStyle: "italic",
+            }}
+          >
+            {matchedViaRole
+              ? `via: ${matchedViaRole}`
+              : viaSource === "current-title"
+              ? `via current title: ${viaLabel}`
+              : `via: ${viaLabel}`}
+          </p>
+        ) : null}
       </div>
 
       <style>{`

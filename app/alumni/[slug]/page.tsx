@@ -23,7 +23,9 @@ import { rateLog, logOnce } from "@/lib/logHelpers";
 import { CanonicalSlugGate } from "@/components/alumni/CanonicalSlugGate";
 
 import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
-import { getOrderedProfileRoles } from "@/lib/profileRoleAssignments";
+import { getOrderedProfileRoles, deriveBoardStatus, getBoardRoleLabelForProfile } from "@/lib/profileRoleAssignments";
+import { programMap } from "@/lib/programMap";
+import { productionMap } from "@/lib/productionMap";
 
 type PageProps = {
   params: Promise<{ slug: string | string[] }>;
@@ -337,28 +339,6 @@ async function loadCollectionsFor({
 /* -----------------------------------------------------------
  * Page
  * ----------------------------------------------------------*/
-function parseISOStart(d?: string): Date | null {
-  const s = String(d ?? "").trim();
-  if (!s) return null;
-  const dt = new Date(`${s}T00:00:00`);
-  return Number.isNaN(dt.getTime()) ? null : dt;
-}
-
-function parseISOEnd(d?: string): Date | null {
-  const s = String(d ?? "").trim();
-  if (!s) return null;
-  const dt = new Date(`${s}T23:59:59.999`);
-  return Number.isNaN(dt.getTime()) ? null : dt;
-}
-
-function isAssignmentActiveNow(a: { startDate?: string; endDate?: string }, asOf: Date) {
-  const start = parseISOStart(a.startDate);
-  const end = parseISOEnd(a.endDate);
-  if (start && asOf < start) return false;
-  if (end && asOf > end) return false;
-  return true;
-}
-
 export default async function AlumniPage({ params, searchParams }: PageProps) {
   const p = await params;
   const sp = searchParams ? await searchParams : undefined;
@@ -471,27 +451,58 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
       incoming
   ).trim();
 
-  const mergedRoles = getOrderedProfileRoles(
+  // Build project roles from programMap / productionMap for this profile's aliases.
+  // These serve as "history" enrichment when Role-Assignments has no current entry.
+  const projectRoles: string[] = [];
+  for (const key in programMap) {
+    const prog = (programMap as Record<string, any>)[key];
+    const artists = prog.artists || {};
+    for (const artistSlug of Object.keys(artists)) {
+      if (aliases.has(normSlug(artistSlug))) {
+        const artistRoles: string[] = Array.isArray(artists[artistSlug])
+          ? artists[artistSlug]
+          : [];
+        projectRoles.push(...artistRoles);
+      }
+    }
+  }
+  for (const key in productionMap) {
+    const prod = (productionMap as Record<string, any>)[key];
+    const artists = prod.artists || {};
+    for (const artistSlug of Object.keys(artists)) {
+      if (aliases.has(normSlug(artistSlug))) {
+        const artistRoles: string[] = Array.isArray(artists[artistSlug])
+          ? artists[artistSlug]
+          : [];
+        projectRoles.push(...artistRoles);
+      }
+    }
+  }
+
+  const mergedRolesBase = getOrderedProfileRoles(
     profileId,
     Array.isArray((normalizedAlumni as any).roles)
       ? ((normalizedAlumni as any).roles as string[])
       : [],
-    roleAssignments
+    roleAssignments,
+    new Date(),
+    projectRoles
   );
+
+  // Ensure the board title (if active) appears in the visible role output.
+  // getBoardRoleLabelForProfile surfaces BOARD assignments regardless of showOnProfile.
+  const boardLabel = getBoardRoleLabelForProfile(profileId, roleAssignments);
+  const mergedRoles =
+    boardLabel && !mergedRolesBase.some((r) => r.toLowerCase() === boardLabel.toLowerCase())
+      ? [...mergedRolesBase, boardLabel]
+      : mergedRolesBase;
 
   const mergedStatusFlags = Array.from(
     new Set([
       ...((normalizedAlumni as any).statusFlags || []),
-      ...roleAssignments
-        .filter(
-          (a) =>
-            String(a.profileId ?? "").trim() === profileId &&
-            isAssignmentActiveNow(a, new Date()) &&
-            String(a.roleCode ?? "").trim().toUpperCase() === "BOARD"
-        )
-        .map(() => "Board Member"),
+      ...(deriveBoardStatus(profileId, roleAssignments) ? ["Board Member"] : []),
     ])
-  );  
+  );
 
   // 7) Render
   return (

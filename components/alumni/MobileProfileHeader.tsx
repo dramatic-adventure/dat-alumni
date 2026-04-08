@@ -312,7 +312,7 @@ export default function MobileProfileHeader({
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.35rem", marginTop: "0.5rem" }}>
                   {/* Balancing spacer — mirrors the circle button so text stays optically centered */}
                   {extraCurrentTitles.length > 0 && (
-                    <span aria-hidden="true" style={{ width: "1.1em", height: "1.1em", fontSize: "1.2rem", flexShrink: 0, visibility: "hidden" }} />
+                    <span aria-hidden="true" style={{ width: "1.25em", height: "1.25em", fontSize: "1.2rem", flexShrink: 0, visibility: "hidden" }} />
                   )}
                   {currentTitleHref ? (
                     <Link
@@ -341,7 +341,7 @@ export default function MobileProfileHeader({
                   {extraCurrentTitles.length > 0 && (
                     <button
                       onClick={(e) => { e.preventDefault(); setCurrentTitlesExpanded((r) => !r); }}
-                      style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: currentTitlesExpanded ? 0.3 : 0.16, fontSize: "1.2rem", fontWeight: 700, padding: 0, width: "1.1em", height: "1.1em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
+                      style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: currentTitlesExpanded ? 0.3 : 0.16, fontSize: "1.2rem", fontWeight: 700, padding: 0, width: "1.25em", height: "1.25em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
                       onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = currentTitlesExpanded ? "0.3" : "0.16"; }}
                       aria-label={currentTitlesExpanded ? "Collapse titles" : "Show more titles"}
@@ -398,7 +398,7 @@ export default function MobileProfileHeader({
                       borderRadius: "4px",
                     }}>
                       {/* Always-visible row: DAT + primary role + toggle */}
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}>
+                      <span style={{ display: "inline-flex", alignItems: "flex-start", gap: "0.45rem", paddingRight: "0.4rem" }}>
                         <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.72rem", letterSpacing: "3.5px", fontWeight: 900, color: "#ffcc00", textTransform: "uppercase" }}>
                           DAT
                         </span>
@@ -442,7 +442,7 @@ export default function MobileProfileHeader({
                         {titleLinks.length > 1 && (
                           <button
                             onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
-                            style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: rolesExpanded ? 0.3 : 0.16, fontSize: "0.95rem", fontWeight: 700, padding: 0, width: "1.1em", height: "1.1em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
+                            style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: rolesExpanded ? 0.3 : 0.16, fontSize: "0.95rem", fontWeight: 700, padding: 0, width: "1.25em", height: "1.25em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
                             onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
                             onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = rolesExpanded ? "0.3" : "0.16"; }}
                             aria-label={rolesExpanded ? "Collapse roles" : "Show more roles"}
@@ -502,7 +502,7 @@ export default function MobileProfileHeader({
                 {titleLinks.length > 0 && (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.1rem", marginTop: "0.5rem" }}>
                     {/* Primary role row */}
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem" }}>
+                    <span style={{ display: "inline-flex", alignItems: "flex-start", gap: "0.4rem", paddingRight: "0.5rem" }}>
                       {titleLinks[0].href ? (
                         <Link
                           href={titleLinks[0].href}
@@ -546,7 +546,7 @@ export default function MobileProfileHeader({
                       {titleLinks.length > 1 && (
                         <button
                           onClick={(e) => { e.preventDefault(); setRolesExpanded((r) => !r); }}
-                          style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: rolesExpanded ? 0.3 : 0.16, fontSize: "1.2rem", fontWeight: 700, padding: 0, width: "1.1em", height: "1.1em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
+                          style={{ background: "none", border: "1px solid currentColor", borderRadius: "50%", cursor: "pointer", color: "#241123", opacity: rolesExpanded ? 0.3 : 0.16, fontSize: "1rem", fontWeight: 700, padding: 0, width: "1.25em", height: "1.25em", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", transition: "color 0.2s ease, opacity 0.2s ease" }}
                           onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; e.currentTarget.style.opacity = "1"; }}
                           onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; e.currentTarget.style.opacity = rolesExpanded ? "0.3" : "0.16"; }}
                           aria-label={rolesExpanded ? "Collapse roles" : "Show more roles"}
