@@ -1121,50 +1121,80 @@ export default function EventDetailPageTemplate({
                     )}
                     {isBilingual ? (
                       <>
-                        {/* EN subtitle (tagline) — default; omit if it matches a paragraph verbatim */}
-                        {event.subtitle && (
-                          <p className="evd-tagline-inline evd-bilingual-default">{event.subtitle}</p>
-                        )}
-                        {/* ES subtitle — alt */}
-                        {event.translations?.["es"]?.subtitle && (
-                          <p className="evd-tagline-inline evd-bilingual-alt evd-bilingual-es">
-                            {event.translations["es"].subtitle}
-                          </p>
-                        )}
-                        {/* EN paragraphs — default; tagline paragraph deduped */}
-                        <div className="evd-bilingual-default">
-                          {paragraphs
-                            .filter((p) => event.subtitle ? p !== event.subtitle.trim() : true)
-                            .map((p, i) => (
-                              <p key={i} className="evd-body-text evd-about-body">{p}</p>
-                            ))}
-                        </div>
-                        {/* ES paragraphs — alt */}
-                        <div className="evd-bilingual-alt evd-bilingual-es">
-                          {splitParagraphs(
+                        {/* EN — tagline above if not in body; inline-styled at position if found in body */}
+                        {(() => {
+                          const enTaglineInBody = event.subtitle
+                            ? paragraphs.some((p) => p === event.subtitle!.trim())
+                            : false;
+                          return (
+                            <>
+                              {event.subtitle && !enTaglineInBody && (
+                                <p className="evd-tagline-inline evd-bilingual-default">{event.subtitle}</p>
+                              )}
+                              <div className="evd-bilingual-default">
+                                {paragraphs.map((p, i) =>
+                                  enTaglineInBody && event.subtitle && p === event.subtitle.trim() ? (
+                                    <p key={i} className="evd-tagline-inline">{p}</p>
+                                  ) : (
+                                    <p key={i} className="evd-body-text evd-about-body">{p}</p>
+                                  )
+                                )}
+                              </div>
+                            </>
+                          );
+                        })()}
+                        {/* ES — tagline above if not in body; inline-styled at position if found in body */}
+                        {(() => {
+                          const esTagline = event.translations?.["es"]?.subtitle;
+                          const esParagraphs = splitParagraphs(
                             event.translations?.["es"]?.longDescription ??
                             event.translations?.["es"]?.description ??
                             ""
-                          )
-                            .filter((p) => {
-                              const esTagline = event.translations?.["es"]?.subtitle;
-                              return esTagline ? p !== esTagline.trim() : true;
-                            })
-                            .map((p, i) => (
-                              <p key={i} className="evd-body-text evd-about-body">{p}</p>
-                            ))}
-                        </div>
+                          );
+                          const esTaglineInBody = esTagline
+                            ? esParagraphs.some((p) => p === esTagline.trim())
+                            : false;
+                          return (
+                            <>
+                              {esTagline && !esTaglineInBody && (
+                                <p className="evd-tagline-inline evd-bilingual-alt evd-bilingual-es">
+                                  {esTagline}
+                                </p>
+                              )}
+                              <div className="evd-bilingual-alt evd-bilingual-es">
+                                {esParagraphs.map((p, i) =>
+                                  esTaglineInBody && esTagline && p === esTagline.trim() ? (
+                                    <p key={i} className="evd-tagline-inline">{p}</p>
+                                  ) : (
+                                    <p key={i} className="evd-body-text evd-about-body">{p}</p>
+                                  )
+                                )}
+                              </div>
+                            </>
+                          );
+                        })()}
                       </>
                     ) : (
                       <>
-                        {event.subtitle ? (
-                          <p className="evd-tagline-inline">{event.subtitle}</p>
-                        ) : null}
-                        {paragraphs
-                          .filter((p) => event.subtitle ? p !== event.subtitle.trim() : true)
-                          .map((p, i) => (
-                            <p key={i} className="evd-body-text evd-about-body">{p}</p>
-                          ))}
+                        {(() => {
+                          const taglineInBody = event.subtitle
+                            ? paragraphs.some((p) => p === event.subtitle!.trim())
+                            : false;
+                          return (
+                            <>
+                              {event.subtitle && !taglineInBody && (
+                                <p className="evd-tagline-inline">{event.subtitle}</p>
+                              )}
+                              {paragraphs.map((p, i) =>
+                                taglineInBody && event.subtitle && p === event.subtitle.trim() ? (
+                                  <p key={i} className="evd-tagline-inline">{p}</p>
+                                ) : (
+                                  <p key={i} className="evd-body-text evd-about-body">{p}</p>
+                                )
+                              )}
+                            </>
+                          );
+                        })()}
                       </>
                     )}
                     {/* Theme tags — production enrichment */}
