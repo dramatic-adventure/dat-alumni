@@ -490,25 +490,14 @@ function ArchivedEventInfoBand({
           </div>
 
           <div className="evd-ticket-purchase">
-            {routeKind === "theatre" && relatedProduction ? (
-              <Link href={`/theatre/${relatedProduction.slug}`} className="evd-btn-ticket">
-                {event.translations ? (
-                  <>
-                    <span className="evd-bilingual-wrap-default">View Production Archive →</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Ver Archivo de Producción →</span>
-                  </>
-                ) : "View Production Archive →"}
-              </Link>
-            ) : (
-              <Link href="/projects" className="evd-btn-ticket">
-                {event.translations ? (
-                  <>
-                    <span className="evd-bilingual-wrap-default">Browse Project Archive →</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Explorar el Archivo →</span>
-                  </>
-                ) : "Browse Project Archive →"}
-              </Link>
-            )}
+            <Link href="/donate?mode=new-work&freq=monthly" className="evd-btn-ticket">
+              {event.translations ? (
+                <>
+                  <span className="evd-bilingual-wrap-default">Sponsor Stories Like This →</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Apoya Historias Como Esta →</span>
+                </>
+              ) : "Sponsor Stories Like This →"}
+            </Link>
           </div>
         </div>
 
@@ -1062,14 +1051,6 @@ export default function EventDetailPageTemplate({
                     />
                     <div className="evd-elder-overlay" aria-hidden="true" />
                     <div className="evd-elder-content">
-                      <p className="evd-elder-label">
-                        {event.translations ? (
-                          <>
-                            <span className="evd-bilingual-wrap-default">From the artist</span>
-                            <span className="evd-bilingual-wrap-alt evd-bilingual-es">Del artista</span>
-                          </>
-                        ) : "From the artist"}
-                      </p>
                       {artistNote ? (
                         isBilingual ? (
                           <>
@@ -1077,7 +1058,13 @@ export default function EventDetailPageTemplate({
                             <p className="evd-elder-text evd-bilingual-default">&ldquo;{artistNote.note}&rdquo;</p>
                             {artistNote.by && (
                               <p className="evd-elder-meta evd-bilingual-default">
-                                <span className="evd-elder-name">{artistNote.by}</span>
+                                {resolved.artistNoteHref ? (
+                                  <a href={resolved.artistNoteHref} target="_blank" rel="noopener noreferrer" className="evd-elder-attribution-link">
+                                    <span className="evd-elder-name">{artistNote.by}</span>
+                                  </a>
+                                ) : (
+                                  <span className="evd-elder-name">{artistNote.by}</span>
+                                )}
                               </p>
                             )}
                             {/* ES artist note — alt */}
@@ -1086,9 +1073,17 @@ export default function EventDetailPageTemplate({
                             </p>
                             {(event.translations?.["es"]?.artistNoteBy ?? artistNote.by) ? (
                               <p className="evd-elder-meta evd-bilingual-alt evd-bilingual-es">
-                                <span className="evd-elder-name">
-                                  {event.translations?.["es"]?.artistNoteBy ?? artistNote.by}
-                                </span>
+                                {resolved.artistNoteHref ? (
+                                  <a href={resolved.artistNoteHref} target="_blank" rel="noopener noreferrer" className="evd-elder-attribution-link">
+                                    <span className="evd-elder-name">
+                                      {event.translations?.["es"]?.artistNoteBy ?? artistNote.by}
+                                    </span>
+                                  </a>
+                                ) : (
+                                  <span className="evd-elder-name">
+                                    {event.translations?.["es"]?.artistNoteBy ?? artistNote.by}
+                                  </span>
+                                )}
                               </p>
                             ) : null}
                           </>
@@ -1097,7 +1092,13 @@ export default function EventDetailPageTemplate({
                             <p className="evd-elder-text">&ldquo;{artistNote.note}&rdquo;</p>
                             {artistNote.by ? (
                               <p className="evd-elder-meta">
-                                <span className="evd-elder-name">{artistNote.by}</span>
+                                {resolved.artistNoteHref ? (
+                                  <a href={resolved.artistNoteHref} target="_blank" rel="noopener noreferrer" className="evd-elder-attribution-link">
+                                    <span className="evd-elder-name">{artistNote.by}</span>
+                                  </a>
+                                ) : (
+                                  <span className="evd-elder-name">{artistNote.by}</span>
+                                )}
                               </p>
                             ) : null}
                           </>
@@ -1522,6 +1523,7 @@ export default function EventDetailPageTemplate({
                             />
                           )}
                         </div>
+                        <p className="evd-cast-name">{c.name}</p>
                         <p className="evd-cast-role">
                           {esRole ? (
                             <>
@@ -1530,7 +1532,6 @@ export default function EventDetailPageTemplate({
                             </>
                           ) : c.role}
                         </p>
-                        <p className="evd-cast-name">{c.name}</p>
                       </div>
                     );
                     return c.href ? (
@@ -1599,8 +1600,8 @@ export default function EventDetailPageTemplate({
       </section>
 
       {/* ── Related Productions Cycle ────────────────────────────────── */}
-      {/* Show only when there is a cycle (more than 1 entry, or production + cycle entries) */}
-      {(relatedProduction || productionCycle.length > 0) && (relatedProduction || productionCycle.length > 1 || productionCycle.length > 0) ? (
+      {/* Show only when total entries > 1 (relatedProduction counts as 1 entry) */}
+      {((relatedProduction ? 1 : 0) + productionCycle.length) > 1 ? (
         <section className="evd-cycle-band">
           {/* DAT logo sticker — half above section top edge */}
           <div className="evd-cycle-logo-sticker" aria-hidden="true">
@@ -2134,6 +2135,7 @@ export default function EventDetailPageTemplate({
           display: flex;
           flex-wrap: wrap;
           gap: 0.65rem;
+          margin-top: 1.1rem;
         }
         .evd-pill {
           display: inline-flex;
@@ -2534,6 +2536,15 @@ export default function EventDetailPageTemplate({
         .evd-elder-name {
           font-weight: 600;
         }
+        .evd-elder-attribution-link {
+          color: inherit;
+          text-decoration: none;
+          transition: color 0.16s ease, letter-spacing 0.16s ease;
+        }
+        .evd-elder-attribution-link:hover {
+          color: #ffcc00;
+          letter-spacing: 0.06em;
+        }
 
         /* Press/alumni quotes — dc-quote-block--alumni style */
         .evd-voices-quotes {
@@ -2562,6 +2573,15 @@ export default function EventDetailPageTemplate({
           font-size: 0.8rem;
           opacity: 0.8;
           font-family: "Space Grotesk", sans-serif;
+        }
+        .evd-voices-figcaption a {
+          color: inherit;
+          text-decoration: none;
+          transition: color 0.16s ease, letter-spacing 0.16s ease;
+        }
+        .evd-voices-figcaption a:hover {
+          color: #6C00AF;
+          letter-spacing: 0.04em;
         }
 
         /* ── Community Impact section ───────────────────────────────────── */
@@ -3944,14 +3964,15 @@ export default function EventDetailPageTemplate({
         .evd-hero-credit {
           font-family: "DM Sans", sans-serif;
           font-size: 0.76rem;
-          font-weight: 500;
+          font-weight: 600;
           letter-spacing: 0.1em;
           color: rgba(255,255,255,0.55);
           margin: 0;
           text-transform: uppercase;
         }
         .evd-hero-credit-prefix {
-          color: rgba(255,255,255,0.35);
+          color: rgba(255,255,255,0.38);
+          font-weight: 500;
         }
         .evd-hero-credit-name {
           color: rgba(255,255,255,0.82);
@@ -3972,13 +3993,29 @@ export default function EventDetailPageTemplate({
         .evd-hero-season-link {
           color: inherit;
           text-decoration: none;
-          border-bottom: 1px solid rgba(255,255,255,0.25);
-          transition: color 0.16s ease, border-color 0.16s ease, letter-spacing 0.16s ease;
+          transition: color 0.16s ease, letter-spacing 0.16s ease;
         }
         .evd-hero-season-link:hover {
           color: #ffcc00;
-          border-color: rgba(255,204,0,0.5);
-          letter-spacing: 0.32em;
+          letter-spacing: 0.06em;
+        }
+
+        /* Archive badge in hero */
+        .evd-archive-badge-wrap {
+          margin: 0.5rem 0 0.75rem;
+        }
+        .evd-archive-badge {
+          display: inline-block;
+          padding: 0.22rem 0.72rem;
+          border: 1px solid rgba(255,255,255,0.28);
+          border-radius: 999px;
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.62rem;
+          font-weight: 700;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.6);
+          background: rgba(0,0,0,0.22);
         }
 
         /* About: theme pills — DAT teal */

@@ -57,6 +57,12 @@ export interface ResolvedPerformanceEvent extends DatEvent {
    * Template reads this to hydrate the Community Impact badge.
    */
   dramaClubSlugs?: string[];
+  /**
+   * Resolved from productionDetailsMap.pullQuote.attributionHref when the
+   * artist note comes from a pull quote (not a direct event.artistNote).
+   * Used to link the attribution in the quote overlay.
+   */
+  artistNoteHref?: string;
 }
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
@@ -260,6 +266,10 @@ export function resolvePerformanceEvent(event: DatEvent): ResolvedPerformanceEve
     event.artistNoteBy,
     extra?.pullQuote?.attribution || undefined,
   );
+  // href for the attribution — only meaningful when the note comes from pullQuote
+  const artistNoteHref = event.artistNote
+    ? undefined
+    : (extra?.pullQuote?.attributionHref || undefined);
 
   // ── Assemble resolved event ────────────────────────────────────────────────
   // Spread base event first, then apply resolved overrides.
@@ -284,6 +294,7 @@ export function resolvePerformanceEvent(event: DatEvent): ResolvedPerformanceEve
   if (credits !== undefined) resolved.credits = credits;
   if (artistNote !== undefined) resolved.artistNote = artistNote;
   if (artistNoteBy !== undefined) resolved.artistNoteBy = artistNoteBy;
+  if (artistNoteHref !== undefined) resolved.artistNoteHref = artistNoteHref;
 
   return resolved;
 }

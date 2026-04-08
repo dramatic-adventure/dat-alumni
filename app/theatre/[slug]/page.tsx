@@ -16,6 +16,7 @@ import { eventsByProduction, eventById } from "@/lib/events";
 
 import EventDetailPageTemplate from "@/components/events/EventDetailPageTemplate";
 import { resolvePerformanceEvent } from "@/lib/events/resolvePerformanceEvent";
+import { loadAlumni } from "@/lib/loadAlumni";
 
 // NOTE: params is now a Promise in Next 15 for some routes
 type PageProps = { params: Promise<{ slug: string }> };
@@ -158,9 +159,30 @@ export default async function TheatreProductionPage({ params }: PageProps) {
   const performanceEvent = eventById(slug);
 
   if (performanceEvent?.category === "performance") {
+    const resolved = resolvePerformanceEvent(performanceEvent);
+
+    // Enrich credits with real alumni headshots from slug-based resolution.
+    // Only fires when credits exist; loadAlumni is request-memoized via cache().
+    if (resolved.credits?.length) {
+      const allAlumni = await loadAlumni();
+      const headshotBySlug: Record<string, string> = {};
+      for (const a of allAlumni) {
+        if (a.slug && a.headshotUrl) {
+          headshotBySlug[a.slug] = a.headshotUrl.replace(/^http:\/\//i, "https://");
+        }
+      }
+      resolved.credits = resolved.credits.map((c) => {
+        if (c.photo) return c;
+        const match = c.href?.match(/^\/alumni\/(.+)$/);
+        if (!match) return c;
+        const photo = headshotBySlug[match[1]];
+        return photo ? { ...c, photo } : c;
+      });
+    }
+
     return (
       <EventDetailPageTemplate
-        event={resolvePerformanceEvent(performanceEvent)}
+        event={resolved}
         routeKind="theatre"
       />
     );
