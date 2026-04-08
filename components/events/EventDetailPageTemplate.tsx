@@ -1817,7 +1817,7 @@ export default function EventDetailPageTemplate({
                         <span className="evd-bilingual-wrap-default">Continue the Story →</span>
                         <span className="evd-bilingual-wrap-alt evd-bilingual-es">Continúa la Historia →</span>
                       </>
-                    ) : "Continue the Story →"}
+                    ) : "See What's Next →"}
                   </span>
                 </Link>
               </div>
@@ -1957,10 +1957,20 @@ export default function EventDetailPageTemplate({
             <h2 className="evd-newsletter-title">
               {isBilingual ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">Watch the story take shape.</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Mira cómo la historia toma forma.</span>
+                  <span className="evd-bilingual-wrap-default">
+                    {isArchiveView
+                      ? "Follow the work."
+                      : "Never miss a show."}
+                  </span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                    {isArchiveView
+                      ? "Sigue la obra."
+                      : "No te pierdas ningún espectáculo."}
+                  </span>
                 </>
-              ) : "Watch the story take shape."}
+              ) : (isArchiveView
+                ? "Follow the work."
+                : "Never miss a show.")}
             </h2>
             <p className="evd-newsletter-body">
               {isBilingual ? (
@@ -2624,9 +2634,10 @@ export default function EventDetailPageTemplate({
           color: inherit;
           text-decoration: none;
           transition: color 0.16s ease, letter-spacing 0.16s ease;
+          display: inline-block;
         }
         .evd-voices-figcaption a:hover {
-          color: #6C00AF;
+          color: var(--evd-accent, #F23359);
           letter-spacing: 0.04em;
         }
 
@@ -2759,9 +2770,27 @@ export default function EventDetailPageTemplate({
           padding: clamp(1.5rem, 3.5vw, 2.8rem) clamp(1.5rem, 3.5vw, 2.8rem);
           overflow: hidden;
           position: relative;
+          isolation: isolate;
           width: 90vw;
           max-width: 1200px;
           margin: 0 auto;
+        }
+        /* Background image treatment — subtle landscape image behind card content */
+        .evd-content-card[style*="--evd-card-bg-img"]::after {
+          content: "";
+          position: absolute;
+          top: 5px; /* sits beneath accent stripe */
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: -1;
+          background-image: var(--evd-card-bg-img);
+          background-size: cover;
+          background-position: center 25%;
+          opacity: 0.06;
+          pointer-events: none;
+          -webkit-mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 88%);
+          mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 88%);
         }
         /* Category accent stripe across the top of the white card */
         .evd-content-card::before {
