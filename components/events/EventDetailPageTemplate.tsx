@@ -389,6 +389,28 @@ function getEventBadge(startDate: string, endDate?: string): {
 }
 
 /**
+ * Derives a dynamic status badge for a production by looking up its events.
+ * Returns upcoming/nowplaying/archive based on the most relevant event found.
+ */
+function getProductionBadge(productionSlug: string): {
+  label: string;
+  cls: "upcoming" | "nowplaying" | "archive";
+  isUpcoming: boolean;
+} {
+  const prodEvents = events.filter(
+    (e) => e.production === productionSlug && e.status !== "cancelled",
+  );
+  if (prodEvents.length === 0) {
+    return { label: "Archive", cls: "archive", isUpcoming: false };
+  }
+  // Find the latest upcoming/now-playing event first
+  const active = prodEvents.find((e) => !isElapsed(e));
+  if (active) return getEventBadge(active.date, active.endDate);
+  // All events elapsed — use archive
+  return { label: "Archive", cls: "archive", isUpcoming: false };
+}
+
+/**
  * Finds a related upcoming event for an archived event's linked production.
  * Tries the production's relatedUpcomingEventId first, then any event sharing
  * the same production slug.
@@ -789,6 +811,9 @@ export default function EventDetailPageTemplate({
   const relatedEvents = relatedUpcomingEvents(event);
   const productionCycle = relatedProductionCycle(event.production);
   const relatedUpcomingEvent = isArchiveView ? findRelatedUpcomingEvent(event, productionExtra) : undefined;
+  // True when the production cycle section renders (≥2 total entries including current).
+  // Used to determine where the DAT logo sticker should appear.
+  const showCycleSection = ((relatedProduction ? 1 : 0) + productionCycle.length) > 1;
 
   // Archive-enriched eyebrow: "Live Theatre · Season 8 (2013)" with linked season
   const archiveEyebrowNode =
@@ -889,6 +914,19 @@ export default function EventDetailPageTemplate({
             </span>
           </nav>
 
+          {isArchiveView ? (
+            <div className="evd-archive-badge-wrap">
+              <span className="evd-archive-badge">
+                {isBilingual ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">Archived</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Archivado</span>
+                  </>
+                ) : "Archived"}
+              </span>
+            </div>
+          ) : null}
+
           <EventHeroText
             defaultLang={heroDefaultLang}
             eyebrow={getEventEyebrow(event)}
@@ -925,19 +963,6 @@ export default function EventDetailPageTemplate({
               </div>
             );
           })() : null}
-
-          {isArchiveView ? (
-            <div className="evd-archive-badge-wrap">
-              <span className="evd-archive-badge">
-                {isBilingual ? (
-                  <>
-                    <span className="evd-bilingual-wrap-default">Archive</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Archivo</span>
-                  </>
-                ) : "Archive"}
-              </span>
-            </div>
-          ) : null}
 
           <div className="evd-hero-pills">
             {event.ticketUrl ? (
@@ -1250,7 +1275,7 @@ export default function EventDetailPageTemplate({
               </div>
 
               {/* ── RIGHT (40%): press reviews → Community Impact ── */}
-              {(linkedDramaClubs.length > 0 || event.pressQuotes?.length || event.donateLink || resolvedCauses?.length || resolvedPartners?.length) ? (
+              {(linkedDramaClubs.length > 0 || event.pressQuotes?.length || event.donateLink || event.impactBlurb || resolvedCauses?.length || resolvedPartners?.length) ? (
                 <div className="evd-dashboard-right">
 
                   {/* Press / audience reviews */}
@@ -1446,7 +1471,7 @@ export default function EventDetailPageTemplate({
                       ) : null}
 
                       <a
-                        href={event.donateLink || "/donate"}
+                        href={event.donateLink || "/donate?mode=new-work&freq=monthly&tier=nw-m50-field-rehearsals"}
                         className="evd-impact-donate-btn"
                       >
                         {isBilingual ? (
@@ -1634,7 +1659,7 @@ export default function EventDetailPageTemplate({
 
       {/* ── Related Productions Cycle ────────────────────────────────── */}
       {/* Show only when total entries > 1 (relatedProduction counts as 1 entry) */}
-      {((relatedProduction ? 1 : 0) + productionCycle.length) > 1 ? (
+      {showCycleSection ? (
         <section className="evd-cycle-band">
           {/* DAT logo sticker — half above section top edge */}
           <div className="evd-cycle-logo-sticker" aria-hidden="true">
@@ -1714,44 +1739,46 @@ export default function EventDetailPageTemplate({
                   );
                 })() : null}
 
-                {/* ── Other productions in the same cycle — always ARCHIVE ── */}
-                {productionCycle.map((p) => (
-                  <Link key={p.slug} href={`/theatre/${p.slug}`} className="evd-cycle-card" role="listitem">
-                    <div
-                      className="evd-cycle-img"
-                      style={{
-                        backgroundImage: p.posterUrl
-                          ? `url('${p.posterUrl}')`
-                          : undefined,
-                      }}
-                    >
-                      <span className="evd-cycle-badge evd-cycle-badge--archive">
-                        {isBilingual ? (
-                          <>
-                            <span className="evd-bilingual-wrap-default">Archive</span>
-                            <span className="evd-bilingual-wrap-alt evd-bilingual-es">Archivo</span>
-                          </>
-                        ) : "Archive"}
-                      </span>
-                    </div>
-                    <div className="evd-cycle-body">
-                      <p className="evd-cycle-title">{p.title}</p>
-                      {(p.location || p.festival) ? (
-                        <p className="evd-cycle-meta">
-                          {p.location}{p.festival ? ` · ${p.festival}` : ""}
-                        </p>
-                      ) : null}
-                      <span className="evd-cycle-link">
-                        {isBilingual ? (
-                          <>
-                            <span className="evd-bilingual-wrap-default">View Archive →</span>
-                            <span className="evd-bilingual-wrap-alt evd-bilingual-es">Ver Archivo →</span>
-                          </>
-                        ) : "View Archive →"}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
+                {/* ── Other productions in the same cycle — dynamic status badge ── */}
+                {productionCycle.map((p) => {
+                  const cycleBadge = getProductionBadge(p.slug);
+                  return (
+                    <Link key={p.slug} href={`/theatre/${p.slug}`} className="evd-cycle-card" role="listitem">
+                      <div
+                        className="evd-cycle-img"
+                        style={{
+                          backgroundImage: p.posterUrl
+                            ? `url('${p.posterUrl}')`
+                            : undefined,
+                        }}
+                      >
+                        <span className={`evd-cycle-badge evd-cycle-badge--${cycleBadge.cls}`}>
+                          {cycleBadge.label}
+                        </span>
+                      </div>
+                      <div className="evd-cycle-body">
+                        <p className="evd-cycle-title">{p.title}</p>
+                        {(p.location || p.festival) ? (
+                          <p className="evd-cycle-meta">
+                            {p.location}{p.festival ? ` · ${p.festival}` : ""}
+                          </p>
+                        ) : null}
+                        <span className="evd-cycle-link">
+                          {isBilingual ? (
+                            <>
+                              <span className="evd-bilingual-wrap-default">
+                                {cycleBadge.isUpcoming ? "Explore Production →" : "View Archive →"}
+                              </span>
+                              <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                                {cycleBadge.isUpcoming ? "Explorar Producción →" : "Ver Archivo →"}
+                              </span>
+                            </>
+                          ) : (cycleBadge.isUpcoming ? "Explore Production →" : "View Archive →")}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
 
@@ -1803,7 +1830,7 @@ export default function EventDetailPageTemplate({
       {relatedEvents.length > 0 ? (
         <section className="evd-related-events-band">
           {/* DAT logo sticker — only shown here when the cycle section is absent */}
-          {!(relatedProduction || productionCycle.length > 0) && (
+          {!showCycleSection && (
             <div className="evd-cycle-logo-sticker" aria-hidden="true">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/dat-logo7.svg" alt="" className="evd-cycle-logo-img" />
@@ -1915,7 +1942,7 @@ export default function EventDetailPageTemplate({
       {/* ── Newsletter ─────────────────────────────────────────────────── */}
       <section className="evd-newsletter-band">
         {/* DAT logo sticker — only when both cycle and related events are absent */}
-        {!(relatedProduction || productionCycle.length > 0) && relatedEvents.length === 0 && (
+        {!showCycleSection && relatedEvents.length === 0 && (
           <div className="evd-cycle-logo-sticker" aria-hidden="true">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/dat-logo7.svg" alt="" className="evd-cycle-logo-img" />
@@ -3223,6 +3250,7 @@ export default function EventDetailPageTemplate({
           max-width: 240px;
           display: flex;
           flex-direction: column;
+          align-items: center;
           padding: 0.75rem;
           transition: transform 0.3s ease, box-shadow 0.3s ease;
           cursor: default;
@@ -3309,7 +3337,7 @@ export default function EventDetailPageTemplate({
 
         /* Shared credit item (used by both Creative Team and cast grid) */
         .evd-credit-item {
-          padding: 1.1rem 1.25rem 1.1rem 0;
+          padding: 1.1rem 0.75rem;
           border-bottom: 1px solid rgba(255,255,255,0.055);
           text-align: center;
         }
@@ -4011,16 +4039,16 @@ export default function EventDetailPageTemplate({
         }
         .evd-hero-credit {
           font-family: "DM Sans", sans-serif;
-          font-size: 0.76rem;
-          font-weight: 600;
-          letter-spacing: 0.1em;
-          color: rgba(255,255,255,0.55);
+          font-size: 0.84rem;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          color: rgba(255,255,255,0.62);
           margin: 0;
           text-transform: uppercase;
         }
         .evd-hero-credit-prefix {
-          color: rgba(255,255,255,0.38);
-          font-weight: 500;
+          color: rgba(255,255,255,0.42);
+          font-weight: 600;
         }
         .evd-hero-credit-name {
           color: rgba(255,255,255,0.82);
@@ -4028,18 +4056,16 @@ export default function EventDetailPageTemplate({
         .evd-hero-credit-link {
           color: rgba(255,255,255,0.82);
           text-decoration: none;
-          border-bottom: 1px solid rgba(255,255,255,0.25);
-          transition: color 0.16s ease, border-color 0.16s ease, letter-spacing 0.16s ease;
+          transition: color 0.16s ease, letter-spacing 0.16s ease;
         }
         .evd-hero-credit-link:hover {
           color: #ffcc00;
-          border-color: rgba(255,204,0,0.5);
           letter-spacing: 0.13em;
         }
 
         /* Archive eyebrow season link */
         .evd-hero-season-link {
-          color: inherit;
+          color: rgba(255,255,255,0.45);
           text-decoration: none;
           transition: color 0.16s ease, letter-spacing 0.16s ease;
         }
@@ -4115,11 +4141,11 @@ export default function EventDetailPageTemplate({
           font-size: 0.875rem;
           color: var(--evd-accent);
           text-decoration: none;
-          border-bottom: 1px solid transparent;
-          transition: border-color 0.15s;
+          transition: color 0.15s ease, letter-spacing 0.15s ease;
         }
         .evd-resource-link:hover {
-          border-color: var(--evd-accent);
+          color: #ffcc00;
+          letter-spacing: 0.04em;
         }
         .evd-resource-label {
           font-family: "DM Sans", sans-serif;

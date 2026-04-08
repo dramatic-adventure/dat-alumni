@@ -729,7 +729,7 @@ export const productionMap: Record<string, Production> = {
       "jon-kevin-lazarus": ["Production Assistant"],
       "gustavo-redin": ["Road Manager"],
       "alena-acker": ["Actor"],
-      "dianna-beshara": ["Actor"],
+      "diana-beshara": ["Actor"],
       "katarina-hughes": ["Actor"],
       "maggie-thompson": ["Actor"],
       "lauren-ullrich": ["Actor"],

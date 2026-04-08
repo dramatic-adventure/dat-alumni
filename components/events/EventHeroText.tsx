@@ -61,19 +61,27 @@ export default function EventHeroText({
     setMounted(true);
     let resolvedLang = defaultLang;
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved && langCodes.includes(saved)) {
-        resolvedLang = saved;
+      // 1. URL ?lang= param wins — enables direct deep-links like /theatre/agwow?lang=es
+      const urlParam = new URLSearchParams(window.location.search).get("lang")?.toLowerCase();
+      if (urlParam && langCodes.includes(urlParam)) {
+        resolvedLang = urlParam;
+        localStorage.setItem(STORAGE_KEY, urlParam);
       } else {
-        // Auto-detect from browser language on first visit
-        const browserLang = navigator.language?.split("-")[0]?.toLowerCase();
-        if (browserLang && langCodes.includes(browserLang) && browserLang !== defaultLang) {
-          resolvedLang = browserLang;
-          localStorage.setItem(STORAGE_KEY, browserLang);
+        // 2. Persisted preference
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved && langCodes.includes(saved)) {
+          resolvedLang = saved;
+        } else {
+          // 3. Browser language auto-detect on first visit
+          const browserLang = navigator.language?.split("-")[0]?.toLowerCase();
+          if (browserLang && langCodes.includes(browserLang) && browserLang !== defaultLang) {
+            resolvedLang = browserLang;
+            localStorage.setItem(STORAGE_KEY, browserLang);
+          }
         }
       }
     } catch {
-      // localStorage not available
+      // localStorage / URLSearchParams not available — stay on defaultLang
     }
     setActiveLang(resolvedLang);
     // English-first CSS model: set data-evd-lang only when a non-EN language is active.

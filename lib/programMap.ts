@@ -585,7 +585,7 @@ export const programMap: Record<string, ProgramData> = {
       "hanniel-sindelar": ["Actor"],
       "courtney-dusenberry": ["Actor"],      
       "alena-acker": ["Actor"],
-      "dianna-beshara": ["Actor"],
+      "diana-beshara": ["Actor"],
       "katarina-hughes": ["Actor"],
       "maggie-thompson": ["Actor"],
       "bryant-vance": ["Actor"],
