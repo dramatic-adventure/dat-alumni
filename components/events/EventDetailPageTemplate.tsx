@@ -1002,7 +1002,10 @@ export default function EventDetailPageTemplate({
       {/* ── White Content Card: description → creative team ─────────────── */}
       <section className="evd-content-section" style={{ "--evd-accent": theme.accent } as CSSProperties}>
         <div className="evd-container">
-          <div className="evd-content-card">
+          <div
+            className="evd-content-card"
+            style={editorialImg1 ? { "--evd-card-bg": `url('${editorialImg1}')` } as CSSProperties : undefined}
+          >
 
             {/* Card-level title — frames the whole card */}
             <p className="evd-card-title" aria-hidden="true">
@@ -1758,10 +1761,10 @@ export default function EventDetailPageTemplate({
                 <p className="evd-related-upcoming-eyebrow">
                   {isBilingual ? (
                     <>
-                      <span className="evd-bilingual-wrap-default">Coming Up</span>
-                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Próxima Función</span>
+                      <span className="evd-bilingual-wrap-default">The Work Returns</span>
+                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">La Obra Regresa</span>
                     </>
-                  ) : "Coming Up"}
+                  ) : "The Work Returns"}
                 </p>
                 <Link href={canonicalEventPath(relatedUpcomingEvent)} className="evd-related-upcoming-link">
                   <div className="evd-related-upcoming-copy">
@@ -1784,10 +1787,10 @@ export default function EventDetailPageTemplate({
                   <span className="evd-related-upcoming-cta">
                     {isBilingual ? (
                       <>
-                        <span className="evd-bilingual-wrap-default">See This Show →</span>
-                        <span className="evd-bilingual-wrap-alt evd-bilingual-es">Ver Función →</span>
+                        <span className="evd-bilingual-wrap-default">Continue the Story →</span>
+                        <span className="evd-bilingual-wrap-alt evd-bilingual-es">Continúa la Historia →</span>
                       </>
-                    ) : "See This Show →"}
+                    ) : "Continue the Story →"}
                   </span>
                 </Link>
               </div>
@@ -1933,17 +1936,17 @@ export default function EventDetailPageTemplate({
                 <>
                   <span className="evd-bilingual-wrap-default">
                     {isArchiveView
-                      ? "Stay connected to new work, revivals, and gatherings."
+                      ? "Follow the work."
                       : "Never miss a show."}
                   </span>
                   <span className="evd-bilingual-wrap-alt evd-bilingual-es">
                     {isArchiveView
-                      ? "Mantente al día con nuevas obras, reposiciones y encuentros."
+                      ? "Sigue la obra."
                       : "No te pierdas ningún espectáculo."}
                   </span>
                 </>
               ) : (isArchiveView
-                ? "Stay connected to new work, revivals, and gatherings."
+                ? "Follow the work."
                 : "Never miss a show.")}
             </h2>
             <p className="evd-newsletter-body">
@@ -2757,6 +2760,21 @@ export default function EventDetailPageTemplate({
           height: 5px;
           background: var(--evd-accent, #F23359);
           border-radius: 18px 18px 0 0;
+        }
+        /* Panoramic background image — very low opacity, fades to bottom */
+        .evd-content-card::after {
+          content: "";
+          position: absolute;
+          inset: 5px 0 0 0;
+          background-image: var(--evd-card-bg, none);
+          background-size: cover;
+          background-position: center top;
+          opacity: 0.06;
+          pointer-events: none;
+          -webkit-mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);
+          mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);
+          border-radius: 0 0 18px 18px;
+          z-index: 0;
         }
 
         /* Text color overrides inside white card */
