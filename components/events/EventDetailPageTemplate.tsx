@@ -1953,28 +1953,18 @@ export default function EventDetailPageTemplate({
             <p className="evd-newsletter-eyebrow">
               {isBilingual ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">Stay Connected</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Mantente Conectado</span>
+                  <span className="evd-bilingual-wrap-default">From the Field</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Desde el Terreno</span>
                 </>
-              ) : "Stay Connected"}
+              ) : "From the Field"}
             </p>
             <h2 className="evd-newsletter-title">
               {isBilingual ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">
-                    {isArchiveView
-                      ? "Follow the work."
-                      : "Never miss a show."}
-                  </span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">
-                    {isArchiveView
-                      ? "Sigue la obra."
-                      : "No te pierdas ningún espectáculo."}
-                  </span>
+                  <span className="evd-bilingual-wrap-default">Watch the story take shape.</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Mira cómo la historia toma forma.</span>
                 </>
-              ) : (isArchiveView
-                ? "Follow the work."
-                : "Never miss a show.")}
+              ) : "Watch the story take shape."}
             </h2>
             <p className="evd-newsletter-body">
               {isBilingual ? (
