@@ -21,6 +21,17 @@ export function splitTitles(raw?: string | null): string[] {
     .filter(Boolean);
 }
 
+function splitRoleTokensForBuckets(raw?: string | null): string[] {
+  const s = String(raw || "").trim();
+  if (!s) return [];
+
+  if (/\bboard of directors\b/i.test(s)) {
+    return ["Board of Directors"];
+  }
+
+  return splitTitles(s);
+}
+
 /** Irregulars + simple pluralization */
 const irregular: Record<string, string> = {
   actress: "Actresses",
@@ -436,7 +447,7 @@ export function buildTitleBuckets(alumni: AlumniRow[]) {
       meta: FIXED_BUCKETS[key],
       people: new Set<string>(),
     };
-    if (key === "designers") {
+    if (key === "designers" || key === "executive-directors") {
       obj.subcats = new Map<string, Set<string>>();
     }
     buckets.set(key, obj);
@@ -493,12 +504,14 @@ export function buildTitleBuckets(alumni: AlumniRow[]) {
   }
 
   for (const a of alumni) {
-    const tokens = new Set(splitTitles(a.role).map((t) => t.trim()).filter(Boolean));
+    const tokens = new Set(
+      splitRoleTokensForBuckets(a.role).map((t) => t.trim()).filter(Boolean)
+    );
 
     // Also include merged roles array when pre-populated (e.g. from Role-Assignments)
     for (const r of a.roles || []) {
       if (typeof r === "string") {
-        for (const t of splitTitles(r)) {
+        for (const t of splitRoleTokensForBuckets(r)) {
           if (t.trim()) tokens.add(t.trim());
         }
       }
@@ -526,6 +539,27 @@ export function buildTitleBuckets(alumni: AlumniRow[]) {
           : ensureDynamicBucket(key);
 
         bucket.people.add(a.slug); // de-dupe persons within a bucket
+
+        if (key === "executive-directors") {
+          if (!bucket.subcats) bucket.subcats = new Map<string, Set<string>>();
+
+          if (!bucket.subcats.has("current")) bucket.subcats.set("current", new Set<string>());
+          if (!bucket.subcats.has("former")) bucket.subcats.set("former", new Set<string>());
+
+          const currentSet = bucket.subcats.get("current")!;
+          const formerSet = bucket.subcats.get("former")!;
+
+          const isFormer = /^former\b/i.test(rawToken);
+
+          if (isFormer) {
+            if (!currentSet.has(a.slug)) {
+              formerSet.add(a.slug);
+            }
+          } else {
+            currentSet.add(a.slug);
+            formerSet.delete(a.slug);
+          }
+        }
 
         // Designers subcategories: "<Something> Designer"
         if (key === "designers") {
@@ -605,7 +639,7 @@ export function getViaBucketToken(
 
   // If the primary role already maps to this bucket: check if it's a broad match
   // (e.g., "Artistic Director" broadly matches title:directors → show "via: Director")
-  for (const t of splitTitles(a.role)) {
+  for (const t of splitRoleTokensForBuckets(a.role)) {
     if (!t.trim()) continue;
     if (bucketsForTitleToken(t).includes(bk)) {
       const canonical = canonicalViaLabelForBucket(t, bk);
@@ -620,7 +654,7 @@ export function getViaBucketToken(
 
   // Check roles array (includes merged Role-Assignment labels)
   for (const r of a.roles ?? []) {
-    for (const t of splitTitles(r)) {
+    for (const t of splitRoleTokensForBuckets(r)) {
       if (!t.trim()) continue;
       if (bucketsForTitleToken(t).includes(bk)) {
         return { label: canonicalViaLabelForBucket(t, bk), source: "dat-role" };
@@ -644,7 +678,9 @@ export function getViaBucketToken(
 
 /** For a person, produce deduped links for each of their titles */
 export function getBucketLinksForAlumni(a: AlumniRow): Array<{ label: string; href: string }> {
-  const tokens = new Set(splitTitles(a.role).map((t) => t.trim()).filter(Boolean));
+  const tokens = new Set(
+    splitRoleTokensForBuckets(a.role).map((t) => t.trim()).filter(Boolean)
+  );
   const links: Array<{ label: string; href: string }> = [];
   const seen = new Set<string>();
 

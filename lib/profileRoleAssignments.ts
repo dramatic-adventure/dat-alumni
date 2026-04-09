@@ -7,6 +7,9 @@ import type { RoleAssignmentRow } from "@/lib/loadRoleAssignments";
  * leaking through after an assignment is removed from the sheet).
  */
 const DAT_ROLE_FRAGMENTS = [
+  "artistic director",
+  "associate artistic director",
+  "executive director",
   "director of creative learning",
   "director of community partnerships",
   "manager of community partnerships",
@@ -16,7 +19,7 @@ const DAT_ROLE_FRAGMENTS = [
 ];
 
 function isDatStyleRole(role: string): boolean {
-  const lc = (role ?? "").toLowerCase();
+  const lc = roleMatchKey(role);
   return DAT_ROLE_FRAGMENTS.some((frag) => lc.includes(frag));
 }
 
@@ -30,18 +33,93 @@ function normRoleText(s?: string) {
     .trim();
 }
 
-function parseISOStart(d?: string): Date | null {
-  const s = (d ?? "").trim();
+function roleMatchKey(s?: string) {
+  let out = normRoleText(s);
+
+  while (/^(former|interim|acting|incoming)\s+/i.test(out)) {
+    out = out.replace(/^(former|interim|acting|incoming)\s+/i, "");
+  }
+
+  if (out === "ed") return "executive director";
+  if (out === "ad") return "artistic director";
+  if (out === "aad") return "associate artistic director";
+  if (out === "assoc artistic director") return "associate artistic director";
+  if (out === "rp") return "resident playwright";
+  if (out === "dcl") return "director of creative learning";
+  if (out === "dcp") return "director of community partnerships";
+  if (out === "mcp") return "manager of community partnerships";
+  if (out === "tair") return "teaching artist in residence";
+  if (out === "rta") return "resident teaching artist";
+
+  return out;
+}
+
+function expandDisplayRole(role?: string) {
+  const clean = String(role ?? "").trim();
+  const code = clean.toUpperCase();
+
+  switch (code) {
+    case "AD":
+      return "Artistic Director";
+    case "AAD":
+      return "Associate Artistic Director";     
+    case "RP":
+      return "Resident Playwright";
+    case "ED":
+      return "Executive Director";
+    case "DCL":
+      return "Director of Creative Learning";
+    case "DCP":
+      return "Director of Community Partnerships";
+    case "MCP":
+      return "Manager of Community Partnerships";
+    case "TAIR":
+      return "Teaching Artist in Residence";
+    case "RTA":
+      return "Resident Teaching Artist";
+    default:
+      return clean;
+  }
+}
+
+function parseSheetDate(value?: string, endOfDay: boolean = false): Date | null {
+  const s = String(value ?? "").trim();
   if (!s) return null;
-  const dt = new Date(`${s}T00:00:00`);
-  return Number.isNaN(dt.getTime()) ? null : dt;
+
+  // Google Sheets / Excel serial date
+  if (/^\d+(\.\d+)?$/.test(s)) {
+    const serial = Number(s);
+    const baseUtc = Date.UTC(1899, 11, 30);
+    const dt = new Date(baseUtc + serial * 86400 * 1000);
+    if (Number.isNaN(dt.getTime())) return null;
+
+    if (endOfDay) dt.setUTCHours(23, 59, 59, 999);
+    else dt.setUTCHours(0, 0, 0, 0);
+
+    return dt;
+  }
+
+  // ISO date string
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const dt = new Date(`${s}${endOfDay ? "T23:59:59.999" : "T00:00:00.000"}`);
+    return Number.isNaN(dt.getTime()) ? null : dt;
+  }
+
+  const dt = new Date(s);
+  if (Number.isNaN(dt.getTime())) return null;
+
+  if (endOfDay) dt.setHours(23, 59, 59, 999);
+  else dt.setHours(0, 0, 0, 0);
+
+  return dt;
+}
+
+function parseISOStart(d?: string): Date | null {
+  return parseSheetDate(d, false);
 }
 
 function parseISOEnd(d?: string): Date | null {
-  const s = (d ?? "").trim();
-  if (!s) return null;
-  const dt = new Date(`${s}T23:59:59.999`);
-  return Number.isNaN(dt.getTime()) ? null : dt;
+  return parseSheetDate(d, true);
 }
 
 function isActive(a: RoleAssignmentRow, asOf: Date) {
@@ -104,6 +182,14 @@ function roleCodeLabel(roleCode?: string): string {
       return "Resident Teaching Artist";
     case "BOARD":
       return "Board of Directors";
+    case "ED":
+      return "Executive Director";  
+    case "AD":
+      return "Artistic Director";
+    case "AAD":
+      return "Associate Artistic Director";    
+    case "RP":
+      return "Resident Playwright";
     default:
       return String(roleCode ?? "").trim();
   }
@@ -150,9 +236,6 @@ function clubLabelFromScopeKey(scopeKey?: string) {
 }
 
 function scopeSpecificity(a: RoleAssignmentRow): string {
-  const details = String(a.roleDetails ?? "").trim();
-  if (details) return details;
-
   if (String(a.scopeType ?? "").toUpperCase() === "COUNTRY") {
     return titleCaseWords(a.scopeKey);
   }
@@ -162,6 +245,23 @@ function scopeSpecificity(a: RoleAssignmentRow): string {
   }
 
   return "";
+}
+
+function getAssignmentStatusPrefix(a: RoleAssignmentRow): string {
+  const status = String(a.statusSignifier ?? "").trim();
+  if (shouldPrefixStatus(status)) return status;
+
+  const details = String(a.roleDetails ?? "").trim();
+  if (shouldPrefixStatus(details)) return details;
+
+  return "";
+}
+
+function getAssignmentContextualLabel(a: RoleAssignmentRow): string {
+  const details = String(a.roleDetails ?? "").trim();
+  if (details && !shouldPrefixStatus(details)) return details;
+
+  return scopeSpecificity(a);
 }
 
 function shouldPrefixStatus(status?: string) {
@@ -184,10 +284,14 @@ function isPlaceholderRoleLabel(label?: string) {
   return false;
 }
 
-function buildAssignmentRoleLabel(a: RoleAssignmentRow): string {
+function buildAssignmentRoleLabel(
+  a: RoleAssignmentRow,
+  options?: { historical?: boolean }
+): string {
+  const historical = !!options?.historical;
   const scopeType = String(a.scopeType ?? "").trim().toUpperCase();
   const explicitRoleLabel = String(a.roleLabel ?? "").trim();
-  const contextual = String(a.roleDetails ?? "").trim() || scopeSpecificity(a);
+  const contextual = getAssignmentContextualLabel(a);
 
   const base =
     explicitRoleLabel && !isPlaceholderRoleLabel(explicitRoleLabel)
@@ -213,20 +317,28 @@ function buildAssignmentRoleLabel(a: RoleAssignmentRow): string {
     }
   }
 
-  // For BOARD roles: always append ", Board of Directors" when the specific title
-  // is used as base so the board context is never lost from the displayed label.
-  if (String(a.roleCode ?? "").trim().toUpperCase() === "BOARD" &&
-      !label.toLowerCase().includes("board")) {
+  if (
+    String(a.roleCode ?? "").trim().toUpperCase() === "BOARD" &&
+    !label.toLowerCase().includes("board")
+  ) {
     label = `${label}, Board of Directors`;
   }
 
-  const status = String(a.statusSignifier ?? "").trim();
-  if (!status || !shouldPrefixStatus(status)) return label;
+  const prefixes: string[] = [];
 
-  const statusLower = status.toLowerCase();
-  if (label.toLowerCase().startsWith(statusLower)) return label;
+  if (historical && !label.toLowerCase().startsWith("former ")) {
+    prefixes.push("Former");
+  }
 
-  return `${status} ${label}`;
+  const statusPrefix = getAssignmentStatusPrefix(a);
+  if (
+    statusPrefix &&
+    !label.toLowerCase().startsWith(statusPrefix.toLowerCase())
+  ) {
+    prefixes.push(statusPrefix[0].toUpperCase() + statusPrefix.slice(1).toLowerCase());
+  }
+
+  return prefixes.length ? `${prefixes.join(" ")} ${label}` : label;
 }
 
 function dedupeRoles(roles: string[]) {
@@ -237,7 +349,7 @@ function dedupeRoles(roles: string[]) {
     const clean = String(role ?? "").trim();
     if (!clean) continue;
 
-    const key = normRoleText(clean);
+    const key = roleMatchKey(clean);
     if (seen.has(key)) continue;
 
     seen.add(key);
@@ -248,8 +360,8 @@ function dedupeRoles(roles: string[]) {
 }
 
 function removeRoles(source: string[], toRemove: string[]) {
-  const removeSet = new Set(toRemove.map((r) => normRoleText(r)));
-  return source.filter((role) => !removeSet.has(normRoleText(role)));
+  const removeSet = new Set(toRemove.map((r) => roleMatchKey(r)));
+  return source.filter((role) => !removeSet.has(roleMatchKey(role)));
 }
 
 function compareExplicitRolePriority(a?: string, b?: string) {
@@ -299,9 +411,11 @@ export function getOrderedProfileRoles(
   projectRoles: string[] = []
 ): string[] {
   const pid = normRoleText(String(profileId ?? ""));
-  const rawExisting = dedupeRoles(Array.isArray(existingRoles) ? existingRoles : []);
+  const rawExisting = dedupeRoles(
+    Array.isArray(existingRoles) ? existingRoles.map(expandDisplayRole) : []
+  );
   const cleanProjectRoles = dedupeRoles(
-    projectRoles.map((r) => r.trim()).filter(Boolean)
+    projectRoles.map((r) => expandDisplayRole(r.trim())).filter(Boolean)
   );
 
   if (!pid) {
@@ -334,8 +448,12 @@ export function getOrderedProfileRoles(
     .filter((a) => !isActive(a, asOf) && !isFuture(a, asOf))
     .sort(compareHistorical);
 
-  const currentLabels = dedupeRoles(current.map(buildAssignmentRoleLabel));
-  const historicalLabels = dedupeRoles(historical.map(buildAssignmentRoleLabel));
+  const currentLabels = dedupeRoles(
+    current.map((a) => buildAssignmentRoleLabel(a))
+  );
+  const historicalLabels = dedupeRoles(
+    historical.map((a) => buildAssignmentRoleLabel(a, { historical: true }))
+  );
 
   // If there is a current role in Role-Assignments, it becomes primary.
   // Historical DAT roles come next, then project/history roles, then
@@ -363,22 +481,31 @@ export function getOrderedProfileRoles(
 
   // No current Role-Assignment: preserve Profile-Live primary, fold in
   // historical assignments and project roles underneath it.
-  if (currentExisting.length > 0) {
+    const preservedExisting =
+    relevant.length > 0
+        ? currentExisting.filter((r) => !isDatStyleRole(r))
+        : currentExisting;
+
+    if (preservedExisting.length > 0) {
     const extraProject = removeRoles(cleanProjectRoles, [
-      ...currentExisting,
-      ...historicalLabels,
+        ...preservedExisting,
+        ...historicalLabels,
     ]);
     return dedupeRoles([
-      currentExisting[0],
-      ...historicalLabels,
-      ...extraProject,
-      ...currentExisting.slice(1),
+        preservedExisting[0],
+        ...historicalLabels,
+        ...extraProject,
+        ...preservedExisting.slice(1),
     ]);
-  }
+    }
 
-  // Fallback for profiles with no existing roles list.
-  const extraProject = removeRoles(cleanProjectRoles, historicalLabels);
-  return dedupeRoles([...historicalLabels, ...extraProject]);
+    if (relevant.length > 0) {
+    const extraProject = removeRoles(cleanProjectRoles, historicalLabels);
+    return dedupeRoles([...extraProject, ...historicalLabels]);
+    }
+
+    const extraProject = removeRoles(cleanProjectRoles, historicalLabels);
+    return dedupeRoles([...historicalLabels, ...extraProject]);
 }
 
 /**

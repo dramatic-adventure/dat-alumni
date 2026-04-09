@@ -272,12 +272,25 @@ const handleError = useCallback(() => {
   const matchedViaRole = useMemo(() => {
     const q = String(searchQuery || "").trim().toLowerCase();
     if (!q || !allRoles || allRoles.length <= 1) return null;
-    const primaryNorm = String(role || "").trim().toLowerCase();
-    if (primaryNorm.includes(q)) return null; // primary already surfaces the match
-    return allRoles.find((r) => {
-      const rn = String(r || "").trim().toLowerCase();
-      return rn !== primaryNorm && rn.includes(q);
-    }) || null;
+
+    const norm = (s: string) => String(s || "").trim().toLowerCase();
+    const words = (s: string) => norm(s).split(/[^a-z0-9]+/g).filter(Boolean);
+
+    const primaryNorm = norm(role || "");
+    const secondaryRoles = allRoles.filter((r) => norm(r || "") !== primaryNorm);
+
+    const exactWordMatch = secondaryRoles.find((r) => {
+      const rn = norm(r || "");
+      return rn === q || words(r || "").includes(q);
+    });
+
+    if (exactWordMatch) {
+      return q[0] ? q[0].toUpperCase() + q.slice(1) : exactWordMatch;
+    }
+
+    return (
+      secondaryRoles.find((r) => norm(r || "").includes(q)) || null
+    );
   }, [searchQuery, allRoles, role]);
 
   const isLight = variant === "light";

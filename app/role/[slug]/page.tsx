@@ -7,12 +7,22 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
+import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
+import {
+  getOrderedProfileRoles,
+  getPrimaryDatRoleForProfile,
+} from "@/lib/profileRoleAssignments";
 import type { AlumniRow } from "@/lib/types";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import RolesGrid from "@/components/alumni/RolesGrid";
 import { pluralizeTitle } from "@/lib/pluralizeTitle";
-import { getCanonicalFlag, slugifyFlag, type FlagLabel } from "@/lib/flags";
+import {
+  displayFlagLabel,
+  getCanonicalFlag,
+  slugifyFlag,
+  type FlagLabel,
+} from "@/lib/flags";
 
 export const revalidate = 3600;
 
@@ -58,7 +68,10 @@ function normalizeFlagForSlug(
   const canonical = getCanonicalFlag(raw) as FlagLabel | null;
 
   if (canonical) {
-    return { label: canonical, slug: slugifyFlag(canonical) };
+    return {
+      label: displayFlagLabel(canonical),
+      slug: slugifyFlag(canonical),
+    };
   }
 
   // unknown flag — still allow routing
@@ -67,7 +80,29 @@ function normalizeFlagForSlug(
 
 // Build all valid role slugs at build time
 export async function generateStaticParams() {
-  const alumni: AlumniRow[] = await loadVisibleAlumni();
+  const [alumniRaw, roleAssignments] = await Promise.all([
+    loadVisibleAlumni(),
+    loadRoleAssignments(),
+  ]);
+
+  const alumni: AlumniRow[] = alumniRaw.map((a) => {
+    const mergedRoles = getOrderedProfileRoles(
+      a.profileId || a.slug,
+      a.roles || [],
+      roleAssignments
+    );
+
+    const primaryRole =
+      getPrimaryDatRoleForProfile(a.slug, a.roles || [], roleAssignments) ||
+      mergedRoles[0] ||
+      a.role;
+
+    return {
+      ...a,
+      role: primaryRole,
+      roles: mergedRoles,
+    };
+  });
   const slugs = new Set<string>();
 
   for (const artist of alumni) {
@@ -129,7 +164,29 @@ export default async function RolePage({
     notFound();
   }
 
-  const alumni: AlumniRow[] = await loadVisibleAlumni();
+  const [alumniRaw, roleAssignments] = await Promise.all([
+    loadVisibleAlumni(),
+    loadRoleAssignments(),
+  ]);
+
+  const alumni: AlumniRow[] = alumniRaw.map((a) => {
+    const mergedRoles = getOrderedProfileRoles(
+      a.profileId || a.slug,
+      a.roles || [],
+      roleAssignments
+    );
+
+    const primaryRole =
+      getPrimaryDatRoleForProfile(a.slug, a.roles || [], roleAssignments) ||
+      mergedRoles[0] ||
+      a.role;
+
+    return {
+      ...a,
+      role: primaryRole,
+      roles: mergedRoles,
+    };
+  });
 
   // Filter by canonicalized status flag; fallback to raw flag slug if canonical is unknown
   const filteredRaw = alumni.filter((artist) =>
@@ -258,12 +315,11 @@ export default async function RolePage({
               {filtered.map((artist) => (
                 <MiniProfileCard
                   key={artist.slug}
-                  // ✅ IMPORTANT: lets MiniProfileCard self-hydrate selected/current headshot
                   alumniId={artist.slug}
                   name={artist.name}
                   role={artist.role}
+                  allRoles={artist.roles}
                   slug={artist.slug}
-                  // keep this as fallback only
                   headshotUrl={artist.headshotUrl}
                 />
               ))}

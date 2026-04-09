@@ -186,6 +186,7 @@ function addProfileLiveTokens(aliasTokens: Set<string>, item: ProfileLiveRow) {
   addPhraseTokens(aliasTokens, item.pronouns);
   addPhraseTokens(aliasTokens, item.location);
   addPhraseTokens(aliasTokens, item.currentWork);
+  addPhraseTokens(aliasTokens, item.currentTitle);
 
   // Bios
   addPhraseTokens(aliasTokens, item.bioShort);

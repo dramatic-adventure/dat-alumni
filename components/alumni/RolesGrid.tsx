@@ -8,6 +8,7 @@ import {
   iconMap,
   getCanonicalFlag,
   slugifyFlag,
+  displayFlagLabel,
   FlagLabel,
 } from "@/lib/flags";
 import { pluralizeTitle } from "@/lib/pluralizeTitle";
@@ -39,7 +40,7 @@ export default function RolesGrid({ roles, alumni }: RolesGridProps) {
         const color = flagStyles[role];
         const icon = iconMap[role];
         const slug = slugifyFlag(role);
-        const label = pluralizeTitle(role);
+        const label = pluralizeTitle(displayFlagLabel(role));
 
         return (
           <Link key={role} href={`/role/${slug}`} className={styles.roleLink}>

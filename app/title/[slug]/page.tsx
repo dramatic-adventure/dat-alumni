@@ -13,7 +13,10 @@ import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import TitlesGrid from "@/components/alumni/TitlesGrid";
 import { buildTitleBuckets, slugifyTitle } from "@/lib/titles";
 import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
-import { getOrderedProfileRoles } from "@/lib/profileRoleAssignments";
+import {
+  getOrderedProfileRoles,
+  getPrimaryDatRoleForProfile,
+} from "@/lib/profileRoleAssignments";
 import { getViaBucketToken, type TitleBucketKey } from "@/lib/titles";
 import { cache } from "react";
 
@@ -30,14 +33,24 @@ const loadAlumniWithMergedRoles = cache(async (): Promise<AlumniRow[]> => {
     loadVisibleAlumni(),
     loadRoleAssignments(),
   ]);
-  return alumni.map((a) => ({
-    ...a,
-    roles: getOrderedProfileRoles(
+  return alumni.map((a) => {
+    const mergedRoles = getOrderedProfileRoles(
       a.profileId || a.slug,
       a.roles,
       roleAssignments
-    ),
-  }));
+    );
+
+    const primaryRole =
+      getPrimaryDatRoleForProfile(a.slug, a.roles || [], roleAssignments) ||
+      mergedRoles[0] ||
+      a.role;
+
+    return {
+      ...a,
+      role: primaryRole,
+      roles: mergedRoles,
+    };
+  });
 });
 
 type ParamsLike<T> = Promise<T> | T;
@@ -160,29 +173,36 @@ export default async function TitlePage({
   const bySlug = new Map(alumni.map((a) => [a.slug, a]));
 
   // Only Designers has subcategories; everyone else is a flat grid
-  const isDesigners = entry.meta.key === "designers";
+  const isGrouped =
+    entry.meta.key === "designers" || entry.meta.key === "executive-directors";
 
-  const flatSelected = !isDesigners
-    ? alumni
-        .filter((a) => entry.people.has(a.slug))
-        .sort((a, b) => a.name.localeCompare(b.name))
-    : [];
+const flatSelected = !isGrouped
+  ? alumni
+      .filter((a) => entry.people.has(a.slug))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  : [];
 
-  const designerGroups =
-    isDesigners && entry.subcats
-      ? Array.from(entry.subcats.entries())
-          .map(([lcSubcat, slugs]) => {
-            const title = titleCase(lcSubcat);
-            const people = Array.from(slugs)
-              .map((s) => bySlug.get(s))
-              .filter(Boolean)
-              .sort((a, b) =>
-                (a!.name || "").localeCompare(b!.name || "")
-              ) as AlumniRow[];
-            return { title, people };
-          })
-          .sort((a, b) => a.title.localeCompare(b.title))
-      : null;
+const groupedSections =
+  isGrouped && entry.subcats
+    ? Array.from(entry.subcats.entries())
+        .map(([lcSubcat, slugs]) => {
+          const title = titleCase(lcSubcat);
+          const people = Array.from(slugs)
+            .map((s) => bySlug.get(s))
+            .filter(Boolean)
+            .sort((a, b) =>
+              (a!.name || "").localeCompare(b!.name || "")
+            ) as AlumniRow[];
+          return { title, people };
+        })
+        .sort((a, b) => {
+          if (entry.meta.key === "executive-directors") {
+            if (a.title.toLowerCase() === "current" && b.title.toLowerCase() === "former") return -1;
+            if (a.title.toLowerCase() === "former" && b.title.toLowerCase() === "current") return 1;
+          }
+          return a.title.localeCompare(b.title);
+        })
+    : null;
 
   return (
     <div>
@@ -271,9 +291,9 @@ export default async function TitlePage({
               padding: "2rem",
             }}
           >
-            {designerGroups ? (
+            {groupedSections ? (
               <div style={{ display: "grid", gap: "2.5rem" }}>
-                {designerGroups.map((group) => (
+                {groupedSections.map((group) => (
                   <section key={group.title}>
                     <h4
                       style={{
@@ -290,7 +310,7 @@ export default async function TitlePage({
                         display: "inline-block",
                       }}
                     >
-                      {group.title} Designers
+                      {entry.meta.key === "designers" ? `${group.title} Designers` : titleCase(group.title)}
                     </h4>
 
                     <div
@@ -310,6 +330,7 @@ export default async function TitlePage({
                             alumniId={artist.slug}
                             name={artist.name}
                             role={artist.role}
+                            allRoles={artist.roles}
                             slug={artist.slug}
                             headshotUrl={artist.headshotUrl}
                             viaLabel={via?.label}
@@ -338,6 +359,7 @@ export default async function TitlePage({
                       alumniId={artist.slug}
                       name={artist.name}
                       role={artist.role}
+                      allRoles={artist.roles}
                       slug={artist.slug}
                       headshotUrl={artist.headshotUrl}
                       viaLabel={via?.label}

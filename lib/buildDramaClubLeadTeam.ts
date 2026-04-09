@@ -37,18 +37,44 @@ function normClubScopeKey(s?: string) {
   return normKey(noSuffix);
 }
 
-function parseISOStart(d?: string): Date | null {
-  const s = (d ?? "").trim();
+function parseSheetDate(value?: string, endOfDay: boolean = false): Date | null {
+  const s = String(value ?? "").trim();
   if (!s) return null;
-  const dt = new Date(`${s}T00:00:00`);
-  return Number.isNaN(dt.getTime()) ? null : dt;
+
+  // Google Sheets / Excel serial date
+  if (/^\d+(\.\d+)?$/.test(s)) {
+    const serial = Number(s);
+    const baseUtc = Date.UTC(1899, 11, 30);
+    const dt = new Date(baseUtc + serial * 86400 * 1000);
+    if (Number.isNaN(dt.getTime())) return null;
+
+    if (endOfDay) dt.setUTCHours(23, 59, 59, 999);
+    else dt.setUTCHours(0, 0, 0, 0);
+
+    return dt;
+  }
+
+  // ISO date string
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const dt = new Date(`${s}${endOfDay ? "T23:59:59.999" : "T00:00:00.000"}`);
+    return Number.isNaN(dt.getTime()) ? null : dt;
+  }
+
+  const dt = new Date(s);
+  if (Number.isNaN(dt.getTime())) return null;
+
+  if (endOfDay) dt.setHours(23, 59, 59, 999);
+  else dt.setHours(0, 0, 0, 0);
+
+  return dt;
+}
+
+function parseISOStart(d?: string): Date | null {
+  return parseSheetDate(d, false);
 }
 
 function parseISOEnd(d?: string): Date | null {
-  const s = (d ?? "").trim();
-  if (!s) return null;
-  const dt = new Date(`${s}T23:59:59.999`);
-  return Number.isNaN(dt.getTime()) ? null : dt;
+  return parseSheetDate(d, true);
 }
 
 function isActive(a: RoleAssignmentRow, asOf: Date) {
@@ -67,6 +93,58 @@ function isFuture(a: RoleAssignmentRow, asOf: Date) {
 function isPast(a: RoleAssignmentRow, asOf: Date) {
   const end = parseISOEnd(a.endDate);
   return !!end && asOf > end;
+}
+
+function startOfYear(year: number) {
+  return new Date(`${year}-01-01T00:00:00.000`);
+}
+
+function endOfYear(year: number) {
+  return new Date(`${year}-12-31T23:59:59.999`);
+}
+
+function overlapsWindow(a: RoleAssignmentRow, start: Date, end: Date) {
+  const aStart = parseISOStart(a.startDate);
+  const aEnd = parseISOEnd(a.endDate);
+
+  if (aStart && aStart > end) return false;
+  if (aEnd && aEnd < start) return false;
+  return true;
+}
+
+function endsBeforeWindow(a: RoleAssignmentRow, start: Date) {
+  const aEnd = parseISOEnd(a.endDate);
+  return !!aEnd && aEnd < start;
+}
+
+function wasActiveOn(a: RoleAssignmentRow, when: Date) {
+  return isActive(a, when);
+}
+
+function getLeadTeamMode(
+  club: DramaClub,
+  asOf: Date
+):
+  | { mode: "legacy"; start: Date; end: Date; clubBegin: Date }
+  | { mode: "current"; asOf: Date } {
+  const status = club.statusOverride ?? club.status;
+  const firstYear = club.firstYearActive;
+  const lastYear = club.lastYearActive;
+
+  if (
+    status === "legacy" &&
+    typeof firstYear === "number" &&
+    typeof lastYear === "number"
+  ) {
+    return {
+      mode: "legacy",
+      start: startOfYear(firstYear),
+      end: endOfYear(lastYear),
+      clubBegin: startOfYear(firstYear),
+    };
+  }
+
+  return { mode: "current", asOf };
 }
 
 function isGlobalScopeKey(scopeKey: string) {
@@ -109,6 +187,31 @@ function isPlaceholderRoleLabel(label?: string) {
   return false;
 }
 
+function shouldPrefixLeadTeamStatus(status?: string) {
+  const s = String(status ?? "").trim().toLowerCase();
+  return s === "interim" || s === "acting" || s === "incoming";
+}
+
+function getLeadTeamStatusPrefix(roleDetails?: string) {
+  const details = String(roleDetails ?? "").trim();
+  return shouldPrefixLeadTeamStatus(details) ? details : "";
+}
+
+function getLeadTeamContextualLabel(
+  club: DramaClub,
+  roleCode: string,
+  roleDetails?: string
+) {
+  const details = String(roleDetails ?? "").trim();
+  if (details && !shouldPrefixLeadTeamStatus(details)) return details;
+
+  if (roleCode === "MCP" || roleCode === "DCP") {
+    return club.country?.trim() || "";
+  }
+
+  return "";
+}
+
 function roleSubtitle(
   roleCodeRaw: string,
   club: DramaClub,
@@ -116,7 +219,6 @@ function roleSubtitle(
   roleDetails?: string
 ) {
   const explicitRoleLabel = String(roleLabel ?? "").trim();
-  const details = String(roleDetails ?? "").trim();
   const city = club.city?.trim();
   const country = club.country?.trim();
   const fallbackLoc = city && country ? `${city}, ${country}` : city || country || "";
@@ -136,39 +238,40 @@ function roleSubtitle(
               ? "Director of Creative Learning"
               : "";
 
-  if (details) {
+  const contextual = getLeadTeamContextualLabel(club, roleCode, roleDetails);
+  const statusPrefix = getLeadTeamStatusPrefix(roleDetails);
+
+  let label = base;
+
+  if (contextual) {
     const baseLower = base.toLowerCase();
-    const detailsLower = details.toLowerCase();
+    const contextualLower = contextual.toLowerCase();
 
-    if (baseLower && detailsLower.includes(baseLower)) return details;
-    if (roleCode === "MCP" || roleCode === "DCP") return `${base} in ${details}`;
-    if (roleCode === "TAIR" || roleCode === "DCL") return `${base} — ${details}`;
-    return base ? `${base} — ${details}` : details;
+    if (baseLower && contextualLower.includes(baseLower)) label = contextual;
+    else if (roleCode === "MCP" || roleCode === "DCP") label = `${base} in ${contextual}`;
+    else if (roleCode === "TAIR" || roleCode === "DCL") label = `${base} — ${contextual}`;
+    else label = base ? `${base} — ${contextual}` : contextual;
+  } else if (!label) {
+    if (roleCode === "TAIR") {
+      label = fallbackLoc
+        ? `Teaching Artist in Residence — ${fallbackLoc}`
+        : "Teaching Artist in Residence";
+    } else if (roleCode === "MCP") {
+      label = country
+        ? `Manager of Community Partnerships in ${country}`
+        : "Manager of Community Partnerships";
+    } else if (roleCode === "DCP") {
+      label = "Director of Community Partnerships";
+    } else if (roleCode === "DCL") {
+      label = "Director of Creative Learning";
+    }
   }
 
-  if (base) return base;
-
-  if (roleCode === "TAIR") {
-    return fallbackLoc
-      ? `Teaching Artist in Residence — ${fallbackLoc}`
-      : "Teaching Artist in Residence";
+  if (statusPrefix && !label.toLowerCase().startsWith(statusPrefix.toLowerCase())) {
+    label = `${statusPrefix[0].toUpperCase()}${statusPrefix.slice(1).toLowerCase()} ${label}`;
   }
 
-  if (roleCode === "MCP") {
-    return country
-      ? `Manager of Community Partnerships in ${country}`
-      : "Manager of Community Partnerships";
-  }
-
-  if (roleCode === "DCP") {
-    return "Director of Community Partnerships";
-  }
-
-  if (roleCode === "DCL") {
-    return "Director of Creative Learning";
-  }
-
-  return "";
+  return label;
 }
 
 function pickAvatarSrc(p: unknown): string | undefined {
@@ -205,6 +308,38 @@ function compareCoreAssignments(a: RoleAssignmentRow, b: RoleAssignmentRow) {
   if (aStart !== bStart) return bStart - aStart;
 
   return String(a.roleLabel ?? "").localeCompare(String(b.roleLabel ?? ""));
+}
+
+function comparePastCoreAssignments(a: RoleAssignmentRow, b: RoleAssignmentRow) {
+  const aEnd = parseISOEnd(a.endDate)?.getTime() ?? 0;
+  const bEnd = parseISOEnd(b.endDate)?.getTime() ?? 0;
+  if (aEnd !== bEnd) return bEnd - aEnd;
+
+  return compareCoreAssignments(a, b);
+}
+
+function compareLegacyCoreAssignments(
+  a: RoleAssignmentRow,
+  b: RoleAssignmentRow,
+  clubBegin: Date
+) {
+  const aAtBegin = wasActiveOn(a, clubBegin);
+  const bAtBegin = wasActiveOn(b, clubBegin);
+  if (aAtBegin !== bAtBegin) return aAtBegin ? -1 : 1;
+
+  return compareCoreAssignments(a, b);
+}
+
+function compareLegacyTAIR(
+  a: RoleAssignmentRow,
+  b: RoleAssignmentRow,
+  clubBegin: Date
+) {
+  const aAtBegin = wasActiveOn(a, clubBegin);
+  const bAtBegin = wasActiveOn(b, clubBegin);
+  if (aAtBegin !== bAtBegin) return aAtBegin ? -1 : 1;
+
+  return compareCurrentTAIR(a, b);
 }
 
 function compareCurrentTAIR(a: RoleAssignmentRow, b: RoleAssignmentRow) {
@@ -289,36 +424,98 @@ export function buildDramaClubLeadTeam(
   const clubScopeKey = normClubScopeKey(clubSlug || clubId || "");
   const countryLabelKey = normKey(club.country);
 
+  const leadTeamMode = getLeadTeamMode(club, asOf);
+
   const visible = assignments.filter((a) => a.showOnProfile !== false);
 
-  const active = visible.filter((a) => isActive(a, asOf));
+  const active =
+  leadTeamMode.mode === "legacy"
+    ? visible.filter((a) => overlapsWindow(a, leadTeamMode.start, leadTeamMode.end))
+    : visible.filter((a) => isActive(a, leadTeamMode.asOf));
 
-  const dcp = active
-    .filter(
-      (a) =>
-        normRoleCode(a.roleCode) === "DCP" &&
-        normScopeType(a.scopeType) === "GLOBAL" &&
-        isGlobalScopeKey(String(a.scopeKey ?? ""))
-    )
-    .sort(compareCoreAssignments)[0];
+const dcpCurrent = active
+  .filter(
+    (a) =>
+      normRoleCode(a.roleCode) === "DCP" &&
+      normScopeType(a.scopeType) === "GLOBAL" &&
+      isGlobalScopeKey(String(a.scopeKey ?? ""))
+  )
+  .sort((a, b) =>
+    leadTeamMode.mode === "legacy"
+      ? compareLegacyCoreAssignments(a, b, leadTeamMode.clubBegin)
+      : compareCoreAssignments(a, b)
+  )[0];
 
-  const mcp = active
-    .filter(
-      (a) =>
-        normRoleCode(a.roleCode) === "MCP" &&
-        normScopeType(a.scopeType) === "COUNTRY" &&
-        scopeKeyMatchesCountry(String(a.scopeKey ?? ""), countryLabelKey)
-    )
-    .sort(compareCoreAssignments)[0];
+  const dcpPast =
+    leadTeamMode.mode === "legacy"
+      ? visible
+          .filter(
+            (a) =>
+              normRoleCode(a.roleCode) === "DCP" &&
+              normScopeType(a.scopeType) === "GLOBAL" &&
+              isGlobalScopeKey(String(a.scopeKey ?? "")) &&
+              endsBeforeWindow(a, leadTeamMode.start)
+          )
+          .sort(comparePastCoreAssignments)[0]
+      : undefined;
 
-  const dcl = active
-    .filter(
-      (a) =>
-        normRoleCode(a.roleCode) === "DCL" &&
-        normScopeType(a.scopeType) === "GLOBAL" &&
-        isGlobalScopeKey(String(a.scopeKey ?? ""))
-    )
-    .sort(compareCoreAssignments)[0];
+  const dcp = dcpCurrent ?? dcpPast;
+
+const mcpCurrent = active
+  .filter(
+    (a) =>
+      normRoleCode(a.roleCode) === "MCP" &&
+      normScopeType(a.scopeType) === "COUNTRY" &&
+      scopeKeyMatchesCountry(String(a.scopeKey ?? ""), countryLabelKey)
+  )
+  .sort((a, b) =>
+    leadTeamMode.mode === "legacy"
+      ? compareLegacyCoreAssignments(a, b, leadTeamMode.clubBegin)
+      : compareCoreAssignments(a, b)
+  )[0];
+
+  const mcpPast =
+    leadTeamMode.mode === "legacy"
+      ? visible
+          .filter(
+            (a) =>
+              normRoleCode(a.roleCode) === "MCP" &&
+              normScopeType(a.scopeType) === "COUNTRY" &&
+              scopeKeyMatchesCountry(String(a.scopeKey ?? ""), countryLabelKey) &&
+              endsBeforeWindow(a, leadTeamMode.start)
+          )
+          .sort(comparePastCoreAssignments)[0]
+      : undefined;
+
+  const mcp = mcpCurrent ?? mcpPast;
+
+const dclCurrent = active
+  .filter(
+    (a) =>
+      normRoleCode(a.roleCode) === "DCL" &&
+      normScopeType(a.scopeType) === "GLOBAL" &&
+      isGlobalScopeKey(String(a.scopeKey ?? ""))
+  )
+  .sort((a, b) =>
+    leadTeamMode.mode === "legacy"
+      ? compareLegacyCoreAssignments(a, b, leadTeamMode.clubBegin)
+      : compareCoreAssignments(a, b)
+  )[0];
+
+const dclPast =
+  leadTeamMode.mode === "legacy"
+    ? visible
+        .filter(
+          (a) =>
+            normRoleCode(a.roleCode) === "DCL" &&
+            normScopeType(a.scopeType) === "GLOBAL" &&
+            isGlobalScopeKey(String(a.scopeKey ?? "")) &&
+            endsBeforeWindow(a, leadTeamMode.start)
+        )
+        .sort(comparePastCoreAssignments)[0]
+    : undefined;
+
+const dcl = dclCurrent ?? dclPast;
 
   const core = dedupePeople([
     toPersonRef(dcp, club, peopleById),
@@ -339,9 +536,19 @@ export function buildDramaClubLeadTeam(
     );
   });
 
-  const tairCurrent = tairBase.filter((a) => isActive(a, asOf)).sort(compareCurrentTAIR);
-  const tairUpcoming = tairBase.filter((a) => isFuture(a, asOf)).sort(compareUpcomingTAIR);
-  const tairPast = tairBase.filter((a) => isPast(a, asOf)).sort(comparePastTAIR);
+  const tairCurrent =
+    leadTeamMode.mode === "legacy"
+      ? tairBase
+          .filter((a) => overlapsWindow(a, leadTeamMode.start, leadTeamMode.end))
+          .sort((a, b) => compareLegacyTAIR(a, b, leadTeamMode.clubBegin))
+      : tairBase.filter((a) => isActive(a, leadTeamMode.asOf)).sort(compareCurrentTAIR);
+  const tairUpcoming: RoleAssignmentRow[] = [];
+  const tairPast =
+    leadTeamMode.mode === "legacy"
+      ? tairBase
+          .filter((a) => endsBeforeWindow(a, leadTeamMode.start))
+          .sort(comparePastTAIR)
+      : tairBase.filter((a) => isPast(a, leadTeamMode.asOf)).sort(comparePastTAIR);
 
   const fillers = dedupePeople([
     ...tairCurrent.map((a) => toPersonRef(a, club, peopleById)),
