@@ -100,6 +100,7 @@ export type EnrichedProfileLiveRow = ProfileLiveRow & {
   roleTokens: string[];
   bioTokens: string[];
   locationTokens: string[];
+  locationExactTokens: string[];
 
   // Optional (nice to have)
   identityTokens: string[]; // your sheet calls these `tags` right now
@@ -162,6 +163,36 @@ function splitListish(raw?: string): string[] {
     .map((x) => x.trim())
     .filter(Boolean);
 }
+
+function buildStructuredComboKey(parts: Array<string | number | undefined>) {
+  return normalizeText(parts.filter(Boolean).join(" "))
+    .split(" ")
+    .filter(Boolean)
+    .sort()
+    .join(" ");
+}
+
+function addLocationExactTokens(set: Set<string>, raw?: string) {
+  const s = String(raw ?? "").trim();
+  if (!s) return;
+
+  const whole = normalizeText(s);
+  if (whole) set.add(whole);
+
+  s
+    .split(/[|;/]+/g)
+    .map((x) => normalizeText(x))
+    .filter(Boolean)
+    .forEach((x) => set.add(x));
+
+  s
+    .split(",")
+    .map((x) => normalizeText(x))
+    .filter(Boolean)
+    .forEach((x) => set.add(x));
+}
+
+
 
 /**
  * Add all Profile-Live fields we care about into aliasTokens (catch-all).
@@ -434,6 +465,7 @@ export async function enrichAlumniData(
     const roleTokens = new Set<string>();
     const bioTokens = new Set<string>();
     const locationTokens = new Set<string>();
+    const locationExactTokens = new Set<string>();
     const identityTokens = new Set<string>();
     const statusTokens = new Set<string>();
 
@@ -543,7 +575,9 @@ export async function enrichAlumniData(
     for (const r of splitListish(item.roles)) addPhraseTokens(roleTokens, r);
 
     // ✅ Location bucket (for scoring)
+    // Broad tokens for fuzzy matching + exact location phrases for top matches.
     addPhraseTokens(locationTokens, item.location);
+    addLocationExactTokens(locationExactTokens, item.location);
 
     // ✅ Bio bucket (for scoring)
     addPhraseTokens(bioTokens, item.bioShort);
@@ -580,24 +614,117 @@ export async function enrichAlumniData(
 
         if (prog.title) programTokens.add(normalizeText(prog.title));
         if (prog.program) programTokens.add(normalizeText(prog.program));
-        if (prog.location) programTokens.add(normalizeText(prog.location));
+        if (prog.location) {
+          programTokens.add(normalizeText(prog.location));
+          addPhraseTokens(locationTokens, prog.location);
+          addLocationExactTokens(locationExactTokens, prog.location);
+        }
         if (prog.year) addYearishTokens(programTokens, prog.year);
         if (prog.season) addYearishTokens(programTokens, prog.season);
 
-        if (prog.program && prog.location)
+        if (prog.location && prog.year) {
+          addYearishTokens(locationTokens, `${prog.location} ${prog.year}`);
+          locationTokens.add(
+            buildStructuredComboKey([prog.location, prog.year])
+          );
+        }
+
+        if (prog.program && prog.location) {
           programTokens.add(
             normalizeText(`${prog.program} ${prog.location}`)
           );
-        if (prog.program && prog.year)
+          programTokens.add(
+            buildStructuredComboKey([prog.program, prog.location])
+          );
+        }
+        if (prog.title && prog.location) {
+          programTokens.add(
+            normalizeText(`${prog.title} ${prog.location}`)
+          );
+          programTokens.add(
+            buildStructuredComboKey([prog.title, prog.location])
+          );
+        }
+        if (prog.program && prog.year) {
           addYearishTokens(programTokens, `${prog.program} ${prog.year}`);
+          programTokens.add(
+            buildStructuredComboKey([prog.program, prog.year])
+          );
+        }
+        if (prog.title && prog.year) {
+          addYearishTokens(programTokens, `${prog.title} ${prog.year}`);
+          programTokens.add(
+            buildStructuredComboKey([prog.title, prog.year])
+          );
+        }
+        if (prog.program && prog.location && prog.year) {
+          addYearishTokens(
+            programTokens,
+            `${prog.program} ${prog.location} ${prog.year}`
+          );
+          programTokens.add(
+            buildStructuredComboKey([prog.program, prog.location, prog.year])
+          );
+        }
+        if (prog.title && prog.location && prog.year) {
+          addYearishTokens(
+            programTokens,
+            `${prog.title} ${prog.location} ${prog.year}`
+          );
+          programTokens.add(
+            buildStructuredComboKey([prog.title, prog.location, prog.year])
+          );
+        }
         if (prog.program && prog.season)
           addYearishTokens(programTokens, `${prog.program} ${prog.season}`);
+        if (prog.title && prog.season)
+          addYearishTokens(programTokens, `${prog.title} ${prog.season}`);
 
         // Feed into catch-all too
         if (prog.title) addPhraseTokens(aliasTokens, prog.title);
         if (prog.program) addPhraseTokens(aliasTokens, prog.program);
         if (prog.location) addPhraseTokens(aliasTokens, prog.location);
         if (prog.year) addYearishTokens(aliasTokens, prog.year);
+
+        if (prog.program && prog.location) {
+          aliasTokens.add(
+            buildStructuredComboKey([prog.program, prog.location])
+          );
+        }
+        if (prog.title && prog.location) {
+          aliasTokens.add(
+            buildStructuredComboKey([prog.title, prog.location])
+          );
+        }
+        if (prog.program && prog.year) {
+          aliasTokens.add(
+            buildStructuredComboKey([prog.program, prog.year])
+          );
+        }
+        if (prog.title && prog.year) {
+          aliasTokens.add(
+            buildStructuredComboKey([prog.title, prog.year])
+          );
+        }
+        if (prog.program && prog.location && prog.year) {
+          addYearishTokens(
+            aliasTokens,
+            `${prog.program} ${prog.location} ${prog.year}`
+          );
+          aliasTokens.add(
+            buildStructuredComboKey([prog.program, prog.location, prog.year])
+          );
+        }
+        if (prog.title && prog.location && prog.year) {
+          addYearishTokens(
+            aliasTokens,
+            `${prog.title} ${prog.location} ${prog.year}`
+          );
+          aliasTokens.add(
+            buildStructuredComboKey([prog.title, prog.location, prog.year])
+          );
+        }
+
         if (prog.season) addYearishTokens(aliasTokens, prog.season);
 
         // Feed season info into catch-all too (so people can search "Season 18")
@@ -618,17 +745,45 @@ export async function enrichAlumniData(
       if (hit) {
         addSeasonFromNumber(seasonTokens, prod.season);
 
-        if (prod.title) productionTokens.add(normalizeText(prod.title));
-        if (prod.location) productionTokens.add(normalizeText(prod.location));
-        if (prod.year) addYearishTokens(productionTokens, prod.year);
-        if (prod.season) addYearishTokens(productionTokens, prod.season);
+      if (prod.title) productionTokens.add(normalizeText(prod.title));
+      if (prod.location) {
+        productionTokens.add(normalizeText(prod.location));
+        addPhraseTokens(locationTokens, prod.location);
+        addLocationExactTokens(locationExactTokens, prod.location);
+      }
+      if (prod.year) addYearishTokens(productionTokens, prod.year);
+      if (prod.season) addYearishTokens(productionTokens, prod.season);
 
-        if (prod.title && prod.location)
+      if (prod.location && prod.year) {
+        addYearishTokens(locationTokens, `${prod.location} ${prod.year}`);
+        locationTokens.add(
+          buildStructuredComboKey([prod.location, prod.year])
+        );
+      }
+
+        if (prod.title && prod.location) {
           productionTokens.add(
             normalizeText(`${prod.title} ${prod.location}`)
           );
-        if (prod.title && prod.year)
+          productionTokens.add(
+            buildStructuredComboKey([prod.title, prod.location])
+          );
+        }
+        if (prod.title && prod.year) {
           addYearishTokens(productionTokens, `${prod.title} ${prod.year}`);
+          productionTokens.add(
+            buildStructuredComboKey([prod.title, prod.year])
+          );
+        }
+        if (prod.title && prod.location && prod.year) {
+          addYearishTokens(
+            productionTokens,
+            `${prod.title} ${prod.location} ${prod.year}`
+          );
+          productionTokens.add(
+            buildStructuredComboKey([prod.title, prod.location, prod.year])
+          );
+        }
         if (prod.title && prod.season)
           addYearishTokens(productionTokens, `${prod.title} ${prod.season}`);
 
@@ -645,6 +800,27 @@ export async function enrichAlumniData(
         if (prod.title) addPhraseTokens(aliasTokens, prod.title);
         if (prod.location) addPhraseTokens(aliasTokens, prod.location);
         if (prod.year) addYearishTokens(aliasTokens, prod.year);
+
+        if (prod.title && prod.location) {
+          aliasTokens.add(
+            buildStructuredComboKey([prod.title, prod.location])
+          );
+        }
+        if (prod.title && prod.year) {
+          aliasTokens.add(
+            buildStructuredComboKey([prod.title, prod.year])
+          );
+        }
+        if (prod.title && prod.location && prod.year) {
+          addYearishTokens(
+            aliasTokens,
+            `${prod.title} ${prod.location} ${prod.year}`
+          );
+          aliasTokens.add(
+            buildStructuredComboKey([prod.title, prod.location, prod.year])
+          );
+        }
+
         if (prod.season) addYearishTokens(aliasTokens, prod.season);
         if (prod.festival) addPhraseTokens(aliasTokens, prod.festival);
 
@@ -725,6 +901,7 @@ export async function enrichAlumniData(
       roleTokens: Array.from(roleTokens),
       bioTokens: Array.from(bioTokens),
       locationTokens: Array.from(locationTokens),
+      locationExactTokens: Array.from(locationExactTokens),
       identityTokens: Array.from(identityTokens),
       statusTokens: Array.from(statusTokens),
 

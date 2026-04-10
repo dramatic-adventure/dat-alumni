@@ -51,6 +51,7 @@ function buildFlatTokenSet(item: EnrichedProfileLiveRow): Set<string> {
     ...(item.aliasTokens || []),
     ...(item.roleTokens || []),
     ...(item.locationTokens || []),
+    ...(item.locationExactTokens || []),
     ...(item.programTokens || []),
     ...(item.productionTokens || []),
     ...(item.festivalTokens || []),
@@ -64,9 +65,7 @@ function buildFlatTokenSet(item: EnrichedProfileLiveRow): Set<string> {
 
 function buildStructuredQualifierTokenSet(item: EnrichedProfileLiveRow): Set<string> {
   return new Set<string>([
-    ...(item.locationTokens || []),
-    ...(item.programTokens || []),
-    ...(item.productionTokens || []),
+    ...(item.locationExactTokens || []),
     ...(item.festivalTokens || []),
     ...(item.seasonTokens || []),
   ]);
@@ -76,18 +75,18 @@ function hasStructuredQualifierMatch(
   qualifierTerms: string[],
   qualifierPhrase: string,
   qualifierTokens: Set<string>,
-  structuredSearchText: string
+  _structuredSearchText: string
 ): boolean {
   if (qualifierTerms.length === 0) return true;
 
-  const hasPhrase =
-    !!qualifierPhrase && structuredSearchText.includes(qualifierPhrase);
+  const hasExactPhrase =
+    !!qualifierPhrase && qualifierTokens.has(qualifierPhrase);
 
   const hasAllTerms = qualifierTerms.every((term) =>
     qualifierTokens.has(term)
   );
 
-  return hasAllTerms || hasPhrase;
+  return hasAllTerms || hasExactPhrase;
 }
 
 function stripQualifierNoiseTerms(terms: string[]) {
@@ -96,6 +95,72 @@ function stripQualifierNoiseTerms(terms: string[]) {
 
 function splitNormalizedTerms(value: string) {
   return normalizeText(value).split(" ").filter(Boolean);
+}
+
+function singularizeSimplePhrase(value: string) {
+  return normalizeText(value)
+    .split(" ")
+    .filter(Boolean)
+    .map((term) => {
+      if (term.endsWith("ies") && term.length > 3) {
+        return `${term.slice(0, -3)}y`;
+      }
+      if (term.endsWith("s") && !term.endsWith("ss") && term.length > 3) {
+        return term.slice(0, -1);
+      }
+      return term;
+    })
+    .join(" ");
+}
+
+function buildStructuredComboKey(parts: string[]) {
+  return normalizeText(parts.join(" "))
+    .split(" ")
+    .filter(Boolean)
+    .sort()
+    .join(" ");
+}
+
+function findLongestKnownPhrase(
+  terms: string[],
+  knownPhrases: Set<string>
+): { phrase: string; terms: string[] } {
+  for (let size = terms.length; size >= 1; size -= 1) {
+    for (let start = 0; start <= terms.length - size; start += 1) {
+      const slice = terms.slice(start, start + size);
+      const phrase = normalizeText(slice.join(" "));
+      if (phrase && knownPhrases.has(phrase)) {
+        return { phrase, terms: slice };
+      }
+    }
+  }
+
+  return { phrase: "", terms: [] };
+}
+
+function removeMatchedPhrase(terms: string[], matchedTerms: string[]) {
+  if (matchedTerms.length === 0) return terms;
+
+  for (let start = 0; start <= terms.length - matchedTerms.length; start += 1) {
+    const slice = terms.slice(start, start + matchedTerms.length);
+    if (slice.join(" ") === matchedTerms.join(" ")) {
+      return [...terms.slice(0, start), ...terms.slice(start + matchedTerms.length)];
+    }
+  }
+
+  return terms;
+}
+
+function hasStructuredTokenContainingAllParts(
+  tokens: string[] | undefined,
+  parts: string[]
+): boolean {
+  if (!tokens?.length || parts.length === 0) return false;
+
+  return tokens.some((token) => {
+    const normalizedToken = normalizeText(token);
+    return parts.every((part) => normalizedToken.includes(normalizeText(part)));
+  });
 }
 
 function matchesCoreProjectIntent(
@@ -215,18 +280,30 @@ export function useAlumniSearch(
       const knownProductionTokens = new Set<string>();
 
       (enrichedData ?? []).forEach((row) => {
-        (row.locationTokens || []).forEach((token) => knownQualifierTokens.add(token));
-        (row.programTokens || []).forEach((token) => {
-          knownQualifierTokens.add(token);
-          knownProgramTokens.add(token);
-        });
-        (row.productionTokens || []).forEach((token) => {
-          knownQualifierTokens.add(token);
-          knownProductionTokens.add(token);
-        });
+        (row.locationExactTokens || []).forEach((token) => knownQualifierTokens.add(token));
         (row.festivalTokens || []).forEach((token) => knownQualifierTokens.add(token));
         (row.seasonTokens || []).forEach((token) => knownQualifierTokens.add(token));
+
+        (row.programTokens || []).forEach((token) => knownProgramTokens.add(token));
+        (row.productionTokens || []).forEach((token) => knownProductionTokens.add(token));
       });
+
+      const knownCoreTokens = new Set<string>([
+        ...knownProgramTokens,
+        ...knownProductionTokens,
+      ]);
+
+      const knownInferableCoreTokens = new Set<string>(
+        [...knownCoreTokens].filter((token) => {
+          const terms = splitNormalizedTerms(token);
+
+          return (
+            terms.length > 0 &&
+            !terms.some((term) => /^(19|20)\d{2}$/.test(term)) &&
+            !terms.some((term) => knownQualifierTokens.has(term))
+          );
+        })
+      );
 
       /**
        * If the full phrase after ":" exists as a known structured qualifier,
@@ -239,58 +316,34 @@ export function useAlumniSearch(
         !!colonQualifierBasePhrase &&
         knownQualifierTokens.has(colonQualifierBasePhrase);
 
-      const inferredQualifierPhrase =
-        !hasExplicitColonQualifier
-          ? (() => {
-              for (let start = 1; start < nonYearTerms.length; start += 1) {
-                const rawCandidateTerms = nonYearTerms.slice(start);
-                const candidateTerms = stripQualifierNoiseTerms(rawCandidateTerms);
-                const candidatePhrase = normalizeText(rawCandidateTerms.join(" "));
+      const inferredCoreMatch = !hasExplicitColonQualifier
+        ? findLongestKnownPhrase(nonYearTerms, knownInferableCoreTokens)
+        : { phrase: "", terms: [] as string[] };
 
-                if (candidatePhrase && knownQualifierTokens.has(candidatePhrase)) {
-                  return candidatePhrase;
-                }
+      const remainingNonYearTerms = !hasExplicitColonQualifier
+        ? removeMatchedPhrase(nonYearTerms, inferredCoreMatch.terms)
+        : nonYearTerms;
 
-                if (candidateTerms.length === 0) continue;
-
-                const structuredMatchCount = (enrichedData ?? []).filter((row) => {
-                  const qualifierTokens = buildStructuredQualifierTokenSet(row);
-                  return candidateTerms.every((term) => qualifierTokens.has(term));
-                }).length;
-
-                if (structuredMatchCount >= 3) {
-                  return candidatePhrase;
-                }
-              }
-
-              return "";
-            })()
-          : "";
-
-      const inferredQualifierTerms = inferredQualifierPhrase
-        ? stripQualifierNoiseTerms(
-            expandQueryTerms(inferredQualifierPhrase).filter(
-              (term) => !/^(19|20)\d{2}$/.test(term)
-            )
-          )
-        : !hasExplicitColonQualifier &&
-            nonYearTerms.length >= 3 &&
-            knownQualifierTokens.has(nonYearTerms[nonYearTerms.length - 1])
-          ? [nonYearTerms[nonYearTerms.length - 1]]
-          : [];
+      const inferredQualifierMatch = !hasExplicitColonQualifier
+        ? findLongestKnownPhrase(remainingNonYearTerms, knownQualifierTokens)
+        : { phrase: "", terms: [] as string[] };
 
       const strictQualifierTerms = hasExplicitColonQualifier
         ? normalizedColonQualifierTerms
-        : inferredQualifierTerms;
+        : stripQualifierNoiseTerms(inferredQualifierMatch.terms);
 
       const strictQualifierPhrase = hasExplicitColonQualifier
         ? colonQualifierTerms.length >= 2 || hasKnownColonQualifierPhrase
           ? colonQualifierBasePhrase
           : ""
-        : inferredQualifierPhrase;
-      const coreTerms = stripQualifierNoiseTerms(
-        nonYearTerms.filter((term) => !strictQualifierTerms.includes(term))
-      );
+        : inferredQualifierMatch.phrase;
+
+      const coreTerms =
+        !hasExplicitColonQualifier && inferredCoreMatch.phrase
+          ? stripQualifierNoiseTerms(inferredCoreMatch.terms)
+          : stripQualifierNoiseTerms(
+              nonYearTerms.filter((term) => !strictQualifierTerms.includes(term))
+            );
 
       const fuzzyCoreTerms = stripQualifierNoiseTerms(
         queryTerms.filter(
@@ -308,18 +361,44 @@ export function useAlumniSearch(
       const hasStrictQualifierIntent = strictQualifierTerms.length > 0;
       const multiTerm = queryTerms.length > 1;
 
-      const standaloneStructuredQualifierPhrase =
-        !hasStrictQualifierIntent &&
-        nonYearTerms.length >= 2 &&
-        (enrichedData ?? []).some((row) => {
-          const qualifierTokens = buildStructuredQualifierTokenSet(row);
-          return nonYearTerms.every((term) => qualifierTokens.has(term));
-        })
-          ? normalizeText(nonYearTerms.join(" "))
-          : "";
+      const standaloneStructuredQualifierPhrase = "";
 
       const effectiveQualifierPhrase =
         strictQualifierPhrase || standaloneStructuredQualifierPhrase;
+
+      const hasKnownStructuredCorePhrase =
+        !!corePhrase &&
+        (knownProgramTokens.has(corePhrase) || knownProductionTokens.has(corePhrase));
+
+      const hasStructuredQualifierComboIntent =
+        hasKnownStructuredCorePhrase &&
+        !!effectiveQualifierPhrase &&
+        coreTerms.length > 0;
+
+      const structuredQualifierComboKey = hasStructuredQualifierComboIntent
+        ? buildStructuredComboKey([coreTerms.join(" "), effectiveQualifierPhrase])
+        : "";
+
+      const hasStructuredCoreYearComboIntent =
+        hasKnownStructuredCorePhrase &&
+        hasYearIntent &&
+        coreTerms.length > 0;
+
+      const structuredCoreYearComboKey = hasStructuredCoreYearComboIntent
+        ? buildStructuredComboKey([coreTerms.join(" "), yearTerms.join(" ")])
+        : "";
+
+      const hasStructuredYearComboIntent =
+        hasStructuredQualifierComboIntent &&
+        hasYearIntent;
+
+      const structuredYearComboKey = hasStructuredYearComboIntent
+        ? buildStructuredComboKey([
+            coreTerms.join(" "),
+            effectiveQualifierPhrase,
+            yearTerms.join(" "),
+          ])
+        : "";
 
       const treatAsStandaloneQualifierYearSearch =
         hasYearIntent &&
@@ -327,23 +406,75 @@ export function useAlumniSearch(
         !!standaloneStructuredQualifierPhrase &&
         coreTerms.length <= 1;
 
+      const structuredExactQuery = quoted || qLower;
+      const normalizedExactRoleQuery =
+        singularizeSimplePhrase(structuredExactQuery);
+
+      const hasKnownStructuredQualifierQueryPhrase =
+        !!structuredExactQuery && knownQualifierTokens.has(structuredExactQuery);
+
+      const hasKnownStructuredCoreQueryPhrase =
+        !!structuredExactQuery &&
+        (
+          knownProgramTokens.has(structuredExactQuery) ||
+          knownProductionTokens.has(structuredExactQuery)
+        );
+
+      const hasKnownStructuredQueryPhrase =
+        hasKnownStructuredQualifierQueryPhrase ||
+        hasKnownStructuredCoreQueryPhrase;
+
+      const isExactStructuredCoreOnlyQuery =
+        !!structuredExactQuery &&
+        !hasYearIntent &&
+        !hasExplicitColonQualifier &&
+        hasKnownStructuredCoreQueryPhrase &&
+        corePhrase === structuredExactQuery &&
+        !effectiveQualifierPhrase;
+
+      const isExactStructuredQualifierOnlyQuery =
+        !!structuredExactQuery &&
+        !hasYearIntent &&
+        !hasExplicitColonQualifier &&
+        hasKnownStructuredQualifierQueryPhrase &&
+        effectiveQualifierPhrase === structuredExactQuery &&
+        coreTerms.length === 0;
+
+      const suppressSecondaryForExactStructuredOnlyQuery =
+        isExactStructuredCoreOnlyQuery || isExactStructuredQualifierOnlyQuery;
+
+      const hasStructuredQualifierYearOnlyComboIntent =
+        hasYearIntent &&
+        hasStrictQualifierIntent &&
+        coreTerms.length === 0;
+
+      const structuredQualifierYearOnlyParts =
+        hasStructuredQualifierYearOnlyComboIntent && effectiveQualifierPhrase
+          ? [effectiveQualifierPhrase, ...yearTerms]
+          : [];
+
+      const isQualifierOnlyYearSearch =
+        hasYearIntent &&
+        hasStrictQualifierIntent &&
+        coreTerms.length === 0;
+
       const searchBase: SearchRow[] = gated.filter((item) => {
         const flatTokens = buildFlatTokenSet(item);
 
-        const structuredSearchText = normalizeText(
-          [
-            ...(item.locationTokens || []),
-            ...(item.programTokens || []),
-            ...(item.productionTokens || []),
-            ...(item.festivalTokens || []),
-            ...(item.seasonTokens || []),
-          ].join(" ")
-        );
+      const structuredSearchText = normalizeText(
+        [
+          ...(item.locationTokens || []),
+          ...(item.festivalTokens || []),
+          ...(item.seasonTokens || []),
+        ].join(" ")
+      );
 
         if (
           yearTerms.length > 0 &&
-          !yearTerms.every(
-            (term) => flatTokens.has(term) || structuredSearchText.includes(term)
+          !yearTerms.every((term) =>
+            isQualifierOnlyYearSearch
+              ? structuredSearchText.includes(term)
+              : flatTokens.has(term) || structuredSearchText.includes(term)
           )
         ) {
           return false;
@@ -358,6 +489,61 @@ export function useAlumniSearch(
             strictQualifierPhrase,
             qualifierTokens,
             structuredSearchText
+          )
+        ) {
+          return false;
+        }
+
+        if (
+          hasStructuredQualifierYearOnlyComboIntent &&
+          !(
+            hasStructuredTokenContainingAllParts(item.aliasTokens, structuredQualifierYearOnlyParts) ||
+            hasStructuredTokenContainingAllParts(item.programTokens, structuredQualifierYearOnlyParts) ||
+            hasStructuredTokenContainingAllParts(item.productionTokens, structuredQualifierYearOnlyParts) ||
+            hasStructuredTokenContainingAllParts(item.locationTokens, structuredQualifierYearOnlyParts) ||
+            hasStructuredTokenContainingAllParts(item.festivalTokens, structuredQualifierYearOnlyParts) ||
+            hasStructuredTokenContainingAllParts(item.seasonTokens, structuredQualifierYearOnlyParts)
+          )
+        ) {
+          return false;
+        }
+
+        if (
+          hasStructuredQualifierComboIntent &&
+          !(
+            (item.aliasTokens || []).includes(structuredQualifierComboKey) ||
+            (item.programTokens || []).includes(structuredQualifierComboKey) ||
+            (item.productionTokens || []).includes(structuredQualifierComboKey)
+          )
+        ) {
+          return false;
+        }
+
+        if (hasStructuredCoreYearComboIntent) {
+          const hasExactCoreYearCombo =
+            (item.aliasTokens || []).includes(structuredCoreYearComboKey) ||
+            (item.programTokens || []).includes(structuredCoreYearComboKey) ||
+            (item.productionTokens || []).includes(structuredCoreYearComboKey);
+
+          const hasExactCorePhrase =
+            !!corePhrase &&
+            (
+              (item.aliasTokens || []).includes(corePhrase) ||
+              (item.programTokens || []).includes(corePhrase) ||
+              (item.productionTokens || []).includes(corePhrase)
+            );
+
+          if (!hasExactCoreYearCombo && !hasExactCorePhrase) {
+            return false;
+          }
+        }
+
+        if (
+          hasStructuredYearComboIntent &&
+          !(
+            (item.aliasTokens || []).includes(structuredYearComboKey) ||
+            (item.programTokens || []).includes(structuredYearComboKey) ||
+            (item.productionTokens || []).includes(structuredYearComboKey)
           )
         ) {
           return false;
@@ -385,6 +571,7 @@ export function useAlumniSearch(
 
         const roleTokens = item.roleTokens || [];
         const locationTokens = item.locationTokens || [];
+        const locationExactTokens = item.locationExactTokens || [];
         const programTokens = item.programTokens || [];
         const productionTokens = item.productionTokens || [];
         const festivalTokens = item.festivalTokens || [];
@@ -394,9 +581,15 @@ export function useAlumniSearch(
         const languageTokens = item.languageTokens || [];
         const seasonTokens = item.seasonTokens || [];
 
-        const flatTokenSet = buildFlatTokenSet(item);
+        const hasEffectiveQualifierFieldMatch =
+          !!effectiveQualifierPhrase &&
+          (
+            festivalTokens.includes(effectiveQualifierPhrase) ||
+            locationExactTokens.includes(effectiveQualifierPhrase) ||
+            seasonTokens.includes(effectiveQualifierPhrase)
+          );
 
-        const structuredExactQuery = quoted || qLower;
+        const flatTokenSet = buildFlatTokenSet(item);
 
         const hasFullQueryExact =
           aliasSet.has(structuredExactQuery) ||
@@ -405,14 +598,21 @@ export function useAlumniSearch(
           festivalTokens.includes(structuredExactQuery) ||
           seasonTokens.includes(structuredExactQuery) ||
           locationTokens.includes(structuredExactQuery) ||
+          roleTokens.includes(structuredExactQuery) ||
+          roleTokens.includes(normalizedExactRoleQuery) ||
           nameNorm === structuredExactQuery;
 
-        const hasExactStructuredFieldMatch =
+        const hasExactCoreFieldMatch =
           programTokens.includes(structuredExactQuery) ||
-          productionTokens.includes(structuredExactQuery) ||
+          productionTokens.includes(structuredExactQuery);
+
+        const hasExactQualifierFieldMatch =
           festivalTokens.includes(structuredExactQuery) ||
-          locationTokens.includes(structuredExactQuery) ||
+          locationExactTokens.includes(structuredExactQuery) ||
           seasonTokens.includes(structuredExactQuery);
+
+        const hasExactStructuredFieldMatch =
+          hasExactCoreFieldMatch || hasExactQualifierFieldMatch;
 
           
 
@@ -421,8 +621,6 @@ export function useAlumniSearch(
         const qualifierSearchText = normalizeText(
           [
             ...(item.locationTokens || []),
-            ...(item.programTokens || []),
-            ...(item.productionTokens || []),
             ...(item.festivalTokens || []),
             ...(item.seasonTokens || []),
           ].join(" ")
@@ -430,8 +628,10 @@ export function useAlumniSearch(
 
         const hasAllYearTerms =
           yearTerms.length > 0 &&
-          yearTerms.every(
-            (term) => flatTokenSet.has(term) || qualifierSearchText.includes(term)
+          yearTerms.every((term) =>
+            isQualifierOnlyYearSearch
+              ? qualifierSearchText.includes(term)
+              : flatTokenSet.has(term) || qualifierSearchText.includes(term)
           );
 
         const hasAllStrictQualifierTerms = hasStructuredQualifierMatch(
@@ -557,7 +757,7 @@ export function useAlumniSearch(
           reasons.push("Exact Production Match");
         }
 
-        if (locationTokens.includes(qLower)) {
+        if (locationExactTokens.includes(qLower)) {
           score += 150;
           reasons.push("Exact Location Match");
         }
@@ -692,7 +892,9 @@ export function useAlumniSearch(
 
         const matchedQueryTerms = queryTerms.filter((term) => {
           if (yearTerms.includes(term)) {
-            return flatTokenSet.has(term) || qualifierSearchText.includes(term);
+            return isQualifierOnlyYearSearch
+              ? qualifierSearchText.includes(term)
+              : flatTokenSet.has(term) || qualifierSearchText.includes(term);
           }
 
           return (
@@ -757,25 +959,9 @@ export function useAlumniSearch(
             (hasStrictQualifierIntent || !!standaloneStructuredQualifierPhrase)
               ? (
                   (coreTerms.length === 0 || treatAsStandaloneQualifierYearSearch)
-                    ? (
-                        !!effectiveQualifierPhrase &&
-                        (
-                          programTokens.includes(effectiveQualifierPhrase) ||
-                          productionTokens.includes(effectiveQualifierPhrase) ||
-                          festivalTokens.includes(effectiveQualifierPhrase) ||
-                          locationTokens.includes(effectiveQualifierPhrase) ||
-                          seasonTokens.includes(effectiveQualifierPhrase)
-                        )
-                      )
+                    ? hasEffectiveQualifierFieldMatch
                     : (
-                        !!effectiveQualifierPhrase &&
-                        (
-                          programTokens.includes(effectiveQualifierPhrase) ||
-                          productionTokens.includes(effectiveQualifierPhrase) ||
-                          festivalTokens.includes(effectiveQualifierPhrase) ||
-                          locationTokens.includes(effectiveQualifierPhrase) ||
-                          seasonTokens.includes(effectiveQualifierPhrase)
-                        ) &&
+                        hasEffectiveQualifierFieldMatch &&
                         (
                           hasKnownProgramCorePhrase
                             ? coreProgramHits >= minCoreHits
@@ -796,14 +982,7 @@ export function useAlumniSearch(
                   (hasStrictQualifierIntent || !!standaloneStructuredQualifierPhrase) &&
                   coreTerms.length > 0
                     ? (
-                        !!effectiveQualifierPhrase &&
-                        (
-                          programTokens.includes(effectiveQualifierPhrase) ||
-                          productionTokens.includes(effectiveQualifierPhrase) ||
-                          festivalTokens.includes(effectiveQualifierPhrase) ||
-                          locationTokens.includes(effectiveQualifierPhrase) ||
-                          seasonTokens.includes(effectiveQualifierPhrase)
-                        ) &&
+                        hasEffectiveQualifierFieldMatch &&
                         (
                           hasKnownProgramCorePhrase
                             ? coreProgramHits >= minCoreHits
@@ -827,11 +1006,14 @@ export function useAlumniSearch(
                           projectPhraseMatch
                         ) ||
                         (
-                          hasKnownProgramCorePhrase
-                            ? coreProgramHits >= minCoreHits && hasYearIntent && coreTerms.length <= 1
-                            : hasKnownProductionCorePhrase
-                              ? coreProductionHits >= minCoreHits && hasYearIntent && coreTerms.length <= 1
-                              : strongStructuredCoreHits >= 1 && hasYearIntent && coreTerms.length <= 1
+                          hasYearIntent &&
+                          (
+                            hasKnownProgramCorePhrase
+                              ? coreProgramHits >= minCoreHits
+                              : hasKnownProductionCorePhrase
+                                ? coreProductionHits >= minCoreHits
+                                : strongStructuredCoreHits >= minCoreHits
+                          )
                         ) ||
                         (
                           coverage >= 0.75 &&
@@ -858,44 +1040,53 @@ export function useAlumniSearch(
             coreTerms.length > 0
           );
 
-        const hasKnownStructuredQueryPhrase =
-          !!structuredExactQuery && knownQualifierTokens.has(structuredExactQuery);
-
         const includeAsPrimary =
-          hasKnownStructuredQueryPhrase &&
-          !hasYearIntent &&
-          !requiresExplicitStructuredProjectPrimary
+          suppressSecondaryForExactStructuredOnlyQuery
             ? (
-                hasExactStructuredFieldMatch ||
-                aliasSet.has(qLower) ||
-                nameNorm === qLower
+                isExactStructuredCoreOnlyQuery
+                  ? (
+                      hasExactCoreFieldMatch ||
+                      aliasSet.has(qLower) ||
+                      nameNorm === qLower
+                    )
+                  : isExactStructuredQualifierOnlyQuery
+                    ? hasExactQualifierFieldMatch
+                    : false
               )
-            : queryTerms.length === 1
-              ? (score >= 120 || coverage >= 0.6) &&
-                (!hasYearIntent || hasAllYearTerms || hasFullQueryExact) &&
-                qualifiesStrictQualifierPrimary
-              : (
-                  requiresExplicitStructuredProjectPrimary
-                    ? includeStructuredProjectPrimary
-                    : (
-                        hasKnownStructuredQueryPhrase
-                          ? (
-                              hasExactStructuredFieldMatch ||
-                              aliasSet.has(qLower) ||
-                              nameNorm === qLower ||
-                              (!hasYearIntent && includeStructuredProjectPrimary)
-                            )
-                          : (
-                              allTermsPresent ||
-                              hasFullQueryExact ||
-                              nameNorm === qLower ||
-                              aliasSet.has(qLower) ||
-                              includeStructuredProjectPrimary
-                            )
-                      )
-                ) &&
-                (!hasYearIntent || hasAllYearTerms || hasFullQueryExact) &&
-                qualifiesStrictQualifierPrimary;
+            : hasKnownStructuredQueryPhrase &&
+              !hasYearIntent &&
+              !requiresExplicitStructuredProjectPrimary
+              ? (
+                  hasExactStructuredFieldMatch ||
+                  aliasSet.has(qLower) ||
+                  nameNorm === qLower
+                )
+              : queryTerms.length === 1
+                ? (score >= 120 || coverage >= 0.6) &&
+                  (!hasYearIntent || hasAllYearTerms || hasFullQueryExact) &&
+                  qualifiesStrictQualifierPrimary
+                : (
+                    requiresExplicitStructuredProjectPrimary
+                      ? includeStructuredProjectPrimary
+                      : (
+                          hasKnownStructuredQueryPhrase
+                            ? (
+                                hasExactStructuredFieldMatch ||
+                                aliasSet.has(qLower) ||
+                                nameNorm === qLower ||
+                                (!hasYearIntent && includeStructuredProjectPrimary)
+                              )
+                            : (
+                                allTermsPresent ||
+                                hasFullQueryExact ||
+                                nameNorm === qLower ||
+                                aliasSet.has(qLower) ||
+                                includeStructuredProjectPrimary
+                              )
+                        )
+                  ) &&
+                  (!hasYearIntent || hasAllYearTerms || hasFullQueryExact) &&
+                  qualifiesStrictQualifierPrimary;
 
         if (includeAsPrimary) {
           scoredResults.push({
@@ -916,26 +1107,28 @@ export function useAlumniSearch(
 
       const secondary: ProfileLiveRow[] = [];
 
-      const candidateQueries = Array.from(
-        new Set(
-          [
-            cleanedQuery,
-            qLower,
-            strictQualifierPhrase || standaloneStructuredQualifierPhrase,
-            queryTerms.join(" "),
-            coreTerms.join(" "),
-            ...(
-              strictQualifierPhrase
-                ? coreTerms
-                : standaloneStructuredQualifierPhrase
-                  ? []
-                  : queryTerms
-            ),
-          ]
-            .map((q) => q.trim())
-            .filter(Boolean)
-        )
-      );
+      const candidateQueries = suppressSecondaryForExactStructuredOnlyQuery
+        ? []
+        : Array.from(
+            new Set(
+              [
+                cleanedQuery,
+                qLower,
+                strictQualifierPhrase || standaloneStructuredQualifierPhrase,
+                queryTerms.join(" "),
+                coreTerms.join(" "),
+                ...(
+                  strictQualifierPhrase
+                    ? coreTerms
+                    : standaloneStructuredQualifierPhrase
+                      ? []
+                      : queryTerms
+                ),
+              ]
+                .map((q) => q.trim())
+                .filter(Boolean)
+            )
+          );
 
       const secondaryCandidates = new Map<string, EnrichedProfileLiveRow>();
 
@@ -962,23 +1155,23 @@ export function useAlumniSearch(
           return;
         }
 
-const flatTokens = buildFlatTokenSet(it);
-const qualifierTokenSet = buildStructuredQualifierTokenSet(it);
+      const flatTokens = buildFlatTokenSet(it);
+      const qualifierTokenSet = buildStructuredQualifierTokenSet(it);
 
-const qualifierSearchText = normalizeText(
-  [
-    ...(it.locationTokens || []),
-    ...(it.programTokens || []),
-    ...(it.productionTokens || []),
-    ...(it.festivalTokens || []),
-    ...(it.seasonTokens || []),
-  ].join(" ")
-);
+      const qualifierSearchText = normalizeText(
+        [
+          ...(it.locationTokens || []),
+          ...(it.festivalTokens || []),
+          ...(it.seasonTokens || []),
+        ].join(" ")
+      );
 
         if (
           yearTerms.length > 0 &&
-          !yearTerms.every(
-            (term) => flatTokens.has(term) || qualifierSearchText.includes(term)
+          !yearTerms.every((term) =>
+            isQualifierOnlyYearSearch
+              ? qualifierSearchText.includes(term)
+              : flatTokens.has(term) || qualifierSearchText.includes(term)
           )
         ) {
           return;
@@ -990,6 +1183,61 @@ const qualifierSearchText = normalizeText(
             strictQualifierPhrase,
             qualifierTokenSet,
             qualifierSearchText
+          )
+        ) {
+          return;
+        }
+
+        if (
+          hasStructuredQualifierYearOnlyComboIntent &&
+          !(
+            hasStructuredTokenContainingAllParts(it.aliasTokens, structuredQualifierYearOnlyParts) ||
+            hasStructuredTokenContainingAllParts(it.programTokens, structuredQualifierYearOnlyParts) ||
+            hasStructuredTokenContainingAllParts(it.productionTokens, structuredQualifierYearOnlyParts) ||
+            hasStructuredTokenContainingAllParts(it.locationTokens, structuredQualifierYearOnlyParts) ||
+            hasStructuredTokenContainingAllParts(it.festivalTokens, structuredQualifierYearOnlyParts) ||
+            hasStructuredTokenContainingAllParts(it.seasonTokens, structuredQualifierYearOnlyParts)
+          )
+        ) {
+          return;
+        }
+
+        if (
+          hasStructuredQualifierComboIntent &&
+          !(
+            (it.aliasTokens || []).includes(structuredQualifierComboKey) ||
+            (it.programTokens || []).includes(structuredQualifierComboKey) ||
+            (it.productionTokens || []).includes(structuredQualifierComboKey)
+          )
+        ) {
+          return;
+        }
+
+        if (hasStructuredCoreYearComboIntent) {
+          const hasExactCoreYearCombo =
+            (it.aliasTokens || []).includes(structuredCoreYearComboKey) ||
+            (it.programTokens || []).includes(structuredCoreYearComboKey) ||
+            (it.productionTokens || []).includes(structuredCoreYearComboKey);
+
+          const hasExactCorePhrase =
+            !!corePhrase &&
+            (
+              (it.aliasTokens || []).includes(corePhrase) ||
+              (it.programTokens || []).includes(corePhrase) ||
+              (it.productionTokens || []).includes(corePhrase)
+            );
+
+          if (!hasExactCoreYearCombo && !hasExactCorePhrase) {
+            return;
+          }
+        }
+
+        if (
+          hasStructuredYearComboIntent &&
+          !(
+            (it.aliasTokens || []).includes(structuredYearComboKey) ||
+            (it.programTokens || []).includes(structuredYearComboKey) ||
+            (it.productionTokens || []).includes(structuredYearComboKey)
           )
         ) {
           return;
@@ -1011,6 +1259,11 @@ const qualifierSearchText = normalizeText(
         const coreMatchedTerms = coreTerms.filter(
           (term) => flatTokens.has(term) || secondaryProjectSearchText.includes(term)
         );
+
+        if (queryTerms.length === 1 && matchedTerms.length === 0) {
+          return;
+        }
+
         const structuredCoreMatchedTerms = coreTerms.filter(
           (term) =>
             (it.aliasTokens || []).includes(term) ||

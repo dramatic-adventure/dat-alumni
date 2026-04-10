@@ -19,6 +19,22 @@ interface RolesGridProps {
   alumni: AlumniRow[];
 }
 
+const ROLE_ORDER: FlagLabel[] = [
+  "Founding Member",
+  "Board Member",
+  "Staff",
+  "Resident Artist",
+  "Associate Artist",
+  "Fellow",
+  "Artist-in-Residence",
+  "Volunteer",
+  "Intern",
+];
+
+const ROLE_ORDER_INDEX = new Map(
+  ROLE_ORDER.map((role, index) => [role, index])
+);
+
 export default function RolesGrid({ roles, alumni }: RolesGridProps) {
   const presentFlags = new Set<FlagLabel>();
   for (const a of alumni) {
@@ -28,9 +44,17 @@ export default function RolesGrid({ roles, alumni }: RolesGridProps) {
     }
   }
 
-  const candidates = (roles?.length ? roles : (Object.keys(flagStyles) as FlagLabel[]))
-    .map((r) => getCanonicalFlag(r) as FlagLabel | null)
-    .filter((r): r is FlagLabel => !!r && presentFlags.has(r));
+  const candidates = Array.from(
+    new Set(
+      (roles?.length ? roles : (Object.keys(flagStyles) as FlagLabel[]))
+        .map((r) => getCanonicalFlag(r) as FlagLabel | null)
+        .filter((r): r is FlagLabel => !!r && presentFlags.has(r))
+    )
+  ).sort((a, b) => {
+    const ai = ROLE_ORDER_INDEX.get(a) ?? 999;
+    const bi = ROLE_ORDER_INDEX.get(b) ?? 999;
+    return ai - bi || a.localeCompare(b);
+  });
 
   if (!candidates.length) return null;
 

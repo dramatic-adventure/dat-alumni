@@ -26,11 +26,21 @@ export function cleanQuery(query: string): string {
 export function expandQueryTerms(query: string): string[] {
   const base = normalizeText(query);
   if (!base) return [];
+
   const terms = base.split(/\s+/).filter(Boolean);
 
-  // also include no-space version for name-like matching
+  // Only add the no-space variant for punctuation-driven name cases
+  // like J'nelle -> jnelle, not for ordinary multi-word phrases
+  // like "Teaching Artist".
   const noSpace = normalizeNameNoSpace(query);
-  if (noSpace && noSpace !== base) terms.push(noSpace);
+  const shouldAddNoSpaceVariant =
+    !!noSpace &&
+    noSpace !== base &&
+    /['’.\-]/.test(query);
+
+  if (shouldAddNoSpaceVariant) {
+    terms.push(noSpace);
+  }
 
   return Array.from(new Set(terms));
 }

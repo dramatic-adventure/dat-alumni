@@ -270,28 +270,28 @@ const handleError = useCallback(() => {
 
   // "Matched via" — only shown when a search query matches a secondary role, not the primary
   const matchedViaRole = useMemo(() => {
-    const q = String(searchQuery || "").trim().toLowerCase();
-    if (!q || !allRoles || allRoles.length <= 1) return null;
+  const q = String(searchQuery || "").trim().toLowerCase();
+  if (!q || !allRoles || allRoles.length <= 1) return null;
 
-    const norm = (s: string) => String(s || "").trim().toLowerCase();
-    const words = (s: string) => norm(s).split(/[^a-z0-9]+/g).filter(Boolean);
+  const norm = (s: string) => String(s || "").trim().toLowerCase();
+  const words = (s: string) => norm(s).split(/[^a-z0-9]+/g).filter(Boolean);
 
-    const primaryNorm = norm(role || "");
-    const secondaryRoles = allRoles.filter((r) => norm(r || "") !== primaryNorm);
+  const primaryNorm = norm(role || "");
+  if (primaryNorm === q) return null;
 
-    const exactWordMatch = secondaryRoles.find((r) => {
-      const rn = norm(r || "");
-      return rn === q || words(r || "").includes(q);
-    });
+  const secondaryRoles = allRoles.filter((r) => norm(r || "") !== primaryNorm);
 
-    if (exactWordMatch) {
-      return q[0] ? q[0].toUpperCase() + q.slice(1) : exactWordMatch;
-    }
+  const exactWordMatch = secondaryRoles.find((r) => {
+    const rn = norm(r || "");
+    return rn === q || words(r || "").includes(q);
+  });
 
-    return (
-      secondaryRoles.find((r) => norm(r || "").includes(q)) || null
-    );
-  }, [searchQuery, allRoles, role]);
+  if (exactWordMatch) {
+    return q[0] ? q[0].toUpperCase() + q.slice(1) : exactWordMatch;
+  }
+
+  return secondaryRoles.find((r) => norm(r || "").includes(q)) || null;
+}, [searchQuery, allRoles, role]);
 
   const isLight = variant === "light";
   const nameColor = isLight ? "#241123" : "#f2f2f2";

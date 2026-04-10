@@ -1,11 +1,12 @@
 // lib/pluralizeTitle.ts
 const IRREGULAR_PLURALS: Record<string, string> = {
   Fellow: "Fellows",
-  Alumni: "Alumni",
+  Alumni: "Alumni", // already plural
   Artist: "Artists",
   Partner: "Partners",
-  Staff: "Staff",
+  Staff: "Staff", // same singular/plural
   "Board of Directors": "Board of Directors",
+  "Artist-in-Residence": "Artists-in-Residence",
 };
 
 export function pluralizeTitle(title: string): string {

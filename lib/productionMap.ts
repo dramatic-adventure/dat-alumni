@@ -330,7 +330,6 @@ export const productionMap: Record<string, Production> = {
       "amber-steffey": ["Stage Manager"],
       "barbara-herucova": ["Road Manager"],
       "amna-mehmood": ["Actor"],
-      "daryl-paris-bright": ["Actor"],
       "gareth-tidball": ["Actor"],
       "marla-jane-caram": ["Actor"],
       "monica-hanigan": ["Actor"],
@@ -601,7 +600,7 @@ export const productionMap: Record<string, Production> = {
     "drew-ernst": ["Actor"],
     "jason-williamson": ["Resident Playwright"],
     "christen-madrazo": ["Actor"],
-    "kathleen-amshoff": ["Assoc. Artistic Director", "Director"],
+    "kathleen-amshoff": ["Associate Artistic Director", "Director"],
     "mary-k-baxter": ["Executive Director"],
     "jesse-baxter": ["Artistic Director"]
   }
@@ -807,7 +806,7 @@ export const productionMap: Record<string, Production> = {
     url: "",
     posterUrl: "/posters/hotel-millionaire-landscape.jpg",
     artists: {
-      "kathleen-amshoff": ["Assoc. Artistic Director", "Director"],
+      "kathleen-amshoff": ["Associate Artistic Director", "Director"],
       "rachael-palmer-jones": ["Actor"],
       "heather-massie": ["Actor"],
       "katey-parker": ["Actor"],
@@ -883,7 +882,7 @@ export const productionMap: Record<string, Production> = {
     url: "",
     posterUrl: "",
     artists: {
-      "jamil-mangan": ["Assoc. Artistic Director, Director"],
+      "jamil-mangan": ["Director"],
       "vince-eaton": ["Actor"],
       "jacob-hellman": ["Actor"],
       "elizabeth-irwin": ["Actor"],
