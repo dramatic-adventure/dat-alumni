@@ -2614,15 +2614,9 @@
   display: none !important;
 }
 
-/* ────────────────────────────────────────────── */
-/* PAGE SHELL BACKGROUND (moved from inline)      */
-/* ────────────────────────────────────────────── */
+/* PAGE SHELL BACKGROUND: handled globally by body::before in globals.css */
 .dc-page-shell {
   min-height: 100vh;
-  background-image: url("/texture/kraft-paper.png");
-  background-size: cover;
-  background-attachment: fixed;
-  background-repeat: repeat;
 }
 
 /* ────────────────────────────────────────────── */

@@ -236,15 +236,7 @@ export default async function ThemePage({
   const heroIntro = meta.intro || "How this idea shapes our journey.";
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundImage: 'url("/texture/kraft-paper.png")',
-        backgroundSize: "cover",
-        backgroundAttachment: "fixed",
-        backgroundRepeat: "repeat",
-      }}
-    >
+    <div>
       {/* HERO (mirrors cause page proportions) */}
       <div
         style={{

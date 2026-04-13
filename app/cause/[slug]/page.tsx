@@ -507,15 +507,7 @@ export default async function CausePage({
     meta.intro || "Plays, drama clubs, stories, and artists championing this cause";
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundImage: 'url("/texture/kraft-paper.png")',
-        backgroundSize: "cover",
-        backgroundAttachment: "fixed",
-        backgroundRepeat: "repeat",
-      }}
-    >
+    <div>
       {/* HERO */}
       <div
         style={{

@@ -143,15 +143,7 @@ export default function DramaClubIndexPage() {
   ];
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundImage: 'url("/texture/kraft-paper.png")',
-        backgroundSize: "cover",
-        backgroundAttachment: "fixed",
-        backgroundRepeat: "repeat",
-      }}
-    >
+    <div>
       <main className="min-h-screen">
         <style>{`
   /* 📸 Drama Club photo splay sizing */
