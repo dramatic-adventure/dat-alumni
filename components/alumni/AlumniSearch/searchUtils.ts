@@ -98,7 +98,10 @@ export function levenshteinDistance(a: string, b: string): number {
 const customAliases: Record<string, string[]> = {
   "action slovakia": ["heart of europe"],
   slovakia: ["heart of europe"],
-  ecuador: ["andes", "amazon"],
+  czechia: ["heart of europe"],
+  "czech republic": ["heart of europe"],
+  "new york city": ["nyc"],
+  "new york": ["nyc"],
 };
 
 /** ✅ Build Alias Index for strict matches */
@@ -120,11 +123,21 @@ export function buildAliasIndex(): Record<string, string[]> {
     const aliases = [
       normalizeText(prog.title),
       normalizeText(prog.program),
+      ...(prog.acronyms || []).map((a) => normalizeText(a)),
       normalizeText(prog.program.replace(/^action[:\s]+/i, "")),
       normalizeText(prog.location),
+      normalizeText(prog.country || ""),
+      normalizeText(prog.region || ""),
+      normalizeText(prog.city || ""),
       normalizeText(`${prog.program} ${prog.year}`),
       normalizeText(`${prog.program} ${prog.location}`),
+      normalizeText(`${prog.program} ${prog.country || ""}`),
       normalizeText(`${prog.program} ${prog.location} ${prog.year}`),
+      normalizeText(`${prog.program} ${prog.country || ""} ${prog.year}`),
+      normalizeText(`${prog.title} ${prog.location}`),
+      normalizeText(`${prog.title} ${prog.country || ""}`),
+      normalizeText(`${prog.title} ${prog.location} ${prog.year}`),
+      normalizeText(`${prog.title} ${prog.country || ""} ${prog.year}`),
     ];
 
     aliases.forEach((alias) => addAlias(alias, slugs));
