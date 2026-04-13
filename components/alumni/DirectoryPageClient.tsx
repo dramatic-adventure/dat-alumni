@@ -64,7 +64,7 @@ function liveRowToAlumniItem(
   primaryRoleBySlug: Record<string, string>
 ): AlumniItem {
   // roles/programs/tags/statusFlags can be stored as CSV-ish strings in Profile-Live
-  const roles = splitCsvish(r.roles);
+  const rawRoles = splitCsvish(r.roles);
   const programs = splitCsvish((r as any).programs);
   const statusFlags = splitCsvish((r as any).statusFlags);
   const identityTags = splitCsvish((r as any).tags);
@@ -78,15 +78,20 @@ function liveRowToAlumniItem(
       : undefined;
 
   const enrichedRow = enrichedBySlug.get(r.slug) || enrichedBySlug.get((r as any).canonicalSlug || "");
+  const mergedRoles = enrichedRow?.mergedRoles?.length ? enrichedRow.mergedRoles : rawRoles;
+  const seasons = (enrichedRow?.seasonTokens || [])
+    .filter((t) => /^season \d+$/i.test(t))
+    .map((t) => t.replace(/^season (\d+)$/i, "Season $1"));
 
   return {
     name: r.name || "",
     slug: r.slug || "",
-    roles,
-    primaryRole: primaryRoleBySlug[r.slug] || roles[0] || "",
-    allRoles: enrichedRow?.mergedRoles?.length ? enrichedRow.mergedRoles : roles,
+    roles: mergedRoles,
+    primaryRole: primaryRoleBySlug[r.slug] || mergedRoles[0] || "",
+    allRoles: mergedRoles,
     location: r.location || "",
     programs,
+    seasons,
     statusFlags,
     identityTags,
     languages,
@@ -532,18 +537,23 @@ export default function DirectoryPageClient({
             >
               {mainResults.map((alum, idx) => {
                 const primaryRole = alum.primaryRole || alum.roles?.[0] || "";
-                const q = query.trim().toLowerCase();
+                const rawQuery = query.trim();
+                const q =
+                  rawQuery.toLowerCase() === "teaching artists"
+                    ? "teaching artist"
+                    : rawQuery.toLowerCase();
                 const ct = alum.currentTitle || "";
-                const ctVia = ct && q && ct.toLowerCase().includes(q) && !primaryRole.toLowerCase().includes(q)
-                  ? { viaLabel: ct, viaSource: "current-title" as const }
-                  : undefined;
+                const ctVia =
+                  ct && q && ct.toLowerCase().includes(q) && !primaryRole.toLowerCase().includes(q)
+                    ? { viaLabel: ct, viaSource: "current-title" as const }
+                    : undefined;
                 return (
                   <MiniProfileCard
                     key={alum.slug || String(idx)}
                     name={alum.name}
                     role={primaryRole}
                     allRoles={alum.allRoles}
-                    searchQuery={query}
+                    searchQuery={q}
                     slug={alum.slug}
                     priority={idx < 12}
                     {...ctVia}
@@ -589,18 +599,23 @@ export default function DirectoryPageClient({
               >
                 {extraResults.map((alum, idx) => {
                   const primaryRole = alum.primaryRole || alum.roles?.[0] || "";
-                  const q = query.trim().toLowerCase();
+                  const rawQuery = query.trim();
+                  const q =
+                    rawQuery.toLowerCase() === "teaching artists"
+                      ? "teaching artist"
+                      : rawQuery.toLowerCase();
                   const ct = alum.currentTitle || "";
-                  const ctVia = ct && q && ct.toLowerCase().includes(q) && !primaryRole.toLowerCase().includes(q)
-                    ? { viaLabel: ct, viaSource: "current-title" as const }
-                    : undefined;
+                  const ctVia =
+                    ct && q && ct.toLowerCase().includes(q) && !primaryRole.toLowerCase().includes(q)
+                      ? { viaLabel: ct, viaSource: "current-title" as const }
+                      : undefined;
                   return (
                     <MiniProfileCard
                       key={alum.slug || String(idx)}
                       name={alum.name}
                       role={primaryRole}
                       allRoles={alum.allRoles}
-                      searchQuery={query}
+                      searchQuery={q}
                       slug={alum.slug}
                       priority={idx < 12}
                       {...ctVia}
