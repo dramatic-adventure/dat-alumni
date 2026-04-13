@@ -614,7 +614,7 @@ export const productionMap: Record<string, Production> = {
     location: "Washington, DC",
     venue: "",
     festival: "Page-to-Stage Festival -- Kennedy Center",
-    dramaClubSlugs: ["quiolotoa-collective"],
+    dramaClubSlugs: ["quilotoa-collective"],
     url: "",
     posterUrl: "/posters/a-girl-without-wings-reading-landscape.jpg",
     artists: {
@@ -643,7 +643,7 @@ export const productionMap: Record<string, Production> = {
     location: "NYC",
     venue: "Gene Frankel Theatre",
     festival: "ACTion Fest 2010: Poco a Poco / Little by Little",
-    dramaClubSlugs: ["quiolotoa-collective", "san-cristobal-collective"],
+    dramaClubSlugs: ["quilotoa-collective", "san-cristobal-collective"],
     url: "",
     posterUrl: "",
     artists: {
@@ -678,7 +678,7 @@ export const productionMap: Record<string, Production> = {
     location: "NYC",
     venue: "Gene Frankel Theatre",
     festival: "ACTion Fest 2010: Poco a Poco / Little by Little",
-    dramaClubSlugs: ["quiolotoa-collective", "esmeraldas-youth-ensemble"],
+    dramaClubSlugs: ["quilotoa-collective", "esmeraldas-youth-ensemble"],
     url: "",
     posterUrl: "",
     artists: {
@@ -711,7 +711,7 @@ export const productionMap: Record<string, Production> = {
     location: "NYC",
     venue: "Gene Frankel Theatre",
     festival: "ACTion Fest 2010: Poco a Poco / Little by Little",
-    dramaClubSlugs: ["quiolotoa-collective", "esmeraldas-youth-ensemble"],
+    dramaClubSlugs: ["quilotoa-collective", "esmeraldas-youth-ensemble"],
     url: "",
     posterUrl: "/posters/esperanza-landscape.jpg",
     artists: {
@@ -747,7 +747,7 @@ export const productionMap: Record<string, Production> = {
     location: "NYC",
     venue: "IATI Theatre & Richmond Shepard Theatre",
     festival: "Performing Arts Marathon 2009 Festival & ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador",
-    dramaClubSlugs: ["quiolotoa-collective", "la-selva-lab"],
+    dramaClubSlugs: ["quilotoa-collective", "la-selva-lab"],
     url: "",
     posterUrl: "",
     artists: {
@@ -778,7 +778,7 @@ export const productionMap: Record<string, Production> = {
     location: "NYC",
     venue: "IATI Theatre & Richmond Shepard Theatre",
     festival: "Performing Arts Marathon 2009 Festival & ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador",
-    dramaClubSlugs: ["quiolotoa-collective", "esmeraldas-youth-ensemble"],
+    dramaClubSlugs: ["quilotoa-collective", "esmeraldas-youth-ensemble"],
     url: "",
     posterUrl: "",
     artists: {
@@ -802,7 +802,7 @@ export const productionMap: Record<string, Production> = {
     location: "NYC",
     venue: "IATI Theatre & Richmond Shepard Theatre",
     festival: "Performing Arts Marathon 2009 Festival & ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador",
-    dramaClubSlugs: ["quiolotoa-collective", "san-cristobal-collective"],
+    dramaClubSlugs: ["quilotoa-collective", "san-cristobal-collective"],
     url: "",
     posterUrl: "/posters/hotel-millionaire-landscape.jpg",
     artists: {
@@ -827,7 +827,7 @@ export const productionMap: Record<string, Production> = {
     location: "NYC",
     venue: "IATI Theatre & Richmond Shepard Theatre",
     festival: "Performing Arts Marathon 2009 Festival & ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador",
-    dramaClubSlugs: ["quiolotoa-collective", "la-selva-lab"],
+    dramaClubSlugs: ["quilotoa-collective", "la-selva-lab"],
     url: "",
     posterUrl: "",
     artists: {
@@ -853,7 +853,7 @@ export const productionMap: Record<string, Production> = {
     location: "NYC",
     venue: "IATI Theatre & Richmond Shepard Theatre",
     festival: "Performing Arts Marathon 2009 Festival & ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador",
-    dramaClubSlugs: ["quiolotoa-collective", "la-selva-lab"],
+    dramaClubSlugs: ["quilotoa-collective", "la-selva-lab"],
     url: "",
     posterUrl: "",
     artists: {
@@ -878,7 +878,7 @@ export const productionMap: Record<string, Production> = {
     location: "NYC",
     venue: "IATI Theatre & Richmond Shepard Theatre",
     festival: "Performing Arts Marathon 2009 Festival & ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador",
-    dramaClubSlugs: ["quiolotoa-collective", "la-selva-lab"],
+    dramaClubSlugs: ["quilotoa-collective", "la-selva-lab"],
     url: "",
     posterUrl: "",
     artists: {
@@ -906,7 +906,7 @@ export const productionMap: Record<string, Production> = {
     location: "NYC",
     venue: "IATI Theatre & Richmond Shepard Theatre",
     festival: "Performing Arts Marathon 2009 Festival & ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador",
-    dramaClubSlugs: ["quiolotoa-collective", "esmeraldas-youth-ensemble"],
+    dramaClubSlugs: ["quilotoa-collective", "esmeraldas-youth-ensemble"],
     url: "",
     posterUrl: "",
     artists: {
@@ -933,7 +933,7 @@ export const productionMap: Record<string, Production> = {
     location: "NYC",
     venue: "IATI Theatre & Richmond Shepard Theatre",
     festival: "Performing Arts Marathon 2009 Festival & ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador",
-    dramaClubSlugs: ["quiolotoa-collective", "esmeraldas-youth-ensemble"],
+    dramaClubSlugs: ["quilotoa-collective", "esmeraldas-youth-ensemble"],
     url: "",
     posterUrl: "",
     artists: {
@@ -961,7 +961,7 @@ export const productionMap: Record<string, Production> = {
     location: "NYC",
     venue: "IATI Theatre & Richmond Shepard Theatre",
     festival: "Performing Arts Marathon 2009 Festival & ACTion Fest 2009: Hecho en Ecuador / Made in Ecuador",
-    dramaClubSlugs: ["quiolotoa-collective", "esmeraldas-youth-ensemble"],
+    dramaClubSlugs: ["quilotoa-collective", "esmeraldas-youth-ensemble"],
     url: "",
     posterUrl: "",
     artists: {
@@ -993,7 +993,7 @@ export const productionMap: Record<string, Production> = {
     location: "NYC",
     venue: "IATI Theatre & Red Room Theater",
     festival: "Performing Arts Marathon 2008 Festival & Off-Off-Broadway Production", 
-    dramaClubSlugs: ["quiolotoa-collective", "esmeraldas-youth-ensemble", "la-selva-lab", "san-cristobal-collective"],
+    dramaClubSlugs: ["quilotoa-collective", "esmeraldas-youth-ensemble", "la-selva-lab", "san-cristobal-collective"],
     url: "",
     posterUrl: "/posters/flight-360-landscape.jpg",
     artists: {

@@ -502,13 +502,13 @@ export const productionDetailsMap: Record<string, ProductionExtra> = {
     /** Overrides for roster (to test NameCell + autoLinkPeopleBase) */
     creativeTeamOverride: [
       { role: "Director", name: "Jesse Baxter", href: "/alumni/jesse-baxter" },
-      { role: "Playwright", name: "Jason Williamson" },
-      { role: "Composer", name: "Ana María Torres" },
+      { role: "Playwright", name: "Jason Williamson", href: "/alumni/jason-williamson" },
+      { role: "Composer", name: "Christen Madrazo", href: "/alumni/christen-madrazo" },
     ] as PersonRole[],
     castOverride: [
-      { role: "Chaska", name: "Lucille Baxter" },
-      { role: "Condor", name: "Seamus Baxter" },
-      { role: "Mother", name: "Mary Baxter" },
+      { role: "Chaska", name: "Lacy Allen", href: "/alumni/lacy-allen" },
+      { role: "Condor", name: "Jaime Carillo", href: "/alumni/jaime-carillo" },
+      { role: "Mother", name: "Mary K. Baxter", href: "/alumni/mary-k-baxter" },
     ] as PersonRole[],
 
     /** Media — Production Gallery (main) */
