@@ -84,8 +84,8 @@ function PhotoRowSection({
         <h3 className="evd-prodrow-title">
           {bilingual ? (
             <>
-              <span className="evd-bilingual-wrap-default">Galería de Producción</span>
-              <span className="evd-bilingual-wrap-alt evd-bilingual-en">Production Gallery</span>
+              <span className="evd-bilingual-wrap-default">Production Gallery</span>
+              <span className="evd-bilingual-wrap-alt evd-bilingual-es">Galería de Producción</span>
             </>
           ) : "Production Gallery"}
         </h3>
@@ -93,8 +93,8 @@ function PhotoRowSection({
           <div className="evd-prodrow-credit">
             {bilingual ? (
               <>
-                <span className="evd-bilingual-wrap-default">Fotos por{" "}</span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-en">Photos by{" "}</span>
+                <span className="evd-bilingual-wrap-default">Photos by{" "}</span>
+                <span className="evd-bilingual-wrap-alt evd-bilingual-es">Fotos por{" "}</span>
               </>
             ) : "Photos by "}
             {photographerHrefSafe ? (
@@ -143,13 +143,13 @@ function PhotoRowSection({
               {bilingual ? (
                 expanded ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">VER MENOS</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">SEE LESS</span>
+                    <span className="evd-bilingual-wrap-default">SEE LESS</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">VER MENOS</span>
                   </>
                 ) : (
                   <>
-                    <span className="evd-bilingual-wrap-default">VER MÁS</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-en">SEE MORE</span>
+                    <span className="evd-bilingual-wrap-default">SEE MORE</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">VER MÁS</span>
                   </>
                 )
               ) : (expanded ? "SEE LESS" : "SEE MORE")}
@@ -166,8 +166,8 @@ function PhotoRowSection({
             >
               {bilingual ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">ABRIR ÁLBUM COMPLETO ↗</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">{baseLabel} ↗</span>
+                  <span className="evd-bilingual-wrap-default">{baseLabel} ↗</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">ABRIR ÁLBUM COMPLETO ↗</span>
                 </>
               ) : `${baseLabel} ↗`}
             </a>
@@ -225,8 +225,8 @@ function FieldGridSection({
       <h3 className="evd-about-head" style={{ marginTop: "1.5rem" }}>
         {bilingual ? (
           <>
-            <span className="evd-bilingual-wrap-default">{safeTitleEs}</span>
-            <span className="evd-bilingual-wrap-alt evd-bilingual-en">{safeTitle}</span>
+            <span className="evd-bilingual-wrap-default">{safeTitle}</span>
+            <span className="evd-bilingual-wrap-alt evd-bilingual-es">{safeTitleEs}</span>
           </>
         ) : safeTitle}
       </h3>
@@ -266,13 +266,13 @@ function FieldGridSection({
             {bilingual ? (
               expanded ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">VER MENOS</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">SEE LESS</span>
+                  <span className="evd-bilingual-wrap-default">SEE LESS</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">VER MENOS</span>
                 </>
               ) : (
                 <>
-                  <span className="evd-bilingual-wrap-default">VER MÁS</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-en">SEE MORE</span>
+                  <span className="evd-bilingual-wrap-default">SEE MORE</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">VER MÁS</span>
                 </>
               )
             ) : (expanded ? "SEE LESS" : "SEE MORE")}
@@ -287,8 +287,8 @@ function FieldGridSection({
           >
             {bilingual ? (
               <>
-                <span className="evd-bilingual-wrap-default">ABRIR ÁLBUM COMPLETO ↗</span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-en">OPEN FULL ALBUM ↗</span>
+                <span className="evd-bilingual-wrap-default">OPEN FULL ALBUM ↗</span>
+                <span className="evd-bilingual-wrap-alt evd-bilingual-es">ABRIR ÁLBUM COMPLETO ↗</span>
               </>
             ) : "OPEN FULL ALBUM ↗"}
           </a>

@@ -331,14 +331,14 @@ function resolveCredits(
     role: p.role,
     name: p.name,
     href: p.href,
-    photo: undefined as string | undefined,
+    photo: p.photo,
   }));
   const cast = (extra?.castOverride ?? []).map((p) => ({
     group: "cast" as const,
     role: p.role,
     name: p.name,
     href: p.href,
-    photo: undefined as string | undefined,
+    photo: p.photo,
   }));
   const combined = [...team, ...cast];
   return combined.length ? combined : undefined;
@@ -486,42 +486,41 @@ function ArchivedEventInfoBand({
     <div className="evd-ticket-bar">
       <div className="evd-ticket-bar-inner">
         <div className="evd-ticket-row1">
-          <div className="evd-ticket-chips">
-            <span className="evd-tmeta-chip">
-              {formatDateRange(event.date, event.endDate)}
-            </span>
-
-            <span className="evd-tmeta-chip">
+          <div className="evd-ticket-when-where">
+            <span className="evd-tww-date">{formatDateRange(event.date, event.endDate)}</span>
+            <span className="evd-tww-venue">
               {event.venue}
               {event.city !== "Worldwide"
                 ? ` · ${event.city}${event.country ? `, ${event.country}` : ""}`
                 : ""}
             </span>
-
-            {event.runtime ? (
-              <span className="evd-tmeta-chip">{event.runtime}</span>
-            ) : null}
-
-            {event.language ? (
-              <span className="evd-tmeta-chip">{event.language}</span>
-            ) : null}
-
-            {event.suitability ? (
-              <span className="evd-tmeta-chip">{event.suitability}</span>
-            ) : null}
           </div>
 
           <div className="evd-ticket-purchase">
             <Link href="/donate?mode=new-work&freq=monthly" className="evd-btn-ticket">
               {event.translations ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">Sponsor Stories Like This →</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Apoya Historias Como Esta →</span>
+                  <span className="evd-bilingual-wrap-default">Sponsor New Works Like This →</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Apoya Nuevas Obras →</span>
                 </>
-              ) : "Sponsor Stories Like This →"}
+              ) : "Sponsor New Works Like This →"}
             </Link>
           </div>
         </div>
+
+        {(event.runtime || event.language || event.suitability) ? (
+          <div className="evd-ticket-chips">
+            {event.runtime ? (
+              <span className="evd-tmeta-chip">{event.runtime}</span>
+            ) : null}
+            {event.language ? (
+              <span className="evd-tmeta-chip">{event.language}</span>
+            ) : null}
+            {event.suitability ? (
+              <span className="evd-tmeta-chip">{event.suitability}</span>
+            ) : null}
+          </div>
+        ) : null}
 
         {event.archiveSummary ? (
           <div className="evd-a11y-inline">
@@ -581,6 +580,55 @@ function UpcomingEventInfoBand({
     <div className="evd-ticket-bar">
       <div className="evd-ticket-bar-inner">
         <div className="evd-ticket-row1">
+          <div className="evd-ticket-when-where">
+            {event.ticketUrl ? (
+              <a href={event.ticketUrl} target="_blank" rel="noopener noreferrer" className="evd-tww-date evd-tww-date--linked">
+                {formatDateRange(event.date, event.endDate)}
+              </a>
+            ) : (
+              <span className="evd-tww-date">{formatDateRange(event.date, event.endDate)}</span>
+            )}
+            {event.venueUrl ? (
+              <a href={event.venueUrl} target="_blank" rel="noopener noreferrer" className="evd-tww-venue evd-tww-venue--linked">
+                {event.venue}{event.city !== "Worldwide" ? ` · ${event.city}${event.country ? `, ${event.country}` : ""}` : ""}
+              </a>
+            ) : (
+              <span className="evd-tww-venue">
+                {event.venue}{event.city !== "Worldwide" ? ` · ${event.city}${event.country ? `, ${event.country}` : ""}` : ""}
+              </span>
+            )}
+          </div>
+
+          <div className="evd-ticket-purchase">
+            {event.ticketPrice ? (
+              <span className="evd-tmeta-price">
+                {event.translations?.["es"]?.ticketPrice ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">{event.ticketPrice}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].ticketPrice}</span>
+                  </>
+                ) : event.ticketPrice}
+              </span>
+            ) : null}
+            {primaryAction ? (
+              <a
+                href={primaryAction.href}
+                target={primaryAction.external ? "_blank" : undefined}
+                rel={primaryAction.external ? "noopener noreferrer" : undefined}
+                className={`evd-btn-ticket${primaryAction.tone === "invite" ? " evd-btn-ticket--invite" : ""}`}
+              >
+                {isBilingual && primaryAction.esLabel ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">{primaryAction.label}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{primaryAction.esLabel}</span>
+                  </>
+                ) : primaryAction.label}
+              </a>
+            ) : null}
+          </div>
+        </div>
+
+        {(event.runtime || event.language || event.suitability) ? (
           <div className="evd-ticket-chips">
             {event.runtime ? (
               <span className="evd-tmeta-chip">
@@ -616,35 +664,7 @@ function UpcomingEventInfoBand({
               </span>
             ) : null}
           </div>
-
-          <div className="evd-ticket-purchase">
-            {event.ticketPrice ? (
-              <span className="evd-tmeta-price">
-                {event.translations?.["es"]?.ticketPrice ? (
-                  <>
-                    <span className="evd-bilingual-wrap-default">{event.ticketPrice}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].ticketPrice}</span>
-                  </>
-                ) : event.ticketPrice}
-              </span>
-            ) : null}
-            {primaryAction ? (
-              <a
-                href={primaryAction.href}
-                target={primaryAction.external ? "_blank" : undefined}
-                rel={primaryAction.external ? "noopener noreferrer" : undefined}
-                className={`evd-btn-ticket${primaryAction.tone === "invite" ? " evd-btn-ticket--invite" : ""}`}
-              >
-                {isBilingual && primaryAction.esLabel ? (
-                  <>
-                    <span className="evd-bilingual-wrap-default">{primaryAction.label}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{primaryAction.esLabel}</span>
-                  </>
-                ) : primaryAction.label}
-              </a>
-            ) : null}
-          </div>
-        </div>
+        ) : null}
 
         <div className="evd-actions">
           <EventShareButton
@@ -824,16 +844,14 @@ export default function EventDetailPageTemplate({
             <span className="evd-bilingual-wrap-default">
               {getEventEyebrow(event)}{" · "}
               <Link href={`/season/${relatedProduction.season}`} className="evd-hero-season-link">
-                {`Season ${relatedProduction.season}`}
+                {`Season ${relatedProduction.season}`}{relatedProduction.year ? ` (${relatedProduction.year})` : ""}
               </Link>
-              {relatedProduction.year ? ` (${relatedProduction.year})` : ""}
             </span>
             <span className="evd-bilingual-wrap-alt evd-bilingual-es">
               {getEventEyebrowEs(event)}{" · "}
               <Link href={`/season/${relatedProduction.season}`} className="evd-hero-season-link">
-                {`Temporada ${relatedProduction.season}`}
+                {`Temporada ${relatedProduction.season}`}{relatedProduction.year ? ` (${relatedProduction.year})` : ""}
               </Link>
-              {relatedProduction.year ? ` (${relatedProduction.year})` : ""}
             </span>
           </>
         )
@@ -841,9 +859,8 @@ export default function EventDetailPageTemplate({
           <>
             {getEventEyebrow(event)}{" · "}
             <Link href={`/season/${relatedProduction.season}`} className="evd-hero-season-link">
-              {`Season ${relatedProduction.season}`}
+              {`Season ${relatedProduction.season}`}{relatedProduction.year ? ` (${relatedProduction.year})` : ""}
             </Link>
-            {relatedProduction.year ? ` (${relatedProduction.year})` : ""}
           </>
         )
       : undefined;
@@ -852,8 +869,16 @@ export default function EventDetailPageTemplate({
   const castCredits = (credits ?? []).filter((c) => c.group === "cast");
   const creativeCredits = (credits ?? []).filter((c) => !c.group || c.group === "creative");
 
-  // Images for editorial overlays — photo gallery is the primary source
-  const editorialImg1 = photoGallery?.[0]?.src ?? null;
+  // Images for editorial overlays — prefer the first landscape-oriented gallery image.
+  // Landscape detection: filename contains "landscape", "wide", or "16x9".
+  // Falls back to first gallery image if no landscape indicator is found.
+  const editorialImg1 = ((): string | null => {
+    if (!photoGallery?.length) return null;
+    const landscape = photoGallery.find(
+      (g) => /landscape|wide|16x9/i.test(g.src)
+    );
+    return landscape?.src ?? photoGallery[0].src;
+  })();
 
   const eventUrl = `${DETAIL_URL_BASE}${canonicalEventPath(event)}`;
   const gcalUrl = googleCalendarUrl(event);
@@ -964,43 +989,6 @@ export default function EventDetailPageTemplate({
             );
           })() : null}
 
-          <div className="evd-hero-pills">
-            {event.ticketUrl ? (
-              <a
-                href={event.ticketUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="evd-pill evd-pill--date evd-pill--link"
-              >
-                {formatDateRange(event.date, event.endDate)}
-              </a>
-            ) : (
-              <span className="evd-pill evd-pill--date">
-                {formatDateRange(event.date, event.endDate)}
-              </span>
-            )}
-
-            {event.venueUrl ? (
-              <a
-                href={event.venueUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="evd-pill evd-pill--venue evd-pill--link"
-              >
-                {event.venue}
-                {event.city !== "Worldwide"
-                  ? ` · ${event.city}${event.country ? `, ${event.country}` : ""}`
-                  : ""}
-              </a>
-            ) : (
-              <span className="evd-pill evd-pill--venue">
-                {event.venue}
-                {event.city !== "Worldwide"
-                  ? ` · ${event.city}${event.country ? `, ${event.country}` : ""}`
-                  : ""}
-              </span>
-            )}
-          </div>
         </div>
       </div>
 
@@ -1693,11 +1681,15 @@ export default function EventDetailPageTemplate({
 
                 {/* ── Current linked production — dynamic status badge ── */}
                 {relatedProduction && event.production ? (() => {
-                  const badge = getEventBadge(event.date, event.endDate);
+                  // Use isArchiveView (isElapsed) as the authoritative check — respects
+                  // event.status="past" even when the date hasn't passed yet.
+                  const badge = isArchiveView
+                    ? { label: "Archive", cls: "archive" as const, isUpcoming: false }
+                    : getEventBadge(event.date, event.endDate);
                   return (
                     <Link
                       href={`/theatre/${event.production}`}
-                      className="evd-cycle-card"
+                      className={`evd-cycle-card${badge.isUpcoming ? " evd-cycle-card--upcoming" : ""}`}
                       role="listitem"
                     >
                       <div
@@ -1743,7 +1735,7 @@ export default function EventDetailPageTemplate({
                 {productionCycle.map((p) => {
                   const cycleBadge = getProductionBadge(p.slug);
                   return (
-                    <Link key={p.slug} href={`/theatre/${p.slug}`} className="evd-cycle-card" role="listitem">
+                    <Link key={p.slug} href={`/theatre/${p.slug}`} className={`evd-cycle-card${cycleBadge.isUpcoming ? " evd-cycle-card--upcoming" : ""}`} role="listitem">
                       <div
                         className="evd-cycle-img"
                         style={{
@@ -1841,10 +1833,10 @@ export default function EventDetailPageTemplate({
               <p className="evd-section-eyebrow">
                 {isBilingual ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">More Events</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Más Eventos</span>
+                    <span className="evd-bilingual-wrap-default">Next Up</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Lo Que Sigue</span>
                   </>
-                ) : "More Events"}
+                ) : "Next Up"}
               </p>
               <h2 className="evd-section-title">
                 {isBilingual ? (
@@ -1925,10 +1917,10 @@ export default function EventDetailPageTemplate({
               <Link href="/events" className="evd-btn-ghost evd-rel-all-events-btn">
                 {isBilingual ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">Explore the Season →</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Explora la Temporada →</span>
+                    <span className="evd-bilingual-wrap-default">Find Your Show →</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Encuentra Tu Función →</span>
                   </>
-                ) : "Explore the Season →"}
+                ) : "Find Your Show →"}
               </Link>
             </div>
           </div>
@@ -1959,18 +1951,18 @@ export default function EventDetailPageTemplate({
                 <>
                   <span className="evd-bilingual-wrap-default">
                     {isArchiveView
-                      ? "Follow the work."
-                      : "Never miss a show."}
+                      ? "Stay with the work."
+                      : "Be in the room."}
                   </span>
                   <span className="evd-bilingual-wrap-alt evd-bilingual-es">
                     {isArchiveView
-                      ? "Sigue la obra."
-                      : "No te pierdas ningún espectáculo."}
+                      ? "Mantente cerca de la obra."
+                      : "Sé parte de la sala."}
                   </span>
                 </>
               ) : (isArchiveView
-                ? "Follow the work."
-                : "Never miss a show.")}
+                ? "Stay with the work."
+                : "Be in the room.")}
             </h2>
             <p className="evd-newsletter-body">
               {isBilingual ? (
@@ -2073,6 +2065,7 @@ export default function EventDetailPageTemplate({
           inset: 0;
           background: var(--evd-hero-overlay);
           z-index: 1;
+          pointer-events: none;
         }
 
         .evd-hero-glow {
@@ -2251,7 +2244,7 @@ export default function EventDetailPageTemplate({
           gap: 0.6rem;
         }
 
-        /* Row 1: chips left, price + CTA right — all on one line */
+        /* Row 1: when/where (left) + CTA (right) */
         .evd-ticket-row1 {
           display: flex;
           align-items: center;
@@ -2259,12 +2252,65 @@ export default function EventDetailPageTemplate({
           gap: 1.5rem;
           flex-wrap: wrap;
         }
+        /* Date + venue — prominent hierarchy row */
+        .evd-ticket-when-where {
+          display: flex;
+          flex-direction: column;
+          gap: 0.35rem;
+          flex: 1;
+          min-width: 0;
+        }
+        /* Date — primary visual anchor with subtle ring framing */
+        .evd-tww-date {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: clamp(1rem, 1.6vw, 1.2rem);
+          font-weight: 700;
+          color: #fff;
+          letter-spacing: 0.01em;
+          line-height: 1.25;
+          white-space: nowrap;
+          display: inline-block;
+          padding: 0.22rem 0.75rem;
+          border: 1.5px solid rgba(255,255,255,0.18);
+          border-radius: 6px;
+          background: rgba(255,255,255,0.06);
+          align-self: flex-start;
+        }
+        .evd-tww-date--linked {
+          text-decoration: none;
+          transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+        }
+        .evd-tww-date--linked:hover {
+          color: #ffcc00;
+          border-color: rgba(255,204,0,0.35);
+          background: rgba(255,204,0,0.07);
+        }
+        /* Venue — clear but secondary, supports the date anchor */
+        .evd-tww-venue {
+          font-family: "DM Sans", sans-serif;
+          font-size: clamp(0.8rem, 1.2vw, 0.9rem);
+          font-weight: 500;
+          color: rgba(255,255,255,0.62);
+          letter-spacing: 0.02em;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          padding-left: 0.1rem;
+        }
+        .evd-tww-venue--linked {
+          text-decoration: none;
+          transition: color 0.15s ease;
+        }
+        .evd-tww-venue--linked:hover { color: rgba(255,255,255,0.88); }
+        /* Meta chips row — separated from date/venue block */
         .evd-ticket-chips {
           display: flex;
           align-items: center;
           gap: 1.75rem;
           flex-wrap: wrap;
-          flex: 1;
+          margin-top: 0.5rem;
+          padding-top: 0.5rem;
+          border-top: 1px solid rgba(255,255,255,0.07);
         }
         .evd-ticket-purchase {
           display: flex;
@@ -2803,18 +2849,21 @@ export default function EventDetailPageTemplate({
           background: var(--evd-accent, #F23359);
           border-radius: 18px 18px 0 0;
         }
-        /* Panoramic background image — fades smoothly from top, no hard lower edge */
+        /* Panoramic background image — full bleed top, fades to transparent below */
         .evd-content-card::after {
           content: "";
           position: absolute;
-          inset: 0 0 0 0;
+          top: 5px; /* sits beneath the 5px accent stripe */
+          left: 0;
+          right: 0;
+          height: clamp(180px, 20vw, 320px);
           background-image: var(--evd-card-bg, none);
           background-size: cover;
           background-position: center top;
-          opacity: 0.13;
+          opacity: 0.15;
           pointer-events: none;
-          -webkit-mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,0.85) 20%, rgba(0,0,0,0.45) 50%, transparent 68%);
-          mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,0.85) 20%, rgba(0,0,0,0.45) 50%, transparent 68%);
+          -webkit-mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 100%);
+          mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 100%);
           border-radius: 18px 18px 0 0;
           z-index: 0;
         }
@@ -2894,6 +2943,51 @@ export default function EventDetailPageTemplate({
         }
         .evd-content-card .evd-credit-link:hover {
           color: #F23359;
+        }
+        /* White-card contrast overrides for category tags */
+        .evd-content-card .evd-theme-pill {
+          color: #1a7d90;
+          background: rgba(36,147,169,0.08);
+          border-color: rgba(36,147,169,0.32);
+        }
+        .evd-content-card a.evd-theme-pill:hover {
+          color: #115e6e;
+          background: rgba(36,147,169,0.15);
+          border-color: rgba(36,147,169,0.55);
+        }
+        .evd-content-card .evd-cause-pill {
+          color: #6c00af;
+          background: rgba(108,0,175,0.07);
+          border-color: rgba(108,0,175,0.28);
+        }
+        .evd-content-card a.evd-cause-pill:hover {
+          color: #530087;
+          background: rgba(108,0,175,0.14);
+          border-color: rgba(108,0,175,0.45);
+        }
+        .evd-content-card .evd-impact-support-eyebrow {
+          color: rgba(36,17,35,0.5);
+        }
+
+        /* Partners inside white content card — override dark-bg defaults */
+        .evd-content-card .evd-partner-link {
+          color: rgba(36,17,35,0.78);
+        }
+        .evd-content-card .evd-partner-link--row {
+          border-color: rgba(36,17,35,0.1);
+          background: rgba(36,17,35,0.03);
+        }
+        .evd-content-card a.evd-partner-link:hover {
+          color: rgba(36,17,35,0.95);
+          background: rgba(36,17,35,0.06);
+          border-color: rgba(36,17,35,0.2);
+        }
+        .evd-content-card .evd-partner-arrow {
+          color: var(--evd-accent, #F23359);
+          opacity: 0.75;
+        }
+        .evd-content-card a.evd-partner-link:hover .evd-partner-arrow {
+          opacity: 1;
         }
 
         /* ── 3c. About section (stolen from /theatre/[slug]) ───────────── */
@@ -3588,6 +3682,27 @@ export default function EventDetailPageTemplate({
           border-color: rgba(47,168,115,0.5);
         }
 
+        /* Upcoming cycle cards — more presence than archive cards */
+        .evd-cycle-card--upcoming {
+          border-color: rgba(217,169,25,0.2);
+          background: rgba(217,169,25,0.04);
+        }
+        .evd-cycle-card--upcoming:hover {
+          border-color: rgba(217,169,25,0.5);
+          box-shadow: 0 16px 48px rgba(217,169,25,0.18), 0 4px 16px rgba(0,0,0,0.4);
+        }
+        .evd-cycle-card--upcoming .evd-cycle-link {
+          border-color: rgba(217,169,25,0.3);
+          color: #D9A919;
+        }
+        .evd-cycle-card--upcoming:hover .evd-cycle-link {
+          border-color: rgba(217,169,25,0.65);
+          color: #D9A919;
+        }
+        .evd-cycle-card--upcoming .evd-cycle-title {
+          color: rgba(255,255,255,0.96);
+        }
+
         /* ── 9. Related Upcoming Events ────────────────────────────────── */
         /* Shared section header (used by cycle + related events) */
         .evd-section-head {
@@ -4080,13 +4195,15 @@ export default function EventDetailPageTemplate({
 
         /* Archive eyebrow season link */
         .evd-hero-season-link {
-          color: rgba(255,255,255,0.45);
+          color: rgba(255,255,255,0.52);
           text-decoration: none;
-          transition: color 0.16s ease, letter-spacing 0.16s ease;
+          transition: color 0.16s ease;
+          cursor: pointer;
         }
         .evd-hero-season-link:hover {
           color: #ffcc00;
-          letter-spacing: 0.06em;
+          text-decoration: underline;
+          text-underline-offset: 3px;
         }
 
         /* Archive badge in hero */
@@ -4154,12 +4271,13 @@ export default function EventDetailPageTemplate({
         .evd-resource-link {
           font-family: "DM Sans", sans-serif;
           font-size: 0.875rem;
-          color: var(--evd-accent);
+          font-weight: 700;
+          color: #6c00af;
           text-decoration: none;
           transition: color 0.15s ease, letter-spacing 0.15s ease;
         }
         .evd-resource-link:hover {
-          color: #ffcc00;
+          color: #F23359;
           letter-spacing: 0.04em;
         }
         .evd-resource-label {

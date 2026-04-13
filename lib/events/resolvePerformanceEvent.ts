@@ -227,14 +227,14 @@ export function resolvePerformanceEvent(event: DatEvent): ResolvedPerformanceEve
         role: p.role,
         name: p.name,
         href: p.href,
-        photo: undefined as string | undefined,
+        photo: p.photo,
       }));
       const castItems = (extra?.castOverride ?? []).map((p) => ({
         group: "cast" as const,
         role: p.role,
         name: p.name,
         href: p.href,
-        photo: undefined as string | undefined,
+        photo: p.photo,
       }));
       const combined = [...team, ...castItems];
       return combined.length ? combined : undefined;
