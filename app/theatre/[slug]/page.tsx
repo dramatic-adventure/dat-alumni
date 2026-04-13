@@ -161,22 +161,43 @@ export default async function TheatreProductionPage({ params }: PageProps) {
   if (performanceEvent?.category === "performance") {
     const resolved = resolvePerformanceEvent(performanceEvent);
 
-    // Enrich credits with real alumni headshots from slug-based resolution.
-    // Only fires when credits exist; loadAlumni is request-memoized via cache().
+    // Enrich credits with real alumni headshots.
+    // Tries slug-based lookup (from href) first, then name-based fallback.
+    // Name-based lookup also populates missing hrefs so archive links work.
+    // loadAlumni is request-memoized via cache().
     if (resolved.credits?.length) {
       const allAlumni = await loadAlumni();
       const headshotBySlug: Record<string, string> = {};
+      const slugByName: Record<string, string> = {};
+      const headshotByName: Record<string, string> = {};
       for (const a of allAlumni) {
-        if (a.slug && a.headshotUrl) {
-          headshotBySlug[a.slug] = a.headshotUrl.replace(/^http:\/\//i, "https://");
+        if (!a.slug) continue;
+        const nameKey = a.name?.toLowerCase().trim();
+        if (a.headshotUrl) {
+          const url = a.headshotUrl.replace(/^http:\/\//i, "https://");
+          headshotBySlug[a.slug] = url;
+          if (nameKey) headshotByName[nameKey] = url;
         }
+        if (nameKey) slugByName[nameKey] = a.slug;
       }
       resolved.credits = resolved.credits.map((c) => {
         if (c.photo) return c;
-        const match = c.href?.match(/^\/alumni\/(.+)$/);
-        if (!match) return c;
-        const photo = headshotBySlug[match[1]];
-        return photo ? { ...c, photo } : c;
+        // 1. Slug-based lookup from href
+        const slugMatch = c.href?.match(/^\/alumni\/(.+)$/);
+        if (slugMatch) {
+          const photo = headshotBySlug[slugMatch[1]];
+          if (photo) return { ...c, photo };
+        }
+        // 2. Name-based fallback — also repairs missing hrefs
+        const nameKey = c.name?.toLowerCase().trim();
+        if (nameKey) {
+          const photo = headshotByName[nameKey];
+          const slug = slugByName[nameKey];
+          const href = c.href ?? (slug ? `/alumni/${slug}` : undefined);
+          if (photo) return { ...c, photo, ...(href ? { href } : {}) };
+          if (href && !c.href) return { ...c, href };
+        }
+        return c;
       });
     }
 
