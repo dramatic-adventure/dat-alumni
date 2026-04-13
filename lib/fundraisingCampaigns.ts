@@ -179,6 +179,24 @@ export type FundraisingCampaign = {
     }>;
   };
 
+  // ── Donor messaging ────────────────────────────────────────────────
+  /**
+   * Short, punchy editorial statement (1–2 sentences) displayed as a
+   * highlighted pull-quote near the give panel. Makes the "why donate"
+   * case viscerally clear without repeating heroCopy.
+   */
+  donorCallout?: string;
+
+  // ── Match underwriter pathway ───────────────────────────────────────
+  /** Email address for large-donor / match-underwriter inquiries */
+  matchUnderwriterEmail?: string;
+  /** Custom label for the underwriter CTA (defaults to "Interested in funding a matching gift?") */
+  matchUnderwriterLabel?: string;
+
+  // ── Social share ────────────────────────────────────────────────────
+  /** Pre-written share text used in native share / Twitter / copy prompt */
+  shareText?: string;
+
   // ── Analytics ──────────────────────────────────────────────────────
   utmCampaign?: string;     // defaults to campaign.id
 };

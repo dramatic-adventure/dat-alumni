@@ -6,7 +6,7 @@
  *
  * Color palette (campaign-specific, distinct from DAT main-site purple identity):
  *   DARK    = #081C3A  deep midnight navy  (hero, band, testimonials, CTA)
- *   ACCENT  = #1A5FD4  vibrant campaign blue (eyebrows, dates, links, amounts)
+ *   ACCENT  = #2493A9  DAT blue (eyebrows, dates, links, accents)
  *   YELLOW  = #FFCC00  DAT yellow (CTAs, highlights — unchanged)
  *   PURPLE  = #6C00AF  DAT purple (secondary nod, kept minimal)
  *
@@ -27,7 +27,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import type { FundraisingCampaign } from "@/lib/fundraisingCampaigns";
 import {
   formatCurrencyMinor,
@@ -43,7 +43,7 @@ import CampaignGiveWidget from "@/components/campaign/CampaignGiveWidget";
 /* ------------------------------------------------------------------ */
 
 const DARK = "#081C3A";
-const ACCENT = "#1A5FD4";
+const ACCENT = "#2493A9";   // DAT Blue
 const YELLOW = "#FFCC00";
 
 /* ------------------------------------------------------------------ */
@@ -82,6 +82,38 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
   const pct = campaignProgress(totals.raisedMinor, campaign.goalAmount);
   const daysLeft = daysUntilDeadline(campaign.deadline);
 
+  // Share state
+  const [copied, setCopied] = useState(false);
+  const [canShare, setCanShare] = useState(false);
+  const [pageUrl, setPageUrl] = useState("");
+
+  useEffect(() => {
+    setPageUrl(window.location.href);
+    setCanShare(typeof navigator !== "undefined" && !!navigator.share);
+  }, []);
+
+  const shareText =
+    campaign.shareText ?? `Support ${campaign.title} — a DAT fundraising campaign.`;
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(pageUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
+    } catch {
+      // silently ignore
+    }
+  };
+
+  const handleNativeShare = async () => {
+    if (!navigator.share) return;
+    try {
+      await navigator.share({ title: campaign.title, text: shareText, url: pageUrl });
+    } catch {
+      // user dismissed — ignore
+    }
+  };
+
   // Parallax hero scroll
   useEffect(() => {
     const el = heroRef.current;
@@ -119,6 +151,14 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
               <span className="cmp-match-cap">
                 Up to {formatCurrency(campaign.matchCap, currency)}
               </span>
+            )}
+            {campaign.matchUnderwriterEmail && (
+              <a
+                href={`mailto:${campaign.matchUnderwriterEmail}?subject=${encodeURIComponent(`Matching Gift — ${campaign.title}`)}`}
+                className="cmp-match-underwriter"
+              >
+                {campaign.matchUnderwriterLabel ?? "Interested in funding a matching gift?"} →
+              </a>
             )}
           </div>
         </div>
@@ -242,6 +282,14 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
             {campaign.heroCopy.split("\n\n").map((para, i) => (
               <p key={i} className="cmp-story-para">{para}</p>
             ))}
+
+            {/* Donor callout pull-quote */}
+            {campaign.donorCallout && (
+              <blockquote className="cmp-donor-callout">
+                <span className="cmp-donor-callout-mark">"</span>
+                {campaign.donorCallout}
+              </blockquote>
+            )}
 
             {/* Learn more links — generic, not hardcoded to PASSAGE */}
             {(campaign.learnMoreUrl || campaign.secondaryUrl) && (
@@ -495,6 +543,49 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         </section>
       )}
 
+      {/* ── 10.5 SHARE ──────────────────────────────────────────── */}
+      {isActive && (
+        <section className="cmp-share-section">
+          <div className="cmp-share-inner">
+            <div className="cmp-share-copy">
+              <span className="cmp-share-eyebrow">Pass it on</span>
+              <p className="cmp-share-text">
+                Know someone who believes in this work? Sharing this campaign
+                is one of the most powerful things you can do right now.
+              </p>
+            </div>
+            <div className="cmp-share-actions">
+              <button
+                type="button"
+                className={`cmp-share-btn${copied ? " cmp-share-btn--done" : ""}`}
+                onClick={handleCopyLink}
+              >
+                {copied ? "✓ Copied!" : "Copy Link"}
+              </button>
+              {canShare && (
+                <button
+                  type="button"
+                  className="cmp-share-btn cmp-share-btn--native"
+                  onClick={handleNativeShare}
+                >
+                  Share →
+                </button>
+              )}
+              {pageUrl && (
+                <a
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText + " ")}&url=${encodeURIComponent(pageUrl)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cmp-share-btn cmp-share-btn--x"
+                >
+                  Post on X
+                </a>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ── 11. LINKED CONTENT ──────────────────────────────────── */}
       {hasLinkedContent && (
         <section className="cmp-linked-section">
@@ -728,6 +819,18 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           opacity: 0.65;
           font-weight: 600;
         }
+        .cmp-match-underwriter {
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.7rem;
+          font-weight: 600;
+          color: rgba(8,28,58,0.7);
+          text-decoration: underline;
+          text-underline-offset: 2px;
+          opacity: 0.75;
+          white-space: nowrap;
+          transition: opacity 140ms;
+        }
+        .cmp-match-underwriter:hover { opacity: 1; }
 
         /* ─── Hero ─────────────────────────────────────────────────── */
         .cmp-hero-section {
@@ -938,6 +1041,31 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           line-height: 1.78;
           color: rgba(8,28,58,0.78);
         }
+        /* Donor callout pull-quote */
+        .cmp-donor-callout {
+          position: relative;
+          margin: 1.75rem 0 1.5rem;
+          padding: 1.25rem 1.5rem 1.25rem 1.75rem;
+          border-left: 3px solid ${ACCENT};
+          background: rgba(36, 147, 169, 0.06);
+          border-radius: 0 12px 12px 0;
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: 1.05rem;
+          font-weight: 600;
+          line-height: 1.6;
+          color: #0f1f38;
+          font-style: normal;
+        }
+        .cmp-donor-callout-mark {
+          font-family: Georgia, serif;
+          font-size: 2rem;
+          line-height: 0;
+          vertical-align: -0.6rem;
+          margin-right: 0.2rem;
+          color: ${ACCENT};
+          opacity: 0.6;
+        }
+
         .cmp-story-links { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
         .cmp-text-link {
           font-family: var(--font-space-grotesk), sans-serif;
@@ -950,7 +1078,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           transition: color 140ms, border-color 140ms;
           align-self: flex-start;
         }
-        .cmp-text-link:hover { color: #1449a8; border-color: #1449a8; }
+        .cmp-text-link:hover { color: #1c7a8a; border-color: #1c7a8a; }
         .cmp-text-link--secondary { color: rgba(8,28,58,0.5); border-color: rgba(8,28,58,0.18); font-size: 0.8rem; }
 
         .cmp-give-sticky { position: sticky; top: 2rem; }
@@ -1328,6 +1456,96 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
         .cmp-supporters-cta {
           margin-top: 1.5rem;
+        }
+
+        /* ─── Share section ────────────────────────────────────────── */
+        .cmp-share-section {
+          background: ${DARK};
+          padding: 2.75rem 2rem;
+        }
+        .cmp-share-inner {
+          max-width: 1100px;
+          margin: 0 auto;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 2rem;
+          flex-wrap: wrap;
+        }
+        .cmp-share-copy {
+          flex: 1;
+          min-width: 220px;
+        }
+        .cmp-share-eyebrow {
+          display: block;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.65rem;
+          font-weight: 700;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          color: ${ACCENT};
+          margin-bottom: 0.4rem;
+        }
+        .cmp-share-text {
+          margin: 0;
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: 0.92rem;
+          font-weight: 500;
+          color: rgba(242,242,242,0.78);
+          line-height: 1.55;
+          max-width: 400px;
+        }
+        .cmp-share-actions {
+          display: flex;
+          gap: 0.65rem;
+          flex-wrap: wrap;
+          align-items: center;
+        }
+        .cmp-share-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.6rem 1.2rem;
+          border-radius: 10px;
+          border: 1.5px solid rgba(255,255,255,0.18);
+          background: rgba(255,255,255,0.06);
+          color: rgba(242,242,242,0.88);
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: 0.78rem;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          cursor: pointer;
+          text-decoration: none;
+          transition: background 140ms, border-color 140ms, color 140ms;
+          white-space: nowrap;
+        }
+        .cmp-share-btn:hover {
+          background: rgba(255,255,255,0.12);
+          border-color: rgba(255,255,255,0.35);
+          color: #fff;
+        }
+        .cmp-share-btn--done {
+          background: rgba(36,147,169,0.2);
+          border-color: ${ACCENT};
+          color: ${ACCENT};
+        }
+        .cmp-share-btn--native {
+          background: ${ACCENT};
+          border-color: ${ACCENT};
+          color: #fff;
+        }
+        .cmp-share-btn--native:hover {
+          background: #1c7a8a;
+          border-color: #1c7a8a;
+        }
+        .cmp-share-btn--x {
+          background: transparent;
+        }
+        @media (max-width: 640px) {
+          .cmp-share-inner {
+            flex-direction: column;
+            align-items: flex-start;
+          }
         }
 
         /* ─── Linked content ───────────────────────────────────────── */

@@ -308,6 +308,16 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
       {/* ── Error ───────────────────────────────────────────────── */}
       {error && <p className="cgw-error">{error}</p>}
 
+      {/* ── Match callout ───────────────────────────────────────── */}
+      {campaign.matchActive && campaign.matchDescription && (
+        <div className="cgw-match-callout">
+          <span className="cgw-match-callout-bolt">⚡</span>
+          <span className="cgw-match-callout-text">
+            {campaign.matchDescription}
+          </span>
+        </div>
+      )}
+
       {/* ── Submit ──────────────────────────────────────────────── */}
       <button
         type="button"
@@ -572,6 +582,29 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
           font-family: var(--font-dm-sans), sans-serif;
           font-size: 0.82rem;
           color: #c81e1e;
+        }
+
+        /* Match callout */
+        .cgw-match-callout {
+          display: flex;
+          align-items: center;
+          gap: 0.55rem;
+          padding: 0.65rem 0.9rem;
+          background: rgba(255, 204, 0, 0.1);
+          border: 1.5px solid rgba(255, 204, 0, 0.35);
+          border-radius: 11px;
+        }
+        .cgw-match-callout-bolt {
+          font-size: 0.9rem;
+          line-height: 1;
+          flex-shrink: 0;
+        }
+        .cgw-match-callout-text {
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: #5a3d00;
+          line-height: 1.4;
         }
 
         /* Submit */

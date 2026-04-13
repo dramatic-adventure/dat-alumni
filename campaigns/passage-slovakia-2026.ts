@@ -24,7 +24,7 @@ export const passageSlovakia2026: FundraisingCampaign = {
   eyebrow: "Artist Fundraising Campaign",
   tagline: "Send an artist to Slovakia. Build something that lasts.",
   heroCopy:
-    "PASSAGE is DAT's international residency model: artists from across the world arriving in a new community, making theatre together with the people who live there. In 2026, that work lands in Slovakia — at ETP Slovensko's schools and cultural centers in Nitra and beyond.\n\nWe're raising $12,000 to subsidize artist participation so that financial barriers never determine who gets to be in the room. This is how we keep the work honest. This is how we keep it open.\n\nYour gift sends an artist to Slovakia. And the theatre they make there will echo long after they leave.",
+    "PASSAGE is not a tour. It is a residency — artists arriving in a community, making theatre *with* the people who live there, not for them. In 2026, that work goes to Slovakia: to ETP Slovensko's schools and cultural centers in Nitra and beyond, where DAT's partnership with the local community has been growing for years.\n\nEvery artist in the PASSAGE program brings something irreplaceable. But travel costs money. And we believe financial barriers should never decide who gets to be in the room. So we're raising $12,000 to subsidize artist participation — because the work is only as honest as who's allowed to show up.\n\nYour gift does not just send an artist across the world. It sends a specific person, with a specific story, into a room full of people who will make something none of them could make alone. That's the work. That's what your support makes possible.",
   heroImage: "/images/rehearsing-nitra.jpg",
   heroImageFocus: "center",
   heroImageCredit: "Rehearsals at ETP Slovensko, Nitra",
@@ -42,6 +42,16 @@ export const passageSlovakia2026: FundraisingCampaign = {
   matchActive: true,
   matchDescription: "All gifts matched 1:1 through May 31 — double your impact.",
   matchCap: 5000,
+  matchUnderwriterEmail: "hello@dramaticadventure.com",
+  matchUnderwriterLabel: "Interested in funding a matching gift?",
+
+  // ── Donor callout ─────────────────────────────────────────────────
+  donorCallout:
+    "This is not just about travel. It is about who gets to be an artist — and who gets to say so. Your gift opens that door.",
+
+  // ── Share ─────────────────────────────────────────────────────────
+  shareText:
+    "DAT artists are heading to Slovakia to make theatre with the community there — and every gift through May 31 is being matched. Help send them:",
 
   // ── Giving ────────────────────────────────────────────────────────
   giveAmounts: [50, 100, 250, 500, 1000],
@@ -91,19 +101,36 @@ export const passageSlovakia2026: FundraisingCampaign = {
     },
   ],
 
-  // ── Drama clubs ───────────────────────────────────────────────────
-  // Replace with real slugs as they become available in the data system.
-  dramaClubs: [
-    { slug: "nitra-youth-ensemble", name: "Nitra Youth Ensemble", country: "Slovakia", city: "Nitra" },
-    { slug: "bratislava-drama-studio", name: "Bratislava Drama Studio", country: "Slovakia", city: "Bratislava" },
-  ],
-
   // ── Alumni ────────────────────────────────────────────────────────
-  // Replace slugs with real artists when confirmed for Slovakia 2026.
+  // Real DAT alumni slugs — linked to live profiles on this site.
   alumni: [
-    { slug: "demo-artist-passage-1", name: "Maria Nguyen", role: "Teaching Artist" },
-    { slug: "demo-artist-passage-2", name: "Kofi Mensah", role: "Ensemble Lead" },
-    { slug: "demo-artist-passage-3", name: "Sofia Andersen", role: "Playwright" },
+    {
+      slug: "jesse-baxter",
+      name: "Jesse Baxter",
+      role: "Artistic Director",
+      imageUrl: "/api/img?fileId=13HsY_wCfqqtlePCBex3PdbSLR1bFofL5&v=2026-02-01T00%3A17%3A56.157Z",
+    },
+    {
+      slug: "barbara-herucova",
+      name: "Barbara Herucová",
+      role: "Community Partnerships, Czechia & Slovakia",
+      imageUrl:
+        "https://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1616725992694-TNS2JIIE17GYNSMTZJYV/64537018_10157465992125439_6983616771756392448_o.jpg",
+    },
+    {
+      slug: "peter-petkovsek",
+      name: "Peter Petkovšek",
+      role: "Director",
+      imageUrl:
+        "https://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613936866403-QO2DX0RHGL3HYGI200RB/peter1.jpg",
+    },
+    {
+      slug: "mathilde-prosen-oldani",
+      name: "Mathilde Prosen-Oldani",
+      role: "Theatremaker",
+      imageUrl:
+        "https://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1688753036942-IFAX0D3LJFO4U8B9YLH1/Tilda6804BW+%282%29+%281%29.jpg",
+    },
   ],
 
   // ── Events ────────────────────────────────────────────────────────
@@ -119,11 +146,19 @@ export const passageSlovakia2026: FundraisingCampaign = {
   ],
 
   // ── Stories ───────────────────────────────────────────────────────
+  // Real story slugs — directly connected to Slovakia and Eastern Europe.
   stories: [
     {
-      slug: "a-girl-without-wings",
-      title: "A Girl Without Wings",
-      teaser: "How a community story in Quito became a touring production that crossed three continents.",
+      slug: "drama-works",
+      title: "Drama Works",
+      teaser:
+        "Long-term drama workshops with Roma youth in Eastern Slovakia — how a partnership with ETP Slovensko became one of DAT's most enduring collaborations.",
+    },
+    {
+      slug: "night-at-the-roma-museum",
+      title: "Night at the Roma Museum",
+      teaser:
+        "A cross-cultural production in Brno, Czechia — made with a community, not just for one.",
     },
   ],
 
