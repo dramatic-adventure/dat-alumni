@@ -61,6 +61,7 @@ export type CampaignLinkedDramaClub = {
   name: string;
   country: string;
   city?: string;
+  imageUrl?: string;
 };
 
 export type CampaignLinkedProduction = {
@@ -78,12 +79,14 @@ export type CampaignLinkedEvent = {
   city: string;
   country: string;
   ticketUrl?: string;
+  imageUrl?: string;
 };
 
 export type CampaignLinkedStory = {
   slug: string;
   title: string;
   teaser?: string;
+  imageUrl?: string;
 };
 
 export type CampaignGalleryItem = {

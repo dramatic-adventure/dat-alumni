@@ -342,8 +342,11 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
         .cgw-root {
           background: #fff;
           border-radius: 20px;
-          border: 1.5px solid rgba(36, 147, 169, 0.22);
-          box-shadow: 0 8px 40px rgba(36, 147, 169, 0.12);
+          border: 2px solid rgba(36, 147, 169, 0.5);
+          box-shadow:
+            0 8px 40px rgba(36, 147, 169, 0.18),
+            0 0 0 5px rgba(36, 147, 169, 0.07),
+            inset 0 1px 0 rgba(255,255,255,0.8);
           padding: 1.75rem 1.5rem 1.5rem;
           display: flex;
           flex-direction: column;

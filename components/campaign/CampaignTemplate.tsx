@@ -39,6 +39,25 @@ import type { CampaignTotals } from "@/lib/getCampaignTotals";
 import CampaignGiveWidget from "@/components/campaign/CampaignGiveWidget";
 
 /* ------------------------------------------------------------------ */
+/* Live totals hook (polls every 60s — drives dynamic stretch goals)  */
+/* ------------------------------------------------------------------ */
+
+function useLiveTotals(campaignId: string, initial: CampaignTotals) {
+  const [live, setLive] = useState<CampaignTotals>(initial);
+  useEffect(() => {
+    const refresh = async () => {
+      try {
+        const res = await fetch(`/api/campaign/${campaignId}/totals`, { cache: "no-store" });
+        if (res.ok) setLive(await res.json());
+      } catch { /* silently keep last known */ }
+    };
+    const interval = setInterval(refresh, 60_000);
+    return () => clearInterval(interval);
+  }, [campaignId]);
+  return live;
+}
+
+/* ------------------------------------------------------------------ */
 /* Color constants                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -80,6 +99,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
   const isActive = campaign.status === "active";
   const isEnded = campaign.status === "ended" || campaign.status === "archived";
 
+  const liveTotals = useLiveTotals(campaign.id, totals);
   const currency = campaign.currency ?? "usd";
   const pct = campaignProgress(totals.raisedMinor, campaign.goalAmount);
   const daysLeft = daysUntilDeadline(campaign.deadline);
@@ -188,6 +208,9 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
 
         {/* Secondary gradient: soft left-column reading zone */}
         <div className="cmp-hero-gradient-left" />
+
+        {/* Teal wash: atmospheric #2493A9 shading at the bottom — transitions into progress band */}
+        <div className="cmp-hero-gradient-bottom" />
 
         {/* Hero editorial text panel */}
         <div className="cmp-hero-body">
@@ -388,7 +411,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
             </h2>
             <div className="cmp-stretch-grid">
               {campaign.stretchGoals!.map((goal, i) => {
-                const raised = totals.raisedMinor / 100;
+                const raised = liveTotals.raisedMinor / 100;
                 const unlocked = raised >= goal.amount;
                 return (
                   <div
@@ -396,8 +419,8 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                     className={`cmp-stretch-card${unlocked ? " cmp-stretch-card--unlocked" : ""}`}
                   >
                     <div className="cmp-stretch-card-top">
-                      <span className="cmp-stretch-status">
-                        {unlocked ? "✓ Unlocked" : "Locked"}
+                      <span className={`cmp-stretch-status${unlocked ? " cmp-stretch-status--unlocked" : ""}`}>
+                        {unlocked ? "🎉 Unlocked!" : "Locked"}
                       </span>
                       <span className="cmp-stretch-amount">
                         {formatCurrency(goal.amount, currency)}
@@ -405,7 +428,11 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                     </div>
                     <h3 className="cmp-stretch-card-title">{goal.title}</h3>
                     <p className="cmp-stretch-card-desc">{goal.description}</p>
-                    {!unlocked && (
+                    {unlocked ? (
+                      <div className="cmp-stretch-unlocked-banner">
+                        ✓ Goal reached — this milestone is active
+                      </div>
+                    ) : (
                       <div className="cmp-stretch-mini-bar">
                         <div
                           className="cmp-stretch-mini-fill"
@@ -426,6 +453,11 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
       {/* ── 7. TESTIMONIALS ─────────────────────────────────────── */}
       {hasTestimonials && (
         <section className="cmp-quotes-section">
+          {/* DAT logo stamp divider — sits between Stretch Goals and Voices from the Work */}
+          <div className="cmp-stamp-divider" aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/dat-logo7.svg" alt="" className="cmp-stamp-img" />
+          </div>
           <div className="cmp-quotes-inner">
             <span className="cmp-eyebrow" style={{ color: YELLOW, opacity: 0.85 }}>
               Voices from the Work
@@ -665,7 +697,18 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                     const eventHref = e.ticketUrl ?? campaign.learnMoreUrl;
                     return (
                       <div key={e.id} className="cmp-event-row">
-                        <div>
+                        {e.imageUrl && (
+                          <div className="cmp-event-img">
+                            <Image
+                              src={e.imageUrl}
+                              alt={e.title}
+                              fill
+                              sizes="90px"
+                              style={{ objectFit: "cover" }}
+                            />
+                          </div>
+                        )}
+                        <div className="cmp-event-info">
                           <span className="cmp-event-date">{formatDate(e.date)}</span>
                           <span className="cmp-event-title">{e.title}</span>
                           <span className="cmp-event-loc">{e.venue} · {e.city}, {e.country}</span>
@@ -692,13 +735,27 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
               <div className="cmp-linked-block">
                 <span className="cmp-eyebrow cmp-eyebrow--accent">Community Connection</span>
                 <h2 className="cmp-linked-block-title">Partner drama clubs on the ground.</h2>
-                <div className="cmp-clubs-list">
+                <p className="cmp-linked-block-sub">Your gift directly supports these communities.</p>
+                <div className="cmp-clubs-grid">
                   {campaign.dramaClubs!.map((c) => (
-                    <Link key={c.slug} href={`/drama-club/${c.slug}`} className="cmp-club-pill">
-                      <span className="cmp-club-name">{c.name}</span>
-                      <span className="cmp-club-loc">
-                        {c.city ? `${c.city}, ` : ""}{c.country}
-                      </span>
+                    <Link key={c.slug} href={`/drama-club/${c.slug}`} className="cmp-club-card">
+                      {c.imageUrl && (
+                        <div className="cmp-club-card-img">
+                          <Image
+                            src={c.imageUrl}
+                            alt={c.name}
+                            fill
+                            sizes="(min-width:1024px) 20vw, 50vw"
+                            style={{ objectFit: "cover" }}
+                          />
+                        </div>
+                      )}
+                      <div className="cmp-club-card-body">
+                        <span className="cmp-club-name">{c.name}</span>
+                        <span className="cmp-club-loc">
+                          {c.city ? `${c.city}, ` : ""}{c.country}
+                        </span>
+                      </div>
                     </Link>
                   ))}
                 </div>
@@ -713,9 +770,22 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                 <div className="cmp-stories-list">
                   {campaign.stories!.map((s) => (
                     <Link key={s.slug} href={`/story/${s.slug}`} className="cmp-story-pill">
-                      <span className="cmp-story-title">{s.title}</span>
-                      {s.teaser && <span className="cmp-story-teaser">{s.teaser}</span>}
-                      <span className="cmp-story-read">Read the story →</span>
+                      {s.imageUrl && (
+                        <div className="cmp-story-img">
+                          <Image
+                            src={s.imageUrl}
+                            alt={s.title}
+                            fill
+                            sizes="72px"
+                            style={{ objectFit: "cover" }}
+                          />
+                        </div>
+                      )}
+                      <div className="cmp-story-body">
+                        <span className="cmp-story-title">{s.title}</span>
+                        {s.teaser && <span className="cmp-story-teaser">{s.teaser}</span>}
+                        <span className="cmp-story-read">Read the story →</span>
+                      </div>
                     </Link>
                   ))}
                 </div>
@@ -873,9 +943,21 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           inset: 0;
           background: radial-gradient(ellipse 70% 55% at 8% 88%, rgba(36,147,169,0.2) 0%, transparent 60%);
         }
+        /* Atmospheric #2493A9 shading at the very bottom — bridges hero into the teal progress band */
+        .cmp-hero-gradient-bottom {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            to top,
+            rgba(36, 147, 169, 0.7) 0%,
+            rgba(36, 147, 169, 0.3) 14%,
+            transparent 38%
+          );
+          z-index: 1;
+        }
         .cmp-hero-body {
           position: relative;
-          z-index: 2;
+          z-index: 3;
           width: 100%;
           padding: clamp(6rem, 12vw, 10rem) clamp(1.5rem, 6vw, 4rem) clamp(2.5rem, 5vw, 4rem);
         }
@@ -936,7 +1018,11 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── Progress band ────────────────────────────────────────── */
-        .cmp-band { background: ${DEEP}; padding: 2.5rem 2rem; }
+        .cmp-band {
+          background: #2493A9;
+          padding: 2.5rem 2rem;
+          box-shadow: 0 8px 30px rgba(8, 28, 58, 0.18);
+        }
         .cmp-band-inner {
           max-width: 1100px;
           margin: 0 auto;
@@ -947,13 +1033,13 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         .cmp-band-thermo { display: flex; flex-direction: column; gap: 0.6rem; }
         .cmp-band-track {
           height: 10px;
-          background: rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.22);
           border-radius: 999px;
           overflow: hidden;
         }
         .cmp-band-fill {
           height: 100%;
-          background: linear-gradient(90deg, ${ACCENT}, ${YELLOW});
+          background: linear-gradient(90deg, rgba(255,255,255,0.9), ${YELLOW});
           border-radius: 999px;
           transition: width 1s cubic-bezier(0.25, 1, 0.5, 1);
           min-width: 4px;
@@ -967,12 +1053,12 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: clamp(1.2rem, 3vw, 1.8rem);
           font-weight: 800;
-          color: ${YELLOW};
+          color: #fff;
         }
         .cmp-band-goal {
           font-family: var(--font-dm-sans), sans-serif;
           font-size: 0.82rem;
-          color: rgba(242,242,242,0.5);
+          color: rgba(255,255,255,0.72);
         }
         .cmp-band-stats {
           display: flex;
@@ -984,7 +1070,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: clamp(1.5rem, 4vw, 2.5rem);
           font-weight: 800;
-          color: #f2f2f2;
+          color: #fff;
           line-height: 1;
         }
         .cmp-band-stat-lbl {
@@ -993,25 +1079,25 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           font-weight: 700;
           letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: rgba(242,242,242,0.45);
+          color: rgba(255,255,255,0.6);
         }
         .cmp-band-stat--match .cmp-band-stat-val {
           color: ${YELLOW};
         }
         .cmp-band-stat--match .cmp-band-stat-lbl {
-          color: rgba(255,204,0,0.6);
+          color: rgba(255,204,0,0.75);
         }
 
         /* ─── Shared primitives ────────────────────────────────────── */
         .cmp-eyebrow {
           display: inline-block;
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.68rem;
-          font-weight: 700;
+          font-size: 0.72rem;
+          font-weight: 800;
           letter-spacing: 0.22em;
           text-transform: uppercase;
           margin-bottom: 0.6rem;
-          color: rgba(36,17,35,0.45);
+          color: rgba(36,17,35,0.5);
         }
         .cmp-eyebrow--accent {
           color: ${ACCENT};
@@ -1025,7 +1111,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── Story + Give ─────────────────────────────────────────── */
-        .cmp-story-section { padding: 5rem 2rem; background: #f0f8fa; }
+        .cmp-story-section { padding: 5rem 2rem; background: #f0f8fa; box-shadow: 0 8px 30px rgba(8,28,58,0.1); }
         .cmp-story-inner {
           max-width: 1200px;
           margin: 0 auto;
@@ -1231,9 +1317,23 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           border-radius: 6px;
           background: rgba(8,28,58,0.06);
         }
-        .cmp-stretch-card--unlocked .cmp-stretch-status {
-          color: #2FA873;
-          background: rgba(47,168,115,0.12);
+        .cmp-stretch-status--unlocked {
+          color: #1a7a50;
+          background: rgba(47,168,115,0.15);
+          font-size: 0.72rem;
+          letter-spacing: 0.1em;
+        }
+        .cmp-stretch-unlocked-banner {
+          margin-top: 0.25rem;
+          padding: 0.5rem 0.75rem;
+          background: rgba(47,168,115,0.1);
+          border: 1px solid rgba(47,168,115,0.3);
+          border-radius: 8px;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          color: #1a7a50;
+          letter-spacing: 0.04em;
         }
         .cmp-stretch-amount {
           font-family: var(--font-space-grotesk), sans-serif;
@@ -1271,8 +1371,29 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           transition: width 1s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
+        /* ─── Stamp divider ───────────────────────────────────────── */
+        .cmp-quotes-section { background: #0a1e24; padding: 5rem 2rem; position: relative; }
+        .cmp-stamp-divider {
+          position: absolute;
+          top: -60px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 20;
+          pointer-events: none;
+        }
+        .cmp-stamp-img {
+          display: block;
+          width: 120px;
+          height: 120px;
+          filter: drop-shadow(0 3px 14px rgba(0,0,0,0.4));
+          opacity: 0.92;
+        }
+        @media (max-width: 640px) {
+          .cmp-stamp-img { width: 80px; height: 80px; }
+          .cmp-stamp-divider { top: -40px; }
+        }
+
         /* ─── Testimonials ─────────────────────────────────────────── */
-        .cmp-quotes-section { background: #0a1e24; padding: 5rem 2rem; }
         .cmp-quotes-inner { max-width: 1100px; margin: 0 auto; }
         .cmp-quotes-grid {
           display: grid;
@@ -1367,7 +1488,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── Campaign updates ─────────────────────────────────────── */
-        .cmp-updates-section { padding: 5rem 2rem; background: #f0f8fa; }
+        .cmp-updates-section { padding: 5rem 2rem; background: #f0f8fa; box-shadow: 0 8px 30px rgba(8,28,58,0.1); }
         .cmp-updates-inner { max-width: 780px; margin: 0 auto; }
         .cmp-updates-feed { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
         .cmp-update-card {
@@ -1549,16 +1670,18 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
         .cmp-share-ambassador-link {
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.72rem;
+          font-size: 0.78rem;
           font-weight: 600;
-          color: rgba(242,242,242,0.52);
+          color: rgba(242,242,242,0.68);
           text-decoration: none;
           letter-spacing: 0.06em;
           white-space: nowrap;
           transition: color 140ms;
           align-self: center;
+          border-bottom: 1px solid rgba(242,242,242,0.25);
+          padding-bottom: 1px;
         }
-        .cmp-share-ambassador-link:hover { color: rgba(242,242,242,0.85); }
+        .cmp-share-ambassador-link:hover { color: #fff; border-bottom-color: rgba(242,242,242,0.55); }
         @media (max-width: 640px) {
           .cmp-share-inner {
             flex-direction: column;
@@ -1622,11 +1745,15 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
         .cmp-alumni-name {
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.72rem;
+          font-size: 0.82rem;
           font-weight: 700;
           color: #0f1f38;
           text-align: center;
           line-height: 1.3;
+          transition: color 150ms;
+        }
+        .cmp-alumni-card:hover .cmp-alumni-name {
+          color: ${ACCENT};
         }
         .cmp-alumni-role {
           font-family: var(--font-dm-sans), sans-serif;
@@ -1679,30 +1806,54 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           color: rgba(8,28,58,0.45);
         }
 
-        /* Drama clubs */
-        .cmp-clubs-list { display: flex; flex-wrap: wrap; gap: 0.65rem; }
-        .cmp-club-pill {
+        /* Drama clubs — upgraded card grid */
+        .cmp-linked-block-sub {
+          margin: -0.25rem 0 1rem;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.88rem;
+          color: rgba(8,28,58,0.55);
+          line-height: 1.5;
+        }
+        .cmp-clubs-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 1.25rem;
+        }
+        .cmp-club-card {
           display: flex;
           flex-direction: column;
-          gap: 0.15rem;
-          padding: 0.6rem 1rem;
-          background: #fff;
-          border: 1.5px solid rgba(26,95,212,0.16);
-          border-radius: 12px;
           text-decoration: none;
-          transition: border-color 140ms, transform 140ms;
+          border-radius: 16px;
+          overflow: hidden;
+          border: 1.5px solid rgba(36,147,169,0.22);
+          background: #fff;
+          transition: box-shadow 180ms, transform 180ms;
         }
-        .cmp-club-pill:hover { border-color: ${ACCENT}; transform: translateY(-2px); }
+        .cmp-club-card:hover {
+          box-shadow: 0 6px 24px rgba(36,147,169,0.2);
+          transform: translateY(-3px);
+        }
+        .cmp-club-card-img {
+          position: relative;
+          height: 120px;
+          background: rgba(36,147,169,0.08);
+        }
+        .cmp-club-card-body {
+          padding: 0.85rem 1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.2rem;
+        }
         .cmp-club-name {
           font-family: var(--font-space-grotesk), sans-serif;
-          font-size: 0.82rem;
+          font-size: 0.88rem;
           font-weight: 700;
           color: ${ACCENT};
         }
         .cmp-club-loc {
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.68rem;
-          color: rgba(8,28,58,0.48);
+          font-size: 0.72rem;
+          color: rgba(8,28,58,0.5);
         }
 
         /* Events */
@@ -1725,6 +1876,16 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           box-shadow: 0 6px 24px rgba(36,147,169,0.16);
           transform: translateY(-2px);
         }
+        .cmp-event-img {
+          position: relative;
+          width: 88px;
+          height: 88px;
+          border-radius: 10px;
+          overflow: hidden;
+          flex-shrink: 0;
+          background: rgba(36,147,169,0.08);
+        }
+        .cmp-event-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
         .cmp-event-date {
           display: block;
           font-family: var(--font-dm-sans), sans-serif;
@@ -1755,8 +1916,9 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         .cmp-stories-list { display: flex; flex-direction: column; gap: 0.75rem; }
         .cmp-story-pill {
           display: flex;
-          flex-direction: column;
-          gap: 0.3rem;
+          flex-direction: row;
+          align-items: flex-start;
+          gap: 1rem;
           padding: 1.1rem 1.4rem;
           background: rgba(26,95,212,0.04);
           border: 1.5px solid rgba(26,95,212,0.12);
@@ -1767,6 +1929,22 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         .cmp-story-pill:hover {
           border-color: ${ACCENT};
           background: rgba(26,95,212,0.07);
+        }
+        .cmp-story-img {
+          position: relative;
+          width: 72px;
+          height: 72px;
+          border-radius: 8px;
+          overflow: hidden;
+          flex-shrink: 0;
+          background: rgba(36,147,169,0.08);
+        }
+        .cmp-story-body {
+          display: flex;
+          flex-direction: column;
+          gap: 0.3rem;
+          flex: 1;
+          min-width: 0;
         }
         .cmp-story-title {
           font-family: var(--font-space-grotesk), sans-serif;
