@@ -92,6 +92,12 @@ export type CampaignGalleryItem = {
   caption?: string;
 };
 
+export type CampaignGiftImpact = {
+  amount: number;    // in whole units (dollars)
+  description: string;
+  icon?: string;     // optional emoji or short label
+};
+
 /* ------------------------------------------------------------------ */
 /* Core campaign config                                                */
 /* ------------------------------------------------------------------ */
@@ -152,6 +158,27 @@ export type FundraisingCampaign = {
   archiveSummary?: string;
   archiveImage?: string;
 
+  // ── Gift impact ────────────────────────────────────────────────────
+  /** "Where your gift goes" impact table — hidden cleanly when absent */
+  giftImpact?: CampaignGiftImpact[];
+
+  // ── Demo totals ─────────────────────────────────────────────────────
+  /**
+   * Optional demo/preview totals — used when no real donations exist yet.
+   * Applied server-side when raisedMinor === 0 && donorCount === 0.
+   * Remove or zero out to revert to live-only data.
+   */
+  demoTotals?: {
+    raisedMinor: number;
+    donorCount: number;
+    recentSupporters?: Array<{
+      name: string | null;
+      amountMinor: number;
+      currency: string;
+      createdAt: Date;
+    }>;
+  };
+
   // ── Analytics ──────────────────────────────────────────────────────
   utmCampaign?: string;     // defaults to campaign.id
 };
@@ -173,6 +200,10 @@ export function getCampaign(slug: string): FundraisingCampaign | null {
 
 export function getAllCampaignSlugs(): string[] {
   return Object.keys(CAMPAIGN_REGISTRY);
+}
+
+export function getAllCampaigns(): FundraisingCampaign[] {
+  return Object.values(CAMPAIGN_REGISTRY);
 }
 
 /* ------------------------------------------------------------------ */

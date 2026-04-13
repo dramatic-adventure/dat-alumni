@@ -7,12 +7,17 @@
  *
  * Revalidates every 60 seconds so the progress bar and supporter wall stay
  * fresh without a full dynamic render on every request.
+ *
+ * DEMO TOTALS: If a campaign has demoTotals configured and no real donations
+ * have arrived yet (raisedMinor === 0 && donorCount === 0), the demo totals
+ * are used as a preview state so the full UI is visible during setup.
  */
 
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getCampaign, getAllCampaignSlugs } from "@/lib/fundraisingCampaigns";
 import { getCampaignTotals } from "@/lib/getCampaignTotals";
+import type { CampaignTotals } from "@/lib/getCampaignTotals";
 import CampaignTemplate from "@/components/campaign/CampaignTemplate";
 
 export const revalidate = 60; // ISR — refresh totals every 60s
@@ -56,7 +61,27 @@ export default async function CampaignPage({ params }: PageProps) {
   const campaign = getCampaign(slug);
   if (!campaign) notFound();
 
-  const totals = await getCampaignTotals(campaign.id);
+  let totals: CampaignTotals = await getCampaignTotals(campaign.id);
+
+  // Apply demo totals when no real donations exist yet and a demo is configured.
+  // This lets the full UI — match banner, supporter wall, updates, stretch goals — be
+  // visible during setup without compromising production data integrity.
+  if (
+    campaign.demoTotals &&
+    totals.raisedMinor === 0 &&
+    totals.donorCount === 0
+  ) {
+    totals = {
+      raisedMinor: campaign.demoTotals.raisedMinor,
+      donorCount: campaign.demoTotals.donorCount,
+      recentSupporters: (campaign.demoTotals.recentSupporters ?? []).map((s) => ({
+        name: s.name,
+        amountMinor: s.amountMinor,
+        currency: s.currency,
+        createdAt: s.createdAt,
+      })),
+    };
+  }
 
   return <CampaignTemplate campaign={campaign} totals={totals} />;
 }
