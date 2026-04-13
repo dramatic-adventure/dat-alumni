@@ -43,8 +43,10 @@ import CampaignGiveWidget from "@/components/campaign/CampaignGiveWidget";
 /* ------------------------------------------------------------------ */
 
 const DARK = "#081C3A";
-const ACCENT = "#2493A9";   // DAT Blue
+const DEEP = "#05141a";     // dark teal — dominant structure/band color
+const ACCENT = "#2493A9";   // DAT Blue — #2493A9 family as dominant bg/fill
 const YELLOW = "#FFCC00";
+const PURPLE = "#6C00AF";   // DAT purple — strategic CTA use
 
 /* ------------------------------------------------------------------ */
 /* Props                                                               */
@@ -189,31 +191,33 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
 
         {/* Hero editorial text panel */}
         <div className="cmp-hero-body">
-          {campaign.eyebrow && (
-            <span className="cmp-hero-eyebrow">{campaign.eyebrow}</span>
-          )}
-          <h1 className="cmp-hero-title">{campaign.title}</h1>
-          <p className="cmp-hero-tagline">{campaign.tagline}</p>
-
-          <div className="cmp-hero-actions">
-            {isActive && (
-              <a href="#give" className="cmp-btn-yellow">Give Now</a>
+          <div className="cmp-hero-panel">
+            {campaign.eyebrow && (
+              <span className="cmp-hero-eyebrow">{campaign.eyebrow}</span>
             )}
-            {campaign.learnMoreUrl && (
-              <a
-                href={campaign.learnMoreUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cmp-btn-ghost"
-              >
-                Learn More →
-              </a>
+            <h1 className="cmp-hero-title">{campaign.title}</h1>
+            <p className="cmp-hero-tagline">{campaign.tagline}</p>
+
+            <div className="cmp-hero-actions">
+              {isActive && (
+                <a href="#give" className="cmp-btn-yellow">Give Now</a>
+              )}
+              {campaign.learnMoreUrl && (
+                <a
+                  href={campaign.learnMoreUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cmp-btn-ghost"
+                >
+                  Learn More →
+                </a>
+              )}
+            </div>
+
+            {campaign.heroImageCredit && (
+              <p className="cmp-hero-credit">{campaign.heroImageCredit}</p>
             )}
           </div>
-
-          {campaign.heroImageCredit && (
-            <p className="cmp-hero-credit">{campaign.heroImageCredit}</p>
-          )}
         </div>
       </section>
 
@@ -555,6 +559,15 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
               </p>
             </div>
             <div className="cmp-share-actions">
+              {canShare && (
+                <button
+                  type="button"
+                  className="cmp-share-btn cmp-share-btn--primary"
+                  onClick={handleNativeShare}
+                >
+                  Share →
+                </button>
+              )}
               <button
                 type="button"
                 className={`cmp-share-btn${copied ? " cmp-share-btn--done" : ""}`}
@@ -562,25 +575,6 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
               >
                 {copied ? "✓ Copied!" : "Copy Link"}
               </button>
-              {canShare && (
-                <button
-                  type="button"
-                  className="cmp-share-btn cmp-share-btn--native"
-                  onClick={handleNativeShare}
-                >
-                  Share →
-                </button>
-              )}
-              {pageUrl && (
-                <a
-                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText + " ")}&url=${encodeURIComponent(pageUrl)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="cmp-share-btn cmp-share-btn--x"
-                >
-                  Post on X
-                </a>
-              )}
             </div>
           </div>
         </section>
@@ -599,14 +593,14 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                 <div className="cmp-alumni-grid">
                   {campaign.alumni!.map((a) => (
                     <Link key={a.slug} href={`/alumni/${a.slug}`} className="cmp-alumni-card">
-                      <div className={`cmp-alumni-avatar${a.imageUrl ? "" : " cmp-alumni-avatar--placeholder"}`}>
+                      <div className={`cmp-alumni-headshot${a.imageUrl ? "" : " cmp-alumni-headshot--placeholder"}`}>
                         {a.imageUrl ? (
                           <Image
                             src={a.imageUrl}
                             alt={a.name}
                             fill
-                            sizes="96px"
-                            style={{ objectFit: "cover" }}
+                            sizes="90px"
+                            style={{ objectFit: "cover", objectPosition: "top center" }}
                           />
                         ) : (
                           <span>{a.name[0]}</span>
@@ -657,25 +651,28 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                 <span className="cmp-eyebrow cmp-eyebrow--accent">Upcoming Event</span>
                 <h2 className="cmp-linked-block-title">Be there in person.</h2>
                 <div className="cmp-events-list">
-                  {campaign.events!.map((e) => (
-                    <div key={e.id} className="cmp-event-row">
-                      <div>
-                        <span className="cmp-event-date">{formatDate(e.date)}</span>
-                        <span className="cmp-event-title">{e.title}</span>
-                        <span className="cmp-event-loc">{e.venue} · {e.city}, {e.country}</span>
+                  {campaign.events!.map((e) => {
+                    const eventHref = e.ticketUrl ?? campaign.learnMoreUrl;
+                    return (
+                      <div key={e.id} className="cmp-event-row">
+                        <div>
+                          <span className="cmp-event-date">{formatDate(e.date)}</span>
+                          <span className="cmp-event-title">{e.title}</span>
+                          <span className="cmp-event-loc">{e.venue} · {e.city}, {e.country}</span>
+                        </div>
+                        {eventHref && (
+                          <a
+                            href={eventHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="cmp-btn-yellow-sm"
+                          >
+                            {e.ticketUrl ? "Tickets →" : "Learn More →"}
+                          </a>
+                        )}
                       </div>
-                      {e.ticketUrl && (
-                        <a
-                          href={e.ticketUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="cmp-btn-yellow-sm"
-                        >
-                          Tickets →
-                        </a>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -719,7 +716,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
       )}
 
       {/* ── 12. CTA FOOTER ──────────────────────────────────────── */}
-      <section className="cmp-cta-section">
+      <section className={`cmp-cta-section${isActive ? " cmp-cta-section--active" : ""}`}>
         <div className="cmp-cta-inner">
           {isActive ? (
             <>
@@ -846,30 +843,29 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           inset: -15% 0;
           will-change: transform;
         }
-        /* Primary gradient: fades image into the dark progress band below */
-        /* Fully opaque at 88% so there's no hard seam */
+        /* Primary gradient: fades image into the deep teal band below */
         .cmp-hero-gradient-primary {
           position: absolute;
           inset: 0;
           background: linear-gradient(
             to bottom,
-            rgba(8,28,58,0.04) 0%,
-            rgba(8,28,58,0.12) 22%,
-            rgba(8,28,58,0.52) 50%,
-            rgba(8,28,58,0.85) 70%,
-            rgba(8,28,58,0.97) 85%,
-            ${DARK} 100%
+            rgba(5,20,26,0.04) 0%,
+            rgba(5,20,26,0.15) 22%,
+            rgba(5,20,26,0.58) 50%,
+            rgba(5,20,26,0.90) 72%,
+            rgba(5,20,26,0.98) 87%,
+            ${DEEP} 100%
           );
         }
-        /* Secondary gradient: creates a soft reading zone on the left */
+        /* Secondary gradient: creates a strong reading zone on the left */
         .cmp-hero-gradient-left {
           position: absolute;
           inset: 0;
           background: linear-gradient(
             to right,
-            rgba(8,28,58,0.45) 0%,
-            rgba(8,28,58,0.2) 40%,
-            transparent 65%
+            rgba(5,20,26,0.62) 0%,
+            rgba(5,20,26,0.28) 45%,
+            transparent 70%
           );
         }
         .cmp-hero-body {
@@ -882,6 +878,26 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         @media (max-width: 900px) {
           .cmp-hero-body {
             padding: 2rem 1.5rem;
+          }
+        }
+        /* Editorial text panel — readable container over imagery */
+        .cmp-hero-panel {
+          max-width: 660px;
+          background: rgba(5,20,26,0.65);
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+          border-left: 4px solid ${ACCENT};
+          border-radius: 0 16px 16px 0;
+          padding: 2rem 2rem 2rem 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+        }
+        @media (max-width: 900px) {
+          .cmp-hero-panel {
+            max-width: 100%;
+            border-radius: 0 12px 12px 0;
+            padding: 1.75rem 1.5rem 1.75rem 0;
           }
         }
         .cmp-hero-eyebrow {
@@ -929,7 +945,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── Progress band ────────────────────────────────────────── */
-        .cmp-band { background: ${DARK}; padding: 2.5rem 2rem; }
+        .cmp-band { background: ${DEEP}; padding: 2.5rem 2rem; }
         .cmp-band-inner {
           max-width: 1100px;
           margin: 0 auto;
@@ -1018,7 +1034,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── Story + Give ─────────────────────────────────────────── */
-        .cmp-story-section { padding: 5rem 2rem; }
+        .cmp-story-section { padding: 5rem 2rem; background: #f0f8fa; }
         .cmp-story-inner {
           max-width: 1200px;
           margin: 0 auto;
@@ -1124,9 +1140,9 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
 
         /* ─── Gift impact ──────────────────────────────────────────── */
         .cmp-impact-section {
-          background: rgba(26,95,212,0.04);
-          border-top: 1px solid rgba(26,95,212,0.1);
-          border-bottom: 1px solid rgba(26,95,212,0.08);
+          background: rgba(36,147,169,0.07);
+          border-top: 1px solid rgba(36,147,169,0.15);
+          border-bottom: 1px solid rgba(36,147,169,0.12);
           padding: 5rem 2rem;
         }
         .cmp-impact-inner { max-width: 1100px; margin: 0 auto; }
@@ -1138,7 +1154,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
         .cmp-impact-card {
           background: #fff;
-          border: 1.5px solid rgba(26,95,212,0.12);
+          border: 1.5px solid rgba(36,147,169,0.18);
           border-radius: 18px;
           padding: 1.5rem 1.25rem;
           display: flex;
@@ -1147,7 +1163,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           transition: box-shadow 200ms, transform 200ms;
         }
         .cmp-impact-card:hover {
-          box-shadow: 0 6px 24px rgba(26,95,212,0.1);
+          box-shadow: 0 6px 24px rgba(36,147,169,0.15);
           transform: translateY(-2px);
         }
         .cmp-impact-icon {
@@ -1183,7 +1199,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         .cmp-impact-give:hover { opacity: 1; }
 
         /* ─── Stretch goals ────────────────────────────────────────── */
-        .cmp-stretch-section { background: rgba(8,28,58,0.03); padding: 5rem 2rem; border-top: 1px solid rgba(8,28,58,0.06); }
+        .cmp-stretch-section { background: rgba(36,147,169,0.05); padding: 5rem 2rem; border-top: 1px solid rgba(36,147,169,0.12); }
         .cmp-stretch-inner { max-width: 1100px; margin: 0 auto; }
         .cmp-stretch-grid {
           display: grid;
@@ -1265,7 +1281,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── Testimonials ─────────────────────────────────────────── */
-        .cmp-quotes-section { background: ${DARK}; padding: 5rem 2rem; }
+        .cmp-quotes-section { background: #0a1e24; padding: 5rem 2rem; }
         .cmp-quotes-inner { max-width: 1100px; margin: 0 auto; }
         .cmp-quotes-grid {
           display: grid;
@@ -1330,7 +1346,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── Gallery ──────────────────────────────────────────────── */
-        .cmp-gallery-section { padding: 0; overflow: hidden; }
+        .cmp-gallery-section { padding: 0; overflow: hidden; background: ${DEEP}; }
         .cmp-gallery-strip {
           display: flex;
           gap: 0;
@@ -1353,14 +1369,14 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           margin: 0;
           font-family: var(--font-dm-sans), sans-serif;
           font-size: 0.68rem;
-          color: rgba(8,28,58,0.45);
+          color: rgba(242,242,242,0.45);
           font-style: italic;
-          background: rgba(8,28,58,0.03);
-          border-bottom: 1px solid rgba(8,28,58,0.06);
+          background: rgba(5,20,26,0.72);
+          border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
         /* ─── Campaign updates ─────────────────────────────────────── */
-        .cmp-updates-section { padding: 5rem 2rem; }
+        .cmp-updates-section { padding: 5rem 2rem; background: #f0f8fa; }
         .cmp-updates-inner { max-width: 780px; margin: 0 auto; }
         .cmp-updates-feed { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
         .cmp-update-card {
@@ -1404,7 +1420,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── Supporters wall ──────────────────────────────────────── */
-        .cmp-supporters-section { background: rgba(8,28,58,0.03); padding: 5rem 2rem; }
+        .cmp-supporters-section { background: rgba(36,147,169,0.07); padding: 5rem 2rem; }
         .cmp-supporters-inner { max-width: 1100px; margin: 0 auto; }
         .cmp-supporters-wall {
           display: flex;
@@ -1417,7 +1433,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           flex-direction: column;
           gap: 0.25rem;
           background: #fff;
-          border: 1.5px solid rgba(26,95,212,0.12);
+          border: 1.5px solid rgba(36,147,169,0.18);
           border-radius: 14px;
           padding: 0.85rem 1.1rem;
           min-width: 150px;
@@ -1425,7 +1441,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           transition: box-shadow 160ms, transform 160ms;
         }
         .cmp-supporter-chip:hover {
-          box-shadow: 0 4px 16px rgba(26,95,212,0.1);
+          box-shadow: 0 4px 16px rgba(36,147,169,0.15);
           transform: translateY(-1px);
         }
         .cmp-supporter-name {
@@ -1460,7 +1476,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
 
         /* ─── Share section ────────────────────────────────────────── */
         .cmp-share-section {
-          background: ${DARK};
+          background: #052f3d;
           padding: 2.75rem 2rem;
         }
         .cmp-share-inner {
@@ -1529,17 +1545,16 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           border-color: ${ACCENT};
           color: ${ACCENT};
         }
-        .cmp-share-btn--native {
+        .cmp-share-btn--primary {
           background: ${ACCENT};
           border-color: ${ACCENT};
           color: #fff;
+          font-size: 0.85rem;
+          padding: 0.65rem 1.5rem;
         }
-        .cmp-share-btn--native:hover {
+        .cmp-share-btn--primary:hover {
           background: #1c7a8a;
           border-color: #1c7a8a;
-        }
-        .cmp-share-btn--x {
-          background: transparent;
         }
         @media (max-width: 640px) {
           .cmp-share-inner {
@@ -1549,7 +1564,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── Linked content ───────────────────────────────────────── */
-        .cmp-linked-section { padding: 5rem 2rem; }
+        .cmp-linked-section { padding: 5rem 2rem; background: #f0f8fa; }
         .cmp-linked-inner { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 4rem; }
         .cmp-linked-block { display: flex; flex-direction: column; gap: 0.5rem; }
         .cmp-linked-block-title {
@@ -1561,37 +1576,44 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           line-height: 1.2;
         }
 
-        /* Alumni — larger, editorial cards */
+        /* Alumni — mini 8×10 portrait headshot cards */
         .cmp-alumni-grid {
           display: flex;
           flex-wrap: wrap;
-          gap: 1.5rem;
+          gap: 1.75rem;
         }
         .cmp-alumni-card {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 0.65rem;
+          gap: 0;
           text-decoration: none;
-          width: 100px;
-          transition: transform 160ms;
+          width: 98px;
+          transition: transform 200ms;
         }
-        .cmp-alumni-card:hover { transform: translateY(-4px); }
-        .cmp-alumni-avatar {
+        .cmp-alumni-card:hover { transform: translateY(-6px); }
+        .cmp-alumni-card:hover .cmp-alumni-headshot {
+          box-shadow: 0 14px 40px rgba(5,20,26,0.22), 0 4px 10px rgba(36,147,169,0.18);
+        }
+        /* Portrait rectangle — 4:5 ratio, white border, shadow */
+        .cmp-alumni-headshot {
           position: relative;
-          width: 88px;
-          height: 88px;
-          border-radius: 50%;
+          width: 90px;
+          height: 112px;
+          border-radius: 4px;
           overflow: hidden;
-          border: 2.5px solid rgba(26,95,212,0.2);
-          background: rgba(26,95,212,0.07);
+          border: 3px solid #fff;
+          box-shadow: 0 4px 18px rgba(5,20,26,0.18), 0 1px 4px rgba(5,20,26,0.12);
+          background: rgba(36,147,169,0.1);
+          margin-bottom: 0.65rem;
+          transition: box-shadow 200ms;
         }
-        .cmp-alumni-avatar--placeholder {
+        .cmp-alumni-headshot--placeholder {
           display: flex;
           align-items: center;
           justify-content: center;
           font-family: var(--font-space-grotesk), sans-serif;
-          font-size: 1.75rem;
+          font-size: 2rem;
           font-weight: 800;
           color: ${ACCENT};
         }
@@ -1608,6 +1630,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           font-size: 0.62rem;
           color: rgba(8,28,58,0.5);
           text-align: center;
+          margin-top: 0.2rem;
         }
 
         /* Productions */
@@ -1757,7 +1780,8 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── CTA footer ───────────────────────────────────────────── */
-        .cmp-cta-section { background: ${DARK}; padding: 5rem 2rem; }
+        .cmp-cta-section { background: ${DEEP}; padding: 5rem 2rem; }
+        .cmp-cta-section--active { background: ${PURPLE}; }
         .cmp-cta-inner {
           max-width: 700px;
           margin: 0 auto;

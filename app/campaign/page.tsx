@@ -249,7 +249,7 @@ export default function CampaignHubPage() {
 
         /* ─── Header ───────────────────────────────────────────────── */
         .chub-header {
-          background: #081C3A;
+          background: #05141a;
           padding: 5rem 2rem 4rem;
         }
         .chub-header-inner {
@@ -300,7 +300,7 @@ export default function CampaignHubPage() {
           font-weight: 700;
           letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: #1A5FD4;
+          color: #2493A9;
           margin-bottom: 0.4rem;
         }
         .chub-section-head {
@@ -316,6 +316,7 @@ export default function CampaignHubPage() {
         /* ─── Active campaigns ─────────────────────────────────────── */
         .chub-active-section {
           padding: 4rem 0;
+          background: #f0f8fa;
         }
         .chub-active-grid {
           display: grid;
@@ -370,7 +371,7 @@ export default function CampaignHubPage() {
         }
         .chub-badge--match {
           background: rgba(255,255,255,0.92);
-          color: #1A5FD4;
+          color: #2493A9;
         }
 
         /* Card body */
@@ -388,7 +389,7 @@ export default function CampaignHubPage() {
           font-weight: 700;
           letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: #1A5FD4;
+          color: #2493A9;
           margin-bottom: 0.4rem;
         }
         .chub-card-title {
@@ -423,8 +424,8 @@ export default function CampaignHubPage() {
           font-family: var(--font-dm-sans), sans-serif;
           font-size: 0.75rem;
           font-weight: 600;
-          color: #1A5FD4;
-          background: rgba(26,95,212,0.08);
+          color: #2493A9;
+          background: rgba(36,147,169,0.1);
           padding: 0.18rem 0.55rem;
           border-radius: 6px;
         }
@@ -528,7 +529,7 @@ export default function CampaignHubPage() {
         .chub-archive-row:last-child {
           border-bottom: 1px solid rgba(8,28,58,0.07);
         }
-        .chub-archive-row:hover { background: rgba(26,95,212,0.03); }
+        .chub-archive-row:hover { background: rgba(36,147,169,0.05); }
         .chub-archive-thumb {
           position: relative;
           width: 64px;
@@ -577,7 +578,7 @@ export default function CampaignHubPage() {
 
         /* ─── General giving CTA ───────────────────────────────────── */
         .chub-cta-section {
-          background: #081C3A;
+          background: #6C00AF;
           padding: 5rem 2rem;
         }
         .chub-cta-inner {
@@ -637,8 +638,8 @@ export default function CampaignHubPage() {
           padding: 0.85rem 1.4rem;
           border-radius: 13px;
           background: transparent;
-          color: #1A5FD4;
-          border: 1.5px solid rgba(26,95,212,0.3);
+          color: #2493A9;
+          border: 1.5px solid rgba(36,147,169,0.35);
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: 0.8rem;
           font-weight: 700;
@@ -647,7 +648,7 @@ export default function CampaignHubPage() {
           text-decoration: none;
           transition: transform 150ms, border-color 150ms;
         }
-        .chub-btn-secondary:hover { transform: translateY(-2px); border-color: #1A5FD4; }
+        .chub-btn-secondary:hover { transform: translateY(-2px); border-color: #2493A9; }
       `}</style>
     </main>
   );

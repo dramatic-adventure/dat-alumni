@@ -142,6 +142,7 @@ export const passageSlovakia2026: FundraisingCampaign = {
       venue: "DAT Studio",
       city: "Brooklyn",
       country: "USA",
+      ticketUrl: "https://dramaticadventure.com/passage/slovakia",
     },
   ],
 
