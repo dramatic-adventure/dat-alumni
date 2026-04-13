@@ -29,6 +29,7 @@ export type PersonRole = {
   name: string;
   href?: string;
   dramaClubSlug?: string;
+  photo?: string;
 };
 
 type InputImage = GalleryImage;
