@@ -516,7 +516,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
       {hasSupporters && (
         <section className="cmp-supporters-section">
           <div className="cmp-supporters-inner">
-            <span className="cmp-eyebrow cmp-eyebrow--accent">Recent Supporters</span>
+            <span className="cmp-eyebrow cmp-eyebrow--accent" style={{ color: "#1a6478" }}>Recent Supporters</span>
             <h2 className="cmp-section-title" style={{ color: "#0f1f38" }}>
               In good company.
             </h2>
@@ -575,6 +575,16 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
               >
                 {copied ? "✓ Copied!" : "Copy Link"}
               </button>
+              {campaign.ambassadorUrl && (
+                <a
+                  href={campaign.ambassadorUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cmp-share-ambassador-link"
+                >
+                  Become an ambassador →
+                </a>
+              )}
             </div>
           </div>
         </section>
@@ -837,77 +847,58 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           overflow: hidden;
           display: flex;
           align-items: flex-end;
+          background: #2493A9;
         }
         .cmp-hero-img-layer {
           position: absolute;
           inset: -15% 0;
           will-change: transform;
         }
-        /* Primary gradient: fades image into the deep teal band below */
+        /* Primary gradient: festivals-style — solid dark base, fades transparent toward top */
         .cmp-hero-gradient-primary {
           position: absolute;
           inset: 0;
           background: linear-gradient(
-            to bottom,
-            rgba(5,20,26,0.04) 0%,
-            rgba(5,20,26,0.15) 22%,
-            rgba(5,20,26,0.58) 50%,
-            rgba(5,20,26,0.90) 72%,
-            rgba(5,20,26,0.98) 87%,
-            ${DEEP} 100%
+            to top,
+            rgba(5,20,26,1.0) 0%,
+            rgba(5,20,26,1.0) 12%,
+            rgba(5,15,20,0.85) 35%,
+            rgba(5,15,20,0.45) 65%,
+            rgba(5,15,20,0.15) 100%
           );
         }
-        /* Secondary gradient: creates a strong reading zone on the left */
+        /* Teal glow accent — matches /events/festivals treatment */
         .cmp-hero-gradient-left {
           position: absolute;
           inset: 0;
-          background: linear-gradient(
-            to right,
-            rgba(5,20,26,0.62) 0%,
-            rgba(5,20,26,0.28) 45%,
-            transparent 70%
-          );
+          background: radial-gradient(ellipse 70% 55% at 8% 88%, rgba(36,147,169,0.2) 0%, transparent 60%);
         }
         .cmp-hero-body {
           position: relative;
           z-index: 2;
           width: 100%;
-          padding: 2.5rem max(1.5rem, calc(50vw - 540px));
-          padding-right: max(1.5rem, calc(50vw - 100px));
+          padding: clamp(6rem, 12vw, 10rem) clamp(1.5rem, 6vw, 4rem) clamp(2.5rem, 5vw, 4rem);
         }
         @media (max-width: 900px) {
           .cmp-hero-body {
-            padding: 2rem 1.5rem;
+            padding: 5rem 1.5rem 2.5rem;
           }
         }
-        /* Editorial text panel — readable container over imagery */
+        /* Text panel — floats over gradient, no box */
         .cmp-hero-panel {
           max-width: 660px;
-          background: rgba(5,20,26,0.65);
-          backdrop-filter: blur(6px);
-          -webkit-backdrop-filter: blur(6px);
-          border-left: 4px solid ${ACCENT};
-          border-radius: 0 16px 16px 0;
-          padding: 2rem 2rem 2rem 0;
           display: flex;
           flex-direction: column;
           gap: 0;
         }
-        @media (max-width: 900px) {
-          .cmp-hero-panel {
-            max-width: 100%;
-            border-radius: 0 12px 12px 0;
-            padding: 1.75rem 1.5rem 1.75rem 0;
-          }
-        }
         .cmp-hero-eyebrow {
           display: block;
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.7rem;
+          font-size: 0.72rem;
           font-weight: 700;
-          letter-spacing: 0.22em;
+          letter-spacing: 0.28em;
           text-transform: uppercase;
-          color: ${YELLOW};
+          color: ${ACCENT};
           margin-bottom: 0.75rem;
         }
         .cmp-hero-title {
@@ -1556,6 +1547,18 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           background: #1c7a8a;
           border-color: #1c7a8a;
         }
+        .cmp-share-ambassador-link {
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.72rem;
+          font-weight: 600;
+          color: rgba(242,242,242,0.52);
+          text-decoration: none;
+          letter-spacing: 0.06em;
+          white-space: nowrap;
+          transition: color 140ms;
+          align-self: center;
+        }
+        .cmp-share-ambassador-link:hover { color: rgba(242,242,242,0.85); }
         @media (max-width: 640px) {
           .cmp-share-inner {
             flex-direction: column;
@@ -1708,36 +1711,44 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          gap: 1rem;
-          padding: 1.1rem 1.4rem;
+          gap: 1.25rem;
+          padding: 1.25rem 1.5rem 1.25rem 1.25rem;
           background: #fff;
-          border: 1.5px solid rgba(8,28,58,0.09);
+          border: 1.5px solid rgba(36,147,169,0.18);
+          border-left: 4px solid ${ACCENT};
           border-radius: 14px;
           flex-wrap: wrap;
+          box-shadow: 0 2px 10px rgba(36,147,169,0.07);
+          transition: box-shadow 180ms, transform 180ms;
+        }
+        .cmp-event-row:hover {
+          box-shadow: 0 6px 24px rgba(36,147,169,0.16);
+          transform: translateY(-2px);
         }
         .cmp-event-date {
           display: block;
           font-family: var(--font-dm-sans), sans-serif;
           font-size: 0.68rem;
           font-weight: 700;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
           color: ${ACCENT};
-          margin-bottom: 0.2rem;
+          margin-bottom: 0.25rem;
         }
         .cmp-event-title {
           display: block;
           font-family: var(--font-space-grotesk), sans-serif;
-          font-size: 0.95rem;
-          font-weight: 700;
+          font-size: 1.05rem;
+          font-weight: 800;
           color: #0f1f38;
+          line-height: 1.2;
         }
         .cmp-event-loc {
           display: block;
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.75rem;
+          font-size: 0.76rem;
           color: rgba(8,28,58,0.52);
-          margin-top: 0.15rem;
+          margin-top: 0.2rem;
         }
 
         /* Stories */

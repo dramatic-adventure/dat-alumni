@@ -342,8 +342,8 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
         .cgw-root {
           background: #fff;
           border-radius: 20px;
-          border: 1.5px solid rgba(108, 0, 175, 0.18);
-          box-shadow: 0 8px 40px rgba(36, 17, 35, 0.12);
+          border: 1.5px solid rgba(36, 147, 169, 0.22);
+          box-shadow: 0 8px 40px rgba(36, 147, 169, 0.12);
           padding: 1.75rem 1.5rem 1.5rem;
           display: flex;
           flex-direction: column;
@@ -366,13 +366,13 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
         .cgw-progress-track {
           position: relative;
           height: 10px;
-          background: rgba(108, 0, 175, 0.12);
+          background: rgba(36, 147, 169, 0.12);
           border-radius: 999px;
           overflow: visible;
         }
         .cgw-progress-fill {
           height: 100%;
-          background: linear-gradient(90deg, #6C00AF, #FFCC00);
+          background: linear-gradient(90deg, #2493A9, #FFCC00);
           border-radius: 999px;
           transition: width 800ms cubic-bezier(0.25, 1, 0.5, 1);
           min-width: 4px;
@@ -397,7 +397,7 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: 1.35rem;
           font-weight: 800;
-          color: #6C00AF;
+          color: #2493A9;
           line-height: 1;
         }
         .cgw-raised-label {

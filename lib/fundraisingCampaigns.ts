@@ -152,6 +152,7 @@ export type FundraisingCampaign = {
   // ── Links ──────────────────────────────────────────────────────────
   learnMoreUrl?: string;    // primary external "learn more" link
   secondaryUrl?: string;    // lower-priority contextual link
+  ambassadorUrl?: string;   // link to ambassador/advocate sign-up page
 
   // ── Archive state ──────────────────────────────────────────────────
   archiveHeadline?: string;
