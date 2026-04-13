@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import Link from "next/link";
+import path from "path";
+import sharp from "sharp";
 
 import DramaClubBadge from "@/components/ui/DramaClubBadge";
 import EventShareButton from "@/components/events/EventShareButton";
@@ -666,6 +668,22 @@ function UpcomingEventInfoBand({
           </div>
         ) : null}
 
+        {event.accessibility ? (
+          <div className="evd-a11y-inline">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0, opacity: 0.4 }}><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+            {isBilingual ? (
+              <>
+                <span className="evd-bilingual-wrap-default">{event.accessibility}</span>
+                <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                  {event.translations?.["es"]?.accessibility ?? event.accessibility}
+                </span>
+              </>
+            ) : (
+              <span>{event.accessibility}</span>
+            )}
+          </div>
+        ) : null}
+
         <div className="evd-actions">
           <EventShareButton
             url={eventUrl}
@@ -673,8 +691,8 @@ function UpcomingEventInfoBand({
             description={event.description}
             shareLabel={isBilingual ? (
               <>
-                <span className="evd-bilingual-wrap-default">Share →</span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-es">Compartir →</span>
+                <span className="evd-bilingual-wrap-default">Share</span>
+                <span className="evd-bilingual-wrap-alt evd-bilingual-es">Compartir</span>
               </>
             ) : undefined}
           />
@@ -721,35 +739,47 @@ function UpcomingEventInfoBand({
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
               {isBilingual ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">Bring a Group →</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Traer un Grupo →</span>
+                  <span className="evd-bilingual-wrap-default">Bring a Group</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Traer un Grupo</span>
                 </>
-              ) : "Bring a Group →"}
+              ) : "Bring a Group"}
             </a>
           ) : null}
         </div>
-
-        {event.accessibility ? (
-          <div className="evd-a11y-inline">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0, opacity: 0.4 }}><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
-            {isBilingual ? (
-              <>
-                <span className="evd-bilingual-wrap-default">{event.accessibility}</span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-es">
-                  {event.translations?.["es"]?.accessibility ?? event.accessibility}
-                </span>
-              </>
-            ) : (
-              <span>{event.accessibility}</span>
-            )}
-          </div>
-        ) : null}
       </div>
     </div>
   );
 }
 
-export default function EventDetailPageTemplate({
+/**
+ * Returns the first gallery image with width > height (landscape),
+ * using actual image dimensions for local files via sharp.
+ * Falls back to filename heuristic, then first image.
+ */
+async function findLandscapeImageSrc(
+  images: Array<{ src: string }>,
+): Promise<string | null> {
+  if (!images.length) return null;
+  for (const img of images) {
+    if (img.src.startsWith("/")) {
+      try {
+        const filePath = path.join(process.cwd(), "public", img.src);
+        const meta = await sharp(filePath).metadata();
+        if (meta.width && meta.height && meta.width > meta.height) {
+          return img.src;
+        }
+      } catch {
+        // File not found or not readable — continue
+      }
+    }
+  }
+  // Filename heuristic fallback
+  const byName = images.find((g) => /landscape|wide|16x9/i.test(g.src));
+  if (byName) return byName.src;
+  return images[0].src;
+}
+
+export default async function EventDetailPageTemplate({
   event,
   routeKind,
 
@@ -869,16 +899,9 @@ export default function EventDetailPageTemplate({
   const castCredits = (credits ?? []).filter((c) => c.group === "cast");
   const creativeCredits = (credits ?? []).filter((c) => !c.group || c.group === "creative");
 
-  // Images for editorial overlays — prefer the first landscape-oriented gallery image.
-  // Landscape detection: filename contains "landscape", "wide", or "16x9".
-  // Falls back to first gallery image if no landscape indicator is found.
-  const editorialImg1 = ((): string | null => {
-    if (!photoGallery?.length) return null;
-    const landscape = photoGallery.find(
-      (g) => /landscape|wide|16x9/i.test(g.src)
-    );
-    return landscape?.src ?? photoGallery[0].src;
-  })();
+  // Images for editorial overlays — prefer the first true landscape image (width > height).
+  // Uses actual image dimensions for local files; falls back to filename heuristic.
+  const editorialImg1 = await findLandscapeImageSrc(photoGallery ?? []);
 
   const eventUrl = `${DETAIL_URL_BASE}${canonicalEventPath(event)}`;
   const gcalUrl = googleCalendarUrl(event);
@@ -1806,8 +1829,8 @@ export default function EventDetailPageTemplate({
                   <span className="evd-related-upcoming-cta">
                     {isBilingual ? (
                       <>
-                        <span className="evd-bilingual-wrap-default">Continue the Story →</span>
-                        <span className="evd-bilingual-wrap-alt evd-bilingual-es">Continúa la Historia →</span>
+                        <span className="evd-bilingual-wrap-default">See What&apos;s Next →</span>
+                        <span className="evd-bilingual-wrap-alt evd-bilingual-es">Ver Lo Que Sigue →</span>
                       </>
                     ) : "See What's Next →"}
                   </span>
@@ -1990,35 +2013,7 @@ export default function EventDetailPageTemplate({
       />
 
       <style>{`
-        /* ═══════════════════════════════════════════════════════════════════
-           EVENT DETAIL PAGE — Dramatic Adventure Theatre
-           Inline <style> scoped to this server component.
-
-           CSS custom properties (--evd-accent, --evd-surface, etc.) are
-           injected via heroVars on the root .evd-hero element and cascade
-           to all children — this is why we stay inline rather than using
-           a CSS module.
-
-           Section index:
-             0.  Global / color-scheme
-             1.  Layout: container
-             2.  Hero
-             3.  Ticket Dashboard (info, CTA, two-col: description, video,
-                   drama club, snapshot, press quotes)
-             4.  Photo Gallery (EventGallery component styles)
-             5.  Cast
-             6.  Creative Team
-             7.  Production Archive Link
-             8.  Production Cycle
-             9.  Related Upcoming Events (section-head shared)
-            10.  Newsletter + Mailing List Form
-            11.  Bottom Navigation
-            12.  Dropdowns: Share & Calendar (EventShareButton component)
-            13.  Shared scrollbar utility
-            14.  Responsive overrides
-           ═══════════════════════════════════════════════════════════════════ */
-
-        /* ── 0. Global ─────────────────────────────────────────────────── */
+        /* 0. Global */
         :root {
           color-scheme: dark;
         }
@@ -2260,20 +2255,21 @@ export default function EventDetailPageTemplate({
           flex: 1;
           min-width: 0;
         }
-        /* Date — primary visual anchor with subtle ring framing */
+        /* Date — bold visual anchor with ring framing */
         .evd-tww-date {
           font-family: "Space Grotesk", sans-serif;
-          font-size: clamp(1rem, 1.6vw, 1.2rem);
+          font-size: clamp(1.05rem, 1.7vw, 1.25rem);
           font-weight: 700;
           color: #fff;
-          letter-spacing: 0.01em;
+          letter-spacing: 0.02em;
           line-height: 1.25;
           white-space: nowrap;
           display: inline-block;
-          padding: 0.22rem 0.75rem;
-          border: 1.5px solid rgba(255,255,255,0.18);
+          padding: 0.3rem 0.9rem;
+          border: 1.5px solid rgba(255,255,255,0.32);
           border-radius: 6px;
-          background: rgba(255,255,255,0.06);
+          background: rgba(255,255,255,0.09);
+          box-shadow: 0 0 0 3px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.08);
           align-self: flex-start;
         }
         .evd-tww-date--linked {
@@ -2308,9 +2304,9 @@ export default function EventDetailPageTemplate({
           align-items: center;
           gap: 1.75rem;
           flex-wrap: wrap;
-          margin-top: 0.5rem;
-          padding-top: 0.5rem;
-          border-top: 1px solid rgba(255,255,255,0.07);
+          margin-top: 1rem;
+          padding-top: 0.85rem;
+          border-top: 1px solid rgba(255,255,255,0.08);
         }
         .evd-ticket-purchase {
           display: flex;
@@ -3682,25 +3678,38 @@ export default function EventDetailPageTemplate({
           border-color: rgba(47,168,115,0.5);
         }
 
-        /* Upcoming cycle cards — more presence than archive cards */
+        /* Archive cards — visually recede to signal past productions */
+        .evd-cycle-card:not(.evd-cycle-card--upcoming) .evd-cycle-img {
+          filter: saturate(0.65) brightness(0.8);
+        }
+        .evd-cycle-card:not(.evd-cycle-card--upcoming):hover .evd-cycle-img {
+          filter: saturate(0.85) brightness(0.95);
+        }
+        .evd-cycle-card:not(.evd-cycle-card--upcoming) .evd-cycle-title {
+          color: rgba(255,255,255,0.72);
+        }
+        /* Upcoming cycle cards — full presence, alive */
         .evd-cycle-card--upcoming {
-          border-color: rgba(217,169,25,0.2);
-          background: rgba(217,169,25,0.04);
+          border-color: rgba(217,169,25,0.28);
+          background: rgba(217,169,25,0.05);
+          box-shadow: 0 0 0 1px rgba(217,169,25,0.1);
         }
         .evd-cycle-card--upcoming:hover {
-          border-color: rgba(217,169,25,0.5);
-          box-shadow: 0 16px 48px rgba(217,169,25,0.18), 0 4px 16px rgba(0,0,0,0.4);
+          border-color: rgba(217,169,25,0.55);
+          box-shadow: 0 16px 48px rgba(217,169,25,0.22), 0 4px 16px rgba(0,0,0,0.4);
         }
         .evd-cycle-card--upcoming .evd-cycle-link {
-          border-color: rgba(217,169,25,0.3);
+          border-color: rgba(217,169,25,0.38);
           color: #D9A919;
+          font-weight: 800;
         }
         .evd-cycle-card--upcoming:hover .evd-cycle-link {
-          border-color: rgba(217,169,25,0.65);
+          border-color: rgba(217,169,25,0.7);
           color: #D9A919;
+          background: rgba(217,169,25,0.06);
         }
         .evd-cycle-card--upcoming .evd-cycle-title {
-          color: rgba(255,255,255,0.96);
+          color: #fff;
         }
 
         /* ── 9. Related Upcoming Events ────────────────────────────────── */
@@ -4378,52 +4387,64 @@ export default function EventDetailPageTemplate({
         .evd-related-upcoming-eyebrow {
           font-family: "DM Sans", sans-serif;
           font-size: 0.68rem;
-          font-weight: 700;
-          letter-spacing: 0.26em;
+          font-weight: 800;
+          letter-spacing: 0.28em;
           text-transform: uppercase;
-          color: var(--evd-accent);
-          margin: 0 0 0.85rem;
+          color: #D9A919;
+          margin: 0 0 0.9rem;
         }
         .evd-related-upcoming-link {
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 1.5rem;
-          padding: 1.1rem 1.4rem;
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 6px;
+          padding: 1.25rem 1.5rem;
+          border: 1px solid rgba(217,169,25,0.22);
+          border-radius: 8px;
           text-decoration: none;
-          background: rgba(255,255,255,0.03);
-          transition: background 0.15s, border-color 0.15s;
+          background: rgba(217,169,25,0.04);
+          box-shadow: 0 0 0 1px rgba(217,169,25,0.08);
+          transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
         }
         .evd-related-upcoming-link:hover {
-          background: rgba(255,255,255,0.06);
-          border-color: rgba(255,255,255,0.18);
+          background: rgba(217,169,25,0.08);
+          border-color: rgba(217,169,25,0.42);
+          box-shadow: 0 8px 28px rgba(217,169,25,0.14), 0 0 0 1px rgba(217,169,25,0.16);
         }
         .evd-related-upcoming-copy {
           display: flex;
           flex-direction: column;
-          gap: 0.25rem;
+          gap: 0.3rem;
         }
         .evd-related-upcoming-title {
           font-family: "DM Serif Display", serif;
-          font-size: 1.05rem;
-          color: rgba(255,255,255,0.9);
+          font-size: 1.2rem;
+          color: rgba(255,255,255,0.95);
           margin: 0;
         }
         .evd-related-upcoming-meta {
           font-family: "DM Sans", sans-serif;
-          font-size: 0.78rem;
-          color: rgba(255,255,255,0.45);
+          font-size: 0.8rem;
+          color: rgba(255,255,255,0.52);
           margin: 0;
         }
         .evd-related-upcoming-cta {
           font-family: "DM Sans", sans-serif;
-          font-size: 0.8rem;
-          font-weight: 600;
-          color: var(--evd-accent);
+          font-size: 0.75rem;
+          font-weight: 800;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #D9A919;
           white-space: nowrap;
           flex-shrink: 0;
+          padding: 0.45rem 1rem;
+          border: 1.5px solid rgba(217,169,25,0.35);
+          border-radius: 999px;
+          transition: border-color 0.15s, background 0.15s;
+        }
+        .evd-related-upcoming-link:hover .evd-related-upcoming-cta {
+          border-color: rgba(217,169,25,0.65);
+          background: rgba(217,169,25,0.08);
         }
 
         /* ── 14. Responsive overrides ──────────────────────────────────── */

@@ -8,6 +8,7 @@ import Image from 'next/image';
 const LOGOS = {
   src: '/images/dat-mobile-logo.png',
   alt: 'Dramatic Adventure Theatre Logo',
+  width: 84,
   height: 84,
   paddingLeft: '2rem',
   paddingY: '0.25rem',
@@ -258,11 +259,10 @@ export default function Header() {
             <Image
               src={LOGOS.src}
               alt={LOGOS.alt}
-              width={252}
+              width={LOGOS.width}
               height={LOGOS.height}
               priority
               className="w-auto"
-              style={{ height: LOGOS.height }}
               draggable={false}
             />
           </Link>

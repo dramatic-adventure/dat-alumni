@@ -477,7 +477,6 @@ export const productionDetailsMap: Record<string, ProductionExtra> = {
         name: "Pachaysana Institute",
         href: "https://www.pachaysana.org/",
         type: "community",
-        logoSrc: "/logos/pachaysana.svg",
         logoAlt: "Pachaysana Institute",
       },
       {
