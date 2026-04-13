@@ -39,6 +39,7 @@ export type ProfileLiveRow = {
   pronouns?: string;
   roles?: string; // likely CSV/pipe separated string
   location?: string;
+  secondLocation?: string;
   currentWork?: string;
   currentTitle?: string;  // present-day professional title (outside DAT)
 
@@ -192,6 +193,18 @@ function addLocationExactTokens(set: Set<string>, raw?: string) {
     .forEach((x) => set.add(x));
 }
 
+function shouldSearchTokenDebug(item?: { slug?: string }) {
+  if (process.env.NODE_ENV !== "development") return false;
+
+  const watch = new Set([
+    "tina-valentova",
+    "peter-petkovsek",
+    "kasie-lerner",
+    "jesse-baxter",
+  ]);
+
+  return watch.has(normSlug(item?.slug || ""));
+}
 
 
 /**
@@ -216,6 +229,7 @@ function addProfileLiveTokens(aliasTokens: Set<string>, item: ProfileLiveRow) {
   // Profile fields
   addPhraseTokens(aliasTokens, item.pronouns);
   addPhraseTokens(aliasTokens, item.location);
+  addPhraseTokens(aliasTokens, item.secondLocation);
   addPhraseTokens(aliasTokens, item.currentWork);
   addPhraseTokens(aliasTokens, item.currentTitle);
 
@@ -310,6 +324,21 @@ function headshotUrlFrom(item: ProfileLiveRow): string {
 
   const u = String(item.currentHeadshotUrl ?? "").trim();
   return u;
+}
+
+function getProgramGeoParts(prog: {
+  location?: string;
+  country?: string;
+  region?: string;
+  city?: string;
+}): string[] {
+  return Array.from(
+    new Set(
+      [prog.location, prog.country, prog.region, prog.city]
+        .map((v) => String(v ?? "").trim())
+        .filter(Boolean)
+    )
+  );
 }
 
 /**
@@ -578,6 +607,8 @@ export async function enrichAlumniData(
     // Broad tokens for fuzzy matching + exact location phrases for top matches.
     addPhraseTokens(locationTokens, item.location);
     addLocationExactTokens(locationExactTokens, item.location);
+    addPhraseTokens(locationTokens, item.secondLocation);
+    addLocationExactTokens(locationExactTokens, item.secondLocation);
 
     // ✅ Bio bucket (for scoring)
     addPhraseTokens(bioTokens, item.bioShort);
@@ -614,10 +645,16 @@ export async function enrichAlumniData(
 
         if (prog.title) programTokens.add(normalizeText(prog.title));
         if (prog.program) programTokens.add(normalizeText(prog.program));
-        if (prog.location) {
-          programTokens.add(normalizeText(prog.location));
-          addPhraseTokens(locationTokens, prog.location);
-          addLocationExactTokens(locationExactTokens, prog.location);
+        for (const geo of getProgramGeoParts(prog)) {
+          programTokens.add(normalizeText(geo));
+          addPhraseTokens(locationTokens, geo);
+          addLocationExactTokens(locationExactTokens, geo);
+        }
+
+        if (prog.country) {
+          programTokens.add(normalizeText(prog.country));
+          addPhraseTokens(locationTokens, prog.country);
+          addLocationExactTokens(locationExactTokens, prog.country);
         }
         if (prog.year) addYearishTokens(programTokens, prog.year);
         if (prog.season) addYearishTokens(programTokens, prog.season);
@@ -629,6 +666,13 @@ export async function enrichAlumniData(
           );
         }
 
+        if (prog.country && prog.year) {
+          addYearishTokens(locationTokens, `${prog.country} ${prog.year}`);
+          locationTokens.add(
+            buildStructuredComboKey([prog.country, prog.year])
+          );
+        }
+
         if (prog.program && prog.location) {
           programTokens.add(
             normalizeText(`${prog.program} ${prog.location}`)
@@ -637,12 +681,28 @@ export async function enrichAlumniData(
             buildStructuredComboKey([prog.program, prog.location])
           );
         }
+        if (prog.program && prog.country) {
+          programTokens.add(
+            normalizeText(`${prog.program} ${prog.country}`)
+          );
+          programTokens.add(
+            buildStructuredComboKey([prog.program, prog.country])
+          );
+        }
         if (prog.title && prog.location) {
           programTokens.add(
             normalizeText(`${prog.title} ${prog.location}`)
           );
           programTokens.add(
             buildStructuredComboKey([prog.title, prog.location])
+          );
+        }
+        if (prog.title && prog.country) {
+          programTokens.add(
+            normalizeText(`${prog.title} ${prog.country}`)
+          );
+          programTokens.add(
+            buildStructuredComboKey([prog.title, prog.country])
           );
         }
         if (prog.program && prog.year) {
@@ -666,6 +726,15 @@ export async function enrichAlumniData(
             buildStructuredComboKey([prog.program, prog.location, prog.year])
           );
         }
+        if (prog.program && prog.country && prog.year) {
+          addYearishTokens(
+            programTokens,
+            `${prog.program} ${prog.country} ${prog.year}`
+          );
+          programTokens.add(
+            buildStructuredComboKey([prog.program, prog.country, prog.year])
+          );
+        }
         if (prog.title && prog.location && prog.year) {
           addYearishTokens(
             programTokens,
@@ -675,8 +744,18 @@ export async function enrichAlumniData(
             buildStructuredComboKey([prog.title, prog.location, prog.year])
           );
         }
+        if (prog.title && prog.country && prog.year) {
+          addYearishTokens(
+            programTokens,
+            `${prog.title} ${prog.country} ${prog.year}`
+          );
+          programTokens.add(
+            buildStructuredComboKey([prog.title, prog.country, prog.year])
+          );
+        }
         if (prog.program && prog.season)
           addYearishTokens(programTokens, `${prog.program} ${prog.season}`);
+        (prog.acronyms || []).forEach((a: string) => addPhraseTokens(programTokens, a));
         if (prog.title && prog.season)
           addYearishTokens(programTokens, `${prog.title} ${prog.season}`);
 
@@ -684,6 +763,9 @@ export async function enrichAlumniData(
         if (prog.title) addPhraseTokens(aliasTokens, prog.title);
         if (prog.program) addPhraseTokens(aliasTokens, prog.program);
         if (prog.location) addPhraseTokens(aliasTokens, prog.location);
+        if (prog.country) addPhraseTokens(aliasTokens, prog.country);
+        if (prog.region) addPhraseTokens(aliasTokens, prog.region);
+        if (prog.city) addPhraseTokens(aliasTokens, prog.city);
         if (prog.year) addYearishTokens(aliasTokens, prog.year);
 
         if (prog.program && prog.location) {
@@ -691,9 +773,19 @@ export async function enrichAlumniData(
             buildStructuredComboKey([prog.program, prog.location])
           );
         }
+        if (prog.program && prog.country) {
+          aliasTokens.add(
+            buildStructuredComboKey([prog.program, prog.country])
+          );
+        }
         if (prog.title && prog.location) {
           aliasTokens.add(
             buildStructuredComboKey([prog.title, prog.location])
+          );
+        }
+        if (prog.title && prog.country) {
+          aliasTokens.add(
+            buildStructuredComboKey([prog.title, prog.country])
           );
         }
         if (prog.program && prog.year) {
@@ -715,6 +807,15 @@ export async function enrichAlumniData(
             buildStructuredComboKey([prog.program, prog.location, prog.year])
           );
         }
+        if (prog.program && prog.country && prog.year) {
+          addYearishTokens(
+            aliasTokens,
+            `${prog.program} ${prog.country} ${prog.year}`
+          );
+          aliasTokens.add(
+            buildStructuredComboKey([prog.program, prog.country, prog.year])
+          );
+        }
         if (prog.title && prog.location && prog.year) {
           addYearishTokens(
             aliasTokens,
@@ -724,7 +825,16 @@ export async function enrichAlumniData(
             buildStructuredComboKey([prog.title, prog.location, prog.year])
           );
         }
-
+        if (prog.title && prog.country && prog.year) {
+          addYearishTokens(
+            aliasTokens,
+            `${prog.title} ${prog.country} ${prog.year}`
+          );
+          aliasTokens.add(
+            buildStructuredComboKey([prog.title, prog.country, prog.year])
+          );
+        }
+        (prog.acronyms || []).forEach((a: string) => addPhraseTokens(aliasTokens, a));
         if (prog.season) addYearishTokens(aliasTokens, prog.season);
 
         // Feed season info into catch-all too (so people can search "Season 18")
@@ -787,6 +897,8 @@ export async function enrichAlumniData(
         if (prod.title && prod.season)
           addYearishTokens(productionTokens, `${prod.title} ${prod.season}`);
 
+        (prod.acronyms || []).forEach((a: string) => addPhraseTokens(productionTokens, a));
+
         if (prod.festival) {
           productionTokens.add(normalizeText(prod.festival));
           prod.festival
@@ -821,6 +933,7 @@ export async function enrichAlumniData(
           );
         }
 
+        (prod.acronyms || []).forEach((a: string) => addPhraseTokens(aliasTokens, a));
         if (prod.season) addYearishTokens(aliasTokens, prod.season);
         if (prod.festival) addPhraseTokens(aliasTokens, prod.festival);
 
@@ -877,7 +990,27 @@ export async function enrichAlumniData(
     );
 
     // Add all merged roles to roleTokens so search/filter finds them.
-    for (const r of mergedRoles) addPhraseTokens(roleTokens, r);
+    // Also split combined role lines like "Artistic Director, Teaching Artist"
+    // so phrase searches for "Teaching Artist" work.
+    for (const r of mergedRoles) {
+      addPhraseTokens(roleTokens, r);
+      for (const part of splitListish(r)) {
+        addPhraseTokens(roleTokens, part);
+      }
+    }
+
+    if (shouldSearchTokenDebug(item)) {
+      // eslint-disable-next-line no-console
+      console.log("[search-token-debug]", item.slug, {
+        mergedRoles,
+        roleTokens: Array.from(roleTokens),
+        locationExactTokens: Array.from(locationExactTokens),
+        locationTokens: Array.from(locationTokens),
+        programTokens: Array.from(programTokens),
+        productionTokens: Array.from(productionTokens),
+        festivalTokens: Array.from(festivalTokens),
+      });
+    }
 
     const safeItem = item;
 
