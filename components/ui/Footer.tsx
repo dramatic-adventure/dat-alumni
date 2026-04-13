@@ -1,152 +1,120 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { FaInstagram, FaFacebook, FaTwitter, FaYoutube, FaEnvelope } from "react-icons/fa";
-import { useFitTextToParent } from "../hooks/useFitTextToParent";
 
 export default function Footer() {
-  // Auto-fit only below 768; CSS takes over at md (≥768)
-  const h2Ref = useFitTextToParent<HTMLHeadingElement>({
-    minPx: 28,
-    maxPx: 520,
-    desktopMin: 768,
-  });
+  const h2Ref = useRef<HTMLHeadingElement>(null);
 
+  useLayoutEffect(() => {
+    const el = h2Ref.current;
+    if (!el) return;
 
-  useEffect(() => {
-    let cancelled = false;
+    const fitHeadline = () => {
+      const parent = el.parentElement;
+      if (!parent) return;
 
-    const done = () => {
-      if (cancelled) return;
-      // kick your fit hook after fonts/layout settle
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (cancelled) return;
-          window.dispatchEvent(new Event("resize"));
-        });
-      });
+      // Start from a predictable measurement size
+      el.style.fontSize = "200px";
+
+      const parentWidth = parent.getBoundingClientRect().width;
+      const textWidth = el.getBoundingClientRect().width;
+
+      if (!parentWidth || !textWidth) return;
+
+      // Slightly under full width to avoid rounding overflow
+      const nextFontSize = (parentWidth / textWidth) * 200 * 0.995;
+      el.style.fontSize = `${nextFontSize}px`;
     };
 
-    const ready = document?.fonts?.ready;
-    if (ready?.then) {
-      ready.then(done).catch(done);
-    } else {
-      done();
-    }
+    const raf1 = requestAnimationFrame(() => {
+      const raf2 = requestAnimationFrame(fitHeadline);
+
+      const resizeObserver = new ResizeObserver(fitHeadline);
+      if (el.parentElement) resizeObserver.observe(el.parentElement);
+
+      window.addEventListener("resize", fitHeadline);
+      document.fonts?.ready?.then(fitHeadline);
+
+      (el as any).__footerCleanup = () => {
+        cancelAnimationFrame(raf2);
+        resizeObserver.disconnect();
+        window.removeEventListener("resize", fitHeadline);
+      };
+    });
 
     return () => {
-      cancelled = true;
-    };
-  }, []);
-
-    // Re-run fit after initial paint and after fonts load (prevents refresh-to-refresh size variance)
-  useEffect(() => {
-    let cancelled = false;
-
-    const nudge = () => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (cancelled) return;
-          window.dispatchEvent(new Event("resize"));
-        });
-      });
-    };
-
-    nudge();
-
-    const fontsReady = document?.fonts?.ready;
-    if (fontsReady?.then) {
-      fontsReady.then(() => {
-        if (cancelled) return;
-        nudge();
-      });
-    }
-
-    return () => {
-      cancelled = true;
+      cancelAnimationFrame(raf1);
+      (el as any).__footerCleanup?.();
     };
   }, []);
 
   return (
-    <footer className="relative z-10 bg-[#241123] overflow-x-hidden w-screen left-1/2 -ml-[50vw] pt-16 lg:pt-24 pb-10 px-3 sm:px-4 lg:px-6">
-      <div className="max-w-7xl mx-auto flex flex-col">
-
-        {/* Headline — bleed to viewport, then 90vw <768 / 62.25vw ≥768 */}
-        <div className="-mx-3 sm:-mx-4 lg:-mx-6">
-          <div
-            className="
-              headline-box headline-gap mx-auto
-              w-[88vw] md:w-[62.25vw] max-w-[100vw]
-              flex justify-center items-end
-              min-h-[calc(16.12vw*0.85)] md:min-h-[10.2rem]
-            "
-            style={{ marginTop: "7.75vh" }}
-          >
+  <footer className="relative z-10 bg-[#241123] overflow-x-hidden w-screen left-1/2 -ml-[50vw] pt-16 lg:pt-24 pb-10 px-3 sm:px-4 lg:px-6">
+    <div className="max-w-7xl mx-auto flex flex-col">
+      <div className="-mx-3 sm:-mx-4 lg:-mx-6">
+        <div
+          className="footer-cta mx-auto w-[88vw] md:w-[62.25vw] max-w-[100vw]"
+          style={{ marginTop: "7.75vh" }}
+        >
+          <div className="mb-4 md:mb-6 w-full overflow-hidden text-center">
             <h2
               ref={h2Ref}
               className="
-                block text-center max-w-full
-                font-gloucester text-[#F23359] font-[400]
-                leading-[0.85] tracking-[0.01em] whitespace-nowrap
-                text-[16.15vw] md:text-[12rem]
+                inline-block
+                font-gloucester font-[400] text-[#F23359]
+                leading-[0.85] tracking-[-0.02em] whitespace-nowrap
               "
-              style={{ margin: 0, willChange: "transform", transform: "translateZ(0)" }}
+              style={{ margin: 0, display: "inline-block" }}
             >
               Ready to act?
             </h2>
           </div>
+
+          <a
+            href="https://dramaticadventure.com/travel-opportunities"
+            className="first-cta-offset block w-full box-border text-center transition hover:opacity-80 uppercase tracking-[0.345em]"
+            style={{
+              backgroundColor: "#2493A9",
+              color: "#241123",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+              fontWeight: 400,
+              fontSize: "0.885rem",
+              paddingTop: "0.33em",
+              paddingBottom: "0.33em",
+              paddingLeft: "2.5rem",
+              paddingRight: "2.5rem",
+              borderRadius: "0.375rem",
+              marginTop: "0.9rem",
+              marginBottom: "0.7rem",
+              textDecoration: "none",
+            }}
+          >
+            Get Involved
+          </a>
+
+          <a
+            href="/donate"
+            className="block w-full box-border text-center transition hover:opacity-80 uppercase tracking-[0.345em]"
+            style={{
+              backgroundColor: "#2493A9",
+              color: "#241123",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+              fontWeight: 400,
+              fontSize: "0.885rem",
+              paddingTop: "0.33em",
+              paddingBottom: "0.33em",
+              paddingLeft: "2.5rem",
+              paddingRight: "2.5rem",
+              borderRadius: "0.375rem",
+              textDecoration: "none",
+            }}
+          >
+            Donate
+          </a>
         </div>
+      </div>
 
-        {/* CTA Buttons — 90vw <768, 62.25vw ≥768; padding won’t push past 100% */}
-<div className="-mx-3 sm:-mx-4 lg:-mx-6">
-  <div className="footer-cta mx-auto w-[88vw] md:w-[62.25vw] max-w-[100vw]">
-    <a
-      href="https://dramaticadventure.com/travel-opportunities"
-      className="first-cta-offset block w-full box-border text-center transition hover:opacity-80 uppercase tracking-[0.345em]"
-      style={{
-        backgroundColor: "#2493A9",
-        color: "#241123",
-        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-        fontWeight: 400,
-        fontSize: "0.885rem",
-        paddingTop: "0.33em",
-        paddingBottom: "0.33em",
-        paddingLeft: "2.5rem",
-        paddingRight: "2.5rem",
-        borderRadius: "0.375rem",
-        marginTop: "0.9rem",
-        marginBottom: "0.7rem",
-        textDecoration: "none",
-        willChange: "transform",
-        transform: "translateZ(0)",
-      }}
-    >
-      Get Involved
-    </a>
-
-    <a
-      href="/donate"
-      className="block w-full box-border text-center transition hover:opacity-80 uppercase tracking-[0.345em]"
-      style={{
-        backgroundColor: "#2493A9",
-        color: "#241123",
-        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-        fontWeight: 400,
-        fontSize: "0.885rem",
-        paddingTop: "0.33em",
-        paddingBottom: "0.33em",
-        paddingLeft: "2.5rem",
-        paddingRight: "2.5rem",
-        borderRadius: "0.375rem",
-        textDecoration: "none",
-        willChange: "transform",
-        transform: "translateZ(0)",
-      }}
-    >
-      Donate
-    </a>
-  </div>
-</div>
 
 
         {/* Social Icons */}
