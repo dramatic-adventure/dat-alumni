@@ -337,15 +337,25 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
         Secure checkout via Stripe · Tax-deductible · No account required
       </p>
 
+      {/* ── Match gift underwriter path ──────────────────────────── */}
+      {campaign.matchUnderwriterEmail && (
+        <a
+          href={`mailto:${campaign.matchUnderwriterEmail}?subject=${encodeURIComponent(`Matching Gift — ${campaign.title}`)}`}
+          className="cgw-match-gift-link"
+        >
+          {campaign.matchUnderwriterLabel ?? "Interested in funding a match gift?"} →
+        </a>
+      )}
+
       {/* ── Styles ──────────────────────────────────────────────── */}
       <style>{`
         .cgw-root {
           background: #fff;
           border-radius: 20px;
-          border: 2px solid rgba(36, 147, 169, 0.5);
+          border: 2px solid rgba(108, 0, 175, 0.45);
           box-shadow:
-            0 8px 40px rgba(36, 147, 169, 0.18),
-            0 0 0 5px rgba(36, 147, 169, 0.07),
+            0 8px 40px rgba(108, 0, 175, 0.18),
+            0 0 0 5px rgba(108, 0, 175, 0.07),
             inset 0 1px 0 rgba(255,255,255,0.8);
           padding: 1.75rem 1.5rem 1.5rem;
           display: flex;
@@ -369,13 +379,13 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
         .cgw-progress-track {
           position: relative;
           height: 10px;
-          background: rgba(36, 147, 169, 0.12);
+          background: rgba(108, 0, 175, 0.12);
           border-radius: 999px;
           overflow: visible;
         }
         .cgw-progress-fill {
           height: 100%;
-          background: linear-gradient(90deg, #2493A9, #FFCC00);
+          background: linear-gradient(90deg, #6C00AF, #FFCC00);
           border-radius: 999px;
           transition: width 800ms cubic-bezier(0.25, 1, 0.5, 1);
           min-width: 4px;
@@ -400,7 +410,7 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: 1.35rem;
           font-weight: 800;
-          color: #2493A9;
+          color: #6C00AF;
           line-height: 1;
         }
         .cgw-raised-label {
@@ -643,6 +653,26 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
           font-size: 0.7rem;
           color: rgba(36,17,35,0.45);
           line-height: 1.5;
+        }
+
+        /* Match gift underwriter path */
+        .cgw-match-gift-link {
+          display: block;
+          text-align: center;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.7rem;
+          font-weight: 600;
+          color: rgba(108,0,175,0.65);
+          text-decoration: none;
+          border-bottom: 1px solid rgba(108,0,175,0.2);
+          padding-bottom: 1px;
+          align-self: center;
+          transition: color 140ms, border-color 140ms;
+          margin-top: -0.25rem;
+        }
+        .cgw-match-gift-link:hover {
+          color: #6C00AF;
+          border-bottom-color: rgba(108,0,175,0.55);
         }
       `}</style>
     </div>

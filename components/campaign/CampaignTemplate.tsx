@@ -4,11 +4,12 @@
 /**
  * Reusable DAT fundraising campaign template.
  *
- * Color palette (campaign-specific, distinct from DAT main-site purple identity):
- *   DARK    = #081C3A  deep midnight navy  (hero, band, testimonials, CTA)
- *   ACCENT  = #2493A9  DAT blue (eyebrows, dates, links, accents)
- *   YELLOW  = #FFCC00  DAT yellow (CTAs, highlights — unchanged)
- *   PURPLE  = #6C00AF  DAT purple (secondary nod, kept minimal)
+ * Color palette:
+ *   DEEP        = #241123  DAT dark purple (hero, band, testimonials, share, CTA backgrounds)
+ *   ACCENT      = #2493A9  DAT blue (links, dates, amounts, card accents)
+ *   YELLOW      = #FFCC00  DAT yellow (CTAs, eyebrows on dark, highlights)
+ *   PURPLE      = #6C00AF  DAT purple (progress bars, donor moment, glow)
+ *   EYEBROW_BLUE = #0BC5E0 Vivid teal for eyebrows on light backgrounds
  *
  * Sections (all config-driven; linked-content blocks hide when empty):
  *   1. Match banner        — above hero, only when matchActive
@@ -61,11 +62,11 @@ function useLiveTotals(campaignId: string, initial: CampaignTotals) {
 /* Color constants                                                     */
 /* ------------------------------------------------------------------ */
 
-const DARK = "#081C3A";
-const DEEP = "#05141a";     // dark teal — dominant structure/band color
-const ACCENT = "#2493A9";   // DAT Blue — #2493A9 family as dominant bg/fill
+const DEEP = "#241123";     // DAT dark purple — primary structural background
+const ACCENT = "#2493A9";   // DAT Blue — links, accents, dates
 const YELLOW = "#FFCC00";
-const PURPLE = "#6C00AF";   // DAT purple — strategic CTA use
+const PURPLE = "#6C00AF";   // DAT purple — progress bars, CTAs, structural glow
+const EYEBROW_BLUE = "#0BC5E0"; // Bright vivid teal for eyebrows on light backgrounds
 
 /* ------------------------------------------------------------------ */
 /* Props                                                               */
@@ -158,7 +159,8 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
   const hasEvents = (campaign.events?.length ?? 0) > 0;
   const hasStories = (campaign.stories?.length ?? 0) > 0;
   const hasProductions = (campaign.productions?.length ?? 0) > 0;
-  const hasLinkedContent = hasAlumni || hasDramaClubs || hasEvents || hasStories || hasProductions;
+  // Drama clubs get their own dedicated conversion section — exclude from generic linked content
+  const hasLinkedContent = hasAlumni || hasEvents || hasStories || hasProductions;
 
   return (
     <main style={{ background: "transparent", overflowX: "hidden" }}>
@@ -401,6 +403,52 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         </section>
       )}
 
+      {/* ── 5.5. DRAMA CLUB CONVERSION ──────────────────────────── */}
+      {hasDramaClubs && (
+        <section className="cmp-clubs-moment-section">
+          <div className="cmp-clubs-moment-inner">
+            <span className="cmp-eyebrow" style={{ color: YELLOW, opacity: 0.85 }}>
+              Who You&apos;re Supporting
+            </span>
+            <h2 className="cmp-clubs-moment-title">
+              Your gift goes to real communities.
+            </h2>
+            <p className="cmp-clubs-moment-lead">
+              Every dollar raised goes toward the work DAT builds with its long-term local partners — drama programs embedded in the communities where PASSAGE happens. These are not one-time encounters. They are ongoing relationships, and your gift sustains them.
+            </p>
+            <div className="cmp-clubs-moment-grid">
+              {campaign.dramaClubs!.map((c) => (
+                <Link key={c.slug} href={`/drama-club/${c.slug}`} className="cmp-clubs-moment-card">
+                  {c.imageUrl && (
+                    <div className="cmp-clubs-moment-card-img">
+                      <Image
+                        src={c.imageUrl}
+                        alt={c.name}
+                        fill
+                        sizes="(min-width:1024px) 30vw, 90vw"
+                        style={{ objectFit: "cover" }}
+                      />
+                      <div className="cmp-clubs-moment-card-img-overlay" />
+                    </div>
+                  )}
+                  <div className="cmp-clubs-moment-card-body">
+                    <span className="cmp-clubs-moment-card-name">{c.name}</span>
+                    <span className="cmp-clubs-moment-card-loc">
+                      {c.city ? `${c.city}, ` : ""}{c.country}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            {isActive && (
+              <div className="cmp-clubs-moment-cta">
+                <a href="#give" className="cmp-btn-yellow">Give for These Communities</a>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* ── 6. STRETCH GOALS ────────────────────────────────────── */}
       {hasStretchGoals && (
         <section className="cmp-stretch-section">
@@ -548,7 +596,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
       {hasSupporters && (
         <section className="cmp-supporters-section">
           <div className="cmp-supporters-inner">
-            <span className="cmp-eyebrow cmp-eyebrow--accent" style={{ color: "#1a6478" }}>Recent Supporters</span>
+            <span className="cmp-eyebrow cmp-eyebrow--accent">Recent Supporters</span>
             <h2 className="cmp-section-title" style={{ color: "#0f1f38" }}>
               In good company.
             </h2>
@@ -612,9 +660,9 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                   href={campaign.ambassadorUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="cmp-share-ambassador-link"
+                  className="cmp-share-ambassador-btn"
                 >
-                  Become an ambassador →
+                  Become an Ambassador →
                 </a>
               )}
             </div>
@@ -726,38 +774,6 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                       </div>
                     );
                   })}
-                </div>
-              </div>
-            )}
-
-            {/* Community connection (drama clubs) */}
-            {hasDramaClubs && (
-              <div className="cmp-linked-block">
-                <span className="cmp-eyebrow cmp-eyebrow--accent">Community Connection</span>
-                <h2 className="cmp-linked-block-title">Partner drama clubs on the ground.</h2>
-                <p className="cmp-linked-block-sub">Your gift directly supports these communities.</p>
-                <div className="cmp-clubs-grid">
-                  {campaign.dramaClubs!.map((c) => (
-                    <Link key={c.slug} href={`/drama-club/${c.slug}`} className="cmp-club-card">
-                      {c.imageUrl && (
-                        <div className="cmp-club-card-img">
-                          <Image
-                            src={c.imageUrl}
-                            alt={c.name}
-                            fill
-                            sizes="(min-width:1024px) 20vw, 50vw"
-                            style={{ objectFit: "cover" }}
-                          />
-                        </div>
-                      )}
-                      <div className="cmp-club-card-body">
-                        <span className="cmp-club-name">{c.name}</span>
-                        <span className="cmp-club-loc">
-                          {c.city ? `${c.city}, ` : ""}{c.country}
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
                 </div>
               </div>
             )}
@@ -917,40 +933,40 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           overflow: hidden;
           display: flex;
           align-items: flex-end;
-          background: #2493A9;
+          background: #241123;
         }
         .cmp-hero-img-layer {
           position: absolute;
           inset: -15% 0;
           will-change: transform;
         }
-        /* Primary gradient: festivals-style — solid dark base, fades transparent toward top */
+        /* Primary gradient: solid dark purple base, fades transparent toward top */
         .cmp-hero-gradient-primary {
           position: absolute;
           inset: 0;
           background: linear-gradient(
             to top,
-            rgba(5,20,26,1.0) 0%,
-            rgba(5,20,26,1.0) 12%,
-            rgba(5,15,20,0.85) 35%,
-            rgba(5,15,20,0.45) 65%,
-            rgba(5,15,20,0.15) 100%
+            rgba(36,17,35,1.0) 0%,
+            rgba(36,17,35,1.0) 12%,
+            rgba(36,17,35,0.85) 35%,
+            rgba(36,17,35,0.45) 65%,
+            rgba(36,17,35,0.15) 100%
           );
         }
-        /* Teal glow accent — matches /events/festivals treatment */
+        /* DAT purple glow accent — atmospheric bottom-left warmth */
         .cmp-hero-gradient-left {
           position: absolute;
           inset: 0;
-          background: radial-gradient(ellipse 70% 55% at 8% 88%, rgba(36,147,169,0.2) 0%, transparent 60%);
+          background: radial-gradient(ellipse 70% 55% at 8% 88%, rgba(108,0,175,0.28) 0%, transparent 60%);
         }
-        /* Atmospheric #2493A9 shading at the very bottom — bridges hero into the teal progress band */
+        /* DAT purple atmospheric shading at the very bottom — bridges hero into the dark band */
         .cmp-hero-gradient-bottom {
           position: absolute;
           inset: 0;
           background: linear-gradient(
             to top,
-            rgba(36, 147, 169, 0.7) 0%,
-            rgba(36, 147, 169, 0.3) 14%,
+            rgba(108, 0, 175, 0.55) 0%,
+            rgba(108, 0, 175, 0.2) 14%,
             transparent 38%
           );
           z-index: 1;
@@ -977,10 +993,11 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           display: block;
           font-family: var(--font-dm-sans), sans-serif;
           font-size: 0.72rem;
-          font-weight: 700;
+          font-weight: 800;
           letter-spacing: 0.28em;
           text-transform: uppercase;
-          color: ${ACCENT};
+          color: ${YELLOW};
+          opacity: 0.88;
           margin-bottom: 0.75rem;
         }
         .cmp-hero-title {
@@ -1019,9 +1036,9 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
 
         /* ─── Progress band ────────────────────────────────────────── */
         .cmp-band {
-          background: #2493A9;
+          background: #241123;
           padding: 2.5rem 2rem;
-          box-shadow: 0 8px 30px rgba(8, 28, 58, 0.18);
+          box-shadow: 0 8px 30px rgba(36,17,35,0.35);
         }
         .cmp-band-inner {
           max-width: 1100px;
@@ -1033,13 +1050,13 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         .cmp-band-thermo { display: flex; flex-direction: column; gap: 0.6rem; }
         .cmp-band-track {
           height: 10px;
-          background: rgba(255,255,255,0.22);
+          background: rgba(255,255,255,0.12);
           border-radius: 999px;
           overflow: hidden;
         }
         .cmp-band-fill {
           height: 100%;
-          background: linear-gradient(90deg, rgba(255,255,255,0.9), ${YELLOW});
+          background: linear-gradient(90deg, ${PURPLE}, ${YELLOW});
           border-radius: 999px;
           transition: width 1s cubic-bezier(0.25, 1, 0.5, 1);
           min-width: 4px;
@@ -1100,7 +1117,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           color: rgba(36,17,35,0.5);
         }
         .cmp-eyebrow--accent {
-          color: ${ACCENT};
+          color: ${EYEBROW_BLUE};
         }
         .cmp-section-title {
           margin: 0 0 1.25rem;
@@ -1339,7 +1356,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: 1.05rem;
           font-weight: 800;
-          color: ${ACCENT};
+          color: ${PURPLE};
         }
         .cmp-stretch-card-title {
           margin: 0;
@@ -1365,17 +1382,17 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
         .cmp-stretch-mini-fill {
           height: 100%;
-          background: linear-gradient(90deg, ${ACCENT}, ${YELLOW});
+          background: linear-gradient(90deg, ${PURPLE}, ${YELLOW});
           border-radius: 999px;
           min-width: 3px;
           transition: width 1s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         /* ─── Stamp divider ───────────────────────────────────────── */
-        .cmp-quotes-section { background: #0a1e24; padding: 5rem 2rem; position: relative; }
+        .cmp-quotes-section { background: ${DEEP}; padding: 5rem 2rem; position: relative; }
         .cmp-stamp-divider {
           position: absolute;
-          top: -60px;
+          top: -90px;
           left: 50%;
           transform: translateX(-50%);
           z-index: 20;
@@ -1383,14 +1400,14 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
         .cmp-stamp-img {
           display: block;
-          width: 120px;
-          height: 120px;
-          filter: drop-shadow(0 3px 14px rgba(0,0,0,0.4));
+          width: 180px;
+          height: 180px;
+          filter: drop-shadow(0 3px 16px rgba(0,0,0,0.45));
           opacity: 0.92;
         }
         @media (max-width: 640px) {
-          .cmp-stamp-img { width: 80px; height: 80px; }
-          .cmp-stamp-divider { top: -40px; }
+          .cmp-stamp-img { width: 110px; height: 110px; }
+          .cmp-stamp-divider { top: -55px; }
         }
 
         /* ─── Testimonials ─────────────────────────────────────────── */
@@ -1483,7 +1500,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           font-size: 0.68rem;
           color: rgba(242,242,242,0.45);
           font-style: italic;
-          background: rgba(5,20,26,0.72);
+          background: rgba(24,6,32,0.75);
           border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
@@ -1588,7 +1605,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
 
         /* ─── Share section ────────────────────────────────────────── */
         .cmp-share-section {
-          background: #052f3d;
+          background: ${DEEP};
           padding: 2.75rem 2rem;
         }
         .cmp-share-inner {
@@ -1608,10 +1625,11 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           display: block;
           font-family: var(--font-dm-sans), sans-serif;
           font-size: 0.65rem;
-          font-weight: 700;
+          font-weight: 800;
           letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: ${ACCENT};
+          color: ${YELLOW};
+          opacity: 0.85;
           margin-bottom: 0.4rem;
         }
         .cmp-share-text {
@@ -1668,20 +1686,28 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           background: #1c7a8a;
           border-color: #1c7a8a;
         }
-        .cmp-share-ambassador-link {
-          font-family: var(--font-dm-sans), sans-serif;
+        .cmp-share-ambassador-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.6rem 1.2rem;
+          border-radius: 10px;
+          border: 1.5px solid rgba(255,204,0,0.5);
+          background: rgba(255,204,0,0.1);
+          color: ${YELLOW};
+          font-family: var(--font-space-grotesk), sans-serif;
           font-size: 0.78rem;
-          font-weight: 600;
-          color: rgba(242,242,242,0.68);
+          font-weight: 700;
+          letter-spacing: 0.08em;
           text-decoration: none;
-          letter-spacing: 0.06em;
           white-space: nowrap;
-          transition: color 140ms;
-          align-self: center;
-          border-bottom: 1px solid rgba(242,242,242,0.25);
-          padding-bottom: 1px;
+          transition: background 140ms, border-color 140ms, transform 140ms;
         }
-        .cmp-share-ambassador-link:hover { color: #fff; border-bottom-color: rgba(242,242,242,0.55); }
+        .cmp-share-ambassador-btn:hover {
+          background: rgba(255,204,0,0.18);
+          border-color: rgba(255,204,0,0.8);
+          transform: translateY(-1px);
+        }
         @media (max-width: 640px) {
           .cmp-share-inner {
             flex-direction: column;
@@ -1854,6 +1880,98 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           font-family: var(--font-dm-sans), sans-serif;
           font-size: 0.72rem;
           color: rgba(8,28,58,0.5);
+        }
+
+        /* ─── Drama club conversion moment ────────────────────────── */
+        .cmp-clubs-moment-section {
+          background: ${DEEP};
+          padding: 5rem 2rem;
+          position: relative;
+          overflow: hidden;
+        }
+        .cmp-clubs-moment-section::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(ellipse 85% 65% at 50% 110%, rgba(108,0,175,0.35) 0%, transparent 70%);
+          pointer-events: none;
+        }
+        .cmp-clubs-moment-inner {
+          max-width: 1100px;
+          margin: 0 auto;
+          position: relative;
+          z-index: 1;
+        }
+        .cmp-clubs-moment-title {
+          margin: 0 0 1rem;
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+          font-weight: 800;
+          color: #f2f2f2;
+          line-height: 1.15;
+        }
+        .cmp-clubs-moment-lead {
+          margin: 0 0 2.5rem;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: clamp(0.9rem, 1.6vw, 1.02rem);
+          line-height: 1.75;
+          color: rgba(242,242,242,0.68);
+          max-width: 620px;
+        }
+        .cmp-clubs-moment-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+          gap: 1.25rem;
+          margin-bottom: 2.5rem;
+        }
+        .cmp-clubs-moment-card {
+          display: flex;
+          flex-direction: column;
+          text-decoration: none;
+          border-radius: 18px;
+          overflow: hidden;
+          border: 1.5px solid rgba(108,0,175,0.4);
+          background: rgba(255,255,255,0.04);
+          transition: box-shadow 180ms, transform 180ms, border-color 180ms;
+        }
+        .cmp-clubs-moment-card:hover {
+          box-shadow: 0 8px 32px rgba(108,0,175,0.35);
+          transform: translateY(-4px);
+          border-color: rgba(108,0,175,0.7);
+        }
+        .cmp-clubs-moment-card-img {
+          position: relative;
+          height: 180px;
+          background: rgba(108,0,175,0.18);
+          overflow: hidden;
+        }
+        .cmp-clubs-moment-card-img-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to bottom, transparent 50%, rgba(36,17,35,0.6) 100%);
+        }
+        .cmp-clubs-moment-card-body {
+          padding: 1rem 1.1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.3rem;
+        }
+        .cmp-clubs-moment-card-name {
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: 0.98rem;
+          font-weight: 800;
+          color: #f2f2f2;
+        }
+        .cmp-clubs-moment-card-loc {
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.72rem;
+          font-weight: 600;
+          color: rgba(255,204,0,0.7);
+          letter-spacing: 0.06em;
+        }
+        .cmp-clubs-moment-cta {
+          display: flex;
+          justify-content: flex-start;
         }
 
         /* Events */

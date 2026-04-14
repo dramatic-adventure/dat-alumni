@@ -133,6 +133,18 @@ export const passageSlovakia2026: FundraisingCampaign = {
     },
   ],
 
+  // ── Drama clubs / partner communities ────────────────────────────
+  // These render as the primary conversion moment ("who you're supporting").
+  dramaClubs: [
+    {
+      slug: "etp-slovensko",
+      name: "ETP Slovensko Drama Program",
+      country: "Slovakia",
+      city: "Nitra",
+      imageUrl: "/images/rehearsing-nitra.jpg",
+    },
+  ],
+
   // ── Events ────────────────────────────────────────────────────────
   events: [
     {
@@ -143,6 +155,7 @@ export const passageSlovakia2026: FundraisingCampaign = {
       city: "Brooklyn",
       country: "USA",
       ticketUrl: "https://dramaticadventure.com/passage/slovakia",
+      imageUrl: "/images/rehearsing-nitra.jpg",
     },
   ],
 
@@ -154,12 +167,14 @@ export const passageSlovakia2026: FundraisingCampaign = {
       title: "Drama Works",
       teaser:
         "Long-term drama workshops with Roma youth in Eastern Slovakia — how a partnership with ETP Slovensko became one of DAT's most enduring collaborations.",
+      imageUrl: "/images/rehearsing-nitra.jpg",
     },
     {
       slug: "night-at-the-roma-museum",
       title: "Night at the Roma Museum",
       teaser:
         "A cross-cultural production in Brno, Czechia — made with a community, not just for one.",
+      imageUrl: "/images/performing-zanzibar.jpg",
     },
   ],
 
@@ -211,6 +226,7 @@ export const passageSlovakia2026: FundraisingCampaign = {
   // ── Links ─────────────────────────────────────────────────────────
   learnMoreUrl: "https://dramaticadventure.com/passage/slovakia",
   secondaryUrl: "https://dramaticadventure.com/passage",
+  ambassadorUrl: "https://dramaticadventure.com/passage/slovakia",
 
   // ── Archive state ─────────────────────────────────────────────────
   archiveHeadline: "PASSAGE: Slovakia 2026 is complete.",
