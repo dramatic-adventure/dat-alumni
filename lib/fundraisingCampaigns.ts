@@ -209,6 +209,13 @@ export type FundraisingCampaign = {
   /** Marks this as an always-open annual-fund style campaign (no deadline pressure) */
   evergreen?: boolean;
 
+  /**
+   * Overrides the "raised" label in the progress display.
+   * E.g. "raised this year" for annual-fund campaigns.
+   * Defaults to "raised" when absent.
+   */
+  progressLabel?: string;
+
   /** Custom label for the drama clubs CTA button — defaults to "Sponsor an Artist" */
   dramaClubsCtaLabel?: string;
 };

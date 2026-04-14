@@ -499,7 +499,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
             </div>
             {isActive && (
               <div className="cmp-stretch-footer-cta">
-                <a href="#give" className="cmp-btn-yellow">Help unlock the next goal</a>
+                <a href="#give" className="cmp-btn-blue-secondary">Help unlock the next goal</a>
               </div>
             )}
           </div>
@@ -669,7 +669,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
               </div>
               {campaign.events!.length > 1 && (
                 <div className="cmp-extra-events">
-                  {campaign.events!.slice(1).map((e) => {
+                  {campaign.events!.slice(1, 3).map((e) => {
                     const href = e.ticketUrl ?? campaign.learnMoreUrl;
                     return (
                       <div key={e.id} className="cmp-event-row">
@@ -679,13 +679,23 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                           <span className="cmp-event-loc">{e.venue} · {e.city}, {e.country}</span>
                         </div>
                         {href && (
-                          <a href={href} target="_blank" rel="noopener noreferrer" className="cmp-btn-yellow-sm">
+                          <a href={href} target="_blank" rel="noopener noreferrer" className="cmp-btn-event-sm">
                             {e.ticketUrl ? "Get Tickets" : "Learn More"}
                           </a>
                         )}
                       </div>
                     );
                   })}
+                  {campaign.events!.length > 3 && campaign.learnMoreUrl && (
+                    <a
+                      href={campaign.learnMoreUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="cmp-events-view-all"
+                    >
+                      View all events
+                    </a>
+                  )}
                 </div>
               )}
             </div>
@@ -1455,6 +1465,25 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           padding-top: 2rem;
           border-top: 1px solid rgba(36,147,169,0.12);
         }
+        .cmp-btn-blue-secondary {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.85rem 1.75rem;
+          border-radius: 14px;
+          background: #2493A9;
+          color: #fff;
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: 0.82rem;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          text-decoration: none;
+          border: none;
+          cursor: pointer;
+          transition: transform 150ms, background 150ms;
+        }
+        .cmp-btn-blue-secondary:hover { transform: translateY(-2px); background: #1e7d90; }
 
         /* ─── Stamp divider ───────────────────────────────────────── */
         .cmp-quotes-section { background: ${DEEP}; padding: 5rem 2rem; position: relative; }
@@ -2200,9 +2229,9 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
 
         /* ─── Featured event section ──────────────────────────────── */
         .cmp-featured-event-section {
-          background: #fff;
+          background: #241123;
           padding: 4rem 2rem;
-          border-top: 1px solid rgba(8,28,58,0.07);
+          border-top: 1px solid rgba(255,255,255,0.06);
         }
         .cmp-featured-event-inner {
           max-width: 860px;
@@ -2213,22 +2242,27 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           flex-direction: row;
           border-radius: 20px;
           overflow: hidden;
-          border: 1.5px solid rgba(36,147,169,0.2);
-          background: rgba(36,147,169,0.03);
+          border: 1.5px solid rgba(36,147,169,0.3);
+          background: rgba(255,255,255,0.06);
           margin-top: 1rem;
-          box-shadow: 0 4px 24px rgba(36,147,169,0.1);
+          box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+          transition: box-shadow 220ms, transform 180ms;
+        }
+        .cmp-featured-event-card:hover {
+          box-shadow: 0 0 0 2px rgba(36,147,169,0.55), 0 8px 36px rgba(36,147,169,0.22);
+          transform: translateY(-2px);
         }
         .cmp-featured-event-img {
           position: relative;
           width: 300px;
           min-height: 200px;
           flex-shrink: 0;
-          background: rgba(36,147,169,0.08);
+          background: rgba(36,147,169,0.15);
         }
         .cmp-featured-event-img-overlay {
           position: absolute;
           inset: 0;
-          background: linear-gradient(to right, transparent 50%, rgba(240,248,250,0.12) 100%);
+          background: linear-gradient(to right, transparent 50%, rgba(36,17,35,0.18) 100%);
         }
         .cmp-featured-event-date-badge {
           position: absolute;
@@ -2243,7 +2277,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           text-transform: uppercase;
           padding: 0.25rem 0.65rem;
           border-radius: 6px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.28);
         }
         .cmp-featured-event-body {
           padding: 1.75rem 2rem;
@@ -2266,14 +2300,14 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: clamp(1.15rem, 2.2vw, 1.55rem);
           font-weight: 800;
-          color: #0f1f38;
+          color: #f2f2f2;
           line-height: 1.2;
         }
         .cmp-featured-event-loc {
           display: block;
           font-family: var(--font-dm-sans), sans-serif;
           font-size: 0.82rem;
-          color: rgba(8,28,58,0.52);
+          color: rgba(242,242,242,0.52);
           margin-bottom: 0.5rem;
         }
         .cmp-extra-events {
@@ -2281,6 +2315,53 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           display: flex;
           flex-direction: column;
           gap: 0.5rem;
+        }
+        /* Secondary event rows on dark section bg */
+        .cmp-extra-events .cmp-event-row {
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 12px;
+        }
+        .cmp-extra-events .cmp-event-row:hover {
+          background: rgba(255,255,255,0.08);
+        }
+        .cmp-extra-events .cmp-event-date { color: ${ACCENT}; }
+        .cmp-extra-events .cmp-event-title { color: #f2f2f2; }
+        .cmp-extra-events .cmp-event-loc { color: rgba(242,242,242,0.5); }
+        .cmp-events-view-all {
+          display: inline-block;
+          margin-top: 0.5rem;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.78rem;
+          font-weight: 600;
+          color: rgba(242,242,242,0.55);
+          text-decoration: none;
+          letter-spacing: 0.04em;
+          transition: color 140ms;
+        }
+        .cmp-events-view-all:hover { color: rgba(242,242,242,0.9); }
+        /* Small secondary button on dark event section */
+        .cmp-btn-event-sm {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.5rem 1.1rem;
+          border-radius: 10px;
+          background: transparent;
+          color: ${ACCENT};
+          border: 1.5px solid rgba(36,147,169,0.5);
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: 0.7rem;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          text-decoration: none;
+          flex-shrink: 0;
+          transition: background 150ms, border-color 150ms;
+        }
+        .cmp-btn-event-sm:hover {
+          background: rgba(36,147,169,0.12);
+          border-color: ${ACCENT};
         }
         @media (max-width: 640px) {
           .cmp-featured-event-card {

@@ -56,7 +56,9 @@ export const passageSlovakia2026: FundraisingCampaign = {
   // ── Giving ────────────────────────────────────────────────────────
   giveAmounts: [50, 100, 250, 500, 1000],
   defaultAmount: 100,
-  allowMonthly: false,
+  allowMonthly: true,
+  // One-time is the default. Monthly giving explicitly supports PASSAGE's
+  // ongoing community partnerships and residency preparation work.
 
   // ── Gift impact ────────────────────────────────────────────────────
   giftImpact: [

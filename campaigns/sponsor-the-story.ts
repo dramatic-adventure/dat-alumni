@@ -70,6 +70,10 @@ export const sponsorTheStory: FundraisingCampaign = {
   // ── Labels ────────────────────────────────────────────────────────
   dramaClubsCtaLabel: "Sponsor the Story",
 
+  // ── Progress label ────────────────────────────────────────────────
+  // Honest label: this is YTD giving, not all-time cumulative.
+  progressLabel: "raised this year",
+
   // ── Analytics ─────────────────────────────────────────────────────
   utmCampaign: "sponsor-the-story",
 };

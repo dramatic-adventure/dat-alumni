@@ -83,7 +83,8 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
   const [selectedAmount, setSelectedAmount] = useState<number>(defaultAmt);
   const [customAmount, setCustomAmount] = useState("");
   const [isCustom, setIsCustom] = useState(false);
-  const [frequency, setFrequency] = useState<"one_time" | "monthly">("one_time");
+  // Evergreen annual-fund campaigns default to monthly; time-bound campaigns default to one-time.
+  const [frequency, setFrequency] = useState<"one_time" | "monthly">(campaign.evergreen ? "monthly" : "one_time");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const customRef = useRef<HTMLInputElement>(null);
@@ -192,7 +193,7 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
             <span className="cgw-raised-amount">
               {formatCurrencyMinor(raised, currency)}
             </span>
-            <span className="cgw-raised-label"> raised</span>
+            <span className="cgw-raised-label"> {campaign.progressLabel ?? "raised"}</span>
           </div>
           <div className="cgw-progress-goal">
             <span className="cgw-goal-label">Goal: </span>

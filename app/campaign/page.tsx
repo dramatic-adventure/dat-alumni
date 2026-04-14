@@ -92,7 +92,7 @@ function ActiveCampaignCard({ campaign }: { campaign: FundraisingCampaign }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Evergreen campaign card — horizontal, no deadline pressure         */
+/* Evergreen campaign card — sidebar companion to the live campaign   */
 /* ------------------------------------------------------------------ */
 
 function EvergreenCampaignCard({ campaign }: { campaign: FundraisingCampaign }) {
@@ -104,9 +104,10 @@ function EvergreenCampaignCard({ campaign }: { campaign: FundraisingCampaign }) 
             src={campaign.heroImage}
             alt={campaign.title}
             fill
-            sizes="(min-width:1024px) 160px, 50vw"
-            style={{ objectFit: "cover", objectPosition: campaign.heroImageFocus ?? "center" }}
+            sizes="(min-width:1024px) 340px, 90vw"
+            style={{ objectFit: "cover", objectPosition: campaign.heroImageFocus ?? "center top" }}
           />
+          <div className="chub-evergreen-img-overlay" />
         </div>
       )}
       <div className="chub-evergreen-body">
@@ -121,8 +122,11 @@ function EvergreenCampaignCard({ campaign }: { campaign: FundraisingCampaign }) 
         )}
         <h3 className="chub-evergreen-title">{campaign.title}</h3>
         <p className="chub-evergreen-tagline">{campaign.tagline}</p>
-        <Link href={`/campaign/${campaign.id}`} className="chub-btn-primary">
-          Give Now
+        <Link href={`/campaign/${campaign.id}`} className="chub-btn-evergreen">
+          Give Monthly
+        </Link>
+        <Link href={`/campaign/${campaign.id}`} className="chub-btn-evergreen-ghost">
+          Give Once
         </Link>
       </div>
     </article>
@@ -197,8 +201,45 @@ export default function CampaignHubPage() {
         </div>
       </section>
 
-      {/* ── Active campaigns ─────────────────────────────────────── */}
-      {active.length > 0 && (
+      {/* ── Combined live + evergreen layout ────────────────────── */}
+      {active.length > 0 && evergreen.length > 0 && (
+        <section className="chub-combined-section">
+          <div className="chub-combined-inner">
+            {/* Left: live campaign(s) */}
+            <div className="chub-combined-primary">
+              <div className="chub-section-head">
+                <span className="chub-section-eyebrow">Active Now</span>
+                <p className="chub-section-note">
+                  {active.length === 1
+                    ? "One campaign is currently accepting gifts."
+                    : `${active.length} campaigns are currently accepting gifts.`}
+                </p>
+              </div>
+              <div className="chub-active-grid">
+                {active.map((c) => (
+                  <ActiveCampaignCard key={c.id} campaign={c} />
+                ))}
+              </div>
+            </div>
+
+            {/* Right: evergreen / annual fund */}
+            <div className="chub-combined-evergreen">
+              <div className="chub-section-head">
+                <span className="chub-section-eyebrow">Annual Support</span>
+                <p className="chub-section-note">Always open — sustain the work year-round.</p>
+              </div>
+              <div className="chub-evergreen-stack">
+                {evergreen.map((c) => (
+                  <EvergreenCampaignCard key={c.id} campaign={c} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Active only (no evergreen) ────────────────────────────── */}
+      {active.length > 0 && evergreen.length === 0 && (
         <section className="chub-active-section">
           <div className="chub-inner">
             <div className="chub-section-head">
@@ -218,25 +259,8 @@ export default function CampaignHubPage() {
         </section>
       )}
 
-      {/* ── No active campaigns ───────────────────────────────────── */}
-      {active.length === 0 && (
-        <section className="chub-empty-section">
-          <div className="chub-inner">
-            <div className="chub-empty">
-              <h2 className="chub-empty-title">No active campaigns right now.</h2>
-              <p className="chub-empty-body">
-                Check back soon — or support DAT&apos;s ongoing work through our general fund.
-              </p>
-              <Link href="/donate" className="chub-btn-primary">
-                Donate to DAT
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ── Evergreen / annual support campaigns ─────────────────── */}
-      {evergreen.length > 0 && (
+      {/* ── Evergreen only (no active) ────────────────────────────── */}
+      {active.length === 0 && evergreen.length > 0 && (
         <section className="chub-evergreen-section">
           <div className="chub-inner">
             <div className="chub-section-head">
@@ -247,6 +271,23 @@ export default function CampaignHubPage() {
               {evergreen.map((c) => (
                 <EvergreenCampaignCard key={c.id} campaign={c} />
               ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── No active campaigns, no evergreen ─────────────────────── */}
+      {active.length === 0 && evergreen.length === 0 && (
+        <section className="chub-empty-section">
+          <div className="chub-inner">
+            <div className="chub-empty">
+              <h2 className="chub-empty-title">No active campaigns right now.</h2>
+              <p className="chub-empty-body">
+                Check back soon — or support DAT&apos;s ongoing work through our general fund.
+              </p>
+              <Link href="/donate" className="chub-btn-primary">
+                Donate to DAT
+              </Link>
             </div>
           </div>
         </section>
@@ -410,7 +451,38 @@ export default function CampaignHubPage() {
           color: rgba(8,28,58,0.52);
         }
 
-        /* ─── Active campaigns ─────────────────────────────────────── */
+        /* ─── Combined live + evergreen layout ────────────────────── */
+        .chub-combined-section {
+          padding: 4rem 0;
+          background: #f5f0f8;
+        }
+        .chub-combined-inner {
+          max-width: 1140px;
+          margin: 0 auto;
+          padding: 0 2rem;
+          display: grid;
+          grid-template-columns: 1fr 340px;
+          gap: 2.5rem;
+          align-items: start;
+        }
+        .chub-combined-primary { min-width: 0; }
+        .chub-combined-evergreen { min-width: 0; }
+        .chub-evergreen-stack {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+        @media (max-width: 900px) {
+          .chub-combined-inner {
+            grid-template-columns: 1fr;
+          }
+          .chub-combined-evergreen {
+            border-top: 1px solid rgba(108,0,175,0.1);
+            padding-top: 2rem;
+          }
+        }
+
+        /* ─── Active campaigns (standalone section, no evergreen) ─── */
         .chub-active-section {
           padding: 4rem 0;
           background: #f5f0f8;
@@ -537,7 +609,7 @@ export default function CampaignHubPage() {
           margin-top: auto;
         }
 
-        /* ─── Evergreen campaigns ─────────────────────────────────── */
+        /* ─── Evergreen campaigns (standalone section) ────────────── */
         .chub-evergreen-section {
           padding: 3.5rem 0 4rem;
           background: #f5f0f8;
@@ -552,28 +624,36 @@ export default function CampaignHubPage() {
         @media (max-width: 440px) {
           .chub-evergreen-grid { grid-template-columns: 1fr; }
         }
+
+        /* Evergreen card — vertical, sidebar-friendly */
         .chub-evergreen-card {
           display: flex;
-          flex-direction: row;
+          flex-direction: column;
           border-radius: 18px;
           overflow: hidden;
           border: 1.5px solid rgba(108,0,175,0.18);
-          background: #fff;
-          box-shadow: 0 2px 12px rgba(108,0,175,0.07);
+          background: #241123;
+          box-shadow: 0 4px 20px rgba(36,17,35,0.18);
           transition: box-shadow 180ms, transform 180ms;
         }
         .chub-evergreen-card:hover {
-          box-shadow: 0 6px 24px rgba(108,0,175,0.14);
+          box-shadow: 0 8px 32px rgba(108,0,175,0.22);
           transform: translateY(-2px);
         }
         .chub-evergreen-img-wrap {
           position: relative;
-          width: 140px;
+          width: 100%;
+          height: 160px;
           flex-shrink: 0;
-          background: rgba(108,0,175,0.08);
+          background: rgba(108,0,175,0.15);
+        }
+        .chub-evergreen-img-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to bottom, rgba(36,17,35,0.1) 0%, rgba(36,17,35,0.55) 100%);
         }
         .chub-evergreen-body {
-          padding: 1.25rem 1.4rem;
+          padding: 1.25rem 1.4rem 1.6rem;
           display: flex;
           flex-direction: column;
           gap: 0.35rem;
@@ -586,12 +666,12 @@ export default function CampaignHubPage() {
           margin-bottom: 0.25rem;
         }
         .chub-badge--evergreen {
-          background: rgba(108,0,175,0.1);
-          color: #6C00AF;
+          background: rgba(108,0,175,0.35);
+          color: rgba(242,242,242,0.85);
         }
         .chub-badge--monthly {
-          background: rgba(36,147,169,0.1);
-          color: #1c7a8a;
+          background: rgba(36,147,169,0.25);
+          color: rgba(242,242,242,0.75);
         }
         .chub-evergreen-eyebrow {
           display: block;
@@ -605,19 +685,56 @@ export default function CampaignHubPage() {
         .chub-evergreen-title {
           margin: 0;
           font-family: var(--font-space-grotesk), sans-serif;
-          font-size: 1.1rem;
+          font-size: 1.15rem;
           font-weight: 800;
-          color: #0f1f38;
+          color: #f2f2f2;
           line-height: 1.2;
         }
         .chub-evergreen-tagline {
-          margin: 0 0 0.5rem;
+          margin: 0 0 0.75rem;
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.82rem;
-          line-height: 1.55;
-          color: rgba(8,28,58,0.6);
+          font-size: 0.83rem;
+          line-height: 1.6;
+          color: rgba(242,242,242,0.58);
           flex: 1;
         }
+        /* Evergreen-specific buttons */
+        .chub-btn-evergreen {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.75rem 1.4rem;
+          border-radius: 12px;
+          background: #2493A9;
+          color: #fff;
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: 0.77rem;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          text-decoration: none;
+          margin-bottom: 0.4rem;
+          transition: transform 150ms, background 150ms;
+        }
+        .chub-btn-evergreen:hover { transform: translateY(-2px); background: #1e7d90; }
+        .chub-btn-evergreen-ghost {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.65rem 1.4rem;
+          border-radius: 12px;
+          background: transparent;
+          color: rgba(242,242,242,0.6);
+          border: 1px solid rgba(242,242,242,0.2);
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: 0.75rem;
+          font-weight: 600;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          text-decoration: none;
+          transition: border-color 150ms, color 150ms;
+        }
+        .chub-btn-evergreen-ghost:hover { border-color: rgba(242,242,242,0.45); color: rgba(242,242,242,0.9); }
 
         /* ─── No active campaigns ──────────────────────────────────── */
         .chub-empty-section { padding: 4rem 0 2rem; }
