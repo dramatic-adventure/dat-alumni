@@ -38,6 +38,7 @@ import {
 } from "@/lib/fundraisingCampaigns";
 import type { CampaignTotals } from "@/lib/getCampaignTotals";
 import CampaignGiveWidget from "@/components/campaign/CampaignGiveWidget";
+import Lightbox from "@/components/shared/Lightbox";
 
 /* ------------------------------------------------------------------ */
 /* Live totals hook (polls every 60s — drives dynamic stretch goals)  */
@@ -109,6 +110,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
   const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
   const [pageUrl, setPageUrl] = useState("");
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   useEffect(() => {
     setPageUrl(window.location.href);
@@ -160,7 +162,8 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
   const hasStories = (campaign.stories?.length ?? 0) > 0;
   const hasProductions = (campaign.productions?.length ?? 0) > 0;
   // Drama clubs get their own dedicated conversion section — exclude from generic linked content
-  const hasLinkedContent = hasAlumni || hasEvents || hasStories || hasProductions;
+  // Events get their own featured section — exclude from generic linked content
+  const hasLinkedContent = hasAlumni || hasStories || hasProductions;
 
   return (
     <main style={{ background: "transparent", overflowX: "hidden" }}>
@@ -234,7 +237,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                   rel="noopener noreferrer"
                   className="cmp-btn-ghost"
                 >
-                  Learn More →
+                  Learn More
                 </a>
               )}
             </div>
@@ -367,7 +370,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                     `This campaign has ended. We raised ${formatCurrencyMinor(totals.raisedMinor, currency)} — thank you to every donor who made it possible.`}
                 </p>
                 <Link href="/donate" className="cmp-btn-yellow-sm">
-                  Support DAT →
+                  Support DAT
                 </Link>
               </div>
             )}
@@ -442,7 +445,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
             </div>
             {isActive && (
               <div className="cmp-clubs-moment-cta">
-                <a href="#give" className="cmp-btn-yellow">Give for These Communities</a>
+                <a href="#give" className="cmp-btn-yellow">{campaign.dramaClubsCtaLabel ?? "Sponsor an Artist"}</a>
               </div>
             )}
           </div>
@@ -496,7 +499,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
             </div>
             {isActive && (
               <div className="cmp-stretch-footer-cta">
-                <a href="#give" className="cmp-btn-yellow">Help unlock the next goal →</a>
+                <a href="#give" className="cmp-btn-yellow">Help unlock the next goal</a>
               </div>
             )}
           </div>
@@ -550,21 +553,35 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           <div className="cmp-gallery-strip">
             {campaign.gallery!.map((item, i) => (
               <div key={i} className="cmp-gallery-item">
-                <div className="cmp-gallery-img-wrap">
-                  <Image
-                    src={item.src}
-                    alt={item.alt}
-                    fill
-                    sizes="(min-width:1024px) 33vw, 90vw"
-                    style={{ objectFit: "cover" }}
-                  />
-                </div>
+                <button
+                  className="cmp-gallery-thumb-btn"
+                  onClick={() => setLightboxIdx(i)}
+                  aria-label={`Open image: ${item.alt}`}
+                >
+                  <div className="cmp-gallery-img-wrap">
+                    <Image
+                      src={item.src}
+                      alt={item.alt}
+                      fill
+                      sizes="(min-width:1024px) 33vw, 90vw"
+                      style={{ objectFit: "cover" }}
+                    />
+                    <div className="cmp-gallery-thumb-hint" aria-hidden="true">⊕</div>
+                  </div>
+                </button>
                 {item.caption && (
                   <p className="cmp-gallery-caption">{item.caption}</p>
                 )}
               </div>
             ))}
           </div>
+          {lightboxIdx !== null && (
+            <Lightbox
+              images={campaign.gallery!.map((g) => g.src)}
+              startIndex={lightboxIdx}
+              onClose={() => setLightboxIdx(null)}
+            />
+          )}
         </section>
       )}
 
@@ -578,24 +595,103 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
             </h2>
             <div className="cmp-updates-feed">
               {campaign.updates!.map((u) => (
-                <article key={u.id} className="cmp-update-card">
-                  <div className="cmp-update-meta">
-                    <time className="cmp-update-date">{formatDate(u.date)}</time>
-                    {u.authorName && (
-                      <span className="cmp-update-author">
-                        {u.authorName}
-                        {u.authorRole && ` · ${u.authorRole}`}
-                      </span>
-                    )}
+                <article key={u.id} className={`cmp-update-card${u.imageUrl ? " cmp-update-card--has-media" : ""}`}>
+                  <div className="cmp-update-text-col">
+                    <div className="cmp-update-meta">
+                      <time className="cmp-update-date">{formatDate(u.date)}</time>
+                      {u.authorName && (
+                        <span className="cmp-update-author">
+                          {u.authorName}
+                          {u.authorRole && ` · ${u.authorRole}`}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="cmp-update-title">{u.title}</h3>
+                    <p className="cmp-update-body">{u.body}</p>
                   </div>
-                  <h3 className="cmp-update-title">{u.title}</h3>
-                  <p className="cmp-update-body">{u.body}</p>
+                  {u.imageUrl && (
+                    <div className="cmp-update-media">
+                      <Image
+                        src={u.imageUrl}
+                        alt={u.title}
+                        fill
+                        sizes="(min-width:900px) 220px, 90vw"
+                        style={{ objectFit: "cover" }}
+                      />
+                    </div>
+                  )}
                 </article>
               ))}
             </div>
           </div>
         </section>
       )}
+
+      {/* ── 9.5 FEATURED EVENT ──────────────────────────────────── */}
+      {hasEvents && (() => {
+        const ev = campaign.events![0];
+        const eventHref = ev.ticketUrl ?? campaign.learnMoreUrl;
+        return (
+          <section className="cmp-featured-event-section">
+            <div className="cmp-featured-event-inner">
+              <span className="cmp-eyebrow cmp-eyebrow--accent">Upcoming Event</span>
+              <div className="cmp-featured-event-card">
+                {ev.imageUrl && (
+                  <div className="cmp-featured-event-img">
+                    <Image
+                      src={ev.imageUrl}
+                      alt={ev.title}
+                      fill
+                      sizes="(min-width:900px) 320px, 90vw"
+                      style={{ objectFit: "cover" }}
+                    />
+                    <div className="cmp-featured-event-img-overlay" />
+                    <span className="cmp-featured-event-date-badge">{formatShortDate(ev.date)}</span>
+                  </div>
+                )}
+                <div className="cmp-featured-event-body">
+                  {!ev.imageUrl && (
+                    <time className="cmp-featured-event-date-inline">{formatDate(ev.date)}</time>
+                  )}
+                  <h2 className="cmp-featured-event-title">{ev.title}</h2>
+                  <span className="cmp-featured-event-loc">{ev.venue} · {ev.city}, {ev.country}</span>
+                  {eventHref && (
+                    <a
+                      href={eventHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="cmp-btn-yellow-sm"
+                    >
+                      {ev.ticketUrl ? "Get Tickets" : "Learn More"}
+                    </a>
+                  )}
+                </div>
+              </div>
+              {campaign.events!.length > 1 && (
+                <div className="cmp-extra-events">
+                  {campaign.events!.slice(1).map((e) => {
+                    const href = e.ticketUrl ?? campaign.learnMoreUrl;
+                    return (
+                      <div key={e.id} className="cmp-event-row">
+                        <div className="cmp-event-info">
+                          <span className="cmp-event-date">{formatShortDate(e.date)}</span>
+                          <span className="cmp-event-title">{e.title}</span>
+                          <span className="cmp-event-loc">{e.venue} · {e.city}, {e.country}</span>
+                        </div>
+                        {href && (
+                          <a href={href} target="_blank" rel="noopener noreferrer" className="cmp-btn-yellow-sm">
+                            {e.ticketUrl ? "Get Tickets" : "Learn More"}
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* ── 10. SUPPORTERS WALL ─────────────────────────────────── */}
       {hasSupporters && (
@@ -652,7 +748,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                   className="cmp-share-btn cmp-share-btn--primary"
                   onClick={handleNativeShare}
                 >
-                  Share →
+                  Share
                 </button>
               )}
               <button
@@ -742,49 +838,6 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
               </div>
             )}
 
-            {/* Upcoming event / Live moment */}
-            {hasEvents && (
-              <div className="cmp-linked-block">
-                <span className="cmp-eyebrow cmp-eyebrow--accent">Upcoming Event</span>
-                <h2 className="cmp-linked-block-title">Be there in person.</h2>
-                <div className="cmp-events-list">
-                  {campaign.events!.map((e) => {
-                    const eventHref = e.ticketUrl ?? campaign.learnMoreUrl;
-                    return (
-                      <div key={e.id} className="cmp-event-row">
-                        {e.imageUrl && (
-                          <div className="cmp-event-img">
-                            <Image
-                              src={e.imageUrl}
-                              alt={e.title}
-                              fill
-                              sizes="90px"
-                              style={{ objectFit: "cover" }}
-                            />
-                          </div>
-                        )}
-                        <div className="cmp-event-info">
-                          <span className="cmp-event-date">{formatDate(e.date)}</span>
-                          <span className="cmp-event-title">{e.title}</span>
-                          <span className="cmp-event-loc">{e.venue} · {e.city}, {e.country}</span>
-                        </div>
-                        {eventHref && (
-                          <a
-                            href={eventHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="cmp-btn-yellow-sm"
-                          >
-                            {e.ticketUrl ? "Tickets →" : "Learn More →"}
-                          </a>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
             {/* Related stories */}
             {hasStories && (
               <div className="cmp-linked-block">
@@ -841,7 +894,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                     rel="noopener noreferrer"
                     className="cmp-btn-ghost"
                   >
-                    Learn More →
+                    Learn More
                   </a>
                 )}
                 {campaign.secondaryUrl && (
@@ -851,7 +904,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                     rel="noopener noreferrer"
                     className="cmp-btn-outline-light"
                   >
-                    About the Program →
+                    About the Program
                   </a>
                 )}
               </div>
@@ -868,10 +921,10 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
               </p>
               <div className="cmp-cta-actions">
                 <Link href="/donate" className="cmp-btn-yellow">
-                  Support DAT →
+                  Support DAT
                 </Link>
                 <Link href="/campaign" className="cmp-btn-ghost">
-                  All Campaigns →
+                  All Campaigns
                 </Link>
               </div>
             </>
@@ -2097,6 +2150,149 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           opacity: 0.65;
           letter-spacing: 0.06em;
           margin-top: 0.1rem;
+        }
+
+        /* ─── Gallery lightbox thumb ──────────────────────────────── */
+        .cmp-gallery-thumb-btn {
+          all: unset;
+          display: block;
+          cursor: pointer;
+          width: 100%;
+        }
+        .cmp-gallery-thumb-btn:hover .cmp-gallery-img-wrap {
+          opacity: 0.88;
+        }
+        .cmp-gallery-thumb-hint {
+          position: absolute;
+          bottom: 8px;
+          right: 8px;
+          color: rgba(255,255,255,0.8);
+          font-size: 1.25rem;
+          pointer-events: none;
+          text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+          transition: opacity 140ms;
+        }
+
+        /* ─── Update card with media ──────────────────────────────── */
+        .cmp-update-card--has-media {
+          display: grid;
+          grid-template-columns: 1fr 220px;
+          gap: 1.5rem;
+          align-items: start;
+        }
+        .cmp-update-media {
+          position: relative;
+          height: 150px;
+          border-radius: 12px;
+          overflow: hidden;
+          background: rgba(8,28,58,0.06);
+          flex-shrink: 0;
+        }
+        @media (max-width: 640px) {
+          .cmp-update-card--has-media {
+            grid-template-columns: 1fr;
+          }
+          .cmp-update-media {
+            height: 200px;
+            order: -1;
+          }
+        }
+
+        /* ─── Featured event section ──────────────────────────────── */
+        .cmp-featured-event-section {
+          background: #fff;
+          padding: 4rem 2rem;
+          border-top: 1px solid rgba(8,28,58,0.07);
+        }
+        .cmp-featured-event-inner {
+          max-width: 860px;
+          margin: 0 auto;
+        }
+        .cmp-featured-event-card {
+          display: flex;
+          flex-direction: row;
+          border-radius: 20px;
+          overflow: hidden;
+          border: 1.5px solid rgba(36,147,169,0.2);
+          background: rgba(36,147,169,0.03);
+          margin-top: 1rem;
+          box-shadow: 0 4px 24px rgba(36,147,169,0.1);
+        }
+        .cmp-featured-event-img {
+          position: relative;
+          width: 300px;
+          min-height: 200px;
+          flex-shrink: 0;
+          background: rgba(36,147,169,0.08);
+        }
+        .cmp-featured-event-img-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to right, transparent 50%, rgba(240,248,250,0.12) 100%);
+        }
+        .cmp-featured-event-date-badge {
+          position: absolute;
+          top: 1rem;
+          left: 1rem;
+          background: rgba(255,204,0,0.96);
+          color: #0f1f38;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.63rem;
+          font-weight: 800;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          padding: 0.25rem 0.65rem;
+          border-radius: 6px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+        }
+        .cmp-featured-event-body {
+          padding: 1.75rem 2rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          justify-content: center;
+        }
+        .cmp-featured-event-date-inline {
+          display: block;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: ${ACCENT};
+        }
+        .cmp-featured-event-title {
+          margin: 0 0 0.2rem;
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: clamp(1.15rem, 2.2vw, 1.55rem);
+          font-weight: 800;
+          color: #0f1f38;
+          line-height: 1.2;
+        }
+        .cmp-featured-event-loc {
+          display: block;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.82rem;
+          color: rgba(8,28,58,0.52);
+          margin-bottom: 0.5rem;
+        }
+        .cmp-extra-events {
+          margin-top: 1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        @media (max-width: 640px) {
+          .cmp-featured-event-card {
+            flex-direction: column;
+          }
+          .cmp-featured-event-img {
+            width: 100%;
+            height: 200px;
+          }
+          .cmp-featured-event-body {
+            padding: 1.25rem 1.5rem;
+          }
         }
 
         /* ─── CTA footer ───────────────────────────────────────────── */

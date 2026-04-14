@@ -39,6 +39,7 @@ export type CampaignUpdate = {
   body: string;
   authorName?: string;
   authorRole?: string;
+  imageUrl?: string;      // optional media image for this update
 };
 
 export type CampaignTestimonial = {
@@ -203,6 +204,13 @@ export type FundraisingCampaign = {
 
   // ── Analytics ──────────────────────────────────────────────────────
   utmCampaign?: string;     // defaults to campaign.id
+
+  // ── Evergreen ──────────────────────────────────────────────────────
+  /** Marks this as an always-open annual-fund style campaign (no deadline pressure) */
+  evergreen?: boolean;
+
+  /** Custom label for the drama clubs CTA button — defaults to "Sponsor an Artist" */
+  dramaClubsCtaLabel?: string;
 };
 
 /* ------------------------------------------------------------------ */
@@ -211,9 +219,11 @@ export type FundraisingCampaign = {
 
 // Import individual campaign configs here:
 import { passageSlovakia2026 } from "@/campaigns/passage-slovakia-2026";
+import { sponsorTheStory } from "@/campaigns/sponsor-the-story";
 
 const CAMPAIGN_REGISTRY: Record<string, FundraisingCampaign> = {
   [passageSlovakia2026.id]: passageSlovakia2026,
+  [sponsorTheStory.id]: sponsorTheStory,
 };
 
 export function getCampaign(slug: string): FundraisingCampaign | null {
