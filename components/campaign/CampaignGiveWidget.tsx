@@ -26,6 +26,10 @@ type Props = {
   initialTotals: CampaignTotals;
   /** Display variant: "panel" (sidebar sticky) | "band" (full-width strip) */
   variant?: "panel" | "band";
+  /** Controlled frequency — when provided, widget defers to parent for state */
+  frequency?: "one_time" | "monthly";
+  /** Called when user switches frequency — required when frequency prop is provided */
+  onFrequencyChange?: (freq: "one_time" | "monthly") => void;
 };
 
 /* ------------------------------------------------------------------ */
@@ -75,12 +79,14 @@ function useLiveTotals(campaignId: string, initial: CampaignTotals) {
 /* Main widget                                                         */
 /* ------------------------------------------------------------------ */
 
-export default function CampaignGiveWidget({ campaign, initialTotals, variant = "panel" }: Props) {
+export default function CampaignGiveWidget({ campaign, initialTotals, variant = "panel", frequency: frequencyProp, onFrequencyChange }: Props) {
   const totals = useLiveTotals(campaign.id, initialTotals);
   const daysLeft = useCountdown(campaign.deadline);
 
   // Evergreen campaigns default to monthly; time-bound default to one-time.
-  const [frequency, setFrequency] = useState<"one_time" | "monthly">(campaign.evergreen ? "monthly" : "one_time");
+  // Internal state used when no controlled frequency prop is provided.
+  const [frequencyInternal, setFrequencyInternal] = useState<"one_time" | "monthly">(campaign.evergreen ? "monthly" : "one_time");
+  const frequency = frequencyProp ?? frequencyInternal;
 
   // Amount buttons depend on frequency (differentiated amounts if configured)
   const displayAmounts = (freq: "one_time" | "monthly") =>
@@ -93,7 +99,7 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
     return campaign.defaultAmount ?? amts[1] ?? amts[0];
   };
 
-  const [selectedAmount, setSelectedAmount] = useState<number>(() => defaultAmtForFreq(campaign.evergreen ? "monthly" : "one_time"));
+  const [selectedAmount, setSelectedAmount] = useState<number>(() => defaultAmtForFreq(frequencyProp ?? (campaign.evergreen ? "monthly" : "one_time")));
   const [customAmount, setCustomAmount] = useState("");
   const [isCustom, setIsCustom] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -106,18 +112,20 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
     const params = new URLSearchParams(window.location.search);
     const urlFreq = params.get("frequency");
     if (urlFreq === "one_time" || urlFreq === "monthly") {
-      setFrequency(urlFreq);
+      setFrequencyInternal(urlFreq);
+      onFrequencyChange?.(urlFreq);
       setSelectedAmount(defaultAmtForFreq(urlFreq));
       setIsCustom(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // When frequency changes, reset selected amount to the default for that mode
+  // When frequency changes, update internal state and notify parent if controlled
   const handleFrequencyChange = (newFreq: "one_time" | "monthly") => {
     const amts = displayAmounts(newFreq);
     const current = selectedAmount;
-    setFrequency(newFreq);
+    setFrequencyInternal(newFreq);
+    onFrequencyChange?.(newFreq);
     if (!amts.includes(current)) {
       setSelectedAmount(defaultAmtForFreq(newFreq));
       setIsCustom(false);
@@ -346,12 +354,8 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
         </div>
       )}
 
-      {/* ── Frequency-aware impact copy (evergreen only) ─────────── */}
-      {campaign.evergreen && (
-        frequency === "monthly"
-          ? campaign.monthlyImpactCopy
-          : campaign.oneTimeImpactCopy
-      ) && (
+      {/* ── Frequency-aware impact copy ─────────────────────────── */}
+      {(frequency === "monthly" ? campaign.monthlyImpactCopy : campaign.oneTimeImpactCopy) && (
         <p className="cgw-impact-line">
           {frequency === "monthly" ? campaign.monthlyImpactCopy : campaign.oneTimeImpactCopy}
         </p>

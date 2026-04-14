@@ -118,6 +118,9 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
   const pct = campaignProgress(totals.raisedMinor, campaign.goalAmount);
   const daysLeft = daysUntilDeadline(campaign.deadline);
 
+  // Frequency state — lifted here so section 5 heading can respond to widget toggle
+  const [frequency, setFrequency] = useState<"one_time" | "monthly">(campaign.evergreen ? "monthly" : "one_time");
+
   // Share state
   const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
@@ -227,7 +230,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         <div
           className="cmp-hero-gradient-left"
           style={campaign.evergreen ? {
-            background: "radial-gradient(ellipse 70% 55% at 8% 88%, rgba(36,147,169,0.22) 0%, transparent 60%)"
+            background: "radial-gradient(ellipse 70% 55% at 10% 85%, rgba(36,147,169,0.28) 0%, transparent 60%)"
           } : undefined}
         />
 
@@ -235,7 +238,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         <div
           className="cmp-hero-gradient-bottom"
           style={campaign.evergreen ? {
-            background: "linear-gradient(to top, rgba(11,29,54,0.7) 0%, rgba(36,147,169,0.25) 18%, transparent 42%)"
+            background: "linear-gradient(to top, rgba(11,29,54,1.0) 0%, rgba(11,29,54,0.9) 10%, rgba(36,147,169,0.3) 22%, transparent 48%)"
           } : undefined}
         />
 
@@ -274,19 +277,23 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
       {/* ── 3. PROGRESS BAND (time-bound) / EVERGREEN STATS ────── */}
       {campaign.evergreen ? (
         <section className="cmp-band cmp-band--evergreen">
-          <div className="cmp-band-inner">
+          <div className="cmp-band-inner cmp-band-inner--evergreen">
 
-            {/* Season feature — prominent linked moment */}
+            {/* Left: Season feature — prominent linked moment */}
             {campaign.seasonNumber && campaign.seasonLabel && (
               <Link href={`/season/${campaign.seasonNumber}`} className="cmp-season-feature">
-                <span className="cmp-season-feature-label">{campaign.seasonLabel}</span>
-                {campaign.seasonYears && (
-                  <span className="cmp-season-feature-years">{campaign.seasonYears}</span>
-                )}
-                <span className="cmp-season-feature-cta">View season →</span>
+                <span className="cmp-season-feature-num">{campaign.seasonNumber}</span>
+                <div className="cmp-season-feature-text">
+                  <span className="cmp-season-feature-label">{campaign.seasonLabel}</span>
+                  {campaign.seasonYears && (
+                    <span className="cmp-season-feature-years">{campaign.seasonYears}</span>
+                  )}
+                  <span className="cmp-season-feature-cta">View season →</span>
+                </div>
               </Link>
             )}
 
+            {/* Right: Stats */}
             <div className="cmp-band-stats">
               {totals.raisedMinor > 0 && (
                 <div className="cmp-band-stat">
@@ -430,6 +437,8 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                 campaign={campaign}
                 initialTotals={totals}
                 variant="panel"
+                frequency={frequency}
+                onFrequencyChange={setFrequency}
               />
             ) : (
               /* Ended state */
@@ -457,7 +466,9 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           <div className="cmp-impact-inner">
             <span className="cmp-eyebrow cmp-eyebrow--accent">Where Your Gift Goes</span>
             <h2 className="cmp-section-title" style={{ color: "#0f1f38" }}>
-              Every amount moves the needle.
+              {campaign.monthlyImpactCopy && frequency === "monthly"
+                ? "Your monthly gift keeps the work alive."
+                : "Every amount moves the needle."}
             </h2>
             <div className="cmp-impact-grid">
               {campaign.giftImpact!.map((item, i) => (
@@ -490,7 +501,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
               Your gift goes to real communities.
             </h2>
             <p className="cmp-clubs-moment-lead">
-              Every dollar raised goes toward the work DAT builds with its long-term local partners — drama programs embedded in the communities where PASSAGE happens. These are not one-time encounters. They are ongoing relationships, and your gift sustains them.
+              DAT continually invests in communities with little to no access to arts programming — through workshops, events, mentorship, and the long-term drama club partnerships that outlast any single residency. Your gift sustains that investment.
             </p>
             <div className="cmp-clubs-moment-grid">
               {campaign.dramaClubs!.map((c) => (
@@ -678,20 +689,28 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                     const href = ev.ticketUrl ?? campaign.learnMoreUrl;
                     return (
                       <div key={ev.id} className="cmp-event-item">
-                        <div className="cmp-event-cal">
-                          <span className="cmp-event-cal-month">{formatEventMonth(ev.date)}</span>
-                          <span className="cmp-event-cal-day">{formatEventDay(ev.date)}</span>
-                          <span className="cmp-event-cal-year">{formatEventYear(ev.date)}</span>
-                        </div>
                         {ev.imageUrl && (
                           <div className="cmp-event-item-img">
                             <Image
                               src={ev.imageUrl}
                               alt={ev.title}
                               fill
-                              sizes="88px"
+                              sizes="(min-width:600px) 160px, 90px"
                               style={{ objectFit: "cover" }}
                             />
+                            {/* Date stamp overlay on image */}
+                            <div className="cmp-event-cal">
+                              <span className="cmp-event-cal-month">{formatEventMonth(ev.date)}</span>
+                              <span className="cmp-event-cal-day">{formatEventDay(ev.date)}</span>
+                              <span className="cmp-event-cal-year">{formatEventYear(ev.date)}</span>
+                            </div>
+                          </div>
+                        )}
+                        {!ev.imageUrl && (
+                          <div className="cmp-event-cal cmp-event-cal--standalone">
+                            <span className="cmp-event-cal-month">{formatEventMonth(ev.date)}</span>
+                            <span className="cmp-event-cal-day">{formatEventDay(ev.date)}</span>
+                            <span className="cmp-event-cal-year">{formatEventYear(ev.date)}</span>
                           </div>
                         )}
                         <div className="cmp-event-item-body">
@@ -699,17 +718,17 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                           <span className="cmp-event-item-loc">
                             {ev.venue} · {ev.city}, {ev.country}
                           </span>
+                          {href && (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="cmp-btn-event-sm"
+                            >
+                              {ev.ticketUrl ? "Get Tickets →" : "Learn More →"}
+                            </a>
+                          )}
                         </div>
-                        {href && (
-                          <a
-                            href={href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="cmp-btn-event-sm"
-                          >
-                            {ev.ticketUrl ? "Get Tickets" : "Learn More"}
-                          </a>
-                        )}
                       </div>
                     );
                   })}
@@ -1177,44 +1196,56 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           gap: 2rem 3rem;
         }
 
-        /* Season feature — prominent linked moment in evergreen band */
+        /* Season feature — featured linked moment in evergreen band */
         .cmp-season-feature {
           display: inline-flex;
-          align-items: baseline;
-          gap: 1rem;
+          align-items: center;
+          gap: 1.25rem;
           text-decoration: none;
           border: 1px solid rgba(36,147,169,0.4);
-          border-radius: 12px;
-          padding: 0.7rem 1.4rem;
+          border-radius: 14px;
+          padding: 1rem 1.5rem;
           background: rgba(36,147,169,0.1);
-          align-self: flex-start;
+          flex-shrink: 0;
           transition: background 150ms, border-color 150ms;
         }
         .cmp-season-feature:hover {
           background: rgba(36,147,169,0.18);
           border-color: rgba(36,147,169,0.65);
         }
+        .cmp-season-feature-num {
+          font-family: var(--font-anton), sans-serif;
+          font-size: clamp(2.8rem, 6vw, 4.5rem);
+          color: #2BC4DB;
+          line-height: 1;
+          letter-spacing: -0.01em;
+        }
+        .cmp-season-feature-text {
+          display: flex;
+          flex-direction: column;
+          gap: 0.15rem;
+        }
         .cmp-season-feature-label {
           font-family: var(--font-space-grotesk), sans-serif;
-          font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+          font-size: clamp(0.95rem, 2vw, 1.2rem);
           font-weight: 800;
-          color: #2BC4DB;
+          color: #f0f8ff;
           line-height: 1;
         }
         .cmp-season-feature-years {
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: clamp(0.85rem, 1.5vw, 1rem);
+          font-size: clamp(0.78rem, 1.4vw, 0.9rem);
           font-weight: 600;
           color: rgba(220,240,255,0.6);
           letter-spacing: 0.04em;
         }
         .cmp-season-feature-cta {
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.7rem;
+          font-size: 0.65rem;
           font-weight: 600;
-          color: rgba(36,147,169,0.65);
+          color: rgba(36,147,169,0.75);
           letter-spacing: 0.1em;
-          margin-left: 0.25rem;
+          margin-top: 0.1rem;
         }
 
         .cmp-band-inner {
@@ -1223,6 +1254,25 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           display: flex;
           flex-direction: column;
           gap: 1.25rem;
+        }
+        /* Evergreen band: season feature left, stats right */
+        .cmp-band-inner--evergreen {
+          flex-direction: row;
+          align-items: center;
+          gap: 2.5rem;
+        }
+        .cmp-band-inner--evergreen .cmp-band-stats {
+          flex: 1;
+          justify-content: flex-end;
+        }
+        @media (max-width: 768px) {
+          .cmp-band-inner--evergreen {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+          .cmp-band-inner--evergreen .cmp-band-stats {
+            justify-content: flex-start;
+          }
         }
         .cmp-band-thermo { display: flex; flex-direction: column; gap: 0.6rem; }
         .cmp-band-track {
@@ -1706,7 +1756,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── What's happening (updates + events) ─────────────────── */
-        .cmp-updates-section { padding: 5rem 2rem; background: #f0f8fa; box-shadow: 0 8px 30px rgba(8,28,58,0.1); }
+        .cmp-updates-section { padding: 5rem 2rem; background: transparent; }
         .cmp-updates-inner { max-width: 780px; margin: 0 auto; }
         .cmp-updates-feed { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
         .cmp-sub-label {
@@ -1721,77 +1771,107 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* Events block inside "What's happening" */
-        .cmp-events-block { margin-bottom: 0.5rem; }
+        .cmp-events-block { margin-bottom: 1.5rem; }
         .cmp-events-list {
           display: flex;
           flex-direction: column;
           gap: 0;
-          border-radius: 12px;
+          border-radius: 16px;
           overflow: hidden;
-          border: 1px solid rgba(8,28,58,0.08);
+          border: 1px solid rgba(8,28,58,0.1);
           background: #fff;
+          box-shadow: 0 4px 20px rgba(8,28,58,0.08);
         }
         .cmp-event-item {
           display: flex;
-          align-items: center;
-          gap: 1.25rem;
-          padding: 1.1rem 1.25rem;
+          align-items: stretch;
+          gap: 0;
           border-bottom: 1px solid rgba(8,28,58,0.07);
           transition: background 140ms;
+          overflow: hidden;
         }
         .cmp-event-item:last-child { border-bottom: none; }
-        .cmp-event-item:hover { background: rgba(36,147,169,0.04); }
+        .cmp-event-item:hover { background: rgba(36,147,169,0.03); }
 
-        /* Calendar stamp */
+        /* Event image with date stamp overlay */
+        .cmp-event-item-img {
+          position: relative;
+          width: 140px;
+          min-width: 140px;
+          height: 120px;
+          flex-shrink: 0;
+          overflow: hidden;
+        }
+        @media (max-width: 600px) {
+          .cmp-event-item-img { width: 90px; min-width: 90px; height: 100px; }
+        }
+
+        /* Calendar stamp — overlaid bottom-left of image */
         .cmp-event-cal {
+          position: absolute;
+          bottom: 0;
+          left: 0;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
           width: 52px;
-          min-width: 52px;
-          height: 58px;
-          border-radius: 10px;
-          background: #0B1D36;
-          padding: 0.2rem 0;
+          padding: 0.3rem 0.2rem;
           text-align: center;
+          background: rgba(11,29,54,0.88);
+          backdrop-filter: blur(4px);
+        }
+        /* Standalone cal stamp (no image) */
+        .cmp-event-cal--standalone {
+          position: static;
+          width: 56px;
+          min-width: 56px;
+          height: 100%;
+          border-radius: 0;
+          background: #0B1D36;
           flex-shrink: 0;
+          justify-content: center;
+          padding: 0;
         }
         .cmp-event-cal-month {
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.7rem;
+          font-size: 0.68rem;
           font-weight: 800;
           letter-spacing: 0.12em;
           color: ${ACCENT};
           line-height: 1;
           padding-bottom: 0.1rem;
+          text-transform: uppercase;
         }
         .cmp-event-cal-day {
           font-family: var(--font-space-grotesk), sans-serif;
-          font-size: 1.55rem;
+          font-size: 1.65rem;
           font-weight: 800;
           color: #fff;
           line-height: 1;
         }
         .cmp-event-cal-year {
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.5rem;
+          font-size: 0.48rem;
           font-weight: 600;
-          color: rgba(255,255,255,0.45);
+          color: rgba(255,255,255,0.55);
           line-height: 1;
-          padding-top: 0.15rem;
+          padding-top: 0.12rem;
+          letter-spacing: 0.06em;
         }
         .cmp-event-item-body {
           flex: 1;
           min-width: 0;
           display: flex;
           flex-direction: column;
-          gap: 0.2rem;
+          gap: 0.25rem;
+          padding: 1rem 1.25rem;
+          justify-content: center;
         }
         .cmp-event-item-title {
           margin: 0;
           font-family: var(--font-space-grotesk), sans-serif;
-          font-size: 0.95rem;
+          font-size: 0.98rem;
           font-weight: 700;
           color: #0f1f38;
           line-height: 1.25;
@@ -1810,8 +1890,8 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           align-items: center;
           gap: 0.4rem;
         }
-        /* Full-size event image column — replaces the old 20px thumb */
-        .cmp-event-item-img {
+        /* Event image placeholder (legacy compat) */
+        .cmp-event-item-img-legacy {
           position: relative;
           width: 88px;
           height: 88px;
@@ -2569,28 +2649,20 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           transition: color 140ms;
         }
         .cmp-events-view-all:hover { color: rgba(242,242,242,0.9); }
-        /* Small secondary button on dark event section */
+        /* Small action link inside event body */
         .cmp-btn-event-sm {
           display: inline-flex;
           align-items: center;
-          justify-content: center;
-          padding: 0.5rem 1.1rem;
-          border-radius: 10px;
-          background: transparent;
-          color: ${ACCENT};
-          border: 1.5px solid rgba(36,147,169,0.5);
-          font-family: var(--font-space-grotesk), sans-serif;
-          font-size: 0.7rem;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.75rem;
           font-weight: 700;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
+          color: ${ACCENT};
           text-decoration: none;
-          flex-shrink: 0;
-          transition: background 150ms, border-color 150ms;
+          margin-top: 0.25rem;
+          transition: color 140ms;
         }
         .cmp-btn-event-sm:hover {
-          background: rgba(36,147,169,0.12);
-          border-color: ${ACCENT};
+          color: #1e7d90;
         }
         @media (max-width: 640px) {
           .cmp-featured-event-card {

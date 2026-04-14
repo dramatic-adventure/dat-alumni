@@ -54,11 +54,20 @@ export const passageSlovakia2026: FundraisingCampaign = {
     "DAT artists are heading to Slovakia to make theatre with the community there — and every gift through May 31 is being matched. Help send them:",
 
   // ── Giving ────────────────────────────────────────────────────────
-  giveAmounts: [50, 100, 250, 500, 1000],
+  giveAmounts: [50, 100, 250, 500, 1000],        // fallback
+  oneTimeAmounts: [50, 100, 250, 500, 1000],     // one-time default
+  monthlyAmounts: [25, 50, 100, 250],            // lower threshold for recurring
   defaultAmount: 100,
   allowMonthly: true,
-  // One-time is the default. Monthly giving explicitly supports PASSAGE's
-  // ongoing community partnerships and residency preparation work.
+  // One-time is the default (time-bound campaign).
+  // Monthly giving sustains PASSAGE's ongoing community partnerships
+  // and residency preparation work beyond the 2026 program.
+
+  // ── Frequency-aware impact copy ────────────────────────────────────
+  oneTimeImpactCopy:
+    "Your gift goes directly toward artist travel subsidies, visa costs, and field expenses that make PASSAGE possible in Slovakia.",
+  monthlyImpactCopy:
+    "Your monthly gift sustains DAT's ongoing community partnerships in Slovakia — keeping drama programs active and residency relationships alive beyond any single trip.",
 
   // ── Gift impact ────────────────────────────────────────────────────
   giftImpact: [

@@ -300,25 +300,35 @@ export default function CampaignHubPage() {
         </section>
       )}
 
-      {/* ── Trust layer / general giving ─────────────────────────── */}
-      <section className="chub-trust-section">
-        <div className="chub-inner">
-          <h2 className="chub-trust-heading">Why it matters.</h2>
-          <div className="chub-trust-row">
-            <div className="chub-trust-item">
-              <span className="chub-trust-stat">{YEARS_OF_WORK}</span>
-              <span className="chub-trust-label">Years of work</span>
-              <span className="chub-trust-desc">Two decades of residency-based theatre in communities that rarely see professional arts programs. Every year, the work continues.</span>
-            </div>
-            <div className="chub-trust-item">
-              <span className="chub-trust-stat">{COUNTRY_COUNT}+</span>
-              <span className="chub-trust-label">Countries reached</span>
-              <span className="chub-trust-desc">DAT continually invests — through workshops, events, and mentorship — in communities with little to no access to arts programming.</span>
-            </div>
-            <div className="chub-trust-item">
-              <span className="chub-trust-stat">{CLUB_COUNT}+</span>
-              <span className="chub-trust-label">Drama clubs created</span>
-              <span className="chub-trust-desc">Each club is a permanent gift to its community — locally run, independently sustained, and still active long after DAT moves on.</span>
+      {/* ── Why it Matters ───────────────────────────────────────── */}
+      <section className="chub-why-section">
+        <div className="chub-inner chub-why-grid">
+          <div className="chub-why-heading-col">
+            <span className="chub-section-eyebrow" style={{ color: "#0BC5E0" }}>Why It Matters</span>
+            <h2 className="chub-why-title">
+              The work<br />goes where<br />the story lives.
+            </h2>
+          </div>
+          <div className="chub-why-content-col">
+            <p className="chub-why-body">
+              DAT continually invests in communities with little to no access to arts programming — through workshops, residencies, events, and mentorship. The work is relationship-based and long-term. It changes who gets to make theatre and who gets to say so.
+            </p>
+            <p className="chub-why-body">
+              Each drama club DAT helps build becomes a permanent, locally-run gift to its community — active and thriving long after DAT moves on.
+            </p>
+            <div className="chub-why-stats">
+              <div className="chub-why-stat">
+                <span className="chub-why-stat-num">{YEARS_OF_WORK}</span>
+                <span className="chub-why-stat-label">Years of work</span>
+              </div>
+              <div className="chub-why-stat">
+                <span className="chub-why-stat-num">{COUNTRY_COUNT}+</span>
+                <span className="chub-why-stat-label">Countries</span>
+              </div>
+              <div className="chub-why-stat">
+                <span className="chub-why-stat-num">{CLUB_COUNT}+</span>
+                <span className="chub-why-stat-label">Drama clubs</span>
+              </div>
             </div>
           </div>
         </div>
@@ -386,12 +396,22 @@ export default function CampaignHubPage() {
           inset: 0;
           background: linear-gradient(
             to top,
-            rgba(36,17,35,0.96) 0%,
-            rgba(36,17,35,0.72) 35%,
-            rgba(36,17,35,0.28) 70%,
-            rgba(36,17,35,0.08) 100%
+            rgba(36,17,35,1.0) 0%,
+            rgba(36,17,35,1.0) 10%,
+            rgba(36,17,35,0.85) 35%,
+            rgba(36,17,35,0.45) 65%,
+            rgba(36,17,35,0.12) 100%
           );
           z-index: 1;
+        }
+        /* Teal glow in bottom-left corner — atmospheric warmth */
+        .chub-hero-img-wrap::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(ellipse 70% 55% at 10% 85%, rgba(36,147,169,0.2) 0%, transparent 60%);
+          z-index: 2;
+          pointer-events: none;
         }
         .chub-hero-body {
           position: relative;
@@ -795,49 +815,71 @@ export default function CampaignHubPage() {
           color: rgba(8,28,58,0.62);
         }
 
-        /* ─── Trust layer ──────────────────────────────────────────── */
-        .chub-trust-section {
-          padding: 5rem 0;
+        /* ─── Why it Matters ──────────────────────────────────────── */
+        .chub-why-section {
+          padding: clamp(4rem, 8vw, 7rem) 0;
           background: transparent;
         }
-        .chub-trust-heading {
-          margin: 0 0 2.5rem;
-          font-family: var(--font-space-grotesk), sans-serif;
-          font-size: clamp(1.6rem, 3vw, 2.4rem);
-          font-weight: 800;
-          color: #0f1f38;
-          line-height: 1.15;
-        }
-        .chub-trust-row {
+        .chub-why-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-          gap: 2.5rem;
+          grid-template-columns: 1fr 1.6fr;
+          gap: clamp(2.5rem, 6vw, 5rem);
+          align-items: start;
         }
-        .chub-trust-item {
+        @media (max-width: 700px) {
+          .chub-why-grid { grid-template-columns: 1fr; }
+        }
+        .chub-why-heading-col {
           display: flex;
           flex-direction: column;
-          gap: 0.4rem;
+          gap: 0.5rem;
         }
-        .chub-trust-stat {
+        .chub-why-title {
+          margin: 0.3rem 0 0;
+          font-family: var(--font-anton), sans-serif;
+          font-size: clamp(2.2rem, 5vw, 3.8rem);
+          font-weight: 400;
+          color: #241123;
+          line-height: 1.0;
+          letter-spacing: 0.01em;
+        }
+        .chub-why-content-col {
+          background: rgba(8,28,58,0.03);
+          border-radius: 16px;
+          padding: 1.75rem 2rem;
+        }
+        .chub-why-body {
           font-family: var(--font-space-grotesk), sans-serif;
-          font-size: clamp(2.2rem, 4vw, 3rem);
+          font-size: 0.97rem;
+          color: #241123;
+          line-height: 1.75;
+          margin: 0 0 1rem;
+        }
+        .chub-why-body:last-of-type { margin-bottom: 0; }
+        .chub-why-stats {
+          display: flex;
+          gap: 2.5rem;
+          margin-top: 1.5rem;
+          flex-wrap: wrap;
+        }
+        .chub-why-stat {
+          display: flex;
+          flex-direction: column;
+          gap: 0.2rem;
+        }
+        .chub-why-stat-num {
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: clamp(1.8rem, 3.5vw, 2.5rem);
           font-weight: 800;
           color: #0BC5E0;
           line-height: 1;
           letter-spacing: -0.02em;
         }
-        .chub-trust-label {
-          font-family: var(--font-space-grotesk), sans-serif;
-          font-size: 0.88rem;
-          font-weight: 700;
-          color: #0f1f38;
-          margin-top: 0.1rem;
-        }
-        .chub-trust-desc {
+        .chub-why-stat-label {
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.82rem;
-          line-height: 1.65;
-          color: rgba(8,28,58,0.58);
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: rgba(8,28,58,0.55);
         }
 
         /* ─── Archive ──────────────────────────────────────────────── */
