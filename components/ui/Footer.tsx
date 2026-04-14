@@ -57,7 +57,7 @@ export default function Footer() {
           className="footer-cta mx-auto w-[88vw] md:w-[62.25vw] max-w-[100vw]"
           style={{ marginTop: "7.75vh" }}
         >
-          <div className="mb-4 md:mb-6 w-full overflow-hidden text-center">
+          <div className="relative z-20 mb-4 md:mb-6 w-full overflow-visible text-center">
             <h2
               ref={h2Ref}
               className="
