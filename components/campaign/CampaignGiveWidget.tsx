@@ -207,7 +207,8 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
 
   return (
     <div className={`cgw-root${isBand ? " cgw-root--band" : ""}`}>
-      {/* ── Progress thermometer ────────────────────────────────── */}
+      {/* ── Progress thermometer — hidden for evergreen campaigns ── */}
+      {!campaign.evergreen && (
       <div className="cgw-progress-section">
         <div className="cgw-progress-track">
           <div
@@ -271,6 +272,7 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
           )}
         </div>
       </div>
+      )}
 
       {/* ── Stretch goal next target ────────────────────────────── */}
       {nextStretch && pct >= 100 && (
@@ -342,6 +344,17 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
             className="cgw-custom-input"
           />
         </div>
+      )}
+
+      {/* ── Frequency-aware impact copy (evergreen only) ─────────── */}
+      {campaign.evergreen && (
+        frequency === "monthly"
+          ? campaign.monthlyImpactCopy
+          : campaign.oneTimeImpactCopy
+      ) && (
+        <p className="cgw-impact-line">
+          {frequency === "monthly" ? campaign.monthlyImpactCopy : campaign.oneTimeImpactCopy}
+        </p>
       )}
 
       {/* ── Error ───────────────────────────────────────────────── */}
@@ -623,6 +636,20 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
         .cgw-custom-input::placeholder { color: rgba(36,17,35,0.3); }
         .cgw-custom-input::-webkit-inner-spin-button,
         .cgw-custom-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+        /* Frequency-aware impact line */
+        .cgw-impact-line {
+          margin: 0;
+          padding: 0.6rem 0.85rem;
+          background: rgba(36,147,169,0.06);
+          border-left: 2px solid rgba(36,147,169,0.4);
+          border-radius: 0 8px 8px 0;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.78rem;
+          line-height: 1.55;
+          color: rgba(36,17,35,0.72);
+          font-style: italic;
+        }
 
         /* Error */
         .cgw-error {

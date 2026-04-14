@@ -224,10 +224,20 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         <div className="cmp-hero-gradient-primary" />
 
         {/* Secondary gradient: soft left-column reading zone */}
-        <div className="cmp-hero-gradient-left" />
+        <div
+          className="cmp-hero-gradient-left"
+          style={campaign.evergreen ? {
+            background: "radial-gradient(ellipse 70% 55% at 8% 88%, rgba(36,147,169,0.22) 0%, transparent 60%)"
+          } : undefined}
+        />
 
-        {/* Teal wash: atmospheric #2493A9 shading at the bottom — transitions into progress band */}
-        <div className="cmp-hero-gradient-bottom" />
+        {/* Atmospheric bottom shading — teal for evergreen, purple for time-bound */}
+        <div
+          className="cmp-hero-gradient-bottom"
+          style={campaign.evergreen ? {
+            background: "linear-gradient(to top, rgba(11,29,54,0.7) 0%, rgba(36,147,169,0.25) 18%, transparent 42%)"
+          } : undefined}
+        />
 
         {/* Hero editorial text panel */}
         <div className="cmp-hero-body">
@@ -265,6 +275,18 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
       {campaign.evergreen ? (
         <section className="cmp-band cmp-band--evergreen">
           <div className="cmp-band-inner">
+
+            {/* Season feature — prominent linked moment */}
+            {campaign.seasonNumber && campaign.seasonLabel && (
+              <Link href={`/season/${campaign.seasonNumber}`} className="cmp-season-feature">
+                <span className="cmp-season-feature-label">{campaign.seasonLabel}</span>
+                {campaign.seasonYears && (
+                  <span className="cmp-season-feature-years">{campaign.seasonYears}</span>
+                )}
+                <span className="cmp-season-feature-cta">View season →</span>
+              </Link>
+            )}
+
             <div className="cmp-band-stats">
               {totals.raisedMinor > 0 && (
                 <div className="cmp-band-stat">
@@ -290,12 +312,6 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                 <span className="cmp-band-stat-val">{CLUB_COUNT}+</span>
                 <span className="cmp-band-stat-lbl">Drama clubs</span>
               </div>
-              {campaign.seasonNumber && (
-                <div className="cmp-band-stat">
-                  <span className="cmp-band-stat-val">S{campaign.seasonNumber}</span>
-                  <span className="cmp-band-stat-lbl">{campaign.seasonYears ?? "Active Season"}</span>
-                </div>
-              )}
               {(campaign.seasonPrograms?.length ?? 0) > 0 && (
                 <div className="cmp-band-stat">
                   <span className="cmp-band-stat-val">{campaign.seasonPrograms!.length}</span>
@@ -667,20 +683,20 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                           <span className="cmp-event-cal-day">{formatEventDay(ev.date)}</span>
                           <span className="cmp-event-cal-year">{formatEventYear(ev.date)}</span>
                         </div>
+                        {ev.imageUrl && (
+                          <div className="cmp-event-item-img">
+                            <Image
+                              src={ev.imageUrl}
+                              alt={ev.title}
+                              fill
+                              sizes="88px"
+                              style={{ objectFit: "cover" }}
+                            />
+                          </div>
+                        )}
                         <div className="cmp-event-item-body">
                           <h3 className="cmp-event-item-title">{ev.title}</h3>
                           <span className="cmp-event-item-loc">
-                            {ev.imageUrl && (
-                              <span className="cmp-event-item-thumb-wrap">
-                                <Image
-                                  src={ev.imageUrl}
-                                  alt={ev.title}
-                                  fill
-                                  sizes="48px"
-                                  style={{ objectFit: "cover" }}
-                                />
-                              </span>
-                            )}
                             {ev.venue} · {ev.city}, {ev.country}
                           </span>
                         </div>
@@ -1160,6 +1176,47 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         .cmp-band--evergreen .cmp-band-stats {
           gap: 2rem 3rem;
         }
+
+        /* Season feature — prominent linked moment in evergreen band */
+        .cmp-season-feature {
+          display: inline-flex;
+          align-items: baseline;
+          gap: 1rem;
+          text-decoration: none;
+          border: 1px solid rgba(36,147,169,0.4);
+          border-radius: 12px;
+          padding: 0.7rem 1.4rem;
+          background: rgba(36,147,169,0.1);
+          align-self: flex-start;
+          transition: background 150ms, border-color 150ms;
+        }
+        .cmp-season-feature:hover {
+          background: rgba(36,147,169,0.18);
+          border-color: rgba(36,147,169,0.65);
+        }
+        .cmp-season-feature-label {
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+          font-weight: 800;
+          color: #2BC4DB;
+          line-height: 1;
+        }
+        .cmp-season-feature-years {
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: clamp(0.85rem, 1.5vw, 1rem);
+          font-weight: 600;
+          color: rgba(220,240,255,0.6);
+          letter-spacing: 0.04em;
+        }
+        .cmp-season-feature-cta {
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.7rem;
+          font-weight: 600;
+          color: rgba(36,147,169,0.65);
+          letter-spacing: 0.1em;
+          margin-left: 0.25rem;
+        }
+
         .cmp-band-inner {
           max-width: 1100px;
           margin: 0 auto;
@@ -1702,9 +1759,9 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
         .cmp-event-cal-month {
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.52rem;
+          font-size: 0.7rem;
           font-weight: 800;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.12em;
           color: ${ACCENT};
           line-height: 1;
           padding-bottom: 0.1rem;
@@ -1753,6 +1810,17 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           align-items: center;
           gap: 0.4rem;
         }
+        /* Full-size event image column — replaces the old 20px thumb */
+        .cmp-event-item-img {
+          position: relative;
+          width: 88px;
+          height: 88px;
+          border-radius: 10px;
+          overflow: hidden;
+          flex-shrink: 0;
+          background: rgba(36,147,169,0.08);
+        }
+
         .cmp-event-item-thumb-wrap {
           position: relative;
           display: inline-block;

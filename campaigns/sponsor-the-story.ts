@@ -98,4 +98,10 @@ export const sponsorTheStory: FundraisingCampaign = {
 
   // ── Analytics ─────────────────────────────────────────────────────
   utmCampaign: "sponsor-the-story",
+
+  // ── Frequency-aware impact copy ────────────────────────────────────
+  monthlyImpactCopy:
+    "Your monthly gift keeps drama alive in communities where it wouldn't otherwise exist — sustaining residencies, workshops, and partnerships every single month.",
+  oneTimeImpactCopy:
+    "Your gift goes directly into the field — artist fees, travel, materials, and the community infrastructure that makes this work real.",
 };

@@ -313,12 +313,12 @@ export default function CampaignHubPage() {
             <div className="chub-trust-item">
               <span className="chub-trust-stat">{COUNTRY_COUNT}+</span>
               <span className="chub-trust-label">Countries reached</span>
-              <span className="chub-trust-desc">DAT programs have run across six continents — built with local artists, rooted in local stories, and never parachuted in.</span>
+              <span className="chub-trust-desc">DAT continually invests — through workshops, events, and mentorship — in communities with little to no access to arts programming.</span>
             </div>
             <div className="chub-trust-item">
               <span className="chub-trust-stat">{CLUB_COUNT}+</span>
               <span className="chub-trust-label">Drama clubs created</span>
-              <span className="chub-trust-desc">Each club is a permanent gift to the community — locally run, independently sustained, still active long after DAT has left.</span>
+              <span className="chub-trust-desc">Each club is a permanent gift to its community — locally run, independently sustained, and still active long after DAT moves on.</span>
             </div>
           </div>
         </div>
@@ -375,6 +375,7 @@ export default function CampaignHubPage() {
           display: flex;
           align-items: flex-end;
           background: #241123;
+          box-shadow: 0 16px 60px rgba(0,0,0,0.4);
         }
         .chub-hero-img-wrap {
           position: absolute;
@@ -476,7 +477,7 @@ export default function CampaignHubPage() {
         /* ─── Combined live + evergreen layout ────────────────────── */
         .chub-combined-section {
           padding: 4rem 0;
-          background: #f5f0f8;
+          background: transparent;
         }
         .chub-combined-inner {
           max-width: 1140px;
@@ -511,7 +512,7 @@ export default function CampaignHubPage() {
         /* ─── Active campaigns (standalone section, no evergreen) ─── */
         .chub-active-section {
           padding: 4rem 0;
-          background: #f5f0f8;
+          background: transparent;
         }
         .chub-active-grid {
           display: grid;
@@ -648,8 +649,7 @@ export default function CampaignHubPage() {
         /* ─── Evergreen campaigns (standalone section) ────────────── */
         .chub-evergreen-section {
           padding: 3.5rem 0 4rem;
-          background: #f5f0f8;
-          border-top: 1px solid rgba(108,0,175,0.1);
+          background: transparent;
         }
         .chub-evergreen-grid {
           display: grid;
@@ -797,9 +797,8 @@ export default function CampaignHubPage() {
 
         /* ─── Trust layer ──────────────────────────────────────────── */
         .chub-trust-section {
-          padding: 4.5rem 0;
-          border-top: 1px solid rgba(8,28,58,0.06);
-          background: #fff;
+          padding: 5rem 0;
+          background: transparent;
         }
         .chub-trust-heading {
           margin: 0 0 2.5rem;

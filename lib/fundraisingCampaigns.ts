@@ -236,6 +236,12 @@ export type FundraisingCampaign = {
   monthlyAmounts?: number[];
   /** Preset amounts for one-time giving — overrides giveAmounts when frequency = one_time */
   oneTimeAmounts?: number[];
+
+  // ── Frequency-aware impact copy (evergreen) ────────────────────────
+  /** Short sentence explaining monthly giving purpose — shown in widget when frequency = monthly */
+  monthlyImpactCopy?: string;
+  /** Short sentence explaining one-time giving purpose — shown in widget when frequency = one_time */
+  oneTimeImpactCopy?: string;
 };
 
 /* ------------------------------------------------------------------ */
