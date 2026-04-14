@@ -39,6 +39,7 @@ import {
 import type { CampaignTotals } from "@/lib/getCampaignTotals";
 import CampaignGiveWidget from "@/components/campaign/CampaignGiveWidget";
 import Lightbox from "@/components/shared/Lightbox";
+import { YEARS_OF_WORK, CLUB_COUNT, COUNTRY_COUNT } from "@/lib/datStats";
 
 /* ------------------------------------------------------------------ */
 /* Live totals hook (polls every 60s — drives dynamic stretch goals)  */
@@ -90,6 +91,17 @@ function formatDate(iso: string) {
 function formatShortDate(iso: string) {
   const d = new Date(iso + "T12:00:00");
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function formatEventMonth(iso: string) {
+  const d = new Date(iso + "T12:00:00");
+  return d.toLocaleDateString("en-US", { month: "short" }).toUpperCase();
+}
+function formatEventDay(iso: string) {
+  return new Date(iso + "T12:00:00").getDate().toString();
+}
+function formatEventYear(iso: string) {
+  return new Date(iso + "T12:00:00").getFullYear().toString();
 }
 
 /* ------------------------------------------------------------------ */
@@ -249,59 +261,104 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         </div>
       </section>
 
-      {/* ── 3. PROGRESS BAND ────────────────────────────────────── */}
-      <section className="cmp-band">
-        <div className="cmp-band-inner">
-          {/* Thermometer */}
-          <div className="cmp-band-thermo">
-            <div className="cmp-band-track">
-              <div className="cmp-band-fill" style={{ width: `${pct}%` }} />
-            </div>
-            <div className="cmp-band-thermo-labels">
-              <span className="cmp-band-raised">
-                {formatCurrencyMinor(totals.raisedMinor, currency)} raised
-              </span>
-              <span className="cmp-band-goal">
-                Goal: {formatCurrency(campaign.goalAmount, currency)}
-              </span>
+      {/* ── 3. PROGRESS BAND (time-bound) / EVERGREEN STATS ────── */}
+      {campaign.evergreen ? (
+        <section className="cmp-band cmp-band--evergreen">
+          <div className="cmp-band-inner">
+            <div className="cmp-band-stats">
+              {totals.raisedMinor > 0 && (
+                <div className="cmp-band-stat">
+                  <span className="cmp-band-stat-val">{formatCurrencyMinor(totals.raisedMinor, currency)}</span>
+                  <span className="cmp-band-stat-lbl">{campaign.progressLabel ?? "raised this year"}</span>
+                </div>
+              )}
+              {totals.donorCount > 0 && (
+                <div className="cmp-band-stat">
+                  <span className="cmp-band-stat-val">{totals.donorCount}</span>
+                  <span className="cmp-band-stat-lbl">{totals.donorCount === 1 ? "Supporter" : "Supporters"}</span>
+                </div>
+              )}
+              <div className="cmp-band-stat">
+                <span className="cmp-band-stat-val">{YEARS_OF_WORK}</span>
+                <span className="cmp-band-stat-lbl">Years of work</span>
+              </div>
+              <div className="cmp-band-stat">
+                <span className="cmp-band-stat-val">{COUNTRY_COUNT}+</span>
+                <span className="cmp-band-stat-lbl">Countries</span>
+              </div>
+              <div className="cmp-band-stat">
+                <span className="cmp-band-stat-val">{CLUB_COUNT}+</span>
+                <span className="cmp-band-stat-lbl">Drama clubs</span>
+              </div>
+              {campaign.seasonNumber && (
+                <div className="cmp-band-stat">
+                  <span className="cmp-band-stat-val">S{campaign.seasonNumber}</span>
+                  <span className="cmp-band-stat-lbl">{campaign.seasonYears ?? "Active Season"}</span>
+                </div>
+              )}
+              {(campaign.seasonPrograms?.length ?? 0) > 0 && (
+                <div className="cmp-band-stat">
+                  <span className="cmp-band-stat-val">{campaign.seasonPrograms!.length}</span>
+                  <span className="cmp-band-stat-lbl">Active programs</span>
+                </div>
+              )}
             </div>
           </div>
+        </section>
+      ) : (
+        <section className="cmp-band">
+          <div className="cmp-band-inner">
+            {/* Thermometer */}
+            <div className="cmp-band-thermo">
+              <div className="cmp-band-track">
+                <div className="cmp-band-fill" style={{ width: `${pct}%` }} />
+              </div>
+              <div className="cmp-band-thermo-labels">
+                <span className="cmp-band-raised">
+                  {formatCurrencyMinor(totals.raisedMinor, currency)} raised
+                </span>
+                <span className="cmp-band-goal">
+                  Goal: {formatCurrency(campaign.goalAmount, currency)}
+                </span>
+              </div>
+            </div>
 
-          {/* Stats */}
-          <div className="cmp-band-stats">
-            {totals.donorCount > 0 && (
+            {/* Stats */}
+            <div className="cmp-band-stats">
+              {totals.donorCount > 0 && (
+                <div className="cmp-band-stat">
+                  <span className="cmp-band-stat-val">{totals.donorCount}</span>
+                  <span className="cmp-band-stat-lbl">{totals.donorCount === 1 ? "Donor" : "Donors"}</span>
+                </div>
+              )}
+              {typeof daysLeft === "number" && daysLeft > 0 && (
+                <div className="cmp-band-stat">
+                  <span className="cmp-band-stat-val">{daysLeft}</span>
+                  <span className="cmp-band-stat-lbl">{daysLeft === 1 ? "Day Left" : "Days Left"}</span>
+                </div>
+              )}
+              {typeof daysLeft === "number" && daysLeft === 0 && (
+                <div className="cmp-band-stat">
+                  <span className="cmp-band-stat-val">Ended</span>
+                  <span className="cmp-band-stat-lbl">Thank You</span>
+                </div>
+              )}
               <div className="cmp-band-stat">
-                <span className="cmp-band-stat-val">{totals.donorCount}</span>
-                <span className="cmp-band-stat-lbl">{totals.donorCount === 1 ? "Donor" : "Donors"}</span>
+                <span className="cmp-band-stat-val">
+                  {Math.round(pct)}%
+                </span>
+                <span className="cmp-band-stat-lbl">Funded</span>
               </div>
-            )}
-            {typeof daysLeft === "number" && daysLeft > 0 && (
-              <div className="cmp-band-stat">
-                <span className="cmp-band-stat-val">{daysLeft}</span>
-                <span className="cmp-band-stat-lbl">{daysLeft === 1 ? "Day Left" : "Days Left"}</span>
-              </div>
-            )}
-            {typeof daysLeft === "number" && daysLeft === 0 && (
-              <div className="cmp-band-stat">
-                <span className="cmp-band-stat-val">Ended</span>
-                <span className="cmp-band-stat-lbl">Thank You</span>
-              </div>
-            )}
-            <div className="cmp-band-stat">
-              <span className="cmp-band-stat-val">
-                {Math.round(pct)}%
-              </span>
-              <span className="cmp-band-stat-lbl">Funded</span>
+              {campaign.matchActive && (
+                <div className="cmp-band-stat cmp-band-stat--match">
+                  <span className="cmp-band-stat-val">2×</span>
+                  <span className="cmp-band-stat-lbl">Match Active</span>
+                </div>
+              )}
             </div>
-            {campaign.matchActive && (
-              <div className="cmp-band-stat cmp-band-stat--match">
-                <span className="cmp-band-stat-val">2×</span>
-                <span className="cmp-band-stat-lbl">Match Active</span>
-              </div>
-            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── 4. STORY + GIVE ─────────────────────────────────────── */}
       <section id="give" className="cmp-story-section">
@@ -585,123 +642,104 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         </section>
       )}
 
-      {/* ── 9. CAMPAIGN UPDATES ─────────────────────────────────── */}
-      {hasUpdates && (
+      {/* ── 9. WHAT'S HAPPENING (updates + events, unified) ──────── */}
+      {(hasUpdates || hasEvents) && (
         <section className="cmp-updates-section">
           <div className="cmp-updates-inner">
-            <span className="cmp-eyebrow cmp-eyebrow--accent">Campaign Updates</span>
+            <span className="cmp-eyebrow cmp-eyebrow--accent">What&apos;s Happening</span>
             <h2 className="cmp-section-title" style={{ color: "#0f1f38" }}>
               What&apos;s happening.
             </h2>
-            <div className="cmp-updates-feed">
-              {campaign.updates!.map((u) => (
-                <article key={u.id} className={`cmp-update-card${u.imageUrl ? " cmp-update-card--has-media" : ""}`}>
-                  <div className="cmp-update-text-col">
-                    <div className="cmp-update-meta">
-                      <time className="cmp-update-date">{formatDate(u.date)}</time>
-                      {u.authorName && (
-                        <span className="cmp-update-author">
-                          {u.authorName}
-                          {u.authorRole && ` · ${u.authorRole}`}
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="cmp-update-title">{u.title}</h3>
-                    <p className="cmp-update-body">{u.body}</p>
-                  </div>
-                  {u.imageUrl && (
-                    <div className="cmp-update-media">
-                      <Image
-                        src={u.imageUrl}
-                        alt={u.title}
-                        fill
-                        sizes="(min-width:900px) 220px, 90vw"
-                        style={{ objectFit: "cover" }}
-                      />
-                    </div>
-                  )}
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
-      {/* ── 9.5 FEATURED EVENT ──────────────────────────────────── */}
-      {hasEvents && (() => {
-        const ev = campaign.events![0];
-        const eventHref = ev.ticketUrl ?? campaign.learnMoreUrl;
-        return (
-          <section className="cmp-featured-event-section">
-            <div className="cmp-featured-event-inner">
-              <span className="cmp-eyebrow cmp-eyebrow--accent">Upcoming Event</span>
-              <div className="cmp-featured-event-card">
-                {ev.imageUrl && (
-                  <div className="cmp-featured-event-img">
-                    <Image
-                      src={ev.imageUrl}
-                      alt={ev.title}
-                      fill
-                      sizes="(min-width:900px) 320px, 90vw"
-                      style={{ objectFit: "cover" }}
-                    />
-                    <div className="cmp-featured-event-img-overlay" />
-                    <span className="cmp-featured-event-date-badge">{formatShortDate(ev.date)}</span>
-                  </div>
+            {/* Events — shown first, inline with updates */}
+            {hasEvents && (
+              <div className="cmp-events-block">
+                {hasUpdates && (
+                  <p className="cmp-sub-label">Upcoming Events</p>
                 )}
-                <div className="cmp-featured-event-body">
-                  {!ev.imageUrl && (
-                    <time className="cmp-featured-event-date-inline">{formatDate(ev.date)}</time>
-                  )}
-                  <h2 className="cmp-featured-event-title">{ev.title}</h2>
-                  <span className="cmp-featured-event-loc">{ev.venue} · {ev.city}, {ev.country}</span>
-                  {eventHref && (
-                    <a
-                      href={eventHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="cmp-btn-yellow-sm"
-                    >
-                      {ev.ticketUrl ? "Get Tickets" : "Learn More"}
-                    </a>
-                  )}
-                </div>
-              </div>
-              {campaign.events!.length > 1 && (
-                <div className="cmp-extra-events">
-                  {campaign.events!.slice(1, 3).map((e) => {
-                    const href = e.ticketUrl ?? campaign.learnMoreUrl;
+                <div className="cmp-events-list">
+                  {campaign.events!.map((ev) => {
+                    const href = ev.ticketUrl ?? campaign.learnMoreUrl;
                     return (
-                      <div key={e.id} className="cmp-event-row">
-                        <div className="cmp-event-info">
-                          <span className="cmp-event-date">{formatShortDate(e.date)}</span>
-                          <span className="cmp-event-title">{e.title}</span>
-                          <span className="cmp-event-loc">{e.venue} · {e.city}, {e.country}</span>
+                      <div key={ev.id} className="cmp-event-item">
+                        <div className="cmp-event-cal">
+                          <span className="cmp-event-cal-month">{formatEventMonth(ev.date)}</span>
+                          <span className="cmp-event-cal-day">{formatEventDay(ev.date)}</span>
+                          <span className="cmp-event-cal-year">{formatEventYear(ev.date)}</span>
+                        </div>
+                        <div className="cmp-event-item-body">
+                          <h3 className="cmp-event-item-title">{ev.title}</h3>
+                          <span className="cmp-event-item-loc">
+                            {ev.imageUrl && (
+                              <span className="cmp-event-item-thumb-wrap">
+                                <Image
+                                  src={ev.imageUrl}
+                                  alt={ev.title}
+                                  fill
+                                  sizes="48px"
+                                  style={{ objectFit: "cover" }}
+                                />
+                              </span>
+                            )}
+                            {ev.venue} · {ev.city}, {ev.country}
+                          </span>
                         </div>
                         {href && (
-                          <a href={href} target="_blank" rel="noopener noreferrer" className="cmp-btn-event-sm">
-                            {e.ticketUrl ? "Get Tickets" : "Learn More"}
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="cmp-btn-event-sm"
+                          >
+                            {ev.ticketUrl ? "Get Tickets" : "Learn More"}
                           </a>
                         )}
                       </div>
                     );
                   })}
-                  {campaign.events!.length > 3 && campaign.learnMoreUrl && (
-                    <a
-                      href={campaign.learnMoreUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="cmp-events-view-all"
-                    >
-                      View all events
-                    </a>
-                  )}
                 </div>
-              )}
-            </div>
-          </section>
-        );
-      })()}
+              </div>
+            )}
+
+            {/* Updates feed */}
+            {hasUpdates && (
+              <>
+                {hasEvents && <p className="cmp-sub-label" style={{ marginTop: "2rem" }}>Latest Updates</p>}
+                <div className="cmp-updates-feed">
+                  {campaign.updates!.map((u) => (
+                    <article key={u.id} className={`cmp-update-card${u.imageUrl ? " cmp-update-card--has-media" : ""}`}>
+                      <div className="cmp-update-text-col">
+                        <div className="cmp-update-meta">
+                          <time className="cmp-update-date">{formatDate(u.date)}</time>
+                          {u.authorName && (
+                            <span className="cmp-update-author">
+                              {u.authorName}
+                              {u.authorRole && ` · ${u.authorRole}`}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="cmp-update-title">{u.title}</h3>
+                        <p className="cmp-update-body">{u.body}</p>
+                      </div>
+                      {u.imageUrl && (
+                        <div className="cmp-update-media">
+                          <Image
+                            src={u.imageUrl}
+                            alt={u.title}
+                            fill
+                            sizes="(min-width:900px) 220px, 90vw"
+                            style={{ objectFit: "cover" }}
+                          />
+                        </div>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ── 10. SUPPORTERS WALL ─────────────────────────────────── */}
       {hasSupporters && (
@@ -1109,6 +1147,18 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           background: #241123;
           padding: 2.5rem 2rem;
           box-shadow: 0 8px 30px rgba(36,17,35,0.35);
+        }
+        /* Evergreen band — DAT blue, stat grid instead of thermometer */
+        .cmp-band--evergreen {
+          background: #0B1D36;
+          box-shadow: 0 8px 30px rgba(11,29,54,0.4);
+        }
+        .cmp-band--evergreen .cmp-band-stat-val {
+          color: #2BC4DB;
+          font-size: clamp(1.3rem, 3.5vw, 2rem);
+        }
+        .cmp-band--evergreen .cmp-band-stats {
+          gap: 2rem 3rem;
         }
         .cmp-band-inner {
           max-width: 1100px;
@@ -1598,10 +1648,121 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
-        /* ─── Campaign updates ─────────────────────────────────────── */
+        /* ─── What's happening (updates + events) ─────────────────── */
         .cmp-updates-section { padding: 5rem 2rem; background: #f0f8fa; box-shadow: 0 8px 30px rgba(8,28,58,0.1); }
         .cmp-updates-inner { max-width: 780px; margin: 0 auto; }
         .cmp-updates-feed { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
+        .cmp-sub-label {
+          margin: 0 0 1rem;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.65rem;
+          font-weight: 800;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: ${ACCENT};
+          opacity: 0.75;
+        }
+
+        /* Events block inside "What's happening" */
+        .cmp-events-block { margin-bottom: 0.5rem; }
+        .cmp-events-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+          border-radius: 12px;
+          overflow: hidden;
+          border: 1px solid rgba(8,28,58,0.08);
+          background: #fff;
+        }
+        .cmp-event-item {
+          display: flex;
+          align-items: center;
+          gap: 1.25rem;
+          padding: 1.1rem 1.25rem;
+          border-bottom: 1px solid rgba(8,28,58,0.07);
+          transition: background 140ms;
+        }
+        .cmp-event-item:last-child { border-bottom: none; }
+        .cmp-event-item:hover { background: rgba(36,147,169,0.04); }
+
+        /* Calendar stamp */
+        .cmp-event-cal {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          width: 52px;
+          min-width: 52px;
+          height: 58px;
+          border-radius: 10px;
+          background: #0B1D36;
+          padding: 0.2rem 0;
+          text-align: center;
+          flex-shrink: 0;
+        }
+        .cmp-event-cal-month {
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.52rem;
+          font-weight: 800;
+          letter-spacing: 0.1em;
+          color: ${ACCENT};
+          line-height: 1;
+          padding-bottom: 0.1rem;
+        }
+        .cmp-event-cal-day {
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: 1.55rem;
+          font-weight: 800;
+          color: #fff;
+          line-height: 1;
+        }
+        .cmp-event-cal-year {
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.5rem;
+          font-weight: 600;
+          color: rgba(255,255,255,0.45);
+          line-height: 1;
+          padding-top: 0.15rem;
+        }
+        .cmp-event-item-body {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0.2rem;
+        }
+        .cmp-event-item-title {
+          margin: 0;
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: #0f1f38;
+          line-height: 1.25;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .cmp-event-item-loc {
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.75rem;
+          color: rgba(8,28,58,0.5);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+        .cmp-event-item-thumb-wrap {
+          position: relative;
+          display: inline-block;
+          width: 20px;
+          height: 20px;
+          border-radius: 3px;
+          overflow: hidden;
+          flex-shrink: 0;
+          vertical-align: middle;
+        }
         .cmp-update-card {
           padding: 2rem 0;
           border-top: 1px solid rgba(8,28,58,0.08);

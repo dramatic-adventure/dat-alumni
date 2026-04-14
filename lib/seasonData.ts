@@ -212,3 +212,14 @@ export const seasons: SeasonInfo[] = [
     ]
   }
 ];
+
+/** Returns the most recent (current) season — seasons are ordered newest-first */
+export function getCurrentSeason(): SeasonInfo {
+  return seasons[0];
+}
+
+/** Parses the numeric season number from a title like "Season 20" → 20 */
+export function getSeasonNumber(season: SeasonInfo): number {
+  const m = season.seasonTitle.match(/\d+/);
+  return m ? parseInt(m[0], 10) : seasons.length;
+}

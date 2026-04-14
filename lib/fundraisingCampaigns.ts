@@ -218,6 +218,24 @@ export type FundraisingCampaign = {
 
   /** Custom label for the drama clubs CTA button — defaults to "Sponsor an Artist" */
   dramaClubsCtaLabel?: string;
+
+  // ── Season framing (optional — annual fund) ────────────────────────
+  /** Current season number, e.g. 20 */
+  seasonNumber?: number;
+  /** Current season label, e.g. "Season 20" */
+  seasonLabel?: string;
+  /** Current season year span, e.g. "2025 / 2026" */
+  seasonYears?: string;
+  /** Active programs in the current season */
+  seasonPrograms?: string[];
+  /** Short framing statement about the current season for display */
+  seasonFraming?: string;
+
+  // ── Differentiated amounts (optional) ─────────────────────────────
+  /** Preset amounts for monthly giving — overrides giveAmounts when frequency = monthly */
+  monthlyAmounts?: number[];
+  /** Preset amounts for one-time giving — overrides giveAmounts when frequency = one_time */
+  oneTimeAmounts?: number[];
 };
 
 /* ------------------------------------------------------------------ */

@@ -79,15 +79,53 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
   const totals = useLiveTotals(campaign.id, initialTotals);
   const daysLeft = useCountdown(campaign.deadline);
 
-  const defaultAmt = campaign.defaultAmount ?? campaign.giveAmounts[1] ?? campaign.giveAmounts[0];
-  const [selectedAmount, setSelectedAmount] = useState<number>(defaultAmt);
+  // Evergreen campaigns default to monthly; time-bound default to one-time.
+  const [frequency, setFrequency] = useState<"one_time" | "monthly">(campaign.evergreen ? "monthly" : "one_time");
+
+  // Amount buttons depend on frequency (differentiated amounts if configured)
+  const displayAmounts = (freq: "one_time" | "monthly") =>
+    freq === "monthly"
+      ? (campaign.monthlyAmounts ?? campaign.giveAmounts)
+      : (campaign.oneTimeAmounts ?? campaign.giveAmounts);
+
+  const defaultAmtForFreq = (freq: "one_time" | "monthly") => {
+    const amts = displayAmounts(freq);
+    return campaign.defaultAmount ?? amts[1] ?? amts[0];
+  };
+
+  const [selectedAmount, setSelectedAmount] = useState<number>(() => defaultAmtForFreq(campaign.evergreen ? "monthly" : "one_time"));
   const [customAmount, setCustomAmount] = useState("");
   const [isCustom, setIsCustom] = useState(false);
-  // Evergreen annual-fund campaigns default to monthly; time-bound campaigns default to one-time.
-  const [frequency, setFrequency] = useState<"one_time" | "monthly">(campaign.evergreen ? "monthly" : "one_time");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const customRef = useRef<HTMLInputElement>(null);
+
+  // Read ?frequency=one_time|monthly from URL on mount (set by hub "Give Once" links)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const urlFreq = params.get("frequency");
+    if (urlFreq === "one_time" || urlFreq === "monthly") {
+      setFrequency(urlFreq);
+      setSelectedAmount(defaultAmtForFreq(urlFreq));
+      setIsCustom(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // When frequency changes, reset selected amount to the default for that mode
+  const handleFrequencyChange = (newFreq: "one_time" | "monthly") => {
+    const amts = displayAmounts(newFreq);
+    const current = selectedAmount;
+    setFrequency(newFreq);
+    if (!amts.includes(current)) {
+      setSelectedAmount(defaultAmtForFreq(newFreq));
+      setIsCustom(false);
+      setCustomAmount("");
+    }
+  };
+
+  const activeAmounts = displayAmounts(frequency);
 
   const currency = campaign.currency ?? "usd";
   const pct = campaignProgress(totals.raisedMinor, campaign.goalAmount);
@@ -250,14 +288,14 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
         <div className="cgw-freq-toggle">
           <button
             className={`cgw-freq-btn${frequency === "one_time" ? " cgw-freq-btn--active" : ""}`}
-            onClick={() => setFrequency("one_time")}
+            onClick={() => handleFrequencyChange("one_time")}
             type="button"
           >
-            One-time
+            Give Once
           </button>
           <button
             className={`cgw-freq-btn${frequency === "monthly" ? " cgw-freq-btn--active" : ""}`}
-            onClick={() => setFrequency("monthly")}
+            onClick={() => handleFrequencyChange("monthly")}
             type="button"
           >
             Monthly
@@ -267,7 +305,7 @@ export default function CampaignGiveWidget({ campaign, initialTotals, variant = 
 
       {/* ── Amount buttons ──────────────────────────────────────── */}
       <div className="cgw-amounts">
-        {campaign.giveAmounts.map((amt) => (
+        {activeAmounts.map((amt) => (
           <button
             key={amt}
             type="button"

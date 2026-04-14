@@ -15,6 +15,7 @@ import Link from "next/link";
 import { getAllCampaigns } from "@/lib/fundraisingCampaigns";
 import { formatCurrency, daysUntilDeadline } from "@/lib/fundraisingCampaigns";
 import type { FundraisingCampaign } from "@/lib/fundraisingCampaigns";
+import { YEARS_OF_WORK, CLUB_COUNT, COUNTRY_COUNT } from "@/lib/datStats";
 
 export const metadata: Metadata = {
   title: "Campaigns | Dramatic Adventure Theatre",
@@ -35,7 +36,7 @@ function ActiveCampaignCard({ campaign }: { campaign: FundraisingCampaign }) {
   const daysLeft = daysUntilDeadline(campaign.deadline);
 
   return (
-    <article className="chub-active-card">
+    <article className="chub-active-card chub-card-hoverable">
       {/* Hero image */}
       <div className="chub-card-img-wrap">
         <Image
@@ -47,7 +48,7 @@ function ActiveCampaignCard({ campaign }: { campaign: FundraisingCampaign }) {
         />
         <div className="chub-card-img-overlay" />
 
-        {/* Status badges */}
+        {/* Status badges — upper-left */}
         <div className="chub-card-badges">
           <span className="chub-badge chub-badge--active">Active Campaign</span>
           {campaign.matchActive && (
@@ -97,7 +98,7 @@ function ActiveCampaignCard({ campaign }: { campaign: FundraisingCampaign }) {
 
 function EvergreenCampaignCard({ campaign }: { campaign: FundraisingCampaign }) {
   return (
-    <article className="chub-evergreen-card">
+    <article className="chub-evergreen-card chub-card-hoverable chub-card-hoverable--blue">
       {campaign.heroImage && (
         <div className="chub-evergreen-img-wrap">
           <Image
@@ -108,26 +109,32 @@ function EvergreenCampaignCard({ campaign }: { campaign: FundraisingCampaign }) 
             style={{ objectFit: "cover", objectPosition: campaign.heroImageFocus ?? "center top" }}
           />
           <div className="chub-evergreen-img-overlay" />
+          {/* Badges in upper-left corner of the image — same position as active card */}
+          <div className="chub-card-badges">
+            <span className="chub-badge chub-badge--annual">Annual Fund</span>
+            {campaign.seasonLabel && (
+              <span className="chub-badge chub-badge--season">{campaign.seasonLabel}</span>
+            )}
+          </div>
         </div>
       )}
       <div className="chub-evergreen-body">
-        <div className="chub-evergreen-top">
-          <span className="chub-badge chub-badge--evergreen">Always Open</span>
-          {campaign.allowMonthly && (
-            <span className="chub-badge chub-badge--monthly">Monthly giving</span>
-          )}
-        </div>
         {campaign.eyebrow && (
           <span className="chub-evergreen-eyebrow">{campaign.eyebrow}</span>
         )}
         <h3 className="chub-evergreen-title">{campaign.title}</h3>
         <p className="chub-evergreen-tagline">{campaign.tagline}</p>
-        <Link href={`/campaign/${campaign.id}`} className="chub-btn-evergreen">
-          Give Monthly
-        </Link>
-        <Link href={`/campaign/${campaign.id}`} className="chub-btn-evergreen-ghost">
-          Give Once
-        </Link>
+        {campaign.seasonFraming && (
+          <p className="chub-evergreen-framing">{campaign.seasonFraming}</p>
+        )}
+        <div className="chub-evergreen-actions">
+          <Link href={`/campaign/${campaign.id}`} className="chub-btn-evergreen">
+            Give Monthly
+          </Link>
+          <Link href={`/campaign/${campaign.id}?frequency=one_time`} className="chub-btn-evergreen-ghost">
+            Give Once
+          </Link>
+        </div>
       </div>
     </article>
   );
@@ -296,21 +303,22 @@ export default function CampaignHubPage() {
       {/* ── Trust layer / general giving ─────────────────────────── */}
       <section className="chub-trust-section">
         <div className="chub-inner">
+          <h2 className="chub-trust-heading">Why it matters.</h2>
           <div className="chub-trust-row">
             <div className="chub-trust-item">
-              <span className="chub-trust-icon">🎭</span>
-              <span className="chub-trust-label">Direct impact</span>
-              <span className="chub-trust-desc">Gifts go to specific programs, not general overhead.</span>
+              <span className="chub-trust-stat">{YEARS_OF_WORK}</span>
+              <span className="chub-trust-label">Years of work</span>
+              <span className="chub-trust-desc">Two decades of residency-based theatre in communities that rarely see professional arts programs. Every year, the work continues.</span>
             </div>
             <div className="chub-trust-item">
-              <span className="chub-trust-icon">🌍</span>
-              <span className="chub-trust-label">Global reach</span>
-              <span className="chub-trust-desc">30+ countries of work over more than two decades.</span>
+              <span className="chub-trust-stat">{COUNTRY_COUNT}+</span>
+              <span className="chub-trust-label">Countries reached</span>
+              <span className="chub-trust-desc">DAT programs have run across six continents — built with local artists, rooted in local stories, and never parachuted in.</span>
             </div>
             <div className="chub-trust-item">
-              <span className="chub-trust-icon">🤝</span>
-              <span className="chub-trust-label">Community-led</span>
-              <span className="chub-trust-desc">Every program is built with the community it serves.</span>
+              <span className="chub-trust-stat">{CLUB_COUNT}+</span>
+              <span className="chub-trust-label">Drama clubs created</span>
+              <span className="chub-trust-desc">Each club is a permanent gift to the community — locally run, independently sustained, still active long after DAT has left.</span>
             </div>
           </div>
         </div>
@@ -451,6 +459,20 @@ export default function CampaignHubPage() {
           color: rgba(8,28,58,0.52);
         }
 
+        /* ─── Shared hover treatment ────────────────────────────────── */
+        .chub-card-hoverable {
+          transition: box-shadow 180ms, transform 180ms, border-color 180ms;
+        }
+        .chub-card-hoverable:hover {
+          box-shadow: 0 10px 36px rgba(108,0,175,0.18), 0 0 0 2px rgba(108,0,175,0.18);
+          transform: translateY(-3px);
+          border-color: rgba(108,0,175,0.22);
+        }
+        .chub-card-hoverable--blue:hover {
+          box-shadow: 0 10px 36px rgba(36,147,169,0.22), 0 0 0 2px rgba(36,147,169,0.22);
+          border-color: rgba(36,147,169,0.35);
+        }
+
         /* ─── Combined live + evergreen layout ────────────────────── */
         .chub-combined-section {
           padding: 4rem 0;
@@ -461,20 +483,24 @@ export default function CampaignHubPage() {
           margin: 0 auto;
           padding: 0 2rem;
           display: grid;
-          grid-template-columns: 1fr 340px;
+          grid-template-columns: 1fr 360px;
           gap: 2.5rem;
-          align-items: start;
+          align-items: stretch;
         }
-        .chub-combined-primary { min-width: 0; }
-        .chub-combined-evergreen { min-width: 0; }
+        .chub-combined-primary { min-width: 0; display: flex; flex-direction: column; }
+        .chub-combined-evergreen { min-width: 0; display: flex; flex-direction: column; }
+        .chub-combined-primary .chub-active-card { flex: 1; }
         .chub-evergreen-stack {
           display: flex;
           flex-direction: column;
           gap: 1rem;
+          flex: 1;
         }
+        .chub-evergreen-stack .chub-evergreen-card { flex: 1; }
         @media (max-width: 900px) {
           .chub-combined-inner {
             grid-template-columns: 1fr;
+            align-items: start;
           }
           .chub-combined-evergreen {
             border-top: 1px solid rgba(108,0,175,0.1);
@@ -506,6 +532,7 @@ export default function CampaignHubPage() {
           display: flex;
           flex-direction: column;
         }
+        .chub-active-card .chub-card-img-wrap { position: relative; height: 240px; }
 
         /* Card image */
         .chub-card-img-wrap {
@@ -541,6 +568,15 @@ export default function CampaignHubPage() {
         .chub-badge--match {
           background: rgba(255,255,255,0.92);
           color: #6C00AF;
+        }
+        .chub-badge--annual {
+          background: rgba(36,147,169,0.92);
+          color: #fff;
+        }
+        .chub-badge--season {
+          background: rgba(255,255,255,0.18);
+          color: rgba(255,255,255,0.9);
+          border: 1px solid rgba(255,255,255,0.22);
         }
 
         /* Card body */
@@ -625,53 +661,34 @@ export default function CampaignHubPage() {
           .chub-evergreen-grid { grid-template-columns: 1fr; }
         }
 
-        /* Evergreen card — vertical, sidebar-friendly */
+        /* Evergreen card — vertical, sidebar-friendly — DAT-blue treatment */
         .chub-evergreen-card {
           display: flex;
           flex-direction: column;
           border-radius: 18px;
           overflow: hidden;
-          border: 1.5px solid rgba(108,0,175,0.18);
-          background: #241123;
-          box-shadow: 0 4px 20px rgba(36,17,35,0.18);
-          transition: box-shadow 180ms, transform 180ms;
-        }
-        .chub-evergreen-card:hover {
-          box-shadow: 0 8px 32px rgba(108,0,175,0.22);
-          transform: translateY(-2px);
+          border: 1.5px solid rgba(36,147,169,0.28);
+          background: #0B1D36;
+          box-shadow: 0 4px 20px rgba(11,29,54,0.22);
         }
         .chub-evergreen-img-wrap {
           position: relative;
           width: 100%;
-          height: 160px;
+          height: 180px;
           flex-shrink: 0;
-          background: rgba(108,0,175,0.15);
+          background: rgba(36,147,169,0.12);
         }
         .chub-evergreen-img-overlay {
           position: absolute;
           inset: 0;
-          background: linear-gradient(to bottom, rgba(36,17,35,0.1) 0%, rgba(36,17,35,0.55) 100%);
+          background: linear-gradient(to bottom, rgba(11,29,54,0.08) 0%, rgba(11,29,54,0.52) 100%);
         }
         .chub-evergreen-body {
-          padding: 1.25rem 1.4rem 1.6rem;
+          padding: 1.35rem 1.5rem 1.75rem;
           display: flex;
           flex-direction: column;
-          gap: 0.35rem;
-          flex: 1;
-        }
-        .chub-evergreen-top {
-          display: flex;
           gap: 0.4rem;
-          flex-wrap: wrap;
-          margin-bottom: 0.25rem;
-        }
-        .chub-badge--evergreen {
-          background: rgba(108,0,175,0.35);
-          color: rgba(242,242,242,0.85);
-        }
-        .chub-badge--monthly {
-          background: rgba(36,147,169,0.25);
-          color: rgba(242,242,242,0.75);
+          flex: 1;
         }
         .chub-evergreen-eyebrow {
           display: block;
@@ -680,25 +697,42 @@ export default function CampaignHubPage() {
           font-weight: 800;
           letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: #0BC5E0;
+          color: #2BC4DB;
+          margin-bottom: 0.1rem;
         }
         .chub-evergreen-title {
           margin: 0;
           font-family: var(--font-space-grotesk), sans-serif;
-          font-size: 1.15rem;
+          font-size: clamp(1.1rem, 2vw, 1.3rem);
           font-weight: 800;
-          color: #f2f2f2;
+          color: #f0f8ff;
           line-height: 1.2;
         }
         .chub-evergreen-tagline {
-          margin: 0 0 0.75rem;
+          margin: 0;
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.83rem;
+          font-size: 0.85rem;
           line-height: 1.6;
-          color: rgba(242,242,242,0.58);
+          color: rgba(220,240,255,0.65);
+        }
+        .chub-evergreen-framing {
+          margin: 0.35rem 0 0.5rem;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.77rem;
+          line-height: 1.6;
+          color: rgba(36,147,169,0.85);
+          border-left: 2px solid rgba(36,147,169,0.35);
+          padding-left: 0.75rem;
           flex: 1;
         }
         /* Evergreen-specific buttons */
+        .chub-evergreen-actions {
+          display: flex;
+          gap: 0.6rem;
+          flex-wrap: wrap;
+          margin-top: auto;
+          padding-top: 0.75rem;
+        }
         .chub-btn-evergreen {
           display: inline-flex;
           align-items: center;
@@ -713,7 +747,6 @@ export default function CampaignHubPage() {
           letter-spacing: 0.14em;
           text-transform: uppercase;
           text-decoration: none;
-          margin-bottom: 0.4rem;
           transition: transform 150ms, background 150ms;
         }
         .chub-btn-evergreen:hover { transform: translateY(-2px); background: #1e7d90; }
@@ -721,11 +754,11 @@ export default function CampaignHubPage() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          padding: 0.65rem 1.4rem;
+          padding: 0.65rem 1.1rem;
           border-radius: 12px;
           background: transparent;
-          color: rgba(242,242,242,0.6);
-          border: 1px solid rgba(242,242,242,0.2);
+          color: rgba(220,240,255,0.65);
+          border: 1px solid rgba(36,147,169,0.3);
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: 0.75rem;
           font-weight: 600;
@@ -734,7 +767,7 @@ export default function CampaignHubPage() {
           text-decoration: none;
           transition: border-color 150ms, color 150ms;
         }
-        .chub-btn-evergreen-ghost:hover { border-color: rgba(242,242,242,0.45); color: rgba(242,242,242,0.9); }
+        .chub-btn-evergreen-ghost:hover { border-color: rgba(36,147,169,0.6); color: rgba(220,240,255,0.9); }
 
         /* ─── No active campaigns ──────────────────────────────────── */
         .chub-empty-section { padding: 4rem 0 2rem; }
@@ -764,34 +797,47 @@ export default function CampaignHubPage() {
 
         /* ─── Trust layer ──────────────────────────────────────────── */
         .chub-trust-section {
-          padding: 3.5rem 0;
+          padding: 4.5rem 0;
           border-top: 1px solid rgba(8,28,58,0.06);
+          background: #fff;
+        }
+        .chub-trust-heading {
+          margin: 0 0 2.5rem;
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: clamp(1.6rem, 3vw, 2.4rem);
+          font-weight: 800;
+          color: #0f1f38;
+          line-height: 1.15;
         }
         .chub-trust-row {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 2rem;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 2.5rem;
         }
         .chub-trust-item {
           display: flex;
           flex-direction: column;
-          gap: 0.35rem;
+          gap: 0.4rem;
         }
-        .chub-trust-icon {
-          font-size: 1.4rem;
+        .chub-trust-stat {
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: clamp(2.2rem, 4vw, 3rem);
+          font-weight: 800;
+          color: #0BC5E0;
           line-height: 1;
-          margin-bottom: 0.1rem;
+          letter-spacing: -0.02em;
         }
         .chub-trust-label {
           font-family: var(--font-space-grotesk), sans-serif;
-          font-size: 0.82rem;
+          font-size: 0.88rem;
           font-weight: 700;
           color: #0f1f38;
+          margin-top: 0.1rem;
         }
         .chub-trust-desc {
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.8rem;
-          line-height: 1.6;
+          font-size: 0.82rem;
+          line-height: 1.65;
           color: rgba(8,28,58,0.58);
         }
 
