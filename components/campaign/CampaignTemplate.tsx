@@ -494,6 +494,11 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                 );
               })}
             </div>
+            {isActive && (
+              <div className="cmp-stretch-footer-cta">
+                <a href="#give" className="cmp-btn-yellow">Help unlock the next goal →</a>
+              </div>
+            )}
           </div>
         </section>
       )}
@@ -612,7 +617,9 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                     </span>
                     <span className="cmp-supporter-sep">·</span>
                     <span className="cmp-supporter-date">
-                      {formatShortDate(s.createdAt.toString())}
+                      {s.createdAt instanceof Date
+                        ? s.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                        : formatShortDate(s.createdAt as string)}
                     </span>
                   </div>
                 </div>
@@ -620,7 +627,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
             </div>
             {isActive && (
               <div className="cmp-supporters-cta">
-                <a href="#give" className="cmp-text-link">Join them — give now →</a>
+                <a href="#give" className="cmp-btn-yellow">Join them — give now</a>
               </div>
             )}
           </div>
@@ -1070,7 +1077,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: clamp(1.2rem, 3vw, 1.8rem);
           font-weight: 800;
-          color: #fff;
+          color: ${YELLOW};
         }
         .cmp-band-goal {
           font-family: var(--font-dm-sans), sans-serif;
@@ -1099,10 +1106,10 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           color: rgba(255,255,255,0.6);
         }
         .cmp-band-stat--match .cmp-band-stat-val {
-          color: ${YELLOW};
+          color: #F23359;
         }
         .cmp-band-stat--match .cmp-band-stat-lbl {
-          color: rgba(255,204,0,0.75);
+          color: rgba(242,51,89,0.75);
         }
 
         /* ─── Shared primitives ────────────────────────────────────── */
@@ -1293,7 +1300,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         .cmp-impact-give:hover { opacity: 1; }
 
         /* ─── Stretch goals ────────────────────────────────────────── */
-        .cmp-stretch-section { background: rgba(36,147,169,0.05); padding: 5rem 2rem; border-top: 1px solid rgba(36,147,169,0.12); }
+        .cmp-stretch-section { background: rgba(36,147,169,0.05); padding: 5rem 2rem 9rem; border-top: 1px solid rgba(36,147,169,0.12); }
         .cmp-stretch-inner { max-width: 1100px; margin: 0 auto; }
         .cmp-stretch-grid {
           display: grid;
@@ -1388,6 +1395,14 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           transition: width 1s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
+        .cmp-stretch-footer-cta {
+          display: flex;
+          justify-content: center;
+          margin-top: 2.5rem;
+          padding-top: 2rem;
+          border-top: 1px solid rgba(36,147,169,0.12);
+        }
+
         /* ─── Stamp divider ───────────────────────────────────────── */
         .cmp-quotes-section { background: ${DEEP}; padding: 5rem 2rem; position: relative; }
         .cmp-stamp-divider {
@@ -1405,10 +1420,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           filter: drop-shadow(0 3px 16px rgba(0,0,0,0.45));
           opacity: 0.92;
         }
-        @media (max-width: 640px) {
-          .cmp-stamp-img { width: 110px; height: 110px; }
-          .cmp-stamp-divider { top: -55px; }
-        }
+        /* stamp stays 180×180 on all screen sizes */
 
         /* ─── Testimonials ─────────────────────────────────────────── */
         .cmp-quotes-inner { max-width: 1100px; margin: 0 auto; }
@@ -1498,9 +1510,9 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           margin: 0;
           font-family: var(--font-dm-sans), sans-serif;
           font-size: 0.68rem;
-          color: rgba(242,242,242,0.45);
+          color: rgba(242,242,242,0.65);
           font-style: italic;
-          background: rgba(24,6,32,0.75);
+          background: #241123;
           border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
@@ -1888,6 +1900,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           padding: 5rem 2rem;
           position: relative;
           overflow: hidden;
+          box-shadow: 0 8px 40px rgba(36,17,35,0.55);
         }
         .cmp-clubs-moment-section::before {
           content: '';
@@ -1920,7 +1933,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
         .cmp-clubs-moment-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
           gap: 1.25rem;
           margin-bottom: 2.5rem;
         }
@@ -1941,7 +1954,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
         .cmp-clubs-moment-card-img {
           position: relative;
-          height: 180px;
+          height: 240px;
           background: rgba(108,0,175,0.18);
           overflow: hidden;
         }
