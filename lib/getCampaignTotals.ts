@@ -54,23 +54,12 @@ export async function getCampaignTotals(campaignId: string): Promise<CampaignTot
       }),
     ]);
 
-    // Also sum active recurring gifts (monthly donors count too)
-    const recurringAggregate = await prisma.recurringGift.aggregate({
-      where: {
-        contextType: ContextType.campaign,
-        contextId: campaignId,
-        status: "active",
-      },
-      _sum: { amountMinor: true },
-      _count: { id: true },
-    });
-
-    const raisedMinor =
-      (aggregate._sum.amountMinor ?? 0) +
-      (recurringAggregate._sum.amountMinor ?? 0);
-
-    const donorCount =
-      (aggregate._count.id ?? 0) + (recurringAggregate._count.id ?? 0);
+    // DonationPayment captures every actual charge (kind=one_time AND kind=monthly via
+    // invoice.payment_succeeded). Do NOT add RecurringGift.amountMinor on top — that
+    // would double-count every monthly donor since their charges are already in
+    // DonationPayment.
+    const raisedMinor = aggregate._sum.amountMinor ?? 0;
+    const donorCount = aggregate._count.id ?? 0;
 
     return {
       raisedMinor,

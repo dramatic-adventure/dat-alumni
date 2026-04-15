@@ -3178,9 +3178,6 @@ const ctaDisabled =
           <div className="donateAlert">
             <div className="donateAlertTitle font-sans">Checkout couldn’t start</div>
             <div className="donateAlertBody font-sans">{error}</div>
-            <div className="donateAlertHint font-sans">
-              (Expected until STRIPE_SECRET_KEY + webhook are set.)
-            </div>
           </div>
         ) : null}
 
