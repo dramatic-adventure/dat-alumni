@@ -6,10 +6,8 @@
  * Primary link: https://dramaticadventure.com/passage/slovakia
  * Contextual link: https://dramaticadventure.com/passage
  *
- * DEMO STATE: demoTotals are active while no real donations exist.
- *   - Shows match banner, supporter wall, multiple updates, stretch-goal states.
- *   - Remove demoTotals (or set to zero) to return to live-only data.
- *   - Set matchActive: false to hide the match banner before a real match is in place.
+ * LIVE: matchActive is false until a real match underwriter is confirmed.
+ * Seed the Neon DB with a real donation before publishing to avoid a zero start.
  */
 
 import type { FundraisingCampaign } from "@/lib/fundraisingCampaigns";
@@ -38,8 +36,7 @@ export const passageSlovakia2026: FundraisingCampaign = {
 
   // ── Match ─────────────────────────────────────────────────────────
   // Set to true and update matchDescription when a real match is confirmed.
-  // Currently active for demo visibility.
-  matchActive: true,
+  matchActive: false,
   matchDescription: "All gifts matched 1:1 through May 31 — double your impact.",
   matchCap: 5000,
   matchUnderwriterEmail: "hello@dramaticadventure.com",
@@ -51,7 +48,7 @@ export const passageSlovakia2026: FundraisingCampaign = {
 
   // ── Share ─────────────────────────────────────────────────────────
   shareText:
-    "DAT artists are heading to Slovakia to make theatre with the community there — and every gift through May 31 is being matched. Help send them:",
+    "DAT artists are heading to Slovakia to make theatre with the community there. Help send them:",
 
   // ── Giving ────────────────────────────────────────────────────────
   giveAmounts: [50, 100, 250, 500, 1000],        // fallback
@@ -218,14 +215,6 @@ export const passageSlovakia2026: FundraisingCampaign = {
   // ── Campaign updates ──────────────────────────────────────────────
   updates: [
     {
-      id: "u-passage-3",
-      date: "2026-04-13",
-      title: "36% Funded in the First Two Weeks",
-      body: "We've crossed $4,300 raised — and with the matching gift still active through May 31, every dollar still counts twice. Thank you to every donor who has given so far. We're naming the artists in the next update.",
-      authorName: "Jesse Baxter",
-      authorRole: "Artistic Director",
-    },
-    {
       id: "u-passage-2",
       date: "2026-04-07",
       title: "First Artist Confirmed for Slovakia",
@@ -250,24 +239,6 @@ export const passageSlovakia2026: FundraisingCampaign = {
   archiveHeadline: "PASSAGE: Slovakia 2026 is complete.",
   archiveSummary:
     "Thank you to every donor who made this possible. Artists traveled to Slovakia, made theatre with the community, and brought something lasting home. The work continues.",
-
-  // ── Demo totals ───────────────────────────────────────────────────
-  // Active while no real donations exist. Remove or zero out after first
-  // real donation lands to return to live-only display.
-  demoTotals: {
-    raisedMinor: 437500, // $4,375
-    donorCount: 23,
-    recentSupporters: [
-      { name: "DAT Alumni Fund", amountMinor: 100000, currency: "usd", createdAt: new Date("2026-04-10") },
-      { name: "The Martinez Family", amountMinor: 50000, currency: "usd", createdAt: new Date("2026-04-12") },
-      { name: "Sarah K.", amountMinor: 25000, currency: "usd", createdAt: new Date("2026-04-13") },
-      { name: "James & Lena", amountMinor: 15000, currency: "usd", createdAt: new Date("2026-04-11") },
-      { name: "Rachel T.", amountMinor: 7500, currency: "usd", createdAt: new Date("2026-04-11") },
-      { name: "Anonymous", amountMinor: 10000, currency: "usd", createdAt: new Date("2026-04-12") },
-      { name: "Michael B.", amountMinor: 5000, currency: "usd", createdAt: new Date("2026-04-09") },
-      { name: "Dr. A. Reyes", amountMinor: 25000, currency: "usd", createdAt: new Date("2026-04-08") },
-    ],
-  },
 
   // ── Analytics ─────────────────────────────────────────────────────
   utmCampaign: "passage-slovakia-2026",

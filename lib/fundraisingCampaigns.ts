@@ -137,6 +137,7 @@ export type FundraisingCampaign = {
   giveAmounts: number[];      // preset amounts displayed as buttons
   defaultAmount?: number;     // pre-selected amount
   allowMonthly?: boolean;     // default false — campaign donations typically one-time
+  allowPromotionCodes?: boolean; // default false — set true for ticket/merchandise contexts
 
   // ── Stretch goals ──────────────────────────────────────────────────
   stretchGoals?: CampaignStretchGoal[];

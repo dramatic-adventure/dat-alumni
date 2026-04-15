@@ -1,6 +1,7 @@
 // app/api/stripe/checkout/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { getCampaign } from "@/lib/fundraisingCampaigns";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -279,6 +280,7 @@ export async function POST(req: Request) {
 
   // ✅ Campaign + donor identity (optional) — accept campaign aliases
   const campaignSlug = getCampaignSlugFromBody(body) ?? DEFAULT_CAMPAIGN;
+  const campaignConfig = getCampaign(campaignSlug);
 
   const donorKey =
     typeof body?.donorKey === "string" && body.donorKey ? body.donorKey : null;
@@ -378,7 +380,7 @@ export async function POST(req: Request) {
   const common: Stripe.Checkout.SessionCreateParams = {
     client_reference_id: donorKey ?? undefined,
     customer_email: email ?? undefined,
-    allow_promotion_codes: true,
+    allow_promotion_codes: campaignConfig?.allowPromotionCodes ?? false,
 
     billing_address_collection: "required",
 
