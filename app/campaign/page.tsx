@@ -429,11 +429,11 @@ export default function CampaignHubPage() {
         .chub-hero-panel {
           max-width: 600px;
           padding: 1.25rem 1.5rem 1.35rem;
-          background: rgba(36,17,35,0.45);
-          backdrop-filter: blur(14px);
-          -webkit-backdrop-filter: blur(14px);
-          border-radius: 10px;
-          border: 1px solid rgba(255,255,255,0.06);
+          background: transparent;
+          backdrop-filter: none;
+          -webkit-backdrop-filter: none;
+          border-radius: 0;
+          border: none;
         }
         .chub-hero-eyebrow {
           display: block;
@@ -444,6 +444,7 @@ export default function CampaignHubPage() {
           text-transform: uppercase;
           color: rgba(255,204,0,0.92);
           margin-bottom: 0.85rem;
+          text-shadow: 0 1px 8px rgba(0,0,0,0.5);
         }
         .chub-hero-h1 {
           margin: 0;
@@ -453,16 +454,17 @@ export default function CampaignHubPage() {
           line-height: 0.93;
           color: #f2f2f2;
           letter-spacing: -0.01em;
-          text-shadow: 0 3px 24px rgba(0,0,0,0.5);
+          text-shadow: 0 2px 12px rgba(0,0,0,0.55), 0 4px 32px rgba(0,0,0,0.35);
         }
         .chub-hero-tagline {
           margin: 1.1rem 0 0;
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: clamp(0.95rem, 1.7vw, 1.1rem);
           font-weight: 400;
-          color: rgba(242,242,242,0.72);
+          color: rgba(242,242,242,0.82);
           max-width: 480px;
           line-height: 1.6;
+          text-shadow: 0 1px 10px rgba(0,0,0,0.45);
         }
 
         /* ─── Shared inner ──────────────────────────────────────────── */
@@ -515,6 +517,7 @@ export default function CampaignHubPage() {
           background: #fafbfc;
           border-top: 1px solid rgba(8,28,58,0.06);
           border-bottom: 1px solid rgba(8,28,58,0.06);
+          box-shadow: 0 12px 36px -4px rgba(8,28,58,0.14);
         }
         .chub-combined-inner {
           max-width: 1140px;
@@ -528,6 +531,10 @@ export default function CampaignHubPage() {
         .chub-combined-primary { min-width: 0; display: flex; flex-direction: column; }
         .chub-combined-evergreen { min-width: 0; display: flex; flex-direction: column; }
         .chub-combined-primary .chub-active-card { flex: 1; }
+        /* Active Now heading — DAT pink */
+        .chub-combined-primary .chub-section-heading { color: #FF4470; }
+        /* Annual Support heading — DAT yellow */
+        .chub-combined-evergreen .chub-section-heading { color: #FFCC00; }
         .chub-evergreen-stack {
           display: flex;
           flex-direction: column;
@@ -535,6 +542,12 @@ export default function CampaignHubPage() {
           flex: 1;
         }
         .chub-evergreen-stack .chub-evergreen-card { flex: 1; }
+        @media (min-width: 901px) {
+          .chub-combined-evergreen {
+            border-left: 1px solid rgba(8,28,58,0.09);
+            padding-left: 2.5rem;
+          }
+        }
         @media (max-width: 900px) {
           .chub-combined-inner {
             grid-template-columns: 1fr;

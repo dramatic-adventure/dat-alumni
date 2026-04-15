@@ -1358,7 +1358,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── Story + Give ─────────────────────────────────────────── */
-        .cmp-story-section { padding: 5rem 2rem; background: #f0f8fa; box-shadow: 0 8px 30px rgba(8,28,58,0.1); }
+        .cmp-story-section { padding: 5rem 2rem; background: #f0f8fa; box-shadow: 0 14px 40px -4px rgba(8,28,58,0.18); }
         .cmp-story-inner {
           max-width: 1200px;
           margin: 0 auto;
@@ -1464,9 +1464,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
 
         /* ─── Gift impact ──────────────────────────────────────────── */
         .cmp-impact-section {
-          background: #fff;
-          border-top: 1px solid rgba(8,28,58,0.07);
-          border-bottom: 1px solid rgba(8,28,58,0.07);
+          background: transparent;
           padding: 5rem 2rem;
         }
         .cmp-impact-inner { max-width: 1100px; margin: 0 auto; }
@@ -1529,7 +1527,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── Stretch goals ────────────────────────────────────────── */
-        .cmp-stretch-section { background: #fff; padding: 5rem 2rem 9rem; border-top: 1px solid rgba(8,28,58,0.07); }
+        .cmp-stretch-section { background: transparent; padding: 5rem 2rem 9rem; }
         .cmp-stretch-inner { max-width: 1100px; margin: 0 auto; }
         .cmp-stretch-grid {
           display: grid;
@@ -1765,7 +1763,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── What's happening (updates + events) ─────────────────── */
-        .cmp-updates-section { padding: 5rem 2rem; background: #f0f8fa; border-top: 1px solid rgba(36,147,169,0.14); border-bottom: 1px solid rgba(36,147,169,0.14); }
+        .cmp-updates-section { padding: 5rem 2rem; background: #f0f8fa; border-top: 1px solid rgba(36,147,169,0.14); border-bottom: 1px solid rgba(36,147,169,0.14); box-shadow: 0 12px 36px -4px rgba(8,28,58,0.14); }
         .cmp-updates-inner { max-width: 780px; margin: 0 auto; }
         .cmp-updates-feed { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
         .cmp-sub-label {

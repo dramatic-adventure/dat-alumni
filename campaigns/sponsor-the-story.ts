@@ -73,12 +73,11 @@ export const sponsorTheStory: FundraisingCampaign = {
 
   // ── Gift impact ────────────────────────────────────────────────────
   giftImpact: [
-    { amount: 10, description: "Covers supplies for one drama club session in a partner community", icon: "✏️" },
-    { amount: 25, description: "Supports one artist's preparation session for a community residency", icon: "🎭" },
     { amount: 50, description: "Funds one day of ongoing drama club work", icon: "🎨" },
     { amount: 100, description: "Covers materials and space for a full community workshop", icon: "🌍" },
     { amount: 250, description: "Sustains a community drama program for one month", icon: "⭐" },
     { amount: 500, description: "Enables DAT to keep a long-term residency partnership active", icon: "🤝" },
+    { amount: 1000, description: "Funds a full residency phase — travel, materials, and partnership support", icon: "🎭" },
   ],
 
   monthlyGiftImpact: [
