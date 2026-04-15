@@ -78,6 +78,13 @@ export const passageSlovakia2026: FundraisingCampaign = {
     { amount: 1000, description: "Fully funds one artist's PASSAGE residency, start to finish", icon: "⭐" },
   ],
 
+  monthlyGiftImpact: [
+    { amount: 25, description: "Sustains ongoing comms and prep between DAT and Slovak partners each month", icon: "🤝" },
+    { amount: 50, description: "Funds one ongoing community drama partnership check-in in Slovakia", icon: "🎭" },
+    { amount: 100, description: "Covers monthly coordination and remote mentorship for Slovak drama communities", icon: "☀️" },
+    { amount: 250, description: "Keeps DAT's Slovakia presence active — materials, logistics, and local support", icon: "⭐" },
+  ],
+
   // ── Stretch goals ─────────────────────────────────────────────────
   stretchGoals: [
     {

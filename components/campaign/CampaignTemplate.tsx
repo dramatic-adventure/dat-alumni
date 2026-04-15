@@ -170,7 +170,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
   const hasUpdates = (campaign.updates?.length ?? 0) > 0;
   const hasSupporters = totals.recentSupporters.length > 0;
   const hasStretchGoals = (campaign.stretchGoals?.length ?? 0) > 0;
-  const hasGiftImpact = (campaign.giftImpact?.length ?? 0) > 0;
+  const hasGiftImpact = (campaign.giftImpact?.length ?? 0) > 0 || (campaign.monthlyGiftImpact?.length ?? 0) > 0;
   const hasAlumni = (campaign.alumni?.length ?? 0) > 0;
   const hasDramaClubs = (campaign.dramaClubs?.length ?? 0) > 0;
   const hasEvents = (campaign.events?.length ?? 0) > 0;
@@ -471,17 +471,21 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                 : "Every gift moves this work forward."}
             </h2>
             <div className="cmp-impact-grid">
-              {campaign.giftImpact!.map((item, i) => (
+              {(frequency === "monthly" && (campaign.monthlyGiftImpact?.length ?? 0) > 0
+                ? campaign.monthlyGiftImpact!
+                : campaign.giftImpact ?? []
+              ).map((item, i) => (
                 <div key={i} className="cmp-impact-card">
                   {item.icon && (
                     <span className="cmp-impact-icon">{item.icon}</span>
                   )}
                   <span className="cmp-impact-amount">
                     {formatCurrency(item.amount, currency)}
+                    {frequency === "monthly" && <span className="cmp-impact-freq">/mo</span>}
                   </span>
                   <span className="cmp-impact-desc">{item.description}</span>
                   {isActive && (
-                    <a href="#give" className="cmp-impact-give">Give {formatCurrency(item.amount, currency)} →</a>
+                    <a href="#give" className="cmp-impact-give">Give {formatCurrency(item.amount, currency)}{frequency === "monthly" ? "/mo" : ""} →</a>
                   )}
                 </div>
               ))}
@@ -1460,9 +1464,9 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
 
         /* ─── Gift impact ──────────────────────────────────────────── */
         .cmp-impact-section {
-          background: rgba(36,147,169,0.07);
-          border-top: 1px solid rgba(36,147,169,0.15);
-          border-bottom: 1px solid rgba(36,147,169,0.12);
+          background: #fff;
+          border-top: 1px solid rgba(8,28,58,0.07);
+          border-bottom: 1px solid rgba(8,28,58,0.07);
           padding: 5rem 2rem;
         }
         .cmp-impact-inner { max-width: 1100px; margin: 0 auto; }
@@ -1517,9 +1521,15 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           align-self: flex-start;
         }
         .cmp-impact-give:hover { opacity: 1; }
+        .cmp-impact-freq {
+          font-size: 0.65em;
+          font-weight: 600;
+          opacity: 0.6;
+          margin-left: 0.1em;
+        }
 
         /* ─── Stretch goals ────────────────────────────────────────── */
-        .cmp-stretch-section { background: rgba(36,147,169,0.05); padding: 5rem 2rem 9rem; border-top: 1px solid rgba(36,147,169,0.12); }
+        .cmp-stretch-section { background: #fff; padding: 5rem 2rem 9rem; border-top: 1px solid rgba(8,28,58,0.07); }
         .cmp-stretch-inner { max-width: 1100px; margin: 0 auto; }
         .cmp-stretch-grid {
           display: grid;
@@ -1755,7 +1765,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── What's happening (updates + events) ─────────────────── */
-        .cmp-updates-section { padding: 5rem 2rem; background: rgba(36,17,35,0.04); border-top: 1px solid rgba(36,17,35,0.07); border-bottom: 1px solid rgba(36,17,35,0.07); }
+        .cmp-updates-section { padding: 5rem 2rem; background: #f0f8fa; border-top: 1px solid rgba(36,147,169,0.14); border-bottom: 1px solid rgba(36,147,169,0.14); }
         .cmp-updates-inner { max-width: 780px; margin: 0 auto; }
         .cmp-updates-feed { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
         .cmp-sub-label {

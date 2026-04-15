@@ -164,8 +164,10 @@ export type FundraisingCampaign = {
   archiveImage?: string;
 
   // ── Gift impact ────────────────────────────────────────────────────
-  /** "Where your gift goes" impact table — hidden cleanly when absent */
+  /** "Where your gift goes" impact table — shown when frequency = one_time (or always if monthlyGiftImpact absent) */
   giftImpact?: CampaignGiftImpact[];
+  /** Monthly-frequency impact table — shown instead of giftImpact when frequency = monthly */
+  monthlyGiftImpact?: CampaignGiftImpact[];
 
   // ── Demo totals ─────────────────────────────────────────────────────
   /**

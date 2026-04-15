@@ -81,6 +81,14 @@ export const sponsorTheStory: FundraisingCampaign = {
     { amount: 500, description: "Enables DAT to keep a long-term residency partnership active", icon: "🤝" },
   ],
 
+  monthlyGiftImpact: [
+    { amount: 10, description: "Keeps drama club supplies flowing in a partner community every month", icon: "✏️" },
+    { amount: 25, description: "Sustains one artist's ongoing community residency preparation", icon: "🎭" },
+    { amount: 50, description: "Keeps one active drama club running month after month", icon: "🎨" },
+    { amount: 100, description: "Funds monthly materials and space for an ongoing community workshop", icon: "🌍" },
+    { amount: 250, description: "Sustains a full community drama program every single month", icon: "⭐" },
+  ],
+
   // ── Links ─────────────────────────────────────────────────────────
   learnMoreUrl: "https://dramaticadventure.com",
   ambassadorUrl: "https://dramaticadventure.com",

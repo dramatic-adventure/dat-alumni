@@ -215,8 +215,8 @@ export default function CampaignHubPage() {
             {/* Left: live campaign(s) */}
             <div className="chub-combined-primary">
               <div className="chub-section-head">
-                <span className="chub-section-eyebrow">Active Now</span>
-                <p className="chub-section-note">
+                <h2 className="chub-section-heading">Active Now</h2>
+                <p className="chub-section-desc">
                   {active.length === 1
                     ? "One campaign is currently accepting gifts."
                     : `${active.length} campaigns are currently accepting gifts.`}
@@ -232,8 +232,8 @@ export default function CampaignHubPage() {
             {/* Right: evergreen / annual fund */}
             <div className="chub-combined-evergreen">
               <div className="chub-section-head">
-                <span className="chub-section-eyebrow">Annual Support</span>
-                <p className="chub-section-note">Always open — sustain the work year-round.</p>
+                <h2 className="chub-section-heading">Annual Support</h2>
+                <p className="chub-section-desc">Always open — sustain the work year-round.</p>
               </div>
               <div className="chub-evergreen-stack">
                 {evergreen.map((c) => (
@@ -250,8 +250,8 @@ export default function CampaignHubPage() {
         <section className="chub-active-section">
           <div className="chub-inner">
             <div className="chub-section-head">
-              <span className="chub-section-eyebrow">Active Now</span>
-              <p className="chub-section-note">
+              <h2 className="chub-section-heading">Active Now</h2>
+              <p className="chub-section-desc">
                 {active.length === 1
                   ? "One campaign is currently accepting gifts."
                   : `${active.length} campaigns are currently accepting gifts.`}
@@ -271,8 +271,8 @@ export default function CampaignHubPage() {
         <section className="chub-evergreen-section">
           <div className="chub-inner">
             <div className="chub-section-head">
-              <span className="chub-section-eyebrow">Annual Support</span>
-              <p className="chub-section-note">Always open — give monthly or once, any time of year.</p>
+              <h2 className="chub-section-heading">Annual Support</h2>
+              <p className="chub-section-desc">Always open — give monthly or once, any time of year.</p>
             </div>
             <div className="chub-evergreen-grid">
               {evergreen.map((c) => (
@@ -301,36 +301,42 @@ export default function CampaignHubPage() {
       )}
 
       {/* ── Why it Matters ───────────────────────────────────────── */}
-      <section className="chub-why-section">
-        <div className="chub-inner chub-why-grid">
-          <div className="chub-why-heading-col">
-            <span className="chub-section-eyebrow" style={{ color: "#0BC5E0" }}>Why It Matters</span>
-            <h2 className="chub-why-title">
-              Sustained investment.<br />Lasting creative<br />infrastructure.
-            </h2>
+      <section className="fest-about-band">
+        <div className="chub-inner fest-about-grid">
+          <div>
+            <div className="fest-about-heading-box">
+              <p className="fest-about-eyebrow" style={{ color: "#0BC5E0" }}>
+                Why It Matters
+              </p>
+              <h2 className="fest-about-title">
+                Sustained Investment.<br />Lasting Creative<br />Infrastructure.
+              </h2>
+            </div>
           </div>
-          <div className="chub-why-content-col">
-            <p className="chub-why-body">
+
+          <div className="fest-about-content-box">
+            <p className="fest-about-body">
               Dramatic Adventure Theatre invests in communities with little to no access to arts programming through workshops, performances, mentorship, and long-term creative partnership.
             </p>
-            <p className="chub-why-body">
+            <p className="fest-about-body">
               This is not a one-time visit. Over time, DAT helps build the artistic relationships, local leadership, and community-rooted programs that allow theatre to keep growing after a residency ends.
             </p>
-            <p className="chub-why-body">
+            <p className="fest-about-body">
               Drama Clubs are one example: locally run creative homes where young people keep making work, building confidence, and shaping the stories of their own communities.
             </p>
-            <div className="chub-why-stats">
-              <div className="chub-why-stat">
-                <span className="chub-why-stat-num">{YEARS_OF_WORK}</span>
-                <span className="chub-why-stat-label">Years of work</span>
+
+            <div className="fest-about-stats">
+              <div className="fest-stat">
+                <span className="fest-stat-num fest-stat-num--hub">{YEARS_OF_WORK}</span>
+                <span className="fest-stat-label fest-stat-label--hub">Years of work</span>
               </div>
-              <div className="chub-why-stat">
-                <span className="chub-why-stat-num">{COUNTRY_COUNT}+</span>
-                <span className="chub-why-stat-label">Countries</span>
+              <div className="fest-stat">
+                <span className="fest-stat-num fest-stat-num--hub">{COUNTRY_COUNT}+</span>
+                <span className="fest-stat-label fest-stat-label--hub">Countries</span>
               </div>
-              <div className="chub-why-stat">
-                <span className="chub-why-stat-num">{CLUB_COUNT}+</span>
-                <span className="chub-why-stat-label">Drama clubs</span>
+              <div className="fest-stat">
+                <span className="fest-stat-num fest-stat-num--hub">{CLUB_COUNT}+</span>
+                <span className="fest-stat-label fest-stat-label--hub">Drama clubs</span>
               </div>
             </div>
           </div>
@@ -399,10 +405,9 @@ export default function CampaignHubPage() {
           inset: 0;
           background: linear-gradient(
             to top,
-            rgba(36,17,35,0.88) 0%,
-            rgba(36,17,35,0.52) 25%,
-            rgba(36,17,35,0.12) 60%,
-            transparent 85%
+            rgba(36,17,35,0.48) 0%,
+            rgba(36,17,35,0.14) 22%,
+            transparent 52%
           );
           z-index: 1;
         }
@@ -423,15 +428,21 @@ export default function CampaignHubPage() {
         }
         .chub-hero-panel {
           max-width: 600px;
+          padding: 1.25rem 1.5rem 1.35rem;
+          background: rgba(36,17,35,0.45);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+          border-radius: 10px;
+          border: 1px solid rgba(255,255,255,0.06);
         }
         .chub-hero-eyebrow {
           display: block;
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.68rem;
-          font-weight: 700;
+          font-size: 0.72rem;
+          font-weight: 800;
           letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: rgba(255,204,0,0.75);
+          color: rgba(255,204,0,0.92);
           margin-bottom: 0.85rem;
         }
         .chub-hero-h1 {
@@ -462,24 +473,25 @@ export default function CampaignHubPage() {
         }
 
         /* ─── Section heads ────────────────────────────────────────── */
-        .chub-section-eyebrow {
-          display: block;
-          font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.68rem;
-          font-weight: 800;
-          letter-spacing: 0.22em;
-          text-transform: uppercase;
-          color: #0BC5E0;
-          margin-bottom: 0.4rem;
-        }
         .chub-section-head {
           margin-bottom: 2rem;
         }
-        .chub-section-note {
-          margin: 0.3rem 0 0;
+        .chub-section-heading {
+          margin: 0 0 0.45rem;
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: clamp(1.5rem, 3vw, 2rem);
+          font-weight: 800;
+          color: #0f1f38;
+          line-height: 1.12;
+          letter-spacing: -0.01em;
+        }
+        .chub-section-desc {
+          margin: 0;
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.85rem;
-          color: rgba(8,28,58,0.52);
+          font-size: clamp(0.9rem, 1.5vw, 1rem);
+          line-height: 1.65;
+          color: rgba(8,28,58,0.6);
+          max-width: 420px;
         }
 
         /* ─── Shared hover treatment ────────────────────────────────── */
@@ -487,20 +499,22 @@ export default function CampaignHubPage() {
           transition: box-shadow 200ms, transform 200ms, border-color 200ms;
         }
         .chub-card-hoverable:hover {
-          box-shadow: 0 12px 48px rgba(108,0,175,0.38), 0 0 0 2.5px rgba(108,0,175,0.55), 0 0 28px rgba(108,0,175,0.22);
-          transform: translateY(-4px);
-          border-color: rgba(108,0,175,0.58);
+          box-shadow: 0 6px 24px rgba(108,0,175,0.14), 0 0 0 1.5px rgba(108,0,175,0.26);
+          transform: translateY(-2px);
+          border-color: rgba(108,0,175,0.28);
         }
         .chub-card-hoverable--blue:hover {
-          box-shadow: 0 12px 48px rgba(36,147,169,0.42), 0 0 0 2.5px rgba(36,147,169,0.58), 0 0 28px rgba(36,147,169,0.22);
-          border-color: rgba(36,147,169,0.62);
-          transform: translateY(-4px);
+          box-shadow: 0 6px 24px rgba(36,147,169,0.16), 0 0 0 1.5px rgba(36,147,169,0.28);
+          border-color: rgba(36,147,169,0.32);
+          transform: translateY(-2px);
         }
 
         /* ─── Combined live + evergreen layout ────────────────────── */
         .chub-combined-section {
           padding: 4rem 0;
-          background: transparent;
+          background: #fafbfc;
+          border-top: 1px solid rgba(8,28,58,0.06);
+          border-bottom: 1px solid rgba(8,28,58,0.06);
         }
         .chub-combined-inner {
           max-width: 1140px;
@@ -535,7 +549,9 @@ export default function CampaignHubPage() {
         /* ─── Active campaigns (standalone section, no evergreen) ─── */
         .chub-active-section {
           padding: 4rem 0;
-          background: transparent;
+          background: #fafbfc;
+          border-top: 1px solid rgba(8,28,58,0.06);
+          border-bottom: 1px solid rgba(8,28,58,0.06);
         }
         .chub-active-grid {
           display: grid;
@@ -672,7 +688,9 @@ export default function CampaignHubPage() {
         /* ─── Evergreen campaigns (standalone section) ────────────── */
         .chub-evergreen-section {
           padding: 3.5rem 0 4rem;
-          background: transparent;
+          background: #fafbfc;
+          border-top: 1px solid rgba(8,28,58,0.06);
+          border-bottom: 1px solid rgba(8,28,58,0.06);
         }
         .chub-evergreen-grid {
           display: grid;
@@ -704,7 +722,7 @@ export default function CampaignHubPage() {
         .chub-evergreen-img-overlay {
           position: absolute;
           inset: 0;
-          background: linear-gradient(to bottom, rgba(11,29,54,0.08) 0%, rgba(11,29,54,0.52) 100%);
+          background: linear-gradient(to bottom, transparent 50%, rgba(11,29,54,0.2) 100%);
         }
         .chub-evergreen-body {
           padding: 1.35rem 1.5rem 1.75rem;
@@ -818,69 +836,84 @@ export default function CampaignHubPage() {
           color: rgba(8,28,58,0.62);
         }
 
-        /* ─── Why it Matters ──────────────────────────────────────── */
-        .chub-why-section {
-          padding: clamp(4rem, 8vw, 7rem) 0;
+        /* ─── Why It Matters ──────────────────────────────────────── */
+        .fest-about-band {
           background: transparent;
+          padding: clamp(3.5rem, 7vw, 6rem) 0;
         }
-        .chub-why-grid {
+        .fest-about-grid {
           display: grid;
           grid-template-columns: 1fr 1.6fr;
           gap: clamp(2.5rem, 6vw, 5rem);
           align-items: start;
         }
         @media (max-width: 700px) {
-          .chub-why-grid { grid-template-columns: 1fr; }
+          .fest-about-grid { grid-template-columns: 1fr; }
         }
-        .chub-why-heading-col {
-          display: flex;
+        .fest-about-heading-box {
+          display: inline-flex;
           flex-direction: column;
-          gap: 0.5rem;
+          gap: 0.2rem;
+          background: rgba(36,17,35,0.28);
+          border-left: 4px solid #2493A9;
+          padding: 0.75rem 1.5rem 0.75rem 1rem;
+          border-radius: 0 10px 10px 0;
         }
-        .chub-why-title {
-          margin: 0.3rem 0 0;
-          font-family: var(--font-anton), sans-serif;
-          font-size: clamp(2.2rem, 5vw, 3.8rem);
-          font-weight: 400;
+        .fest-about-eyebrow {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.28em;
+          text-transform: uppercase;
+          margin: 0 0 0.4rem;
+        }
+        .fest-about-title {
+          font-family: "Anton", sans-serif;
+          font-size: clamp(2rem, 4vw, 3.2rem);
           color: #241123;
-          line-height: 1.0;
-          letter-spacing: 0.01em;
+          margin: 0;
+          line-height: 1;
         }
-        .chub-why-content-col {
-          padding: 0.25rem 0;
+        .fest-about-content-box {
+          background: rgba(242,242,242,0.70);
+          border-radius: 16px;
+          padding: 1.75rem 2rem;
         }
-        .chub-why-body {
-          font-family: var(--font-space-grotesk), sans-serif;
-          font-size: 0.97rem;
+        .fest-about-body {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 1rem;
           color: #241123;
           line-height: 1.75;
           margin: 0 0 1rem;
         }
-        .chub-why-body:last-of-type { margin-bottom: 0; }
-        .chub-why-stats {
+        .fest-about-body:last-of-type { margin-bottom: 0; }
+        .fest-about-stats {
           display: flex;
           gap: 2.5rem;
-          margin-top: 1.5rem;
+          margin-top: 2rem;
           flex-wrap: wrap;
         }
-        .chub-why-stat {
-          display: flex;
-          flex-direction: column;
-          gap: 0.2rem;
-        }
-        .chub-why-stat-num {
-          font-family: var(--font-space-grotesk), sans-serif;
-          font-size: clamp(1.8rem, 3.5vw, 2.5rem);
-          font-weight: 800;
-          color: #0BC5E0;
+        .fest-stat { display: flex; flex-direction: column; gap: 0.2rem; }
+        .fest-stat-num {
+          font-family: "Anton", sans-serif;
+          font-size: 2.8rem;
           line-height: 1;
-          letter-spacing: -0.02em;
         }
-        .chub-why-stat-label {
-          font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.75rem;
+        .fest-stat-label {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.78rem;
           font-weight: 600;
-          color: rgba(8,28,58,0.55);
+          color: #5a4060;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+        }
+
+        .fest-stat-num--hub {
+          color: #2493A9;
+        }
+
+        .fest-stat-label--hub {
+          color: #5a4060;
         }
 
         /* ─── Archive ──────────────────────────────────────────────── */
