@@ -1664,7 +1664,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           width: 180px;
           height: 180px;
           filter: drop-shadow(0 3px 16px rgba(0,0,0,0.45));
-          opacity: 0.92;
+          opacity: 1;
         }
         /* stamp stays 180×180 on all screen sizes */
 
