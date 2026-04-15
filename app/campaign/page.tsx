@@ -306,15 +306,18 @@ export default function CampaignHubPage() {
           <div className="chub-why-heading-col">
             <span className="chub-section-eyebrow" style={{ color: "#0BC5E0" }}>Why It Matters</span>
             <h2 className="chub-why-title">
-              The work<br />goes where<br />the story lives.
+              Sustained investment.<br />Lasting creative<br />infrastructure.
             </h2>
           </div>
           <div className="chub-why-content-col">
             <p className="chub-why-body">
-              DAT continually invests in communities with little to no access to arts programming — through workshops, residencies, events, and mentorship. The work is relationship-based and long-term. It changes who gets to make theatre and who gets to say so.
+              Dramatic Adventure Theatre invests in communities with little to no access to arts programming through workshops, performances, mentorship, and long-term creative partnership.
             </p>
             <p className="chub-why-body">
-              Each drama club DAT helps build becomes a permanent, locally-run gift to its community — active and thriving long after DAT moves on.
+              This is not a one-time visit. Over time, DAT helps build the artistic relationships, local leadership, and community-rooted programs that allow theatre to keep growing after a residency ends.
+            </p>
+            <p className="chub-why-body">
+              Drama Clubs are one example: locally run creative homes where young people keep making work, building confidence, and shaping the stories of their own communities.
             </p>
             <div className="chub-why-stats">
               <div className="chub-why-stat">
@@ -371,7 +374,7 @@ export default function CampaignHubPage() {
       {/* ── Styles ───────────────────────────────────────────────── */}
       <style>{`
         .chub-main {
-          background: #fff;
+          background: transparent;
           overflow-x: hidden;
         }
 
@@ -396,11 +399,10 @@ export default function CampaignHubPage() {
           inset: 0;
           background: linear-gradient(
             to top,
-            rgba(36,17,35,1.0) 0%,
-            rgba(36,17,35,1.0) 10%,
-            rgba(36,17,35,0.85) 35%,
-            rgba(36,17,35,0.45) 65%,
-            rgba(36,17,35,0.12) 100%
+            rgba(36,17,35,0.88) 0%,
+            rgba(36,17,35,0.52) 25%,
+            rgba(36,17,35,0.12) 60%,
+            transparent 85%
           );
           z-index: 1;
         }
@@ -482,16 +484,17 @@ export default function CampaignHubPage() {
 
         /* ─── Shared hover treatment ────────────────────────────────── */
         .chub-card-hoverable {
-          transition: box-shadow 180ms, transform 180ms, border-color 180ms;
+          transition: box-shadow 200ms, transform 200ms, border-color 200ms;
         }
         .chub-card-hoverable:hover {
-          box-shadow: 0 10px 36px rgba(108,0,175,0.18), 0 0 0 2px rgba(108,0,175,0.18);
-          transform: translateY(-3px);
-          border-color: rgba(108,0,175,0.22);
+          box-shadow: 0 12px 48px rgba(108,0,175,0.38), 0 0 0 2.5px rgba(108,0,175,0.55), 0 0 28px rgba(108,0,175,0.22);
+          transform: translateY(-4px);
+          border-color: rgba(108,0,175,0.58);
         }
         .chub-card-hoverable--blue:hover {
-          box-shadow: 0 10px 36px rgba(36,147,169,0.22), 0 0 0 2px rgba(36,147,169,0.22);
-          border-color: rgba(36,147,169,0.35);
+          box-shadow: 0 12px 48px rgba(36,147,169,0.42), 0 0 0 2.5px rgba(36,147,169,0.58), 0 0 28px rgba(36,147,169,0.22);
+          border-color: rgba(36,147,169,0.62);
+          transform: translateY(-4px);
         }
 
         /* ─── Combined live + evergreen layout ────────────────────── */
@@ -547,9 +550,9 @@ export default function CampaignHubPage() {
         .chub-active-card {
           border-radius: 20px;
           overflow: hidden;
-          border: 1.5px solid rgba(8,28,58,0.08);
+          border: 2px solid rgba(108,0,175,0.22);
           background: #fff;
-          box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+          box-shadow: 0 6px 30px rgba(108,0,175,0.1), 0 0 0 1px rgba(108,0,175,0.06);
           display: flex;
           flex-direction: column;
         }
@@ -687,9 +690,9 @@ export default function CampaignHubPage() {
           flex-direction: column;
           border-radius: 18px;
           overflow: hidden;
-          border: 1.5px solid rgba(36,147,169,0.28);
+          border: 2px solid rgba(36,147,169,0.45);
           background: #0B1D36;
-          box-shadow: 0 4px 20px rgba(11,29,54,0.22);
+          box-shadow: 0 6px 28px rgba(11,29,54,0.3), 0 0 0 1px rgba(36,147,169,0.12);
         }
         .chub-evergreen-img-wrap {
           position: relative;
@@ -844,9 +847,7 @@ export default function CampaignHubPage() {
           letter-spacing: 0.01em;
         }
         .chub-why-content-col {
-          background: rgba(8,28,58,0.03);
-          border-radius: 16px;
-          padding: 1.75rem 2rem;
+          padding: 0.25rem 0;
         }
         .chub-why-body {
           font-family: var(--font-space-grotesk), sans-serif;

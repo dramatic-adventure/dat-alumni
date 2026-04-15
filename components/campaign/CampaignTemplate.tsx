@@ -238,7 +238,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         <div
           className="cmp-hero-gradient-bottom"
           style={campaign.evergreen ? {
-            background: "linear-gradient(to top, rgba(11,29,54,1.0) 0%, rgba(11,29,54,0.9) 10%, rgba(36,147,169,0.3) 22%, transparent 48%)"
+            background: "linear-gradient(to top, rgba(11,29,54,0.62) 0%, rgba(11,29,54,0.28) 16%, rgba(36,147,169,0.08) 28%, transparent 48%)"
           } : undefined}
         />
 
@@ -466,9 +466,9 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           <div className="cmp-impact-inner">
             <span className="cmp-eyebrow cmp-eyebrow--accent">Where Your Gift Goes</span>
             <h2 className="cmp-section-title" style={{ color: "#0f1f38" }}>
-              {campaign.monthlyImpactCopy && frequency === "monthly"
+              {frequency === "monthly" && campaign.monthlyImpactCopy
                 ? "Your monthly gift keeps the work alive."
-                : "Every amount moves the needle."}
+                : "Every gift moves this work forward."}
             </h2>
             <div className="cmp-impact-grid">
               {campaign.giftImpact!.map((item, i) => (
@@ -695,7 +695,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                               src={ev.imageUrl}
                               alt={ev.title}
                               fill
-                              sizes="(min-width:600px) 160px, 90px"
+                              sizes="(min-width:600px) 200px, 110px"
                               style={{ objectFit: "cover" }}
                             />
                             {/* Date stamp overlay on image */}
@@ -1083,17 +1083,16 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           inset: -15% 0;
           will-change: transform;
         }
-        /* Primary gradient: solid dark purple base, fades transparent toward top */
+        /* Primary gradient: minimal text-backing vignette — image breathes above */
         .cmp-hero-gradient-primary {
           position: absolute;
           inset: 0;
           background: linear-gradient(
             to top,
-            rgba(36,17,35,1.0) 0%,
-            rgba(36,17,35,1.0) 12%,
-            rgba(36,17,35,0.85) 35%,
-            rgba(36,17,35,0.45) 65%,
-            rgba(36,17,35,0.15) 100%
+            rgba(36,17,35,0.78) 0%,
+            rgba(36,17,35,0.45) 22%,
+            rgba(36,17,35,0.1) 52%,
+            transparent 72%
           );
         }
         /* DAT purple glow accent — atmospheric bottom-left warmth */
@@ -1102,15 +1101,15 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           inset: 0;
           background: radial-gradient(ellipse 70% 55% at 8% 88%, rgba(108,0,175,0.28) 0%, transparent 60%);
         }
-        /* DAT purple atmospheric shading at the very bottom — bridges hero into the dark band */
+        /* DAT purple atmospheric shading — very light, just a hint of warmth at base */
         .cmp-hero-gradient-bottom {
           position: absolute;
           inset: 0;
           background: linear-gradient(
             to top,
-            rgba(108, 0, 175, 0.55) 0%,
-            rgba(108, 0, 175, 0.2) 14%,
-            transparent 38%
+            rgba(108, 0, 175, 0.2) 0%,
+            rgba(108, 0, 175, 0.06) 12%,
+            transparent 28%
           );
           z-index: 1;
         }
@@ -1756,7 +1755,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── What's happening (updates + events) ─────────────────── */
-        .cmp-updates-section { padding: 5rem 2rem; background: transparent; }
+        .cmp-updates-section { padding: 5rem 2rem; background: rgba(36,17,35,0.04); border-top: 1px solid rgba(36,17,35,0.07); border-bottom: 1px solid rgba(36,17,35,0.07); }
         .cmp-updates-inner { max-width: 780px; margin: 0 auto; }
         .cmp-updates-feed { display: flex; flex-direction: column; gap: 0; margin-top: 0.5rem; }
         .cmp-sub-label {
@@ -1776,11 +1775,11 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           display: flex;
           flex-direction: column;
           gap: 0;
-          border-radius: 16px;
+          border-radius: 18px;
           overflow: hidden;
-          border: 1px solid rgba(8,28,58,0.1);
+          border: 1.5px solid rgba(36,147,169,0.2);
           background: #fff;
-          box-shadow: 0 4px 20px rgba(8,28,58,0.08);
+          box-shadow: 0 8px 36px rgba(8,28,58,0.12), 0 0 0 1px rgba(36,147,169,0.08);
         }
         .cmp-event-item {
           display: flex;
@@ -1789,106 +1788,102 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           border-bottom: 1px solid rgba(8,28,58,0.07);
           transition: background 140ms;
           overflow: hidden;
+          min-height: 150px;
         }
         .cmp-event-item:last-child { border-bottom: none; }
         .cmp-event-item:hover { background: rgba(36,147,169,0.03); }
 
-        /* Event image with date stamp overlay */
+        /* Event image — large editorial block */
         .cmp-event-item-img {
           position: relative;
-          width: 140px;
-          min-width: 140px;
-          height: 120px;
+          width: 200px;
+          min-width: 200px;
           flex-shrink: 0;
           overflow: hidden;
         }
         @media (max-width: 600px) {
-          .cmp-event-item-img { width: 90px; min-width: 90px; height: 100px; }
+          .cmp-event-item-img { width: 110px; min-width: 110px; }
         }
 
-        /* Calendar stamp — overlaid bottom-left of image */
+        /* Calendar date badge — full-width overlay across image bottom */
         .cmp-event-cal {
           position: absolute;
           bottom: 0;
           left: 0;
+          right: 0;
+          padding: 1rem 1rem 0.9rem;
+          background: linear-gradient(to top, rgba(8,28,58,0.88) 0%, rgba(8,28,58,0.55) 55%, transparent 100%);
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.02rem;
+          z-index: 2;
+        }
+        /* Standalone cal (no image): left column, dark panel */
+        .cmp-event-cal--standalone {
+          position: static;
+          width: 72px;
+          min-width: 72px;
+          background: #0B1D36;
+          flex-shrink: 0;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          width: 52px;
-          padding: 0.3rem 0.2rem;
-          text-align: center;
-          background: rgba(11,29,54,0.88);
-          backdrop-filter: blur(4px);
-        }
-        /* Standalone cal stamp (no image) */
-        .cmp-event-cal--standalone {
-          position: static;
-          width: 56px;
-          min-width: 56px;
-          height: 100%;
-          border-radius: 0;
-          background: #0B1D36;
-          flex-shrink: 0;
-          justify-content: center;
-          padding: 0;
+          padding: 1rem 0.5rem;
+          gap: 0.05rem;
         }
         .cmp-event-cal-month {
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.68rem;
+          font-size: 0.72rem;
           font-weight: 800;
-          letter-spacing: 0.12em;
-          color: ${ACCENT};
+          letter-spacing: 0.2em;
+          color: #2BC4DB;
           line-height: 1;
-          padding-bottom: 0.1rem;
           text-transform: uppercase;
         }
         .cmp-event-cal-day {
           font-family: var(--font-space-grotesk), sans-serif;
-          font-size: 1.65rem;
+          font-size: 2.6rem;
           font-weight: 800;
           color: #fff;
           line-height: 1;
+          letter-spacing: -0.03em;
         }
         .cmp-event-cal-year {
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.48rem;
+          font-size: 0.62rem;
           font-weight: 600;
-          color: rgba(255,255,255,0.55);
+          color: rgba(255,255,255,0.48);
           line-height: 1;
-          padding-top: 0.12rem;
-          letter-spacing: 0.06em;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
         }
         .cmp-event-item-body {
           flex: 1;
           min-width: 0;
           display: flex;
           flex-direction: column;
-          gap: 0.25rem;
-          padding: 1rem 1.25rem;
+          gap: 0.3rem;
+          padding: 1.25rem 1.5rem;
           justify-content: center;
         }
         .cmp-event-item-title {
           margin: 0;
           font-family: var(--font-space-grotesk), sans-serif;
-          font-size: 0.98rem;
-          font-weight: 700;
+          font-size: 1.05rem;
+          font-weight: 800;
           color: #0f1f38;
           line-height: 1.25;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
         }
         .cmp-event-item-loc {
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.75rem;
+          font-size: 0.76rem;
           color: rgba(8,28,58,0.5);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
           display: flex;
           align-items: center;
           gap: 0.4rem;
+          line-height: 1.4;
         }
         /* Event image placeholder (legacy compat) */
         .cmp-event-item-img-legacy {
@@ -1952,7 +1947,7 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
         }
 
         /* ─── Supporters wall ──────────────────────────────────────── */
-        .cmp-supporters-section { background: rgba(36,147,169,0.07); padding: 5rem 2rem; }
+        .cmp-supporters-section { background: transparent; padding: 5rem 2rem; }
         .cmp-supporters-inner { max-width: 1100px; margin: 0 auto; }
         .cmp-supporters-wall {
           display: flex;
@@ -2649,20 +2644,28 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
           transition: color 140ms;
         }
         .cmp-events-view-all:hover { color: rgba(242,242,242,0.9); }
-        /* Small action link inside event body */
+        /* Event CTA — solid button treatment */
         .cmp-btn-event-sm {
           display: inline-flex;
           align-items: center;
-          font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.75rem;
+          padding: 0.45rem 1rem;
+          border-radius: 9px;
+          background: #2493A9;
+          color: #fff;
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: 0.72rem;
           font-weight: 700;
-          color: ${ACCENT};
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
           text-decoration: none;
-          margin-top: 0.25rem;
-          transition: color 140ms;
+          margin-top: 0.5rem;
+          align-self: flex-start;
+          transition: background 140ms, transform 140ms;
         }
         .cmp-btn-event-sm:hover {
-          color: #1e7d90;
+          background: #1e7d90;
+          transform: translateY(-1px);
+          color: #fff;
         }
         @media (max-width: 640px) {
           .cmp-featured-event-card {
