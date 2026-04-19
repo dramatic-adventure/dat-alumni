@@ -21,7 +21,7 @@ export default function LoginButton({ callbackUrl }: { callbackUrl: string }) {
       onClick={handleClick}
       disabled={pending}
       aria-busy={pending}
-      className="group relative inline-flex w-full items-center justify-center gap-5 rounded-xl border px-6 py-6 text-[0.95rem] font-semibold tracking-[0.18em] transition-[transform,box-shadow,background-color] duration-200 hover:-translate-y-[2px] hover:shadow-[0_20px_56px_rgba(255,204,0,0.28),_0_8px_20px_rgba(0,0,0,0.45)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#FFCC00] focus-visible:ring-offset-[#361252] disabled:cursor-wait disabled:opacity-80"
+      className="group relative inline-flex w-full items-center justify-center gap-5 rounded-2xl border px-6 py-8 text-[0.95rem] font-semibold tracking-[0.18em] transition-[transform,box-shadow,background-color] duration-200 hover:-translate-y-[2px] hover:shadow-[0_20px_56px_rgba(255,204,0,0.28),_0_8px_20px_rgba(0,0,0,0.45)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#FFCC00] focus-visible:ring-offset-[#361252] disabled:cursor-wait disabled:opacity-80"
       style={{
         fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
         textTransform: "uppercase",
