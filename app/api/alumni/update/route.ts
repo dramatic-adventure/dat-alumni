@@ -3,8 +3,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { sheetsClient } from "@/lib/googleClients";
 import { isDatGold } from "@/lib/updateStarters";
-import { requireAuth } from "@/lib/requireAuth";
-import { getOwnerEmailForAlumniId, normalizeGmail } from "@/lib/ownership";
+import { assertCanEditProfile } from "@/lib/ownership";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -209,10 +208,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Missing ALUMNI_SHEET_ID" }, { status: 500 });
   }
 
-  // ✅ Auth gate FIRST
-  const auth = await requireAuth(req);
-  if (!auth.ok) return auth.response;
-
   let body: Body | null = null;
   try {
     body = (await req.json()) as Body;
@@ -232,22 +227,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "Empty update" }, { status: 400 });
   }
 
-  // ✅ Ownership gate BEFORE touching Profile-Live
-  if (!auth.isAdmin) {
-    const ownerEmail = await getOwnerEmailForAlumniId(spreadsheetId, alumniId);
-    if (!ownerEmail) {
-      return NextResponse.json(
-        { ok: false, error: "This profile is not yet claimed. Please contact DAT." },
-        { status: 403 }
-      );
-    }
-    if (normalizeGmail(auth.email) !== normalizeGmail(ownerEmail)) {
-      return NextResponse.json(
-        { ok: false, error: "Forbidden: you may only update your own profile." },
-        { status: 403 }
-      );
-    }
-  }
+  // ✅ Canonical auth+ownership gate
+  const auth = await assertCanEditProfile(req, alumniId);
+  if (!auth.ok) return auth.response;
 
   try {
     const live = await loadLiveRow(alumniId);

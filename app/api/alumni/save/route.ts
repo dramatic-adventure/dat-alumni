@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { sheetsClient } from "@/lib/googleClients";
 import { requireAuth } from "@/lib/requireAuth";
 import { rateLimit } from "@/lib/rateLimit";
-// import { maybeArchiveStorySnapshotFromLiveRow } from "@/lib/mapArchive";
+import { getAlumniIdForOwnerEmail } from "@/lib/ownership";
 
 export const runtime = "nodejs";
 
@@ -19,20 +19,6 @@ function idxOf(header: string[], candidates: string[]) {
 
 function normId(x: unknown) {
   return String(x ?? "").trim().toLowerCase();
-}
-
-/** Normalize gmail/googlemail and strip +tag/dots for gmail */
-function normalizeGmail(raw: string) {
-  const e = String(raw || "").trim().toLowerCase();
-  const [user, domain] = e.split("@");
-  if (!user || !domain) return e;
-
-  const canonDomain = domain === "googlemail.com" ? "gmail.com" : domain;
-  if (canonDomain !== "gmail.com") return `${user}@${canonDomain}`;
-
-  const noPlus = user.split("+")[0];
-  const noDots = noPlus.replace(/\./g, "");
-  return `${noDots}@gmail.com`;
 }
 
 function isAdmin(email: string | undefined | null) {
@@ -106,55 +92,6 @@ function resolveStableAlumniIdForEdit(opts: {
   return key;
 }
 
-/** Resolve stable owner alumniId for a login email (Profile-Owners → Aliases optional) */
-async function resolveOwnerAlumniId(
-  sheets: ReturnType<typeof sheetsClient>,
-  spreadsheetId: string,
-  email: string
-): Promise<string> {
-  const nEmail = normalizeGmail(email);
-  if (!nEmail) return "";
-
-  // 1) Profile-Owners (source of truth)
-  const owners = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range: "Profile-Owners!A:ZZ",
-    valueRenderOption: "UNFORMATTED_VALUE",
-  });
-
-  const ownersRows = owners.data.values ?? [];
-  if (ownersRows.length > 1) {
-    const [H, ...rows] = ownersRows as any[][];
-    const idIdx = idxOf(H, ["alumniid", "alumni id", "id"]);
-    const ownerEmailIdx = idxOf(H, ["owneremail", "owner email"]);
-    if (idIdx !== -1 && ownerEmailIdx !== -1) {
-      for (const r of rows) {
-        const e = normalizeGmail(String(r[ownerEmailIdx] || ""));
-        if (e && e === nEmail) return normId(r[idIdx]);
-      }
-    }
-  }
-
-  // 2) Optional legacy Profile-Aliases fallback
-  try {
-    const alias = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: "Profile-Aliases!A:B",
-      valueRenderOption: "UNFORMATTED_VALUE",
-    });
-    const aRows = alias.data.values ?? [];
-    if (aRows.length > 1) {
-      const [, ...rest] = aRows;
-      const hit = rest.find(([e, aid]) => e && aid && normalizeGmail(String(e)) === nEmail);
-      if (hit) return normId(hit[1]);
-    }
-  } catch {
-    // optional
-  }
-
-  return "";
-}
-
 function isStableIdField(k: string) {
   const kk = k.trim().toLowerCase();
   return kk === "alumniid" || kk === "alumni id" || kk === "id";
@@ -168,80 +105,6 @@ function isServerControlledField(k: string) {
 function isAdminOnlyField(k: string) {
   const kk = k.trim().toLowerCase();
   return kk === "ispublic" || kk === "is public" || kk === "status";
-}
-
-/** Ensure Profile-Aliases sheet has header row */
-async function ensureAliasesHeader(
-  sheets: ReturnType<typeof sheetsClient>,
-  spreadsheetId: string
-) {
-  try {
-    const res = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: "Profile-Aliases!A:B",
-      valueRenderOption: "UNFORMATTED_VALUE",
-    });
-    const vals = res.data.values ?? [];
-    if (vals.length === 0 || (vals[0] || []).length < 2) {
-      await sheets.spreadsheets.values.update({
-        spreadsheetId,
-        range: "Profile-Aliases!A1:B1",
-        valueInputOption: "RAW",
-        requestBody: { values: [["email", "alumniId"]] },
-      });
-    }
-  } catch {
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: "Profile-Aliases!A1:B1",
-      valueInputOption: "RAW",
-      requestBody: { values: [["email", "alumniId"]] },
-    });
-  }
-}
-
-/** Ensure current email is mapped to this alumniId (non-fatal if it fails) */
-async function ensureAlias(
-  sheets: ReturnType<typeof sheetsClient>,
-  spreadsheetId: string,
-  email: string,
-  alumniId: string
-) {
-  const nEmail = normalizeGmail(email);
-  const nId = normId(alumniId);
-  if (!nEmail || !nId) return;
-
-  await ensureAliasesHeader(sheets, spreadsheetId);
-
-  try {
-    const res = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: "Profile-Aliases!A:B",
-      valueRenderOption: "UNFORMATTED_VALUE",
-    });
-    const vals = (res.data.values ?? []) as any[][];
-    const [H, ...rows] = vals.length ? vals : [[]];
-    const eIdx = idxOf(H as any, ["email"]);
-    const idIdx = idxOf(H as any, ["alumniid", "alumni id", "id"]);
-    if (eIdx === -1 || idIdx === -1) return;
-
-    const exists = rows.some(
-      (r) =>
-        normalizeGmail(String(r?.[eIdx] ?? "")) === nEmail &&
-        normId(String(r?.[idIdx] ?? "")) === nId
-    );
-
-    if (!exists) {
-      await sheets.spreadsheets.values.append({
-        spreadsheetId,
-        range: "Profile-Aliases!A:B",
-        valueInputOption: "RAW",
-        requestBody: { values: [[nEmail, nId]] },
-      });
-    }
-  } catch {
-    // don't fail saves because alias sheet is unavailable
-  }
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -384,8 +247,6 @@ export async function PUT(req: Request) {
     const slugIdx = idxOf(header as string[], ["slug"]);
     const statusIdx = idxOf(header as string[], ["status"]);
     const updatedIdx = idxOf(header as string[], ["updatedat", "updated at"]);
-    // const emailIdx = idxOf(header as string[], ["email"]); // legacy: no longer used
-    // const isPublicIdx = idxOf(header as string[], ["ispublic", "is public"]); // currently unused
 
     if (idIdx === -1) throw new Error('Profile-Live missing "alumniId" header');
     if (slugIdx === -1) throw new Error('Profile-Live missing "slug" header');
@@ -405,14 +266,17 @@ export async function PUT(req: Request) {
       );
     }
 
-    // Non-admins can only edit their own stable alumniId
+    // ✅ Canonical ownership check (matches /api/alumni/update and /undo):
+    //    Non-admins may only edit the profile their signed-in email owns.
+    //    `getAlumniIdForOwnerEmail` reads Profile-Owners then Profile-Aliases
+    //    (legacy read-only fallback) — same shape as the deprecated inline
+    //    copy that used to live here.
     if (!admin) {
-      const ownerId = await resolveOwnerAlumniId(
-        sheets,
+      const ownedId = await getAlumniIdForOwnerEmail(
         spreadsheetId,
         auth.email || ""
       );
-      if (!ownerId || ownerId !== ownerKey) {
+      if (!ownedId || normId(ownedId) !== normId(ownerKey)) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
     }
@@ -420,13 +284,6 @@ export async function PUT(req: Request) {
     // Editor identity (audit only)
     const editorEmail = String(submittedByEmail || auth.email || "").trim();
     const nowIso = new Date().toISOString();
-
-
-    // ensure the editor email is mapped (non-fatal)
-    // (helps resolveOwnerAlumniId find the owner next time)
-    if (editorEmail) {
-      void ensureAlias(sheets, spreadsheetId, editorEmail, ownerKey).catch(() => {});
-    }
 
     // Find the live row by stable alumniId
     let rowIndex = dataRows.findIndex((r) => normId(r?.[idIdx]) === ownerKey);
@@ -502,8 +359,6 @@ export async function PUT(req: Request) {
       acceptedCanonicalKeys.push(kCanon);
     }
 
-    // If the client explicitly changed the profile's email, use THAT.
-    // Otherwise, only allow auto-backfill for non-admin self-saves *when the live email is blank*.
     // ✅ Login identity is NOT stored in Profile-Live.email.
     // Public contact is Profile-Live.publicEmail.
     // Therefore: never auto-write Profile-Live.email here.
@@ -567,7 +422,7 @@ export async function PUT(req: Request) {
         return NextResponse.json(
           {
             error:
-              "Profile not found. New profiles must be seeded by admin (Profile-Live + Profile-Aliases).",
+              "Profile not found. New profiles must be seeded by admin (Profile-Live + Profile-Owners).",
           },
           { status: 404 }
         );

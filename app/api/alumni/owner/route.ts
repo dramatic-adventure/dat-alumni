@@ -1,7 +1,10 @@
 // app/api/alumni/owner/route.ts
 import { NextResponse } from "next/server";
-import { sheetsClient } from "@/lib/googleClients";
 import { requireAuth } from "@/lib/requireAuth";
+import {
+  getAlumniIdForOwnerEmail,
+  normalizeGmail,
+} from "@/lib/ownership";
 
 export const runtime = "nodejs";
 
@@ -19,85 +22,8 @@ function hasValidAdminHeader(req: Request) {
   return (!!envKey && key === envKey) || (!!envToken && token === envToken);
 }
 
-/** case-insensitive header lookup */
-function idxOf(header: string[], candidates: string[]) {
-  const lower = header.map((h) => String(h || "").trim().toLowerCase());
-  for (const c of candidates) {
-    const i = lower.indexOf(c.toLowerCase());
-    if (i !== -1) return i;
-  }
-  return -1;
-}
-
 function normId(x: unknown) {
   return String(x ?? "").trim().toLowerCase();
-}
-
-/** Normalize gmail/googlemail and strip +tag/dots for gmail */
-function normalizeGmail(raw: string) {
-  const e = String(raw || "").trim().toLowerCase();
-  const [user, domain] = e.split("@");
-  if (!user || !domain) return e;
-
-  const canonDomain = domain === "googlemail.com" ? "gmail.com" : domain;
-  if (canonDomain !== "gmail.com") return `${user}@${canonDomain}`;
-
-  const noPlus = user.split("+")[0];
-  const noDots = noPlus.replace(/\./g, "");
-  return `${noDots}@gmail.com`;
-}
-
-/**
- * Resolve stable owner alumniId for a login email (Profile-Owners → Aliases optional)
- */
-async function resolveOwnerAlumniId(
-  sheets: ReturnType<typeof sheetsClient>,
-  spreadsheetId: string,
-  email: string
-): Promise<string> {
-  const nEmail = normalizeGmail(email);
-  if (!nEmail) return "";
-
-  // 1) Profile-Owners (source of truth)
-  const owners = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range: "Profile-Owners!A:ZZ",
-    valueRenderOption: "UNFORMATTED_VALUE",
-  });
-
-  const ownersRows = owners.data.values ?? [];
-  if (ownersRows.length > 1) {
-    const [H, ...rows] = ownersRows as any[][];
-    const idIdx = idxOf(H, ["alumniid", "alumni id", "id"]);
-    const ownerEmailIdx = idxOf(H, ["owneremail", "owner email"]);
-    if (idIdx !== -1 && ownerEmailIdx !== -1) {
-      for (const r of rows) {
-        const e = normalizeGmail(String(r[ownerEmailIdx] || ""));
-        if (e && e === nEmail) return normId(r[idIdx]);
-      }
-    }
-  }
-
-  // 2) Optional legacy Profile-Aliases fallback
-  try {
-    const alias = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: "Profile-Aliases!A:B",
-      valueRenderOption: "UNFORMATTED_VALUE",
-    });
-    const aRows = alias.data.values ?? [];
-    if (aRows.length > 1) {
-      const [, ...rest] = aRows;
-      const hit = rest.find(
-        ([e, aid]) => e && aid && normalizeGmail(String(e)) === nEmail
-      );
-      if (hit) return normId(hit[1]);
-    }
-  } catch {
-    // optional
-  }
-
-  return "";
 }
 
 export async function GET(req: Request) {
@@ -115,8 +41,6 @@ export async function GET(req: Request) {
     );
   }
 
-  let sheets: ReturnType<typeof sheetsClient>;
-
   // ✅ DEV-ONLY admin header bypass for local curl/debug:
   // Accept ?email=... OR ?alumniId=...
   // If neither is provided, fall back to ADMIN_ALUMNI_ID (DEV only).
@@ -133,8 +57,7 @@ export async function GET(req: Request) {
 
     const email = normalizeGmail(url.searchParams.get("email") || "");
     if (email) {
-      sheets = sheetsClient();
-      const ownerId = await resolveOwnerAlumniId(sheets, spreadsheetId, email);
+      const ownerId = await getAlumniIdForOwnerEmail(spreadsheetId, email);
       if (!ownerId) {
         return NextResponse.json(
           {
@@ -180,8 +103,7 @@ export async function GET(req: Request) {
     );
   }
 
-  sheets = sheetsClient();
-  const ownerId = await resolveOwnerAlumniId(sheets, spreadsheetId, email);
+  const ownerId = await getAlumniIdForOwnerEmail(spreadsheetId, email);
   if (!ownerId) {
     return NextResponse.json(
       {

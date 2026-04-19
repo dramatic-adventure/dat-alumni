@@ -1,5 +1,7 @@
 // /lib/ownership.ts
+import { NextResponse } from "next/server";
 import { sheetsClient } from "@/lib/googleClients";
+import { requireAuth } from "@/lib/requireAuth";
 
 /** Narrow media kinds used across routes */
 export type MediaKind = "headshot" | "album" | "reel" | "event";
@@ -113,7 +115,133 @@ export async function getOwnerEmailForAlumniId(
   return String(row?.[ownerIdx] ?? "").trim();
 }
 
-/** Resolve the alumniId that "owns" an email (Live → Aliases → Changes) */
+/**
+ * Canonical email -> alumniId resolver.
+ *
+ * Source of truth: Profile-Owners.
+ * Legacy read-only fallback: Profile-Aliases (pair of [email, alumniId]).
+ *
+ * Returns "" if nothing found.
+ *
+ * This is the ONE function the app uses to answer
+ * "which profile does this signed-in email own?"
+ */
+export async function getAlumniIdForOwnerEmail(
+  spreadsheetId: string,
+  email: string
+): Promise<string> {
+  const nEmail = normalizeGmail(email);
+  if (!spreadsheetId || !nEmail) return "";
+
+  const sheets = sheetsClient();
+
+  // 1) Profile-Owners (source of truth)
+  try {
+    const res = await withRetry(
+      () =>
+        sheets.spreadsheets.values.get({
+          spreadsheetId,
+          range: `${OWNERS_TAB}!A:ZZ`,
+          valueRenderOption: "UNFORMATTED_VALUE",
+        }),
+      "Sheets get Profile-Owners (by email)"
+    );
+    const all = (res.data.values ?? []) as any[][];
+    if (all.length > 1) {
+      const header = all[0] as string[];
+      const rows = all.slice(1);
+      const idIdx = idxOf(header, ["alumniid", "alumni id", "id"]);
+      const ownerIdx = idxOf(header, ["owneremail", "owner email"]);
+      if (idIdx !== -1 && ownerIdx !== -1) {
+        for (const r of rows) {
+          const e = normalizeGmail(String(r?.[ownerIdx] ?? ""));
+          if (e && e === nEmail) return normId(r?.[idIdx]);
+        }
+      }
+    }
+  } catch {
+    // fall through to aliases
+  }
+
+  // 2) Profile-Aliases (legacy read-only fallback)
+  try {
+    const res = await withRetry(
+      () =>
+        sheets.spreadsheets.values.get({
+          spreadsheetId,
+          range: "Profile-Aliases!A:B",
+          valueRenderOption: "UNFORMATTED_VALUE",
+        }),
+      "Sheets get Profile-Aliases (by email)"
+    );
+    const all = (res.data.values ?? []) as any[][];
+    if (all.length > 1) {
+      const [, ...rest] = all;
+      const hit = rest.find(
+        ([e, aid]) => e && aid && normalizeGmail(String(e)) === nEmail
+      );
+      if (hit) return normId(hit[1]);
+    }
+  } catch {
+    // optional sheet
+  }
+
+  return "";
+}
+
+/**
+ * Resolve a profile slug to its stable alumniId by reading Profile-Live directly.
+ * Returns "" if not found / header missing.
+ *
+ * Replaces the old self-HTTP dance in /alumni/update/page.tsx so the server
+ * doesn't fetch its own routes.
+ */
+export async function resolveSlugToAlumniId(
+  spreadsheetId: string,
+  slugOrId: string
+): Promise<string> {
+  const key = String(slugOrId ?? "").trim().toLowerCase();
+  if (!spreadsheetId || !key) return "";
+
+  const sheets = sheetsClient();
+  const res = await withRetry(
+    () =>
+      sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: "Profile-Live!A:ZZ",
+        valueRenderOption: "UNFORMATTED_VALUE",
+      }),
+    "Sheets get Profile-Live (slug->id)"
+  );
+
+  const all = (res.data.values ?? []) as any[][];
+  if (all.length < 2) return "";
+
+  const header = (all[0] ?? []).map((h) => String(h ?? "").trim());
+  const rows = all.slice(1);
+
+  const idIdx = idxOf(header, ["alumniid", "alumni id", "id"]);
+  const slugIdx = idxOf(header, ["slug"]);
+  if (idIdx < 0) return "";
+
+  // exact alumniId match
+  const byId = rows.find((r) => normId(r?.[idIdx]) === key);
+  if (byId) return normId(byId[idIdx]);
+
+  // slug match
+  if (slugIdx >= 0) {
+    const bySlug = rows.find((r) => normId(r?.[slugIdx]) === key);
+    if (bySlug) return normId(bySlug[idIdx]);
+  }
+
+  return "";
+}
+
+/**
+ * @deprecated — prefer getAlumniIdForOwnerEmail.
+ * Kept for backward compatibility with any callers that expected the
+ * Live-email / Changes fallback reads. Do not add new callers.
+ */
 export async function resolveOwnerAlumniId(
   spreadsheetId: string,
   email: string
@@ -205,6 +333,56 @@ export async function resolveOwnerAlumniId(
   }
 
   return "";
+}
+
+// ──────────────────────────────────────────────────────────────
+// Canonical authorization helper for edit routes
+// ──────────────────────────────────────────────────────────────
+
+export type EditAuthOK = { ok: true; email: string; isAdmin: boolean };
+export type EditAuthFail = { ok: false; response: NextResponse };
+
+/**
+ * One-call guard for edit routes where the target alumniId is already known.
+ *
+ * Behavior:
+ *   1. requireAuth(req) — session, admin-token, or dev-bypass
+ *   2. If admin → allowed
+ *   3. Otherwise: getAlumniIdForOwnerEmail(session.email) must equal alumniId
+ *
+ * Use this in routes like /api/alumni/update and /api/alumni/update/undo
+ * where the body already carries alumniId. For bulk save (where the stable
+ * alumniId must first be resolved from a slug), call getAlumniIdForOwnerEmail
+ * directly after resolving.
+ */
+export async function assertCanEditProfile(
+  req: Request,
+  alumniId: string
+): Promise<EditAuthOK | EditAuthFail> {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return auth;
+  if (auth.isAdmin) return auth;
+
+  const spreadsheetId = process.env.ALUMNI_SHEET_ID || "";
+  if (!spreadsheetId) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: "Server misconfigured: ALUMNI_SHEET_ID missing" },
+        { status: 500 }
+      ),
+    };
+  }
+
+  const ownedId = await getAlumniIdForOwnerEmail(spreadsheetId, auth.email);
+  if (!ownedId || normId(ownedId) !== normId(alumniId)) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+    };
+  }
+
+  return auth;
 }
 
 /** Map kind -> Profile-Live asset column (shared) */

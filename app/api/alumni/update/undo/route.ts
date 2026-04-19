@@ -2,8 +2,7 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { sheetsClient } from "@/lib/googleClients";
-import { requireAuth } from "@/lib/requireAuth";
-import { getOwnerEmailForAlumniId, normalizeGmail } from "@/lib/ownership";
+import { assertCanEditProfile } from "@/lib/ownership";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -248,10 +247,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // ✅ Auth gate
-  const auth = await requireAuth(req);
-  if (!auth.ok) return auth.response;
-
   let body: Body | any = null;
   try {
     body = (await req.json()) as any;
@@ -270,16 +265,9 @@ export async function POST(req: Request) {
     );
   }
 
-  // ✅ Ownership gate
-  if (!auth.isAdmin) {
-    const ownerEmail = await getOwnerEmailForAlumniId(spreadsheetId, alumniId);
-    if (!ownerEmail) {
-      return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
-    }
-    if (normalizeGmail(auth.email) !== normalizeGmail(ownerEmail)) {
-      return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
-    }
-  }
+  // ✅ Canonical auth+ownership gate
+  const auth = await assertCanEditProfile(req, alumniId);
+  if (!auth.ok) return auth.response;
 
   try {
     const change = await findChangeRow(alumniId, ts);

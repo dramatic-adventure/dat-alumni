@@ -235,6 +235,41 @@ export async function generateInvites(
   return results;
 }
 
+// ── Preview an invite (no side effects) ────────────────────────
+export type InvitePreview =
+  | {
+      ok: true;
+      alumniId: string;
+      alumniName: string;
+      expiresAt: string;
+      expired: boolean;
+      used: boolean;
+    }
+  | { ok: false; reason: "invalid" };
+
+/**
+ * Read-only lookup used by the confirmation UI so we can show the alumnus's
+ * name before they explicitly redeem. Does NOT mutate the invite or Owners.
+ */
+export async function getInvitePreview(token: string): Promise<InvitePreview> {
+  const sheets = sheetsClient();
+  const nToken = String(token || "").trim();
+  if (!nToken) return { ok: false, reason: "invalid" };
+
+  const { rows } = await readAllInvites(sheets);
+  const match = rows.find((r) => r.token === nToken);
+  if (!match) return { ok: false, reason: "invalid" };
+
+  return {
+    ok: true,
+    alumniId: match.alumniId,
+    alumniName: match.alumniName,
+    expiresAt: match.expiresAt,
+    expired: !!match.expiresAt && new Date(match.expiresAt) < new Date(),
+    used: !!match.usedAt,
+  };
+}
+
 // ── Redeem a token ─────────────────────────────────────────────
 export type RedeemResult =
   | { ok: true; alumniId: string; alumniName: string }
