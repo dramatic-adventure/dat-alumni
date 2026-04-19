@@ -16,29 +16,67 @@ export default function LoginButton({ callbackUrl }: { callbackUrl: string }) {
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={pending}
-      aria-busy={pending}
-      className="group relative inline-flex w-full items-center justify-center gap-5 rounded-2xl border px-6 py-8 text-[0.95rem] font-semibold tracking-[0.18em] transition-[transform,box-shadow,background-color] duration-200 hover:-translate-y-[2px] hover:shadow-[0_20px_56px_rgba(255,204,0,0.28),_0_8px_20px_rgba(0,0,0,0.45)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#FFCC00] focus-visible:ring-offset-[#361252] disabled:cursor-wait disabled:opacity-80"
-      style={{
-        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-        textTransform: "uppercase",
-        backgroundColor: "#FFCC00",
-        color: "#241123",
-        borderColor: "#FFCC00",
-      }}
-    >
-      {/* Official Google "G" mark */}
-      <span
-        aria-hidden
-        className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white"
+    <>
+      <style>{`
+        .dat-login-cta {
+          transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+        }
+        .dat-login-cta:hover:not(:disabled) {
+          transform: translateY(-2px);
+          filter: brightness(1.12);
+          box-shadow: 0 10px 28px rgba(255,204,0,0.38), 0 4px 12px rgba(0,0,0,0.32);
+        }
+        .dat-login-cta:active:not(:disabled) {
+          transform: translateY(0);
+          box-shadow: none;
+        }
+        .dat-login-cta:focus-visible {
+          outline: 2px solid #FFCC00;
+          outline-offset: 3px;
+        }
+        .dat-login-cta:disabled {
+          cursor: wait;
+          opacity: 0.75;
+        }
+      `}</style>
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={pending}
+        aria-busy={pending}
+        className="dat-login-cta inline-flex w-full items-center justify-center"
+        style={{
+          appearance: "none",
+          WebkitAppearance: "none",
+          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+          fontSize: "0.95rem",
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.18em",
+          backgroundColor: "#FFCC00",
+          color: "#241123",
+          border: "none",
+          borderRadius: "6px",
+          padding: "1.25rem 1.5rem",
+          gap: "1.25rem",
+          cursor: "pointer",
+          width: "100%",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
-        <GoogleG />
-      </span>
-      <span>{pending ? "Connecting…" : "Continue with Google"}</span>
-    </button>
+        {/* Official Google "G" mark */}
+        <span
+          aria-hidden
+          className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white"
+          style={{ flexShrink: 0 }}
+        >
+          <GoogleG />
+        </span>
+        <span>{pending ? "Connecting…" : "Continue with Google"}</span>
+      </button>
+    </>
   );
 }
 
