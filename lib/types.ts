@@ -52,6 +52,8 @@ export interface AlumniRow {
   productions?: string[];
   festival?: string;
   identityTags: string[];
+  practiceTags: string[];
+  exploreCareTags: string[];
   statusFlags: string[];
   programSeasons: number[];
 
@@ -101,7 +103,14 @@ export interface AlumniRow {
   website?: string;
   socials?: string[];
   hasContactInfo?: boolean;
-  }
+
+  // Visibility flags ("false" = hide; anything else = show)
+  showWebsite?: string;
+  showPublicEmail?: string;
+
+  // Featured link computed from primarySocial + individual platform value
+  featuredLink?: { url: string; label: string };
+}
 
 // ========== Updates ==========
 /**

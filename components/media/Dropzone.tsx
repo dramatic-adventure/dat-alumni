@@ -1,7 +1,7 @@
 // /components/media/Dropzone.tsx
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 
 type Reject = { file: File; reason: string };
 
@@ -19,7 +19,11 @@ type Props = {
 
   label?: string;
   sublabel?: string;
+  /** if provided, replaces default label/sublabel paragraph */
+  children?: React.ReactNode;
   className?: string;
+  /** inline styles applied to the outer container, merged with font-family default */
+  style?: React.CSSProperties;
 
   /** if you want drag-only in some contexts */
   allowClick?: boolean; // default true
@@ -73,7 +77,9 @@ export default function Dropzone({
 
   label = "Choose files",
   sublabel = "or drag & drop here",
+  children,
   className = "",
+  style,
 
   allowClick = true,
 }: Props) {
@@ -168,12 +174,14 @@ export default function Dropzone({
         disabled ? "opacity-60" : "",
         className,
       ].join(" ")}
-      style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif" }}
+      style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", ...style }}
     >
-      <p className="m-0 text-sm">
-        <span className={allowClick && !disabled ? "underline" : ""}>{label}</span>{" "}
-        <span className="text-gray-500">{sublabel}</span>
-      </p>
+      {children ?? (
+        <p className="m-0 text-sm">
+          <span className={allowClick && !disabled ? "underline" : ""}>{label}</span>{" "}
+          <span className="text-gray-500">{sublabel}</span>
+        </p>
+      )}
 
       <input
         ref={inputRef}

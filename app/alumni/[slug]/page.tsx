@@ -519,6 +519,8 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
           location: (normalizedAlumni as any).location || "",
           headshotUrl: (normalizedAlumni as any).headshotUrl || "",
           identityTags: (normalizedAlumni as any).identityTags || [],
+          practiceTags: (normalizedAlumni as any).practiceTags || [],
+          exploreCareTags: (normalizedAlumni as any).exploreCareTags || [],
           statusFlags: mergedStatusFlags,
           programBadges: (normalizedAlumni as any).programBadges || [],
           programSeasons: (normalizedAlumni as any).programSeasons || [],

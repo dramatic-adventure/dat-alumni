@@ -257,6 +257,8 @@ const lookupUrl = useMemo(() => {
     bioLong: "",
 
     website: "",
+    showWebsite: "",
+    showPublicEmail: "",
     instagram: "",
     youtube: "",
     vimeo: "",
@@ -268,20 +270,28 @@ const lookupUrl = useMemo(() => {
     roles: "",
     pronouns: "",
     identityTags: "",
+    practiceTags: "",
+    exploreCareTags: "",
     languages: "",
+    currentTitle: "",
     currentWork: "",
     programs: "",
     tags: "",
     statusFlags: "",
     spotlight: "",
 
+    currentHeadshotId: "",
     currentHeadshotUrl: "",
+    featuredAlbumId: "",
+    featuredReelId: "",
+    featuredEventId: "",
 
     x: "",
     tiktok: "",
     threads: "",
     bluesky: "",
     linkedin: "",
+    newsletter: "",
     primarySocial: "instagram",
 
     currentUpdateText: "",
@@ -310,8 +320,36 @@ const lookupUrl = useMemo(() => {
     storyTimeStamp: "",
   });
 
-  // ✅ Single source of truth for “who is this?”
+  // ✅ Single source of truth for "who is this?"
   const isLoaded = !!stableAlumniId && !!liveBaseline;
+
+  // Dirty detection: compare live profile against last-saved baseline
+  const contactDirty = useMemo(() => {
+    if (!isLoaded) return false;
+    return MODULES["Contact"].fieldKeys.some(
+      (k) => String((profile as any)[k] ?? "") !== String((liveBaseline as any)[k] ?? "")
+    );
+  }, [profile, liveBaseline, isLoaded]);
+
+  const basicsDirty = useMemo(() => {
+    if (!isLoaded) return false;
+    const nameChanged = name !== liveBaseline?.name;
+    const locChanged = location !== liveBaseline?.location;
+    return (
+      nameChanged ||
+      locChanged ||
+      MODULES["Basics"].fieldKeys.some(
+        (k) => String((profile as any)[k] ?? "") !== String((liveBaseline as any)[k] ?? "")
+      )
+    );
+  }, [profile, liveBaseline, isLoaded, name, location]);
+
+  const identityDirty = useMemo(() => {
+    if (!isLoaded) return false;
+    return MODULES["Identity"].fieldKeys.some(
+      (k) => String((profile as any)[k] ?? "") !== String((liveBaseline as any)[k] ?? "")
+    );
+  }, [profile, liveBaseline, isLoaded]);
 
   /* drafts */
   const basicsDraft = useDraft({
@@ -337,6 +375,8 @@ const lookupUrl = useMemo(() => {
     key: stableAlumniId ? `draft:${stableAlumniId}:contact` : "draft:__none__:contact",
     initial: {
       website: "",
+      showWebsite: "",
+      showPublicEmail: "",
       instagram: "",
       x: "",
       tiktok: "",
@@ -348,6 +388,7 @@ const lookupUrl = useMemo(() => {
       imdb: "",
       facebook: "",
       linktree: "",
+      newsletter: "",
       publicEmail: "",
       primarySocial: "instagram",
     },
@@ -421,7 +462,7 @@ const lookupUrl = useMemo(() => {
     showToastRef.current?.(msg, type);
 
   // Lift the Basics save click handler into a named function (logic unchanged)
-  async function handleSaveBasics() {
+  async function handleSaveBasics(headshotUrl?: string) {
     setLoading(true);
     try {
       const alumniId = stableAlumniId;
@@ -430,7 +471,10 @@ const lookupUrl = useMemo(() => {
 
       const hadStagedHeadshot = !!headshotFile;
 
-      let nextProfile: any = profile;
+      // Apply URL-input override if provided (no staged file needed)
+      let nextProfile: any = headshotUrl
+        ? { ...profile, currentHeadshotUrl: headshotUrl }
+        : profile;
 
       if (headshotFile) {
         if (headshotUploadInFlight.current) {
@@ -510,7 +554,7 @@ const lookupUrl = useMemo(() => {
     setProfile((p: any) => ({
       ...p,
 
-      // ✅ clear pointer (prevents “accidentally editing last-selected story”)
+      // ✅ clear pointer (prevents "accidentally editing last-selected story")
       storyKey: "",
 
       // ✅ clear buffer fields
@@ -818,24 +862,6 @@ const openEventAndScroll = () => {
   /* MEDIA HUB click */
   const hubRef = useRef<HTMLDivElement | null>(null);
 
-  /* socials (UI only) */
-  const ALL_SOCIALS = [
-    "instagram",
-    "x",
-    "tiktok",
-    "threads",
-    "bluesky",
-    "linkedin",
-    "youtube",
-    "vimeo",
-    "facebook",
-  ] as const;
-
-  const [visibleSocials, setVisibleSocials] = useState<string[]>([
-    "instagram",
-    "x",
-    "linkedin",
-  ]);
   const [primarySocial, setPrimarySocial] = useState<string>("instagram");
 
   // ✅ keep UI-only primarySocial state synced to profile.primarySocial
@@ -856,6 +882,18 @@ const openEventAndScroll = () => {
 
   const lastBasicsDraftSig = useRef<string>("");
   const lastContactDraftSig = useRef<string>("");
+
+  // Browser leave warning when there are unsaved changes
+  useEffect(() => {
+    const anyDirty = contactDirty || basicsDirty || identityDirty;
+    if (!anyDirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [contactDirty, basicsDirty, identityDirty]);
 
   const [lastPostedId, setLastPostedId] = useState<string | null>(null);
 
@@ -919,7 +957,10 @@ useEffect(() => {
         pronouns: String(j?.pronouns || p.pronouns || ""),
         roles: String(j?.roles || p.roles || ""),
         identityTags: String(j?.identityTags || p.identityTags || ""),
+        practiceTags: String(j?.practiceTags || p.practiceTags || ""),
+        exploreCareTags: String(j?.exploreCareTags || p.exploreCareTags || ""),
         languages: String(j?.languages || p.languages || ""),
+        currentTitle: String(j?.currentTitle || p.currentTitle || ""),
         currentWork: String(j?.currentWork || p.currentWork || ""),
 
         bioShort: String(j?.bioShort || p.bioShort || ""),
@@ -939,7 +980,10 @@ useEffect(() => {
         imdb: String(j?.imdb || p.imdb || ""),
         facebook: String(j?.facebook || p.facebook || ""),
         linktree: String(j?.linktree || p.linktree || ""),
+        newsletter: String(j?.newsletter || p.newsletter || ""),
         publicEmail: String(j?.publicEmail || p.publicEmail || ""),
+        showWebsite: String(j?.showWebsite ?? p.showWebsite ?? ""),
+        showPublicEmail: String(j?.showPublicEmail ?? p.showPublicEmail ?? ""),
 
         programs: String(j?.programs || p.programs || ""),
         tags: String(j?.tags || p.tags || ""),
@@ -962,6 +1006,10 @@ useEffect(() => {
         secondLocation: String(j?.secondLocation || p.secondLocation || ""),
 
         currentHeadshotUrl: String(j?.currentHeadshotUrl || p.currentHeadshotUrl || ""),
+        currentHeadshotId: String(j?.currentHeadshotId || p.currentHeadshotId || ""),
+        featuredAlbumId: String(j?.featuredAlbumId || p.featuredAlbumId || ""),
+        featuredReelId: String(j?.featuredReelId || p.featuredReelId || ""),
+        featuredEventId: String(j?.featuredEventId || p.featuredEventId || ""),
 
         storyTitle: String(j?.storyTitle || p.storyTitle || ""),
         storyProgram: String(j?.storyProgram || p.storyProgram || ""),
@@ -1306,7 +1354,7 @@ async function rehydrate() {
     const slug = String(j?.canonicalSlug || j?.slug || "").trim();
 
     // ✅ Same fallback: slug may BE the alumniId
-    // (optional) if you want a separate “story list slug”, add state for it.
+    // (optional) if you want a separate "story list slug", add state for it.
     // Otherwise do nothing here.
     const s = slugFromLookupPayload(j);
     if (s) setCurrentSlug(s);
@@ -1332,7 +1380,10 @@ async function rehydrate() {
         pronouns: String(j?.pronouns || p.pronouns || ""),
         roles: String(j?.roles || p.roles || ""),
         identityTags: String(j?.identityTags || p.identityTags || ""),
+        practiceTags: String(j?.practiceTags || p.practiceTags || ""),
+        exploreCareTags: String(j?.exploreCareTags || p.exploreCareTags || ""),
         languages: String(j?.languages || p.languages || ""),
+        currentTitle: String(j?.currentTitle || p.currentTitle || ""),
         currentWork: String(j?.currentWork || p.currentWork || ""),
 
         bioShort: String(j?.bioShort || p.bioShort || ""),
@@ -1352,7 +1403,10 @@ async function rehydrate() {
         imdb: String(j?.imdb || p.imdb || ""),
         facebook: String(j?.facebook || p.facebook || ""),
         linktree: String(j?.linktree || p.linktree || ""),
+        newsletter: String(j?.newsletter || p.newsletter || ""),
         publicEmail: String(j?.publicEmail || p.publicEmail || ""),
+        showWebsite: String(j?.showWebsite ?? p.showWebsite ?? ""),
+        showPublicEmail: String(j?.showPublicEmail ?? p.showPublicEmail ?? ""),
 
         programs: String(j?.programs || p.programs || ""),
         tags: String(j?.tags || p.tags || ""),
@@ -1495,7 +1549,7 @@ async function saveStoryMapViaWriter(opts?: { clearAfter?: boolean }) {
       setProfile((p: any) => ({
         ...p,
         storyKey: nextKey,
-        // ✅ show “this is the current edit session”
+        // ✅ show "this is the current edit session"
         storyTimeStamp: NOW_ISO(),
       }));
     }
@@ -1657,19 +1711,11 @@ setProgress((p) => ({
 }
 
 
-    // CONTACT: clear hidden socials & set primary (do not rely on async setProfile)
+    // CONTACT: ensure primarySocial is in sync before save
     let profileForSave: any = profileOverride ?? profile;
 
-    // reuse the existing tagKey computed earlier in this function
     if (tagKey === "contact") {
-      const next = { ...(profileForSave as any) }; // use override if provided
-      const ALL = ALL_SOCIALS as unknown as string[];
-      ALL.forEach((k) => {
-        if (!visibleSocials.includes(k)) next[k] = "";
-      });
-      if (visibleSocials.length && primarySocial && visibleSocials.includes(primarySocial)) {
-        next.primarySocial = primarySocial;
-      }
+      const next = { ...(profileForSave as any), primarySocial };
       setProfile(next);
       profileForSave = next;
     }
@@ -1949,10 +1995,10 @@ return (
         labelStyle={labelStyle}
         inputStyle={inputStyle}
         inputLockedStyle={inputLockedStyle}
-        datButtonGhost={datButtonGhost}
         datButtonLocal={datButtonLocal}
         COLOR={COLOR}
         loading={loading}
+        isDirty={basicsDirty}
         autoDetected={autoDetected}
         currentSlug={currentSlug}
         name={name}
@@ -1969,6 +2015,12 @@ return (
         toast={toastNow}
         openPicker={openPicker}
         onSave={handleSaveBasics}
+        alumniId={stableAlumniId}
+        onHeadshotFeatured={async (fileId) => {
+          setAssets((a) => ({ ...a, [POINTER_MAP["headshot"]]: fileId }));
+          showToastRef.current?.("Headshot updated — profile basics will reflect the change shortly.");
+          await rehydrate();
+        }}
       />
     }
     identityPanel={
@@ -1979,6 +2031,7 @@ return (
         inputStyle={inputStyle}
         datButtonLocal={datButtonLocal}
         loading={loading}
+        isDirty={identityDirty}
         profile={profile}
         setProfile={setProfile}
         renderFieldsOrNull={renderFieldsOrNull}
@@ -2007,20 +2060,15 @@ return (
       <ContactPanel
         explainStyleLocal={explainStyleLocal}
         subheadChipStyle={subheadChipStyle}
-        datButtonGhost={datButtonGhost}
         datButtonLocal={datButtonLocal}
         labelStyle={labelStyle}
         inputStyle={inputStyle}
         loading={loading}
-        ALL_SOCIALS={ALL_SOCIALS}
-        visibleSocials={visibleSocials}
-        setVisibleSocials={setVisibleSocials}
+        isDirty={contactDirty}
         primarySocial={primarySocial}
         setPrimarySocial={setPrimarySocial}
         profile={profile}
         setProfile={setProfile}
-        ContactEditKeys={ContactEditKeys}
-        renderFieldsOrNull={renderFieldsOrNull}
         saveCategory={saveCategory as any}
         contactFieldKeys={MODULES["Contact"].fieldKeys}
         onClearDraft={() => contactDraft.clearDraft()}
@@ -2109,13 +2157,16 @@ return (
   onClose={() => setPickerOpen(false)}
   alumniId={stableAlumniId}
   kind={pickerKind}
-  title={`Choose ${pickerKind}`}
+  title={pickerKind === "headshot" ? "Choose a past headshot" : `Choose ${pickerKind}`}
   onFeatured={async (fileId?: string) => {
     if (fileId) {
       const key = POINTER_MAP[pickerKind];
       setAssets((a) => ({ ...a, [key]: fileId }));
     }
-    showToastRef.current?.("Featured media updated.");
+    const msg = pickerKind === "headshot"
+      ? "Headshot updated — profile basics will reflect the change shortly."
+      : "Featured media updated.";
+    showToastRef.current?.(msg);
     await rehydrate();
   }}
 />

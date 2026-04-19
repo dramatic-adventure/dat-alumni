@@ -8,6 +8,7 @@ interface ContactPanelProps {
   email?: string;
   website?: string;
   socials?: string[];
+  featuredLink?: { url: string; label: string };
   onClose: () => void;
 }
 
@@ -94,6 +95,7 @@ export default function ContactPanel({
   email,
   website,
   socials = [],
+  featuredLink,
   onClose,
 }: ContactPanelProps) {
 const linkClasses =
@@ -103,7 +105,7 @@ const linkClasses =
   const websiteSafe = String(website || "").trim();
   const socialsSafe = (socials || []).map((s) => String(s || "").trim()).filter(Boolean);
 
-  const hasLinks = !!emailSafe || !!websiteSafe || socialsSafe.length > 0;
+  const hasLinks = !!emailSafe || !!websiteSafe || socialsSafe.length > 0 || !!featuredLink;
   const panelRef = useRef<HTMLDivElement>(null);
 
   const Arrow = () => (
@@ -188,6 +190,19 @@ const linkClasses =
               >
                 <Arrow />
                 <span>{displayUrl(websiteSafe)}</span>
+              </a>
+            )}
+
+            {featuredLink && (
+              <a
+                href={featuredLink.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={linkClasses}
+                style={{ textDecoration: "none" }}
+              >
+                <Arrow />
+                <span>{featuredLink.label}</span>
               </a>
             )}
 

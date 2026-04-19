@@ -116,13 +116,26 @@ export const LIVE_KEYS: Array<keyof AlumniProfile | string> = [
   "publicEmail",
   "imdb",
 
+  "newsletter",
+  "showWebsite",
+  "showPublicEmail",
+  "primarySocial",
+
   "spotlight",
   "programs",
   "tags",
   "statusFlags",
   "backgroundStyle",
 
+  "currentTitle",
+  "identityTags",
+  "languages",
+
   "currentHeadshotUrl",
+  "currentHeadshotId",
+  "featuredAlbumId",
+  "featuredReelId",
+  "featuredEventId",
 ];
 
 /** ---------- normalize ---------- */

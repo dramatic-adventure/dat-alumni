@@ -13,26 +13,32 @@ export function baselineFromLookup(j: any, slug: string, nm: string, loc: string
     pronouns: String(j?.pronouns || ""),
     roles: String(j?.roles || ""),
     identityTags: String(j?.identityTags || ""),
+    practiceTags: String(j?.practiceTags || ""),
+    exploreCareTags: String(j?.exploreCareTags || ""),
     languages: String(j?.languages || ""),
+    currentTitle: String(j?.currentTitle || ""),
     currentWork: String(j?.currentWork || ""),
 
     bioShort: String(j?.bioShort || ""),
     bioLong: String(j?.bioLong || ""),
 
     website: String(j?.website || ""),
+    showWebsite: String(j?.showWebsite ?? ""),
+    showPublicEmail: String(j?.showPublicEmail ?? ""),
     instagram: String(j?.instagram || ""),
     x: String(j?.x || ""),
     tiktok: String(j?.tiktok || ""),
     threads: String(j?.threads || ""),
     bluesky: String(j?.bluesky || ""),
     linkedin: String(j?.linkedin || ""),
-    primarySocial: String(j?.primarySocial || ""),
+    primarySocial: String(j?.primarySocial || "instagram"),
 
     youtube: String(j?.youtube || ""),
     vimeo: String(j?.vimeo || ""),
     imdb: String(j?.imdb || ""),
     facebook: String(j?.facebook || ""),
     linktree: String(j?.linktree || ""),
+    newsletter: String(j?.newsletter || ""),
     publicEmail: String(j?.publicEmail || ""),
 
     spotlight: String(j?.spotlight || ""),
@@ -50,7 +56,11 @@ export function baselineFromLookup(j: any, slug: string, nm: string, loc: string
     upcomingEventExpiresAt: String(j?.upcomingEventExpiresAt || ""),
     upcomingEventDescription: String(j?.upcomingEventDescription || ""),
 
+    currentHeadshotId: String(j?.currentHeadshotId || ""),
     currentHeadshotUrl: String(j?.currentHeadshotUrl || ""),
+    featuredAlbumId: String(j?.featuredAlbumId || ""),
+    featuredReelId: String(j?.featuredReelId || ""),
+    featuredEventId: String(j?.featuredEventId || ""),
 
     storyTitle: String(j?.storyTitle || ""),
     storyProgram: String(j?.storyProgram || ""),
@@ -64,6 +74,7 @@ export function baselineFromLookup(j: any, slug: string, nm: string, loc: string
     storyMoreInfoUrl: String(j?.storyMoreInfoUrl || ""),
     storyCountry: String(j?.storyCountry || ""),
     storyShowOnMap: boolCell(j?.storyShowOnMap),
-    storyKey: String(j?.storyKey || ""),
+    // Sheet header is `activeStoryKey`; code/UI uses `storyKey`. Accept either.
+    storyKey: String(j?.storyKey || j?.activeStoryKey || ""),
   };
 }

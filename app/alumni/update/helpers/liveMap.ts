@@ -15,12 +15,17 @@ export function toLiveSavableProfile(p: any) {
     pronouns: String(p.pronouns || "").trim(),
     roles: String(p.roles || "").trim(),
     identityTags: String(p.identityTags || "").trim(),
+    practiceTags: String(p.practiceTags || "").trim(),
+    exploreCareTags: String(p.exploreCareTags || "").trim(),
     languages: String(p.languages || "").trim(),
+    currentTitle: String(p.currentTitle || "").trim(),
     currentWork: String(p.currentWork || "").trim(),
     bioShort: String(p.bioShort || "").trim(),
     bioLong: String(p.bioLong || "").trim(),
 
     website: String(p.website || "").trim(),
+    showWebsite: String(p.showWebsite ?? "").trim(),
+    showPublicEmail: String(p.showPublicEmail ?? "").trim(),
     instagram: String(p.instagram || "").trim(),
     x: String(p.x || "").trim(),
     tiktok: String(p.tiktok || "").trim(),
@@ -33,6 +38,7 @@ export function toLiveSavableProfile(p: any) {
     imdb: String(p.imdb || "").trim(),
     facebook: String(p.facebook || "").trim(),
     linktree: String(p.linktree || "").trim(),
+    newsletter: String(p.newsletter || "").trim(),
     publicEmail: String(p.publicEmail || "").trim(),
 
     spotlight: String(p.spotlight || "").trim(),
@@ -50,7 +56,11 @@ export function toLiveSavableProfile(p: any) {
     upcomingEventExpiresAt: String(p.upcomingEventExpiresAt || "").trim(),
     upcomingEventDescription: String(p.upcomingEventDescription || "").trim(),
 
+    currentHeadshotId: String(p.currentHeadshotId || "").trim(),
     currentHeadshotUrl: String(p.currentHeadshotUrl || "").trim(),
+    featuredAlbumId: String(p.featuredAlbumId || "").trim(),
+    featuredReelId: String(p.featuredReelId || "").trim(),
+    featuredEventId: String(p.featuredEventId || "").trim(),
 
     storyTitle: String(p.storyTitle || "").trim(),
     storyProgram: String(p.storyProgram || "").trim(),
@@ -64,7 +74,9 @@ export function toLiveSavableProfile(p: any) {
     storyMoreInfoUrl: String(p.storyMoreInfoUrl || "").trim(),
     storyCountry: String(p.storyCountry || "").trim(),
     storyShowOnMap: boolCell(p.storyShowOnMap),
-    storyTimeStamp: String(p.storyTimeStamp || "").trim(), // keep if already present
+    storyTimeStamp: String(p.storyTimeStamp || "").trim(), // system-written; passthrough
+    // Code-side key is `storyKey`; the save route aliases it to the sheet's
+    // `activeStoryKey` column.
     storyKey: String(p.storyKey || "").trim(),
 
   };

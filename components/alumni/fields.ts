@@ -1,5 +1,16 @@
 // /components/alumni/fields.ts
-import type { AlumniProfile, RoleAtDAT, IdentityTag } from "@/schemas";
+import type {
+  AlumniProfile,
+  RoleAtDAT,
+  IdentityTag,
+  PracticeTag,
+  ExploreCareTag,
+} from "@/schemas";
+import {
+  IDENTITY_TAGS,
+  PRACTICE_TAGS,
+  EXPLORE_CARE_TAGS,
+} from "@/lib/alumniTaxonomy";
 
 /** What kinds of UI controls we’ll render later */
 export type FieldKind =
@@ -48,17 +59,30 @@ export const ROLE_OPTIONS: { value: RoleAtDAT; label: string }[] = [
   "Other",
 ].map((v) => ({ value: v as RoleAtDAT, label: v }));
 
-export const IDENTITY_OPTIONS: { value: IdentityTag; label: string }[] = [
-  "Global Majority",
-  "LGBTQIA+",
-  "Disabled",
-  "Immigrant/First-Gen",
-  "Parent/Caregiver",
-  "Veteran",
-  "Rural",
-  "Indigenous",
-  "Other",
-].map((v) => ({ value: v as IdentityTag, label: v }));
+/**
+ * "How I Identify" — V1 canonical identity tags.
+ * Source of truth: lib/alumniTaxonomy.ts IDENTITY_TAGS.
+ * Self-selected only; never inferred; not popularity-sorted.
+ */
+export const IDENTITY_OPTIONS: { value: IdentityTag; label: string }[] =
+  IDENTITY_TAGS.filter((t) => t.status === "active").map((t) => ({
+    value: t.label as IdentityTag,
+    label: t.label,
+  }));
+
+/** "My Artistic Practice" — V1 canonical practice tags. */
+export const PRACTICE_OPTIONS: { value: PracticeTag; label: string }[] =
+  PRACTICE_TAGS.filter((t) => t.status === "active").map((t) => ({
+    value: t.label as PracticeTag,
+    label: t.label,
+  }));
+
+/** "What I Explore & Care About in My Work" — V1 canonical themes. */
+export const EXPLORE_CARE_OPTIONS: { value: ExploreCareTag; label: string }[] =
+  EXPLORE_CARE_TAGS.filter((t) => t.status === "active").map((t) => ({
+    value: t.label as ExploreCareTag,
+    label: t.label,
+  }));
 
 /**
  * NOTE:
@@ -96,12 +120,41 @@ export const PROFILE_FIELDS: FieldDef[] = [
     placeholder: "isabel-martinez",
   },
   {
-    key: "currentRole",
-    label: "Current Role / Title",
+    key: "currentTitle",
+    label: "Current Title / Role",
     kind: "text",
     placeholder: "Actor, Theatremaker, Psychologist, Arts Educator…",
     help:
       "Who you are today — even if your journey has shifted beyond the arts. This appears prominently near your name.",
+  },
+  {
+    key: "currentWork",
+    label: "What You’re Working On",
+    kind: "text",
+    placeholder: "Developing a new play, on tour with X, on sabbatical…",
+    help:
+      "A short line about what’s active for you right now — a project, tour, role, or current chapter.",
+  },
+  {
+    key: "pronouns",
+    label: "Pronouns",
+    kind: "text",
+    placeholder: "she/her, they/them, he/him…",
+    help: "Optional. How you'd like to be referred to on your profile.",
+  },
+  {
+    key: "languages",
+    label: "Languages",
+    kind: "text",
+    placeholder: "English, Spanish, Twi…",
+    help: "Comma-separated list of languages you speak.",
+  },
+  {
+    key: "roles",
+    label: "Roles",
+    kind: "text",
+    help:
+      "Comma-separated list of hats you wear — onstage, backstage, in leadership, or in your current life/work.",
   },
   {
     key: "location",
@@ -128,11 +181,27 @@ export const PROFILE_FIELDS: FieldDef[] = [
   },
   {
     key: "identityTags",
-    label: "Identity Tags",
+    label: "How I Identify",
     kind: "multiselect",
     options: IDENTITY_OPTIONS,
     help:
-      "Optional discovery tags. Choose any that feel true to you. These help alumni find collaborators and shared communities.",
+      "Optional self-identified tags that may help others understand your perspective and lived context. Pick up to 3.",
+  },
+  {
+    key: "practiceTags",
+    label: "My Artistic Practice",
+    kind: "multiselect",
+    options: PRACTICE_OPTIONS,
+    help:
+      "Select the forms, methods, or modes of making that best reflect your work. Pick up to 3.",
+  },
+  {
+    key: "exploreCareTags",
+    label: "What I Explore & Care About in My Work",
+    kind: "multiselect",
+    options: EXPLORE_CARE_OPTIONS,
+    help:
+      "Select the themes, questions, and causes that most shape your work. Pick up to 4.",
   },
 
   // ✅ bioLong
@@ -170,16 +239,6 @@ export const PROFILE_FIELDS: FieldDef[] = [
     ],
     help:
       "Choose a subtle background to match your vibe. You can change this anytime; “Kraft” is the default.",
-  },
-
-  // ───────────────────────────────────────────────── Roles (DAT & Current)
-  {
-    key: "datRoles",
-    label: "Roles with DAT",
-    kind: "multiselect",
-    options: ROLE_OPTIONS,
-    help:
-      "Select every hat you’ve worn with DAT — onstage, backstage, or in leadership. We’ll surface these as badges on your profile.",
   },
 
   // ───────────────────────────────────────────────── Links & Contact
@@ -236,6 +295,27 @@ export const PROFILE_FIELDS: FieldDef[] = [
       "Paste your handle (the part after /in/) or a full profile URL. We’ll save https://www.linkedin.com/in/yourhandle.",
   },
   {
+    key: "primarySocial",
+    label: "Primary Social (featured)",
+    kind: "select",
+    options: [
+      { value: "", label: "(none)" },
+      { value: "instagram", label: "Instagram" },
+      { value: "x", label: "X (Twitter)" },
+      { value: "tiktok", label: "TikTok" },
+      { value: "threads", label: "Threads" },
+      { value: "bluesky", label: "Bluesky" },
+      { value: "linkedin", label: "LinkedIn" },
+      { value: "youtube", label: "YouTube" },
+      { value: "vimeo", label: "Vimeo" },
+      { value: "imdb", label: "IMDb" },
+      { value: "facebook", label: "Facebook" },
+      { value: "linktree", label: "Linktree" },
+      { value: "website", label: "Website" },
+    ],
+    help: "Which link should be featured most prominently on your profile.",
+  },
+  {
     key: "youtube",
     label: "YouTube",
     kind: "text",
@@ -249,6 +329,20 @@ export const PROFILE_FIELDS: FieldDef[] = [
     kind: "text",
     placeholder: "handle or profile URL",
     help: "Paste your handle or a full URL. We’ll save https://vimeo.com/yourhandle.",
+  },
+  {
+    key: "imdb",
+    label: "IMDb",
+    kind: "text",
+    placeholder: "nm1234567 or full IMDb URL",
+    help: "Paste your IMDb name ID (e.g., nm1234567) or a full IMDb URL.",
+  },
+  {
+    key: "newsletter",
+    label: "Newsletter",
+    kind: "url",
+    placeholder: "https://yourname.substack.com or similar",
+    help: "Link to your newsletter subscription page (Substack, Beehiiv, Mailchimp, etc.).",
   },
   {
     key: "facebook",
@@ -298,6 +392,41 @@ export const PROFILE_FIELDS: FieldDef[] = [
     kind: "date",
     help:
       "Your update will auto-archive after this date so your profile stays fresh. (Default is ~90 days if you leave this blank.)",
+  },
+
+  // ───────────────────────────────────────────────── Upcoming Event
+  {
+    key: "upcomingEventTitle",
+    label: "Upcoming Event Title",
+    kind: "text",
+    help: "The title of an upcoming performance, screening, class, or appearance.",
+  },
+  {
+    key: "upcomingEventLink",
+    label: "Upcoming Event Link",
+    kind: "url",
+    placeholder: "https://…",
+    help: "Tickets, RSVP, or more-info URL.",
+  },
+  {
+    key: "upcomingEventDate",
+    label: "Upcoming Event Date",
+    kind: "date",
+    help: "The date the event happens.",
+  },
+  {
+    key: "upcomingEventExpiresAt",
+    label: "Upcoming Event Expires",
+    kind: "date",
+    help:
+      "When this event should auto-archive off your profile. Defaults to the event date if left blank.",
+  },
+  {
+    key: "upcomingEventDescription",
+    label: "Upcoming Event Description",
+    kind: "textarea",
+    maxLen: 600,
+    help: "A short description of the event.",
   },
 
   // ───────────────────────────────────────────────── Story Map Contribution (FLAT KEYS that match Profile-Live)
@@ -396,7 +525,7 @@ export const PROFILE_FIELDS: FieldDef[] = [
     help: "Who said the quote? If it’s you, include your name as you’d like it to appear.",
   },
 
-  // ✅ IMPORTANT: Profile-Live header is storystoryShowOnMap (NOT storyShowOnMap)
+  // Profile-Live header: storyShowOnMap (single prefix, confirmed against live sheet)
   {
     key: "storyShowOnMap",
     label: "Show on Map?",
@@ -405,62 +534,54 @@ export const PROFILE_FIELDS: FieldDef[] = [
       "Turn this on when you’re ready for this story to appear publicly on the map (admins can add lat/lng later).",
   },
 
-  // ───────────────────────────────────────────────── Tech Support
-  {
-    key: "supportBug",
-    label: "Report a Bug",
-    kind: "textarea",
-    maxLen: 1000,
-    help:
-      "What broke, where did it happen, and what did you expect to see? Include steps to reproduce if you can.",
-  },
-  {
-    key: "supportFeature",
-    label: "Request a Feature",
-    kind: "textarea",
-    maxLen: 1000,
-    help:
-      "What would make this better for you or the community? Share the goal, not just the button.",
-  },
-  {
-    key: "supportAssistance",
-    label: "Request Technical Assistance",
-    kind: "textarea",
-    maxLen: 1000,
-    help:
-      "Tell us what you’re trying to do and where you’re getting stuck. We’ll follow up to help.",
-  },
+  // NOTE: Tech Support inputs (bug report / feature request / assistance)
+  // are NOT profile fields. They route through their own submission endpoint
+  // and must not be part of PROFILE_FIELDS / PROFILE_GROUPS / LIVE_KEYS.
 ];
 
-/** Section groupings used by the renderer */
+/**
+ * Section groupings used by the renderer and by editKeys.ts.
+ *
+ * Canonical rule: every alumni-editable field must appear in exactly one group.
+ * Admin-only and server-controlled fields must NOT appear here.
+ */
 export const PROFILE_GROUPS: Record<string, string[]> = {
   "Profile Basics": [
     "name",
     "slug",
-    "currentRole",
+    "currentTitle",
+    "currentWork",
+    "pronouns",
+    "languages",
+    "roles",
     "location",
     "isBiCoastal",
     "secondLocation",
     "identityTags",
+    "practiceTags",
+    "exploreCareTags",
     "bioLong",
     "currentHeadshotUrl",
     "backgroundStyle",
   ],
 
-  "Roles (DAT & Current)": ["datRoles"],
-
   "Contact": [
     "website",
+    "showWebsite",
+    "showPublicEmail",
+    "primarySocial",
     "instagram",
-    "x",
+    "linkedin",
+    "vimeo",
+    "youtube",
+    "imdb",
+    "facebook",
     "tiktok",
     "threads",
     "bluesky",
-    "linkedin",
-    "youtube",
-    "vimeo",
-    "facebook",
+    "x",
     "linktree",
+    "newsletter",
     "publicEmail",
   ],
 
@@ -468,6 +589,14 @@ export const PROFILE_GROUPS: Record<string, string[]> = {
     "currentUpdateText",
     "currentUpdateLink",
     "currentUpdateExpiresAt",
+  ],
+
+  "Upcoming Event": [
+    "upcomingEventTitle",
+    "upcomingEventLink",
+    "upcomingEventDate",
+    "upcomingEventExpiresAt",
+    "upcomingEventDescription",
   ],
 
   // ✅ Flat keys that match Profile-Live headers
@@ -485,6 +614,4 @@ export const PROFILE_GROUPS: Record<string, string[]> = {
     "storyQuoteAttribution",
     "storyShowOnMap",
   ],
-
-  "Tech Support": ["supportBug", "supportFeature", "supportAssistance"],
 };

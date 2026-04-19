@@ -8,10 +8,50 @@ export type RoleAtDAT =
   | "Assistant Stage Manager / Crew" | "Event Host / Emcee / Moderator / Speaker"
   | "Road Manager" | "Staff / Administrator" | "Other";
 
-/** Optional discovery tags (opt-in) */
+/**
+ * "How I Identify" — V1 canonical identity tags (self-selected only).
+ * Never inferred from bio/credits/roles/geography. See lib/alumniTaxonomy.ts.
+ */
 export type IdentityTag =
-  | "Global Majority" | "LGBTQIA+" | "Disabled" | "Immigrant/First-Gen"
-  | "Parent/Caregiver" | "Veteran" | "Rural" | "Indigenous" | "Other";
+  | "Queer"
+  | "Trans"
+  | "Nonbinary"
+  | "Disabled"
+  | "Neurodivergent"
+  | "Indigenous"
+  | "Immigrant"
+  | "First-Generation"
+  | "Diasporic"
+  | "Parent";
+
+/** "My Artistic Practice" — V1 canonical practice tags. */
+export type PracticeTag =
+  | "Teaching Artist"
+  | "Devised Theatre"
+  | "Physical Theatre"
+  | "Site-Specific Performance"
+  | "Community-Engaged Theatre"
+  | "New Work Development"
+  | "Interdisciplinary Performance"
+  | "Ensemble Creation"
+  | "Immersive Theatre"
+  | "Documentary Theatre"
+  | "Cross-Cultural Collaboration";
+
+/** "What I Explore & Care About in My Work" — V1 canonical themes. */
+export type ExploreCareTag =
+  | "Myth & Folklore"
+  | "Belonging"
+  | "Identity & Representation"
+  | "Migration & Diaspora"
+  | "Youth Voice"
+  | "Cultural Preservation"
+  | "Environmental Justice"
+  | "Arts Access"
+  | "Memory & History"
+  | "Education Equity"
+  | "Community Empowerment"
+  | "Place & Landscape";
 
 /** Generic social link (kept for back-compat; specific fields are also supported) */
 export type SocialLink = { platform: string; url: string };
@@ -72,8 +112,14 @@ export type AlumniProfile = {
   /** Profile-Live write key used by the Studio editor. */
   currentHeadshotUrl?: string;
 
-  /** Optional identity tags (opt-in, controlled vocab) */
+  /** Optional identity tags (opt-in, controlled vocab, max 3). */
   identityTags?: IdentityTag[];
+
+  /** Artistic practice tags (controlled vocab, max 3). */
+  practiceTags?: PracticeTag[];
+
+  /** Themes / causes the artist explores (controlled vocab, max 4). */
+  exploreCareTags?: ExploreCareTag[];
 
   /** Short bio / artist statement (shown near the top of profile) */
   artistStatement?: string;

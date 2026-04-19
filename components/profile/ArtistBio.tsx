@@ -1,8 +1,10 @@
 import React from "react";
-import IdentityTags from "@/components/alumni/IdentityTags";
+import AlumniTagSections from "@/components/alumni/AlumniTagSections";
 
 interface ArtistBioProps {
   identityTags?: string[];
+  practiceTags?: string[];
+  exploreCareTags?: string[];
   artistStatement?: string;
   fontFamily?: string;
   fontSize?: string;
@@ -12,11 +14,13 @@ interface ArtistBioProps {
   letterSpacing?: string;
   identityTagStyle?: React.CSSProperties;
   bioStyle?: React.CSSProperties;
-  sectionStyle?: React.CSSProperties; // ✅ NEW
+  sectionStyle?: React.CSSProperties;
 }
 
 export default function ArtistBio({
   identityTags = [],
+  practiceTags = [],
+  exploreCareTags = [],
   artistStatement,
   fontFamily = 'var(--font-dm-sans), system-ui, sans-serif',
   fontSize = "1.15rem",
@@ -28,19 +32,29 @@ export default function ArtistBio({
   bioStyle = {},
   sectionStyle = {},
 }: ArtistBioProps) {
-  if (!artistStatement && identityTags.length === 0) return null;
+  const hasAnyTags =
+    identityTags.length > 0 ||
+    practiceTags.length > 0 ||
+    exploreCareTags.length > 0;
+
+  if (!artistStatement && !hasAnyTags) return null;
 
   return (
     <section
       style={{
         backgroundColor: "#2493A9",
         color: "#fff",
-        ...sectionStyle, // ✅ Apply external styles here
+        ...sectionStyle,
       }}
     >
-      {identityTags.length > 0 && (
-        <div className="flex flex-wrap gap-2 justify-end" style={identityTagStyle}>
-          <IdentityTags tags={identityTags} />
+      {hasAnyTags && (
+        <div style={identityTagStyle}>
+          <AlumniTagSections
+            identityTags={identityTags}
+            practiceTags={practiceTags}
+            exploreCareTags={exploreCareTags}
+            align="end"
+          />
         </div>
       )}
       {artistStatement && (

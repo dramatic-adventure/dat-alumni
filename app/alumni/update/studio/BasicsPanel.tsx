@@ -1,13 +1,13 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 
 import Dropzone from "@/components/media/Dropzone";
 import BackgroundSwatches from "@/components/alumni/update/BackgroundSwatches";
-import ProfileStudio, {
-  Field,
+import {
   ghostButton as studioGhostButton,
 } from "@/components/alumni/update/ProfileStudio";
+import HeadshotChooser from "@/app/alumni/update/studio/HeadshotChooser";
 
 function isCheckedTrue(v: any) {
   const s = String(v ?? "").trim().toLowerCase();
@@ -20,11 +20,11 @@ export default function BasicsTab({
   labelStyle,
   inputStyle,
   inputLockedStyle,
-  datButtonGhost,
   datButtonLocal,
   COLOR,
 
   loading,
+  isDirty = false,
   autoDetected,
   currentSlug,
 
@@ -43,20 +43,22 @@ export default function BasicsTab({
   setHeadshotFile,
   headshotPreviewUrl,
 
-  toast, // (msg, type?) => void
-  openPicker, // (kind) => void
-  onSave, // async () => void
+  toast,
+  openPicker,
+  onSave,
+  alumniId,
+  onHeadshotFeatured,
 }: {
   explainStyleLocal: CSSProperties;
   subheadChipStyle: CSSProperties;
   labelStyle: CSSProperties;
   inputStyle: CSSProperties;
   inputLockedStyle: CSSProperties;
-  datButtonGhost: CSSProperties;
   datButtonLocal: CSSProperties;
   COLOR: { ink: string; brand: string; gold: string; teal: string; red: string; snow: string };
 
   loading: boolean;
+  isDirty?: boolean;
   autoDetected: boolean;
   currentSlug: string;
 
@@ -77,8 +79,21 @@ export default function BasicsTab({
 
   toast: (msg: string, type?: "success" | "error") => void;
   openPicker: (kind: "headshot" | "album" | "reel" | "event") => void;
-  onSave: () => Promise<void>;
+  onSave: (headshotUrl?: string) => Promise<void>;
+  alumniId?: string;
+  onHeadshotFeatured?: (fileId: string) => void;
 }) {
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [headshotUrlInput, setHeadshotUrlInput] = useState("");
+  const [showHeadshotChooser, setShowHeadshotChooser] = useState(false);
+
+  const storedHeadshotId = String(profile?.currentHeadshotId || "").trim();
+  const storedHeadshotUrl = String(profile?.currentHeadshotUrl || "").trim();
+  // Prefer ID-based thumbnail (reflects picker selection); fall back to direct URL
+  const currentHeadshotDisplayUrl = storedHeadshotId
+    ? `/api/media/thumb?fileId=${encodeURIComponent(storedHeadshotId)}`
+    : storedHeadshotUrl;
+
   return (
     <div>
       <div id="studio-basics-anchor" />
@@ -91,7 +106,7 @@ export default function BasicsTab({
           Profile Basics
         </span>
 
-        <p style={explainStyleLocal} className="explain">
+        <p style={{ ...explainStyleLocal, opacity: 0.65, fontSize: "0.8rem" }} className="explain">
           Your professional name and slug are locked by default. If your professional name
           changed, unlock it and your slug preview will update automatically.
         </p>
@@ -101,9 +116,9 @@ export default function BasicsTab({
             Profile slug
           </label>
           <input id="slug" value={currentSlug} readOnly style={inputLockedStyle} />
-          <p style={{ ...explainStyleLocal, marginTop: 6 }} className="explain">
+          <p style={{ ...explainStyleLocal, marginTop: 6, opacity: 0.5, fontSize: "0.78rem" }} className="explain">
             {autoDetected
-              ? "We auto-detected your current slug from Profile-Live."
+              ? "Auto-detected from Profile-Live."
               : "Your slug mirrors your professional name."}
           </p>
         </div>
@@ -135,7 +150,7 @@ export default function BasicsTab({
               <button
                 type="button"
                 className="dat-btn-ghost"
-                style={datButtonGhost}
+                style={studioGhostButton}
                 onClick={() => setNameLocked((x) => !x)}
               >
                 {nameLocked ? "My professional name changed" : "Lock name"}
@@ -161,7 +176,7 @@ export default function BasicsTab({
         </div>
 
         <div style={{ marginTop: 18 }}>
-          <label style={{ fontWeight: 700 }}>
+          <label style={{ fontWeight: 500, cursor: "pointer", fontSize: "0.9rem" }}>
             <input
               type="checkbox"
               checked={isCheckedTrue(profile?.isBiCoastal)}
@@ -173,12 +188,12 @@ export default function BasicsTab({
               }
               style={{ marginRight: 10 }}
             />
-            Bi-coastal
+            Check here if you split your time between two cities (e.g. Los Angeles and New York City).
           </label>
 
           {isCheckedTrue(profile?.isBiCoastal) ? (
             <div style={{ marginTop: 12 }}>
-              <label style={labelStyle}>Second location</label>
+              <label style={labelStyle}>Second city / location</label>
               <input
                 value={profile?.secondLocation || ""}
                 onChange={(e) =>
@@ -210,141 +225,258 @@ export default function BasicsTab({
         </div>
       </div>
 
-      {/* Headshot actions (URL + library + upload) */}
+      {/* ── Headshot ──────────────────────────────────────────── */}
       <div
         style={{
-          marginTop: 16,
-          paddingTop: 14,
+          marginTop: 24,
+          paddingTop: 16,
           borderTop: "1px solid rgba(255,255,255,0.12)",
         }}
       >
-        <div style={{ display: "grid", gap: 12 }}>
-          <Field
-            label="Headshot URL (optional)"
-            help="If you paste a URL, it should point directly to the image file (not a webpage)."
-          >
-            <input
-              value={profile?.currentHeadshotUrl || ""}
-              onChange={(e) =>
-                setProfile((p: any) => ({ ...p, currentHeadshotUrl: e.target.value }))
-              }
-              style={inputStyle}
-              placeholder="https://... (direct image URL)"
-            />
-          </Field>
+        <span style={subheadChipStyle} className="subhead-chip">
+          Headshot
+        </span>
 
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ display: "grid", gap: 14 }}>
+          {/* Current saved headshot (when no file is staged) */}
+          {!headshotFile && currentHeadshotDisplayUrl ? (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "84px 1fr",
+                gap: 12,
+                alignItems: "center",
+                padding: 10,
+                border: "1px solid rgba(255,255,255,0.10)",
+                borderRadius: 12,
+                background: "rgba(0,0,0,0.14)",
+              }}
+            >
+              <div
+                style={{
+                  width: 84,
+                  height: 84,
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,0.06)",
+                  flexShrink: 0,
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={currentHeadshotDisplayUrl}
+                  alt="Current headshot"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: 13, opacity: 0.85 }}>Current headshot</div>
+                <div style={{ fontSize: 12, opacity: 0.5, marginTop: 2, color: "#d9d9d9" }}>
+                  Upload a new file below, or use "Choose past headshot" to switch to a previous one.
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {/* Primary path: large drag-and-drop target */}
+          <Dropzone
+            accept="image/*"
+            multiple={false}
+            disabled={loading}
+            label=""
+            sublabel=""
+            onFiles={(files) => setHeadshotFile(files[0] || null)}
+            onReject={(rej) => toast(rej[0]?.reason || "File rejected", "error")}
+            style={{
+              minHeight: 160,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "36px 24px",
+              textAlign: "center",
+              gap: 0,
+            }}
+          >
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 17, letterSpacing: "0.01em" }}>
+              Upload a Headshot
+            </p>
+            <p style={{ margin: "10px 0 4px", fontWeight: 600, fontSize: 15, opacity: 0.85 }}>
+              Drag &amp; Drop
+            </p>
+            <p style={{ margin: "0 0 8px", fontSize: 12, opacity: 0.5 }}>or</p>
+            <p style={{ margin: 0, fontSize: 13, opacity: 0.75, textDecoration: "underline" }}>
+              Click to Browse
+            </p>
+          </Dropzone>
+
+          {/* Staged headshot preview */}
+          {headshotFile ? (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "84px 1fr auto",
+                gap: 12,
+                alignItems: "center",
+                padding: 10,
+                border: "1px solid rgba(255,255,255,0.14)",
+                borderRadius: 12,
+                background: "rgba(0,0,0,0.18)",
+              }}
+            >
+              <div
+                style={{
+                  width: 84,
+                  height: 84,
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,0.06)",
+                }}
+              >
+                {headshotPreviewUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={headshotPreviewUrl}
+                    alt="Staged headshot preview"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                ) : null}
+              </div>
+
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 700, lineHeight: 1.2 }}>Staged headshot</div>
+                <div
+                  style={{
+                    opacity: 0.8,
+                    fontSize: 13,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {headshotFile.name} • {Math.round(headshotFile.size / 1024)} KB
+                </div>
+                <div style={{ opacity: 0.7, fontSize: 12, marginTop: 4 }}>
+                  This will become your featured headshot when you save.
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="dat-btn-ghost"
+                style={studioGhostButton}
+                onClick={() => setHeadshotFile(null)}
+                disabled={loading}
+              >
+                Clear
+              </button>
+            </div>
+          ) : null}
+
+          {/* Secondary actions row */}
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            {alumniId && (
+              <button
+                type="button"
+                style={studioGhostButton}
+                onClick={() => setShowHeadshotChooser((x) => !x)}
+                disabled={loading}
+              >
+                {showHeadshotChooser ? "Hide past headshots" : "Choose past headshot"}
+              </button>
+            )}
+
             <button
               type="button"
-              style={studioGhostButton}
-              onClick={() => openPicker("headshot")}
+              style={{
+                ...studioGhostButton,
+                opacity: 0.7,
+                fontSize: "0.82rem",
+              }}
+              onClick={() => {
+                setShowUrlInput((x) => !x);
+                setHeadshotUrlInput("");
+              }}
               disabled={loading}
             >
-              Choose past headshot
-            </button>
-            <button
-              type="button"
-              style={studioGhostButton}
-              onClick={() => openPicker("album")}
-              disabled={loading}
-            >
-              Open library
+              {showUrlInput ? "Hide URL input" : "Use image URL instead"}
             </button>
           </div>
 
-          <div style={{ display: "grid", gap: 10 }}>
-            <Dropzone
-              accept="image/*"
-              multiple={false}
-              disabled={loading}
-              label="Add a headshot"
-              sublabel="or drag & drop here"
-              onFiles={(files) => setHeadshotFile(files[0] || null)}
-              onReject={(rej) => toast(rej[0]?.reason || "File rejected", "error")}
-            />
-
-            {headshotFile ? (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "84px 1fr auto",
-                  gap: 12,
-                  alignItems: "center",
-                  padding: 10,
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  borderRadius: 12,
-                  background: "rgba(0,0,0,0.18)",
-                }}
-              >
-                <div
-                  style={{
-                    width: 84,
-                    height: 84,
-                    borderRadius: 12,
-                    overflow: "hidden",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    background: "rgba(255,255,255,0.06)",
-                  }}
-                >
-                  {headshotPreviewUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={headshotPreviewUrl}
-                      alt="Staged headshot preview"
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    />
-                  ) : null}
-                </div>
-
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, lineHeight: 1.2 }}>Staged headshot</div>
-                  <div
-                    style={{
-                      opacity: 0.8,
-                      fontSize: 13,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {headshotFile.name} • {Math.round(headshotFile.size / 1024)} KB
-                  </div>
-                  <div style={{ opacity: 0.7, fontSize: 12, marginTop: 4 }}>
-                    This will become your featured headshot when you save.
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  className="dat-btn-ghost"
-                  style={datButtonGhost}
-                  onClick={() => setHeadshotFile(null)}
-                  disabled={loading}
-                >
-                  Clear
-                </button>
-              </div>
-            ) : null}
-
+          {/* Inline past-headshot chooser */}
+          {showHeadshotChooser && alumniId && (
             <div
               style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 10,
-                flexWrap: "wrap",
+                padding: "16px 0 8px",
+                borderTop: "1px solid rgba(255,255,255,0.08)",
               }}
             >
-              <button type="button" style={datButtonLocal} disabled={loading} onClick={onSave}>
-                Save Profile Basics
-              </button>
+              <HeadshotChooser
+                alumniId={alumniId}
+                loading={loading}
+                onFeatured={(fileId) => {
+                  setShowHeadshotChooser(false);
+                  onHeadshotFeatured?.(fileId);
+                }}
+              />
             </div>
+          )}
+
+          {/* Collapsed URL input — starts blank; does NOT prefill the stored URL */}
+          {showUrlInput ? (
+            <div>
+              <label style={labelStyle}>Image URL</label>
+              <input
+                value={headshotUrlInput}
+                onChange={(e) => setHeadshotUrlInput(e.target.value)}
+                style={inputStyle}
+                placeholder="https://www.website.com/headshot.jpg"
+              />
+              <p style={{ ...explainStyleLocal, marginTop: 4, opacity: 0.6, fontSize: 12 }}>
+                Paste a direct link to the image file (not a webpage).
+              </p>
+            </div>
+          ) : null}
+
+          <div
+            style={{
+              marginTop: 8,
+              paddingTop: 18,
+              borderTop: "1px solid rgba(255,255,255,0.10)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: 14,
+              flexWrap: "wrap",
+            }}
+          >
+            {isDirty && (
+              <span
+                style={{
+                  fontSize: 12,
+                  opacity: 0.7,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  color: "#f5c542",
+                }}
+              >
+                <span style={{ fontSize: 8 }}>●</span> Unsaved changes
+              </span>
+            )}
+            <button
+              type="button"
+              style={datButtonLocal}
+              disabled={loading}
+              onClick={() => onSave(headshotUrlInput.trim() || undefined)}
+            >
+              Save Profile Basics
+            </button>
           </div>
         </div>
       </div>
-
-      {/* (keep the same background palette you had available) */}
-      <p style={{ ...explainStyleLocal, marginTop: 10, opacity: 0.85, color: COLOR.snow }}>
-        Tip: Uploading a headshot here will set it as your featured headshot when you save.
-      </p>
     </div>
   );
 }

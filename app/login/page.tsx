@@ -132,18 +132,6 @@ export default async function LoginPage({
             <br />
             PORTAL
           </h1>
-          <p
-            style={{
-              fontFamily: "var(--font-gloucester), serif",
-              fontSize: "clamp(1rem, 2vw, 1.5rem)",
-              fontStyle: "italic",
-              color: "rgba(242,242,242,0.82)",
-              textShadow: "0 4px 12px rgba(0,0,0,0.8)",
-              margin: "0.4rem 0 0",
-            }}
-          >
-            The adventure continues.
-          </p>
         </div>
       </section>
 

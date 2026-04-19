@@ -1,5 +1,45 @@
 // lib/normalizeAlumniRow.ts
 import type { AlumniRow } from "./types";
+import { filterToCanonicalLabels, enforceLimit } from "./alumniTaxonomy";
+
+const PLATFORM_LABELS: Record<string, string> = {
+  instagram: "Instagram", x: "X", tiktok: "TikTok", threads: "Threads",
+  bluesky: "Bluesky", linkedin: "LinkedIn", youtube: "YouTube", vimeo: "Vimeo",
+  imdb: "IMDb", facebook: "Facebook", linktree: "Linktree", newsletter: "Newsletter",
+};
+
+function buildPlatformUrl(platform: string, raw: string): string {
+  const s = raw.trim();
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return s;
+  const handle = s.replace(/^@/, "");
+  switch (platform) {
+    case "instagram": return `https://instagram.com/${handle}`;
+    case "x": return `https://x.com/${handle}`;
+    case "tiktok": return `https://tiktok.com/@${handle}`;
+    case "threads": return `https://threads.net/@${handle}`;
+    case "bluesky": return `https://bsky.app/profile/${handle}`;
+    case "linkedin": return `https://linkedin.com/in/${handle}`;
+    case "youtube": return `https://youtube.com/@${handle}`;
+    case "vimeo": return `https://vimeo.com/${handle}`;
+    case "imdb": return `https://www.imdb.com/name/${handle}`;
+    case "facebook": return `https://facebook.com/${handle}`;
+    case "linktree": return `https://linktr.ee/${handle}`;
+    case "newsletter": return /^https?:\/\//i.test(s) ? s : `https://${s}`;
+    default: return s;
+  }
+}
+
+function buildFeaturedLink(
+  platform: string,
+  values: Record<string, string>
+): { url: string; label: string } | null {
+  if (!platform) return null;
+  const raw = values[platform] || "";
+  const url = buildPlatformUrl(platform, raw);
+  if (!url) return null;
+  return { url, label: PLATFORM_LABELS[platform] || platform };
+}
 
 /** Build a case-insensitive view of the row */
 function lowerKeyed(row: Record<string, any>) {
@@ -129,9 +169,31 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
   ]);
   const statusFlags = flagsRaw ? splitCsvish(flagsRaw) : [];
 
-  // Identity tags
+  // Identity tags — V1 canonical only. Legacy/unknown labels are dropped.
   const identityTagsRaw = getFirstCI(row, ["identity tags", "identitytags", "identityTags"]);
-  const identityTags = identityTagsRaw ? splitCsvish(identityTagsRaw) : [];
+  const identityTags = enforceLimit(
+    filterToCanonicalLabels(identityTagsRaw ? splitCsvish(identityTagsRaw) : [], "identity"),
+    "identity"
+  );
+
+  // Practice tags — new layer; column may not exist yet (handled gracefully).
+  const practiceTagsRaw = getFirstCI(row, ["practice tags", "practicetags", "practiceTags"]);
+  const practiceTags = enforceLimit(
+    filterToCanonicalLabels(practiceTagsRaw ? splitCsvish(practiceTagsRaw) : [], "practice"),
+    "practice"
+  );
+
+  // Explore & care tags — new layer; column may not exist yet.
+  const exploreCareTagsRaw = getFirstCI(row, [
+    "explore care tags",
+    "explorecaretags",
+    "exploreCareTags",
+    "explore_care_tags",
+  ]);
+  const exploreCareTags = enforceLimit(
+    filterToCanonicalLabels(exploreCareTagsRaw ? splitCsvish(exploreCareTagsRaw) : [], "exploreCare"),
+    "exploreCare"
+  );
 
   // Program badges (optional)
   const programBadgesRaw = getFirstCI(row, [
@@ -168,6 +230,28 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
   // Public email ONLY (Option A). Never extract private/admin email into public runtime objects.
   const publicEmail = getFirstCI(row, ["publicEmail", "public email", "public_email"]).trim();
 
+  // Visibility flags: blank/true = show; "false" = hide (default shown for backward compat)
+  const showWebsite = getFirstCI(row, ["showWebsite", "show website", "showwebsite"]).trim();
+  const showPublicEmail = getFirstCI(row, ["showPublicEmail", "show public email", "showpublicemail"]).trim();
+
+  // Featured link: primarySocial key → resolve URL from individual platform column
+  const primarySocial = getFirstCI(row, ["primarySocial", "primary social", "primarysocial"]).trim().toLowerCase();
+  const platformValues: Record<string, string> = {
+    instagram: getFirstCI(row, ["instagram"]).trim(),
+    x: getFirstCI(row, ["x"]).trim(),
+    tiktok: getFirstCI(row, ["tiktok"]).trim(),
+    threads: getFirstCI(row, ["threads"]).trim(),
+    bluesky: getFirstCI(row, ["bluesky"]).trim(),
+    linkedin: getFirstCI(row, ["linkedin"]).trim(),
+    youtube: getFirstCI(row, ["youtube"]).trim(),
+    vimeo: getFirstCI(row, ["vimeo"]).trim(),
+    imdb: getFirstCI(row, ["imdb"]).trim(),
+    facebook: getFirstCI(row, ["facebook"]).trim(),
+    linktree: getFirstCI(row, ["linktree"]).trim(),
+    newsletter: getFirstCI(row, ["newsletter"]).trim(),
+  };
+  const featuredLink = buildFeaturedLink(primarySocial, platformValues);
+
   // lastModified
   const lastModifiedRaw = getFirstCI(row, ["lastmodified", "updatedat", "updated at", "updatedAt"]);
   const lastModified = lastModifiedRaw ? new Date(lastModifiedRaw) : null;
@@ -198,6 +282,8 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
     festival,
 
     identityTags,
+    practiceTags,
+    exploreCareTags,
     statusFlags,
     programSeasons,
 
@@ -214,6 +300,9 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
     publicEmail: publicEmail || "",
     website: website || "",
     socials,
+    showWebsite,
+    showPublicEmail,
+    featuredLink: featuredLink || undefined,
 
     showOnProfile,
 

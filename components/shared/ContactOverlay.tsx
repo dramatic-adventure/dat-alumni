@@ -11,6 +11,7 @@ interface ContactOverlayProps {
   publicEmail?: string;
   website?: string;
   socials?: string[];
+  featuredLink?: { url: string; label: string };
   profileCardRef: RefObject<HTMLDivElement | null>;
 }
 
@@ -20,6 +21,7 @@ export default function ContactOverlay({
   publicEmail,
   website,
   socials = [],
+  featuredLink,
   profileCardRef,
 }: ContactOverlayProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,7 +32,7 @@ export default function ContactOverlay({
   const websiteSafe = String(website || "").trim();
   const socialsSafe = (socials || []).map((s) => String(s || "").trim()).filter(Boolean);
 
-  const hasContactInfo = !!emailSafe || !!websiteSafe || socialsSafe.length > 0;
+  const hasContactInfo = !!emailSafe || !!websiteSafe || socialsSafe.length > 0 || !!featuredLink;
   if (!hasContactInfo) return null;
 
   const tabWidth = 48; // actual width of your tab
@@ -108,6 +110,7 @@ export default function ContactOverlay({
             email={emailSafe}
             website={websiteSafe}
             socials={socialsSafe}
+            featuredLink={featuredLink}
             onClose={() => setIsOpen(false)}
           />
         </div>

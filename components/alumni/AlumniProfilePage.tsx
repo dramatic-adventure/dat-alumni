@@ -95,6 +95,10 @@ export default function AlumniProfilePage({
   // NOTE: these may be string[] OR strings depending on CSV/live snapshot
   const programBadges = coerceStrArray(d.programBadges ?? d.programs ?? d.projectBadges);
   const identityTags = coerceStrArray(d.identityTags ?? d.identity ?? d.identity_tags);
+  const practiceTags = coerceStrArray(d.practiceTags ?? d.practice_tags ?? d["practice tags"]);
+  const exploreCareTags = coerceStrArray(
+    d.exploreCareTags ?? d.explore_care_tags ?? d["explore care tags"]
+  );
   const statusFlags = coerceStrArray(d.statusFlags ?? d.flags ?? d.status_signifier);
 
   // ✅ Bio / artist statement: accept multiple worlds
@@ -117,9 +121,18 @@ export default function AlumniProfilePage({
 
   // Contact fields: accept multiple worlds
   const location = cleanStr(d.location) ?? "";
-  const publicEmail = cleanStr((d as any).publicEmail);
-  const website = cleanStr(d.website) ?? cleanStr(d.profileUrl) ?? cleanStr(d["profile url"]) ?? "";
+  const rawPublicEmail = cleanStr((d as any).publicEmail);
+  const rawWebsite = cleanStr(d.website) ?? cleanStr(d.profileUrl) ?? cleanStr(d["profile url"]) ?? "";
   const socials = coerceStrArray(d.socials ?? d.socialLinks ?? d["social links"] ?? d["artist social links"]);
+
+  // Visibility flags: "false" = hidden; blank / "true" = shown (default shown for compat)
+  const showWebsite = String((d as any).showWebsite ?? "").trim().toLowerCase() !== "false";
+  const showPublicEmail = String((d as any).showPublicEmail ?? "").trim().toLowerCase() !== "false";
+  const website = showWebsite ? rawWebsite : "";
+  const publicEmail = showPublicEmail ? rawPublicEmail : undefined;
+
+  // Featured link from primarySocial
+  const featuredLink = (d as any).featuredLink as { url: string; label: string } | undefined;
 
   // NOTE: updates shape is handled inside ProfileCard; we just pass through.
   const updates = (d.updates ?? []) as any[];
@@ -267,12 +280,15 @@ alumniId={alumniId || undefined}
                 location={location}
                 programBadges={programBadges}
                 identityTags={identityTags}
+                practiceTags={practiceTags}
+                exploreCareTags={exploreCareTags}
                 statusFlags={statusFlags}
                 artistStatement={artistStatement}
                 stories={authorStories}
                 publicEmail={publicEmail}
                 website={website}
                 socials={socials}
+                featuredLink={featuredLink}
                 updates={updates}
                 currentTitle={currentTitle || undefined}
                 secondLocation={secondLocation || undefined}

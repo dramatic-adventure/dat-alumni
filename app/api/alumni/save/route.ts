@@ -102,9 +102,32 @@ function isServerControlledField(k: string) {
   return kk === "updatedat" || kk === "updated at";
 }
 
+/**
+ * Admin-only fields.
+ *
+ * Keys here are compared against the CANONICAL form produced by canonKey()
+ * (lowercased, separators removed), so variants like "bio short" / "bio_short"
+ * all collapse to the canonical key.
+ *
+ * - ispublic / status: publish/workflow flags
+ * - bioshort, spotlight, programs, tags, statusflags: curation fields — alumni
+ *   must not edit these from the Profile Studio.
+ */
+const ADMIN_ONLY_CANONICAL_KEYS = new Set<string>([
+  "ispublic",
+  "status",
+  "bioshort",
+  "spotlight",
+  "programs",
+  "tags",
+  "statusflags",
+]);
+
 function isAdminOnlyField(k: string) {
-  const kk = k.trim().toLowerCase();
-  return kk === "ispublic" || kk === "is public" || kk === "status";
+  const kk = k.trim().toLowerCase().replace(/[\s_-]+/g, "");
+  // legacy explicit checks preserved for non-canonicalized callers
+  if (kk === "ispublic" || kk === "status") return true;
+  return ADMIN_ONLY_CANONICAL_KEYS.has(kk);
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -148,6 +171,54 @@ const FIELD_ALIASES: Record<string, string> = {
   backgroundchoice: "backgroundchoice",
   isbicoastal: "isbicoastal",
   publicemail: "publicemail",
+
+  // Primary social (defensive identity + short form)
+  primarysocial: "primarysocial",
+  "primary social": "primarysocial",
+  primary: "primarysocial",
+
+  // Show-on-map: confirmed against live sheet — header is `storyShowOnMap`
+  // (single prefix). Legacy `showOnMap` (no `story` prefix) aliased for safety.
+  storyshowonmap: "storyshowonmap",
+  showonmap: "storyshowonmap",
+  "show on map": "storyshowonmap",
+
+  // Title vs Work — Profile-Live has BOTH `currentTitle` (role/title) and
+  // `currentWork` (what they're working on now). Legacy `currentRole` maps
+  // to `currentTitle`.
+  currenttitle: "currenttitle",
+  "current title": "currenttitle",
+  currentrole: "currenttitle",
+  "current role": "currenttitle",
+  currentwork: "currentwork",
+  "current work": "currentwork",
+
+  // Roles — `roles` is canonical; `datRoles` is legacy
+  roles: "roles",
+  datroles: "roles",
+  "dat roles": "roles",
+
+  // Story key — sheet header is `activeStoryKey`; code/UI uses `storyKey`.
+  // Both canonicalize to `activestorykey` so the save route maps correctly.
+  storykey: "activestorykey",
+  "story key": "activestorykey",
+  activestorykey: "activestorykey",
+  "active story key": "activestorykey",
+
+  // Media IDs (sheet headers are camelCase)
+  currentheadshotid: "currentheadshotid",
+  featuredalbumid: "featuredalbumid",
+  featuredreelid: "featuredreelid",
+  featuredeventid: "featuredeventid",
+
+  // Newsletter link
+  newsletter: "newsletter",
+
+  // Visibility toggles
+  showwebsite: "showwebsite",
+  "show website": "showwebsite",
+  showpublicemail: "showpublicemail",
+  "show public email": "showpublicemail",
 };
 
 function canonKey(rawKey: string) {

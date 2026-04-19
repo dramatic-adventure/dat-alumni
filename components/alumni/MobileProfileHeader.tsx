@@ -27,6 +27,7 @@ interface MobileProfileHeaderProps {
   currentTitle?: string;
   secondLocation?: string;
   isBiCoastal?: boolean;
+  featuredLink?: { url: string; label: string };
 }
 
 export default function MobileProfileHeader({
@@ -44,6 +45,7 @@ export default function MobileProfileHeader({
   currentTitle,
   secondLocation,
   isBiCoastal,
+  featuredLink,
 }: MobileProfileHeaderProps) {
 
   const fallbackImage = "/images/default-headshot.png";
@@ -136,7 +138,7 @@ export default function MobileProfileHeader({
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];
   const lastName = nameParts.slice(-1).join(" ") || "";
 
-  const hasContactInfo = !!(publicEmail || website || (socials && socials.length > 0));
+  const hasContactInfo = !!(publicEmail || website || (socials && socials.length > 0) || featuredLink);
 
   const allRoles = (roles && roles.length > 0 ? roles : splitTitles(role))
     .map((r) => r.trim())
@@ -177,8 +179,8 @@ export default function MobileProfileHeader({
   const currentTitles = currentTitle
     ? splitTitles(currentTitle).map((t) => t.trim()).filter(Boolean)
     : [];
-  const primaryCurrentTitle = titleLinks.length > 0 ? null : currentTitles[0] ?? null;
-  const extraCurrentTitles = (titleLinks.length > 0 ? [] : currentTitles.slice(1)).map((label) => ({
+  const primaryCurrentTitle = currentTitles[0] ?? null;
+  const extraCurrentTitles = currentTitles.slice(1).map((label) => ({
     label,
     href: hrefForTitleToken(label),
   }));
@@ -268,7 +270,7 @@ export default function MobileProfileHeader({
   return (
     <div ref={headerRef} style={{ backgroundColor: "#C39B6C", position: "relative" }}>
       {hasContactInfo && (
-        <ContactOverlay name={name} slug={slug} publicEmail={publicEmail} website={website} socials={socials} profileCardRef={headerRef} />
+        <ContactOverlay name={name} slug={slug} publicEmail={publicEmail} website={website} socials={socials} featuredLink={featuredLink} profileCardRef={headerRef} />
       )}
 
       {statusFlags.length > 0 && (

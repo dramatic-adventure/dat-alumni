@@ -9,6 +9,11 @@ import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import TagsGrid from "@/components/alumni/TagsGrid";
 import { getCanonicalTag, slugifyTag } from "@/lib/tags";
+import {
+  findTagByLabelOrAlias,
+  LAYER_LABELS,
+  type TaxonomyLayer,
+} from "@/lib/alumniTaxonomy";
 
 export const revalidate = 3600;
 
@@ -37,22 +42,57 @@ function fallbackSlugify(raw: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+type NormalizedTag = {
+  label: string;
+  slug: string;
+  layer: TaxonomyLayer | null;
+};
+
 /**
- * ✅ Canonicalize if possible; otherwise fall back to raw tag string.
- * For canonical tags we use slugifyTag (typed). For unknown tags we use fallbackSlugify.
+ * Canonicalize a tag against the three-layer taxonomy (identity / practice /
+ * exploreCare). Falls back to slugifying the raw string so legacy / unknown
+ * labels still route — but they won't carry a layer.
  */
-function normalizeTagForSlug(tag: unknown): { label: string; slug: string } | null {
+function normalizeTagForSlug(tag: unknown): NormalizedTag | null {
   const raw = String(tag ?? "").trim();
   if (!raw) return null;
 
-  const canonical = getCanonicalTag(raw);
-
-  if (canonical) {
-    return { label: canonical, slug: slugifyTag(canonical) };
+  const taxonomyHit = findTagByLabelOrAlias(raw);
+  if (taxonomyHit) {
+    return {
+      label: taxonomyHit.label,
+      slug: slugifyTag(taxonomyHit.label),
+      layer: taxonomyHit.layer,
+    };
   }
 
-  // unknown tag — still allow routing
-  return { label: raw, slug: fallbackSlugify(raw) };
+  const canonical = getCanonicalTag(raw);
+  if (canonical) {
+    return { label: canonical, slug: slugifyTag(canonical), layer: null };
+  }
+
+  return { label: raw, slug: fallbackSlugify(raw), layer: null };
+}
+
+/** All tags across the three layers for an alumni row (deduped by slug). */
+function allTagsForAlumni(artist: AlumniRow): NormalizedTag[] {
+  const seen = new Set<string>();
+  const out: NormalizedTag[] = [];
+  const pools: Array<[string[] | undefined, TaxonomyLayer | null]> = [
+    [artist.identityTags, "identity"],
+    [(artist as any).practiceTags, "practice"],
+    [(artist as any).exploreCareTags, "exploreCare"],
+  ];
+  for (const [list] of pools) {
+    for (const raw of list ?? []) {
+      const norm = normalizeTagForSlug(raw);
+      if (!norm) continue;
+      if (seen.has(norm.slug)) continue;
+      seen.add(norm.slug);
+      out.push(norm);
+    }
+  }
+  return out;
 }
 
 // Build all valid tag slugs at build time
@@ -61,9 +101,8 @@ export async function generateStaticParams() {
   const slugs = new Set<string>();
 
   for (const artist of alumni) {
-    for (const tag of artist.identityTags ?? []) {
-      const norm = normalizeTagForSlug(tag);
-      if (norm?.slug) slugs.add(norm.slug);
+    for (const norm of allTagsForAlumni(artist)) {
+      if (norm.slug) slugs.add(norm.slug);
     }
   }
 
@@ -102,12 +141,11 @@ export async function generateMetadata({
 
   const alumni: AlumniRow[] = await loadVisibleAlumni();
 
-  // Try to find a label for this slug from actual data (canonical OR unknown tags)
+  // Try to find a label for this slug from actual data (across all layers)
   const labelFromData =
     alumni
-      .flatMap((a) => a.identityTags ?? [])
-      .map((t) => normalizeTagForSlug(t))
-      .find((x) => x && x.slug.toLowerCase() === slugLower)?.label ?? humanizeSlug(slug);
+      .flatMap((a) => allTagsForAlumni(a))
+      .find((x) => x.slug.toLowerCase() === slugLower)?.label ?? humanizeSlug(slug);
 
   const title = `${labelFromData} — DAT Alumni`;
   const description = `Explore artists tagged as ${labelFromData}.`;
@@ -147,12 +185,9 @@ export default async function TagPage({
   const slugLower = slug.toLowerCase();
   const alumni: AlumniRow[] = await loadVisibleAlumni();
 
-  // Filter by canonicalized tag; fallback to raw tag slug if canonical is unknown
+  // Filter across ALL three layers (identity / practice / exploreCare).
   const filteredRaw = alumni.filter((artist) =>
-    (artist.identityTags ?? []).some((tag) => {
-      const norm = normalizeTagForSlug(tag);
-      return norm ? norm.slug.toLowerCase() === slugLower : false;
-    })
+    allTagsForAlumni(artist).some((n) => n.slug.toLowerCase() === slugLower)
   );
 
   // De-dupe by slug and stable-sort by last → first
@@ -167,12 +202,13 @@ export default async function TagPage({
 
   if (!filtered.length) return notFound();
 
-  // Display label from data if possible; fallback to humanized slug
-  const displayLabel =
+  // Display label (and layer, for sub-heading) from data
+  const matchedTag =
     filtered
-      .flatMap((a) => a.identityTags ?? [])
-      .map((t) => normalizeTagForSlug(t))
-      .find((x) => x && x.slug.toLowerCase() === slugLower)?.label ?? humanizeSlug(slug);
+      .flatMap((a) => allTagsForAlumni(a))
+      .find((x) => x.slug.toLowerCase() === slugLower) ?? null;
+  const displayLabel = matchedTag?.label ?? humanizeSlug(slug);
+  const layerLabel = matchedTag?.layer ? LAYER_LABELS[matchedTag.layer] : null;
 
   return (
     <div>
@@ -219,7 +255,9 @@ export default async function TagPage({
               textAlign: "right",
             }}
           >
-            Artists tagged as {String(displayLabel ?? "").toLowerCase()}
+            {layerLabel
+              ? `${layerLabel} — ${String(displayLabel ?? "").toLowerCase()}`
+              : `Artists tagged as ${String(displayLabel ?? "").toLowerCase()}`}
           </p>
         </div>
       </div>

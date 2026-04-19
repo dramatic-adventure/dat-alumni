@@ -287,6 +287,8 @@ interface ProfileCardProps {
   currentHeadshotId?: string;
   location?: string;
   identityTags?: any;
+  practiceTags?: any;
+  exploreCareTags?: any;
   statusFlags?: any;
   programBadges?: any;
   artistStatement?: string;
@@ -299,6 +301,7 @@ interface ProfileCardProps {
   currentTitle?: string;
   secondLocation?: string;
   isBiCoastal?: boolean;
+  featuredLink?: { url: string; label: string };
 }
 
 const scaleCache = new Map<string, { first: number; last: number }>();
@@ -341,6 +344,10 @@ export default function ProfileCard(props: ProfileCardProps) {
 
   // ✅ Normalize "array-ish" props defensively
   const identityTags = coerceStrArray((props as any).identityTags ?? (props as any)["identity tags"]);
+  const practiceTags = coerceStrArray((props as any).practiceTags ?? (props as any)["practice tags"]);
+  const exploreCareTags = coerceStrArray(
+    (props as any).exploreCareTags ?? (props as any)["explore care tags"],
+  );
   const statusFlags = coerceStrArray(
     (props as any).statusFlags ??
       (props as any).statusflags ??
@@ -397,7 +404,11 @@ export default function ProfileCard(props: ProfileCardProps) {
     }
   }, [name, hasMeasured]);
 
-  const hasArtistBio = !!artistStatement?.trim() || identityTags.length > 0;
+  const hasArtistBio =
+    !!artistStatement?.trim() ||
+    identityTags.length > 0 ||
+    practiceTags.length > 0 ||
+    exploreCareTags.length > 0;
 
   // ✅ Alias-aware normalized slug set (must be defined BEFORE any story filtering)
   const aliasNormSet = useMemo(() => {
@@ -671,6 +682,7 @@ const hasStories = storiesForFeatured.length > 0;
           currentTitle={props.currentTitle}
           secondLocation={props.secondLocation}
           isBiCoastal={props.isBiCoastal}
+          featuredLink={props.featuredLink}
         />
       ) : (
         <DesktopProfileHeader
@@ -689,6 +701,7 @@ const hasStories = storiesForFeatured.length > 0;
           currentTitle={props.currentTitle}
           secondLocation={props.secondLocation}
           isBiCoastal={props.isBiCoastal}
+          featuredLink={props.featuredLink}
         />
       )}
 
@@ -697,6 +710,8 @@ const hasStories = storiesForFeatured.length > 0;
           {hasArtistBio && (
             <ArtistBio
               identityTags={identityTags}
+              practiceTags={practiceTags}
+              exploreCareTags={exploreCareTags}
               artistStatement={artistStatement}
               fontFamily="var(--font-dm-sans), system-ui, sans-serif"
               fontSize="1.15rem"

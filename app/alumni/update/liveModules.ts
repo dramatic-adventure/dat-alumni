@@ -11,52 +11,83 @@ export type ModuleKey =
   | "CurrentUpdate"
   | "StoryMap"
   | "UpcomingEvent"
-  | "TechSupport";
+  | "Media";
 
-// NOTE: include both storyTimeStamp + storyTimeStamp if your codebase has both.
-// If you only want one, keep the canonical one and update the other call sites later.
+/**
+ * LIVE_KEYS — the set of keys the alumni-save flow is allowed to consider.
+ *
+ * Ownership note:
+ *  - Alumni-editable fields: exposed through some module in MODULES below.
+ *  - Admin-only fields (bioShort, spotlight, programs, tags, statusFlags):
+ *      kept in LIVE_KEYS so admin tools that save them still work, but they
+ *      are NOT listed in any module. The /api/alumni/save route ALSO gates
+ *      these keys so only admins can persist them.
+ *  - System fields (storyKey, storyTimeStamp): listed for read-through;
+ *      never written by alumni flows.
+ */
 export const LIVE_KEYS = new Set<string>(
   Object.freeze([
+    // Basics / Identity
     "name",
     "slug",
     "location",
     "isBiCoastal",
     "secondLocation",
     "backgroundStyle",
-    "bioShort",
     "bioLong",
     "pronouns",
     "roles",
     "identityTags",
+    "practiceTags",
+    "exploreCareTags",
     "languages",
+    "currentTitle",
     "currentWork",
-    "website",
-    "instagram",
-    "x",
-    "tiktok",
-    "threads",
-    "bluesky",
-    "linkedin",
-    "primarySocial",
-    "youtube",
-    "vimeo",
-    "imdb",
-    "facebook",
-    "linktree",
-    "publicEmail",
+    "currentHeadshotId",
+    "currentHeadshotUrl",
+    "featuredAlbumId",
+    "featuredReelId",
+    "featuredEventId",
+
+    // Admin-only curation (gated in save route)
+    "bioShort",
     "spotlight",
     "programs",
     "tags",
     "statusFlags",
-    "currentHeadshotUrl",
+
+    // Contact
+    "website",
+    "showWebsite",
+    "showPublicEmail",
+    "primarySocial",
+    "instagram",
+    "linkedin",
+    "vimeo",
+    "youtube",
+    "imdb",
+    "facebook",
+    "tiktok",
+    "threads",
+    "bluesky",
+    "x",
+    "linktree",
+    "newsletter",
+    "publicEmail",
+
+    // Current Update
     "currentUpdateText",
     "currentUpdateLink",
     "currentUpdateExpiresAt",
+
+    // Upcoming Event
     "upcomingEventTitle",
     "upcomingEventLink",
     "upcomingEventDate",
     "upcomingEventExpiresAt",
     "upcomingEventDescription",
+
+    // Story Map
     "storyTitle",
     "storyProgram",
     "storyLocationName",
@@ -69,12 +100,12 @@ export const LIVE_KEYS = new Set<string>(
     "storyMoreInfoUrl",
     "storyCountry",
     "storyShowOnMap",
+
+    // System (read-only — `storyKey` is the code-side name; sheet header is
+    // `activeStoryKey`. The save route aliases both to the same canonical key.)
     "storyKey",
-    "storyTimeStamp", // ✅ keep this if used anywhere
-    "storyTimeStamp", // ✅ keep this too if you have mixed casing/spelling elsewhere
-    "supportBug",
-    "supportFeature",
-    "supportAssistance",
+    "activeStoryKey",
+    "storyTimeStamp",
   ])
 );
 
@@ -95,18 +126,21 @@ export const MODULES = {
       "backgroundStyle",
       "currentHeadshotUrl",
       "bioLong",
+      "currentTitle",
       "currentWork",
-      "upcomingEventTitle",
-      "upcomingEventLink",
-      "upcomingEventDate",
-      "upcomingEventExpiresAt",
-      "upcomingEventDescription",
     ]),
     uploadKinds: [],
   },
 
   Identity: {
-    fieldKeys: keysForSaving(["pronouns", "identityTags", "languages"]),
+    fieldKeys: keysForSaving([
+      "pronouns",
+      "identityTags",
+      "practiceTags",
+      "exploreCareTags",
+      "languages",
+      "currentTitle",
+    ]),
     uploadKinds: [],
   },
 
@@ -118,19 +152,22 @@ export const MODULES = {
   Contact: {
     fieldKeys: keysForSaving([
       "website",
+      "showWebsite",
+      "showPublicEmail",
+      "primarySocial",
       "instagram",
-      "x",
+      "linkedin",
+      "vimeo",
+      "youtube",
+      "imdb",
+      "facebook",
       "tiktok",
       "threads",
       "bluesky",
-      "linkedin",
-      "youtube",
-      "vimeo",
-      "facebook",
+      "x",
       "linktree",
+      "newsletter",
       "publicEmail",
-      "imdb",
-      // primarySocial handled by Contact save logic
     ]),
     uploadKinds: [],
   },
@@ -158,8 +195,6 @@ export const MODULES = {
       "storyMediaUrl",
       "storyMoreInfoUrl",
       "storyShowOnMap",
-      "storyKey",
-      "storyTimeStamp", // ✅ keep consistent with LIVE_KEYS above
     ]),
     uploadKinds: [],
   },
@@ -175,8 +210,17 @@ export const MODULES = {
     uploadKinds: [],
   },
 
-  TechSupport: {
-    fieldKeys: keysForSaving(["supportBug", "supportFeature", "supportAssistance"]),
+  // Media IDs are typically set by the upload pipeline, not typed by the user.
+  // Listing them here exposes them to the save whitelist so upload handlers
+  // can persist the chosen headshot / featured collection IDs.
+  Media: {
+    fieldKeys: keysForSaving([
+      "currentHeadshotId",
+      "currentHeadshotUrl",
+      "featuredAlbumId",
+      "featuredReelId",
+      "featuredEventId",
+    ]),
     uploadKinds: [],
   },
 } satisfies Record<ModuleKey, { fieldKeys: string[]; uploadKinds: UploadKind[] }>;

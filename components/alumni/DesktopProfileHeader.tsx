@@ -25,6 +25,7 @@ interface DesktopProfileHeaderProps {
   publicEmail?: string;
   website?: string;
   socials?: string[];
+  featuredLink?: { url: string; label: string };
   currentTitle?: string;
   secondLocation?: string;
   isBiCoastal?: boolean;
@@ -42,6 +43,7 @@ export default function DesktopProfileHeader({
   publicEmail,
   website,
   socials,
+  featuredLink,
   currentTitle,
   secondLocation,
   isBiCoastal,
@@ -135,7 +137,7 @@ export default function DesktopProfileHeader({
   }
 
   const profileCardRef = useRef<HTMLDivElement>(null);
-  const hasContactInfo = !!(publicEmail || website || (socials && socials.length > 0));
+  const hasContactInfo = !!(publicEmail || website || (socials && socials.length > 0) || featuredLink);
 
   useEffect(() => { if (typeof window !== "undefined") setCurrentUrl(window.location.href); }, []);
 
@@ -182,8 +184,8 @@ export default function DesktopProfileHeader({
   const currentTitles = currentTitle
     ? splitTitles(currentTitle).map((t) => t.trim()).filter(Boolean)
     : [];
-  const primaryCurrentTitle = titleLinks.length > 0 ? null : currentTitles[0] ?? null;
-  const extraCurrentTitles = (titleLinks.length > 0 ? [] : currentTitles.slice(1)).map((label) => ({
+  const primaryCurrentTitle = currentTitles[0] ?? null;
+  const extraCurrentTitles = currentTitles.slice(1).map((label) => ({
     label,
     href: hrefForTitleToken(label),
   }));
@@ -298,7 +300,7 @@ export default function DesktopProfileHeader({
   return (
     <div ref={profileCardRef} style={{ position: "relative" }}>
       {hasContactInfo && (
-        <ContactOverlay name={name} slug={slug} publicEmail={publicEmail} website={website} socials={socials} profileCardRef={profileCardRef} />
+        <ContactOverlay name={name} slug={slug} publicEmail={publicEmail} website={website} socials={socials} featuredLink={featuredLink} profileCardRef={profileCardRef} />
       )}
 
       {statusFlags?.length > 0 && (

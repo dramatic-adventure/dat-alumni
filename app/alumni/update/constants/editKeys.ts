@@ -1,15 +1,13 @@
 import { PROFILE_GROUPS } from "@/components/alumni/fields";
 
 // ------------------------------------------------------------
-// ✅ DROPDOWN SECTIONS: ALWAYS RENDER
+// Edit-key lists used by sheet-driven field rendering.
+// These derive directly from PROFILE_GROUPS so the UI and the
+// schema cannot drift out of sync.
 // ------------------------------------------------------------
 
-// Prefer groups if present, otherwise fallback keys.
-
 export const UpcomingEventEditKeys =
-  PROFILE_GROUPS["Upcoming Event"] ??
-  PROFILE_GROUPS["Events"] ??
-  [
+  PROFILE_GROUPS["Upcoming Event"] ?? [
     "upcomingEventTitle",
     "upcomingEventLink",
     "upcomingEventDate",
@@ -17,24 +15,24 @@ export const UpcomingEventEditKeys =
     "upcomingEventDescription",
   ];
 
-export const ContactEditKeys = [
-  "website",
-  "instagram",
-  "x",
-  "tiktok",
-  "threads",
-  "bluesky",
-  "linkedin",
-  "primarySocial",
-  "youtube",
-  "vimeo",
-  "imdb",
-  "facebook",
-  "linktree",
-  "publicEmail",
-];
+export const ContactEditKeys =
+  PROFILE_GROUPS["Contact"] ?? [
+    "website",
+    "instagram",
+    "x",
+    "tiktok",
+    "threads",
+    "bluesky",
+    "linkedin",
+    "primarySocial",
+    "youtube",
+    "vimeo",
+    "imdb",
+    "facebook",
+    "linktree",
+    "publicEmail",
+  ];
 
-// ✅ Story Map section keys (match Profile-Live headers)
 export const StoryMapEditKeys =
   PROFILE_GROUPS["Story Map Contribution"] ?? [
     "storyTitle",

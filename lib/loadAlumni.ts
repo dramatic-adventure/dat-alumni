@@ -277,6 +277,25 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
   const secondLocationIdx = idxOf(header, ["second location", "secondlocation", "secondLocation", "second_location", "second location (city)"]);
   const isBiCoastalIdx = idxOf(header, ["isbicoastal", "is bi-coastal", "bicoastal", "bi-coastal", "is bicoastal", "isBiCoastal"]);
 
+  // Visibility toggles
+  const showWebsiteIdx = idxOf(header, ["showwebsite", "showWebsite", "show website"]);
+  const showPublicEmailIdx = idxOf(header, ["showpublicemail", "showPublicEmail", "show public email"]);
+
+  // Featured link: primarySocial key + individual platform columns
+  const primarySocialIdx = idxOf(header, ["primarysocial", "primarySocial", "primary social"]);
+  const instagramIdx = idxOf(header, ["instagram"]);
+  const xIdx = idxOf(header, ["x"]);
+  const tiktokIdx = idxOf(header, ["tiktok"]);
+  const threadsIdx = idxOf(header, ["threads"]);
+  const blueskyIdx = idxOf(header, ["bluesky"]);
+  const linkedinIdx = idxOf(header, ["linkedin"]);
+  const youtubeIdx = idxOf(header, ["youtube"]);
+  const vimeoIdx = idxOf(header, ["vimeo"]);
+  const imdbIdx = idxOf(header, ["imdb"]);
+  const facebookIdx = idxOf(header, ["facebook"]);
+  const linktreeIdx = idxOf(header, ["linktree"]);
+  const newsletterIdx = idxOf(header, ["newsletter"]);
+
   const out: AlumniRow[] = [];
   let skipped = 0;
 
@@ -342,6 +361,25 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
       secondLocation: cell(r, secondLocationIdx),
       "is bi-coastal": cell(r, isBiCoastalIdx),
       isBiCoastal: cell(r, isBiCoastalIdx),
+
+      // Visibility toggles
+      showWebsite: cell(r, showWebsiteIdx),
+      showPublicEmail: cell(r, showPublicEmailIdx),
+
+      // Featured link: primarySocial + individual platform columns
+      primarySocial: cell(r, primarySocialIdx),
+      instagram: cell(r, instagramIdx),
+      x: cell(r, xIdx),
+      tiktok: cell(r, tiktokIdx),
+      threads: cell(r, threadsIdx),
+      bluesky: cell(r, blueskyIdx),
+      linkedin: cell(r, linkedinIdx),
+      youtube: cell(r, youtubeIdx),
+      vimeo: cell(r, vimeoIdx),
+      imdb: cell(r, imdbIdx),
+      facebook: cell(r, facebookIdx),
+      linktree: cell(r, linktreeIdx),
+      newsletter: cell(r, newsletterIdx),
     };
 
     const normalizedKeys = Object.fromEntries(

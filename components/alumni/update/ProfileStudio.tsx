@@ -313,15 +313,6 @@ export default function ProfileStudio(props: ProfileStudioProps) {
         </button>
 
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
-          <button
-            type="button"
-            style={{ ...ghostButton, padding: "10px 12px", opacity: 0.9 }}
-            disabled={loading}
-            onClick={() => onOpenPicker("album")}
-            title="Open media library"
-          >
-            Library
-          </button>
           {adminHref && (
             <a
               href={adminHref}
