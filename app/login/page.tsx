@@ -96,16 +96,15 @@ export default async function LoginPage({
       }}
     >
       {/* ══════════════════════════════════════════════════════
-          PAGE-LEVEL HERO — cinematic full-width statement
-          "ALUMNI PORTAL" + "The adventure continues."
+          PAGE-LEVEL HERO — matches /alumni hero treatment
           ══════════════════════════════════════════════════════ */}
-      <div
+      <section
         style={{
           position: "relative",
           width: "100%",
-          height: "clamp(260px, 45vh, 480px)",
-          overflow: "hidden",
-          flexShrink: 0,
+          height: "55vh",
+          boxShadow: "0px 0px 33px rgba(0,0,0,0.5)",
+          zIndex: 1,
         }}
       >
         <Image
@@ -113,60 +112,40 @@ export default async function LoginPage({
           alt="DAT alumni artists"
           fill
           priority
-          style={{ objectFit: "cover", objectPosition: "center 30%" }}
+          sizes="100vw"
+          className="object-cover object-center"
         />
-        {/* Gradient: transparent top → deep purple-black at bottom */}
-        <div
-          aria-hidden
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(to bottom, rgba(36,17,35,0.12) 0%, rgba(36,17,35,0.80) 100%)",
-          }}
-        />
-        {/* Hero text anchored to image bottom */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            padding:
-              "0 clamp(1.5rem, 5vw, 3rem) clamp(1.75rem, 4vw, 2.75rem)",
-            textAlign: "center",
-          }}
-        >
-          <div
+        {/* Heading: bottom-right, same position/font/size as /alumni */}
+        <div style={{ position: "absolute", bottom: "1rem", right: "5%", textAlign: "right" }}>
+          <h1
             style={{
-              fontFamily:
-                "var(--font-special-elite), ui-monospace, monospace",
-              fontSize: "clamp(0.58rem, 1.1vw, 0.75rem)",
-              letterSpacing: "0.52em",
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
+              fontSize: "clamp(4rem, 9vw, 10rem)",
+              color: "#f2f2f2",
               textTransform: "uppercase",
-              color: "#FFCC00",
-              opacity: 0.9,
-              marginBottom: "0.65rem",
+              textShadow: "0 8px 20px rgba(0,0,0,0.8)",
+              lineHeight: 0.92,
+              margin: 0,
             }}
           >
-            ALUMNI PORTAL
-          </div>
+            ALUMNI
+            <br />
+            PORTAL
+          </h1>
           <p
             style={{
               fontFamily: "var(--font-gloucester), serif",
-              fontSize: "clamp(1.5rem, 3.5vw, 2.4rem)",
+              fontSize: "clamp(1rem, 2vw, 1.5rem)",
               fontStyle: "italic",
-              lineHeight: 1.15,
-              color: "rgba(245,236,217,0.88)",
-              margin: 0,
+              color: "rgba(242,242,242,0.82)",
+              textShadow: "0 4px 12px rgba(0,0,0,0.8)",
+              margin: "0.4rem 0 0",
             }}
           >
             The adventure continues.
           </p>
         </div>
-      </div>
+      </section>
 
       {/* ══════════════════════════════════════════════════════
           CARD SECTION — invitation card on kraft background
