@@ -104,9 +104,16 @@ export default function DesktopProfileHeader({
 
         const currentItem = rawItems.find((it: any) => it?.isCurrent === true);
         const currentUrl = currentItem ? toUrl(currentItem) : null;
-        // Only use media-list isCurrent when Profile-Live didn't supply an explicit URL headshot.
-        // A non-empty headshotUrl prop means Profile-Live explicitly chose a URL — trust that.
-        if (currentUrl && !headshotUrl) setImageSrc(currentUrl);
+        // A Drive-based headshotUrl (uploaded file pointer stored in Profile-Live) must be
+        // validated against the media list. If no current item exists, the file was deleted —
+        // fall back to the default image rather than keeping the stale Drive URL.
+        // Plain external HTTPS URLs (URL-based headshots) are trusted as-is.
+        const isFileProp = headshotUrl && /drive\.google\.com|\/api\/media\/thumb\?fileId=/i.test(headshotUrl);
+        if (currentUrl && (!headshotUrl || isFileProp)) {
+          setImageSrc(currentUrl);
+        } else if (!currentUrl && isFileProp) {
+          setImageSrc(fallbackImage);
+        }
 
         if (unique.length) {
           setGalleryUrls(unique);
