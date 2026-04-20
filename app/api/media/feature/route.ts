@@ -5,7 +5,7 @@ import { requireAuth } from "@/lib/requireAuth";
 import { rateLimit } from "@/lib/rateLimit";
 import {
   isAdmin,
-  resolveOwnerAlumniId,
+  getAlumniIdForOwnerEmail,
   withRetry,
   featureExistingInMedia,
   featureExistingInMediaByUrl,
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
 
     // Owner/Admin guard: non-admins can only edit their own alumniId
     if (auth.email && !isAdmin(auth.email)) {
-      const ownerId = await resolveOwnerAlumniId(spreadsheetId, auth.email);
+      const ownerId = await getAlumniIdForOwnerEmail(spreadsheetId, auth.email || "");
       if (!ownerId || ownerId !== alumniId) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }

@@ -403,51 +403,47 @@ function pickBestHeadshot(media: ProfileMediaRow[] | undefined) {
     return s === "headshot" || s === "head shot" || s.includes("headshot") || s.includes("head shot");
   };
 
-  const rows = (media ?? []).filter((r) => kindIsHeadshot(r.kind));
-
+  const isTrue = (v?: string | boolean) => {
+    if (v === true) return true;
+    if (v === false) return false;
+    const s = String(v ?? "").trim().toLowerCase();
+    return s === "true" || s === "t" || s === "yes" || s === "y" || s === "1";
+  };
 
   const parseTime = (s?: string) => {
     const t = Date.parse(String(s || ""));
     return Number.isFinite(t) ? t : 0;
   };
 
-  const isTrue = (v?: string | boolean) => {
-    if (v === true) return true;
-    if (v === false) return false;
-
-    const s = String(v ?? "").trim().toLowerCase();
-    return s === "true" || s === "t" || s === "yes" || s === "y" || s === "1";
-  };
-
-    const parseSortIndex = (v?: string) => {
+  const parseSortIndex = (v?: string) => {
     const n = Number(String(v ?? "").trim());
     return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
   };
 
+  // Only consider rows that are explicitly marked as current.
+  // If no row has isCurrent=true (e.g. the headshot was deleted/cleared),
+  // return empty so the fallback image is shown rather than a stale deleted headshot.
+  const rows = (media ?? []).filter((r) => kindIsHeadshot(r.kind) && isTrue(r.isCurrent));
+
   if (!rows.length) return { upstreamUrl: "", cacheKey: "" };
 
   rows.sort((a, b) => {
-    // 0) TRUE wins first (PRIMARY)
-    const aCur = isTrue(a.isCurrent);
-    const bCur = isTrue(b.isCurrent);
-    if (aCur !== bCur) return aCur ? -1 : 1;
-
-    // 1) newest uploadedAt wins (SECONDARY)
+    // 0) newest uploadedAt wins (PRIMARY — all rows already have isCurrent=true)
     const tA = parseTime(a.uploadedAt);
     const tB = parseTime(b.uploadedAt);
     if (tA !== tB) return tB - tA;
 
-    // 2) if present, lower sortIndex wins (explicit manual quality ordering)
+    // 1) lower sortIndex wins (explicit manual quality ordering)
     const sA = parseSortIndex(a.sortIndex);
     const sB = parseSortIndex(b.sortIndex);
     if (sA !== sB) return sA - sB;
 
-    // 3) prefer Drive uploads (fileId) over externalUrl
+    // 2) prefer Drive uploads (fileId) over externalUrl
     const aHasFile = !!String(a.fileId || "").trim();
     const bHasFile = !!String(b.fileId || "").trim();
     if (aHasFile !== bHasFile) return aHasFile ? -1 : 1;
 
-    // 4) stable deterministic fallback
+    // 3) stable deterministic fallback
     const aKey = String(a.fileId || a.externalUrl || "").trim();
     const bKey = String(b.fileId || b.externalUrl || "").trim();
     if (aKey !== bKey) return aKey.localeCompare(bKey);

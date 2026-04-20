@@ -460,6 +460,7 @@ export default function BasicsTab({
               <HeadshotChooser
                 alumniId={alumniId}
                 loading={loading}
+                profileHeadshotId={storedHeadshotId}
                 profileHeadshotUrl={storedHeadshotUrl}
                 onFeaturedUrl={(url) => {
                   setProfile((p: any) => ({

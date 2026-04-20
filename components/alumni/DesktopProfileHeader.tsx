@@ -109,10 +109,13 @@ export default function DesktopProfileHeader({
         // fall back to the default image rather than keeping the stale Drive URL.
         // Plain external HTTPS URLs (URL-based headshots) are trusted as-is.
         const isFileProp = headshotUrl && /drive\.google\.com|\/api\/media\/thumb\?fileId=/i.test(headshotUrl);
-        if (currentUrl && (!headshotUrl || isFileProp)) {
+        if (currentUrl && isFileProp) {
           setImageSrc(currentUrl);
         } else if (!currentUrl && isFileProp) {
           setImageSrc(fallbackImage);
+        } else if (currentUrl && !headshotUrl) {
+          // Profile-Live has no URL but media list has a current file-backed item — use it.
+          setImageSrc(currentUrl);
         }
 
         if (unique.length) {

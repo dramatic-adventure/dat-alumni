@@ -16,12 +16,14 @@ export default function HeadshotChooser({
   alumniId,
   onFeatured,
   onFeaturedUrl,
+  profileHeadshotId,
   profileHeadshotUrl,
   loading: parentLoading,
 }: {
   alumniId: string;
   onFeatured: (fileId: string) => void;
   onFeaturedUrl?: (url: string) => void;
+  profileHeadshotId?: string;
   profileHeadshotUrl?: string;
   loading?: boolean;
 }) {
@@ -51,6 +53,18 @@ export default function HeadshotChooser({
     run();
   }, [alumniId]);
 
+  // Sync isCurrent badges to the profile's actual saved headshot (Profile-Live is authoritative;
+  // Sheets isCurrent flags can be stale due to eventual consistency + 15s server cache).
+  useEffect(() => {
+    if (profileHeadshotId) {
+      setItems((prev) => prev.map((it) => ({ ...it, isCurrent: it.fileId === profileHeadshotId })));
+    } else if (profileHeadshotUrl) {
+      setItems((prev) =>
+        prev.map((it) => ({ ...it, isCurrent: !it.fileId && it.externalUrl === profileHeadshotUrl }))
+      );
+    }
+  }, [profileHeadshotId, profileHeadshotUrl]);
+
   // Staging-only selection: no server write until Save Profile Basics is clicked.
   function select(fileId: string, externalUrl?: string) {
     if (parentLoading) return;
@@ -78,6 +92,19 @@ export default function HeadshotChooser({
   // Filters out completely blank rows (no fileId and no externalUrl).
   const displayItems = useMemo<HeadshotItem[]>(() => {
     const filtered = items.filter((it) => it.fileId || it.externalUrl);
+
+    // When no headshot is current (both cleared to default), override any stale isCurrent:true
+    // flags from the API so the user can click and re-select any item.
+    if (!profileHeadshotId && !profileHeadshotUrl) {
+      return filtered.map((it) => ({ ...it, isCurrent: false }));
+    }
+
+    // When a file-backed headshot is active, the API items already cover it — no synthetic needed.
+    // Without this guard, a stale profileHeadshotUrl (left over from a previous URL-backed headshot)
+    // would cause a spurious synthetic item to be prepended alongside the real file-backed items,
+    // producing a duplicate image slot and an apparent missing item in the chooser strip.
+    if (profileHeadshotId) return filtered;
+
     const url = profileHeadshotUrl;
     if (!url) return filtered;
     if (filtered.some((it) => it.externalUrl === url)) return filtered;
@@ -87,7 +114,7 @@ export default function HeadshotChooser({
       { fileId: "", externalUrl: url, isCurrent: syntheticIsCurrent, isSynthetic: true },
       ...filtered,
     ];
-  }, [items, profileHeadshotUrl]);
+  }, [items, profileHeadshotId, profileHeadshotUrl]);
 
   const current = displayItems.find((it) => it.isCurrent);
 
