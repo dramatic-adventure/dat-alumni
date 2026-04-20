@@ -99,6 +99,12 @@ export default function HeadshotChooser({
       return filtered.map((it) => ({ ...it, isCurrent: false }));
     }
 
+    // When a file-backed headshot is active, the API items already cover it — no synthetic needed.
+    // Without this guard, a stale profileHeadshotUrl (left over from a previous URL-backed headshot)
+    // would cause a spurious synthetic item to be prepended alongside the real file-backed items,
+    // producing a duplicate image slot and an apparent missing item in the chooser strip.
+    if (profileHeadshotId) return filtered;
+
     const url = profileHeadshotUrl;
     if (!url) return filtered;
     if (filtered.some((it) => it.externalUrl === url)) return filtered;
