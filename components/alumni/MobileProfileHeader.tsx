@@ -108,6 +108,9 @@ export default function MobileProfileHeader({
           setImageSrc(currentUrl);
         } else if (!currentUrl && isFileProp) {
           setImageSrc(fallbackImage);
+        } else if (currentUrl && !headshotUrl) {
+          // Profile-Live has no URL but media list has a current file-backed item — use it.
+          setImageSrc(currentUrl);
         }
 
         if (unique.length) {
