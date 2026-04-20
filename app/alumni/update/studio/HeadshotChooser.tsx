@@ -89,30 +89,43 @@ export default function HeadshotChooser({
   };
 
   // Merge fetched items with an optional synthetic entry for the profile's URL headshot.
-  // Filters out completely blank rows (no fileId and no externalUrl).
+  // Filters out completely blank rows (no fileId and no externalUrl), then deduplicates
+  // by fileId (primary) or externalUrl (for URL-only items) before any badge normalization,
+  // so isCurrent overlays never alter which items appear in the strip.
   const displayItems = useMemo<HeadshotItem[]>(() => {
     const filtered = items.filter((it) => it.fileId || it.externalUrl);
+
+    // Dedupe: fileId wins; URL-only items fall back to externalUrl as the key.
+    const seen = new Set<string>();
+    const deduped: HeadshotItem[] = [];
+    for (const it of filtered) {
+      const key = it.fileId ? `id:${it.fileId}` : `url:${it.externalUrl!}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        deduped.push(it);
+      }
+    }
 
     // When no headshot is current (both cleared to default), override any stale isCurrent:true
     // flags from the API so the user can click and re-select any item.
     if (!profileHeadshotId && !profileHeadshotUrl) {
-      return filtered.map((it) => ({ ...it, isCurrent: false }));
+      return deduped.map((it) => ({ ...it, isCurrent: false }));
     }
 
     // When a file-backed headshot is active, the API items already cover it — no synthetic needed.
     // Without this guard, a stale profileHeadshotUrl (left over from a previous URL-backed headshot)
     // would cause a spurious synthetic item to be prepended alongside the real file-backed items,
     // producing a duplicate image slot and an apparent missing item in the chooser strip.
-    if (profileHeadshotId) return filtered;
+    if (profileHeadshotId) return deduped;
 
     const url = profileHeadshotUrl;
-    if (!url) return filtered;
-    if (filtered.some((it) => it.externalUrl === url)) return filtered;
+    if (!url) return deduped;
+    if (deduped.some((it) => it.externalUrl === url)) return deduped;
     // Only mark the synthetic item as current if no fetched item is already current
-    const syntheticIsCurrent = !filtered.some((it) => it.isCurrent);
+    const syntheticIsCurrent = !deduped.some((it) => it.isCurrent);
     return [
       { fileId: "", externalUrl: url, isCurrent: syntheticIsCurrent, isSynthetic: true },
-      ...filtered,
+      ...deduped,
     ];
   }, [items, profileHeadshotId, profileHeadshotUrl]);
 
