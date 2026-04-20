@@ -3,6 +3,21 @@ import "server-only";
 
 import { sheetsClient } from "@/lib/googleClients";
 
+/* ──────────────────────────────────────────────────────────
+ * Module-level snapshot cache
+ * Mirrors the alumniCache pattern in loadAlumni.ts.
+ * One Sheets API call per TTL window per Node.js process — so the entire
+ * Next.js static-generation pass (which runs in a single process) only hits
+ * Role-Assignments once, eliminating the 429 quota errors during Netlify builds.
+ * Default TTL is 1 hour (matching page revalidate = 3600), overridable via
+ * ROLE_ASSIGNMENTS_TTL_MS env var.
+ * ────────────────────────────────────────────────────────── */
+let _cache: RoleAssignmentRow[] | null = null;
+let _cacheAt = 0;
+const ROLE_ASSIGNMENTS_TTL_MS = Number(
+  process.env.ROLE_ASSIGNMENTS_TTL_MS || 3_600_000
+);
+
 export type ScopeType = "GLOBAL" | "COUNTRY" | "CLUB" | "PRODUCTION";
 export type RoleCode =
   | "RTA"
@@ -58,6 +73,12 @@ function cell(r: unknown[], idx: number) {
 }
 
 export async function loadRoleAssignments(): Promise<RoleAssignmentRow[]> {
+  // Return snapshot if still fresh.
+  const now = Date.now();
+  if (_cache !== null && now - _cacheAt < ROLE_ASSIGNMENTS_TTL_MS) {
+    return _cache;
+  }
+
   const spreadsheetId = process.env.ALUMNI_SHEET_ID || "";
   if (!spreadsheetId) throw new Error("Missing ALUMNI_SHEET_ID");
 
@@ -72,7 +93,11 @@ export async function loadRoleAssignments(): Promise<RoleAssignmentRow[]> {
   });
 
   const all = (res.data.values ?? []) as unknown[][];
-  if (!all.length) return [];
+  if (!all.length) {
+    _cache = [];
+    _cacheAt = Date.now();
+    return [];
+  }
 
   const header = (all[0] ?? []).map((h) => String(h ?? "").trim());
   const rows = all.slice(1);
@@ -138,6 +163,10 @@ export async function loadRoleAssignments(): Promise<RoleAssignmentRow[]> {
       showOnProfile: toBool(cell(r, showOnProfileIdx)),
     });
   }
+
+  // Populate snapshot cache before returning.
+  _cache = out;
+  _cacheAt = Date.now();
 
   return out;
 }
