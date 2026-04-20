@@ -16,12 +16,14 @@ export default function HeadshotChooser({
   alumniId,
   onFeatured,
   onFeaturedUrl,
+  profileHeadshotId,
   profileHeadshotUrl,
   loading: parentLoading,
 }: {
   alumniId: string;
   onFeatured: (fileId: string) => void;
   onFeaturedUrl?: (url: string) => void;
+  profileHeadshotId?: string;
   profileHeadshotUrl?: string;
   loading?: boolean;
 }) {
@@ -50,6 +52,18 @@ export default function HeadshotChooser({
     };
     run();
   }, [alumniId]);
+
+  // Sync isCurrent badges to the profile's actual saved headshot (Profile-Live is authoritative;
+  // Sheets isCurrent flags can be stale due to eventual consistency + 15s server cache).
+  useEffect(() => {
+    if (profileHeadshotId) {
+      setItems((prev) => prev.map((it) => ({ ...it, isCurrent: it.fileId === profileHeadshotId })));
+    } else if (profileHeadshotUrl) {
+      setItems((prev) =>
+        prev.map((it) => ({ ...it, isCurrent: !it.fileId && it.externalUrl === profileHeadshotUrl }))
+      );
+    }
+  }, [profileHeadshotId, profileHeadshotUrl]);
 
   // Staging-only selection: no server write until Save Profile Basics is clicked.
   function select(fileId: string, externalUrl?: string) {

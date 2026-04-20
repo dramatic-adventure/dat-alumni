@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { sheetsClient } from "@/lib/googleClients";
 import { requireAuth } from "@/lib/requireAuth";
 import { rateLimit } from "@/lib/rateLimit";
-import { getAlumniIdForOwnerEmail } from "@/lib/ownership";
+import { getAlumniIdForOwnerEmail, clearAllCurrentForKind } from "@/lib/ownership";
 
 export const runtime = "nodejs";
 
@@ -554,6 +554,24 @@ export async function PUT(req: Request) {
         valueInputOption: "RAW",
         requestBody: { values: [row] },
       });
+    }
+
+    // When both headshot fields are explicitly cleared, sync Profile-Media so the
+    // client-side media-list API no longer returns isCurrent=true for the old headshot.
+    const clearingHeadshotId =
+      "currentheadshotid" in filteredChangesByCanonical &&
+      filteredChangesByCanonical["currentheadshotid"] === "";
+    const clearingHeadshotUrl =
+      "currentheadshoturl" in filteredChangesByCanonical &&
+      filteredChangesByCanonical["currentheadshoturl"] === "";
+    const resultHeadshotId = filteredChangesByCanonical["currentheadshotid"] ?? beforeForCanonKey("currentheadshotid");
+    const resultHeadshotUrl = filteredChangesByCanonical["currentheadshoturl"] ?? beforeForCanonKey("currentheadshoturl");
+    if ((clearingHeadshotId || clearingHeadshotUrl) && !resultHeadshotId && !resultHeadshotUrl) {
+      try {
+        await clearAllCurrentForKind(spreadsheetId, ownerKey, "headshot");
+      } catch {
+        // non-fatal: Profile-Media sync failure should not block the Profile-Live save
+      }
     }
 
     return NextResponse.json({

@@ -143,6 +143,7 @@ const targetAlumniIdFromProp =
   }, []);
 
   const headshotUploadInFlight = useRef(false);
+  const lastUploadedHeadshotRef = useRef<{ name: string; size: number; lastModified: number; fileId: string } | null>(null);
   const [basicsSavedRecently, setBasicsSavedRecently] = useState(false);
   const basicsSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -524,18 +525,16 @@ const lookupUrl = useMemo(() => {
           // non-fatal: saveCategory will still persist currentHeadshotId to Profile-Live
         }
       } else if (!stagedFileId && !stagedUrl && !headshotFile) {
-        // Saving intentionally empty headshot (user chose default/fallback)
-        const hadHeadshot = !!(baselineFileId || baselineUrl);
-        if (hadHeadshot) {
-          try {
-            await fetch("/api/media/feature", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ alumniId, kind: "headshot", clear: true }),
-            });
-          } catch {
-            // non-fatal
-          }
+        // Saving intentionally empty headshot (user chose default/fallback).
+        // Always clear Profile-Media — handles out-of-sync rows regardless of liveBaseline state.
+        try {
+          await fetch("/api/media/feature", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ alumniId, kind: "headshot", clear: true }),
+          });
+        } catch {
+          // non-fatal
         }
       }
 
@@ -544,25 +543,44 @@ const lookupUrl = useMemo(() => {
           throw new Error("Headshot upload already in progress.");
         }
 
-        headshotUploadInFlight.current = true;
-        try {
-          const { url: uploadedUrl, fileId: uploadedFileId } = await uploadHeadshotViaQueue({
-            file: headshotFile,
-            alumniId,
-          });
+        // File-signature dedup: same file re-selected in this session → reuse cached fileId,
+        // no new upload, no duplicate Profile-Media row.
+        const fileSig = {
+          name: headshotFile.name,
+          size: headshotFile.size,
+          lastModified: headshotFile.lastModified,
+        };
+        const prevUpload = lastUploadedHeadshotRef.current;
+        const isSameFile =
+          prevUpload &&
+          prevUpload.name === fileSig.name &&
+          prevUpload.size === fileSig.size &&
+          prevUpload.lastModified === fileSig.lastModified;
 
-          const resolvedUrl = uploadedUrl.trim();
-          const resolvedFileId = uploadedFileId.trim();
+        if (isSameFile) {
+          nextProfile = { ...nextProfile, currentHeadshotId: prevUpload.fileId, currentHeadshotUrl: "" };
+        } else {
+          headshotUploadInFlight.current = true;
+          try {
+            const { url: uploadedUrl, fileId: uploadedFileId } = await uploadHeadshotViaQueue({
+              file: headshotFile,
+              alumniId,
+            });
 
-          if (resolvedUrl) {
-            nextProfile = { ...profile, currentHeadshotUrl: resolvedUrl, currentHeadshotId: "" };
-            setProfile(nextProfile);
-          } else if (resolvedFileId) {
-            // Drive file saved; store fileId so saveCategory writes it to Profile-Live correctly.
-            nextProfile = { ...nextProfile, currentHeadshotId: resolvedFileId, currentHeadshotUrl: "" };
+            const resolvedUrl = uploadedUrl.trim();
+            const resolvedFileId = uploadedFileId.trim();
+
+            if (resolvedUrl) {
+              nextProfile = { ...profile, currentHeadshotUrl: resolvedUrl, currentHeadshotId: "" };
+              setProfile(nextProfile);
+            } else if (resolvedFileId) {
+              // Drive file saved; store fileId so saveCategory writes it to Profile-Live correctly.
+              nextProfile = { ...nextProfile, currentHeadshotId: resolvedFileId, currentHeadshotUrl: "" };
+              lastUploadedHeadshotRef.current = { ...fileSig, fileId: resolvedFileId };
+            }
+          } finally {
+            headshotUploadInFlight.current = false;
           }
-        } finally {
-          headshotUploadInFlight.current = false;
         }
       }
 
@@ -579,8 +597,24 @@ const lookupUrl = useMemo(() => {
           };
           basicsDraft.clearDraft();
           setHeadshotFile(null);
+          // Reset headshot progress bar — saveCategory uses uploadKinds:[] so never resets it
+          setProgress((p) => ({ ...p, headshot: { uploaded: 0, total: 0, pct: 0 } }));
         },
       });
+
+      // URL headshots: saveCategory may return "no changes" when Profile-Live already has the
+      // correct URL, but the feature call above still ran. Treat that as success so the URL
+      // input clears.
+      if (!didSave && externalUrlToFeature) {
+        didSave = true;
+      }
+
+      // Clear/default: saveCategory may return "no changes" when Profile-Live is already empty,
+      // but the media clear above still ran. Treat that as success so the UI reflects the intent.
+      if (!didSave && !stagedFileId && !stagedUrl && !headshotFile) {
+        didSave = true;
+        savedHeadshot = { url: "", id: "" };
+      }
 
       if (didSave && savedHeadshot) {
         // Patch baseline + profile with what was saved — overrides any stale rehydrate data
