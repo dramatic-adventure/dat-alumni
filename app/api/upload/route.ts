@@ -366,7 +366,13 @@ async function findOrCreateFolder(
   )}'`;
 
   const list = (await withRetry(
-    () => (drive.files.list as any)({ q, fields: "files(id,name)" }),
+    () =>
+      (drive.files.list as any)({
+        q,
+        fields: "files(id,name)",
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
+      }),
     "Drive list folder"
   )) as DriveListResp;
 
