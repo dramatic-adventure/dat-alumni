@@ -9,6 +9,7 @@ import {
   withRetry,
   featureExistingInMedia,
   featureExistingInMediaByUrl,
+  clearAllCurrentForKind,
   setLivePointer,
   type MediaKind,
 } from "@/lib/ownership";
@@ -45,7 +46,9 @@ export async function POST(req: Request) {
     if (!["headshot", "album", "reel", "event"].includes(kind)) {
       return NextResponse.json({ error: "kind invalid" }, { status: 400 });
     }
-    if (!fileId && !externalUrl) {
+    const clear = body.clear === true;
+
+    if (!clear && !fileId && !externalUrl) {
       return NextResponse.json({ error: "fileId or externalUrl required" }, { status: 400 });
     }
 
@@ -64,6 +67,12 @@ export async function POST(req: Request) {
 
     const sheets = sheetsClient();
     const nowIso = new Date().toISOString();
+
+    // --- clear: intentionally use default (no headshot) ---
+    if (clear) {
+      await clearAllCurrentForKind(spreadsheetId, alumniId, kind);
+      return NextResponse.json({ ok: true, cleared: true, at: nowIso });
+    }
 
     // --- URL-based headshot path ---
     if (externalUrl) {

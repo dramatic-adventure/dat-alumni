@@ -46,6 +46,7 @@ export default function BasicsTab({
   toast,
   openPicker,
   onSave,
+  savedRecently = false,
   alumniId,
   onHeadshotFeatured,
 }: {
@@ -79,7 +80,8 @@ export default function BasicsTab({
 
   toast: (msg: string, type?: "success" | "error") => void;
   openPicker: (kind: "headshot" | "album" | "reel" | "event") => void;
-  onSave: (headshotUrl?: string) => Promise<void>;
+  onSave: (headshotUrl?: string) => Promise<boolean | void>;
+  savedRecently?: boolean;
   alumniId?: string;
   onHeadshotFeatured?: (fileId: string) => void;
 }) {
@@ -403,7 +405,49 @@ export default function BasicsTab({
             >
               {showUrlInput ? "Hide URL input" : "Use image URL instead"}
             </button>
+
+            {/* Show "Use default" only when a headshot is currently selected */}
+            {alumniId && (storedHeadshotId || storedHeadshotUrl || headshotFile) && (
+              <button
+                type="button"
+                style={{
+                  ...studioGhostButton,
+                  opacity: 0.55,
+                  fontSize: "0.78rem",
+                }}
+                onClick={() => {
+                  setProfile((p: any) => ({ ...p, currentHeadshotId: "", currentHeadshotUrl: "" }));
+                  setHeadshotFile(null);
+                  setShowHeadshotChooser(false);
+                  setShowUrlInput(false);
+                  setHeadshotUrlInput("");
+                }}
+                disabled={loading}
+              >
+                Use default image
+              </button>
+            )}
           </div>
+
+          {/* "Using default image" indicator — shown when no headshot is active */}
+          {alumniId && !headshotFile && !storedHeadshotId && !storedHeadshotUrl && (
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: 10,
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                fontSize: 13,
+                opacity: 0.75,
+                color: "#d9d9d9",
+              }}
+            >
+              <div>No headshot set — your public profile will show the default image.</div>
+              <div style={{ marginTop: 5, fontSize: 12, opacity: 0.75 }}>
+                To use a real headshot: drag a file into the upload area above, paste a URL, or choose a past headshot.
+              </div>
+            </div>
+          )}
 
           {/* Inline past-headshot chooser */}
           {showHeadshotChooser && alumniId && (
@@ -465,7 +509,7 @@ export default function BasicsTab({
               flexWrap: "wrap",
             }}
           >
-            {isDirty && (
+            {isDirty && !savedRecently && (
               <span
                 style={{
                   fontSize: 12,
@@ -479,13 +523,39 @@ export default function BasicsTab({
                 <span style={{ fontSize: 8 }}>●</span> Unsaved changes
               </span>
             )}
+            {savedRecently && (
+              <span
+                style={{
+                  fontSize: 12,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 5,
+                  color: "#6ee7b7",
+                  opacity: 0.9,
+                }}
+              >
+                <span style={{ fontSize: 10 }}>✓</span> Saved
+              </span>
+            )}
             <button
               type="button"
-              style={datButtonLocal}
+              style={{
+                ...datButtonLocal,
+                ...(savedRecently
+                  ? { background: "rgba(52,211,153,0.25)", borderColor: "rgba(52,211,153,0.5)" }
+                  : {}),
+              }}
               disabled={loading}
-              onClick={() => onSave(headshotUrlInput.trim() || undefined)}
+              onClick={async () => {
+                const ok = await onSave(headshotUrlInput.trim() || undefined);
+                if (ok) {
+                  setHeadshotUrlInput("");
+                  setShowUrlInput(false);
+                  setShowHeadshotChooser(false);
+                }
+              }}
             >
-              Save Profile Basics
+              {savedRecently ? "Saved ✓" : "Save Profile Basics"}
             </button>
           </div>
         </div>

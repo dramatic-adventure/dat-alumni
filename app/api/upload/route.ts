@@ -756,34 +756,57 @@ export async function POST(req: Request) {
     const fileId = createRes.data.id!;
     if (!fileId) throw new Error("Drive upload returned no file id");
 
-    // 2) Append to Profile-Media
-    await withRetry(
-      () =>
-        sheets.spreadsheets.values.append({
-          spreadsheetId,
-          range: "Profile-Media!A:L",
-          valueInputOption: "RAW",
-          requestBody: {
-            values: [
-              [
-                alumniId, // A: alumniId
-                kind, // B: kind
-                collectionId ?? "", // C: collectionId
-                collectionTitle ?? "", // D: collectionTitle
-                fileId, // E: fileId
-                "", // F: externalUrl
-                uploaderEmail, // G: uploadedByEmail
-                nowIso, // H: uploadedAt
-                "", // I: isCurrent (set in batch for headshot)
-                "", // J: isFeatured (set in batch)
-                sortIndex ?? "", // K: sortIndex
-                note ?? "", // L: note
-              ],
-            ],
-          },
-        }),
-      "Sheets append Profile-Media"
+    // 2) Append to Profile-Media (skip if this fileId is already recorded for alumniId+kind)
+    const existingMedia = await withRetry(
+      () => sheets.spreadsheets.values.get({ spreadsheetId, range: "Profile-Media!A:L" }),
+      "Sheets get Profile-Media (dedup check)"
     );
+    const existingRows = existingMedia.data.values ?? [];
+    const [existingHeader, ...existingDataRows] = existingRows as string[][];
+    const exHdrLower = (existingHeader ?? []).map((h) => String(h || "").trim().toLowerCase());
+    const idxEAid = exHdrLower.indexOf("alumniid");
+    const idxEKind = exHdrLower.indexOf("kind");
+    const idxEFile = exHdrLower.indexOf("fileid");
+    const rowAlreadyExists =
+      idxEAid !== -1 &&
+      idxEKind !== -1 &&
+      idxEFile !== -1 &&
+      existingDataRows.some(
+        (r) =>
+          normId((r as string[])[idxEAid]) === alumniId &&
+          String((r as string[])[idxEKind] || "") === kind &&
+          String((r as string[])[idxEFile] || "") === fileId
+      );
+
+    if (!rowAlreadyExists) {
+      await withRetry(
+        () =>
+          sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: "Profile-Media!A:L",
+            valueInputOption: "RAW",
+            requestBody: {
+              values: [
+                [
+                  alumniId, // A: alumniId
+                  kind, // B: kind
+                  collectionId ?? "", // C: collectionId
+                  collectionTitle ?? "", // D: collectionTitle
+                  fileId, // E: fileId
+                  "", // F: externalUrl
+                  uploaderEmail, // G: uploadedByEmail
+                  nowIso, // H: uploadedAt
+                  "", // I: isCurrent (set in batch for headshot)
+                  "", // J: isFeatured (set in batch)
+                  sortIndex ?? "", // K: sortIndex
+                  note ?? "", // L: note
+                ],
+              ],
+            },
+          }),
+        "Sheets append Profile-Media"
+      );
+    }
 
     // 3) mark Profile-Live needs_review
     await markLiveNeedsReview(sheets, spreadsheetId, alumniId, nowIso);

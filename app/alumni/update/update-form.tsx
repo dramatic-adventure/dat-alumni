@@ -143,6 +143,8 @@ const targetAlumniIdFromProp =
   }, []);
 
   const headshotUploadInFlight = useRef(false);
+  const [basicsSavedRecently, setBasicsSavedRecently] = useState(false);
+  const basicsSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const searchParams = useSearchParams();
 
@@ -461,9 +463,16 @@ const lookupUrl = useMemo(() => {
   const toastNow = (msg: string, type: "success" | "error" = "success") =>
     showToastRef.current?.(msg, type);
 
-  // Lift the Basics save click handler into a named function (logic unchanged)
-  async function handleSaveBasics(headshotUrl?: string) {
+  function normalizeHeadshotUrl(u: string) {
+    return u.trim().replace(/^http:\/\//i, "https://");
+  }
+
+  // Basics save handler — returns true on successful save
+  async function handleSaveBasics(headshotUrl?: string): Promise<boolean> {
     setLoading(true);
+    let didSave = false;
+    let savedHeadshot: { url: string; id: string } | null = null;
+
     try {
       const alumniId = stableAlumniId;
       if (!alumniId) throw new Error("Profile not loaded yet.");
@@ -471,20 +480,23 @@ const lookupUrl = useMemo(() => {
 
       const hadStagedHeadshot = !!headshotFile;
 
+      // Normalize URL input (trim + http→https)
+      const normalizedHeadshotUrl = headshotUrl ? normalizeHeadshotUrl(headshotUrl) : undefined;
+
       // Apply URL-input override if provided (no staged file needed)
-      let nextProfile: any = headshotUrl
-        ? { ...profile, currentHeadshotUrl: headshotUrl, currentHeadshotId: "" }
+      let nextProfile: any = normalizedHeadshotUrl
+        ? { ...profile, currentHeadshotUrl: normalizedHeadshotUrl, currentHeadshotId: "" }
         : profile;
 
       // Mark the chosen headshot current in Profile-Media before saveCategory writes Profile-Live.
       const stagedFileId = String(nextProfile.currentHeadshotId || "").trim();
       const baselineFileId = String(liveBaseline?.currentHeadshotId || "").trim();
-      const stagedUrl = String(nextProfile.currentHeadshotUrl || "").trim();
-      const baselineUrl = String(liveBaseline?.currentHeadshotUrl || "").trim();
+      const stagedUrl = normalizeHeadshotUrl(String(nextProfile.currentHeadshotUrl || ""));
+      const baselineUrl = normalizeHeadshotUrl(String(liveBaseline?.currentHeadshotUrl || ""));
 
       // Canonical externalUrl to feature: text-input arg takes precedence, then chooser selection
       const externalUrlToFeature =
-        headshotUrl ||
+        normalizedHeadshotUrl ||
         (!stagedFileId && stagedUrl && (baselineFileId || stagedUrl !== baselineUrl)
           ? stagedUrl
           : "");
@@ -511,6 +523,20 @@ const lookupUrl = useMemo(() => {
         } catch {
           // non-fatal: saveCategory will still persist currentHeadshotId to Profile-Live
         }
+      } else if (!stagedFileId && !stagedUrl && !headshotFile) {
+        // Saving intentionally empty headshot (user chose default/fallback)
+        const hadHeadshot = !!(baselineFileId || baselineUrl);
+        if (hadHeadshot) {
+          try {
+            await fetch("/api/media/feature", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ alumniId, kind: "headshot", clear: true }),
+            });
+          } catch {
+            // non-fatal
+          }
+        }
       }
 
       if (headshotFile) {
@@ -520,25 +546,20 @@ const lookupUrl = useMemo(() => {
 
         headshotUploadInFlight.current = true;
         try {
-          const url = await uploadHeadshotViaQueue({
+          const { url: uploadedUrl, fileId: uploadedFileId } = await uploadHeadshotViaQueue({
             file: headshotFile,
             alumniId,
           });
 
-          const resolvedUrl = String(url || "").trim();
+          const resolvedUrl = uploadedUrl.trim();
+          const resolvedFileId = uploadedFileId.trim();
 
           if (resolvedUrl) {
             nextProfile = { ...profile, currentHeadshotUrl: resolvedUrl, currentHeadshotId: "" };
             setProfile(nextProfile);
-            showToastRef.current?.("Headshot uploaded ✓", "success");
-          } else {
-            // Upload route already set currentHeadshotId in Profile-Live via setLivePointerIfFeatured.
-            // Clear it in nextProfile so saveCategory does not overwrite that write with a stale value.
-            nextProfile = { ...nextProfile, currentHeadshotId: "" };
-            showToastRef.current?.(
-              "Headshot uploaded ✓ (no URL returned, but it should still be live)",
-              "success"
-            );
+          } else if (resolvedFileId) {
+            // Drive file saved; store fileId so saveCategory writes it to Profile-Live correctly.
+            nextProfile = { ...nextProfile, currentHeadshotId: resolvedFileId, currentHeadshotUrl: "" };
           }
         } finally {
           headshotUploadInFlight.current = false;
@@ -551,18 +572,40 @@ const lookupUrl = useMemo(() => {
         uploadKinds: [],
         profileOverride: nextProfile,
         afterSave: () => {
+          didSave = true;
+          savedHeadshot = {
+            url: String(nextProfile.currentHeadshotUrl ?? ""),
+            id: String(nextProfile.currentHeadshotId ?? ""),
+          };
           basicsDraft.clearDraft();
           setHeadshotFile(null);
-
-          if (hadStagedHeadshot) {
-            showToastRef.current?.("Profile basics saved ✓ (headshot set)", "success");
-          } else {
-            showToastRef.current?.("Profile basics saved ✓", "success");
-          }
         },
       });
+
+      if (didSave && savedHeadshot) {
+        // Patch baseline + profile with what was saved — overrides any stale rehydrate data
+        const sh = savedHeadshot as { url: string; id: string };
+        setLiveBaseline((prev: any) => ({
+          ...(prev ?? {}),
+          currentHeadshotUrl: sh.url,
+          currentHeadshotId: sh.id,
+        }));
+        setProfile((p: any) => ({
+          ...p,
+          currentHeadshotUrl: sh.url,
+          currentHeadshotId: sh.id,
+        }));
+
+        // Flash the Save button to confirm success
+        if (basicsSavedTimeoutRef.current) clearTimeout(basicsSavedTimeoutRef.current);
+        setBasicsSavedRecently(true);
+        basicsSavedTimeoutRef.current = setTimeout(() => setBasicsSavedRecently(false), 2500);
+      }
+
+      return didSave;
     } catch (e: any) {
       showToastRef.current?.(e?.message || "Save failed", "error");
+      return false;
     } finally {
       setLoading(false);
     }
@@ -895,7 +938,7 @@ const openEventAndScroll = () => {
   const queueEmptyResolver = useRef<(() => void) | null>(null);
 
   const headshotUploadResolver = useRef<{
-  resolve: (url: string) => void;
+  resolve: (result: { url: string; fileId: string }) => void;
   reject: (err: any) => void;
 } | null>(null);
 
@@ -1113,9 +1156,10 @@ useEffect(() => {
         (json as any)?.publicUrl ||
         (json as any)?.asset?.url ||
         "";
+      const fileId = String((json as any)?.fileId || "").trim();
       const { resolve } = headshotUploadResolver.current;
       headshotUploadResolver.current = null;
-      resolve(String(url || "").trim());
+      resolve({ url: String(url || "").trim(), fileId });
     }
 
     if (json?.status) setStatus(String(json.status));
@@ -1342,23 +1386,19 @@ const postCurrentUpdate = async (rawText: string, meta?: any): Promise<string | 
 };
 
 async function uploadHeadshotViaQueue(opts: { file: File; alumniId: string }) {
-  // keep signature if you want, but always pass stableAlumniId into it
   const { file, alumniId } = opts;
   if (!alumniId) throw new Error("Missing alumniId for upload.");
 
   const uploader = uploaderRef.current;
   if (!uploader) throw new Error("Uploader not ready.");
 
-  // ✅ Prevent parallel headshot uploads from stomping the resolver
   if (headshotUploadResolver.current) {
     throw new Error("Headshot upload already in progress.");
   }
 
-  // Set up one-shot resolver
-  const urlPromise = new Promise<string>((resolve, reject) => {
+  const uploadResult = new Promise<{ url: string; fileId: string }>((resolve, reject) => {
     headshotUploadResolver.current = { resolve, reject };
   });
-
 
   uploader.enqueue({
     kind: "headshot",
@@ -1368,10 +1408,7 @@ async function uploadHeadshotViaQueue(opts: { file: File; alumniId: string }) {
 
   uploader.start();
 
-  const url = (await urlPromise).trim(); // ✅ resolves on headshot completion
-
-  if (!url) throw new Error("Upload succeeded but no URL was returned.");
-  return url;
+  return await uploadResult; // resolves with { url, fileId }; rejects on upload error
 }
 
 
@@ -2056,6 +2093,7 @@ return (
         toast={toastNow}
         openPicker={openPicker}
         onSave={handleSaveBasics}
+        savedRecently={basicsSavedRecently}
         alumniId={stableAlumniId}
         onHeadshotFeatured={async (fileId) => {
           setAssets((a) => ({ ...a, [POINTER_MAP["headshot"]]: fileId }));

@@ -562,6 +562,62 @@ export async function featureExistingInMedia(
   }
 }
 
+/** Set isCurrent = FALSE on every Profile-Media row for this alumni + kind */
+export async function clearAllCurrentForKind(
+  spreadsheetId: string,
+  alumniId: string,
+  kind: MediaKind
+) {
+  const sheets = sheetsClient();
+  const media = await withRetry(
+    () =>
+      sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: "Profile-Media!A:L",
+      }),
+    "Sheets get Profile-Media"
+  );
+
+  const mRows = media.data.values ?? [];
+  const [mh, ...rows] = mRows as string[][];
+  if (!mh) return;
+
+  const mhLower = mh.map((h) => String(h || "").trim().toLowerCase());
+  const idxAid = mhLower.indexOf("alumniid");
+  const idxKind = mhLower.indexOf("kind");
+  const idxIsCur = mhLower.indexOf("iscurrent");
+  if (idxAid === -1 || idxKind === -1 || idxIsCur === -1) return;
+
+  const aid = normId(alumniId);
+  const updates: { range: string; values: string[][] }[] = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i] as string[];
+    if (normId(r[idxAid]) === aid && String(r[idxKind] || "") === kind) {
+      if (String(r[idxIsCur] || "").toUpperCase() === "TRUE") {
+        const updated = [...r];
+        while (updated.length < mh.length) updated.push("");
+        updated[idxIsCur] = "FALSE";
+        updates.push({
+          range: `Profile-Media!A${i + 2}:L${i + 2}`,
+          values: [updated],
+        });
+      }
+    }
+  }
+
+  if (updates.length) {
+    await withRetry(
+      () =>
+        sheets.spreadsheets.values.batchUpdate({
+          spreadsheetId,
+          requestBody: { data: updates, valueInputOption: "RAW" },
+        }),
+      "Sheets batchUpdate Profile-Media (clear all current)"
+    );
+  }
+}
+
 /** Set the pointer in Profile-Live to the selected file (needs_review + lastChangeType="media") */
 export async function setLivePointer(
   spreadsheetId: string,
