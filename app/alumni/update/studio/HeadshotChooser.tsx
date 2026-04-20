@@ -92,6 +92,13 @@ export default function HeadshotChooser({
   // Filters out completely blank rows (no fileId and no externalUrl).
   const displayItems = useMemo<HeadshotItem[]>(() => {
     const filtered = items.filter((it) => it.fileId || it.externalUrl);
+
+    // When no headshot is current (both cleared to default), override any stale isCurrent:true
+    // flags from the API so the user can click and re-select any item.
+    if (!profileHeadshotId && !profileHeadshotUrl) {
+      return filtered.map((it) => ({ ...it, isCurrent: false }));
+    }
+
     const url = profileHeadshotUrl;
     if (!url) return filtered;
     if (filtered.some((it) => it.externalUrl === url)) return filtered;
@@ -101,7 +108,7 @@ export default function HeadshotChooser({
       { fileId: "", externalUrl: url, isCurrent: syntheticIsCurrent, isSynthetic: true },
       ...filtered,
     ];
-  }, [items, profileHeadshotUrl]);
+  }, [items, profileHeadshotId, profileHeadshotUrl]);
 
   const current = displayItems.find((it) => it.isCurrent);
 
