@@ -5,7 +5,7 @@ import { requireAuth } from "@/lib/requireAuth";
 import { rateLimit } from "@/lib/rateLimit";
 import {
   isAdmin,
-  resolveOwnerAlumniId,
+  getAlumniIdForOwnerEmail,
   withRetry,
   featureExistingInMedia,
   featureExistingInMediaByUrl,
