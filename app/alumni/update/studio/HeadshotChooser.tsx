@@ -30,6 +30,11 @@ export default function HeadshotChooser({
   const [items, setItems] = useState<HeadshotItem[]>([]);
   const [fetching, setFetching] = useState(false);
   const [err, setErr] = useState("");
+  // Tracks the Drive fileId that Profile-Media considers current, captured from the raw
+  // API response before any client-side isCurrent mutations. Used as a fallback when
+  // profileHeadshotId is absent (e.g. Profile-Live's currentHeadshotId column is empty
+  // or missing in production) so we don't inject a phantom synthetic URL slot.
+  const [apiCurrentFileId, setApiCurrentFileId] = useState("");
 
   useEffect(() => {
     if (!alumniId) return;
@@ -43,7 +48,11 @@ export default function HeadshotChooser({
         );
         const j = await res.json();
         if (!res.ok) throw new Error(j?.error || "Failed to load");
-        setItems(j.items || []);
+        const fetched: HeadshotItem[] = j.items || [];
+        setItems(fetched);
+        // Snapshot which Drive file Profile-Media considers current before any
+        // client-side isCurrent mutations occur (sync effect, select(), etc.).
+        setApiCurrentFileId(fetched.find((it) => !!it.fileId && it.isCurrent)?.fileId ?? "");
       } catch (e: any) {
         setErr(e?.message || "Failed to load");
       } finally {
@@ -73,12 +82,14 @@ export default function HeadshotChooser({
       setItems((prev) =>
         prev.map((it) => ({ ...it, isCurrent: !it.fileId && it.externalUrl === externalUrl }))
       );
+      setApiCurrentFileId(""); // user chose a URL-backed headshot; clear Drive sentinel
       onFeaturedUrl?.(externalUrl);
       return;
     }
     setItems((prev) =>
       prev.map((it) => ({ ...it, isCurrent: it.fileId === fileId }))
     );
+    setApiCurrentFileId(fileId); // user chose this Drive file; keep sentinel current
     onFeatured(fileId);
   }
 
@@ -112,22 +123,40 @@ export default function HeadshotChooser({
       return deduped.map((it) => ({ ...it, isCurrent: false }));
     }
 
-    // When a file-backed headshot is active, the API items already cover it — no synthetic needed.
-    // Without this guard, a stale profileHeadshotUrl (left over from a previous URL-backed headshot)
-    // would cause a spurious synthetic item to be prepended alongside the real file-backed items,
-    // producing a duplicate image slot and an apparent missing item in the chooser strip.
-    if (profileHeadshotId) return deduped;
+    // Effective headshot file ID: prefer the explicit prop from Profile-Live; fall back to
+    // the Drive fileId that Profile-Media flagged isCurrent in the most recent API fetch
+    // (captured in apiCurrentFileId before any client-side isCurrent mutations).
+    //
+    // The fallback is the production fix: Profile-Live's currentHeadshotId column can be
+    // absent or empty for some alumni (data gap), leaving profileHeadshotId as "" while
+    // profileHeadshotUrl holds a stale Drive-derived URL. Without the fallback, the stale
+    // URL passes all guards and a phantom synthetic slot is prepended, producing the
+    // duplicate/missing thumbnail symptom that only appears in production.
+    const effectiveHeadshotId = profileHeadshotId || apiCurrentFileId;
+
+    if (effectiveHeadshotId) {
+      // A file-backed headshot is active (explicit or inferred from Profile-Media).
+      // Return the deduped list with isCurrent normalised to the effective file —
+      // this also corrects for cases where the sync effect hasn't run yet.
+      return deduped.map((it) => ({ ...it, isCurrent: it.fileId === effectiveHeadshotId }));
+    }
 
     const url = profileHeadshotUrl;
     if (!url) return deduped;
-    if (deduped.some((it) => it.externalUrl === url)) return deduped;
+
+    // Normalise before comparing: trim whitespace and coerce http → https so minor
+    // URL format differences between Profile-Live and Profile-Media don't produce
+    // false negatives that would cause a duplicate synthetic slot.
+    const normUrl = (u: string) => u.trim().replace(/^http:\/\//i, "https://");
+    if (deduped.some((it) => normUrl(it.externalUrl || "") === normUrl(url))) return deduped;
+
     // Only mark the synthetic item as current if no fetched item is already current
     const syntheticIsCurrent = !deduped.some((it) => it.isCurrent);
     return [
       { fileId: "", externalUrl: url, isCurrent: syntheticIsCurrent, isSynthetic: true },
       ...deduped,
     ];
-  }, [items, profileHeadshotId, profileHeadshotUrl]);
+  }, [items, apiCurrentFileId, profileHeadshotId, profileHeadshotUrl]);
 
   const current = displayItems.find((it) => it.isCurrent);
 

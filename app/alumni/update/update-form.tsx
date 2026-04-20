@@ -1454,7 +1454,18 @@ async function rehydrate() {
 
   try {
     const url = lookupUrl.startsWith("/") ? lookupUrl : `/${lookupUrl}`;
-    const r = await fetch(url, { cache: "no-store", credentials: "include" });
+    let r = await fetch(url, { cache: "no-store", credentials: "include" });
+
+    // In production, the API's alumniId lookup returns 403 for non-admin users.
+    // lookupUrl will have switched to the alumniId form once stableAlumniId is known,
+    // so rehydrate() would silently no-op on every post-save refresh for those users,
+    // leaving profile.currentHeadshotId stale and triggering the phantom synthetic slot
+    // in HeadshotChooser. Fall back to the email path, which is always self-gated.
+    if (r.status === 403 && String(email || "").trim()) {
+      const emailFallback = `/api/alumni/lookup?email=${encodeURIComponent(String(email).trim())}&nocache=1`;
+      r = await fetch(emailFallback, { cache: "no-store", credentials: "include" });
+    }
+
     if (!r.ok) return;
 
     const j = await r.json();
