@@ -393,6 +393,92 @@ export const LIVE_ASSET_COL: Record<MediaKind, string> = {
   event: "featuredEventId",
 };
 
+/** Flip featured/current flags in Profile-Media for an existing externalUrl */
+export async function featureExistingInMediaByUrl(
+  spreadsheetId: string,
+  alumniId: string,
+  kind: MediaKind,
+  externalUrl: string
+) {
+  const sheets = sheetsClient();
+  const media = await withRetry(
+    () =>
+      sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: "Profile-Media!A:L",
+      }),
+    "Sheets get Profile-Media"
+  );
+
+  const mRows = media.data.values ?? [];
+  const [mh, ...rows] = mRows as string[][];
+  if (!mh) throw new Error("Profile-Media has no header");
+
+  const mhLower = mh.map((h) => String(h || "").trim().toLowerCase());
+  const idxAid = mhLower.indexOf("alumniid");
+  const idxKind = mhLower.indexOf("kind");
+  const idxUrl = mhLower.indexOf("externalurl");
+  const idxIsCur = mhLower.indexOf("iscurrent");
+  const idxIsFeat = mhLower.indexOf("isfeatured");
+
+  if (idxAid === -1 || idxKind === -1 || idxUrl === -1) {
+    throw new Error("Profile-Media is missing required columns");
+  }
+
+  const flagColIdx = kind === "headshot" ? idxIsCur : idxIsFeat;
+  if (flagColIdx === -1) {
+    throw new Error("Profile-Media missing featured/current flag columns");
+  }
+
+  const normExtUrl = (u: string) => u.trim().replace(/^http:\/\//i, "https://");
+  const targetExtUrl = normExtUrl(externalUrl);
+
+  const aid = normId(alumniId);
+  const targetRowIndices: number[] = [];
+  let targetIndex: number | null = null;
+
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i] as string[];
+    if (normId(r[idxAid]) === aid && String(r[idxKind] || "") === kind) {
+      targetRowIndices.push(i);
+      if (normExtUrl(String(r[idxUrl] || "")) === targetExtUrl) targetIndex = i;
+    }
+  }
+
+  if (targetIndex == null) throw new Error("externalUrl not found for this alumni/kind");
+
+  const data: { range: string; values: string[][] }[] = [];
+
+  const selected = rows[targetIndex] as string[];
+  while (selected.length < mh.length) selected.push("");
+  selected[flagColIdx] = "TRUE";
+  data.push({
+    range: `Profile-Media!A${targetIndex + 2}:L${targetIndex + 2}`,
+    values: [selected],
+  });
+
+  for (const i of targetRowIndices) {
+    if (i === targetIndex) continue;
+    const row = rows[i] as string[];
+    while (row.length < mh.length) row.push("");
+    if (row[flagColIdx] === "TRUE") {
+      row[flagColIdx] = "FALSE";
+      data.push({ range: `Profile-Media!A${i + 2}:L${i + 2}`, values: [row] });
+    }
+  }
+
+  if (data.length) {
+    await withRetry(
+      () =>
+        sheets.spreadsheets.values.batchUpdate({
+          spreadsheetId,
+          requestBody: { data, valueInputOption: "RAW" },
+        }),
+      "Sheets batchUpdate Profile-Media (feature existing by url)"
+    );
+  }
+}
+
 /** Flip featured/current flags in Profile-Media for an existing fileId */
 export async function featureExistingInMedia(
   spreadsheetId: string,

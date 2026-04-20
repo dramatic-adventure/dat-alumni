@@ -8,6 +8,7 @@ import {
   resolveOwnerAlumniId,
   withRetry,
   featureExistingInMedia,
+  featureExistingInMediaByUrl,
   setLivePointer,
   type MediaKind,
 } from "@/lib/ownership";
@@ -38,12 +39,15 @@ export async function POST(req: Request) {
     const alumniId = String(body.alumniId || "").trim().toLowerCase();
     const kind = String(body.kind || "").trim().toLowerCase() as MediaKind;
     const fileId = String(body.fileId || "").trim();
+    const externalUrl = String(body.externalUrl || "").trim();
 
     if (!alumniId) return NextResponse.json({ error: "alumniId required" }, { status: 400 });
     if (!["headshot", "album", "reel", "event"].includes(kind)) {
       return NextResponse.json({ error: "kind invalid" }, { status: 400 });
     }
-    if (!fileId) return NextResponse.json({ error: "fileId required" }, { status: 400 });
+    if (!fileId && !externalUrl) {
+      return NextResponse.json({ error: "fileId or externalUrl required" }, { status: 400 });
+    }
 
     const spreadsheetId = process.env.ALUMNI_SHEET_ID;
     if (!spreadsheetId) {
@@ -60,6 +64,54 @@ export async function POST(req: Request) {
 
     const sheets = sheetsClient();
     const nowIso = new Date().toISOString();
+
+    // --- URL-based headshot path ---
+    if (externalUrl) {
+      // 1) Flip isCurrent flags in Profile-Media for this externalUrl row
+      try {
+        await featureExistingInMediaByUrl(spreadsheetId, alumniId, kind, externalUrl);
+      } catch (e: any) {
+        const msg = String(e?.message || e);
+        // Row doesn't exist yet — create it then retry
+        if (/externalurl not found for this alumni\/kind/i.test(msg)) {
+          await withRetry(
+            () =>
+              sheets.spreadsheets.values.append({
+                spreadsheetId,
+                range: "Profile-Media!A:L",
+                valueInputOption: "RAW",
+                requestBody: {
+                  values: [
+                    [
+                      alumniId, // A: alumniId
+                      kind, // B: kind
+                      "", // C: collectionId
+                      "", // D: collectionTitle
+                      "", // E: fileId
+                      externalUrl, // F: externalUrl
+                      auth.email || "", // G: uploadedByEmail
+                      nowIso, // H: uploadedAt
+                      "", // I: isCurrent (set by flip)
+                      "", // J: isFeatured (set by flip)
+                      "", // K: sortIndex
+                      "stub from /api/media/feature (url)", // L: note
+                    ],
+                  ],
+                },
+              }),
+            "Sheets append Profile-Media (stub for missing externalUrl)"
+          );
+          await featureExistingInMediaByUrl(spreadsheetId, alumniId, kind, externalUrl);
+        } else {
+          throw e;
+        }
+      }
+
+      // Profile-Live currentHeadshotUrl is written by saveCategory — skip setLivePointer here
+      return NextResponse.json({ ok: true, updated: { externalUrl }, at: nowIso });
+    }
+
+    // --- fileId-based path (existing behavior) ---
 
     // 1) Flip featured/current flags in Profile-Media
     try {

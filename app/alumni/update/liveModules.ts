@@ -124,6 +124,7 @@ export const MODULES = {
       "isBiCoastal",
       "secondLocation",
       "backgroundStyle",
+      "currentHeadshotId",
       "currentHeadshotUrl",
       "bioLong",
       "currentTitle",

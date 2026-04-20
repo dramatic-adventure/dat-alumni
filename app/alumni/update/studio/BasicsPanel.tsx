@@ -91,7 +91,7 @@ export default function BasicsTab({
   const storedHeadshotUrl = String(profile?.currentHeadshotUrl || "").trim();
   // Prefer ID-based thumbnail (reflects picker selection); fall back to direct URL
   const currentHeadshotDisplayUrl = storedHeadshotId
-    ? `/api/media/thumb?fileId=${encodeURIComponent(storedHeadshotId)}`
+    ? `/api/media/thumb?fileId=${encodeURIComponent(storedHeadshotId)}&w=200`
     : storedHeadshotUrl;
 
   return (
@@ -416,9 +416,22 @@ export default function BasicsTab({
               <HeadshotChooser
                 alumniId={alumniId}
                 loading={loading}
+                profileHeadshotUrl={storedHeadshotUrl}
+                onFeaturedUrl={(url) => {
+                  setProfile((p: any) => ({
+                    ...p,
+                    currentHeadshotUrl: url,
+                    currentHeadshotId: "",
+                  }));
+                  setHeadshotFile(null);
+                }}
                 onFeatured={(fileId) => {
-                  setShowHeadshotChooser(false);
-                  onHeadshotFeatured?.(fileId);
+                  setProfile((p: any) => ({
+                    ...p,
+                    currentHeadshotId: fileId,
+                    currentHeadshotUrl: "",
+                  }));
+                  setHeadshotFile(null);
                 }}
               />
             </div>

@@ -68,7 +68,7 @@ export default function DesktopProfileHeader({
 
     const toUrl = (it: any): string => {
       const fid = String(it?.fileId || "").trim();
-      if (fid) return `/api/img?fileId=${encodeURIComponent(fid)}`;
+      if (fid) return `/api/media/thumb?fileId=${encodeURIComponent(fid)}`;
       const ext = String(it?.externalUrl || "").trim();
       if (ext) return `/api/img?url=${encodeURIComponent(ext)}`;
       return "";
@@ -104,11 +104,16 @@ export default function DesktopProfileHeader({
 
         const currentItem = rawItems.find((it: any) => it?.isCurrent === true);
         const currentUrl = currentItem ? toUrl(currentItem) : null;
-        if (currentUrl) setImageSrc(currentUrl);
+        // Only use media-list isCurrent when Profile-Live didn't supply an explicit URL headshot.
+        // A non-empty headshotUrl prop means Profile-Live explicitly chose a URL — trust that.
+        if (currentUrl && !headshotUrl) setImageSrc(currentUrl);
 
         if (unique.length) {
           setGalleryUrls(unique);
-          const idx = currentUrl ? unique.indexOf(currentUrl) : -1;
+          const preferredUrl = headshotUrl
+            ? headshotUrl.replace(/^http:\/\//i, "https://")
+            : currentUrl;
+          const idx = preferredUrl ? unique.indexOf(preferredUrl) : -1;
           setCurrentHeadshotIndex(idx >= 0 ? idx : 0);
           unique.forEach(url => { try { new window.Image().src = url; } catch {} });
         }
@@ -125,7 +130,7 @@ export default function DesktopProfileHeader({
       fetchAbortRef.current?.abort();
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [alumniId]);
+  }, [alumniId, headshotUrl]);
 
   const nameParts = name.trim().split(" ");
   const firstName = nameParts.slice(0, -1).join(" ") || nameParts[0];

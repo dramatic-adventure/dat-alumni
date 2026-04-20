@@ -473,8 +473,45 @@ const lookupUrl = useMemo(() => {
 
       // Apply URL-input override if provided (no staged file needed)
       let nextProfile: any = headshotUrl
-        ? { ...profile, currentHeadshotUrl: headshotUrl }
+        ? { ...profile, currentHeadshotUrl: headshotUrl, currentHeadshotId: "" }
         : profile;
+
+      // Mark the chosen headshot current in Profile-Media before saveCategory writes Profile-Live.
+      const stagedFileId = String(nextProfile.currentHeadshotId || "").trim();
+      const baselineFileId = String(liveBaseline?.currentHeadshotId || "").trim();
+      const stagedUrl = String(nextProfile.currentHeadshotUrl || "").trim();
+      const baselineUrl = String(liveBaseline?.currentHeadshotUrl || "").trim();
+
+      // Canonical externalUrl to feature: text-input arg takes precedence, then chooser selection
+      const externalUrlToFeature =
+        headshotUrl ||
+        (!stagedFileId && stagedUrl && (baselineFileId || stagedUrl !== baselineUrl)
+          ? stagedUrl
+          : "");
+
+      if (externalUrlToFeature) {
+        // URL-based: flip isCurrent on the URL row; saveCategory writes currentHeadshotUrl to Profile-Live
+        try {
+          await fetch("/api/media/feature", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ alumniId, kind: "headshot", externalUrl: externalUrlToFeature }),
+          });
+        } catch {
+          // non-fatal
+        }
+      } else if (stagedFileId && stagedFileId !== baselineFileId) {
+        // File selected via chooser: flip isCurrent on the fileId row
+        try {
+          await fetch("/api/media/feature", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ alumniId, kind: "headshot", fileId: stagedFileId }),
+          });
+        } catch {
+          // non-fatal: saveCategory will still persist currentHeadshotId to Profile-Live
+        }
+      }
 
       if (headshotFile) {
         if (headshotUploadInFlight.current) {
@@ -491,10 +528,13 @@ const lookupUrl = useMemo(() => {
           const resolvedUrl = String(url || "").trim();
 
           if (resolvedUrl) {
-            nextProfile = { ...profile, currentHeadshotUrl: resolvedUrl };
+            nextProfile = { ...profile, currentHeadshotUrl: resolvedUrl, currentHeadshotId: "" };
             setProfile(nextProfile);
             showToastRef.current?.("Headshot uploaded ✓", "success");
           } else {
+            // Upload route already set currentHeadshotId in Profile-Live via setLivePointerIfFeatured.
+            // Clear it in nextProfile so saveCategory does not overwrite that write with a stale value.
+            nextProfile = { ...nextProfile, currentHeadshotId: "" };
             showToastRef.current?.(
               "Headshot uploaded ✓ (no URL returned, but it should still be live)",
               "success"
@@ -1426,6 +1466,7 @@ async function rehydrate() {
         ),
 
         currentHeadshotUrl: String(j?.currentHeadshotUrl || p.currentHeadshotUrl || ""),
+        currentHeadshotId: String(j?.currentHeadshotId || p.currentHeadshotId || ""),
         backgroundStyle: String(j?.backgroundStyle || p.backgroundStyle || "kraft"),
         // ✅ normalize into Live-cell shape (string "true" or "")
         isBiCoastal: boolCell(j?.isBiCoastal || p.isBiCoastal),

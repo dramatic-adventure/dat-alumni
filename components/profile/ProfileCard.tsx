@@ -328,7 +328,12 @@ export default function ProfileCard(props: ProfileCardProps) {
       ? `/api/media/thumb?fileId=${encodeURIComponent(currentHeadshotId.trim())}`
       : "";
 
-    return sanitizeHeadshotUrl(fromId) || sanitizeHeadshotUrl(headshotUrl) || undefined;
+    const raw = sanitizeHeadshotUrl(fromId) || sanitizeHeadshotUrl(headshotUrl);
+    if (!raw) return undefined;
+    // Route external URLs through the image proxy so next/image can load them
+    // and so the URL format matches what toUrl() produces in the media-list effect.
+    if (/^https?:\/\//i.test(raw)) return `/api/img?url=${encodeURIComponent(raw)}`;
+    return raw;
   }, [currentHeadshotId, headshotUrl]);
 
   useEffect(() => {

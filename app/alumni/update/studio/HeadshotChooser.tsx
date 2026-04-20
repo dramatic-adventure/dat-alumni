@@ -1,27 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type DriveMeta = { name?: string; thumbnailLink?: string; webViewLink?: string };
 type HeadshotItem = {
   fileId: string;
   uploadedAt?: string;
   isCurrent?: boolean;
+  externalUrl?: string;
+  isSynthetic?: boolean;
   drive?: DriveMeta;
 };
 
 export default function HeadshotChooser({
   alumniId,
   onFeatured,
+  onFeaturedUrl,
+  profileHeadshotUrl,
   loading: parentLoading,
 }: {
   alumniId: string;
   onFeatured: (fileId: string) => void;
+  onFeaturedUrl?: (url: string) => void;
+  profileHeadshotUrl?: string;
   loading?: boolean;
 }) {
   const [items, setItems] = useState<HeadshotItem[]>([]);
   const [fetching, setFetching] = useState(false);
-  const [featuring, setFeaturing] = useState<string | null>(null);
   const [err, setErr] = useState("");
 
   useEffect(() => {
@@ -46,35 +51,45 @@ export default function HeadshotChooser({
     run();
   }, [alumniId]);
 
-  async function feature(fileId: string) {
-    if (featuring || parentLoading) return;
-    setFeaturing(fileId);
-    setErr("");
-    try {
-      const res = await fetch("/api/media/feature", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ alumniId, kind: "headshot", fileId }),
-      });
-      const j = await res.json();
-      if (!res.ok || !j.ok) throw new Error(j?.error || "Feature failed");
-      // Optimistically mark new current in local list
+  // Staging-only selection: no server write until Save Profile Basics is clicked.
+  function select(fileId: string, externalUrl?: string) {
+    if (parentLoading) return;
+    if (!fileId) {
+      if (!externalUrl) return;
       setItems((prev) =>
-        prev.map((it) => ({ ...it, isCurrent: it.fileId === fileId }))
+        prev.map((it) => ({ ...it, isCurrent: !it.fileId && it.externalUrl === externalUrl }))
       );
-      onFeatured(fileId);
-    } catch (e: any) {
-      setErr(e?.message || "Feature failed");
-    } finally {
-      setFeaturing(null);
+      onFeaturedUrl?.(externalUrl);
+      return;
     }
+    setItems((prev) =>
+      prev.map((it) => ({ ...it, isCurrent: it.fileId === fileId }))
+    );
+    onFeatured(fileId);
   }
 
-  const current = items.find((it) => it.isCurrent);
-  const thumbUrl = (it: HeadshotItem) =>
-    it.drive?.thumbnailLink
-      ? it.drive.thumbnailLink
-      : `/api/media/thumb?fileId=${encodeURIComponent(it.fileId)}`;
+  const thumbUrl = (it: HeadshotItem): string => {
+    if (it.fileId) return `/api/media/thumb?fileId=${encodeURIComponent(it.fileId)}&w=160`;
+    if (it.externalUrl) return it.externalUrl;
+    return "";
+  };
+
+  // Merge fetched items with an optional synthetic entry for the profile's URL headshot.
+  // Filters out completely blank rows (no fileId and no externalUrl).
+  const displayItems = useMemo<HeadshotItem[]>(() => {
+    const filtered = items.filter((it) => it.fileId || it.externalUrl);
+    const url = profileHeadshotUrl;
+    if (!url) return filtered;
+    if (filtered.some((it) => it.externalUrl === url)) return filtered;
+    // Only mark the synthetic item as current if no fetched item is already current
+    const syntheticIsCurrent = !filtered.some((it) => it.isCurrent);
+    return [
+      { fileId: "", externalUrl: url, isCurrent: syntheticIsCurrent, isSynthetic: true },
+      ...filtered,
+    ];
+  }, [items, profileHeadshotUrl]);
+
+  const current = displayItems.find((it) => it.isCurrent);
 
   if (fetching) {
     return (
@@ -84,7 +99,7 @@ export default function HeadshotChooser({
     );
   }
 
-  if (items.length === 0) {
+  if (displayItems.length === 0) {
     return (
       <div style={{ padding: "16px 0", opacity: 0.5, fontSize: 13 }}>
         No past headshots found.
@@ -159,7 +174,7 @@ export default function HeadshotChooser({
         {/* Horizontal scrollable strip */}
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 12, opacity: 0.55, marginBottom: 8 }}>
-            Click any thumbnail to make it your current headshot.
+            Click any thumbnail to stage it. Hit <strong>Save Profile Basics</strong> to persist.
           </div>
           <div
             style={{
@@ -169,15 +184,14 @@ export default function HeadshotChooser({
               paddingBottom: 4,
             }}
           >
-            {items.map((it) => {
+            {displayItems.map((it) => {
               const isCurr = !!it.isCurrent;
-              const isProcessing = featuring === it.fileId;
               return (
                 <button
-                  key={it.fileId}
+                  key={it.fileId || `url:${it.externalUrl}`}
                   type="button"
-                  onClick={() => !isCurr && feature(it.fileId)}
-                  disabled={!!featuring || !!parentLoading}
+                  onClick={() => !isCurr && select(it.fileId, it.externalUrl)}
+                  disabled={!!parentLoading}
                   style={{
                     flexShrink: 0,
                     width: 72,
@@ -191,8 +205,7 @@ export default function HeadshotChooser({
                     background: "rgba(255,255,255,0.06)",
                     padding: 0,
                     position: "relative",
-                    opacity: isProcessing ? 0.5 : 1,
-                    transition: "border-color 0.15s, opacity 0.15s",
+                    transition: "border-color 0.15s",
                   }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -202,22 +215,6 @@ export default function HeadshotChooser({
                     style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                     onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                   />
-                  {isProcessing && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        background: "rgba(0,0,0,0.5)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 10,
-                        color: "#fff",
-                      }}
-                    >
-                      …
-                    </div>
-                  )}
                 </button>
               );
             })}
