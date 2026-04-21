@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 
 import Dropzone from "@/components/media/Dropzone";
 import BackgroundSwatches from "@/components/alumni/update/BackgroundSwatches";
@@ -92,6 +92,15 @@ export default function BasicsTab({
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [headshotUrlInput, setHeadshotUrlInput] = useState("");
   const [showHeadshotChooser, setShowHeadshotChooser] = useState(false);
+  const [extraPreviewUrls, setExtraPreviewUrls] = useState<string[]>([]);
+
+  // Generate/revoke object URLs for extra staged files
+  useEffect(() => {
+    if (!extraHeadshotFiles.length) { setExtraPreviewUrls([]); return; }
+    const urls = extraHeadshotFiles.map((f) => URL.createObjectURL(f));
+    setExtraPreviewUrls(urls);
+    return () => urls.forEach((u) => URL.revokeObjectURL(u));
+  }, [extraHeadshotFiles]);
 
   const storedHeadshotId = String(profile?.currentHeadshotId || "").trim();
   const storedHeadshotUrl = String(profile?.currentHeadshotUrl || "").trim();
@@ -325,67 +334,106 @@ export default function BasicsTab({
           {headshotFile ? (
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "84px 1fr auto",
-                gap: 12,
-                alignItems: "center",
-                padding: 10,
+                padding: 12,
                 border: "1px solid rgba(255,255,255,0.14)",
                 borderRadius: 12,
                 background: "rgba(0,0,0,0.18)",
+                display: "grid",
+                gap: 10,
               }}
             >
-              <div
-                style={{
-                  width: 84,
-                  height: 84,
-                  borderRadius: 12,
-                  overflow: "hidden",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: "rgba(255,255,255,0.06)",
-                }}
-              >
-                {headshotPreviewUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={headshotPreviewUrl}
-                    alt="Staged headshot preview"
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
-                ) : null}
-              </div>
-
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontWeight: 700, lineHeight: 1.2 }}>Staged headshot</div>
-                <div
-                  style={{
-                    opacity: 0.8,
-                    fontSize: 13,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {headshotFile.name} • {Math.round(headshotFile.size / 1024)} KB
-                </div>
-                <div style={{ opacity: 0.7, fontSize: 12, marginTop: 4 }}>
-                  This will become your featured headshot when you save.
-                </div>
-                {extraHeadshotFiles.length > 0 && (
-                  <div style={{ opacity: 0.7, fontSize: 12, marginTop: 4 }}>
-                    + {extraHeadshotFiles.length} more file{extraHeadshotFiles.length > 1 ? "s" : ""} will also upload
+              {/* Thumbnail strip — all staged photos */}
+              <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2 }}>
+                {/* Primary (featured) */}
+                <div style={{ flexShrink: 0, position: "relative" }}>
+                  <div
+                    style={{
+                      width: 80,
+                      aspectRatio: "4 / 5",
+                      borderRadius: 8,
+                      overflow: "hidden",
+                      border: "2px solid rgba(108,0,175,0.9)",
+                      background: "rgba(255,255,255,0.06)",
+                    }}
+                  >
+                    {headshotPreviewUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={headshotPreviewUrl}
+                        alt={headshotFile.name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      />
+                    ) : null}
                   </div>
-                )}
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      background: "rgba(108,0,175,0.82)",
+                      fontSize: 9,
+                      fontWeight: 700,
+                      letterSpacing: "0.06em",
+                      textAlign: "center",
+                      padding: "2px 0",
+                      color: "#fff",
+                      borderBottomLeftRadius: 6,
+                      borderBottomRightRadius: 6,
+                    }}
+                  >
+                    FEATURED
+                  </div>
+                </div>
+
+                {/* Extras */}
+                {extraPreviewUrls.map((url, i) => (
+                  <div
+                    key={url}
+                    style={{
+                      flexShrink: 0,
+                      width: 80,
+                      aspectRatio: "4 / 5",
+                      borderRadius: 8,
+                      overflow: "hidden",
+                      border: "2px solid rgba(255,255,255,0.25)",
+                      background: "rgba(255,255,255,0.06)",
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={url}
+                      alt={extraHeadshotFiles[i]?.name || `Extra ${i + 1}`}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                    />
+                  </div>
+                ))}
               </div>
 
-              <button
-                type="button"
-                className="dat-btn-ghost"
-                style={studioGhostButton}
-                onClick={() => { setHeadshotFile(null); onExtraHeadshotFiles?.([]); }}
-                disabled={loading}
-              >
-                Clear
-              </button>
+              {/* Info + Clear row */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.3 }}>
+                    {extraHeadshotFiles.length > 0
+                      ? `${1 + extraHeadshotFiles.length} photos staged`
+                      : "Staged headshot"}
+                  </div>
+                  <div style={{ opacity: 0.65, fontSize: 12, marginTop: 3 }}>
+                    {extraHeadshotFiles.length > 0
+                      ? "First will become featured · rest upload to your library"
+                      : "Will become your featured headshot when you save"}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="dat-btn-ghost"
+                  style={{ ...studioGhostButton, flexShrink: 0 }}
+                  onClick={() => { setHeadshotFile(null); onExtraHeadshotFiles?.([]); }}
+                  disabled={loading}
+                >
+                  Clear
+                </button>
+              </div>
             </div>
           ) : null}
 
