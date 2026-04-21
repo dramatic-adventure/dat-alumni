@@ -242,7 +242,7 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
 
   // Roles / tags / programs
   const rolesIdx = idxOf(header, ["roles", "role", "primary role"]);
-  const tagsIdx = idxOf(header, ["identity tags", "tags", "identity", "identity_tags"]);
+  const tagsIdx = idxOf(header, ["identity tags", "identitytags", "tags", "identity", "identity_tags"]);
   const programsIdx = idxOf(header, ["program badges", "project badges", "programs", "badges"]);
 
   // ✅ Missing fields that your UI needs
@@ -276,6 +276,12 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
   const currentTitleIdx = idxOf(header, ["current title", "currenttitle", "currentTitle", "current_title"]);
   const secondLocationIdx = idxOf(header, ["second location", "secondlocation", "secondLocation", "second_location", "second location (city)"]);
   const isBiCoastalIdx = idxOf(header, ["isbicoastal", "is bi-coastal", "bicoastal", "bi-coastal", "is bicoastal", "isBiCoastal"]);
+
+  // Identity-panel fields missing from original shaped pass-through
+  const pronounsIdx      = idxOf(header, ["pronouns"]);
+  const languagesIdx     = idxOf(header, ["languages"]);
+  const practiceTagsIdx  = idxOf(header, ["practice tags", "practicetags"]);
+  const exploreCareTagsIdx = idxOf(header, ["explore care tags", "explorecaretags", "explore_care_tags"]);
 
   // Visibility toggles
   const showWebsiteIdx = idxOf(header, ["showwebsite", "showWebsite", "show website"]);
@@ -362,6 +368,14 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
       secondLocation: cell(r, secondLocationIdx),
       "is bi-coastal": cell(r, isBiCoastalIdx),
       isBiCoastal: cell(r, isBiCoastalIdx),
+
+      // Identity-panel fields (pronouns, languages, practice/explore tags)
+      pronouns: cell(r, pronounsIdx),
+      languages: cell(r, languagesIdx),
+      "practice tags": cell(r, practiceTagsIdx),
+      practiceTags: cell(r, practiceTagsIdx),
+      "explore care tags": cell(r, exploreCareTagsIdx),
+      exploreCareTags: cell(r, exploreCareTagsIdx),
 
       // Visibility toggles
       showWebsite: cell(r, showWebsiteIdx),

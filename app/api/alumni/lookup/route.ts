@@ -572,6 +572,13 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
     const spotlightIdx = idxOf(LH as string[], ["spotlight"]);
     const currentHeadshotIdIdx = idxOf(LH as string[], ["currentheadshotid", "current headshot id"]);
 
+    // Identity-panel fields not previously in buildPayload
+    const currentTitleIdx    = idxOf(LH as string[], ["currenttitle", "current title"]);
+    const languagesIdx       = idxOf(LH as string[], ["languages"]);
+    const identityTagsIdx    = idxOf(LH as string[], ["identitytags", "identity tags", "identity_tags"]);
+    const practiceTagsIdx    = idxOf(LH as string[], ["practicetags", "practice tags", "practice_tags"]);
+    const exploreCareTagsIdx = idxOf(LH as string[], ["explorecaretags", "explore care tags", "explore_care_tags"]);
+
     if (isDebug(req, "1")) {
       const sample = liveRows.slice(0, 5).map((r) => ({
         alumniId: alumniIdIdx !== -1 ? String(r[alumniIdIdx] ?? "") : "",
@@ -742,6 +749,11 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
 
         name: nameIdx !== -1 ? String(row[nameIdx] ?? "").trim() : "",
         pronouns: pronounsIdx !== -1 ? String(row[pronounsIdx] ?? "").trim() : "",
+        currentTitle: currentTitleIdx !== -1 ? String(row[currentTitleIdx] ?? "").trim() : "",
+        languages: languagesIdx !== -1 ? String(row[languagesIdx] ?? "").trim() : "",
+        identityTags: identityTagsIdx !== -1 ? String(row[identityTagsIdx] ?? "").trim() : "",
+        practiceTags: practiceTagsIdx !== -1 ? String(row[practiceTagsIdx] ?? "").trim() : "",
+        exploreCareTags: exploreCareTagsIdx !== -1 ? String(row[exploreCareTagsIdx] ?? "").trim() : "",
         roles: rolesIdx !== -1 ? String(row[rolesIdx] ?? "").trim() : "",
         location: locationIdx !== -1 ? String(row[locationIdx] ?? "").trim() : "",
         currentWork,

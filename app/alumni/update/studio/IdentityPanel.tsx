@@ -64,15 +64,17 @@ function matchesSearch(tag: TaxonomyTag, query: string): boolean {
   return searchTokensFor(tag).some((tok) => tok.toLowerCase().includes(q));
 }
 
-/* ---------------- Styles shared across layer pickers ---------------- */
+/* ---------------- Shared styles ---------------- */
+
+const FF =
+  'var(--font-dm-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
 const tipStyle: CSSProperties = {
   marginTop: 6,
   marginBottom: 0,
   fontSize: "0.74rem",
   opacity: 0.6,
-  fontFamily:
-    'var(--font-dm-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  fontFamily: FF,
   color: "#d9d9d9",
 };
 
@@ -86,10 +88,11 @@ const chipRowStyle: CSSProperties = {
   display: "flex",
   flexWrap: "wrap",
   gap: 6,
-  marginTop: 10,
+  marginTop: 8,
 };
 
-const chipStyle: CSSProperties = {
+/* Pronouns / language preset chips (compact, pill) */
+const presetChip: CSSProperties = {
   borderRadius: 999,
   border: "1px solid rgba(148, 115, 255, 0.55)",
   padding: "4px 10px",
@@ -99,24 +102,55 @@ const chipStyle: CSSProperties = {
   backgroundColor: "rgba(19, 7, 44, 0.8)",
   color: "#f2f2f2",
   cursor: "pointer",
-  fontFamily:
-    'var(--font-dm-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  fontFamily: FF,
   display: "inline-flex",
   alignItems: "center",
   gap: 4,
 };
 
-const chipActiveStyle: CSSProperties = {
-  ...chipStyle,
+const presetChipActive: CSSProperties = {
+  ...presetChip,
   backgroundColor: "#ffcc00",
   color: "#241123",
   borderColor: "rgba(24, 8, 32, 0.9)",
   fontWeight: 600,
 };
 
-const chipDisabledStyle: CSSProperties = {
-  ...chipStyle,
-  opacity: 0.4,
+/* Taxonomy tag chips — lighter, cleaner */
+const tagBase: CSSProperties = {
+  borderRadius: 999,
+  padding: "5px 12px",
+  fontSize: "0.75rem",
+  letterSpacing: "0.015em",
+  cursor: "pointer",
+  fontFamily: FF,
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 5,
+  transition: "background 0.12s, border-color 0.12s, opacity 0.12s",
+  lineHeight: 1.3,
+};
+
+const tagIdle: CSSProperties = {
+  ...tagBase,
+  background: "transparent",
+  border: "1px solid rgba(255,255,255,0.22)",
+  color: "rgba(255,255,255,0.82)",
+};
+
+const tagSelected: CSSProperties = {
+  ...tagBase,
+  background: "#ffcc00",
+  border: "1px solid rgba(24,8,32,0.45)",
+  color: "#241123",
+  fontWeight: 700,
+};
+
+const tagDisabled: CSSProperties = {
+  ...tagBase,
+  background: "transparent",
+  border: "1px solid rgba(255,255,255,0.1)",
+  color: "rgba(255,255,255,0.25)",
   cursor: "not-allowed",
 };
 
@@ -128,8 +162,7 @@ const linkButtonStyle: CSSProperties = {
   cursor: "pointer",
   fontSize: "0.74rem",
   textDecoration: "underline",
-  fontFamily:
-    'var(--font-dm-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  fontFamily: FF,
 };
 
 const suggestionBoxStyle: CSSProperties = {
@@ -142,7 +175,7 @@ const suggestionBoxStyle: CSSProperties = {
   gap: 8,
 };
 
-/* ---------------- Layer picker subcomponent ---------------- */
+/* ---------------- LayerPicker ---------------- */
 
 function LayerPicker({
   layer,
@@ -161,6 +194,7 @@ function LayerPicker({
 }) {
   const profileKey = LAYER_TO_PROFILE_KEY[layer];
   const limit = SELECTION_LIMITS[layer];
+
   const active = useMemo(
     () => parseCommaList(profile[profileKey]),
     [profile, profileKey]
@@ -182,12 +216,20 @@ function LayerPicker({
     "idle" | "sending" | "ok" | "error"
   >("idle");
 
-  const visible = useMemo(() => {
-    if (!expanded) return seeded;
-    return all.filter((t) => matchesSearch(t, query));
-  }, [expanded, seeded, all, query]);
-
   const atLimit = active.length >= limit;
+
+  // Always surface currently-selected tags so they stay visible even when
+  // they aren't in the seeded pool (e.g. loaded from a previous session).
+  const visible = useMemo(() => {
+    const pool = expanded
+      ? all.filter((t) => matchesSearch(t, query))
+      : seeded;
+    const poolIds = new Set(pool.map((t) => t.id));
+    const alwaysShow = all.filter(
+      (t) => activeLowerSet.has(t.label.toLowerCase()) && !poolIds.has(t.id)
+    );
+    return [...alwaysShow, ...pool];
+  }, [expanded, seeded, all, query, activeLowerSet]);
 
   function isActive(tag: TaxonomyTag): boolean {
     return activeLowerSet.has(tag.label.toLowerCase());
@@ -196,11 +238,13 @@ function LayerPicker({
   function toggle(tag: TaxonomyTag) {
     setProfile((p: any) => {
       const list = parseCommaList(p[profileKey]);
-      const idx = list.findIndex((v) => v.toLowerCase() === tag.label.toLowerCase());
+      const idx = list.findIndex(
+        (v) => v.toLowerCase() === tag.label.toLowerCase()
+      );
       if (idx >= 0) {
         list.splice(idx, 1);
       } else {
-        if (list.length >= limit) return p;
+        if (list.length >= limit) return p; // enforce limit
         list.push(tag.label);
       }
       return { ...p, [profileKey]: joinCommaList(list) };
@@ -231,64 +275,96 @@ function LayerPicker({
     }
   }
 
+  // Inline count badge next to label
+  const countSuffix =
+    active.length > 0
+      ? ` · ${active.length}/${limit}${atLimit ? " — deselect to swap" : ""}`
+      : "";
+
   return (
     <div style={fieldBlockStyle}>
-      <label style={labelStyle}>{LAYER_LABELS[layer]}</label>
-      <p style={{ ...tipStyle, marginTop: 0, marginBottom: 6 }}>
+      {/* Label row: name + count badge */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: 8,
+        }}
+      >
+        <label style={labelStyle}>
+          {LAYER_LABELS[layer]}
+          {countSuffix && (
+            <span
+              style={{
+                fontWeight: 400,
+                fontSize: "0.72rem",
+                opacity: 0.65,
+                marginLeft: 6,
+                color: atLimit ? "#f5c542" : undefined,
+              }}
+            >
+              {countSuffix}
+            </span>
+          )}
+        </label>
+      </div>
+
+      <p style={{ ...tipStyle, marginTop: 0, marginBottom: 2 }}>
         {LAYER_HELPER_COPY[layer]}
       </p>
 
-      {/* Current selections summary */}
-      <p style={tipStyle}>
-        {active.length === 0
-          ? `Pick up to ${limit}.`
-          : `${active.length} of ${limit} selected${
-              atLimit ? " — deselect to swap." : "."
-            }`}
-      </p>
-
-      {/* Search (only when expanded) */}
+      {/* Search — only when expanded */}
       {expanded && (
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          style={{ ...inputStyle, marginTop: 8 }}
-          placeholder="Search tags…"
+          style={{ ...inputStyle, marginTop: 6, marginBottom: 4 }}
+          placeholder="Filter options…"
           disabled={loading}
         />
       )}
 
-      {/* Chips */}
-      <div style={chipRowStyle}>
+      {/* Chip grid */}
+      <div style={{ ...chipRowStyle, marginTop: 10 }}>
         {visible.map((tag) => {
-          const selected = isActive(tag);
-          const disabled = !selected && atLimit;
-          const style = selected
-            ? chipActiveStyle
-            : disabled
-              ? chipDisabledStyle
-              : chipStyle;
+          const sel = isActive(tag);
+          const dis = !sel && atLimit;
+          const style = sel ? tagSelected : dis ? tagDisabled : tagIdle;
           return (
             <button
               key={tag.id}
               type="button"
               style={style}
-              disabled={loading || (disabled && !selected)}
+              disabled={loading || dis}
               onClick={() => toggle(tag)}
-              aria-pressed={selected}
+              aria-pressed={sel}
             >
+              {sel && (
+                <span style={{ fontSize: "0.6rem", lineHeight: 1, opacity: 0.8 }}>
+                  ✓
+                </span>
+              )}
               {tag.label}
             </button>
           );
         })}
-        {expanded && visible.length === 0 && (
-          <span style={tipStyle}>No tags match “{query}”.</span>
+        {expanded && query.trim() && visible.length === 0 && (
+          <span style={tipStyle}>No tags match "{query}".</span>
         )}
       </div>
 
-      {/* Expand / collapse */}
-      {all.length > seeded.length && (
-        <div style={{ marginTop: 10, display: "flex", gap: 16, flexWrap: "wrap" }}>
+      {/* Footer links */}
+      <div
+        style={{
+          marginTop: 10,
+          display: "flex",
+          gap: 16,
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
+      >
+        {all.length > seeded.length && (
           <button
             type="button"
             style={linkButtonStyle}
@@ -298,36 +374,26 @@ function LayerPicker({
               setQuery("");
             }}
           >
-            {expanded ? "Show fewer" : "Show more"}
+            {expanded
+              ? "Show fewer options"
+              : `Show all ${all.length} options`}
           </button>
-          <button
-            type="button"
-            style={linkButtonStyle}
-            disabled={loading}
-            onClick={() => setSuggestOpen((v) => !v)}
-          >
-            {suggestOpen ? "Cancel request" : "Request a new tag"}
-          </button>
-        </div>
-      )}
-      {all.length <= seeded.length && (
-        <div style={{ marginTop: 10 }}>
-          <button
-            type="button"
-            style={linkButtonStyle}
-            disabled={loading}
-            onClick={() => setSuggestOpen((v) => !v)}
-          >
-            {suggestOpen ? "Cancel request" : "Request a new tag"}
-          </button>
-        </div>
-      )}
+        )}
+        <button
+          type="button"
+          style={linkButtonStyle}
+          disabled={loading}
+          onClick={() => setSuggestOpen((v) => !v)}
+        >
+          {suggestOpen ? "Cancel" : "Suggest a tag"}
+        </button>
+      </div>
 
       {/* Suggestion form */}
       {suggestOpen && (
         <div style={suggestionBoxStyle}>
           <label style={{ ...labelStyle, fontSize: "0.8rem" }}>
-            Suggest a tag for “{LAYER_LABELS[layer]}”
+            Suggest a tag for "{LAYER_LABELS[layer]}"
           </label>
           <input
             value={suggestLabel}
@@ -348,7 +414,9 @@ function LayerPicker({
               type="button"
               style={linkButtonStyle}
               disabled={
-                loading || suggestState === "sending" || !suggestLabel.trim()
+                loading ||
+                suggestState === "sending" ||
+                !suggestLabel.trim()
               }
               onClick={submitSuggestion}
             >
@@ -361,7 +429,7 @@ function LayerPicker({
             )}
             {suggestState === "error" && (
               <span style={{ ...tipStyle, color: "#f5a6a6" }}>
-                Couldn’t send. Please try again.
+                Couldn't send. Please try again.
               </span>
             )}
           </div>
@@ -390,13 +458,16 @@ export default function IdentityPanel({
   const pronounPresets = ["she/her", "he/him", "they/them", "she/they", "he/they"];
   const languagePresets = ["English", "Español", "Slovenský", "Shuar-Chicham"];
 
-  function toggleLanguagePreset(lang: string) {
+  function togglePresetList(
+    fieldKey: string,
+    value: string
+  ) {
     setProfile((p: any) => {
-      const list = parseCommaList(p.languages);
-      const idx = list.findIndex((v) => v.toLowerCase() === lang.toLowerCase());
+      const list = parseCommaList(p[fieldKey]);
+      const idx = list.findIndex((v) => v.toLowerCase() === value.toLowerCase());
       if (idx >= 0) list.splice(idx, 1);
-      else list.push(lang);
-      return { ...p, languages: joinCommaList(list) };
+      else list.push(value);
+      return { ...p, [fieldKey]: joinCommaList(list) };
     });
   }
 
@@ -412,12 +483,15 @@ export default function IdentityPanel({
         creative language.
       </p>
 
-      <span style={subheadChipStyle} className="subhead-chip">
-        Identity
-      </span>
+      {/* Eyebrow with extra breathing room below */}
+      <div style={{ marginBottom: 20 }}>
+        <span style={subheadChipStyle} className="subhead-chip">
+          Identity
+        </span>
+      </div>
 
       {renderFieldsOrNull(allIdentityKeys) ?? (
-        <div style={{ marginTop: 24 }}>
+        <div style={{ marginTop: 8 }}>
           {/* Current role / title */}
           <div style={fieldBlockStyle}>
             <label style={labelStyle}>Current role / title</label>
@@ -436,39 +510,84 @@ export default function IdentityPanel({
             </p>
           </div>
 
-          {/* Pronouns */}
-          <div style={fieldBlockStyle}>
-            <label style={labelStyle}>Pronouns</label>
-            <input
-              value={profile.pronouns || ""}
-              onChange={(e) =>
-                setProfile((p: any) => ({ ...p, pronouns: e.target.value }))
-              }
-              style={inputStyle}
-              placeholder="she/her, he/him, they/them…"
-              disabled={loading}
-            />
-            <div style={chipRowStyle}>
-              {pronounPresets.map((option) => {
-                const isActive =
-                  (profile.pronouns || "").toString().toLowerCase().trim() ===
-                  option.toLowerCase();
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    style={isActive ? chipActiveStyle : chipStyle}
-                    disabled={loading}
-                    onClick={() =>
-                      setProfile((p: any) => ({ ...p, pronouns: option }))
-                    }
-                  >
-                    {option}
-                  </button>
-                );
-              })}
+          {/* Pronouns + Languages — same row */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 20,
+              marginBottom: 24,
+            }}
+          >
+            {/* Pronouns */}
+            <div style={{ display: "grid", gap: 8 }}>
+              <label style={labelStyle}>Pronouns</label>
+              <input
+                value={profile.pronouns || ""}
+                onChange={(e) =>
+                  setProfile((p: any) => ({ ...p, pronouns: e.target.value }))
+                }
+                style={inputStyle}
+                placeholder="she/her, he/him, they/them…"
+                disabled={loading}
+              />
+              <div style={chipRowStyle}>
+                {pronounPresets.map((option) => {
+                  const isOn =
+                    (profile.pronouns || "").toString().toLowerCase().trim() ===
+                    option.toLowerCase();
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      style={isOn ? presetChipActive : presetChip}
+                      disabled={loading}
+                      onClick={() =>
+                        setProfile((p: any) => ({ ...p, pronouns: option }))
+                      }
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+              <p style={tipStyle}>Optional. Leave blank to not share.</p>
             </div>
-            <p style={tipStyle}>Optional. Leave blank if you prefer not to share.</p>
+
+            {/* Languages */}
+            <div style={{ display: "grid", gap: 8 }}>
+              <label style={labelStyle}>Languages</label>
+              <input
+                value={profile.languages || ""}
+                onChange={(e) =>
+                  setProfile((p: any) => ({ ...p, languages: e.target.value }))
+                }
+                style={inputStyle}
+                placeholder="English, Español, Slovenský…"
+                disabled={loading}
+              />
+              <div style={chipRowStyle}>
+                {languagePresets.map((lang) => {
+                  const isOn = parseCommaList(profile.languages).some(
+                    (t) => t.toLowerCase() === lang.toLowerCase()
+                  );
+                  return (
+                    <button
+                      key={lang}
+                      type="button"
+                      style={isOn ? presetChipActive : presetChip}
+                      disabled={loading}
+                      onClick={() => togglePresetList("languages", lang)}
+                    >
+                      {lang}
+                    </button>
+                  );
+                })}
+              </div>
+              <p style={tipStyle}>
+                Languages you create, teach, perform, or collaborate in.
+              </p>
+            </div>
           </div>
 
           {/* Three taxonomy layers */}
@@ -496,45 +615,10 @@ export default function IdentityPanel({
             labelStyle={labelStyle}
             inputStyle={inputStyle}
           />
-
-          {/* Languages */}
-          <div style={fieldBlockStyle}>
-            <label style={labelStyle}>Languages you work in</label>
-            <input
-              value={profile.languages || ""}
-              onChange={(e) =>
-                setProfile((p: any) => ({ ...p, languages: e.target.value }))
-              }
-              style={inputStyle}
-              placeholder="Comma-separated: e.g. English, Español, Slovenský…"
-              disabled={loading}
-            />
-            <div style={chipRowStyle}>
-              {languagePresets.map((lang) => {
-                const isActive = parseCommaList(profile.languages).some(
-                  (t) => t.toLowerCase() === lang.toLowerCase()
-                );
-                return (
-                  <button
-                    key={lang}
-                    type="button"
-                    style={isActive ? chipActiveStyle : chipStyle}
-                    disabled={loading}
-                    onClick={() => toggleLanguagePreset(lang)}
-                  >
-                    {lang}
-                  </button>
-                );
-              })}
-            </div>
-            <p style={tipStyle}>
-              Include any languages you create, teach, perform, or collaborate in.
-            </p>
-          </div>
         </div>
       )}
 
-      {/* One save button */}
+      {/* Save button */}
       <div
         style={{
           marginTop: 32,
