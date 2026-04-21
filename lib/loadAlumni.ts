@@ -270,7 +270,7 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
   const socialsIdx = idxOf(header, ["socials", "social links", "social links (csv)", "social"]);
 
   // Optional
-  const backgroundIdx = idxOf(header, ["background choice", "background", "background style", "background key"]);
+  const backgroundIdx = idxOf(header, ["backgroundstyle", "background style", "background choice", "background", "background key"]);
 
   // Dual title + multi-city
   const currentTitleIdx = idxOf(header, ["current title", "currenttitle", "currentTitle", "current_title"]);
@@ -353,6 +353,7 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
 
       // optional but harmless if your normalizer supports it
       "background choice": cell(r, backgroundIdx),
+      backgroundStyle: cell(r, backgroundIdx),
 
       // Dual title + multi-city
       "current title": cell(r, currentTitleIdx),
