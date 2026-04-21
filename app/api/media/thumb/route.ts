@@ -4,9 +4,10 @@ import { driveClient } from "@/lib/googleClients";
 
 export const runtime = "nodejs";
 
-// 1 year cache is safe because URL is keyed by fileId (new upload => new fileId)
+// private: browser caches per-user (1 year, keyed by full URL including fileId),
+// but Netlify's CDN is excluded so it cannot pool responses across different fileIds.
 const CACHE_OK =
-  "public, max-age=31536000, s-maxage=31536000, stale-while-revalidate=86400";
+  "private, max-age=31536000, stale-while-revalidate=86400";
 
 function clampInt(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
