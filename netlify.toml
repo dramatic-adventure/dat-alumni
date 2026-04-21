@@ -11,3 +11,13 @@
 
 [build.environment]
   SECRETS_SCAN_OMIT_PATHS = "public/namestack-hints.json"
+
+# Prevent Netlify's CDN from caching the Drive thumbnail proxy across different fileId
+# query params. This rule runs at the CDN config layer (before @netlify/plugin-nextjs
+# can interfere) and is the authoritative no-store instruction for this path.
+[[headers]]
+  for = "/api/media/thumb"
+  [headers.values]
+    Cache-Control = "private, max-age=31536000, stale-while-revalidate=86400"
+    CDN-Cache-Control = "no-store"
+    Netlify-CDN-Cache-Control = "no-store"
