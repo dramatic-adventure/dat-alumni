@@ -325,7 +325,7 @@ export default function ProfileCard(props: ProfileCardProps) {
 
   const derivedHeadshotUrl = useMemo(() => {
     const fromId = currentHeadshotId?.trim()
-      ? `/api/media/thumb/${encodeURIComponent(currentHeadshotId.trim())}`
+      ? `/api/media/thumb/${encodeURIComponent(currentHeadshotId.trim())}?w=900`
       : "";
 
     const raw = sanitizeHeadshotUrl(fromId) || sanitizeHeadshotUrl(headshotUrl);
