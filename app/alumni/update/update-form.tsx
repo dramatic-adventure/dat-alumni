@@ -400,6 +400,7 @@ const lookupUrl = useMemo(() => {
 
   /* media selections */
   const [headshotFile, setHeadshotFile] = useState<File | null>(null);
+  const [extraHeadshotFiles, setExtraHeadshotFiles] = useState<File[]>([]);
   const [albumFiles, setAlbumFiles] = useState<File[]>([]);
   const [reelFiles, setReelFiles] = useState<File[]>([]);
   const [eventFiles, setEventFiles] = useState<File[]>([]);
@@ -634,6 +635,24 @@ const lookupUrl = useMemo(() => {
         if (basicsSavedTimeoutRef.current) clearTimeout(basicsSavedTimeoutRef.current);
         setBasicsSavedRecently(true);
         basicsSavedTimeoutRef.current = setTimeout(() => setBasicsSavedRecently(false), 2500);
+      }
+
+      // Belt-and-suspenders: clear staged headshot on success even if saveCategory returned
+      // "No changes to save." and afterSave was never called (e.g. re-selecting current headshot).
+      if (didSave) {
+        setHeadshotFile(null);
+        // Fire-and-forget: upload extra headshots to Drive (stored for chooser, not set as current)
+        const extrasToUpload = extraHeadshotFiles;
+        if (extrasToUpload.length > 0 && alumniId) {
+          setExtraHeadshotFiles([]);
+          (async () => {
+            let uploaded = 0;
+            for (const f of extrasToUpload) {
+              try { await uploadHeadshotViaQueue({ file: f, alumniId }); uploaded++; } catch { /* best-effort */ }
+            }
+            if (uploaded > 0) showToastRef.current?.(`${uploaded} extra headshot${uploaded > 1 ? "s" : ""} uploaded ✓`);
+          })();
+        }
       }
 
       return didSave;
@@ -2135,6 +2154,8 @@ return (
         headshotFile={headshotFile}
         setHeadshotFile={setHeadshotFile}
         headshotPreviewUrl={headshotPreviewUrl}
+        extraHeadshotFiles={extraHeadshotFiles}
+        onExtraHeadshotFiles={setExtraHeadshotFiles}
         toast={toastNow}
         openPicker={openPicker}
         onSave={handleSaveBasics}

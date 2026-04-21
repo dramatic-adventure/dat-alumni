@@ -42,6 +42,8 @@ export default function BasicsTab({
   headshotFile,
   setHeadshotFile,
   headshotPreviewUrl,
+  extraHeadshotFiles = [],
+  onExtraHeadshotFiles,
 
   toast,
   openPicker,
@@ -77,6 +79,8 @@ export default function BasicsTab({
   headshotFile: File | null;
   setHeadshotFile: (f: File | null) => void;
   headshotPreviewUrl: string;
+  extraHeadshotFiles?: File[];
+  onExtraHeadshotFiles?: (files: File[]) => void;
 
   toast: (msg: string, type?: "success" | "error") => void;
   openPicker: (kind: "headshot" | "album" | "reel" | "event") => void;
@@ -285,11 +289,14 @@ export default function BasicsTab({
           {/* Primary path: large drag-and-drop target */}
           <Dropzone
             accept="image/*"
-            multiple={false}
+            multiple={true}
             disabled={loading}
             label=""
             sublabel=""
-            onFiles={(files) => setHeadshotFile(files[0] || null)}
+            onFiles={(files) => {
+              setHeadshotFile(files[0] || null);
+              if (files.length > 1) onExtraHeadshotFiles?.(files.slice(1));
+            }}
             onReject={(rej) => toast(rej[0]?.reason || "File rejected", "error")}
             style={{
               minHeight: 160,
@@ -363,13 +370,18 @@ export default function BasicsTab({
                 <div style={{ opacity: 0.7, fontSize: 12, marginTop: 4 }}>
                   This will become your featured headshot when you save.
                 </div>
+                {extraHeadshotFiles.length > 0 && (
+                  <div style={{ opacity: 0.7, fontSize: 12, marginTop: 4 }}>
+                    + {extraHeadshotFiles.length} more file{extraHeadshotFiles.length > 1 ? "s" : ""} will also upload
+                  </div>
+                )}
               </div>
 
               <button
                 type="button"
                 className="dat-btn-ghost"
                 style={studioGhostButton}
-                onClick={() => setHeadshotFile(null)}
+                onClick={() => { setHeadshotFile(null); onExtraHeadshotFiles?.([]); }}
                 disabled={loading}
               >
                 Clear
@@ -548,12 +560,12 @@ export default function BasicsTab({
               }}
               disabled={loading}
               onClick={async () => {
-                const ok = await onSave(headshotUrlInput.trim() || undefined);
-                if (ok) {
-                  setHeadshotUrlInput("");
-                  setShowUrlInput(false);
-                  setShowHeadshotChooser(false);
-                }
+                await onSave(headshotUrlInput.trim() || undefined);
+                // Always close auxiliary panels after a save attempt — chooser and URL input
+                // should never remain open after the user intentionally hit Save.
+                setHeadshotUrlInput("");
+                setShowUrlInput(false);
+                setShowHeadshotChooser(false);
               }}
             >
               {savedRecently ? "Saved ✓" : "Save Profile Basics"}

@@ -7,8 +7,10 @@ export default function Toast({ msg, type }: { msg: string; type: "success" | "e
       aria-live="polite"
       style={{
         position: "fixed",
-        right: 16,
-        bottom: 86,
+        bottom: 32,
+        left: "50%",
+        transform: "translateX(-50%)",
+        whiteSpace: "nowrap",
         padding: "12px 16px",
         borderRadius: 12,
         background: type === "success" ? "#2493A9" : "#F23359",
