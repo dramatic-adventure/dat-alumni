@@ -68,7 +68,7 @@ export default function MobileProfileHeader({
 
     const toUrl = (it: any): string => {
       const fid = String(it?.fileId || "").trim();
-      if (fid) return `/api/media/thumb?fileId=${encodeURIComponent(fid)}`;
+      if (fid) return `/api/media/thumb/${encodeURIComponent(fid)}`;
       const ext = String(it?.externalUrl || "").trim();
       if (ext) return `/api/img?url=${encodeURIComponent(ext)}`;
       return "";

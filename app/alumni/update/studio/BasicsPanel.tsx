@@ -93,7 +93,7 @@ export default function BasicsTab({
   const storedHeadshotUrl = String(profile?.currentHeadshotUrl || "").trim();
   // Prefer ID-based thumbnail (reflects picker selection); fall back to direct URL
   const currentHeadshotDisplayUrl = storedHeadshotId
-    ? `/api/media/thumb?fileId=${encodeURIComponent(storedHeadshotId)}&w=200`
+    ? `/api/media/thumb/${encodeURIComponent(storedHeadshotId)}?w=200`
     : storedHeadshotUrl;
 
   return (

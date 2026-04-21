@@ -94,7 +94,7 @@ export default function HeadshotChooser({
   }
 
   const thumbUrl = (it: HeadshotItem): string => {
-    if (it.fileId) return `/api/media/thumb?fileId=${encodeURIComponent(it.fileId)}&w=160`;
+    if (it.fileId) return `/api/media/thumb/${encodeURIComponent(it.fileId)}?w=160`;
     if (it.externalUrl) return it.externalUrl;
     return "";
   };

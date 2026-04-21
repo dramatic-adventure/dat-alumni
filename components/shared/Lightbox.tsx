@@ -76,7 +76,11 @@ export default function Lightbox({
     if (u.startsWith("/api/media/thumb")) {
       try {
         const parsed = new URL(u, "http://local");
-        const fid = String(parsed.searchParams.get("fileId") || "").trim();
+        // New format: /api/media/thumb/[fileId] — fileId is the last path segment.
+        // Legacy format: /api/media/thumb?fileId= — kept for any cached browser URLs.
+        const fid = String(
+          parsed.pathname.split("/").pop() || parsed.searchParams.get("fileId") || ""
+        ).trim();
         if (fid) return `/api/img?fileId=${encodeURIComponent(fid)}`;
       } catch {}
       return u;
