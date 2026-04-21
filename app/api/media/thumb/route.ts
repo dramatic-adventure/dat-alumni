@@ -4,10 +4,12 @@ import { driveClient } from "@/lib/googleClients";
 
 export const runtime = "nodejs";
 
-// private: browser caches per-user (1 year, keyed by full URL including fileId),
-// but Netlify's CDN is excluded so it cannot pool responses across different fileIds.
+// Browser cache: private (per-user), 1 year — keyed by full URL including fileId.
+// CDN-Cache-Control: no-store — tells Netlify's edge CDN explicitly not to cache,
+// preventing cross-fileId response collisions at the CDN layer.
 const CACHE_OK =
   "private, max-age=31536000, stale-while-revalidate=86400";
+const CDN_NO_STORE = "no-store";
 
 function clampInt(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -64,6 +66,7 @@ export async function GET(req: Request) {
           headers: {
             "Content-Type": contentType,
             "Cache-Control": CACHE_OK,
+            "CDN-Cache-Control": CDN_NO_STORE,
           },
         });
       }
@@ -89,6 +92,7 @@ export async function GET(req: Request) {
       headers: {
         "Content-Type": contentType,
         "Cache-Control": CACHE_OK,
+        "CDN-Cache-Control": CDN_NO_STORE,
       },
     });
   } catch (e: any) {
