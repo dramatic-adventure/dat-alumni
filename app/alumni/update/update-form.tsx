@@ -650,6 +650,8 @@ const lookupUrl = useMemo(() => {
             for (const f of extrasToUpload) {
               try { await uploadHeadshotViaQueue({ file: f, alumniId }); uploaded++; } catch { /* best-effort */ }
             }
+            // Clear the headshot progress bar — uploadHeadshotViaQueue leaves total > 0
+            setProgress((p) => ({ ...p, headshot: { uploaded: 0, total: 0, pct: 0 } }));
             if (uploaded > 0) showToastRef.current?.(`${uploaded} extra headshot${uploaded > 1 ? "s" : ""} uploaded ✓`);
           })();
         }
