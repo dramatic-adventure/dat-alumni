@@ -228,17 +228,13 @@ export const PROFILE_FIELDS: FieldDef[] = [
 
   {
     key: "backgroundStyle",
-    label: "Background Theme",
+    label: "Background Textures",
     kind: "select",
     options: [
-      { value: "kraft", label: "Kraft Paper (default)" },
-      { value: "ink", label: "Plum Ink" },
-      { value: "teal", label: "Teal" },
-      { value: "gold", label: "Gold" },
-      { value: "purple", label: "Purple" },
+      { value: "kraft", label: "Kraft Paper" },
+      { value: "leather", label: "Leather" },
     ],
-    help:
-      "Choose a subtle background to match your vibe. You can change this anytime; “Kraft” is the default.",
+    help: "Choose a background texture for your profile. Kraft Paper is the default.",
   },
 
   // ───────────────────────────────────────────────── Links & Contact

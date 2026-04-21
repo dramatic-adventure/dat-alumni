@@ -16,8 +16,6 @@ export default function AlumniProfileBackdrop({
   backgroundKey = "kraft",
   children,
 }: AlumniProfileBackdropProps) {
-  // 🔍 TEMP DEBUG — remove after confirming pipeline
-  console.log("[Backdrop] backgroundKey received:", backgroundKey);
   const backgroundImage = backgroundMap[backgroundKey] || backgroundMap.kraft;
 
   return (

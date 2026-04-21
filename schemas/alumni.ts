@@ -57,7 +57,7 @@ export type ExploreCareTag =
 export type SocialLink = { platform: string; url: string };
 
 /** Visual theme for profile background */
-export type BackgroundStyle = "kraft" | "ink" | "teal" | "gold" | "purple";
+export type BackgroundStyle = "kraft" | "leather";
 
 /** Atomic event entry (kept separate from profile document) */
 export type UpcomingEvent = {
