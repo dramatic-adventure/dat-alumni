@@ -8,8 +8,8 @@ interface AlumniProfileBackdropProps {
 
 const backgroundMap: Record<string, string> = {
   kraft: "url('/texture/kraft-paper.png')",
-  coral: "url('/texture/coral-paper.png')",
-  grape: "url('/texture/grape-fiber.png')",
+  // Leather: DAT Dark Purple (#241123) at 15% opacity layered over leather texture
+  leather: "linear-gradient(rgba(36,17,35,0.15), rgba(36,17,35,0.15)), url('/texture/leather.webp')",
 };
 
 export default function AlumniProfileBackdrop({

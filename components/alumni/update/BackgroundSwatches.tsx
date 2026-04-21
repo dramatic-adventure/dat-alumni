@@ -6,12 +6,8 @@ type Props = {
 };
 
 const OPTIONS: { key: string; label: string; swatch: string }[] = [
-  { key: "kraft", label: "Kraft", swatch: "#D8C2A7" },
-  { key: "ink", label: "Ink", swatch: "#241123" },
-  { key: "plum", label: "Plum", swatch: "#6C00AF" },
-  { key: "teal", label: "Teal", swatch: "#2493A9" },
-  { key: "gold", label: "Gold", swatch: "#D9A919" },
-  { key: "snow", label: "Snow", swatch: "#F2F2F2" },
+  { key: "kraft", label: "Kraft Paper", swatch: "#D8C2A7" },
+  { key: "leather", label: "Leather", swatch: "#5C3829" },
 ];
 
 export default function BackgroundSwatches({ value, onChange }: Props) {
@@ -26,7 +22,7 @@ export default function BackgroundSwatches({ value, onChange }: Props) {
           marginBottom: 8,
         }}
       >
-        Background style
+        Background Textures
       </div>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         {OPTIONS.map((opt) => {
