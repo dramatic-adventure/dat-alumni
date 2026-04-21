@@ -343,71 +343,107 @@ export default function BasicsTab({
               }}
             >
               {/* Thumbnail strip — all staged photos */}
-              <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 2 }}>
+              <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
                 {/* Primary (featured) */}
-                <div style={{ flexShrink: 0, position: "relative" }}>
-                  <div
-                    style={{
-                      width: 80,
-                      aspectRatio: "4 / 5",
-                      borderRadius: 8,
-                      overflow: "hidden",
-                      border: "2px solid rgba(108,0,175,0.9)",
-                      background: "rgba(255,255,255,0.06)",
-                    }}
-                  >
-                    {headshotPreviewUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={headshotPreviewUrl}
-                        alt={headshotFile.name}
-                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                      />
-                    ) : null}
+                <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div style={{ position: "relative" }}>
+                    <div
+                      style={{
+                        width: 80,
+                        aspectRatio: "4 / 5",
+                        borderRadius: 8,
+                        overflow: "hidden",
+                        border: "2px solid rgba(108,0,175,0.9)",
+                        background: "rgba(255,255,255,0.06)",
+                      }}
+                    >
+                      {headshotPreviewUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={headshotPreviewUrl}
+                          alt={headshotFile.name}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                        />
+                      ) : null}
+                    </div>
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        background: "rgba(108,0,175,0.82)",
+                        fontSize: 9,
+                        fontWeight: 700,
+                        letterSpacing: "0.06em",
+                        textAlign: "center",
+                        padding: "2px 0",
+                        color: "#fff",
+                        borderBottomLeftRadius: 6,
+                        borderBottomRightRadius: 6,
+                      }}
+                    >
+                      FEATURED
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      position: "absolute",
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      background: "rgba(108,0,175,0.82)",
-                      fontSize: 9,
-                      fontWeight: 700,
-                      letterSpacing: "0.06em",
-                      textAlign: "center",
-                      padding: "2px 0",
-                      color: "#fff",
-                      borderBottomLeftRadius: 6,
-                      borderBottomRightRadius: 6,
-                    }}
-                  >
-                    FEATURED
-                  </div>
+                  {/* Filename + size */}
+                  <div style={{ width: 80, fontSize: 10, opacity: 0.7, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{headshotFile.name}</div>
+                  <div style={{ fontSize: 10, opacity: 0.5 }}>{Math.round(headshotFile.size / 1024)} KB</div>
                 </div>
 
-                {/* Extras */}
-                {extraPreviewUrls.map((url, i) => (
-                  <div
-                    key={url}
-                    style={{
-                      flexShrink: 0,
-                      width: 80,
-                      aspectRatio: "4 / 5",
-                      borderRadius: 8,
-                      overflow: "hidden",
-                      border: "2px solid rgba(255,255,255,0.25)",
-                      background: "rgba(255,255,255,0.06)",
-                    }}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={url}
-                      alt={extraHeadshotFiles[i]?.name || `Extra ${i + 1}`}
-                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                    />
-                  </div>
-                ))}
+                {/* Extras — click to promote to featured */}
+                {extraPreviewUrls.map((url, i) => {
+                  const f = extraHeadshotFiles[i];
+                  return (
+                    <button
+                      key={url}
+                      type="button"
+                      title="Click to make this the featured headshot"
+                      disabled={loading}
+                      onClick={() => {
+                        // Swap: clicked extra becomes primary, current primary becomes first extra
+                        const newExtras = [headshotFile!, ...extraHeadshotFiles.filter((_, j) => j !== i)];
+                        setHeadshotFile(f);
+                        onExtraHeadshotFiles?.(newExtras);
+                      }}
+                      style={{
+                        flexShrink: 0,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 4,
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        cursor: loading ? "default" : "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 80,
+                          aspectRatio: "4 / 5",
+                          borderRadius: 8,
+                          overflow: "hidden",
+                          border: "2px solid rgba(255,255,255,0.25)",
+                          background: "rgba(255,255,255,0.06)",
+                          transition: "border-color 0.15s",
+                        }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(108,0,175,0.6)"; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.borderColor = "rgba(255,255,255,0.25)"; }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={url}
+                          alt={f?.name || `Extra ${i + 1}`}
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                        />
+                      </div>
+                      {/* Filename + size */}
+                      <div style={{ width: 80, fontSize: 10, opacity: 0.7, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f?.name ?? ""}</div>
+                      <div style={{ fontSize: 10, opacity: 0.5 }}>{f ? `${Math.round(f.size / 1024)} KB` : ""}</div>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Info + Clear row */}
@@ -420,7 +456,7 @@ export default function BasicsTab({
                   </div>
                   <div style={{ opacity: 0.65, fontSize: 12, marginTop: 3 }}>
                     {extraHeadshotFiles.length > 0
-                      ? "First will become featured · rest upload to your library"
+                      ? "Click any photo to make it featured · rest upload to your library"
                       : "Will become your featured headshot when you save"}
                   </div>
                 </div>

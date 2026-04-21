@@ -641,17 +641,28 @@ const lookupUrl = useMemo(() => {
       // "No changes to save." and afterSave was never called (e.g. re-selecting current headshot).
       if (didSave) {
         setHeadshotFile(null);
-        // Fire-and-forget: upload extra headshots to Drive (stored for chooser, not set as current)
+        // Fire-and-forget: upload extra headshots via direct fetch with isFeatured=FALSE.
+        // Using fetch (not uploadHeadshotViaQueue) for two reasons:
+        // 1. Avoids touching the shared headshotUploadResolver / progress bar, so the bar
+        //    never reappears after the primary save clears it.
+        // 2. isFeatured=FALSE tells the server not to overwrite the just-saved primary
+        //    headshot in Profile-Live — prevents extras from clobbering the featured pointer.
         const extrasToUpload = extraHeadshotFiles;
         if (extrasToUpload.length > 0 && alumniId) {
           setExtraHeadshotFiles([]);
           (async () => {
             let uploaded = 0;
             for (const f of extrasToUpload) {
-              try { await uploadHeadshotViaQueue({ file: f, alumniId }); uploaded++; } catch { /* best-effort */ }
+              try {
+                const form = new FormData();
+                form.append("file", f);
+                form.append("alumniId", alumniId);
+                form.append("kind", "headshot");
+                form.append("isFeatured", "FALSE");
+                const resp = await fetch("/api/upload", { method: "POST", body: form });
+                if (resp.ok) uploaded++;
+              } catch { /* best-effort */ }
             }
-            // Clear the headshot progress bar — uploadHeadshotViaQueue leaves total > 0
-            setProgress((p) => ({ ...p, headshot: { uploaded: 0, total: 0, pct: 0 } }));
             if (uploaded > 0) showToastRef.current?.(`${uploaded} extra headshot${uploaded > 1 ? "s" : ""} uploaded ✓`);
           })();
         }
