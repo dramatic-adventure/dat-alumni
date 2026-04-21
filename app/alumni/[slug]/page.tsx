@@ -535,6 +535,7 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
           currentTitle: (normalizedAlumni as any).currentTitle || "",
           secondLocation: (normalizedAlumni as any).secondLocation || "",
           isBiCoastal: !!(normalizedAlumni as any).isBiCoastal,
+          backgroundChoice: (normalizedAlumni as any).backgroundChoice || "",
         }}
         allStories={storiesForThisAlum}
         // ✅ NEW: component can match productions/credits/stories against any known slug

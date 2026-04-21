@@ -262,6 +262,16 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
 
   const festival = getFirstCI(row, ["festival"]);
 
+  // Background texture
+  const backgroundChoice = getFirstCI(row, [
+    "backgroundstyle",
+    "background style",
+    "background choice",
+    "backgroundchoice",
+    "backgroundkey",
+    "background key",
+  ]);
+
   // Updates
   const update = normalizeSingleUpdate(row);
 
@@ -291,6 +301,7 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
     currentTitle: currentTitle || undefined,
     secondLocation: secondLocation || undefined,
     isBiCoastal,
+    backgroundChoice: backgroundChoice || undefined,
 
     lastModifiedRaw: lastModifiedRaw || "",
     lastModified,
