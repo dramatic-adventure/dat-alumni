@@ -150,6 +150,12 @@ export default function HeadshotChooser({
     const normUrl = (u: string) => u.trim().replace(/^http:\/\//i, "https://");
     if (deduped.some((it) => normUrl(it.externalUrl || "") === normUrl(url))) return deduped;
 
+    // If we already have Drive items but none match the stale URL, don't inject a phantom.
+    // This happens when profileHeadshotUrl is an old Drive thumbnail URL from the legacy
+    // system and no Profile-Media row has a matching externalUrl. Injecting a synthetic
+    // alongside real Drive items produces the duplicate-thumbnail strip bug.
+    if (deduped.length > 0) return deduped;
+
     // Only mark the synthetic item as current if no fetched item is already current
     const syntheticIsCurrent = !deduped.some((it) => it.isCurrent);
     return [
