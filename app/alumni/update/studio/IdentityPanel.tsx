@@ -9,6 +9,7 @@ import {
   type TaxonomyLayer,
   type TaxonomyTag,
 } from "@/lib/alumniTaxonomy";
+import { datButtonGhost } from "@/app/alumni/update/updateStyles";
 
 type UploadKind = "headshot" | "album" | "reel" | "event";
 
@@ -111,44 +112,41 @@ const presetChipActive: CSSProperties = {
   opacity: 1,
 };
 
-/* Taxonomy tag chips */
-const tagBase: CSSProperties = {
-  borderRadius: 14,
+/* Taxonomy tag chips — same base as ContactPanel platform chips */
+const tagChipBase: CSSProperties = {
+  ...datButtonGhost,
   padding: "7px 13px",
   fontSize: "0.82rem",
   letterSpacing: "0.02em",
-  cursor: "pointer",
-  fontFamily: FF,
   display: "inline-flex",
   alignItems: "center",
   gap: 4,
-  transition: "background 0.15s, border-color 0.15s, opacity 0.15s",
   lineHeight: 1.3,
-  fontWeight: 500,
+  transition: "background 0.15s, border-color 0.15s, opacity 0.15s",
 };
 
-/* idle: muted ghost — matches ContactPanel unselected */
+/* idle: muted ghost — identical to ContactPanel unselected */
 const tagIdle: CSSProperties = {
-  ...tagBase,
+  ...tagChipBase,
+  fontWeight: 500,
   background: "transparent",
   border: "1px solid rgba(255,255,255,0.4)",
-  color: "#f2f2f2",
   opacity: 0.6,
 };
 
-/* selected: DAT PURPLE tint — matches ContactPanel selected */
+/* selected: DAT PURPLE tint — identical to ContactPanel selected */
 const tagSelected: CSSProperties = {
-  ...tagBase,
+  ...tagChipBase,
+  fontWeight: 700,
   background: "rgba(108,0,175,0.22)",
   border: "1px solid rgba(108,0,175,0.7)",
-  color: "#ffffff",
-  fontWeight: 700,
   opacity: 1,
 };
 
 /* disabled: at-limit unselected */
 const tagDisabled: CSSProperties = {
-  ...tagBase,
+  ...tagChipBase,
+  fontWeight: 500,
   background: "transparent",
   border: "1px solid rgba(255,255,255,0.1)",
   color: "rgba(255,255,255,0.22)",
