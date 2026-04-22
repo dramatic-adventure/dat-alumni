@@ -577,8 +577,9 @@ export default function IdentityPanel({
           </p>
         </div>
 
-        {/* Pronouns + Languages — side by side */}
+        {/* Pronouns + Languages — side by side on wide, stacked on mobile */}
         <div
+          className="identity-pair-grid"
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 1fr",

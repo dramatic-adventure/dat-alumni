@@ -2381,6 +2381,13 @@ return (
     border-color: rgba(255, 255, 255, 0.55);
   }
 
+  /* Identity panel: pronouns + languages stack on mobile */
+  @media (max-width: 600px) {
+    .alumni-update .identity-pair-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
   /* Layer picker card header hover */
   .alumni-update .layer-card-header {
     transition: background 0.15s ease;
