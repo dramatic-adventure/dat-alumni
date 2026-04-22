@@ -564,6 +564,17 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
     const youtubeIdx = idxOf(LH as string[], ["youtube"]);
     const vimeoIdx = idxOf(LH as string[], ["vimeo"]);
     const imdbIdx = idxOf(LH as string[], ["imdb"]);
+    const xIdx = idxOf(LH as string[], ["x"]);
+    const tiktokIdx = idxOf(LH as string[], ["tiktok"]);
+    const threadsIdx = idxOf(LH as string[], ["threads"]);
+    const blueskyIdx = idxOf(LH as string[], ["bluesky"]);
+    const linkedinIdx = idxOf(LH as string[], ["linkedin"]);
+    const linktreeIdx = idxOf(LH as string[], ["linktree"]);
+    const newsletterIdx = idxOf(LH as string[], ["newsletter"]);
+    const facebookIdx = idxOf(LH as string[], ["facebook"]);
+    const primarySocialIdx = idxOf(LH as string[], ["primarysocial", "primary social", "primarySocial"]);
+    const showWebsiteIdx = idxOf(LH as string[], ["showwebsite", "show website", "showWebsite"]);
+    const showPublicEmailIdx = idxOf(LH as string[], ["showpublicemail", "show public email", "showPublicEmail"]);
     const bioShortIdx = idxOf(LH as string[], ["bioshort", "bio short"]);
     const bioLongIdx = idxOf(LH as string[], ["biolong", "bio long"]);
     const pronounsIdx = idxOf(LH as string[], ["pronouns"]);
@@ -765,6 +776,17 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
         youtube: youtubeIdx !== -1 ? String(row[youtubeIdx] ?? "").trim() : "",
         vimeo: vimeoIdx !== -1 ? String(row[vimeoIdx] ?? "").trim() : "",
         imdb: imdbIdx !== -1 ? String(row[imdbIdx] ?? "").trim() : "",
+        x: xIdx !== -1 ? String(row[xIdx] ?? "").trim() : "",
+        tiktok: tiktokIdx !== -1 ? String(row[tiktokIdx] ?? "").trim() : "",
+        threads: threadsIdx !== -1 ? String(row[threadsIdx] ?? "").trim() : "",
+        bluesky: blueskyIdx !== -1 ? String(row[blueskyIdx] ?? "").trim() : "",
+        linkedin: linkedinIdx !== -1 ? String(row[linkedinIdx] ?? "").trim() : "",
+        linktree: linktreeIdx !== -1 ? String(row[linktreeIdx] ?? "").trim() : "",
+        newsletter: newsletterIdx !== -1 ? String(row[newsletterIdx] ?? "").trim() : "",
+        facebook: facebookIdx !== -1 ? String(row[facebookIdx] ?? "").trim() : "",
+        primarySocial: primarySocialIdx !== -1 ? String(row[primarySocialIdx] ?? "").trim() : "",
+        showWebsite: showWebsiteIdx !== -1 ? String(row[showWebsiteIdx] ?? "").trim() : "",
+        showPublicEmail: showPublicEmailIdx !== -1 ? String(row[showPublicEmailIdx] ?? "").trim() : "",
         spotlight: spotlightIdx !== -1 ? String(row[spotlightIdx] ?? "").trim() : "",
         programs: programsIdx !== -1 ? String(row[programsIdx] ?? "").trim() : "",
         tags: tagsIdx !== -1 ? String(row[tagsIdx] ?? "").trim() : "",
