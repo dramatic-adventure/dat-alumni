@@ -1,0 +1,20 @@
+{
+  "node": {
+    "703222d33b1f229ee54e50dc5f401086bcaa8dd4e7": {
+      "workers": {
+        "app/campaign/[slug]/page": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fjessebaxter%2FDocuments%2Fdat-alumni%2Flib%2FloadCsv.ts%22%2C%5B%7B%22id%22%3A%22703222d33b1f229ee54e50dc5f401086bcaa8dd4e7%22%2C%22exportedName%22%3A%22loadCsv%22%2C%22filename%22%3A%22lib%2FloadCsv.ts%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        },
+        "app/api/stories/route": {
+          "moduleId": "(rsc)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fjessebaxter%2FDocuments%2Fdat-alumni%2Flib%2FloadCsv.ts%22%2C%5B%7B%22id%22%3A%22703222d33b1f229ee54e50dc5f401086bcaa8dd4e7%22%2C%22exportedName%22%3A%22loadCsv%22%2C%22filename%22%3A%22lib%2FloadCsv.ts%22%7D%5D%5D%5D&__client_imported__=!",
+          "async": false
+        }
+      },
+      "filename": "lib/loadCsv.ts",
+      "exportedName": "loadCsv"
+    }
+  },
+  "edge": {},
+  "encryptionKey": "SN8/DNPrZiOy7dHdd9Wy7mh4ZNx0MdJYwf9OYKtZsVQ="
+}

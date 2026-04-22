@@ -240,6 +240,20 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
   const headshotIdx = idxOf(header, ["currentheadshoturl", "current headshot url", "headshot url"]);
   const locationIdx = idxOf(header, ["location", "based in", "currently based in"]);
 
+  const alumniIdIdx = idxOf(header, [
+    "alumniid",
+    "alumni id",
+    "profileid",
+    "profile id",
+    "id",
+  ]);
+
+  const currentHeadshotIdIdx = idxOf(header, [
+    "currentheadshotid",
+    "current headshot id",
+    "currentHeadshotId",
+  ]);
+
   // Roles / tags / programs
   const rolesIdx = idxOf(header, ["roles", "role", "primary role"]);
   const tagsIdx = idxOf(header, ["identity tags", "identitytags", "tags", "identity", "identity_tags"]);
@@ -338,6 +352,13 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
 
       // headshot
       "headshot url": cell(r, headshotIdx),
+      currentHeadshotId: cell(r, currentHeadshotIdIdx),
+      "current headshot id": cell(r, currentHeadshotIdIdx),
+
+      // stable identity
+      alumniId: cell(r, alumniIdIdx),
+      "alumni id": cell(r, alumniIdIdx),
+      profileId: cell(r, alumniIdIdx),
 
       // identity tags + programs (legacy labels normalizeAlumniRow expects)
       tags: cell(r, tagsIdx),

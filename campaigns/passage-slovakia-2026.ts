@@ -39,7 +39,6 @@ export const passageSlovakia2026: FundraisingCampaign = {
   deadline: "2026-06-30",
 
   // ── Match ─────────────────────────────────────────────────────────
-  // Set to true and update matchDescription when a real match underwriter is confirmed.
   matchActive: false,
   matchDescription: "",
   matchCap: 0,
@@ -174,81 +173,22 @@ export const passageSlovakia2026: FundraisingCampaign = {
     },
   ],
 
-  // ── Alumni ────────────────────────────────────────────────────────
-  alumni: [
-    {
-      slug: "jesse-baxter",
-      name: "Jesse Baxter",
-      role: "Artistic Director",
-      imageUrl: "/api/img?fileId=13HsY_wCfqqtlePCBex3PdbSLR1bFofL5&v=2026-02-01T00%3A17%3A56.157Z",
-    },
-    {
-      slug: "barbara-herucova",
-      name: "Barbara Herucová",
-      role: "Community Partnerships, Czechia & Slovakia",
-      imageUrl:
-        "https://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1616725992694-TNS2JIIE17GYNSMTZJYV/64537018_10157465992125439_6983616771756392448_o.jpg",
-    },
-    {
-      slug: "peter-petkovsek",
-      name: "Peter Petkovšek",
-      role: "Director",
-      imageUrl:
-        "https://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1613936866403-QO2DX0RHGL3HYGI200RB/peter1.jpg",
-    },
-    {
-      slug: "mathilde-prosen-oldani",
-      name: "Mathilde Prosen-Oldani",
-      role: "Theatremaker",
-      imageUrl:
-        "https://images.squarespace-cdn.com/content/v1/6022114419b886404b1030fa/1688753036942-IFAX0D3LJFO4U8B9YLH1/Tilda6804BW+%282%29+%281%29.jpg",
-    },
+  // ── Linked content (dynamic references) ───────────────────────────
+  alumniSlugs: [
+    "jesse-baxter",
+    "barbara-herucova",
+    "peter-petkovsek",
+    "mathilde-prosen-oldani",
   ],
 
-  // ── Drama clubs / partner communities ─────────────────────────────
-  dramaClubs: [
-    {
-      slug: "lunik-ix-collective",
-      name: "Luník IX Collective, DAT Drama Club",
-      country: "Slovakia",
-      city: "Košice",
-      imageUrl: "/images/rehearsing-nitra.jpg",
-    },
-  ],
+  dramaClubSlugs: ["lunik-ix-collective"],
 
-  // ── Events ────────────────────────────────────────────────────────
-  events: [
-    {
-      id: "passage-sendoff-2026",
-      title: "PASSAGE Send-Off Gathering",
-      date: "2026-06-25",
-      venue: "DAT Studio",
-      city: "Brooklyn",
-      country: "USA",
-      ticketUrl: "https://dramaticadventure.com/passage/slovakia",
-      imageUrl: "/images/rehearsing-nitra.jpg",
-    },
-  ],
+  eventIds: ["dat-summer-launch-2026", "passage-sendoff-2026", "joint-drama-club-showcase-slovakia-2026", "passage-performance-party-2026"],
 
-  // ── Stories ───────────────────────────────────────────────────────
-  stories: [
-    {
-      slug: "drama-works",
-      title: "Drama Works",
-      teaser:
-        "Long-term drama workshops with Roma youth in Eastern Slovakia — and how community-rooted theatre can build confidence, voice, and belonging over time.",
-      imageUrl: "/images/rehearsing-nitra.jpg",
-    },
-    {
-      slug: "night-at-the-roma-museum",
-      title: "Night at the Roma Museum",
-      teaser:
-        "A cross-cultural production in Brno made with community — preserving stories, widening perspective, and proving what shared creation can hold.",
-      imageUrl: "/images/performing-zanzibar.jpg",
-    },
-  ],
+  storySlugs: ["drama-works", "night-at-the-roma-museum"],
 
   // ── Gallery ───────────────────────────────────────────────────────
+  // Keep inline for now: the captions are campaign-specific.
   gallery: [
     {
       src: "/images/rehearsing-nitra.jpg",

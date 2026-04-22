@@ -445,24 +445,10 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const debug = url.searchParams.get("debug") === "1" && !isProd;
 
-    const sheetId = (process.env.STORIES_SHEET_ID || "").trim();
-    const gid = (process.env.STORIES_GID || "582055134").trim();
-
-    if (!sheetId) {
-      return NextResponse.json(
-        { ok: false, error: "Missing STORIES_SHEET_ID" },
-        { status: 500, headers: noStoreHeaders() }
-      );
-    }
-
     const filterAlumniId = String(url.searchParams.get("alumniId") || "").trim();
 
     // ✅ Cache-bust param to avoid stale CSV from intermediary caches
     const cb = Date.now();
-
-    const sourceUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${encodeURIComponent(
-      gid
-    )}&_cb=${cb}`;
 
     const publishedUrlRaw = (process.env.NEXT_PUBLIC_MAP_CSV_URL || "").trim();
     const publishedUrl = publishedUrlRaw
@@ -475,22 +461,18 @@ export async function GET(req: Request) {
       ? {
           env: {
             NODE_ENV: process.env.NODE_ENV,
-            has_STORIES_SHEET_ID: !!sheetId,
-            STORIES_GID: gid,
             has_NEXT_PUBLIC_MAP_CSV_URL: !!publishedUrlRaw,
           },
           urls: {
-            primary: sourceUrl,
             published: publishedUrl || "(missing)",
           },
-          primary: {},
           published: {},
           fallback: {},
         }
       : null;
 
 const tryLoad = async (
-  label: "primary" | "published",
+  label: "published",
   urlToUse: string
 ): Promise<{ text: string; didFallback: boolean }> => {
   try {
@@ -545,38 +527,32 @@ const loadLocalFallback = async (): Promise<string> => {
 };
 
 let csv = "";
-let used: "primary" | "published" | "fallback" = "primary";
+let used: "published" | "fallback" = "fallback";
 
 try {
-  csv = (await tryLoad("primary", sourceUrl)).text;
-  used = "primary";
-} catch (primaryErr: any) {
+  if (publishedUrl) {
+    csv = (await tryLoad("published", publishedUrl)).text;
+    used = "published";
+  } else {
+    csv = await loadLocalFallback();
+    used = "fallback";
+  }
+} catch (publishedErr: any) {
   try {
-    if (publishedUrl) {
-      csv = (await tryLoad("published", publishedUrl)).text;
-      used = "published";
-    } else {
-      throw new Error("NEXT_PUBLIC_MAP_CSV_URL is missing");
-    }
-  } catch (publishedErr: any) {
-    // Final tier: local fallback file
-    try {
-      csv = await loadLocalFallback();
-      used = "fallback";
-    } catch (fallbackErr: any) {
-      const msg1 = primaryErr?.message || String(primaryErr);
-      const msg2 = publishedErr?.message || String(publishedErr);
-      const msg3 = fallbackErr?.message || String(fallbackErr);
+    csv = await loadLocalFallback();
+    used = "fallback";
+  } catch (fallbackErr: any) {
+    const msg1 = publishedErr?.message || String(publishedErr);
+    const msg2 = fallbackErr?.message || String(fallbackErr);
 
-      return NextResponse.json(
-        {
-          ok: false,
-          error: `All CSV sources failed. primary=${msg1}; published=${msg2}; fallback=${msg3}`,
-          ...(debug ? { _debug: diag } : {}),
-        },
-        { status: 500, headers: noStoreHeaders() }
-      );
-    }
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `All CSV sources failed. published=${msg1}; fallback=${msg2}`,
+        ...(debug ? { _debug: diag } : {}),
+      },
+      { status: 500, headers: noStoreHeaders() }
+    );
   }
 }
 

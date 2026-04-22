@@ -6,6 +6,8 @@ const isCanaryPPR = process.env.NEXT_CANARY_PPR === "1";
 const nextConfig: NextConfig = {
   ...(isCanaryPPR ? { experimental: { ppr: true } } : {}),
 
+  distDir: ".next-local",
+
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60,

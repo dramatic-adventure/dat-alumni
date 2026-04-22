@@ -2,13 +2,39 @@
 import "server-only";
 
 import { cache } from "react";
-import { fetchStories } from "./fetchStories";
 import { StoryRow } from "./types";
 import { getSlugAliases, normSlug } from "@/lib/slugAliases";
 
-// 🔄 Cached story fetcher
+function getApiBaseUrl(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.SITE_URL ||
+    process.env.URL ||
+    "http://localhost:3000";
+
+  const trimmed = String(raw).trim().replace(/\/+$/, "");
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+
+  return `https://${trimmed}`;
+}
+
+// 🔄 Cached story fetcher via internal API
 const loadRows = cache(async (): Promise<StoryRow[]> => {
-  return await fetchStories();
+  try {
+    const baseUrl = getApiBaseUrl();
+    const res = await fetch(`${baseUrl}/api/stories`, {
+      cache: "no-store",
+    });
+
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    const rows = Array.isArray(data?.stories) ? data.stories : [];
+
+    return rows as StoryRow[];
+  } catch {
+    return [];
+  }
 });
 
 export default loadRows;
@@ -18,7 +44,6 @@ export async function getStoriesByAlumniSlug(slug: string): Promise<StoryRow[]> 
   const incoming = normSlug(slug);
   if (!incoming) return [];
 
-  // canonical + all aliases
   const aliases = await getSlugAliases(incoming);
   const aliasSet = new Set(
     Array.from(aliases)
@@ -30,6 +55,19 @@ export async function getStoriesByAlumniSlug(slug: string): Promise<StoryRow[]> 
   return rows.filter((row) => {
     const a = normSlug((row as any)?.authorSlug);
     return a ? aliasSet.has(a) : false;
+  });
+}
+
+// 🔍 Lookup by story slug
+export async function getStoryBySlug(slug: string): Promise<StoryRow | undefined> {
+  const incoming = normSlug(slug);
+  if (!incoming) return undefined;
+
+  const rows = await loadRows();
+
+  return rows.find((row) => {
+    const rowSlug = normSlug((row as any)?.slug ?? (row as any)?.storySlug);
+    return rowSlug === incoming;
   });
 }
 

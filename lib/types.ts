@@ -45,6 +45,8 @@ export interface AlumniRow {
   // Core fields
   location: string;
   headshotUrl?: string;
+  currentHeadshotId?: string;
+  alumniId?: string;
   artistStatement?: string;
 
   // Filters & tags

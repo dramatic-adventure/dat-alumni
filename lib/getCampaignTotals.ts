@@ -2,8 +2,8 @@
 /**
  * Server-side helper: query live donation totals for a fundraising campaign.
  *
- * Uses the existing Prisma + SQLite setup. Works by filtering DonationPayment
- * and RecurringGift records where contextType = "campaign" and contextId = campaignId.
+ * Uses the existing Prisma setup. Works by filtering DonationPayment
+ * records where contextType = "campaign" and contextId = campaignId.
  *
  * This matches the Stripe checkout route's context resolution logic exactly:
  * when a campaign give widget posts to /api/stripe/checkout with only a
@@ -11,7 +11,7 @@
  * contextType = "campaign" and contextId = campaignSlug automatically.
  */
 
-import { prisma, ContextType } from "@/lib/prisma";
+import { prisma, ContextType, PaymentStatus } from "@/lib/prisma";
 
 export type CampaignTotals = {
   /** Total raised in minor units (cents). 0 when no donations yet. */
@@ -32,7 +32,7 @@ export async function getCampaignTotals(campaignId: string): Promise<CampaignTot
     const whereClause = {
       contextType: ContextType.campaign,
       contextId: campaignId,
-      status: "succeeded" as const,
+      status: PaymentStatus.succeeded,
     };
 
     const [aggregate, recent] = await Promise.all([

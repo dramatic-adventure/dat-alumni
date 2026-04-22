@@ -19,6 +19,8 @@ import { getCampaign, getAllCampaignSlugs } from "@/lib/fundraisingCampaigns";
 import { getCampaignTotals } from "@/lib/getCampaignTotals";
 import type { CampaignTotals } from "@/lib/getCampaignTotals";
 import CampaignTemplate from "@/components/campaign/CampaignTemplate";
+import { resolveCampaignLinkedContent } from "@/lib/resolveCampaignLinkedContent";
+import { campaignLinkedContentResolvers } from "@/lib/campaignLinkedContentResolvers";
 
 export const revalidate = 60; // ISR — refresh totals every 60s
 
@@ -83,5 +85,10 @@ export default async function CampaignPage({ params }: PageProps) {
     };
   }
 
-  return <CampaignTemplate campaign={campaign} totals={totals} />;
+  const resolvedCampaign = await resolveCampaignLinkedContent(
+    campaign,
+    campaignLinkedContentResolvers
+  );
+
+  return <CampaignTemplate campaign={resolvedCampaign} totals={totals} />;
 }

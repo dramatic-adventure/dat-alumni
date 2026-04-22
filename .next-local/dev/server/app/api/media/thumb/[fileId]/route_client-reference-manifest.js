@@ -1,0 +1,1 @@
+globalThis.__RSC_MANIFEST=(globalThis.__RSC_MANIFEST||{});globalThis.__RSC_MANIFEST["/api/media/thumb/[fileId]/route"]={"moduleLoading":{"prefix":"/_next/"},"ssrModuleMapping":{},"edgeSSRModuleMapping":{},"clientModules":{},"entryCSSFiles":{"/Users/jessebaxter/Documents/dat-alumni/app/api/media/thumb/[fileId]/route":[]},"rscModuleMapping":{},"edgeRscModuleMapping":{}};

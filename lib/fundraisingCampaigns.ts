@@ -55,6 +55,7 @@ export type CampaignLinkedAlumnus = {
   name: string;
   role?: string;
   imageUrl?: string;
+  alumniId?: string;
 };
 
 export type CampaignLinkedDramaClub = {
@@ -143,6 +144,7 @@ export type FundraisingCampaign = {
   stretchGoals?: CampaignStretchGoal[];
 
   // ── Linked content (all optional — hidden cleanly when absent) ─────
+  // Legacy / resolved object arrays — keep these so existing templates continue to work.
   alumni?: CampaignLinkedAlumnus[];
   dramaClubs?: CampaignLinkedDramaClub[];
   productions?: CampaignLinkedProduction[];
@@ -150,6 +152,13 @@ export type FundraisingCampaign = {
   stories?: CampaignLinkedStory[];
   testimonials?: CampaignTestimonial[];
   gallery?: CampaignGalleryItem[];
+
+  // Dynamic reference arrays — preferred authoring format for campaign configs.
+  // A resolver can hydrate these into the legacy arrays above.
+  alumniSlugs?: string[];
+  dramaClubSlugs?: string[];
+  eventIds?: string[];
+  storySlugs?: string[];
 
   // ── Campaign updates ───────────────────────────────────────────────
   updates?: CampaignUpdate[];

@@ -1,0 +1,2618 @@
+/*!*************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[15].oneOf[10].use[2]!./node_modules/next/dist/build/webpack/loaders/postcss-loader/src/index.js??ruleSet[1].rules[15].oneOf[10].use[3]!./app/globals.css ***!
+  \*************************************************************************************************************************************************************************************************************************************************************/
+/*! tailwindcss v4.2.2 | MIT License | https://tailwindcss.com */
+@layer properties;
+.pointer-events-auto {
+  pointer-events: auto;
+}
+.pointer-events-none {
+  pointer-events: none;
+}
+.collapse {
+  visibility: collapse;
+}
+.invisible {
+  visibility: hidden;
+}
+.visible {
+  visibility: visible;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border-width: 0;
+}
+.absolute {
+  position: absolute;
+}
+.fixed {
+  position: fixed;
+}
+.relative {
+  position: relative;
+}
+.static {
+  position: static;
+}
+.sticky {
+  position: sticky;
+}
+.top-\[-10px\] {
+  top: -10px;
+}
+.top-full {
+  top: 100%;
+}
+.right-\[4rem\] {
+  right: 4rem;
+}
+.left-1\/2 {
+  left: calc(1 / 2 * 100%);
+}
+.left-\[1\.5rem\] {
+  left: 1.5rem;
+}
+.isolate {
+  isolation: isolate;
+}
+.z-10 {
+  z-index: 10;
+}
+.z-20 {
+  z-index: 20;
+}
+.z-40 {
+  z-index: 40;
+}
+.z-50 {
+  z-index: 50;
+}
+.z-\[100\] {
+  z-index: 100;
+}
+.z-\[1000\] {
+  z-index: 1000;
+}
+.z-\[9998\] {
+  z-index: 9998;
+}
+.z-\[999999\] {
+  z-index: 999999;
+}
+.col-span-1 {
+  grid-column: span 1 / span 1;
+}
+.col-span-2 {
+  grid-column: span 2 / span 2;
+}
+.col-span-12 {
+  grid-column: span 12 / span 12;
+}
+.col-start-2 {
+  grid-column-start: 2;
+}
+.\!container {
+  width: 100% !important;
+}
+.container {
+  width: 100%;
+}
+.mx-auto {
+  margin-inline: auto;
+}
+.mt-\[0px\] {
+  margin-top: 0px;
+}
+.mt-auto {
+  margin-top: auto;
+}
+.-ml-\[50vw\] {
+  margin-left: calc(50vw * -1);
+}
+.ml-\[3rem\] {
+  margin-left: 3rem;
+}
+.box-border {
+  box-sizing: border-box;
+}
+.block {
+  display: block;
+}
+.contents {
+  display: contents;
+}
+.flex {
+  display: flex;
+}
+.grid {
+  display: grid;
+}
+.hidden {
+  display: none;
+}
+.inline {
+  display: inline;
+}
+.inline-block {
+  display: inline-block;
+}
+.inline-flex {
+  display: inline-flex;
+}
+.inline-grid {
+  display: inline-grid;
+}
+.table {
+  display: table;
+}
+.aspect-\[2\/3\] {
+  aspect-ratio: 2/3;
+}
+.aspect-\[3\/2\] {
+  aspect-ratio: 3/2;
+}
+.aspect-\[16\/10\] {
+  aspect-ratio: 16/10;
+}
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+.h-\[100dvh\] {
+  height: 100dvh;
+}
+.h-\[450px\] {
+  height: 450px;
+}
+.h-full {
+  height: 100%;
+}
+.h-screen {
+  height: 100vh;
+}
+.min-h-\[100dvh\] {
+  min-height: 100dvh;
+}
+.min-h-\[100px\] {
+  min-height: 100px;
+}
+.min-h-\[300px\] {
+  min-height: 300px;
+}
+.min-h-screen {
+  min-height: 100vh;
+}
+.w-1\/2 {
+  width: calc(1 / 2 * 100%);
+}
+.w-1\/3 {
+  width: calc(1 / 3 * 100%);
+}
+.w-2\/3 {
+  width: calc(2 / 3 * 100%);
+}
+.w-3\/4 {
+  width: calc(3 / 4 * 100%);
+}
+.w-3\/5 {
+  width: calc(3 / 5 * 100%);
+}
+.w-4\/5 {
+  width: calc(4 / 5 * 100%);
+}
+.w-\[85vw\] {
+  width: 85vw;
+}
+.w-\[88vw\] {
+  width: 88vw;
+}
+.w-\[90vw\] {
+  width: 90vw;
+}
+.w-\[92vw\] {
+  width: 92vw;
+}
+.w-\[240px\] {
+  width: 240px;
+}
+.w-\[360px\] {
+  width: 360px;
+}
+.w-\[540px\] {
+  width: 540px;
+}
+.w-auto {
+  width: auto;
+}
+.w-full {
+  width: 100%;
+}
+.w-screen {
+  width: 100vw;
+}
+.max-w-\[92rem\] {
+  max-width: 92rem;
+}
+.max-w-\[100vw\] {
+  max-width: 100vw;
+}
+.max-w-\[360px\] {
+  max-width: 360px;
+}
+.max-w-\[640px\] {
+  max-width: 640px;
+}
+.max-w-\[768px\] {
+  max-width: 768px;
+}
+.max-w-\[840px\] {
+  max-width: 840px;
+}
+.max-w-\[1200px\] {
+  max-width: 1200px;
+}
+.max-w-full {
+  max-width: 100%;
+}
+.flex-1 {
+  flex: 1;
+}
+.flex-shrink {
+  flex-shrink: 1;
+}
+.shrink {
+  flex-shrink: 1;
+}
+.shrink-0 {
+  flex-shrink: 0;
+}
+.flex-grow {
+  flex-grow: 1;
+}
+.grow {
+  flex-grow: 1;
+}
+.border-collapse {
+  border-collapse: collapse;
+}
+.-translate-x-1\/2 {
+  --tw-translate-x: calc(calc(1 / 2 * 100%) * -1);
+  translate: var(--tw-translate-x) var(--tw-translate-y);
+}
+.-translate-y-full {
+  --tw-translate-y: -100%;
+  translate: var(--tw-translate-x) var(--tw-translate-y);
+}
+.rotate-2 {
+  rotate: 2deg;
+}
+.transform {
+  transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
+}
+.cursor-default {
+  cursor: default;
+}
+.cursor-not-allowed {
+  cursor: not-allowed;
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+.resize {
+  resize: both;
+}
+.snap-x {
+  scroll-snap-type: x var(--tw-scroll-snap-strictness);
+}
+.snap-mandatory {
+  --tw-scroll-snap-strictness: mandatory;
+}
+.snap-start {
+  scroll-snap-align: start;
+}
+.list-disc {
+  list-style-type: disc;
+}
+.grid-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.grid-cols-12 {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+.grid-cols-\[80px_1fr\] {
+  grid-template-columns: 80px 1fr;
+}
+.flex-col {
+  flex-direction: column;
+}
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.items-baseline {
+  align-items: baseline;
+}
+.items-center {
+  align-items: center;
+}
+.items-end {
+  align-items: flex-end;
+}
+.items-start {
+  align-items: flex-start;
+}
+.items-stretch {
+  align-items: stretch;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.justify-center {
+  justify-content: center;
+}
+.justify-end {
+  justify-content: flex-end;
+}
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.overflow-hidden {
+  overflow: hidden;
+}
+.overflow-visible {
+  overflow: visible;
+}
+.overflow-x-auto {
+  overflow-x: auto;
+}
+.overflow-x-hidden {
+  overflow-x: hidden;
+}
+.overflow-y-auto {
+  overflow-y: auto;
+}
+.rounded-\[0\.5rem\] {
+  border-radius: 0.5rem;
+}
+.rounded-full {
+  border-radius: calc(infinity * 1px);
+}
+.rounded-none {
+  border-radius: 0;
+}
+.border {
+  border-style: var(--tw-border-style);
+  border-width: 1px;
+}
+.border-0 {
+  border-style: var(--tw-border-style);
+  border-width: 0px;
+}
+.border-2 {
+  border-style: var(--tw-border-style);
+  border-width: 2px;
+}
+.border-4 {
+  border-style: var(--tw-border-style);
+  border-width: 4px;
+}
+.border-t {
+  border-top-style: var(--tw-border-style);
+  border-top-width: 1px;
+}
+.border-b {
+  border-bottom-style: var(--tw-border-style);
+  border-bottom-width: 1px;
+}
+.border-l-4 {
+  border-left-style: var(--tw-border-style);
+  border-left-width: 4px;
+}
+.border-dashed {
+  --tw-border-style: dashed;
+  border-style: dashed;
+}
+.border-none {
+  --tw-border-style: none;
+  border-style: none;
+}
+.border-\[\#6C00AF\] {
+  border-color: #6C00AF;
+}
+.border-\[\#241123\]\/10 {
+  border-color: color-mix(in oklab, #241123 10%, transparent);
+}
+.border-\[\#ff3b7a\] {
+  border-color: #ff3b7a;
+}
+.border-\[\#ffcc00\] {
+  border-color: #ffcc00;
+}
+.border-\[rgba\(36\,17\,35\,0\.16\)\] {
+  border-color: rgba(36,17,35,0.16);
+}
+.border-\[rgba\(242\,242\,242\,0\.12\)\] {
+  border-color: rgba(242,242,242,0.12);
+}
+.border-\[rgba\(242\,242\,242\,0\.18\)\] {
+  border-color: rgba(242,242,242,0.18);
+}
+.border-\[rgba\(242\,242\,242\,0\.22\)\] {
+  border-color: rgba(242,242,242,0.22);
+}
+.border-current {
+  border-color: currentcolor;
+}
+.border-transparent {
+  border-color: transparent;
+}
+.bg-\[\#6C00AF\] {
+  background-color: #6C00AF;
+}
+.bg-\[\#6c00af\] {
+  background-color: #6c00af;
+}
+.bg-\[\#19657c\] {
+  background-color: #19657c;
+}
+.bg-\[\#241123\] {
+  background-color: #241123;
+}
+.bg-\[\#241123\]\/65 {
+  background-color: color-mix(in oklab, #241123 65%, transparent);
+}
+.bg-\[\#F5F2EC\] {
+  background-color: #F5F2EC;
+}
+.bg-\[\#F9F4E7\]\/90 {
+  background-color: color-mix(in oklab, #F9F4E7 90%, transparent);
+}
+.bg-\[\#FFCC00\] {
+  background-color: #FFCC00;
+}
+.bg-\[\#f2f2f2\] {
+  background-color: #f2f2f2;
+}
+.bg-\[\#f5f1eb\] {
+  background-color: #f5f1eb;
+}
+.bg-\[\#f7f2e9\] {
+  background-color: #f7f2e9;
+}
+.bg-\[\#fbf7f1\] {
+  background-color: #fbf7f1;
+}
+.bg-\[\#ffcc00\] {
+  background-color: #ffcc00;
+}
+.bg-\[rgba\(108\,0\,175\,0\.06\)\] {
+  background-color: rgba(108,0,175,0.06);
+}
+.bg-\[rgba\(242\,242\,242\,0\.14\)\] {
+  background-color: rgba(242,242,242,0.14);
+}
+.bg-\[var\(--btn-bg\)\] {
+  background-color: var(--btn-bg);
+}
+.bg-\[var\(--btn-bg\,\#241123\)\] {
+  background-color: var(--btn-bg,#241123);
+}
+.bg-transparent {
+  background-color: transparent;
+}
+.bg-gradient-to-b {
+  --tw-gradient-position: to bottom in oklab;
+  background-image: linear-gradient(var(--tw-gradient-stops));
+}
+.bg-gradient-to-r {
+  --tw-gradient-position: to right in oklab;
+  background-image: linear-gradient(var(--tw-gradient-stops));
+}
+.bg-gradient-to-t {
+  --tw-gradient-position: to top in oklab;
+  background-image: linear-gradient(var(--tw-gradient-stops));
+}
+.via-transparent {
+  --tw-gradient-via: transparent;
+  --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-via-stops);
+}
+.to-transparent {
+  --tw-gradient-to: transparent;
+  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+}
+.bg-cover {
+  background-size: cover;
+}
+.bg-center {
+  background-position: center;
+}
+.object-contain {
+  -o-object-fit: contain;
+     object-fit: contain;
+}
+.object-cover {
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+.object-center {
+  -o-object-position: center;
+     object-position: center;
+}
+.object-top {
+  -o-object-position: top;
+     object-position: top;
+}
+.px-\[30px\] {
+  padding-inline: 30px;
+}
+.py-\[6px\] {
+  padding-block: 6px;
+}
+.py-\[30px\] {
+  padding-block: 30px;
+}
+.pr-\[2rem\] {
+  padding-right: 2rem;
+}
+.pb-\[42\.85\%\] {
+  padding-bottom: 42.85%;
+}
+.pb-\[56\.25\%\] {
+  padding-bottom: 56.25%;
+}
+.pb-\[75\%\] {
+  padding-bottom: 75%;
+}
+.pb-\[100\%\] {
+  padding-bottom: 100%;
+}
+.pl-\[2rem\] {
+  padding-left: 2rem;
+}
+.text-center {
+  text-align: center;
+}
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
+.text-\[0\.7rem\] {
+  font-size: 0.7rem;
+}
+.text-\[0\.9rem\] {
+  font-size: 0.9rem;
+}
+.text-\[0\.78rem\] {
+  font-size: 0.78rem;
+}
+.text-\[0\.85rem\] {
+  font-size: 0.85rem;
+}
+.text-\[1\.1rem\] {
+  font-size: 1.1rem;
+}
+.text-\[1\.8rem\] {
+  font-size: 1.8rem;
+}
+.text-\[11px\] {
+  font-size: 11px;
+}
+.text-\[13px\] {
+  font-size: 13px;
+}
+.text-\[15px\] {
+  font-size: 15px;
+}
+.text-\[clamp\(2\.2rem\,6vw\,6rem\)\] {
+  font-size: clamp(2.2rem, 6vw, 6rem);
+}
+.leading-\[0\.85\] {
+  --tw-leading: 0.85;
+  line-height: 0.85;
+}
+.leading-\[0\.95\] {
+  --tw-leading: 0.95;
+  line-height: 0.95;
+}
+.leading-\[1\.05\] {
+  --tw-leading: 1.05;
+  line-height: 1.05;
+}
+.leading-none {
+  --tw-leading: 1;
+  line-height: 1;
+}
+.font-\[400\] {
+  --tw-font-weight: 400;
+  font-weight: 400;
+}
+.tracking-\[-0\.02em\] {
+  --tw-tracking: -0.02em;
+  letter-spacing: -0.02em;
+}
+.tracking-\[0\.01em\] {
+  --tw-tracking: 0.01em;
+  letter-spacing: 0.01em;
+}
+.tracking-\[0\.2em\] {
+  --tw-tracking: 0.2em;
+  letter-spacing: 0.2em;
+}
+.tracking-\[0\.4em\] {
+  --tw-tracking: 0.4em;
+  letter-spacing: 0.4em;
+}
+.tracking-\[0\.05em\] {
+  --tw-tracking: 0.05em;
+  letter-spacing: 0.05em;
+}
+.tracking-\[0\.12em\] {
+  --tw-tracking: 0.12em;
+  letter-spacing: 0.12em;
+}
+.tracking-\[0\.18em\] {
+  --tw-tracking: 0.18em;
+  letter-spacing: 0.18em;
+}
+.tracking-\[0\.22em\] {
+  --tw-tracking: 0.22em;
+  letter-spacing: 0.22em;
+}
+.tracking-\[0\.24em\] {
+  --tw-tracking: 0.24em;
+  letter-spacing: 0.24em;
+}
+.tracking-\[0\.25em\] {
+  --tw-tracking: 0.25em;
+  letter-spacing: 0.25em;
+}
+.tracking-\[0\.35rem\] {
+  --tw-tracking: 0.35rem;
+  letter-spacing: 0.35rem;
+}
+.tracking-\[0\.345em\] {
+  --tw-tracking: 0.345em;
+  letter-spacing: 0.345em;
+}
+.text-balance {
+  text-wrap: balance;
+}
+.break-all {
+  word-break: break-all;
+}
+.whitespace-normal {
+  white-space: normal;
+}
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+.text-\[\#2b1a2a\] {
+  color: #2b1a2a;
+}
+.text-\[\#5BBFD3\] {
+  color: #5BBFD3;
+}
+.text-\[\#241123\] {
+  color: #241123;
+}
+.text-\[\#241123\]\/70 {
+  color: color-mix(in oklab, #241123 70%, transparent);
+}
+.text-\[\#D9A919\] {
+  color: #D9A919;
+}
+.text-\[\#F2F2F2\] {
+  color: #F2F2F2;
+}
+.text-\[\#F23359\] {
+  color: #F23359;
+}
+.text-\[\#f2f2f2\] {
+  color: #f2f2f2;
+}
+.text-\[\#f2f2f2\]\/55 {
+  color: color-mix(in oklab, #f2f2f2 55%, transparent);
+}
+.text-\[\#f2f2f2\]\/80 {
+  color: color-mix(in oklab, #f2f2f2 80%, transparent);
+}
+.text-\[\#f2f2f2\]\/85 {
+  color: color-mix(in oklab, #f2f2f2 85%, transparent);
+}
+.text-\[\#ff3b7a\] {
+  color: #ff3b7a;
+}
+.text-\[\#ffcc00\] {
+  color: #ffcc00;
+}
+.text-\[var\(--btn-text\)\] {
+  color: var(--btn-text);
+}
+.text-\[var\(--btn-text\,\#fff\)\] {
+  color: var(--btn-text,#fff);
+}
+.text-current {
+  color: currentcolor;
+}
+.capitalize {
+  text-transform: capitalize;
+}
+.lowercase {
+  text-transform: lowercase;
+}
+.uppercase {
+  text-transform: uppercase;
+}
+.italic {
+  font-style: italic;
+}
+.tabular-nums {
+  --tw-numeric-spacing: tabular-nums;
+  font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,);
+}
+.no-underline {
+  text-decoration-line: none;
+}
+.underline {
+  text-decoration-line: underline;
+}
+.underline-offset-2 {
+  text-underline-offset: 2px;
+}
+.underline-offset-4 {
+  text-underline-offset: 4px;
+}
+.antialiased {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.opacity-0 {
+  opacity: 0%;
+}
+.opacity-50 {
+  opacity: 50%;
+}
+.opacity-60 {
+  opacity: 60%;
+}
+.opacity-65 {
+  opacity: 65%;
+}
+.opacity-70 {
+  opacity: 70%;
+}
+.opacity-80 {
+  opacity: 80%;
+}
+.opacity-85 {
+  opacity: 85%;
+}
+.opacity-90 {
+  opacity: 90%;
+}
+.opacity-\[0\.9\] {
+  opacity: 0.9;
+}
+.shadow-\[0_12px_28px_rgba\(108\,0\,175\,0\.20\)\] {
+  --tw-shadow: 0 12px 28px var(--tw-shadow-color, rgba(108,0,175,0.20));
+  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.shadow-\[0_18px_50px_rgba\(36\,17\,35\,0\.10\)\] {
+  --tw-shadow: 0 18px 50px var(--tw-shadow-color, rgba(36,17,35,0.10));
+  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.shadow-\[6px_8px_20px_rgba\(0\,0\,0\,0\.25\)\] {
+  --tw-shadow: 6px 8px 20px var(--tw-shadow-color, rgba(0,0,0,0.25));
+  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.ring {
+  --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.ring-\[\#F23359\] {
+  --tw-ring-color: #F23359;
+}
+.outline {
+  outline-style: var(--tw-outline-style);
+  outline-width: 1px;
+}
+.filter {
+  filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+}
+.backdrop-filter {
+  backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+}
+.transition {
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, box-shadow, transform, translate, scale, rotate, filter, backdrop-filter, display, content-visibility, overlay, pointer-events;
+  transition-timing-function: var(--tw-ease, ease);
+  transition-duration: var(--tw-duration, 0s);
+}
+.transition-\[transform\,filter\,box-shadow\] {
+  transition-property: transform,filter,box-shadow;
+  transition-timing-function: var(--tw-ease, ease);
+  transition-duration: var(--tw-duration, 0s);
+}
+.transition-all {
+  transition-property: all;
+  transition-timing-function: var(--tw-ease, ease);
+  transition-duration: var(--tw-duration, 0s);
+}
+.transition-colors {
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
+  transition-timing-function: var(--tw-ease, ease);
+  transition-duration: var(--tw-duration, 0s);
+}
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: var(--tw-ease, ease);
+  transition-duration: var(--tw-duration, 0s);
+}
+.transition-transform {
+  transition-property: transform, translate, scale, rotate;
+  transition-timing-function: var(--tw-ease, ease);
+  transition-duration: var(--tw-duration, 0s);
+}
+.duration-150 {
+  --tw-duration: 150ms;
+  transition-duration: 150ms;
+}
+.duration-200 {
+  --tw-duration: 200ms;
+  transition-duration: 200ms;
+}
+.duration-250 {
+  --tw-duration: 250ms;
+  transition-duration: 250ms;
+}
+.duration-300 {
+  --tw-duration: 300ms;
+  transition-duration: 300ms;
+}
+.outline-none {
+  --tw-outline-style: none;
+  outline-style: none;
+}
+.select-none {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+       user-select: none;
+}
+.group-hover\:scale-105 {
+  &:is(:where(.group):hover *) {
+    @media (hover: hover) {
+      --tw-scale-x: 105%;
+      --tw-scale-y: 105%;
+      --tw-scale-z: 105%;
+      scale: var(--tw-scale-x) var(--tw-scale-y);
+    }
+  }
+}
+.group-hover\:scale-\[1\.11\] {
+  &:is(:where(.group):hover *) {
+    @media (hover: hover) {
+      scale: 1.11;
+    }
+  }
+}
+.group-hover\:scale-\[1\.12\] {
+  &:is(:where(.group):hover *) {
+    @media (hover: hover) {
+      scale: 1.12;
+    }
+  }
+}
+.group-hover\:opacity-100 {
+  &:is(:where(.group):hover *) {
+    @media (hover: hover) {
+      opacity: 100%;
+    }
+  }
+}
+.group-hover\:shadow-\[0_6px_20px_rgba\(0\,0\,0\,0\.35\)\] {
+  &:is(:where(.group):hover *) {
+    @media (hover: hover) {
+      --tw-shadow: 0 6px 20px var(--tw-shadow-color, rgba(0,0,0,0.35));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+}
+.group-hover\:shadow-\[0_26px_60px_rgba\(0\,0\,0\,0\.85\)\] {
+  &:is(:where(.group):hover *) {
+    @media (hover: hover) {
+      --tw-shadow: 0 26px 60px var(--tw-shadow-color, rgba(0,0,0,0.85));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+}
+.group-hover\:ring-4 {
+  &:is(:where(.group):hover *) {
+    @media (hover: hover) {
+      --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(4px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+}
+.group-hover\:brightness-105 {
+  &:is(:where(.group):hover *) {
+    @media (hover: hover) {
+      --tw-brightness: brightness(105%);
+      filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+    }
+  }
+}
+.hover\:-translate-y-\[1px\] {
+  &:hover {
+    @media (hover: hover) {
+      --tw-translate-y: calc(1px * -1);
+      translate: var(--tw-translate-x) var(--tw-translate-y);
+    }
+  }
+}
+.hover\:scale-105 {
+  &:hover {
+    @media (hover: hover) {
+      --tw-scale-x: 105%;
+      --tw-scale-y: 105%;
+      --tw-scale-z: 105%;
+      scale: var(--tw-scale-x) var(--tw-scale-y);
+    }
+  }
+}
+.hover\:scale-110 {
+  &:hover {
+    @media (hover: hover) {
+      --tw-scale-x: 110%;
+      --tw-scale-y: 110%;
+      --tw-scale-z: 110%;
+      scale: var(--tw-scale-x) var(--tw-scale-y);
+    }
+  }
+}
+.hover\:border-\[\#F23359\] {
+  &:hover {
+    @media (hover: hover) {
+      border-color: #F23359;
+    }
+  }
+}
+.hover\:border-\[rgba\(242\,242\,242\,0\.35\)\] {
+  &:hover {
+    @media (hover: hover) {
+      border-color: rgba(242,242,242,0.35);
+    }
+  }
+}
+.hover\:bg-\[rgba\(36\,147\,169\,0\.06\)\] {
+  &:hover {
+    @media (hover: hover) {
+      background-color: rgba(36,147,169,0.06);
+    }
+  }
+}
+.hover\:bg-\[rgba\(242\,242\,242\,0\.22\)\] {
+  &:hover {
+    @media (hover: hover) {
+      background-color: rgba(242,242,242,0.22);
+    }
+  }
+}
+.hover\:tracking-\[0\.06em\] {
+  &:hover {
+    @media (hover: hover) {
+      --tw-tracking: 0.06em;
+      letter-spacing: 0.06em;
+    }
+  }
+}
+.hover\:tracking-\[0\.08em\] {
+  &:hover {
+    @media (hover: hover) {
+      --tw-tracking: 0.08em;
+      letter-spacing: 0.08em;
+    }
+  }
+}
+.hover\:text-\[\#1DA1F2\] {
+  &:hover {
+    @media (hover: hover) {
+      color: #1DA1F2;
+    }
+  }
+}
+.hover\:text-\[\#6C00AF\] {
+  &:hover {
+    @media (hover: hover) {
+      color: #6C00AF;
+    }
+  }
+}
+.hover\:text-\[\#25D366\] {
+  &:hover {
+    @media (hover: hover) {
+      color: #25D366;
+    }
+  }
+}
+.hover\:text-\[\#1877f2\] {
+  &:hover {
+    @media (hover: hover) {
+      color: #1877f2;
+    }
+  }
+}
+.hover\:text-\[\#F23359\] {
+  &:hover {
+    @media (hover: hover) {
+      color: #F23359;
+    }
+  }
+}
+.hover\:text-\[\#FFCC00\] {
+  &:hover {
+    @media (hover: hover) {
+      color: #FFCC00;
+    }
+  }
+}
+.hover\:text-\[\#ea4335\] {
+  &:hover {
+    @media (hover: hover) {
+      color: #ea4335;
+    }
+  }
+}
+.hover\:text-\[\#f2f2f2\] {
+  &:hover {
+    @media (hover: hover) {
+      color: #f2f2f2;
+    }
+  }
+}
+.hover\:no-underline {
+  &:hover {
+    @media (hover: hover) {
+      text-decoration-line: none;
+    }
+  }
+}
+.hover\:underline {
+  &:hover {
+    @media (hover: hover) {
+      text-decoration-line: underline;
+    }
+  }
+}
+.hover\:opacity-80 {
+  &:hover {
+    @media (hover: hover) {
+      opacity: 80%;
+    }
+  }
+}
+.hover\:opacity-90 {
+  &:hover {
+    @media (hover: hover) {
+      opacity: 90%;
+    }
+  }
+}
+.hover\:opacity-95 {
+  &:hover {
+    @media (hover: hover) {
+      opacity: 95%;
+    }
+  }
+}
+.hover\:shadow-\[0_10px_30px_rgba\(0\,0\,0\,0\.25\)\] {
+  &:hover {
+    @media (hover: hover) {
+      --tw-shadow: 0 10px 30px var(--tw-shadow-color, rgba(0,0,0,0.25));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+}
+.hover\:brightness-\[1\.07\] {
+  &:hover {
+    @media (hover: hover) {
+      --tw-brightness: brightness(1.07);
+      filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+    }
+  }
+}
+.focus\:no-underline {
+  &:focus {
+    text-decoration-line: none;
+  }
+}
+.focus\:ring-2 {
+  &:focus {
+    --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+}
+.focus\:ring-offset-2 {
+  &:focus {
+    --tw-ring-offset-width: 2px;
+    --tw-ring-offset-shadow: var(--tw-ring-inset,) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  }
+}
+.focus\:outline-none {
+  &:focus {
+    --tw-outline-style: none;
+    outline-style: none;
+  }
+}
+.focus-visible\:underline {
+  &:focus-visible {
+    text-decoration-line: underline;
+  }
+}
+.focus-visible\:ring-2 {
+  &:focus-visible {
+    --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  }
+}
+.focus-visible\:ring-\[\#ffcc00\]\/50 {
+  &:focus-visible {
+    --tw-ring-color: color-mix(in oklab, #ffcc00 50%, transparent);
+  }
+}
+.focus-visible\:ring-offset-0 {
+  &:focus-visible {
+    --tw-ring-offset-width: 0px;
+    --tw-ring-offset-shadow: var(--tw-ring-inset,) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  }
+}
+.focus-visible\:ring-offset-2 {
+  &:focus-visible {
+    --tw-ring-offset-width: 2px;
+    --tw-ring-offset-shadow: var(--tw-ring-inset,) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  }
+}
+.focus-visible\:outline-none {
+  &:focus-visible {
+    --tw-outline-style: none;
+    outline-style: none;
+  }
+}
+.active\:scale-\[0\.98\] {
+  &:active {
+    scale: 0.98;
+  }
+}
+.disabled\:cursor-not-allowed {
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+.disabled\:opacity-50 {
+  &:disabled {
+    opacity: 50%;
+  }
+}
+.disabled\:opacity-60 {
+  &:disabled {
+    opacity: 60%;
+  }
+}
+html {
+  box-sizing: border-box;
+}
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+html, body {
+  width: 100%;
+  min-height: 100vh;
+  background: none;
+}
+html {
+  font-family: var(--font-dm-sans), system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Helvetica, Arial, sans-serif;
+}
+body {
+  font-family: var(--font-dm-sans), system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Helvetica, Arial, sans-serif;
+}
+html, body {
+  margin: 0;
+  padding: 0;
+}
+.hero-flush main {
+  padding-top: 0 !important;
+  margin-top: 0 !important;
+}
+main.alumni-profile-reset {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100%;
+  display: block;
+  line-height: normal;
+}
+body {
+  position: relative;
+  isolation: isolate;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--page-bg-color, #f6e4c1);
+  background-image: var(--page-bg-image, url("/texture/kraft-paper.png"));
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+:root {
+  --dat-color-bg: #241123;
+  --dat-color-accent: #F23359;
+  --dat-font-heading: var(--font-gloucester), serif;
+  --hero-offset: 0px;
+  --hero-height: 80vh;
+}
+@media (max-width: 1024px) {
+  :root {
+    --hero-height: 55vh;
+  }
+}
+@media (max-width: 767px) {
+  :root {
+    --hero-height: 45vh;
+  }
+}
+h1, h2, h3, h4 {
+  font-family: var(--dat-font-heading);
+}
+@layer base {
+  a, a:visited {
+    color: inherit;
+    text-decoration: none;
+  }
+  a:hover, a:focus-visible {
+    text-decoration: none;
+  }
+}
+a[href=""],
+a[href="#"],
+a:not([href]) {
+  pointer-events: none;
+  cursor: default;
+  color: inherit;
+}
+a, button, [role="link"], [role="button"] {
+  cursor: pointer !important;
+}
+.force-grotesk {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif !important;
+}
+.alumni-profile-page {
+  width: 100%;
+  max-width: 80%;
+  margin: 0 auto;
+  padding: 0;
+  background: #fff;
+  border-radius: 0.9rem;
+  box-shadow: none;
+  position: relative;
+  z-index: 1;
+}
+.alumni-profile-section {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  padding-top: 0rem;
+}
+.profile-card-wrapper {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  background-color: #C39B6C;
+  text-align: center;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.profile-card-image {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  background-color: #241123;
+  overflow: hidden;
+  cursor: pointer;
+}
+.profile-card-image img {
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+  display: block;
+}
+.profile-card-content {
+  padding: 1.5rem 1rem 2rem;
+}
+.profile-card-meta {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.meta-role {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: clamp(1rem, 4vw, 1.35rem);
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #241123;
+}
+.meta-location {
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: clamp(0.85rem, 3vw, 1rem);
+  font-weight: 700;
+  opacity: 0.7;
+  letter-spacing: 2px;
+}
+.meta-dot {
+  color: #241123;
+  opacity: 0.5;
+}
+.story-page,
+.mapboxgl-popup-content {
+  width: 90%;
+  max-width: 720px;
+  margin: 3rem auto;
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  color: #111;
+  position: relative;
+  z-index: 1;
+}
+.mapboxgl-popup-tip {
+  display: block;
+  margin: 0 auto;
+}
+.mapboxgl-popup-close-button {
+  display: none !important;
+}
+.popup-title {
+  font-family: var(--font-anton), system-ui, sans-serif;
+  font-size: 2.6rem;
+  font-weight: 550;
+  text-transform: uppercase;
+  line-height: 1;
+  margin-top: 0.1rem;
+  margin-bottom: 0;
+  background: #FFCC00;
+  padding: 0.2rem 0.4rem;
+  display: inline-block;
+}
+@media (min-width: 768px) {
+  .popup-title {
+    font-size: 3.2rem;
+  }
+}
+@media (min-width: 1024px) {
+  .popup-title {
+    font-size: 3.6rem;
+  }
+}
+.popup-location {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 0.8rem;
+  text-align: right;
+  margin-bottom: 0.2rem;
+  margin-top: 0.2rem;
+}
+.popup-program {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 1rem;
+  margin-top: 0.3rem;
+  margin-bottom: 0.75rem;
+}
+.popup-media {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  gap: 1rem;
+  margin-bottom: 0;
+}
+.popup-media > * {
+  width: 100%;
+  max-width: 100%;
+}
+.popup-image {
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  display: block;
+}
+.popup-video {
+  width: 100%;
+  max-height: 480px;
+}
+.popup-video iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: none;
+  border-radius: 16px;
+  display: block;
+}
+.popup-partners {
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-style: italic;
+  text-align: right;
+  margin-top: 0.25rem;
+  margin-bottom: 1.2rem;
+  line-height: 1.4;
+}
+.popup-quote {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 1.6rem;
+  font-style: italic;
+  margin: 0.75rem 2rem 0.25rem;
+}
+.popup-quote-author {
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 1rem;
+  margin: 0.25rem 3rem 1.9rem;
+}
+.popup-story {
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  margin: -0.5rem 0;
+}
+.popup-author {
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #6c00af;
+  margin-bottom: 0.75rem;
+}
+.popup-author a {
+  transition: color 160ms ease, letter-spacing 160ms ease;
+}
+.popup-author a {
+  color: #6c00af;
+}
+.popup-author a:hover {
+  color: #f23359 !important;
+  letter-spacing: 0.1em;
+}
+.popup-button {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  background: #194d56;
+  color: #fff;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+  letter-spacing: 0.4em;
+  border-radius: 8px;
+  text-transform: uppercase;
+  transition: background-color 0.3s ease;
+  margin-top: 1.5rem;
+}
+.popup-button {
+  text-decoration: none !important;
+  transition: background-color 160ms ease, color 160ms ease, letter-spacing 160ms ease;
+}
+.popup-button:hover {
+  background: #123a40;
+  text-decoration: none !important;
+}
+.story-page ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.story-page li {
+  background-color: #f2f2f2;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+.explore-more-link {
+  transition: color 160ms ease;
+}
+.explore-more-link:hover {
+  color: #6c00af !important;
+}
+.clip-hexagon {
+  clip-path: polygon(
+    25% 0%,
+    75% 0%,
+    100% 50%,
+    75% 100%,
+    25% 100%,
+    0% 50%
+  );
+}
+.stamp-wrapper:hover svg {
+  transform: scale(1.05);
+  filter: brightness(0.75);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  scrollbar-gutter: stable both-edges;
+}
+footer h2.font-gloucester {
+  white-space: nowrap;
+  will-change: transform;
+  transform: translateZ(0);
+}
+footer .flex.items-center.justify-center > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  box-sizing: content-box;
+  will-change: opacity, transform;
+  transform: translateZ(0);
+}
+body {
+  font-synthesis-weight: none;
+}
+footer .footer-cta a {
+  font-size-adjust: from-font;
+  line-height: 1;
+}
+footer h2.font-gloucester {
+  margin-bottom: 0;
+}
+footer .headline-gap {
+  margin-bottom: 0.55vh;
+}
+footer .first-cta-offset {
+  margin-top: 0.75rem;
+}
+@media (min-width: 768px) and (max-width: 1024px) {
+  footer .headline-gap {
+    margin-bottom: 12px;
+  }
+  footer .first-cta-offset {
+    margin-top: 8px;
+  }
+}
+@media (min-width: 1024px) {
+  footer h2.font-gloucester::after {
+    content: "";
+    display: block;
+    height: 0.05em;
+  }
+}
+footer .headline-box,
+footer .footer-cta {
+  width: 88vw;
+  max-width: 88vw;
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (min-width: 768px) {
+  footer .headline-box,
+  footer .footer-cta {
+    width: 62.25vw !important;
+    max-width: none;
+  }
+}
+.poster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 220px));
+  gap: clamp(14px, 2vw, 22px);
+  justify-content: flex-start;
+}
+.poster-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0 0 18px 18px;
+  overflow: hidden;
+  background: rgba(240, 225, 203, 0.55);
+  opacity: 0.9;
+  border: 0;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.32),
+    0 3px 8px rgba(0, 0, 0, 0.22);
+  transition: transform 200ms ease,
+    box-shadow 220ms ease,
+    background-color 200ms ease,
+    opacity 200ms ease;
+  width: 100%;
+  max-width: 220px;
+}
+.poster-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 0 0, rgba(255,255,255,0.16), transparent 55%),
+    radial-gradient(circle at 100% 0, rgba(255,255,255,0.08), transparent 55%),
+    linear-gradient(135deg, rgba(0,0,0,0.03), rgba(255,255,255,0.02));
+  mix-blend-mode: soft-light;
+  opacity: 0.14;
+  pointer-events: none;
+}
+.poster-card:hover::before {
+  opacity: 0.55;
+}
+.poster-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.40),
+    0 10px 20px rgba(0, 0, 0, 0.28);
+  background: rgba(255, 253, 248, 0.98);
+  opacity: 1;
+}
+@media (max-width: 640px) {
+  .poster-grid {
+    grid-template-columns: 1fr;
+    justify-content: stretch;
+  }
+  .poster-card {
+    max-width: none;
+  }
+}
+.poster-image-shell {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 27 / 40;
+  background: #24112312;
+  overflow: hidden;
+}
+.poster-image-shell::after {
+  content: "";
+  position: absolute;
+  top: -30%;
+  left: -70%;
+  width: 160%;
+  height: 160%;
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.02) 35%,
+    rgba(255, 255, 255, 0.14) 46%,
+    rgba(255, 255, 255, 0.26) 50%,
+    rgba(255, 255, 255, 0.14) 54%,
+    rgba(255, 255, 255, 0.02) 65%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  opacity: 0;
+  transform: translateX(-18%);
+  filter: blur(18px);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  transition: opacity 520ms ease-out,
+    transform 1450ms ease-out;
+}
+.poster-card:hover .poster-image-shell::after {
+  opacity: 0.55;
+  transform: translateX(44%);
+}
+.poster-meta {
+  padding: 9px 12px 11px;
+  background: linear-gradient(
+    to bottom,
+    rgba(240, 225, 203, 0.9),
+    rgba(228, 207, 180, 0.85)
+  );
+  transition: background 200ms ease;
+}
+.poster-card:hover .poster-meta {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 253, 248, 0.98),
+    rgba(250, 244, 234, 0.95)
+  );
+}
+.poster-eyebrow {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #24112399;
+  margin-bottom: 2px;
+}
+.poster-title {
+  margin: 0;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.075em;
+  font-size: 0.98rem;
+  color: #241123;
+  line-height: 1;
+}
+.poster-subtitle {
+  margin: 2px 0 4px 0;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #24112380;
+}
+#profile-studio button,
+#profile-studio a {
+  transition: transform 150ms ease,
+    filter 150ms ease,
+    box-shadow 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    opacity 150ms ease;
+}
+#profile-studio button:hover,
+#profile-studio a:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+#profile-studio button:active,
+#profile-studio a:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16);
+  filter: brightness(1.02);
+}
+#profile-studio button:focus-visible,
+#profile-studio a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.28), 0 10px 30px rgba(0, 0, 0, 0.16);
+}
+.ls-hover {
+  display: inline-block;
+  transform-origin: left center;
+  transition: transform 0.25s ease-out, color 0.2s ease, opacity 0.2s ease;
+  will-change: transform;
+}
+.ls-hover:hover {
+  transform: scaleX(1.04);
+}
+@property --tw-translate-x {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-translate-y {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-translate-z {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-rotate-x {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-rotate-y {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-rotate-z {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-skew-x {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-skew-y {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-scroll-snap-strictness {
+  syntax: "*";
+  inherits: false;
+  initial-value: proximity;
+}
+@property --tw-border-style {
+  syntax: "*";
+  inherits: false;
+  initial-value: solid;
+}
+@property --tw-gradient-position {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-gradient-from {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #0000;
+}
+@property --tw-gradient-via {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #0000;
+}
+@property --tw-gradient-to {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #0000;
+}
+@property --tw-gradient-stops {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-gradient-via-stops {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-gradient-from-position {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+@property --tw-gradient-via-position {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
+@property --tw-gradient-to-position {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-leading {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-font-weight {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-tracking {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ordinal {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-slashed-zero {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-numeric-figure {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-numeric-spacing {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-numeric-fraction {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-inset-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-inset-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-ring-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ring-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-inset-ring-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-inset-ring-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-ring-inset {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-ring-offset-width {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --tw-ring-offset-color {
+  syntax: "*";
+  inherits: false;
+  initial-value: #fff;
+}
+@property --tw-ring-offset-shadow {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0 0 #0000;
+}
+@property --tw-outline-style {
+  syntax: "*";
+  inherits: false;
+  initial-value: solid;
+}
+@property --tw-blur {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-brightness {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-contrast {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-grayscale {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-hue-rotate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-invert {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-opacity {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-saturate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-sepia {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-drop-shadow {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-drop-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-drop-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-drop-shadow-size {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-blur {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-brightness {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-contrast {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-grayscale {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-hue-rotate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-invert {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-opacity {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-saturate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-backdrop-sepia {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-duration {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-scale-x {
+  syntax: "*";
+  inherits: false;
+  initial-value: 1;
+}
+@property --tw-scale-y {
+  syntax: "*";
+  inherits: false;
+  initial-value: 1;
+}
+@property --tw-scale-z {
+  syntax: "*";
+  inherits: false;
+  initial-value: 1;
+}
+@layer properties {
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
+    *, ::before, ::after, ::backdrop {
+      --tw-translate-x: 0;
+      --tw-translate-y: 0;
+      --tw-translate-z: 0;
+      --tw-rotate-x: initial;
+      --tw-rotate-y: initial;
+      --tw-rotate-z: initial;
+      --tw-skew-x: initial;
+      --tw-skew-y: initial;
+      --tw-scroll-snap-strictness: proximity;
+      --tw-border-style: solid;
+      --tw-gradient-position: initial;
+      --tw-gradient-from: #0000;
+      --tw-gradient-via: #0000;
+      --tw-gradient-to: #0000;
+      --tw-gradient-stops: initial;
+      --tw-gradient-via-stops: initial;
+      --tw-gradient-from-position: 0%;
+      --tw-gradient-via-position: 50%;
+      --tw-gradient-to-position: 100%;
+      --tw-leading: initial;
+      --tw-font-weight: initial;
+      --tw-tracking: initial;
+      --tw-ordinal: initial;
+      --tw-slashed-zero: initial;
+      --tw-numeric-figure: initial;
+      --tw-numeric-spacing: initial;
+      --tw-numeric-fraction: initial;
+      --tw-shadow: 0 0 #0000;
+      --tw-shadow-color: initial;
+      --tw-shadow-alpha: 100%;
+      --tw-inset-shadow: 0 0 #0000;
+      --tw-inset-shadow-color: initial;
+      --tw-inset-shadow-alpha: 100%;
+      --tw-ring-color: initial;
+      --tw-ring-shadow: 0 0 #0000;
+      --tw-inset-ring-color: initial;
+      --tw-inset-ring-shadow: 0 0 #0000;
+      --tw-ring-inset: initial;
+      --tw-ring-offset-width: 0px;
+      --tw-ring-offset-color: #fff;
+      --tw-ring-offset-shadow: 0 0 #0000;
+      --tw-outline-style: solid;
+      --tw-blur: initial;
+      --tw-brightness: initial;
+      --tw-contrast: initial;
+      --tw-grayscale: initial;
+      --tw-hue-rotate: initial;
+      --tw-invert: initial;
+      --tw-opacity: initial;
+      --tw-saturate: initial;
+      --tw-sepia: initial;
+      --tw-drop-shadow: initial;
+      --tw-drop-shadow-color: initial;
+      --tw-drop-shadow-alpha: 100%;
+      --tw-drop-shadow-size: initial;
+      --tw-backdrop-blur: initial;
+      --tw-backdrop-brightness: initial;
+      --tw-backdrop-contrast: initial;
+      --tw-backdrop-grayscale: initial;
+      --tw-backdrop-hue-rotate: initial;
+      --tw-backdrop-invert: initial;
+      --tw-backdrop-opacity: initial;
+      --tw-backdrop-saturate: initial;
+      --tw-backdrop-sepia: initial;
+      --tw-duration: initial;
+      --tw-scale-x: 1;
+      --tw-scale-y: 1;
+      --tw-scale-z: 1;
+    }
+  }
+}
+
+/*!********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[15].oneOf[3].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[15].oneOf[3].use[2]!./node_modules/next/font/local/target.css?{"path":"app/layout.tsx","import":"","arguments":[{"variable":"--font-major-mono","display":"swap","src":[{"path":"../public/fonts/major-mono-display-v17-latin-regular.woff2","weight":"400","style":"normal"}]}],"variableName":"majorMono"} ***!
+  \********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+@font-face {
+font-family: 'majorMono';
+src: url(/_next/static/media/22718d2a6fc64b15-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 400;
+font-style: normal;
+}@font-face {font-family: 'majorMono Fallback';src: local("Arial");ascent-override: 55.50%;descent-override: 6.17%;line-gap-override: 0.00%;size-adjust: 162.17%
+}.__className_25ff4f {font-family: 'majorMono', 'majorMono Fallback';font-weight: 400;font-style: normal
+}.__variable_25ff4f {--font-major-mono: 'majorMono', 'majorMono Fallback'
+}
+
+/*!********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[15].oneOf[3].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[15].oneOf[3].use[2]!./node_modules/next/font/local/target.css?{"path":"app/fonts.ts","import":"","arguments":[{"src":[{"path":"../public/fonts/anton-v27-latin_latin-ext_vietnamese-regular.woff2","weight":"400","style":"normal"},{"path":"../public/fonts/anton-v26-latin-regular.woff2","weight":"400","style":"normal"}],"variable":"--font-anton","display":"swap","fallback":["system-ui","-apple-system","BlinkMacSystemFont","Segoe UI","Helvetica","Arial","sans-serif"]}],"variableName":"anton"} ***!
+  \********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+@font-face {
+font-family: 'anton';
+src: url(/_next/static/media/815a26b003f31e67-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 400;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'anton';
+src: url(/_next/static/media/f658e5a0f4c9e38c-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 400;
+font-style: normal;
+}@font-face {font-family: 'anton Fallback';src: local("Arial");ascent-override: 127.93%;descent-override: 35.79%;line-gap-override: 0.00%;size-adjust: 91.94%
+}.__className_86588f {font-family: 'anton', 'anton Fallback', system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif
+}.__variable_86588f {--font-anton: 'anton', 'anton Fallback', system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif
+}
+
+/*!*****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[15].oneOf[3].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[15].oneOf[3].use[2]!./node_modules/next/font/local/target.css?{"path":"app/fonts.ts","import":"","arguments":[{"src":[{"path":"../public/fonts/DM_Sans/DMSans-VariableFont_opsz,wght.ttf","weight":"100 900","style":"normal"},{"path":"../public/fonts/DM_Sans/DMSans-Italic-VariableFont_opsz,wght.ttf","weight":"100 900","style":"italic"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-100-normal.woff2","weight":"100","style":"normal"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-200-normal.woff2","weight":"200","style":"normal"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-300-normal.woff2","weight":"300","style":"normal"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-400-normal.woff2","weight":"400","style":"normal"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-500-normal.woff2","weight":"500","style":"normal"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-600-normal.woff2","weight":"600","style":"normal"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-700-normal.woff2","weight":"700","style":"normal"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-800-normal.woff2","weight":"800","style":"normal"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-900-normal.woff2","weight":"900","style":"normal"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-100-italic.woff2","weight":"100","style":"italic"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-200-italic.woff2","weight":"200","style":"italic"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-300-italic.woff2","weight":"300","style":"italic"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-400-italic.woff2","weight":"400","style":"italic"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-500-italic.woff2","weight":"500","style":"italic"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-600-italic.woff2","weight":"600","style":"italic"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-700-italic.woff2","weight":"700","style":"italic"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-800-italic.woff2","weight":"800","style":"italic"},{"path":"../public/fonts/dm-sans-latin-ext/dm-sans-latin-ext-900-italic.woff2","weight":"900","style":"italic"}],"variable":"--font-dm-sans","display":"swap","fallback":["system-ui","-apple-system","BlinkMacSystemFont","Segoe UI","Helvetica","Arial","sans-serif"]}],"variableName":"dmSans"} ***!
+  \*****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/cc9d420a560ee774-s.p.ttf) format('truetype');
+font-display: swap;
+font-weight: 100 900;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/63fbb40366a52850-s.p.ttf) format('truetype');
+font-display: swap;
+font-weight: 100 900;
+font-style: italic;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/2f764a972eb00d94-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 100;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/9e564eca1d6479e5-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 200;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/072cc21c6351c81e-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 300;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/ff35d0b061471e6b-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 400;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/f2e93ebf88260d1e-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 500;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/6ee429d14a536253-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 600;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/6c1dfb5877f58890-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 700;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/c9df244fabfd260a-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 800;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/b250690be55e0efd-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 900;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/17053100b7e1aa07-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 100;
+font-style: italic;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/8ba026ecb89c474c-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 200;
+font-style: italic;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/bad17538dd46f7e4-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 300;
+font-style: italic;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/2c109049b4083960-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 400;
+font-style: italic;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/1188d05ab9f87fe7-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 500;
+font-style: italic;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/a83902ec98b2b3dd-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 600;
+font-style: italic;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/cb44398e4205d779-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 700;
+font-style: italic;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/a073b81d19f7c440-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 800;
+font-style: italic;
+}
+
+@font-face {
+font-family: 'dmSans';
+src: url(/_next/static/media/a598168eeb577ae5-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 900;
+font-style: italic;
+}@font-face {font-family: 'dmSans Fallback';src: local("Arial");ascent-override: 99.20%;descent-override: 31.00%;line-gap-override: 0.00%;size-adjust: 100.00%
+}.__className_bd587e {font-family: 'dmSans', 'dmSans Fallback', system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif
+}.__variable_bd587e {--font-dm-sans: 'dmSans', 'dmSans Fallback', system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif
+}
+
+/*!*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[15].oneOf[3].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[15].oneOf[3].use[2]!./node_modules/next/font/local/target.css?{"path":"app/fonts.ts","import":"","arguments":[{"src":[{"path":"../public/fonts/space-grotesk-latin-ext/space-grotesk-latin-ext-300-normal.woff2","weight":"300","style":"normal"},{"path":"../public/fonts/space-grotesk-latin-ext/space-grotesk-latin-ext-400-normal.woff2","weight":"400","style":"normal"},{"path":"../public/fonts/space-grotesk-latin-ext/space-grotesk-latin-ext-500-normal.woff2","weight":"500","style":"normal"},{"path":"../public/fonts/space-grotesk-latin-ext/space-grotesk-latin-ext-600-normal.woff2","weight":"600","style":"normal"},{"path":"../public/fonts/space-grotesk-latin-ext/space-grotesk-latin-ext-700-normal.woff2","weight":"700","style":"normal"},{"path":"../public/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-300.woff2","weight":"300","style":"normal"},{"path":"../public/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-regular.woff2","weight":"400","style":"normal"},{"path":"../public/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-500.woff2","weight":"500","style":"normal"},{"path":"../public/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-600.woff2","weight":"600","style":"normal"},{"path":"../public/fonts/space-grotesk-v21-latin/space-grotesk-v21-latin-700.woff2","weight":"700","style":"normal"}],"variable":"--font-space-grotesk","display":"swap","fallback":["system-ui","-apple-system","BlinkMacSystemFont","Segoe UI","Helvetica","Arial","sans-serif"]}],"variableName":"spaceGrotesk"} ***!
+  \*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+@font-face {
+font-family: 'spaceGrotesk';
+src: url(/_next/static/media/3bd62bb86adb1f3a-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 300;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'spaceGrotesk';
+src: url(/_next/static/media/f44744fafc06a2c2-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 400;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'spaceGrotesk';
+src: url(/_next/static/media/f605b0d216b6c920-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 500;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'spaceGrotesk';
+src: url(/_next/static/media/51defb17534c5216-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 600;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'spaceGrotesk';
+src: url(/_next/static/media/ad18a16f048d88bc-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 700;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'spaceGrotesk';
+src: url(/_next/static/media/f2fb27bfc7ff7e25-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 300;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'spaceGrotesk';
+src: url(/_next/static/media/5c1eb586f54a6a32-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 400;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'spaceGrotesk';
+src: url(/_next/static/media/52f2374eaa5ff65e-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 500;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'spaceGrotesk';
+src: url(/_next/static/media/0bfc1bdd8d3fb0fd-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 600;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'spaceGrotesk';
+src: url(/_next/static/media/a9249e80d7b835d5-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 700;
+font-style: normal;
+}@font-face {font-family: 'spaceGrotesk Fallback';src: local("Arial");ascent-override: 88.75%;descent-override: 26.34%;line-gap-override: 0.00%;size-adjust: 110.87%
+}.__className_bcc0ce {font-family: 'spaceGrotesk', 'spaceGrotesk Fallback', system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif
+}.__variable_bcc0ce {--font-space-grotesk: 'spaceGrotesk', 'spaceGrotesk Fallback', system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif
+}
+
+/*!*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[15].oneOf[3].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[15].oneOf[3].use[2]!./node_modules/next/font/local/target.css?{"path":"app/fonts.ts","import":"","arguments":[{"src":"../public/fonts/rock-salt-v23-latin-regular.woff2","variable":"--font-rock-salt","weight":"400","display":"swap","fallback":["system-ui","-apple-system","BlinkMacSystemFont","Segoe UI","Helvetica","Arial","sans-serif"]}],"variableName":"rockSalt"} ***!
+  \*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+@font-face {
+font-family: 'rockSalt';
+src: url(/_next/static/media/be6986254b0ca28e-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 400;
+}@font-face {font-family: 'rockSalt Fallback';src: local("Arial");ascent-override: 112.36%;descent-override: 54.55%;line-gap-override: 2.22%;size-adjust: 141.07%
+}.__className_a4cc72 {font-family: 'rockSalt', 'rockSalt Fallback', system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif;font-weight: 400
+}.__variable_a4cc72 {--font-rock-salt: 'rockSalt', 'rockSalt Fallback', system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif
+}
+
+/*!***************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[15].oneOf[3].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[15].oneOf[3].use[2]!./node_modules/next/font/local/target.css?{"path":"app/fonts.ts","import":"","arguments":[{"src":"../public/fonts/GloucesterMT-ExtraCondensed.woff2","variable":"--font-gloucester","weight":"400","display":"swap","fallback":["Georgia","Times New Roman","Times","serif"]}],"variableName":"gloucester"} ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+@font-face {
+font-family: 'gloucester';
+src: url(/_next/static/media/8f4b1600508e2758-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 400;
+}@font-face {font-family: 'gloucester Fallback';src: local("Arial");ascent-override: 151.19%;descent-override: 34.83%;line-gap-override: 0.00%;size-adjust: 62.52%
+}.__className_0e40ab {font-family: 'gloucester', 'gloucester Fallback', Georgia, Times New Roman, Times, serif;font-weight: 400
+}.__variable_0e40ab {--font-gloucester: 'gloucester', 'gloucester Fallback', Georgia, Times New Roman, Times, serif
+}
+
+/*!*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[15].oneOf[3].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[15].oneOf[3].use[2]!./node_modules/next/font/local/target.css?{"path":"app/fonts.ts","import":"","arguments":[{"src":"../public/fonts/vt323-v17-latin-regular.woff2","variable":"--font-vt323","weight":"400","display":"swap","fallback":["ui-monospace","SFMono-Regular","Menlo","Monaco","Consolas","Liberation Mono","Courier New","monospace"]}],"variableName":"vt323"} ***!
+  \*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+@font-face {
+font-family: 'vt323';
+src: url(/_next/static/media/624ee930d46a3b26-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 400;
+}@font-face {font-family: 'vt323 Fallback';src: local("Arial");ascent-override: 91.26%;descent-override: 22.82%;line-gap-override: 0.00%;size-adjust: 87.66%
+}.__className_7baa06 {font-family: 'vt323', 'vt323 Fallback', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;font-weight: 400
+}.__variable_7baa06 {--font-vt323: 'vt323', 'vt323 Fallback', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace
+}
+
+/*!*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[15].oneOf[3].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[15].oneOf[3].use[2]!./node_modules/next/font/local/target.css?{"path":"app/fonts.ts","import":"","arguments":[{"src":"../public/fonts/special-elite-v19-latin-regular.woff2","variable":"--font-special-elite","weight":"400","display":"swap","fallback":["system-ui","-apple-system","BlinkMacSystemFont","Segoe UI","Helvetica","Arial","sans-serif"]}],"variableName":"specialElite"} ***!
+  \*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+@font-face {
+font-family: 'specialElite';
+src: url(/_next/static/media/51e85c95046b108d-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 400;
+}@font-face {font-family: 'specialElite Fallback';src: local("Arial");ascent-override: 60.23%;descent-override: 25.43%;line-gap-override: 0.00%;size-adjust: 116.74%
+}.__className_ba2bf3 {font-family: 'specialElite', 'specialElite Fallback', system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif;font-weight: 400
+}.__variable_ba2bf3 {--font-special-elite: 'specialElite', 'specialElite Fallback', system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif
+}
+
+/*!************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[15].oneOf[3].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[15].oneOf[3].use[2]!./node_modules/next/font/local/target.css?{"path":"app/fonts.ts","import":"","arguments":[{"src":"../public/fonts/share-tech-mono-v15-latin-regular.woff2","variable":"--font-share-tech","weight":"400","display":"swap","fallback":["ui-monospace","SFMono-Regular","Menlo","Monaco","Consolas","Liberation Mono","Courier New","monospace"]}],"variableName":"shareTechMono"} ***!
+  \************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+@font-face {
+font-family: 'shareTechMono';
+src: url(/_next/static/media/bdf93e757923b810-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 400;
+}@font-face {font-family: 'shareTechMono Fallback';src: local("Arial");ascent-override: 74.78%;descent-override: 20.45%;line-gap-override: 0.00%;size-adjust: 118.34%
+}.__className_d86062 {font-family: 'shareTechMono', 'shareTechMono Fallback', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;font-weight: 400
+}.__variable_d86062 {--font-share-tech: 'shareTechMono', 'shareTechMono Fallback', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace
+}
+
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[15].oneOf[3].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[15].oneOf[3].use[2]!./node_modules/next/font/local/target.css?{"path":"app/fonts.ts","import":"","arguments":[{"src":"../public/fonts/cutive-mono-v22-latin-regular.woff2","variable":"--font-cutive-mono","weight":"400","display":"swap","fallback":["ui-monospace","SFMono-Regular","Menlo","Monaco","Consolas","Liberation Mono","Courier New","monospace"]}],"variableName":"cutiveMono"} ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+@font-face {
+font-family: 'cutiveMono';
+src: url(/_next/static/media/4c9a8222cce469d6-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 400;
+}@font-face {font-family: 'cutiveMono Fallback';src: local("Arial");ascent-override: 62.45%;descent-override: 20.53%;line-gap-override: 0.00%;size-adjust: 132.69%
+}.__className_fef35d {font-family: 'cutiveMono', 'cutiveMono Fallback', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;font-weight: 400
+}.__variable_fef35d {--font-cutive-mono: 'cutiveMono', 'cutiveMono Fallback', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace
+}
+
+/*!*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[15].oneOf[3].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[15].oneOf[3].use[2]!./node_modules/next/font/local/target.css?{"path":"app/fonts.ts","import":"","arguments":[{"src":[{"path":"../public/fonts/anonymous-pro-v21-latin/anonymous-pro-v21-latin-regular.woff2","weight":"400","style":"normal"},{"path":"../public/fonts/anonymous-pro-v21-latin/anonymous-pro-v21-latin-700.woff2","weight":"700","style":"normal"}],"variable":"--font-anonymous-pro","display":"swap","fallback":["ui-monospace","SFMono-Regular","Menlo","Monaco","Consolas","Liberation Mono","Courier New","monospace"]}],"variableName":"anonymousPro"} ***!
+  \*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+@font-face {
+font-family: 'anonymousPro';
+src: url(/_next/static/media/cba4709747200210-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 400;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'anonymousPro';
+src: url(/_next/static/media/f1c21fa79dd7f548-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 700;
+font-style: normal;
+}@font-face {font-family: 'anonymousPro Fallback';src: local("Arial");ascent-override: 68.36%;descent-override: 15.22%;line-gap-override: 0.00%;size-adjust: 119.63%
+}.__className_5c7ee7 {font-family: 'anonymousPro', 'anonymousPro Fallback', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace
+}.__variable_5c7ee7 {--font-anonymous-pro: 'anonymousPro', 'anonymousPro Fallback', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace
+}
+
+/*!************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[15].oneOf[3].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[15].oneOf[3].use[2]!./node_modules/next/font/local/target.css?{"path":"app/fonts.ts","import":"","arguments":[{"src":"../public/fonts/syne-mono-v15-latin-regular.woff2","variable":"--font-syne-mono","weight":"400","display":"swap","fallback":["ui-monospace","SFMono-Regular","Menlo","Monaco","Consolas","Liberation Mono","Courier New","monospace"]}],"variableName":"syneMono"} ***!
+  \************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+@font-face {
+font-family: 'syneMono';
+src: url(/_next/static/media/bf1ac852b0240bba-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 400;
+}@font-face {font-family: 'syneMono Fallback';src: local("Arial");ascent-override: 76.74%;descent-override: 22.82%;line-gap-override: 0.00%;size-adjust: 120.53%
+}.__className_f9f6dd {font-family: 'syneMono', 'syneMono Fallback', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;font-weight: 400
+}.__variable_f9f6dd {--font-syne-mono: 'syneMono', 'syneMono Fallback', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace
+}
+
+/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/next/dist/build/webpack/loaders/css-loader/src/index.js??ruleSet[1].rules[15].oneOf[3].use[1]!./node_modules/next/dist/build/webpack/loaders/next-font-loader/index.js??ruleSet[1].rules[15].oneOf[3].use[2]!./node_modules/next/font/local/target.css?{"path":"app/fonts.ts","import":"","arguments":[{"src":[{"path":"../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-300.woff2","weight":"300","style":"normal"},{"path":"../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-regular.woff2","weight":"400","style":"normal"},{"path":"../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-500.woff2","weight":"500","style":"normal"},{"path":"../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-600.woff2","weight":"600","style":"normal"},{"path":"../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-700.woff2","weight":"700","style":"normal"}],"variable":"--font-zilla-slab","display":"swap","fallback":["Georgia","Times New Roman","Times","serif"]}],"variableName":"zillaSlab"} ***!
+  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+@font-face {
+font-family: 'zillaSlab';
+src: url(/_next/static/media/1e3715f216ea0e92-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 300;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'zillaSlab';
+src: url(/_next/static/media/45f25248449623fa-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 400;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'zillaSlab';
+src: url(/_next/static/media/c9ab350c7727d139-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 500;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'zillaSlab';
+src: url(/_next/static/media/1098f54b77917491-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 600;
+font-style: normal;
+}
+
+@font-face {
+font-family: 'zillaSlab';
+src: url(/_next/static/media/531d99e28ea1c3ac-s.p.woff2) format('woff2');
+font-display: swap;
+font-weight: 700;
+font-style: normal;
+}@font-face {font-family: 'zillaSlab Fallback';src: local("Arial");ascent-override: 96.66%;descent-override: 26.21%;line-gap-override: 0.00%;size-adjust: 97.67%
+}.__className_054a3b {font-family: 'zillaSlab', 'zillaSlab Fallback', Georgia, Times New Roman, Times, serif
+}.__variable_054a3b {--font-zilla-slab: 'zillaSlab', 'zillaSlab Fallback', Georgia, Times New Roman, Times, serif
+}
+

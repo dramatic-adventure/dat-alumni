@@ -1,0 +1,4 @@
+{
+  "/api/campaign/[slug]/totals/route": "app/api/campaign/[slug]/totals/route.js",
+  "/campaign/[slug]/page": "app/campaign/[slug]/page.js"
+}

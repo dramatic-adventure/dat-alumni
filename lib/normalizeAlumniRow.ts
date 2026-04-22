@@ -133,6 +133,21 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
     "headshoturl",
   ]);
 
+  const currentHeadshotId = getFirstCI(row, [
+    "currentheadshotid",
+    "current headshot id",
+    "currentHeadshotId",
+  ]);
+
+  const alumniId = getFirstCI(row, [
+    "alumniid",
+    "alumni id",
+    "profileid",
+    "profile id",
+    "id",
+  ]);
+
+
   // ✅ Bio/Artist Statement: support Live + legacy
   const bioLong = getFirstCI(row, [
     "biolong",
@@ -283,6 +298,8 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
 
     location,
     headshotUrl,
+    currentHeadshotId: currentHeadshotId || undefined,
+    alumniId: alumniId || undefined,
 
     // keep legacy field name in type, but fill from bioLong
     artistStatement: bioLong || "",

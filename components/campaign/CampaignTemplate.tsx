@@ -39,6 +39,7 @@ import {
 import type { CampaignTotals } from "@/lib/getCampaignTotals";
 import CampaignGiveWidget from "@/components/campaign/CampaignGiveWidget";
 import Lightbox from "@/components/shared/Lightbox";
+import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import { YEARS_OF_WORK, CLUB_COUNT, COUNTRY_COUNT } from "@/lib/datStats";
 
 /* ------------------------------------------------------------------ */
@@ -74,6 +75,10 @@ const EYEBROW_BLUE = "#0BC5E0"; // Bright vivid teal for eyebrows on light backg
 /* Props                                                               */
 /* ------------------------------------------------------------------ */
 
+// NOTE:
+// `campaign` should already be hydrated before reaching this template.
+// Linked-content sections render from campaign.alumni / dramaClubs / events / stories,
+// even if the source config was authored with alumniSlugs / dramaClubSlugs / eventIds / storySlugs.
 type Props = {
   campaign: FundraisingCampaign;
   totals: CampaignTotals;
@@ -872,23 +877,16 @@ export default function CampaignTemplate({ campaign, totals }: Props) {
                 <h2 className="cmp-linked-block-title">The people doing the work.</h2>
                 <div className="cmp-alumni-grid">
                   {campaign.alumni!.map((a) => (
-                    <Link key={a.slug} href={`/alumni/${a.slug}`} className="cmp-alumni-card">
-                      <div className={`cmp-alumni-headshot${a.imageUrl ? "" : " cmp-alumni-headshot--placeholder"}`}>
-                        {a.imageUrl ? (
-                          <Image
-                            src={a.imageUrl}
-                            alt={a.name}
-                            fill
-                            sizes="90px"
-                            style={{ objectFit: "cover", objectPosition: "top center" }}
-                          />
-                        ) : (
-                          <span>{a.name[0]}</span>
-                        )}
-                      </div>
-                      <span className="cmp-alumni-name">{a.name}</span>
-                      {a.role && <span className="cmp-alumni-role">{a.role}</span>}
-                    </Link>
+                    <MiniProfileCard
+                      key={a.slug}
+                      slug={a.slug}
+                      alumniId={(a as any).alumniId}
+                      name={a.name}
+                      role={a.role ?? ""}
+                      headshotUrl={a.imageUrl}
+                      variant="light"
+                      customStyle={{ width: "144px" }}
+                    />
                   ))}
                 </div>
               </div>
