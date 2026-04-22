@@ -295,7 +295,10 @@ function LayerPicker({
           slug: profile?.slug || "",
         }),
       });
-      if (!res.ok) throw new Error(String(res.status));
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || j?.ok === false) {
+        throw new Error(j?.note || j?.error || `Status ${res.status}`);
+      }
       setSuggestState("ok");
       setSuggestLabel("");
       setSuggestRationale("");
