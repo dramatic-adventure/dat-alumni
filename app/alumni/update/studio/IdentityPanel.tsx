@@ -104,10 +104,10 @@ const presetChip: CSSProperties = {
 
 const presetChipActive: CSSProperties = {
   ...presetChip,
-  background: "#ffcc00",                       /* DAT YELLOW */
-  color: "#241123",                            /* DAT DARK PURPLE */
-  border: "1px solid rgba(24,8,32,0.5)",
-  fontWeight: 700,
+  background: "rgba(36,147,169,0.8)",          /* DAT BLUE #2493A9 — muted active */
+  color: "#f2f2f2",                            /* DAT WHITE */
+  border: "1px solid rgba(36,147,169,0.6)",
+  fontWeight: 600,
   opacity: 1,
 };
 
@@ -133,14 +133,14 @@ const tagIdle: CSSProperties = {
   background: "transparent",
   border: "1px solid rgba(255,255,255,0.4)",
   color: "rgba(255,255,255,0.9)",
-  opacity: 0.6,
+  opacity: 0.75,
 };
 
 /* selected: DAT PURPLE tint — same as Contact Panel hasValue state */
 const tagSelected: CSSProperties = {
   ...tagBase,
-  background: "rgba(108,0,175,0.22)",          /* DAT PURPLE #6C00AF */
-  border: "1px solid rgba(108,0,175,0.7)",
+  background: "rgba(108,0,175,0.35)",          /* DAT PURPLE #6C00AF — stronger fill */
+  border: "1px solid rgba(108,0,175,0.85)",
   color: "rgba(255,255,255,0.95)",
   fontWeight: 700,
   opacity: 1,
@@ -181,7 +181,7 @@ const suggestionBoxStyle: CSSProperties = {
 const layerCardStyle: CSSProperties = {
   borderRadius: 12,
   border: "1px solid rgba(148,115,255,0.18)",
-  background: "rgba(0,0,0,0.28)",
+  background: "rgba(0,0,0,0.15)",
   padding: "18px 20px 16px",
   marginBottom: 14,
 };
@@ -484,7 +484,7 @@ export default function IdentityPanel({
       </p>
 
       {/* Eyebrow with extra breathing room below */}
-      <div style={{ marginBottom: 28 }}>
+      <div style={{ marginBottom: 14 }}>
         <span style={subheadChipStyle} className="subhead-chip">
           Identity
         </span>
@@ -595,14 +595,15 @@ export default function IdentityPanel({
             <div
               style={{
                 marginBottom: 24,
-                padding: "14px 16px",
-                borderRadius: 10,
-                background: "rgba(0,0,0,0.2)",
-                border: "1px solid rgba(36,147,169,0.2)",   /* DAT BLUE subtle */
+                paddingLeft: 14,
+                paddingTop: 10,
+                paddingBottom: 10,
+                paddingRight: 0,
+                borderLeft: "2px solid rgba(36,147,169,0.4)",   /* DAT BLUE accent — reads as sub-control */
               }}
             >
               <p style={{ ...tipStyle, marginTop: 0, marginBottom: 12, opacity: 0.55, letterSpacing: "0.03em" }}>
-                Language levels <span style={{ opacity: 0.5 }}>(optional)</span>
+                Language levels
               </p>
               <div style={{ display: "grid", gap: 10 }}>
                 {langEntries.map((entry) => (
@@ -647,7 +648,7 @@ export default function IdentityPanel({
               fontSize: "0.74rem",
               letterSpacing: "0.04em",
               textTransform: "uppercase",
-              color: "rgba(255,255,255,0.35)",
+              color: "rgba(255,255,255,0.75)",
               fontFamily: FF,
             }}>
               Your profile in three dimensions

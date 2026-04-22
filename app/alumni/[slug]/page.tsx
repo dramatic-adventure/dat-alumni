@@ -533,6 +533,7 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
           publicEmail: (normalizedAlumni as any).publicEmail || "",
           website: (normalizedAlumni as any).website || "",
           socials: (normalizedAlumni as any).socials || [],
+          featuredLink: (normalizedAlumni as any).featuredLink,
           updates: (normalizedAlumni as any).updates || [],
           currentTitle: (normalizedAlumni as any).currentTitle || "",
           secondLocation: (normalizedAlumni as any).secondLocation || "",

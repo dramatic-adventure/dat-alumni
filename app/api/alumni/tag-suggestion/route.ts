@@ -28,22 +28,15 @@ async function ensureHeader(
   sheets: ReturnType<typeof sheetsClient>,
   spreadsheetId: string
 ): Promise<"ok" | "missing-tab"> {
+  // Step 1: confirm the tab exists. Only this GET should classify as "missing-tab".
+  let row: unknown[] = [];
   try {
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: `${SHEET_TAB}!A1:G1`,
       valueRenderOption: "UNFORMATTED_VALUE",
     });
-    const row = (res.data.values ?? [])[0] ?? [];
-    if (row.length < HEADER_ROW.length) {
-      await sheets.spreadsheets.values.update({
-        spreadsheetId,
-        range: `${SHEET_TAB}!A1:G1`,
-        valueInputOption: "RAW",
-        requestBody: { values: [HEADER_ROW] },
-      });
-    }
-    return "ok";
+    row = (res.data.values ?? [])[0] ?? [];
   } catch (err: any) {
     // Google returns 400 "Unable to parse range" when the tab doesn't exist.
     const msg = String(err?.message ?? err ?? "");
@@ -52,6 +45,17 @@ async function ensureHeader(
     }
     throw err;
   }
+
+  // Step 2: tab exists — write header if missing. Errors here are real errors, not missing-tab.
+  if (row.length < HEADER_ROW.length) {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `${SHEET_TAB}!A1:G1`,
+      valueInputOption: "RAW",
+      requestBody: { values: [HEADER_ROW] },
+    });
+  }
+  return "ok";
 }
 
 export async function POST(req: Request) {
