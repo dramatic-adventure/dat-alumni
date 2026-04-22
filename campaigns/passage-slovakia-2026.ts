@@ -1,8 +1,11 @@
 // campaigns/passage-slovakia-2026.ts
 /**
- * PASSAGE: Slovakia 2026 — first instance of the DAT fundraising campaign engine.
+ * PASSAGE: Slovakia 2026 — DAT fundraising campaign
  *
- * Goal: $12,000 minimum to subsidize artists participating in the Slovakia PASSAGE program.
+ * Goal: Raise the funds needed to bring artists into community in Slovakia this summer,
+ * widening participation for both traveling artists and local artists, and supporting
+ * shared creative work that builds voice, confidence, belonging, leadership, and possibility.
+ *
  * Primary link: https://dramaticadventure.com/passage/slovakia
  * Contextual link: https://dramaticadventure.com/passage
  *
@@ -18,83 +21,138 @@ export const passageSlovakia2026: FundraisingCampaign = {
   status: "active",
 
   // ── Hero ──────────────────────────────────────────────────────────
-  title: "PASSAGE: Slovakia 2026",
-  eyebrow: "Artist Fundraising Campaign",
-  tagline: "Send an artist to Slovakia. Build something that lasts.",
+  title: "Get Artists to Slovakia This Summer",
+  eyebrow: "PASSAGE: SLOVAKIA 2026",
+  tagline:
+    "Your gift will help artists and communities create work that builds voice, confidence, belonging, and possibility.",
   heroCopy:
-    "PASSAGE is not a tour. It is a residency — artists arriving in a community, making theatre *with* the people who live there, not for them. In 2026, that work goes to Slovakia: to ETP Slovensko's schools and cultural centers in Nitra and beyond, where DAT's partnership with the local community has been growing for years.\n\nEvery artist in the PASSAGE program brings something irreplaceable. But travel costs money. And we believe financial barriers should never decide who gets to be in the room. So we're raising $12,000 to subsidize artist participation — because the work is only as honest as who's allowed to show up.\n\nYour gift does not just send an artist across the world. It sends a specific person, with a specific story, into a room full of people who will make something none of them could make alone. That's the work. That's what your support makes possible.",
+    "This summer, Dramatic Adventure Theatre will bring artists to Eastern Slovakia to make theatre in real relationship with community — side by side with local partners, local artists, and young people whose voices and stories belong front and center.\n\nIn many of the communities DAT serves, meaningful access to arts education and programming is limited. And for many artists — especially those with fewer resources, fewer connections, or fewer opportunities to travel — work like this can feel out of reach. Your gift helps close that gap.\n\nYour gift opens this project to more artists, including overlooked and less-resourced traveling artists as well as local artists whose presence is essential to the honesty, depth, and impact of the work. And your gift helps create theatre that amplifies local voices, strengthens confidence and belonging, preserves culture, grows creative problem-solving and leadership, and gives people space to imagine beyond the immediate needs of the moment.\n\nPASSAGE does not end when the residency ends. The work deepens with DAT Drama Clubs, and each artist involved will be imprinted by the experience. This community-rooted way of making work will find its way into the artists' future classrooms, rehearsal rooms, and home communities.\n\nTogether we can create magic in Slovakia this summer.",
   heroImage: "/images/rehearsing-nitra.jpg",
   heroImageFocus: "center",
-  heroImageCredit: "Rehearsals at ETP Slovensko, Nitra",
+  heroImageCredit: "Rehearsals at Divadlo Andrea Bagara, Nitra",
 
   // ── Goal ──────────────────────────────────────────────────────────
   goalAmount: 12000,
   currency: "usd",
 
   // ── Deadline ──────────────────────────────────────────────────────
-  deadline: "2026-08-01",
+  deadline: "2026-06-30",
 
   // ── Match ─────────────────────────────────────────────────────────
-  // Set to true and update matchDescription when a real match is confirmed.
+  // Set to true and update matchDescription when a real match underwriter is confirmed.
   matchActive: false,
-  matchDescription: "All gifts matched 1:1 through May 31 — double your impact.",
-  matchCap: 5000,
+  matchDescription: "",
+  matchCap: 0,
   matchUnderwriterEmail: "hello@dramaticadventure.com",
-  matchUnderwriterLabel: "Interested in funding a matching gift?",
+  matchUnderwriterLabel: "Interested in underwriting artist access?",
 
   // ── Donor callout ─────────────────────────────────────────────────
   donorCallout:
-    "This is not just about travel. It is about who gets to be an artist — and who gets to say so. Your gift opens that door.",
+    "A gift of a few hundred dollars helps close two access gaps at once: bringing meaningful theatre into communities that deserve more of it, and opening this life-shaping work to artists who might otherwise be left out.",
 
   // ── Share ─────────────────────────────────────────────────────────
   shareText:
-    "DAT artists are heading to Slovakia to make theatre with the community there. Help send them:",
+    "Help DAT bring artists to Slovakia this summer so artists and communities can create work that builds voice, confidence, belonging, leadership, and possibility.",
 
   // ── Giving ────────────────────────────────────────────────────────
-  giveAmounts: [50, 100, 250, 500, 1000],        // fallback
-  oneTimeAmounts: [50, 100, 250, 500, 1000],     // one-time default
-  monthlyAmounts: [25, 50, 100, 250],            // lower threshold for recurring
-  defaultAmount: 100,
-  allowMonthly: true,
-  // One-time is the default (time-bound campaign).
-  // Monthly giving sustains PASSAGE's ongoing community partnerships
-  // and residency preparation work beyond the 2026 program.
+  giveAmounts: [50, 100, 250, 500, 1000, 2500],
+  oneTimeAmounts: [50, 100, 250, 500, 1000, 2500],
+  monthlyAmounts: [25, 50, 100, 250],
+  defaultAmount: 250,
+  allowMonthly: false,
 
-  // ── Frequency-aware impact copy ────────────────────────────────────
+  // ── Frequency-aware impact copy ───────────────────────────────────
   oneTimeImpactCopy:
-    "Your gift goes directly toward artist travel subsidies, visa costs, and field expenses that make PASSAGE possible in Slovakia.",
+    "Your gift helps make PASSAGE possible for more artists and supports community-rooted theatre that can amplify local voices, strengthen belonging, grow leadership, preserve culture, and widen what feels possible.",
   monthlyImpactCopy:
-    "Your monthly gift sustains DAT's ongoing community partnerships in Slovakia — keeping drama programs active and residency relationships alive beyond any single trip.",
+    "Monthly giving is currently disabled for this time-bound campaign so the focus stays on getting artists to Slovakia this summer.",
 
-  // ── Gift impact ────────────────────────────────────────────────────
+  // ── Gift impact ───────────────────────────────────────────────────
   giftImpact: [
-    { amount: 50, description: "Covers materials for one community workshop session", icon: "🎭" },
-    { amount: 100, description: "Funds one full day of an artist's residency in Slovakia", icon: "☀️" },
-    { amount: 250, description: "Subsidizes one leg of an artist's international travel", icon: "✈️" },
-    { amount: 500, description: "Covers visa, travel, and prep costs for one artist", icon: "📋" },
-    { amount: 1000, description: "Fully funds one artist's PASSAGE residency, start to finish", icon: "⭐" },
+    {
+      amount: 50,
+      description:
+        "Helps strengthen the shared creative process that gives young people and artists space to be seen, heard, and valued.",
+      icon: "✨",
+    },
+    {
+      amount: 100,
+      description:
+        "Supports theatre-making in community that builds confidence, communication, and creative expression.",
+      icon: "🎭",
+    },
+    {
+      amount: 250,
+      description:
+        "Helps make participation possible for an artist whose presence can deepen the work and widen who gets to take part.",
+      icon: "🧭",
+    },
+    {
+      amount: 500,
+      description:
+        "Provides meaningful support for community-rooted work that can grow belonging, leadership, and possibility.",
+      icon: "✈️",
+    },
+    {
+      amount: 1000,
+      description:
+        "Helps widen the circle of artists and strengthen the ripple effects this work can have in community and beyond.",
+      icon: "⭐",
+    },
+    {
+      amount: 2500,
+      description:
+        "Makes a leadership-level investment in shared creation that can shape artists, strengthen community, and leave lasting impact.",
+      icon: "🔥",
+    },
   ],
 
   monthlyGiftImpact: [
-    { amount: 25, description: "Sustains ongoing comms and prep between DAT and Slovak partners each month", icon: "🤝" },
-    { amount: 50, description: "Funds one ongoing community drama partnership check-in in Slovakia", icon: "🎭" },
-    { amount: 100, description: "Covers monthly coordination and remote mentorship for Slovak drama communities", icon: "☀️" },
-    { amount: 250, description: "Keeps DAT's Slovakia presence active — materials, logistics, and local support", icon: "⭐" },
+    {
+      amount: 25,
+      description:
+        "Would sustain ongoing coordination and relationship-building with Slovak partners in future phases of the work.",
+      icon: "🤝",
+    },
+    {
+      amount: 50,
+      description:
+        "Would support future community-rooted theatre activity and continued partnership after the residency.",
+      icon: "🎭",
+    },
+    {
+      amount: 100,
+      description:
+        "Would help maintain ongoing mentorship, collaboration, and local follow-through beyond a single trip.",
+      icon: "☀️",
+    },
+    {
+      amount: 250,
+      description:
+        "Would help sustain DAT's long-term community relationships in Slovakia over time.",
+      icon: "⭐",
+    },
   ],
 
   // ── Stretch goals ─────────────────────────────────────────────────
   stretchGoals: [
     {
       amount: 15000,
-      title: "Extended Residency",
+      title: "A Wider Circle of Artists",
       description:
-        "Fund a two-week extension for a DAT teaching team to stay in Slovakia after the PASSAGE program — deepening partnerships with ETP Slovensko schools and giving the drama clubs time to breathe and grow.",
+        "Go beyond the core goal and open PASSAGE to more artists whose presence can deepen the work and widen who gets to participate.",
     },
     {
-      amount: 20000,
-      title: "Return Artist Fellowship",
+      amount: 18000,
+      title: "Stronger Community Impact",
       description:
-        "Sponsor an alumni artist — someone who worked with DAT in Slovakia before — to return as a lead teaching artist and mentor for the next generation of PASSAGE participants.",
+        "Increase support for local artists and collaborators in Slovakia so the work can build deeper confidence, belonging, leadership, cultural pride, and community connection.",
+    },
+    {
+      amount: 22000,
+      title: "Longer Ripples Beyond the Summer",
+      description:
+        "Invest more deeply in the relationships, local leadership, and shared creative process that continue shaping artists and community long after the residency ends.",
     },
   ],
 
@@ -103,21 +161,20 @@ export const passageSlovakia2026: FundraisingCampaign = {
     {
       id: "t-passage-1",
       quote:
-        "Working with DAT in Slovakia changed how I understand what theatre can do. I didn't just make a show — I made a community. And that community is still there, still making work, years later.",
+        "What changed me was not just being in Slovakia. It was making something in real relationship with people whose stories, artistry, and presence changed how I understand theatre and community.",
       name: "DAT Artist",
-      role: "PASSAGE Program Participant",
+      role: "PASSAGE Participant",
     },
     {
       id: "t-passage-2",
       quote:
-        "ETP Slovensko has been our partner for years. The PASSAGE program is the most transformative collaboration we've had — for our students, for our community, and for the artists who arrive.",
+        "This work matters because it helps people find voice, confidence, connection, and possibility through shared creation. It strengthens artists, young people, and community at the same time.",
       name: "ETP Slovensko",
-      role: "Slovakia Partner Organization",
+      role: "Community Collaborator",
     },
   ],
 
   // ── Alumni ────────────────────────────────────────────────────────
-  // Real DAT alumni slugs — linked to live profiles on this site.
   alumni: [
     {
       slug: "jesse-baxter",
@@ -148,14 +205,13 @@ export const passageSlovakia2026: FundraisingCampaign = {
     },
   ],
 
-  // ── Drama clubs / partner communities ────────────────────────────
-  // These render as the primary conversion moment ("who you're supporting").
+  // ── Drama clubs / partner communities ─────────────────────────────
   dramaClubs: [
     {
-      slug: "etp-slovensko",
-      name: "ETP Slovensko Drama Program",
+      slug: "lunik-ix-collective",
+      name: "Luník IX Collective, DAT Drama Club",
       country: "Slovakia",
-      city: "Nitra",
+      city: "Košice",
       imageUrl: "/images/rehearsing-nitra.jpg",
     },
   ],
@@ -163,9 +219,9 @@ export const passageSlovakia2026: FundraisingCampaign = {
   // ── Events ────────────────────────────────────────────────────────
   events: [
     {
-      id: "passage-farewell-brooklyn-2026",
-      title: "PASSAGE Farewell Gathering",
-      date: "2026-07-15",
+      id: "passage-sendoff-2026",
+      title: "PASSAGE Send-Off Gathering",
+      date: "2026-06-25",
       venue: "DAT Studio",
       city: "Brooklyn",
       country: "USA",
@@ -175,20 +231,19 @@ export const passageSlovakia2026: FundraisingCampaign = {
   ],
 
   // ── Stories ───────────────────────────────────────────────────────
-  // Real story slugs — directly connected to Slovakia and Eastern Europe.
   stories: [
     {
       slug: "drama-works",
       title: "Drama Works",
       teaser:
-        "Long-term drama workshops with Roma youth in Eastern Slovakia — how a partnership with ETP Slovensko became one of DAT's most enduring collaborations.",
+        "Long-term drama workshops with Roma youth in Eastern Slovakia — and how community-rooted theatre can build confidence, voice, and belonging over time.",
       imageUrl: "/images/rehearsing-nitra.jpg",
     },
     {
       slug: "night-at-the-roma-museum",
       title: "Night at the Roma Museum",
       teaser:
-        "A cross-cultural production in Brno, Czechia — made with a community, not just for one.",
+        "A cross-cultural production in Brno made with community — preserving stories, widening perspective, and proving what shared creation can hold.",
       imageUrl: "/images/performing-zanzibar.jpg",
     },
   ],
@@ -208,24 +263,44 @@ export const passageSlovakia2026: FundraisingCampaign = {
     {
       src: "/images/teaching-amazon.jpg",
       alt: "DAT teaching artist at work",
-      caption: "What artists bring back changes how they teach everywhere else",
+      caption: "What artists carry home can keep rippling outward for years",
     },
   ],
 
   // ── Campaign updates ──────────────────────────────────────────────
   updates: [
     {
+      id: "u-passage-4",
+      date: "2026-04-14",
+      title: "Why This Work Matters",
+      body:
+        "PASSAGE is not just about getting artists to Slovakia. It is about creating shared work in community that can build voice, confidence, belonging, leadership, and possibility. Every gift helps widen that impact.",
+      authorName: "Jesse Baxter",
+      authorRole: "Artistic Director",
+    },
+    {
+      id: "u-passage-3",
+      date: "2026-04-13",
+      title: "36% Funded",
+      body:
+        "We've crossed $4,300 toward our goal. Thank you for helping open this project to more artists and strengthen the community-rooted work at its heart.",
+      authorName: "Jesse Baxter",
+      authorRole: "Artistic Director",
+    },
+    {
       id: "u-passage-2",
       date: "2026-04-07",
-      title: "First Artist Confirmed for Slovakia",
-      body: "We're excited to share that our first artist has been confirmed for the PASSAGE: Slovakia program. More names to follow as the roster builds out. If you've been considering a gift, now is a good moment — we're still in the matched window.",
+      title: "The Impact Begins in Community",
+      body:
+        "This work only becomes real when artists are in relationship with community, making something together on the ground in Slovakia. That is where voice, belonging, confidence, and possibility begin.",
       authorName: "DAT Team",
     },
     {
       id: "u-passage-1",
       date: "2026-04-01",
       title: "Campaign Launched",
-      body: "We're officially raising funds for PASSAGE: Slovakia 2026. Our team travels in late summer — and we need your help to make sure every artist who wants to go can afford to be there. Share this page with someone who believes in the work.",
+      body:
+        "We're raising funds to help bring artists to Slovakia this summer so PASSAGE can create the kind of shared work that strengthens artists, communities, and the future they imagine together.",
       authorName: "DAT Team",
     },
   ],
@@ -236,9 +311,9 @@ export const passageSlovakia2026: FundraisingCampaign = {
   ambassadorUrl: "https://dramaticadventure.com/passage/slovakia",
 
   // ── Archive state ─────────────────────────────────────────────────
-  archiveHeadline: "PASSAGE: Slovakia 2026 is complete.",
+  archiveHeadline: "Because you helped make this work possible.",
   archiveSummary:
-    "Thank you to every donor who made this possible. Artists traveled to Slovakia, made theatre with the community, and brought something lasting home. The work continues.",
+    "Thank you to every donor who helped open PASSAGE to more artists and bring shared creative work to life in Slovakia. What was built there — voice, confidence, belonging, leadership, and possibility — will keep rippling outward through artists, community, and the relationships that continue beyond the summer.",
 
   // ── Analytics ─────────────────────────────────────────────────────
   utmCampaign: "passage-slovakia-2026",

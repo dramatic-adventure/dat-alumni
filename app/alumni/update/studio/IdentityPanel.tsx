@@ -257,6 +257,7 @@ function LayerPicker({
   const [suggestState, setSuggestState] = useState<
     "idle" | "sending" | "ok" | "error"
   >("idle");
+  const [suggestError, setSuggestError] = useState("");
 
   const atLimit = active.length >= limit;
 
@@ -302,7 +303,8 @@ function LayerPicker({
       setSuggestState("ok");
       setSuggestLabel("");
       setSuggestRationale("");
-    } catch {
+    } catch (err: any) {
+      setSuggestError(err?.message || "Unknown error");
       setSuggestState("error");
     }
   }
@@ -420,7 +422,7 @@ function LayerPicker({
             )}
             {suggestState === "error" && (
               <span style={{ ...layerHelpStyle, color: "#f5a6a6", opacity: 1 }}>
-                Couldn&apos;t send. Try again.
+                {suggestError || "Couldn\u2019t send. Try again."}
               </span>
             )}
           </div>

@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useLayoutEffect } from "react";
 
 interface AlumniProfileBackdropProps {
   backgroundKey?: string;
@@ -16,6 +16,24 @@ export default function AlumniProfileBackdrop({
   backgroundKey = "kraft",
   children,
 }: AlumniProfileBackdropProps) {
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    if (backgroundKey === "leather") {
+      root.style.setProperty(
+        "--page-bg-image",
+        "linear-gradient(rgba(36,17,35,0.15),rgba(36,17,35,0.15)),url('/texture/leather.webp')"
+      );
+      root.style.setProperty("--page-bg-color", "#241123");
+    } else {
+      root.style.removeProperty("--page-bg-image");
+      root.style.removeProperty("--page-bg-color");
+    }
+    return () => {
+      root.style.removeProperty("--page-bg-image");
+      root.style.removeProperty("--page-bg-color");
+    };
+  }, [backgroundKey]);
+
   const backgroundImage = backgroundMap[backgroundKey] || backgroundMap.kraft;
 
   return (
