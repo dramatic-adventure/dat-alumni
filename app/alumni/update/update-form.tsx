@@ -2381,6 +2381,14 @@ return (
     border-color: rgba(255, 255, 255, 0.55);
   }
 
+  /* Layer picker card header hover */
+  .alumni-update .layer-card-header {
+    transition: background 0.15s ease;
+  }
+  .alumni-update .layer-card-header:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+  }
+
   /* Quick Update composer overrides */
   .alumni-update .update-composer textarea,
   .alumni-update textarea[data-update-composer] {

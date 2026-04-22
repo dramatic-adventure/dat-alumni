@@ -313,75 +313,78 @@ function LayerPicker({
   }
 
   return (
-    <div style={layerCardStyle}>
+    <div style={{
+      ...layerCardStyle,
+      border: isOpen
+        ? "1px solid rgba(148,115,255,0.18)"
+        : "1px solid rgba(148,115,255,0.35)",
+    }}>
       {/* Card header — always visible, clicking toggles open/close */}
       <button
         type="button"
+        className="layer-card-header"
         style={{
           display: "flex",
-          alignItems: "flex-start",
+          alignItems: "center",
           justifyContent: "space-between",
-          gap: 10,
+          gap: 12,
           width: "100%",
           background: "none",
           border: "none",
-          padding: 0,
+          padding: "4px 6px",
+          margin: "-4px -6px",
+          borderRadius: 8,
           cursor: "pointer",
           textAlign: "left",
         }}
         onClick={() => setIsOpen((v) => !v)}
         aria-expanded={isOpen}
       >
+        {/* Left: title + help text */}
         <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={layerTitleStyle}>{LAYER_LABELS[layer]}</div>
-            {/* Chevron */}
-            <span style={{
-              fontSize: "0.7rem",
-              color: "rgba(255,255,255,0.5)",
-              transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform 0.2s",
-              display: "inline-block",
-              lineHeight: 1,
-            }}>▾</span>
-          </div>
-          {!isOpen && (
-            <p style={{ ...layerHelpStyle, marginTop: 2 }}>
-              {active.length > 0
-                ? `${active.length} of ${limit} selected`
-                : LAYER_HELPER_COPY[layer]}
-            </p>
-          )}
-          {isOpen && (
-            <p style={layerHelpStyle}>{LAYER_HELPER_COPY[layer]}</p>
-          )}
+          <div style={layerTitleStyle}>{LAYER_LABELS[layer]}</div>
+          <p style={{ ...layerHelpStyle, marginTop: 2 }}>
+            {!isOpen && active.length > 0
+              ? `${active.length} of ${limit} selected`
+              : LAYER_HELPER_COPY[layer]}
+          </p>
         </div>
-        {/* Count badge */}
-        <span
-          style={{
-            flexShrink: 0,
-            display: "inline-flex",
-            alignItems: "center",
-            padding: "3px 9px",
-            borderRadius: 999,
-            fontSize: "0.7rem",
-            fontWeight: 600,
-            fontFamily: FF,
-            background: atLimit
-              ? "rgba(245,197,66,0.15)"
-              : active.length > 0
-              ? "rgba(148,115,255,0.15)"
-              : "rgba(255,255,255,0.06)",
-            border: atLimit
-              ? "1px solid rgba(245,197,66,0.45)"
-              : active.length > 0
-              ? "1px solid rgba(148,115,255,0.4)"
-              : "1px solid rgba(255,255,255,0.12)",
-            color: atLimit ? "#f5c542" : active.length > 0 ? "#c4b5fd" : "rgba(255,255,255,0.4)",
-          }}
-        >
-          {active.length > 0 ? `${active.length} / ${limit}` : `up to ${limit}`}
-        </span>
+        {/* Right: count badge + chevron */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "3px 9px",
+              borderRadius: 999,
+              fontSize: "0.7rem",
+              fontWeight: 600,
+              fontFamily: FF,
+              background: atLimit
+                ? "rgba(245,197,66,0.15)"
+                : active.length > 0
+                ? "rgba(148,115,255,0.15)"
+                : "rgba(255,255,255,0.06)",
+              border: atLimit
+                ? "1px solid rgba(245,197,66,0.45)"
+                : active.length > 0
+                ? "1px solid rgba(148,115,255,0.4)"
+                : "1px solid rgba(255,255,255,0.12)",
+              color: atLimit ? "#f5c542" : active.length > 0 ? "#c4b5fd" : "rgba(255,255,255,0.4)",
+            }}
+          >
+            {active.length > 0 ? `${active.length} / ${limit}` : `up to ${limit}`}
+          </span>
+          {/* Chevron — far right, standard accordion affordance */}
+          <span style={{
+            fontSize: "1.1rem",
+            color: "rgba(255,255,255,0.75)",
+            transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.2s",
+            display: "inline-block",
+            lineHeight: 1,
+          }}>▾</span>
+        </div>
       </button>
 
       {/* Collapsed summary — selected chips only */}
@@ -710,19 +713,6 @@ export default function IdentityPanel({
         </div>
 
         {/* Three taxonomy layers */}
-        <div style={{ marginBottom: 8 }}>
-          <p style={{
-            margin: "0 0 14px",
-            fontSize: "0.74rem",
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-            color: "#f2f2f2",
-            fontFamily: FF,
-            fontWeight: 600,
-          }}>
-            Your profile in three dimensions
-          </p>
-        </div>
         <LayerPicker
           layer="identity"
           profile={profile}
