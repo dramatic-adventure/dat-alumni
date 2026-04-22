@@ -129,6 +129,8 @@ export const LIVE_KEYS: Array<keyof AlumniProfile | string> = [
 
   "currentTitle",
   "identityTags",
+  "practiceTags",
+  "exploreCareTags",
   "languages",
 
   "currentHeadshotUrl",

@@ -3,11 +3,9 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import {
   getActiveTagsForLayer,
-  getSeededTagsForLayer,
   LAYER_HELPER_COPY,
   LAYER_LABELS,
   SELECTION_LIMITS,
-  searchTokensFor,
   type TaxonomyLayer,
   type TaxonomyTag,
 } from "@/lib/alumniTaxonomy";
@@ -27,7 +25,7 @@ type IdentityPanelProps = {
   profile: any;
   setProfile: (updater: any) => void;
 
-  renderFieldsOrNull: (keys: string[]) => ReactNode;
+  renderFieldsOrNull?: (keys: string[]) => ReactNode; // retained for prop-compat; Identity always renders its own UI
 
   MODULES: Record<string, { fieldKeys: string[]; uploadKinds: UploadKind[] }>;
 
@@ -58,12 +56,6 @@ function joinCommaList(values: string[]): string {
   return values.join(", ");
 }
 
-function matchesSearch(tag: TaxonomyTag, query: string): boolean {
-  const q = query.trim().toLowerCase();
-  if (!q) return true;
-  return searchTokensFor(tag).some((tok) => tok.toLowerCase().includes(q));
-}
-
 /* ---------------- Shared styles ---------------- */
 
 const FF =
@@ -81,77 +73,87 @@ const tipStyle: CSSProperties = {
 const fieldBlockStyle: CSSProperties = {
   display: "grid",
   gap: 8,
-  marginBottom: 24,
+  marginBottom: 32,
 };
 
 const chipRowStyle: CSSProperties = {
   display: "flex",
   flexWrap: "wrap",
-  gap: 6,
+  gap: 8,
   marginTop: 8,
 };
 
-/* Pronouns / language preset chips (compact, pill) */
+/* Pronouns / language preset chips — DAT BLUE idle, DAT YELLOW active */
 const presetChip: CSSProperties = {
-  borderRadius: 999,
-  border: "1px solid rgba(148, 115, 255, 0.55)",
-  padding: "4px 10px",
-  fontSize: "0.72rem",
-  textTransform: "none",
+  borderRadius: 14,
+  border: "1px solid rgba(36,147,169,0.5)",   /* DAT BLUE #2493A9 */
+  padding: "6px 13px",
+  fontSize: "0.8rem",
   letterSpacing: "0.02em",
-  backgroundColor: "rgba(19, 7, 44, 0.8)",
+  background: "transparent",
   color: "#f2f2f2",
   cursor: "pointer",
   fontFamily: FF,
   display: "inline-flex",
   alignItems: "center",
   gap: 4,
+  fontWeight: 500,
+  opacity: 0.75,
+  transition: "background 0.15s, border-color 0.15s, opacity 0.15s",
 };
 
 const presetChipActive: CSSProperties = {
   ...presetChip,
-  backgroundColor: "#ffcc00",
-  color: "#241123",
-  borderColor: "rgba(24, 8, 32, 0.9)",
-  fontWeight: 600,
+  background: "#ffcc00",                       /* DAT YELLOW */
+  color: "#241123",                            /* DAT DARK PURPLE */
+  border: "1px solid rgba(24,8,32,0.5)",
+  fontWeight: 700,
+  opacity: 1,
 };
 
-/* Taxonomy tag chips — lighter, cleaner */
+/* Taxonomy tag chips — exact Contact Panel "Additional links" chip style */
 const tagBase: CSSProperties = {
-  borderRadius: 999,
-  padding: "5px 12px",
-  fontSize: "0.75rem",
-  letterSpacing: "0.015em",
+  borderRadius: 14,                             /* matches datButtonGhost */
+  padding: "7px 13px",
+  fontSize: "0.82rem",
+  letterSpacing: "0.02em",
   cursor: "pointer",
   fontFamily: FF,
   display: "inline-flex",
   alignItems: "center",
-  gap: 5,
-  transition: "background 0.12s, border-color 0.12s, opacity 0.12s",
+  gap: 4,
+  transition: "background 0.15s, border-color 0.15s, opacity 0.15s",
   lineHeight: 1.3,
+  fontWeight: 500,
 };
 
+/* idle: ghost — same as Contact Panel default chip */
 const tagIdle: CSSProperties = {
   ...tagBase,
   background: "transparent",
-  border: "1px solid rgba(255,255,255,0.22)",
-  color: "rgba(255,255,255,0.82)",
+  border: "1px solid rgba(255,255,255,0.4)",
+  color: "rgba(255,255,255,0.9)",
+  opacity: 0.6,
 };
 
+/* selected: DAT PURPLE tint — same as Contact Panel hasValue state */
 const tagSelected: CSSProperties = {
   ...tagBase,
-  background: "#ffcc00",
-  border: "1px solid rgba(24,8,32,0.45)",
-  color: "#241123",
+  background: "rgba(108,0,175,0.22)",          /* DAT PURPLE #6C00AF */
+  border: "1px solid rgba(108,0,175,0.7)",
+  color: "rgba(255,255,255,0.95)",
   fontWeight: 700,
+  opacity: 1,
 };
 
+/* disabled: at-limit unselected */
 const tagDisabled: CSSProperties = {
   ...tagBase,
   background: "transparent",
   border: "1px solid rgba(255,255,255,0.1)",
-  color: "rgba(255,255,255,0.25)",
+  color: "rgba(255,255,255,0.22)",
   cursor: "not-allowed",
+  opacity: 0.35,
 };
 
 const linkButtonStyle: CSSProperties = {
@@ -166,7 +168,7 @@ const linkButtonStyle: CSSProperties = {
 };
 
 const suggestionBoxStyle: CSSProperties = {
-  marginTop: 10,
+  marginTop: 12,
   padding: 12,
   borderRadius: 8,
   backgroundColor: "rgba(19, 7, 44, 0.5)",
@@ -174,6 +176,49 @@ const suggestionBoxStyle: CSSProperties = {
   display: "grid",
   gap: 8,
 };
+
+/* Card container — neutral dark so purple-tint selected chips read cleanly */
+const layerCardStyle: CSSProperties = {
+  borderRadius: 12,
+  border: "1px solid rgba(148,115,255,0.18)",
+  background: "rgba(0,0,0,0.28)",
+  padding: "18px 20px 16px",
+  marginBottom: 14,
+};
+
+const layerTitleStyle: CSSProperties = {
+  fontSize: "0.88rem",
+  fontWeight: 600,
+  letterSpacing: "0.01em",
+  color: "#ddd5ff",
+  fontFamily: FF,
+  lineHeight: 1.3,
+};
+
+const layerHelpStyle: CSSProperties = {
+  margin: "5px 0 0",
+  fontSize: "0.74rem",
+  lineHeight: 1.5,
+  opacity: 0.55,
+  fontFamily: FF,
+  color: "#d9d9d9",
+};
+
+/* ---------------- Language level helpers ---------------- */
+
+const LANGUAGE_LEVELS = ["Conversational", "Working", "Fluent", "Native"] as const;
+type LangEntry = { lang: string; level: string };
+
+function parseLangEntries(raw: string | undefined | null): LangEntry[] {
+  return parseCommaList(raw).map((s) => {
+    const m = s.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+    return m ? { lang: m[1].trim(), level: m[2].trim() } : { lang: s.trim(), level: "" };
+  });
+}
+
+function formatLangEntries(entries: LangEntry[]): string {
+  return entries.map((e) => (e.level ? `${e.lang} (${e.level})` : e.lang)).join(", ");
+}
 
 /* ---------------- LayerPicker ---------------- */
 
@@ -204,11 +249,8 @@ function LayerPicker({
     [active]
   );
 
-  const seeded = useMemo(() => getSeededTagsForLayer(layer), [layer]);
   const all = useMemo(() => getActiveTagsForLayer(layer), [layer]);
 
-  const [expanded, setExpanded] = useState(false);
-  const [query, setQuery] = useState("");
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [suggestLabel, setSuggestLabel] = useState("");
   const [suggestRationale, setSuggestRationale] = useState("");
@@ -217,19 +259,6 @@ function LayerPicker({
   >("idle");
 
   const atLimit = active.length >= limit;
-
-  // Always surface currently-selected tags so they stay visible even when
-  // they aren't in the seeded pool (e.g. loaded from a previous session).
-  const visible = useMemo(() => {
-    const pool = expanded
-      ? all.filter((t) => matchesSearch(t, query))
-      : seeded;
-    const poolIds = new Set(pool.map((t) => t.id));
-    const alwaysShow = all.filter(
-      (t) => activeLowerSet.has(t.label.toLowerCase()) && !poolIds.has(t.id)
-    );
-    return [...alwaysShow, ...pool];
-  }, [expanded, seeded, all, query, activeLowerSet]);
 
   function isActive(tag: TaxonomyTag): boolean {
     return activeLowerSet.has(tag.label.toLowerCase());
@@ -275,110 +304,73 @@ function LayerPicker({
     }
   }
 
-  // Inline count badge next to label
-  const countSuffix =
-    active.length > 0
-      ? ` · ${active.length}/${limit}${atLimit ? " — deselect to swap" : ""}`
-      : "";
-
   return (
-    <div style={fieldBlockStyle}>
-      {/* Label row: name + count badge */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "space-between",
-          gap: 8,
-        }}
-      >
-        <label style={labelStyle}>
-          {LAYER_LABELS[layer]}
-          {countSuffix && (
-            <span
-              style={{
-                fontWeight: 400,
-                fontSize: "0.72rem",
-                opacity: 0.65,
-                marginLeft: 6,
-                color: atLimit ? "#f5c542" : undefined,
-              }}
-            >
-              {countSuffix}
-            </span>
-          )}
-        </label>
+    <div style={layerCardStyle}>
+      {/* Card header: layer name + limit badge */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+        <div style={{ flex: 1 }}>
+          <div style={layerTitleStyle}>{LAYER_LABELS[layer]}</div>
+          <p style={layerHelpStyle}>{LAYER_HELPER_COPY[layer]}</p>
+        </div>
+        <span
+          style={{
+            flexShrink: 0,
+            display: "inline-flex",
+            alignItems: "center",
+            padding: "3px 9px",
+            borderRadius: 999,
+            fontSize: "0.7rem",
+            fontWeight: 600,
+            fontFamily: FF,
+            background: atLimit
+              ? "rgba(245,197,66,0.15)"
+              : active.length > 0
+              ? "rgba(148,115,255,0.15)"
+              : "rgba(255,255,255,0.06)",
+            border: atLimit
+              ? "1px solid rgba(245,197,66,0.45)"
+              : active.length > 0
+              ? "1px solid rgba(148,115,255,0.4)"
+              : "1px solid rgba(255,255,255,0.12)",
+            color: atLimit ? "#f5c542" : active.length > 0 ? "#c4b5fd" : "rgba(255,255,255,0.4)",
+          }}
+        >
+          {active.length > 0 ? `${active.length} / ${limit}` : `up to ${limit}`}
+        </span>
       </div>
 
-      <p style={{ ...tipStyle, marginTop: 0, marginBottom: 2 }}>
-        {LAYER_HELPER_COPY[layer]}
-      </p>
-
-      {/* Search — only when expanded */}
-      {expanded && (
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          style={{ ...inputStyle, marginTop: 6, marginBottom: 4 }}
-          placeholder="Filter options…"
-          disabled={loading}
-        />
-      )}
-
-      {/* Chip grid */}
-      <div style={{ ...chipRowStyle, marginTop: 10 }}>
-        {visible.map((tag) => {
+      {/* Tag chips */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
+        {all.map((tag) => {
           const sel = isActive(tag);
           const dis = !sel && atLimit;
-          const style = sel ? tagSelected : dis ? tagDisabled : tagIdle;
           return (
             <button
               key={tag.id}
               type="button"
-              style={style}
+              style={sel ? tagSelected : dis ? tagDisabled : tagIdle}
               disabled={loading || dis}
               onClick={() => toggle(tag)}
               aria-pressed={sel}
             >
               {sel && (
-                <span style={{ fontSize: "0.6rem", lineHeight: 1, opacity: 0.8 }}>
-                  ✓
-                </span>
+                <span style={{ marginRight: 3, fontSize: "0.65em", opacity: 0.8 }}>✓</span>
               )}
               {tag.label}
             </button>
           );
         })}
-        {expanded && query.trim() && visible.length === 0 && (
-          <span style={tipStyle}>No tags match "{query}".</span>
-        )}
       </div>
 
-      {/* Footer links */}
-      <div
-        style={{
-          marginTop: 10,
-          display: "flex",
-          gap: 16,
-          flexWrap: "wrap",
-          alignItems: "center",
-        }}
-      >
-        {all.length > seeded.length && (
-          <button
-            type="button"
-            style={linkButtonStyle}
-            disabled={loading}
-            onClick={() => {
-              setExpanded((v) => !v);
-              setQuery("");
-            }}
-          >
-            {expanded
-              ? "Show fewer options"
-              : `Show all ${all.length} options`}
-          </button>
-        )}
+      {/* At-limit nudge — only shown when full */}
+      {atLimit && (
+        <p style={{ marginTop: 10, marginBottom: 0, fontSize: "0.72rem", color: "#f5c542", opacity: 0.8, fontFamily: FF }}>
+          {limit} selected — deselect one to swap.
+        </p>
+      )}
+
+      {/* Suggest link */}
+      <div style={{ marginTop: 14 }}>
         <button
           type="button"
           style={linkButtonStyle}
@@ -392,8 +384,8 @@ function LayerPicker({
       {/* Suggestion form */}
       {suggestOpen && (
         <div style={suggestionBoxStyle}>
-          <label style={{ ...labelStyle, fontSize: "0.8rem" }}>
-            Suggest a tag for "{LAYER_LABELS[layer]}"
+          <label style={{ ...layerTitleStyle, fontSize: "0.8rem" }}>
+            Suggest a tag for &ldquo;{LAYER_LABELS[layer]}&rdquo;
           </label>
           <input
             value={suggestLabel}
@@ -413,23 +405,19 @@ function LayerPicker({
             <button
               type="button"
               style={linkButtonStyle}
-              disabled={
-                loading ||
-                suggestState === "sending" ||
-                !suggestLabel.trim()
-              }
+              disabled={loading || suggestState === "sending" || !suggestLabel.trim()}
               onClick={submitSuggestion}
             >
               {suggestState === "sending" ? "Sending…" : "Send suggestion"}
             </button>
             {suggestState === "ok" && (
-              <span style={{ ...tipStyle, color: "#9ee5a6" }}>
-                Thanks — your suggestion is in the queue for review.
+              <span style={{ ...layerHelpStyle, color: "#9ee5a6", opacity: 1 }}>
+                Thanks — queued for review.
               </span>
             )}
             {suggestState === "error" && (
-              <span style={{ ...tipStyle, color: "#f5a6a6" }}>
-                Couldn't send. Please try again.
+              <span style={{ ...layerHelpStyle, color: "#f5a6a6", opacity: 1 }}>
+                Couldn&apos;t send. Try again.
               </span>
             )}
           </div>
@@ -451,27 +439,34 @@ export default function IdentityPanel({
   isDirty = false,
   profile,
   setProfile,
-  renderFieldsOrNull,
+  renderFieldsOrNull: _renderFieldsOrNull, // not used — Identity always renders its own UI
   MODULES,
   saveCategory,
 }: IdentityPanelProps) {
   const pronounPresets = ["she/her", "he/him", "they/them", "she/they", "he/they"];
   const languagePresets = ["English", "Español", "Slovenský", "Shuar-Chicham"];
 
-  function togglePresetList(
-    fieldKey: string,
-    value: string
-  ) {
+  // Derived — parsed language entries (lang + optional level)
+  const langEntries = parseLangEntries(profile.languages);
+
+  function toggleLang(lang: string) {
     setProfile((p: any) => {
-      const list = parseCommaList(p[fieldKey]);
-      const idx = list.findIndex((v) => v.toLowerCase() === value.toLowerCase());
-      if (idx >= 0) list.splice(idx, 1);
-      else list.push(value);
-      return { ...p, [fieldKey]: joinCommaList(list) };
+      const entries = parseLangEntries(p.languages);
+      const idx = entries.findIndex((e) => e.lang.toLowerCase() === lang.toLowerCase());
+      if (idx >= 0) entries.splice(idx, 1);
+      else entries.push({ lang, level: "" });
+      return { ...p, languages: formatLangEntries(entries) };
     });
   }
 
-  const allIdentityKeys = MODULES["Identity"].fieldKeys;
+  function setLangLevel(lang: string, level: string) {
+    setProfile((p: any) => {
+      const entries = parseLangEntries(p.languages);
+      const entry = entries.find((e) => e.lang.toLowerCase() === lang.toLowerCase());
+      if (entry) entry.level = entry.level === level ? "" : level; // tap again to clear
+      return { ...p, languages: formatLangEntries(entries) };
+    });
+  }
 
   return (
     <div>
@@ -484,14 +479,13 @@ export default function IdentityPanel({
       </p>
 
       {/* Eyebrow with extra breathing room below */}
-      <div style={{ marginBottom: 20 }}>
+      <div style={{ marginBottom: 28 }}>
         <span style={subheadChipStyle} className="subhead-chip">
           Identity
         </span>
       </div>
 
-      {renderFieldsOrNull(allIdentityKeys) ?? (
-        <div style={{ marginTop: 8 }}>
+      <div style={{ marginTop: 8 }}>
           {/* Current role / title */}
           <div style={fieldBlockStyle}>
             <label style={labelStyle}>Current role / title</label>
@@ -516,7 +510,7 @@ export default function IdentityPanel({
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
               gap: 20,
-              marginBottom: 24,
+              marginBottom: langEntries.length > 0 ? 14 : 24,
             }}
           >
             {/* Pronouns */}
@@ -563,23 +557,24 @@ export default function IdentityPanel({
                   setProfile((p: any) => ({ ...p, languages: e.target.value }))
                 }
                 style={inputStyle}
-                placeholder="English, Español, Slovenský…"
+                placeholder="English, Español (Fluent), Slovenský…"
                 disabled={loading}
               />
               <div style={chipRowStyle}>
                 {languagePresets.map((lang) => {
-                  const isOn = parseCommaList(profile.languages).some(
-                    (t) => t.toLowerCase() === lang.toLowerCase()
+                  const entry = langEntries.find(
+                    (e) => e.lang.toLowerCase() === lang.toLowerCase()
                   );
+                  const isOn = !!entry;
                   return (
                     <button
                       key={lang}
                       type="button"
                       style={isOn ? presetChipActive : presetChip}
                       disabled={loading}
-                      onClick={() => togglePresetList("languages", lang)}
+                      onClick={() => toggleLang(lang)}
                     >
-                      {lang}
+                      {isOn && entry?.level ? `${lang} (${entry.level})` : lang}
                     </button>
                   );
                 })}
@@ -590,7 +585,69 @@ export default function IdentityPanel({
             </div>
           </div>
 
-          {/* Three taxonomy layers */}
+          {/* Language level picker — full-width, only when languages are active */}
+          {langEntries.length > 0 && (
+            <div
+              style={{
+                marginBottom: 24,
+                padding: "14px 16px",
+                borderRadius: 10,
+                background: "rgba(0,0,0,0.2)",
+                border: "1px solid rgba(36,147,169,0.2)",   /* DAT BLUE subtle */
+              }}
+            >
+              <p style={{ ...tipStyle, marginTop: 0, marginBottom: 12, opacity: 0.55, letterSpacing: "0.03em" }}>
+                Language levels <span style={{ opacity: 0.5 }}>(optional)</span>
+              </p>
+              <div style={{ display: "grid", gap: 10 }}>
+                {langEntries.map((entry) => (
+                  <div
+                    key={entry.lang}
+                    style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "0.78rem",
+                        fontWeight: 500,
+                        color: "rgba(255,255,255,0.65)",
+                        fontFamily: FF,
+                        minWidth: 100,
+                      }}
+                    >
+                      {entry.lang}
+                    </span>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {LANGUAGE_LEVELS.map((level) => (
+                        <button
+                          key={level}
+                          type="button"
+                          style={entry.level === level ? presetChipActive : presetChip}
+                          disabled={loading}
+                          onClick={() => setLangLevel(entry.lang, level)}
+                        >
+                          {level}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Three taxonomy layers — each in its own card */}
+          <div style={{ marginBottom: 8 }}>
+            <p style={{
+              margin: "0 0 14px",
+              fontSize: "0.74rem",
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.35)",
+              fontFamily: FF,
+            }}>
+              Your profile in three dimensions
+            </p>
+          </div>
           <LayerPicker
             layer="identity"
             profile={profile}
@@ -615,8 +672,7 @@ export default function IdentityPanel({
             labelStyle={labelStyle}
             inputStyle={inputStyle}
           />
-        </div>
-      )}
+      </div>
 
       {/* Save button */}
       <div
