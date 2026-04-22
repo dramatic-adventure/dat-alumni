@@ -61,8 +61,8 @@ body::before{
   z-index: -1;
   pointer-events: none;
 
-  background-color: #f6e4c1;
-  background-image: url("/texture/kraft-paper.png");
+  background-color: var(--page-bg-color, #f6e4c1);
+  background-image: var(--page-bg-image, url("/texture/kraft-paper.png"));
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;

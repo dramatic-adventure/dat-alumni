@@ -19,7 +19,7 @@ export default function AlumniProfileBackdrop({
   const backgroundImage = backgroundMap[backgroundKey] || backgroundMap.kraft;
 
   return (
-    <div className="relative w-full" style={{ zIndex: 0 }}>
+    <div className="relative w-full">
       {/* ✅ Fixed parallax background */}
       <div
         className="fixed inset-0 bg-cover bg-center"

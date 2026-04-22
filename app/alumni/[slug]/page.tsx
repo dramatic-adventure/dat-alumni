@@ -504,9 +504,16 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
     ])
   );
 
+  const bgChoice = (normalizedAlumni as any).backgroundChoice || "";
+
   // 7) Render
   return (
     <>
+      {/* Inject CSS variable so body::before uses the correct texture server-side (no flash) */}
+      {bgChoice === "leather" && (
+        <style>{`:root{--page-bg-image:linear-gradient(rgba(36,17,35,0.15),rgba(36,17,35,0.15)),url('/texture/leather.webp');--page-bg-color:#241123}`}</style>
+      )}
+
       {/* Client-side self-heal fallback (uses /api/alumni/lookup) */}
       <CanonicalSlugGate slug={incoming} basePath="/alumni" />
 
@@ -535,7 +542,7 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
           currentTitle: (normalizedAlumni as any).currentTitle || "",
           secondLocation: (normalizedAlumni as any).secondLocation || "",
           isBiCoastal: !!(normalizedAlumni as any).isBiCoastal,
-          backgroundChoice: (normalizedAlumni as any).backgroundChoice || "",
+          backgroundChoice: bgChoice,
         }}
         allStories={storiesForThisAlum}
         // ✅ NEW: component can match productions/credits/stories against any known slug
