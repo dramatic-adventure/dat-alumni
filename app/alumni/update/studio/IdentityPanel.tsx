@@ -127,20 +127,20 @@ const tagBase: CSSProperties = {
   fontWeight: 500,
 };
 
-/* idle: visible ghost */
+/* idle: muted ghost — matches ContactPanel unselected */
 const tagIdle: CSSProperties = {
   ...tagBase,
   background: "transparent",
   border: "1px solid rgba(255,255,255,0.4)",
   color: "#f2f2f2",
-  opacity: 1,
+  opacity: 0.6,
 };
 
-/* selected: DAT PURPLE tint */
+/* selected: DAT PURPLE tint — matches ContactPanel selected */
 const tagSelected: CSSProperties = {
   ...tagBase,
-  background: "rgba(108,0,175,0.35)",          /* DAT PURPLE #6C00AF */
-  border: "1px solid rgba(108,0,175,0.85)",
+  background: "rgba(108,0,175,0.22)",
+  border: "1px solid rgba(108,0,175,0.7)",
   color: "#ffffff",
   fontWeight: 700,
   opacity: 1,
