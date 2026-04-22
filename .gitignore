@@ -68,3 +68,6 @@ netlify.env
 dev.log
 service-account.json
 .claude/
+
+.next/
+.next-local/
