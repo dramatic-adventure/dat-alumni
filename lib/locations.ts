@@ -33,6 +33,18 @@ export const LOCATION_ALIASES: Record<string, string> = {
   "washington dc": "Washington, DC",
   "washington, d.c.": "Washington, DC",
 
+  "baltimore": "Baltimore, MD",
+  "baltimore, md": "Baltimore, MD",
+  "baltimore md": "Baltimore, MD",
+  "baltimore, maryland": "Baltimore, MD",
+  "baltimore maryland": "Baltimore, MD",
+  "baltimore city": "Baltimore, MD",
+  "baltimore city, md": "Baltimore, MD",
+  "baltimore city, maryland": "Baltimore, MD",
+  "bmore": "Baltimore, MD",
+  "b'more": "Baltimore, MD",
+  "charm city": "Baltimore, MD",
+
   "uk": "United Kingdom",
   "u.k.": "United Kingdom",
   "great britain": "United Kingdom",
