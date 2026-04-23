@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import path from "path";
-import sharp from "sharp";
 
 import DramaClubBadge from "@/components/ui/DramaClubBadge";
 import EventShareButton from "@/components/events/EventShareButton";
@@ -752,28 +750,13 @@ function UpcomingEventInfoBand({
 }
 
 /**
- * Returns the first gallery image with width > height (landscape),
- * using actual image dimensions for local files via sharp.
- * Falls back to filename heuristic, then first image.
+ * Returns the first likely landscape gallery image by filename heuristic,
+ * then falls back to the first image.
  */
 async function findLandscapeImageSrc(
   images: Array<{ src: string }>,
 ): Promise<string | null> {
   if (!images.length) return null;
-  for (const img of images) {
-    if (img.src.startsWith("/")) {
-      try {
-        const filePath = path.join(process.cwd(), "public", img.src);
-        const meta = await sharp(filePath).metadata();
-        if (meta.width && meta.height && meta.width > meta.height) {
-          return img.src;
-        }
-      } catch {
-        // File not found or not readable — continue
-      }
-    }
-  }
-  // Filename heuristic fallback
   const byName = images.find((g) => /landscape|wide|16x9/i.test(g.src));
   if (byName) return byName.src;
   return images[0].src;
