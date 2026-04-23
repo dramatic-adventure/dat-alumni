@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   distDir: process.env.NODE_ENV === "development" ? ".next-local" : ".next",
 
   images: {
+    unoptimized: true,
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60,
 
