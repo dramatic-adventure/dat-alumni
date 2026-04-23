@@ -104,10 +104,9 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata(
-  { params }: { params: Promise<{ season: string }> | { season: string } }
+  { params }: { params: Promise<{ season: string }> }
 ): Promise<Metadata> {
-  const resolvedParams = await Promise.resolve(params);
-  const { season } = resolvedParams;
+  const { season } = await params;
 
   const n = seasonParamToNumber(season);
   const info = Number.isFinite(n) ? seasons.find((s) => s.slug === `season-${n}`) : undefined;
@@ -121,10 +120,9 @@ export async function generateMetadata(
 }
 
 export default async function SeasonPage(
-  { params }: { params: Promise<{ season: string }> | { season: string } }
+  { params }: { params: Promise<{ season: string }> }
 ) {
-  const resolvedParams = await Promise.resolve(params);
-  const { season } = resolvedParams;
+  const { season } = await params;
 
   const seasonNumber = seasonParamToNumber(season);
   if (!Number.isFinite(seasonNumber) || seasonNumber <= 0) {

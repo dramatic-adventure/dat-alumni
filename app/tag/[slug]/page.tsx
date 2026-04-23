@@ -17,16 +17,8 @@ import {
 
 export const revalidate = 3600;
 
-type ParamsLike<T> = Promise<T> | T;
-
-async function resolveParams(
-  params: ParamsLike<{ slug: string }> | ParamsLike<{ slug?: string }>
-) {
-  const p = (params instanceof Promise ? await params : params) as {
-    slug?: string;
-  };
-  return p;
-}
+// Next 16 passes dynamic route params as an async value.
+type RouteParams = Promise<{ slug: string }>;
 
 /**
  * Fallback slugify for unknown/non-canonical tags.
@@ -95,6 +87,10 @@ function allTagsForAlumni(artist: AlumniRow): NormalizedTag[] {
   return out;
 }
 
+function norm(v: unknown) {
+  return String(v ?? "").trim().toLowerCase();
+}
+
 // Build all valid tag slugs at build time
 export async function generateStaticParams() {
   const alumni: AlumniRow[] = await loadVisibleAlumni();
@@ -113,11 +109,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: ParamsLike<{ slug: string }> | { slug: string };
+  params: RouteParams;
 }): Promise<Metadata> {
-  const p = await resolveParams(params);
-  const slug = String(p?.slug ?? "").trim();
-  const slugLower = slug.toLowerCase();
+  const { slug } = await params;
+  const slugLower = norm(slug);
 
   // ✅ Never crash in metadata
   if (!slugLower) {
@@ -172,17 +167,16 @@ export async function generateMetadata({
 export default async function TagPage({
   params,
 }: {
-  params: ParamsLike<{ slug: string }> | { slug: string };
+  params: RouteParams;
 }) {
-  const p = await resolveParams(params);
-  const slug = String(p?.slug ?? "").trim();
+  const { slug } = await params;
 
   // ✅ seasons-style guard
   if (!slug) {
     notFound();
   }
 
-  const slugLower = slug.toLowerCase();
+  const slugLower = norm(slug);
   const alumni: AlumniRow[] = await loadVisibleAlumni();
 
   // Filter across ALL three layers (identity / practice / exploreCare).

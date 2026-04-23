@@ -18,9 +18,12 @@ function toWebStream(nodeStream: NodeJS.ReadableStream): ReadableStream<Uint8Arr
   });
 }
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const fileId = params.id;
+    const { id: fileId } = await params;
     const drive = driveClient();
 
     // Metadata for headers

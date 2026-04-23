@@ -30,16 +30,8 @@ const themeMetaMap: Record<string, ThemeMeta> = {
   // },
 };
 
-type ParamsLike<T> = Promise<T> | T;
-
-async function resolveParams(
-  params: ParamsLike<{ slug: string }> | ParamsLike<{ slug?: string }>
-) {
-  const p = (params instanceof Promise ? await params : params) as {
-    slug?: string;
-  };
-  return p;
-}
+// Next 16 passes dynamic route params as an async value.
+type RouteParams = Promise<{ slug: string }>;
 
 /* ===============================
    Helpers
@@ -65,6 +57,10 @@ function humanizeSlug(slug: string): string {
     .split("-")
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
     .join(" ");
+}
+
+function norm(v: unknown) {
+  return String(v ?? "").trim().toLowerCase();
 }
 
 /* ===============================
@@ -96,11 +92,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: ParamsLike<{ slug: string }> | { slug: string };
+  params: RouteParams;
 }): Promise<Metadata> {
-  const p = await resolveParams(params);
-  const slug = String(p?.slug ?? "").trim();
-  const slugLower = slug.toLowerCase();
+  const { slug } = await params;
+  const slugLower = norm(slug);
 
   // ✅ Never crash in metadata
   if (!slugLower) {
@@ -162,17 +157,16 @@ export async function generateMetadata({
 export default async function ThemePage({
   params,
 }: {
-  params: ParamsLike<{ slug: string }> | { slug: string };
+  params: RouteParams;
 }) {
-  const p = await resolveParams(params);
-  const slug = String(p?.slug ?? "").trim();
+  const { slug } = await params;
 
   // ✅ seasons-style guard
   if (!slug) {
     notFound();
   }
 
-  const slugLower = slug.toLowerCase();
+  const slugLower = norm(slug);
 
   const allProductions: Production[] = Object.values(productionMap);
 

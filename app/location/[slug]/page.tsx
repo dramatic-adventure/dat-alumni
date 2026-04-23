@@ -28,15 +28,11 @@ import {
 
 export const revalidate = 3600;
 
-type ParamsLike<T> = Promise<T> | T;
+// Next 16 passes dynamic route params as an async value.
+type RouteParams = Promise<{ slug: string }>;
 
-async function resolveParams(
-  params: ParamsLike<{ slug: string }> | ParamsLike<{ slug?: string }>
-) {
-  const p = (params instanceof Promise ? await params : params) as {
-    slug?: string;
-  };
-  return p;
+function norm(v: unknown) {
+  return String(v ?? "").trim().toLowerCase();
 }
 
 // ✅ Build all valid slugs from data (server-safe)
@@ -57,10 +53,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: ParamsLike<{ slug: string }> | { slug: string };
+  params: RouteParams;
 }): Promise<Metadata> {
-  const p = await resolveParams(params);
-  const slug = String(p?.slug ?? "").trim();
+  const { slug } = await params;
+  const slugLower = norm(slug);
 
   // ✅ Metadata should never crash; fall back gracefully.
   if (!slug) {
@@ -110,10 +106,9 @@ export async function generateMetadata({
 export default async function LocationPage({
   params,
 }: {
-  params: ParamsLike<{ slug: string }> | { slug: string };
+  params: RouteParams;
 }) {
-  const p = await resolveParams(params);
-  const slug = String(p?.slug ?? "").trim();
+  const { slug } = await params;
 
   // ✅ seasons-style guard
   if (!slug) {

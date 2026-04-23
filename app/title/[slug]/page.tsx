@@ -53,7 +53,11 @@ const loadAlumniWithMergedRoles = cache(async (): Promise<AlumniRow[]> => {
   });
 });
 
-type ParamsLike<T> = Promise<T> | T;
+type RouteParams = Promise<{ slug: string }>;
+
+function norm(v: unknown) {
+  return String(v ?? "").trim().toLowerCase();
+}
 
 function humanizeSlug(slug: string) {
   const safe = typeof slug === "string" ? slug : "";
@@ -68,15 +72,6 @@ function titleCase(input: string) {
     .split(/\s+/)
     .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
     .join(" ");
-}
-
-async function resolveParams(
-  params: ParamsLike<{ slug: string }> | ParamsLike<{ slug?: string }>
-) {
-  const p = (params instanceof Promise ? await params : params) as {
-    slug?: string;
-  };
-  return p;
 }
 
 export async function generateStaticParams() {
@@ -107,10 +102,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: ParamsLike<{ slug: string }> | { slug: string };
+  params: RouteParams;
 }): Promise<Metadata> {
-  const p = await resolveParams(params);
-  const slug = String(p?.slug ?? "").trim();
+  const { slug } = await params;
+  const slugLower = norm(slug);
 
   // ✅ Metadata must never crash; fall back gracefully.
   if (!slug) {
@@ -142,12 +137,10 @@ export async function generateMetadata({
 export default async function TitlePage({
   params,
 }: {
-  params: ParamsLike<{ slug: string }> | { slug: string };
+  params: RouteParams;
 }) {
-  const p = await resolveParams(params);
-
-  const slug = String(p?.slug ?? "").trim();
-  const target = slug.toLowerCase();
+  const { slug } = await params;
+  const target = norm(slug);
 
   // ✅ seasons-style guard
   if (!target) {

@@ -12,12 +12,10 @@ import ClientStory from "./ClientStory";
 import { resolveCanonicalSlug, getSlugAliases, normSlug } from "@/lib/slugAliases";
 import { loadAlumniByAliases } from "@/lib/loadAlumni";
 
-/** Next can hand us params as an object OR a Promise in some server contexts. */
-type RouteParams = { slug: string };
-async function readParams(
-  params: RouteParams | Promise<RouteParams>
-): Promise<RouteParams> {
-  return await Promise.resolve(params);
+/** Next 16 passes dynamic route params as an async value. */
+type RouteParams = Promise<{ slug: string }>;
+async function readParams(params: RouteParams): Promise<{ slug: string }> {
+  return await params;
 }
 
 /** Build an absolute base URL from request headers (works on Netlify/Vercel/proxies). */
@@ -291,7 +289,7 @@ async function findStoryBySlug(slugRaw: string): Promise<StoryRow | null> {
 export async function generateMetadata({
   params,
 }: {
-  params: RouteParams | Promise<RouteParams>;
+  params: RouteParams;
 }): Promise<Metadata> {
   const { slug: rawSlug } = await readParams(params);
   const story = await findStoryBySlug(rawSlug);
@@ -335,7 +333,7 @@ export async function generateMetadata({
 export default async function StorySlugPage({
   params,
 }: {
-  params: RouteParams | Promise<RouteParams>;
+  params: RouteParams;
 }) {
   const { slug: rawSlug } = await readParams(params);
   const storyRaw = await findStoryBySlug(rawSlug);

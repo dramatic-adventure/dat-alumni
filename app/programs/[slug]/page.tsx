@@ -94,9 +94,9 @@ function renderMaybeLink(href: string | undefined, label: string, className?: st
 
 // ---------- Metadata ----------
 export async function generateMetadata(
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
-  const { slug } = params;
+  const { slug } = await params;
   const p = programMap[slug];
 
   if (!p) {
@@ -129,8 +129,8 @@ export async function generateMetadata(
 }
 
 // ---------- page ----------
-export default async function ProgramPage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+export default async function ProgramPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const p = programMap[slug];
   if (!p) return notFound();
 

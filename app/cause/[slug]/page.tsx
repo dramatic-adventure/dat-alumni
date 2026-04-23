@@ -37,16 +37,8 @@ import PosterCard from "@/components/shared/PosterCard";
 
 export const revalidate = 3600;
 
-type ParamsLike<T> = Promise<T> | T;
-
-async function resolveParams(
-  params: ParamsLike<{ slug: string }> | ParamsLike<{ slug?: string }>
-) {
-  const p = (params instanceof Promise ? await params : params) as {
-    slug?: string;
-  };
-  return p;
-}
+// Next 16 passes dynamic route params as an async value.
+type RouteParams = Promise<{ slug: string }>;
 
 type PersonRoleMaybeSlug = {
   name: string;
@@ -78,10 +70,6 @@ const causeMetaMap: Record<string, CauseMeta> = {
 // ===============================
 // Helpers
 // ===============================
-
-function norm(v: unknown) {
-  return String(v ?? "").trim().toLowerCase();
-}
 
 function normalizeStaticSrc(src?: string): string | undefined {
   if (!src) return undefined;
@@ -131,6 +119,10 @@ function findCauseBySlug(slug: unknown): {
   }
 
   return null;
+}
+
+function norm(v: unknown) {
+  return String(v ?? "").trim().toLowerCase();
 }
 
 // ===============================
@@ -215,10 +207,9 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: ParamsLike<{ slug: string }> | { slug: string };
+  params: RouteParams;
 }): Promise<Metadata> {
-  const p = await resolveParams(params);
-  const slug = String(p?.slug ?? "").trim();
+  const { slug } = await params;
   const slugLower = norm(slug);
 
   // ✅ Metadata must never crash; fall back gracefully.
@@ -288,10 +279,9 @@ export async function generateMetadata({
 export default async function CausePage({
   params,
 }: {
-  params: ParamsLike<{ slug: string }> | { slug: string };
+  params: RouteParams;
 }) {
-  const p = await resolveParams(params);
-  const slug = String(p?.slug ?? "").trim();
+  const { slug } = await params;
 
   // ✅ seasons-style guard
   if (!slug) {

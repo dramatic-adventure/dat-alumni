@@ -119,14 +119,11 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }> | { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  // ✅ Next 15: params may be a Promise in some dynamic setups
-  const p = (params instanceof Promise ? await params : params) as {
-    slug?: string;
-  };
+  const { slug: rawSlug } = await params;
 
-  const raw = String(p?.slug ?? "").trim();
+  const raw = String(rawSlug ?? "").trim();
 
   // ✅ Metadata should never crash the page; fall back gracefully.
   if (!raw) {
@@ -150,14 +147,11 @@ export async function generateMetadata({
 export default async function RolePage({
   params,
 }: {
-  params: Promise<{ slug: string }> | { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  // ✅ Next 15: params may be a Promise in some dynamic setups
-  const p = (params instanceof Promise ? await params : params) as {
-    slug?: string;
-  };
+  const { slug: rawSlug } = await params;
 
-  const slugLower = String(p?.slug ?? "").trim().toLowerCase();
+  const slugLower = String(rawSlug ?? "").trim().toLowerCase();
 
   // ✅ seasons-style guard
   if (!slugLower) {
