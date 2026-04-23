@@ -1,8 +1,8 @@
 # netlify.toml
 [build]
-  command = "export NODE_OPTIONS=--max-old-space-size=4096 && export DATABASE_URL=file:/tmp/dev.db && npm run prisma:generate && npm run build"
+  command = "export NODE_OPTIONS=--max-old-space-size=4096 && npm run prisma:generate && npm run build"
   publish  = ".next"
-
+  
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 

@@ -175,9 +175,13 @@ function normalizeStatus(raw: unknown) {
   return s;
 }
 
-export async function GET(req: Request, ctx: { params: { slug: string } }) {
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ slug: string }> }
+) {
   try {
-    const incoming = lower(ctx.params.slug).trim();
+    const { slug } = await params;
+    const incoming = lower(slug).trim();
     if (!incoming) {
       return NextResponse.json({ error: "Not found" }, { status: 404, headers: nocache() });
     }
