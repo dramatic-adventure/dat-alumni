@@ -6,6 +6,31 @@ const isCanaryPPR = process.env.NEXT_CANARY_PPR === "1";
 const nextConfig: NextConfig = {
   ...(isCanaryPPR ? { experimental: { ppr: true } } : {}),
 
+  // The Prisma 7 client ships WASM query compilers for every supported database
+  // (~75 MB total in node_modules/@prisma/client/runtime). This app only uses
+  // PostgreSQL via the Neon adapter, so excluding the other engines and the
+  // Prisma CLI/dev tooling keeps the Netlify server function under the 50 MB
+  // upload limit.
+  outputFileTracingExcludes: {
+    "/*": [
+      "node_modules/@prisma/client/runtime/query_compiler_*.cockroachdb.*",
+      "node_modules/@prisma/client/runtime/query_compiler_*.mysql.*",
+      "node_modules/@prisma/client/runtime/query_compiler_*.sqlite.*",
+      "node_modules/@prisma/client/runtime/query_compiler_*.sqlserver.*",
+      "node_modules/@prisma/client/runtime/query_compiler_small_bg.postgresql.*",
+      "node_modules/@prisma/engines/**",
+      "node_modules/prisma/**",
+      "node_modules/@prisma/studio-core/**",
+      "node_modules/@prisma/dev/**",
+      "node_modules/@prisma/fetch-engine/**",
+      "node_modules/@prisma/get-platform/**",
+      "node_modules/@prisma/adapter-better-sqlite3/**",
+      "node_modules/better-sqlite3/**",
+    ],
+  },
+
+  serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon"],
+
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 60,
