@@ -1,14 +1,34 @@
 import React from "react";
 
+type TextureOverlay = { color: string; opacity: number };
+
+type TextureOption = {
+  key: string;
+  label: string;
+  image: string;
+  overlay?: TextureOverlay;
+};
+
+/**
+ * Texture options for the Basics panel.
+ * Kraft Paper is the default/global background — selecting it clears any
+ * custom override (the save layer already treats "kraft" as the baseline).
+ * Add new entries here to extend the texture picker without changing the UI.
+ */
+const OPTIONS: TextureOption[] = [
+  { key: "kraft", label: "Kraft Paper", image: "/texture/kraft-paper.jpg" },
+  {
+    key: "leather",
+    label: "Red Leather",
+    image: "/texture/leather.webp",
+    overlay: { color: "#241123", opacity: 0.15 },
+  },
+];
+
 type Props = {
   value: string;
   onChange: (next: string) => void;
 };
-
-const OPTIONS: { key: string; label: string; swatch: string }[] = [
-  { key: "kraft", label: "Kraft Paper", swatch: "#D8C2A7" },
-  { key: "leather", label: "Leather", swatch: "#5C3829" },
-];
 
 export default function BackgroundSwatches({ value, onChange }: Props) {
   return (
@@ -35,29 +55,49 @@ export default function BackgroundSwatches({ value, onChange }: Props) {
               aria-pressed={active}
               style={{
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
-                gap: 8,
-                border: "none",
-                background: active ? "rgba(255,255,255,0.18)" : "transparent",
+                gap: 7,
+                border: active
+                  ? "2px solid rgba(255,255,255,0.60)"
+                  : "2px solid rgba(255,255,255,0.12)",
+                background: active ? "rgba(255,255,255,0.10)" : "transparent",
                 padding: "8px 10px",
                 borderRadius: 12,
                 cursor: "pointer",
                 color: "#F2F2F2",
                 fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                fontSize: 14,
+                fontSize: 13,
               }}
             >
+              {/* Real texture snippet — position:relative + overflow:hidden clips the image */}
               <span
                 aria-hidden
                 style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: 6,
-                  background: opt.swatch,
-                  boxShadow:
-                    "inset 0 0 0 2px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.18)",
+                  position: "relative",
+                  display: "block",
+                  width: 80,
+                  height: 52,
+                  borderRadius: 7,
+                  overflow: "hidden",
+                  backgroundImage: `url(${opt.image})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.32)",
                 }}
-              />
+              >
+                {opt.overlay ? (
+                  <span
+                    aria-hidden
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      backgroundColor: opt.overlay.color,
+                      opacity: opt.overlay.opacity,
+                    }}
+                  />
+                ) : null}
+              </span>
               {opt.label}
             </button>
           );

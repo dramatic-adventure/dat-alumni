@@ -2113,8 +2113,8 @@ return (
       letterSpacing: ".1em",
       opacity: 0.9,
       marginBottom: 12,
-      paddingLeft: "clamp(12px, 2.5vw, 24px)",
-      paddingRight: "clamp(12px, 2.5vw, 24px)",
+      paddingLeft: 2,
+      paddingRight: 2,
     }}
   >
     <span>Profile Studio</span>
