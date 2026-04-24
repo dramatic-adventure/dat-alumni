@@ -41,6 +41,13 @@ function parseAccept(accept: string) {
     .filter(Boolean);
 }
 
+// Extension lists used as a fallback when file.type is empty (common on iOS/iPadOS).
+const EXT_BY_MIME_PREFIX: Record<string, string[]> = {
+  image: [".jpg", ".jpeg", ".png", ".gif", ".webp", ".heic", ".heif", ".avif", ".bmp", ".tiff", ".tif", ".svg"],
+  video: [".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v", ".3gp"],
+  audio: [".mp3", ".wav", ".m4a", ".aac", ".ogg", ".flac"],
+};
+
 function fileMatchesToken(file: File, token: string) {
   const name = (file.name || "").toLowerCase();
   const type = (file.type || "").toLowerCase();
@@ -52,10 +59,17 @@ function fileMatchesToken(file: File, token: string) {
   // wildcard mime: "image/*"
   if (t.endsWith("/*")) {
     const prefix = t.slice(0, -2);
-    return type.startsWith(prefix);
+    // Primary: MIME type match
+    if (type) return type.startsWith(prefix);
+    // Fallback: iOS/iPadOS often omits file.type — use extension instead
+    const exts = EXT_BY_MIME_PREFIX[prefix];
+    if (exts) return exts.some((ext) => name.endsWith(ext));
+    return false;
   }
 
   // exact mime: "application/pdf"
+  // Same iOS fallback: if type is empty, treat as a pass-through so the server can decide
+  if (!type && t === "application/octet-stream") return true;
   return type === t;
 }
 
