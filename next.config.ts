@@ -6,11 +6,16 @@ const isCanaryPPR = process.env.NEXT_CANARY_PPR === "1";
 const nextConfig: NextConfig = {
   ...(isCanaryPPR ? { experimental: { ppr: true } } : {}),
 
-  // The Prisma 7 client ships WASM query compilers for every supported database
-  // (~75 MB total in node_modules/@prisma/client/runtime). This app only uses
-  // PostgreSQL via the Neon adapter, so excluding the other engines and the
-  // Prisma CLI/dev tooling keeps the Netlify server function under the 50 MB
-  // upload limit.
+  // Files filtered out of `.next/standalone` before @netlify/plugin-nextjs
+  // copies it into the generated server handler. This is one of only two
+  // levers that actually shrink ___netlify-server-handler — see netlify.toml
+  // for the full explanation. The `"/*"` key applies to all routes.
+  //
+  // - Prisma 7 ships WASM query compilers for every database it supports
+  //   (~75 MB); this app only talks to Postgres via the Neon adapter.
+  // - sharp ships per-platform prebuilt native binaries via @img/*. Netlify
+  //   Functions run on Amazon Linux (glibc) x64, so every other prebuild
+  //   variant is dead weight in the zipped upload.
   outputFileTracingExcludes: {
     "/*": [
       "node_modules/@prisma/client/runtime/query_compiler_*.cockroachdb.*",
@@ -26,6 +31,29 @@ const nextConfig: NextConfig = {
       "node_modules/@prisma/get-platform/**",
       "node_modules/@prisma/adapter-better-sqlite3/**",
       "node_modules/better-sqlite3/**",
+
+      // sharp: Alpine (musl) variants
+      "node_modules/@img/sharp-libvips-linuxmusl-x64/**",
+      "node_modules/@img/sharp-linuxmusl-x64/**",
+      "node_modules/@img/sharp-libvips-linuxmusl-arm64/**",
+      "node_modules/@img/sharp-linuxmusl-arm64/**",
+
+      // sharp: non-Linux prebuilds
+      "node_modules/@img/sharp-darwin-arm64/**",
+      "node_modules/@img/sharp-darwin-x64/**",
+      "node_modules/@img/sharp-libvips-darwin-arm64/**",
+      "node_modules/@img/sharp-libvips-darwin-x64/**",
+      "node_modules/@img/sharp-win32-arm64/**",
+      "node_modules/@img/sharp-win32-ia32/**",
+      "node_modules/@img/sharp-win32-x64/**",
+
+      // sharp: non-x64 Linux prebuilds
+      "node_modules/@img/sharp-linux-arm/**",
+      "node_modules/@img/sharp-linux-arm64/**",
+      "node_modules/@img/sharp-libvips-linux-arm/**",
+      "node_modules/@img/sharp-libvips-linux-arm64/**",
+      "node_modules/@img/sharp-libvips-linux-s390x/**",
+      "node_modules/@img/sharp-libvips-linux-ppc64/**",
     ],
   },
 

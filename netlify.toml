@@ -2,28 +2,34 @@
 [build]
   command = "export NODE_OPTIONS=--max-old-space-size=4096 && npm run prisma:generate && npm run build"
   publish  = ".next"
-  
+
 [functions]
   directory = "netlify/functions"
 
-# The Netlify Next.js plugin copies the whole workspace into the generated
-# server handler (.netlify/functions-internal/___netlify-server-handler/).
-# That includes large items this function never needs at runtime and which
-# push the zipped upload past Netlify's 50 MB function limit. Exclude them
-# so the bundler drops them before upload.
-#   - .git/ is repo history; the function doesn't read it (~56 MB).
-#   - public/ is served by Netlify's static CDN and Image CDN via HTTP;
-#     the server handler does not read files from it (~66 MB).
-#   - @img/sharp-libvips-linuxmusl-x64 + sharp-linuxmusl-x64 are the Alpine
-#     (musl) sharp prebuilds. Netlify Functions run on Amazon Linux (glibc),
-#     so only the linux-x64 (glibc) prebuilds are loaded at runtime (~17 MB).
-[functions."___netlify-server-handler"]
-  included_files = [
-    "!.git/**",
-    "!public/**",
-    "!node_modules/@img/sharp-libvips-linuxmusl-x64/**",
-    "!node_modules/@img/sharp-linuxmusl-x64/**",
-  ]
+# Note on Next.js server handler size:
+#
+# @netlify/plugin-nextjs generates .netlify/functions-internal/
+# ___netlify-server-handler/___netlify-server-handler.json at build time with
+#   includedFiles: ["**"]
+#   includedFilesBasePath: <that same handler directory>
+#   nodeBundler: "none"
+# That manifest is authoritative for zip-it-and-ship-it, so negated
+# `[functions."___netlify-server-handler"].included_files` entries in this
+# file are silently ignored for that function (confirmed by reading the
+# plugin source in opennextjs-netlify/src/build/functions/server.ts).
+#
+# To keep the handler under Netlify's 50 MB upload limit, exclusions must be
+# applied in one of two places that the plugin actually respects:
+#   1. next.config.ts `outputFileTracingExcludes` — filters files out of
+#      `.next/standalone`, which the plugin copies into the handler dir.
+#   2. The local Netlify Build plugin declared below, which runs in
+#      onPostBuild (after the Next.js plugin populates the handler dir, and
+#      before zip-it-and-ship-it zips it) and physically deletes files from
+#      the handler directory. That plugin also logs actual on-disk sizes so
+#      production deploy logs contain ground truth, not a simulated zip.
+
+[[plugins]]
+  package = "./netlify/plugins/prune-server-handler"
 
 [build.environment]
   SECRETS_SCAN_OMIT_PATHS = "public/namestack-hints.json"
