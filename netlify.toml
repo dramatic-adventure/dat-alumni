@@ -5,8 +5,25 @@
   
 [functions]
   directory = "netlify/functions"
-  external_node_modules = ["@prisma/client", "prisma"]
-  included_files = ["node_modules/.prisma/client/**"]
+
+# The Netlify Next.js plugin copies the whole workspace into the generated
+# server handler (.netlify/functions-internal/___netlify-server-handler/).
+# That includes large items this function never needs at runtime and which
+# push the zipped upload past Netlify's 50 MB function limit. Exclude them
+# so the bundler drops them before upload.
+#   - .git/ is repo history; the function doesn't read it (~56 MB).
+#   - public/ is served by Netlify's static CDN and Image CDN via HTTP;
+#     the server handler does not read files from it (~66 MB).
+#   - @img/sharp-libvips-linuxmusl-x64 + sharp-linuxmusl-x64 are the Alpine
+#     (musl) sharp prebuilds. Netlify Functions run on Amazon Linux (glibc),
+#     so only the linux-x64 (glibc) prebuilds are loaded at runtime (~17 MB).
+[functions."___netlify-server-handler"]
+  included_files = [
+    "!.git/**",
+    "!public/**",
+    "!node_modules/@img/sharp-libvips-linuxmusl-x64/**",
+    "!node_modules/@img/sharp-linuxmusl-x64/**",
+  ]
 
 [build.environment]
   SECRETS_SCAN_OMIT_PATHS = "public/namestack-hints.json"
