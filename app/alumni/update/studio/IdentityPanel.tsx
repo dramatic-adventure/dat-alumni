@@ -515,7 +515,20 @@ export default function IdentityPanel({
   saveCategory,
 }: IdentityPanelProps) {
   const pronounPresets = ["she/her", "he/him", "they/them", "she/they", "he/they"];
-  const languagePresets = ["English", "Español", "Slovenský", "Shuar-Chicham"];
+  const languagePresets = [
+    // Slovakia / ETP
+    "Slovenský", "Romani", "Hungarian",
+    // Ecuador
+    "Español", "Shuar-Chicham", "Quechua",
+    // Tanzania
+    "Kiswahili", "German",
+    // Zimbabwe
+    "Shona", "Ndebele",
+    // Ivory Coast
+    "French",
+    // Global
+    "English",
+  ];
 
   // Derived — parsed language entries (lang + optional level)
   const langEntries = parseLangEntries(profile.languages);
