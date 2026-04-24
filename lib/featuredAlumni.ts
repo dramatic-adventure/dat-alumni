@@ -52,6 +52,7 @@ export const neverFeatured = new Set<string>([
   "petra-slovakova",
   "tamara-durackova",
   "rachel-wiese",
+  "cameron-cuthill",
 ]);
 
 
