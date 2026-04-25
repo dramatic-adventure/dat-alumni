@@ -5,8 +5,6 @@
   
 [functions]
   directory = "netlify/functions"
-  external_node_modules = ["@prisma/client"]
-  included_files = ["node_modules/.prisma/client/**"]
 
 [build.environment]
   SECRETS_SCAN_OMIT_PATHS = "public/namestack-hints.json"
