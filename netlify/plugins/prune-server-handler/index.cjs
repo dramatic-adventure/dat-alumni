@@ -93,7 +93,7 @@ function removePath(target, handlerRoot, utils) {
 }
 
 module.exports = {
-  onPostBuild: async ({ utils }) => {
+  onBuild: async ({ utils }) => {
     const HANDLER_DIR = path.resolve(
       ".netlify",
       "functions-internal",
