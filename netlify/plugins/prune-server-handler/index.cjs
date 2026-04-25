@@ -89,17 +89,33 @@ module.exports = {
       totalFreed += removePath(gitDir, HANDLER_DIR, utils);
     }
 
-    // 2. public/ — RISKY: server reads public/fallback/*.csv at runtime.
-    //    Only prune when PRUNE_HANDLER_PUBLIC=1 is explicitly set.
-    if (process.env.PRUNE_HANDLER_PUBLIC === "1") {
-      const publicDir = path.join(HANDLER_DIR, "public");
-      if (fs.existsSync(publicDir)) {
-        totalFreed += removePath(publicDir, HANDLER_DIR, utils);
+    // 2. public/ — selectively prune children not needed by server fs reads.
+    //    Keep: fallback/ (loadCsv.ts reads CSV via fs.readFile at runtime)
+    //          seasons/  (season page uses fs.access to test hero image existence)
+    //    Delete everything else (posters, images, fonts, texture, icons, etc.)
+    //    — those are URL-path references only, served by Netlify CDN static deploy.
+    const PUBLIC_SAFELIST = new Set(["fallback", "seasons"]);
+    const publicDir = path.join(HANDLER_DIR, "public");
+    if (fs.existsSync(publicDir)) {
+      let publicEntries;
+      try {
+        publicEntries = fs.readdirSync(publicDir, { withFileTypes: true });
+      } catch (_) {
+        publicEntries = [];
+      }
+      const kept = [];
+      for (const e of publicEntries) {
+        if (PUBLIC_SAFELIST.has(e.name)) {
+          kept.push(e.name);
+        } else {
+          totalFreed += removePath(path.join(publicDir, e.name), HANDLER_DIR, utils);
+        }
+      }
+      if (kept.length) {
+        console.log(`  kept public/ children: ${kept.join(", ")}`);
       }
     } else {
-      console.log(
-        "  skipping public/ (server reads public/fallback CSV at runtime — set PRUNE_HANDLER_PUBLIC=1 to override)"
-      );
+      console.log("  skipping public/ (not found in handler)");
     }
 
     // 3. Wrong-platform Sharp native binaries under node_modules/@img.
