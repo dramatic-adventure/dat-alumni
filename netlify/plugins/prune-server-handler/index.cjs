@@ -44,6 +44,33 @@ function collectMapFiles(dirPath, results = []) {
   return results;
 }
 
+// Log the top-N largest immediate children of a directory by size.
+function logLargestChildren(label, dirPath, topN = 25) {
+  if (!fs.existsSync(dirPath)) return;
+  let entries;
+  try {
+    entries = fs.readdirSync(dirPath, { withFileTypes: true });
+  } catch (_) {
+    return;
+  }
+  const sized = entries.map((e) => {
+    const full = path.join(dirPath, e.name);
+    let size = 0;
+    if (e.isDirectory()) {
+      size = dirSize(full);
+    } else {
+      try { size = fs.statSync(full).size; } catch (_) {}
+    }
+    return { name: e.name, size };
+  });
+  sized.sort((a, b) => b.size - a.size);
+  const top = sized.slice(0, topN);
+  console.log(`\n[prune-server-handler] ${label} (${top.length} entries):`);
+  for (const { name, size } of top) {
+    console.log(`  ${mb(size).padStart(9)}  ${name}`);
+  }
+}
+
 // Remove a path (file or directory) and return bytes freed.
 function removePath(target, handlerRoot, utils) {
   // Safety: resolved target must be inside handlerRoot.
@@ -146,6 +173,29 @@ module.exports = {
     const after = dirSize(HANDLER_DIR);
     console.log(
       `[prune-server-handler] freed ${mb(totalFreed)} — handler size after: ${mb(after)}`
+    );
+
+    // Diagnostic: show what remains large after pruning.
+    logLargestChildren("largest handler children after pruning", HANDLER_DIR);
+    logLargestChildren(
+      "largest node_modules children after pruning",
+      path.join(HANDLER_DIR, "node_modules")
+    );
+    logLargestChildren(
+      "largest @prisma children after pruning",
+      path.join(HANDLER_DIR, "node_modules", "@prisma")
+    );
+    logLargestChildren(
+      "largest @img children after pruning",
+      path.join(HANDLER_DIR, "node_modules", "@img")
+    );
+    logLargestChildren(
+      "largest .next children after pruning",
+      path.join(HANDLER_DIR, ".next")
+    );
+    logLargestChildren(
+      "largest public children after pruning",
+      path.join(HANDLER_DIR, "public")
     );
   },
 };
