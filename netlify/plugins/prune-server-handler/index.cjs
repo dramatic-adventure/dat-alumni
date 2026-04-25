@@ -118,10 +118,10 @@ module.exports = {
 
     // OpenNext/Netlify can copy nested build artifacts into the handler.
     // Do NOT delete all of .netlify: the runtime imports .netlify/dist/run/...
-    // Keep .netlify/dist and prune other nested .netlify children.
+    // Keep .netlify/dist and .netlify/package.json; runtime files need package metadata for ESM.
     const nestedNetlifyDir = path.join(HANDLER_DIR, ".netlify");
     if (fs.existsSync(nestedNetlifyDir)) {
-      const keepNestedNetlify = new Set(["dist"]);
+      const keepNestedNetlify = new Set(["dist", "package.json"]);
       let kept = [];
       try {
         const entries = fs.readdirSync(nestedNetlifyDir, { withFileTypes: true });
