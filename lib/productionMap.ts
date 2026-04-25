@@ -271,7 +271,7 @@ export const productionMap: Record<string, Production> = {
       "jesse-baxter": ["Artistic Director"],
       "mary-k-baxter": ["Executive Director"],
       "tom-costello": ["Producer"],
-      "christen-madrazo": ["Dramaturg", "Narrator"],
+      "christen-madrazo": ["Dramaturg", "Actor"],
       "dominika-siroka": ["Dramaturg"],
       "petra-slovakova": ["Interpreter"],
       "lukas-hudak": ["Actor, Musician"],

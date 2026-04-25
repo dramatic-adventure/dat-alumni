@@ -36,13 +36,13 @@ export default function NotFound() {
           color: #241123;
         }
         .nf-support-link {
-          color: #6C00AF;
+          color: #FFCC00;
           letter-spacing: 0.2em;
           border-bottom: 1px solid rgba(108,0,175,0.4);
           transition: color 180ms ease, letter-spacing 180ms ease, border-color 180ms ease;
         }
         .nf-support-link:hover {
-          color: #FFCC00;
+          color: #D9A919;
           letter-spacing: 0.32em;
           border-bottom-color: rgba(255,204,0,0.6);
         }
@@ -63,8 +63,8 @@ export default function NotFound() {
         <span
           style={{
             fontFamily: "var(--font-space-grotesk), sans-serif",
-            fontSize: "0.85rem",
-            fontWeight: 600,
+            fontSize: "1rem",
+            fontWeight:900,
             letterSpacing: "0.22em",
             textTransform: "uppercase",
             color: "#241123",
@@ -107,7 +107,8 @@ export default function NotFound() {
             fontFamily: 'var(--font-special-elite), "Courier New", monospace',
             fontSize: "clamp(1.05rem, 1.9vw, 1.25rem)",
             fontWeight: 400,
-            color: "#f2f2f2e1",
+            color: "#f2f2f2",
+            letterSpacing: "0.1em",
             lineHeight: 1.5,
             margin: "0 auto 0.6rem",
           }}
@@ -122,7 +123,7 @@ export default function NotFound() {
             fontSize: "clamp(0.95rem, 1.5vw, 1.05rem)",
             fontWeight: 400,
             lineHeight: 1.65,
-            color: "rgba(36,17,35,0.88)",
+            color: "#f2f2f29a",
             maxWidth: "46ch",
             margin: "0 auto 2.75rem",
           }}
@@ -159,8 +160,8 @@ export default function NotFound() {
           className="nf-support-link"
           style={{
             fontFamily: "var(--font-dm-sans), sans-serif",
-            fontSize: "0.82rem",
-            fontWeight: 900,
+            fontSize: "0.72rem",
+            fontWeight: 700,
             textTransform: "uppercase",
             textDecoration: "none",
             paddingBottom: "2px",

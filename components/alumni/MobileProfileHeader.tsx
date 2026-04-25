@@ -9,7 +9,7 @@ import Lightbox from "@/components/shared/Lightbox";
 import StatusFlags from "@/components/alumni/StatusFlags";
 
 import NameStack from "@/components/shared/NameStack";
-import { splitTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
+import { splitTitles, splitCurrentTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
 import { getLocationHrefForToken, normalizeLocation } from "@/lib/locations";
 
 interface MobileProfileHeaderProps {
@@ -190,9 +190,12 @@ export default function MobileProfileHeader({
     ).values()
   );
 
-  // Multi-value currentTitle support: "Social Worker, Teacher" → ["Social Worker", "Teacher"]
+  // Multi-value currentTitle support: "Social Worker; Teacher" → ["Social Worker", "Teacher"]
+  // ✅ Use splitCurrentTitles (no comma split) so titles like
+  //    "Executive Director, Dramatic Adventure Theatre" stay as one entry.
+  //    Separate multiple outside titles with semicolons or newlines.
   const currentTitles = currentTitle
-    ? splitTitles(currentTitle).map((t) => t.trim()).filter(Boolean)
+    ? splitCurrentTitles(currentTitle).map((t) => t.trim()).filter(Boolean)
     : [];
   const primaryCurrentTitle = currentTitles[0] ?? null;
   const extraCurrentTitles = currentTitles.slice(1).map((label) => ({

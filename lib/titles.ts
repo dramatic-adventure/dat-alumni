@@ -21,6 +21,24 @@ export function splitTitles(raw?: string | null): string[] {
     .filter(Boolean);
 }
 
+/**
+ * Split a `currentTitle` string into individual titles WITHOUT splitting on commas.
+ *
+ * Commas are intentionally excluded because a single professional title commonly
+ * contains a comma (e.g. "Executive Director, Dramatic Adventure Theatre" or
+ * "Co-Founder, President"). Splitting on commas would create spurious second
+ * titles from what is actually one continuous title string.
+ *
+ * Multiple outside titles should be separated by semicolons or newlines.
+ */
+export function splitCurrentTitles(raw?: string | null): string[] {
+  if (!raw) return [];
+  return raw
+    .split(/[\u2215/|;·•—–\n\r]+/g) // same as splitTitles but WITHOUT comma
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 function splitRoleTokensForBuckets(raw?: string | null): string[] {
   const s = String(raw || "").trim();
   if (!s) return [];
@@ -84,6 +102,12 @@ const EXCLUDED_TITLES = new Set([
   "fellow",
   "volunteer",
   "cos", // no COS button
+  // ✅ Emeritus is a modifier/status, not a standalone DAT title bucket.
+  //    "Executive Director Emeritus" is routed to executive-directors via its own pattern.
+  "emeritus",
+  "emerituss",        // typo variant in source data
+  "member emeritus",  // EM code expansion; no standalone bucket needed
+  "member emerituss", // typo-plural variant
 ]);
 
 /** Canonical buckets (keys → display label, icon, color) */
@@ -98,8 +122,11 @@ export type TitleBucketKey =
   | "travel-writers"
   | "playwrights"
   | "special-event-hosts"
-  // dynamic fallbacks:
-  | `title:${string}`;
+  | "staff"
+  // dynamic DAT role fallbacks:
+  | `title:${string}`
+  // professional pathway buckets (generated from currentTitle):
+  | `pathway:${string}`;
 
 export interface BucketMeta {
   key: TitleBucketKey;
@@ -110,7 +137,7 @@ export interface BucketMeta {
 
 /** Core, fixed buckets — ALL unique emoji + color (curated) */
 export const FIXED_BUCKETS: Record<
-  Exclude<TitleBucketKey, `title:${string}`>,
+  Exclude<TitleBucketKey, `title:${string}` | `pathway:${string}`>,
   BucketMeta
 > = {
   "executive-directors": {
@@ -172,6 +199,12 @@ export const FIXED_BUCKETS: Record<
     label: "Partners",
     icon: "🌐",
     color: "#708090", // slate gray
+  },
+  staff: {
+    key: "staff",
+    label: "Staff",
+    icon: "🏢",
+    color: "#3E3A36", // matches flags.ts Staff color
   },
 };
 
@@ -288,6 +321,19 @@ export function bucketsForTitleToken(tokenRaw: string): TitleBucketKey[] {
   // exclusions
   if (isExcludedTitleToken(t)) return [];
 
+  // ✅ "Former X" tokens are status/historical modifiers — no standalone bucket.
+  //    Historical director appearances are handled by the execDirStatus field mechanism.
+  // ✅ Tokens containing "Emeritus" are status modifiers, not browse buckets.
+  if (/^former\b/i.test(t) || /\bemeritus\b/i.test(t)) return [];
+
+  // ✅ Staff admin titles: operational/administrative roles that belong in the broad
+  //    Staff bucket (populated via datStaffStatus) — NOT singleton dynamic title buckets.
+  if (isStaffAdminTitle(t)) return [];
+
+  // ✅ "X Design" / "X Designs" (without "er") — suppress singleton design-noun buckets.
+  //    Only "X Designer" forms route to the Designers bucket.
+  if (/\bdesigns?\b/i.test(t) && !/\bdesigner\b/i.test(t)) return [];
+
   const buckets: TitleBucketKey[] = [];
 
   // Partners (specific)
@@ -304,10 +350,11 @@ export function bucketsForTitleToken(tokenRaw: string): TitleBucketKey[] {
     return buckets;
   }
 
-  // Director of Creative Learning → teaching-artists + executive-directors (specific taxonomy rule)
+  // Director of Creative Learning → teaching-artists only.
+  // ✅ executive-directors is now populated exclusively via the execDirStatus field
+  //    (Staff Role-Assignments with "Director" in the resolved title), not token routing.
   if (t === "director of creative learning") {
     buckets.push("teaching-artists");
-    buckets.push("executive-directors");
     return buckets;
   }
 
@@ -326,15 +373,14 @@ export function bucketsForTitleToken(tokenRaw: string): TitleBucketKey[] {
     buckets.push("designers");
     return buckets; // ✅ always fixed, no dynamic variant
   }
-  if (/\bdesigner\b/i.test(t)) {
-    buckets.push("designers");
-    return buckets;
-  }
 
-  // Executive Directors: singular + plural, plus other leadership variants below
-  if (/\bexecutive director(s)?\b/i.test(t)) {
-    buckets.push("executive-directors");
-    return buckets; // ✅ always fixed, no dynamic variant
+  // ✅ Executive Director tokens: no token-based bucket.
+  //    /title/executive-directors is populated exclusively by the execDirStatus field
+  //    (Staff Role-Assignments where resolved title contains "Director").
+  //    This prevents project roles, production credits, and legacy profile roles
+  //    from polluting the executive-directors bucket.
+  if (/\bexecutive director\b/i.test(t)) {
+    return [];
   }
 
   /** --- Remaining fixed-bucket rules --- */
@@ -342,9 +388,6 @@ export function bucketsForTitleToken(tokenRaw: string): TitleBucketKey[] {
   // Playwrights: anything with "playwright" (incl. Resident Playwright)
   if (/\bplaywright\b/i.test(t)) {
     buckets.push("playwrights");
-    if (t === "resident playwright") {
-      buckets.push("executive-directors"); // per your rule
-    }
     return buckets;
   }
 
@@ -359,12 +402,12 @@ export function bucketsForTitleToken(tokenRaw: string): TitleBucketKey[] {
   }
 
   // Managers of Community Partnerships:
+  // ✅ MCP/DCP titles route ONLY to their dedicated bucket.
   if (
     /\b(Manager|Director)\b.*\bof\b.*\bCommunity Partnerships\b/i.test(token) ||
     /\bCommunity Partnerships\b.*\b(Manager|Director)\b/i.test(token)
   ) {
     buckets.push("managers-community-partnerships");
-    buckets.push("executive-directors");
     return buckets;
   }
 
@@ -374,22 +417,19 @@ export function bucketsForTitleToken(tokenRaw: string): TitleBucketKey[] {
     return buckets;
   }
 
-  // Artistic Director / Associate Artistic Director: executive-directors + broadly directors
-  if (t === "artistic director" || t === "associate artistic director") {
-    buckets.push("executive-directors");
-    buckets.push("title:directors" as TitleBucketKey);
+  // Host / Hosts → merge into Special Event Hosts (not a separate generic bucket)
+  if (/^hosts?$/i.test(t)) {
+    buckets.push("special-event-hosts");
     return buckets;
   }
 
-  // Executive Directors bucket: other director-of / X-director forms
-  if (
-    /^director of\s+.+/i.test(token) ||
-    /^.+\s+director$/i.test(token)
-  ) {
-    if (t !== "director") {
-      buckets.push("executive-directors");
-      return buckets;
-    }
+  // Artistic Director / Associate Artistic Director → directors bucket only.
+  // ✅ executive-directors is handled by the execDirStatus field, not token routing.
+  // Strip trailing parenthetical modifiers (e.g. "(On Hiatus)") before matching.
+  const tBase = t.replace(/\s*\([^)]*\)\s*$/, "").trim();
+  if (tBase === "artistic director" || tBase === "associate artistic director") {
+    buckets.push("title:directors" as TitleBucketKey);
+    return buckets;
   }
 
   // Board of Directors → dedicated fixed bucket
@@ -425,11 +465,40 @@ export function bucketsForTitleToken(tokenRaw: string): TitleBucketKey[] {
 }
 
 /** Bucket record type used in the map below */
-type BucketRecord = {
+export type BucketRecord = {
   meta: BucketMeta;
   people: Set<string>;
-  subcats?: Map<string, Set<string>>; // used by Designers only now
+  subcats?: Map<string, Set<string>>; // used by Designers / Executive Directors
+  /** Distinguishes DAT-assigned roles from alumni's present-day professional titles. */
+  category: "dat-role" | "professional-pathway";
 };
+
+// ─── Staff admin title suppression ───────────────────────────────────────────
+// These are operational/administrative job titles that should live in the broad
+// Staff bucket — NOT create singleton dynamic DAT-role title buckets.
+// Normalization: & → and, extra whitespace collapsed, before matching.
+const STAFF_ADMIN_TITLE_RE =
+  /^(engagement\s+(coordinator|manager)|development\s+(director|associate|manager)|program\s+(coordinator|manager)|communications?\s+(manager|director|coordinator)|outreach\s+(coordinator|manager)|development\s+director|operations?\s+manager|finance\s+(director|manager)|grants?\s+(manager|coordinator|writer)|deputy\s+director(\s+.*)?|(.+\s+)?engagement\s+(coordinator|manager)|development\s+(and\s+)?community\s+engagement)$/i;
+
+function isStaffAdminTitle(t: string): boolean {
+  // Normalize & → and and collapse whitespace before pattern matching so tokens
+  // like "Artist & Alumni Engagement Coordinator" are reliably caught.
+  const normalized = t.trim().toLowerCase().replace(/&/g, "and").replace(/\s+/g, " ");
+  return STAFF_ADMIN_TITLE_RE.test(normalized);
+}
+
+// ─── Professional Pathway junk filter ────────────────────────────────────────
+// Exclude empty, too-short, symbol-only, or common placeholder currentTitle values
+// from creating Professional Pathway buckets.
+const JUNK_TITLE_RE =
+  /^(n\/a|none|na|tbd|unknown|other|student|retired|unemployed|job\s+seeker)$/i;
+
+function isJunkCurrentTitle(t: string): boolean {
+  if (!t || t.length < 3) return true;
+  if (!/[a-zA-Z]/.test(t)) return true;
+  if (JUNK_TITLE_RE.test(t.trim())) return true;
+  return false;
+}
 
 /** Build all buckets from alumni rows */
 export function buildTitleBuckets(alumni: AlumniRow[]) {
@@ -441,13 +510,14 @@ export function buildTitleBuckets(alumni: AlumniRow[]) {
     Object.values(FIXED_BUCKETS).map((b) => b.color.toLowerCase())
   );
 
-  // Seed fixed buckets (Designers gets subcats Map)
+  // Seed fixed buckets (Designers and Executive Directors get subcats Maps)
   for (const key of Object.keys(FIXED_BUCKETS) as (keyof typeof FIXED_BUCKETS)[]) {
     const obj: BucketRecord = {
       meta: FIXED_BUCKETS[key],
       people: new Set<string>(),
+      category: "dat-role",
     };
-    if (key === "designers" || key === "executive-directors") {
+    if (key === "designers" || key === "executive-directors" || key === "staff") {
       obj.subcats = new Map<string, Set<string>>();
     }
     buckets.set(key, obj);
@@ -498,7 +568,21 @@ export function buildTitleBuckets(alumni: AlumniRow[]) {
       icon: guessIconForLabel(label),
       color: colorForDynamic(label), // ← unique color per dynamic label
     };
-    const v: BucketRecord = { meta, people: new Set<string>() };
+    const v: BucketRecord = { meta, people: new Set<string>(), category: "dat-role" };
+    buckets.set(key, v);
+    return v;
+  }
+
+  // helper to ensure meta for professional-pathway buckets (pathway:physical-therapists, etc.)
+  function ensurePathwayBucket(key: TitleBucketKey, label: string) {
+    if (buckets.has(key)) return buckets.get(key)!;
+    const meta: BucketMeta = {
+      key,
+      label,
+      icon: guessIconForLabel(label),
+      color: colorForDynamic(label),
+    };
+    const v: BucketRecord = { meta, people: new Set<string>(), category: "professional-pathway" };
     buckets.set(key, v);
     return v;
   }
@@ -517,49 +601,25 @@ export function buildTitleBuckets(alumni: AlumniRow[]) {
       }
     }
 
-    // Also include currentTitle so alumni are findable by their life role
-    // (e.g., "Social Worker" → /title/social-workers shows this alumni).
-    // ✅ Run through splitTitles so comma-separated values ("Actor, Writer") each
-    //    become independent tokens rather than one bad concatenated token.
-    const ct = (a as any).currentTitle ?? (a as any)["current title"];
-    if (ct && typeof ct === "string" && ct.trim()) {
-      for (const t of splitTitles(ct)) {
-        if (t.trim()) tokens.add(t.trim());
-      }
-    }
+    // ✅ currentTitle is intentionally NOT included here.
+    //    DAT title buckets should only reflect DAT-assigned roles, not outside
+    //    professional titles. currentTitle is not included in DAT Role buckets. It may still be used for search, matched-via labels, individual profile display, and Professional Pathways.
 
     for (const rawToken of tokens) {
       const keys = bucketsForTitleToken(rawToken);
       if (!keys.length) continue;
 
       for (const key of keys) {
+        // ✅ executive-directors is now populated exclusively by the execDirStatus field
+        //    below — skip any residual token routing for that bucket.
+        if (key === "executive-directors") continue;
+
         const isFixed = key in FIXED_BUCKETS;
         const bucket = isFixed
           ? buckets.get(key as keyof typeof FIXED_BUCKETS)!
           : ensureDynamicBucket(key);
 
         bucket.people.add(a.slug); // de-dupe persons within a bucket
-
-        if (key === "executive-directors") {
-          if (!bucket.subcats) bucket.subcats = new Map<string, Set<string>>();
-
-          if (!bucket.subcats.has("current")) bucket.subcats.set("current", new Set<string>());
-          if (!bucket.subcats.has("former")) bucket.subcats.set("former", new Set<string>());
-
-          const currentSet = bucket.subcats.get("current")!;
-          const formerSet = bucket.subcats.get("former")!;
-
-          const isFormer = /^former\b/i.test(rawToken);
-
-          if (isFormer) {
-            if (!currentSet.has(a.slug)) {
-              formerSet.add(a.slug);
-            }
-          } else {
-            currentSet.add(a.slug);
-            formerSet.delete(a.slug);
-          }
-        }
 
         // Designers subcategories: "<Something> Designer"
         if (key === "designers") {
@@ -570,6 +630,76 @@ export function buildTitleBuckets(alumni: AlumniRow[]) {
           if (!bucket.subcats.has(lc)) bucket.subcats.set(lc, new Set());
           bucket.subcats.get(lc)!.add(a.slug);
         }
+      }
+    }
+
+    // ✅ Executive Directors bucket: populated from execDirStatus field only.
+    //    Source: Staff Role-Assignments where resolved title contains "Director".
+    //    Current/Past determined by Role-Assignments startDate/endDate.
+    //    This is the ONLY place executive-directors gets populated — token routing
+    //    for this bucket has been intentionally removed from bucketsForTitleToken.
+    const execDirStatus = (a as any).execDirStatus as string | undefined;
+    if (execDirStatus === "current" || execDirStatus === "past") {
+      const execBucket = buckets.get("executive-directors")!;
+      execBucket.people.add(a.slug);
+      if (!execBucket.subcats) execBucket.subcats = new Map();
+      if (!execBucket.subcats.has("current")) execBucket.subcats.set("current", new Set<string>());
+      if (!execBucket.subcats.has("past"))    execBucket.subcats.set("past",    new Set<string>());
+
+      if (execDirStatus === "current") {
+        execBucket.subcats.get("current")!.add(a.slug);
+        // Ensure they're not also in past if they have an active assignment
+        execBucket.subcats.get("past")!.delete(a.slug);
+      } else {
+        // Only add to past if not already current
+        if (!execBucket.subcats.get("current")!.has(a.slug)) {
+          execBucket.subcats.get("past")!.add(a.slug);
+        }
+      }
+    }
+
+    // ✅ Staff bucket: populated from datStaffStatus (set by loadAlumniWithMergedRoles
+    //    via getStaffStatusForProfile). Does NOT use role tokens — keeps admin job titles
+    //    out of the DAT creative title bucket system.
+    const staffStatus = (a as any).datStaffStatus as string | undefined;
+    if (staffStatus === "current" || staffStatus === "past") {
+      const staffBucket = buckets.get("staff")!;
+      staffBucket.people.add(a.slug);
+      if (!staffBucket.subcats) staffBucket.subcats = new Map();
+      if (!staffBucket.subcats.has(staffStatus)) staffBucket.subcats.set(staffStatus, new Set());
+      staffBucket.subcats.get(staffStatus)!.add(a.slug);
+    }
+
+    // ✅ Current Title → existing FIXED DAT Role buckets (when matched) + Professional Pathways.
+    //
+    //    If a currentTitle token matches an existing fixed DAT role bucket (e.g. "Playwright"
+    //    → playwrights), the person appears in that bucket with a "via current title" label.
+    //    This does NOT create new dynamic title:* buckets from currentTitle — only pathway:*
+    //    buckets are generated from currentTitle for Professional Pathways.
+    //
+    //    executive-directors is intentionally excluded: that bucket requires Staff Role-Assignments,
+    //    not a currentTitle self-report.
+    const rawCt = (a as any).currentTitle ?? "";
+    if (rawCt && typeof rawCt === "string") {
+      for (const rawTitle of splitCurrentTitles(rawCt)) {
+        const title = rawTitle.trim();
+        if (isJunkCurrentTitle(title)) continue;
+
+        // Route to fixed DAT role buckets when matched (no new dynamic buckets from currentTitle)
+        const ctKeys = bucketsForTitleToken(title);
+        for (const ctKey of ctKeys) {
+          if (ctKey === "executive-directors") continue; // Staff Role-Assignments only
+          if (!(ctKey in FIXED_BUCKETS)) continue;       // skip dynamic title:* keys
+          const fixedBucket = buckets.get(ctKey as keyof typeof FIXED_BUCKETS);
+          if (!fixedBucket) continue;
+          fixedBucket.people.add(a.slug);
+        }
+
+        // Professional Pathways: always create pathway:* buckets from currentTitle
+        const plural = pluralizeToken(title);
+        const pathwayKey = `pathway:${slugifyTitle(plural)}` as TitleBucketKey;
+        const pathwayBucket = ensurePathwayBucket(pathwayKey, plural);
+        pathwayBucket.people.add(a.slug);
       }
     }
   }
@@ -636,6 +766,50 @@ export function getViaBucketToken(
   bucketKey: string
 ): { label: string; source: "dat-role" | "current-title" } | null {
   const bk = bucketKey as TitleBucketKey;
+
+  // ✅ Professional pathway buckets: match via currentTitle only.
+  //    Returns the raw currentTitle token that produced this pathway slug.
+  if (bucketKey.startsWith("pathway:")) {
+    const pathwaySlug = bucketKey.slice("pathway:".length);
+    const ct = (a as any).currentTitle ?? (a as any)["current title"];
+    if (ct && typeof ct === "string") {
+      for (const t of splitCurrentTitles(ct)) {
+        if (!t.trim() || isJunkCurrentTitle(t)) continue;
+        const plural = pluralizeToken(t.trim());
+        if (slugifyTitle(plural) === pathwaySlug) {
+          return { label: t.trim(), source: "current-title" };
+        }
+      }
+    }
+    return null;
+  }
+
+  // ✅ Executive Directors: via label comes from execDirViaTitle field.
+  //    Suppress via when the person's primary visible role already contains "Director"
+  //    (it already explains why they appear here). Only show via when the primary role
+  //    doesn't contain "Director" but a secondary Staff assignment title does.
+  if (bucketKey === "executive-directors") {
+    const execVia = (a as any).execDirViaTitle as string | undefined;
+    if (!execVia) return null;
+    const primaryRole = String(a.role ?? "").trim();
+    // Primary role already explains the Director membership — no via needed
+    if (/\bdirector\b/i.test(primaryRole)) return null;
+    // Suppress if via is a duplicate of the primary role (normalized)
+    if (execVia.trim().toLowerCase() === primaryRole.toLowerCase()) return null;
+    return { label: execVia, source: "dat-role" };
+  }
+
+  // ✅ Staff bucket: show specific role label when available (e.g. "Interim Manager of
+  //    Community Partnerships in Czechia and Slovakia") so staff cards aren't vague.
+  //    Falls back to null (no label) when only a generic "Staff" placeholder is available.
+  //    Suppress via when it exactly duplicates the card's primary role (no added context).
+  if (bucketKey === "staff") {
+    const staffVia = (a as any).staffViaLabel as string | undefined;
+    if (!staffVia) return null;
+    const cardTitle = String(a.role ?? "").trim().toLowerCase();
+    if (staffVia.trim().toLowerCase() === cardTitle) return null;
+    return { label: staffVia, source: "dat-role" };
+  }
 
   // If the primary role already maps to this bucket: check if it's a broad match
   // (e.g., "Artistic Director" broadly matches title:directors → show "via: Director")

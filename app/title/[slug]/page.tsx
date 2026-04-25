@@ -16,7 +16,14 @@ import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
 import {
   getOrderedProfileRoles,
   getPrimaryDatRoleForProfile,
+  getStaffStatusForProfile,
+  getStaffViaLabelForProfile,
+  getExecDirStatusForProfile,
+  getExecDirViaLabelForProfile,
 } from "@/lib/profileRoleAssignments";
+import { programMap } from "@/lib/programMap";
+import { productionMap } from "@/lib/productionMap";
+import { normSlug } from "@/lib/slugAliases";
 import { getViaBucketToken, type TitleBucketKey } from "@/lib/titles";
 import { cache } from "react";
 
@@ -24,7 +31,44 @@ import { cache } from "react";
 export const revalidate = 3600;
 
 /**
+ * Build a slug-keyed index of project roles from programMap + productionMap.
+ * Used to enrich mergedRoles with roles that only appear in program/production data
+ * (e.g. a Road Manager credit that never made it into Profile-Live or Role-Assignments).
+ */
+function buildProjectRolesIndex(): Map<string, string[]> {
+  const index = new Map<string, string[]>();
+
+  const addRoles = (artistSlug: string, roles: string[]) => {
+    const key = normSlug(artistSlug);
+    if (!key) return;
+    const existing = index.get(key) ?? [];
+    index.set(key, [...existing, ...roles]);
+  };
+
+  for (const key in programMap) {
+    const prog = (programMap as Record<string, any>)[key];
+    const artists: Record<string, string[]> = prog?.artists ?? {};
+    for (const [slug, roles] of Object.entries(artists)) {
+      if (Array.isArray(roles)) addRoles(slug, roles);
+    }
+  }
+
+  for (const key in productionMap) {
+    const prod = (productionMap as Record<string, any>)[key];
+    const artists: Record<string, string[]> = prod?.artists ?? {};
+    for (const [slug, roles] of Object.entries(artists)) {
+      if (Array.isArray(roles)) addRoles(slug, roles);
+    }
+  }
+
+  return index;
+}
+
+/**
  * Loads alumni with Role-Assignment merged roles populated into a.roles.
+ * Also folds in project roles from programMap/productionMap so that credits
+ * that only appear there (e.g. "Road Manager") are included in title buckets.
+ *
  * Cached per render so generateStaticParams / generateMetadata / TitlePage
  * all share the same computed data.
  */
@@ -33,11 +77,18 @@ const loadAlumniWithMergedRoles = cache(async (): Promise<AlumniRow[]> => {
     loadVisibleAlumni(),
     loadRoleAssignments(),
   ]);
+
+  const projectRolesIndex = buildProjectRolesIndex();
+
   return alumni.map((a) => {
+    const projectRoles = projectRolesIndex.get(normSlug(a.slug)) ?? [];
+
     const mergedRoles = getOrderedProfileRoles(
       a.profileId || a.slug,
       a.roles,
-      roleAssignments
+      roleAssignments,
+      new Date(),
+      projectRoles,
     );
 
     const primaryRole =
@@ -45,10 +96,20 @@ const loadAlumniWithMergedRoles = cache(async (): Promise<AlumniRow[]> => {
       mergedRoles[0] ||
       a.role;
 
+    const staffStatus = getStaffStatusForProfile(a.profileId || a.slug, roleAssignments);
+    const staffViaLabel = getStaffViaLabelForProfile(a.profileId || a.slug, roleAssignments) ?? undefined;
+
+    const execDirStatus = getExecDirStatusForProfile(a.profileId || a.slug, roleAssignments);
+    const execDirViaTitle = getExecDirViaLabelForProfile(a.profileId || a.slug, roleAssignments) ?? undefined;
+
     return {
       ...a,
       role: primaryRole,
       roles: mergedRoles,
+      datStaffStatus: staffStatus ?? undefined,
+      staffViaLabel,
+      execDirStatus: execDirStatus ?? undefined,
+      execDirViaTitle,
     };
   });
 });
@@ -84,14 +145,15 @@ export async function generateStaticParams() {
   for (const b of valid) {
     const keySlug = String(b.meta.key); // fixed buckets: use key (e.g., "playwrights")
     const labelSlug = slugifyTitle(b.meta.label); // dynamic buckets: use label
-    const canonical = keySlug.startsWith("title:") ? labelSlug : keySlug;
+    const isDynamic = keySlug.startsWith("title:") || keySlug.startsWith("pathway:");
+    const canonical = isDynamic ? labelSlug : keySlug;
 
     if (!seen.has(canonical)) {
       out.push({ slug: canonical });
       seen.add(canonical);
     }
-    // also allow labelSlug for fixed buckets
-    if (!keySlug.startsWith("title:") && !seen.has(labelSlug)) {
+    // also allow labelSlug for fixed (non-dynamic) buckets as an alias
+    if (!isDynamic && !seen.has(labelSlug)) {
       out.push({ slug: labelSlug });
       seen.add(labelSlug);
     }
@@ -122,7 +184,8 @@ export async function generateMetadata({
   const entry = Array.from(buckets.values()).find((b) => {
     const keySlug = String(b.meta.key);
     const labelSlug = slugifyTitle(b.meta.label);
-    const canonical = keySlug.startsWith("title:") ? labelSlug : keySlug;
+    const isDynamic = keySlug.startsWith("title:") || keySlug.startsWith("pathway:");
+    const canonical = isDynamic ? labelSlug : keySlug;
     return canonical === target || labelSlug === target;
   });
 
@@ -152,22 +215,26 @@ export default async function TitlePage({
 
   // Find target bucket by either key or label slug
   const entry = Array.from(buckets.values()).find((b) => {
-    const keySlug = String(b.meta.key); // e.g., "designers" or "title:actors"
-    const labelSlug = slugifyTitle(b.meta.label); // e.g., "actors"
-    const canonical = keySlug.startsWith("title:") ? labelSlug : keySlug;
+    const keySlug = String(b.meta.key); // e.g., "designers", "title:actors", "pathway:physical-therapists"
+    const labelSlug = slugifyTitle(b.meta.label); // e.g., "actors", "physical-therapists"
+    const isDynamic = keySlug.startsWith("title:") || keySlug.startsWith("pathway:");
+    const canonical = isDynamic ? labelSlug : keySlug;
     return canonical === target || labelSlug === target;
   });
 
   if (!entry || entry.people.size === 0) return notFound();
 
   const displayLabel = entry.meta.label;
+  const isPathwayBucket = entry.category === "professional-pathway";
 
   // Quick lookup for slug -> AlumniRow
   const bySlug = new Map(alumni.map((a) => [a.slug, a]));
 
-  // Only Designers has subcategories; everyone else is a flat grid
+  // Only Designers and Executive Directors have subcategories; everyone else is a flat grid
   const isGrouped =
-    entry.meta.key === "designers" || entry.meta.key === "executive-directors";
+    entry.meta.key === "designers" ||
+    entry.meta.key === "executive-directors" ||
+    entry.meta.key === "staff";
 
 const flatSelected = !isGrouped
   ? alumni
@@ -188,10 +255,15 @@ const groupedSections =
             ) as AlumniRow[];
           return { title, people };
         })
+        // ✅ Drop empty subgroups so no empty section headings render.
+        .filter((g) => g.people.length > 0)
         .sort((a, b) => {
-          if (entry.meta.key === "executive-directors") {
-            if (a.title.toLowerCase() === "current" && b.title.toLowerCase() === "former") return -1;
-            if (a.title.toLowerCase() === "former" && b.title.toLowerCase() === "current") return 1;
+          if (entry.meta.key === "executive-directors" || entry.meta.key === "staff") {
+            // ✅ Order: Current → Past
+            const order: Record<string, number> = { current: 0, past: 1 };
+            const aOrd = order[a.title.toLowerCase()] ?? 99;
+            const bOrd = order[b.title.toLowerCase()] ?? 99;
+            if (aOrd !== bOrd) return aOrd - bOrd;
           }
           return a.title.localeCompare(b.title);
         })

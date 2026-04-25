@@ -77,6 +77,8 @@ function expandDisplayRole(role?: string) {
       return "Teaching Artist in Residence";
     case "RTA":
       return "Resident Teaching Artist";
+    // EM is not expanded here — public label comes from Role-Assignments explicit
+    // roleLabel / Notes / roleDetails. No hardcoded mapping; avoids mystery abbreviation.
     default:
       return clean;
   }
@@ -187,9 +189,11 @@ function roleCodeLabel(roleCode?: string): string {
     case "AD":
       return "Artistic Director";
     case "AAD":
-      return "Associate Artistic Director";    
+      return "Associate Artistic Director";
     case "RP":
       return "Resident Playwright";
+    // EM is not expanded here — public label must come from Role-Assignments explicit
+    // roleLabel / Notes / roleDetails, not a hardcoded code→string mapping.
     default:
       return String(roleCode ?? "").trim();
   }
@@ -259,9 +263,16 @@ function getAssignmentStatusPrefix(a: RoleAssignmentRow): string {
 
 function getAssignmentContextualLabel(a: RoleAssignmentRow): string {
   const details = String(a.roleDetails ?? "").trim();
-  if (details && !shouldPrefixStatus(details)) return details;
+  // ✅ "Hiatus" and "Emeritus" (+ typo variants) are display modifiers handled separately —
+  //    do NOT treat them as contextual labels (avoids "Role — Hiatus" constructions).
+  if (details && !shouldPrefixStatus(details) && !isRoleModifier(details)) return details;
 
   return scopeSpecificity(a);
+}
+
+/** Returns true for roleDetails values that are display modifiers, not contextual labels. */
+function isRoleModifier(s: string): boolean {
+  return /^(hiatus|emeritus+)$/i.test(s.trim());
 }
 
 function shouldPrefixStatus(status?: string) {
@@ -298,13 +309,25 @@ function buildAssignmentRoleLabel(
       ? explicitRoleLabel
       : roleCodeLabel(a.roleCode);
 
+  // ✅ Emeritus modifier rule: if roleDetails is "Emeritus" (or typo variant "Emerituss"),
+  //    build as "<Role> Emeritus" — no "Former" prefix, no em-dash separator.
+  const rawDetails = String(a.roleDetails ?? "").trim();
+  if (/^emeritus+$/i.test(rawDetails)) {
+    return `${base} Emeritus`;
+  }
+
   let label = base;
 
   if (contextual) {
     const baseLower = base.toLowerCase();
     const contextualLower = contextual.toLowerCase();
 
-    if (contextualLower.includes(baseLower)) {
+    // ✅ If base is a raw/placeholder code (e.g. "EC", "Staff"), and contextual has a
+    //    meaningful human-readable value, promote contextual directly — avoids exposing
+    //    unexpanded codes like "EC — Engagement Coordinator" publicly.
+    if (isPlaceholderRoleLabel(base)) {
+      label = contextual;
+    } else if (contextualLower.includes(baseLower)) {
       label = contextual;
     } else if (String(a.roleCode ?? "").trim().toUpperCase() === "BOARD") {
       label = `${contextual}, ${base}`;
@@ -338,7 +361,14 @@ function buildAssignmentRoleLabel(
     prefixes.push(statusPrefix[0].toUpperCase() + statusPrefix.slice(1).toLowerCase());
   }
 
-  return prefixes.length ? `${prefixes.join(" ")} ${label}` : label;
+  // ✅ Hiatus suffix: "Executive Director (On Hiatus)" — appended after all other modifiers,
+  //    only on active (non-historical) assignments. Person stays in Current subgroup.
+  const isHiatus = /^hiatus$/i.test(rawDetails);
+  const hiatusSuffix = isHiatus && !historical ? " (On Hiatus)" : "";
+
+  return prefixes.length
+    ? `${prefixes.join(" ")} ${label}${hiatusSuffix}`
+    : `${label}${hiatusSuffix}`;
 }
 
 function dedupeRoles(roles: string[]) {
@@ -350,9 +380,15 @@ function dedupeRoles(roles: string[]) {
     if (!clean) continue;
 
     const key = roleMatchKey(clean);
-    if (seen.has(key)) continue;
+    // Also track the "core" key with any appended ", Board of Directors" stripped.
+    // This deduplicates bare "Governance Chair" vs. the BOARD-label form
+    // "Governance Chair, Board of Directors" that buildAssignmentRoleLabel produces.
+    const coreKey = key.replace(/,?\s*board of directors\s*$/i, "").trim();
+
+    if (seen.has(key) || seen.has(coreKey)) continue;
 
     seen.add(key);
+    if (coreKey !== key) seen.add(coreKey);
     out.push(clean);
   }
 
@@ -543,7 +579,137 @@ export function getPrimaryDatRoleForProfile(
 }
 
 /**
+ * Returns "current" if the profile has an active Staff assignment, "past" if they
+ * have only ended Staff assignments, or null if no Staff assignments exist.
+ * Used to route alumni to the Staff bucket in /title without polluting DAT role tokens.
+ */
+export function getStaffStatusForProfile(
+  profileId: string | undefined,
+  assignments: RoleAssignmentRow[],
+  asOf: Date = new Date()
+): "current" | "past" | null {
+  const pid = normRoleText(String(profileId ?? ""));
+  if (!pid) return null;
+
+  const staffRows = assignments.filter(
+    (a) =>
+      normRoleText(String(a.profileId ?? "")) === pid &&
+      /\bstaff\b/i.test(String(a.statusSignifier ?? "").trim())
+  );
+
+  if (!staffRows.length) return null;
+
+  if (staffRows.some((a) => isActive(a, asOf))) return "current";
+  if (staffRows.some((a) => !isActive(a, asOf) && !isFuture(a, asOf))) return "past";
+  return null; // only future assignments
+}
+
+/**
+ * Returns a descriptive via label for the Staff bucket when a specific role title is
+ * available from Role-Assignments (e.g. "Interim Manager of Community Partnerships in
+ * Czechia and Slovakia"). Returns null when only a generic "Staff" placeholder exists.
+ *
+ * Used by /title/staff so staff cards show WHY someone is in the Staff bucket rather
+ * than presenting an unlabelled card.
+ */
+export function getStaffViaLabelForProfile(
+  profileId: string | undefined,
+  assignments: RoleAssignmentRow[],
+  asOf: Date = new Date()
+): string | null {
+  const pid = normRoleText(String(profileId ?? ""));
+  if (!pid) return null;
+
+  const staffRows = assignments.filter(
+    (a) =>
+      normRoleText(String(a.profileId ?? "")) === pid &&
+      /\bstaff\b/i.test(String(a.statusSignifier ?? "").trim())
+  );
+  if (!staffRows.length) return null;
+
+  // Prefer active rows; fall back to historical so we always show something when available.
+  const sorted = [
+    ...staffRows.filter((a) => isActive(a, asOf)),
+    ...staffRows.filter((a) => !isActive(a, asOf) && !isFuture(a, asOf)),
+  ];
+
+  for (const row of sorted) {
+    const label = buildAssignmentRoleLabel(row);
+    if (!isPlaceholderRoleLabel(label)) return label;
+  }
+
+  return null;
+}
+
+/**
+ * Returns all Staff Role-Assignments for a profile where the resolved public title
+ * contains the word "Director". Used exclusively to populate /title/executive-directors.
+ *
+ * Rule: statusSignifier must contain "Staff" AND buildAssignmentRoleLabel must contain "Director".
+ * Does NOT include project roles, production roles, or non-Staff assignments.
+ */
+export function getExecDirEntriesForProfile(
+  profileId: string | undefined,
+  assignments: RoleAssignmentRow[],
+  asOf: Date = new Date()
+): Array<{ title: string; isCurrent: boolean }> {
+  const pid = normRoleText(String(profileId ?? ""));
+  if (!pid) return [];
+
+  const staffRows = assignments.filter(
+    (a) =>
+      normRoleText(String(a.profileId ?? "")) === pid &&
+      /\bstaff\b/i.test(String(a.statusSignifier ?? "").trim())
+  );
+
+  const out: Array<{ title: string; isCurrent: boolean }> = [];
+  for (const row of staffRows) {
+    // Use clean label (no "Former" prefix) so via labels are readable
+    const label = buildAssignmentRoleLabel(row);
+    if (!/\bdirector\b/i.test(label)) continue;
+    const active = isActive(row, asOf);
+    const hist = !active && !isFuture(row, asOf);
+    if (active || hist) {
+      out.push({ title: label, isCurrent: active });
+    }
+  }
+  return out;
+}
+
+/**
+ * Returns "current" if the profile has an active Staff+Director assignment,
+ * "past" if they only have ended ones, or null if none qualify.
+ */
+export function getExecDirStatusForProfile(
+  profileId: string | undefined,
+  assignments: RoleAssignmentRow[],
+  asOf: Date = new Date()
+): "current" | "past" | null {
+  const entries = getExecDirEntriesForProfile(profileId, assignments, asOf);
+  if (!entries.length) return null;
+  if (entries.some((e) => e.isCurrent)) return "current";
+  return "past";
+}
+
+/**
+ * Returns the best director title to use as a via-label on /title/executive-directors.
+ * Prefers active entries over historical. Returns null when none qualify.
+ */
+export function getExecDirViaLabelForProfile(
+  profileId: string | undefined,
+  assignments: RoleAssignmentRow[],
+  asOf: Date = new Date()
+): string | null {
+  const entries = getExecDirEntriesForProfile(profileId, assignments, asOf);
+  if (!entries.length) return null;
+  const current = entries.filter((e) => e.isCurrent);
+  const entry = current[0] ?? entries[0];
+  return entry?.title ?? null;
+}
+
+/**
  * Returns true if the given profileId has an active BOARD assignment in Role-Assignments.
+ * Used to derive "Board Member" status flag automatically without manual Profile-Live duplication.
  * Used to derive "Board Member" status flag automatically without manual Profile-Live duplication.
  */
 export function deriveBoardStatus(

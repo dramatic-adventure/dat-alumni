@@ -77,6 +77,20 @@ export interface AlumniRow {
 
   // Dual title: currentTitle = present-day professional title outside DAT
   currentTitle?: string;
+
+  // Computed from Role-Assignments statusSignifier="Staff" — used by /title Staff bucket.
+  // "current" = active staff assignment today; "past" = only ended staff assignments.
+  datStaffStatus?: "current" | "past";
+  // Descriptive via label for the Staff bucket (e.g. "Interim Manager of Community Partnerships").
+  // Null when only a generic "Staff" placeholder is available.
+  staffViaLabel?: string;
+
+  // Computed from Staff Role-Assignments where resolved title contains "Director".
+  // Used exclusively by /title/executive-directors (field-based, not token-based).
+  execDirStatus?: "current" | "past";
+  // The specific director title that qualified this person for executive-directors
+  // (e.g. "Associate Artistic Director"). Used for via-label on their card.
+  execDirViaTitle?: string;
   legacyProductions?: string;
 
   storyTitle?: string;

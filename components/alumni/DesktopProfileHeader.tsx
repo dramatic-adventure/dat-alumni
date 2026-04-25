@@ -11,7 +11,7 @@ import ShareButton from "@/components/ui/ShareButton";
 import Lightbox from "@/components/shared/Lightbox";
 import ContactOverlay from "@/components/shared/ContactOverlay";
 import StatusFlags from "@/components/alumni/StatusFlags";
-import { splitTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
+import { splitTitles, splitCurrentTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
 
 interface DesktopProfileHeaderProps {
   alumniId: string;
@@ -194,10 +194,13 @@ export default function DesktopProfileHeader({
     [allRoles]
   );
 
-  // Multi-value currentTitle support: "Social Worker, Teacher" → ["Social Worker", "Teacher"]
+  // Multi-value currentTitle support: "Social Worker; Teacher" → ["Social Worker", "Teacher"]
   // First value = primary (user controls order); extras expandable via "+"
+  // ✅ Use splitCurrentTitles (no comma split) so titles like
+  //    "Executive Director, Dramatic Adventure Theatre" stay as one entry.
+  //    Separate multiple outside titles with semicolons or newlines.
   const currentTitles = currentTitle
-    ? splitTitles(currentTitle).map((t) => t.trim()).filter(Boolean)
+    ? splitCurrentTitles(currentTitle).map((t) => t.trim()).filter(Boolean)
     : [];
   const primaryCurrentTitle = currentTitles[0] ?? null;
   const extraCurrentTitles = currentTitles.slice(1).map((label) => ({

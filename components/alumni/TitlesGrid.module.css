@@ -1,3 +1,38 @@
+.titlesGridRoot {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── Section wrapper ─────────────────────────────────────────────────── */
+.section {
+  /* no extra padding — sits inside the parent container */
+}
+
+.sectionHeader {
+  margin-bottom: 1.25rem;
+}
+
+.sectionHeading {
+  display: block;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: rgba(255, 204, 0, 0.9);
+  margin-bottom: 0.3rem;
+}
+
+.sectionDesc {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 0.8rem;
+  color: rgba(242, 242, 242, 0.68);
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* ── DAT Roles grid ──────────────────────────────────────────────────── */
 .titlesGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -54,7 +89,8 @@
 .titleLabel {
   margin-top: 0.5rem;
   display: block;
-  font-family: var(--font-space-grotesk), system-ui, sans-serif;  font-weight: 500;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-weight: 500;
   text-transform: uppercase;
   font-size: 1rem;
   letter-spacing: 0.06em;
@@ -63,7 +99,141 @@
   line-height: 1.15;
   transition: color 200ms ease;
 }
+
 .titleLink:hover .titleLabel,
 .titleLink:focus-visible .titleLabel {
   color: #ffcc00;
+}
+
+/* ── Professional Pathways section ───────────────────────────────────── */
+.pathwaysSection {
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(242, 242, 242, 0.1);
+}
+
+.pathwaysGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.pathwayLink {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3em;
+  padding: 0.28em 0.65em;
+  border-radius: 5px;
+  border: 1px solid rgba(242, 242, 242, 0.28);
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: rgba(242, 242, 242, 0.82);
+  text-decoration: none !important;
+  background: rgba(255, 255, 255, 0.06);
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.pathwayLink:hover,
+.pathwayLink:focus-visible {
+  border-color: rgba(255, 204, 0, 0.4);
+  color: #ffcc00;
+  background: rgba(255, 204, 0, 0.07);
+}
+
+.pathwayCount {
+  font-size: 0.72em;
+  color: rgba(242, 242, 242, 0.55);
+  transition: color 150ms ease;
+}
+
+.pathwayLink:hover .pathwayCount,
+.pathwayLink:focus-visible .pathwayCount {
+  color: rgba(255, 204, 0, 0.55);
+}
+
+/* ── DAT Roles: collapsed show-more ─────────────────────────────────── */
+
+/* Mobile default: hide items 9+ (≈ 3 rows at 3 col, 4 rows at 2 col) */
+.titlesGridCollapsed .titleLink:nth-child(n + 9) {
+  display: none;
+}
+
+/* Desktop (≥ 600 px): show items 9-12, hide 13+ (≈ 3 rows at 4 col) */
+@media (min-width: 600px) {
+  .titlesGridCollapsed .titleLink:nth-child(n + 9) {
+    display: block;
+  }
+  .titlesGridCollapsed .titleLink:nth-child(n + 13) {
+    display: none;
+  }
+}
+
+/* See more / See less — DAT Roles (prominent, matches DAT accent) */
+.showMoreBtn {
+  margin-top: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  background: none;
+  border: 1px solid rgba(255, 204, 0, 0.35);
+  border-radius: 6px;
+  padding: 0.35em 0.95em;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: rgba(255, 204, 0, 0.82);
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+}
+
+.showMoreBtn:hover,
+.showMoreBtn:focus-visible {
+  border-color: rgba(255, 204, 0, 0.65);
+  color: #ffcc00;
+  background: rgba(255, 204, 0, 0.07);
+}
+
+.showMoreBtn:focus-visible {
+  outline: 2px solid rgba(255, 204, 0, 0.45);
+  outline-offset: 2px;
+}
+
+/* ── Professional Pathways: collapsed show-more ──────────────────────── */
+
+/* Hide pathways 16+ when collapsed */
+.pathwaysGridCollapsed .pathwayLink:nth-child(n + 16) {
+  display: none;
+}
+
+/* See more / See less — Pathways (subtle, secondary) */
+.showMorePathwaysBtn {
+  margin-top: 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0.2em 0;
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(242, 242, 242, 0.48);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 150ms ease;
+}
+
+.showMorePathwaysBtn:hover,
+.showMorePathwaysBtn:focus-visible {
+  color: rgba(242, 242, 242, 0.78);
+}
+
+.showMorePathwaysBtn:focus-visible {
+  outline: 2px solid rgba(255, 204, 0, 0.4);
+  outline-offset: 2px;
 }
