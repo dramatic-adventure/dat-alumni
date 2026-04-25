@@ -117,10 +117,26 @@ module.exports = {
     }
 
     // OpenNext/Netlify can copy nested build artifacts into the handler.
-    // This is not runtime code and was the largest remaining payload in production logs.
+    // Do NOT delete all of .netlify: the runtime imports .netlify/dist/run/...
+    // Keep .netlify/dist and prune other nested .netlify children.
     const nestedNetlifyDir = path.join(HANDLER_DIR, ".netlify");
     if (fs.existsSync(nestedNetlifyDir)) {
-      totalFreed += removePath(nestedNetlifyDir, HANDLER_DIR, utils);
+      const keepNestedNetlify = new Set(["dist"]);
+      let kept = [];
+      try {
+        const entries = fs.readdirSync(nestedNetlifyDir, { withFileTypes: true });
+        for (const e of entries) {
+          const child = path.join(nestedNetlifyDir, e.name);
+          if (keepNestedNetlify.has(e.name)) {
+            kept.push(e.name);
+          } else {
+            totalFreed += removePath(child, HANDLER_DIR, utils);
+          }
+        }
+      } catch (e) {
+        console.log(`  skip .netlify selective prune: ${e.message}`);
+      }
+      console.log(`  kept .netlify/ children: ${kept.join(", ") || "(none)"}`);
     }
 
     // 2. public/ — selectively prune children not needed by server fs reads.
