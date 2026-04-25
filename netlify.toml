@@ -6,6 +6,9 @@
 [functions]
   directory = "netlify/functions"
 
+[[plugins]]
+  package = "./netlify/plugins/prune-server-handler"
+
 [build.environment]
   SECRETS_SCAN_OMIT_PATHS = "public/namestack-hints.json"
 
