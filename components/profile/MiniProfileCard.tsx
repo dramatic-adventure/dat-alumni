@@ -281,15 +281,20 @@ const handleError = useCallback(() => {
 
   const secondaryRoles = allRoles.filter((r) => norm(r || "") !== primaryNorm);
 
-  const exactWordMatch = secondaryRoles.find((r) => {
-    const rn = norm(r || "");
-    return rn === q || words(r || "").includes(q);
-  });
-
-  if (exactWordMatch) {
-    return q[0] ? q[0].toUpperCase() + q.slice(1) : exactWordMatch;
+  // Exact phrase match — the whole query equals a secondary role (case-insensitive).
+  // Return the stored role to preserve its original title casing (e.g. "Road Manager").
+  const exactPhraseMatch = secondaryRoles.find((r) => norm(r || "") === q);
+  if (exactPhraseMatch) {
+    return exactPhraseMatch;
   }
 
+  // Word match — query is a single word found inside a secondary role.
+  const wordMatch = secondaryRoles.find((r) => words(r || "").includes(q));
+  if (wordMatch) {
+    return q[0] ? q[0].toUpperCase() + q.slice(1) : wordMatch;
+  }
+
+  // Substring match — query appears anywhere inside a secondary role string.
   return secondaryRoles.find((r) => norm(r || "").includes(q)) || null;
 }, [searchQuery, allRoles, role]);
 
