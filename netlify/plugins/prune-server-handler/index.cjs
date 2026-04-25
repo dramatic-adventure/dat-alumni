@@ -152,23 +152,18 @@ module.exports = {
       console.log("  skipping public/ (not found in handler)");
     }
 
-    // 3. Wrong-platform Sharp native binaries under node_modules/@img.
-    //    Keep: sharp-linux-x64, sharp-libvips-linux-x64
-    //    Delete: everything else (darwin-*, arm64-*, wasm32-*)
+    // 3. Sharp/@img native binaries.
+    // Netlify redirects Next image optimization to Netlify Image CDN, and this app
+    // does not directly import sharp in runtime code. Do not ship Sharp binaries
+    // inside the SSR handler.
     const imgDir = path.join(HANDLER_DIR, "node_modules", "@img");
     if (fs.existsSync(imgDir)) {
-      let entries;
-      try {
-        entries = fs.readdirSync(imgDir, { withFileTypes: true });
-      } catch (_) {
-        entries = [];
-      }
-      const keep = new Set(["sharp-linux-x64", "sharp-libvips-linux-x64"]);
-      for (const e of entries) {
-        if (e.isDirectory() && !keep.has(e.name)) {
-          totalFreed += removePath(path.join(imgDir, e.name), HANDLER_DIR, utils);
-        }
-      }
+      totalFreed += removePath(imgDir, HANDLER_DIR, utils);
+    }
+
+    const sharpDir = path.join(HANDLER_DIR, "node_modules", "sharp");
+    if (fs.existsSync(sharpDir)) {
+      totalFreed += removePath(sharpDir, HANDLER_DIR, utils);
     }
 
     // 4. *.map files anywhere in the handler.
