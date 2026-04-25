@@ -110,10 +110,17 @@ module.exports = {
 
     let totalFreed = 0;
 
-    // 1. .git inside handler (should never exist, but cheap insurance)
+    // 1. Repo/build metadata inside handler (should never ship in the function)
     const gitDir = path.join(HANDLER_DIR, ".git");
     if (fs.existsSync(gitDir)) {
       totalFreed += removePath(gitDir, HANDLER_DIR, utils);
+    }
+
+    // OpenNext/Netlify can copy nested build artifacts into the handler.
+    // This is not runtime code and was the largest remaining payload in production logs.
+    const nestedNetlifyDir = path.join(HANDLER_DIR, ".netlify");
+    if (fs.existsSync(nestedNetlifyDir)) {
+      totalFreed += removePath(nestedNetlifyDir, HANDLER_DIR, utils);
     }
 
     // 2. public/ — selectively prune children not needed by server fs reads.
