@@ -541,8 +541,18 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
           backgroundChoice: bgChoice,
         }}
         allStories={storiesForThisAlum}
-        // ✅ NEW: component can match productions/credits/stories against any known slug
         slugAliases={Array.from(aliases)}
+        upcomingEvent={
+          (normalizedAlumni as any).upcomingEventTitle
+            ? {
+                title: (normalizedAlumni as any).upcomingEventTitle as string,
+                link: (normalizedAlumni as any).upcomingEventLink || undefined,
+                date: (normalizedAlumni as any).upcomingEventDate || undefined,
+                expiresAt: (normalizedAlumni as any).upcomingEventExpiresAt || undefined,
+                description: (normalizedAlumni as any).upcomingEventDescription || undefined,
+              }
+            : undefined
+        }
       />
 
       <section className="bg-[#241123] pt-0 pb-10" />

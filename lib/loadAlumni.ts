@@ -316,6 +316,12 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
   const linktreeIdx = idxOf(header, ["linktree"]);
   const newsletterIdx = idxOf(header, ["newsletter"]);
 
+  const upcomingEventTitleIdx = idxOf(header, ["upcomingeventtitle", "upcoming event title", "upcomingEventTitle"]);
+  const upcomingEventLinkIdx = idxOf(header, ["upcomingeventlink", "upcoming event link", "upcomingEventLink"]);
+  const upcomingEventDateIdx = idxOf(header, ["upcomingeventdate", "upcoming event date", "upcomingEventDate"]);
+  const upcomingEventExpiresAtIdx = idxOf(header, ["upcomingeventexpiresat", "upcoming event expires at", "upcomingEventExpiresAt"]);
+  const upcomingEventDescriptionIdx = idxOf(header, ["upcomingeventdescription", "upcoming event description", "upcomingEventDescription"]);
+
   const out: AlumniRow[] = [];
   let skipped = 0;
 
@@ -432,8 +438,14 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
     }
 
     const normalized = normalizeAlumniRow(normalizedKeys as any);
-    if (normalized) out.push(normalized);
-    else skipped++;
+    if (normalized) {
+      (normalized as any).upcomingEventTitle = cell(r, upcomingEventTitleIdx);
+      (normalized as any).upcomingEventLink = cell(r, upcomingEventLinkIdx);
+      (normalized as any).upcomingEventDate = cell(r, upcomingEventDateIdx);
+      (normalized as any).upcomingEventExpiresAt = cell(r, upcomingEventExpiresAtIdx);
+      (normalized as any).upcomingEventDescription = cell(r, upcomingEventDescriptionIdx);
+      out.push(normalized);
+    } else skipped++;
   }
 
   if (DEBUG) {
