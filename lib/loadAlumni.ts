@@ -321,6 +321,11 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
   const upcomingEventDateIdx = idxOf(header, ["upcomingeventdate", "upcoming event date", "upcomingEventDate"]);
   const upcomingEventExpiresAtIdx = idxOf(header, ["upcomingeventexpiresat", "upcoming event expires at", "upcomingEventExpiresAt"]);
   const upcomingEventDescriptionIdx = idxOf(header, ["upcomingeventdescription", "upcoming event description", "upcomingEventDescription"]);
+  const featuredEventIdIdx = idxOf(header, ["featuredeventid", "featured event id", "featuredEventId"]);
+  const upcomingEventMediaTypeIdx = idxOf(header, ["upcomingeventmediatype", "upcoming event media type", "upcomingEventMediaType"]);
+  const upcomingEventMediaUrlIdx = idxOf(header, ["upcomingeventmediaurl", "upcoming event media url", "upcomingEventMediaUrl"]);
+  const upcomingEventMediaAltIdx = idxOf(header, ["upcomingeventmediaalt", "upcoming event media alt", "upcomingEventMediaAlt"]);
+  const upcomingEventVideoAutoplayIdx = idxOf(header, ["upcomingeventvideooautoplay", "upcomingeventvideoautoplay", "upcoming event video autoplay", "upcomingEventVideoAutoplay"]);
 
   const out: AlumniRow[] = [];
   let skipped = 0;
@@ -444,6 +449,11 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
       (normalized as any).upcomingEventDate = cell(r, upcomingEventDateIdx);
       (normalized as any).upcomingEventExpiresAt = cell(r, upcomingEventExpiresAtIdx);
       (normalized as any).upcomingEventDescription = cell(r, upcomingEventDescriptionIdx);
+      (normalized as any).featuredEventId = cell(r, featuredEventIdIdx);
+      (normalized as any).upcomingEventMediaType = cell(r, upcomingEventMediaTypeIdx);
+      (normalized as any).upcomingEventMediaUrl = cell(r, upcomingEventMediaUrlIdx);
+      (normalized as any).upcomingEventMediaAlt = cell(r, upcomingEventMediaAltIdx);
+      (normalized as any).upcomingEventVideoAutoplay = cell(r, upcomingEventVideoAutoplayIdx);
       out.push(normalized);
     } else skipped++;
   }

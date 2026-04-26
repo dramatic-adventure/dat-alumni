@@ -144,6 +144,10 @@ export const LIVE_KEYS: Array<keyof AlumniProfile | string> = [
   "upcomingEventDate",
   "upcomingEventExpiresAt",
   "upcomingEventDescription",
+  "upcomingEventMediaType",
+  "upcomingEventMediaUrl",
+  "upcomingEventMediaAlt",
+  "upcomingEventVideoAutoplay",
 ];
 
 /** ---------- normalize ---------- */

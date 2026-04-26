@@ -86,6 +86,10 @@ export const LIVE_KEYS = new Set<string>(
     "upcomingEventDate",
     "upcomingEventExpiresAt",
     "upcomingEventDescription",
+    "upcomingEventMediaType",
+    "upcomingEventMediaUrl",
+    "upcomingEventMediaAlt",
+    "upcomingEventVideoAutoplay",
 
     // Story Map
     "storyTitle",
@@ -207,8 +211,13 @@ export const MODULES = {
       "upcomingEventDate",
       "upcomingEventExpiresAt",
       "upcomingEventDescription",
+      "featuredEventId",
+      "upcomingEventMediaType",
+      "upcomingEventMediaUrl",
+      "upcomingEventMediaAlt",
+      "upcomingEventVideoAutoplay",
     ]),
-    uploadKinds: [],
+    uploadKinds: ["event"],
   },
 
   // Media IDs are typically set by the upload pipeline, not typed by the user.

@@ -9,7 +9,11 @@ export interface ComingUpEvent {
   date?: string;
   expiresAt?: string;
   description?: string;
-  imageUrl?: string; // reserved — no upload wired yet
+  mediaType?: "image" | "video";
+  mediaFileId?: string;
+  mediaUrl?: string;
+  mediaAlt?: string;
+  videoAutoplay?: boolean;
 }
 
 interface Props {
@@ -34,7 +38,18 @@ function formatDate(dateStr?: string): string | null {
   return dt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
 
-// Abstract DAT color wash — fills the left column on desktop when no real image exists.
+function deriveMediaSrc(ev: ComingUpEvent): string | null {
+  if (ev.mediaFileId) return `/api/img?fileId=${encodeURIComponent(ev.mediaFileId)}`;
+  if (ev.mediaUrl) {
+    // Images: route through proxy for security. Videos: use URL directly (proxy buffers
+    // the full file which prevents seek; direct URL lets the browser stream natively).
+    if ((ev.mediaType || "image") === "video") return ev.mediaUrl;
+    return `/api/img?url=${encodeURIComponent(ev.mediaUrl)}`;
+  }
+  return null;
+}
+
+// Abstract DAT color wash — fills the left column on desktop when no real media exists.
 function DATFallbackVisual() {
   return (
     <svg
@@ -62,12 +77,12 @@ function DATFallbackVisual() {
  * Mobile (< 1024px):
  *   .cu-layout       — block, single column
  *   .cu-media        — display:none  (fallback hidden; no awkward empty block)
- *   .cu-media.cu-has-img — display:block, aspect-ratio 16/9  (real image only)
+ *   .cu-media.cu-has-media — display:block, aspect-ratio 16/9  (real media only)
  *
  * Desktop (≥ 1024px):
  *   .cu-layout       — CSS grid: 415px | minmax(0, 1fr)
- *   .cu-media        — display:block always  (real image or branded fallback)
- *   .cu-media.cu-has-img — aspect-ratio unset  (grid row height drives the column)
+ *   .cu-media        — display:block always  (real media or branded fallback)
+ *   .cu-media.cu-has-media — aspect-ratio unset  (grid row height drives the column)
  */
 const STYLES = `
   .cu-layout {
@@ -77,7 +92,7 @@ const STYLES = `
     position: relative;
     display: none;
   }
-  .cu-media.cu-has-img {
+  .cu-media.cu-has-media {
     display: block;
     aspect-ratio: 16 / 9;
   }
@@ -95,14 +110,16 @@ const STYLES = `
 `;
 
 export default function ComingUpEventStrip({ upcomingEvent }: Props) {
-  const [imgError, setImgError] = useState(false);
+  const [mediaError, setMediaError] = useState(false);
 
   // Fail-closed: render nothing for missing/expired events
   if (!upcomingEvent?.title?.trim()) return null;
   if (isExpired(upcomingEvent.date, upcomingEvent.expiresAt)) return null;
 
-  const formattedDate  = formatDate(upcomingEvent.date);
-  const showRealImage  = Boolean(upcomingEvent.imageUrl) && !imgError;
+  const formattedDate = formatDate(upcomingEvent.date);
+  const mediaSrc     = deriveMediaSrc(upcomingEvent);
+  const isVideo      = upcomingEvent.mediaType === "video";
+  const showRealMedia = Boolean(mediaSrc) && !mediaError;
 
   return (
     <div
@@ -121,27 +138,44 @@ export default function ComingUpEventStrip({ upcomingEvent }: Props) {
 
         {/*
           Left column.
-          cu-has-img is set only when a real image is available AND has not errored.
-          Without cu-has-img: hidden on mobile, shown (with DATFallbackVisual) on desktop.
-          With cu-has-img:    shown on mobile (aspect-video) and on desktop (grid stretch).
+          cu-has-media is set only when a usable media src exists AND has not errored.
+          Without cu-has-media: hidden on mobile, shown (with DATFallbackVisual) on desktop.
+          With cu-has-media:    shown on mobile (aspect-video) and on desktop (grid stretch).
         */}
-        <div className={showRealImage ? "cu-media cu-has-img" : "cu-media"}>
-          {showRealImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={upcomingEvent.imageUrl}
-              alt=""
-              aria-hidden="true"
-              onError={() => setImgError(true)}
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                display: "block",
-              }}
-            />
+        <div className={showRealMedia ? "cu-media cu-has-media" : "cu-media"}>
+          {showRealMedia ? (
+            isVideo ? (
+              <video
+                src={mediaSrc!}
+                onError={() => setMediaError(true)}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+                {...(upcomingEvent.videoAutoplay
+                  ? { autoPlay: true, muted: true, loop: true, playsInline: true }
+                  : { controls: true })}
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={mediaSrc!}
+                alt={upcomingEvent.mediaAlt || ""}
+                onError={() => setMediaError(true)}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
+            )
           ) : (
             <DATFallbackVisual />
           )}

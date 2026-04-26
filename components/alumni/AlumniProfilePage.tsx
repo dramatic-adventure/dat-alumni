@@ -15,6 +15,11 @@ interface UpcomingEvent {
   date?: string;
   expiresAt?: string;
   description?: string;
+  mediaType?: "image" | "video";
+  mediaFileId?: string;
+  mediaUrl?: string;
+  mediaAlt?: string;
+  videoAutoplay?: boolean;
 }
 
 interface AlumniProfileProps {

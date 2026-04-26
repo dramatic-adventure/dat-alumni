@@ -313,6 +313,10 @@ const lookupUrl = useMemo(() => {
     upcomingEventDate: "",
     upcomingEventExpiresAt: "",
     upcomingEventDescription: "",
+    upcomingEventMediaType: "",
+    upcomingEventMediaUrl: "",
+    upcomingEventMediaAlt: "",
+    upcomingEventVideoAutoplay: "",
 
     storyTitle: "",
     storyProgram: "",
@@ -1156,6 +1160,10 @@ useEffect(() => {
         upcomingEventDate: String(j?.upcomingEventDate || p.upcomingEventDate || ""),
         upcomingEventExpiresAt: String(j?.upcomingEventExpiresAt || p.upcomingEventExpiresAt || ""),
         upcomingEventDescription: String(j?.upcomingEventDescription || p.upcomingEventDescription || ""),
+        upcomingEventMediaType: String(j?.upcomingEventMediaType || p.upcomingEventMediaType || ""),
+        upcomingEventMediaUrl: String(j?.upcomingEventMediaUrl || p.upcomingEventMediaUrl || ""),
+        upcomingEventMediaAlt: String(j?.upcomingEventMediaAlt || p.upcomingEventMediaAlt || ""),
+        upcomingEventVideoAutoplay: String(j?.upcomingEventVideoAutoplay || p.upcomingEventVideoAutoplay || ""),
 
         backgroundStyle: String(j?.backgroundStyle || p.backgroundStyle || "kraft"),
         // normalize into Live-cell shape (string "true" or "")
@@ -2341,6 +2349,8 @@ return (
         eventEditKeys={UpcomingEventEditKeys}
         saveCategory={saveCategory as any}
         eventFieldKeys={UpcomingEventEditKeys}
+        eventFile={eventFiles[0] ?? null}
+        onEventFileChange={(f) => setEventFiles(f ? [f] : [])}
         savedRecently={eventSavedRecently}
         onSaved={() => {
           if (eventSavedTimeoutRef.current) clearTimeout(eventSavedTimeoutRef.current);

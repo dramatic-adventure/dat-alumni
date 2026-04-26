@@ -55,6 +55,10 @@ export function toLiveSavableProfile(p: any) {
     upcomingEventDate: String(p.upcomingEventDate || "").trim(),
     upcomingEventExpiresAt: String(p.upcomingEventExpiresAt || "").trim(),
     upcomingEventDescription: String(p.upcomingEventDescription || "").trim(),
+    upcomingEventMediaType: String(p.upcomingEventMediaType || "").trim(),
+    upcomingEventMediaUrl: String(p.upcomingEventMediaUrl || "").trim(),
+    upcomingEventMediaAlt: String(p.upcomingEventMediaAlt || "").trim(),
+    upcomingEventVideoAutoplay: String(p.upcomingEventVideoAutoplay || "").trim(),
 
     currentHeadshotId: String(p.currentHeadshotId || "").trim(),
     currentHeadshotUrl: String(p.currentHeadshotUrl || "").trim(),
