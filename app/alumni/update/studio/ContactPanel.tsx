@@ -112,122 +112,175 @@ export default function ContactPanel({
     ? primarySocial
     : "";
 
+  // What's currently visible on the public Contact tab
+  const websiteShown =
+    isPubliclyVisible(profile?.showWebsite) && !!String(profile?.website || "").trim();
+  const emailShown =
+    isPubliclyVisible(profile?.showPublicEmail) && !!String(profile?.publicEmail || "").trim();
+  const featuredSocial =
+    featuredSelectValue && String(profile?.[featuredSelectValue] || "").trim()
+      ? { key: featuredSelectValue, label: ADDITIONAL_LINKS.find((l) => l.key === featuredSelectValue)?.label ?? featuredSelectValue, value: profile[featuredSelectValue] }
+      : null;
+
+  const previewItems: { key: string; label: string; value: string }[] = [
+    ...(websiteShown ? [{ key: "website", label: "Website", value: profile.website }] : []),
+    ...(emailShown ? [{ key: "email", label: "Email", value: profile.publicEmail }] : []),
+    ...(featuredSocial ? [featuredSocial] : []),
+  ];
+
+  // Shared button styles for feature toggles
+  const featureBtn: CSSProperties = {
+    ...datButtonGhost,
+    padding: "6px 12px",
+    fontSize: "0.76rem",
+    whiteSpace: "nowrap",
+    flexShrink: 0,
+    borderRadius: 10,
+  };
+  const featureBtnActive: CSSProperties = {
+    ...featureBtn,
+    background: "rgba(108,0,175,0.22)",
+    border: "1px solid rgba(108,0,175,0.65)",
+    color: "rgba(210,185,255,0.95)",
+  };
+
+  // Zone B: saved links that are collapsed and not currently featured
+  const savedCollapsedNotFeatured = featuredOptions.filter(
+    (o) => o.key !== featuredSelectValue && !openPlatforms.has(o.key)
+  );
+
   return (
     <div>
       <div id="studio-contact-anchor" />
 
-      {/* ── Primary contact ───────────────────────────────────── */}
+      {/* ── Your Contact Tab ──────────────────────────────────── */}
       <span style={subheadChipStyle} className="subhead-chip">
-        Primary contact
+        Your Contact Tab
       </span>
       <p style={{ ...explainStyleLocal, opacity: 0.65, fontSize: "0.8rem" }}>
-        Your website and email can each be shown or hidden on your public profile. Uncheck to store them for DAT&apos;s records only.
+        Choose what appears publicly on the Contact tab of your DAT profile.
       </p>
+
+      {/* Preview area */}
+      {previewItems.length > 0 ? (
+        <div
+          style={{
+            background: "rgba(108,0,175,0.09)",
+            borderLeft: "3px solid rgba(108,0,175,0.42)",
+            borderRadius: "0 6px 6px 0",
+            padding: "11px 16px",
+            marginBottom: 20,
+          }}
+        >
+          <span
+            style={{
+              display: "block",
+              fontSize: "0.67rem",
+              color: "rgba(185,145,255,0.85)",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              fontWeight: 600,
+              marginBottom: 8,
+            }}
+          >
+            Showing on your profile
+          </span>
+          {previewItems.map((item) => (
+            <div
+              key={item.key}
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: 8,
+                marginBottom: 4,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "0.72rem",
+                  fontWeight: 600,
+                  opacity: 0.6,
+                  minWidth: 56,
+                  flexShrink: 0,
+                }}
+              >
+                {item.label}
+              </span>
+              <span style={{ fontSize: "0.78rem", opacity: 0.88, wordBreak: "break-all" }}>
+                {item.value}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p
+          style={{
+            ...explainStyleLocal,
+            opacity: 0.38,
+            fontSize: "0.8rem",
+            marginBottom: 20,
+            paddingLeft: 4,
+          }}
+        >
+          Nothing on your Contact tab yet — feature your website, email, or a social link below.
+        </p>
+      )}
 
       <div style={{ display: "grid", gap: 16, marginBottom: 28 }}>
         {/* Website */}
         <div>
           <label style={labelStyle}>Website / Portfolio</label>
-          <input
-            value={profile?.website || ""}
-            onChange={(e) => setProfile((p) => ({ ...p, website: e.target.value }))}
-            style={inputStyle}
-            placeholder="https://yoursite.com"
-            disabled={loading}
-          />
-          <label
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              marginTop: 8,
-              fontSize: 13,
-              cursor: "pointer",
-              opacity: 0.85,
-            }}
-          >
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
             <input
-              type="checkbox"
-              checked={isPubliclyVisible(profile?.showWebsite)}
-              onChange={(e) =>
-                setProfile((p) => ({ ...p, showWebsite: e.target.checked ? "true" : "false" }))
-              }
+              value={profile?.website || ""}
+              onChange={(e) => setProfile((p) => ({ ...p, website: e.target.value }))}
+              style={{ ...inputStyle, flex: 1, minWidth: 0, width: "auto" }}
+              placeholder="https://yoursite.com"
               disabled={loading}
             />
-            Show on public profile
-          </label>
+            <button
+              type="button"
+              onClick={() =>
+                setProfile((p) => ({
+                  ...p,
+                  showWebsite: isPubliclyVisible(p.showWebsite) ? "false" : "true",
+                }))
+              }
+              style={websiteShown ? featureBtnActive : featureBtn}
+              disabled={loading}
+            >
+              {websiteShown ? "✓ On profile" : "Feature this website"}
+            </button>
+          </div>
         </div>
 
         {/* Public Email */}
         <div>
           <label style={labelStyle}>Public email</label>
-          <input
-            type="email"
-            value={profile?.publicEmail || ""}
-            onChange={(e) => setProfile((p) => ({ ...p, publicEmail: e.target.value }))}
-            style={inputStyle}
-            placeholder="name@example.com"
-            disabled={loading}
-          />
-          <label
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              marginTop: 8,
-              fontSize: 13,
-              cursor: "pointer",
-              opacity: 0.85,
-            }}
-          >
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
             <input
-              type="checkbox"
-              checked={isPubliclyVisible(profile?.showPublicEmail)}
-              onChange={(e) =>
-                setProfile((p) => ({ ...p, showPublicEmail: e.target.checked ? "true" : "false" }))
-              }
+              type="email"
+              value={profile?.publicEmail || ""}
+              onChange={(e) => setProfile((p) => ({ ...p, publicEmail: e.target.value }))}
+              style={{ ...inputStyle, flex: 1, minWidth: 0, width: "auto" }}
+              placeholder="name@example.com"
               disabled={loading}
             />
-            Show on public profile
-          </label>
+            <button
+              type="button"
+              onClick={() =>
+                setProfile((p) => ({
+                  ...p,
+                  showPublicEmail: isPubliclyVisible(p.showPublicEmail) ? "false" : "true",
+                }))
+              }
+              style={emailShown ? featureBtnActive : featureBtn}
+              disabled={loading}
+            >
+              {emailShown ? "✓ On profile" : "Feature this email"}
+            </button>
+          </div>
         </div>
-      </div>
-
-      {/* ── Featured link ─────────────────────────────────────── */}
-      <span style={subheadChipStyle} className="subhead-chip">
-        Featured link
-      </span>
-      <p style={{ ...explainStyleLocal, opacity: 0.65, fontSize: "0.8rem" }}>
-        Choose one of the additional links below to feature on your profile.
-      </p>
-      <div style={{ marginBottom: 28 }}>
-        <select
-          value={featuredSelectValue}
-          onChange={(e) => {
-            const v = e.target.value;
-            setPrimarySocial(v);
-            setProfile((p) => ({ ...p, primarySocial: v }));
-          }}
-          style={{
-            ...inputStyle,
-            opacity: featuredOptions.length === 0 ? 0.55 : 1,
-            cursor: featuredOptions.length === 0 ? "not-allowed" : "pointer",
-          }}
-          disabled={loading || featuredOptions.length === 0}
-        >
-          {featuredOptions.length === 0 ? (
-            <option value="">— Add an additional link first —</option>
-          ) : (
-            <>
-              <option value="">— None —</option>
-              {featuredOptions.map(({ key, label }) => (
-                <option key={key} value={key}>
-                  {label}
-                </option>
-              ))}
-            </>
-          )}
-        </select>
       </div>
 
       {/* ── Additional links ──────────────────────────────────── */}
@@ -274,22 +327,102 @@ export default function ContactPanel({
         })}
       </div>
 
-      {/* Expanded inputs — in sheet column order, only open ones */}
+      {/* Expanded inputs with inline Feature button */}
       {ADDITIONAL_LINKS.filter(({ key }) => openPlatforms.has(key)).map(
-        ({ key, label, placeholder }) => (
-          <div key={key} style={{ marginBottom: 14 }}>
-            <label style={labelStyle}>{label}</label>
-            <input
-              value={profile?.[key] || ""}
-              onChange={(e) =>
-                setProfile((p) => ({ ...p, [key]: e.target.value }))
-              }
-              style={inputStyle}
-              placeholder={placeholder}
-              disabled={loading}
-            />
-          </div>
-        )
+        ({ key, label, placeholder }) => {
+          const hasValue = !!String(profile?.[key] || "").trim();
+          const isFeatured = featuredSelectValue === key;
+          return (
+            <div key={key} style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>{label}</label>
+              <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <input
+                  value={profile?.[key] || ""}
+                  onChange={(e) =>
+                    setProfile((p) => ({ ...p, [key]: e.target.value }))
+                  }
+                  style={{ ...inputStyle, flex: 1, minWidth: 0, width: "auto" }}
+                  placeholder={placeholder}
+                  disabled={loading}
+                />
+                {hasValue && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isFeatured) {
+                        setPrimarySocial(key);
+                        setProfile((p) => ({ ...p, primarySocial: key }));
+                      }
+                    }}
+                    style={isFeatured ? featureBtnActive : featureBtn}
+                    disabled={loading || isFeatured}
+                  >
+                    {isFeatured ? "✓ Featured" : "Feature this link"}
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        }
+      )}
+
+      {/* Zone B: saved links that are collapsed and not currently featured */}
+      {savedCollapsedNotFeatured.length > 0 && (
+        <div
+          style={{
+            marginTop: 8,
+            marginBottom: 8,
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            paddingTop: 12,
+          }}
+        >
+          {savedCollapsedNotFeatured.map(({ key, label }) => (
+            <div
+              key={key}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                padding: "9px 0",
+                borderBottom: "1px solid rgba(255,255,255,0.05)",
+              }}
+            >
+              <div>
+                <div style={{ fontSize: "0.83rem", fontWeight: 500, opacity: 0.85 }}>
+                  {label}
+                </div>
+                <div
+                  style={{
+                    fontSize: "0.73rem",
+                    opacity: 0.45,
+                    marginTop: 2,
+                    wordBreak: "break-all",
+                  }}
+                >
+                  {profile?.[key]}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setPrimarySocial(key);
+                  setProfile((p) => ({ ...p, primarySocial: key }));
+                }}
+                style={{
+                  ...datButtonGhost,
+                  padding: "5px 11px",
+                  fontSize: "0.76rem",
+                  whiteSpace: "nowrap",
+                  opacity: 0.75,
+                }}
+                disabled={loading}
+              >
+                Feature this link
+              </button>
+            </div>
+          ))}
+        </div>
       )}
 
       {/* ── Panel footer ──────────────────────────────────────── */}
