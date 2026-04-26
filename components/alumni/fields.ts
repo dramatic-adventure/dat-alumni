@@ -228,7 +228,7 @@ export const PROFILE_FIELDS: FieldDef[] = [
 
   {
     key: "backgroundStyle",
-    label: "Background Textures",
+    label: "Background Texture",
     kind: "select",
     options: [
       { value: "kraft", label: "Kraft Paper" },

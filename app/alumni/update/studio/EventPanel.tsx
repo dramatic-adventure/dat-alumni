@@ -31,6 +31,9 @@ export default function EventPanel(props: {
 
   // optional fallback (keeps your current inline fallback component intact)
   manualFallback?: ReactNode;
+
+  savedRecently?: boolean;
+  onSaved?: () => void;
 }) {
   const {
     loading,
@@ -43,6 +46,8 @@ export default function EventPanel(props: {
     saveCategory,
     eventFieldKeys,
     manualFallback,
+    savedRecently = false,
+    onSaved,
   } = props;
 
   return (
@@ -55,10 +60,38 @@ export default function EventPanel(props: {
 
       {renderFieldsOrNull(eventEditKeys) ?? manualFallback ?? null}
 
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: 14,
+          flexWrap: "wrap",
+          marginTop: 20,
+        }}
+      >
+        {savedRecently && (
+          <span
+            style={{
+              fontSize: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              color: "#6ee7b7",
+              opacity: 0.9,
+            }}
+          >
+            <span style={{ fontSize: 10 }}>✓</span> Saved
+          </span>
+        )}
         <button
           type="button"
-          style={datButtonLocal}
+          style={{
+            ...datButtonLocal,
+            ...(savedRecently
+              ? { background: "rgba(52,211,153,0.25)", borderColor: "rgba(52,211,153,0.5)" }
+              : {}),
+          }}
           className="dat-btn"
           disabled={loading}
           onClick={() =>
@@ -66,10 +99,11 @@ export default function EventPanel(props: {
               tag: "Event",
               fieldKeys: eventFieldKeys,
               uploadKinds: [],
+              afterSave: () => onSaved?.(),
             })
           }
         >
-          Save Event
+          {savedRecently ? "Saved ✓" : "Save Event"}
         </button>
       </div>
     </div>

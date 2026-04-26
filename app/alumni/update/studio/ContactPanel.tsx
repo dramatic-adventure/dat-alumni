@@ -49,6 +49,8 @@ type ContactPanelProps = {
 
   contactFieldKeys: string[];
   onClearDraft: () => void;
+  savedRecently?: boolean;
+  onSaved?: () => void;
 };
 
 /** Returns true when a field should be publicly visible (default: shown unless "false") */
@@ -71,6 +73,8 @@ export default function ContactPanel({
   saveCategory,
   contactFieldKeys,
   onClearDraft,
+  savedRecently = false,
+  onSaved,
 }: ContactPanelProps) {
   // Which platform inputs are currently expanded
   const [openPlatforms, setOpenPlatforms] = useState<Set<Platform>>(new Set());
@@ -301,7 +305,7 @@ export default function ContactPanel({
           flexWrap: "wrap",
         }}
       >
-        {isDirty && (
+        {isDirty && !savedRecently && (
           <span
             style={{
               fontSize: 12,
@@ -315,6 +319,20 @@ export default function ContactPanel({
             <span style={{ fontSize: 8 }}>●</span> Unsaved changes
           </span>
         )}
+        {savedRecently && (
+          <span
+            style={{
+              fontSize: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              color: "#6ee7b7",
+              opacity: 0.9,
+            }}
+          >
+            <span style={{ fontSize: 10 }}>✓</span> Saved
+          </span>
+        )}
         <button
           type="button"
           onClick={() =>
@@ -322,14 +340,22 @@ export default function ContactPanel({
               tag: "Contact",
               fieldKeys: contactFieldKeys,
               uploadKinds: [],
-              afterSave: () => onClearDraft(),
+              afterSave: () => {
+                onClearDraft();
+                onSaved?.();
+              },
             })
           }
-          style={datButtonLocal}
+          style={{
+            ...datButtonLocal,
+            ...(savedRecently
+              ? { background: "rgba(52,211,153,0.25)", borderColor: "rgba(52,211,153,0.5)" }
+              : {}),
+          }}
           className="dat-btn"
           disabled={loading}
         >
-          Save Contact Info
+          {savedRecently ? "Saved ✓" : "Save Contact Info"}
         </button>
       </div>
 

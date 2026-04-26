@@ -239,6 +239,29 @@ function canonKey(rawKey: string) {
   return smashed;
 }
 
+/** Convert 0-based column index to A1 letter notation (0→A, 25→Z, 26→AA …) */
+function colIndexToLetter(idx: number): string {
+  let s = "";
+  let n = idx + 1;
+  while (n > 0) {
+    const rem = (n - 1) % 26;
+    s = String.fromCharCode(65 + rem) + s;
+    n = Math.floor((n - 1) / 26);
+  }
+  return s;
+}
+
+/**
+ * Columns that MUST exist in Profile-Live for alumni-editable visibility flags.
+ * Map: canonical key → preferred header label written to the sheet.
+ * Called lazily on each save; safe to run concurrently (duplicate headers are
+ * deduplicated by headerMap's first-wins rule, so no data is lost).
+ */
+const REQUIRED_VISIBILITY_COLUMNS: Record<string, string> = {
+  showwebsite:     "showWebsite",
+  showpublicemail: "showPublicEmail",
+};
+
 export async function PUT(req: Request) {
   try {
     const ip =
@@ -313,6 +336,33 @@ export async function PUT(req: Request) {
       if (typeof headerMap[kCanon] !== "number") headerMap[kCanon] = i;
     });
 
+    // ── Self-healing: append any missing required visibility columns ──────────
+    // If showWebsite / showPublicEmail columns don't exist in the sheet yet,
+    // add them now so this save (and all future saves) can persist them.
+    {
+      const missingCols: string[] = [];
+      for (const [canon, label] of Object.entries(REQUIRED_VISIBILITY_COLUMNS)) {
+        if (typeof headerMap[canon] !== "number") missingCols.push(label);
+      }
+      if (missingCols.length > 0) {
+        const startIdx = header.length;
+        const endIdx   = startIdx + missingCols.length - 1;
+        const range    = `Profile-Live!${colIndexToLetter(startIdx)}1:${colIndexToLetter(endIdx)}1`;
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range,
+          valueInputOption: "RAW",
+          requestBody: { values: [missingCols] },
+        });
+        missingCols.forEach((label, i) => {
+          const canon = canonKey(label);
+          const colIdx = startIdx + i;
+          header.push(label);
+          headerMap[canon] = colIdx;
+        });
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     const idIdx = idxOf(header as string[], ["alumniid", "alumni id", "id"]);
     const slugIdx = idxOf(header as string[], ["slug"]);

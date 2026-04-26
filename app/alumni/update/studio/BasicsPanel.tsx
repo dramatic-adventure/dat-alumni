@@ -175,7 +175,7 @@ export default function BasicsTab({
 
           <div>
             <label htmlFor="location" style={labelStyle}>
-              Base
+              Base city / primary location
             </label>
             <input
               id="location"

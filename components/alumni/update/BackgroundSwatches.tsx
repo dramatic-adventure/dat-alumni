@@ -42,7 +42,7 @@ export default function BackgroundSwatches({ value, onChange }: Props) {
           marginBottom: 8,
         }}
       >
-        Background Textures
+        Background Texture
       </div>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
         {OPTIONS.map((opt) => {

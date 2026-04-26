@@ -37,6 +37,9 @@ type IdentityPanelProps = {
     afterSave?: () => void;
     profileOverride?: any;
   }) => void;
+
+  savedRecently?: boolean;
+  onSaved?: () => void;
 };
 
 const LAYER_TO_PROFILE_KEY: Record<TaxonomyLayer, string> = {
@@ -513,6 +516,8 @@ export default function IdentityPanel({
   renderFieldsOrNull: _renderFieldsOrNull, // not used — Identity always renders its own UI
   MODULES,
   saveCategory,
+  savedRecently = false,
+  onSaved,
 }: IdentityPanelProps) {
   const pronounPresets = ["she/her", "he/him", "they/them", "she/they", "he/they"];
   const languagePresets = [
@@ -764,7 +769,7 @@ export default function IdentityPanel({
           flexWrap: "wrap",
         }}
       >
-        {isDirty && (
+        {isDirty && !savedRecently && (
           <span
             style={{
               fontSize: 12,
@@ -778,9 +783,28 @@ export default function IdentityPanel({
             <span style={{ fontSize: 8 }}>●</span> Unsaved changes
           </span>
         )}
+        {savedRecently && (
+          <span
+            style={{
+              fontSize: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              color: "#6ee7b7",
+              opacity: 0.9,
+            }}
+          >
+            <span style={{ fontSize: 10 }}>✓</span> Saved
+          </span>
+        )}
         <button
           type="button"
-          style={datButtonLocal}
+          style={{
+            ...datButtonLocal,
+            ...(savedRecently
+              ? { background: "rgba(52,211,153,0.25)", borderColor: "rgba(52,211,153,0.5)" }
+              : {}),
+          }}
           className="dat-btn"
           disabled={loading}
           onClick={() =>
@@ -788,10 +812,11 @@ export default function IdentityPanel({
               tag: "Identity",
               fieldKeys: MODULES["Identity"].fieldKeys,
               uploadKinds: [],
+              afterSave: () => onSaved?.(),
             })
           }
         >
-          Save Identity
+          {savedRecently ? "Saved ✓" : "Save Identity"}
         </button>
       </div>
     </div>

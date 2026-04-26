@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { signOut } from "next-auth/react";
 
 import { MODULES, type ModuleKey } from "./liveModules";
 import { boolCell } from "@/app/alumni/update/helpers/boolean";
@@ -146,6 +147,12 @@ const targetAlumniIdFromProp =
   const lastUploadedHeadshotRef = useRef<{ name: string; size: number; lastModified: number; fileId: string } | null>(null);
   const [basicsSavedRecently, setBasicsSavedRecently] = useState(false);
   const basicsSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [contactSavedRecently, setContactSavedRecently] = useState(false);
+  const contactSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [identitySavedRecently, setIdentitySavedRecently] = useState(false);
+  const identitySavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [eventSavedRecently, setEventSavedRecently] = useState(false);
+  const eventSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const searchParams = useSearchParams();
 
@@ -1326,6 +1333,8 @@ useEffect(() => {
 
   const next = {
     website: profile.website ?? "",
+    showWebsite: String((profile as any).showWebsite ?? ""),
+    showPublicEmail: String((profile as any).showPublicEmail ?? ""),
     instagram: profile.instagram ?? "",
     x: profile.x ?? "",
     tiktok: profile.tiktok ?? "",
@@ -1351,6 +1360,8 @@ useEffect(() => {
 }, [
   stableAlumniId,
   profile.website,
+  (profile as any).showWebsite,
+  (profile as any).showPublicEmail,
   profile.instagram,
   profile.x,
   profile.tiktok,
@@ -2119,19 +2130,40 @@ return (
   >
     <span>Profile Studio</span>
 
-    {loading ? (
-      <span
-        aria-label="Loading"
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      {loading ? (
+        <span
+          aria-label="Loading"
+          style={{
+            width: 14,
+            height: 14,
+            borderRadius: 999,
+            border: "2px solid rgba(255,255,255,0.25)",
+            borderTopColor: "rgba(255,255,255,0.9)",
+            animation: "datSpin 0.8s linear infinite",
+          }}
+        />
+      ) : null}
+      <button
+        type="button"
+        onClick={() => signOut({ callbackUrl: "/" })}
         style={{
-          width: 14,
-          height: 14,
-          borderRadius: 999,
-          border: "2px solid rgba(255,255,255,0.25)",
-          borderTopColor: "rgba(255,255,255,0.9)",
-          animation: "datSpin 0.8s linear infinite",
+          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: ".08em",
+          textTransform: "uppercase",
+          background: "transparent",
+          color: "rgba(242,242,242,0.55)",
+          border: "1px solid rgba(255,255,255,0.18)",
+          borderRadius: 8,
+          padding: "5px 10px",
+          cursor: "pointer",
         }}
-      />
-    ) : null}
+      >
+        Sign out
+      </button>
+    </div>
   </div>
 
 <div
@@ -2195,6 +2227,12 @@ return (
         renderFieldsOrNull={renderFieldsOrNull}
         MODULES={MODULES as any}
         saveCategory={saveCategory as any}
+        savedRecently={identitySavedRecently}
+        onSaved={() => {
+          if (identitySavedTimeoutRef.current) clearTimeout(identitySavedTimeoutRef.current);
+          setIdentitySavedRecently(true);
+          identitySavedTimeoutRef.current = setTimeout(() => setIdentitySavedRecently(false), 2500);
+        }}
       />
     }
     mediaPanel={
@@ -2230,6 +2268,12 @@ return (
         saveCategory={saveCategory as any}
         contactFieldKeys={MODULES["Contact"].fieldKeys}
         onClearDraft={() => contactDraft.clearDraft()}
+        savedRecently={contactSavedRecently}
+        onSaved={() => {
+          if (contactSavedTimeoutRef.current) clearTimeout(contactSavedTimeoutRef.current);
+          setContactSavedRecently(true);
+          contactSavedTimeoutRef.current = setTimeout(() => setContactSavedRecently(false), 2500);
+        }}
       />
     }
     storyPanel={
@@ -2271,6 +2315,12 @@ return (
         eventEditKeys={UpcomingEventEditKeys}
         saveCategory={saveCategory as any}
         eventFieldKeys={UpcomingEventEditKeys}
+        savedRecently={eventSavedRecently}
+        onSaved={() => {
+          if (eventSavedTimeoutRef.current) clearTimeout(eventSavedTimeoutRef.current);
+          setEventSavedRecently(true);
+          eventSavedTimeoutRef.current = setTimeout(() => setEventSavedRecently(false), 2500);
+        }}
         manualFallback={
           <ManualUpcomingEventFallback
             profile={profile}

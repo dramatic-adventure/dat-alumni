@@ -189,7 +189,6 @@ export function UploadProgressSection({
 
             <UploadControls
               kind={k}
-              disabled={loading}
               uploaderRef={uploaderRef}
               stableAlumniId={stableAlumniId}
               datButtonGhost={datButtonGhost}
