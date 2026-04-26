@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Menu, X } from 'lucide-react';
 import Image from 'next/image';
 
@@ -98,25 +98,33 @@ export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [showSubmenu, setShowSubmenu] = useState<string | null>(null);
   const [hidden, setHidden] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollYRef = useRef(0);
 
   // 👇 NEW: track if viewport is "short" like we did with @media (max-height: 650px)
   const [isTight, setIsTight] = useState(false);
 
-  // Hide-on-scroll only when menu is CLOSED
+  // Hide-on-scroll only when menu is CLOSED.
+  // Uses a ref for lastScrollY so the listener is registered once per isOpen
+  // change rather than on every scroll tick (avoids re-render jank).
+  // Thresholds: stay visible for the first 80px; require 8px down to hide,
+  // 4px up to show — prevents flicker from micro-jitter and iOS bounce.
   useEffect(() => {
     const handleScroll = () => {
+      if (isOpen) return;
       const currentY = window.scrollY;
-      if (!isOpen && currentY > lastScrollY) {
+      const delta = currentY - lastScrollYRef.current;
+      if (currentY < 80) {
+        setHidden(false);
+      } else if (delta > 8) {
         setHidden(true);
-      } else if (currentY < lastScrollY) {
+      } else if (delta < -4) {
         setHidden(false);
       }
-      setLastScrollY(currentY);
+      lastScrollYRef.current = currentY;
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY, isOpen]);
+  }, [isOpen]);
 
   // Lock body scroll while menu is open
   useEffect(() => {
