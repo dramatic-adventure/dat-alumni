@@ -28,6 +28,7 @@ import CategoryScroller from "@/components/alumni/CategoryScroller";
 import { mapSpotlightUpdateToUpdate } from "@/lib/mapSpotlightUpdateToUpdate";
 import JourneyMiniCard from "@/components/alumni/JourneyMiniCard";
 import PublicMediaSection from "@/components/profile/PublicMediaSection";
+import ComingUpEventStrip, { type ComingUpEvent } from "@/components/profile/ComingUpEventStrip";
 
 import "@/components/productions/productionCarouselCards.css";
 
@@ -303,6 +304,7 @@ interface ProfileCardProps {
   secondLocation?: string;
   isBiCoastal?: boolean;
   featuredLink?: { url: string; label: string };
+  upcomingEvent?: ComingUpEvent;
 }
 
 const scaleCache = new Map<string, { first: number; last: number }>();
@@ -710,6 +712,8 @@ const hasStories = storiesForFeatured.length > 0;
           featuredLink={props.featuredLink}
         />
       )}
+
+      <ComingUpEventStrip upcomingEvent={props.upcomingEvent} />
 
       {(hasArtistBio || hasSpotlight || hasHighlight) && (
         <div style={{ backgroundColor: "#2493A9", paddingTop: hasArtistBio ? "3rem" : "2rem", paddingBottom: "2.5rem" }}>
