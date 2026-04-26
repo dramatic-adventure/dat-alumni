@@ -9,6 +9,14 @@ import ProfileCard from "@/components/profile/ProfileCard";
 import AlumniProfileBackdrop from "@/components/alumni/AlumniProfileBackdrop";
 import { clientDebug } from "@/lib/clientDebug";
 
+interface UpcomingEvent {
+  title: string;
+  link?: string;
+  date?: string;
+  expiresAt?: string;
+  description?: string;
+}
+
 interface AlumniProfileProps {
   data: AlumniRow;
   allStories: StoryRow[];
@@ -23,6 +31,8 @@ interface AlumniProfileProps {
   offsetTop?: string; // Additional offset for fine-tuning (e.g., "-2rem")
   offsetBottom?: string; // Space below section (e.g., "-6rem")
   minSectionHeight?: string; // Ensures parallax coverage (e.g., "140vh")
+
+  upcomingEvent?: UpcomingEvent;
 }
 
 const HEADER_HEIGHT = "84px"; // ✅ Adjust if your header height changes
@@ -70,6 +80,24 @@ function coerceStrArray(v: any): string[] {
   return [];
 }
 
+function isMomentExpired(date?: string, expiresAt?: string): boolean {
+  const boundary = (expiresAt || "").trim() || (date || "").trim();
+  if (!boundary) return false;
+  const t = new Date();
+  const today = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+  return today > boundary;
+}
+
+function formatEventDate(dateStr?: string): string | null {
+  if (!dateStr) return null;
+  const parts = dateStr.trim().split("-");
+  if (parts.length !== 3) return null;
+  const [y, m, d] = parts.map(Number);
+  const dt = new Date(y, m - 1, d);
+  if (isNaN(dt.getTime())) return null;
+  return dt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+}
+
 export default function AlumniProfilePage({
   data,
   allStories,
@@ -77,6 +105,7 @@ export default function AlumniProfilePage({
   offsetTop = "2rem",
   offsetBottom = "15rem",
   minSectionHeight = "100vh",
+  upcomingEvent,
 }: AlumniProfileProps) {
   const d = (data || {}) as any;
 
@@ -297,6 +326,136 @@ alumniId={alumniId || undefined}
             </div>
           </section>
         </AlumniProfileBackdrop>
+
+        {upcomingEvent?.title && !isMomentExpired(upcomingEvent.date, upcomingEvent.expiresAt) && (
+          <div
+            style={{
+              width: "85%",
+              maxWidth: "1120px",
+              margin: "0 auto",
+              padding: "2rem 0 4rem",
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: "#1D1A24",
+                borderRadius: "20px",
+                border: "1px solid rgba(255,255,255,0.06)",
+                boxShadow: "0 4px 32px rgba(0,0,0,0.35)",
+                fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              {/* Gold left accent bar */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: "4px",
+                  background: "linear-gradient(to bottom, #C4A35A, #A8853E)",
+                }}
+              />
+
+              {/* Content — left padding keeps text clear of the accent bar and any headshot bleed */}
+              <div style={{ padding: "2rem 2.5rem 2rem 2.5rem" }}>
+                {/* Eyebrow */}
+                <div
+                  style={{
+                    fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                    fontSize: "0.68rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "#9B89B4",
+                    marginBottom: "0.6rem",
+                  }}
+                >
+                  Coming Up
+                </div>
+
+                {/* Date — before title for immediate scannability */}
+                {upcomingEvent.date && (
+                  <p
+                    style={{
+                      fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                      fontSize: "0.78rem",
+                      fontWeight: 600,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      color: "#C4A35A",
+                      margin: "0 0 0.5rem",
+                    }}
+                  >
+                    {formatEventDate(upcomingEvent.date)}
+                  </p>
+                )}
+
+                {/* Title */}
+                <h2
+                  style={{
+                    fontFamily: "var(--font-anton), system-ui, sans-serif",
+                    fontSize: "clamp(1.5rem, 4vw, 2.25rem)",
+                    lineHeight: 1.1,
+                    textTransform: "uppercase",
+                    color: "#F2ECE6",
+                    margin: "0 0 1rem",
+                    letterSpacing: "0.02em",
+                    maxWidth: "52ch",
+                  }}
+                >
+                  {upcomingEvent.title}
+                </h2>
+
+                {/* Description */}
+                {upcomingEvent.description && (
+                  <p
+                    style={{
+                      fontSize: "0.97rem",
+                      lineHeight: 1.65,
+                      color: "#B8B0C0",
+                      margin: "0 0 1.5rem",
+                      maxWidth: "56ch",
+                    }}
+                  >
+                    {upcomingEvent.description}
+                  </p>
+                )}
+
+                {/* CTA */}
+                {upcomingEvent.link && (
+                  <a
+                    href={upcomingEvent.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.35rem",
+                      fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      color: "#1D1A24",
+                      backgroundColor: "#C4A35A",
+                      textDecoration: "none",
+                      padding: "0.55rem 1.1rem",
+                      borderRadius: "6px",
+                      transition: "opacity 0.15s",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+                    onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                  >
+                    View Event →
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </>
   );
