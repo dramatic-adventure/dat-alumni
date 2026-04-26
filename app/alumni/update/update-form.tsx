@@ -457,6 +457,7 @@ const lookupUrl = useMemo(() => {
 
   /* UX */
   const [loading, setLoading] = useState(false);
+  const [signOutHover, setSignOutHover] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(
     null
   );
@@ -1041,7 +1042,7 @@ const openEventAndScroll = () => {
 
   // Browser leave warning when there are unsaved changes
   useEffect(() => {
-    const anyDirty = contactDirty || basicsDirty || identityDirty;
+    const anyDirty = contactDirty || basicsDirty || identityDirty || !!headshotFile;
     if (!anyDirty) return;
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault();
@@ -1049,7 +1050,7 @@ const openEventAndScroll = () => {
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [contactDirty, basicsDirty, identityDirty]);
+  }, [contactDirty, basicsDirty, identityDirty, headshotFile]);
 
   const [lastPostedId, setLastPostedId] = useState<string | null>(null);
 
@@ -1996,7 +1997,7 @@ return (
         position: "relative",
         height: "95vh",
         overflow: "hidden",
-        zIndex: 0,
+        zIndex: 15,
         boxShadow: "0 0 33px rgba(0, 0, 0, 0.5)",
       }}
     >
@@ -2008,7 +2009,7 @@ return (
         className="object-cover object-center"
         style={{ zIndex: -1 }}
       />
-      <div style={{ position: "absolute", bottom: "1rem", right: "5%" }}>
+      <div style={{ position: "absolute", bottom: "1rem", right: "5%", zIndex: 20 }}>
         <h1
           style={{
             fontFamily: "var(--font-anton), system-ui, sans-serif",
@@ -2035,6 +2036,35 @@ return (
           Signed in as <strong>{email}</strong>
           {isAdmin ? " (admin)" : ""}
         </p>
+        <button
+          type="button"
+          onClick={() => void signOut({ callbackUrl: "/" })}
+          onMouseEnter={() => setSignOutHover(true)}
+          onMouseLeave={() => setSignOutHover(false)}
+          style={{
+            display: "block",
+            marginLeft: "auto",
+            marginTop: 6,
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: ".1em",
+            textTransform: "uppercase",
+            background: signOutHover ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.07)",
+            color: signOutHover ? "rgba(242,242,242,1)" : "rgba(242,242,242,0.6)",
+            border: signOutHover
+              ? "1px solid rgba(242,242,242,0.55)"
+              : "1px solid rgba(242,242,242,0.25)",
+            borderRadius: 4,
+            cursor: "pointer",
+            padding: "4px 12px",
+            textShadow: "0 1px 4px rgba(0,0,0,0.8)",
+            transition: "background 0.15s, color 0.15s, border-color 0.15s",
+            outline: "none",
+          }}
+        >
+          Sign out
+        </button>
       </div>
     </div>
 
@@ -2130,40 +2160,19 @@ return (
   >
     <span>Profile Studio</span>
 
-    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      {loading ? (
-        <span
-          aria-label="Loading"
-          style={{
-            width: 14,
-            height: 14,
-            borderRadius: 999,
-            border: "2px solid rgba(255,255,255,0.25)",
-            borderTopColor: "rgba(255,255,255,0.9)",
-            animation: "datSpin 0.8s linear infinite",
-          }}
-        />
-      ) : null}
-      <button
-        type="button"
-        onClick={() => signOut({ callbackUrl: "/" })}
+    {loading ? (
+      <span
+        aria-label="Loading"
         style={{
-          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: ".08em",
-          textTransform: "uppercase",
-          background: "transparent",
-          color: "rgba(242,242,242,0.55)",
-          border: "1px solid rgba(255,255,255,0.18)",
-          borderRadius: 8,
-          padding: "5px 10px",
-          cursor: "pointer",
+          width: 14,
+          height: 14,
+          borderRadius: 999,
+          border: "2px solid rgba(255,255,255,0.25)",
+          borderTopColor: "rgba(255,255,255,0.9)",
+          animation: "datSpin 0.8s linear infinite",
         }}
-      >
-        Sign out
-      </button>
-    </div>
+      />
+    ) : null}
   </div>
 
 <div

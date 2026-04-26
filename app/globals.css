@@ -776,3 +776,13 @@ footer .footer-cta {
 .ls-hover:hover {
   transform: scaleX(1.04);
 }
+
+.hero-signout-btn {
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.hero-signout-btn:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: rgba(242, 242, 242, 0.95) !important;
+  border-color: rgba(242, 242, 242, 0.5) !important;
+}
