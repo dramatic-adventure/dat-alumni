@@ -1,6 +1,8 @@
 // app/api/stories/route.ts
 import { NextResponse } from "next/server";
 import { loadCsv } from "@/lib/loadCsv";
+import { csvUrls } from "@/lib/csvUrls";
+import { sheetsClient } from "@/lib/googleClients";
 
 export const runtime = "nodejs"; // important on Netlify
 
@@ -436,6 +438,34 @@ function compareTsDesc(a: any, b: any) {
 }
 
 /* ===========================
+   Google Sheets API loader
+   =========================== */
+const STORIES_TAB = process.env.MAP_STORIES_TAB || "Clean Map Data";
+
+async function fetchStoriesCsvFromApi(): Promise<string> {
+  const spreadsheetId = (process.env.ALUMNI_SHEET_ID || "").trim();
+  if (!spreadsheetId) throw new Error("ALUMNI_SHEET_ID not set");
+
+  const sheets = sheetsClient();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: `'${STORIES_TAB}'`,
+    valueRenderOption: "UNFORMATTED_VALUE",
+    dateTimeRenderOption: "FORMATTED_STRING",
+  });
+
+  const rows = res.data.values ?? [];
+  if (!rows.length) throw new Error(`'${STORIES_TAB}' sheet returned no data`);
+
+  const needsQ = /[",\r\n]/;
+  const quote = (v: unknown) => {
+    const s = v == null ? "" : String(v);
+    return needsQ.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return rows.map((r) => (r as unknown[]).map(quote).join(",")).join("\n");
+}
+
+/* ===========================
    Route handler
    =========================== */
 export async function GET(req: Request) {
@@ -450,7 +480,7 @@ export async function GET(req: Request) {
     // ✅ Cache-bust param to avoid stale CSV from intermediary caches
     const cb = Date.now();
 
-    const publishedUrlRaw = (process.env.NEXT_PUBLIC_MAP_CSV_URL || "").trim();
+    const publishedUrlRaw = (process.env.NEXT_PUBLIC_MAP_CSV_URL || csvUrls.cleanMapData).trim();
     const publishedUrl = publishedUrlRaw
       ? `${publishedUrlRaw}${publishedUrlRaw.includes("?") ? "&" : "?"}_cb=${cb}`
       : "";
@@ -527,32 +557,43 @@ const loadLocalFallback = async (): Promise<string> => {
 };
 
 let csv = "";
-let used: "published" | "fallback" = "fallback";
+let used: "api" | "published" | "fallback" = "api";
 
+// 1) Google Sheets API (primary — authenticated, no public publish required)
 try {
-  if (publishedUrl) {
-    csv = (await tryLoad("published", publishedUrl)).text;
-    used = "published";
-  } else {
-    csv = await loadLocalFallback();
-    used = "fallback";
-  }
-} catch (publishedErr: any) {
-  try {
-    csv = await loadLocalFallback();
-    used = "fallback";
-  } catch (fallbackErr: any) {
-    const msg1 = publishedErr?.message || String(publishedErr);
-    const msg2 = fallbackErr?.message || String(fallbackErr);
+  csv = await fetchStoriesCsvFromApi();
+  used = "api";
+} catch (apiErr: any) {
+  if (debug && diag) diag.api_error = apiErr?.message || String(apiErr);
 
-    return NextResponse.json(
-      {
-        ok: false,
-        error: `All CSV sources failed. published=${msg1}; fallback=${msg2}`,
-        ...(debug ? { _debug: diag } : {}),
-      },
-      { status: 500, headers: noStoreHeaders() }
-    );
+  // 2) Published CSV URL (fallback — requires sheet to be published to the web)
+  let publishedSucceeded = false;
+  if (publishedUrl) {
+    try {
+      csv = (await tryLoad("published", publishedUrl)).text;
+      used = "published";
+      publishedSucceeded = true;
+    } catch {}
+  }
+
+  if (!publishedSucceeded) {
+    // 3) Blobs / local file (last resort)
+    try {
+      csv = await loadLocalFallback();
+      used = "fallback";
+    } catch (fallbackErr: any) {
+      const msg1 = apiErr?.message || String(apiErr);
+      const msg2 = fallbackErr?.message || String(fallbackErr);
+
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `All sources failed. api=${msg1}; fallback=${msg2}`,
+          ...(debug ? { _debug: diag } : {}),
+        },
+        { status: 500, headers: noStoreHeaders() }
+      );
+    }
   }
 }
 
