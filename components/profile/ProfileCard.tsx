@@ -27,6 +27,7 @@ import ProfileShowcaseSection from "@/components/profile/ProfileShowcaseSection"
 import CategoryScroller from "@/components/alumni/CategoryScroller";
 import { mapSpotlightUpdateToUpdate } from "@/lib/mapSpotlightUpdateToUpdate";
 import JourneyMiniCard from "@/components/alumni/JourneyMiniCard";
+import PublicMediaSection from "@/components/profile/PublicMediaSection";
 
 import "@/components/productions/productionCarouselCards.css";
 
@@ -800,6 +801,9 @@ const hasStories = storiesForFeatured.length > 0;
           </ProfileShowcaseSection>
         </div>
       )}
+
+      {/* ✅ Public media section — only renders when alumni has featured album/reel items */}
+      <PublicMediaSection alumniId={alumniIdForMedia} />
 
       {featuredProductions.length > 0 && (
         <div className="bg-[#19657c] py-[30px] px-[30px]">

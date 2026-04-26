@@ -115,6 +115,11 @@ export async function GET(req: Request) {
     const includeDrive =
       String(searchParams.get("includeDrive") || "false").toLowerCase() === "true";
 
+    // featuredOnly=true → server-side filter: only return rows where isFeatured is truthy.
+    // Used by the public profile page so unfeatured/private media is never sent over the wire.
+    const featuredOnly =
+      String(searchParams.get("featuredOnly") || "false").toLowerCase() === "true";
+
     if (!alumniId) {
       return NextResponse.json(
         { error: "alumniId required" },
@@ -175,6 +180,15 @@ export async function GET(req: Request) {
         const k = idxKind !== -1 ? String(r[idxKind] || "").trim().toLowerCase() : "";
         if (k !== kind) return false;
       }
+
+      // Server-side privacy gate: when featuredOnly=true, exclude any row where
+      // isFeatured is not explicitly truthy. Unfeatured rows are never sent.
+      if (featuredOnly) {
+        const feat =
+          idxIsFeat !== -1 ? String(r[idxIsFeat] || "").trim().toLowerCase() : "";
+        if (feat !== "true" && feat !== "1" && feat !== "yes" && feat !== "y") return false;
+      }
+
       return true;
     });
 
