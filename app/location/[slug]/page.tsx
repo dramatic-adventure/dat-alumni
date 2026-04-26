@@ -10,6 +10,8 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
+import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
+import { getPrimaryDatRoleForProfile } from "@/lib/profileRoleAssignments";
 import type { AlumniRow } from "@/lib/types";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
@@ -115,7 +117,18 @@ export default async function LocationPage({
     notFound();
   }
 
-  const alumni: AlumniRow[] = await loadVisibleAlumni();
+  const [alumni, roleAssignments]: [AlumniRow[], Awaited<ReturnType<typeof loadRoleAssignments>>] =
+    await Promise.all([loadVisibleAlumni(), loadRoleAssignments()]);
+
+  // ✅ Use the same canonical role resolver as /alumni and /directory.
+  //    Without this, the raw Profile-Live role is shown (stale) instead of
+  //    the current Role-Assignments value.
+  const primaryRoleBySlug: Record<string, string> = Object.fromEntries(
+    alumni.map((a) => [
+      a.slug,
+      getPrimaryDatRoleForProfile(a.slug, a.roles || [], roleAssignments),
+    ])
+  );
 
   const canonical = unslugToCanonical(slug); // e.g., "Brooklyn, NYC" or "New York City"
   const parent = getParentFor(canonical); // boroughs → { label: "New York City", slug: "new-york-city" }
@@ -210,7 +223,10 @@ export default async function LocationPage({
             }}
           >
             Artists based in and around{" "}
-            {(typeof displayLabel === "string" ? displayLabel : "").replace(
+            {(typeof displayLabel === "string"
+              ? displayLabel.split(",")[0].trim()
+              : ""
+            ).replace(
               /\w\S*/g,
               (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
             )}
@@ -280,7 +296,7 @@ export default async function LocationPage({
                     key={artist.slug}
                     alumniId={artist.slug}
                     name={artist.name}
-                    role={artist.role}
+                    role={primaryRoleBySlug[artist.slug] || artist.role}
                     slug={artist.slug}
                     headshotUrl={artist.headshotUrl}
                   />
@@ -335,7 +351,7 @@ export default async function LocationPage({
                     key={n.alum.slug}
                     alumniId={n.alum.slug}
                     name={n.alum.name}
-                    role={n.alum.role}
+                    role={primaryRoleBySlug[n.alum.slug] || n.alum.role}
                     slug={n.alum.slug}
                     headshotUrl={n.alum.headshotUrl}
                   />

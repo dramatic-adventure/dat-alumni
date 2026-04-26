@@ -22,6 +22,8 @@ export const LOCATION_ALIASES: Record<string, string> = {
 
   "la": "Los Angeles, CA",
   "l.a.": "Los Angeles, CA",
+  "los angeles": "Los Angeles, CA",
+  "los angeles ca": "Los Angeles, CA",
   "los ángeles": "Los Angeles, CA",
 
   "sf": "San Francisco, CA",
@@ -55,6 +57,12 @@ export const LOCATION_ALIASES: Record<string, string> = {
   "quito": "Quito, Ecuador",
   "brno": "Brno, Czechia",
 
+  // City+Country without comma (belt-and-suspenders alongside the general suffix rule)
+  "paris france": "Paris, France",
+  "london uk": "London, UK",
+  "toronto canada": "Toronto, Canada",
+  "berlin germany": "Berlin, Germany",
+
   "remote": "",
   "online": "",
   "n/a": "",
@@ -62,6 +70,34 @@ export const LOCATION_ALIASES: Record<string, string> = {
 };
 
 const EXCLUDED = new Set(["remote", "online", "n/a", "—", "-"]);
+
+/** Countries whose names can appear as the last word of a "City Country" label.
+ *  Used in both normalizeLocation (CSV input) and unslugToCanonical (slug→label)
+ *  to dynamically insert the missing comma: "Stockholm Sweden" → "Stockholm, Sweden".
+ */
+const KNOWN_COUNTRIES = new Set([
+  // Sovereign nations
+  "France", "Germany", "Spain", "Italy", "Ireland", "Mexico",
+  "Canada", "Japan", "Brazil", "Argentina", "Australia", "India",
+  "China", "Portugal", "Greece", "Netherlands", "Sweden", "Norway",
+  "Denmark", "Finland", "Belgium", "Switzerland", "Austria", "Poland",
+  "Romania", "Hungary", "Ukraine", "Russia", "Turkey", "Israel",
+  "Colombia", "Chile", "Peru", "Venezuela", "Cuba", "Nigeria",
+  "Ghana", "Kenya", "Ethiopia", "Egypt", "Morocco", "Tunisia",
+  "Tanzania", "Uganda", "Rwanda", "Senegal",
+  "Korea", "Vietnam", "Thailand", "Indonesia", "Philippines",
+  "Pakistan", "Bangladesh", "Nepal", "Zimbabwe", "Mozambique",
+  "Cameroon", "Congo", "Malawi", "Zambia", "Sudan", "Somalia",
+  "Singapore", "Malaysia", "Myanmar", "Cambodia", "Taiwan",
+  "NewZealand", "Ecuador", "Bolivia", "Paraguay", "Uruguay",
+  "Panama", "CostaRica", "Guatemala", "Honduras", "Nicaragua",
+  "Jamaica", "Haiti", "Trinidad", "Barbados", "Bahamas",
+  "Iceland", "Luxembourg", "Slovakia", "Slovenia", "Croatia",
+  "Serbia", "Bulgaria", "Albania", "Lithuania", "Latvia", "Estonia",
+  "Georgia", "Armenia", "Azerbaijan", "Kazakhstan", "Uzbekistan",
+  // UK constituent countries — commonly used instead of "UK"
+  "England", "Scotland", "Wales",
+]);
 
 /** Strip accents for stable slugs/alias lookups */
 function stripDiacritics(s: string) {
@@ -100,6 +136,16 @@ export function normalizeLocation(raw?: string | null): string | null {
       const city = titleCaseCity(mUS[1]);
       const st = mUS[2].toUpperCase();
       val = `${city}, ${st}`;
+    }
+  }
+
+  // Normalize "City Country" → "City, Country" when comma is missing and the
+  // last token is a known country name (prevents mangling "New York City" etc.)
+  if (!val.includes(",") && val.includes(" ")) {
+    const parts = val.split(/\s+/);
+    const lastWord = parts[parts.length - 1];
+    if (KNOWN_COUNTRIES.has(lastWord)) {
+      val = `${parts.slice(0, -1).join(" ")}, ${lastWord}`;
     }
   }
 
@@ -380,16 +426,26 @@ export function findNearbyAlumniByPoint(
       const locs = getLocationLinksForAlumni(alum);
       const primary = locs[0]?.label;
       const coords = getAlumPrimaryCoords(alum);
-      const slug = primary ? slugifyLocation(primary) : null;
-      return { alum, primary, coords, slug };
+      const primarySlug = primary ? slugifyLocation(primary) : null;
+      // Collect ALL location slugs for this alum (including parent slugs for boroughs)
+      // so that artists in the viewed bucket are excluded regardless of which location
+      // is their "primary" — prevents second-location artists from leaking into nearby.
+      const allLocSlugs = new Set<string>();
+      for (const l of locs) {
+        allLocSlugs.add(slugifyLocation(l.label));
+        const p = getParentFor(l.label);
+        if (p) allLocSlugs.add(slugifyLocation(p.label));
+      }
+      return { alum, primary, coords, slug: primarySlug, allLocSlugs };
     })
     .filter(
-      (x): x is { alum: AlumniRow; primary: string; coords: LatLng; slug: string } =>
+      (x): x is { alum: AlumniRow; primary: string; coords: LatLng; slug: string; allLocSlugs: Set<string> } =>
         Boolean(x.primary && x.coords && x.slug)
     );
 
   return items
-    .filter((x) => !excludeSlugs.has(x.slug))
+    // Exclude if ANY of the artist's locations falls in the excluded set
+    .filter((x) => !Array.from(x.allLocSlugs).some((s) => excludeSlugs.has(s)))
     .map((x) => ({
       alum: x.alum,
       distance: haversineMiles(center, x.coords),
@@ -405,9 +461,19 @@ export function unslugToCanonical(slug: string): string {
   for (const label of Object.keys(LOCATION_COORDS)) {
     if (slugifyLocation(label) === slug) return label;
   }
-  // humanize fallback
-  const guess = slug.replace(/-/g, " ");
-  return guess.replace(/\b\w/g, (c) => c.toUpperCase());
+  // humanize fallback: title-case the slug words
+  const humanized = slug
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+  // Re-apply country-suffix comma rule so "Stockholm Sweden" → "Stockholm, Sweden"
+  if (!humanized.includes(",") && humanized.includes(" ")) {
+    const parts = humanized.split(/\s+/);
+    const lastWord = parts[parts.length - 1];
+    if (KNOWN_COUNTRIES.has(lastWord)) {
+      return `${parts.slice(0, -1).join(" ")}, ${lastWord}`;
+    }
+  }
+  return humanized;
 }
 
 export function isKnownLocationSlug(slug: string): boolean {

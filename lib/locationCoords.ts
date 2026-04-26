@@ -28,4 +28,18 @@ export const LOCATION_COORDS: CoordsMap = {
   "Quito, Ecuador": [-0.1807, -78.4678],
   "Brno, Czechia": [49.1951, 16.6068],
   "Floreana, Galápagos, Ecuador": [-1.285, -90.450],
+
+  // International cities — ensures unslugToCanonical returns the comma form
+  "Paris, France": [48.8566, 2.3522],
+  "London, UK": [51.5074, -0.1278],
+  "Toronto, Canada": [43.6532, -79.3832],
+  "Berlin, Germany": [52.5200, 13.4050],
+  "Amsterdam, Netherlands": [52.3676, 4.9041],
+  "Mexico City, Mexico": [19.4326, -99.1332],
+  "São Paulo, Brazil": [-23.5505, -46.6333],
+  "Buenos Aires, Argentina": [-34.6037, -58.3816],
+  "Seoul, Korea": [37.5665, 126.9780],
+  "Tokyo, Japan": [35.6762, 139.6503],
+  "Sydney, Australia": [-33.8688, 151.2093],
+  "Melbourne, Australia": [-37.8136, 144.9631],
 } as const;
