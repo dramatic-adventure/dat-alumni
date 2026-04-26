@@ -324,7 +324,9 @@ export function createUploader(opts: UploaderOptions = {}): Uploader {
     tasks
       .filter(t => t.kind === kind && (t.status === "queued" || t.status === "paused"))
       .forEach(t => setTaskStatus(t, "canceled"));
-    updateAgg(kind);
+    // Zero progress immediately — canceled tasks should not count toward total
+    agg[kind] = { uploaded: 0, total: 0, pct: 0 };
+    cb.onKindProgress?.(kind, agg[kind]);
   }
 
   function cancelAll() {

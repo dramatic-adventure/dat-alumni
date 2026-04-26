@@ -1261,6 +1261,13 @@ useEffect(() => {
   },
 
         onQueueEmpty: () => {
+          // If uploadHeadshotViaQueue was awaiting but the queue drained without
+          // completing the headshot (e.g., canceled), reject to unblock the caller.
+          if (headshotUploadResolver.current) {
+            const { reject } = headshotUploadResolver.current;
+            headshotUploadResolver.current = null;
+            reject(Object.assign(new Error("Upload canceled"), { canceled: true }));
+          }
           if (queueEmptyResolver.current) {
             const resolve = queueEmptyResolver.current;
             queueEmptyResolver.current = null;
@@ -1854,6 +1861,16 @@ if (hasUploads) {
   });
   uploader.start();
   await waitForQueue;
+
+  // Guard: if no tasks for these kinds actually completed (e.g. user canceled),
+  // don't treat the emptied queue as success — leave staged files intact.
+  const anyCompleted = uploader.getTasks().some(
+    (t) => uploadKinds.includes(t.kind) && t.status === "completed"
+  );
+  if (!anyCompleted) {
+    setLoading(false);
+    return;
+  }
 
   // ✅ MEDIA-ONLY SAVE PATH
   // If this category was uploads-only, don't fall through into diff/save logic
