@@ -635,6 +635,7 @@ export default function DirectoryPageClient({
               boxShadow: "0px 0px 33px rgba(0,0,0,0.8)",
               padding: "4rem 0",
               marginTop: "4rem",
+              marginBottom: "-2rem", // tuck into footer, cancels inner <main> pb-2rem
             }}
           >
             <div style={{ width: "100%", margin: "0 auto" }}>
