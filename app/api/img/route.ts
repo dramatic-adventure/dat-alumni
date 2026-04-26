@@ -30,6 +30,28 @@ const ALLOWED_HOSTS = new Set<string>([
 // (This is upstream payload size, not final transformed size.)
 const MAX_UPSTREAM_BYTES = 18 * 1024 * 1024; // 18MB
 
+// Per-instance in-memory cache: survives across requests within the same
+// serverless slot (typically minutes–hours). Cuts Google Drive round-trips for
+// repeat fetches — most useful for lightbox navigation within a single session.
+const _imgCache = new Map<string, { buf: Uint8Array; ct: string; ts: number }>();
+const INSTANCE_CACHE_TTL_MS = 15 * 60 * 1000;
+const INSTANCE_CACHE_MAX = 80;
+
+function instanceCacheGet(key: string): { buf: Uint8Array; ct: string } | null {
+  const e = _imgCache.get(key);
+  if (!e) return null;
+  if (Date.now() - e.ts > INSTANCE_CACHE_TTL_MS) { _imgCache.delete(key); return null; }
+  return { buf: e.buf, ct: e.ct };
+}
+
+function instanceCacheSet(key: string, buf: Uint8Array, ct: string) {
+  if (_imgCache.size >= INSTANCE_CACHE_MAX) {
+    const oldest = _imgCache.keys().next().value;
+    if (oldest !== undefined) _imgCache.delete(oldest);
+  }
+  _imgCache.set(key, { buf, ct, ts: Date.now() });
+}
+
 function noStoreHeaders() {
   return {
     // ✅ kill caching everywhere (browser, CDN, Next, proxies)
@@ -168,6 +190,16 @@ export async function GET(req: Request) {
       });
     }
 
+    const cacheKey = fileId ? `fid:${fileId}` : `url:${effectiveUrl}`;
+    const cached = instanceCacheGet(cacheKey);
+    if (cached) {
+      const cacheHeaders = fileId ? fileIdCacheHeaders() : noStoreHeaders();
+      return new NextResponse(Buffer.from(cached.buf), {
+        status: 200,
+        headers: { ...cacheHeaders, "Content-Type": cached.ct },
+      });
+    }
+
     // ✅ NOTE: we intentionally DO NOT cache upstream fetches.
     const upstream = await fetch(parsed.toString(), {
       cache: "no-store",
@@ -244,12 +276,15 @@ export async function GET(req: Request) {
 
     // ✅ Proxy-only response: preserve upstream bytes and content-type.
     const outCt = contentType || "application/octet-stream";
+    const outBuf = new Uint8Array(inputBuf);
+
+    instanceCacheSet(cacheKey, outBuf, outCt);
 
     // fileId requests are immutable — cache in the browser for 24h.
     // url= requests may change, so keep no-store for those.
     const cacheHeaders = fileId ? fileIdCacheHeaders() : noStoreHeaders();
 
-    return new NextResponse(new Uint8Array(inputBuf), {
+    return new NextResponse(Buffer.from(outBuf), {
       status: 200,
       headers: {
         ...cacheHeaders,

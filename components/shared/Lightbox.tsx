@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useSwipeable } from "react-swipeable";
 import LightboxPortal from "./LightboxPortal";
 import StoryMedia from "@/components/shared/StoryMedia";
@@ -17,12 +17,16 @@ export default function Lightbox({
   onClose,
 }: LightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(startIndex);
+  const [imgError, setImgError] = useState(false);
   const total = images.length;
   const multiple = total > 1;
 
   useEffect(() => {
     setCurrentIndex(startIndex);
+    setImgError(false);
   }, [startIndex, images.length]);
+
+  useEffect(() => { setImgError(false); }, [currentIndex]);
 
   const goTo = useCallback(
     (index: number) => setCurrentIndex((index + total) % total),
@@ -102,6 +106,23 @@ export default function Lightbox({
   const currentUrlRaw = images[currentIndex] ?? "";
   const currentUrl = toLightboxSrc(currentUrlRaw);
 
+  // Bounded preload window: current image + up to 3 prev + up to 3 next.
+  // Re-runs every time currentIndex changes so the window slides as the user navigates.
+  // For small galleries (≤ 7 images) this naturally covers the whole set; for large
+  // galleries it caps at 7 requests, never blasting the whole gallery on open.
+  const PRELOAD_WINDOW = 3;
+  const windowUrls = useMemo(() => {
+    const indices = new Set<number>();
+    indices.add(currentIndex);
+    for (let offset = 1; offset <= PRELOAD_WINDOW; offset++) {
+      indices.add((currentIndex - offset + total) % total);
+      indices.add((currentIndex + offset) % total);
+    }
+    return Array.from(indices)
+      .map((i) => toLightboxSrc(images[i] ?? ""))
+      .filter(Boolean);
+  }, [currentIndex, images, total, toLightboxSrc]);
+
   if (total === 0) return null;
 
   const onSidePanelKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -139,7 +160,7 @@ export default function Lightbox({
           onClick={onClose}
           style={{
             position: "relative",
-            zIndex: 20,
+            zIndex: 35,
 
             // Make THIS middle cell paint across the entire viewport width.
             marginLeft: "calc(-100vw)",
@@ -168,27 +189,48 @@ export default function Lightbox({
             <div
               {...swipeHandlers}
               className="relative w-full overflow-hidden"
+              onClick={onClose}
               style={{
                 height: "80vh",
                 maxHeight: 760,
-                cursor: "default",
+                cursor: "pointer",
                 touchAction: "pan-y",
                 pointerEvents: "auto", // ✅ re-enable events for media footprint
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
-              onClick={(e) => e.stopPropagation()}
             >
-              <StoryMedia
-                imageUrl={currentUrl}
-                title={`Media ${currentIndex + 1}`}
-                mode="lightbox"
-              />
+              {imgError || !currentUrl ? (
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.45)", fontSize: 15 }}>
+                  Image unavailable
+                </div>
+              ) : (
+                <StoryMedia
+                  imageUrl={currentUrl}
+                  title={`Media ${currentIndex + 1}`}
+                  mode="lightbox"
+                  onError={() => setImgError(true)}
+                />
+              )}
+
+              {multiple && (
+                <button className="lb-arrow-btn" style={{ left: 12 }}
+                  onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+                  aria-label="Previous image">&#8249;</button>
+              )}
+              {multiple && (
+                <button className="lb-arrow-btn" style={{ right: 12 }}
+                  onClick={(e) => { e.stopPropagation(); handleNext(); }}
+                  aria-label="Next image">&#8250;</button>
+              )}
             </div>
 
             {/* Pager below with spacing */}
             {multiple && (
               <div
                 className="flex justify-center"
-                style={{ width: "min(520px, 78vw)", marginTop: 16 }}
+                style={{ width: "min(520px, 78vw)", marginTop: 16, pointerEvents: "auto" }}
                 aria-label={`Image ${currentIndex + 1} of ${total}`}
               >
                 <div
@@ -278,11 +320,48 @@ export default function Lightbox({
         />
       </div>
 
-      {/* Cursor & image display tweaks */}
+      {/* Windowed preload: current ± 3 images only; slides as the user navigates */}
+      <div aria-hidden style={{ display: "none" }}>
+        {windowUrls.map((url) => (
+          <img key={url} src={url} alt="" />
+        ))}
+      </div>
+
       <style jsx global>{`
         .col-start-2[role="dialog"] img {
           cursor: default !important;
           display: block;
+        }
+        .lb-arrow-btn {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 10;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          border: 1px solid rgba(255, 255, 255, 0.18);
+          background: rgba(0, 0, 0, 0.48);
+          color: #fff;
+          font-size: 28px;
+          line-height: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          opacity: 0.82;
+          transition: opacity 150ms ease, background 150ms ease;
+          -webkit-tap-highlight-color: transparent;
+          touch-action: manipulation;
+        }
+        .lb-arrow-btn:hover,
+        .lb-arrow-btn:focus-visible {
+          opacity: 1;
+          background: rgba(0, 0, 0, 0.70);
+          outline: none;
+        }
+        .lb-arrow-btn:active {
+          transform: translateY(-50%) scale(0.93);
         }
       `}</style>
     </LightboxPortal>

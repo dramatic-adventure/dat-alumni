@@ -11,6 +11,7 @@ interface StoryMediaProps {
   title?: string;
   style?: React.CSSProperties;
   mode?: "default" | "lightbox";
+  onError?: () => void;
 }
 
 export default function StoryMedia({
@@ -18,6 +19,7 @@ export default function StoryMedia({
   title,
   style,
   mode = "default",
+  onError,
 }: StoryMediaProps) {
   if (!imageUrl) return null;
 
@@ -279,6 +281,31 @@ const containerClass =
 
   // 🖼 Images (local + remote via next/image)
   if (isImage) {
+    // In lightbox mode render a naturally-sized <img> so that the surrounding
+    // letterbox areas (above/below/left/right of the image pixels) are NOT
+    // covered by the element and clicks there can bubble up to the media box
+    // click-out handler.  Only the <img> itself stops propagation.
+    if (mode === "lightbox") {
+      return (
+        <img
+          src={cleanUrl}
+          alt={title || "Image"}
+          loading="eager"
+          decoding="async"
+          onError={onError}
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: "100%",
+            maxHeight: "100%",
+            objectFit: "contain",
+            display: "block",
+            cursor: "default",
+          }}
+        />
+      );
+    }
+
     // ✅ If we're already looking at Next's optimized image URL, render it directly.
     // Avoids double-optimizing and fixes "blank swipe" when Lightbox receives "/_next/image?..."
     if (isNextImageOptimized) {
@@ -288,13 +315,13 @@ const containerClass =
             <img
               src={cleanUrl}
               alt={title || "Image"}
-              loading={mode === "lightbox" ? "eager" : "lazy"}
+              loading="lazy"
               decoding="async"
               style={{
                 width: "100%",
                 height: "100%",
                 objectFit: "contain",
-                borderRadius: mode === "lightbox" ? 0 : 16,
+                borderRadius: 16,
               }}
             />
           </div>
@@ -308,15 +335,8 @@ const containerClass =
         style={{
           width: "100%",
           maxWidth: "100%",
-          height: mode === "lightbox" ? "100%" : undefined,
           position: "relative",
           zIndex: 0, // prevent accidental overlay behavior
-        }}
-        onPointerDown={(e) => {
-          if (mode === "lightbox") e.stopPropagation();
-        }}
-        onClick={(e) => {
-          if (mode === "lightbox") e.stopPropagation();
         }}
       >
         {/* ✅ This box is EXACTLY the media footprint. It alone blocks click-out. */}
@@ -325,8 +345,6 @@ const containerClass =
             ...boxStyle,
             width: "100%",
             maxWidth: "100%",
-            height: "100%",
-            minHeight: 0,
             margin: 0,
             cursor: "default",
           }}
@@ -335,18 +353,11 @@ const containerClass =
             src={imgSrc}
             alt={title || "Image"}
             fill
-            quality={mode === "lightbox" ? 92 : 80}
-            className={
-              mode === "lightbox"
-                ? "object-contain"
-                : "object-cover rounded-xl shadow-md"
-            }
-            sizes={
-              mode === "lightbox"
-                ? "(max-width: 768px) 92vw, 1200px"
-                : "(max-width: 640px) 92vw, (max-width: 1024px) 85vw, 1100px"
-            }
-            priority={mode === "lightbox"}
+            quality={80}
+            className="object-cover rounded-xl shadow-md"
+            sizes="(max-width: 640px) 92vw, (max-width: 1024px) 85vw, 1100px"
+            priority={false}
+            onError={undefined}
           />
         </div>
       </div>
