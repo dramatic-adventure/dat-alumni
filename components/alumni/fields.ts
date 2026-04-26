@@ -393,36 +393,36 @@ export const PROFILE_FIELDS: FieldDef[] = [
   // ───────────────────────────────────────────────── Upcoming Event
   {
     key: "upcomingEventTitle",
-    label: "Upcoming Event Title",
+    label: "Event Title",
     kind: "text",
-    help: "The title of an upcoming performance, screening, class, or appearance.",
+    help: "What's happening — the name of the performance, screening, workshop, or appearance.",
   },
   {
     key: "upcomingEventLink",
-    label: "Upcoming Event Link",
+    label: "Tickets / Info Link",
     kind: "url",
     placeholder: "https://…",
-    help: "Tickets, RSVP, or more-info URL.",
+    help: "Where people can get tickets, RSVP, watch, or learn more.",
   },
   {
     key: "upcomingEventDate",
-    label: "Upcoming Event Date",
+    label: "Event Date",
     kind: "date",
-    help: "The date the event happens.",
+    help: "When it happens.",
   },
   {
     key: "upcomingEventExpiresAt",
-    label: "Upcoming Event Expires",
+    label: "Stop Showing After",
     kind: "date",
     help:
-      "When this event should auto-archive off your profile. Defaults to the event date if left blank.",
+      "When to remove this from your public profile. Defaults to the event date if left blank.",
   },
   {
     key: "upcomingEventDescription",
-    label: "Upcoming Event Description",
+    label: "Short Description",
     kind: "textarea",
     maxLen: 600,
-    help: "A short description of the event.",
+    help: "A short invitation — what will people experience? Keep it conversational, not a press release.",
   },
 
   // ───────────────────────────────────────────────── Story Map Contribution (FLAT KEYS that match Profile-Live)
