@@ -590,6 +590,20 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
     const practiceTagsIdx    = idxOf(LH as string[], ["practicetags", "practice tags", "practice_tags"]);
     const exploreCareTagsIdx = idxOf(LH as string[], ["explorecaretags", "explore care tags", "explore_care_tags"]);
 
+    // Upcoming Event fields
+    const upcomingEventTitleIdx        = idxOf(LH as string[], ["upcomingeventtitle", "upcoming event title", "upcomingEventTitle"]);
+    const upcomingEventLinkIdx         = idxOf(LH as string[], ["upcomingeventlink", "upcoming event link", "upcomingEventLink"]);
+    const upcomingEventDateIdx         = idxOf(LH as string[], ["upcomingeventdate", "upcoming event date", "upcomingEventDate"]);
+    const upcomingEventExpiresAtIdx    = idxOf(LH as string[], ["upcomingeventexpiresat", "upcoming event expires at", "upcomingEventExpiresAt"]);
+    const upcomingEventDescriptionIdx  = idxOf(LH as string[], ["upcomingeventdescription", "upcoming event description", "upcomingEventDescription"]);
+    const featuredEventIdIdx           = idxOf(LH as string[], ["featuredeventid", "featured event id", "featuredEventId"]);
+    const upcomingEventMediaTypeIdx    = idxOf(LH as string[], ["upcomingeventmediatype", "upcoming event media type", "upcomingEventMediaType"]);
+    const upcomingEventMediaUrlIdx     = idxOf(LH as string[], ["upcomingeventmediaurl", "upcoming event media url", "upcomingEventMediaUrl"]);
+    const upcomingEventMediaAltIdx     = idxOf(LH as string[], ["upcomingeventmediaalt", "upcoming event media alt", "upcomingEventMediaAlt"]);
+    const upcomingEventVideoAutoplayIdx = idxOf(LH as string[], ["upcomingeventvideooautoplay", "upcomingeventvideoautoplay", "upcoming event video autoplay", "upcomingEventVideoAutoplay"]);
+    const upcomingEventCityIdx          = idxOf(LH as string[], ["upcomingeventcity", "upcoming event city", "upcomingEventCity"]);
+    const upcomingEventStateCountryIdx  = idxOf(LH as string[], ["upcomingeventstatecountry", "upcoming event state country", "upcomingEventStateCountry"]);
+
     if (isDebug(req, "1")) {
       const sample = liveRows.slice(0, 5).map((r) => ({
         alumniId: alumniIdIdx !== -1 ? String(r[alumniIdIdx] ?? "") : "",
@@ -800,6 +814,20 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
         // ✅ include these for the update form
         isBiCoastal,
         secondLocation,
+
+        // Upcoming Event
+        upcomingEventTitle:       upcomingEventTitleIdx !== -1       ? String(row[upcomingEventTitleIdx] ?? "").trim()       : "",
+        upcomingEventLink:        upcomingEventLinkIdx !== -1        ? String(row[upcomingEventLinkIdx] ?? "").trim()        : "",
+        upcomingEventDate:        upcomingEventDateIdx !== -1        ? String(row[upcomingEventDateIdx] ?? "").trim()        : "",
+        upcomingEventExpiresAt:   upcomingEventExpiresAtIdx !== -1   ? String(row[upcomingEventExpiresAtIdx] ?? "").trim()   : "",
+        upcomingEventDescription: upcomingEventDescriptionIdx !== -1 ? String(row[upcomingEventDescriptionIdx] ?? "").trim() : "",
+        featuredEventId:          featuredEventIdIdx !== -1          ? String(row[featuredEventIdIdx] ?? "").trim()          : "",
+        upcomingEventMediaType:   upcomingEventMediaTypeIdx !== -1   ? String(row[upcomingEventMediaTypeIdx] ?? "").trim()   : "",
+        upcomingEventMediaUrl:    upcomingEventMediaUrlIdx !== -1    ? String(row[upcomingEventMediaUrlIdx] ?? "").trim()    : "",
+        upcomingEventMediaAlt:    upcomingEventMediaAltIdx !== -1    ? String(row[upcomingEventMediaAltIdx] ?? "").trim()    : "",
+        upcomingEventVideoAutoplay: upcomingEventVideoAutoplayIdx !== -1 ? String(row[upcomingEventVideoAutoplayIdx] ?? "").trim() : "",
+        upcomingEventCity:          upcomingEventCityIdx !== -1          ? String(row[upcomingEventCityIdx] ?? "").trim()          : "",
+        upcomingEventStateCountry:  upcomingEventStateCountryIdx !== -1  ? String(row[upcomingEventStateCountryIdx] ?? "").trim()  : "",
 
         // Email:
         // - Admin: always see

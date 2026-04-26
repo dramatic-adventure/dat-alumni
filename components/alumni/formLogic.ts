@@ -144,6 +144,8 @@ export const LIVE_KEYS: Array<keyof AlumniProfile | string> = [
   "upcomingEventDate",
   "upcomingEventExpiresAt",
   "upcomingEventDescription",
+  "upcomingEventCity",
+  "upcomingEventStateCountry",
   "upcomingEventMediaType",
   "upcomingEventMediaUrl",
   "upcomingEventMediaAlt",

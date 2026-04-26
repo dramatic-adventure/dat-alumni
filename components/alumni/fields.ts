@@ -424,6 +424,20 @@ export const PROFILE_FIELDS: FieldDef[] = [
     maxLen: 600,
     help: "A short invitation — what will people experience? Keep it conversational, not a press release.",
   },
+  {
+    key: "upcomingEventCity",
+    label: "City",
+    kind: "text",
+    placeholder: "e.g. New York",
+    help: "City where the event takes place.",
+  },
+  {
+    key: "upcomingEventStateCountry",
+    label: "State / Country",
+    kind: "text",
+    placeholder: "e.g. NY or Japan",
+    help: "State, province, or country.",
+  },
 
   // ───────────────────────────────────────────────── Story Map Contribution (FLAT KEYS that match Profile-Live)
   {
@@ -593,6 +607,8 @@ export const PROFILE_GROUPS: Record<string, string[]> = {
     "upcomingEventDate",
     "upcomingEventExpiresAt",
     "upcomingEventDescription",
+    "upcomingEventCity",
+    "upcomingEventStateCountry",
   ],
 
   // ✅ Flat keys that match Profile-Live headers

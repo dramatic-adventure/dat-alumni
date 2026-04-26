@@ -313,6 +313,8 @@ const lookupUrl = useMemo(() => {
     upcomingEventDate: "",
     upcomingEventExpiresAt: "",
     upcomingEventDescription: "",
+    upcomingEventCity: "",
+    upcomingEventStateCountry: "",
     upcomingEventMediaType: "",
     upcomingEventMediaUrl: "",
     upcomingEventMediaAlt: "",
@@ -1160,6 +1162,8 @@ useEffect(() => {
         upcomingEventDate: String(j?.upcomingEventDate || p.upcomingEventDate || ""),
         upcomingEventExpiresAt: String(j?.upcomingEventExpiresAt || p.upcomingEventExpiresAt || ""),
         upcomingEventDescription: String(j?.upcomingEventDescription || p.upcomingEventDescription || ""),
+        upcomingEventCity: String(j?.upcomingEventCity || p.upcomingEventCity || ""),
+        upcomingEventStateCountry: String(j?.upcomingEventStateCountry || p.upcomingEventStateCountry || ""),
         upcomingEventMediaType: String(j?.upcomingEventMediaType || p.upcomingEventMediaType || ""),
         upcomingEventMediaUrl: String(j?.upcomingEventMediaUrl || p.upcomingEventMediaUrl || ""),
         upcomingEventMediaAlt: String(j?.upcomingEventMediaAlt || p.upcomingEventMediaAlt || ""),
@@ -1598,13 +1602,18 @@ async function rehydrate() {
         currentUpdateLink: String(j?.currentUpdateLink || p.currentUpdateLink || ""),
         currentUpdateExpiresAt: String(j?.currentUpdateExpiresAt || p.currentUpdateExpiresAt || ""),
 
-        upcomingEventTitle: String(j?.upcomingEventTitle || p.upcomingEventTitle || ""),
-        upcomingEventLink: String(j?.upcomingEventLink || p.upcomingEventLink || ""),
-        upcomingEventDate: String(j?.upcomingEventDate || p.upcomingEventDate || ""),
-        upcomingEventExpiresAt: String(j?.upcomingEventExpiresAt || p.upcomingEventExpiresAt || ""),
-        upcomingEventDescription: String(
-          j?.upcomingEventDescription || p.upcomingEventDescription || ""
-        ),
+        upcomingEventTitle:         String(j?.upcomingEventTitle         || p.upcomingEventTitle         || ""),
+        upcomingEventLink:          String(j?.upcomingEventLink          || p.upcomingEventLink          || ""),
+        upcomingEventDate:          String(j?.upcomingEventDate          || p.upcomingEventDate          || ""),
+        upcomingEventExpiresAt:     String(j?.upcomingEventExpiresAt     || p.upcomingEventExpiresAt     || ""),
+        upcomingEventDescription:   String(j?.upcomingEventDescription   || p.upcomingEventDescription   || ""),
+        upcomingEventCity:          String(j?.upcomingEventCity          || p.upcomingEventCity          || ""),
+        upcomingEventStateCountry:  String(j?.upcomingEventStateCountry  || p.upcomingEventStateCountry  || ""),
+        featuredEventId:            String(j?.featuredEventId            || p.featuredEventId            || ""),
+        upcomingEventMediaType:     String(j?.upcomingEventMediaType     || p.upcomingEventMediaType     || ""),
+        upcomingEventMediaUrl:      String(j?.upcomingEventMediaUrl      || p.upcomingEventMediaUrl      || ""),
+        upcomingEventMediaAlt:      String(j?.upcomingEventMediaAlt      || p.upcomingEventMediaAlt      || ""),
+        upcomingEventVideoAutoplay: String(j?.upcomingEventVideoAutoplay || p.upcomingEventVideoAutoplay || ""),
 
         currentHeadshotUrl: String(j?.currentHeadshotUrl || p.currentHeadshotUrl || ""),
         currentHeadshotId: String(j?.currentHeadshotId || p.currentHeadshotId || ""),
@@ -2272,6 +2281,8 @@ return (
     mediaPanel={
       <MediaPanel
         explainStyleLocal={explainStyleLocal}
+        subheadChipStyle={subheadChipStyle}
+        labelStyle={labelStyle}
         inputStyle={inputStyle}
         datButtonLocal={datButtonLocal}
         loading={loading}
@@ -2342,6 +2353,9 @@ return (
       <EventPanel
         loading={loading}
         explainStyleLocal={explainStyleLocal}
+        subheadChipStyle={subheadChipStyle}
+        labelStyle={labelStyle}
+        inputStyle={inputStyle}
         datButtonLocal={datButtonLocal}
         profile={profile}
         setProfile={setProfile}

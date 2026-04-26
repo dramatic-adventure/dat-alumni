@@ -550,6 +550,8 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
                 date: (normalizedAlumni as any).upcomingEventDate || undefined,
                 expiresAt: (normalizedAlumni as any).upcomingEventExpiresAt || undefined,
                 description: (normalizedAlumni as any).upcomingEventDescription || undefined,
+                city: (normalizedAlumni as any).upcomingEventCity || undefined,
+                stateCountry: (normalizedAlumni as any).upcomingEventStateCountry || undefined,
                 mediaType: ((normalizedAlumni as any).upcomingEventMediaType || undefined) as "image" | "video" | undefined,
                 mediaFileId: (normalizedAlumni as any).featuredEventId || undefined,
                 mediaUrl: (normalizedAlumni as any).upcomingEventMediaUrl || undefined,

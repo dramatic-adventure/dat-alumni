@@ -15,6 +15,8 @@ interface UpcomingEvent {
   date?: string;
   expiresAt?: string;
   description?: string;
+  city?: string;
+  stateCountry?: string;
   mediaType?: "image" | "video";
   mediaFileId?: string;
   mediaUrl?: string;

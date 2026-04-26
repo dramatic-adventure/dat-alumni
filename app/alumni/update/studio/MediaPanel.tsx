@@ -3,17 +3,19 @@
 import type { CSSProperties } from "react";
 
 import Dropzone from "@/components/media/Dropzone";
-import ProfileStudio, { Field, ghostButton as studioGhostButton } from "@/components/alumni/update/ProfileStudio";
+import { ghostButton as studioGhostButton } from "@/components/alumni/update/ProfileStudio";
 
-type StudioTab = "basics" | "identity" | "media" | "contact" | "story" | "event";
 type UploadKind = "headshot" | "album" | "reel" | "event";
 
 type MediaPanelProps = {
   explainStyleLocal: CSSProperties;
+  subheadChipStyle: CSSProperties;
+  labelStyle: CSSProperties;
   inputStyle: CSSProperties;
   datButtonLocal: CSSProperties;
 
   loading: boolean;
+  savedRecently?: boolean;
 
   albumName: string;
   setAlbumName: (v: string) => void;
@@ -39,9 +41,12 @@ type MediaPanelProps = {
 
 export default function MediaPanel({
   explainStyleLocal,
+  subheadChipStyle,
+  labelStyle,
   inputStyle,
   datButtonLocal,
   loading,
+  savedRecently = false,
   albumName,
   setAlbumName,
   albumFiles,
@@ -52,14 +57,24 @@ export default function MediaPanel({
   showToastError,
   saveCategory,
 }: MediaPanelProps) {
+  const isDirty = albumFiles.length > 0 || reelFiles.length > 0;
+
   return (
     <div>
       <div id="studio-media-anchor" />
       <p style={explainStyleLocal}>
-        Albums + reels live here. You’re choosing placement before uploading.
+        Albums + reels live here. Stage your files, then hit Upload.
       </p>
 
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+      <span style={subheadChipStyle} className="subhead-chip">
+        Photos &amp; Reels
+      </span>
+
+      <p style={{ ...explainStyleLocal, opacity: 0.65, fontSize: "0.8rem" }}>
+        Use the pickers to select from your existing library, or drop new files below.
+      </p>
+
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
         <button
           type="button"
           style={studioGhostButton}
@@ -78,17 +93,19 @@ export default function MediaPanel({
         </button>
       </div>
 
-      <div style={{ display: "grid", gap: 12 }}>
-        <Field label="Album name (optional)">
+      <div style={{ display: "grid", gap: 14 }}>
+        <div>
+          <label style={labelStyle}>Album name (optional)</label>
           <input
             value={albumName || ""}
             onChange={(e) => setAlbumName(e.target.value)}
             style={inputStyle}
             placeholder="e.g. Production photos, BTS, PASSAGE…"
           />
-        </Field>
+        </div>
 
-        <Field label="Add photos to album">
+        <div>
+          <label style={labelStyle}>Add photos to album</label>
           <Dropzone
             accept="image/*"
             multiple
@@ -98,9 +115,10 @@ export default function MediaPanel({
             onFiles={(files) => setAlbumFiles(files)}
             onReject={(rej) => showToastError(rej[0]?.reason || "File rejected")}
           />
-        </Field>
+        </div>
 
-        <Field label="Add reels (video files)">
+        <div>
+          <label style={labelStyle}>Add reels (video files)</label>
           <Dropzone
             accept="video/*"
             multiple
@@ -110,13 +128,57 @@ export default function MediaPanel({
             onFiles={(files) => setReelFiles(files)}
             onReject={(rej) => showToastError(rej[0]?.reason || "File rejected")}
           />
-        </Field>
+        </div>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
+      <div
+        style={{
+          marginTop: 32,
+          paddingTop: 18,
+          borderTop: "1px solid rgba(255,255,255,0.10)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: 14,
+          flexWrap: "wrap",
+        }}
+      >
+        {isDirty && !savedRecently && (
+          <span
+            style={{
+              fontSize: 12,
+              opacity: 0.7,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              color: "#f5c542",
+            }}
+          >
+            <span style={{ fontSize: 8 }}>●</span> Unsaved changes
+          </span>
+        )}
+        {savedRecently && (
+          <span
+            style={{
+              fontSize: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              color: "#6ee7b7",
+              opacity: 0.9,
+            }}
+          >
+            <span style={{ fontSize: 10 }}>✓</span> Uploaded
+          </span>
+        )}
         <button
           type="button"
-          style={datButtonLocal}
+          style={{
+            ...datButtonLocal,
+            ...(savedRecently
+              ? { background: "rgba(52,211,153,0.25)", borderColor: "rgba(52,211,153,0.5)" }
+              : {}),
+          }}
           disabled={loading || (!albumFiles.length && !reelFiles.length)}
           onClick={() =>
             saveCategory({
@@ -129,7 +191,7 @@ export default function MediaPanel({
             })
           }
         >
-          Upload Staged Media
+          {savedRecently ? "Uploaded ✓" : "Upload Staged Media"}
         </button>
       </div>
     </div>

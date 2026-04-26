@@ -68,13 +68,21 @@ export default function StoryPanel(props: {
         file.
       </p>
 
+      <span style={subheadChipStyle} className="subhead-chip">
+        Your Story
+      </span>
+
+      <p style={{ ...explainStyleLocal, opacity: 0.65, fontSize: "0.8rem" }}>
+        Write or edit a map story. Load a published story to revise it, or start fresh.
+      </p>
+
       <div
         style={{
           display: "flex",
           gap: 10,
           flexWrap: "wrap",
           alignItems: "center",
-          marginBottom: 12,
+          marginBottom: 16,
         }}
       >
         <button
@@ -109,7 +117,6 @@ export default function StoryPanel(props: {
             const country = String(s.storyCountry || "").trim();
             const years = String(s.storyYears || "").trim();
 
-            // Title -- Program: Country Year(s)
             const label = `${title} -- ${program || "Program"}: ${country || "Country"}${
               years ? ` ${years}` : ""
             }`;
@@ -135,7 +142,18 @@ export default function StoryPanel(props: {
 
       {renderFieldsOrNull(storyMapEditKeys) ?? manualFallback}
 
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 14 }}>
+      <div
+        style={{
+          marginTop: 32,
+          paddingTop: 18,
+          borderTop: "1px solid rgba(255,255,255,0.10)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: 14,
+          flexWrap: "wrap",
+        }}
+      >
         <button
           type="button"
           style={datButtonLocal}

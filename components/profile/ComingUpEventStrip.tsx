@@ -1,7 +1,8 @@
 // components/profile/ComingUpEventStrip.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { resolveVideo } from "@/lib/media/resolveVideo";
 
 export interface ComingUpEvent {
   title: string;
@@ -9,6 +10,8 @@ export interface ComingUpEvent {
   date?: string;
   expiresAt?: string;
   description?: string;
+  city?: string;
+  stateCountry?: string;
   mediaType?: "image" | "video";
   mediaFileId?: string;
   mediaUrl?: string;
@@ -38,15 +41,37 @@ function formatDate(dateStr?: string): string | null {
   return dt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
 
+function isSafeExternalUrl(url: string): boolean {
+  return url.startsWith("http://") || url.startsWith("https://");
+}
+
 function deriveMediaSrc(ev: ComingUpEvent): string | null {
   if (ev.mediaFileId) return `/api/img?fileId=${encodeURIComponent(ev.mediaFileId)}`;
-  if (ev.mediaUrl) {
-    // Images: route through proxy for security. Videos: use URL directly (proxy buffers
-    // the full file which prevents seek; direct URL lets the browser stream natively).
-    if ((ev.mediaType || "image") === "video") return ev.mediaUrl;
-    return `/api/img?url=${encodeURIComponent(ev.mediaUrl)}`;
-  }
+  if (ev.mediaUrl && isSafeExternalUrl(ev.mediaUrl)) return ev.mediaUrl;
   return null;
+}
+
+// Only true (boolean) or "true" (string) enables autoplay — guards against "false", "FALSE", "0", etc.
+function isAutoplay(val: unknown): boolean {
+  return val === true || val === "true";
+}
+
+function buildEmbedUrl(embedUrl: string, provider: "youtube" | "vimeo", autoplay: boolean): string {
+  try {
+    const u = new URL(embedUrl);
+    if (autoplay) {
+      if (provider === "youtube") {
+        u.searchParams.set("autoplay", "1");
+        u.searchParams.set("mute", "1");
+      } else {
+        u.searchParams.set("autoplay", "1");
+        u.searchParams.set("muted", "1");
+      }
+    }
+    return u.toString();
+  } catch {
+    return embedUrl;
+  }
 }
 
 // Abstract DAT color wash — fills the left column on desktop when no real media exists.
@@ -91,6 +116,7 @@ const STYLES = `
   .cu-media {
     position: relative;
     display: none;
+    overflow: hidden;
   }
   .cu-media.cu-has-media {
     display: block;
@@ -102,7 +128,8 @@ const STYLES = `
       grid-template-columns: 415px minmax(0, 1fr);
       align-items: stretch;
     }
-    .cu-media {
+    .cu-media,
+    .cu-media.cu-has-media {
       display: block;
       aspect-ratio: unset;
     }
@@ -112,14 +139,29 @@ const STYLES = `
 export default function ComingUpEventStrip({ upcomingEvent }: Props) {
   const [mediaError, setMediaError] = useState(false);
 
+  // Derive src before early returns so useEffect is always called (rules of hooks).
+  const mediaSrc = upcomingEvent ? deriveMediaSrc(upcomingEvent) : null;
+
+  // Reset error whenever the media source changes (e.g. artist pastes a new URL).
+  useEffect(() => {
+    setMediaError(false);
+  }, [mediaSrc]);
+
   // Fail-closed: render nothing for missing/expired events
   if (!upcomingEvent?.title?.trim()) return null;
   if (isExpired(upcomingEvent.date, upcomingEvent.expiresAt)) return null;
 
   const formattedDate = formatDate(upcomingEvent.date);
-  const mediaSrc     = deriveMediaSrc(upcomingEvent);
-  const isVideo      = upcomingEvent.mediaType === "video";
-  const showRealMedia = Boolean(mediaSrc) && !mediaError;
+  const city         = upcomingEvent.city?.trim() || "";
+  const stateCountry = upcomingEvent.stateCountry?.trim() || "";
+  const locationLine = city && stateCountry ? `${city}, ${stateCountry}` : city || stateCountry || "";
+  const isVideo       = upcomingEvent.mediaType === "video";
+  // For video, resolve the URL to know whether it's an embed or a direct file.
+  // An unresolvable video URL (not YouTube/Vimeo/known file) counts as broken.
+  const resolvedVideo = isVideo && mediaSrc ? resolveVideo(mediaSrc) : null;
+  const showRealMedia = Boolean(mediaSrc) && !mediaError && (!isVideo || resolvedVideo !== null);
+  // External URLs (no fileId) render directly; apply referrerPolicy accordingly.
+  const isExternalSrc = Boolean(mediaSrc && isSafeExternalUrl(mediaSrc));
 
   return (
     <div
@@ -145,34 +187,52 @@ export default function ComingUpEventStrip({ upcomingEvent }: Props) {
         <div className={showRealMedia ? "cu-media cu-has-media" : "cu-media"}>
           {showRealMedia ? (
             isVideo ? (
-              <video
-                src={mediaSrc!}
-                onError={() => setMediaError(true)}
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  display: "block",
-                }}
-                {...(upcomingEvent.videoAutoplay
-                  ? { autoPlay: true, muted: true, loop: true, playsInline: true }
-                  : { controls: true })}
-              />
+              resolvedVideo?.kind === "embed" ? (
+                <iframe
+                  src={buildEmbedUrl(resolvedVideo.embedUrl, resolvedVideo.provider, isAutoplay(upcomingEvent.videoAutoplay))}
+                  title={upcomingEvent.mediaAlt || upcomingEvent.title || "Video"}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  loading="lazy"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "block",
+                    width: "100%",
+                    height: "100%",
+                    border: 0,
+                  }}
+                />
+              ) : (
+                <video
+                  src={mediaSrc!}
+                  onError={() => setMediaError(true)}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center center",
+                  }}
+                  {...(isExternalSrc ? { referrerPolicy: "no-referrer" } : {})}
+                  {...(isAutoplay(upcomingEvent.videoAutoplay)
+                    ? { autoPlay: true, muted: true, loop: true, playsInline: true }
+                    : { controls: true })}
+                />
+              )
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={mediaSrc!}
                 alt={upcomingEvent.mediaAlt || ""}
                 onError={() => setMediaError(true)}
+                referrerPolicy={isExternalSrc ? "no-referrer" : undefined}
                 style={{
-                  position: "absolute",
-                  inset: 0,
+                  display: "block",
                   width: "100%",
                   height: "100%",
                   objectFit: "cover",
-                  display: "block",
+                  objectPosition: "center center",
                 }}
               />
             )
@@ -199,29 +259,67 @@ export default function ComingUpEventStrip({ upcomingEvent }: Props) {
             Coming Up
           </div>
 
-          {formattedDate && (
-            <p
+          {(formattedDate || locationLine) && (
+            <div
               style={{
-                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                fontSize: "0.78rem",
-                fontWeight: 600,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                color: "#C4A35A",
-                margin: "0 0 0.4rem",
+                position: "relative",
+                width: "360px",
+                maxWidth: "100%",
+                padding: "1rem 1.25rem",
+                marginBottom: "2.75rem",
               }}
             >
-              {formattedDate}
-            </p>
+              {/* Top horizontal line */}
+              <span aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, right: 0, height: "1px", background: "rgba(196,163,90,0.45)" }} />
+              {/* Bottom horizontal line */}
+              <span aria-hidden="true" style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "1px", background: "rgba(196,163,90,0.45)" }} />
+              {/* Left corner returns */}
+              <span aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, width: "1px", height: "10px", background: "rgba(196,163,90,0.45)" }} />
+              <span aria-hidden="true" style={{ position: "absolute", bottom: 0, left: 0, width: "1px", height: "10px", background: "rgba(196,163,90,0.45)" }} />
+              {/* Right corner returns */}
+              <span aria-hidden="true" style={{ position: "absolute", top: 0, right: 0, width: "1px", height: "10px", background: "rgba(196,163,90,0.45)" }} />
+              <span aria-hidden="true" style={{ position: "absolute", bottom: 0, right: 0, width: "1px", height: "10px", background: "rgba(196,163,90,0.45)" }} />
+
+              {formattedDate && (
+                <p
+                  style={{
+                    fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                    fontSize: "0.90rem",
+                    fontWeight: 600,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: "#F23359",
+                    margin: "0 0 0.2rem",
+                  }}
+                >
+                  {formattedDate}
+                </p>
+              )}
+              {locationLine && (
+                <p
+                  style={{
+                    fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                    fontSize: "1.1rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.15em",
+                    textTransform: "uppercase",
+                    color: "#D9A919",
+                    margin: 0,
+                  }}
+                >
+                  {locationLine}
+                </p>
+              )}
+            </div>
           )}
 
           <h2
             style={{
               fontFamily: "var(--font-anton), system-ui, sans-serif",
-              fontSize: "clamp(1.25rem, 3vw, 1.75rem)",
+              fontSize: "clamp(1.45rem, 3vw, 1.95rem)",
               lineHeight: 1.15,
               textTransform: "uppercase",
-              color: "#F2ECE6",
+              color: "#F2F2F2",
               margin: "0 0 0.75rem",
               letterSpacing: "0.02em",
               maxWidth: "52ch",
@@ -259,13 +357,13 @@ export default function ComingUpEventStrip({ upcomingEvent }: Props) {
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
                 color: "#1D1A24",
-                backgroundColor: "#C4A35A",
+                backgroundColor: "#D9A919",
                 textDecoration: "none",
                 padding: "0.55rem 1.1rem",
                 borderRadius: "6px",
               }}
             >
-              View Event →
+              View Event
             </a>
           )}
 

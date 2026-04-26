@@ -326,6 +326,8 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
   const upcomingEventMediaUrlIdx = idxOf(header, ["upcomingeventmediaurl", "upcoming event media url", "upcomingEventMediaUrl"]);
   const upcomingEventMediaAltIdx = idxOf(header, ["upcomingeventmediaalt", "upcoming event media alt", "upcomingEventMediaAlt"]);
   const upcomingEventVideoAutoplayIdx = idxOf(header, ["upcomingeventvideooautoplay", "upcomingeventvideoautoplay", "upcoming event video autoplay", "upcomingEventVideoAutoplay"]);
+  const upcomingEventCityIdx         = idxOf(header, ["upcomingeventcity", "upcoming event city", "upcomingEventCity"]);
+  const upcomingEventStateCountryIdx = idxOf(header, ["upcomingeventstatecountry", "upcoming event state country", "upcomingEventStateCountry"]);
 
   const out: AlumniRow[] = [];
   let skipped = 0;
@@ -454,6 +456,8 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
       (normalized as any).upcomingEventMediaUrl = cell(r, upcomingEventMediaUrlIdx);
       (normalized as any).upcomingEventMediaAlt = cell(r, upcomingEventMediaAltIdx);
       (normalized as any).upcomingEventVideoAutoplay = cell(r, upcomingEventVideoAutoplayIdx);
+      (normalized as any).upcomingEventCity         = cell(r, upcomingEventCityIdx);
+      (normalized as any).upcomingEventStateCountry = cell(r, upcomingEventStateCountryIdx);
       out.push(normalized);
     } else skipped++;
   }

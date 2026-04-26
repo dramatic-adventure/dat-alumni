@@ -13,6 +13,8 @@ export const UpcomingEventEditKeys =
     "upcomingEventDate",
     "upcomingEventExpiresAt",
     "upcomingEventDescription",
+    "upcomingEventCity",
+    "upcomingEventStateCountry",
   ];
 
 export const ContactEditKeys =

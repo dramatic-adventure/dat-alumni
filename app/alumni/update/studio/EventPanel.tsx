@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useState, useEffect, useRef } from "react";
 
 type UploadKind = "headshot" | "album" | "reel" | "event";
@@ -17,8 +17,11 @@ export default function EventPanel(props: {
   loading: boolean;
 
   // styles
-  explainStyleLocal: any;
-  datButtonLocal: any;
+  explainStyleLocal: CSSProperties;
+  subheadChipStyle: CSSProperties;
+  labelStyle: CSSProperties;
+  inputStyle: CSSProperties;
+  datButtonLocal: CSSProperties;
 
   // profile state
   profile: any;
@@ -42,15 +45,19 @@ export default function EventPanel(props: {
   eventFile?: File | null;
   onEventFileChange?: (f: File | null) => void;
 
-  // optional fallback (keeps your current inline fallback component intact)
+  // optional fallback
   manualFallback?: ReactNode;
 
+  isDirty?: boolean;
   savedRecently?: boolean;
   onSaved?: () => void;
 }) {
   const {
     loading,
     explainStyleLocal,
+    subheadChipStyle,
+    labelStyle,
+    inputStyle,
     datButtonLocal,
     profile,
     setProfile,
@@ -61,6 +68,7 @@ export default function EventPanel(props: {
     eventFile,
     onEventFileChange,
     manualFallback,
+    isDirty = false,
     savedRecently = false,
     onSaved,
   } = props;
@@ -87,7 +95,6 @@ export default function EventPanel(props: {
   const hasStoredMedia = Boolean(storedFileId || mediaUrl);
   const hasStagedFile  = Boolean(eventFile);
 
-  // thumbnail for already-saved file
   const storedThumbUrl = storedFileId
     ? `/api/media/thumb/${encodeURIComponent(storedFileId)}?w=200`
     : "";
@@ -132,50 +139,65 @@ export default function EventPanel(props: {
     }));
   }
 
-  const fieldRowStyle: React.CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    gap: 4,
-    marginBottom: 12,
+  /* Ghost button used for media type toggle and file actions — matches reference panels */
+  const mediaTypeBtn: CSSProperties = {
+    padding: "5px 14px",
+    borderRadius: 20,
+    fontSize: 12,
+    fontWeight: 600,
+    border: "1px solid rgba(255,255,255,0.15)",
+    background: "rgba(255,255,255,0.05)",
+    color: "rgba(255,255,255,0.55)",
+    cursor: "pointer",
+    textTransform: "capitalize" as const,
   };
-  const labelStyle: React.CSSProperties = {
+  const mediaTypeBtnActive: CSSProperties = {
+    ...mediaTypeBtn,
+    border: "1px solid rgba(196,163,90,0.8)",
+    background: "rgba(196,163,90,0.18)",
+    color: "#C4A35A",
+  };
+
+  const fileActionBtn: CSSProperties = {
+    padding: "5px 14px",
+    borderRadius: 6,
+    fontSize: 12,
+    fontWeight: 600,
+    border: "1px solid rgba(255,255,255,0.2)",
+    background: "rgba(255,255,255,0.07)",
+    color: "rgba(255,255,255,0.75)",
+    cursor: "pointer",
+  };
+  const removeBtn: CSSProperties = {
+    ...fileActionBtn,
+    border: "1px solid rgba(255,100,100,0.35)",
+    background: "rgba(255,100,100,0.06)",
+    color: "rgba(255,120,120,0.85)",
+  };
+
+  /* Small label for sub-fields inside the Event Media card */
+  const mediaSubLabel: CSSProperties = {
     fontSize: 11.5,
     fontWeight: 600,
     color: "rgba(255,255,255,0.7)",
     letterSpacing: "0.01em",
-  };
-  const inputStyle: React.CSSProperties = {
-    background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.14)",
-    borderRadius: 6,
-    padding: "6px 10px",
-    fontSize: 13,
-    color: "rgba(255,255,255,0.88)",
-    width: "100%",
-    boxSizing: "border-box",
-    outline: "none",
+    display: "block",
+    marginBottom: 4,
   };
 
   return (
     <div>
       <div id="studio-event-anchor" />
 
-      <h3
-        style={{
-          margin: "0 0 6px",
-          fontSize: 15,
-          fontWeight: 600,
-          color: "rgba(255,255,255,0.92)",
-          letterSpacing: "-0.01em",
-        }}
-      >
-        Share an Upcoming Event
-      </h3>
-
-      <p style={{ ...explainStyleLocal, margin: "0 0 4px" }}>
+      <p style={explainStyleLocal}>
         Let alumni and DAT&apos;s wider audience know where they can experience your work next.
       </p>
-      <p style={{ ...explainStyleLocal, margin: "0 0 18px", opacity: 0.65 }}>
+
+      <span style={subheadChipStyle} className="subhead-chip">
+        Share an Upcoming Event
+      </span>
+
+      <p style={{ ...explainStyleLocal, opacity: 0.65, fontSize: "0.8rem" }}>
         This powers the <strong style={{ color: "rgba(255,255,255,0.75)" }}>Coming Up</strong>{" "}
         section on your public profile. The event disappears automatically once the event date or
         expiration date passes.
@@ -188,9 +210,9 @@ export default function EventPanel(props: {
         style={{
           marginTop: 20,
           padding: "14px 16px",
-          borderRadius: 8,
+          borderRadius: 12,
           border: "1px solid rgba(255,255,255,0.10)",
-          background: "rgba(255,255,255,0.03)",
+          background: "rgba(0,0,0,0.14)",
         }}
       >
         <p
@@ -201,35 +223,20 @@ export default function EventPanel(props: {
             color: "rgba(255,255,255,0.85)",
           }}
         >
-          Event Media <span style={{ fontWeight: 400, opacity: 0.5, fontSize: 11.5 }}>(optional)</span>
+          Event Media{" "}
+          <span style={{ fontWeight: 400, opacity: 0.5, fontSize: 11.5 }}>(optional)</span>
         </p>
 
         {/* Media type toggle */}
-        <div style={{ ...fieldRowStyle, marginBottom: 14 }}>
-          <span style={labelStyle}>Type</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 14 }}>
+          <span style={mediaSubLabel}>Type</span>
           <div style={{ display: "flex", gap: 8 }}>
             {(["image", "video"] as const).map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setProfile((p: any) => ({ ...p, upcomingEventMediaType: t }))}
-                style={{
-                  padding: "5px 14px",
-                  borderRadius: 20,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  border: mediaType === t
-                    ? "1px solid rgba(196,163,90,0.8)"
-                    : "1px solid rgba(255,255,255,0.15)",
-                  background: mediaType === t
-                    ? "rgba(196,163,90,0.18)"
-                    : "rgba(255,255,255,0.05)",
-                  color: mediaType === t
-                    ? "#C4A35A"
-                    : "rgba(255,255,255,0.55)",
-                  cursor: "pointer",
-                  textTransform: "capitalize",
-                }}
+                style={mediaType === t ? mediaTypeBtnActive : mediaTypeBtn}
               >
                 {t}
               </button>
@@ -238,8 +245,8 @@ export default function EventPanel(props: {
         </div>
 
         {/* Paste URL */}
-        <div style={fieldRowStyle}>
-          <label style={labelStyle}>Paste URL</label>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 }}>
+          <label style={mediaSubLabel}>Paste URL</label>
           <input
             type="url"
             value={mediaUrl}
@@ -250,8 +257,8 @@ export default function EventPanel(props: {
         </div>
 
         {/* Upload file */}
-        <div style={{ ...fieldRowStyle, marginBottom: 14 }}>
-          <span style={labelStyle}>Or upload a file</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 14 }}>
+          <span style={mediaSubLabel}>Or upload a file</span>
           <input
             ref={fileInputRef}
             type="file"
@@ -301,35 +308,13 @@ export default function EventPanel(props: {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              style={{
-                padding: "5px 14px",
-                borderRadius: 6,
-                fontSize: 12,
-                fontWeight: 600,
-                border: "1px solid rgba(255,255,255,0.2)",
-                background: "rgba(255,255,255,0.07)",
-                color: "rgba(255,255,255,0.75)",
-                cursor: "pointer",
-              }}
+              style={fileActionBtn}
             >
               {hasStagedFile ? "Change file" : "Choose file"}
             </button>
 
             {(hasStagedFile || hasStoredMedia) && (
-              <button
-                type="button"
-                onClick={clearMedia}
-                style={{
-                  padding: "5px 14px",
-                  borderRadius: 6,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  border: "1px solid rgba(255,100,100,0.35)",
-                  background: "rgba(255,100,100,0.06)",
-                  color: "rgba(255,120,120,0.85)",
-                  cursor: "pointer",
-                }}
-              >
+              <button type="button" onClick={clearMedia} style={removeBtn}>
                 Remove media
               </button>
             )}
@@ -337,8 +322,11 @@ export default function EventPanel(props: {
         </div>
 
         {/* Alt text */}
-        <div style={fieldRowStyle}>
-          <label style={labelStyle}>Alt text / caption <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span></label>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 4 }}>
+          <label style={mediaSubLabel}>
+            Alt text / caption{" "}
+            <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span>
+          </label>
           <input
             type="text"
             value={mediaAlt}
@@ -349,9 +337,9 @@ export default function EventPanel(props: {
           />
         </div>
 
-        {/* Video autoplay toggle — only shown for video type */}
+        {/* Video autoplay toggle */}
         {mediaType === "video" && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
             <input
               id="cu-video-autoplay"
               type="checkbox"
@@ -418,7 +406,7 @@ export default function EventPanel(props: {
 
       <div
         style={{
-          marginTop: 20,
+          marginTop: 32,
           paddingTop: 18,
           borderTop: "1px solid rgba(255,255,255,0.10)",
           display: "flex",
@@ -428,6 +416,20 @@ export default function EventPanel(props: {
           flexWrap: "wrap",
         }}
       >
+        {isDirty && !savedRecently && (
+          <span
+            style={{
+              fontSize: 12,
+              opacity: 0.7,
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              color: "#f5c542",
+            }}
+          >
+            <span style={{ fontSize: 8 }}>●</span> Unsaved changes
+          </span>
+        )}
         {savedRecently && (
           <span
             style={{
