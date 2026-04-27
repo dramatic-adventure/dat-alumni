@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
+import { parseLanguages } from "@/lib/languages";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import AlumniSearch from "@/components/alumni/AlumniSearch/AlumniSearch";
@@ -184,6 +185,21 @@ export default function DirectoryPageClient({
     return Array.from(set).sort();
   }, [alumni]);
 
+  const languageOptions = useMemo(() => {
+    const seen = new Map<string, string>(); // slug -> first-seen display name (preserves diacritics)
+    alumni.forEach((a) => {
+      const raw = Array.isArray(a.languages)
+        ? a.languages.join(", ")
+        : typeof a.languages === "string"
+        ? a.languages
+        : "";
+      parseLanguages(raw).forEach(({ slug, name }) => {
+        if (!seen.has(slug)) seen.set(slug, name);
+      });
+    });
+    return Array.from(seen.values()).sort((x, y) => x.localeCompare(y));
+  }, [alumni]);
+
   /** Filter + sort helper */
   const applyFiltersAndSort = (list: AlumniItem[]): AlumniItem[] => {
     let result = [...list];
@@ -194,7 +210,14 @@ export default function DirectoryPageClient({
     if (filters.role) result = result.filter((a) => a.roles?.includes(filters.role));
     if (filters.statusFlag) result = result.filter((a) => a.statusFlags?.includes(filters.statusFlag));
     if (filters.identityTag) result = result.filter((a) => a.identityTags?.includes(filters.identityTag));
-    if (filters.language) result = result.filter((a) => a.languages?.includes(filters.language));
+    if (filters.language) result = result.filter((a) => {
+      const raw = Array.isArray(a.languages)
+        ? a.languages.join(", ")
+        : typeof a.languages === "string"
+        ? a.languages
+        : "";
+      return parseLanguages(raw).some(({ name }) => name === filters.language);
+    });
     if (filters.updatedOnly) result = result.filter((a) => a.updatedRecently);
 
     // Keep relevance order if query is active; otherwise apply selected alpha/recent sort
@@ -238,7 +261,9 @@ export default function DirectoryPageClient({
     { name: "role", label: "ROLE", options: roles },
     { name: "statusFlag", label: "INVOLVEMENT", options: ["Resident Artist", "Fellow", "Board Member"] },
     { name: "identityTag", label: "TAGS", options: ["Indigenous", "LGBTQIA+", "POC"] },
-    { name: "language", label: "LANGUAGE", options: ["English", "Spanish", "French", "Portuguese"] },
+    ...(languageOptions.length > 0
+      ? [{ name: "language" as const, label: "LANGUAGE", options: languageOptions }]
+      : []),
   ] as const;
 
   /** Which data to display (memoized to avoid extra work per keystroke) */
