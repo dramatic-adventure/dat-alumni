@@ -55,6 +55,12 @@ export function baselineFromLookup(j: any, slug: string, nm: string, loc: string
     upcomingEventDate: String(j?.upcomingEventDate || ""),
     upcomingEventExpiresAt: String(j?.upcomingEventExpiresAt || ""),
     upcomingEventDescription: String(j?.upcomingEventDescription || ""),
+    upcomingEventCity: String(j?.upcomingEventCity || ""),
+    upcomingEventStateCountry: String(j?.upcomingEventStateCountry || ""),
+    upcomingEventMediaType: String(j?.upcomingEventMediaType || ""),
+    upcomingEventMediaUrl: String(j?.upcomingEventMediaUrl || ""),
+    upcomingEventMediaAlt: String(j?.upcomingEventMediaAlt || ""),
+    upcomingEventVideoAutoplay: String(j?.upcomingEventVideoAutoplay ?? ""),
 
     currentHeadshotId: String(j?.currentHeadshotId || ""),
     currentHeadshotUrl: String(j?.currentHeadshotUrl || ""),

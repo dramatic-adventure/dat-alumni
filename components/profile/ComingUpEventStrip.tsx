@@ -46,7 +46,7 @@ function isSafeExternalUrl(url: string): boolean {
 }
 
 function deriveMediaSrc(ev: ComingUpEvent): string | null {
-  if (ev.mediaFileId) return `/api/img?fileId=${encodeURIComponent(ev.mediaFileId)}`;
+  if (ev.mediaFileId) return `/api/media/thumb/${encodeURIComponent(ev.mediaFileId)}`;
   if (ev.mediaUrl && isSafeExternalUrl(ev.mediaUrl)) return ev.mediaUrl;
   return null;
 }
