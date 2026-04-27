@@ -69,7 +69,7 @@ export default function BioIdentitySection({
         textTransform: "uppercase",
         letterSpacing: "0.2rem",
         fontWeight: 600,
-        color: "#FFCC00",
+        color: "#F2f2f2",
         opacity: 0.85,
         margin: "0 0 1.1rem 0",
       }}
@@ -102,9 +102,9 @@ export default function BioIdentitySection({
             {eyebrow}
             <p
               style={{
-                fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                 fontSize: "clamp(1.4rem, 2.2vw, 1.9rem)",
-                fontWeight: 300,
+                fontWeight: 500,
                 color: "#241123",
                 lineHeight: 1.45,
                 margin: 0,
@@ -118,7 +118,7 @@ export default function BioIdentitySection({
               style={{
                 width: "5rem",
                 height: "2px",
-                backgroundColor: "#FFCC00",
+                backgroundColor: "#24112327",
                 margin: "1.25rem 0",
               }}
             />
@@ -146,6 +146,22 @@ export default function BioIdentitySection({
               <button
                 type="button"
                 onClick={() => setExpanded((e) => !e)}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "#FFCC00";
+                  e.currentTarget.style.letterSpacing = "0.25rem";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "#6c00af";
+                  e.currentTarget.style.letterSpacing = "0.15rem";
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.color = "#FFCC00";
+                  e.currentTarget.style.letterSpacing = "0.25rem";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.color = "#6c00af";
+                  e.currentTarget.style.letterSpacing = "0.15rem";
+                }}
                 style={{
                   display: "block",
                   marginTop: "1rem",
@@ -154,11 +170,12 @@ export default function BioIdentitySection({
                   color: "#6c00af",
                   fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                   fontSize: "0.75rem",
-                  fontWeight: 600,
+                  fontWeight: 800,
                   textTransform: "uppercase",
                   letterSpacing: "0.15rem",
                   cursor: "pointer",
                   padding: 0,
+                  transition: "color 180ms ease, letter-spacing 180ms ease",
                 }}
               >
                 {expanded ? "LESS ↑" : "FULL BIO →"}
