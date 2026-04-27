@@ -213,6 +213,8 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
   // Impact causes + supported clubs + languages (passed through as raw comma strings)
   const impactCauses = getFirstCI(row, ["impactCauses", "impactcauses", "impact causes"]).trim() || undefined;
   const supportedClubs = getFirstCI(row, ["supportedClubs", "supportedclubs", "supported clubs"]).trim() || undefined;
+  const featuredSupportedClub = getFirstCI(row, ["featuredSupportedClub", "featuredsupportedclub", "featured supported club"]).trim() || undefined;
+  const featuredImpactCause = getFirstCI(row, ["featuredImpactCause", "featuredimpactcause", "featured impact cause"]).trim() || undefined;
   const languages = getFirstCI(row, ["languages"]).trim() || undefined;
 
   // Program badges (optional)
@@ -341,6 +343,8 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
 
     impactCauses,
     supportedClubs,
+    featuredSupportedClub,
+    featuredImpactCause,
     languages,
 
     fieldNotes: [],

@@ -130,6 +130,8 @@ export interface AlumniRow {
   // Impact panel
   impactCauses?: string;
   supportedClubs?: string;
+  featuredSupportedClub?: string;
+  featuredImpactCause?: string;
 
   // Identity extras
   languages?: string;

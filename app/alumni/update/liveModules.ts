@@ -84,6 +84,8 @@ export const LIVE_KEYS = new Set<string>(
     // Impact
     "impactCauses",
     "supportedClubs",
+    "featuredSupportedClub",
+    "featuredImpactCause",
 
     // Upcoming Event
     "upcomingEventTitle",
@@ -157,7 +159,7 @@ export const MODULES = {
   },
 
   Impact: {
-    fieldKeys: keysForSaving(["impactCauses", "supportedClubs"]),
+    fieldKeys: keysForSaving(["impactCauses", "supportedClubs", "featuredSupportedClub", "featuredImpactCause"]),
     uploadKinds: [],
   },
 

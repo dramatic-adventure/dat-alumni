@@ -88,6 +88,8 @@ export function toLiveSavableProfile(p: any) {
     // Impact
     impactCauses: String(p.impactCauses || "").trim(),
     supportedClubs: String(p.supportedClubs || "").trim(),
+    featuredSupportedClub: String(p.featuredSupportedClub || "").trim(),
+    featuredImpactCause: String(p.featuredImpactCause || "").trim(),
   };
 }
 

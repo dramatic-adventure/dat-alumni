@@ -122,6 +122,8 @@ export default function AlumniProfilePage({
 
   const impactCauses = cleanStr(d.impactCauses) ?? "";
   const supportedClubs = cleanStr(d.supportedClubs) ?? "";
+  const featuredSupportedClub = cleanStr(d.featuredSupportedClub) ?? "";
+  const featuredImpactCause = cleanStr(d.featuredImpactCause) ?? "";
   const languages = cleanStr(d.languages) ?? "";
 
   // ✅ Bio / artist statement: accept multiple worlds
@@ -309,6 +311,8 @@ alumniId={alumniId || undefined}
                 artistStatement={artistStatement}
                 impactCauses={impactCauses || undefined}
                 supportedClubs={supportedClubs || undefined}
+                featuredSupportedClub={featuredSupportedClub || undefined}
+                featuredImpactCause={featuredImpactCause || undefined}
                 languages={languages || undefined}
                 stories={authorStories}
                 publicEmail={publicEmail}

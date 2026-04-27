@@ -4,11 +4,6 @@ import React, { useState } from "react";
 import Link from "next/link";
 import AlumniTagSections from "@/components/alumni/AlumniTagSections";
 import useIsMobile from "@/hooks/useIsMobile";
-import {
-  CAUSE_CATEGORIES,
-  CAUSE_SUBCATEGORIES_BY_CATEGORY,
-} from "@/lib/causes";
-import { dramaClubs } from "@/lib/dramaClubMap";
 import { parseLanguages } from "@/lib/languages";
 
 interface BioIdentitySectionProps {
@@ -18,16 +13,6 @@ interface BioIdentitySectionProps {
   languages?: string;
   artistStatement?: string;
   directlyBelowHero?: boolean;
-  impactCauses?: string;
-  supportedClubs?: string;
-}
-
-function parseCommaList(raw: string | undefined | null): string[] {
-  if (!raw) return [];
-  return String(raw)
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
 }
 
 export default function BioIdentitySection({
@@ -37,8 +22,6 @@ export default function BioIdentitySection({
   languages,
   artistStatement,
   directlyBelowHero = false,
-  impactCauses,
-  supportedClubs,
 }: BioIdentitySectionProps) {
   const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
@@ -52,28 +35,7 @@ export default function BioIdentitySection({
     languageList.length > 0;
   const bio = artistStatement?.trim() ?? "";
 
-  // Resolve impactCauses IDs → { id, label } for linking to /cause/[id]
-  const causeIds = parseCommaList(impactCauses);
-  const resolvedCauses: { id: string; label: string }[] = [];
-  for (const cat of CAUSE_CATEGORIES) {
-    const subs = CAUSE_SUBCATEGORIES_BY_CATEGORY[cat.id] ?? [];
-    for (const sub of subs) {
-      if (causeIds.includes(sub.id)) {
-        resolvedCauses.push({ id: sub.id, label: sub.shortLabel ?? sub.label });
-      }
-    }
-  }
-
-  // Resolve supportedClubs slugs → name + country + slug (for linking)
-  const clubSlugs = parseCommaList(supportedClubs);
-  const clubSlugSet = new Set(clubSlugs);
-  const resolvedClubs = dramaClubs
-    .filter((c) => clubSlugSet.has(c.slug))
-    .map((c) => ({ slug: c.slug, label: `${c.name} — ${c.country}` }));
-
-  const hasImpact = resolvedCauses.length > 0 || resolvedClubs.length > 0;
-
-  if (!bio && !hasAnyTags && !hasImpact) return null;
+  if (!bio && !hasAnyTags) return null;
 
   // Split bio into lead paragraph and body
   let leadText = "";
@@ -104,7 +66,7 @@ export default function BioIdentitySection({
     !isMobile && directlyBelowHero ? "5rem" : isMobile ? "2.5rem" : "4rem";
 
   const hasBio = bio.length > 0;
-  const useGrid = !isMobile && hasBio && (hasAnyTags || hasImpact);
+  const useGrid = !isMobile && hasBio && hasAnyTags;
 
   const eyebrow = (
     <p
@@ -229,8 +191,8 @@ export default function BioIdentitySection({
           </div>
         )}
 
-        {/* Right column: identity tags + impact */}
-        {(hasAnyTags || hasImpact) && (
+        {/* Right column: identity tags + languages */}
+        {hasAnyTags && (
           <div style={{ marginTop: isMobile && hasBio ? "2rem" : 0 }}>
             {!hasBio && eyebrow}
             {hasAnyTags && (
@@ -283,92 +245,6 @@ export default function BioIdentitySection({
                     </Link>
                   ))}
                 </div>
-              </div>
-            )}
-            {hasImpact && (
-              <div style={{ marginTop: hasAnyTags ? "1.75rem" : 0 }}>
-                {resolvedCauses.length > 0 && (
-                  <div style={{ marginBottom: resolvedClubs.length > 0 ? "1.25rem" : 0 }}>
-                    <p
-                      style={{
-                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                        fontSize: "0.78rem",
-                        textTransform: "uppercase" as const,
-                        letterSpacing: "0.2rem",
-                        fontWeight: 600,
-                        color: "#241123",
-                        opacity: 0.75,
-                        margin: "0 0 0.5rem 0",
-                      }}
-                    >
-                      Causes I Stand For
-                    </p>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-                      {resolvedCauses.map(({ id, label }) => (
-                        <Link
-                          key={id}
-                          href={`/cause/${id}`}
-                          style={{
-                            display: "inline-block",
-                            padding: "3px 10px",
-                            borderRadius: 999,
-                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                            fontSize: "0.72rem",
-                            fontWeight: 600,
-                            textTransform: "uppercase" as const,
-                            letterSpacing: "0.12rem",
-                            color: "#241123",
-                            background: "rgba(36,17,35,0.10)",
-                            border: "1px solid rgba(36,17,35,0.15)",
-                            textDecoration: "none",
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(36,17,35,0.20)"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(36,17,35,0.10)"; }}
-                        >
-                          {label}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {resolvedClubs.length > 0 && (
-                  <div>
-                    <p
-                      style={{
-                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                        fontSize: "0.78rem",
-                        textTransform: "uppercase" as const,
-                        letterSpacing: "0.2rem",
-                        fontWeight: 600,
-                        color: "#241123",
-                        opacity: 0.75,
-                        margin: "0 0 0.5rem 0",
-                      }}
-                    >
-                      Drama Clubs I Support
-                    </p>
-                    <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: "0.35rem" }}>
-                      {resolvedClubs.map((club) => (
-                        <li key={club.slug}>
-                          <Link
-                            href={`/drama-club/${club.slug}`}
-                            style={{
-                              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                              fontSize: "0.84rem",
-                              fontWeight: 400,
-                              color: "#241123d4",
-                              textDecoration: "none",
-                            }}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6c00af"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123d4"; }}
-                          >
-                            {club.label}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
             )}
           </div>

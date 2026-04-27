@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import BioIdentitySection from "./BioIdentitySection";
+import CommunitySection from "./CommunitySection";
 import ProgramStamps from "@/components/alumni/ProgramStamps";
 import Lightbox from "@/components/shared/Lightbox";
 
@@ -307,6 +308,8 @@ interface ProfileCardProps {
   upcomingEvent?: ComingUpEvent;
   impactCauses?: string;
   supportedClubs?: string;
+  featuredSupportedClub?: string;
+  featuredImpactCause?: string;
   languages?: string;
 }
 
@@ -721,8 +724,13 @@ const hasStories = storiesForFeatured.length > 0;
         languages={props.languages}
         artistStatement={artistStatement}
         directlyBelowHero={!props.upcomingEvent}
-        impactCauses={props.impactCauses}
+      />
+
+      <CommunitySection
         supportedClubs={props.supportedClubs}
+        impactCauses={props.impactCauses}
+        featuredSupportedClub={props.featuredSupportedClub}
+        featuredImpactCause={props.featuredImpactCause}
       />
 
       {(hasSpotlight || hasHighlight) && (

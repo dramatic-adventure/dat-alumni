@@ -86,5 +86,7 @@ export function baselineFromLookup(j: any, slug: string, nm: string, loc: string
     // Impact
     impactCauses: String(j?.impactCauses || ""),
     supportedClubs: String(j?.supportedClubs || ""),
+    featuredSupportedClub: String(j?.featuredSupportedClub || ""),
+    featuredImpactCause: String(j?.featuredImpactCause || ""),
   };
 }

@@ -192,8 +192,16 @@ export default function ImpactPanel({
   function toggleCause(subcategoryId: string) {
     setProfile((prev: any) => {
       const current = new Set(parseCommaList(prev.impactCauses));
-      if (current.has(subcategoryId)) current.delete(subcategoryId);
-      else current.add(subcategoryId);
+      if (current.has(subcategoryId)) {
+        current.delete(subcategoryId);
+        const clearFeatured = prev.featuredImpactCause === subcategoryId;
+        return {
+          ...prev,
+          impactCauses: joinCommaList(Array.from(current)),
+          ...(clearFeatured ? { featuredImpactCause: "" } : {}),
+        };
+      }
+      current.add(subcategoryId);
       return { ...prev, impactCauses: joinCommaList(Array.from(current)) };
     });
   }
@@ -201,8 +209,16 @@ export default function ImpactPanel({
   function toggleClub(slug: string) {
     setProfile((prev: any) => {
       const current = new Set(parseCommaList(prev.supportedClubs));
-      if (current.has(slug)) current.delete(slug);
-      else current.add(slug);
+      if (current.has(slug)) {
+        current.delete(slug);
+        const clearFeatured = prev.featuredSupportedClub === slug;
+        return {
+          ...prev,
+          supportedClubs: joinCommaList(Array.from(current)),
+          ...(clearFeatured ? { featuredSupportedClub: "" } : {}),
+        };
+      }
+      current.add(slug);
       return { ...prev, supportedClubs: joinCommaList(Array.from(current)) };
     });
   }
@@ -217,7 +233,38 @@ export default function ImpactPanel({
     );
   }, [clubSearch]);
 
+  const featuredClubOptions = useMemo(
+    () => dramaClubs.filter((c) => selectedClubs.has(c.slug)),
+    [selectedClubs]
+  );
+
+  const featuredCauseOptions = useMemo(() => {
+    const result: { id: string; label: string }[] = [];
+    for (const cat of CAUSE_CATEGORIES) {
+      const subs = CAUSE_SUBCATEGORIES_BY_CATEGORY[cat.id] ?? [];
+      for (const sub of subs) {
+        if (selectedCauses.has(sub.id)) {
+          result.push({ id: sub.id, label: sub.shortLabel ?? sub.label });
+        }
+      }
+    }
+    return result;
+  }, [selectedCauses]);
+
   function handleSave() {
+    // Clear stale featured values if their parent was deselected
+    setProfile((prev: any) => {
+      const clubs = new Set(parseCommaList(prev.supportedClubs));
+      const causes = new Set(parseCommaList(prev.impactCauses));
+      const staleFeaturedClub = prev.featuredSupportedClub && !clubs.has(prev.featuredSupportedClub);
+      const staleFeaturedCause = prev.featuredImpactCause && !causes.has(prev.featuredImpactCause);
+      if (!staleFeaturedClub && !staleFeaturedCause) return prev;
+      return {
+        ...prev,
+        ...(staleFeaturedClub ? { featuredSupportedClub: "" } : {}),
+        ...(staleFeaturedCause ? { featuredImpactCause: "" } : {}),
+      };
+    });
     saveCategory({
       tag: "Impact",
       fieldKeys: MODULES["Impact"].fieldKeys,
@@ -363,6 +410,105 @@ export default function ImpactPanel({
           </p>
         )}
       </div>
+
+      {/* ── Featured Highlights ── */}
+      {(featuredCauseOptions.length > 0 || featuredClubOptions.length > 0) && (
+        <>
+          <div style={dividerStyle} />
+          <p style={sectionHeadStyle}>Feature on Your Profile</p>
+          <p style={{ ...studioExplainStyle, marginBottom: 14 }}>
+            Spotlight one cause and one drama club at the top of your community section.
+          </p>
+
+          {featuredCauseOptions.length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <p
+                style={{
+                  fontFamily: FF_GROTESK,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase" as const,
+                  color: SNOW,
+                  opacity: 0.6,
+                  margin: "0 0 6px 0",
+                }}
+              >
+                Featured Cause
+              </p>
+              <select
+                value={profile.featuredImpactCause ?? ""}
+                onChange={(e) =>
+                  setProfile((prev: any) => ({ ...prev, featuredImpactCause: e.target.value }))
+                }
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  background: "rgba(255,255,255,0.07)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  color: SNOW,
+                  fontFamily: FF_SANS,
+                  fontSize: 13,
+                  outline: "none",
+                  boxSizing: "border-box" as const,
+                }}
+              >
+                <option value="">— None —</option>
+                {featuredCauseOptions.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {featuredClubOptions.length > 0 && (
+            <div>
+              <p
+                style={{
+                  fontFamily: FF_GROTESK,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase" as const,
+                  color: SNOW,
+                  opacity: 0.6,
+                  margin: "0 0 6px 0",
+                }}
+              >
+                Featured Drama Club
+              </p>
+              <select
+                value={profile.featuredSupportedClub ?? ""}
+                onChange={(e) =>
+                  setProfile((prev: any) => ({ ...prev, featuredSupportedClub: e.target.value }))
+                }
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  background: "rgba(255,255,255,0.07)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  color: SNOW,
+                  fontFamily: FF_SANS,
+                  fontSize: 13,
+                  outline: "none",
+                  boxSizing: "border-box" as const,
+                }}
+              >
+                <option value="">— None —</option>
+                {featuredClubOptions.map((c) => (
+                  <option key={c.slug} value={c.slug}>
+                    {c.name} — {c.country}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </>
+      )}
 
       {/* ── Save ── */}
       <div style={footerRowStyle}>

@@ -133,6 +133,8 @@ export const LIVE_KEYS: Array<keyof AlumniProfile | string> = [
   "exploreCareTags",
   "impactCauses",
   "supportedClubs",
+  "featuredSupportedClub",
+  "featuredImpactCause",
   "languages",
 
   "currentHeadshotUrl",
