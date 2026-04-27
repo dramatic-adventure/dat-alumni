@@ -154,8 +154,7 @@ export default async function LanguageDetailPage({
               textAlign: "right",
             }}
           >
-            {artistsWithLevel.length}{" "}
-            {artistsWithLevel.length === 1 ? "artist" : "artists"}
+            Artists and alumni who create, collaborate, teach, or connect in {langName}.
           </p>
         </div>
       </div>
@@ -181,7 +180,7 @@ export default async function LanguageDetailPage({
               fontWeight: 600,
               color: "#f2f2f2",
               opacity: 0.6,
-              margin: "0 0 0.5rem",
+              margin: "0 0 1.5rem",
             }}
           >
             <Link
@@ -192,9 +191,11 @@ export default async function LanguageDetailPage({
             </Link>
             {" / "}
             {langName}
+            <span style={{ opacity: 0.55, fontWeight: 400, marginLeft: "0.75rem" }}>
+              {artistsWithLevel.length}{" "}
+              {artistsWithLevel.length === 1 ? "artist" : "artists"}
+            </span>
           </p>
-
-          <SectionLabel>Artists Who Speak {langName}</SectionLabel>
 
           <div
             style={{
@@ -224,13 +225,14 @@ export default async function LanguageDetailPage({
                 {artistsWithLevel.map(({ artist, level }) => (
                   <MiniProfileCard
                     key={artist.slug}
+                    alumniId={artist.slug}
                     name={artist.name ?? ""}
                     slug={artist.slug}
                     role={primaryRoleBySlug[artist.slug] ?? (artist.roles?.[0] ?? "")}
                     headshotUrl={artist.headshotUrl}
                     variant="dark"
-                    viaLabel={level}
-                    viaSource="dat-role"
+                    viaLabel={level ? `Language level: ${level}` : undefined}
+                    viaSource="label-only"
                   />
                 ))}
               </div>
@@ -267,24 +269,3 @@ export default async function LanguageDetailPage({
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <h2
-      style={{
-        fontFamily: "var(--font-anton), system-ui, sans-serif",
-        fontSize: "2.4rem",
-        margin: "3.5rem 0 1.1rem",
-        textTransform: "uppercase",
-        letterSpacing: "0.2rem",
-        color: "#241123",
-        backgroundColor: "#FFCC00",
-        opacity: 0.7,
-        padding: "0.1em 0.5em",
-        borderRadius: "0.3em",
-        display: "inline-block",
-      }}
-    >
-      {children}
-    </h2>
-  );
-}

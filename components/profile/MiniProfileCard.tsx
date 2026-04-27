@@ -42,8 +42,8 @@ interface MiniProfileCardProps {
 
   /** Direct via label (e.g., from /title page bucket matching). */
   viaLabel?: string;
-  /** Source class for viaLabel: "dat-role" shows "via: X", "current-title" shows "via current title: X". */
-  viaSource?: "dat-role" | "current-title";
+  /** Source class for viaLabel: "dat-role" shows "via: X", "current-title" shows "via current title: X", "label-only" shows viaLabel as-is. */
+  viaSource?: "dat-role" | "current-title" | "label-only";
 }
 
 function addCacheBust(url: string, cacheKey?: string | number) {
@@ -416,6 +416,8 @@ const handleError = useCallback(() => {
               ? `via: ${matchedViaRole}`
               : viaSource === "current-title"
               ? `via current title: ${viaLabel}`
+              : viaSource === "label-only"
+              ? `${viaLabel}`
               : `via: ${viaLabel}`}
           </p>
         ) : null}

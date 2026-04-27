@@ -84,7 +84,7 @@ export default async function LanguagesIndexPage() {
               textAlign: "right",
             }}
           >
-            The DAT network connects artists across cultures and communities
+            Explore the languages spoken across the Dramatic Adventure Theatre community.
           </p>
         </div>
       </div>
@@ -100,8 +100,6 @@ export default async function LanguagesIndexPage() {
         }}
       >
         <div style={{ width: "90%", maxWidth: 1200, margin: "0 auto" }}>
-          <SectionLabel>Explore by Language</SectionLabel>
-
           <div
             style={{
               background: "rgba(36, 17, 35, 0.18)",
@@ -206,24 +204,3 @@ export default async function LanguagesIndexPage() {
   );
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <h2
-      style={{
-        fontFamily: "var(--font-anton), system-ui, sans-serif",
-        fontSize: "2.4rem",
-        margin: "3.5rem 0 1.1rem",
-        textTransform: "uppercase",
-        letterSpacing: "0.2rem",
-        color: "#241123",
-        backgroundColor: "#FFCC00",
-        opacity: 0.7,
-        padding: "0.1em 0.5em",
-        borderRadius: "0.3em",
-        display: "inline-block",
-      }}
-    >
-      {children}
-    </h2>
-  );
-}
