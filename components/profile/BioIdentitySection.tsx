@@ -69,7 +69,7 @@ export default function BioIdentitySection({
         textTransform: "uppercase",
         letterSpacing: "0.2rem",
         fontWeight: 600,
-        color: "#F2D166",
+        color: "#D9A919",
         opacity: 0.85,
         margin: "0 0 1.1rem 0",
       }}
@@ -105,7 +105,7 @@ export default function BioIdentitySection({
                 fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                 fontSize: "clamp(1.4rem, 2.2vw, 1.9rem)",
                 fontWeight: 300,
-                color: "#F2F2F2",
+                color: "#241123",
                 lineHeight: 1.45,
                 margin: 0,
                 maxWidth: useGrid ? undefined : "72ch",
@@ -118,7 +118,7 @@ export default function BioIdentitySection({
               style={{
                 width: "5rem",
                 height: "2px",
-                backgroundColor: "#F2D166",
+                backgroundColor: "#D9A919",
                 margin: "1.25rem 0",
               }}
             />
@@ -130,7 +130,7 @@ export default function BioIdentitySection({
                   fontSize: "1rem",
                   fontWeight: 300,
                   lineHeight: 1.75,
-                  color: "rgba(242,242,242,0.88)",
+                  color: "#241123d4",
                   margin: 0,
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
