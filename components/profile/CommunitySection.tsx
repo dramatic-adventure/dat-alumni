@@ -61,8 +61,6 @@ export default function CommunitySection({
     }
   }
 
-  if (resolvedClubs.length === 0 && resolvedCauses.length === 0) return null;
-
   const featuredClubSlug = featuredSupportedClub?.trim() ?? "";
   const featuredClub = featuredClubSlug
     ? (resolvedClubs.find((c) => c.slug === featuredClubSlug) ?? resolveDramaClub(featuredClubSlug))
@@ -79,7 +77,11 @@ export default function CommunitySection({
     ? resolvedCauses.filter((c) => c.id !== featuredCause.id)
     : resolvedCauses;
 
-  const hasBothColumns = resolvedClubs.length > 0 && resolvedCauses.length > 0;
+  const hasClubs = resolvedClubs.length > 0 || !!featuredClub;
+  const hasCauses = resolvedCauses.length > 0 || !!featuredCause;
+  const hasBothColumns = hasClubs && hasCauses;
+
+  if (!hasClubs && !hasCauses) return null;
 
   return (
     <section
@@ -112,8 +114,8 @@ export default function CommunitySection({
           }}
         >
           {/* Drama Clubs */}
-          {resolvedClubs.length > 0 && (
-            <div style={{ marginBottom: isMobile && resolvedCauses.length > 0 ? "3rem" : 0 }}>
+          {hasClubs && (
+            <div style={{ marginBottom: isMobile && hasCauses ? "3rem" : 0 }}>
               <p
                 style={{
                   fontFamily: FF_GROTESK,
@@ -151,6 +153,19 @@ export default function CommunitySection({
                     e.currentTarget.style.borderColor = "rgba(36,147,169,0.22)";
                   }}
                 >
+                  <p
+                    style={{
+                      fontFamily: FF_GROTESK,
+                      fontSize: "0.65rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.18rem",
+                      fontWeight: 600,
+                      color: "#2493A9",
+                      margin: "0 0 0.45rem 0",
+                    }}
+                  >
+                    Featured Drama Club
+                  </p>
                   <p
                     style={{
                       fontFamily: FF_GROTESK,
@@ -213,7 +228,7 @@ export default function CommunitySection({
           )}
 
           {/* Causes */}
-          {resolvedCauses.length > 0 && (
+          {hasCauses && (
             <div>
               <p
                 style={{
@@ -231,30 +246,58 @@ export default function CommunitySection({
               </p>
 
               {featuredCause && (
-                <Link
-                  href={`/cause/${featuredCause.id}`}
+                <div
                   style={{
-                    display: "block",
-                    textDecoration: "none",
+                    padding: "1.1rem 1.4rem",
+                    borderRadius: "10px",
+                    background: "rgba(108,0,175,0.05)",
+                    border: "1px solid rgba(108,0,175,0.18)",
                     marginBottom: otherCauses.length > 0 ? "1.1rem" : 0,
+                    transition: "background 160ms, border-color 160ms",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(108,0,175,0.09)";
+                    e.currentTarget.style.borderColor = "rgba(108,0,175,0.3)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "rgba(108,0,175,0.05)";
+                    e.currentTarget.style.borderColor = "rgba(108,0,175,0.18)";
                   }}
                 >
                   <p
                     style={{
                       fontFamily: FF_GROTESK,
-                      fontSize: "1.25rem",
+                      fontSize: "0.65rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.18rem",
                       fontWeight: 600,
-                      color: INK,
-                      margin: 0,
-                      lineHeight: 1.3,
-                      transition: "color 140ms",
+                      color: "#6C00AF",
+                      margin: "0 0 0.45rem 0",
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = "#2493A9"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = INK; }}
                   >
-                    {featuredCause.label}
+                    Featured Cause
                   </p>
-                </Link>
+                  <Link
+                    href={`/cause/${featuredCause.id}`}
+                    style={{ display: "block", textDecoration: "none" }}
+                  >
+                    <p
+                      style={{
+                        fontFamily: FF_GROTESK,
+                        fontSize: "1.25rem",
+                        fontWeight: 600,
+                        color: INK,
+                        margin: 0,
+                        lineHeight: 1.3,
+                        transition: "color 140ms",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = INK; }}
+                    >
+                      {featuredCause.label}
+                    </p>
+                  </Link>
+                </div>
               )}
 
               {otherCauses.length > 0 && (
