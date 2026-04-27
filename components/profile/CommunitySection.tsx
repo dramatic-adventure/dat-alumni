@@ -21,6 +21,19 @@ const FF_GROTESK = "var(--font-space-grotesk), system-ui, sans-serif";
 const FF_SANS = "var(--font-dm-sans), system-ui, sans-serif";
 const INK = "#241123";
 
+function resolveDramaClub(slug: string) {
+  const dc = dramaClubs.find((c) => c.slug === slug);
+  return dc ? { slug: dc.slug, name: dc.name, country: dc.country, location: dc.location } : undefined;
+}
+
+function resolveCauseAnywhere(id: string) {
+  for (const cat of CAUSE_CATEGORIES) {
+    const sub = (CAUSE_SUBCATEGORIES_BY_CATEGORY[cat.id] ?? []).find((s) => s.id === id);
+    if (sub) return { id: sub.id, label: sub.shortLabel ?? sub.label };
+  }
+  return undefined;
+}
+
 export default function CommunitySection({
   supportedClubs,
   impactCauses,
@@ -50,15 +63,17 @@ export default function CommunitySection({
 
   if (resolvedClubs.length === 0 && resolvedCauses.length === 0) return null;
 
-  const featuredClub = featuredSupportedClub?.trim()
-    ? resolvedClubs.find((c) => c.slug === featuredSupportedClub.trim())
+  const featuredClubSlug = featuredSupportedClub?.trim() ?? "";
+  const featuredClub = featuredClubSlug
+    ? (resolvedClubs.find((c) => c.slug === featuredClubSlug) ?? resolveDramaClub(featuredClubSlug))
     : undefined;
   const otherClubs = featuredClub
     ? resolvedClubs.filter((c) => c.slug !== featuredClub.slug)
     : resolvedClubs;
 
-  const featuredCause = featuredImpactCause?.trim()
-    ? resolvedCauses.find((c) => c.id === featuredImpactCause.trim())
+  const featuredCauseId = featuredImpactCause?.trim() ?? "";
+  const featuredCause = featuredCauseId
+    ? (resolvedCauses.find((c) => c.id === featuredCauseId) ?? resolveCauseAnywhere(featuredCauseId))
     : undefined;
   const otherCauses = featuredCause
     ? resolvedCauses.filter((c) => c.id !== featuredCause.id)
