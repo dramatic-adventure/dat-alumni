@@ -31,6 +31,8 @@ export default async function LanguagesIndexPage() {
   const languages = buildLanguageSummaries(alumni.map((a) => a.languages));
 
   return (
+    <>
+      <style>{`.lang-link:hover { background: rgba(36,147,169,0.15) !important; }`}</style>
     <main
       style={{
         minHeight: "100vh",
@@ -112,6 +114,7 @@ export default async function LanguagesIndexPage() {
               <li key={lang.slug}>
                 <Link
                   href={`/languages/${lang.slug}`}
+                  className="lang-link"
                   style={{
                     display: "flex",
                     alignItems: "baseline",
@@ -122,14 +125,6 @@ export default async function LanguagesIndexPage() {
                     background: "rgba(255,255,255,0.04)",
                     border: "1px solid rgba(255,255,255,0.08)",
                     transition: "background 180ms ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLAnchorElement).style.background =
-                      "rgba(36,147,169,0.15)";
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLAnchorElement).style.background =
-                      "rgba(255,255,255,0.04)";
                   }}
                 >
                   <span
@@ -159,5 +154,6 @@ export default async function LanguagesIndexPage() {
         )}
       </section>
     </main>
+    </>
   );
 }
