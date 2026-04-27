@@ -70,11 +70,11 @@ export default function MediaPanel({
         Photos &amp; Reels
       </span>
 
-      <p style={{ ...explainStyleLocal, opacity: 0.65, fontSize: "0.8rem" }}>
+      <p style={{ ...explainStyleLocal, opacity: 0.55, fontSize: "0.8rem", fontStyle: "italic" }}>
         Use the pickers to select from your existing library, or drop new files below.
       </p>
 
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16, marginBottom: 16 }}>
         <button
           type="button"
           style={studioGhostButton}

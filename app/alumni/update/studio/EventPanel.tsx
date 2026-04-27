@@ -197,13 +197,32 @@ export default function EventPanel(props: {
         Share an Upcoming Event
       </span>
 
-      <p style={{ ...explainStyleLocal, opacity: 0.65, fontSize: "0.8rem" }}>
-        This powers the <strong style={{ color: "rgba(255,255,255,0.75)" }}>Coming Up</strong>{" "}
-        section on your public profile. The event disappears automatically once the event date or
-        expiration date passes.
+      <p style={{ ...explainStyleLocal, opacity: 0.55, fontSize: "0.8rem", fontStyle: "italic" }}>
+        Powers the <strong style={{ color: "rgba(255,255,255,0.7)", fontStyle: "normal" }}>Coming Up</strong>{" "}
+        strip on your public profile. Disappears automatically once the event date or expiration
+        date passes.
       </p>
 
-      {renderFieldsOrNull(eventEditKeys) ?? manualFallback ?? null}
+      {/* Field layout — responsive rows on desktop */}
+      {(() => {
+        const titleField = renderFieldsOrNull(["upcomingEventTitle"]);
+        if (titleField === null) return manualFallback ?? null;
+        return (
+          <div style={{ marginTop: 16 }}>
+            {titleField}
+            <div className="event-field-row-3">
+              <div>{renderFieldsOrNull(["upcomingEventLink"])}</div>
+              <div>{renderFieldsOrNull(["upcomingEventDate"])}</div>
+              <div>{renderFieldsOrNull(["upcomingEventExpiresAt"])}</div>
+            </div>
+            {renderFieldsOrNull(["upcomingEventDescription"])}
+            <div className="event-field-row-2">
+              <div>{renderFieldsOrNull(["upcomingEventCity"])}</div>
+              <div>{renderFieldsOrNull(["upcomingEventStateCountry"])}</div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Event media ─────────────────────────────────────────────── */}
       <div
@@ -366,41 +385,46 @@ export default function EventPanel(props: {
       <div
         style={{
           marginTop: 22,
-          padding: "12px 14px",
-          borderRadius: 8,
-          border: "1px solid rgba(139,92,246,0.25)",
-          background: "rgba(139,92,246,0.07)",
+          padding: "14px 16px",
+          borderRadius: 10,
+          border: "1px solid rgba(139,92,246,0.45)",
+          background: "rgba(139,92,246,0.14)",
         }}
       >
         <p
           style={{
-            margin: "0 0 5px",
-            fontSize: 12,
-            fontWeight: 600,
-            color: "rgba(255,255,255,0.75)",
+            margin: "0 0 6px",
+            fontSize: 12.5,
+            fontWeight: 700,
+            color: "rgba(255,255,255,0.92)",
             letterSpacing: "0.01em",
           }}
         >
           Want DAT to help amplify this event?
         </p>
-        <p style={{ ...explainStyleLocal, margin: "0 0 10px", fontSize: 11.5 }}>
-          If this project aligns with DAT&apos;s mission — through adventurous storytelling,
-          community engagement, cross-cultural exchange, or alumni collaboration — we may be able to
-          consider it for broader promotion beyond your alumni profile.
+        <p style={{ ...explainStyleLocal, margin: "0 0 12px", fontSize: 12, opacity: 0.8 }}>
+          If this project aligns with DAT&apos;s mission — adventurous storytelling, community
+          engagement, cross-cultural exchange, or alumni collaboration — we may be able to feature it
+          beyond your profile.
         </p>
         <a
           href={mailtoHref}
           style={{
-            display: "inline-block",
-            fontSize: 11.5,
-            fontWeight: 600,
-            color: "rgba(167,139,250,0.9)",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "7px 16px",
+            borderRadius: 8,
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#c4b5fd",
+            background: "rgba(139,92,246,0.22)",
+            border: "1px solid rgba(139,92,246,0.55)",
             textDecoration: "none",
-            borderBottom: "1px solid rgba(167,139,250,0.4)",
-            paddingBottom: 1,
+            letterSpacing: "0.01em",
           }}
         >
-          Request DAT promotion →
+          Reach Out →
         </a>
       </div>
 

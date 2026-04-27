@@ -1167,7 +1167,7 @@ useEffect(() => {
         upcomingEventMediaType: String(j?.upcomingEventMediaType || p.upcomingEventMediaType || ""),
         upcomingEventMediaUrl: String(j?.upcomingEventMediaUrl || p.upcomingEventMediaUrl || ""),
         upcomingEventMediaAlt: String(j?.upcomingEventMediaAlt || p.upcomingEventMediaAlt || ""),
-        upcomingEventVideoAutoplay: String(j?.upcomingEventVideoAutoplay || p.upcomingEventVideoAutoplay || ""),
+        upcomingEventVideoAutoplay: String(j?.upcomingEventVideoAutoplay ?? p.upcomingEventVideoAutoplay ?? ""),
 
         backgroundStyle: String(j?.backgroundStyle || p.backgroundStyle || "kraft"),
         // normalize into Live-cell shape (string "true" or "")
@@ -1613,7 +1613,7 @@ async function rehydrate() {
         upcomingEventMediaType:     String(j?.upcomingEventMediaType     || p.upcomingEventMediaType     || ""),
         upcomingEventMediaUrl:      String(j?.upcomingEventMediaUrl      || p.upcomingEventMediaUrl      || ""),
         upcomingEventMediaAlt:      String(j?.upcomingEventMediaAlt      || p.upcomingEventMediaAlt      || ""),
-        upcomingEventVideoAutoplay: String(j?.upcomingEventVideoAutoplay || p.upcomingEventVideoAutoplay || ""),
+        upcomingEventVideoAutoplay: String(j?.upcomingEventVideoAutoplay ?? p.upcomingEventVideoAutoplay ?? ""),
 
         currentHeadshotUrl: String(j?.currentHeadshotUrl || p.currentHeadshotUrl || ""),
         currentHeadshotId: String(j?.currentHeadshotId || p.currentHeadshotId || ""),

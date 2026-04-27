@@ -786,3 +786,22 @@ footer .footer-cta {
   color: rgba(242, 242, 242, 0.95) !important;
   border-color: rgba(242, 242, 242, 0.5) !important;
 }
+
+/* -----------------------------------------------------------
+   EventPanel: responsive field rows in Profile Studio
+----------------------------------------------------------- */
+.event-field-row-3,
+.event-field-row-2 {
+  display: grid;
+  gap: 4px;
+}
+
+@media (min-width: 640px) {
+  .event-field-row-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .event-field-row-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}

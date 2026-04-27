@@ -72,16 +72,13 @@ export default function StoryPanel(props: {
         Your Story
       </span>
 
-      <p style={{ ...explainStyleLocal, opacity: 0.65, fontSize: "0.8rem" }}>
-        Write or edit a map story. Load a published story to revise it, or start fresh.
-      </p>
-
       <div
         style={{
           display: "flex",
           gap: 10,
           flexWrap: "wrap",
           alignItems: "center",
+          marginTop: 16,
           marginBottom: 16,
         }}
       >
