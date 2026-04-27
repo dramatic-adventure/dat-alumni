@@ -541,6 +541,8 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
           backgroundChoice: bgChoice,
           impactCauses: (normalizedAlumni as any).impactCauses || "",
           supportedClubs: (normalizedAlumni as any).supportedClubs || "",
+          featuredSupportedClub: (normalizedAlumni as any).featuredSupportedClub,
+          featuredImpactCause: (normalizedAlumni as any).featuredImpactCause,
           languages: (normalizedAlumni as any).languages || "",
         }}
         allStories={storiesForThisAlum}
