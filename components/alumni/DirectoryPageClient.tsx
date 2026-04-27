@@ -170,7 +170,11 @@ export default function DirectoryPageClient({
   const seasons = useMemo(() => {
     const set = new Set<string>();
     alumni.forEach((a) => a.seasons?.forEach((s) => set.add(s)));
-    return Array.from(set).sort();
+    return Array.from(set).sort((a, b) => {
+      const na = parseInt(a.replace(/\D/g, ""), 10) || 0;
+      const nb = parseInt(b.replace(/\D/g, ""), 10) || 0;
+      return nb - na;
+    });
   }, [alumni]);
 
   const locations = useMemo(() => {
@@ -198,6 +202,18 @@ export default function DirectoryPageClient({
       });
     });
     return Array.from(seen.values()).sort((x, y) => x.localeCompare(y));
+  }, [alumni]);
+
+  const statusFlagOptions = useMemo(() => {
+    const set = new Set<string>();
+    alumni.forEach((a) => a.statusFlags?.forEach((f) => set.add(f)));
+    return Array.from(set).sort();
+  }, [alumni]);
+
+  const identityTagOptions = useMemo(() => {
+    const set = new Set<string>();
+    alumni.forEach((a) => a.identityTags?.forEach((t) => set.add(t)));
+    return Array.from(set).sort();
   }, [alumni]);
 
   /** Filter + sort helper */
@@ -259,8 +275,12 @@ export default function DirectoryPageClient({
     { name: "season", label: "SEASON", options: seasons },
     { name: "location", label: "LOCATION", options: locations },
     { name: "role", label: "ROLE", options: roles },
-    { name: "statusFlag", label: "INVOLVEMENT", options: ["Resident Artist", "Fellow", "Board Member"] },
-    { name: "identityTag", label: "TAGS", options: ["Indigenous", "LGBTQIA+", "POC"] },
+    ...(statusFlagOptions.length > 0
+      ? [{ name: "statusFlag" as const, label: "INVOLVEMENT", options: statusFlagOptions }]
+      : []),
+    ...(identityTagOptions.length > 0
+      ? [{ name: "identityTag" as const, label: "TAGS", options: identityTagOptions }]
+      : []),
     ...(languageOptions.length > 0
       ? [{ name: "language" as const, label: "LANGUAGE", options: languageOptions }]
       : []),
