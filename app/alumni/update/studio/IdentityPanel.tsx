@@ -10,6 +10,7 @@ import {
   type TaxonomyTag,
 } from "@/lib/alumniTaxonomy";
 import { datButtonGhost } from "@/app/alumni/update/updateStyles";
+import { LANGUAGE_LEVELS } from "@/lib/languageLevels";
 
 type UploadKind = "headshot" | "album" | "reel" | "event";
 
@@ -207,7 +208,6 @@ const layerHelpStyle: CSSProperties = {
 
 /* ---------------- Language level helpers ---------------- */
 
-const LANGUAGE_LEVELS = ["Conversational", "Working", "Fluent", "Native"] as const;
 type LangEntry = { lang: string; level: string };
 
 function parseLangEntries(raw: string | undefined | null): LangEntry[] {

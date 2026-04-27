@@ -121,6 +121,9 @@ export type AlumniProfile = {
   /** Themes / causes the artist explores (controlled vocab, max 4). */
   exploreCareTags?: ExploreCareTag[];
 
+  /** Languages spoken (comma-separated, e.g. "Español (Advanced), English (Native)") */
+  languages?: string;
+
   /** Short bio / artist statement (shown near the top of profile) */
   artistStatement?: string;
 
