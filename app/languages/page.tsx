@@ -1,9 +1,11 @@
 // app/languages/page.tsx
 
+import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
 import { buildLanguageSummaries } from "@/lib/languages";
+import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 
 export const revalidate = 3600;
 
@@ -14,8 +16,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/languages" },
   openGraph: {
     title: "Languages | Dramatic Adventure Theatre",
-    description:
-      "Explore DAT alumni by the languages they speak.",
+    description: "Explore DAT alumni by the languages they speak.",
     url: "/languages",
     type: "website",
   },
@@ -31,129 +32,198 @@ export default async function LanguagesIndexPage() {
   const languages = buildLanguageSummaries(alumni.map((a) => a.languages));
 
   return (
-    <>
-      <style>{`.lang-link:hover { background: rgba(36,147,169,0.15) !important; }`}</style>
-    <main
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#0e0b14",
-        paddingBottom: "6rem",
-      }}
-    >
-      {/* Hero */}
-      <section
+    <div>
+      {/* HERO */}
+      <div
         style={{
-          backgroundColor: "#2493A9",
-          padding: "5rem 30px 4rem",
+          position: "relative",
+          height: "55vh",
+          overflow: "hidden",
+          zIndex: 0,
+          boxShadow: "0 0 33px rgba(0, 0, 0, 0.5)",
         }}
       >
-        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-          <p
-            style={{
-              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-              fontSize: "0.78rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.2rem",
-              fontWeight: 600,
-              color: "#F2f2f2",
-              opacity: 0.85,
-              margin: "0 0 1rem 0",
-            }}
-          >
-            Community
-          </p>
+        <Image
+          src="/images/alumni-hero.jpg"
+          alt="Languages Hero"
+          fill
+          priority
+          className="object-cover object-center"
+        />
+        <div
+          style={{
+            position: "absolute",
+            bottom: "1.1rem",
+            right: "0",
+            paddingRight: "2.5vw",
+            textAlign: "right",
+          }}
+        >
           <h1
             style={{
-              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-              fontSize: "clamp(2rem, 4vw, 3rem)",
-              fontWeight: 700,
-              color: "#241123",
-              margin: "0 0 1rem 0",
-              lineHeight: 1.2,
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
+              fontSize: "clamp(4rem, 9vw, 8rem)",
+              color: "#f2f2f2",
+              opacity: 0.88,
+              textTransform: "uppercase",
+              textShadow: "0 8px 20px rgba(0,0,0,0.8)",
+              margin: 0,
+              lineHeight: "1",
             }}
           >
             Languages
           </h1>
           <p
             style={{
-              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: "1.1rem",
-              color: "#241123cc",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+              fontSize: "1.5rem",
+              color: "#f2f2f2",
+              opacity: 0.72,
               margin: 0,
-              maxWidth: "60ch",
+              textShadow: "0 4px 9px rgba(0,0,0,0.9)",
+              textAlign: "right",
             }}
           >
-            Languages are how the DAT network connects and communicates.
-            Explore our alumni community by the languages they speak.
+            The DAT network connects artists across cultures and communities
           </p>
         </div>
-      </section>
+      </div>
 
-      {/* Language list */}
-      <section style={{ padding: "4rem 30px 0", maxWidth: "900px", margin: "0 auto" }}>
-        {languages.length === 0 ? (
-          <p
+      {/* MAIN */}
+      <main
+        style={{
+          marginTop: "-5rem",
+          padding: "8rem 0 2rem",
+          position: "relative",
+          opacity: 0.97,
+          zIndex: 10,
+        }}
+      >
+        <div style={{ width: "90%", maxWidth: 1200, margin: "0 auto" }}>
+          <SectionLabel>Explore by Language</SectionLabel>
+
+          <div
             style={{
-              color: "#f2f2f2aa",
-              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+              background: "rgba(36, 17, 35, 0.18)",
+              borderRadius: "12px",
+              padding: "2rem",
             }}
           >
-            No language data available yet.
-          </p>
-        ) : (
-          <ul
-            style={{
-              margin: 0,
-              padding: 0,
-              listStyle: "none",
-              display: "grid",
-              gap: "0.5rem",
-            }}
-          >
-            {languages.map((lang) => (
-              <li key={lang.slug}>
-                <Link
-                  href={`/languages/${lang.slug}`}
-                  className="lang-link"
-                  style={{
-                    display: "flex",
-                    alignItems: "baseline",
-                    gap: "0.75rem",
-                    textDecoration: "none",
-                    padding: "0.75rem 1rem",
-                    borderRadius: "8px",
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    transition: "background 180ms ease",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                      fontSize: "1.05rem",
-                      fontWeight: 600,
-                      color: "#f2f2f2",
-                    }}
-                  >
-                    {lang.name}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                      fontSize: "0.85rem",
-                      color: "#2493A9",
-                      fontWeight: 500,
-                    }}
-                  >
-                    {lang.count} {lang.count === 1 ? "artist" : "artists"}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </main>
-    </>
+            {languages.length === 0 ? (
+              <p
+                style={{
+                  color: "#f2f2f2aa",
+                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                }}
+              >
+                No language data available yet.
+              </p>
+            ) : (
+              <ul
+                style={{
+                  margin: 0,
+                  padding: 0,
+                  listStyle: "none",
+                  display: "grid",
+                  gap: "0.5rem",
+                }}
+              >
+                {languages.map((lang) => (
+                  <li key={lang.slug}>
+                    <Link
+                      href={`/languages/${lang.slug}`}
+                      className="lang-link"
+                      style={{
+                        display: "flex",
+                        alignItems: "baseline",
+                        gap: "0.75rem",
+                        textDecoration: "none",
+                        padding: "0.75rem 1rem",
+                        borderRadius: "8px",
+                        background: "rgba(255,255,255,0.06)",
+                        border: "1px solid rgba(255,255,255,0.10)",
+                        transition: "background 180ms ease, transform 180ms ease",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontSize: "1.05rem",
+                          fontWeight: 600,
+                          color: "#f2f2f2",
+                        }}
+                      >
+                        {lang.name}
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                          fontSize: "0.85rem",
+                          color: "#2493A9",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {lang.count} {lang.count === 1 ? "artist" : "artists"}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        {/* Season nav */}
+        <section
+          style={{
+            width: "100vw",
+            backgroundColor: "#6C00AF",
+            boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)",
+            padding: "4rem 0",
+            marginTop: "4rem",
+            marginBottom: "-2rem",
+          }}
+        >
+          <SeasonsCarouselAlt />
+        </section>
+      </main>
+
+      <style>{`
+        a { text-decoration: none; }
+        a:hover { text-decoration: none; }
+        .lang-link:hover {
+          background: rgba(36,147,169,0.18) !important;
+          transform: translateY(-1px);
+        }
+        @media (max-width: 900px) {
+          main {
+            margin-top: -3.5rem;
+            padding-top: 5.5rem;
+          }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <h2
+      style={{
+        fontFamily: "var(--font-anton), system-ui, sans-serif",
+        fontSize: "2.4rem",
+        margin: "3.5rem 0 1.1rem",
+        textTransform: "uppercase",
+        letterSpacing: "0.2rem",
+        color: "#241123",
+        backgroundColor: "#FFCC00",
+        opacity: 0.7,
+        padding: "0.1em 0.5em",
+        borderRadius: "0.3em",
+        display: "inline-block",
+      }}
+    >
+      {children}
+    </h2>
   );
 }

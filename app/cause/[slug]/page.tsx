@@ -141,6 +141,11 @@ export async function generateStaticParams() {
       const canonical = getCanonicalTag(tag) ?? tag;
       slugs.add(slugify(canonical));
     }
+    // Primary: impactCauses stores comma-separated subcategory IDs directly
+    const causeStr = String((artist as any).impactCauses ?? "").trim();
+    for (const id of causeStr.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean)) {
+      slugs.add(id);
+    }
   }
 
   const allProductions: Production[] = Object.values(productionMap);
@@ -353,8 +358,15 @@ export default async function CausePage({
     }
   }
 
-  const hasCauseTag = (artist: AlumniRow) =>
-    ((((artist as any).causeTags ?? []) as string[])).some(matchTag);
+  const hasCauseTag = (artist: AlumniRow) => {
+    // Legacy tag system (not used on AlumniRow — kept for safety)
+    const tagMatch = (((artist as any).causeTags ?? []) as string[]).some(matchTag);
+    if (tagMatch) return true;
+    // Primary: impactCauses is a comma-separated string of subcategory IDs
+    const causeStr = String((artist as any).impactCauses ?? "").trim();
+    if (!causeStr) return false;
+    return causeStr.split(",").some((s) => s.trim().toLowerCase() === slugLower);
+  };
 
   const both: AlumniRow[] = [];
   const tagOnly: AlumniRow[] = [];

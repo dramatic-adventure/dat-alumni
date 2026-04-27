@@ -1,5 +1,6 @@
 // app/languages/[slug]/page.tsx
 
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -8,6 +9,7 @@ import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
 import { getPrimaryDatRoleForProfile } from "@/lib/profileRoleAssignments";
 import type { AlumniRow } from "@/lib/types";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
+import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import { parseLanguages, buildLanguageSummaries } from "@/lib/languages";
 
 export const revalidate = 3600;
@@ -67,16 +69,11 @@ export default async function LanguageDetailPage({
     ])
   );
 
-  // Find which language name this slug corresponds to
   const summaries = buildLanguageSummaries(alumni.map((a) => a.languages));
   const langSummary = summaries.find((l) => l.slug === slugLower);
   if (!langSummary) notFound();
 
-  // Collect artists who speak this language, along with their level
-  type ArtistWithLevel = {
-    artist: AlumniRow;
-    level?: string;
-  };
+  type ArtistWithLevel = { artist: AlumniRow; level?: string };
 
   const artistsWithLevel: ArtistWithLevel[] = [];
   for (const artist of alumni) {
@@ -87,7 +84,6 @@ export default async function LanguageDetailPage({
     }
   }
 
-  // Sort: by level priority (Native > Fluent > Advanced > Intermediate > Beginner > unknown), then by name
   const levelOrder: Record<string, number> = {
     Native: 0,
     Fluent: 1,
@@ -106,102 +102,189 @@ export default async function LanguageDetailPage({
   const langName = langSummary.name;
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#0e0b14",
-        paddingBottom: "6rem",
-      }}
-    >
-      {/* Hero */}
-      <section
+    <div>
+      {/* HERO */}
+      <div
         style={{
-          backgroundColor: "#2493A9",
-          padding: "5rem 30px 4rem",
+          position: "relative",
+          height: "55vh",
+          overflow: "hidden",
+          zIndex: 0,
+          boxShadow: "0 0 33px rgba(0, 0, 0, 0.5)",
         }}
       >
-        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-          <p
-            style={{
-              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-              fontSize: "0.78rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.2rem",
-              fontWeight: 600,
-              color: "#F2f2f2",
-              opacity: 0.85,
-              margin: "0 0 1rem 0",
-            }}
-          >
-            <Link
-              href="/languages"
-              style={{ color: "inherit", textDecoration: "none", opacity: 0.75 }}
-            >
-              Languages
-            </Link>
-            {" / "}
-            {langName}
-          </p>
+        <Image
+          src="/images/alumni-hero.jpg"
+          alt={`${langName} — Language Hero`}
+          fill
+          priority
+          className="object-cover object-center"
+        />
+        <div
+          style={{
+            position: "absolute",
+            bottom: "1.1rem",
+            right: "0",
+            paddingRight: "2.5vw",
+            textAlign: "right",
+          }}
+        >
           <h1
             style={{
-              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-              fontSize: "clamp(2rem, 4vw, 3rem)",
-              fontWeight: 700,
-              color: "#241123",
-              margin: "0 0 0.5rem 0",
-              lineHeight: 1.2,
+              fontFamily: "var(--font-anton), system-ui, sans-serif",
+              fontSize: "clamp(3.2rem, 7.8vw, 7.6rem)",
+              color: "#f2f2f2",
+              opacity: 0.88,
+              textTransform: "uppercase",
+              textShadow: "0 8px 20px rgba(0,0,0,0.8)",
+              margin: 0,
+              lineHeight: "1",
             }}
           >
             {langName}
           </h1>
           <p
             style={{
-              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: "1rem",
-              color: "#241123aa",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+              fontSize: "1.5rem",
+              color: "#f2f2f2",
+              opacity: 0.72,
               margin: 0,
+              textShadow: "0 4px 9px rgba(0,0,0,0.9)",
+              textAlign: "right",
             }}
           >
             {artistsWithLevel.length}{" "}
             {artistsWithLevel.length === 1 ? "artist" : "artists"}
           </p>
         </div>
-      </section>
+      </div>
 
-      {/* Artists grid */}
-      <section style={{ padding: "4rem 30px 0", maxWidth: "1100px", margin: "0 auto" }}>
-        {artistsWithLevel.length === 0 ? (
+      {/* MAIN */}
+      <main
+        style={{
+          marginTop: "-5rem",
+          padding: "8rem 0 2rem",
+          position: "relative",
+          opacity: 0.97,
+          zIndex: 10,
+        }}
+      >
+        <div style={{ width: "90%", maxWidth: 1200, margin: "0 auto" }}>
+          {/* Breadcrumb */}
           <p
             style={{
-              color: "#f2f2f2aa",
-              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+              fontSize: "0.78rem",
+              textTransform: "uppercase",
+              letterSpacing: "0.15em",
+              fontWeight: 600,
+              color: "#f2f2f2",
+              opacity: 0.6,
+              margin: "0 0 0.5rem",
             }}
           >
-            No artists found for this language.
+            <Link
+              href="/languages"
+              style={{ color: "inherit", textDecoration: "none" }}
+            >
+              Languages
+            </Link>
+            {" / "}
+            {langName}
           </p>
-        ) : (
+
+          <SectionLabel>Artists Who Speak {langName}</SectionLabel>
+
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-              gap: "1.25rem",
+              background: "rgba(36, 17, 35, 0.18)",
+              borderRadius: "12px",
+              padding: "2rem",
             }}
           >
-            {artistsWithLevel.map(({ artist, level }) => (
-              <MiniProfileCard
-                key={artist.slug}
-                name={artist.name ?? ""}
-                slug={artist.slug}
-                role={primaryRoleBySlug[artist.slug] ?? (artist.roles?.[0] ?? "")}
-                headshotUrl={artist.headshotUrl}
-                variant="dark"
-                viaLabel={level}
-                viaSource="dat-role"
-              />
-            ))}
+            {artistsWithLevel.length === 0 ? (
+              <p
+                style={{
+                  color: "#f2f2f2aa",
+                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                }}
+              >
+                No artists found for this language.
+              </p>
+            ) : (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                  gap: "1rem",
+                  justifyItems: "center",
+                }}
+              >
+                {artistsWithLevel.map(({ artist, level }) => (
+                  <MiniProfileCard
+                    key={artist.slug}
+                    name={artist.name ?? ""}
+                    slug={artist.slug}
+                    role={primaryRoleBySlug[artist.slug] ?? (artist.roles?.[0] ?? "")}
+                    headshotUrl={artist.headshotUrl}
+                    variant="dark"
+                    viaLabel={level}
+                    viaSource="dat-role"
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </section>
-    </main>
+        </div>
+
+        {/* Season nav */}
+        <section
+          style={{
+            width: "100vw",
+            backgroundColor: "#6C00AF",
+            boxShadow: "0px 0px 33px rgba(0.8,0.8,0.8,0.8)",
+            padding: "4rem 0",
+            marginTop: "4rem",
+            marginBottom: "-2rem",
+          }}
+        >
+          <SeasonsCarouselAlt />
+        </section>
+      </main>
+
+      <style>{`
+        a { text-decoration: none; }
+        a:hover { text-decoration: none; }
+        @media (max-width: 900px) {
+          main {
+            margin-top: -3.5rem;
+            padding-top: 5.5rem;
+          }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <h2
+      style={{
+        fontFamily: "var(--font-anton), system-ui, sans-serif",
+        fontSize: "2.4rem",
+        margin: "3.5rem 0 1.1rem",
+        textTransform: "uppercase",
+        letterSpacing: "0.2rem",
+        color: "#241123",
+        backgroundColor: "#FFCC00",
+        opacity: 0.7,
+        padding: "0.1em 0.5em",
+        borderRadius: "0.3em",
+        display: "inline-block",
+      }}
+    >
+      {children}
+    </h2>
   );
 }
