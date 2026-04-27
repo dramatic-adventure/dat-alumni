@@ -69,7 +69,7 @@ export default function BioIdentitySection({
         textTransform: "uppercase",
         letterSpacing: "0.2rem",
         fontWeight: 600,
-        color: "#D9A919",
+        color: "#FFCC00",
         opacity: 0.85,
         margin: "0 0 1.1rem 0",
       }}
@@ -118,7 +118,7 @@ export default function BioIdentitySection({
               style={{
                 width: "5rem",
                 height: "2px",
-                backgroundColor: "#D9A919",
+                backgroundColor: "#FFCC00",
                 margin: "1.25rem 0",
               }}
             />
@@ -151,7 +151,7 @@ export default function BioIdentitySection({
                   marginTop: "1rem",
                   background: "none",
                   border: "none",
-                  color: "#F2D166",
+                  color: "#6c00af",
                   fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                   fontSize: "0.75rem",
                   fontWeight: 600,
@@ -181,25 +181,6 @@ export default function BioIdentitySection({
         )}
       </div>
 
-      {/* DAT asterisk watermark — desktop only */}
-      {!isMobile && (
-        <span
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            bottom: "2rem",
-            left: "30px",
-            fontSize: "3rem",
-            opacity: 0.1,
-            color: "#fff",
-            fontFamily: "monospace",
-            userSelect: "none",
-            pointerEvents: "none",
-          }}
-        >
-          ✳
-        </span>
-      )}
     </section>
   );
 }
