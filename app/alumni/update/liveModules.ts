@@ -6,6 +6,7 @@ import type { UploadKind } from "@/lib/uploader";
 export type ModuleKey =
   | "Basics"
   | "Identity"
+  | "Impact"
   | "Roles"
   | "Contact"
   | "CurrentUpdate"
@@ -80,6 +81,10 @@ export const LIVE_KEYS = new Set<string>(
     "currentUpdateLink",
     "currentUpdateExpiresAt",
 
+    // Impact
+    "impactCauses",
+    "supportedClubs",
+
     // Upcoming Event
     "upcomingEventTitle",
     "upcomingEventLink",
@@ -148,6 +153,11 @@ export const MODULES = {
       "languages",
       "currentTitle",
     ]),
+    uploadKinds: [],
+  },
+
+  Impact: {
+    fieldKeys: keysForSaving(["impactCauses", "supportedClubs"]),
     uploadKinds: [],
   },
 

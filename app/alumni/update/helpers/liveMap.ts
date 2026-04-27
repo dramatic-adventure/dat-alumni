@@ -85,6 +85,9 @@ export function toLiveSavableProfile(p: any) {
     // `activeStoryKey` column.
     storyKey: String(p.storyKey || "").trim(),
 
+    // Impact
+    impactCauses: String(p.impactCauses || "").trim(),
+    supportedClubs: String(p.supportedClubs || "").trim(),
   };
 }
 

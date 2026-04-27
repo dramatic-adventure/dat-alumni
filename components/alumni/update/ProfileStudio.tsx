@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
-export type StudioTab = "basics" | "identity" | "media" | "contact" | "story" | "event";
+export type StudioTab = "basics" | "identity" | "impact" | "media" | "contact" | "story" | "event";
 export type UploadKind = "headshot" | "album" | "reel" | "event";
 
 const COLOR = {
@@ -148,6 +148,7 @@ type ProfileStudioProps = {
   // panels
   basicsPanel: ReactNode;
   identityPanel: ReactNode;
+  impactPanel: ReactNode;
   mediaPanel: ReactNode;
   contactPanel: ReactNode;
   storyPanel: ReactNode;
@@ -181,6 +182,7 @@ type ProfileStudioProps = {
 const TAB_ANCHOR_ID: Record<StudioTab, string> = {
   basics: "studio-basics-anchor",
   identity: "studio-identity-anchor",
+  impact: "studio-impact-anchor",
   media: "studio-media-anchor",
   contact: "studio-contact-anchor",
   story: "studio-story-anchor",
@@ -199,6 +201,7 @@ export default function ProfileStudio(props: ProfileStudioProps) {
 
     basicsPanel,
     identityPanel,
+    impactPanel,
     mediaPanel,
     contactPanel,
     storyPanel,
@@ -248,11 +251,12 @@ export default function ProfileStudio(props: ProfileStudioProps) {
   const panel = useMemo(() => {
     if (tab === "basics") return basicsPanel;
     if (tab === "identity") return identityPanel;
+    if (tab === "impact") return impactPanel;
     if (tab === "media") return mediaPanel;
     if (tab === "contact") return contactPanel;
     if (tab === "story") return storyPanel;
     return eventPanel;
-  }, [tab, basicsPanel, identityPanel, mediaPanel, contactPanel, storyPanel, eventPanel]);
+  }, [tab, basicsPanel, identityPanel, impactPanel, mediaPanel, contactPanel, storyPanel, eventPanel]);
 
   const inner = (
     <div>
@@ -274,6 +278,15 @@ export default function ProfileStudio(props: ProfileStudioProps) {
           aria-pressed={tab === "identity"}
         >
           Identity
+        </button>
+
+        <button
+          type="button"
+          style={tabStyle(tab === "impact")}
+          onClick={() => setTab("impact")}
+          aria-pressed={tab === "impact"}
+        >
+          Impact
         </button>
 
         <button

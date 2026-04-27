@@ -82,5 +82,9 @@ export function baselineFromLookup(j: any, slug: string, nm: string, loc: string
     storyShowOnMap: boolCell(j?.storyShowOnMap),
     // Sheet header is `activeStoryKey`; code/UI uses `storyKey`. Accept either.
     storyKey: String(j?.storyKey || j?.activeStoryKey || ""),
+
+    // Impact
+    impactCauses: String(j?.impactCauses || ""),
+    supportedClubs: String(j?.supportedClubs || ""),
   };
 }

@@ -3,6 +3,11 @@
 import React, { useState } from "react";
 import AlumniTagSections from "@/components/alumni/AlumniTagSections";
 import useIsMobile from "@/hooks/useIsMobile";
+import {
+  CAUSE_CATEGORIES,
+  CAUSE_SUBCATEGORIES_BY_CATEGORY,
+} from "@/lib/causes";
+import { dramaClubs } from "@/lib/dramaClubMap";
 
 interface BioIdentitySectionProps {
   identityTags?: string[];
@@ -10,6 +15,16 @@ interface BioIdentitySectionProps {
   exploreCareTags?: string[];
   artistStatement?: string;
   directlyBelowHero?: boolean;
+  impactCauses?: string;
+  supportedClubs?: string;
+}
+
+function parseCommaList(raw: string | undefined | null): string[] {
+  if (!raw) return [];
+  return String(raw)
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 export default function BioIdentitySection({
@@ -18,6 +33,8 @@ export default function BioIdentitySection({
   exploreCareTags = [],
   artistStatement,
   directlyBelowHero = false,
+  impactCauses,
+  supportedClubs,
 }: BioIdentitySectionProps) {
   const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
@@ -28,7 +45,28 @@ export default function BioIdentitySection({
     exploreCareTags.length > 0;
   const bio = artistStatement?.trim() ?? "";
 
-  if (!bio && !hasAnyTags) return null;
+  // Resolve impactCauses IDs → labels
+  const causeIds = parseCommaList(impactCauses);
+  const resolvedCauses: string[] = [];
+  for (const cat of CAUSE_CATEGORIES) {
+    const subs = CAUSE_SUBCATEGORIES_BY_CATEGORY[cat.id] ?? [];
+    for (const sub of subs) {
+      if (causeIds.includes(sub.id)) {
+        resolvedCauses.push(sub.shortLabel ?? sub.label);
+      }
+    }
+  }
+
+  // Resolve supportedClubs slugs → name + country
+  const clubSlugs = parseCommaList(supportedClubs);
+  const clubSlugSet = new Set(clubSlugs);
+  const resolvedClubs = dramaClubs
+    .filter((c) => clubSlugSet.has(c.slug))
+    .map((c) => `${c.name} — ${c.country}`);
+
+  const hasImpact = resolvedCauses.length > 0 || resolvedClubs.length > 0;
+
+  if (!bio && !hasAnyTags && !hasImpact) return null;
 
   // Split bio into lead paragraph and body
   let leadText = "";
@@ -59,7 +97,7 @@ export default function BioIdentitySection({
     !isMobile && directlyBelowHero ? "5rem" : isMobile ? "2.5rem" : "4rem";
 
   const hasBio = bio.length > 0;
-  const useGrid = !isMobile && hasBio && hasAnyTags;
+  const useGrid = !isMobile && hasBio && (hasAnyTags || hasImpact);
 
   const eyebrow = (
     <p
@@ -184,16 +222,93 @@ export default function BioIdentitySection({
           </div>
         )}
 
-        {/* Right column: identity tags */}
-        {hasAnyTags && (
+        {/* Right column: identity tags + impact */}
+        {(hasAnyTags || hasImpact) && (
           <div style={{ marginTop: isMobile && hasBio ? "2rem" : 0 }}>
             {!hasBio && eyebrow}
-            <AlumniTagSections
-              identityTags={identityTags}
-              practiceTags={practiceTags}
-              exploreCareTags={exploreCareTags}
-              align="start"
-            />
+            {hasAnyTags && (
+              <AlumniTagSections
+                identityTags={identityTags}
+                practiceTags={practiceTags}
+                exploreCareTags={exploreCareTags}
+                align="start"
+              />
+            )}
+            {hasImpact && (
+              <div style={{ marginTop: hasAnyTags ? "1.75rem" : 0 }}>
+                {resolvedCauses.length > 0 && (
+                  <div style={{ marginBottom: resolvedClubs.length > 0 ? "1.25rem" : 0 }}>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                        fontSize: "0.72rem",
+                        textTransform: "uppercase" as const,
+                        letterSpacing: "0.16rem",
+                        fontWeight: 700,
+                        color: "#241123",
+                        opacity: 0.6,
+                        margin: "0 0 0.6rem 0",
+                      }}
+                    >
+                      Causes I Stand For
+                    </p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                      {resolvedCauses.map((label) => (
+                        <span
+                          key={label}
+                          style={{
+                            display: "inline-block",
+                            padding: "3px 10px",
+                            borderRadius: 999,
+                            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                            fontSize: "0.78rem",
+                            fontWeight: 500,
+                            color: "#241123",
+                            background: "rgba(36,17,35,0.10)",
+                            border: "1px solid rgba(36,17,35,0.15)",
+                          }}
+                        >
+                          {label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {resolvedClubs.length > 0 && (
+                  <div>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                        fontSize: "0.72rem",
+                        textTransform: "uppercase" as const,
+                        letterSpacing: "0.16rem",
+                        fontWeight: 700,
+                        color: "#241123",
+                        opacity: 0.6,
+                        margin: "0 0 0.6rem 0",
+                      }}
+                    >
+                      Drama Clubs I Support
+                    </p>
+                    <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: "0.3rem" }}>
+                      {resolvedClubs.map((label) => (
+                        <li
+                          key={label}
+                          style={{
+                            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                            fontSize: "0.84rem",
+                            fontWeight: 400,
+                            color: "#241123d4",
+                          }}
+                        >
+                          {label}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

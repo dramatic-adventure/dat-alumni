@@ -54,6 +54,7 @@ import ProfileStudio, {
 
 import BasicsPanel from "@/app/alumni/update/studio/BasicsPanel";
 import IdentityPanel from "@/app/alumni/update/studio/IdentityPanel";
+import ImpactPanel from "@/app/alumni/update/studio/ImpactPanel";
 import MediaPanel from "@/app/alumni/update/studio/MediaPanel";
 import ContactPanel from "@/app/alumni/update/studio/ContactPanel";
 import StoryPanel from "@/app/alumni/update/studio/StoryPanel";
@@ -151,6 +152,8 @@ const targetAlumniIdFromProp =
   const contactSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [identitySavedRecently, setIdentitySavedRecently] = useState(false);
   const identitySavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [impactSavedRecently, setImpactSavedRecently] = useState(false);
+  const impactSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [eventSavedRecently, setEventSavedRecently] = useState(false);
   const eventSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -208,6 +211,7 @@ const lookupUrl = useMemo(() => {
       ({
         basics: "Basics",
         identity: "Identity",
+        impact: "Impact",
         media: "Basics",
         contact: "Contact",
         story: "StoryMap",
@@ -2275,6 +2279,21 @@ return (
           if (identitySavedTimeoutRef.current) clearTimeout(identitySavedTimeoutRef.current);
           setIdentitySavedRecently(true);
           identitySavedTimeoutRef.current = setTimeout(() => setIdentitySavedRecently(false), 2500);
+        }}
+      />
+    }
+    impactPanel={
+      <ImpactPanel
+        profile={profile}
+        setProfile={setProfile}
+        loading={loading}
+        MODULES={MODULES as any}
+        saveCategory={saveCategory as any}
+        savedRecently={impactSavedRecently}
+        onSaved={() => {
+          if (impactSavedTimeoutRef.current) clearTimeout(impactSavedTimeoutRef.current);
+          setImpactSavedRecently(true);
+          impactSavedTimeoutRef.current = setTimeout(() => setImpactSavedRecently(false), 2500);
         }}
       />
     }

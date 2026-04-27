@@ -120,6 +120,9 @@ export default function AlumniProfilePage({
   );
   const statusFlags = coerceStrArray(d.statusFlags ?? d.flags ?? d.status_signifier);
 
+  const impactCauses = cleanStr(d.impactCauses) ?? "";
+  const supportedClubs = cleanStr(d.supportedClubs) ?? "";
+
   // ✅ Bio / artist statement: accept multiple worlds
   const artistStatement =
     cleanStr(d.artistStatement) ??
@@ -303,6 +306,8 @@ alumniId={alumniId || undefined}
                 exploreCareTags={exploreCareTags}
                 statusFlags={statusFlags}
                 artistStatement={artistStatement}
+                impactCauses={impactCauses || undefined}
+                supportedClubs={supportedClubs || undefined}
                 stories={authorStories}
                 publicEmail={publicEmail}
                 website={website}

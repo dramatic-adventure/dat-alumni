@@ -305,6 +305,8 @@ interface ProfileCardProps {
   isBiCoastal?: boolean;
   featuredLink?: { url: string; label: string };
   upcomingEvent?: ComingUpEvent;
+  impactCauses?: string;
+  supportedClubs?: string;
 }
 
 const scaleCache = new Map<string, { first: number; last: number }>();
@@ -717,6 +719,8 @@ const hasStories = storiesForFeatured.length > 0;
         exploreCareTags={exploreCareTags}
         artistStatement={artistStatement}
         directlyBelowHero={!props.upcomingEvent}
+        impactCauses={props.impactCauses}
+        supportedClubs={props.supportedClubs}
       />
 
       {(hasSpotlight || hasHighlight) && (

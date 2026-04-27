@@ -590,6 +590,10 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
     const practiceTagsIdx    = idxOf(LH as string[], ["practicetags", "practice tags", "practice_tags"]);
     const exploreCareTagsIdx = idxOf(LH as string[], ["explorecaretags", "explore care tags", "explore_care_tags"]);
 
+    // Impact fields
+    const impactCausesIdx  = idxOf(LH as string[], ["impactcauses", "impact causes", "impactCauses"]);
+    const supportedClubsIdx = idxOf(LH as string[], ["supportedclubs", "supported clubs", "supportedClubs"]);
+
     // Upcoming Event fields
     const upcomingEventTitleIdx        = idxOf(LH as string[], ["upcomingeventtitle", "upcoming event title", "upcomingEventTitle"]);
     const upcomingEventLinkIdx         = idxOf(LH as string[], ["upcomingeventlink", "upcoming event link", "upcomingEventLink"]);
@@ -779,6 +783,8 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
         identityTags: identityTagsIdx !== -1 ? String(row[identityTagsIdx] ?? "").trim() : "",
         practiceTags: practiceTagsIdx !== -1 ? String(row[practiceTagsIdx] ?? "").trim() : "",
         exploreCareTags: exploreCareTagsIdx !== -1 ? String(row[exploreCareTagsIdx] ?? "").trim() : "",
+        impactCauses: impactCausesIdx !== -1 ? String(row[impactCausesIdx] ?? "").trim() : "",
+        supportedClubs: supportedClubsIdx !== -1 ? String(row[supportedClubsIdx] ?? "").trim() : "",
         roles: rolesIdx !== -1 ? String(row[rolesIdx] ?? "").trim() : "",
         location: locationIdx !== -1 ? String(row[locationIdx] ?? "").trim() : "",
         currentWork,
