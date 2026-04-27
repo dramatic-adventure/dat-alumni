@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import AlumniTagSections from "@/components/alumni/AlumniTagSections";
 import useIsMobile from "@/hooks/useIsMobile";
 import {
@@ -57,12 +58,12 @@ export default function BioIdentitySection({
     }
   }
 
-  // Resolve supportedClubs slugs → name + country
+  // Resolve supportedClubs slugs → name + country + slug (for linking)
   const clubSlugs = parseCommaList(supportedClubs);
   const clubSlugSet = new Set(clubSlugs);
   const resolvedClubs = dramaClubs
     .filter((c) => clubSlugSet.has(c.slug))
-    .map((c) => `${c.name} — ${c.country}`);
+    .map((c) => ({ slug: c.slug, label: `${c.name} — ${c.country}` }));
 
   const hasImpact = resolvedCauses.length > 0 || resolvedClubs.length > 0;
 
@@ -241,13 +242,13 @@ export default function BioIdentitySection({
                     <p
                       style={{
                         fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                        fontSize: "0.72rem",
+                        fontSize: "0.78rem",
                         textTransform: "uppercase" as const,
-                        letterSpacing: "0.16rem",
-                        fontWeight: 700,
+                        letterSpacing: "0.2rem",
+                        fontWeight: 600,
                         color: "#241123",
-                        opacity: 0.6,
-                        margin: "0 0 0.6rem 0",
+                        opacity: 0.75,
+                        margin: "0 0 0.5rem 0",
                       }}
                     >
                       Causes I Stand For
@@ -260,9 +261,11 @@ export default function BioIdentitySection({
                             display: "inline-block",
                             padding: "3px 10px",
                             borderRadius: 999,
-                            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                            fontSize: "0.78rem",
-                            fontWeight: 500,
+                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                            fontSize: "0.72rem",
+                            fontWeight: 600,
+                            textTransform: "uppercase" as const,
+                            letterSpacing: "0.12rem",
                             color: "#241123",
                             background: "rgba(36,17,35,0.10)",
                             border: "1px solid rgba(36,17,35,0.15)",
@@ -279,29 +282,34 @@ export default function BioIdentitySection({
                     <p
                       style={{
                         fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                        fontSize: "0.72rem",
+                        fontSize: "0.78rem",
                         textTransform: "uppercase" as const,
-                        letterSpacing: "0.16rem",
-                        fontWeight: 700,
+                        letterSpacing: "0.2rem",
+                        fontWeight: 600,
                         color: "#241123",
-                        opacity: 0.6,
-                        margin: "0 0 0.6rem 0",
+                        opacity: 0.75,
+                        margin: "0 0 0.5rem 0",
                       }}
                     >
                       Drama Clubs I Support
                     </p>
-                    <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: "0.3rem" }}>
-                      {resolvedClubs.map((label) => (
-                        <li
-                          key={label}
-                          style={{
-                            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                            fontSize: "0.84rem",
-                            fontWeight: 400,
-                            color: "#241123d4",
-                          }}
-                        >
-                          {label}
+                    <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: "0.35rem" }}>
+                      {resolvedClubs.map((club) => (
+                        <li key={club.slug}>
+                          <Link
+                            href={`/drama-club/${club.slug}`}
+                            style={{
+                              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                              fontSize: "0.84rem",
+                              fontWeight: 400,
+                              color: "#241123d4",
+                              textDecoration: "none",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = "#6c00af"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = "#241123d4"; }}
+                          >
+                            {club.label}
+                          </Link>
                         </li>
                       ))}
                     </ul>

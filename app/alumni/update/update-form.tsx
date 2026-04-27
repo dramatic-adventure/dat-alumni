@@ -286,6 +286,8 @@ const lookupUrl = useMemo(() => {
     identityTags: "",
     practiceTags: "",
     exploreCareTags: "",
+    impactCauses: "",
+    supportedClubs: "",
     languages: "",
     currentTitle: "",
     currentWork: "",
