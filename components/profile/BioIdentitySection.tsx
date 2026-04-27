@@ -14,6 +14,7 @@ interface BioIdentitySectionProps {
   identityTags?: string[];
   practiceTags?: string[];
   exploreCareTags?: string[];
+  languages?: string;
   artistStatement?: string;
   directlyBelowHero?: boolean;
   impactCauses?: string;
@@ -32,6 +33,7 @@ export default function BioIdentitySection({
   identityTags = [],
   practiceTags = [],
   exploreCareTags = [],
+  languages,
   artistStatement,
   directlyBelowHero = false,
   impactCauses,
@@ -40,10 +42,13 @@ export default function BioIdentitySection({
   const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
 
+  const languageList = parseCommaList(languages);
+
   const hasAnyTags =
     identityTags.length > 0 ||
     practiceTags.length > 0 ||
-    exploreCareTags.length > 0;
+    exploreCareTags.length > 0 ||
+    languageList.length > 0;
   const bio = artistStatement?.trim() ?? "";
 
   // Resolve impactCauses IDs → labels
@@ -234,6 +239,46 @@ export default function BioIdentitySection({
                 exploreCareTags={exploreCareTags}
                 align="start"
               />
+            )}
+            {languageList.length > 0 && (
+              <div style={{ marginTop: (identityTags.length > 0 || practiceTags.length > 0 || exploreCareTags.length > 0) ? "1.25rem" : 0 }}>
+                <p
+                  style={{
+                    fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                    fontSize: "0.78rem",
+                    textTransform: "uppercase" as const,
+                    letterSpacing: "0.2rem",
+                    fontWeight: 600,
+                    color: "#241123",
+                    opacity: 0.75,
+                    margin: "0 0 0.5rem 0",
+                  }}
+                >
+                  Languages
+                </p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
+                  {languageList.map((lang) => (
+                    <span
+                      key={lang}
+                      style={{
+                        display: "inline-block",
+                        padding: "3px 10px",
+                        borderRadius: 999,
+                        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                        fontSize: "0.72rem",
+                        fontWeight: 600,
+                        textTransform: "uppercase" as const,
+                        letterSpacing: "0.12rem",
+                        color: "#241123",
+                        background: "rgba(36,17,35,0.10)",
+                        border: "1px solid rgba(36,17,35,0.15)",
+                      }}
+                    >
+                      {lang}
+                    </span>
+                  ))}
+                </div>
+              </div>
             )}
             {hasImpact && (
               <div style={{ marginTop: hasAnyTags ? "1.75rem" : 0 }}>

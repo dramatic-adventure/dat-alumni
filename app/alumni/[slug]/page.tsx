@@ -539,6 +539,9 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
           secondLocation: (normalizedAlumni as any).secondLocation || "",
           isBiCoastal: !!(normalizedAlumni as any).isBiCoastal,
           backgroundChoice: bgChoice,
+          impactCauses: (normalizedAlumni as any).impactCauses || "",
+          supportedClubs: (normalizedAlumni as any).supportedClubs || "",
+          languages: (normalizedAlumni as any).languages || "",
         }}
         allStories={storiesForThisAlum}
         slugAliases={Array.from(aliases)}

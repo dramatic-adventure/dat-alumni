@@ -296,6 +296,8 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
   const languagesIdx     = idxOf(header, ["languages"]);
   const practiceTagsIdx  = idxOf(header, ["practice tags", "practicetags"]);
   const exploreCareTagsIdx = idxOf(header, ["explore care tags", "explorecaretags", "explore_care_tags"]);
+  const impactCausesIdx  = idxOf(header, ["impactcauses", "impact causes", "impactCauses"]);
+  const supportedClubsIdx = idxOf(header, ["supportedclubs", "supported clubs", "supportedClubs"]);
 
   // Visibility toggles
   const showWebsiteIdx = idxOf(header, ["showwebsite", "showWebsite", "show website"]);
@@ -410,6 +412,8 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
       practiceTags: cell(r, practiceTagsIdx),
       "explore care tags": cell(r, exploreCareTagsIdx),
       exploreCareTags: cell(r, exploreCareTagsIdx),
+      impactCauses: cell(r, impactCausesIdx),
+      supportedClubs: cell(r, supportedClubsIdx),
 
       // Visibility toggles
       showWebsite: cell(r, showWebsiteIdx),

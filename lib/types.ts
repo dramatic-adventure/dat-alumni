@@ -126,6 +126,13 @@ export interface AlumniRow {
 
   // Featured link computed from primarySocial + individual platform value
   featuredLink?: { url: string; label: string };
+
+  // Impact panel
+  impactCauses?: string;
+  supportedClubs?: string;
+
+  // Identity extras
+  languages?: string;
 }
 
 // ========== Updates ==========

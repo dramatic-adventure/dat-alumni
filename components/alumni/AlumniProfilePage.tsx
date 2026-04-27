@@ -122,6 +122,7 @@ export default function AlumniProfilePage({
 
   const impactCauses = cleanStr(d.impactCauses) ?? "";
   const supportedClubs = cleanStr(d.supportedClubs) ?? "";
+  const languages = cleanStr(d.languages) ?? "";
 
   // ✅ Bio / artist statement: accept multiple worlds
   const artistStatement =
@@ -308,6 +309,7 @@ alumniId={alumniId || undefined}
                 artistStatement={artistStatement}
                 impactCauses={impactCauses || undefined}
                 supportedClubs={supportedClubs || undefined}
+                languages={languages || undefined}
                 stories={authorStories}
                 publicEmail={publicEmail}
                 website={website}

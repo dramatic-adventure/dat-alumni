@@ -1129,6 +1129,8 @@ useEffect(() => {
         practiceTags: String(j?.practiceTags || p.practiceTags || ""),
         exploreCareTags: String(j?.exploreCareTags || p.exploreCareTags || ""),
         languages: String(j?.languages || p.languages || ""),
+        impactCauses: String(j?.impactCauses || p.impactCauses || ""),
+        supportedClubs: String(j?.supportedClubs || p.supportedClubs || ""),
         currentTitle: String(j?.currentTitle || p.currentTitle || ""),
         currentWork: String(j?.currentWork || p.currentWork || ""),
 
@@ -1574,6 +1576,8 @@ async function rehydrate() {
         practiceTags: String(j?.practiceTags || p.practiceTags || ""),
         exploreCareTags: String(j?.exploreCareTags || p.exploreCareTags || ""),
         languages: String(j?.languages || p.languages || ""),
+        impactCauses: String(j?.impactCauses || p.impactCauses || ""),
+        supportedClubs: String(j?.supportedClubs || p.supportedClubs || ""),
         currentTitle: String(j?.currentTitle || p.currentTitle || ""),
         currentWork: String(j?.currentWork || p.currentWork || ""),
 

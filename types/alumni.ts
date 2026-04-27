@@ -19,7 +19,7 @@ export interface AlumniItem {
   bio?: string;
 
   /** ✅ NEW: languages spoken (public-facing) */
-  languages?: string[];
+  languages?: string | string[];
 
   /** ✅ NEW: seasons participated in (public-facing) */
   seasons?: number[];

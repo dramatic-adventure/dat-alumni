@@ -26,7 +26,7 @@ interface AlumniItem {
   seasons?: string[];
   statusFlags?: string[];
   identityTags?: string[];
-  languages?: string[];
+  languages?: string | string[];
   updatedRecently?: boolean;
   updatedAt?: number;
   headshotUrl?: string;

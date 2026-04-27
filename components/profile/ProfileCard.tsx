@@ -307,6 +307,7 @@ interface ProfileCardProps {
   upcomingEvent?: ComingUpEvent;
   impactCauses?: string;
   supportedClubs?: string;
+  languages?: string;
 }
 
 const scaleCache = new Map<string, { first: number; last: number }>();
@@ -717,6 +718,7 @@ const hasStories = storiesForFeatured.length > 0;
         identityTags={identityTags}
         practiceTags={practiceTags}
         exploreCareTags={exploreCareTags}
+        languages={props.languages}
         artistStatement={artistStatement}
         directlyBelowHero={!props.upcomingEvent}
         impactCauses={props.impactCauses}
