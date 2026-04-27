@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 
-import ArtistBio from "./ArtistBio";
+import BioIdentitySection from "./BioIdentitySection";
 import ProgramStamps from "@/components/alumni/ProgramStamps";
 import Lightbox from "@/components/shared/Lightbox";
 
@@ -412,11 +412,7 @@ export default function ProfileCard(props: ProfileCardProps) {
     }
   }, [name, hasMeasured]);
 
-  const hasArtistBio =
-    !!artistStatement?.trim() ||
-    identityTags.length > 0 ||
-    practiceTags.length > 0 ||
-    exploreCareTags.length > 0;
+
 
   // ✅ Alias-aware normalized slug set (must be defined BEFORE any story filtering)
   const aliasNormSet = useMemo(() => {
@@ -715,40 +711,13 @@ const hasStories = storiesForFeatured.length > 0;
 
       <ComingUpEventStrip upcomingEvent={props.upcomingEvent} />
 
-      {(hasArtistBio || hasSpotlight || hasHighlight) && (
-        <div style={{ backgroundColor: "#2493A9", paddingTop: hasArtistBio ? "3rem" : "2rem", paddingBottom: "2.5rem" }}>
-          {hasArtistBio && (
-            <ArtistBio
-              identityTags={identityTags}
-              practiceTags={practiceTags}
-              exploreCareTags={exploreCareTags}
-              artistStatement={artistStatement}
-              fontFamily="var(--font-dm-sans), system-ui, sans-serif"
-              fontSize="1.15rem"
-              color="#0C2D37"
-              fontStyle="normal"
-              fontWeight={400}
-              letterSpacing="normal"
-              identityTagStyle={{
-                marginTop: "0rem",
-                marginBottom: "2.5rem",
-                marginLeft: isMobile ? "30px" : "310px",
-                marginRight: "30px",
-              }}
-              bioStyle={{
-                marginLeft: "30px",
-                marginRight: "30px",
-                marginTop: "1rem",
-                marginBottom: "3rem",
-                maxWidth: "calc(100% - 60px)",
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-                overflowWrap: "anywhere",
-              }}
-            />
-          )}
-        </div>
-      )}
+      <BioIdentitySection
+        identityTags={identityTags}
+        practiceTags={practiceTags}
+        exploreCareTags={exploreCareTags}
+        artistStatement={artistStatement}
+        directlyBelowHero={!props.upcomingEvent}
+      />
 
       {(hasSpotlight || hasHighlight) && (
         <div style={{ margin: "2rem 30px 2.5rem 30px" }}>
