@@ -9,6 +9,7 @@ import {
   CAUSE_SUBCATEGORIES_BY_CATEGORY,
 } from "@/lib/causes";
 import { dramaClubs } from "@/lib/dramaClubMap";
+import { parseLanguages } from "@/lib/languages";
 
 interface BioIdentitySectionProps {
   identityTags?: string[];
@@ -42,7 +43,7 @@ export default function BioIdentitySection({
   const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
 
-  const languageList = parseCommaList(languages);
+  const languageList = parseLanguages(languages);
 
   const hasAnyTags =
     identityTags.length > 0 ||
@@ -51,14 +52,14 @@ export default function BioIdentitySection({
     languageList.length > 0;
   const bio = artistStatement?.trim() ?? "";
 
-  // Resolve impactCauses IDs → labels
+  // Resolve impactCauses IDs → { id, label } for linking to /cause/[id]
   const causeIds = parseCommaList(impactCauses);
-  const resolvedCauses: string[] = [];
+  const resolvedCauses: { id: string; label: string }[] = [];
   for (const cat of CAUSE_CATEGORIES) {
     const subs = CAUSE_SUBCATEGORIES_BY_CATEGORY[cat.id] ?? [];
     for (const sub of subs) {
       if (causeIds.includes(sub.id)) {
-        resolvedCauses.push(sub.shortLabel ?? sub.label);
+        resolvedCauses.push({ id: sub.id, label: sub.shortLabel ?? sub.label });
       }
     }
   }
@@ -258,8 +259,9 @@ export default function BioIdentitySection({
                 </p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
                   {languageList.map((lang) => (
-                    <span
-                      key={lang}
+                    <Link
+                      key={lang.slug + (lang.level ?? "")}
+                      href={`/languages/${lang.slug}`}
                       style={{
                         display: "inline-block",
                         padding: "3px 10px",
@@ -272,10 +274,13 @@ export default function BioIdentitySection({
                         color: "#241123",
                         background: "rgba(36,17,35,0.10)",
                         border: "1px solid rgba(36,17,35,0.15)",
+                        textDecoration: "none",
                       }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(36,17,35,0.20)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(36,17,35,0.10)"; }}
                     >
-                      {lang}
-                    </span>
+                      {lang.name}{lang.level ? ` (${lang.level})` : ""}
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -299,9 +304,10 @@ export default function BioIdentitySection({
                       Causes I Stand For
                     </p>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-                      {resolvedCauses.map((label) => (
-                        <span
-                          key={label}
+                      {resolvedCauses.map(({ id, label }) => (
+                        <Link
+                          key={id}
+                          href={`/cause/${id}`}
                           style={{
                             display: "inline-block",
                             padding: "3px 10px",
@@ -314,10 +320,13 @@ export default function BioIdentitySection({
                             color: "#241123",
                             background: "rgba(36,17,35,0.10)",
                             border: "1px solid rgba(36,17,35,0.15)",
+                            textDecoration: "none",
                           }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(36,17,35,0.20)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(36,17,35,0.10)"; }}
                         >
                           {label}
-                        </span>
+                        </Link>
                       ))}
                     </div>
                   </div>
