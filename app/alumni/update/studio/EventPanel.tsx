@@ -75,6 +75,13 @@ export default function EventPanel(props: {
 
   const [mediaPreviewUrl, setMediaPreviewUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imageSource, setImageSource] = useState<"upload" | "url">(() => {
+    const sid = String(profile?.featuredEventId || "").trim();
+    const mu  = String(profile?.upcomingEventMediaUrl || "").trim();
+    if (sid) return "upload";
+    if (mu)  return "url";
+    return "upload";
+  });
 
   useEffect(() => {
     if (!eventFile) { setMediaPreviewUrl(""); return; }
@@ -125,6 +132,8 @@ export default function EventPanel(props: {
   function handleFileSelect(files: FileList | null) {
     if (!files?.length) return;
     onEventFileChange?.(files[0]);
+    setImageSource("upload");
+    setProfile((p: any) => ({ ...p, upcomingEventMediaUrl: "" }));
   }
 
   function clearMedia() {
@@ -263,98 +272,127 @@ export default function EventPanel(props: {
           </div>
         </div>
 
-        {/* Paste URL */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 }}>
-          <label style={mediaSubLabel}>Paste URL</label>
-          <input
-            type="url"
-            value={mediaUrl}
-            onChange={(e) => setProfile((p: any) => ({ ...p, upcomingEventMediaUrl: e.target.value }))}
-            placeholder={mediaType === "video" ? "https://…  (mp4, mov, or streaming URL)" : "https://…  (jpg, png, webp, gif)"}
-            style={inputStyle}
-          />
-        </div>
-
-        {/* Upload file */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 14 }}>
-          <span style={mediaSubLabel}>Or upload a file</span>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime"
-            style={{ display: "none" }}
-            onChange={(e) => handleFileSelect(e.target.files)}
-          />
-
-          {/* Staged file preview */}
-          {hasStagedFile && mediaPreviewUrl && (
-            <div style={{ marginBottom: 8, position: "relative", display: "inline-block" }}>
-              {eventFile?.type.startsWith("video/") ? (
-                <video
-                  src={mediaPreviewUrl}
-                  style={{ height: 80, borderRadius: 6, display: "block", background: "#000" }}
-                  muted
-                  playsInline
-                />
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={mediaPreviewUrl}
-                  alt=""
-                  style={{ height: 80, borderRadius: 6, display: "block", objectFit: "cover" }}
-                />
-              )}
-              <div style={{ fontSize: 11, opacity: 0.6, marginTop: 3, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {eventFile?.name}
+        {/* Image mode: mutually exclusive source choice */}
+        {mediaType !== "video" && (
+          <>
+            {/* Source toggle */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 14 }}>
+              <span style={mediaSubLabel}>Source</span>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageSource("upload");
+                    setProfile((p: any) => ({ ...p, upcomingEventMediaUrl: "" }));
+                  }}
+                  style={imageSource === "upload" ? mediaTypeBtnActive : mediaTypeBtn}
+                >
+                  Upload image
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageSource("url");
+                    onEventFileChange?.(null);
+                    setProfile((p: any) => ({ ...p, featuredEventId: "" }));
+                  }}
+                  style={imageSource === "url" ? mediaTypeBtnActive : mediaTypeBtn}
+                >
+                  Paste URL
+                </button>
               </div>
             </div>
-          )}
 
-          {/* Stored media preview (when nothing staged) */}
-          {!hasStagedFile && storedThumbUrl && (
-            <div style={{ marginBottom: 8 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={storedThumbUrl}
-                alt=""
-                style={{ height: 80, borderRadius: 6, display: "block", objectFit: "cover" }}
-              />
-              <div style={{ fontSize: 11, opacity: 0.5, marginTop: 3 }}>Current uploaded file</div>
-            </div>
-          )}
+            {/* Upload panel */}
+            {imageSource === "upload" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 14 }}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  style={{ display: "none" }}
+                  onChange={(e) => handleFileSelect(e.target.files)}
+                />
 
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              style={fileActionBtn}
-            >
-              {hasStagedFile ? "Change file" : "Choose file"}
-            </button>
+                {hasStagedFile && mediaPreviewUrl && (
+                  <div style={{ marginBottom: 8, position: "relative", display: "inline-block" }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={mediaPreviewUrl}
+                      alt=""
+                      style={{ height: 80, borderRadius: 6, display: "block", objectFit: "cover" }}
+                    />
+                    <div style={{ fontSize: 11, opacity: 0.6, marginTop: 3, maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {eventFile?.name}
+                    </div>
+                  </div>
+                )}
 
-            {(hasStagedFile || hasStoredMedia) && (
-              <button type="button" onClick={clearMedia} style={removeBtn}>
-                Remove media
-              </button>
+                {!hasStagedFile && storedThumbUrl && (
+                  <div style={{ marginBottom: 8 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={storedThumbUrl}
+                      alt=""
+                      style={{ height: 80, borderRadius: 6, display: "block", objectFit: "cover" }}
+                    />
+                    <div style={{ fontSize: 11, opacity: 0.5, marginTop: 3 }}>Current uploaded image</div>
+                  </div>
+                )}
+
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    style={fileActionBtn}
+                  >
+                    {hasStagedFile ? "Change image" : "Choose image"}
+                  </button>
+
+                  {(hasStagedFile || storedFileId) && (
+                    <button type="button" onClick={clearMedia} style={removeBtn}>
+                      Remove image
+                    </button>
+                  )}
+                </div>
+              </div>
             )}
-          </div>
-        </div>
 
-        {/* Alt text */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 4 }}>
-          <label style={mediaSubLabel}>
-            Alt text / caption{" "}
-            <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span>
-          </label>
-          <input
-            type="text"
-            value={mediaAlt}
-            onChange={(e) => setProfile((p: any) => ({ ...p, upcomingEventMediaAlt: e.target.value }))}
-            placeholder="Brief description of the image or video"
-            maxLength={200}
-            style={inputStyle}
-          />
-        </div>
+            {/* URL panel */}
+            {imageSource === "url" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 }}>
+                <label style={mediaSubLabel}>Image URL</label>
+                <input
+                  type="url"
+                  value={mediaUrl}
+                  onChange={(e) => {
+                    onEventFileChange?.(null);
+                    setProfile((p: any) => ({ ...p, upcomingEventMediaUrl: e.target.value, featuredEventId: "" }));
+                  }}
+                  placeholder="https://… (jpg, png, webp, gif)"
+                  style={inputStyle}
+                />
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Video mode: URL only */}
+        {mediaType === "video" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 }}>
+            <label style={mediaSubLabel}>Video URL</label>
+            <input
+              type="url"
+              value={mediaUrl}
+              onChange={(e) => setProfile((p: any) => ({ ...p, upcomingEventMediaUrl: e.target.value }))}
+              placeholder="https://… (YouTube, Vimeo, MP4, or WebM)"
+              style={inputStyle}
+            />
+            <p style={{ margin: "4px 0 0", fontSize: 11.5, opacity: 0.5, lineHeight: 1.4 }}>
+              For video, paste a YouTube, Vimeo, MP4, or WebM link.
+            </p>
+          </div>
+        )}
 
         {/* Video autoplay toggle */}
         {mediaType === "video" && (
@@ -478,14 +516,24 @@ export default function EventPanel(props: {
           }}
           className="dat-btn"
           disabled={loading}
-          onClick={() =>
+          onClick={() => {
+            // Blank the inactive source at save time so stale values never persist.
+            let profileOverride: any;
+            if (mediaType !== "video") {
+              if (imageSource === "upload") {
+                profileOverride = { ...profile, upcomingEventMediaUrl: "" };
+              } else {
+                profileOverride = { ...profile, featuredEventId: "" };
+              }
+            }
             saveCategory({
               tag: "Event",
               fieldKeys: [...eventFieldKeys, ...EVENT_MEDIA_KEYS],
               uploadKinds: ["event"],
               afterSave: () => onSaved?.(),
-            })
-          }
+              ...(profileOverride ? { profileOverride } : {}),
+            });
+          }}
         >
           {savedRecently ? "Saved ✓" : "Save Event"}
         </button>

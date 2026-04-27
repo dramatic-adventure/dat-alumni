@@ -46,9 +46,14 @@ function isSafeExternalUrl(url: string): boolean {
 }
 
 function deriveMediaSrc(ev: ComingUpEvent): string | null {
-  if (ev.mediaFileId) return `/api/media/thumb/${encodeURIComponent(ev.mediaFileId)}`;
+  if (ev.mediaFileId) return `/api/media/thumb/${encodeURIComponent(ev.mediaFileId)}?w=1600`;
   if (ev.mediaUrl && isSafeExternalUrl(ev.mediaUrl)) return ev.mediaUrl;
   return null;
+}
+
+function generateAlt(title?: string): string {
+  const t = title?.trim();
+  return t ? `Event media for ${t}` : "Coming Up event media";
 }
 
 // Only true (boolean) or "true" (string) enables autoplay — guards against "false", "FALSE", "0", etc.
@@ -190,7 +195,7 @@ export default function ComingUpEventStrip({ upcomingEvent }: Props) {
               resolvedVideo?.kind === "embed" ? (
                 <iframe
                   src={buildEmbedUrl(resolvedVideo.embedUrl, resolvedVideo.provider, isAutoplay(upcomingEvent.videoAutoplay))}
-                  title={upcomingEvent.mediaAlt || upcomingEvent.title || "Video"}
+                  title={upcomingEvent.title ? `Event media for ${upcomingEvent.title}` : "Coming Up video"}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                   loading="lazy"
@@ -224,7 +229,7 @@ export default function ComingUpEventStrip({ upcomingEvent }: Props) {
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={mediaSrc!}
-                alt={upcomingEvent.mediaAlt || ""}
+                alt={generateAlt(upcomingEvent.title)}
                 onError={() => setMediaError(true)}
                 referrerPolicy={isExternalSrc ? "no-referrer" : undefined}
                 style={{
