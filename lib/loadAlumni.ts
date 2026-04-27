@@ -298,6 +298,8 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
   const exploreCareTagsIdx = idxOf(header, ["explore care tags", "explorecaretags", "explore_care_tags"]);
   const impactCausesIdx  = idxOf(header, ["impactcauses", "impact causes", "impactCauses"]);
   const supportedClubsIdx = idxOf(header, ["supportedclubs", "supported clubs", "supportedClubs"]);
+  const featuredSupportedClubIdx = idxOf(header, ["featuredsupportedclub", "featured supported club", "featuredSupportedClub"]);
+  const featuredImpactCauseIdx   = idxOf(header, ["featuredimpactcause", "featured impact cause", "featuredImpactCause"]);
 
   // Visibility toggles
   const showWebsiteIdx = idxOf(header, ["showwebsite", "showWebsite", "show website"]);
@@ -414,6 +416,8 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
       exploreCareTags: cell(r, exploreCareTagsIdx),
       impactCauses: cell(r, impactCausesIdx),
       supportedClubs: cell(r, supportedClubsIdx),
+      featuredSupportedClub: cell(r, featuredSupportedClubIdx),
+      featuredImpactCause: cell(r, featuredImpactCauseIdx),
 
       // Visibility toggles
       showWebsite: cell(r, showWebsiteIdx),

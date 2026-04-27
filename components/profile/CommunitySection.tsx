@@ -1,8 +1,10 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { CAUSE_CATEGORIES, CAUSE_SUBCATEGORIES_BY_CATEGORY } from "@/lib/causes";
 import { dramaClubs } from "@/lib/dramaClubMap";
+import DramaClubBadge from "@/components/ui/DramaClubBadge";
 import useIsMobile from "@/hooks/useIsMobile";
 
 interface CommunitySectionProps {
@@ -135,9 +137,11 @@ export default function CommunitySection({
                 <Link
                   href={`/drama-club/${featuredClub.slug}`}
                   style={{
-                    display: "block",
-                    padding: "1.25rem 1.5rem",
-                    borderRadius: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "1.1rem",
+                    padding: "1.1rem 1.25rem",
+                    borderRadius: "14px",
                     background: "rgba(36,147,169,0.06)",
                     border: "1px solid rgba(36,147,169,0.22)",
                     textDecoration: "none",
@@ -153,42 +157,54 @@ export default function CommunitySection({
                     e.currentTarget.style.borderColor = "rgba(36,147,169,0.22)";
                   }}
                 >
-                  <p
-                    style={{
-                      fontFamily: FF_GROTESK,
-                      fontSize: "0.65rem",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.18rem",
-                      fontWeight: 600,
-                      color: "#2493A9",
-                      margin: "0 0 0.45rem 0",
-                    }}
-                  >
-                    Featured Drama Club
-                  </p>
-                  <p
-                    style={{
-                      fontFamily: FF_GROTESK,
-                      fontSize: "1.25rem",
-                      fontWeight: 600,
-                      color: INK,
-                      margin: "0 0 0.3rem 0",
-                      lineHeight: 1.25,
-                    }}
-                  >
-                    {featuredClub.name}
-                  </p>
-                  <p
-                    style={{
-                      fontFamily: FF_SANS,
-                      fontSize: "0.82rem",
-                      color: INK,
-                      opacity: 0.5,
-                      margin: 0,
-                    }}
-                  >
-                    {featuredClub.location ?? featuredClub.country}
-                  </p>
+                  <DramaClubBadge
+                    name={featuredClub.name}
+                    location={featuredClub.location ?? featuredClub.country}
+                    size={72}
+                    wrappedByParentLink
+                  />
+                  <div style={{ minWidth: 0 }}>
+                    <p
+                      style={{
+                        fontFamily: FF_GROTESK,
+                        fontSize: "0.65rem",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.18rem",
+                        fontWeight: 600,
+                        color: "#2493A9",
+                        margin: "0 0 0.35rem 0",
+                      }}
+                    >
+                      Featured Drama Club
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: FF_GROTESK,
+                        fontSize: "1.1rem",
+                        fontWeight: 600,
+                        color: INK,
+                        margin: "0 0 0.2rem 0",
+                        lineHeight: 1.2,
+                        overflow: "hidden",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                      } as React.CSSProperties}
+                    >
+                      {featuredClub.name}
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: FF_SANS,
+                        fontSize: "0.78rem",
+                        color: INK,
+                        opacity: 0.5,
+                        margin: 0,
+                      }}
+                    >
+                      {featuredClub.location ?? featuredClub.country}
+                    </p>
+                  </div>
                 </Link>
               )}
 
