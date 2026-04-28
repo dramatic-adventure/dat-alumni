@@ -21,6 +21,8 @@ type ImpactPanelProps = {
   }) => void;
   loading: boolean;
   MODULES: Record<string, { fieldKeys: string[]; uploadKinds: UploadKind[] }>;
+  subheadChipStyle: CSSProperties;
+  explainStyleLocal: CSSProperties;
   savedRecently?: boolean;
   onSaved?: () => void;
 };
@@ -37,25 +39,23 @@ function joinCommaList(values: string[]): string {
   return values.join(", ");
 }
 
-/* ---- Shared dark-glass style tokens ---- */
+/* ---- Style tokens ---- */
 
 const FF_SANS =
   'var(--font-dm-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-const FF_GROTESK =
-  "var(--font-space-grotesk), system-ui, sans-serif";
+const FF_GROTESK = "var(--font-space-grotesk), system-ui, sans-serif";
 
 const TEAL = "#2493A9";
 const SNOW = "#F2F2F2";
 const INK = "#241123";
 
-const sectionHeadStyle: CSSProperties = {
+const subSectionLabelStyle: CSSProperties = {
   fontFamily: FF_GROTESK,
   fontSize: 11,
   fontWeight: 800,
   letterSpacing: "0.14em",
   textTransform: "uppercase",
   color: SNOW,
-  opacity: 0.9,
   margin: "0 0 12px 0",
 };
 
@@ -64,8 +64,8 @@ const categoryRowStyle: CSSProperties = {
   alignItems: "center",
   justifyContent: "space-between",
   padding: "10px 12px",
-  background: "rgba(255,255,255,0.05)",
-  border: "1px solid rgba(255,255,255,0.10)",
+  background: "rgba(255,255,255,0.08)",
+  border: "1px solid rgba(255,255,255,0.14)",
   borderRadius: 10,
   cursor: "pointer",
   userSelect: "none",
@@ -76,7 +76,6 @@ const categoryLabelStyle: CSSProperties = {
   fontSize: 13,
   fontWeight: 700,
   color: SNOW,
-  opacity: 0.9,
 };
 
 const chipStyle = (selected: boolean): CSSProperties => ({
@@ -86,14 +85,12 @@ const chipStyle = (selected: boolean): CSSProperties => ({
   borderRadius: 999,
   fontFamily: FF_SANS,
   fontSize: 12,
-  fontWeight: selected ? 700 : 400,
+  fontWeight: selected ? 700 : 500,
   cursor: "pointer",
-  border: selected
-    ? `1px solid ${TEAL}`
-    : "1px solid rgba(255,255,255,0.18)",
-  background: selected ? TEAL : "rgba(255,255,255,0.05)",
-  color: selected ? SNOW : "rgba(242,242,242,0.75)",
-  transition: "background 140ms, border-color 140ms, color 140ms",
+  border: selected ? `1px solid ${TEAL}` : "1px solid rgba(255,255,255,0.25)",
+  background: selected ? TEAL : "rgba(255,255,255,0.07)",
+  color: SNOW,
+  transition: "background 140ms, border-color 140ms",
 });
 
 const clubRowStyle = (selected: boolean): CSSProperties => ({
@@ -103,47 +100,53 @@ const clubRowStyle = (selected: boolean): CSSProperties => ({
   padding: "8px 12px",
   borderRadius: 8,
   cursor: "pointer",
-  border: selected
-    ? `1px solid ${TEAL}`
-    : "1px solid rgba(255,255,255,0.10)",
-  background: selected ? "rgba(36,147,169,0.15)" : "rgba(255,255,255,0.04)",
+  border: selected ? `1px solid ${TEAL}` : "1px solid rgba(255,255,255,0.12)",
+  background: selected ? "rgba(36,147,169,0.18)" : "rgba(255,255,255,0.05)",
   marginBottom: 4,
 });
 
 const clubNameStyle: CSSProperties = {
   fontFamily: FF_SANS,
   fontSize: 13,
+  fontWeight: 500,
   color: SNOW,
-  opacity: 0.9,
 };
 
 const clubCountryStyle: CSSProperties = {
   fontFamily: FF_SANS,
   fontSize: 12,
   color: SNOW,
-  opacity: 0.5,
+  opacity: 0.55,
 };
 
-const searchInputStyle: CSSProperties = {
+/* Light input — matches the standard inputStyle used across all other panels */
+const lightInputStyle: CSSProperties = {
   width: "100%",
-  padding: "8px 12px",
-  borderRadius: 8,
-  background: "rgba(255,255,255,0.07)",
-  border: "1px solid rgba(255,255,255,0.15)",
-  color: SNOW,
+  borderRadius: 10,
+  padding: "10px 14px",
+  outline: "none",
+  border: "none",
+  background: "#f2f2f2",
+  color: INK,
   fontFamily: FF_SANS,
   fontSize: 13,
-  outline: "none",
-  marginBottom: 10,
   boxSizing: "border-box",
+  boxShadow: "0 6px 18px rgba(0,0,0,0.12)",
 };
+
+const featuredSelectStyle = (hasValue: boolean): CSSProperties => ({
+  ...lightInputStyle,
+  border: hasValue ? `2px solid ${TEAL}` : "2px solid transparent",
+  fontWeight: hasValue ? 600 : 400,
+  cursor: "pointer",
+});
 
 const dividerStyle: CSSProperties = {
   borderTop: "1px solid rgba(255,255,255,0.08)",
   margin: "22px 0",
 };
 
-const saveButtonStyle = (loading: boolean): CSSProperties => ({
+const saveButtonStyle = (isLoading: boolean): CSSProperties => ({
   borderRadius: 14,
   padding: "12px 20px",
   fontFamily: FF_GROTESK,
@@ -151,12 +154,12 @@ const saveButtonStyle = (loading: boolean): CSSProperties => ({
   fontSize: "0.85rem",
   textTransform: "uppercase" as const,
   letterSpacing: "0.18em",
-  background: loading ? "rgba(36,147,169,0.5)" : TEAL,
+  background: isLoading ? "rgba(36,147,169,0.5)" : TEAL,
   color: SNOW,
   border: "1px solid rgba(0,0,0,0.22)",
   boxShadow: "0 10px 26px rgba(0,0,0,0.18)",
-  cursor: loading ? "not-allowed" : "pointer",
-  opacity: loading ? 0.6 : 1,
+  cursor: isLoading ? "not-allowed" : "pointer",
+  opacity: isLoading ? 0.6 : 1,
 });
 
 export default function ImpactPanel({
@@ -165,6 +168,8 @@ export default function ImpactPanel({
   saveCategory,
   loading,
   MODULES,
+  subheadChipStyle,
+  explainStyleLocal,
   savedRecently,
   onSaved,
 }: ImpactPanelProps) {
@@ -252,12 +257,13 @@ export default function ImpactPanel({
   }, [selectedCauses]);
 
   function handleSave() {
-    // Clear stale featured values if their parent was deselected
     setProfile((prev: any) => {
       const clubs = new Set(parseCommaList(prev.supportedClubs));
       const causes = new Set(parseCommaList(prev.impactCauses));
-      const staleFeaturedClub = prev.featuredSupportedClub && !clubs.has(prev.featuredSupportedClub);
-      const staleFeaturedCause = prev.featuredImpactCause && !causes.has(prev.featuredImpactCause);
+      const staleFeaturedClub =
+        prev.featuredSupportedClub && !clubs.has(prev.featuredSupportedClub);
+      const staleFeaturedCause =
+        prev.featuredImpactCause && !causes.has(prev.featuredImpactCause);
       if (!staleFeaturedClub && !staleFeaturedCause) return prev;
       return {
         ...prev,
@@ -272,10 +278,24 @@ export default function ImpactPanel({
     });
   }
 
+  const hasCauseSelections = selectedCauses.size > 0;
+  const hasClubSelections = selectedClubs.size > 0;
+
   return (
     <div id="studio-impact-anchor">
+      {/* ── Panel header — matches other Profile Studio panels ── */}
+      <p style={explainStyleLocal}>
+        Share the causes you stand for and the drama clubs you support. Optionally
+        spotlight one of each at the top of your public community section.
+      </p>
+      <div style={{ marginBottom: 18 }}>
+        <span style={subheadChipStyle} className="subhead-chip">
+          Community Impact
+        </span>
+      </div>
+
       {/* ── Causes ── */}
-      <p style={sectionHeadStyle}>Causes I Stand For</p>
+      <p style={subSectionLabelStyle}>Causes I Stand For</p>
       <p style={{ ...studioExplainStyle, marginBottom: 14 }}>
         Select the causes that resonate with your work and values.
       </p>
@@ -328,7 +348,7 @@ export default function ImpactPanel({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   style={{
-                    opacity: 0.6,
+                    opacity: 0.7,
                     transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
                     transition: "transform 180ms",
                     flexShrink: 0,
@@ -368,7 +388,7 @@ export default function ImpactPanel({
       <div style={dividerStyle} />
 
       {/* ── Drama Clubs ── */}
-      <p style={sectionHeadStyle}>Drama Clubs I Support</p>
+      <p style={subSectionLabelStyle}>Drama Clubs I Support</p>
       <p style={{ ...studioExplainStyle, marginBottom: 14 }}>
         Select the DAT drama clubs you feel connected to.
       </p>
@@ -378,7 +398,7 @@ export default function ImpactPanel({
         placeholder="Search clubs…"
         value={clubSearch}
         onChange={(e) => setClubSearch(e.target.value)}
-        style={searchInputStyle}
+        style={{ ...lightInputStyle, marginBottom: 10 }}
         aria-label="Search drama clubs"
       />
 
@@ -411,104 +431,125 @@ export default function ImpactPanel({
         )}
       </div>
 
-      {/* ── Featured Highlights ── */}
-      {(featuredCauseOptions.length > 0 || featuredClubOptions.length > 0) && (
-        <>
-          <div style={dividerStyle} />
-          <p style={sectionHeadStyle}>Feature on Your Profile</p>
-          <p style={{ ...studioExplainStyle, marginBottom: 14 }}>
-            Spotlight one cause and one drama club at the top of your community section.
+      {/* ── Featured Highlights — always visible ── */}
+      <div style={dividerStyle} />
+      <p style={subSectionLabelStyle}>Feature on Your Profile</p>
+      <p style={{ ...studioExplainStyle, marginBottom: 18 }}>
+        Spotlight one cause and one drama club at the top of your community
+        section. Make selections above first.
+      </p>
+
+      {/* Featured Cause */}
+      <div style={{ marginBottom: 18 }}>
+        <p
+          style={{
+            fontFamily: FF_GROTESK,
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase" as const,
+            color: SNOW,
+            margin: "0 0 8px 0",
+          }}
+        >
+          Featured Cause
+        </p>
+        {hasCauseSelections ? (
+          <>
+            <select
+              value={profile.featuredImpactCause ?? ""}
+              onChange={(e) =>
+                setProfile((prev: any) => ({
+                  ...prev,
+                  featuredImpactCause: e.target.value,
+                }))
+              }
+              style={featuredSelectStyle(!!profile.featuredImpactCause)}
+            >
+              <option value="">— None selected —</option>
+              {featuredCauseOptions.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <p style={{ ...studioExplainStyle, marginTop: 6, marginBottom: 0, opacity: 0.65 }}>
+              {profile.featuredImpactCause
+                ? "This cause is highlighted at the top of your community section."
+                : "Choose one cause to feature prominently on your profile."}
+            </p>
+          </>
+        ) : (
+          <p
+            style={{
+              fontFamily: FF_SANS,
+              fontSize: 13,
+              color: SNOW,
+              opacity: 0.45,
+              fontStyle: "italic",
+              margin: 0,
+            }}
+          >
+            Select at least one cause above to enable this.
           </p>
+        )}
+      </div>
 
-          {featuredCauseOptions.length > 0 && (
-            <div style={{ marginBottom: 12 }}>
-              <p
-                style={{
-                  fontFamily: FF_GROTESK,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase" as const,
-                  color: SNOW,
-                  opacity: 0.6,
-                  margin: "0 0 6px 0",
-                }}
-              >
-                Featured Cause
-              </p>
-              <select
-                value={profile.featuredImpactCause ?? ""}
-                onChange={(e) =>
-                  setProfile((prev: any) => ({ ...prev, featuredImpactCause: e.target.value }))
-                }
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  background: "rgba(255,255,255,0.07)",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  color: SNOW,
-                  fontFamily: FF_SANS,
-                  fontSize: 13,
-                  outline: "none",
-                  boxSizing: "border-box" as const,
-                }}
-              >
-                <option value="">— None —</option>
-                {featuredCauseOptions.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {featuredClubOptions.length > 0 && (
-            <div>
-              <p
-                style={{
-                  fontFamily: FF_GROTESK,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase" as const,
-                  color: SNOW,
-                  opacity: 0.6,
-                  margin: "0 0 6px 0",
-                }}
-              >
-                Featured Drama Club
-              </p>
-              <select
-                value={profile.featuredSupportedClub ?? ""}
-                onChange={(e) =>
-                  setProfile((prev: any) => ({ ...prev, featuredSupportedClub: e.target.value }))
-                }
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  background: "rgba(255,255,255,0.07)",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  color: SNOW,
-                  fontFamily: FF_SANS,
-                  fontSize: 13,
-                  outline: "none",
-                  boxSizing: "border-box" as const,
-                }}
-              >
-                <option value="">— None —</option>
-                {featuredClubOptions.map((c) => (
-                  <option key={c.slug} value={c.slug}>
-                    {c.name} — {c.country}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-        </>
-      )}
+      {/* Featured Drama Club */}
+      <div style={{ marginBottom: 4 }}>
+        <p
+          style={{
+            fontFamily: FF_GROTESK,
+            fontSize: 12,
+            fontWeight: 700,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase" as const,
+            color: SNOW,
+            margin: "0 0 8px 0",
+          }}
+        >
+          Featured Drama Club
+        </p>
+        {hasClubSelections ? (
+          <>
+            <select
+              value={profile.featuredSupportedClub ?? ""}
+              onChange={(e) =>
+                setProfile((prev: any) => ({
+                  ...prev,
+                  featuredSupportedClub: e.target.value,
+                }))
+              }
+              style={featuredSelectStyle(!!profile.featuredSupportedClub)}
+            >
+              <option value="">— None selected —</option>
+              {featuredClubOptions.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.name} — {c.country}
+                </option>
+              ))}
+            </select>
+            <p style={{ ...studioExplainStyle, marginTop: 6, marginBottom: 0, opacity: 0.65 }}>
+              {profile.featuredSupportedClub
+                ? "This club is highlighted at the top of your community section."
+                : "Choose one drama club to feature prominently on your profile."}
+            </p>
+          </>
+        ) : (
+          <p
+            style={{
+              fontFamily: FF_SANS,
+              fontSize: 13,
+              color: SNOW,
+              opacity: 0.45,
+              fontStyle: "italic",
+              margin: 0,
+            }}
+          >
+            Select at least one drama club above to enable this.
+          </p>
+        )}
+      </div>
 
       {/* ── Save ── */}
       <div style={footerRowStyle}>

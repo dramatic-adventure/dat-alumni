@@ -288,6 +288,8 @@ const lookupUrl = useMemo(() => {
     exploreCareTags: "",
     impactCauses: "",
     supportedClubs: "",
+    featuredImpactCause: "",
+    featuredSupportedClub: "",
     languages: "",
     currentTitle: "",
     currentWork: "",
@@ -1131,6 +1133,8 @@ useEffect(() => {
         languages: String(j?.languages || p.languages || ""),
         impactCauses: String(j?.impactCauses || p.impactCauses || ""),
         supportedClubs: String(j?.supportedClubs || p.supportedClubs || ""),
+        featuredImpactCause: String(j?.featuredImpactCause || p.featuredImpactCause || ""),
+        featuredSupportedClub: String(j?.featuredSupportedClub || p.featuredSupportedClub || ""),
         currentTitle: String(j?.currentTitle || p.currentTitle || ""),
         currentWork: String(j?.currentWork || p.currentWork || ""),
 
@@ -1578,6 +1582,8 @@ async function rehydrate() {
         languages: String(j?.languages || p.languages || ""),
         impactCauses: String(j?.impactCauses || p.impactCauses || ""),
         supportedClubs: String(j?.supportedClubs || p.supportedClubs || ""),
+        featuredImpactCause: String(j?.featuredImpactCause || p.featuredImpactCause || ""),
+        featuredSupportedClub: String(j?.featuredSupportedClub || p.featuredSupportedClub || ""),
         currentTitle: String(j?.currentTitle || p.currentTitle || ""),
         currentWork: String(j?.currentWork || p.currentWork || ""),
 
@@ -2172,7 +2178,7 @@ return (
 >
   <div
     style={{
-      background: "rgba(36, 17, 35, 0.22)",
+      background: "rgba(36, 17, 35, 0.32)",
       borderRadius: 16,
       padding: "16px 16px 18px",
       color: COLOR.snow,
@@ -2295,6 +2301,8 @@ return (
         loading={loading}
         MODULES={MODULES as any}
         saveCategory={saveCategory as any}
+        subheadChipStyle={subheadChipStyle}
+        explainStyleLocal={explainStyleLocal}
         savedRecently={impactSavedRecently}
         onSaved={() => {
           if (impactSavedTimeoutRef.current) clearTimeout(impactSavedTimeoutRef.current);
