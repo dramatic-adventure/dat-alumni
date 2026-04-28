@@ -726,13 +726,6 @@ const hasStories = storiesForFeatured.length > 0;
         directlyBelowHero={!props.upcomingEvent}
       />
 
-      <CommunitySection
-        supportedClubs={props.supportedClubs}
-        impactCauses={props.impactCauses}
-        featuredSupportedClub={props.featuredSupportedClub}
-        featuredImpactCause={props.featuredImpactCause}
-      />
-
       {(hasSpotlight || hasHighlight) && (
         <div style={{ margin: "2rem 30px 2.5rem 30px" }}>
           <ProfileShowcaseSection>
@@ -791,6 +784,13 @@ const hasStories = storiesForFeatured.length > 0;
 
       {/* ✅ Public media section — only renders when alumni has featured album/reel items */}
       <PublicMediaSection alumniId={alumniIdForMedia} />
+
+      <CommunitySection
+        supportedClubs={props.supportedClubs}
+        impactCauses={props.impactCauses}
+        featuredSupportedClub={props.featuredSupportedClub}
+        featuredImpactCause={props.featuredImpactCause}
+      />
 
       {featuredProductions.length > 0 && (
         <div className="bg-[#19657c] py-[30px] px-[30px]">

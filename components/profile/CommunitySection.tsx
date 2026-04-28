@@ -6,7 +6,6 @@ import Link from "next/link";
 import { CAUSE_CATEGORIES, CAUSE_SUBCATEGORIES_BY_CATEGORY } from "@/lib/causes";
 import { dramaClubs } from "@/lib/dramaClubMap";
 import type { DramaClub } from "@/lib/dramaClubMap";
-import { computeDramaClubStatus, type DramaClubStatus } from "@/lib/dramaClubStatus";
 import useIsMobile from "@/hooks/useIsMobile";
 
 interface CommunitySectionProps {
@@ -23,25 +22,15 @@ function parseCommaList(raw?: string | null): string[] {
 
 const FF_GROTESK = "var(--font-space-grotesk), system-ui, sans-serif";
 const FF_SANS = "var(--font-dm-sans), system-ui, sans-serif";
-const INK = "#241123";
 const FALLBACK_IMAGE = "/images/drama-clubs/club-fallback.jpg";
 
-const CHIP_STYLES: Record<DramaClubStatus, { bg: string; text: string; border: string }> = {
-  new: { bg: "rgba(242, 51, 89, 0.15)", text: "#F23359", border: "rgba(242, 51, 89, 0.55)" },
-  ongoing: { bg: "rgba(255, 204, 0, 0.18)", text: "#8A6400", border: "#8A6400" },
-  legacy: { bg: "rgba(108, 0, 175, 0.22)", text: "#3B1D59", border: "rgba(108, 0, 175, 0.7)" },
-};
-
-const STATUS_LABEL: Record<DramaClubStatus, string> = {
-  new: "NEW",
-  ongoing: "ONGOING",
-  legacy: "LEGACY",
-};
+// Matches the Featured DAT Work section background
+const SECTION_BG = "#19657c";
 
 function resolveCauseAnywhere(id: string) {
   for (const cat of CAUSE_CATEGORIES) {
     const sub = (CAUSE_SUBCATEGORIES_BY_CATEGORY[cat.id] ?? []).find((s) => s.id === id);
-    if (sub) return { id: sub.id, label: sub.shortLabel ?? sub.label };
+    if (sub) return { id: sub.id, label: sub.shortLabel ?? sub.label, description: sub.description };
   }
   return undefined;
 }
@@ -68,8 +57,8 @@ function ClubChip({ chip }: { chip: ClubChipData }) {
         gap: 8,
         padding: "4px 10px 4px 4px",
         borderRadius: 10,
-        background: "rgba(36,147,169,0.06)",
-        border: "1px solid rgba(36,147,169,0.16)",
+        background: "rgba(255,255,255,0.10)",
+        border: "1px solid rgba(255,255,255,0.18)",
         textDecoration: "none",
         flexShrink: 0,
       }}
@@ -81,7 +70,7 @@ function ClubChip({ chip }: { chip: ClubChipData }) {
           borderRadius: 7,
           overflow: "hidden",
           flexShrink: 0,
-          background: imgSrc ? "transparent" : "rgba(36,147,169,0.35)",
+          background: imgSrc ? "transparent" : "rgba(255,255,255,0.2)",
           position: "relative",
         }}
       >
@@ -101,7 +90,7 @@ function ClubChip({ chip }: { chip: ClubChipData }) {
           fontFamily: FF_GROTESK,
           fontSize: "0.72rem",
           fontWeight: 600,
-          color: INK,
+          color: "#fdf9f1",
           whiteSpace: "nowrap",
         }}
       >
@@ -114,10 +103,6 @@ function ClubChip({ chip }: { chip: ClubChipData }) {
 // ─── FeaturedClubBanner ───────────────────────────────────────────────────────
 
 function FeaturedClubBanner({ club, isMobile }: { club: DramaClub; isMobile: boolean }) {
-  const status = computeDramaClubStatus(club);
-  const chip = CHIP_STYLES[status];
-  const tagLabel = STATUS_LABEL[status];
-
   const heroSrc =
     normalizeSrc(club.cardImage) ?? normalizeSrc(club.heroImage) ?? FALLBACK_IMAGE;
   const [imageSrc, setImageSrc] = useState(heroSrc);
@@ -140,6 +125,7 @@ function FeaturedClubBanner({ club, isMobile }: { club: DramaClub; isMobile: boo
           animation: drama-kenburns-zoom 22s ease-in-out infinite alternate;
           transform-origin: center center;
         }
+        .dat-view-club-link:hover { color: #F23359 !important; }
       `}</style>
 
       <div
@@ -184,57 +170,33 @@ function FeaturedClubBanner({ club, isMobile }: { club: DramaClub; isMobile: boo
               }}
             />
 
-            {/* Status chip */}
-            <div
-              style={{
-                position: "absolute",
-                top: 10,
-                left: 10,
-                borderRadius: 999,
-                backgroundColor: chip.bg,
-                border: `1px solid ${chip.border}`,
-                padding: "4px 11px",
-                fontSize: "0.62rem",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.22em",
-                color: chip.text,
-                backdropFilter: "blur(3px)",
-                pointerEvents: "none",
-              }}
-            >
-              {tagLabel}
-            </div>
-
-            {/* Logo watermark — only if logoSrc exists */}
+            {/* Passport badge — low-opacity angled mark; only if logoSrc exists */}
             {logoSrc && (
               <div
                 style={{
                   position: "absolute",
-                  top: 10,
-                  right: 10,
-                  width: 52,
-                  height: 52,
-                  borderRadius: "50%",
-                  background: "rgba(253,249,241,0.12)",
-                  border: "1.5px solid rgba(255,255,255,0.2)",
-                  backdropFilter: "blur(4px)",
-                  opacity: 0.7,
-                  overflow: "hidden",
+                  bottom: 18,
+                  right: 16,
+                  width: 96,
+                  height: 96,
+                  opacity: 0.15,
+                  transform: "rotate(-18deg)",
                   pointerEvents: "none",
+                  borderRadius: "50%",
+                  overflow: "hidden",
                 }}
               >
                 <Image
                   src={logoSrc}
-                  alt={club.logoAlt ?? `${club.name} logo`}
+                  alt=""
                   fill
-                  sizes="52px"
+                  sizes="96px"
                   style={{ objectFit: "contain" }}
                 />
               </div>
             )}
 
-            {/* Text overlay */}
+            {/* Text overlay — region · country / club name / DAT DRAMA CLUB */}
             <div
               style={{
                 position: "absolute",
@@ -270,6 +232,19 @@ function FeaturedClubBanner({ club, isMobile }: { club: DramaClub; isMobile: boo
               >
                 {club.name}
               </p>
+              <p
+                style={{
+                  margin: "5px 0 0 0",
+                  fontFamily: FF_GROTESK,
+                  fontSize: "9px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.22em",
+                  color: "rgba(255,255,255,0.5)",
+                  fontWeight: 600,
+                }}
+              >
+                DAT DRAMA CLUB
+              </p>
             </div>
           </div>
         </Link>
@@ -282,7 +257,7 @@ function FeaturedClubBanner({ club, isMobile }: { club: DramaClub; isMobile: boo
                 margin: "0 0 10px 0",
                 fontFamily: FF_SANS,
                 fontSize: "0.82rem",
-                color: `${INK}bb`,
+                color: "rgba(36,17,35,0.73)",
                 lineHeight: 1.55,
               }}
             >
@@ -300,10 +275,11 @@ function FeaturedClubBanner({ club, isMobile }: { club: DramaClub; isMobile: boo
                 color: "#6c00af",
               }}
             >
-              Featured Club
+              Community Spotlight
             </span>
             <Link
               href={`/drama-club/${club.slug}`}
+              className="dat-view-club-link"
               style={{
                 fontFamily: FF_GROTESK,
                 fontSize: "11px",
@@ -311,6 +287,7 @@ function FeaturedClubBanner({ club, isMobile }: { club: DramaClub; isMobile: boo
                 color: "#2493a9",
                 textDecoration: "none",
                 letterSpacing: "0.04em",
+                transition: "color 140ms",
               }}
             >
               View Club →
@@ -339,12 +316,12 @@ export default function CommunitySection({
 
   // Resolve causes preserving category order
   const causeIdSet = new Set(parseCommaList(impactCauses));
-  const resolvedCauses: { id: string; label: string }[] = [];
+  const resolvedCauses: { id: string; label: string; description?: string }[] = [];
   for (const cat of CAUSE_CATEGORIES) {
     const subs = CAUSE_SUBCATEGORIES_BY_CATEGORY[cat.id] ?? [];
     for (const sub of subs) {
       if (causeIdSet.has(sub.id)) {
-        resolvedCauses.push({ id: sub.id, label: sub.shortLabel ?? sub.label });
+        resolvedCauses.push({ id: sub.id, label: sub.shortLabel ?? sub.label, description: sub.description });
       }
     }
   }
@@ -385,15 +362,14 @@ export default function CommunitySection({
     textTransform: "uppercase",
     letterSpacing: "0.18rem",
     fontWeight: 600,
-    color: INK,
-    opacity: 0.45,
+    color: "rgba(255,255,255,0.55)",
     margin: "0 0 0.9rem 0",
   };
 
   return (
     <section
       style={{
-        backgroundColor: "#faf8f5",
+        backgroundColor: SECTION_BG,
         padding: isMobile ? "3rem 24px 3.5rem" : "4.5rem 30px 5rem",
       }}
     >
@@ -405,8 +381,7 @@ export default function CommunitySection({
             textTransform: "uppercase",
             letterSpacing: "0.2rem",
             fontWeight: 600,
-            color: INK,
-            opacity: 0.5,
+            color: "rgba(255,255,255,0.6)",
             margin: "0 0 2.5rem 0",
           }}
         >
@@ -431,25 +406,25 @@ export default function CommunitySection({
           {/* RIGHT: Featured cause → Also Supporting chips → Other causes */}
           {hasRightColumn && (
             <div>
-              {/* Featured cause card */}
+              {/* Featured cause card — "Close to My Heart" */}
               {featuredCause && (
                 <div
                   style={{
                     padding: "1.1rem 1.4rem",
                     borderRadius: "10px",
-                    background: "rgba(108,0,175,0.05)",
-                    border: "1px solid rgba(108,0,175,0.18)",
+                    background: "rgba(36,17,35,0.40)",
+                    border: "1px solid rgba(255,255,255,0.12)",
                     marginBottom:
                       otherClubs.length > 0 || otherCauses.length > 0 ? "1.5rem" : 0,
                     transition: "background 160ms, border-color 160ms",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(108,0,175,0.09)";
-                    e.currentTarget.style.borderColor = "rgba(108,0,175,0.3)";
+                    e.currentTarget.style.background = "rgba(36,17,35,0.52)";
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(108,0,175,0.05)";
-                    e.currentTarget.style.borderColor = "rgba(108,0,175,0.18)";
+                    e.currentTarget.style.background = "rgba(36,17,35,0.40)";
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
                   }}
                 >
                   <p
@@ -459,11 +434,11 @@ export default function CommunitySection({
                       textTransform: "uppercase",
                       letterSpacing: "0.18rem",
                       fontWeight: 600,
-                      color: "#6C00AF",
+                      color: "rgba(255,255,255,0.5)",
                       margin: "0 0 0.45rem 0",
                     }}
                   >
-                    Featured Cause
+                    Close to My Heart
                   </p>
                   <Link
                     href={`/cause/${featuredCause.id}`}
@@ -474,17 +449,30 @@ export default function CommunitySection({
                         fontFamily: FF_GROTESK,
                         fontSize: "1.25rem",
                         fontWeight: 600,
-                        color: INK,
+                        color: "#fdf9f1",
                         margin: 0,
                         lineHeight: 1.3,
                         transition: "color 140ms",
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = "#6C00AF"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = INK; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = "#D9A919"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = "#fdf9f1"; }}
                     >
                       {featuredCause.label}
                     </p>
                   </Link>
+                  {featuredCause.description && (
+                    <p
+                      style={{
+                        fontFamily: FF_SANS,
+                        fontSize: "0.82rem",
+                        color: "rgba(255,255,255,0.70)",
+                        lineHeight: 1.55,
+                        margin: "0.55rem 0 0 0",
+                      }}
+                    >
+                      {featuredCause.description}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -520,12 +508,12 @@ export default function CommunitySection({
                           alignItems: "center",
                           padding: "4px 10px",
                           borderRadius: 10,
-                          background: "rgba(36,147,169,0.06)",
-                          border: "1px solid rgba(36,147,169,0.16)",
+                          background: "rgba(255,255,255,0.08)",
+                          border: "1px solid rgba(255,255,255,0.15)",
                           fontFamily: FF_GROTESK,
                           fontSize: "0.72rem",
                           fontWeight: 600,
-                          color: `${INK}99`,
+                          color: "rgba(255,255,255,0.55)",
                           flexShrink: 0,
                         }}
                       >
@@ -536,10 +524,9 @@ export default function CommunitySection({
                 </div>
               )}
 
-              {/* Other causes pills */}
+              {/* Other causes pills — DAT Pink family */}
               {otherCauses.length > 0 && (
                 <div>
-                  {/* Show label when there's no featured cause card above to provide context */}
                   {!featuredCause && (
                     <p style={{ ...subheaderStyle, margin: "0 0 1.1rem 0" }}>
                       Causes I Stand For
@@ -559,19 +546,19 @@ export default function CommunitySection({
                           fontWeight: 600,
                           textTransform: "uppercase",
                           letterSpacing: "0.1rem",
-                          color: INK,
-                          background: "rgba(36,17,35,0.07)",
-                          border: "1px solid rgba(36,17,35,0.13)",
+                          color: "#fdf9f1",
+                          background: "rgba(242,51,89,0.15)",
+                          border: "1px solid rgba(242,51,89,0.30)",
                           textDecoration: "none",
                           transition: "background 140ms, border-color 140ms",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "rgba(36,17,35,0.14)";
-                          e.currentTarget.style.borderColor = "rgba(36,17,35,0.22)";
+                          e.currentTarget.style.background = "rgba(242,51,89,0.28)";
+                          e.currentTarget.style.borderColor = "rgba(242,51,89,0.48)";
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "rgba(36,17,35,0.07)";
-                          e.currentTarget.style.borderColor = "rgba(36,17,35,0.13)";
+                          e.currentTarget.style.background = "rgba(242,51,89,0.15)";
+                          e.currentTarget.style.borderColor = "rgba(242,51,89,0.30)";
                         }}
                       >
                         {label}
