@@ -703,7 +703,6 @@ export default async function CausePage({
 
                 {tagOnly.length > 0 && (
                   <div>
-                    <Subheading>Artists Who Carry This Cause in Their Practice</Subheading>
                     <ArtistGrid artists={tagOnly} />
                   </div>
                 )}
@@ -803,7 +802,7 @@ export default async function CausePage({
         a:hover { text-decoration: none; }
 
         .cause-shell .drama-micro-card {
-  opacity: 0.8;
+  opacity: 1;
   transition:
     transform 180ms ease-out,
     box-shadow 180ms ease-out,

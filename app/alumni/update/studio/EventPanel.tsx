@@ -425,8 +425,8 @@ export default function EventPanel(props: {
           marginTop: 22,
           padding: "14px 16px",
           borderRadius: 10,
-          border: "1px solid rgba(139,92,246,0.45)",
-          background: "rgba(139,92,246,0.14)",
+          border: "1px solid #6c00af7f",
+          background: "#6c00af49",
         }}
       >
         <p
