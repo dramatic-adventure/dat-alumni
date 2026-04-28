@@ -197,7 +197,7 @@ export async function GET(req: Request) {
       {
         headers: {
           "Cache-Control": "no-store, max-age=0",
-          "X-Data-Source": "alumni-csv",
+          "X-Data-Source": "alumni-sheets-csv-export",
         },
       }
     );

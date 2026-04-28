@@ -172,112 +172,14 @@ function reverseSlugSource(map: Record<string, string>, target: string) {
   return candidate;
 }
 
-// ------------------------------------------------------------
-// CSV fallback (public-only)
-// ------------------------------------------------------------
-type CsvRow = Record<string, string>;
-
-function parseCsvSimple(text: string): CsvRow[] {
-  const lines = text.split(/\r?\n/).filter((l) => l.trim().length);
-  if (lines.length < 2) return [];
-
-  const split = (line: string) => {
-    const out: string[] = [];
-    let cur = "";
-    let inQ = false;
-
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') {
-        if (inQ && line[i + 1] === '"') {
-          cur += '"';
-          i++;
-        } else {
-          inQ = !inQ;
-        }
-      } else if (ch === "," && !inQ) {
-        out.push(cur);
-        cur = "";
-      } else {
-        cur += ch;
-      }
-    }
-    out.push(cur);
-    return out.map((s) => s.trim());
-  };
-
-  const headers = split(lines[0]).map((h) => h.replace(/^"|"$/g, "").trim());
-  const rows: CsvRow[] = [];
-
-  for (let i = 1; i < lines.length; i++) {
-    const cells = split(lines[i]).map((c) => c.replace(/^"|"$/g, ""));
-    const row: CsvRow = {};
-    for (let j = 0; j < headers.length; j++) row[headers[j]] = cells[j] ?? "";
-    rows.push(row);
-  }
-
-  return rows;
-}
-
 function toCsvCell(v: unknown) {
   const s = String(v ?? "");
   if (/["\n\r,]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
   return s;
 }
 
-function splitPrevSlugs(raw: unknown) {
-  return String(raw ?? "")
-    .toLowerCase()
-    .split(/[,;\n]/g)
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
 function getFallbackDir() {
   return process.env.FALLBACK_DIR || path.join("public", "fallback");
-}
-
-async function loadFallbackCsv(): Promise<CsvRow[]> {
-  const dir = getFallbackDir();
-  const p = path.join(process.cwd(), dir, "alumni.csv");
-  const text = await fs.readFile(p, "utf8");
-  return parseCsvSimple(text);
-}
-
-async function lookupFromCsvFallback(params: { alumniId?: string; admin: boolean }) {
-  if (params.admin) return { kind: "admin-unavailable" as const };
-
-  const needle = normSlug(params.alumniId || "");
-  if (!needle) return { kind: "not-found" as const };
-
-  const rows = await loadFallbackCsv();
-
-  const match =
-    rows.find((r) => normSlug(r.slug || "") === needle) ||
-    rows.find((r) =>
-      splitPrevSlugs(r["Previous Slugs"] || (r as any).previousSlugs).includes(needle)
-    );
-
-  if (!match) return { kind: "not-found" as const };
-
-  return {
-    kind: "ok" as const,
-    payload: {
-      alumniId: normSlug(match["Profile ID"] || match.alumniId || ""),
-      canonicalSlug: normSlug(match.slug || ""),
-      redirectedFrom: normSlug(match.slug || "") !== needle ? needle : undefined,
-      source: "csv-fallback",
-      status: normalizeStatus(match["Status Signifier"] || match.status || ""),
-      isPublic: match["Show on Profile?"] || match.isPublic || "",
-      name: match.Name || match.name || "",
-      roles: match.Role || match.roles || "",
-      location: match.Location || match.location || "",
-      headshotUrl: match["Headshot URL"] || (match as any).currentHeadshotUrl || "",
-      website: match["Artist URL"] || match.website || match["Profile URL"] || "",
-      statusFlags: (match as any).statusFlags || match["Status Flags"] || "",
-      currentWork: (match as any).currentWork || match["Current Work"] || "",
-    },
-  };
 }
 
 // ------------------------------------------------------------
@@ -449,16 +351,14 @@ async function refreshFallbackSnapshots(opts: {
   if (!canWriteFallbackToDisk()) return;
 
   const dir = getFallbackDir();
-  const alumniPath = path.join(process.cwd(), dir, "alumni.csv");
   const slugMapPath = path.join(process.cwd(), dir, "slug-map.csv");
 
-  const { alumniCsv, slugMapCsv } = buildFallbackCsvStrings({
+  const { slugMapCsv } = buildFallbackCsvStrings({
     liveRows: opts.liveRows,
     liveIdx: opts.liveIdx,
     slugTriples: opts.slugTriples,
   });
 
-  await atomicWriteFile(alumniPath, alumniCsv);
   await atomicWriteFile(slugMapPath, slugMapCsv);
 }
 
@@ -1035,27 +935,9 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
 
     return notFound();
   } catch (e: any) {
-    // Sheets failed: fallback (public only)
-    const fb = await lookupFromCsvFallback({
-      alumniId: lookupKey,
-      admin,
-    });
-
-
-    if (fb.kind === "admin-unavailable") {
-      return json(
-        { error: "Admin lookup unavailable (Sheets unreachable)" },
-        { status: 503, headers: noStoreHeaders() }
-      );
-    }
-
-    if (fb.kind === "ok") {
-      return json(fb.payload, {
-        status: 200,
-        headers: forceNoStore ? noStoreHeaders() : privateCache60Headers(),
-      });
-    }
-
-    return json({ error: "not found" }, { status: 404, headers: noStoreHeaders() });
+    return json(
+      { error: "Alumni data unavailable (Sheets unreachable)" },
+      { status: 503, headers: noStoreHeaders() }
+    );
   }
 }

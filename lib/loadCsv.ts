@@ -185,7 +185,7 @@ function parseServiceAccountSafely(): any | null {
  */
 export async function loadCsv(
   sourceUrl?: string,
-  fallbackFileName = "alumni.csv",
+  fallbackFileName = "fallback.csv",
   opts: LoadCsvOptions = {}
 ): Promise<string> {
   const fs = await import("fs/promises");
