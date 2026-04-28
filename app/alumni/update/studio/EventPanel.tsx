@@ -462,7 +462,7 @@ export default function EventPanel(props: {
             letterSpacing: "0.01em",
           }}
         >
-          Reach Out →
+          Reach Out
         </a>
       </div>
 
