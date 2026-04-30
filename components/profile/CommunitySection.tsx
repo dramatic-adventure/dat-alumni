@@ -3,16 +3,13 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { CAUSE_CATEGORIES, CAUSE_SUBCATEGORIES_BY_CATEGORY } from "@/lib/causes";
 import { dramaClubs } from "@/lib/dramaClubMap";
 import type { DramaClub } from "@/lib/dramaClubMap";
 import useIsMobile from "@/hooks/useIsMobile";
 
 interface CommunitySectionProps {
   supportedClubs?: string;
-  impactCauses?: string;
   featuredSupportedClub?: string;
-  featuredImpactCause?: string;
 }
 
 function parseCommaList(raw?: string | null): string[] {
@@ -22,280 +19,409 @@ function parseCommaList(raw?: string | null): string[] {
 
 const FF_GROTESK = "var(--font-space-grotesk), system-ui, sans-serif";
 const FF_SANS = "var(--font-dm-sans), system-ui, sans-serif";
+const INK = "#241123";
 const FALLBACK_IMAGE = "/images/drama-clubs/club-fallback.jpg";
-
-// Matches the Featured DAT Work section background
-const SECTION_BG = "#19657c";
-
-function resolveCauseAnywhere(id: string) {
-  for (const cat of CAUSE_CATEGORIES) {
-    const sub = (CAUSE_SUBCATEGORIES_BY_CATEGORY[cat.id] ?? []).find((s) => s.id === id);
-    if (sub) return { id: sub.id, label: sub.shortLabel ?? sub.label, description: sub.description };
-  }
-  return undefined;
-}
-
 function normalizeSrc(raw: string | null | undefined): string | null {
   if (!raw || !raw.trim()) return null;
   const s = raw.trim();
   return s.startsWith("/") ? s : `/${s}`;
 }
 
-// ─── ClubChip ────────────────────────────────────────────────────────────────
-
-type ClubChipData = { slug: string; name: string; thumbSrc: string | null };
-
-function ClubChip({ chip }: { chip: ClubChipData }) {
-  const [imgSrc, setImgSrc] = useState<string | null>(chip.thumbSrc);
-
-  return (
-    <Link
-      href={`/drama-club/${chip.slug}`}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "4px 10px 4px 4px",
-        borderRadius: 10,
-        background: "rgba(255,255,255,0.10)",
-        border: "1px solid rgba(255,255,255,0.18)",
-        textDecoration: "none",
-        flexShrink: 0,
-      }}
-    >
-      <div
-        style={{
-          width: 28,
-          height: 28,
-          borderRadius: 7,
-          overflow: "hidden",
-          flexShrink: 0,
-          background: imgSrc ? "transparent" : "rgba(255,255,255,0.2)",
-          position: "relative",
-        }}
-      >
-        {imgSrc && (
-          <Image
-            src={imgSrc}
-            alt={chip.name}
-            fill
-            sizes="28px"
-            style={{ objectFit: "cover" }}
-            onError={() => setImgSrc(null)}
-          />
-        )}
-      </div>
-      <span
-        style={{
-          fontFamily: FF_GROTESK,
-          fontSize: "0.72rem",
-          fontWeight: 600,
-          color: "#fdf9f1",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {chip.name}
-      </span>
-    </Link>
-  );
+function pickClubImage(club: DramaClub): string {
+  return normalizeSrc(club.cardImage) ?? normalizeSrc(club.heroImage) ?? FALLBACK_IMAGE;
 }
 
-// ─── FeaturedClubBanner ───────────────────────────────────────────────────────
+// ─── CSS ─────────────────────────────────────────────────────────────────────
 
-function FeaturedClubBanner({ club, isMobile }: { club: DramaClub; isMobile: boolean }) {
-  const heroSrc =
-    normalizeSrc(club.cardImage) ?? normalizeSrc(club.heroImage) ?? FALLBACK_IMAGE;
-  const [imageSrc, setImageSrc] = useState(heroSrc);
+const CARD_CSS = `
+  @keyframes cs-kenburns {
+    from { transform: scale(1.02); }
+    to   { transform: scale(4); }
+  }
 
-  const logoSrc = normalizeSrc(club.logoSrc);
+  /* ── Featured club card ── */
+  .cs-club-card {
+    cursor: pointer;
+    transform-origin: center center;
+    transition: transform 180ms ease-out, box-shadow 180ms ease-out;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.18);
+    border-radius: 26px;
+    border: 1px solid rgba(36,17,35,0.14);
+    background: transparent;
+  }
+  .cs-club-card:hover {
+    transform: scale(1.025);
+    box-shadow: 0 26px 60px rgba(0,0,0,0.28);
+  }
+  .cs-club-card-bg {
+    border-radius: 26px;
+    background-color: #fdf9f1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  .cs-club-img-wrap {
+    position: relative;
+    width: 100%;
+    padding-bottom: 42.857%;
+    overflow: hidden;
+    border-radius: 18px;
+    margin-bottom: 16px;
+    transition: padding-bottom 200ms ease-out;
+  }
+  .cs-club-card:hover .cs-club-img-wrap {
+    padding-bottom: 75%;
+  }
+  .cs-club-img {
+    transform-origin: center center;
+  }
+  .cs-club-card:hover .cs-club-img {
+    animation: cs-kenburns 44s linear infinite;
+  }
+  .cs-club-extra {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-top: 0;
+    transition:
+      max-height 220ms ease-out,
+      opacity 200ms ease-out,
+      margin-top 200ms ease-out;
+  }
+  .cs-club-card:hover .cs-club-extra {
+    max-height: 900px;
+    opacity: 1;
+    margin-top: 12px;
+  }
+  .cs-club-btn {
+    background-color: #2493A9;
+    transition: background-color 140ms ease-out;
+  }
+  .cs-club-btn:hover { background-color: #1F7F92; }
 
+  /* ── Also Supporting cards ── */
+  .cs-also-card {
+    cursor: pointer;
+    transition: transform 180ms ease-out, box-shadow 180ms ease-out;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    border-radius: 14px;
+    border: 1px solid rgba(36,17,35,0.12);
+    background: transparent;
+  }
+  .cs-also-card:hover {
+    transform: scale(1.015);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+  }
+  .cs-also-bg {
+    border-radius: 14px;
+    background-color: #fdf9f1;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+  .cs-also-extra {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    margin-top: 0;
+    transition:
+      max-height 220ms ease-out,
+      opacity 200ms ease-out,
+      margin-top 200ms ease-out;
+  }
+  .cs-also-card:hover .cs-also-extra {
+    max-height: 900px;
+    opacity: 1;
+    margin-top: 14px;
+  }
+  .cs-also-img-wrap {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    overflow: hidden;
+    border-radius: 12px;
+    margin-bottom: 12px;
+  }
+  .cs-also-img {
+    transform-origin: center center;
+  }
+  .cs-also-card:hover .cs-also-img {
+    animation: cs-kenburns 44s linear infinite;
+  }
+  .cs-also-btn {
+    background-color: #2493A9;
+    transition: background-color 140ms ease-out;
+  }
+  .cs-also-btn:hover { background-color: #1F7F92; }
+`;
+
+// ─── FeaturedClubCard ─────────────────────────────────────────────────────────
+
+function FeaturedClubCard({ club }: { club: DramaClub }) {
+  const [imageSrc, setImageSrc] = useState(pickClubImage(club));
   const regionCountry = club.region ? `${club.region} · ${club.country}` : club.country;
-
-  const blurbRaw = club.shortBlurb ?? club.description;
-  const blurb = blurbRaw.length > 120 ? blurbRaw.slice(0, 117) + "…" : blurbRaw;
+  const blurb = club.shortBlurb ?? club.description;
+  const hasStats = !!(club.approxYouthServed || club.showcasesCount);
 
   return (
-    <>
-      <style>{`
-        @keyframes drama-kenburns-zoom {
-          from { transform: scale(1.02); }
-          to   { transform: scale(1.12); }
-        }
-        .dat-banner-img {
-          animation: drama-kenburns-zoom 22s ease-in-out infinite alternate;
-          transform-origin: center center;
-        }
-        .dat-view-club-link:hover { color: #F23359 !important; }
-      `}</style>
-
-      <div
-        style={{
-          borderRadius: 16,
-          overflow: "hidden",
-          border: "1px solid rgba(36,17,35,0.14)",
-          boxShadow: "0 4px 20px rgba(36,17,35,0.12)",
-        }}
-      >
-        {/* Image zone */}
-        <Link href={`/drama-club/${club.slug}`} style={{ display: "block", textDecoration: "none" }}>
-          <div
-            style={{
-              position: "relative",
-              width: "100%",
-              paddingBottom: isMobile ? "52%" : "58%",
-              overflow: "hidden",
-              backgroundColor: "#1a0f1a",
-            }}
-          >
+    <Link href={`/drama-club/${club.slug}`} style={{ display: "block", textDecoration: "none" }}>
+      <div className="cs-club-card">
+        <div className="cs-club-card-bg">
+          {/* Image — 21:9 collapsed, 75% on hover */}
+          <div className="cs-club-img-wrap">
             <Image
               src={imageSrc}
               alt={`${club.name} Drama Club`}
               fill
-              sizes="(max-width: 1023px) 100vw, 50vw"
-              className="dat-banner-img"
-              style={{ objectFit: "cover" }}
-              onError={() => {
-                if (imageSrc !== FALLBACK_IMAGE) setImageSrc(FALLBACK_IMAGE);
-              }}
+              className="object-cover cs-club-img"
+              sizes="(max-width: 1023px) 90vw, 600px"
+              onError={() => { if (imageSrc !== FALLBACK_IMAGE) setImageSrc(FALLBACK_IMAGE); }}
             />
+          </div>
 
-            {/* Gradient overlay */}
+          {/* Always-visible text */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
             <div
               style={{
-                position: "absolute",
-                inset: 0,
-                background:
-                  "linear-gradient(180deg, transparent 30%, rgba(36,17,35,0.55) 65%, rgba(36,17,35,0.92) 100%)",
-                pointerEvents: "none",
-              }}
-            />
-
-            {/* Passport badge — low-opacity angled mark; only if logoSrc exists */}
-            {logoSrc && (
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: 18,
-                  right: 16,
-                  width: 96,
-                  height: 96,
-                  opacity: 0.15,
-                  transform: "rotate(-18deg)",
-                  pointerEvents: "none",
-                  borderRadius: "50%",
-                  overflow: "hidden",
-                }}
-              >
-                <Image
-                  src={logoSrc}
-                  alt=""
-                  fill
-                  sizes="96px"
-                  style={{ objectFit: "contain" }}
-                />
-              </div>
-            )}
-
-            {/* Text overlay — region · country / club name / DAT DRAMA CLUB */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                padding: "0 18px 18px",
-                pointerEvents: "none",
+                fontFamily: FF_GROTESK,
+                fontSize: "0.7rem",
+                fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: "0.22em",
+                color: "#6C00AF",
               }}
             >
-              <p
-                style={{
-                  margin: "0 0 4px 0",
-                  fontFamily: FF_GROTESK,
-                  fontSize: "9px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.18em",
-                  color: "rgba(255,255,255,0.55)",
-                  fontWeight: 500,
-                }}
-              >
-                {regionCountry}
-              </p>
-              <p
-                style={{
-                  margin: 0,
-                  fontFamily: FF_GROTESK,
-                  fontSize: "18px",
-                  fontWeight: 700,
-                  color: "#fff",
-                  lineHeight: 1.2,
-                }}
-              >
-                {club.name}
-              </p>
-              <p
-                style={{
-                  margin: "5px 0 0 0",
-                  fontFamily: FF_GROTESK,
-                  fontSize: "9px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.22em",
-                  color: "rgba(255,255,255,0.5)",
-                  fontWeight: 600,
-                }}
-              >
-                DAT DRAMA CLUB
-              </p>
+              {regionCountry}
+            </div>
+            <h3
+              style={{
+                marginTop: 4,
+                marginBottom: 0,
+                fontFamily: FF_GROTESK,
+                fontSize: "1.4rem",
+                fontWeight: 700,
+                lineHeight: 1.1,
+                color: INK,
+                overflow: "hidden",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                wordBreak: "break-word",
+              }}
+            >
+              {club.name}
+            </h3>
+            <div
+              style={{
+                marginTop: 6,
+                fontFamily: FF_GROTESK,
+                fontSize: "0.65rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.22em",
+                color: "rgba(60,37,59,0.6)",
+              }}
+            >
+              DAT Drama Club
             </div>
           </div>
-        </Link>
 
-        {/* Info strip */}
-        <div style={{ background: "#fdf9f1", padding: "14px 18px 16px" }}>
-          {blurb && !isMobile && (
-            <p
+          {/* Expanded content */}
+          <div className="cs-club-extra">
+            {blurb && (
+              <p
+                style={{
+                  marginTop: 0,
+                  marginBottom: 0,
+                  fontFamily: FF_SANS,
+                  fontSize: "0.9rem",
+                  lineHeight: 1.6,
+                  color: "#3c253b",
+                }}
+              >
+                {blurb}
+              </p>
+            )}
+            {hasStats && (
+              <div
+                style={{
+                  marginTop: 16,
+                  paddingTop: 10,
+                  borderTop: "1px solid #e4d3be",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  gap: 6,
+                  fontFamily: FF_GROTESK,
+                  fontSize: "0.72rem",
+                  color: "#3c253b",
+                }}
+              >
+                {club.approxYouthServed && (
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                    <span style={{ fontSize: "0.95rem", fontWeight: 600 }}>{club.approxYouthServed}+</span>
+                    <span style={{ textTransform: "uppercase", letterSpacing: "0.18em" }}>youth reached</span>
+                  </div>
+                )}
+                {club.showcasesCount && (
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                    <span style={{ fontSize: "0.95rem", fontWeight: 600 }}>{club.showcasesCount}+</span>
+                    <span style={{ textTransform: "uppercase", letterSpacing: "0.18em" }}>showcases</span>
+                  </div>
+                )}
+              </div>
+            )}
+            <div
+              className="cs-club-btn"
               style={{
-                margin: "0 0 10px 0",
+                marginTop: hasStats ? 20 : 18,
+                display: "inline-flex",
+                justifyContent: "center",
+                alignItems: "center",
+                width: "100%",
+                padding: "0.85rem 1.15rem",
+                borderRadius: 16,
                 fontFamily: FF_SANS,
-                fontSize: "0.82rem",
-                color: "rgba(36,17,35,0.73)",
-                lineHeight: 1.55,
-              }}
-            >
-              {blurb}
-            </p>
-          )}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span
-              style={{
-                fontFamily: FF_GROTESK,
-                fontSize: "9px",
+                fontSize: "0.78rem",
+                lineHeight: 1.15,
+                fontWeight: 800,
+                letterSpacing: "0.24em",
                 textTransform: "uppercase",
-                letterSpacing: "0.18em",
-                fontWeight: 700,
-                color: "#6c00af",
+                color: "#F2F2F2",
               }}
             >
-              Community Spotlight
-            </span>
-            <Link
-              href={`/drama-club/${club.slug}`}
-              className="dat-view-club-link"
-              style={{
-                fontFamily: FF_GROTESK,
-                fontSize: "11px",
-                fontWeight: 600,
-                color: "#2493a9",
-                textDecoration: "none",
-                letterSpacing: "0.04em",
-                transition: "color 140ms",
-              }}
-            >
-              View Club →
-            </Link>
+              View this Drama Club
+            </div>
           </div>
         </div>
       </div>
-    </>
+    </Link>
+  );
+}
+
+// ─── AlsoSupportingCard ───────────────────────────────────────────────────────
+
+function AlsoSupportingCard({ club }: { club: DramaClub }) {
+  const [imageSrc, setImageSrc] = useState(pickClubImage(club));
+  const regionCountry = club.region ? `${club.region} · ${club.country}` : club.country;
+  const blurb = club.shortBlurb ?? club.description;
+  const hasStats = !!(club.approxYouthServed || club.showcasesCount);
+
+  return (
+    <Link href={`/drama-club/${club.slug}`} style={{ display: "block", textDecoration: "none" }}>
+      <div className="cs-also-card">
+        <div className="cs-also-bg">
+          {/* Collapsed: name + region/country + DAT DRAMA CLUB — no image */}
+          <div>
+            <div
+              style={{
+                fontFamily: FF_GROTESK,
+                fontSize: "0.62rem",
+                fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: "0.2em",
+                color: "rgba(36,17,35,0.45)",
+              }}
+            >
+              {regionCountry} · DAT Drama Club
+            </div>
+            <div
+              style={{
+                marginTop: 3,
+                fontFamily: FF_GROTESK,
+                fontSize: "1.05rem",
+                fontWeight: 700,
+                lineHeight: 1.2,
+                color: INK,
+              }}
+            >
+              {club.name}
+            </div>
+          </div>
+
+          {/* Expanded: image + blurb + stats + button */}
+          <div className="cs-also-extra">
+            <div className="cs-also-img-wrap">
+              <Image
+                src={imageSrc}
+                alt={`${club.name} Drama Club`}
+                fill
+                className="object-cover cs-also-img"
+                sizes="(max-width: 1023px) 90vw, 400px"
+                onError={() => { if (imageSrc !== FALLBACK_IMAGE) setImageSrc(FALLBACK_IMAGE); }}
+              />
+            </div>
+            {blurb && (
+              <p
+                style={{
+                  marginTop: 0,
+                  marginBottom: 0,
+                  fontFamily: FF_SANS,
+                  fontSize: "0.88rem",
+                  lineHeight: 1.6,
+                  color: "#3c253b",
+                }}
+              >
+                {blurb}
+              </p>
+            )}
+            {hasStats && (
+              <div
+                style={{
+                  marginTop: 12,
+                  paddingTop: 8,
+                  borderTop: "1px solid #e4d3be",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  gap: 4,
+                  fontFamily: FF_GROTESK,
+                  fontSize: "0.7rem",
+                  color: "#3c253b",
+                }}
+              >
+                {club.approxYouthServed && (
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                    <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>{club.approxYouthServed}+</span>
+                    <span style={{ textTransform: "uppercase", letterSpacing: "0.18em" }}>youth reached</span>
+                  </div>
+                )}
+                {club.showcasesCount && (
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                    <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>{club.showcasesCount}+</span>
+                    <span style={{ textTransform: "uppercase", letterSpacing: "0.18em" }}>showcases</span>
+                  </div>
+                )}
+              </div>
+            )}
+            <div
+              className="cs-also-btn"
+              style={{
+                marginTop: hasStats ? 16 : 14,
+                display: "inline-flex",
+                justifyContent: "center",
+                alignItems: "center",
+                width: "100%",
+                padding: "0.75rem 1rem",
+                borderRadius: 12,
+                fontFamily: FF_SANS,
+                fontSize: "0.75rem",
+                lineHeight: 1.15,
+                fontWeight: 800,
+                letterSpacing: "0.22em",
+                textTransform: "uppercase",
+                color: "#F2F2F2",
+              }}
+            >
+              View this Drama Club
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
   );
 }
 
@@ -303,58 +429,30 @@ function FeaturedClubBanner({ club, isMobile }: { club: DramaClub; isMobile: boo
 
 export default function CommunitySection({
   supportedClubs,
-  impactCauses,
   featuredSupportedClub,
-  featuredImpactCause,
 }: CommunitySectionProps) {
   const isMobile = useIsMobile();
 
-  // Resolve clubs as full DramaClub objects
   const clubSlugs = parseCommaList(supportedClubs);
   const clubSlugSet = new Set(clubSlugs);
   const resolvedClubs = dramaClubs.filter((c) => clubSlugSet.has(c.slug));
 
-  // Resolve causes preserving category order
-  const causeIdSet = new Set(parseCommaList(impactCauses));
-  const resolvedCauses: { id: string; label: string; description?: string }[] = [];
-  for (const cat of CAUSE_CATEGORIES) {
-    const subs = CAUSE_SUBCATEGORIES_BY_CATEGORY[cat.id] ?? [];
-    for (const sub of subs) {
-      if (causeIdSet.has(sub.id)) {
-        resolvedCauses.push({ id: sub.id, label: sub.shortLabel ?? sub.label, description: sub.description });
-      }
-    }
-  }
-
+  // Featured club: explicit slug → fallback to first supported club
   const featuredClubSlug = featuredSupportedClub?.trim() ?? "";
   const featuredClub = featuredClubSlug
     ? (resolvedClubs.find((c) => c.slug === featuredClubSlug) ??
        dramaClubs.find((c) => c.slug === featuredClubSlug))
-    : undefined;
+    : resolvedClubs[0];
 
   const otherClubs = featuredClub
     ? resolvedClubs.filter((c) => c.slug !== featuredClub.slug)
     : resolvedClubs;
 
-  const featuredCauseId = featuredImpactCause?.trim() ?? "";
-  const featuredCause = featuredCauseId
-    ? (resolvedCauses.find((c) => c.id === featuredCauseId) ?? resolveCauseAnywhere(featuredCauseId))
-    : undefined;
-  const otherCauses = featuredCause
-    ? resolvedCauses.filter((c) => c.id !== featuredCause.id)
-    : resolvedCauses;
-
   const hasLeftColumn = !!featuredClub;
-  const hasCauses = resolvedCauses.length > 0 || !!featuredCause;
-  const hasRightColumn = hasCauses || otherClubs.length > 0;
+  const hasRightColumn = otherClubs.length > 0;
   const hasBothColumns = hasLeftColumn && hasRightColumn;
 
   if (!hasLeftColumn && !hasRightColumn) return null;
-
-  // Chip strip — max 5 visible + overflow count
-  const MAX_CHIPS = 5;
-  const visibleChips = otherClubs.slice(0, MAX_CHIPS);
-  const chipOverflow = otherClubs.length - MAX_CHIPS;
 
   const subheaderStyle: React.CSSProperties = {
     fontFamily: FF_GROTESK,
@@ -362,17 +460,18 @@ export default function CommunitySection({
     textTransform: "uppercase",
     letterSpacing: "0.18rem",
     fontWeight: 600,
-    color: "rgba(255,255,255,0.55)",
+    color: "rgba(36,17,35,0.45)",
     margin: "0 0 0.9rem 0",
   };
 
   return (
     <section
       style={{
-        backgroundColor: SECTION_BG,
-        padding: isMobile ? "3rem 24px 3.5rem" : "4.5rem 30px 5rem",
+        backgroundColor: "#3FA9BE",
+        padding: isMobile ? "3rem 24px 3.5rem" : "4.5rem 60px 5rem",
       }}
     >
+      <style>{CARD_CSS}</style>
       <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
         <p
           style={{
@@ -381,193 +480,36 @@ export default function CommunitySection({
             textTransform: "uppercase",
             letterSpacing: "0.2rem",
             fontWeight: 600,
-            color: "rgba(255,255,255,0.6)",
-            margin: "0 0 2.5rem 0",
+            color: "rgba(36,17,35,0.5)",
+            margin: "0 0 0.75rem 0",
           }}
         >
-          What I&apos;m Part Of
+          Proud to Support
         </p>
 
         <div
           style={{
             display: hasBothColumns && !isMobile ? "grid" : "block",
-            gridTemplateColumns: hasBothColumns && !isMobile ? "1fr 0.85fr" : undefined,
-            gap: hasBothColumns && !isMobile ? "4rem" : undefined,
+            gridTemplateColumns: hasBothColumns && !isMobile ? "0.925fr 0.925fr" : undefined,
+            gap: hasBothColumns && !isMobile ? "2rem" : undefined,
             alignItems: "start",
           }}
         >
-          {/* LEFT: Cinematic featured club banner */}
+          {/* LEFT: Expandable featured club card */}
           {hasLeftColumn && (
             <div style={{ marginBottom: isMobile && hasRightColumn ? "3rem" : 0 }}>
-              <FeaturedClubBanner club={featuredClub!} isMobile={isMobile} />
+              <FeaturedClubCard club={featuredClub!} />
             </div>
           )}
 
-          {/* RIGHT: Featured cause → Also Supporting chips → Other causes */}
+          {/* RIGHT: Also Supporting expandable cards */}
           {hasRightColumn && (
             <div>
-              {/* Featured cause card — "Close to My Heart" */}
-              {featuredCause && (
-                <div
-                  style={{
-                    padding: "1.1rem 1.4rem",
-                    borderRadius: "10px",
-                    background: "rgba(36,17,35,0.40)",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    marginBottom:
-                      otherClubs.length > 0 || otherCauses.length > 0 ? "1.5rem" : 0,
-                    transition: "background 160ms, border-color 160ms",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(36,17,35,0.52)";
-                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(36,17,35,0.40)";
-                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)";
-                  }}
-                >
-                  <p
-                    style={{
-                      fontFamily: FF_GROTESK,
-                      fontSize: "0.65rem",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.18rem",
-                      fontWeight: 600,
-                      color: "rgba(255,255,255,0.5)",
-                      margin: "0 0 0.45rem 0",
-                    }}
-                  >
-                    Close to My Heart
-                  </p>
-                  <Link
-                    href={`/cause/${featuredCause.id}`}
-                    style={{ display: "block", textDecoration: "none" }}
-                  >
-                    <p
-                      style={{
-                        fontFamily: FF_GROTESK,
-                        fontSize: "1.25rem",
-                        fontWeight: 600,
-                        color: "#fdf9f1",
-                        margin: 0,
-                        lineHeight: 1.3,
-                        transition: "color 140ms",
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = "#D9A919"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = "#fdf9f1"; }}
-                    >
-                      {featuredCause.label}
-                    </p>
-                  </Link>
-                  {featuredCause.description && (
-                    <p
-                      style={{
-                        fontFamily: FF_SANS,
-                        fontSize: "0.82rem",
-                        color: "rgba(255,255,255,0.70)",
-                        lineHeight: 1.55,
-                        margin: "0.55rem 0 0 0",
-                      }}
-                    >
-                      {featuredCause.description}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Also Supporting chip strip */}
-              {otherClubs.length > 0 && (
-                <div style={{ marginBottom: otherCauses.length > 0 ? "1.5rem" : 0 }}>
-                  <p style={subheaderStyle}>Also Supporting</p>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: isMobile ? "nowrap" : "wrap",
-                      gap: "0.5rem",
-                      overflowX: isMobile ? "auto" : "visible",
-                      paddingBottom: isMobile ? "4px" : 0,
-                    }}
-                  >
-                    {visibleChips.map((club) => {
-                      const thumbSrc =
-                        normalizeSrc(club.logoSrc) ??
-                        normalizeSrc(club.cardImage) ??
-                        normalizeSrc(club.heroImage);
-                      return (
-                        <ClubChip
-                          key={club.slug}
-                          chip={{ slug: club.slug, name: club.name, thumbSrc }}
-                        />
-                      );
-                    })}
-                    {chipOverflow > 0 && (
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          padding: "4px 10px",
-                          borderRadius: 10,
-                          background: "rgba(255,255,255,0.08)",
-                          border: "1px solid rgba(255,255,255,0.15)",
-                          fontFamily: FF_GROTESK,
-                          fontSize: "0.72rem",
-                          fontWeight: 600,
-                          color: "rgba(255,255,255,0.55)",
-                          flexShrink: 0,
-                        }}
-                      >
-                        +{chipOverflow} more
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Other causes pills — DAT Pink family */}
-              {otherCauses.length > 0 && (
-                <div>
-                  {!featuredCause && (
-                    <p style={{ ...subheaderStyle, margin: "0 0 1.1rem 0" }}>
-                      Causes I Stand For
-                    </p>
-                  )}
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-                    {otherCauses.map(({ id, label }) => (
-                      <Link
-                        key={id}
-                        href={`/cause/${id}`}
-                        style={{
-                          display: "inline-block",
-                          padding: "4px 12px",
-                          borderRadius: 999,
-                          fontFamily: FF_GROTESK,
-                          fontSize: "0.72rem",
-                          fontWeight: 600,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.1rem",
-                          color: "#fdf9f1",
-                          background: "rgba(242,51,89,0.15)",
-                          border: "1px solid rgba(242,51,89,0.30)",
-                          textDecoration: "none",
-                          transition: "background 140ms, border-color 140ms",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "rgba(242,51,89,0.28)";
-                          e.currentTarget.style.borderColor = "rgba(242,51,89,0.48)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "rgba(242,51,89,0.15)";
-                          e.currentTarget.style.borderColor = "rgba(242,51,89,0.30)";
-                        }}
-                      >
-                        {label}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-
+              <div style={{ display: "flex", flexDirection: "column", marginTop: "0.25rem", gap: "0.6rem" }}>
+                {otherClubs.map((club) => (
+                  <AlsoSupportingCard key={club.slug} club={club} />
+                ))}
+              </div>
             </div>
           )}
         </div>

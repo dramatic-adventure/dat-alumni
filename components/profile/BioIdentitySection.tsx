@@ -5,6 +5,7 @@ import Link from "next/link";
 import AlumniTagSections from "@/components/alumni/AlumniTagSections";
 import useIsMobile from "@/hooks/useIsMobile";
 import { parseLanguages } from "@/lib/languages";
+import { CAUSE_CATEGORIES, CAUSE_SUBCATEGORIES_BY_CATEGORY } from "@/lib/causes";
 
 interface BioIdentitySectionProps {
   identityTags?: string[];
@@ -13,6 +14,23 @@ interface BioIdentitySectionProps {
   languages?: string;
   artistStatement?: string;
   directlyBelowHero?: boolean;
+  impactCauses?: string;
+  featuredImpactCause?: string;
+}
+
+const MAX_CAUSE_PILLS = 4;
+
+function parseCauseList(raw?: string | null): string[] {
+  if (!raw) return [];
+  return String(raw).split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+function resolveCauseAnywhere(id: string) {
+  for (const cat of CAUSE_CATEGORIES) {
+    const sub = (CAUSE_SUBCATEGORIES_BY_CATEGORY[cat.id] ?? []).find((s) => s.id === id);
+    if (sub) return { id: sub.id, label: sub.shortLabel ?? sub.label, description: sub.description };
+  }
+  return undefined;
 }
 
 export default function BioIdentitySection({
@@ -22,6 +40,8 @@ export default function BioIdentitySection({
   languages,
   artistStatement,
   directlyBelowHero = false,
+  impactCauses,
+  featuredImpactCause,
 }: BioIdentitySectionProps) {
   const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
@@ -62,6 +82,29 @@ export default function BioIdentitySection({
   const showToggle = isLong && hasBody;
   const showBody = !showToggle || expanded;
 
+  // ── Cause resolution ──────────────────────────────────────────────────────
+  const causeIdSet = new Set(parseCauseList(impactCauses));
+  const resolvedCauses: { id: string; label: string; description?: string }[] = [];
+  for (const cat of CAUSE_CATEGORIES) {
+    const subs = CAUSE_SUBCATEGORIES_BY_CATEGORY[cat.id] ?? [];
+    for (const sub of subs) {
+      if (causeIdSet.has(sub.id)) {
+        resolvedCauses.push({ id: sub.id, label: sub.shortLabel ?? sub.label, description: sub.description });
+      }
+    }
+  }
+  const featuredCauseId = featuredImpactCause?.trim() ?? "";
+  const featuredCause = featuredCauseId
+    ? (resolvedCauses.find((c) => c.id === featuredCauseId) ?? resolveCauseAnywhere(featuredCauseId))
+    : undefined;
+  const otherCauses = featuredCause
+    ? resolvedCauses.filter((c) => c.id !== featuredCause.id)
+    : resolvedCauses;
+  const hasCauses = resolvedCauses.length > 0 || !!featuredCause;
+  const visibleCausePills = otherCauses.slice(0, MAX_CAUSE_PILLS);
+  const causePillOverflow = otherCauses.length - MAX_CAUSE_PILLS;
+  // ─────────────────────────────────────────────────────────────────────────
+
   const paddingTop =
     !isMobile && directlyBelowHero ? "5rem" : isMobile ? "2.5rem" : "4rem";
 
@@ -78,7 +121,7 @@ export default function BioIdentitySection({
         fontWeight: 600,
         color: "#F2f2f2",
         opacity: 0.85,
-        margin: "0 0 1.1rem 0",
+        margin: "2rem 0 0.5rem 0",
       }}
     >
       WHO I AM
@@ -90,7 +133,7 @@ export default function BioIdentitySection({
       style={{
         backgroundColor: "#2493A9",
         position: "relative",
-        padding: `${paddingTop} 30px ${isMobile ? "3rem" : "5rem"}`,
+        padding: `${paddingTop} 60px ${isMobile ? "3rem" : "5rem"}`,
         overflow: "hidden",
       }}
     >
@@ -99,22 +142,23 @@ export default function BioIdentitySection({
           maxWidth: "1200px",
           margin: "0 auto",
           display: useGrid ? "grid" : "block",
-          gridTemplateColumns: useGrid ? "1fr 0.6fr" : undefined,
-          gap: useGrid ? "3rem" : undefined,
+          gridTemplateColumns: useGrid ? "0.925fr 0.675fr" : undefined,
+          gap: useGrid ? "6rem" : undefined,
         }}
       >
         {/* Left column: bio */}
         {hasBio && (
           <div>
-            {eyebrow}
+
             <p
               style={{
                 fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                fontSize: "clamp(1.4rem, 2.2vw, 1.9rem)",
+                fontSize: "clamp(1.4rem, 2.2vw, 1.8rem)",
                 fontWeight: 500,
-                color: "#241123",
-                lineHeight: 1.45,
+                color: "#241123d1",
+                lineHeight: 1.3,
                 margin: 0,
+                paddingTop: "1.8rem",
                 maxWidth: useGrid ? undefined : "72ch",
               }}
             >
@@ -188,12 +232,140 @@ export default function BioIdentitySection({
                 {expanded ? "LESS ↑" : "FULL BIO →"}
               </button>
             )}
+
+            {/* Close to My Heart — personal values appended below bio */}
+            {hasCauses && (
+              <div
+                style={{
+                  marginTop: "3.75rem",
+                  padding: "1.1rem 1.4rem",
+                  borderRadius: 10,
+                  background: "rgba(108,0,175,0.075)",
+                  border: "1px solid rgba(108,0,175,0.18)",
+                }}
+              >
+                <p
+                  style={{
+                    fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                    fontSize: "0.65rem",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.18rem",
+                    fontWeight: 600,
+                    color: "#6C00AF",
+                    margin: "0 0 0.45rem 0",
+                  }}
+                >
+                  {featuredCause ? "Close to My Heart" : "Causes I Stand For"}
+                </p>
+
+                {featuredCause && (
+                  <>
+                    <Link
+                      href={`/cause/${featuredCause.id}`}
+                      style={{ display: "block", textDecoration: "none", cursor: "pointer" }}
+                    >
+                      <p
+                        style={{
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontSize: "1.25rem",
+                          fontWeight: 600,
+                          color: "#f4e3ff",
+                          margin: 0,
+                          lineHeight: 1.3,
+                          transition: "color 140ms",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#ffcc00"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "#f4e3ff"; }}
+                      >
+                        {featuredCause.label}
+                      </p>
+                    </Link>
+                    {featuredCause.description && (
+                      <p
+                        style={{
+                          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                          fontSize: "0.82rem",
+                          color: "#2d0049d8",
+                          lineHeight: 1.55,
+                          margin: "0.55rem 0 0 0",
+                        }}
+                      >
+                        {featuredCause.description}
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {visibleCausePills.length > 0 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "0.4rem",
+                      marginTop: featuredCause ? "0.9rem" : 0,
+                    }}
+                  >
+                    {visibleCausePills.map(({ id, label }) => (
+                      <Link
+                        key={id}
+                        href={`/cause/${id}`}
+                        style={{
+                          display: "inline-block",
+                          padding: "4px 12px",
+                          borderRadius: 999,
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontSize: "0.72rem",
+                          fontWeight: 600,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.08rem",
+                          color: "#6C00AF",
+                          background: "rgba(108,0,175,0.08)",
+                          border: "1px solid rgba(108,0,175,0.22)",
+                          textDecoration: "none",
+                          cursor: "pointer",
+                          transition: "background 140ms, border-color 140ms",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "rgba(108,0,175,0.16)";
+                          e.currentTarget.style.borderColor = "rgba(108,0,175,0.38)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "rgba(108,0,175,0.08)";
+                          e.currentTarget.style.borderColor = "rgba(108,0,175,0.22)";
+                        }}
+                      >
+                        {label}
+                      </Link>
+                    ))}
+                    {causePillOverflow > 0 && (
+                      <span
+                        style={{
+                          display: "inline-block",
+                          padding: "4px 12px",
+                          borderRadius: 999,
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontSize: "0.72rem",
+                          fontWeight: 600,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.08rem",
+                          color: "rgba(108,0,175,0.5)",
+                          background: "rgba(108,0,175,0.04)",
+                          border: "1px solid rgba(108,0,175,0.14)",
+                        }}
+                      >
+                        +{causePillOverflow} more
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
         {/* Right column: identity tags + languages */}
         {hasAnyTags && (
-          <div style={{ marginTop: isMobile && hasBio ? "2rem" : 0 }}>
+          <div style={{ paddingTop: "2rem", marginTop: isMobile && hasBio ? "2rem" : 0 }}>
             {!hasBio && eyebrow}
             {hasAnyTags && (
               <AlumniTagSections
@@ -214,7 +386,7 @@ export default function BioIdentitySection({
                     fontWeight: 600,
                     color: "#241123",
                     opacity: 0.75,
-                    margin: "0 0 0.5rem 0",
+                    margin: "4rem 0 0.75rem 0",
                   }}
                 >
                   Languages

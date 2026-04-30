@@ -717,15 +717,7 @@ const hasStories = storiesForFeatured.length > 0;
 
       <ComingUpEventStrip upcomingEvent={props.upcomingEvent} />
 
-      <BioIdentitySection
-        identityTags={identityTags}
-        practiceTags={practiceTags}
-        exploreCareTags={exploreCareTags}
-        languages={props.languages}
-        artistStatement={artistStatement}
-        directlyBelowHero={!props.upcomingEvent}
-      />
-
+      {/* Featured Reel / Trailer / Promo */}
       {(hasSpotlight || hasHighlight) && (
         <div style={{ margin: "2rem 30px 2.5rem 30px" }}>
           <ProfileShowcaseSection>
@@ -782,15 +774,26 @@ const hasStories = storiesForFeatured.length > 0;
         </div>
       )}
 
-      {/* ✅ Public media section — only renders when alumni has featured album/reel items */}
-      <PublicMediaSection alumniId={alumniIdForMedia} />
-
-      <CommunitySection
-        supportedClubs={props.supportedClubs}
+      {/* WHO I AM — bio + identity tags + languages + Close to My Heart */}
+      <BioIdentitySection
+        identityTags={identityTags}
+        practiceTags={practiceTags}
+        exploreCareTags={exploreCareTags}
+        languages={props.languages}
+        artistStatement={artistStatement}
+        directlyBelowHero={!props.upcomingEvent}
         impactCauses={props.impactCauses}
-        featuredSupportedClub={props.featuredSupportedClub}
         featuredImpactCause={props.featuredImpactCause}
       />
+
+      {/* What I'm Part Of — drama clubs only */}
+      <CommunitySection
+        supportedClubs={props.supportedClubs}
+        featuredSupportedClub={props.featuredSupportedClub}
+      />
+
+      {/* ✅ Public media section — only renders when alumni has featured album/reel items */}
+      <PublicMediaSection alumniId={alumniIdForMedia} />
 
       {featuredProductions.length > 0 && (
         <div className="bg-[#19657c] py-[30px] px-[30px]">

@@ -76,12 +76,13 @@ export async function POST(req: Request) {
 
     // --- URL-based headshot path ---
     if (externalUrl) {
-      // 1) Flip isCurrent flags in Profile-Media for this externalUrl row
+      // 1) Toggle isCurrent/isFeatured in Profile-Media for this externalUrl row
+      let urlResult: { turningOn: boolean } = { turningOn: true };
       try {
-        await featureExistingInMediaByUrl(spreadsheetId, alumniId, kind, externalUrl);
+        urlResult = await featureExistingInMediaByUrl(spreadsheetId, alumniId, kind, externalUrl);
       } catch (e: any) {
         const msg = String(e?.message || e);
-        // Row doesn't exist yet — create it then retry
+        // Row doesn't exist yet — create it (turning on) then retry
         if (/externalurl not found for this alumni\/kind/i.test(msg)) {
           await withRetry(
             () =>
@@ -110,21 +111,27 @@ export async function POST(req: Request) {
               }),
             "Sheets append Profile-Media (stub for missing externalUrl)"
           );
-          await featureExistingInMediaByUrl(spreadsheetId, alumniId, kind, externalUrl);
+          urlResult = await featureExistingInMediaByUrl(spreadsheetId, alumniId, kind, externalUrl);
         } else {
           throw e;
         }
       }
 
       // Profile-Live currentHeadshotUrl is written by saveCategory — skip setLivePointer here
-      return NextResponse.json({ ok: true, updated: { externalUrl }, at: nowIso });
+      return NextResponse.json({
+        ok: true,
+        updated: { externalUrl },
+        turningOn: urlResult.turningOn,
+        at: nowIso,
+      });
     }
 
-    // --- fileId-based path (existing behavior) ---
+    // --- fileId-based path ---
 
-    // 1) Flip featured/current flags in Profile-Media
+    // 1) Toggle featured/current flags in Profile-Media
+    let toggleResult: { turningOn: boolean } = { turningOn: true };
     try {
-      await featureExistingInMedia(spreadsheetId, alumniId, kind, fileId);
+      toggleResult = await featureExistingInMedia(spreadsheetId, alumniId, kind, fileId);
     } catch (e: any) {
       const msg = String(e?.message || e);
       // If the fileId isn't present yet, create a minimal row and retry
@@ -156,20 +163,30 @@ export async function POST(req: Request) {
             }),
           "Sheets append Profile-Media (stub for missing fileId)"
         );
-        // Retry the flip now that the row exists
-        await featureExistingInMedia(spreadsheetId, alumniId, kind, fileId);
+        toggleResult = await featureExistingInMedia(spreadsheetId, alumniId, kind, fileId);
       } else {
         throw e; // bubble up other errors
       }
     }
 
-    // 2) Update Live pointer + needs_review + lastChangeType="media"
-    const updatedCol = await setLivePointer(spreadsheetId, alumniId, kind, fileId, nowIso);
+    // 2) Update Profile-Live pointer only when turning ON a feature.
+    //    When turning OFF (unfeaturing), skip the pointer write so we don't
+    //    overwrite featuredAlbumId with the ID we just removed.
+    if (toggleResult.turningOn) {
+      const updatedCol = await setLivePointer(spreadsheetId, alumniId, kind, fileId, nowIso);
+      return NextResponse.json({
+        ok: true,
+        updated: { [updatedCol]: fileId },
+        turningOn: true,
+        status: "needs_review",
+        at: nowIso,
+      });
+    }
 
     return NextResponse.json({
       ok: true,
-      updated: { [updatedCol]: fileId },
-      status: "needs_review",
+      updated: { removed: fileId },
+      turningOn: false,
       at: nowIso,
     });
   } catch (e: any) {

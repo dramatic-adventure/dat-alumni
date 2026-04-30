@@ -168,7 +168,7 @@ export async function GET(req: Request) {
       .toLowerCase() as AnyKind;
 
     // NOTE: parseIntSafe returns number even for 0; clamp ourselves.
-    const limit = Math.min(Math.max(parseIntSafe(searchParams.get("limit"), 50), 1), 100);
+    const limit = Math.min(Math.max(parseIntSafe(searchParams.get("limit"), 50), 1), 200);
     const offset = Math.max(parseIntSafe(searchParams.get("offset"), 0), 0);
 
     const includeDrive =

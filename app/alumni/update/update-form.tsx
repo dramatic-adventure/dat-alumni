@@ -156,6 +156,8 @@ const targetAlumniIdFromProp =
   const impactSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [eventSavedRecently, setEventSavedRecently] = useState(false);
   const eventSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [mediaSavedRecently, setMediaSavedRecently] = useState(false);
+  const mediaSavedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const searchParams = useSearchParams();
 
@@ -2328,6 +2330,15 @@ return (
         openPicker={openPicker}
         showToastError={(msg) => showToastRef.current?.(msg, "error")}
         saveCategory={saveCategory as any}
+        alumniId={stableAlumniId}
+        profile={profile}
+        setProfile={setProfile}
+        savedRecently={mediaSavedRecently}
+        onSaved={() => {
+          if (mediaSavedTimeoutRef.current) clearTimeout(mediaSavedTimeoutRef.current);
+          setMediaSavedRecently(true);
+          mediaSavedTimeoutRef.current = setTimeout(() => setMediaSavedRecently(false), 2500);
+        }}
       />
     }
     contactPanel={

@@ -393,13 +393,18 @@ export const LIVE_ASSET_COL: Record<MediaKind, string> = {
   event: "featuredEventId",
 };
 
-/** Flip featured/current flags in Profile-Media for an existing externalUrl */
+/**
+ * Toggle isFeatured/isCurrent for a URL-based media item in Profile-Media.
+ * Same multi-select semantics as featureExistingInMedia — album is toggled
+ * per-item; other kinds are single-select.
+ * Returns { turningOn: boolean }.
+ */
 export async function featureExistingInMediaByUrl(
   spreadsheetId: string,
   alumniId: string,
   kind: MediaKind,
   externalUrl: string
-) {
+): Promise<{ turningOn: boolean }> {
   const sheets = sheetsClient();
   const media = await withRetry(
     () =>
@@ -447,23 +452,30 @@ export async function featureExistingInMediaByUrl(
 
   if (targetIndex == null) throw new Error("externalUrl not found for this alumni/kind");
 
-  const data: { range: string; values: string[][] }[] = [];
-
-  const selected = rows[targetIndex] as string[];
+  const selected = [...(rows[targetIndex] as string[])];
   while (selected.length < mh.length) selected.push("");
-  selected[flagColIdx] = "TRUE";
-  data.push({
-    range: `Profile-Media!A${targetIndex + 2}:L${targetIndex + 2}`,
-    values: [selected],
-  });
+  const currentlyOn = String(selected[flagColIdx] || "").toUpperCase() === "TRUE";
+  const turningOn   = !currentlyOn;
 
-  for (const i of targetRowIndices) {
-    if (i === targetIndex) continue;
-    const row = rows[i] as string[];
-    while (row.length < mh.length) row.push("");
-    if (row[flagColIdx] === "TRUE") {
-      row[flagColIdx] = "FALSE";
-      data.push({ range: `Profile-Media!A${i + 2}:L${i + 2}`, values: [row] });
+  selected[flagColIdx] = turningOn ? "TRUE" : "FALSE";
+
+  const data: { range: string; values: string[][] }[] = [
+    {
+      range: `Profile-Media!A${targetIndex + 2}:L${targetIndex + 2}`,
+      values: [selected],
+    },
+  ];
+
+  // Single-select kinds: clear others when turning ON
+  if (kind !== "album" && turningOn) {
+    for (const i of targetRowIndices) {
+      if (i === targetIndex) continue;
+      const row = [...(rows[i] as string[])];
+      while (row.length < mh.length) row.push("");
+      if (String(row[flagColIdx] || "").toUpperCase() === "TRUE") {
+        row[flagColIdx] = "FALSE";
+        data.push({ range: `Profile-Media!A${i + 2}:L${i + 2}`, values: [row] });
+      }
     }
   }
 
@@ -477,15 +489,31 @@ export async function featureExistingInMediaByUrl(
       "Sheets batchUpdate Profile-Media (feature existing by url)"
     );
   }
+
+  return { turningOn };
 }
 
-/** Flip featured/current flags in Profile-Media for an existing fileId */
+/**
+ * Toggle isFeatured/isCurrent for a media item in Profile-Media.
+ *
+ * Invariants:
+ *   - Toggle direction is read from the sheet, not passed by the caller:
+ *     current flag TRUE → turns off; anything else → turns on.
+ *   - album (multi-select): only the target row is written; no other rows are
+ *     touched in either direction. The caller enforces the MAX_FEATURED cap.
+ *   - headshot / reel / event (single-select): when turning ON, every other
+ *     row for this alumni+kind currently set to TRUE is cleared to FALSE.
+ *     When turning OFF, only the target row is written.
+ *
+ * Returns { turningOn: boolean } so the caller can skip the Profile-Live
+ * pointer write when turning OFF (avoids overwriting with the removed item).
+ */
 export async function featureExistingInMedia(
   spreadsheetId: string,
   alumniId: string,
   kind: MediaKind,
   fileId: string
-) {
+): Promise<{ turningOn: boolean }> {
   const sheets = sheetsClient();
   const media = await withRetry(
     () =>
@@ -530,23 +558,33 @@ export async function featureExistingInMedia(
 
   if (targetIndex == null) throw new Error("fileId not found for this alumni/kind");
 
-  const data: { range: string; values: string[][] }[] = [];
-
-  const selected = rows[targetIndex] as string[];
+  // Determine toggle direction
+  const selected = [...(rows[targetIndex] as string[])];
   while (selected.length < mh.length) selected.push("");
-  selected[flagColIdx] = "TRUE";
-  data.push({
-    range: `Profile-Media!A${targetIndex + 2}:L${targetIndex + 2}`,
-    values: [selected],
-  });
+  const currentlyOn = String(selected[flagColIdx] || "").toUpperCase() === "TRUE";
+  const turningOn   = !currentlyOn;
 
-  for (const i of targetRowIndices) {
-    if (i === targetIndex) continue;
-    const row = rows[i] as string[];
-    while (row.length < mh.length) row.push("");
-    if (row[flagColIdx] === "TRUE") {
-      row[flagColIdx] = "FALSE";
-      data.push({ range: `Profile-Media!A${i + 2}:L${i + 2}`, values: [row] });
+  selected[flagColIdx] = turningOn ? "TRUE" : "FALSE";
+
+  const data: { range: string; values: string[][] }[] = [
+    {
+      range: `Profile-Media!A${targetIndex + 2}:L${targetIndex + 2}`,
+      values: [selected],
+    },
+  ];
+
+  // For single-select kinds (headshot, reel, event): when turning ON, also
+  // clear every other row for this alumni+kind so only one is active at once.
+  // For album (multi-select): never touch other rows — let callers cap at 4.
+  if (kind !== "album" && turningOn) {
+    for (const i of targetRowIndices) {
+      if (i === targetIndex) continue;
+      const row = [...(rows[i] as string[])];
+      while (row.length < mh.length) row.push("");
+      if (String(row[flagColIdx] || "").toUpperCase() === "TRUE") {
+        row[flagColIdx] = "FALSE";
+        data.push({ range: `Profile-Media!A${i + 2}:L${i + 2}`, values: [row] });
+      }
     }
   }
 
@@ -560,6 +598,8 @@ export async function featureExistingInMedia(
       "Sheets batchUpdate Profile-Media (feature existing)"
     );
   }
+
+  return { turningOn };
 }
 
 /** Set isCurrent = FALSE on every Profile-Media row for this alumni + kind */

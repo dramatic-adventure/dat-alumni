@@ -10,11 +10,12 @@ import Lightbox from "@/components/shared/Lightbox";
 interface MediaItem {
   fileId: string;
   kind: string;
-  collectionTitle?: string; // preserved for album grouping follow-up
-  collectionId?: string;    // preserved for album grouping follow-up
+  collectionTitle?: string;
+  collectionId?: string;
   externalUrl?: string;
   uploadedAt?: string;
   note?: string;
+  isFeatured?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -26,228 +27,81 @@ function toThumbUrl(item: MediaItem, w = 600): string {
   return "";
 }
 
-// ---------------------------------------------------------------------------
-// Fan layout config
-// Each entry: [rotateDeg, translateX(px), translateY(px), zIndex]
-// ---------------------------------------------------------------------------
-const FAN_SLOTS: [number, number, number, number][][] = [
-  // 1 item — centred, no rotation
-  [[0, 0, 0, 1]],
-  // 2 items
-  [[-5, -18, 6, 1], [5, 18, 4, 2]],
-  // 3 items
-  [[-8, -34, 10, 1], [0, 0, 0, 3], [7, 34, 8, 2]],
-  // 4 items
-  [[-10, -48, 14, 1], [-3, -16, 5, 2], [4, 16, 5, 3], [10, 48, 14, 4]],
-];
-
-const CARD_W = 148;
-const CARD_H = 196;
-
-// Grid: show this many photo slots before the "+N more" card
-const GRID_PHOTOS_BEFORE_EXPAND = 4;
-
-// ---------------------------------------------------------------------------
-// PhotoCard — Polaroid-style, absolutely positioned inside fan container
-// ---------------------------------------------------------------------------
-interface PhotoCardProps {
-  src: string;
-  alt: string;
-  rotate: number;
-  tx: number;
-  ty: number;
-  zIndex: number;
-  onClick: () => void;
-}
-
-function PhotoCard({ src, alt, rotate, tx, ty, zIndex, onClick }: PhotoCardProps) {
-  const [errored, setErrored] = useState(false);
-
-  const baseTransform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) rotate(${rotate}deg)`;
-  const hoverTransform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty - 10}px)) rotate(${rotate * 0.4}deg) scale(1.05)`;
-
-  return (
-    <button
-      type="button"
-      aria-label={alt}
-      onClick={onClick}
-      style={{
-        position: "absolute",
-        left: "50%",
-        top: "50%",
-        width: CARD_W,
-        height: CARD_H,
-        transform: baseTransform,
-        zIndex,
-        border: "none",
-        padding: 0,
-        cursor: "pointer",
-        borderRadius: 4,
-        overflow: "hidden",
-        boxShadow: "0 5px 20px rgba(0,0,0,0.55), 0 1px 5px rgba(0,0,0,0.3)",
-        transition: "transform 0.22s cubic-bezier(.22,.68,0,1.2), box-shadow 0.2s ease, z-index 0s",
-        background: "#1a0c22",
-      }}
-      onMouseEnter={(e) => {
-        const el = e.currentTarget;
-        el.style.transform = hoverTransform;
-        el.style.zIndex = "20";
-        el.style.boxShadow = "0 12px 36px rgba(0,0,0,0.65), 0 2px 10px rgba(0,0,0,0.4)";
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget;
-        el.style.transform = baseTransform;
-        el.style.zIndex = String(zIndex);
-        el.style.boxShadow = "0 5px 20px rgba(0,0,0,0.55), 0 1px 5px rgba(0,0,0,0.3)";
-      }}
-    >
-      {/* Polaroid/photo paper border */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          border: "7px solid #f5f0e8",
-          borderBottom: "26px solid #f5f0e8",
-          zIndex: 2,
-          borderRadius: 3,
-          pointerEvents: "none",
-        }}
-      />
-      {!errored && src ? (
-        <img
-          src={src}
-          alt={alt}
-          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          onError={() => setErrored(true)}
-        />
-      ) : (
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            background: "linear-gradient(135deg, #2a1035 0%, #1a0c22 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#6C00AF",
-            fontSize: 28,
-          }}
-        >
-          ◈
-        </div>
-      )}
-    </button>
-  );
+// Group by collectionId (fall back to collectionTitle, then "uncategorized")
+function groupByCollection(
+  items: MediaItem[],
+): Array<{ title: string; id: string; items: MediaItem[] }> {
+  const map = new Map<string, { title: string; id: string; items: MediaItem[] }>();
+  for (const item of items) {
+    const key = item.collectionId || item.collectionTitle || "__uncategorized__";
+    const title = item.collectionTitle || "Photos";
+    if (!map.has(key)) map.set(key, { title, id: key, items: [] });
+    map.get(key)!.items.push(item);
+  }
+  return Array.from(map.values()).filter((c) => c.items.length > 0);
 }
 
 // ---------------------------------------------------------------------------
-// GridCard — compact square thumbnail for grid layout
+// Fan layout — stolen exactly from JoinTheJourneyPanel (/story-map)
 // ---------------------------------------------------------------------------
-interface GridCardProps {
-  src: string;
-  alt: string;
-  hiddenCount?: number; // if > 0, render "+N" overlay instead of showing as photo
-  onClick: () => void;
-}
+const ROTATIONS_DESKTOP = [-12, -4, 6, 15];
+const ROTATIONS_MOBILE  = [-10, -3,  7, 14];
+const XOFFSETS_DESKTOP  = [-96, -42, 27, 78];
+const XOFFSETS_MOBILE   = [-54, -18, 18, 54];
+const Z_ORDER           = [10, 20, 30, 40];
 
-function GridCard({ src, alt, hiddenCount = 0, onClick }: GridCardProps) {
-  const [errored, setErrored] = useState(false);
-  const isOverlay = hiddenCount > 0;
-
-  return (
-    <button
-      type="button"
-      aria-label={isOverlay ? `View ${hiddenCount} more photos` : alt}
-      onClick={onClick}
-      style={{
-        position: "relative",
-        width: "100%",
-        aspectRatio: "1 / 1",
-        border: "none",
-        padding: 0,
-        cursor: "pointer",
-        borderRadius: 8,
-        overflow: "hidden",
-        boxShadow: "0 2px 12px rgba(0,0,0,0.4)",
-        transition: "transform 0.18s ease, box-shadow 0.18s ease",
-        background: "#1a0c22",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "scale(1.03)";
-        e.currentTarget.style.boxShadow = "0 6px 24px rgba(0,0,0,0.55)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "scale(1)";
-        e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.4)";
-      }}
-    >
-      {!errored && src ? (
-        <img
-          src={src}
-          alt={alt}
-          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          onError={() => setErrored(true)}
-        />
-      ) : (
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            background: "linear-gradient(135deg, #2a1035 0%, #1a0c22 100%)",
-          }}
-        />
-      )}
-      {isOverlay && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: "rgba(24, 14, 31, 0.78)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 4,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-              fontSize: "clamp(1.4rem, 4vw, 2rem)",
-              fontWeight: 700,
-              color: "#FFCC00",
-              lineHeight: 1,
-            }}
-          >
-            +{hiddenCount}
-          </span>
-          <span
-            style={{
-              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: "0.75rem",
-              color: "#c0a8d4",
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-            }}
-          >
-            more
-          </span>
-        </div>
-      )}
-    </button>
-  );
+// Adjusted offsets/rotations for fewer than 4 cards (keeps fan centered)
+function getFanParams(
+  count: number,
+  mobile: boolean,
+): { rotations: number[]; xOffsets: number[] } {
+  if (count === 4) {
+    return {
+      rotations: mobile ? ROTATIONS_MOBILE : ROTATIONS_DESKTOP,
+      xOffsets:  mobile ? XOFFSETS_MOBILE  : XOFFSETS_DESKTOP,
+    };
+  }
+  if (count === 3) {
+    return {
+      rotations: mobile ? [-9,  0,  9] : [-10, 0,  10],
+      xOffsets:  mobile ? [-42, 0, 42] : [-66, 0, 66],
+    };
+  }
+  if (count === 2) {
+    return {
+      rotations: mobile ? [-7, 7] : [-8, 8],
+      xOffsets:  mobile ? [-24, 24] : [-39, 39],
+    };
+  }
+  // 1 item
+  return { rotations: [0], xOffsets: [0] };
 }
 
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
-  const [items, setItems] = useState<MediaItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState(false);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [fanItems,         setFanItems]    = useState<MediaItem[]>([]);
+  const [collections,      setCollections] = useState<Array<{ title: string; id: string; items: MediaItem[] }>>([]);
+  const [loading,          setLoading]     = useState(true);
+  const [isMobile,         setIsMobile]    = useState(false);
+  const [showCollections,  setShowCollections] = useState(false);
 
+  // Shared lightbox
+  const [lightboxImages, setLightboxImages] = useState<string[]>([]);
+  const [lightboxIndex,  setLightboxIndex]  = useState(0);
+  const [lightboxOpen,   setLightboxOpen]   = useState(false);
+
+  // Responsive breakpoint
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 768px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  // Data fetch
   useEffect(() => {
     if (!alumniId) return;
     let alive = true;
@@ -255,34 +109,47 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
 
     (async () => {
       try {
-        // Fetch album + reel media — featuredOnly=true ensures the server only
-        // returns rows where isFeatured is explicitly truthy. Unfeatured/private
-        // media is never included in the response; no client-side filtering needed.
-        const base = `/api/media/list?alumniId=${encodeURIComponent(alumniId)}&featuredOnly=true`;
-        const [albumRes, reelRes] = await Promise.allSettled([
-          fetch(`${base}&kind=album&limit=50`),
-          fetch(`${base}&kind=reel&limit=20`),
+        const base = `/api/media/list?alumniId=${encodeURIComponent(alumniId)}`;
+
+        // Featured (fan) + full album library (collections) in parallel
+        const [featuredRes, allRes] = await Promise.allSettled([
+          fetch(`${base}&featuredOnly=true&kind=album&limit=4`),
+          fetch(`${base}&kind=album&limit=200`),
         ]);
 
-        const all: MediaItem[] = [];
+        let featured: MediaItem[] = [];
+        let all: MediaItem[] = [];
 
-        if (albumRes.status === "fulfilled" && albumRes.value.ok) {
-          const j = await albumRes.value.json();
-          if (Array.isArray(j?.items)) all.push(...j.items);
+        if (featuredRes.status === "fulfilled" && featuredRes.value.ok) {
+          const j = await featuredRes.value.json();
+          if (Array.isArray(j?.items)) {
+            featured = j.items
+              .sort(
+                (a: MediaItem, b: MediaItem) =>
+                  (Date.parse(b.uploadedAt || "") || 0) -
+                  (Date.parse(a.uploadedAt || "") || 0),
+              )
+              .slice(0, 4);
+          }
         }
-        if (reelRes.status === "fulfilled" && reelRes.value.ok) {
-          const j = await reelRes.value.json();
-          if (Array.isArray(j?.items)) all.push(...j.items);
+
+        if (allRes.status === "fulfilled" && allRes.value.ok) {
+          const j = await allRes.value.json();
+          if (Array.isArray(j?.items)) {
+            all = j.items.sort(
+              (a: MediaItem, b: MediaItem) =>
+                (Date.parse(b.uploadedAt || "") || 0) -
+                (Date.parse(a.uploadedAt || "") || 0),
+            );
+          }
         }
 
-        // Server has already filtered to featured-only; just sort.
-        all.sort(
-          (a, b) => (Date.parse(b.uploadedAt || "") || 0) - (Date.parse(a.uploadedAt || "") || 0),
-        );
-
-        if (alive) setItems(all);
+        if (alive) {
+          setFanItems(featured);
+          setCollections(groupByCollection(all));
+        }
       } catch {
-        // swallow — section stays hidden
+        // swallow — section stays hidden on error
       } finally {
         if (alive) setLoading(false);
       }
@@ -293,170 +160,333 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
     };
   }, [alumniId]);
 
-  const lightboxUrls = items.map((it) => toThumbUrl(it, 1600));
-
-  const openLightbox = useCallback((idx: number) => {
-    setLightboxIndex(idx);
+  const openLightboxFor = useCallback((images: string[], index: number) => {
+    setLightboxImages(images);
+    setLightboxIndex(index);
     setLightboxOpen(true);
   }, []);
 
-  // Hide section when loading or no public media
-  if (loading || items.length === 0) return null;
+  // Hide section when loading or no content
+  if (loading || (fanItems.length === 0 && collections.length === 0)) return null;
 
-  const count = items.length;
-  const isFanMode = count <= 4;
+  const count = fanItems.length;
+  const { rotations, xOffsets } = getFanParams(count, isMobile);
 
-  // Grid mode: show GRID_PHOTOS_BEFORE_EXPAND photos + "+N" slot (if needed)
-  const gridSlots = expanded ? count : Math.min(GRID_PHOTOS_BEFORE_EXPAND + 1, count);
-  const hiddenInLastSlot =
-    !expanded && count > GRID_PHOTOS_BEFORE_EXPAND + 1
-      ? count - GRID_PHOTOS_BEFORE_EXPAND
-      : 0;
+  // Container height stolen exactly from JoinTheJourneyPanel
+  const fanContainerH = isMobile
+    ? "clamp(180px, 42vw, 336px)"
+    : "clamp(144px, 30vw, 336px)";
 
-  // Fan container dimensions — enough horizontal spread + vertical clearance for rotated cards
-  const fanSpread = count > 1 ? (count - 1) * 56 : 0;
-  const fanContainerW = CARD_W + fanSpread + 32;
-  const fanContainerH = CARD_H + 48;
+  const fanImageUrls = fanItems.map((it) => toThumbUrl(it, 1600));
+
+  // Collection stack constants
+  const STACK_W   = isMobile ? 72 : 90;
+  const STACK_H   = isMobile ? 72 : 90;
+  const STACK_PAD = 18; // padding around stack for rotation bleed
+  const layerRotations = [-5, 3, 0]; // bottom → top
 
   return (
     <section
       aria-label="Photos &amp; Media"
       style={{
-        background: "#180e1f",
-        padding: isFanMode ? "3.5rem 30px 4rem" : "3rem 30px 3.5rem",
+        background: "#3FA9BE",
+        padding: "4rem 0 4.5rem",
+        overflow: "visible",
       }}
     >
-      {/* ── Header ─────────────────────────────────────────────── */}
-      <div style={{ marginBottom: isFanMode ? "2.5rem" : "1.5rem" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-            fontSize: "clamp(2rem, 5vw, 3rem)",
-            color: "#FFCC00",
-            margin: 0,
-            lineHeight: 1,
-          }}
-        >
-          Photos &amp; Media
-        </h2>
-        {count > 1 && (
-          <p
-            style={{
-              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: "0.9rem",
-              color: "#7a4f90",
-              margin: "0.35rem 0 0",
-              letterSpacing: "0.02em",
-            }}
-          >
-            {count} {count === 1 ? "photo" : "photos"}
-          </p>
-        )}
-      </div>
-
-      {/* ── Fan layout (1–4 items) ──────────────────────────────── */}
-      {isFanMode && (
-        <div style={{ display: "flex", justifyContent: "center" }}>
+      {/* ── Fan — exact JoinTheJourneyPanel implementation ─────── */}
+      {fanItems.length > 0 && (
+        <div style={{ overflow: "visible", marginBottom: "3.5rem" }}>
+          {/* Centered fan container (70vw cap) — stolen exactly */}
           <div
-            role="list"
+            aria-label="Featured photos"
+            role="region"
             style={{
-              position: "relative",
-              width: fanContainerW,
+              margin: "0 auto",
+              width: "min(42vw, 660px)",
               height: fanContainerH,
+              overflow: "visible",
+              position: "relative",
             }}
           >
-            {items.map((item, i) => {
-              const [rotate, tx, ty, zIdx] = FAN_SLOTS[count - 1]?.[i] ?? [0, 0, 0, i + 1];
+            {fanItems.map((item, i) => {
+              const rotation = rotations[i] ?? 0;
+              const dx       = xOffsets[i] ?? 0;
+              const z        = Z_ORDER[i] ?? i + 1;
+              const src      = toThumbUrl(item, 1200);
+
               return (
-                <PhotoCard
+                <button
                   key={item.fileId || i}
-                  src={toThumbUrl(item, 600)}
-                  alt={item.collectionTitle || item.note || `Photo ${i + 1}`}
-                  rotate={rotate}
-                  tx={tx}
-                  ty={ty}
-                  zIndex={zIdx}
-                  onClick={() => openLightbox(i)}
-                />
+                  onClick={() => openLightboxFor(fanImageUrls, i)}
+                  aria-label={`Open photo ${i + 1}`}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: "50%",
+                    height: "100%",
+                    aspectRatio: isMobile ? "2 / 3" : "3 / 2",
+                    width: "auto",
+                    transform: `translateX(-50%) translateX(${dx}px) rotate(${rotation}deg)`,
+                    zIndex: z,
+                    border: "none",
+                    padding: 0,
+                    background: "transparent",
+                    cursor: "pointer",
+                    transition:
+                      "transform 180ms ease, box-shadow 180ms ease, z-index 0s",
+                    overflow: "visible",
+                  }}
+                  onMouseEnter={(e) => {
+                    const el = e.currentTarget;
+                    el.style.transform = `translateX(-50%) translateX(${dx}px) rotate(0deg) translateY(-4px) scale(1.02)`;
+                    el.style.zIndex = "99";
+                    const sheen = el.querySelector(
+                      ".pms-sheen",
+                    ) as HTMLDivElement | null;
+                    if (sheen) sheen.style.opacity = "0.28";
+                  }}
+                  onMouseLeave={(e) => {
+                    const el = e.currentTarget;
+                    el.style.transform = `translateX(-50%) translateX(${dx}px) rotate(${rotation}deg)`;
+                    el.style.zIndex = String(z);
+                    const sheen = el.querySelector(
+                      ".pms-sheen",
+                    ) as HTMLDivElement | null;
+                    if (sheen) sheen.style.opacity = "0";
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: "100%",
+                      boxShadow: "0 18px 48px rgba(0,0,0,0.38)",
+                      background: "#111",
+                      borderRadius: 0,
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={src}
+                      alt={item.collectionTitle || item.note || `Photo ${i + 1}`}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        display: "block",
+                        userSelect: "none",
+                        pointerEvents: "none",
+                      }}
+                    />
+                    {/* Sheen — fades in on hover, pinned to each photo */}
+                    <div
+                      className="pms-sheen"
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        pointerEvents: "none",
+                        background:
+                          "linear-gradient(110deg, rgba(255,255,255,0.00) 18%, rgba(255,255,255,0.55) 34%, rgba(255,255,255,0.10) 48%, rgba(255,255,255,0.00) 62%)",
+                        opacity: 0,
+                        transition: "opacity 160ms ease",
+                        borderRadius: 0,
+                      }}
+                    />
+                  </div>
+                </button>
               );
             })}
           </div>
         </div>
       )}
 
-      {/* ── Grid layout (5+ items) ─────────────────────────────── */}
-      {!isFanMode && (
-        <>
+      {/* ── Collections — iMessage-style stacks ─────────────────── */}
+      {collections.length > 0 && (
+        <div style={{ padding: "0 clamp(20px, 5vw, 60px)" }}>
+          {/* Reveal / hide toggle */}
+          <div style={{ textAlign: "center", marginBottom: showCollections ? "1.25rem" : 0 }}>
+            <button
+              type="button"
+              onClick={() => setShowCollections((v) => !v)}
+              style={{
+                background: "rgba(0,0,0,0.18)",
+                border: "1px solid rgba(255,255,255,0.18)",
+                borderRadius: 24,
+                padding: "7px 20px",
+                cursor: "pointer",
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                fontSize: isMobile ? 12 : 13,
+                fontWeight: 600,
+                color: "rgba(255,255,255,0.82)",
+                letterSpacing: "0.03em",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                transition: "background 0.18s, opacity 0.18s",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.3)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.18)";
+              }}
+            >
+              <span style={{ fontSize: isMobile ? 14 : 16, lineHeight: 1 }}>
+                {showCollections ? "▲" : "◈"}
+              </span>
+              {showCollections
+                ? "Hide collections"
+                : `View collections · ${collections.length} album${collections.length !== 1 ? "s" : ""}`}
+            </button>
+          </div>
+
+          {/* Scrollable stacks — only rendered when revealed */}
+          {showCollections && (
           <div
-            role="list"
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-              gap: 10,
-              maxWidth: 860,
-            }}
+              display: "flex",
+              gap: isMobile ? 16 : 28,
+              overflowX: "auto",
+              paddingBottom: 12,
+              paddingTop: 8,
+              /* hide scrollbar but keep scrollability */
+              scrollbarWidth: "none",
+              WebkitOverflowScrolling: "touch",
+            } as React.CSSProperties}
           >
-            {items.slice(0, gridSlots).map((item, i) => {
-              const isLastSlot = !expanded && i === gridSlots - 1 && hiddenInLastSlot > 0;
+            {collections.map((col) => {
+              // Show up to 3 images in the stack (rendered bottom-to-top)
+              const stackImgs  = col.items.slice(0, 3).reverse();
+              const totalCount = col.items.length;
+              const colUrls    = col.items.map((it) => toThumbUrl(it, 1600));
+              const containerW = STACK_W + STACK_PAD * 2;
+              const containerH = STACK_H + STACK_PAD * 2;
+
               return (
-                <GridCard
-                  key={item.fileId || i}
-                  src={toThumbUrl(item, 600)}
-                  alt={item.collectionTitle || item.note || `Photo ${i + 1}`}
-                  hiddenCount={isLastSlot ? hiddenInLastSlot : 0}
-                  onClick={() => {
-                    if (isLastSlot) setExpanded(true);
-                    else openLightbox(i);
+                <button
+                  key={col.id}
+                  type="button"
+                  onClick={() => openLightboxFor(colUrls, 0)}
+                  style={{
+                    flexShrink: 0,
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 7,
+                    transition: "opacity 150ms ease",
                   }}
-                />
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.opacity = "0.8";
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.opacity = "1";
+                  }}
+                >
+                  {/* Photo stack */}
+                  <div
+                    style={{
+                      position: "relative",
+                      width: containerW,
+                      height: containerH,
+                    }}
+                  >
+                    {stackImgs.map((img, si) => (
+                      <div
+                        key={img.fileId || si}
+                        style={{
+                          position: "absolute",
+                          width: STACK_W,
+                          height: STACK_H,
+                          top: "50%",
+                          left: "50%",
+                          transform: `translate(-50%, -50%) rotate(${layerRotations[si] ?? 0}deg)`,
+                          zIndex: si + 1,
+                          borderRadius: 10,
+                          overflow: "hidden",
+                          boxShadow: "0 3px 14px rgba(0,0,0,0.32)",
+                          background: "#1a0c22",
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={toThumbUrl(img, 300)}
+                          alt=""
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                          }}
+                        />
+                      </div>
+                    ))}
+
+                    {/* Photo count badge */}
+                    {totalCount > 1 && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: STACK_PAD - 4,
+                          right: STACK_PAD - 6,
+                          zIndex: 10,
+                          background: "rgba(24,14,31,0.82)",
+                          backdropFilter: "blur(4px)",
+                          borderRadius: 12,
+                          padding: "2px 7px",
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: "#FFCC00",
+                          fontFamily:
+                            "var(--font-space-grotesk), system-ui, sans-serif",
+                          letterSpacing: "0.02em",
+                          lineHeight: 1.4,
+                          pointerEvents: "none",
+                        }}
+                      >
+                        {totalCount}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Collection label */}
+                  <div style={{ textAlign: "center", maxWidth: containerW + 12 }}>
+                    <div
+                      style={{
+                        fontFamily:
+                          "var(--font-space-grotesk), system-ui, sans-serif",
+                        fontSize: isMobile ? 11 : 12,
+                        fontWeight: 600,
+                        color: "#241123",
+                        opacity: 0.82,
+                        letterSpacing: "0.01em",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {col.title}
+                    </div>
+                  </div>
+                </button>
               );
             })}
           </div>
-
-          {expanded && count > GRID_PHOTOS_BEFORE_EXPAND + 1 && (
-            <button
-              type="button"
-              onClick={() => setExpanded(false)}
-              style={{
-                marginTop: "1.25rem",
-                fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                fontSize: "0.85rem",
-                color: "#7a4f90",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                letterSpacing: "0.04em",
-                padding: "4px 0",
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-              }}
-            >
-              Show fewer
-            </button>
-          )}
-        </>
-      )}
-
-      {/* ── Click hint for fan ─────────────────────────────────── */}
-      {isFanMode && (
-        <p
-          style={{
-            textAlign: "center",
-            marginTop: "1.75rem",
-            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-            fontSize: "0.75rem",
-            color: "#4a2860",
-            letterSpacing: "0.07em",
-            textTransform: "uppercase",
-          }}
-        >
-          {count === 1 ? "Click to view" : "Click a photo to view"}
-        </p>
+          )} {/* end showCollections */}
+        </div>
       )}
 
       {/* ── Lightbox ───────────────────────────────────────────── */}
-      {lightboxOpen && lightboxUrls.length > 0 && (
-        <Lightbox images={lightboxUrls} startIndex={lightboxIndex} onClose={() => setLightboxOpen(false)} />
+      {lightboxOpen && lightboxImages.length > 0 && (
+        <Lightbox
+          images={lightboxImages}
+          startIndex={lightboxIndex}
+          onClose={() => setLightboxOpen(false)}
+        />
       )}
     </section>
   );
