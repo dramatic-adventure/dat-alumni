@@ -104,15 +104,17 @@ const CARD_CSS = `
   /* ── Also Supporting cards ── */
   .cs-also-card {
     cursor: pointer;
-    transition: transform 180ms ease-out, box-shadow 180ms ease-out;
+    opacity: 0.28;
+    transition: transform 180ms ease-out, box-shadow 180ms ease-out, opacity 240ms ease-out;
     box-shadow: 0 4px 16px rgba(0,0,0,0.08);
     border-radius: 14px;
     border: 1px solid rgba(36,17,35,0.12);
     background: transparent;
   }
   .cs-also-card:hover {
+    opacity: 1;
     transform: scale(1.015);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.28);
   }
   .cs-also-bg {
     border-radius: 14px;
@@ -467,7 +469,7 @@ export default function CommunitySection({
   return (
     <section
       style={{
-        backgroundColor: "#3FA9BE",
+        backgroundColor: "#2493A9",
         padding: isMobile ? "3rem 24px 3.5rem" : "4.5rem 60px 5rem",
       }}
     >
@@ -476,12 +478,12 @@ export default function CommunitySection({
         <p
           style={{
             fontFamily: FF_GROTESK,
-            fontSize: "0.78rem",
+            fontSize: "0.68rem",
             textTransform: "uppercase",
-            letterSpacing: "0.2rem",
-            fontWeight: 600,
+            letterSpacing: "0.18em",
+            fontWeight: 700,
             color: "rgba(36,17,35,0.5)",
-            margin: "0 0 0.75rem 0",
+            margin: "0 0 1.5rem 0",
           }}
         >
           Proud to Support

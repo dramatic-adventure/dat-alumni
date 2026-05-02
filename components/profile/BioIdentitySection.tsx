@@ -124,11 +124,11 @@ export default function BioIdentitySection({
           gridTemplateColumns: useGrid ? "0.925fr 0.675fr" : undefined,
         }}
       >
-        {/* ── Left column: bio (teal) ───────────────────────────────────── */}
+        {/* ── Left column: bio (light) ─────────────────────────────────── */}
         {hasBio && (
           <div
             style={{
-              backgroundColor: "#2493A9",
+              backgroundColor: "#f2f2f2",
               padding: `${paddingTop} clamp(2.5rem, 5vw, 5rem) ${isMobile ? "3rem" : "5rem"}`,
             }}
           >
@@ -221,8 +221,8 @@ export default function BioIdentitySection({
                     marginTop: "3.75rem",
                     padding: "1.1rem 1.4rem",
                     borderRadius: 10,
-                    background: "rgba(217,169,25,0.08)",
-                    border: "1px solid rgba(217,169,25,0.22)",
+                    background: "rgba(36,17,35,0.82)",
+                    border: "1px solid rgba(217,169,25,0.28)",
                   }}
                 >
                   <p
@@ -250,13 +250,13 @@ export default function BioIdentitySection({
                             fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                             fontSize: "1.25rem",
                             fontWeight: 600,
-                            color: "#241123",
+                            color: "#F2F2F2",
                             margin: 0,
                             lineHeight: 1.3,
                             transition: "color 140ms",
                           }}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = "#D9A919"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#FFCC00"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#F2F2F2"; }}
                         >
                           {featuredCause.label}
                         </p>
@@ -266,7 +266,7 @@ export default function BioIdentitySection({
                           style={{
                             fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                             fontSize: "0.82rem",
-                            color: "#241123cc",
+                            color: "rgba(242,242,242,0.65)",
                             lineHeight: 1.55,
                             margin: "0.55rem 0 0 0",
                           }}
