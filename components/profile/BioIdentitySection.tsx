@@ -111,282 +111,287 @@ export default function BioIdentitySection({
   const hasBio = bio.length > 0;
   const useGrid = !isMobile && hasBio && hasAnyTags;
 
-  const eyebrow = (
-    <p
-      style={{
-        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-        fontSize: "0.78rem",
-        textTransform: "uppercase",
-        letterSpacing: "0.2rem",
-        fontWeight: 600,
-        color: "#F2f2f2",
-        opacity: 0.85,
-        margin: "2rem 0 0.5rem 0",
-      }}
-    >
-      WHO I AM
-    </p>
-  );
-
   return (
     <section
       style={{
-        backgroundColor: "#2493A9",
         position: "relative",
-        padding: `${paddingTop} 60px ${isMobile ? "3rem" : "5rem"}`,
         overflow: "hidden",
+        borderTop: "3px solid #C4A35A",
       }}
     >
       <div
         style={{
-          maxWidth: "1200px",
-          margin: "0 auto",
           display: useGrid ? "grid" : "block",
           gridTemplateColumns: useGrid ? "0.925fr 0.675fr" : undefined,
-          gap: useGrid ? "6rem" : undefined,
         }}
       >
-        {/* Left column: bio */}
+        {/* ── Left column: bio (teal) ───────────────────────────────────── */}
         {hasBio && (
-          <div>
+          <div
+            style={{
+              backgroundColor: "#2493A9",
+              padding: `${paddingTop} clamp(2.5rem, 5vw, 5rem) ${isMobile ? "3rem" : "5rem"}`,
+              borderRight: useGrid ? "2px solid rgba(196,163,90,0.45)" : undefined,
+              borderBottom: !useGrid && hasAnyTags ? "2px solid rgba(196,163,90,0.35)" : undefined,
+            }}
+          >
+            <div style={{ maxWidth: useGrid ? undefined : "72ch" }}>
 
-            <p
-              style={{
-                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                fontSize: "clamp(1.4rem, 2.2vw, 1.8rem)",
-                fontWeight: 500,
-                color: "#241123d1",
-                lineHeight: 1.3,
-                margin: 0,
-                paddingTop: "1.8rem",
-                maxWidth: useGrid ? undefined : "72ch",
-              }}
-            >
-              {leadText}
-            </p>
-
-            <div
-              style={{
-                width: "5rem",
-                height: "2px",
-                backgroundColor: "#24112327",
-                margin: "1.25rem 0",
-              }}
-            />
-
-            {showBody && hasBody && (
               <p
                 style={{
-                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                  fontSize: "1rem",
-                  fontWeight: 300,
-                  lineHeight: 1.75,
-                  color: "#241123d4",
-                  margin: 0,
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                  overflowWrap: "anywhere",
-                  maxWidth: useGrid ? undefined : "72ch",
-                }}
-              >
-                {bodyText}
-              </p>
-            )}
-
-            {showToggle && (
-              <button
-                type="button"
-                onClick={() => setExpanded((e) => !e)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "#FFCC00";
-                  e.currentTarget.style.letterSpacing = "0.25rem";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "#6c00af";
-                  e.currentTarget.style.letterSpacing = "0.15rem";
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.color = "#FFCC00";
-                  e.currentTarget.style.letterSpacing = "0.25rem";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.color = "#6c00af";
-                  e.currentTarget.style.letterSpacing = "0.15rem";
-                }}
-                style={{
-                  display: "block",
-                  marginTop: "1rem",
-                  background: "none",
-                  border: "none",
-                  color: "#6c00af",
                   fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                  fontSize: "0.75rem",
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.15rem",
-                  cursor: "pointer",
-                  padding: 0,
-                  transition: "color 180ms ease, letter-spacing 180ms ease",
+                  fontSize: "clamp(1.4rem, 2.2vw, 1.8rem)",
+                  fontWeight: 500,
+                  color: "#241123d1",
+                  lineHeight: 1.3,
+                  margin: 0,
                 }}
               >
-                {expanded ? "LESS ↑" : "FULL BIO →"}
-              </button>
-            )}
+                {leadText}
+              </p>
 
-            {/* Close to My Heart — personal values appended below bio */}
-            {hasCauses && (
               <div
                 style={{
-                  marginTop: "3.75rem",
-                  padding: "1.1rem 1.4rem",
-                  borderRadius: 10,
-                  background: "rgba(108,0,175,0.075)",
-                  border: "1px solid rgba(108,0,175,0.18)",
+                  width: "5rem",
+                  height: "2px",
+                  backgroundColor: "#24112327",
+                  margin: "1.25rem 0",
                 }}
-              >
+              />
+
+              {showBody && hasBody && (
                 <p
                   style={{
-                    fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                    fontSize: "0.65rem",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.18rem",
-                    fontWeight: 600,
-                    color: "#6C00AF",
-                    margin: "0 0 0.45rem 0",
+                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                    fontSize: "1rem",
+                    fontWeight: 300,
+                    lineHeight: 1.75,
+                    color: "#241123d4",
+                    margin: 0,
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    overflowWrap: "anywhere",
                   }}
                 >
-                  {featuredCause ? "Close to My Heart" : "Causes I Stand For"}
+                  {bodyText}
                 </p>
+              )}
 
-                {featuredCause && (
-                  <>
-                    <Link
-                      href={`/cause/${featuredCause.id}`}
-                      style={{ display: "block", textDecoration: "none", cursor: "pointer" }}
-                    >
-                      <p
-                        style={{
-                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                          fontSize: "1.25rem",
-                          fontWeight: 600,
-                          color: "#f4e3ff",
-                          margin: 0,
-                          lineHeight: 1.3,
-                          transition: "color 140ms",
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "#ffcc00"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "#f4e3ff"; }}
-                      >
-                        {featuredCause.label}
-                      </p>
-                    </Link>
-                    {featuredCause.description && (
-                      <p
-                        style={{
-                          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                          fontSize: "0.82rem",
-                          color: "#2d0049d8",
-                          lineHeight: 1.55,
-                          margin: "0.55rem 0 0 0",
-                        }}
-                      >
-                        {featuredCause.description}
-                      </p>
-                    )}
-                  </>
-                )}
+              {showToggle && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded((e) => !e)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = "#FFCC00";
+                    e.currentTarget.style.letterSpacing = "0.25rem";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = "#6c00af";
+                    e.currentTarget.style.letterSpacing = "0.15rem";
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.color = "#FFCC00";
+                    e.currentTarget.style.letterSpacing = "0.25rem";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.color = "#6c00af";
+                    e.currentTarget.style.letterSpacing = "0.15rem";
+                  }}
+                  style={{
+                    display: "block",
+                    marginTop: "1rem",
+                    background: "none",
+                    border: "none",
+                    color: "#6c00af",
+                    fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                    fontSize: "0.75rem",
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.15rem",
+                    cursor: "pointer",
+                    padding: 0,
+                    transition: "color 180ms ease, letter-spacing 180ms ease",
+                  }}
+                >
+                  {expanded ? "LESS ↑" : "FULL BIO →"}
+                </button>
+              )}
 
-                {visibleCausePills.length > 0 && (
-                  <div
+              {/* Close to My Heart — personal values appended below bio */}
+              {hasCauses && (
+                <div
+                  style={{
+                    marginTop: "3.75rem",
+                    padding: "1.1rem 1.4rem",
+                    borderRadius: 10,
+                    background: "rgba(108,0,175,0.075)",
+                    border: "1px solid rgba(108,0,175,0.18)",
+                  }}
+                >
+                  <p
                     style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "0.4rem",
-                      marginTop: featuredCause ? "0.9rem" : 0,
+                      fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                      fontSize: "0.65rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.18rem",
+                      fontWeight: 600,
+                      color: "#6C00AF",
+                      margin: "0 0 0.45rem 0",
                     }}
                   >
-                    {visibleCausePills.map(({ id, label }) => (
+                    {featuredCause ? "Close to My Heart" : "Causes I Stand For"}
+                  </p>
+
+                  {featuredCause && (
+                    <>
                       <Link
-                        key={id}
-                        href={`/cause/${id}`}
-                        style={{
-                          display: "inline-block",
-                          padding: "4px 12px",
-                          borderRadius: 999,
-                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                          fontSize: "0.72rem",
-                          fontWeight: 600,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.08rem",
-                          color: "#6C00AF",
-                          background: "rgba(108,0,175,0.08)",
-                          border: "1px solid rgba(108,0,175,0.22)",
-                          textDecoration: "none",
-                          cursor: "pointer",
-                          transition: "background 140ms, border-color 140ms",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "rgba(108,0,175,0.16)";
-                          e.currentTarget.style.borderColor = "rgba(108,0,175,0.38)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "rgba(108,0,175,0.08)";
-                          e.currentTarget.style.borderColor = "rgba(108,0,175,0.22)";
-                        }}
+                        href={`/cause/${featuredCause.id}`}
+                        style={{ display: "block", textDecoration: "none", cursor: "pointer" }}
                       >
-                        {label}
+                        <p
+                          style={{
+                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                            fontSize: "1.25rem",
+                            fontWeight: 600,
+                            color: "#f4e3ff",
+                            margin: 0,
+                            lineHeight: 1.3,
+                            transition: "color 140ms",
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#ffcc00"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#f4e3ff"; }}
+                        >
+                          {featuredCause.label}
+                        </p>
                       </Link>
-                    ))}
-                    {causePillOverflow > 0 && (
-                      <span
-                        style={{
-                          display: "inline-block",
-                          padding: "4px 12px",
-                          borderRadius: 999,
-                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                          fontSize: "0.72rem",
-                          fontWeight: 600,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.08rem",
-                          color: "rgba(108,0,175,0.5)",
-                          background: "rgba(108,0,175,0.04)",
-                          border: "1px solid rgba(108,0,175,0.14)",
-                        }}
-                      >
-                        +{causePillOverflow} more
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+                      {featuredCause.description && (
+                        <p
+                          style={{
+                            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                            fontSize: "0.82rem",
+                            color: "#2d0049d8",
+                            lineHeight: 1.55,
+                            margin: "0.55rem 0 0 0",
+                          }}
+                        >
+                          {featuredCause.description}
+                        </p>
+                      )}
+                    </>
+                  )}
+
+                  {visibleCausePills.length > 0 && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "0.4rem",
+                        marginTop: featuredCause ? "0.9rem" : 0,
+                      }}
+                    >
+                      {visibleCausePills.map(({ id, label }) => (
+                        <Link
+                          key={id}
+                          href={`/cause/${id}`}
+                          style={{
+                            display: "inline-block",
+                            padding: "4px 12px",
+                            borderRadius: 999,
+                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                            fontSize: "0.72rem",
+                            fontWeight: 600,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.08rem",
+                            color: "#6C00AF",
+                            background: "rgba(108,0,175,0.08)",
+                            border: "1px solid rgba(108,0,175,0.22)",
+                            textDecoration: "none",
+                            cursor: "pointer",
+                            transition: "background 140ms, border-color 140ms",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = "rgba(108,0,175,0.16)";
+                            e.currentTarget.style.borderColor = "rgba(108,0,175,0.38)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "rgba(108,0,175,0.08)";
+                            e.currentTarget.style.borderColor = "rgba(108,0,175,0.22)";
+                          }}
+                        >
+                          {label}
+                        </Link>
+                      ))}
+                      {causePillOverflow > 0 && (
+                        <span
+                          style={{
+                            display: "inline-block",
+                            padding: "4px 12px",
+                            borderRadius: 999,
+                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                            fontSize: "0.72rem",
+                            fontWeight: 600,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.08rem",
+                            color: "rgba(108,0,175,0.5)",
+                            background: "rgba(108,0,175,0.04)",
+                            border: "1px solid rgba(108,0,175,0.14)",
+                          }}
+                        >
+                          +{causePillOverflow} more
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Right column: identity tags + languages */}
+        {/* ── Right column: identity tags + languages (deep plum) ───────── */}
         {hasAnyTags && (
-          <div style={{ paddingTop: "2rem", marginTop: isMobile && hasBio ? "2rem" : 0 }}>
-            {!hasBio && eyebrow}
-            {hasAnyTags && (
-              <AlumniTagSections
-                identityTags={identityTags}
-                practiceTags={practiceTags}
-                exploreCareTags={exploreCareTags}
-                align="start"
-              />
-            )}
+          <div
+            style={{
+              backgroundColor: "#241123",
+              padding: `${useGrid ? paddingTop : "2.5rem"} clamp(2rem, 4vw, 4rem) ${isMobile ? "3rem" : "5rem"}`,
+              color: "#F2F2F2",
+            }}
+          >
+            {/* Section eyebrow — always shown in this column */}
+            <p
+              style={{
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                fontSize: "0.68rem",
+                fontWeight: 700,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: "#9B89B4",
+                margin: "0 0 1.75rem 0",
+                borderLeft: "3px solid rgba(196,163,90,0.55)",
+                paddingLeft: "0.65rem",
+              }}
+            >
+              Who I Am
+            </p>
+
+            <AlumniTagSections
+              identityTags={identityTags}
+              practiceTags={practiceTags}
+              exploreCareTags={exploreCareTags}
+              align="start"
+            />
+
             {languageList.length > 0 && (
-              <div style={{ marginTop: (identityTags.length > 0 || practiceTags.length > 0 || exploreCareTags.length > 0) ? "1.25rem" : 0 }}>
+              <div style={{ marginTop: (identityTags.length > 0 || practiceTags.length > 0 || exploreCareTags.length > 0) ? "2.5rem" : 0 }}>
                 <p
                   style={{
                     fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                    fontSize: "0.78rem",
+                    fontSize: "0.68rem",
                     textTransform: "uppercase" as const,
-                    letterSpacing: "0.2rem",
-                    fontWeight: 600,
-                    color: "#241123",
-                    opacity: 0.75,
-                    margin: "4rem 0 0.75rem 0",
+                    letterSpacing: "0.18em",
+                    fontWeight: 700,
+                    color: "#9B89B4",
+                    margin: "0 0 0.75rem 0",
                   }}
                 >
                   Languages
@@ -405,13 +410,20 @@ export default function BioIdentitySection({
                         fontWeight: 600,
                         textTransform: "uppercase" as const,
                         letterSpacing: "0.12rem",
-                        color: "#241123",
-                        background: "rgba(36,17,35,0.10)",
-                        border: "1px solid rgba(36,17,35,0.15)",
+                        color: "#C4A35A",
+                        background: "rgba(196,163,90,0.10)",
+                        border: "1px solid rgba(196,163,90,0.25)",
                         textDecoration: "none",
+                        transition: "background 140ms, border-color 140ms",
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(36,17,35,0.20)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(36,17,35,0.10)"; }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "rgba(196,163,90,0.20)";
+                        e.currentTarget.style.borderColor = "rgba(196,163,90,0.45)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "rgba(196,163,90,0.10)";
+                        e.currentTarget.style.borderColor = "rgba(196,163,90,0.25)";
+                      }}
                     >
                       {lang.name}{lang.level ? ` (${lang.level})` : ""}
                     </Link>
@@ -422,7 +434,6 @@ export default function BioIdentitySection({
           </div>
         )}
       </div>
-
     </section>
   );
 }
