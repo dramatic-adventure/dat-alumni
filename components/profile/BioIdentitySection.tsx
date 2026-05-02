@@ -221,8 +221,8 @@ export default function BioIdentitySection({
                     marginTop: "3.75rem",
                     padding: "1.1rem 1.4rem",
                     borderRadius: 10,
-                    background: "rgba(108,0,175,0.075)",
-                    border: "1px solid rgba(108,0,175,0.18)",
+                    background: "rgba(217,169,25,0.08)",
+                    border: "1px solid rgba(217,169,25,0.22)",
                   }}
                 >
                   <p
@@ -232,7 +232,7 @@ export default function BioIdentitySection({
                       textTransform: "uppercase",
                       letterSpacing: "0.18rem",
                       fontWeight: 600,
-                      color: "#6C00AF",
+                      color: "#D9A919",
                       margin: "0 0 0.45rem 0",
                     }}
                   >
@@ -250,13 +250,13 @@ export default function BioIdentitySection({
                             fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                             fontSize: "1.25rem",
                             fontWeight: 600,
-                            color: "#f4e3ff",
+                            color: "#241123",
                             margin: 0,
                             lineHeight: 1.3,
                             transition: "color 140ms",
                           }}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = "#ffcc00"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = "#f4e3ff"; }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#D9A919"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#241123"; }}
                         >
                           {featuredCause.label}
                         </p>
@@ -266,7 +266,7 @@ export default function BioIdentitySection({
                           style={{
                             fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                             fontSize: "0.82rem",
-                            color: "#2d0049d8",
+                            color: "#241123cc",
                             lineHeight: 1.55,
                             margin: "0.55rem 0 0 0",
                           }}
@@ -299,20 +299,20 @@ export default function BioIdentitySection({
                             fontWeight: 600,
                             textTransform: "uppercase",
                             letterSpacing: "0.08rem",
-                            color: "#6C00AF",
-                            background: "rgba(108,0,175,0.08)",
-                            border: "1px solid rgba(108,0,175,0.22)",
+                            color: "#D9A919",
+                            background: "rgba(217,169,25,0.10)",
+                            border: "1px solid rgba(217,169,25,0.25)",
                             textDecoration: "none",
                             cursor: "pointer",
                             transition: "background 140ms, border-color 140ms",
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "rgba(108,0,175,0.16)";
-                            e.currentTarget.style.borderColor = "rgba(108,0,175,0.38)";
+                            e.currentTarget.style.background = "rgba(217,169,25,0.20)";
+                            e.currentTarget.style.borderColor = "rgba(217,169,25,0.45)";
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "rgba(108,0,175,0.08)";
-                            e.currentTarget.style.borderColor = "rgba(108,0,175,0.22)";
+                            e.currentTarget.style.background = "rgba(217,169,25,0.10)";
+                            e.currentTarget.style.borderColor = "rgba(217,169,25,0.25)";
                           }}
                         >
                           {label}
@@ -329,9 +329,9 @@ export default function BioIdentitySection({
                             fontWeight: 600,
                             textTransform: "uppercase",
                             letterSpacing: "0.08rem",
-                            color: "rgba(108,0,175,0.5)",
-                            background: "rgba(108,0,175,0.04)",
-                            border: "1px solid rgba(108,0,175,0.14)",
+                            color: "rgba(217,169,25,0.45)",
+                            background: "rgba(217,169,25,0.04)",
+                            border: "1px solid rgba(217,169,25,0.14)",
                           }}
                         >
                           +{causePillOverflow} more
@@ -354,21 +354,6 @@ export default function BioIdentitySection({
               color: "#F2F2F2",
             }}
           >
-            {/* Section eyebrow — always shown in this column */}
-            <p
-              style={{
-                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                fontSize: "0.68rem",
-                fontWeight: 700,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "#9B89B4",
-                margin: "0 0 1.75rem 0",
-              }}
-            >
-              Who I Am
-            </p>
-
             <AlumniTagSections
               identityTags={identityTags}
               practiceTags={practiceTags}

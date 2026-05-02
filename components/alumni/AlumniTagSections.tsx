@@ -27,11 +27,11 @@ const sectionWrapStyle: CSSProperties = {
 
 const sectionHeadingStyle: CSSProperties = {
   fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-  fontSize: "0.78rem",
+  fontSize: "0.68rem",
   textTransform: "uppercase",
-  letterSpacing: "0.2rem",
-  fontWeight: 600,
-  opacity: 0.75,
+  letterSpacing: "0.18em",
+  fontWeight: 700,
+  opacity: 0.5,
   margin: 0,
   color: "inherit",
 };
