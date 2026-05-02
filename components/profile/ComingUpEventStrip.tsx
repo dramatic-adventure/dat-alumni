@@ -173,7 +173,6 @@ export default function ComingUpEventStrip({ upcomingEvent }: Props) {
       style={{
         position: "relative",
         backgroundColor: "#1D1A24",
-        borderTop: "3px solid #C4A35A",
         fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
         overflow: "hidden",
       }}

@@ -116,7 +116,6 @@ export default function BioIdentitySection({
       style={{
         position: "relative",
         overflow: "hidden",
-        borderTop: "3px solid #C4A35A",
       }}
     >
       <div
@@ -131,8 +130,6 @@ export default function BioIdentitySection({
             style={{
               backgroundColor: "#2493A9",
               padding: `${paddingTop} clamp(2.5rem, 5vw, 5rem) ${isMobile ? "3rem" : "5rem"}`,
-              borderRight: useGrid ? "2px solid rgba(196,163,90,0.45)" : undefined,
-              borderBottom: !useGrid && hasAnyTags ? "2px solid rgba(196,163,90,0.35)" : undefined,
             }}
           >
             <div style={{ maxWidth: useGrid ? undefined : "72ch" }}>
@@ -367,8 +364,6 @@ export default function BioIdentitySection({
                 textTransform: "uppercase",
                 color: "#9B89B4",
                 margin: "0 0 1.75rem 0",
-                borderLeft: "3px solid rgba(196,163,90,0.55)",
-                paddingLeft: "0.65rem",
               }}
             >
               Who I Am
