@@ -349,7 +349,7 @@ export default function BioIdentitySection({
         {hasAnyTags && (
           <div
             style={{
-              backgroundColor: "#241123",
+              backgroundColor: "#3D1070",
               padding: `${useGrid ? paddingTop : "2.5rem"} clamp(2rem, 4vw, 4rem) ${isMobile ? "3rem" : "5rem"}`,
               color: "#F2F2F2",
             }}
@@ -405,19 +405,19 @@ export default function BioIdentitySection({
                         fontWeight: 600,
                         textTransform: "uppercase" as const,
                         letterSpacing: "0.12rem",
-                        color: "#C4A35A",
-                        background: "rgba(196,163,90,0.10)",
-                        border: "1px solid rgba(196,163,90,0.25)",
+                        color: "#D9A919",
+                        background: "rgba(217,169,25,0.10)",
+                        border: "1px solid rgba(217,169,25,0.25)",
                         textDecoration: "none",
                         transition: "background 140ms, border-color 140ms",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(196,163,90,0.20)";
-                        e.currentTarget.style.borderColor = "rgba(196,163,90,0.45)";
+                        e.currentTarget.style.background = "rgba(217,169,25,0.20)";
+                        e.currentTarget.style.borderColor = "rgba(217,169,25,0.45)";
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "rgba(196,163,90,0.10)";
-                        e.currentTarget.style.borderColor = "rgba(196,163,90,0.25)";
+                        e.currentTarget.style.background = "rgba(217,169,25,0.10)";
+                        e.currentTarget.style.borderColor = "rgba(217,169,25,0.25)";
                       }}
                     >
                       {lang.name}{lang.level ? ` (${lang.level})` : ""}
