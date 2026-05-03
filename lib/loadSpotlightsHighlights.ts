@@ -64,5 +64,24 @@ export async function loadSpotlightsHighlightsForProfile(
     };
   });
 
-  return mapped;
+  // Deduplicate: if the same item was edited (same headline, same type), keep only
+  // the most recent version based on sortDate. This prevents edited rows from showing
+  // up as distinct archive entries alongside their earlier draft.
+  const deduped = new Map<string, SpotlightUpdate>();
+  for (const item of mapped) {
+    const key = `${(item.tag || "").toLowerCase()}::${(item.headline || "").toLowerCase().trim()}`;
+    const existing = deduped.get(key);
+    if (!existing) {
+      deduped.set(key, item);
+    } else {
+      // Keep the row with the later sortDate; fall back to keeping the new one if dates are absent
+      const existingDate = existing.sortDate ?? "";
+      const newDate = item.sortDate ?? "";
+      if (newDate >= existingDate) {
+        deduped.set(key, item);
+      }
+    }
+  }
+
+  return Array.from(deduped.values());
 }

@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
-export type StudioTab = "basics" | "identity" | "impact" | "media" | "contact" | "story" | "event";
+export type StudioTab = "basics" | "identity" | "impact" | "media" | "contact" | "story" | "event" | "highlight" | "spotlight";
 export type UploadKind = "headshot" | "album" | "reel" | "event";
 
 const COLOR = {
@@ -153,6 +153,12 @@ type ProfileStudioProps = {
   contactPanel: ReactNode;
   storyPanel: ReactNode;
   eventPanel: ReactNode;
+  /** Alum-facing highlight creation panel */
+  highlightPanel?: ReactNode;
+  /** Admin-only spotlight creation panel */
+  spotlightPanel?: ReactNode;
+  /** Show the Spotlight tab (admin-only — caller decides) */
+  showSpotlightTab?: boolean;
 
   /**
    * Optional container wrapper (OFF by default).
@@ -187,6 +193,8 @@ const TAB_ANCHOR_ID: Record<StudioTab, string> = {
   contact: "studio-contact-anchor",
   story: "studio-story-anchor",
   event: "studio-event-anchor",
+  highlight: "studio-highlight-anchor",
+  spotlight: "studio-spotlight-anchor",
 };
 
 export default function ProfileStudio(props: ProfileStudioProps) {
@@ -206,6 +214,9 @@ export default function ProfileStudio(props: ProfileStudioProps) {
     contactPanel,
     storyPanel,
     eventPanel,
+    highlightPanel,
+    spotlightPanel,
+    showSpotlightTab = false,
 
     container = false,
     containerClassName = "mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8",
@@ -255,8 +266,10 @@ export default function ProfileStudio(props: ProfileStudioProps) {
     if (tab === "media") return mediaPanel;
     if (tab === "contact") return contactPanel;
     if (tab === "story") return storyPanel;
+    if (tab === "highlight") return highlightPanel ?? null;
+    if (tab === "spotlight") return spotlightPanel ?? null;
     return eventPanel;
-  }, [tab, basicsPanel, identityPanel, impactPanel, mediaPanel, contactPanel, storyPanel, eventPanel]);
+  }, [tab, basicsPanel, identityPanel, impactPanel, mediaPanel, contactPanel, storyPanel, eventPanel, highlightPanel, spotlightPanel]);
 
   const inner = (
     <div>
@@ -324,6 +337,32 @@ export default function ProfileStudio(props: ProfileStudioProps) {
         >
           Event
         </button>
+
+        <button
+          type="button"
+          style={tabStyle(tab === "highlight")}
+          onClick={() => setTab("highlight")}
+          aria-pressed={tab === "highlight"}
+        >
+          Highlight
+        </button>
+
+        {showSpotlightTab && (
+          <button
+            type="button"
+            style={{
+              ...tabStyle(tab === "spotlight"),
+              borderColor: tab === "spotlight" ? "rgba(217,169,25,0.7)" : "rgba(217,169,25,0.35)",
+              color: tab === "spotlight" ? "#D9A919" : "rgba(217,169,25,0.75)",
+              background: tab === "spotlight" ? "rgba(217,169,25,0.12)" : "transparent",
+            }}
+            onClick={() => setTab("spotlight")}
+            aria-pressed={tab === "spotlight"}
+            title="Admin: add DAT Spotlight"
+          >
+            ★ Spotlight
+          </button>
+        )}
 
         <div style={{ marginLeft: "auto", display: "flex", gap: 8, alignItems: "center" }}>
           {adminHref && (

@@ -13,7 +13,7 @@ import Lightbox from "@/components/shared/Lightbox";
 
 // (ContactOverlay now lives inside MobileProfileHeader/DesktopProfileHeader)
 
-import type { StoryRow, Production, SpotlightUpdate, Update } from "@/lib/types";
+import type { StoryRow, Production, SpotlightUpdate } from "@/lib/types";
 import { productionMap as productionMapCanon, getSortYear } from "@/lib/productionMap.canon";
 
 import MobileProfileHeader from "@/components/alumni/MobileProfileHeader";
@@ -24,10 +24,6 @@ import SpotlightPanel from "@/components/alumni/SpotlightPanel";
 import HighlightPanel from "@/components/alumni/HighlightPanel";
 import type { HighlightCard as UIHighlightCard } from "@/components/alumni/HighlightPanel";
 
-import ProfileShowcaseSection from "@/components/profile/ProfileShowcaseSection";
-import CategoryScroller from "@/components/alumni/CategoryScroller";
-import { mapSpotlightUpdateToUpdate } from "@/lib/mapSpotlightUpdateToUpdate";
-import JourneyMiniCard from "@/components/alumni/JourneyMiniCard";
 import PublicMediaSection from "@/components/profile/PublicMediaSection";
 import ComingUpEventStrip, { type ComingUpEvent } from "@/components/profile/ComingUpEventStrip";
 
@@ -52,6 +48,7 @@ type RawRow = {
   featured?: string | boolean;
   sortDate?: string;
   tags?: string;
+  category?: string;
   [key: string]: any;
 };
 
@@ -85,6 +82,7 @@ const toSpotlightUpdate = (row: RawRow): SpotlightUpdate => ({
   ctaLink: row.ctaUrl,
   mediaUrl: firstMedia(row.mediaUrls),
   evergreen: coerceBool(row.evergreen),
+  category: (row.category || row.tags || undefined) as import("@/lib/types").HighlightCategory | undefined,
 });
 
 const toHighlightCard = (row: RawRow): UIHighlightCard => ({
@@ -95,6 +93,7 @@ const toHighlightCard = (row: RawRow): UIHighlightCard => ({
   ctaLink: row.ctaUrl || undefined,
   evergreen: coerceBool(row.evergreen),
   expirationDate: row.expirationDate || undefined,
+  category: row.category || row.tags || undefined,
 });
 
 function sanitizeHeadshotUrl(raw?: string): string | undefined {
@@ -311,6 +310,10 @@ interface ProfileCardProps {
   featuredSupportedClub?: string;
   featuredImpactCause?: string;
   languages?: string;
+  /** Sheet-loaded spotlights — override updates-derived when provided */
+  sheetSpotlights?: SpotlightUpdate[];
+  /** Sheet-loaded highlights — override updates-derived when provided */
+  sheetHighlights?: UIHighlightCard[];
 }
 
 const scaleCache = new Map<string, { first: number; last: number }>();
@@ -636,40 +639,32 @@ const hasStories = storiesForFeatured.length > 0;
 
   /* ---------- PANELS ---------- */
   const rowsForThisProfile = filterForSlugIfPresent(updates as RawRow[], aliasNormSet);
-  const spotlightUpdates = rowsForThisProfile.filter(isSpotlightRow).map(toSpotlightUpdate);
-  const highlightUpdates: UIHighlightCard[] = rowsForThisProfile.filter(isHighlightRow).map(toHighlightCard);
 
-  const hasSpotlight = spotlightUpdates.length > 0;
-  const hasHighlight = highlightUpdates.length > 0;
+  // Deduplicate by headline+type: rows are appended in sheet order, so later rows
+  // are newer edits — we keep the last occurrence for each headline.
+  const dedupeByHeadline = <T extends { headline: string }>(items: T[]): T[] => {
+    const seen = new Map<string, T>();
+    for (const item of items) {
+      seen.set((item.headline || "").toLowerCase().trim(), item);
+    }
+    return Array.from(seen.values());
+  };
+
+  const updatesSpotlights = dedupeByHeadline(rowsForThisProfile.filter(isSpotlightRow).map(toSpotlightUpdate));
+  const updatesHighlights: UIHighlightCard[] = dedupeByHeadline(rowsForThisProfile.filter(isHighlightRow).map(toHighlightCard));
+
+  // Sheet-loaded overrides take precedence over updates-derived when provided
+  const spotlightUpdates = (props.sheetSpotlights && props.sheetSpotlights.length > 0)
+    ? props.sheetSpotlights
+    : updatesSpotlights;
+  const highlightUpdates = (props.sheetHighlights && props.sheetHighlights.length > 0)
+    ? props.sheetHighlights
+    : updatesHighlights;
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxUrls, setLightboxUrls] = useState<string[]>([]);
 
-  const spotlightSection = hasSpotlight ? <SpotlightPanel updates={spotlightUpdates} /> : null;
-  const highlightSection = hasHighlight ? <HighlightPanel cards={highlightUpdates} /> : null;
 
-  const categorizedUpdatesMap = new Map<string, Update[]>();
-  rowsForThisProfile
-    .filter((u) => !isHighlightRow(u) && !isSpotlightRow(u))
-    .forEach((raw) => {
-      const pseudo: SpotlightUpdate = {
-        tag: raw.type,
-        headline: raw.title || "",
-        body: raw.bodyNote || "",
-        ctaLink: raw.ctaUrl,
-        mediaUrl: firstMedia(raw.mediaUrls),
-        evergreen: coerceBool(raw.evergreen),
-      };
-      const update = mapSpotlightUpdateToUpdate(pseudo);
-      const category = update.tag || "Other";
-      if (!categorizedUpdatesMap.has(category)) categorizedUpdatesMap.set(category, []);
-      categorizedUpdatesMap.get(category)!.push(update);
-    });
-
-  const categorizedJourneyUpdates = Array.from(categorizedUpdatesMap.entries()).map(([category, updates]) => ({
-    category,
-    updates,
-  }));
 
   return (
     <div ref={profileCardRef} style={{ position: "relative" }}>
@@ -717,64 +712,7 @@ const hasStories = storiesForFeatured.length > 0;
 
       <ComingUpEventStrip upcomingEvent={props.upcomingEvent} />
 
-      {/* Featured Reel / Trailer / Promo */}
-      {(hasSpotlight || hasHighlight) && (
-        <div style={{ margin: "2rem 30px 2.5rem 30px" }}>
-          <ProfileShowcaseSection>
-            {spotlightSection}
-            {highlightSection}
-          </ProfileShowcaseSection>
-        </div>
-      )}
-
-      <CategoryScroller
-        categories={categorizedJourneyUpdates}
-        onCardClick={(category) => {
-          const el = document.getElementById(`journey-category-${category}`);
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-        }}
-      />
-
-      {categorizedJourneyUpdates.length > 0 && (
-        <div style={{ margin: "2rem 30px 3rem 30px" }}>
-          <ProfileShowcaseSection>
-            {categorizedJourneyUpdates.map(({ category, updates }) => (
-              <div key={category} id={`journey-category-${category}`} style={{ marginBottom: "2rem" }}>
-                <h3 style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "2rem", marginBottom: "1rem", color: "#241123" }}>
-                  {category}
-                </h3>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
-                  {updates.map((update, index) => (
-                    <JourneyMiniCard
-                      key={index}
-                      update={update}
-                      onClick={() => {
-                        const link = update.ctaLink?.trim();
-                        const media =
-                          update.mediaUrls
-                            ?.split(",")
-                            .map((url) => url.trim())
-                            .filter(Boolean) || [];
-
-                        if (link?.startsWith("http")) {
-                          window.open(link, "_blank");
-                        } else if (media.length > 0) {
-                          setLightboxUrls(media);
-                          setLightboxOpen(true);
-                        } else {
-                          alert("This update has no link or media. Here's the content:\n\n" + (update.body || "No content"));
-                        }
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </ProfileShowcaseSection>
-        </div>
-      )}
-
-      {/* WHO I AM — bio + identity tags + languages + Close to My Heart */}
+      {/* WHO I AM — bio + identity tags + languages + spotlight/highlight */}
       <BioIdentitySection
         identityTags={identityTags}
         practiceTags={practiceTags}
@@ -782,14 +720,16 @@ const hasStories = storiesForFeatured.length > 0;
         languages={props.languages}
         artistStatement={artistStatement}
         directlyBelowHero={!props.upcomingEvent}
-        impactCauses={props.impactCauses}
-        featuredImpactCause={props.featuredImpactCause}
+        spotlightUpdates={spotlightUpdates}
+        highlightCards={highlightUpdates}
       />
 
-      {/* What I'm Part Of — drama clubs only */}
+      {/* What Matters to Me — drama clubs + impact causes */}
       <CommunitySection
         supportedClubs={props.supportedClubs}
         featuredSupportedClub={props.featuredSupportedClub}
+        impactCauses={props.impactCauses}
+        featuredImpactCause={props.featuredImpactCause}
       />
 
       {/* ✅ Public media section — only renders when alumni has featured album/reel items */}

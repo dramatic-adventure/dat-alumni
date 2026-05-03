@@ -6,10 +6,28 @@ import Link from "next/link";
 import { dramaClubs } from "@/lib/dramaClubMap";
 import type { DramaClub } from "@/lib/dramaClubMap";
 import useIsMobile from "@/hooks/useIsMobile";
+import { CAUSE_CATEGORIES, CAUSE_SUBCATEGORIES_BY_CATEGORY } from "@/lib/causes";
 
 interface CommunitySectionProps {
   supportedClubs?: string;
   featuredSupportedClub?: string;
+  impactCauses?: string;
+  featuredImpactCause?: string;
+}
+
+const MAX_CAUSE_PILLS = 4;
+
+function parseCauseList(raw?: string | null): string[] {
+  if (!raw) return [];
+  return String(raw).split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+function resolveCauseAnywhere(id: string) {
+  for (const cat of CAUSE_CATEGORIES) {
+    const sub = (CAUSE_SUBCATEGORIES_BY_CATEGORY[cat.id] ?? []).find((s) => s.id === id);
+    if (sub) return { id: sub.id, label: sub.shortLabel ?? sub.label, description: sub.description };
+  }
+  return undefined;
 }
 
 function parseCommaList(raw?: string | null): string[] {
@@ -432,14 +450,16 @@ function AlsoSupportingCard({ club }: { club: DramaClub }) {
 export default function CommunitySection({
   supportedClubs,
   featuredSupportedClub,
+  impactCauses,
+  featuredImpactCause,
 }: CommunitySectionProps) {
   const isMobile = useIsMobile();
 
+  // ── Clubs ────────────────────────────────────────────────────────────────
   const clubSlugs = parseCommaList(supportedClubs);
   const clubSlugSet = new Set(clubSlugs);
   const resolvedClubs = dramaClubs.filter((c) => clubSlugSet.has(c.slug));
 
-  // Featured club: explicit slug → fallback to first supported club
   const featuredClubSlug = featuredSupportedClub?.trim() ?? "";
   const featuredClub = featuredClubSlug
     ? (resolvedClubs.find((c) => c.slug === featuredClubSlug) ??
@@ -453,8 +473,31 @@ export default function CommunitySection({
   const hasLeftColumn = !!featuredClub;
   const hasRightColumn = otherClubs.length > 0;
   const hasBothColumns = hasLeftColumn && hasRightColumn;
+  const hasClubs = hasLeftColumn || hasRightColumn;
 
-  if (!hasLeftColumn && !hasRightColumn) return null;
+  // ── Causes ───────────────────────────────────────────────────────────────
+  const causeIdSet = new Set(parseCauseList(impactCauses));
+  const resolvedCauses: { id: string; label: string; description?: string }[] = [];
+  for (const cat of CAUSE_CATEGORIES) {
+    const subs = CAUSE_SUBCATEGORIES_BY_CATEGORY[cat.id] ?? [];
+    for (const sub of subs) {
+      if (causeIdSet.has(sub.id)) {
+        resolvedCauses.push({ id: sub.id, label: sub.shortLabel ?? sub.label, description: sub.description });
+      }
+    }
+  }
+  const featuredCauseId = featuredImpactCause?.trim() ?? "";
+  const featuredCause = featuredCauseId
+    ? (resolvedCauses.find((c) => c.id === featuredCauseId) ?? resolveCauseAnywhere(featuredCauseId))
+    : undefined;
+  const otherCauses = featuredCause
+    ? resolvedCauses.filter((c) => c.id !== featuredCause.id)
+    : resolvedCauses;
+  const hasCauses = resolvedCauses.length > 0 || !!featuredCause;
+  const visibleCausePills = otherCauses.slice(0, MAX_CAUSE_PILLS);
+  const causePillOverflow = otherCauses.length - MAX_CAUSE_PILLS;
+
+  if (!hasClubs && !hasCauses) return null;
 
   const subheaderStyle: React.CSSProperties = {
     fontFamily: FF_GROTESK,
@@ -486,35 +529,165 @@ export default function CommunitySection({
             margin: "0 0 1.5rem 0",
           }}
         >
-          Proud to Support
+          What Matters to Me
         </p>
 
-        <div
-          style={{
-            display: hasBothColumns && !isMobile ? "grid" : "block",
-            gridTemplateColumns: hasBothColumns && !isMobile ? "0.925fr 0.925fr" : undefined,
-            gap: hasBothColumns && !isMobile ? "2rem" : undefined,
-            alignItems: "start",
-          }}
-        >
-          {/* LEFT: Expandable featured club card */}
-          {hasLeftColumn && (
-            <div style={{ marginBottom: isMobile && hasRightColumn ? "3rem" : 0 }}>
-              <FeaturedClubCard club={featuredClub!} />
-            </div>
-          )}
-
-          {/* RIGHT: Also Supporting expandable cards */}
-          {hasRightColumn && (
-            <div>
-              <div style={{ display: "flex", flexDirection: "column", marginTop: "0.25rem", gap: "0.6rem" }}>
-                {otherClubs.map((club) => (
-                  <AlsoSupportingCard key={club.slug} club={club} />
-                ))}
+        {hasClubs && (
+          <div
+            style={{
+              display: hasBothColumns && !isMobile ? "grid" : "block",
+              gridTemplateColumns: hasBothColumns && !isMobile ? "0.925fr 0.925fr" : undefined,
+              gap: hasBothColumns && !isMobile ? "2rem" : undefined,
+              alignItems: "start",
+            }}
+          >
+            {/* LEFT: Expandable featured club card */}
+            {hasLeftColumn && (
+              <div style={{ marginBottom: isMobile && hasRightColumn ? "3rem" : 0 }}>
+                <FeaturedClubCard club={featuredClub!} />
               </div>
-            </div>
-          )}
-        </div>
+            )}
+
+            {/* RIGHT: Also Supporting expandable cards */}
+            {hasRightColumn && (
+              <div>
+                <div style={{ display: "flex", flexDirection: "column", marginTop: "0.25rem", gap: "0.6rem" }}>
+                  {otherClubs.map((club) => (
+                    <AlsoSupportingCard key={club.slug} club={club} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Causes ───────────────────────────────────────────────────── */}
+        {hasCauses && (
+          <div
+            style={{
+              marginTop: hasClubs ? "3rem" : 0,
+              padding: "1.1rem 1.4rem",
+              borderRadius: 10,
+              background: "rgba(36,17,35,0.82)",
+              border: "1px solid rgba(217,169,25,0.28)",
+              }}
+          >
+            <p
+              style={{
+                fontFamily: FF_GROTESK,
+                fontSize: "0.65rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.18rem",
+                fontWeight: 600,
+                color: "#D9A919",
+                margin: "0 0 0.45rem 0",
+              }}
+            >
+              {featuredCause ? "Close to My Heart" : "Causes I Stand For"}
+            </p>
+
+            {featuredCause && (
+              <>
+                <Link
+                  href={`/cause/${featuredCause.id}`}
+                  style={{ display: "block", textDecoration: "none", cursor: "pointer" }}
+                >
+                  <p
+                    style={{
+                      fontFamily: FF_GROTESK,
+                      fontSize: "1.25rem",
+                      fontWeight: 600,
+                      color: "#F2F2F2",
+                      margin: 0,
+                      lineHeight: 1.3,
+                      transition: "color 140ms",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "#FFCC00"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = "#F2F2F2"; }}
+                  >
+                    {featuredCause.label}
+                  </p>
+                </Link>
+                {featuredCause.description && (
+                  <p
+                    style={{
+                      fontFamily: FF_SANS,
+                      fontSize: "0.82rem",
+                      color: "rgba(242,242,242,0.65)",
+                      lineHeight: 1.55,
+                      margin: "0.55rem 0 0 0",
+                    }}
+                  >
+                    {featuredCause.description}
+                  </p>
+                )}
+              </>
+            )}
+
+            {visibleCausePills.length > 0 && (
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "0.4rem",
+                  marginTop: featuredCause ? "0.9rem" : 0,
+                }}
+              >
+                {visibleCausePills.map(({ id, label }) => (
+                  <Link
+                    key={id}
+                    href={`/cause/${id}`}
+                    style={{
+                      display: "inline-block",
+                      padding: "4px 12px",
+                      borderRadius: 999,
+                      fontFamily: FF_GROTESK,
+                      fontSize: "0.72rem",
+                      fontWeight: 600,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08rem",
+                      color: "#D9A919",
+                      background: "rgba(217,169,25,0.10)",
+                      border: "1px solid rgba(217,169,25,0.25)",
+                      textDecoration: "none",
+                      cursor: "pointer",
+                      transition: "background 140ms, border-color 140ms",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(217,169,25,0.20)";
+                      e.currentTarget.style.borderColor = "rgba(217,169,25,0.45)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "rgba(217,169,25,0.10)";
+                      e.currentTarget.style.borderColor = "rgba(217,169,25,0.25)";
+                    }}
+                  >
+                    {label}
+                  </Link>
+                ))}
+                {causePillOverflow > 0 && (
+                  <span
+                    style={{
+                      display: "inline-block",
+                      padding: "4px 12px",
+                      borderRadius: 999,
+                      fontFamily: FF_GROTESK,
+                      fontSize: "0.72rem",
+                      fontWeight: 600,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08rem",
+                      color: "rgba(217,169,25,0.45)",
+                      background: "rgba(217,169,25,0.04)",
+                      border: "1px solid rgba(217,169,25,0.14)",
+                    }}
+                  >
+                    +{causePillOverflow} more
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

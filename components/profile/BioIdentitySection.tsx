@@ -5,7 +5,11 @@ import Link from "next/link";
 import AlumniTagSections from "@/components/alumni/AlumniTagSections";
 import useIsMobile from "@/hooks/useIsMobile";
 import { parseLanguages } from "@/lib/languages";
-import { CAUSE_CATEGORIES, CAUSE_SUBCATEGORIES_BY_CATEGORY } from "@/lib/causes";
+import SpotlightPanel from "@/components/alumni/SpotlightPanel";
+import HighlightPanel from "@/components/alumni/HighlightPanel";
+import SpotlightHighlightArchive from "@/components/alumni/SpotlightHighlightArchive";
+import type { SpotlightUpdate } from "@/components/alumni/SpotlightPanel";
+import type { HighlightCard } from "@/components/alumni/HighlightPanel";
 
 interface BioIdentitySectionProps {
   identityTags?: string[];
@@ -14,23 +18,8 @@ interface BioIdentitySectionProps {
   languages?: string;
   artistStatement?: string;
   directlyBelowHero?: boolean;
-  impactCauses?: string;
-  featuredImpactCause?: string;
-}
-
-const MAX_CAUSE_PILLS = 4;
-
-function parseCauseList(raw?: string | null): string[] {
-  if (!raw) return [];
-  return String(raw).split(",").map((s) => s.trim()).filter(Boolean);
-}
-
-function resolveCauseAnywhere(id: string) {
-  for (const cat of CAUSE_CATEGORIES) {
-    const sub = (CAUSE_SUBCATEGORIES_BY_CATEGORY[cat.id] ?? []).find((s) => s.id === id);
-    if (sub) return { id: sub.id, label: sub.shortLabel ?? sub.label, description: sub.description };
-  }
-  return undefined;
+  spotlightUpdates?: SpotlightUpdate[];
+  highlightCards?: HighlightCard[];
 }
 
 export default function BioIdentitySection({
@@ -40,8 +29,8 @@ export default function BioIdentitySection({
   languages,
   artistStatement,
   directlyBelowHero = false,
-  impactCauses,
-  featuredImpactCause,
+  spotlightUpdates = [],
+  highlightCards = [],
 }: BioIdentitySectionProps) {
   const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
@@ -54,8 +43,11 @@ export default function BioIdentitySection({
     exploreCareTags.length > 0 ||
     languageList.length > 0;
   const bio = artistStatement?.trim() ?? "";
+  const hasSpotlight = spotlightUpdates.length > 0;
+  const hasHighlight = highlightCards.length > 0;
+  const hasPanels = hasSpotlight || hasHighlight;
 
-  if (!bio && !hasAnyTags) return null;
+  if (!bio && !hasAnyTags && !hasPanels) return null;
 
   // Split bio into lead paragraph and body
   let leadText = "";
@@ -82,34 +74,71 @@ export default function BioIdentitySection({
   const showToggle = isLong && hasBody;
   const showBody = !showToggle || expanded;
 
-  // ── Cause resolution ──────────────────────────────────────────────────────
-  const causeIdSet = new Set(parseCauseList(impactCauses));
-  const resolvedCauses: { id: string; label: string; description?: string }[] = [];
-  for (const cat of CAUSE_CATEGORIES) {
-    const subs = CAUSE_SUBCATEGORIES_BY_CATEGORY[cat.id] ?? [];
-    for (const sub of subs) {
-      if (causeIdSet.has(sub.id)) {
-        resolvedCauses.push({ id: sub.id, label: sub.shortLabel ?? sub.label, description: sub.description });
-      }
-    }
-  }
-  const featuredCauseId = featuredImpactCause?.trim() ?? "";
-  const featuredCause = featuredCauseId
-    ? (resolvedCauses.find((c) => c.id === featuredCauseId) ?? resolveCauseAnywhere(featuredCauseId))
-    : undefined;
-  const otherCauses = featuredCause
-    ? resolvedCauses.filter((c) => c.id !== featuredCause.id)
-    : resolvedCauses;
-  const hasCauses = resolvedCauses.length > 0 || !!featuredCause;
-  const visibleCausePills = otherCauses.slice(0, MAX_CAUSE_PILLS);
-  const causePillOverflow = otherCauses.length - MAX_CAUSE_PILLS;
-  // ─────────────────────────────────────────────────────────────────────────
-
   const paddingTop =
     !isMobile && directlyBelowHero ? "5rem" : isMobile ? "2.5rem" : "4rem";
 
   const hasBio = bio.length > 0;
   const useGrid = !isMobile && hasBio && hasAnyTags;
+
+  // ── Full-width panels-only layout ─────────────────────────────────────────
+  // When an alum has no bio or identity tags but DOES have spotlight/highlight,
+  // render the panels prominently full-width so the profile still feels intentional.
+  if (!hasBio && !hasAnyTags && hasPanels) {
+    return (
+      <section
+        style={{
+          background: "linear-gradient(160deg, #1a0a2e 0%, #241123 60%, #19657c 100%)",
+          padding: isMobile
+            ? `${paddingTop} 24px 3.5rem`
+            : `${paddingTop} clamp(3rem, 6vw, 6rem) 5rem`,
+        }}
+      >
+        {/* Subtle section label */}
+        <p
+          style={{
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+            fontSize: "0.65rem",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.22em",
+            color: "rgba(242,242,242,0.38)",
+            margin: "0 0 2rem 0",
+          }}
+        >
+          {hasSpotlight ? "DAT Spotlight" : "Highlight"}
+        </p>
+
+        <div
+          style={{
+            display: isMobile ? "flex" : "grid",
+            flexDirection: isMobile ? "column" : undefined,
+            gridTemplateColumns:
+              !isMobile && hasSpotlight && hasHighlight ? "1fr 1fr" : "1fr",
+            gap: "1.5rem",
+            maxWidth: hasSpotlight && hasHighlight ? "none" : "680px",
+          }}
+        >
+          {hasSpotlight && (
+            <SpotlightPanel
+              updates={spotlightUpdates}
+              compact={false}
+            />
+          )}
+          {hasHighlight && (
+            <HighlightPanel
+              cards={highlightCards}
+              compact={false}
+            />
+          )}
+        </div>
+        <SpotlightHighlightArchive
+          spotlights={spotlightUpdates ?? []}
+          highlights={highlightCards ?? []}
+        />
+      </section>
+    );
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <section
@@ -138,7 +167,8 @@ export default function BioIdentitySection({
                 style={{
                   fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                   fontSize: "clamp(1.4rem, 2.2vw, 1.8rem)",
-                  fontWeight: 500,
+                  fontWeight: 800,
+                  letterSpacing: 1.005,
                   color: "#241123d1",
                   lineHeight: 1.3,
                   margin: 0,
@@ -179,7 +209,7 @@ export default function BioIdentitySection({
                   type="button"
                   onClick={() => setExpanded((e) => !e)}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "#FFCC00";
+                    e.currentTarget.style.color = "#F23359";
                     e.currentTarget.style.letterSpacing = "0.25rem";
                   }}
                   onMouseLeave={(e) => {
@@ -187,7 +217,7 @@ export default function BioIdentitySection({
                     e.currentTarget.style.letterSpacing = "0.15rem";
                   }}
                   onFocus={(e) => {
-                    e.currentTarget.style.color = "#FFCC00";
+                    e.currentTarget.style.color = "#F23359";
                     e.currentTarget.style.letterSpacing = "0.25rem";
                   }}
                   onBlur={(e) => {
@@ -214,131 +244,15 @@ export default function BioIdentitySection({
                 </button>
               )}
 
-              {/* Close to My Heart — personal values appended below bio */}
-              {hasCauses && (
-                <div
-                  style={{
-                    marginTop: "3.75rem",
-                    padding: "1.1rem 1.4rem",
-                    borderRadius: 10,
-                    background: "rgba(36,17,35,0.82)",
-                    border: "1px solid rgba(217,169,25,0.28)",
-                  }}
-                >
-                  <p
-                    style={{
-                      fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                      fontSize: "0.65rem",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.18rem",
-                      fontWeight: 600,
-                      color: "#D9A919",
-                      margin: "0 0 0.45rem 0",
-                    }}
-                  >
-                    {featuredCause ? "Close to My Heart" : "Causes I Stand For"}
-                  </p>
-
-                  {featuredCause && (
-                    <>
-                      <Link
-                        href={`/cause/${featuredCause.id}`}
-                        style={{ display: "block", textDecoration: "none", cursor: "pointer" }}
-                      >
-                        <p
-                          style={{
-                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                            fontSize: "1.25rem",
-                            fontWeight: 600,
-                            color: "#F2F2F2",
-                            margin: 0,
-                            lineHeight: 1.3,
-                            transition: "color 140ms",
-                          }}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = "#FFCC00"; }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = "#F2F2F2"; }}
-                        >
-                          {featuredCause.label}
-                        </p>
-                      </Link>
-                      {featuredCause.description && (
-                        <p
-                          style={{
-                            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-                            fontSize: "0.82rem",
-                            color: "rgba(242,242,242,0.65)",
-                            lineHeight: 1.55,
-                            margin: "0.55rem 0 0 0",
-                          }}
-                        >
-                          {featuredCause.description}
-                        </p>
-                      )}
-                    </>
-                  )}
-
-                  {visibleCausePills.length > 0 && (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "0.4rem",
-                        marginTop: featuredCause ? "0.9rem" : 0,
-                      }}
-                    >
-                      {visibleCausePills.map(({ id, label }) => (
-                        <Link
-                          key={id}
-                          href={`/cause/${id}`}
-                          style={{
-                            display: "inline-block",
-                            padding: "4px 12px",
-                            borderRadius: 999,
-                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                            fontSize: "0.72rem",
-                            fontWeight: 600,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.08rem",
-                            color: "#D9A919",
-                            background: "rgba(217,169,25,0.10)",
-                            border: "1px solid rgba(217,169,25,0.25)",
-                            textDecoration: "none",
-                            cursor: "pointer",
-                            transition: "background 140ms, border-color 140ms",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = "rgba(217,169,25,0.20)";
-                            e.currentTarget.style.borderColor = "rgba(217,169,25,0.45)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = "rgba(217,169,25,0.10)";
-                            e.currentTarget.style.borderColor = "rgba(217,169,25,0.25)";
-                          }}
-                        >
-                          {label}
-                        </Link>
-                      ))}
-                      {causePillOverflow > 0 && (
-                        <span
-                          style={{
-                            display: "inline-block",
-                            padding: "4px 12px",
-                            borderRadius: 999,
-                            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                            fontSize: "0.72rem",
-                            fontWeight: 600,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.08rem",
-                            color: "rgba(217,169,25,0.45)",
-                            background: "rgba(217,169,25,0.04)",
-                            border: "1px solid rgba(217,169,25,0.14)",
-                          }}
-                        >
-                          +{causePillOverflow} more
-                        </span>
-                      )}
-                    </div>
-                  )}
+              {/* Spotlight / Highlight panels — compact, admin or alum voice */}
+              {hasPanels && (
+                <div style={{ marginTop: "2.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  {hasSpotlight && <SpotlightPanel updates={spotlightUpdates} compact />}
+                  {hasHighlight && <HighlightPanel cards={highlightCards} compact />}
+                  <SpotlightHighlightArchive
+                    spotlights={spotlightUpdates ?? []}
+                    highlights={highlightCards ?? []}
+                  />
                 </div>
               )}
             </div>

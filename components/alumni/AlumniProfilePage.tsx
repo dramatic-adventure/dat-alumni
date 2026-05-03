@@ -24,6 +24,24 @@ interface UpcomingEvent {
   videoAutoplay?: boolean;
 }
 
+interface SheetSpotlightRow {
+  profileSlug: string;
+  type: string;
+  title: string;
+  subtitle: string;
+  bodyNote: string;
+  mediaUrls: string;
+  mediaType: string;
+  eventDate: string;
+  evergreen: boolean;
+  expirationDate: string;
+  ctaText: string;
+  ctaUrl: string;
+  featured: boolean;
+  sortDate: string;
+  tags: string;
+}
+
 interface AlumniProfileProps {
   data: AlumniRow;
   allStories: StoryRow[];
@@ -35,11 +53,16 @@ interface AlumniProfileProps {
    */
   slugAliases?: string[];
 
-  offsetTop?: string; // Additional offset for fine-tuning (e.g., "-2rem")
-  offsetBottom?: string; // Space below section (e.g., "-6rem")
-  minSectionHeight?: string; // Ensures parallax coverage (e.g., "140vh")
+  offsetTop?: string;
+  offsetBottom?: string;
+  minSectionHeight?: string;
 
   upcomingEvent?: UpcomingEvent;
+
+  /** Spotlights loaded server-side from the Spotlights & Highlights sheet tab */
+  sheetSpotlights?: SheetSpotlightRow[];
+  /** Highlights loaded server-side from the Spotlights & Highlights sheet tab */
+  sheetHighlights?: SheetSpotlightRow[];
 }
 
 const HEADER_HEIGHT = "84px"; // ✅ Adjust if your header height changes
@@ -88,6 +111,11 @@ function coerceStrArray(v: any): string[] {
 }
 
 
+function firstMedia(s?: string) {
+  if (!s) return undefined;
+  return s.split(",").map((x) => x.trim()).filter(Boolean)[0];
+}
+
 export default function AlumniProfilePage({
   data,
   allStories,
@@ -96,6 +124,8 @@ export default function AlumniProfilePage({
   offsetBottom = "15rem",
   minSectionHeight = "100vh",
   upcomingEvent,
+  sheetSpotlights = [],
+  sheetHighlights = [],
 }: AlumniProfileProps) {
   const d = (data || {}) as any;
 
@@ -161,6 +191,32 @@ export default function AlumniProfilePage({
 
   // NOTE: updates shape is handled inside ProfileCard; we just pass through.
   const updates = (d.updates ?? []) as any[];
+
+  // Convert sheet rows → ProfileCard-ready types (override updates-derived spotlights)
+  const derivedSpotlights = sheetSpotlights.map((r) => ({
+    tag: "DAT Spotlight" as const,
+    headline: r.title,
+    body: r.bodyNote,
+    ctaLink: r.ctaUrl || undefined,
+    ctaText: r.ctaText || undefined,
+    mediaUrl: firstMedia(r.mediaUrls),
+    evergreen: r.evergreen,
+    category: (r.tags || undefined) as any,
+    slug: r.profileSlug,
+    sortDate: r.sortDate || undefined,
+    eventDate: r.eventDate || undefined,
+  }));
+
+  const derivedHighlights = sheetHighlights.map((r) => ({
+    headline: r.title,
+    subheadline: r.subtitle || undefined,
+    body: r.bodyNote || undefined,
+    ctaLink: r.ctaUrl || undefined,
+    mediaUrl: firstMedia(r.mediaUrls),
+    evergreen: r.evergreen,
+    expirationDate: r.expirationDate || undefined,
+    category: (r.tags || undefined) as any,
+  }));
 
   if (process.env.NEXT_PUBLIC_DEBUG_PROFILE === "1") {
     clientDebug("🧪 updates passed to ProfileCard:", updates);
@@ -320,6 +376,8 @@ alumniId={alumniId || undefined}
                 socials={socials}
                 featuredLink={featuredLink}
                 updates={updates}
+                sheetSpotlights={derivedSpotlights}
+                sheetHighlights={derivedHighlights}
                 currentTitle={currentTitle || undefined}
                 secondLocation={secondLocation || undefined}
                 isBiCoastal={isBiCoastal}

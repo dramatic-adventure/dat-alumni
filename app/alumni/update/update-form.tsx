@@ -59,6 +59,8 @@ import MediaPanel from "@/app/alumni/update/studio/MediaPanel";
 import ContactPanel from "@/app/alumni/update/studio/ContactPanel";
 import StoryPanel from "@/app/alumni/update/studio/StoryPanel";
 import EventPanel from "@/app/alumni/update/studio/EventPanel";
+import SpotlightAdminPanel from "@/app/alumni/update/studio/SpotlightAdminPanel";
+import HighlightStudioPanel from "@/app/alumni/update/studio/HighlightStudioPanel";
 
 
 import MediaPickerModal from "@/components/media/MediaPickerModal";
@@ -198,7 +200,7 @@ const lookupUrl = useMemo(() => {
     if (didInitTabFromQuery.current) return;
 
     const raw = String(searchParams?.get("tab") || "").toLowerCase();
-    const allowed: StudioTab[] = ["basics", "identity", "media", "contact", "story", "event"];
+    const allowed: StudioTab[] = ["basics", "identity", "media", "contact", "story", "event", "highlight", "spotlight"];
 
     if (allowed.includes(raw as StudioTab)) {
       setStudioTab(raw as StudioTab);
@@ -218,6 +220,8 @@ const lookupUrl = useMemo(() => {
         contact: "Contact",
         story: "StoryMap",
         event: "UpcomingEvent",
+        highlight: "Basics", // alum highlight tab — falls back to Basics module (unused)
+        spotlight: "Basics", // admin-only tab — falls back to Basics module (unused)
       }) as const satisfies Record<StudioTab, ModuleKey>,
     []
   );
@@ -2426,7 +2430,25 @@ return (
         }
       />
     }
-
+    highlightPanel={
+      <HighlightStudioPanel
+        profileSlug={currentSlug || String(targetAlumniId || "")}
+        onSaved={() => {
+          showToastRef.current?.("Highlight added — reload your profile to see it.", "success");
+        }}
+      />
+    }
+    showSpotlightTab={isAdmin}
+    spotlightPanel={
+      isAdmin ? (
+        <SpotlightAdminPanel
+          profileSlug={currentSlug || String(targetAlumniId || "")}
+          onSaved={() => {
+            showToastRef.current?.("Spotlight saved — reload the profile to see it.", "success");
+          }}
+        />
+      ) : undefined
+    }
   />
 </div>
 

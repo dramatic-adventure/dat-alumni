@@ -26,6 +26,7 @@ import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
 import { getOrderedProfileRoles, deriveBoardStatus, getBoardRoleLabelForProfile } from "@/lib/profileRoleAssignments";
 import { programMap } from "@/lib/programMap";
 import { productionMap } from "@/lib/productionMap";
+import { loadSpotlightsForSlug } from "@/lib/loadSpotlightsFromSheet";
 
 type PageProps = {
   params: Promise<{ slug: string | string[] }>;
@@ -33,7 +34,8 @@ type PageProps = {
 };
 
 // Revalidate server-rendered page data periodically
-export const revalidate = 60;
+// 15 s keeps spotlight/highlight edits from feeling stale without hammering the Sheets API
+export const revalidate = 15;
 
 /* -----------------------------------------------------------
  * Page-level metadata (recommended in Next 15)
@@ -397,13 +399,17 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
     akaFields: ["aka", "aliases", "previousNames", "formerNames"],
   });
 
-  // 5) COLLECTIONS
+  // 5) COLLECTIONS + SPOTLIGHTS (parallel)
   const alumniId =
     (alumni as any).alumniId || (alumni as any).id || (alumni as any).recordId || "";
-  const coll = await loadCollectionsFor({
-    aliases,
-    alumniId: String(alumniId || ""),
-  });
+
+  const [coll, spotlightData] = await Promise.all([
+    loadCollectionsFor({ aliases, alumniId: String(alumniId || "") }),
+    loadSpotlightsForSlug(canonicalOrIncoming || incoming, aliases).catch((err) => {
+      console.error("[alumni/page] loadSpotlightsForSlug failed — falling back to updates-derived data:", err);
+      return { spotlights: [], highlights: [], all: [] };
+    }),
+  ]);
 
   const mergedImageUrls =
     (coll.imageUrls.length ? coll.imageUrls : (alumni as any).imageUrls) || [];
@@ -547,6 +553,8 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
         }}
         allStories={storiesForThisAlum}
         slugAliases={Array.from(aliases)}
+        sheetSpotlights={spotlightData.spotlights}
+        sheetHighlights={spotlightData.highlights}
         upcomingEvent={
           (normalizedAlumni as any).upcomingEventTitle
             ? {
