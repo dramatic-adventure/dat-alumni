@@ -4,6 +4,22 @@ import React from "react";
 import CommunityComposer from "@/app/alumni/update/community/Composer";
 import CommunityUpdateLine from "@/components/alumni/update/CommunityUpdateLine";
 
+/** Returns a short relative label for timestamps < 48 h old; null otherwise. */
+function relativeTime(ts?: string | number): string | null {
+  if (!ts) return null;
+  const ms = typeof ts === "number" ? ts : Date.parse(String(ts));
+  if (!Number.isFinite(ms)) return null;
+  const diffMs = Date.now() - ms;
+  if (diffMs < 0) return null;
+  const diffMin = Math.floor(diffMs / 60_000);
+  if (diffMin < 1) return "just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffH = Math.floor(diffMs / 3_600_000);
+  if (diffH < 24) return `${diffH}h ago`;
+  if (diffH < 48) return "yesterday";
+  return null; // ≥ 2 days — show nothing
+}
+
 type ToastFn = (msg: string, type?: "success" | "error") => void;
 
 export default function Feed({
@@ -111,6 +127,7 @@ export default function Feed({
                     name={it?.name}
                     slug={it?.slug || it?.alumniId || "alumni"}
                     text={it?.text}
+                    meta={relativeTime(it?.ts) ?? undefined}
                     updateId={it?.id}
                     showActions={Boolean(it?.id && (isAdmin || it.alumniId === stableAlumniId))}
                     onUndo={undoPostedUpdate}
