@@ -10,6 +10,7 @@ export type HighlightCard = {
   subheadline?: string;
   body?: string;
   ctaLink?: string;
+  ctaText?: string;
   evergreen?: boolean;
   expirationDate?: string;
   category?: string;
@@ -170,7 +171,7 @@ function HighlightCardView({ card, compact }: { card: HighlightCard; compact: bo
             onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.75")}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           >
-            More Details
+            {card.ctaText || "More Details"}
           </a>
         )}
       </div>
@@ -182,6 +183,12 @@ function HighlightCardView({ card, compact }: { card: HighlightCard; compact: bo
   );
 }
 
+function isExpired(c: HighlightCard): boolean {
+  if (c.evergreen) return false;
+  if (!c.expirationDate) return false;
+  return new Date(c.expirationDate) < new Date();
+}
+
 export default function HighlightPanel({
   cards = [],
   compact = false,
@@ -190,8 +197,9 @@ export default function HighlightPanel({
   compact?: boolean;
 }) {
   const sorted = useMemo(() => {
-    const evergreen = cards.filter((c) => c.evergreen);
-    const others = cards.filter((c) => !c.evergreen);
+    const active = cards.filter((c) => !isExpired(c));
+    const evergreen = active.filter((c) => c.evergreen);
+    const others = active.filter((c) => !c.evergreen);
     return [...evergreen, ...others];
   }, [cards]);
 

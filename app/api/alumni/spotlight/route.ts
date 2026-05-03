@@ -76,7 +76,7 @@ export async function POST(req: Request) {
     ctaText: (body.ctaText ?? "").trim(),
     ctaUrl: (body.ctaUrl ?? "").trim(),
     featured: Boolean(body.featured),
-    sortDate: (body.sortDate ?? "").trim(),
+    sortDate: (body.sortDate ?? "").trim() || new Date().toISOString().split("T")[0],
     tags: (body.tags ?? "").trim(),
   };
 

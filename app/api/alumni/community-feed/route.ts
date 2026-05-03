@@ -86,18 +86,6 @@ export async function GET(req: Request) {
       { ok: true, items: filtered, days, limit, ...(onlyComposer ? { type: "composer" } : {}) },
       { status: 200 }
     );
-
-
-    return noStoreJson(
-      {
-        ok: true,
-        items: filtered,
-        days,
-        limit,
-        ...(onlyComposer ? { type: "composer" } : {}),
-      },
-      { status: 200 }
-    );
   } catch (e: any) {
     return noStoreJson(
       { ok: false, error: e?.message || "failed" },

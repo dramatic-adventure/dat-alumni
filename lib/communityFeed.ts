@@ -175,7 +175,7 @@ function buildText(scored: Scored, live?: ProfileLiveRow): { label: string; text
 
     return {
       label: "Upcoming Event",
-      text: title ? `Added an event — ${title}` : "Updated an event",
+      text: title ? `added an upcoming event — "${title}"` : "added an upcoming event",
     };
   }
 
@@ -184,7 +184,7 @@ function buildText(scored: Scored, live?: ProfileLiveRow): { label: string; text
 
     return {
       label: "Story Map",
-      text: title ? `Added a story to the map — ${title}` : "Added a story to the map",
+      text: title ? `added a story — "${title}"` : "added a story",
     };
   }
 
@@ -360,7 +360,19 @@ export function buildCommunityFeedItems(
     out.push(chosen.item);
   }
 
-  return out.slice(0, limit);
+  // ✅ Text-level dedup: if Pass 2 emitted a second item for the same person
+  // that resolves to the same (label, text) — e.g. a `currentUpdateLink` row
+  // and a `currentUpdateText` row both rendering as the same "Current Update"
+  // line — drop the duplicate.
+  const seenTextKeys = new Set<string>();
+  const deduped = out.filter((item) => {
+    const k = `${item.alumniId}::${item.label}::${item.text}`;
+    if (seenTextKeys.has(k)) return false;
+    seenTextKeys.add(k);
+    return true;
+  });
+
+  return deduped.slice(0, limit);
 }
 
 /**

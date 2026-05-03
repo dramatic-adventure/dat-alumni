@@ -60,6 +60,7 @@ import ContactPanel from "@/app/alumni/update/studio/ContactPanel";
 import StoryPanel from "@/app/alumni/update/studio/StoryPanel";
 import EventPanel from "@/app/alumni/update/studio/EventPanel";
 import SpotlightAdminPanel from "@/app/alumni/update/studio/SpotlightAdminPanel";
+import type { SpotlightPreloadData } from "@/app/alumni/update/studio/SpotlightAdminPanel";
 import HighlightStudioPanel from "@/app/alumni/update/studio/HighlightStudioPanel";
 
 
@@ -253,6 +254,20 @@ const lookupUrl = useMemo(() => {
   const [currentSlug, setCurrentSlug] = useState(""); // current canonical slug
   const [originalSlug, setOriginalSlug] = useState(""); // previous slug for forward mapping
   const [autoDetected, setAutoDetected] = useState(false);
+
+  // Preload spotlight/highlight data once when the slug is known so both studio
+  // panels can initialize synchronously without their own individual fetches.
+  const [spotlightPreload, setSpotlightPreload] = useState<SpotlightPreloadData | undefined>(undefined);
+  useEffect(() => {
+    if (!currentSlug) return;
+    setSpotlightPreload(undefined); // reset on slug change
+    let alive = true;
+    fetch(`/api/alumni/spotlight?slug=${encodeURIComponent(currentSlug)}`)
+      .then((r) => r.json())
+      .then((data) => { if (alive) setSpotlightPreload({ spotlights: data?.spotlights ?? [], highlights: data?.highlights ?? [] }); })
+      .catch(() => { if (alive) setSpotlightPreload({ spotlights: [], highlights: [] }); });
+    return () => { alive = false; };
+  }, [currentSlug]);
 
   /** ✅ Baseline snapshot from Profile-Live (used for diff) */
   const [liveBaseline, setLiveBaseline] = useState<any>(null);
@@ -1011,19 +1026,34 @@ const openEventAndScroll = () => {
   const [feed, setFeed] = useState<any[]>([]);
   const [feedLoading, setFeedLoading] = useState(false);
 
-  async function refreshFeed() {
+  async function refreshFeed(silent = false) {
     try {
-      setFeedLoading(true);
+      if (!silent) setFeedLoading(true);
       const r = await fetch("/api/alumni/community-feed?limit=8", { cache: "no-store" });
       const j = await r.json().catch(() => ({}));
       if (r.ok && Array.isArray(j?.items)) setFeed(j.items);
     } finally {
-      setFeedLoading(false);
+      if (!silent) setFeedLoading(false);
     }
   }
 
   useEffect(() => {
     refreshFeed();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-refresh: silently poll the feed every 45 s so new posts from classmates
+  // appear without any user action. Uses setFeed directly (stable setState ref)
+  // so it never touches profile form state.
+  useEffect(() => {
+    const id = setInterval(async () => {
+      try {
+        const r = await fetch("/api/alumni/community-feed?limit=8", { cache: "no-store" });
+        const j = await r.json().catch(() => ({}));
+        if (r.ok && Array.isArray(j?.items)) setFeed(j.items);
+      } catch { /* silent — don't surface background poll errors */ }
+    }, 45_000);
+    return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1482,19 +1512,35 @@ const postCurrentUpdate = async (rawText: string, meta?: any): Promise<string | 
       ? meta.prompt
       : "";
 
-  try {
-    // optimistic UI
-    setProfile((p: any) => ({ ...p, currentUpdateText: text }));
+  // Optimistic: prepend a placeholder item so the post appears instantly.
+  const tempId = `opt-${Date.now()}`;
+  const optimisticItem = {
+    id: tempId,
+    ts: new Date().toISOString(),
+    alumniId: stableAlumniId,
+    name: name || "",
+    slug: currentSlug || stableAlumniId || "alumni",
+    label: "Current Update",
+    text,
+    kind: "current",
+    field: "currentUpdateText",
+  };
+  setFeed((prev: any[]) => [optimisticItem, ...prev]);
+  setProfile((p: any) => ({ ...p, currentUpdateText: text }));
 
+  try {
     const id = await saveCurrentUpdate(text, promptUsed);
 
     if (id) setLastPostedId(id);
 
     showToastRef.current?.("Posted ✅");
-    await refreshFeed();
+    // Silent refresh: replace optimistic item with real data without a loading flash
+    await refreshFeed(true);
 
     return id;
   } catch (err: any) {
+    // Roll back the optimistic item
+    setFeed((prev: any[]) => prev.filter((it: any) => it.id !== tempId));
     showToastRef.current?.(err?.message || "Update failed", "error");
     return null;
   }
@@ -2433,6 +2479,7 @@ return (
     highlightPanel={
       <HighlightStudioPanel
         profileSlug={currentSlug || String(targetAlumniId || "")}
+        initialData={spotlightPreload}
         onSaved={() => {
           showToastRef.current?.("Highlight added — reload your profile to see it.", "success");
         }}
@@ -2443,6 +2490,7 @@ return (
       isAdmin ? (
         <SpotlightAdminPanel
           profileSlug={currentSlug || String(targetAlumniId || "")}
+          initialData={spotlightPreload}
           onSaved={() => {
             showToastRef.current?.("Spotlight saved — reload the profile to see it.", "success");
           }}

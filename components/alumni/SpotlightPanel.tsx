@@ -10,8 +10,10 @@ export type SpotlightUpdate = {
   subheadline?: string;
   body: string;
   ctaLink?: string;
+  ctaText?: string;
   mediaUrl?: string;
   evergreen?: boolean;
+  expirationDate?: string;
   highlighted?: boolean;
   category?: string;
 };
@@ -167,7 +169,7 @@ function SpotlightCard({ update, compact }: { update: SpotlightUpdate; compact: 
             onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           >
-            More Details
+            {update.ctaText || "More Details"}
           </a>
         )}
       </div>
@@ -179,6 +181,12 @@ function SpotlightCard({ update, compact }: { update: SpotlightUpdate; compact: 
   );
 }
 
+function isExpired(u: SpotlightUpdate): boolean {
+  if (u.evergreen) return false;
+  if (!u.expirationDate) return false;
+  return new Date(u.expirationDate) < new Date();
+}
+
 export default function SpotlightPanel({
   updates = [],
   compact = false,
@@ -187,8 +195,9 @@ export default function SpotlightPanel({
   compact?: boolean;
 }) {
   const sorted = useMemo(() => {
-    const evergreen = updates.filter((u) => u.evergreen);
-    const others = updates.filter((u) => !u.evergreen);
+    const active = updates.filter((u) => !isExpired(u));
+    const evergreen = active.filter((u) => u.evergreen);
+    const others = active.filter((u) => !u.evergreen);
     return [...evergreen, ...others];
   }, [updates]);
 

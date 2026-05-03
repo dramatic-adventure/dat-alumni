@@ -88,6 +88,7 @@ type Form = {
   tags: string;
   evergreen: boolean;
   expirationDate: string;
+  eventDate: string;
 };
 
 const BLANK: Form = {
@@ -100,11 +101,16 @@ const BLANK: Form = {
   tags: "",
   evergreen: true,
   expirationDate: "",
+  eventDate: "",
 };
+
+export type SpotlightPreloadData = { spotlights: any[]; highlights: any[] };
 
 type SpotlightAdminPanelProps = {
   profileSlug: string;
   onSaved?: () => void;
+  /** Preloaded API data — when provided the panel skips its own fetch and renders instantly. */
+  initialData?: SpotlightPreloadData;
 };
 
 function isExpired(row: { evergreen: boolean; expirationDate: string }): boolean {
@@ -113,46 +119,63 @@ function isExpired(row: { evergreen: boolean; expirationDate: string }): boolean
   return new Date(row.expirationDate) < new Date();
 }
 
+function formFromActive(active: any): Form {
+  return {
+    title: active.title ?? "",
+    subtitle: active.subtitle ?? "",
+    bodyNote: active.bodyNote ?? "",
+    mediaUrls: active.mediaUrls ?? "",
+    ctaText: active.ctaText ?? "",
+    ctaUrl: active.ctaUrl ?? "",
+    tags: active.tags ?? "",
+    evergreen: Boolean(active.evergreen),
+    expirationDate: active.expirationDate ?? "",
+    eventDate: active.eventDate ?? "",
+  };
+}
+
 export default function SpotlightAdminPanel({
   profileSlug,
   onSaved,
+  initialData,
 }: SpotlightAdminPanelProps) {
-  const [form, setForm] = useState<Form>(BLANK);
+  const [form, setForm] = useState<Form>(() => {
+    if (initialData !== undefined) {
+      const active = (initialData.spotlights ?? []).find((s: any) => !isExpired(s));
+      return active ? formFromActive(active) : BLANK;
+    }
+    return BLANK;
+  });
   const [saving, setSaving] = useState(false);
   const [savedRecently, setSavedRecently] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [hasExisting, setHasExisting] = useState(false);
+  const [loading, setLoading] = useState(initialData === undefined);
+  const [hasExisting, setHasExisting] = useState(() => {
+    if (initialData !== undefined) {
+      return Boolean((initialData.spotlights ?? []).find((s: any) => !isExpired(s)));
+    }
+    return false;
+  });
 
-  // Pre-populate with existing active spotlight on mount
+  // Pre-populate with existing active spotlight on mount — skipped when initialData is provided
   useEffect(() => {
+    if (initialData !== undefined) return;
     if (!profileSlug) { setLoading(false); return; }
     let alive = true;
     fetch(`/api/alumni/spotlight?slug=${encodeURIComponent(profileSlug)}`)
       .then((r) => r.json())
       .then((data) => {
         if (!alive) return;
-        const spotlights: any[] = data?.spotlights ?? [];
-        const active = spotlights.find((s) => !isExpired(s));
+        const active = (data?.spotlights ?? []).find((s: any) => !isExpired(s));
         if (active) {
-          setForm({
-            title: active.title ?? "",
-            subtitle: active.subtitle ?? "",
-            bodyNote: active.bodyNote ?? "",
-            mediaUrls: active.mediaUrls ?? "",
-            ctaText: active.ctaText ?? "",
-            ctaUrl: active.ctaUrl ?? "",
-            tags: active.tags ?? "",
-            evergreen: Boolean(active.evergreen),
-            expirationDate: active.expirationDate ?? "",
-          });
+          setForm(formFromActive(active));
           setHasExisting(true);
         }
       })
       .catch(() => {})
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, [profileSlug]);
+  }, [profileSlug, initialData]);
 
   const set =
     (key: keyof Form) =>
@@ -194,7 +217,7 @@ export default function SpotlightAdminPanel({
           evergreen: form.evergreen,
           expirationDate: form.expirationDate.trim(),
           mediaType: "",
-          eventDate: "",
+          eventDate: form.eventDate.trim(),
           featured: false,
           sortDate: "",
         }),
@@ -261,6 +284,17 @@ export default function SpotlightAdminPanel({
           value={form.subtitle}
           onChange={set("subtitle")}
           placeholder="e.g. Opening night March 14"
+        />
+      </div>
+
+      {/* Event Date */}
+      <div style={fieldStyle}>
+        <label style={labelStyle}>Event date <span style={{ opacity: 0.5, fontWeight: 400 }}>(optional)</span></label>
+        <input
+          style={{ ...inputStyle, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: 14 }}
+          type="date"
+          value={form.eventDate}
+          onChange={set("eventDate")}
         />
       </div>
 

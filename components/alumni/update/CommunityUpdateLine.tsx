@@ -115,6 +115,8 @@ export default function CommunityUpdateLine({
   name,
   slug,
   text,
+  label,
+  meta,
   updateId,
   showActions = false,
   onUndo,
@@ -223,39 +225,57 @@ export default function CommunityUpdateLine({
             {safeText ? <span style={textStyle}>{safeText}</span> : null}
           </div>
 
-          {actionsEnabled ? (
-            <div style={{ position: "relative" }}>
-              <button
-                ref={dotsBtnRef}
-                type="button"
-                className={`dat-update-dots ${menuOpen ? "is-open" : ""}`}
-                aria-label="More actions"
-                title="More actions"
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            {meta ? (
+              <span
                 style={{
-                  ...dotsBtnStyle,
-                  ...(showActions || menuOpen ? { opacity: 1 } : null),
+                  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                  fontSize: 11,
+                  fontWeight: 500,
+                  opacity: 0.38,
+                  color: COLORS.ink,
+                  whiteSpace: "nowrap",
+                  letterSpacing: "0.02em",
                 }}
-                onClick={() => setMenuOpen((v) => !v)}
               >
-                ⋯
-              </button>
+                {meta}
+              </span>
+            ) : null}
 
-              {menuOpen ? (
-                <div role="menu" aria-label="Update actions" style={actionMenuStyle}>
-                  <button
-                    type="button"
-                    role="menuitem"
-                    style={actionItemPurpleTight}
-                    onClick={handleUndoClick}
-                  >
-                    Undo post
-                  </button>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+            {actionsEnabled ? (
+              <div style={{ position: "relative" }}>
+                <button
+                  ref={dotsBtnRef}
+                  type="button"
+                  className={`dat-update-dots ${menuOpen ? "is-open" : ""}`}
+                  aria-label="More actions"
+                  title="More actions"
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  style={{
+                    ...dotsBtnStyle,
+                    ...(showActions || menuOpen ? { opacity: 1 } : null),
+                  }}
+                  onClick={() => setMenuOpen((v) => !v)}
+                >
+                  ⋯
+                </button>
+
+                {menuOpen ? (
+                  <div role="menu" aria-label="Update actions" style={actionMenuStyle}>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      style={actionItemPurpleTight}
+                      onClick={handleUndoClick}
+                    >
+                      Undo post
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 
