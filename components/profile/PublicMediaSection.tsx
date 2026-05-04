@@ -460,8 +460,8 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
               disabled={safePage === 0}
               aria-label="Previous collections"
               style={{
-                position: "absolute", top: "50%", left: 10,
-                transform: "translateY(-50%)",
+                position: "absolute", top: 12, left: 10,
+                transform: "none",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 width: 36, height: 36, borderRadius: "50%", padding: 0,
                 background: safePage === 0 ? "rgba(0,0,0,0.15)" : "rgba(0,0,0,0.45)",
@@ -511,8 +511,8 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
               disabled={safePage === totalPages - 1}
               aria-label="Next collections"
               style={{
-                position: "absolute", top: "50%", right: 10,
-                transform: "translateY(-50%)",
+                position: "absolute", top: 12, right: 10,
+                transform: "none",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 width: 36, height: 36, borderRadius: "50%", padding: 0,
                 background: safePage === totalPages - 1 ? "rgba(0,0,0,0.15)" : "rgba(0,0,0,0.45)",
