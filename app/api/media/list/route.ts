@@ -95,9 +95,11 @@ function cacheHeaders(opts: { includeDrive: boolean }) {
   }
 
   return {
-    // Browser can keep it briefly; CDN keeps it longer.
-    // Adjust if you want: s-maxage=120 for 2min, etc.
-    "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=86400",
+    // max-age=0 forces the browser to always revalidate — cover-photo changes
+    // from the editor are otherwise invisible for a full minute.
+    // s-maxage=300 lets the Netlify CDN still cache for 5 min between users,
+    // and stale-while-revalidate keeps repeat loads snappy.
+    "Cache-Control": "public, max-age=0, s-maxage=300, stale-while-revalidate=3600",
   };
 }
 

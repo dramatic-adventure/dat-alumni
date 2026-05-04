@@ -187,12 +187,23 @@ export async function GET(req: Request) {
       );
     }
 
+    // _bust=1: caller knows data was just mutated (e.g. after a cover-photo toggle).
+    // Skip the fresh-cache check and evict the entry so the next request also gets
+    // a fresh read.  In-flight dedup still applies so we don't double-hit Sheets.
+    const bust = searchParams.get("_bust") === "1";
+
     const key = makeCacheKey({ alumniId, kind, limit, offset, includeDrive });
 
-    // 1) If we have a fresh cache, return immediately
-    const fresh = cacheFresh(key);
-    if (fresh) {
-      return NextResponse.json(fresh, { status: 200, headers: responseHeaders() });
+    if (bust) {
+      mediaListCache.delete(key); // evict stale entry
+    }
+
+    // 1) If we have a fresh cache (and caller didn't bust it), return immediately
+    if (!bust) {
+      const fresh = cacheFresh(key);
+      if (fresh) {
+        return NextResponse.json(fresh, { status: 200, headers: responseHeaders() });
+      }
     }
 
     // 2) If an identical request is already in-flight, await it

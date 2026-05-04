@@ -60,7 +60,7 @@ type MediaPanelProps = {
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const SLOT_SIZE = 82;   // cover photo thumb px
+const SLOT_SIZE = 82; // cover photo thumb px
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 // Always use our proxy — Drive thumbnailLinks are domain-restricted and expire.
@@ -119,6 +119,9 @@ export default function MediaPanel({
   const [featSavedFlash, setFeatSavedFlash] = useState(false);
   const featSavedFlashTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // ── Cover photo hover state ───────────────────────────────────────────────
+  const [hoveredCoverId, setHoveredCoverId] = useState<string | null>(null);
+
   // ── Picker state ─────────────────────────────────────────────────────────────
   const [openColId, setOpenColId] = useState<string | null>(null);
 
@@ -139,6 +142,9 @@ export default function MediaPanel({
     () => String(profile?.videoFullBleed || "").trim() === "true",
   );
 
+  // ── Video dirty tracking ──────────────────────────────────────────────────
+  const [videoDirty, setVideoDirty] = useState(false);
+
   useEffect(() => {
     setReelUrl1(String(profile?.reelVideoUrl1 || ""));
     setReelUrl2(String(profile?.reelVideoUrl2 || ""));
@@ -151,6 +157,7 @@ export default function MediaPanel({
     setVideoAspect3(String(profile?.videoAspect3 || ""));
     setVideoAutoplay(String(profile?.videoAutoplay || "").trim());
     setVideoFullBleed(String(profile?.videoFullBleed || "").trim() === "true");
+    setVideoDirty(false); // reset dirty when profile reloads from server
   }, [
     profile?.reelVideoUrl1, profile?.reelVideoUrl2, profile?.reelVideoUrl3,
     profile?.videoTitle1, profile?.videoTitle2, profile?.videoTitle3,
@@ -159,12 +166,12 @@ export default function MediaPanel({
   ]);
 
   // ── Fetch library ────────────────────────────────────────────────────────────
-  const fetchLibrary = useCallback(async () => {
+  const fetchLibrary = useCallback(async (bust = false) => {
     if (!alumniId) return;
     setLibraryLoading(true);
     try {
       const res = await fetch(
-        `/api/alumni/media/list?alumniId=${encodeURIComponent(alumniId)}&kind=album&limit=200`,
+        `/api/alumni/media/list?alumniId=${encodeURIComponent(alumniId)}&kind=album&limit=200${bust ? "&_bust=1" : ""}`,
       );
       if (!res.ok) return;
       const j = await res.json();
@@ -199,7 +206,6 @@ export default function MediaPanel({
     if (!alumniId || togglingId) return;
     const colKey = item.collectionId || item.collectionTitle || "__ungrouped__";
 
-    // Find any existing cover in the same collection
     const prevCover = library.find(
       (p) =>
         p.isFeatured &&
@@ -219,7 +225,6 @@ export default function MediaPanel({
     );
 
     try {
-      // Unfeature the previous cover first (if any and we're featuring a new one)
       if (prevCover && !item.isFeatured) {
         await fetch("/api/media/feature", {
           method: "POST",
@@ -227,7 +232,6 @@ export default function MediaPanel({
           body: JSON.stringify({ alumniId, kind: "album", fileId: prevCover.fileId }),
         });
       }
-      // Toggle the clicked item
       const res = await fetch("/api/media/feature", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -236,6 +240,7 @@ export default function MediaPanel({
       const j = await res.json();
       if (!res.ok || !j.ok) throw new Error(j?.error || "Failed");
 
+      // Flash at section level — visible regardless of whether accordion is open
       if (featSavedFlashTimeout.current) clearTimeout(featSavedFlashTimeout.current);
       setFeatSavedFlash(true);
       featSavedFlashTimeout.current = setTimeout(() => setFeatSavedFlash(false), 1500);
@@ -255,11 +260,24 @@ export default function MediaPanel({
   }
 
   const hasUploadWork = albumFiles.length > 0;
-  const isDirty       = hasUploadWork || externalDirty;
+  const isDirty       = hasUploadWork || videoDirty || externalDirty;
+
+  // ── Progressive video slot visibility ────────────────────────────────────────
+  const showVideo2     = !!reelUrl1.trim() || !!reelUrl2.trim();
+  const showVideo3     = !!reelUrl2.trim() || !!reelUrl3.trim();
+  const multipleVideos = [reelUrl1, reelUrl2, reelUrl3].filter((u) => u.trim()).length > 1;
 
   // ─────────────────────────────────────────────────────────────────────────────
   return (
     <div>
+      <style>{`
+        @keyframes _mp_fadeSlideIn {
+          from { opacity: 0; transform: translateY(-4px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        ._mp_videoExtra { animation: _mp_fadeSlideIn 0.18s ease; }
+      `}</style>
+
       <div id="studio-media-anchor" />
 
       <p style={explainStyleLocal}>
@@ -268,203 +286,121 @@ export default function MediaPanel({
       </p>
 
       {/* ═══════════════════════════════════════════════════════════
-          COVER PHOTOS
+          UPLOAD PHOTOS  (first — you need photos before setting covers)
       ═══════════════════════════════════════════════════════════ */}
       <span style={subheadChipStyle} className="subhead-chip">
-        Cover Photos
+        Upload Photos
       </span>
 
       <p style={{ ...explainStyleLocal, opacity: 0.55, fontSize: "0.8rem", fontStyle: "italic" }}>
-        Choose one cover photo per collection — it&apos;s shown in the accordion on your
-        public profile. Click a collection to pick or change its cover.
+        Drop photos below to add them to your library. After uploading,
+        they&apos;ll appear in the cover photo picker below.
       </p>
 
-      {/* ── Per-collection cover rows ──────────────────────────── */}
-      {collections.length > 0 && (
-        <div
-          style={{
-            display: "grid",
-            gap: 8,
-            marginBottom: 20,
-          }}
-        >
-          {collections.map((col) => {
-            const cover = col.items.find((it) => it.isFeatured) ?? col.items[0];
-            const isEditing = openColId === col.id;
-            return (
-              <div
-                key={col.id}
-                style={{
-                  borderRadius: 10,
-                  border: isEditing
-                    ? "1px solid rgba(108,0,175,0.55)"
-                    : "1px solid rgba(255,255,255,0.10)",
-                  background: isEditing ? "rgba(108,0,175,0.10)" : "rgba(0,0,0,0.18)",
-                  overflow: "hidden",
-                  transition: "border-color 0.2s, background 0.2s",
-                }}
-              >
-                {/* Row header */}
-                <button
-                  type="button"
-                  onClick={() => setOpenColId(isEditing ? null : col.id)}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "10px 14px",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    textAlign: "left",
-                  }}
-                >
-                  {/* Cover thumb */}
-                  <div
-                    style={{
-                      width: SLOT_SIZE,
-                      height: SLOT_SIZE,
-                      borderRadius: 7,
-                      overflow: "hidden",
-                      flexShrink: 0,
-                      background: "rgba(255,255,255,0.06)",
-                      border: cover?.isFeatured
-                        ? "2px solid rgba(108,0,175,0.8)"
-                        : "1.5px solid rgba(255,255,255,0.12)",
-                    }}
-                  >
-                    {cover && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={thumbUrl(cover)}
-                        alt=""
-                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                      />
-                    )}
-                  </div>
+      <div style={{ display: "grid", gap: 14, marginTop: 14 }}>
+        <div>
+          <label style={labelStyle}>Album / collection name (optional)</label>
+          <input
+            value={albumName || ""}
+            onChange={(e) => setAlbumName(e.target.value)}
+            style={inputStyle}
+            placeholder="e.g. Production photos, BTS, Summer Camp 2024…"
+          />
+        </div>
 
-                  {/* Labels */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
+        <div>
+          <label style={labelStyle}>Add photos</label>
+          <Dropzone
+            accept="image/*"
+            multiple
+            disabled={loading}
+            label=""
+            sublabel=""
+            onFiles={(files) => setAlbumFiles(files)}
+            onReject={(rej) => showToastError(rej[0]?.reason || "File rejected")}
+            style={{
+              minHeight: 160,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "36px 24px",
+              textAlign: "center",
+              gap: 0,
+            }}
+          >
+            <p style={{ margin: 0, fontWeight: 600, fontSize: 15, opacity: 0.85 }}>
+              Drag &amp; Drop
+            </p>
+            <p style={{ margin: "0 0 8px", fontSize: 12, opacity: 0.5 }}>or</p>
+            <p style={{ margin: 0, fontSize: 13, opacity: 0.75, textDecoration: "underline" }}>
+              Click to Browse
+            </p>
+          </Dropzone>
+        </div>
+
+        {/* Staged file preview */}
+        {albumFiles.length > 0 && (
+          <div
+            style={{
+              padding: 12,
+              border: "1px solid rgba(255,255,255,0.14)",
+              borderRadius: 12,
+              background: "rgba(0,0,0,0.18)",
+              display: "grid",
+              gap: 10,
+            }}
+          >
+            <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
+              {albumFiles.map((f, i) => {
+                const url = URL.createObjectURL(f);
+                return (
+                  <div key={`${f.name}-${i}`} style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: 3 }}>
                     <div
                       style={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "#e0d0f0",
+                        width: 72,
+                        height: 72,
+                        borderRadius: 8,
                         overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
+                        border: "1.5px solid rgba(255,255,255,0.2)",
+                        background: "rgba(255,255,255,0.06)",
                       }}
                     >
-                      {col.title}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={url}
+                        alt={f.name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                        onLoad={() => URL.revokeObjectURL(url)}
+                      />
                     </div>
-                    <div style={{ fontSize: 10, opacity: 0.45, marginTop: 2 }}>
-                      {col.items.length} photo{col.items.length !== 1 ? "s" : ""}
-                      {cover?.isFeatured ? " · cover set" : " · using first photo"}
+                    <div style={{ width: 72, fontSize: 10, opacity: 0.6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {f.name}
                     </div>
                   </div>
-
-                  {/* Caret + saved flash */}
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                    {featSavedFlash && isEditing && (
-                      <span style={{ fontSize: 10, color: "#6ee7b7", fontWeight: 700 }}>✓</span>
-                    )}
-                    <span style={{ fontSize: 11, opacity: 0.4, color: "#e0d0f0" }}>
-                      {isEditing ? "▲" : "▼"}
-                    </span>
-                  </div>
-                </button>
-
-                {/* Expanded photo picker */}
-                {isEditing && (
-                  <div
-                    style={{
-                      padding: "0 14px 14px",
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: 7,
-                    }}
-                  >
-                    {col.items.map((item) => {
-                      const isCover  = !!item.isFeatured;
-                      const toggling = togglingId === item.fileId;
-                      return (
-                        <button
-                          key={item.fileId}
-                          type="button"
-                          title={isCover ? "Current cover — click to remove" : "Set as cover"}
-                          disabled={loading || toggling}
-                          onClick={() => toggleFeatured(item)}
-                          style={{
-                            position: "relative",
-                            width: 68,
-                            height: 68,
-                            borderRadius: 7,
-                            overflow: "hidden",
-                            border: isCover
-                              ? "2.5px solid rgba(108,0,175,0.95)"
-                              : "1.5px solid rgba(255,255,255,0.12)",
-                            background: "#1a0c22",
-                            padding: 0,
-                            cursor: toggling ? "wait" : "pointer",
-                            opacity: toggling ? 0.45 : 1,
-                            transition: "opacity 0.15s, border-color 0.15s",
-                            flexShrink: 0,
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!toggling)
-                              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(108,0,175,0.7)";
-                          }}
-                          onMouseLeave={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.borderColor = isCover
-                              ? "rgba(108,0,175,0.95)"
-                              : "rgba(255,255,255,0.12)";
-                          }}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={thumbUrl(item)}
-                            alt=""
-                            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                          />
-                          {isCover && (
-                            <div
-                              style={{
-                                position: "absolute",
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                background: "rgba(108,0,175,0.88)",
-                                fontSize: 8,
-                                fontWeight: 700,
-                                letterSpacing: "0.06em",
-                                textAlign: "center",
-                                padding: "2px 0 3px",
-                                color: "#fff",
-                                textTransform: "uppercase",
-                                pointerEvents: "none",
-                              }}
-                            >
-                              cover
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                );
+              })}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700 }}>
+                {albumFiles.length} photo{albumFiles.length !== 1 ? "s" : ""} staged
               </div>
-            );
-          })}
-        </div>
-      )}
-
-
+              <button
+                type="button"
+                className="dat-btn-ghost"
+                style={{ ...studioGhostButton, flexShrink: 0 }}
+                onClick={() => setAlbumFiles([])}
+                disabled={loading}
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          UPLOAD PHOTOS
+          COVER PHOTOS  (second — depends on having photos first)
       ═══════════════════════════════════════════════════════════ */}
       <div
         style={{
@@ -473,119 +409,201 @@ export default function MediaPanel({
           borderTop: "1px solid rgba(255,255,255,0.10)",
         }}
       >
-        <span style={subheadChipStyle} className="subhead-chip">
-          Upload Photos
-        </span>
-
-        <p style={{ ...explainStyleLocal, opacity: 0.55, fontSize: "0.8rem", fontStyle: "italic" }}>
-          Drop photos below to add them to your library. After uploading,
-          they appear in the collection picker above.
-        </p>
-
-        <div style={{ display: "grid", gap: 14, marginTop: 14 }}>
-          <div>
-            <label style={labelStyle}>Album / collection name (optional)</label>
-            <input
-              value={albumName || ""}
-              onChange={(e) => setAlbumName(e.target.value)}
-              style={inputStyle}
-              placeholder="e.g. Production photos, BTS, Summer Camp 2024…"
-            />
-          </div>
-
-          <div>
-            <label style={labelStyle}>Add photos</label>
-            <Dropzone
-              accept="image/*"
-              multiple
-              disabled={loading}
-              label=""
-              sublabel=""
-              onFiles={(files) => setAlbumFiles(files)}
-              onReject={(rej) => showToastError(rej[0]?.reason || "File rejected")}
-              style={{
-                minHeight: 160,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "36px 24px",
-                textAlign: "center",
-                gap: 0,
-              }}
-            >
-              <p style={{ margin: 0, fontWeight: 700, fontSize: 17, letterSpacing: "0.01em" }}>
-                Upload Photos
-              </p>
-              <p style={{ margin: "10px 0 4px", fontWeight: 600, fontSize: 15, opacity: 0.85 }}>
-                Drag &amp; Drop
-              </p>
-              <p style={{ margin: "0 0 8px", fontSize: 12, opacity: 0.5 }}>or</p>
-              <p style={{ margin: 0, fontSize: 13, opacity: 0.75, textDecoration: "underline" }}>
-                Click to Browse
-              </p>
-            </Dropzone>
-          </div>
-
-          {/* Staged file preview */}
-          {albumFiles.length > 0 && (
-            <div
-              style={{
-                padding: 12,
-                border: "1px solid rgba(255,255,255,0.14)",
-                borderRadius: 12,
-                background: "rgba(0,0,0,0.18)",
-                display: "grid",
-                gap: 10,
-              }}
-            >
-              <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }}>
-                {albumFiles.map((f, i) => {
-                  const url = URL.createObjectURL(f);
-                  return (
-                    <div key={`${f.name}-${i}`} style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: 3 }}>
-                      <div
-                        style={{
-                          width: 72,
-                          height: 72,
-                          borderRadius: 8,
-                          overflow: "hidden",
-                          border: "1.5px solid rgba(255,255,255,0.2)",
-                          background: "rgba(255,255,255,0.06)",
-                        }}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={url}
-                          alt={f.name}
-                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                          onLoad={() => URL.revokeObjectURL(url)}
-                        />
-                      </div>
-                      <div style={{ width: 72, fontSize: 10, opacity: 0.6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {f.name}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>
-                  {albumFiles.length} photo{albumFiles.length !== 1 ? "s" : ""} staged
-                </div>
-                <button
-                  type="button"
-                  className="dat-btn-ghost"
-                  style={{ ...studioGhostButton, flexShrink: 0 }}
-                  onClick={() => setAlbumFiles([])}
-                  disabled={loading}
-                >
-                  Clear
-                </button>
-              </div>
-            </div>
+        {/* Section header with section-level flash — visible even if accordion is closed */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+          <span style={subheadChipStyle} className="subhead-chip">
+            Cover Photos
+          </span>
+          {featSavedFlash && (
+            <span style={{ fontSize: 11, color: "#6ee7b7", fontWeight: 700, letterSpacing: "0.02em" }}>
+              ✓ Cover updated
+            </span>
           )}
         </div>
+
+        <p style={{ ...explainStyleLocal, opacity: 0.55, fontSize: "0.8rem", fontStyle: "italic" }}>
+          Choose one cover photo per collection — it&apos;s shown in the accordion on your
+          public profile. Click a collection to pick or change its cover.
+        </p>
+
+        {/* Loading state */}
+        {libraryLoading ? (
+          <div style={{ fontSize: 12, opacity: 0.45, padding: "12px 0", fontStyle: "italic" }}>
+            Loading collections…
+          </div>
+        ) : collections.length === 0 ? (
+          <div style={{ fontSize: 12, opacity: 0.45, padding: "8px 0", fontStyle: "italic" }}>
+            No photo collections yet — upload some photos above and they&apos;ll appear here.
+          </div>
+        ) : (
+          <div style={{ display: "grid", gap: 8, marginBottom: 20 }}>
+            {collections.map((col) => {
+              const cover     = col.items.find((it) => it.isFeatured) ?? col.items[0];
+              const isEditing = openColId === col.id;
+              return (
+                <div
+                  key={col.id}
+                  style={{
+                    borderRadius: 10,
+                    border: isEditing
+                      ? "1px solid rgba(108,0,175,0.55)"
+                      : "1px solid rgba(255,255,255,0.10)",
+                    background: isEditing ? "rgba(108,0,175,0.10)" : "rgba(0,0,0,0.18)",
+                    overflow: "hidden",
+                    transition: "border-color 0.2s, background 0.2s",
+                  }}
+                >
+                  {/* Row header */}
+                  <button
+                    type="button"
+                    onClick={() => setOpenColId(isEditing ? null : col.id)}
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      padding: "10px 14px",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    {/* Cover thumb */}
+                    <div
+                      style={{
+                        width: SLOT_SIZE,
+                        height: SLOT_SIZE,
+                        borderRadius: 7,
+                        overflow: "hidden",
+                        flexShrink: 0,
+                        background: "rgba(255,255,255,0.06)",
+                        border: cover?.isFeatured
+                          ? "2px solid rgba(108,0,175,0.8)"
+                          : "1.5px solid rgba(255,255,255,0.12)",
+                      }}
+                    >
+                      {cover && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={thumbUrl(cover)}
+                          alt=""
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                        />
+                      )}
+                    </div>
+
+                    {/* Labels */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: "#e0d0f0",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {col.title}
+                      </div>
+                      <div style={{ fontSize: 10, opacity: 0.45, marginTop: 2 }}>
+                        {col.items.length} photo{col.items.length !== 1 ? "s" : ""}
+                        {cover?.isFeatured ? " · cover set" : " · using first photo"}
+                      </div>
+                    </div>
+
+                    {/* Caret */}
+                    <span style={{ fontSize: 11, opacity: 0.4, color: "#e0d0f0", flexShrink: 0 }}>
+                      {isEditing ? "▲" : "▼"}
+                    </span>
+                  </button>
+
+                  {/* Expanded photo picker */}
+                  {isEditing && (
+                    <div
+                      style={{
+                        padding: "0 14px 14px",
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 7,
+                      }}
+                    >
+                      {col.items.map((item) => {
+                        const isCover  = !!item.isFeatured;
+                        const toggling = togglingId === item.fileId;
+                        const isHovered = hoveredCoverId === item.fileId;
+                        return (
+                          <button
+                            key={item.fileId}
+                            type="button"
+                            title={isCover ? "Current cover — click to unset" : "Set as cover"}
+                            disabled={loading || toggling}
+                            onClick={() => toggleFeatured(item)}
+                            onMouseEnter={() => setHoveredCoverId(item.fileId)}
+                            onMouseLeave={() => setHoveredCoverId(null)}
+                            style={{
+                              position: "relative",
+                              width: 68,
+                              height: 68,
+                              borderRadius: 7,
+                              overflow: "hidden",
+                              border: isCover
+                                ? "2.5px solid rgba(108,0,175,0.95)"
+                                : isHovered
+                                ? "2px solid rgba(108,0,175,0.7)"
+                                : "1.5px solid rgba(255,255,255,0.12)",
+                              background: "#1a0c22",
+                              padding: 0,
+                              cursor: toggling ? "wait" : "pointer",
+                              opacity: toggling ? 0.45 : 1,
+                              transition: "opacity 0.15s, border-color 0.15s",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={thumbUrl(item)}
+                              alt=""
+                              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                            />
+                            {/* Cover badge — shows "✕ unset" on hover so the action is discoverable */}
+                            {isCover && (
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  background: isHovered
+                                    ? "rgba(160,0,60,0.92)"
+                                    : "rgba(108,0,175,0.88)",
+                                  fontSize: 8,
+                                  fontWeight: 700,
+                                  letterSpacing: "0.06em",
+                                  textAlign: "center",
+                                  padding: "2px 0 3px",
+                                  color: "#fff",
+                                  textTransform: "uppercase",
+                                  pointerEvents: "none",
+                                  transition: "background 0.15s",
+                                }}
+                              >
+                                {isHovered ? "✕ unset" : "cover"}
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
@@ -613,6 +631,7 @@ export default function MediaPanel({
             [
               {
                 label: "Video 1",
+                show: true,
                 urlValue: reelUrl1, urlKey: "reelVideoUrl1" as const,
                 urlSetter: setReelUrl1,
                 titleValue: videoTitle1, titleKey: "videoTitle1" as const,
@@ -622,6 +641,7 @@ export default function MediaPanel({
               },
               {
                 label: "Video 2",
+                show: showVideo2,
                 urlValue: reelUrl2, urlKey: "reelVideoUrl2" as const,
                 urlSetter: setReelUrl2,
                 titleValue: videoTitle2, titleKey: "videoTitle2" as const,
@@ -631,6 +651,7 @@ export default function MediaPanel({
               },
               {
                 label: "Video 3",
+                show: showVideo3,
                 urlValue: reelUrl3, urlKey: "reelVideoUrl3" as const,
                 urlSetter: setReelUrl3,
                 titleValue: videoTitle3, titleKey: "videoTitle3" as const,
@@ -639,7 +660,7 @@ export default function MediaPanel({
                 aspectSetter: setVideoAspect3,
               },
             ] as const
-          ).map(({ label, urlValue, urlKey, urlSetter, titleValue, titleKey, titleSetter, aspectValue, aspectKey, aspectSetter }) => (
+          ).filter(({ show }) => show).map(({ label, urlValue, urlKey, urlSetter, titleValue, titleKey, titleSetter, aspectValue, aspectKey, aspectSetter }) => (
             <div key={label} style={{ display: "grid", gap: 8 }}>
               <label style={smallLabel}>{label}</label>
               <input
@@ -648,29 +669,32 @@ export default function MediaPanel({
                 onChange={(e) => {
                   urlSetter(e.target.value);
                   setProfile?.((p: any) => ({ ...p, [urlKey]: e.target.value }));
+                  setVideoDirty(true);
                 }}
                 placeholder="https://… (YouTube, Vimeo, Loom, Google Drive, etc.)"
                 style={inputStyle}
               />
               {urlValue.trim() && (
-                <>
+                <div className="_mp_videoExtra" style={{ display: "grid", gap: 6 }}>
                   <input
                     type="text"
                     value={titleValue}
                     onChange={(e) => {
                       titleSetter(e.target.value);
                       setProfile?.((p: any) => ({ ...p, [titleKey]: e.target.value }));
+                      setVideoDirty(true);
                     }}
                     placeholder="Custom title (optional — auto-detected if blank)"
-                    style={{ ...inputStyle, marginTop: 2 }}
+                    style={inputStyle}
                   />
                   <select
                     value={aspectValue}
                     onChange={(e) => {
                       aspectSetter(e.target.value);
                       setProfile?.((p: any) => ({ ...p, [aspectKey]: e.target.value }));
+                      setVideoDirty(true);
                     }}
-                    style={{ ...inputStyle, marginTop: 2 }}
+                    style={inputStyle}
                   >
                     <option value="">Default (16:9)</option>
                     <option value="16/9">16:9 widescreen</option>
@@ -679,12 +703,12 @@ export default function MediaPanel({
                     <option value="21/9">21:9 cinematic</option>
                     <option value="4/3">4:3</option>
                   </select>
-                </>
+                </div>
               )}
             </div>
           ))}
 
-          {/* Autoplay */}
+          {/* Autoplay — muted only (browsers block unmuted autoplay universally) */}
           <div style={{ display: "grid", gap: 4 }}>
             <label style={smallLabel}>Autoplay first video on page load</label>
             <select
@@ -692,78 +716,50 @@ export default function MediaPanel({
               onChange={(e) => {
                 setVideoAutoplay(e.target.value);
                 setProfile?.((p: any) => ({ ...p, videoAutoplay: e.target.value }));
+                setVideoDirty(true);
               }}
               style={inputStyle}
             >
               <option value="">Off (no autoplay)</option>
               <option value="muted">Autoplay — muted</option>
-              <option value="unmuted">Autoplay — with sound</option>
             </select>
           </div>
 
-          {/* Full bleed — only when only URL 1 is set */}
-          {reelUrl1.trim() && !reelUrl2.trim() && !reelUrl3.trim() && (
-            <label
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 8,
-                cursor: "pointer",
-                fontSize: 13,
-                color: "rgba(255,255,255,0.85)",
-                lineHeight: 1.45,
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={videoFullBleed}
-                onChange={(e) => {
-                  setVideoFullBleed(e.target.checked);
-                  setProfile?.((p: any) => ({ ...p, videoFullBleed: e.target.checked ? "true" : "false" }));
+          {/* Full bleed — shown whenever video 1 is set; disabled with explanation when
+              multiple videos are present (full-bleed only makes sense for a single video) */}
+          {reelUrl1.trim() && (
+            <div>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 8,
+                  cursor: multipleVideos ? "default" : "pointer",
+                  fontSize: 13,
+                  color: multipleVideos ? "rgba(255,255,255,0.38)" : "rgba(255,255,255,0.85)",
+                  lineHeight: 1.45,
                 }}
-                style={{ marginTop: 2, flexShrink: 0 }}
-              />
-              Full bleed — video fills the full section width
-            </label>
+              >
+                <input
+                  type="checkbox"
+                  checked={videoFullBleed}
+                  disabled={multipleVideos}
+                  onChange={(e) => {
+                    setVideoFullBleed(e.target.checked);
+                    setProfile?.((p: any) => ({ ...p, videoFullBleed: e.target.checked ? "true" : "false" }));
+                    setVideoDirty(true);
+                  }}
+                  style={{ marginTop: 2, flexShrink: 0 }}
+                />
+                Full bleed — video fills the full section width
+              </label>
+              {multipleVideos && (
+                <p style={{ margin: "4px 0 0 24px", fontSize: 11, opacity: 0.4, fontStyle: "italic" }}>
+                  Only available when a single video is featured
+                </p>
+              )}
+            </div>
           )}
-        </div>
-
-      </div>
-
-      {/* ═══════════════════════════════════════════════════════════
-          BROWSE & DOWNLOAD
-      ═══════════════════════════════════════════════════════════ */}
-      <div
-        style={{
-          marginTop: 24,
-          paddingTop: 22,
-          borderTop: "1px solid rgba(255,255,255,0.10)",
-        }}
-      >
-        <span style={subheadChipStyle} className="subhead-chip">
-          Browse &amp; Download
-        </span>
-        <p style={{ ...explainStyleLocal, opacity: 0.55, fontSize: "0.8rem", fontStyle: "italic" }}>
-          Open the full library picker to browse or follow Google Drive links to
-          download original files.
-        </p>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
-          <button
-            type="button"
-            style={studioGhostButton}
-            onClick={() => openPicker("album")}
-            disabled={loading}
-          >
-            Browse photo library
-          </button>
-          <button
-            type="button"
-            style={studioGhostButton}
-            onClick={() => openPicker("reel")}
-            disabled={loading}
-          >
-            Browse reel library
-          </button>
         </div>
       </div>
 
@@ -796,7 +792,10 @@ export default function MediaPanel({
           type="button"
           style={{
             ...datButtonLocal,
-            ...(savedRecently ? { background: "rgba(52,211,153,0.25)", borderColor: "rgba(52,211,153,0.5)" } : {}),
+            ...(savedRecently
+              ? { background: "rgba(52,211,153,0.25)", borderColor: "rgba(52,211,153,0.5)" }
+              : {}),
+            ...(!isDirty && !savedRecently ? { opacity: 0.45 } : {}),
           }}
           disabled={loading}
           onClick={() =>
@@ -813,7 +812,11 @@ export default function MediaPanel({
               ],
               afterSave: () => {
                 onSaved?.();
-                if (albumFiles.length) fetchLibrary();
+                setVideoDirty(false);
+                // Always bust the cache after a save so cover-photo changes
+                // toggled earlier in the session are not overwritten by stale
+                // 15-second module-cache data from the list endpoint.
+                fetchLibrary(true);
               },
             })
           }
