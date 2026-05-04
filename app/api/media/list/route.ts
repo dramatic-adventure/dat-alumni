@@ -17,7 +17,7 @@ type MediaItem = {
   collectionTitle?: string;
   externalUrl?: string;
   isCurrent?: string; // "TRUE"/"FALSE" or ""
-  isFeatured?: string; // "TRUE"/"FALSE" or ""
+  isFeatured?: boolean;
   sortIndex?: string;
   note?: string;
   drive?: {
@@ -207,7 +207,12 @@ export async function GET(req: Request) {
         collectionTitle: idxColTitle !== -1 ? String(r[idxColTitle] || "").trim() : "",
         externalUrl: idxExtUrl !== -1 ? String(r[idxExtUrl] || "").trim() : "",
         isCurrent: idxIsCur !== -1 ? String(r[idxIsCur] || "").trim() : "",
-        isFeatured: idxIsFeat !== -1 ? String(r[idxIsFeat] || "").trim() : "",
+        // Normalize to a real boolean — the raw sheet value is "TRUE"/"FALSE"/""
+        // and a non-empty string like "FALSE" is truthy in JS, which broke cover
+        // photo detection in PublicMediaSection.
+        isFeatured: idxIsFeat !== -1
+          ? String(r[idxIsFeat] || "").trim().toUpperCase() === "TRUE"
+          : false,
         sortIndex: idxSort !== -1 ? String(r[idxSort] || "").trim() : "",
         note: idxNote !== -1 ? String(r[idxNote] || "").trim() : "",
       };
