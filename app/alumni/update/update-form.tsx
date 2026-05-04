@@ -1966,6 +1966,12 @@ if (!hasUploads && fieldKeys.length === 0) {
   return;
 }
 
+// Track whether uploads actually completed so afterSave() fires even
+// when no profile fields changed (e.g. uploading photos without editing
+// any video fields — the diff finds nothing to save and would otherwise
+// return early without ever calling afterSave / fetchLibrary).
+let uploadsCompleted = false;
+
 if (hasUploads) {
   if (queueEmptyResolver.current) {
     throw new Error("Upload queue is already being awaited.");
@@ -1989,6 +1995,7 @@ if (hasUploads) {
     setLoading(false);
     return;
   }
+  uploadsCompleted = true;
 
   // ✅ MEDIA-ONLY SAVE PATH
   // If this category was uploads-only, don't fall through into diff/save logic
@@ -2073,7 +2080,10 @@ setProgress((p) => ({
     const changes = Object.fromEntries(Object.entries(changesAll).filter(([k]) => wanted.has(k)));
     
     if (Object.keys(changes).length === 0) {
-      showToastRef.current?.("No changes to save.", "success");
+      // If photos were uploaded successfully, still fire afterSave so the
+      // MediaPanel's fetchLibrary runs and the new collection appears immediately.
+      if (uploadsCompleted) afterSave?.();
+      showToastRef.current?.(uploadsCompleted ? "Upload complete ✅" : "No changes to save.", "success");
       setLoading(false);
       return;
     }

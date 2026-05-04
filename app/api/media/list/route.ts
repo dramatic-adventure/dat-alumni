@@ -184,6 +184,9 @@ export async function GET(req: Request) {
         if (k !== kind) return false;
       }
 
+      // Skip rows whose collection has been soft-deleted (hidden)
+      if (idxColId !== -1 && String(r[idxColId] || "").trim().startsWith("__hidden__:")) return false;
+
       // Server-side privacy gate: when featuredOnly=true, exclude any row where
       // isFeatured is not explicitly truthy. Unfeatured rows are never sent.
       if (featuredOnly) {

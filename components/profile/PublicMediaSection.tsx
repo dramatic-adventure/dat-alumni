@@ -232,91 +232,8 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
       style={{ background: "#0d2c38", overflow: "hidden" }}
     >
       <div>
-        {/* ── Pagination nav (only when there are multiple pages) ───── */}
-        {totalPages > 1 && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              gap: 12,
-              padding: "12px 20px 8px",
-            }}
-          >
-            {/* Prev */}
-            <button
-              type="button"
-              onClick={() => goToPage(safePage - 1)}
-              disabled={safePage === 0}
-              aria-label="Previous collections"
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                width: 30, height: 30, borderRadius: "50%", padding: 0,
-                background: safePage === 0 ? "transparent" : "rgba(255,255,255,0.07)",
-                border: `1px solid ${safePage === 0 ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.18)"}`,
-                cursor: safePage === 0 ? "default" : "pointer",
-                color: safePage === 0 ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.7)",
-                transition: "background 0.2s, border-color 0.2s, color 0.2s",
-                flexShrink: 0,
-              }}
-            >
-              <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden="true">
-                <path d="M6 1L1 6L6 11" stroke="currentColor" strokeWidth="1.5"
-                  strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-
-            {/* Page dots */}
-            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              {Array.from({ length: totalPages }, (_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => goToPage(i)}
-                  aria-label={`Page ${i + 1}`}
-                  style={{
-                    width: i === safePage ? 20 : 6,
-                    height: 6,
-                    borderRadius: 3,
-                    padding: 0,
-                    border: "none",
-                    background: i === safePage
-                      ? "rgba(255,255,255,0.8)"
-                      : "rgba(255,255,255,0.2)",
-                    cursor: i === safePage ? "default" : "pointer",
-                    transition: "width 0.25s ease, background 0.2s",
-                    flexShrink: 0,
-                  }}
-                />
-              ))}
-            </div>
-
-            {/* Next */}
-            <button
-              type="button"
-              onClick={() => goToPage(safePage + 1)}
-              disabled={safePage === totalPages - 1}
-              aria-label="Next collections"
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                width: 30, height: 30, borderRadius: "50%", padding: 0,
-                background: safePage === totalPages - 1 ? "transparent" : "rgba(255,255,255,0.07)",
-                border: `1px solid ${safePage === totalPages - 1 ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.18)"}`,
-                cursor: safePage === totalPages - 1 ? "default" : "pointer",
-                color: safePage === totalPages - 1 ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.7)",
-                transition: "background 0.2s, border-color 0.2s, color 0.2s",
-                flexShrink: 0,
-              }}
-            >
-              <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden="true">
-                <path d="M1 1L6 6L1 11" stroke="currentColor" strokeWidth="1.5"
-                  strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
-        )}
-
-        {/* ── Accordion ────────────────────────────────────────── */}
+        {/* ── Accordion + overlaid pagination arrows ─────────────── */}
+        <div style={{ position: "relative" }}>
         <div
           style={{
             display: "flex",
@@ -532,6 +449,89 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
             );
           })}
         </div>
+
+        {/* ── Overlaid prev/next arrows — only when multiple pages ─ */}
+        {totalPages > 1 && (
+          <>
+            {/* Prev */}
+            <button
+              type="button"
+              onClick={() => goToPage(safePage - 1)}
+              disabled={safePage === 0}
+              aria-label="Previous collections"
+              style={{
+                position: "absolute", top: "50%", left: 10,
+                transform: "translateY(-50%)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: 36, height: 36, borderRadius: "50%", padding: 0,
+                background: safePage === 0 ? "rgba(0,0,0,0.15)" : "rgba(0,0,0,0.45)",
+                border: `1px solid ${safePage === 0 ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.22)"}`,
+                backdropFilter: "blur(6px)",
+                cursor: safePage === 0 ? "default" : "pointer",
+                color: safePage === 0 ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.85)",
+                transition: "background 0.2s, color 0.2s",
+                zIndex: 20,
+              }}
+            >
+              <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden="true">
+                <path d="M6 1L1 6L6 11" stroke="currentColor" strokeWidth="1.5"
+                  strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+
+            {/* Page dots — centred at bottom of accordion */}
+            <div style={{
+              position: "absolute", bottom: 10, left: 0, right: 0,
+              display: "flex", justifyContent: "center", gap: 6,
+              zIndex: 20, pointerEvents: "none",
+            }}>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => goToPage(i)}
+                  aria-label={`Page ${i + 1}`}
+                  style={{
+                    width: i === safePage ? 20 : 6, height: 6,
+                    borderRadius: 3, padding: 0, border: "none",
+                    background: i === safePage ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.35)",
+                    cursor: i === safePage ? "default" : "pointer",
+                    transition: "width 0.25s ease, background 0.2s",
+                    pointerEvents: "all",
+                    flexShrink: 0,
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Next */}
+            <button
+              type="button"
+              onClick={() => goToPage(safePage + 1)}
+              disabled={safePage === totalPages - 1}
+              aria-label="Next collections"
+              style={{
+                position: "absolute", top: "50%", right: 10,
+                transform: "translateY(-50%)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: 36, height: 36, borderRadius: "50%", padding: 0,
+                background: safePage === totalPages - 1 ? "rgba(0,0,0,0.15)" : "rgba(0,0,0,0.45)",
+                border: `1px solid ${safePage === totalPages - 1 ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.22)"}`,
+                backdropFilter: "blur(6px)",
+                cursor: safePage === totalPages - 1 ? "default" : "pointer",
+                color: safePage === totalPages - 1 ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.85)",
+                transition: "background 0.2s, color 0.2s",
+                zIndex: 20,
+              }}
+            >
+              <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden="true">
+                <path d="M1 1L6 6L1 11" stroke="currentColor" strokeWidth="1.5"
+                  strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </>
+        )}
+        </div>{/* end position:relative wrapper */}
       </div>
 
       {/* ── Thumbnail grid — animated reveal ─────────────────── */}

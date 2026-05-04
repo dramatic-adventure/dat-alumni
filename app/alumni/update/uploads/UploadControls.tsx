@@ -108,6 +108,14 @@ export function FailedList({
     uploaderRef.current?.start();
   };
 
+  // Remove a failed file from the list without retrying — the rest of
+  // the batch that already uploaded successfully is unaffected.
+  const dismissOne = (id: string) =>
+    setFailed((f) => ({ ...f, [kind]: f[kind].filter((x) => x !== id) }));
+
+  const dismissAll = () =>
+    setFailed((f) => ({ ...f, [kind]: [] }));
+
   return (
     <div
       style={{
@@ -123,7 +131,8 @@ export function FailedList({
       <ul style={{ marginLeft: 18, listStyle: "disc" }}>
         {tasks.map((t) => (
           <li key={t.id} style={{ margin: "6px 0" }}>
-            {t.file.name} ({prettyMB(t.file.size)} MB)
+            <span style={{ opacity: 0.9 }}>{t.file.name}</span>
+            <span style={{ opacity: 0.55, marginLeft: 4 }}>({prettyMB(t.file.size)} MB)</span>
             <button
               type="button"
               onClick={() => retryOne(t.id)}
@@ -132,13 +141,31 @@ export function FailedList({
             >
               Retry
             </button>
+            <button
+              type="button"
+              onClick={() => dismissOne(t.id)}
+              style={{ ...datButtonGhost, padding: "4px 8px", marginLeft: 6, opacity: 0.7 }}
+              className="dat-btn-ghost"
+              title="Skip this file and continue without it"
+            >
+              Skip
+            </button>
           </li>
         ))}
       </ul>
 
-      <div style={{ marginTop: 8 }}>
+      <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button type="button" onClick={retryAll} style={datButtonGhost} className="dat-btn-ghost">
           Retry all failed
+        </button>
+        <button
+          type="button"
+          onClick={dismissAll}
+          style={{ ...datButtonGhost, opacity: 0.7 }}
+          className="dat-btn-ghost"
+          title="Remove all failed files from the list and continue"
+        >
+          Skip all failed
         </button>
       </div>
     </div>

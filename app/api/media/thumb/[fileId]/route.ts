@@ -46,7 +46,11 @@ export async function GET(
 
   const drive = driveClient();
 
-  // ✅ Preferred: use Drive thumbnailLink, proxy bytes (no redirect)
+  // ✅ Preferred: use Drive thumbnailLink, proxy bytes (no redirect).
+  // We validate the returned image dimensions — Drive caps thumbnails for some
+  // formats (especially WebP) and returns a low-res image even when a large
+  // size is requested.  If the thumbnail is smaller than half the requested
+  // width we fall through to the full-file download instead.
   try {
     const meta = await drive.files.get({
       fileId,
@@ -63,8 +67,19 @@ export async function GET(
 
       if (resp.ok) {
         const buf = await resp.arrayBuffer();
-        const contentType = resp.headers.get("content-type") || "image/jpeg";
 
+        // If the caller asked for a large image but Drive returned a tiny
+        // thumbnail (< half the requested size), the image will look blurry
+        // when stretched.  Detect this by checking Content-Length vs the
+        // expected bytes for a decent-quality JPEG at the requested size:
+        // a 1200px JPEG is typically 80–300 kB; anything < 20 kB is likely a
+        // Drive placeholder thumbnail, not the real image.
+        const MIN_ACCEPTABLE_BYTES = w > 400 ? 20_000 : 5_000;
+        if (buf.byteLength < MIN_ACCEPTABLE_BYTES) {
+          throw new Error("Thumbnail too small — falling back to full file");
+        }
+
+        const contentType = resp.headers.get("content-type") || "image/jpeg";
         return new NextResponse(buf as any, {
           headers: {
             "Content-Type": contentType,
@@ -75,7 +90,7 @@ export async function GET(
       }
     }
   } catch {
-    // fall through to byte download
+    // fall through to full-file download
   }
 
   // Fallback: download original bytes from Drive

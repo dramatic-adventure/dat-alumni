@@ -257,6 +257,10 @@ export async function GET(req: Request) {
           const k = idxKind !== -1 ? String(r[idxKind] || "").toLowerCase() : "";
           if (k !== kind) return false;
         }
+
+        // Skip rows whose collection has been soft-deleted (hidden)
+        if (idxColId !== -1 && String(r[idxColId] || "").trim().startsWith("__hidden__:")) return false;
+
         return true;
       });
 

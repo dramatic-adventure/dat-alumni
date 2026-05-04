@@ -127,6 +127,10 @@ export default function MediaPanel({
   const [coverSaving,   setCoverSaving]   = useState(false);
   const [hoveredCoverId, setHoveredCoverId] = useState<string | null>(null);
 
+  // ── Collection deletion ───────────────────────────────────────────────────
+  const [confirmDeleteColId, setConfirmDeleteColId] = useState<string | null>(null);
+  const [deletingColId,      setDeletingColId]      = useState<string | null>(null);
+
   // ── Picker state ─────────────────────────────────────────────────────────────
   const [openColId, setOpenColId] = useState<string | null>(null);
 
@@ -237,6 +241,30 @@ export default function MediaPanel({
       } else {
         setPendingCovers((p) => ({ ...p, [colKey]: item.fileId }));
       }
+    }
+  }
+
+  // ── Delete (hide) a collection ───────────────────────────────────────────
+  async function deleteCollection(colKey: string) {
+    if (!alumniId || deletingColId) return;
+    setDeletingColId(colKey);
+    setConfirmDeleteColId(null);
+    try {
+      const res = await fetch("/api/alumni/media/collection/hide", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ alumniId, colKey }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j.ok) throw new Error(j?.error || "Could not remove collection");
+      // Remove the collection from local library state immediately
+      setLibrary((prev) => prev.filter((item) => itemColKey(item) !== colKey));
+      // Clean up any pending cover selection for this collection
+      setPendingCovers((p) => { const n = { ...p }; delete n[colKey]; return n; });
+    } catch (e: any) {
+      showToastError(e?.message || "Could not remove collection");
+    } finally {
+      setDeletingColId(null);
     }
   }
 
@@ -571,11 +599,70 @@ export default function MediaPanel({
                       </div>
                     </div>
 
-                    {/* Caret */}
-                    <span style={{ fontSize: 11, opacity: 0.4, color: "#e0d0f0", flexShrink: 0 }}>
-                      {isEditing ? "▲" : "▼"}
-                    </span>
+                    {/* Caret + delete button */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                      <span style={{ fontSize: 11, opacity: 0.4, color: "#e0d0f0" }}>
+                        {isEditing ? "▲" : "▼"}
+                      </span>
+                      <button
+                        type="button"
+                        title="Remove this collection from your profile"
+                        disabled={!!deletingColId}
+                        onClick={(e) => {
+                          e.stopPropagation(); // don't open/close the accordion
+                          setConfirmDeleteColId(confirmDeleteColId === colKey ? null : colKey);
+                        }}
+                        style={{
+                          background: "none", border: "none", padding: "2px 4px",
+                          cursor: "pointer", color: "rgba(255,255,255,0.3)",
+                          fontSize: 13, lineHeight: 1,
+                          opacity: deletingColId === colKey ? 0.3 : 1,
+                        }}
+                      >
+                        <svg width="12" height="13" viewBox="0 0 12 13" fill="none" aria-hidden="true">
+                          <path d="M1 3h10M4 3V2h4v1M2 3l.8 8h6.4L10 3" stroke="currentColor"
+                            strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
                   </button>
+
+                  {/* Inline delete confirmation */}
+                  {confirmDeleteColId === colKey && (
+                    <div style={{
+                      padding: "10px 14px 12px",
+                      borderTop: "1px solid rgba(255,255,255,0.07)",
+                      background: "rgba(180,30,30,0.10)",
+                      display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
+                    }}>
+                      <span style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", flex: 1, minWidth: 160 }}>
+                        Remove from profile? Photos stay in Drive.
+                      </span>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteColId(null)}
+                          style={{
+                            background: "none", border: "1px solid rgba(255,255,255,0.18)",
+                            borderRadius: 6, padding: "4px 10px", fontSize: 11,
+                            color: "rgba(255,255,255,0.6)", cursor: "pointer",
+                          }}
+                        >Cancel</button>
+                        <button
+                          type="button"
+                          onClick={() => deleteCollection(colKey)}
+                          disabled={!!deletingColId}
+                          style={{
+                            background: "rgba(200,40,40,0.75)", border: "none",
+                            borderRadius: 6, padding: "4px 10px", fontSize: 11,
+                            color: "#fff", cursor: "pointer", fontWeight: 600,
+                          }}
+                        >
+                          {deletingColId === colKey ? "Removing…" : "Remove"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Expanded photo picker */}
                   {isEditing && (
