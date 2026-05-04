@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 import Dropzone from "@/components/media/Dropzone";
 import { ghostButton as studioGhostButton } from "@/components/alumni/update/ProfileStudio";
@@ -60,18 +60,21 @@ type MediaPanelProps = {
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const SLOT_SIZE = 82; // cover photo thumb px
+const SLOT_SIZE = 82;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-// Always use our proxy — Drive thumbnailLinks are domain-restricted and expire.
 function thumbUrl(item: LibraryItem, w = 200): string {
   return `/api/media/thumb/${encodeURIComponent(item.fileId)}?w=${w}`;
+}
+
+function itemColKey(item: LibraryItem): string {
+  return item.collectionId || item.collectionTitle || "__ungrouped__";
 }
 
 function groupIntoCollections(items: LibraryItem[]): Collection[] {
   const map = new Map<string, Collection>();
   for (const item of items) {
-    const key   = item.collectionId || item.collectionTitle || "__ungrouped__";
+    const key   = itemColKey(item);
     const title = item.collectionTitle || "All Photos";
     if (!map.has(key)) map.set(key, { id: key, title, items: [] });
     map.get(key)!.items.push(item);
@@ -115,11 +118,13 @@ export default function MediaPanel({
   // ── Library + derived collections ───────────────────────────────────────────
   const [library,        setLibrary]        = useState<LibraryItem[]>([]);
   const [libraryLoading, setLibraryLoading] = useState(false);
-  const [togglingId,     setTogglingId]     = useState<string | null>(null);
-  const [featSavedFlash, setFeatSavedFlash] = useState(false);
-  const featSavedFlashTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Cover photo hover state ───────────────────────────────────────────────
+  // ── Cover photo state ─────────────────────────────────────────────────────
+  // pendingCovers: colKey → fileId to feature (null = explicitly unset cover).
+  // Undefined key = no pending change for that collection.
+  // Selections are purely local until Save is clicked.
+  const [pendingCovers, setPendingCovers] = useState<Record<string, string | null>>({});
+  const [coverSaving,   setCoverSaving]   = useState(false);
   const [hoveredCoverId, setHoveredCoverId] = useState<string | null>(null);
 
   // ── Picker state ─────────────────────────────────────────────────────────────
@@ -157,7 +162,7 @@ export default function MediaPanel({
     setVideoAspect3(String(profile?.videoAspect3 || ""));
     setVideoAutoplay(String(profile?.videoAutoplay || "").trim());
     setVideoFullBleed(String(profile?.videoFullBleed || "").trim() === "true");
-    setVideoDirty(false); // reset dirty when profile reloads from server
+    setVideoDirty(false);
   }, [
     profile?.reelVideoUrl1, profile?.reelVideoUrl2, profile?.reelVideoUrl3,
     profile?.videoTitle1, profile?.videoTitle2, profile?.videoTitle3,
@@ -194,78 +199,139 @@ export default function MediaPanel({
   // ── Derived data ─────────────────────────────────────────────────────────────
   const collections = useMemo(() => groupIntoCollections(library), [library]);
 
-  // Reset stale openColId if the collection it pointed to no longer exists.
   useEffect(() => {
     if (openColId !== null && !collections.find((c) => c.id === openColId)) {
       setOpenColId(null);
     }
   }, [collections, openColId]);
 
-  // ── Set cover photo (1 per collection) ──────────────────────────────────────
-  async function toggleFeatured(item: LibraryItem) {
-    if (!alumniId || togglingId) return;
-    const colKey = item.collectionId || item.collectionTitle || "__ungrouped__";
+  // ── Cover photo selection (local only — saved on Save button) ─────────────
+  // Returns the effective cover fileId for a collection, accounting for pending.
+  function effectiveCoverFileId(col: Collection): string | null {
+    const colKey = col.id;
+    if (colKey in pendingCovers) return pendingCovers[colKey];
+    return col.items.find((it) => it.isFeatured)?.fileId ?? null;
+  }
 
-    const prevCover = library.find(
-      (p) =>
-        p.isFeatured &&
-        p.fileId !== item.fileId &&
-        (p.collectionId || p.collectionTitle || "__ungrouped__") === colKey,
-    );
+  function selectCover(item: LibraryItem, col: Collection) {
+    const colKey = col.id;
+    const current = effectiveCoverFileId(col);
 
-    setTogglingId(item.fileId);
-
-    // Optimistic: unfeature previous cover in this collection, toggle this one
-    setLibrary((prev) =>
-      prev.map((p) => {
-        if (p.fileId === item.fileId) return { ...p, isFeatured: !p.isFeatured };
-        if (prevCover && p.fileId === prevCover.fileId) return { ...p, isFeatured: false };
-        return p;
-      }),
-    );
-
-    try {
-      if (prevCover && !item.isFeatured) {
-        await fetch("/api/media/feature", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ alumniId, kind: "album", fileId: prevCover.fileId }),
-        });
+    if (current === item.fileId) {
+      // Clicking the active cover: unset it.
+      // If the library already has no cover (or it matches), remove the pending
+      // entry so we don't trigger a no-op API call on save.
+      const libCover = col.items.find((it) => it.isFeatured)?.fileId ?? null;
+      if (libCover === null) {
+        // Nothing to change — remove any stale pending entry
+        setPendingCovers((p) => { const n = { ...p }; delete n[colKey]; return n; });
+      } else {
+        setPendingCovers((p) => ({ ...p, [colKey]: null }));
       }
-      const res = await fetch("/api/media/feature", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ alumniId, kind: "album", fileId: item.fileId }),
-      });
-      const j = await res.json();
-      if (!res.ok || !j.ok) throw new Error(j?.error || "Failed");
-
-      // Flash at section level — visible regardless of whether accordion is open
-      if (featSavedFlashTimeout.current) clearTimeout(featSavedFlashTimeout.current);
-      setFeatSavedFlash(true);
-      featSavedFlashTimeout.current = setTimeout(() => setFeatSavedFlash(false), 1500);
-    } catch (e: any) {
-      showToastError(e?.message || "Could not update cover photo");
-      // Roll back optimistic update
-      setLibrary((prev) =>
-        prev.map((p) => {
-          if (p.fileId === item.fileId) return { ...p, isFeatured: item.isFeatured };
-          if (prevCover && p.fileId === prevCover.fileId) return { ...p, isFeatured: true };
-          return p;
-        }),
-      );
-    } finally {
-      setTogglingId(null);
+    } else {
+      // Clicking a non-cover photo: set it as pending cover.
+      // If this matches the library state, remove the pending entry (back to original).
+      const libCover = col.items.find((it) => it.isFeatured)?.fileId ?? null;
+      if (libCover === item.fileId) {
+        setPendingCovers((p) => { const n = { ...p }; delete n[colKey]; return n; });
+      } else {
+        setPendingCovers((p) => ({ ...p, [colKey]: item.fileId }));
+      }
     }
   }
 
-  const hasUploadWork = albumFiles.length > 0;
-  const isDirty       = hasUploadWork || videoDirty || externalDirty;
+  // ── Dirty flags ───────────────────────────────────────────────────────────
+  const hasUploadWork   = albumFiles.length > 0;
+  const hasCoverChanges = Object.keys(pendingCovers).length > 0;
+  const isDirty         = hasUploadWork || videoDirty || hasCoverChanges || externalDirty;
 
   // ── Progressive video slot visibility ────────────────────────────────────────
   const showVideo2     = !!reelUrl1.trim() || !!reelUrl2.trim();
   const showVideo3     = !!reelUrl2.trim() || !!reelUrl3.trim();
   const multipleVideos = [reelUrl1, reelUrl2, reelUrl3].filter((u) => u.trim()).length > 1;
+
+  // ── Save handler (covers + profile fields + uploads) ─────────────────────
+  const handleSave = useCallback(async () => {
+    if (loading || coverSaving) return;
+
+    // 1. Persist pending cover selections via the feature API
+    const coverEntries = Object.entries(pendingCovers);
+    if (coverEntries.length > 0 && alumniId) {
+      setCoverSaving(true);
+      try {
+        for (const [colKey, targetFileId] of coverEntries) {
+          const currentCoverFileId =
+            library.find(
+              (p) => p.isFeatured && itemColKey(p) === colKey,
+            )?.fileId ?? null;
+
+          // Skip if nothing actually changed
+          if (currentCoverFileId === targetFileId) continue;
+
+          // Unfeature the old cover first (if any)
+          if (currentCoverFileId) {
+            await fetch("/api/media/feature", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ alumniId, kind: "album", fileId: currentCoverFileId }),
+            });
+          }
+
+          // Feature the new cover (if set)
+          if (targetFileId) {
+            const res = await fetch("/api/media/feature", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ alumniId, kind: "album", fileId: targetFileId }),
+            });
+            const j = await res.json().catch(() => ({}));
+            if (!res.ok || !j.ok) {
+              showToastError(j?.error || "Could not save cover photo");
+              return; // abort — leave pending so user can retry
+            }
+          }
+        }
+
+        // Optimistically apply pending covers to library so the picker stays
+        // correct until fetchLibrary(bust) returns fresh server data.
+        setLibrary((prev) =>
+          prev.map((item) => {
+            const colKey = itemColKey(item);
+            if (!(colKey in pendingCovers)) return item;
+            return { ...item, isFeatured: item.fileId === pendingCovers[colKey] };
+          }),
+        );
+        setPendingCovers({});
+      } catch (e: any) {
+        showToastError(e?.message || "Could not save cover photos");
+        return;
+      } finally {
+        setCoverSaving(false);
+      }
+    }
+
+    // 2. Save profile fields + uploads via the standard saveCategory path.
+    //    If there's nothing profile-y to save (only covers changed), we still
+    //    call it so the parent's savedRecently flash fires correctly.
+    saveCategory({
+      tag: "Media",
+      fieldKeys: [
+        "reelVideoUrl1", "reelVideoUrl2", "reelVideoUrl3",
+        "videoTitle1", "videoTitle2", "videoTitle3",
+        "videoAspect1", "videoAspect2", "videoAspect3",
+        "videoAutoplay", "videoFullBleed",
+      ],
+      uploadKinds: albumFiles.length ? (["album"] as UploadKind[]) : [],
+      afterSave: () => {
+        onSaved?.();
+        setVideoDirty(false);
+        fetchLibrary(true);
+      },
+    });
+  }, [
+    loading, coverSaving, pendingCovers, alumniId, library,
+    saveCategory, albumFiles, onSaved, showToastError, fetchLibrary,
+  ]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   return (
@@ -286,7 +352,7 @@ export default function MediaPanel({
       </p>
 
       {/* ═══════════════════════════════════════════════════════════
-          UPLOAD PHOTOS  (first — you need photos before setting covers)
+          UPLOAD PHOTOS
       ═══════════════════════════════════════════════════════════ */}
       <span style={subheadChipStyle} className="subhead-chip">
         Upload Photos
@@ -358,18 +424,14 @@ export default function MediaPanel({
                   <div key={`${f.name}-${i}`} style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: 3 }}>
                     <div
                       style={{
-                        width: 72,
-                        height: 72,
-                        borderRadius: 8,
-                        overflow: "hidden",
+                        width: 72, height: 72, borderRadius: 8, overflow: "hidden",
                         border: "1.5px solid rgba(255,255,255,0.2)",
                         background: "rgba(255,255,255,0.06)",
                       }}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={url}
-                        alt={f.name}
+                        src={url} alt={f.name}
                         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                         onLoad={() => URL.revokeObjectURL(url)}
                       />
@@ -400,7 +462,7 @@ export default function MediaPanel({
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          COVER PHOTOS  (second — depends on having photos first)
+          COVER PHOTOS
       ═══════════════════════════════════════════════════════════ */}
       <div
         style={{
@@ -409,24 +471,15 @@ export default function MediaPanel({
           borderTop: "1px solid rgba(255,255,255,0.10)",
         }}
       >
-        {/* Section header with section-level flash — visible even if accordion is closed */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-          <span style={subheadChipStyle} className="subhead-chip">
-            Cover Photos
-          </span>
-          {featSavedFlash && (
-            <span style={{ fontSize: 11, color: "#6ee7b7", fontWeight: 700, letterSpacing: "0.02em" }}>
-              ✓ Cover updated
-            </span>
-          )}
-        </div>
+        <span style={subheadChipStyle} className="subhead-chip">
+          Cover Photos
+        </span>
 
         <p style={{ ...explainStyleLocal, opacity: 0.55, fontSize: "0.8rem", fontStyle: "italic" }}>
-          Choose one cover photo per collection — it&apos;s shown in the accordion on your
-          public profile. Click a collection to pick or change its cover.
+          Choose one cover photo per collection. Selections are saved when you
+          hit Save below.
         </p>
 
-        {/* Loading state */}
         {libraryLoading ? (
           <div style={{ fontSize: 12, opacity: 0.45, padding: "12px 0", fontStyle: "italic" }}>
             Loading collections…
@@ -438,11 +491,15 @@ export default function MediaPanel({
         ) : (
           <div style={{ display: "grid", gap: 8, marginBottom: 20 }}>
             {collections.map((col) => {
-              const cover     = col.items.find((it) => it.isFeatured) ?? col.items[0];
-              const isEditing = openColId === col.id;
+              const colKey         = col.id;
+              const effCoverFileId = effectiveCoverFileId(col);
+              const coverItem      = col.items.find((it) => it.fileId === effCoverFileId) ?? col.items[0];
+              const isPending      = colKey in pendingCovers;
+              const isEditing      = openColId === colKey;
+
               return (
                 <div
-                  key={col.id}
+                  key={colKey}
                   style={{
                     borderRadius: 10,
                     border: isEditing
@@ -456,38 +513,28 @@ export default function MediaPanel({
                   {/* Row header */}
                   <button
                     type="button"
-                    onClick={() => setOpenColId(isEditing ? null : col.id)}
+                    onClick={() => setOpenColId(isEditing ? null : colKey)}
                     style={{
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      padding: "10px 14px",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      textAlign: "left",
+                      width: "100%", display: "flex", alignItems: "center", gap: 12,
+                      padding: "10px 14px", background: "none", border: "none",
+                      cursor: "pointer", textAlign: "left",
                     }}
                   >
                     {/* Cover thumb */}
                     <div
                       style={{
-                        width: SLOT_SIZE,
-                        height: SLOT_SIZE,
-                        borderRadius: 7,
-                        overflow: "hidden",
-                        flexShrink: 0,
+                        width: SLOT_SIZE, height: SLOT_SIZE, borderRadius: 7,
+                        overflow: "hidden", flexShrink: 0,
                         background: "rgba(255,255,255,0.06)",
-                        border: cover?.isFeatured
+                        border: effCoverFileId
                           ? "2px solid rgba(108,0,175,0.8)"
                           : "1.5px solid rgba(255,255,255,0.12)",
                       }}
                     >
-                      {cover && (
+                      {coverItem && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={thumbUrl(cover)}
-                          alt=""
+                          src={thumbUrl(coverItem)} alt=""
                           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                         />
@@ -496,21 +543,15 @@ export default function MediaPanel({
 
                     {/* Labels */}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: "#e0d0f0",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "#e0d0f0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {col.title}
                       </div>
                       <div style={{ fontSize: 10, opacity: 0.45, marginTop: 2 }}>
                         {col.items.length} photo{col.items.length !== 1 ? "s" : ""}
-                        {cover?.isFeatured ? " · cover set" : " · using first photo"}
+                        {effCoverFileId ? " · cover selected" : " · no cover set"}
+                        {isPending && (
+                          <span style={{ color: "#f5c542", marginLeft: 4 }}>● unsaved</span>
+                        )}
                       </div>
                     </div>
 
@@ -522,72 +563,45 @@ export default function MediaPanel({
 
                   {/* Expanded photo picker */}
                   {isEditing && (
-                    <div
-                      style={{
-                        padding: "0 14px 14px",
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: 7,
-                      }}
-                    >
+                    <div style={{ padding: "0 14px 14px", display: "flex", flexWrap: "wrap", gap: 7 }}>
                       {col.items.map((item) => {
-                        const isCover  = !!item.isFeatured;
-                        const toggling = togglingId === item.fileId;
+                        const isCover   = item.fileId === effCoverFileId;
                         const isHovered = hoveredCoverId === item.fileId;
                         return (
                           <button
                             key={item.fileId}
                             type="button"
                             title={isCover ? "Current cover — click to unset" : "Set as cover"}
-                            disabled={loading || toggling}
-                            onClick={() => toggleFeatured(item)}
+                            disabled={loading || coverSaving}
+                            onClick={() => selectCover(item, col)}
                             onMouseEnter={() => setHoveredCoverId(item.fileId)}
                             onMouseLeave={() => setHoveredCoverId(null)}
                             style={{
-                              position: "relative",
-                              width: 68,
-                              height: 68,
-                              borderRadius: 7,
+                              position: "relative", width: 68, height: 68, borderRadius: 7,
                               overflow: "hidden",
                               border: isCover
                                 ? "2.5px solid rgba(108,0,175,0.95)"
                                 : isHovered
                                 ? "2px solid rgba(108,0,175,0.7)"
                                 : "1.5px solid rgba(255,255,255,0.12)",
-                              background: "#1a0c22",
-                              padding: 0,
-                              cursor: toggling ? "wait" : "pointer",
-                              opacity: toggling ? 0.45 : 1,
-                              transition: "opacity 0.15s, border-color 0.15s",
-                              flexShrink: 0,
+                              background: "#1a0c22", padding: 0, cursor: "pointer",
+                              transition: "border-color 0.15s", flexShrink: 0,
                             }}
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                              src={thumbUrl(item)}
-                              alt=""
+                              src={thumbUrl(item)} alt=""
                               style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                             />
-                            {/* Cover badge — shows "✕ unset" on hover so the action is discoverable */}
                             {isCover && (
                               <div
                                 style={{
-                                  position: "absolute",
-                                  bottom: 0,
-                                  left: 0,
-                                  right: 0,
-                                  background: isHovered
-                                    ? "rgba(160,0,60,0.92)"
-                                    : "rgba(108,0,175,0.88)",
-                                  fontSize: 8,
-                                  fontWeight: 700,
-                                  letterSpacing: "0.06em",
-                                  textAlign: "center",
-                                  padding: "2px 0 3px",
-                                  color: "#fff",
-                                  textTransform: "uppercase",
-                                  pointerEvents: "none",
+                                  position: "absolute", bottom: 0, left: 0, right: 0,
+                                  background: isHovered ? "rgba(160,0,60,0.92)" : "rgba(108,0,175,0.88)",
+                                  fontSize: 8, fontWeight: 700, letterSpacing: "0.06em",
+                                  textAlign: "center", padding: "2px 0 3px", color: "#fff",
+                                  textTransform: "uppercase", pointerEvents: "none",
                                   transition: "background 0.15s",
                                 }}
                               >
@@ -630,42 +644,29 @@ export default function MediaPanel({
           {(
             [
               {
-                label: "Video 1",
-                show: true,
-                urlValue: reelUrl1, urlKey: "reelVideoUrl1" as const,
-                urlSetter: setReelUrl1,
-                titleValue: videoTitle1, titleKey: "videoTitle1" as const,
-                titleSetter: setVideoTitle1,
-                aspectValue: videoAspect1, aspectKey: "videoAspect1" as const,
-                aspectSetter: setVideoAspect1,
+                label: "Video 1", show: true,
+                urlValue: reelUrl1, urlKey: "reelVideoUrl1" as const, urlSetter: setReelUrl1,
+                titleValue: videoTitle1, titleKey: "videoTitle1" as const, titleSetter: setVideoTitle1,
+                aspectValue: videoAspect1, aspectKey: "videoAspect1" as const, aspectSetter: setVideoAspect1,
               },
               {
-                label: "Video 2",
-                show: showVideo2,
-                urlValue: reelUrl2, urlKey: "reelVideoUrl2" as const,
-                urlSetter: setReelUrl2,
-                titleValue: videoTitle2, titleKey: "videoTitle2" as const,
-                titleSetter: setVideoTitle2,
-                aspectValue: videoAspect2, aspectKey: "videoAspect2" as const,
-                aspectSetter: setVideoAspect2,
+                label: "Video 2", show: showVideo2,
+                urlValue: reelUrl2, urlKey: "reelVideoUrl2" as const, urlSetter: setReelUrl2,
+                titleValue: videoTitle2, titleKey: "videoTitle2" as const, titleSetter: setVideoTitle2,
+                aspectValue: videoAspect2, aspectKey: "videoAspect2" as const, aspectSetter: setVideoAspect2,
               },
               {
-                label: "Video 3",
-                show: showVideo3,
-                urlValue: reelUrl3, urlKey: "reelVideoUrl3" as const,
-                urlSetter: setReelUrl3,
-                titleValue: videoTitle3, titleKey: "videoTitle3" as const,
-                titleSetter: setVideoTitle3,
-                aspectValue: videoAspect3, aspectKey: "videoAspect3" as const,
-                aspectSetter: setVideoAspect3,
+                label: "Video 3", show: showVideo3,
+                urlValue: reelUrl3, urlKey: "reelVideoUrl3" as const, urlSetter: setReelUrl3,
+                titleValue: videoTitle3, titleKey: "videoTitle3" as const, titleSetter: setVideoTitle3,
+                aspectValue: videoAspect3, aspectKey: "videoAspect3" as const, aspectSetter: setVideoAspect3,
               },
             ] as const
           ).filter(({ show }) => show).map(({ label, urlValue, urlKey, urlSetter, titleValue, titleKey, titleSetter, aspectValue, aspectKey, aspectSetter }) => (
             <div key={label} style={{ display: "grid", gap: 8 }}>
               <label style={smallLabel}>{label}</label>
               <input
-                type="url"
-                value={urlValue}
+                type="url" value={urlValue}
                 onChange={(e) => {
                   urlSetter(e.target.value);
                   setProfile?.((p: any) => ({ ...p, [urlKey]: e.target.value }));
@@ -677,8 +678,7 @@ export default function MediaPanel({
               {urlValue.trim() && (
                 <div className="_mp_videoExtra" style={{ display: "grid", gap: 6 }}>
                   <input
-                    type="text"
-                    value={titleValue}
+                    type="text" value={titleValue}
                     onChange={(e) => {
                       titleSetter(e.target.value);
                       setProfile?.((p: any) => ({ ...p, [titleKey]: e.target.value }));
@@ -725,15 +725,12 @@ export default function MediaPanel({
             </select>
           </div>
 
-          {/* Full bleed — shown whenever video 1 is set; disabled with explanation when
-              multiple videos are present (full-bleed only makes sense for a single video) */}
+          {/* Full bleed — shown whenever video 1 is set; disabled when multiple videos */}
           {reelUrl1.trim() && (
             <div>
               <label
                 style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 8,
+                  display: "flex", alignItems: "flex-start", gap: 8,
                   cursor: multipleVideos ? "default" : "pointer",
                   fontSize: 13,
                   color: multipleVideos ? "rgba(255,255,255,0.38)" : "rgba(255,255,255,0.85)",
@@ -741,9 +738,7 @@ export default function MediaPanel({
                 }}
               >
                 <input
-                  type="checkbox"
-                  checked={videoFullBleed}
-                  disabled={multipleVideos}
+                  type="checkbox" checked={videoFullBleed} disabled={multipleVideos}
                   onChange={(e) => {
                     setVideoFullBleed(e.target.checked);
                     setProfile?.((p: any) => ({ ...p, videoFullBleed: e.target.checked ? "true" : "false" }));
@@ -783,6 +778,11 @@ export default function MediaPanel({
             <span style={{ fontSize: 8 }}>●</span> Photos staged
           </span>
         )}
+        {hasCoverChanges && !savedRecently && (
+          <span style={{ fontSize: 12, opacity: 0.7, display: "flex", alignItems: "center", gap: 5, color: "#f5c542" }}>
+            <span style={{ fontSize: 8 }}>●</span> Cover changes pending
+          </span>
+        )}
         {savedRecently && (
           <span style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 5, color: "#6ee7b7", opacity: 0.9 }}>
             <span style={{ fontSize: 10 }}>✓</span> Saved
@@ -797,31 +797,16 @@ export default function MediaPanel({
               : {}),
             ...(!isDirty && !savedRecently ? { opacity: 0.45 } : {}),
           }}
-          disabled={loading}
-          onClick={() =>
-            saveCategory({
-              tag: "Media",
-              fieldKeys: [
-                "reelVideoUrl1", "reelVideoUrl2", "reelVideoUrl3",
-                "videoTitle1", "videoTitle2", "videoTitle3",
-                "videoAspect1", "videoAspect2", "videoAspect3",
-                "videoAutoplay", "videoFullBleed",
-              ],
-              uploadKinds: [
-                ...(albumFiles.length ? (["album"] as UploadKind[]) : []),
-              ],
-              afterSave: () => {
-                onSaved?.();
-                setVideoDirty(false);
-                // Always bust the cache after a save so cover-photo changes
-                // toggled earlier in the session are not overwritten by stale
-                // 15-second module-cache data from the list endpoint.
-                fetchLibrary(true);
-              },
-            })
-          }
+          disabled={loading || coverSaving}
+          onClick={handleSave}
         >
-          {savedRecently ? "Saved ✓" : hasUploadWork ? "Upload & Save" : "Save Changes"}
+          {coverSaving
+            ? "Saving…"
+            : savedRecently
+            ? "Saved ✓"
+            : hasUploadWork
+            ? "Upload & Save"
+            : "Save Changes"}
         </button>
       </div>
     </div>
