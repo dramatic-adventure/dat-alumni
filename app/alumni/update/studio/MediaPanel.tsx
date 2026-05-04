@@ -382,7 +382,7 @@ export default function MediaPanel({
             disabled={loading}
             label=""
             sublabel=""
-            onFiles={(files) => setAlbumFiles(files)}
+            onFiles={(files) => setAlbumFiles([...albumFiles, ...files])}
             onReject={(rej) => showToastError(rej[0]?.reason || "File rejected")}
             style={{
               minHeight: 160,
@@ -424,6 +424,7 @@ export default function MediaPanel({
                   <div key={`${f.name}-${i}`} style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: 3 }}>
                     <div
                       style={{
+                        position: "relative",
                         width: 72, height: 72, borderRadius: 8, overflow: "hidden",
                         border: "1.5px solid rgba(255,255,255,0.2)",
                         background: "rgba(255,255,255,0.06)",
@@ -435,6 +436,21 @@ export default function MediaPanel({
                         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                         onLoad={() => URL.revokeObjectURL(url)}
                       />
+                      {/* Remove button */}
+                      <button
+                        type="button"
+                        aria-label={`Remove ${f.name}`}
+                        onClick={() => setAlbumFiles(albumFiles.filter((_, j) => j !== i))}
+                        style={{
+                          position: "absolute", top: 3, right: 3,
+                          width: 18, height: 18, borderRadius: "50%",
+                          background: "rgba(0,0,0,0.65)",
+                          border: "1px solid rgba(255,255,255,0.25)",
+                          color: "#fff", fontSize: 10, fontWeight: 700,
+                          lineHeight: 1, cursor: "pointer", padding: 0,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}
+                      >×</button>
                     </div>
                     <div style={{ width: 72, fontSize: 10, opacity: 0.6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {f.name}
