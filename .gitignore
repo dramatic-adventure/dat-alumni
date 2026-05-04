@@ -63,11 +63,6 @@ yarn-error.log*
 # Netlify prod import file (never commit)
 netlify.env
 
-# Local CSV fallbacks — generated at runtime, never commit stale data
-# loadCsv.ts writes these as a last-resort local cache; Netlify Blobs is the
-# real production fallback so these files don't need to be in the repo.
-public/fallback/*.csv
-
 # logs
 *.log
 dev.log

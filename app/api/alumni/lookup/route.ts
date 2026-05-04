@@ -1,8 +1,6 @@
 // /app/api/alumni/lookup/route.ts
 import { NextResponse } from "next/server";
 import { rateLimit } from "@/lib/rateLimit";
-import { promises as fs } from "fs";
-import path from "path";
 import { auth } from "@/auth";
 import { sheetsClient } from "@/lib/googleClients";
 
@@ -178,29 +176,6 @@ function toCsvCell(v: unknown) {
   return s;
 }
 
-function getFallbackDir() {
-  return process.env.FALLBACK_DIR || path.join("public", "fallback");
-}
-
-// ------------------------------------------------------------
-// Atomic-ish writer (tmp then rename)
-// ------------------------------------------------------------
-async function atomicWriteFile(filePath: string, content: string) {
-  const dir = path.dirname(filePath);
-  const base = path.basename(filePath);
-  const tmp = path.join(dir, `.${base}.tmp-${process.pid}-${Date.now()}`);
-
-  await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(tmp, content, "utf8");
-  await fs.rename(tmp, filePath);
-}
-
-function canWriteFallbackToDisk() {
-  if (process.env.NODE_ENV === "production") return false;
-  if (process.env.FALLBACK_WRITE !== "1") return false;
-  if ((process.env.FALLBACK_WRITE_TARGET || "") !== "disk") return false;
-  return true;
-}
 
 // ------------------------------------------------------------
 // Status rules (review-only; only blocklist hides)
@@ -329,38 +304,6 @@ function buildFallbackCsvStrings(opts: {
   };
 }
 
-async function refreshFallbackSnapshots(opts: {
-  liveHeader: any[];
-  liveRows: any[][];
-  liveIdx: {
-    alumniIdIdx: number;
-    slugIdx: number;
-    nameIdx: number;
-    rolesIdx: number;
-    locationIdx: number;
-    headshotUrlIdx: number;
-    websiteIdx: number;
-    isPublicIdx: number;
-    statusIdx: number;
-    updatedAtIdx: number;
-    statusFlagsIdx: number;
-    currentWorkIdx: number;
-  };
-  slugTriples: SlugRow[];
-}) {
-  if (!canWriteFallbackToDisk()) return;
-
-  const dir = getFallbackDir();
-  const slugMapPath = path.join(process.cwd(), dir, "slug-map.csv");
-
-  const { slugMapCsv } = buildFallbackCsvStrings({
-    liveRows: opts.liveRows,
-    liveIdx: opts.liveIdx,
-    slugTriples: opts.slugTriples,
-  });
-
-  await atomicWriteFile(slugMapPath, slugMapCsv);
-}
 
 // ------------------------------------------------------------
 // Main route (Profile-Live is the source of truth for reads)
@@ -622,26 +565,6 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
       });
     }
 
-    // dev-only snapshot writing whenever Sheets is readable
-    void refreshFallbackSnapshots({
-      liveHeader: LH,
-      liveRows,
-      liveIdx: {
-        alumniIdIdx,
-        slugIdx,
-        nameIdx,
-        rolesIdx,
-        locationIdx,
-        headshotUrlIdx,
-        websiteIdx,
-        isPublicIdx,
-        statusIdx,
-        updatedAtIdx,
-        statusFlagsIdx,
-        currentWorkIdx,
-      },
-      slugTriples,
-    }).catch(() => {});
 
     function notFound() {
       return json({ error: "not found" }, { status: 404, headers: noStoreHeaders() });
