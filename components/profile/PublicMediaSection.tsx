@@ -223,7 +223,10 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
             const isActive = hoveredIdx === i;
             const isOpen = openIdx === i;
             const coverItem = col.items.find((it) => it.isFeatured) ?? col.items[0];
-            const coverSrc = coverItem ? toThumbUrl(coverItem, 900) : "";
+            // Active/first panel needs a full-width image; collapsed panels are
+            // only ~58 px wide so a smaller size is fine until they expand.
+            const coverSrc = coverItem ? toThumbUrl(coverItem, i === 0 ? 900 : 480) : "";
+            const isFirst = i === 0;
 
             return (
               <div
@@ -272,6 +275,9 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
                   <img
                     src={coverSrc}
                     alt=""
+                    loading={isFirst ? "eager" : "lazy"}
+                    // @ts-expect-error — fetchpriority is valid HTML but not yet in React types
+                    fetchpriority={isFirst ? "high" : "auto"}
                     style={{
                       position: "absolute",
                       inset: 0,

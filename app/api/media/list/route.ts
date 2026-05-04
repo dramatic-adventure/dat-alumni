@@ -95,11 +95,12 @@ function cacheHeaders(opts: { includeDrive: boolean }) {
   }
 
   return {
-    // max-age=0 forces the browser to always revalidate — cover-photo changes
-    // from the editor are otherwise invisible for a full minute.
-    // s-maxage=300 lets the Netlify CDN still cache for 5 min between users,
-    // and stale-while-revalidate keeps repeat loads snappy.
-    "Cache-Control": "public, max-age=0, s-maxage=300, stale-while-revalidate=3600",
+    // max-age=0: browser always revalidates (cover-photo changes are visible immediately).
+    // s-maxage=30: CDN caches for 30 s — short enough that cover updates show within
+    //   half a minute without hammering the Sheets API on every public-profile load.
+    // stale-while-revalidate=10: CDN can serve the tail-end stale window while it
+    //   fetches fresh, keeping the response snappy.
+    "Cache-Control": "public, max-age=0, s-maxage=30, stale-while-revalidate=10",
   };
 }
 

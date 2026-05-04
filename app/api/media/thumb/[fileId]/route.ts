@@ -9,9 +9,13 @@ import { driveClient } from "@/lib/googleClients";
 
 export const runtime = "nodejs";
 
-// Browser: private per-user cache, 1 year. CDN: must not cache (belt+suspenders).
-const CACHE_OK = "private, max-age=31536000, stale-while-revalidate=86400";
-const CDN_NO_STORE = "no-store";
+// Browser: private cache for 1 year (file IDs are immutable Drive content).
+// CDN: cache for 24 h per file-ID path — safe because each fileId gets its own
+// CDN cache key (that's exactly why this route uses path-based routing instead
+// of a query-param). stale-while-revalidate lets Netlify serve the cached bytes
+// while quietly refreshing in the background.
+const BROWSER_CACHE  = "private, max-age=31536000, stale-while-revalidate=86400";
+const CDN_CACHE      = "public, s-maxage=86400, stale-while-revalidate=86400";
 
 function clampInt(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
@@ -64,9 +68,8 @@ export async function GET(
         return new NextResponse(buf as any, {
           headers: {
             "Content-Type": contentType,
-            "Cache-Control": CACHE_OK,
-            "CDN-Cache-Control": CDN_NO_STORE,
-            "Netlify-CDN-Cache-Control": CDN_NO_STORE,
+            "Cache-Control": BROWSER_CACHE,
+            "Netlify-CDN-Cache-Control": CDN_CACHE,
           },
         });
       }
@@ -90,9 +93,8 @@ export async function GET(
     return new NextResponse(r.data as any, {
       headers: {
         "Content-Type": contentType,
-        "Cache-Control": CACHE_OK,
-        "CDN-Cache-Control": CDN_NO_STORE,
-        "Netlify-CDN-Cache-Control": CDN_NO_STORE,
+        "Cache-Control": BROWSER_CACHE,
+        "Netlify-CDN-Cache-Control": CDN_CACHE,
       },
     });
   } catch (e: any) {
