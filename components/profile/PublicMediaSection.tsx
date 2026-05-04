@@ -23,7 +23,7 @@ type Collection = { title: string; id: string; items: MediaItem[] };
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function toThumbUrl(item: MediaItem, w = 600): string {
+function toThumbUrl(item: MediaItem, w = 1200): string {
   if (item.fileId) return `/api/media/thumb/${encodeURIComponent(item.fileId)}?w=${w}`;
   if (item.externalUrl) return `/api/img?url=${encodeURIComponent(item.externalUrl)}`;
   return "";
@@ -223,9 +223,10 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
             const isActive = hoveredIdx === i;
             const isOpen = openIdx === i;
             const coverItem = col.items.find((it) => it.isFeatured) ?? col.items[0];
-            // Active/first panel needs a full-width image; collapsed panels are
-            // only ~58 px wide so a smaller size is fine until they expand.
-            const coverSrc = coverItem ? toThumbUrl(coverItem, i === 0 ? 900 : 480) : "";
+            // 1200 px: panels expand to ~900 px on desktop and we want retina
+            // sharpness (2×). All panels get the same size so there's no
+            // pixelation when a collapsed panel animates open.
+            const coverSrc = coverItem ? toThumbUrl(coverItem, 1200) : "";
             const isFirst = i === 0;
 
             return (
