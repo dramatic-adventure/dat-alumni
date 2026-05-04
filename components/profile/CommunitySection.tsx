@@ -512,7 +512,7 @@ export default function CommunitySection({
   return (
     <section
       style={{
-        backgroundColor: "#2493A9",
+        backgroundColor: "#5BBFD3",
         padding: isMobile ? "3rem 24px 3.5rem" : "4.5rem 60px 5rem",
       }}
     >

@@ -243,8 +243,6 @@ export default function FeaturedStories({
     <section
       style={{
         padding: "0 0px",
-        marginTop: "-2rem",
-        marginBottom: "0.2rem",
         maxWidth: "100%",
       }}
     >

@@ -44,7 +44,7 @@ const pillRowStyle: CSSProperties = {
 };
 
 const pillStyle: CSSProperties = {
-  backgroundColor: "#6C00AF",
+  backgroundColor: "#2493A9",
   color: "#F2F2F2",
   fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
   textTransform: "uppercase",
@@ -94,10 +94,10 @@ function LayerSection({
             style={pillStyle}
             onClick={() => router.push(`/tag/${slugifyTag(label)}`)}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#5200A0";
+              e.currentTarget.style.backgroundColor = "rgba(36,147,169,0.72)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#6C00AF";
+              e.currentTarget.style.backgroundColor = "#2493A9";
             }}
           >
             {label}

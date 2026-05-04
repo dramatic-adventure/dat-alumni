@@ -157,7 +157,7 @@ export default function BioIdentitySection({
         {hasBio && (
           <div
             style={{
-              backgroundColor: "#f2f2f2",
+              backgroundColor: "#2493A9",
               padding: `${paddingTop} clamp(2.5rem, 5vw, 5rem) ${isMobile ? "3rem" : "5rem"}`,
             }}
           >
@@ -213,7 +213,7 @@ export default function BioIdentitySection({
                     e.currentTarget.style.letterSpacing = "0.25rem";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "#6c00af";
+                    e.currentTarget.style.color = "#19657c";
                     e.currentTarget.style.letterSpacing = "0.15rem";
                   }}
                   onFocus={(e) => {
@@ -221,7 +221,7 @@ export default function BioIdentitySection({
                     e.currentTarget.style.letterSpacing = "0.25rem";
                   }}
                   onBlur={(e) => {
-                    e.currentTarget.style.color = "#6c00af";
+                    e.currentTarget.style.color = "#19657c";
                     e.currentTarget.style.letterSpacing = "0.15rem";
                   }}
                   style={{
@@ -229,7 +229,7 @@ export default function BioIdentitySection({
                     marginTop: "1rem",
                     background: "none",
                     border: "none",
-                    color: "#6c00af",
+                    color: "#19657c",
                     fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                     fontSize: "0.75rem",
                     fontWeight: 800,
@@ -263,7 +263,7 @@ export default function BioIdentitySection({
         {hasAnyTags && (
           <div
             style={{
-              backgroundColor: "#3D1070",
+              backgroundColor: "#19657c",
               padding: `${useGrid ? paddingTop : "2.5rem"} clamp(2rem, 4vw, 4rem) ${isMobile ? "3rem" : "5rem"}`,
               color: "#F2F2F2",
             }}
@@ -284,7 +284,7 @@ export default function BioIdentitySection({
                     textTransform: "uppercase" as const,
                     letterSpacing: "0.18em",
                     fontWeight: 700,
-                    color: "#9B89B4",
+                    color: "rgba(255,255,255,0.55)",
                     margin: "0 0 0.75rem 0",
                   }}
                 >
