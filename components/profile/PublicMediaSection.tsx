@@ -74,6 +74,7 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
   // Accordion state
   const [hoveredIdx, setHoveredIdx] = useState(0);
   const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const [page, setPage] = useState(0);
 
   // Lightbox state
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
@@ -112,7 +113,7 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
                 (Date.parse(b.uploadedAt || "") || 0) -
                 (Date.parse(a.uploadedAt || "") || 0),
             );
-            setCollections(groupByCollection(sorted).slice(0, MAX_PANELS));
+            setCollections(groupByCollection(sorted)); // keep all — pagination handles the limit
           }
         }
       } catch {
@@ -127,7 +128,7 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
     };
   }, [alumniId]);
 
-  // Compute display-ready collection list: full collections + optional catch-all
+  // All display-ready panels: full collections + optional small-collection catch-all
   const accordionCollections = useMemo<Collection[]>(() => {
     const full      = collections.filter((c) => c.items.length >= MIN_COLLECTION_SIZE);
     const leftovers = collections
@@ -138,18 +139,36 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
       : full;
   }, [collections]);
 
-  // Auto-cycle through panels when user hasn't interacted
+  // Pagination — page through MAX_PANELS collections at a time
+  const totalPages        = Math.ceil(accordionCollections.length / MAX_PANELS);
+  const safePage          = Math.min(page, Math.max(0, totalPages - 1));
+  const visibleCollections = accordionCollections.slice(
+    safePage * MAX_PANELS,
+    (safePage + 1) * MAX_PANELS,
+  );
+
+  const goToPage = useCallback((p: number) => {
+    setPage(p);
+    setHoveredIdx(0);
+    setOpenIdx(null);
+    userInteracted.current = false; // restart auto-cycle on the new page
+  }, []);
+
+  // Reset to page 0 whenever the underlying collection list changes
+  useEffect(() => { setPage(0); }, [accordionCollections.length]);
+
+  // Auto-cycle through visible panels when user hasn't interacted
   useEffect(() => {
-    if (accordionCollections.length === 0) return;
+    if (visibleCollections.length === 0) return;
     timerRef.current = setInterval(() => {
       if (!userInteracted.current) {
-        setHoveredIdx((prev) => (prev + 1) % accordionCollections.length);
+        setHoveredIdx((prev) => (prev + 1) % visibleCollections.length);
       }
     }, 2800);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [accordionCollections.length]);
+  }, [visibleCollections.length]);
 
   const stopAutoCycle = useCallback(() => {
     userInteracted.current = true;
@@ -183,7 +202,7 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
 
   const accordionHeight = isMobile ? 240 : 400;
   const collapsedWidth  = isMobile ? 44 : 58;
-  const openCollection  = openIdx !== null ? (accordionCollections[openIdx] ?? null) : null;
+  const openCollection  = openIdx !== null ? (visibleCollections[openIdx] ?? null) : null;
 
   // ── Single-collection bypass: skip accordion, show grid directly ──────────
   if (accordionCollections.length === 1) {
@@ -211,6 +230,67 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
       style={{ background: "#0d2c38", overflow: "hidden" }}
     >
       <div>
+        {/* ── Pagination nav (only when there are multiple pages) ───── */}
+        {totalPages > 1 && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: 10,
+              padding: "10px 16px 6px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => goToPage(safePage - 1)}
+              disabled={safePage === 0}
+              aria-label="Previous collections"
+              style={{
+                background: "none", border: "none", padding: "2px 6px",
+                fontSize: 20, lineHeight: 1, cursor: safePage === 0 ? "default" : "pointer",
+                color: safePage === 0 ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.65)",
+                transition: "color 0.15s",
+              }}
+            >‹</button>
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => goToPage(i)}
+                  aria-label={`Page ${i + 1}`}
+                  style={{
+                    width: i === safePage ? 18 : 6,
+                    height: 6,
+                    borderRadius: 3,
+                    padding: 0,
+                    border: "none",
+                    background: i === safePage
+                      ? "rgba(255,255,255,0.75)"
+                      : "rgba(255,255,255,0.22)",
+                    cursor: "pointer",
+                    transition: "width 0.2s, background 0.2s",
+                  }}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => goToPage(safePage + 1)}
+              disabled={safePage === totalPages - 1}
+              aria-label="Next collections"
+              style={{
+                background: "none", border: "none", padding: "2px 6px",
+                fontSize: 20, lineHeight: 1,
+                cursor: safePage === totalPages - 1 ? "default" : "pointer",
+                color: safePage === totalPages - 1 ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.65)",
+                transition: "color 0.15s",
+              }}
+            >›</button>
+          </div>
+        )}
+
         {/* ── Accordion ────────────────────────────────────────── */}
         <div
           style={{
@@ -219,7 +299,7 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
             height: accordionHeight,
           }}
         >
-          {accordionCollections.map((col, i) => {
+          {visibleCollections.map((col, i) => {
             const isActive = hoveredIdx === i;
             const isOpen = openIdx === i;
             const coverItem = col.items.find((it) => it.isFeatured) ?? col.items[0];
