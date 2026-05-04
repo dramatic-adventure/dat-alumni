@@ -510,6 +510,19 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
     const upcomingEventCityIdx          = idxOf(LH as string[], ["upcomingeventcity", "upcoming event city", "upcomingEventCity"]);
     const upcomingEventStateCountryIdx  = idxOf(LH as string[], ["upcomingeventstatecountry", "upcoming event state country", "upcomingEventStateCountry"]);
 
+    // Featured Videos
+    const reelVideoUrl1Idx  = idxOf(LH as string[], ["reelvideourl1",  "reel video url 1",  "reelVideoUrl1"]);
+    const reelVideoUrl2Idx  = idxOf(LH as string[], ["reelvideourl2",  "reel video url 2",  "reelVideoUrl2"]);
+    const reelVideoUrl3Idx  = idxOf(LH as string[], ["reelvideourl3",  "reel video url 3",  "reelVideoUrl3"]);
+    const videoTitle1Idx    = idxOf(LH as string[], ["videotitle1",    "video title 1",     "videoTitle1"]);
+    const videoTitle2Idx    = idxOf(LH as string[], ["videotitle2",    "video title 2",     "videoTitle2"]);
+    const videoTitle3Idx    = idxOf(LH as string[], ["videotitle3",    "video title 3",     "videoTitle3"]);
+    const videoAspect1Idx   = idxOf(LH as string[], ["videoaspect1",   "video aspect 1",    "videoAspect1"]);
+    const videoAspect2Idx   = idxOf(LH as string[], ["videoaspect2",   "video aspect 2",    "videoAspect2"]);
+    const videoAspect3Idx   = idxOf(LH as string[], ["videoaspect3",   "video aspect 3",    "videoAspect3"]);
+    const videoAutoplayIdx  = idxOf(LH as string[], ["videoautoplay",  "video autoplay",    "videoAutoplay"]);
+    const videoFullBleedIdx = idxOf(LH as string[], ["videofullbleed", "video full bleed",  "videoFullBleed"]);
+
     if (isDebug(req, "1")) {
       const sample = liveRows.slice(0, 5).map((r) => ({
         alumniId: alumniIdIdx !== -1 ? String(r[alumniIdIdx] ?? "") : "",
@@ -738,6 +751,19 @@ if (!wantsExport && alumniIdExplicit && !admin && process.env.NODE_ENV === "prod
         upcomingEventVideoAutoplay: upcomingEventVideoAutoplayIdx !== -1 ? String(row[upcomingEventVideoAutoplayIdx] ?? "").trim() : "",
         upcomingEventCity:          upcomingEventCityIdx !== -1          ? String(row[upcomingEventCityIdx] ?? "").trim()          : "",
         upcomingEventStateCountry:  upcomingEventStateCountryIdx !== -1  ? String(row[upcomingEventStateCountryIdx] ?? "").trim()  : "",
+
+        // Featured Videos
+        reelVideoUrl1:  reelVideoUrl1Idx  !== -1 ? String(row[reelVideoUrl1Idx]  ?? "").trim() : "",
+        reelVideoUrl2:  reelVideoUrl2Idx  !== -1 ? String(row[reelVideoUrl2Idx]  ?? "").trim() : "",
+        reelVideoUrl3:  reelVideoUrl3Idx  !== -1 ? String(row[reelVideoUrl3Idx]  ?? "").trim() : "",
+        videoTitle1:    videoTitle1Idx    !== -1 ? String(row[videoTitle1Idx]    ?? "").trim() : "",
+        videoTitle2:    videoTitle2Idx    !== -1 ? String(row[videoTitle2Idx]    ?? "").trim() : "",
+        videoTitle3:    videoTitle3Idx    !== -1 ? String(row[videoTitle3Idx]    ?? "").trim() : "",
+        videoAspect1:   videoAspect1Idx   !== -1 ? String(row[videoAspect1Idx]   ?? "").trim() : "",
+        videoAspect2:   videoAspect2Idx   !== -1 ? String(row[videoAspect2Idx]   ?? "").trim() : "",
+        videoAspect3:   videoAspect3Idx   !== -1 ? String(row[videoAspect3Idx]   ?? "").trim() : "",
+        videoAutoplay:  videoAutoplayIdx  !== -1 ? String(row[videoAutoplayIdx]  ?? "").trim() : "",
+        videoFullBleed: videoFullBleedIdx !== -1 ? String(row[videoFullBleedIdx] ?? "").trim() : "",
 
         // Email:
         // - Admin: always see

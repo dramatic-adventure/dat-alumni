@@ -83,6 +83,19 @@ export function baselineFromLookup(j: any, slug: string, nm: string, loc: string
     // Sheet header is `activeStoryKey`; code/UI uses `storyKey`. Accept either.
     storyKey: String(j?.storyKey || j?.activeStoryKey || ""),
 
+    // Featured Videos
+    reelVideoUrl1:  String(j?.reelVideoUrl1  || ""),
+    reelVideoUrl2:  String(j?.reelVideoUrl2  || ""),
+    reelVideoUrl3:  String(j?.reelVideoUrl3  || ""),
+    videoTitle1:    String(j?.videoTitle1    || ""),
+    videoTitle2:    String(j?.videoTitle2    || ""),
+    videoTitle3:    String(j?.videoTitle3    || ""),
+    videoAspect1:   String(j?.videoAspect1   || ""),
+    videoAspect2:   String(j?.videoAspect2   || ""),
+    videoAspect3:   String(j?.videoAspect3   || ""),
+    videoAutoplay:  String(j?.videoAutoplay  || ""),
+    videoFullBleed: String(j?.videoFullBleed || ""),
+
     // Impact
     impactCauses: String(j?.impactCauses || ""),
     supportedClubs: String(j?.supportedClubs || ""),

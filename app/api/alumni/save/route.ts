@@ -260,6 +260,17 @@ function colIndexToLetter(idx: number): string {
 const REQUIRED_VISIBILITY_COLUMNS: Record<string, string> = {
   showwebsite:     "showWebsite",
   showpublicemail: "showPublicEmail",
+  reelvideourl1:   "reelVideoUrl1",
+  reelvideourl2:   "reelVideoUrl2",
+  reelvideourl3:   "reelVideoUrl3",
+  videotitle1:     "videoTitle1",
+  videotitle2:     "videoTitle2",
+  videotitle3:     "videoTitle3",
+  videoaspect1:    "videoAspect1",
+  videoaspect2:    "videoAspect2",
+  videoaspect3:    "videoAspect3",
+  videoautoplay:   "videoAutoplay",
+  videofullbleed:  "videoFullBleed",
 };
 
 export async function PUT(req: Request) {

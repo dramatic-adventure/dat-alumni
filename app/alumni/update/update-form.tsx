@@ -1241,11 +1241,32 @@ useEffect(() => {
         storyCountry: String(j?.storyCountry || p.storyCountry || ""),
         storyShowOnMap: boolCell(j?.storyShowOnMap || p.storyShowOnMap),
         storyKey: String(j?.storyKey || p.storyKey || ""),
+
+        // Featured Videos
+        reelVideoUrl1:  String(j?.reelVideoUrl1  || p.reelVideoUrl1  || ""),
+        reelVideoUrl2:  String(j?.reelVideoUrl2  || p.reelVideoUrl2  || ""),
+        reelVideoUrl3:  String(j?.reelVideoUrl3  || p.reelVideoUrl3  || ""),
+        videoTitle1:    String(j?.videoTitle1    || p.videoTitle1    || ""),
+        videoTitle2:    String(j?.videoTitle2    || p.videoTitle2    || ""),
+        videoTitle3:    String(j?.videoTitle3    || p.videoTitle3    || ""),
+        videoAspect1:   String(j?.videoAspect1   || p.videoAspect1   || ""),
+        videoAspect2:   String(j?.videoAspect2   || p.videoAspect2   || ""),
+        videoAspect3:   String(j?.videoAspect3   || p.videoAspect3   || ""),
+        videoAutoplay:  String(j?.videoAutoplay  || p.videoAutoplay  || ""),
+        videoFullBleed: String(j?.videoFullBleed || p.videoFullBleed || ""),
       }));
 
       if (j?.assets) setAssets(j.assets as PointerAssets);
     } catch {
-      /* ignore */
+      // On fetch failure (e.g. cold dev server, transient network error) set a
+      // minimal fallback baseline so the form doesn't stay stuck on
+      // "Loading your profile…" forever. The user can still edit and save; the
+      // baseline will be corrected on the next successful lookup or rehydrate.
+      if (!liveBaseline) {
+        setLiveBaseline(
+          baselineFromLookup({}, forceSlug || String(email || ""), "", "")
+        );
+      }
     }
   };
 
@@ -1706,6 +1727,18 @@ async function rehydrate() {
         storyShowOnMap: boolCell(j?.storyShowOnMap || p.storyShowOnMap),
         storyKey: String(j?.storyKey || p.storyKey || ""),
 
+        // Featured Videos
+        reelVideoUrl1:  String(j?.reelVideoUrl1  || p.reelVideoUrl1  || ""),
+        reelVideoUrl2:  String(j?.reelVideoUrl2  || p.reelVideoUrl2  || ""),
+        reelVideoUrl3:  String(j?.reelVideoUrl3  || p.reelVideoUrl3  || ""),
+        videoTitle1:    String(j?.videoTitle1    || p.videoTitle1    || ""),
+        videoTitle2:    String(j?.videoTitle2    || p.videoTitle2    || ""),
+        videoTitle3:    String(j?.videoTitle3    || p.videoTitle3    || ""),
+        videoAspect1:   String(j?.videoAspect1   || p.videoAspect1   || ""),
+        videoAspect2:   String(j?.videoAspect2   || p.videoAspect2   || ""),
+        videoAspect3:   String(j?.videoAspect3   || p.videoAspect3   || ""),
+        videoAutoplay:  String(j?.videoAutoplay  || p.videoAutoplay  || ""),
+        videoFullBleed: String(j?.videoFullBleed || p.videoFullBleed || ""),
       };
 
       return next;
@@ -2375,8 +2408,6 @@ return (
         setAlbumName={setAlbumName}
         albumFiles={albumFiles}
         setAlbumFiles={setAlbumFiles}
-        reelFiles={reelFiles}
-        setReelFiles={setReelFiles}
         openPicker={openPicker}
         showToastError={(msg) => showToastRef.current?.(msg, "error")}
         saveCategory={saveCategory as any}

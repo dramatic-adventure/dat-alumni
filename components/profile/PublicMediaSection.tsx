@@ -1,7 +1,7 @@
 // components/profile/PublicMediaSection.tsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Lightbox from "@/components/shared/Lightbox";
 
 // ---------------------------------------------------------------------------
@@ -18,6 +18,8 @@ interface MediaItem {
   isFeatured?: boolean;
 }
 
+type Collection = { title: string; id: string; items: MediaItem[] };
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -27,10 +29,8 @@ function toThumbUrl(item: MediaItem, w = 600): string {
   return "";
 }
 
-function groupByCollection(
-  items: MediaItem[],
-): Array<{ title: string; id: string; items: MediaItem[] }> {
-  const map = new Map<string, { title: string; id: string; items: MediaItem[] }>();
+function groupByCollection(items: MediaItem[]): Collection[] {
+  const map = new Map<string, Collection>();
   for (const item of items) {
     const key = item.collectionId || item.collectionTitle || "__uncategorized__";
     const title = item.collectionTitle || "Photos";
@@ -40,21 +40,49 @@ function groupByCollection(
   return Array.from(map.values()).filter((c) => c.items.length > 0);
 }
 
-const MAX_ALBUMS = 4;
+const MAX_PANELS = 6;
+const MIN_COLLECTION_SIZE = 3; // fewer than this → pooled into catch-all
+
+// DAT brand tints — one per panel slot, cycling if there are more collections
+const PANEL_TINTS = [
+  "rgba(75,20,100,0.72)",   // deep purple
+  "rgba(13,44,56,0.78)",    // DAT dark teal
+  "rgba(90,65,10,0.76)",    // amber/gold
+  "rgba(15,80,45,0.74)",    // forest green
+  "rgba(100,20,20,0.74)",   // crimson
+  "rgba(20,45,90,0.76)",    // midnight blue
+];
+
+const labelStyle: React.CSSProperties = {
+  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+  fontSize: "0.65rem",
+  fontWeight: 700,
+  color: "rgba(255,255,255,0.28)",
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  marginBottom: "0.85rem",
+};
 
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
-  const [featured,     setFeatured]     = useState<MediaItem[]>([]);
-  const [collections,  setCollections]  = useState<Array<{ title: string; id: string; items: MediaItem[] }>>([]);
-  const [loading,      setLoading]      = useState(true);
-  const [isMobile,     setIsMobile]     = useState(false);
-  const [showAll,      setShowAll]      = useState(false);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
+  // Accordion state
+  const [hoveredIdx, setHoveredIdx] = useState(0);
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+
+  // Lightbox state
   const [lightboxImages, setLightboxImages] = useState<string[]>([]);
-  const [lightboxIndex,  setLightboxIndex]  = useState(0);
-  const [lightboxOpen,   setLightboxOpen]   = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  // Auto-cycle management
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const userInteracted = useRef(false);
 
   // Responsive
   useEffect(() => {
@@ -65,7 +93,7 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  // Data — fetch featured (top 2) and full album list in parallel
+  // Data fetch
   useEffect(() => {
     if (!alumniId) return;
     let alive = true;
@@ -73,36 +101,19 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
 
     (async () => {
       try {
-        const base = `/api/media/list?alumniId=${encodeURIComponent(alumniId)}`;
-        const [featRes, allRes] = await Promise.allSettled([
-          fetch(`${base}&featuredOnly=true&kind=album&limit=2`),
-          fetch(`${base}&kind=album&limit=200`),
-        ]);
-
-        let feat: MediaItem[] = [];
-        let all:  MediaItem[] = [];
-
-        if (featRes.status === "fulfilled" && featRes.value.ok) {
-          const j = await featRes.value.json();
-          if (Array.isArray(j?.items)) {
-            feat = j.items
-              .sort((a: MediaItem, b: MediaItem) =>
-                (Date.parse(b.uploadedAt || "") || 0) - (Date.parse(a.uploadedAt || "") || 0))
-              .slice(0, 2);
+        const res = await fetch(
+          `/api/media/list?alumniId=${encodeURIComponent(alumniId)}&kind=album&limit=200`,
+        );
+        if (res.ok) {
+          const j = await res.json();
+          if (alive && Array.isArray(j?.items)) {
+            const sorted = [...j.items].sort(
+              (a: MediaItem, b: MediaItem) =>
+                (Date.parse(b.uploadedAt || "") || 0) -
+                (Date.parse(a.uploadedAt || "") || 0),
+            );
+            setCollections(groupByCollection(sorted).slice(0, MAX_PANELS));
           }
-        }
-
-        if (allRes.status === "fulfilled" && allRes.value.ok) {
-          const j = await allRes.value.json();
-          if (Array.isArray(j?.items)) {
-            all = j.items.sort((a: MediaItem, b: MediaItem) =>
-              (Date.parse(b.uploadedAt || "") || 0) - (Date.parse(a.uploadedAt || "") || 0));
-          }
-        }
-
-        if (alive) {
-          setFeatured(feat);
-          setCollections(groupByCollection(all));
         }
       } catch {
         // swallow
@@ -111,8 +122,39 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
       }
     })();
 
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [alumniId]);
+
+  // Compute display-ready collection list: full collections + optional catch-all
+  const accordionCollections = useMemo<Collection[]>(() => {
+    const full      = collections.filter((c) => c.items.length >= MIN_COLLECTION_SIZE);
+    const leftovers = collections
+      .filter((c) => c.items.length < MIN_COLLECTION_SIZE)
+      .flatMap((c) => c.items);
+    return leftovers.length > 0
+      ? [...full, { id: "__catchall__", title: "Photos", items: leftovers }]
+      : full;
+  }, [collections]);
+
+  // Auto-cycle through panels when user hasn't interacted
+  useEffect(() => {
+    if (accordionCollections.length === 0) return;
+    timerRef.current = setInterval(() => {
+      if (!userInteracted.current) {
+        setHoveredIdx((prev) => (prev + 1) % accordionCollections.length);
+      }
+    }, 2800);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [accordionCollections.length]);
+
+  const stopAutoCycle = useCallback(() => {
+    userInteracted.current = true;
+    if (timerRef.current) clearInterval(timerRef.current);
+  }, []);
 
   const openLightboxFor = useCallback((images: string[], index: number) => {
     setLightboxImages(images);
@@ -120,152 +162,282 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
     setLightboxOpen(true);
   }, []);
 
-  if (loading || (featured.length === 0 && collections.length === 0)) return null;
+  const handlePanelHover = useCallback(
+    (idx: number) => {
+      stopAutoCycle();
+      setHoveredIdx(idx);
+    },
+    [stopAutoCycle],
+  );
 
-  const visibleAlbums = showAll ? collections : collections.slice(0, MAX_ALBUMS);
-  const hasMore = collections.length > MAX_ALBUMS;
+  const handlePanelClick = useCallback(
+    (idx: number) => {
+      stopAutoCycle();
+      setHoveredIdx(idx);
+      setOpenIdx((prev) => (prev === idx ? null : idx));
+    },
+    [stopAutoCycle],
+  );
 
-  // If we have fewer than 2 featured, fall back to the top collection items
-  const heroItems = featured.length > 0
-    ? featured
-    : collections[0]?.items.slice(0, 2) ?? [];
+  if (loading || accordionCollections.length === 0) return null;
 
-  const [heroA, heroB] = heroItems;
+  const accordionHeight = isMobile ? 240 : 400;
+  const collapsedWidth  = isMobile ? 44 : 58;
+  const openCollection  = openIdx !== null ? (accordionCollections[openIdx] ?? null) : null;
+
+  // ── Single-collection bypass: skip accordion, show grid directly ──────────
+  if (accordionCollections.length === 1) {
+    return (
+      <section aria-label="Photos & Media" style={{ background: "#0d2c38", overflow: "hidden" }}>
+        <ThumbnailGrid
+          collection={accordionCollections[0]}
+          isMobile={isMobile}
+          onThumbClick={openLightboxFor}
+        />
+        {lightboxOpen && lightboxImages.length > 0 && (
+          <Lightbox
+            images={lightboxImages}
+            startIndex={lightboxIndex}
+            onClose={() => setLightboxOpen(false)}
+          />
+        )}
+      </section>
+    );
+  }
 
   return (
     <section
-      aria-label="Photos &amp; Media"
-      style={{ background: "#0d2c38" }}
+      aria-label="Photos & Media"
+      style={{ background: "#0d2c38", overflow: "hidden" }}
     >
-      {/* ── Featured: full-bleed, separated by a 2px line ─────── */}
-      {heroItems.length > 0 && (
+      <div>
+        {/* ── Accordion ────────────────────────────────────────── */}
         <div
           style={{
             display: "flex",
-            gap: 2,
-            background: "#0d2c38",
-            height: isMobile ? "clamp(180px, 52vw, 300px)" : "clamp(260px, 34vw, 440px)",
+            gap: 4,
+            height: accordionHeight,
           }}
         >
-          {heroA && (
-            <button
-              type="button"
-              onClick={() =>
-                openLightboxFor(heroItems.map((it) => toThumbUrl(it, 1600)), 0)
-              }
-              aria-label="Open featured photo"
-              style={{
-                flex: heroB ? "0 0 62%" : "1",
-                position: "relative",
-                padding: 0,
-                border: "none",
-                borderRadius: 0,
-                overflow: "hidden",
-                background: "#0d2c38",
-                cursor: "pointer",
-                display: "block",
-              }}
-            >
-              <FeaturedPhoto item={heroA} />
-            </button>
-          )}
+          {accordionCollections.map((col, i) => {
+            const isActive = hoveredIdx === i;
+            const isOpen = openIdx === i;
+            const coverItem = col.items.find((it) => it.isFeatured) ?? col.items[0];
+            const coverSrc = coverItem ? toThumbUrl(coverItem, 900) : "";
 
-          {heroB && (
-            <button
-              type="button"
-              onClick={() =>
-                openLightboxFor(heroItems.map((it) => toThumbUrl(it, 1600)), 1)
-              }
-              aria-label="Open featured photo"
-              style={{
-                flex: 1,
-                position: "relative",
-                padding: 0,
-                border: "none",
-                borderRadius: 0,
-                overflow: "hidden",
-                background: "#0d2c38",
-                cursor: "pointer",
-                display: "block",
-              }}
-            >
-              <FeaturedPhoto item={heroB} />
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* ── Albums strip ──────────────────────────────────────── */}
-      {collections.length > 0 && (
-        <div style={{ padding: `2.5rem clamp(20px, 5vw, 56px) 3rem`, overflow: "visible" }}>
-        <>
-          <div style={labelStyle}>Albums</div>
-
-          {/* Album grid — 5 cols desktop, 2 cols mobile, fan hover */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(5, 1fr)",
-              columnGap: isMobile ? 28 : 40,
-              rowGap: isMobile ? 32 : 40,
-              overflow: "visible",
-            }}
-          >
-            {visibleAlbums.map((col) => {
-              const coverItem  = col.items[0];
-              const peek1      = col.items[1];
-              const peek2      = col.items[2];
-              const colUrls    = col.items.map((it) => toThumbUrl(it, 1600));
-
-              return (
-                <AlbumCard
-                  key={col.id}
-                  title={col.title}
-                  count={col.items.length}
-                  coverItem={coverItem}
-                  peek1={peek1}
-                  peek2={peek2}
-                  onClick={() => openLightboxFor(colUrls, 0)}
-                />
-              );
-            })}
-          </div>
-
-          {/* See all */}
-          {hasMore && (
-            <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
-              <button
-                type="button"
-                onClick={() => setShowAll((v) => !v)}
+            return (
+              <div
+                key={col.id}
+                role="button"
+                tabIndex={0}
+                aria-label={`${col.title} — ${col.items.length} photo${col.items.length !== 1 ? "s" : ""}`}
+                aria-expanded={isOpen}
                 style={{
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.14)",
-                  borderRadius: 24,
-                  padding: "7px 20px",
+                  position: "relative",
+                  flex: isActive ? "1 1 0" : `0 0 ${collapsedWidth}px`,
+                  minWidth: 0,
+                  transition: "flex 0.45s cubic-bezier(0.4, 0, 0.2, 1)",
+                  overflow: "hidden",
+                  borderRadius: 0,
                   cursor: "pointer",
-                  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "rgba(255,255,255,0.65)",
-                  letterSpacing: "0.04em",
-                  transition: "background 0.18s",
                 }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background =
-                    "rgba(255,255,255,0.10)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background =
-                    "rgba(255,255,255,0.06)";
+                onMouseEnter={() => handlePanelHover(i)}
+                onClick={() => handlePanelClick(i)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handlePanelClick(i);
+                  }
                 }}
               >
-                {showAll ? "Show less" : `See all ${collections.length} albums`}
-              </button>
-            </div>
-          )}
-        </>
+                {/* Gold top-bar — marks which collection's grid is open */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3,
+                    background: "#FFCC00",
+                    opacity: isOpen ? 1 : 0,
+                    transition: "opacity 0.3s ease",
+                    zIndex: 10,
+                    pointerEvents: "none",
+                  }}
+                />
+
+                {/* Cover photo */}
+                {coverSrc ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={coverSrc}
+                    alt=""
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      display: "block",
+                      transform: isActive ? "scale(1.04)" : "scale(1)",
+                      transition: "transform 0.45s ease",
+                      pointerEvents: "none",
+                      userSelect: "none",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      background: "rgba(255,255,255,0.04)",
+                    }}
+                  />
+                )}
+
+                {/* Color tint — fades out as panel expands to reveal the photo */}
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: PANEL_TINTS[i % PANEL_TINTS.length],
+                    opacity: isActive ? 0 : 1,
+                    transition: "opacity 0.45s ease",
+                    pointerEvents: "none",
+                  }}
+                />
+
+                {/* Gradient overlay */}
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background:
+                      "linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.18) 55%, transparent 100%)",
+                    pointerEvents: "none",
+                  }}
+                />
+
+                {/* Collapsed: vertical title */}
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: isActive ? 0 : 1,
+                    transition: "opacity 0.28s ease",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily:
+                        "var(--font-space-grotesk), system-ui, sans-serif",
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: "rgba(255,255,255,0.9)",
+                      letterSpacing: "0.13em",
+                      textTransform: "uppercase",
+                      writingMode: "vertical-rl",
+                      transform: "rotate(180deg)",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {col.title}
+                  </span>
+                </div>
+
+                {/* Expanded: label bar at bottom */}
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    padding: "14px 16px 16px",
+                    opacity: isActive ? 1 : 0,
+                    transform: isActive ? "translateY(0)" : "translateY(8px)",
+                    transition: "opacity 0.35s ease, transform 0.35s ease",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily:
+                        "var(--font-space-grotesk), system-ui, sans-serif",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: "#FFCC00",
+                      letterSpacing: "0.14em",
+                      textTransform: "uppercase",
+                      marginBottom: 5,
+                    }}
+                  >
+                    {col.items.length} photo{col.items.length !== 1 ? "s" : ""}
+                  </div>
+                  <div
+                    style={{
+                      fontFamily:
+                        "var(--font-space-grotesk), system-ui, sans-serif",
+                      fontSize: isMobile ? 14 : 18,
+                      fontWeight: 600,
+                      color: "#fff",
+                      lineHeight: 1.2,
+                      marginBottom: 8,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {col.title}
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontFamily:
+                          "var(--font-space-grotesk), system-ui, sans-serif",
+                        fontSize: 11,
+                        color: isOpen
+                          ? "rgba(255,204,0,0.85)"
+                          : "rgba(255,255,255,0.45)",
+                        letterSpacing: "0.06em",
+                        transition: "color 0.2s ease",
+                      }}
+                    >
+                      {isOpen ? "▲ hide" : "▼ browse"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
-      )}
+      </div>
+
+      {/* ── Thumbnail grid — animated reveal ─────────────────── */}
+      <div
+        style={{
+          overflow: "hidden",
+          maxHeight: openCollection ? "9999px" : "0px",
+          transition: "max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+        }}
+      >
+        {openCollection && (
+          <ThumbnailGrid
+            collection={openCollection}
+            isMobile={isMobile}
+            onThumbClick={openLightboxFor}
+          />
+        )}
+      </div>
 
       {/* ── Lightbox ──────────────────────────────────────────── */}
       {lightboxOpen && lightboxImages.length > 0 && (
@@ -280,28 +452,143 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Shared label style
+// ThumbnailGrid
 // ---------------------------------------------------------------------------
-const labelStyle: React.CSSProperties = {
-  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-  fontSize: "0.65rem",
-  fontWeight: 700,
-  color: "rgba(255,255,255,0.28)",
-  letterSpacing: "0.14em",
-  textTransform: "uppercase",
-  marginBottom: "0.85rem",
-};
+const THUMB_PAGE = 20;
 
-// ---------------------------------------------------------------------------
-// FeaturedPhoto — fills its button container edge to edge
-// ---------------------------------------------------------------------------
-function FeaturedPhoto({ item }: { item: MediaItem }) {
-  const [hovered, setHovered] = useState(false);
-  const src = toThumbUrl(item, 1400);
+function ThumbnailGrid({
+  collection,
+  isMobile,
+  onThumbClick,
+}: {
+  collection: Collection;
+  isMobile: boolean;
+  onThumbClick: (images: string[], index: number) => void;
+}) {
+  const [showAll, setShowAll] = useState(false);
+
+  const allUrls = collection.items.map((it) => toThumbUrl(it, 1600));
+  const cols = isMobile ? 3 : 5;
+  const hasMore = collection.items.length > THUMB_PAGE;
+  const visible = showAll ? collection.items : collection.items.slice(0, THUMB_PAGE);
 
   return (
     <div
-      style={{ position: "relative", width: "100%", height: "100%" }}
+      style={{
+        padding: `2rem clamp(20px, 5vw, 60px) 3rem`,
+        background: "rgba(0,0,0,0.22)",
+        borderTop: "1px solid rgba(255,255,255,0.06)",
+      }}
+    >
+      {/* Grid header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: 10,
+          marginBottom: "1rem",
+        }}
+      >
+        <span style={labelStyle}>{collection.title}</span>
+        <span
+          style={{
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+            fontSize: "0.65rem",
+            color: "rgba(255,255,255,0.2)",
+            letterSpacing: "0.08em",
+            marginBottom: "0.85rem",
+          }}
+        >
+          {collection.items.length} photos
+        </span>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: `repeat(${cols}, 1fr)`,
+          gap: isMobile ? 2 : 3,
+        }}
+      >
+        {visible.map((item, idx) => (
+          <ThumbnailCell
+            key={item.fileId || idx}
+            src={toThumbUrl(item, 500)}
+            alt={item.note || `Photo ${idx + 1}`}
+            onClick={() => onThumbClick(allUrls, idx)}
+          />
+        ))}
+      </div>
+
+      {/* Show all / show less */}
+      {hasMore && (
+        <div style={{ textAlign: "center", marginTop: "1.25rem" }}>
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            style={{
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              borderRadius: 24,
+              padding: "7px 22px",
+              cursor: "pointer",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "rgba(255,255,255,0.55)",
+              letterSpacing: "0.06em",
+              transition: "background 0.18s, color 0.18s",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.10)";
+              (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.85)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.06)";
+              (e.currentTarget as HTMLButtonElement).style.color = "rgba(255,255,255,0.55)";
+            }}
+          >
+            {showAll
+              ? "Show less"
+              : `Show all ${collection.items.length} photos`}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ThumbnailCell
+// ---------------------------------------------------------------------------
+function ThumbnailCell({
+  src,
+  alt,
+  onClick,
+}: {
+  src: string;
+  alt: string;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={alt}
+      style={{
+        position: "relative",
+        aspectRatio: "1 / 1",
+        padding: 0,
+        border: "none",
+        borderRadius: 2,
+        overflow: "hidden",
+        background: "rgba(255,255,255,0.05)",
+        cursor: "pointer",
+        display: "block",
+        width: "100%",
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -309,7 +596,7 @@ function FeaturedPhoto({ item }: { item: MediaItem }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src}
-          alt={item.note || item.collectionTitle || "Featured photo"}
+          alt=""
           style={{
             position: "absolute",
             inset: 0,
@@ -317,187 +604,24 @@ function FeaturedPhoto({ item }: { item: MediaItem }) {
             height: "100%",
             objectFit: "cover",
             display: "block",
-            transform: hovered ? "scale(1.03)" : "scale(1)",
-            transition: "transform 420ms ease",
+            transform: hovered ? "scale(1.07)" : "scale(1)",
+            transition: "transform 300ms ease",
             pointerEvents: "none",
             userSelect: "none",
           }}
         />
       )}
-      {/* Subtle bottom vignette */}
+      {/* Gold hover tint */}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(180deg, transparent 55%, rgba(0,0,0,0.35) 100%)",
+          background: "rgba(255,204,0,0.14)",
+          opacity: hovered ? 1 : 0,
+          transition: "opacity 200ms ease",
           pointerEvents: "none",
         }}
       />
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// AlbumCard — with fan hover (2 back-photo layers)
-// ---------------------------------------------------------------------------
-function AlbumCard({
-  title,
-  count,
-  coverItem,
-  peek1,
-  peek2,
-  onClick,
-}: {
-  title: string;
-  count: number;
-  coverItem: MediaItem | undefined;
-  peek1:     MediaItem | undefined;
-  peek2:     MediaItem | undefined;
-  onClick:   () => void;
-}) {
-  const [hovered, setHovered] = useState(false);
-
-  const coverSrc = coverItem ? toThumbUrl(coverItem, 600) : "";
-  const peek1Src = peek1     ? toThumbUrl(peek1, 300)     : coverSrc;
-  const peek2Src = peek2     ? toThumbUrl(peek2, 300)     : coverSrc;
-
-  return (
-    // Outer wrapper: overflow visible so fan cards can bleed out
-    <div
-      style={{ position: "relative", overflow: "visible" }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      {/* Back photo 2 — deepest in deck, most rotated clockwise from bottom pivot */}
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 0,
-          borderRadius: 8,
-          overflow: "hidden",
-          zIndex: 1,
-          transformOrigin: "bottom center",
-          transform: hovered ? "rotate(5deg)" : "rotate(2.5deg)",
-          transition: "transform 280ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-        }}
-      >
-        {peek2Src && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={peek2Src}
-            alt=""
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          />
-        )}
-      </div>
-
-      {/* Back photo 1 — middle of deck, slightly rotated */}
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 0,
-          borderRadius: 8,
-          overflow: "hidden",
-          zIndex: 2,
-          transformOrigin: "bottom center",
-          transform: hovered ? "rotate(2.5deg)" : "rotate(1deg)",
-          transition: "transform 280ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-        }}
-      >
-        {peek1Src && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={peek1Src}
-            alt=""
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          />
-        )}
-      </div>
-
-      {/* Front card — the actual clickable album cover */}
-      <button
-        type="button"
-        onClick={onClick}
-        aria-label={`Open ${title} — ${count} photo${count !== 1 ? "s" : ""}`}
-        style={{
-          position: "relative",
-          zIndex: 3,
-          width: "100%",
-          aspectRatio: "2 / 3",
-          padding: 0,
-          border: "none",
-          borderRadius: 8,
-          overflow: "hidden",
-          background: "#0d2c38",
-          cursor: "pointer",
-          display: "block",
-          transform: hovered ? "translateY(-2px)" : "translateY(0)",
-          boxShadow: hovered
-            ? "0 12px 32px rgba(0,0,0,0.55)"
-            : "0 3px 10px rgba(0,0,0,0.45)",
-          transition: "transform 220ms ease, box-shadow 220ms ease",
-        }}
-      >
-        {/* Cover photo */}
-        {coverSrc && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={coverSrc}
-            alt=""
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              display: "block",
-              pointerEvents: "none",
-              userSelect: "none",
-            }}
-          />
-        )}
-
-        {/* Label bar */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            padding: "8px 11px 9px",
-            background: "rgba(0,0,0,0.54)",
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            gap: 6,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-              fontSize: 15,
-              fontWeight: 600,
-              color: "#fff",
-              lineHeight: 1.25,
-            }}
-          >
-            {title}
-          </span>
-          <span
-            style={{
-              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-              fontSize: 10,
-              color: "rgba(255,255,255,0.45)",
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-            }}
-          >
-            {count}
-          </span>
-        </div>
-      </button>
-    </div>
+    </button>
   );
 }

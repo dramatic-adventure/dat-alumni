@@ -85,6 +85,19 @@ export function toLiveSavableProfile(p: any) {
     // `activeStoryKey` column.
     storyKey: String(p.storyKey || "").trim(),
 
+    // Featured Videos
+    reelVideoUrl1: String(p.reelVideoUrl1 || "").trim(),
+    reelVideoUrl2: String(p.reelVideoUrl2 || "").trim(),
+    reelVideoUrl3: String(p.reelVideoUrl3 || "").trim(),
+    videoTitle1: String(p.videoTitle1 || "").trim(),
+    videoTitle2: String(p.videoTitle2 || "").trim(),
+    videoTitle3: String(p.videoTitle3 || "").trim(),
+    videoAspect1: String(p.videoAspect1 || "").trim(),
+    videoAspect2: String(p.videoAspect2 || "").trim(),
+    videoAspect3: String(p.videoAspect3 || "").trim(),
+    videoAutoplay: String(p.videoAutoplay || "").trim(),
+    videoFullBleed: String(p.videoFullBleed || "").trim(),
+
     // Impact
     impactCauses: String(p.impactCauses || "").trim(),
     supportedClubs: String(p.supportedClubs || "").trim(),

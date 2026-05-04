@@ -26,6 +26,7 @@ import type { HighlightCard as UIHighlightCard } from "@/components/alumni/Highl
 
 import PublicMediaSection from "@/components/profile/PublicMediaSection";
 import ComingUpEventStrip, { type ComingUpEvent } from "@/components/profile/ComingUpEventStrip";
+import VideoSection from "@/components/profile/VideoSection";
 
 import "@/components/productions/productionCarouselCards.css";
 
@@ -314,6 +315,20 @@ interface ProfileCardProps {
   sheetSpotlights?: SpotlightUpdate[];
   /** Sheet-loaded highlights — override updates-derived when provided */
   sheetHighlights?: UIHighlightCard[];
+
+  // Featured Videos
+  reelVideoUrl1?: string;
+  reelVideoUrl2?: string;
+  reelVideoUrl3?: string;
+  videoTitle1?: string;
+  videoTitle2?: string;
+  videoTitle3?: string;
+  videoAspect1?: string;
+  videoAspect2?: string;
+  videoAspect3?: string;
+  videoAutoplay?: string;
+  videoFullBleed?: boolean;
+  videoMeta?: ReadonlyArray<{ title?: string; aspectRatio?: string }>;
 }
 
 const scaleCache = new Map<string, { first: number; last: number }>();
@@ -711,6 +726,38 @@ const hasStories = storiesForFeatured.length > 0;
       )}
 
       <ComingUpEventStrip upcomingEvent={props.upcomingEvent} />
+
+      {(() => {
+        const doAutoplay = !!props.videoAutoplay && props.videoAutoplay !== "false" && props.videoAutoplay !== "";
+        const doMuted = props.videoAutoplay !== "unmuted";
+        return (
+          <VideoSection
+            videos={[
+              {
+                url: props.reelVideoUrl1 || "",
+                title: props.videoTitle1,
+                autoTitle: props.videoMeta?.[0]?.title,
+                aspect: (props.videoAspect1 || undefined) as any,
+                autoplay: doAutoplay,
+                muted: doMuted,
+              },
+              {
+                url: props.reelVideoUrl2 || "",
+                title: props.videoTitle2,
+                autoTitle: props.videoMeta?.[1]?.title,
+                aspect: (props.videoAspect2 || undefined) as any,
+              },
+              {
+                url: props.reelVideoUrl3 || "",
+                title: props.videoTitle3,
+                autoTitle: props.videoMeta?.[2]?.title,
+                aspect: (props.videoAspect3 || undefined) as any,
+              },
+            ]}
+            fullBleed={props.videoFullBleed}
+          />
+        );
+      })()}
 
       {/* WHO I AM — bio + identity tags + languages + spotlight/highlight */}
       <BioIdentitySection

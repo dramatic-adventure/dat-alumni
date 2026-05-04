@@ -333,6 +333,19 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
   const upcomingEventCityIdx         = idxOf(header, ["upcomingeventcity", "upcoming event city", "upcomingEventCity"]);
   const upcomingEventStateCountryIdx = idxOf(header, ["upcomingeventstatecountry", "upcoming event state country", "upcomingEventStateCountry"]);
 
+  // Featured Videos
+  const reelVideoUrl1Idx  = idxOf(header, ["reelvideourl1",  "reel video url 1",  "reelVideoUrl1"]);
+  const reelVideoUrl2Idx  = idxOf(header, ["reelvideourl2",  "reel video url 2",  "reelVideoUrl2"]);
+  const reelVideoUrl3Idx  = idxOf(header, ["reelvideourl3",  "reel video url 3",  "reelVideoUrl3"]);
+  const videoTitle1Idx    = idxOf(header, ["videotitle1",    "video title 1",     "videoTitle1"]);
+  const videoTitle2Idx    = idxOf(header, ["videotitle2",    "video title 2",     "videoTitle2"]);
+  const videoTitle3Idx    = idxOf(header, ["videotitle3",    "video title 3",     "videoTitle3"]);
+  const videoAspect1Idx   = idxOf(header, ["videoaspect1",   "video aspect 1",    "videoAspect1"]);
+  const videoAspect2Idx   = idxOf(header, ["videoaspect2",   "video aspect 2",    "videoAspect2"]);
+  const videoAspect3Idx   = idxOf(header, ["videoaspect3",   "video aspect 3",    "videoAspect3"]);
+  const videoAutoplayIdx  = idxOf(header, ["videoautoplay",  "video autoplay",    "videoAutoplay"]);
+  const videoFullBleedIdx = idxOf(header, ["videofullbleed", "video full bleed",  "videoFullBleed"]);
+
   const out: AlumniRow[] = [];
   let skipped = 0;
 
@@ -466,6 +479,20 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
       (normalized as any).upcomingEventVideoAutoplay = cell(r, upcomingEventVideoAutoplayIdx);
       (normalized as any).upcomingEventCity         = cell(r, upcomingEventCityIdx);
       (normalized as any).upcomingEventStateCountry = cell(r, upcomingEventStateCountryIdx);
+
+      // Featured Videos
+      (normalized as any).reelVideoUrl1  = cell(r, reelVideoUrl1Idx);
+      (normalized as any).reelVideoUrl2  = cell(r, reelVideoUrl2Idx);
+      (normalized as any).reelVideoUrl3  = cell(r, reelVideoUrl3Idx);
+      (normalized as any).videoTitle1    = cell(r, videoTitle1Idx);
+      (normalized as any).videoTitle2    = cell(r, videoTitle2Idx);
+      (normalized as any).videoTitle3    = cell(r, videoTitle3Idx);
+      (normalized as any).videoAspect1   = cell(r, videoAspect1Idx);
+      (normalized as any).videoAspect2   = cell(r, videoAspect2Idx);
+      (normalized as any).videoAspect3   = cell(r, videoAspect3Idx);
+      (normalized as any).videoAutoplay  = cell(r, videoAutoplayIdx);
+      (normalized as any).videoFullBleed = cell(r, videoFullBleedIdx);
+
       out.push(normalized);
     } else skipped++;
   }

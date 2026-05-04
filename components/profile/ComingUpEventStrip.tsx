@@ -193,7 +193,7 @@ export default function ComingUpEventStrip({ upcomingEvent }: Props) {
             isVideo ? (
               resolvedVideo?.kind === "embed" ? (
                 <iframe
-                  src={buildEmbedUrl(resolvedVideo.embedUrl, resolvedVideo.provider, isAutoplay(upcomingEvent.videoAutoplay))}
+                  src={buildEmbedUrl(resolvedVideo.embedUrl, resolvedVideo.provider as "youtube" | "vimeo", isAutoplay(upcomingEvent.videoAutoplay))}
                   title={upcomingEvent.title ? `Event media for ${upcomingEvent.title}` : "Coming Up video"}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen

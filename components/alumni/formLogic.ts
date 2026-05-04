@@ -154,6 +154,19 @@ export const LIVE_KEYS: Array<keyof AlumniProfile | string> = [
   "upcomingEventMediaUrl",
   "upcomingEventMediaAlt",
   "upcomingEventVideoAutoplay",
+
+  // Featured Videos
+  "reelVideoUrl1",
+  "reelVideoUrl2",
+  "reelVideoUrl3",
+  "videoTitle1",
+  "videoTitle2",
+  "videoTitle3",
+  "videoAspect1",
+  "videoAspect2",
+  "videoAspect3",
+  "videoAutoplay",
+  "videoFullBleed",
 ];
 
 /** ---------- normalize ---------- */

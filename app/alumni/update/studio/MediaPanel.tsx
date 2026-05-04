@@ -40,9 +40,6 @@ type MediaPanelProps = {
   albumFiles: File[];
   setAlbumFiles: (files: File[]) => void;
 
-  reelFiles: File[];
-  setReelFiles: (files: File[]) => void;
-
   openPicker: (kind: "headshot" | "album" | "reel" | "event") => void;
 
   showToastError: (msg: string) => void;
@@ -63,13 +60,7 @@ type MediaPanelProps = {
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const MAX_FEATURED  = 4;
-const SLOT_SIZE     = 82;   // featured staging slot px
-const COL_STACK_W   = 58;   // collection card thumb px
-const COL_STACK_H   = 58;
-const COL_STACK_PAD = 14;   // bleed space for rotated layers
-const PHOTO_THUMB   = 76;   // open-collection photo px
-const LAYER_ROTS    = [-5, 3, 0]; // bottom → top rotation for stack
+const SLOT_SIZE = 82;   // cover photo thumb px
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 // Always use our proxy — Drive thumbnailLinks are domain-restricted and expire.
@@ -111,8 +102,6 @@ export default function MediaPanel({
   setAlbumName,
   albumFiles,
   setAlbumFiles,
-  reelFiles,
-  setReelFiles,
   openPicker,
   showToastError,
   saveCategory,
@@ -133,16 +122,41 @@ export default function MediaPanel({
   // ── Picker state ─────────────────────────────────────────────────────────────
   const [openColId, setOpenColId] = useState<string | null>(null);
 
-  // ── Reel URL placeholders ────────────────────────────────────────────────────
+  // ── Featured Video URL + metadata state ─────────────────────────────────────
   const [reelUrl1, setReelUrl1] = useState(() => String(profile?.reelVideoUrl1 || ""));
   const [reelUrl2, setReelUrl2] = useState(() => String(profile?.reelVideoUrl2 || ""));
   const [reelUrl3, setReelUrl3] = useState(() => String(profile?.reelVideoUrl3 || ""));
+  const [videoTitle1, setVideoTitle1] = useState(() => String(profile?.videoTitle1 || ""));
+  const [videoTitle2, setVideoTitle2] = useState(() => String(profile?.videoTitle2 || ""));
+  const [videoTitle3, setVideoTitle3] = useState(() => String(profile?.videoTitle3 || ""));
+  const [videoAspect1, setVideoAspect1] = useState(() => String(profile?.videoAspect1 || ""));
+  const [videoAspect2, setVideoAspect2] = useState(() => String(profile?.videoAspect2 || ""));
+  const [videoAspect3, setVideoAspect3] = useState(() => String(profile?.videoAspect3 || ""));
+  const [videoAutoplay, setVideoAutoplay] = useState(
+    () => String(profile?.videoAutoplay || "").trim(),
+  );
+  const [videoFullBleed, setVideoFullBleed] = useState(
+    () => String(profile?.videoFullBleed || "").trim() === "true",
+  );
 
   useEffect(() => {
     setReelUrl1(String(profile?.reelVideoUrl1 || ""));
     setReelUrl2(String(profile?.reelVideoUrl2 || ""));
     setReelUrl3(String(profile?.reelVideoUrl3 || ""));
-  }, [profile?.reelVideoUrl1, profile?.reelVideoUrl2, profile?.reelVideoUrl3]);
+    setVideoTitle1(String(profile?.videoTitle1 || ""));
+    setVideoTitle2(String(profile?.videoTitle2 || ""));
+    setVideoTitle3(String(profile?.videoTitle3 || ""));
+    setVideoAspect1(String(profile?.videoAspect1 || ""));
+    setVideoAspect2(String(profile?.videoAspect2 || ""));
+    setVideoAspect3(String(profile?.videoAspect3 || ""));
+    setVideoAutoplay(String(profile?.videoAutoplay || "").trim());
+    setVideoFullBleed(String(profile?.videoFullBleed || "").trim() === "true");
+  }, [
+    profile?.reelVideoUrl1, profile?.reelVideoUrl2, profile?.reelVideoUrl3,
+    profile?.videoTitle1, profile?.videoTitle2, profile?.videoTitle3,
+    profile?.videoAspect1, profile?.videoAspect2, profile?.videoAspect3,
+    profile?.videoAutoplay, profile?.videoFullBleed,
+  ]);
 
   // ── Fetch library ────────────────────────────────────────────────────────────
   const fetchLibrary = useCallback(async () => {
@@ -171,14 +185,7 @@ export default function MediaPanel({
   useEffect(() => { fetchLibrary(); }, [fetchLibrary]);
 
   // ── Derived data ─────────────────────────────────────────────────────────────
-  const collections   = useMemo(() => groupIntoCollections(library), [library]);
-  const featuredItems = useMemo(() => library.filter((p) => p.isFeatured), [library]);
-  const featuredCount = featuredItems.length;
-  const openCol       = collections.find((c) => c.id === openColId) ?? null;
-
-  // True when every item is ungrouped — skip two-level nav, show flat grid.
-  const allUngrouped =
-    collections.length === 1 && collections[0].id === "__ungrouped__";
+  const collections = useMemo(() => groupIntoCollections(library), [library]);
 
   // Reset stale openColId if the collection it pointed to no longer exists.
   useEffect(() => {
@@ -187,21 +194,40 @@ export default function MediaPanel({
     }
   }, [collections, openColId]);
 
-  // ── Toggle featured ──────────────────────────────────────────────────────────
+  // ── Set cover photo (1 per collection) ──────────────────────────────────────
   async function toggleFeatured(item: LibraryItem) {
     if (!alumniId || togglingId) return;
-    if (!item.isFeatured && featuredCount >= MAX_FEATURED) {
-      showToastError(`Already ${MAX_FEATURED} featured — remove one first.`);
-      return;
-    }
-    setTogglingId(item.fileId);
-    // Optimistic
-    setLibrary((prev) =>
-      prev.map((p) =>
-        p.fileId === item.fileId ? { ...p, isFeatured: !p.isFeatured } : p,
-      ),
+    const colKey = item.collectionId || item.collectionTitle || "__ungrouped__";
+
+    // Find any existing cover in the same collection
+    const prevCover = library.find(
+      (p) =>
+        p.isFeatured &&
+        p.fileId !== item.fileId &&
+        (p.collectionId || p.collectionTitle || "__ungrouped__") === colKey,
     );
+
+    setTogglingId(item.fileId);
+
+    // Optimistic: unfeature previous cover in this collection, toggle this one
+    setLibrary((prev) =>
+      prev.map((p) => {
+        if (p.fileId === item.fileId) return { ...p, isFeatured: !p.isFeatured };
+        if (prevCover && p.fileId === prevCover.fileId) return { ...p, isFeatured: false };
+        return p;
+      }),
+    );
+
     try {
+      // Unfeature the previous cover first (if any and we're featuring a new one)
+      if (prevCover && !item.isFeatured) {
+        await fetch("/api/media/feature", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ alumniId, kind: "album", fileId: prevCover.fileId }),
+        });
+      }
+      // Toggle the clicked item
       const res = await fetch("/api/media/feature", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -209,24 +235,26 @@ export default function MediaPanel({
       });
       const j = await res.json();
       if (!res.ok || !j.ok) throw new Error(j?.error || "Failed");
-      // Optimistic update already reflects the new state — no re-fetch needed.
-      // Re-fetching here would race with Sheets write propagation and snap back.
+
       if (featSavedFlashTimeout.current) clearTimeout(featSavedFlashTimeout.current);
       setFeatSavedFlash(true);
       featSavedFlashTimeout.current = setTimeout(() => setFeatSavedFlash(false), 1500);
     } catch (e: any) {
-      showToastError(e?.message || "Could not update featured status");
+      showToastError(e?.message || "Could not update cover photo");
+      // Roll back optimistic update
       setLibrary((prev) =>
-        prev.map((p) =>
-          p.fileId === item.fileId ? { ...p, isFeatured: item.isFeatured } : p,
-        ),
+        prev.map((p) => {
+          if (p.fileId === item.fileId) return { ...p, isFeatured: item.isFeatured };
+          if (prevCover && p.fileId === prevCover.fileId) return { ...p, isFeatured: true };
+          return p;
+        }),
       );
     } finally {
       setTogglingId(null);
     }
   }
 
-  const hasUploadWork = albumFiles.length > 0 || reelFiles.length > 0;
+  const hasUploadWork = albumFiles.length > 0;
   const isDirty       = hasUploadWork || externalDirty;
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -240,511 +268,200 @@ export default function MediaPanel({
       </p>
 
       {/* ═══════════════════════════════════════════════════════════
-          FEATURED PHOTOS
+          COVER PHOTOS
       ═══════════════════════════════════════════════════════════ */}
       <span style={subheadChipStyle} className="subhead-chip">
-        Featured Photos
+        Cover Photos
       </span>
 
       <p style={{ ...explainStyleLocal, opacity: 0.55, fontSize: "0.8rem", fontStyle: "italic" }}>
-        Up to {MAX_FEATURED} photos appear in the fan on your public profile.
-        Browse your collections below to choose them.
+        Choose one cover photo per collection — it&apos;s shown in the accordion on your
+        public profile. Click a collection to pick or change its cover.
       </p>
 
-      {/* ── Staging area ──────────────────────────────────────── */}
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-          padding: "14px 16px",
-          borderRadius: 12,
-          background: "rgba(0,0,0,0.18)",
-          border: "1px solid rgba(255,255,255,0.10)",
-          marginBottom: 20,
-        }}
-      >
-        {Array.from({ length: MAX_FEATURED }).map((_, i) => {
-          const item = featuredItems[i];
-          if (item) {
-            const toggling = togglingId === item.fileId;
+      {/* ── Per-collection cover rows ──────────────────────────── */}
+      {collections.length > 0 && (
+        <div
+          style={{
+            display: "grid",
+            gap: 8,
+            marginBottom: 20,
+          }}
+        >
+          {collections.map((col) => {
+            const cover = col.items.find((it) => it.isFeatured) ?? col.items[0];
+            const isEditing = openColId === col.id;
             return (
               <div
-                key={item.fileId}
+                key={col.id}
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 4,
-                  opacity: toggling ? 0.5 : 1,
-                  transition: "opacity 0.15s",
+                  borderRadius: 10,
+                  border: isEditing
+                    ? "1px solid rgba(108,0,175,0.55)"
+                    : "1px solid rgba(255,255,255,0.10)",
+                  background: isEditing ? "rgba(108,0,175,0.10)" : "rgba(0,0,0,0.18)",
+                  overflow: "hidden",
+                  transition: "border-color 0.2s, background 0.2s",
                 }}
               >
-                {/* Thumb with remove ×  */}
-                <div style={{ position: "relative" }}>
+                {/* Row header */}
+                <button
+                  type="button"
+                  onClick={() => setOpenColId(isEditing ? null : col.id)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "10px 14px",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  {/* Cover thumb */}
                   <div
                     style={{
                       width: SLOT_SIZE,
                       height: SLOT_SIZE,
-                      borderRadius: 9,
+                      borderRadius: 7,
                       overflow: "hidden",
-                      border: "2.5px solid rgba(108,0,175,0.9)",
+                      flexShrink: 0,
                       background: "rgba(255,255,255,0.06)",
+                      border: cover?.isFeatured
+                        ? "2px solid rgba(108,0,175,0.8)"
+                        : "1.5px solid rgba(255,255,255,0.12)",
                     }}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={thumbUrl(item)}
-                      alt=""
-                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                    />
-                  </div>
-                  {/* Slot number badge */}
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 4,
-                      left: 5,
-                      background: "rgba(108,0,175,0.88)",
-                      borderRadius: 5,
-                      padding: "1px 5px",
-                      fontSize: 9,
-                      fontWeight: 700,
-                      color: "#fff",
-                      letterSpacing: "0.04em",
-                      pointerEvents: "none",
-                    }}
-                  >
-                    {i + 1}
-                  </div>
-                  {/* Remove × */}
-                  <button
-                    type="button"
-                    title="Remove from featured"
-                    disabled={loading || !!togglingId}
-                    onClick={() => toggleFeatured(item)}
-                    style={{
-                      position: "absolute",
-                      top: -6,
-                      right: -6,
-                      width: 20,
-                      height: 20,
-                      borderRadius: "50%",
-                      background: "rgba(30,12,44,0.92)",
-                      border: "1.5px solid rgba(255,255,255,0.25)",
-                      color: "rgba(255,255,255,0.8)",
-                      fontSize: 11,
-                      fontWeight: 700,
-                      lineHeight: 1,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                      padding: 0,
-                      transition: "background 0.15s",
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background = "rgba(200,50,50,0.85)";
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background = "rgba(30,12,44,0.92)";
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-                {/* Short label */}
-                <div
-                  style={{
-                    width: SLOT_SIZE,
-                    fontSize: 9.5,
-                    opacity: 0.55,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    textAlign: "center",
-                    color: "#e0d0f0",
-                  }}
-                >
-                  {item.collectionTitle || item.note || "—"}
-                </div>
-              </div>
-            );
-          }
-
-          // Empty slot
-          return (
-            <div
-              key={`empty-${i}`}
-              style={{
-                width: SLOT_SIZE,
-                height: SLOT_SIZE,
-                borderRadius: 9,
-                border: "2px dashed rgba(255,255,255,0.18)",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 3,
-                opacity: 0.4,
-              }}
-            >
-              <span style={{ fontSize: 18, lineHeight: 1, color: "rgba(255,255,255,0.5)" }}>+</span>
-              <span style={{ fontSize: 9, letterSpacing: "0.04em", color: "rgba(255,255,255,0.45)" }}>
-                SLOT {i + 1}
-              </span>
-            </div>
-          );
-        })}
-
-        {/* Count label at end */}
-        <div
-          style={{
-            alignSelf: "center",
-            marginLeft: 4,
-            display: "flex",
-            flexDirection: "column",
-            gap: 4,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-            }}
-          >
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: featuredCount >= MAX_FEATURED ? "#c4b5fd" : "rgba(255,255,255,0.45)",
-                letterSpacing: "0.03em",
-              }}
-            >
-              ★ {featuredCount} / {MAX_FEATURED}
-            </span>
-            {featSavedFlash && (
-              <span
-                style={{
-                  fontSize: 10,
-                  color: "#6ee7b7",
-                  fontWeight: 700,
-                  opacity: 0.9,
-                  transition: "opacity 0.2s",
-                }}
-              >
-                ✓ Saved
-              </span>
-            )}
-          </div>
-          {featuredCount >= MAX_FEATURED && (
-            <div style={{ fontSize: 10, opacity: 0.6, color: "#c4b5fd", maxWidth: 80, lineHeight: 1.3 }}>
-              Remove one to swap
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Collection picker ─────────────────────────────────── */}
-      <div
-        style={{
-          borderRadius: 12,
-          border: "1px solid rgba(255,255,255,0.10)",
-          background: "rgba(0,0,0,0.12)",
-          overflow: "hidden",
-        }}
-      >
-        {/* Header row */}
-        <div
-          style={{
-            padding: "10px 14px",
-            borderBottom: "1px solid rgba(255,255,255,0.07)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 10,
-          }}
-        >
-          <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.7, letterSpacing: "0.03em" }}>
-            {!allUngrouped && openCol
-              ? (
-                <button
-                  type="button"
-                  onClick={() => setOpenColId(null)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "rgba(255,255,255,0.55)",
-                    fontSize: 12,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    padding: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 5,
-                    letterSpacing: "0.02em",
-                  }}
-                >
-                  ← Collections
-                </button>
-              )
-              : allUngrouped ? "Photos" : "Collections"}
-          </div>
-          {!allUngrouped && openCol && (
-            <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.85 }}>
-              {openCol.title}
-              <span style={{ fontWeight: 400, opacity: 0.5, marginLeft: 6 }}>
-                · {openCol.items.length} photo{openCol.items.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={fetchLibrary}
-            disabled={libraryLoading}
-            style={{
-              background: "none",
-              border: "none",
-              color: "rgba(255,255,255,0.35)",
-              fontSize: 12,
-              cursor: "pointer",
-              padding: 0,
-              transition: "opacity 0.15s",
-              opacity: libraryLoading ? 0.3 : 1,
-            }}
-            title="Refresh library"
-          >
-            ↺
-          </button>
-        </div>
-
-        {/* Body */}
-        <div style={{ padding: "14px 14px 12px" }}>
-          {libraryLoading && library.length === 0 ? (
-            <div style={{ fontSize: 13, opacity: 0.4, padding: "12px 0" }}>
-              Loading your library…
-            </div>
-          ) : library.length === 0 ? (
-            <div style={{ fontSize: 13, opacity: 0.4, padding: "12px 0" }}>
-              No photos yet — upload some below and they&apos;ll appear here.
-            </div>
-          ) : allUngrouped || openCol ? (
-            /* ── Photo grid (flat or inside an open collection) ─── */
-            (() => {
-              const photoGridItems = allUngrouped ? collections[0].items : openCol!.items;
-              return (
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 8,
-              }}
-            >
-              {photoGridItems.map((item) => {
-                const isFeat   = !!item.isFeatured;
-                const toggling = togglingId === item.fileId;
-                const blocked  = !isFeat && featuredCount >= MAX_FEATURED;
-
-                return (
-                  <button
-                    key={item.fileId}
-                    type="button"
-                    title={
-                      isFeat
-                        ? "Click to remove from featured"
-                        : blocked
-                        ? `${MAX_FEATURED} featured already — remove one first`
-                        : "Click to add to featured"
-                    }
-                    disabled={loading || toggling || (blocked && !isFeat)}
-                    onClick={() => toggleFeatured(item)}
-                    style={{
-                      position: "relative",
-                      width: PHOTO_THUMB,
-                      height: PHOTO_THUMB,
-                      borderRadius: 8,
-                      overflow: "hidden",
-                      border: isFeat
-                        ? "2.5px solid rgba(108,0,175,0.95)"
-                        : "2px solid rgba(255,255,255,0.12)",
-                      background: "#1a0c22",
-                      padding: 0,
-                      cursor: blocked ? "not-allowed" : "pointer",
-                      opacity: toggling ? 0.45 : blocked ? 0.35 : 1,
-                      transition: "opacity 0.15s, border-color 0.15s",
-                      flexShrink: 0,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!blocked && !toggling)
-                        (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(108,0,175,0.7)";
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = isFeat
-                        ? "rgba(108,0,175,0.95)"
-                        : "rgba(255,255,255,0.12)";
-                    }}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={thumbUrl(item)}
-                      alt=""
-                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                    />
-                    {/* Featured overlay */}
-                    {isFeat && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          background: "rgba(108,0,175,0.85)",
-                          fontSize: 9,
-                          fontWeight: 700,
-                          letterSpacing: "0.05em",
-                          textAlign: "center",
-                          padding: "2px 0 3px",
-                          color: "#fff",
-                          pointerEvents: "none",
-                        }}
-                      >
-                        ★ {featuredItems.indexOf(item) + 1}
-                      </div>
+                    {cover && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={thumbUrl(cover)}
+                        alt=""
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                      />
                     )}
-                  </button>
-                );
-              })}
-            </div>
-              );
-            })()
-          ) : (
-            /* ── Collection grid ────────────────────────────────── */
-            <div
-              style={{
-                display: "flex",
-                gap: 14,
-                overflowX: "auto",
-                paddingBottom: 8,
-                scrollbarWidth: "none",
-              } as CSSProperties}
-            >
-              {collections.map((col) => {
-                const stackImgs  = col.items.slice(0, 3).reverse(); // bottom → top
-                const hasFeat    = col.items.some((it) => it.isFeatured);
-                const containerW = COL_STACK_W + COL_STACK_PAD * 2;
-                const containerH = COL_STACK_H + COL_STACK_PAD * 2;
+                  </div>
 
-                return (
-                  <button
-                    key={col.id}
-                    type="button"
-                    onClick={() => setOpenColId(col.id)}
-                    style={{
-                      flexShrink: 0,
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                      cursor: "pointer",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: 5,
-                      opacity: libraryLoading ? 0.5 : 1,
-                      transition: "opacity 0.15s",
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.opacity = "0.75";
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.opacity = "1";
-                    }}
-                  >
-                    {/* Stack */}
+                  {/* Labels */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
-                        position: "relative",
-                        width: containerW,
-                        height: containerH,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#e0d0f0",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      {stackImgs.map((img, si) => (
-                        <div
-                          key={img.fileId || si}
+                      {col.title}
+                    </div>
+                    <div style={{ fontSize: 10, opacity: 0.45, marginTop: 2 }}>
+                      {col.items.length} photo{col.items.length !== 1 ? "s" : ""}
+                      {cover?.isFeatured ? " · cover set" : " · using first photo"}
+                    </div>
+                  </div>
+
+                  {/* Caret + saved flash */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                    {featSavedFlash && isEditing && (
+                      <span style={{ fontSize: 10, color: "#6ee7b7", fontWeight: 700 }}>✓</span>
+                    )}
+                    <span style={{ fontSize: 11, opacity: 0.4, color: "#e0d0f0" }}>
+                      {isEditing ? "▲" : "▼"}
+                    </span>
+                  </div>
+                </button>
+
+                {/* Expanded photo picker */}
+                {isEditing && (
+                  <div
+                    style={{
+                      padding: "0 14px 14px",
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 7,
+                    }}
+                  >
+                    {col.items.map((item) => {
+                      const isCover  = !!item.isFeatured;
+                      const toggling = togglingId === item.fileId;
+                      return (
+                        <button
+                          key={item.fileId}
+                          type="button"
+                          title={isCover ? "Current cover — click to remove" : "Set as cover"}
+                          disabled={loading || toggling}
+                          onClick={() => toggleFeatured(item)}
                           style={{
-                            position: "absolute",
-                            width: COL_STACK_W,
-                            height: COL_STACK_H,
-                            top: "50%",
-                            left: "50%",
-                            transform: `translate(-50%, -50%) rotate(${LAYER_ROTS[si] ?? 0}deg)`,
-                            zIndex: si + 1,
-                            borderRadius: 8,
+                            position: "relative",
+                            width: 68,
+                            height: 68,
+                            borderRadius: 7,
                             overflow: "hidden",
-                            boxShadow: "0 2px 10px rgba(0,0,0,0.35)",
+                            border: isCover
+                              ? "2.5px solid rgba(108,0,175,0.95)"
+                              : "1.5px solid rgba(255,255,255,0.12)",
                             background: "#1a0c22",
-                            border: hasFeat && si === stackImgs.length - 1
-                              ? "2px solid rgba(108,0,175,0.7)"
-                              : "none",
+                            padding: 0,
+                            cursor: toggling ? "wait" : "pointer",
+                            opacity: toggling ? 0.45 : 1,
+                            transition: "opacity 0.15s, border-color 0.15s",
+                            flexShrink: 0,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!toggling)
+                              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(108,0,175,0.7)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.borderColor = isCover
+                              ? "rgba(108,0,175,0.95)"
+                              : "rgba(255,255,255,0.12)";
                           }}
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={thumbUrl(img, 150)}
+                            src={thumbUrl(item)}
                             alt=""
                             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                           />
-                        </div>
-                      ))}
-
-                      {/* Featured dot on top-right if this collection has featured photos */}
-                      {hasFeat && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: COL_STACK_PAD - 4,
-                            right: COL_STACK_PAD - 4,
-                            zIndex: 20,
-                            width: 10,
-                            height: 10,
-                            borderRadius: "50%",
-                            background: "#6C00AF",
-                            border: "1.5px solid rgba(255,255,255,0.5)",
-                            pointerEvents: "none",
-                          }}
-                        />
-                      )}
-                    </div>
-
-                    {/* Label */}
-                    <div style={{ textAlign: "center", maxWidth: containerW + 8 }}>
-                      <div
-                        style={{
-                          fontSize: 11,
-                          fontWeight: 600,
-                          opacity: 0.8,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          color: "#e0d0f0",
-                        }}
-                      >
-                        {col.title}
-                      </div>
-                      <div style={{ fontSize: 10, opacity: 0.4, marginTop: 1 }}>
-                        {col.items.length}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+                          {isCover && (
+                            <div
+                              style={{
+                                position: "absolute",
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                background: "rgba(108,0,175,0.88)",
+                                fontSize: 8,
+                                fontWeight: 700,
+                                letterSpacing: "0.06em",
+                                textAlign: "center",
+                                padding: "2px 0 3px",
+                                color: "#fff",
+                                textTransform: "uppercase",
+                                pointerEvents: "none",
+                              }}
+                            >
+                              cover
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
-      </div>
+      )}
+
+
 
       {/* ═══════════════════════════════════════════════════════════
           UPLOAD PHOTOS
@@ -872,7 +589,7 @@ export default function MediaPanel({
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          REELS
+          FEATURED VIDEOS
       ═══════════════════════════════════════════════════════════ */}
       <div
         style={{
@@ -882,96 +599,135 @@ export default function MediaPanel({
         }}
       >
         <span style={subheadChipStyle} className="subhead-chip">
-          Reels
+          Featured Videos
         </span>
 
         <p style={{ ...explainStyleLocal, opacity: 0.55, fontSize: "0.8rem", fontStyle: "italic" }}>
-          Paste links to your short-form video reels (Instagram, TikTok, YouTube
-          Shorts, Vimeo, etc.). These will be wired up to a dedicated reel
-          display in a future update.
+          Add up to 3 video links — YouTube, Vimeo, Loom, Google Drive, or any direct
+          video URL. Great for performance reels, welcome messages, fundraising videos,
+          trailers, or travel footage.
         </p>
 
-        <div style={{ display: "grid", gap: 14, marginTop: 14 }}>
+        <div style={{ display: "grid", gap: 18, marginTop: 14 }}>
           {(
             [
-              { label: "Reel 1", value: reelUrl1, setter: setReelUrl1 },
-              { label: "Reel 2", value: reelUrl2, setter: setReelUrl2 },
-              { label: "Reel 3", value: reelUrl3, setter: setReelUrl3 },
-            ] as { label: string; value: string; setter: (v: string) => void }[]
-          ).map(({ label, value, setter }) => (
-            <div key={label}>
+              {
+                label: "Video 1",
+                urlValue: reelUrl1, urlKey: "reelVideoUrl1" as const,
+                urlSetter: setReelUrl1,
+                titleValue: videoTitle1, titleKey: "videoTitle1" as const,
+                titleSetter: setVideoTitle1,
+                aspectValue: videoAspect1, aspectKey: "videoAspect1" as const,
+                aspectSetter: setVideoAspect1,
+              },
+              {
+                label: "Video 2",
+                urlValue: reelUrl2, urlKey: "reelVideoUrl2" as const,
+                urlSetter: setReelUrl2,
+                titleValue: videoTitle2, titleKey: "videoTitle2" as const,
+                titleSetter: setVideoTitle2,
+                aspectValue: videoAspect2, aspectKey: "videoAspect2" as const,
+                aspectSetter: setVideoAspect2,
+              },
+              {
+                label: "Video 3",
+                urlValue: reelUrl3, urlKey: "reelVideoUrl3" as const,
+                urlSetter: setReelUrl3,
+                titleValue: videoTitle3, titleKey: "videoTitle3" as const,
+                titleSetter: setVideoTitle3,
+                aspectValue: videoAspect3, aspectKey: "videoAspect3" as const,
+                aspectSetter: setVideoAspect3,
+              },
+            ] as const
+          ).map(({ label, urlValue, urlKey, urlSetter, titleValue, titleKey, titleSetter, aspectValue, aspectKey, aspectSetter }) => (
+            <div key={label} style={{ display: "grid", gap: 8 }}>
               <label style={smallLabel}>{label}</label>
               <input
                 type="url"
-                value={value}
-                onChange={(e) => setter(e.target.value)}
-                placeholder="https://… (Instagram, TikTok, YouTube, Vimeo, etc.)"
+                value={urlValue}
+                onChange={(e) => {
+                  urlSetter(e.target.value);
+                  setProfile?.((p: any) => ({ ...p, [urlKey]: e.target.value }));
+                }}
+                placeholder="https://… (YouTube, Vimeo, Loom, Google Drive, etc.)"
                 style={inputStyle}
               />
+              {urlValue.trim() && (
+                <>
+                  <input
+                    type="text"
+                    value={titleValue}
+                    onChange={(e) => {
+                      titleSetter(e.target.value);
+                      setProfile?.((p: any) => ({ ...p, [titleKey]: e.target.value }));
+                    }}
+                    placeholder="Custom title (optional — auto-detected if blank)"
+                    style={{ ...inputStyle, marginTop: 2 }}
+                  />
+                  <select
+                    value={aspectValue}
+                    onChange={(e) => {
+                      aspectSetter(e.target.value);
+                      setProfile?.((p: any) => ({ ...p, [aspectKey]: e.target.value }));
+                    }}
+                    style={{ ...inputStyle, marginTop: 2 }}
+                  >
+                    <option value="">Default (16:9)</option>
+                    <option value="16/9">16:9 widescreen</option>
+                    <option value="9/16">9:16 portrait</option>
+                    <option value="1/1">1:1 square</option>
+                    <option value="21/9">21:9 cinematic</option>
+                    <option value="4/3">4:3</option>
+                  </select>
+                </>
+              )}
             </div>
           ))}
 
-          <div>
-            <label style={labelStyle}>Or upload reel video files</label>
-            <Dropzone
-              accept="video/*"
-              multiple
-              disabled={loading}
-              label=""
-              sublabel=""
-              onFiles={(files) => setReelFiles(files)}
-              onReject={(rej) => showToastError(rej[0]?.reason || "File rejected")}
+          {/* Autoplay */}
+          <div style={{ display: "grid", gap: 4 }}>
+            <label style={smallLabel}>Autoplay first video on page load</label>
+            <select
+              value={videoAutoplay}
+              onChange={(e) => {
+                setVideoAutoplay(e.target.value);
+                setProfile?.((p: any) => ({ ...p, videoAutoplay: e.target.value }));
+              }}
+              style={inputStyle}
+            >
+              <option value="">Off (no autoplay)</option>
+              <option value="muted">Autoplay — muted</option>
+              <option value="unmuted">Autoplay — with sound</option>
+            </select>
+          </div>
+
+          {/* Full bleed — only when only URL 1 is set */}
+          {reelUrl1.trim() && !reelUrl2.trim() && !reelUrl3.trim() && (
+            <label
               style={{
-                minHeight: 120,
                 display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "28px 24px",
-                textAlign: "center",
-                gap: 0,
+                alignItems: "flex-start",
+                gap: 8,
+                cursor: "pointer",
+                fontSize: 13,
+                color: "rgba(255,255,255,0.85)",
+                lineHeight: 1.45,
               }}
             >
-              <p style={{ margin: 0, fontWeight: 600, fontSize: 15 }}>Upload Video Files</p>
-              <p style={{ margin: "8px 0 4px", fontSize: 13, opacity: 0.7 }}>Drag &amp; Drop</p>
-              <p style={{ margin: 0, fontSize: 12, opacity: 0.5, textDecoration: "underline" }}>
-                Click to Browse
-              </p>
-            </Dropzone>
-
-            {reelFiles.length > 0 && (
-              <div
-                style={{
-                  marginTop: 10,
-                  padding: "10px 14px",
-                  borderRadius: 10,
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  background: "rgba(0,0,0,0.14)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 12,
+              <input
+                type="checkbox"
+                checked={videoFullBleed}
+                onChange={(e) => {
+                  setVideoFullBleed(e.target.checked);
+                  setProfile?.((p: any) => ({ ...p, videoFullBleed: e.target.checked ? "true" : "false" }));
                 }}
-              >
-                <div style={{ fontSize: 13, fontWeight: 700 }}>
-                  {reelFiles.length} reel{reelFiles.length !== 1 ? "s" : ""} staged
-                  <div style={{ fontSize: 11, opacity: 0.55, fontWeight: 400, marginTop: 2 }}>
-                    {reelFiles.map((f) => f.name).join(", ")}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="dat-btn-ghost"
-                  style={{ ...studioGhostButton, flexShrink: 0 }}
-                  onClick={() => setReelFiles([])}
-                  disabled={loading}
-                >
-                  Clear
-                </button>
-              </div>
-            )}
-          </div>
+                style={{ marginTop: 2, flexShrink: 0 }}
+              />
+              Full bleed — video fills the full section width
+            </label>
+          )}
         </div>
+
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
@@ -1026,14 +782,14 @@ export default function MediaPanel({
           flexWrap: "wrap",
         }}
       >
-        {isDirty && !savedRecently && (
+        {hasUploadWork && !savedRecently && (
           <span style={{ fontSize: 12, opacity: 0.7, display: "flex", alignItems: "center", gap: 5, color: "#f5c542" }}>
-            <span style={{ fontSize: 8 }}>●</span> Unsaved changes
+            <span style={{ fontSize: 8 }}>●</span> Photos staged
           </span>
         )}
         {savedRecently && (
           <span style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 5, color: "#6ee7b7", opacity: 0.9 }}>
-            <span style={{ fontSize: 10 }}>✓</span> Uploaded
+            <span style={{ fontSize: 10 }}>✓</span> Saved
           </span>
         )}
         <button
@@ -1042,23 +798,27 @@ export default function MediaPanel({
             ...datButtonLocal,
             ...(savedRecently ? { background: "rgba(52,211,153,0.25)", borderColor: "rgba(52,211,153,0.5)" } : {}),
           }}
-          disabled={loading || !hasUploadWork}
+          disabled={loading}
           onClick={() =>
             saveCategory({
-              tag: "Media Upload",
-              fieldKeys: [],
+              tag: "Media",
+              fieldKeys: [
+                "reelVideoUrl1", "reelVideoUrl2", "reelVideoUrl3",
+                "videoTitle1", "videoTitle2", "videoTitle3",
+                "videoAspect1", "videoAspect2", "videoAspect3",
+                "videoAutoplay", "videoFullBleed",
+              ],
               uploadKinds: [
                 ...(albumFiles.length ? (["album"] as UploadKind[]) : []),
-                ...(reelFiles.length  ? (["reel"]  as UploadKind[]) : []),
               ],
               afterSave: () => {
                 onSaved?.();
-                fetchLibrary();
+                if (albumFiles.length) fetchLibrary();
               },
             })
           }
         >
-          {savedRecently ? "Uploaded ✓" : "Upload Staged Media"}
+          {savedRecently ? "Saved ✓" : hasUploadWork ? "Upload & Save" : "Save Changes"}
         </button>
       </div>
     </div>

@@ -27,6 +27,7 @@ import { getOrderedProfileRoles, deriveBoardStatus, getBoardRoleLabelForProfile 
 import { programMap } from "@/lib/programMap";
 import { productionMap } from "@/lib/productionMap";
 import { loadSpotlightsForSlug } from "@/lib/loadSpotlightsFromSheet";
+import { fetchVideoMeta } from "@/lib/media/fetchVideoMeta";
 
 type PageProps = {
   params: Promise<{ slug: string | string[] }>;
@@ -439,6 +440,17 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
     canonicalName: (alumni as any).name,
   });
 
+  // Fetch oEmbed metadata for each reel video URL (server-side, cached 1h)
+  const reelUrl1 = String((normalizedAlumni as any).reelVideoUrl1 || "").trim();
+  const reelUrl2 = String((normalizedAlumni as any).reelVideoUrl2 || "").trim();
+  const reelUrl3 = String((normalizedAlumni as any).reelVideoUrl3 || "").trim();
+  const [videoMeta1, videoMeta2, videoMeta3] = await Promise.all([
+    reelUrl1 ? fetchVideoMeta(reelUrl1) : Promise.resolve({}),
+    reelUrl2 ? fetchVideoMeta(reelUrl2) : Promise.resolve({}),
+    reelUrl3 ? fetchVideoMeta(reelUrl3) : Promise.resolve({}),
+  ]);
+  const videoMeta = [videoMeta1, videoMeta2, videoMeta3] as const;
+
   const safeArtistStatement =
     typeof (normalizedAlumni as any).artistStatement === "string"
       ? (normalizedAlumni as any).artistStatement
@@ -550,7 +562,19 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
           featuredSupportedClub: (normalizedAlumni as any).featuredSupportedClub,
           featuredImpactCause: (normalizedAlumni as any).featuredImpactCause,
           languages: (normalizedAlumni as any).languages || "",
-        }}
+          reelVideoUrl1: (normalizedAlumni as any).reelVideoUrl1 || "",
+          reelVideoUrl2: (normalizedAlumni as any).reelVideoUrl2 || "",
+          reelVideoUrl3: (normalizedAlumni as any).reelVideoUrl3 || "",
+          videoTitle1: (normalizedAlumni as any).videoTitle1 || "",
+          videoTitle2: (normalizedAlumni as any).videoTitle2 || "",
+          videoTitle3: (normalizedAlumni as any).videoTitle3 || "",
+          videoAspect1: (normalizedAlumni as any).videoAspect1 || "",
+          videoAspect2: (normalizedAlumni as any).videoAspect2 || "",
+          videoAspect3: (normalizedAlumni as any).videoAspect3 || "",
+          videoAutoplay: (normalizedAlumni as any).videoAutoplay || "",
+          videoFullBleed: (normalizedAlumni as any).videoFullBleed || "",
+        } as unknown as import("@/lib/types").AlumniRow}
+        videoMeta={videoMeta}
         allStories={storiesForThisAlum}
         slugAliases={Array.from(aliases)}
         sheetSpotlights={spotlightData.spotlights}

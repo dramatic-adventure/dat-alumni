@@ -11,7 +11,7 @@ export type VideoEmbedInput =
 export type ResolvedVideo =
   | {
       kind: "embed";
-      provider: "youtube" | "vimeo";
+      provider: "youtube" | "vimeo" | "loom" | "drive";
       url: string; // original input URL
       embedUrl: string; // iframe-ready
       openUrl?: string; // canonical watch page
@@ -25,6 +25,12 @@ export type ResolvedVideo =
       title?: string;
       poster?: string;
       mimeType?: string;
+    }
+  | {
+      kind: "link";
+      url: string; // original input URL
+      displayDomain: string; // e.g. "instagram.com"
+      title?: string;
     };
 
 function normalizeInput(input: VideoEmbedInput): {
@@ -113,6 +119,23 @@ function extractVimeoId(u: URL): string | null {
   return null;
 }
 
+function extractLoomId(u: URL): string | null {
+  const host = u.hostname.replace(/^www\./, "").toLowerCase();
+  if (host !== "loom.com") return null;
+  const parts = (u.pathname || "").split("/").filter(Boolean);
+  // /share/{id}
+  if (parts[0] === "share" && parts[1]) return parts[1];
+  return null;
+}
+
+function extractDriveId(u: URL): string | null {
+  const host = u.hostname.replace(/^www\./, "").toLowerCase();
+  if (!host.endsWith("drive.google.com") && !host.endsWith("docs.google.com")) return null;
+  // /file/d/{id}/view|open|preview
+  const m = u.pathname.match(/\/file\/d\/([^/]+)/);
+  return m?.[1] ?? null;
+}
+
 function guessMimeType(urlOrPath: string): string | undefined {
   const lower = urlOrPath.toLowerCase();
   if (lower.endsWith(".mp4")) return "video/mp4";
@@ -142,7 +165,7 @@ export function resolveVideo(input: VideoEmbedInput): ResolvedVideo | null {
 
   const parsed = safeParseUrl(trimmed);
 
-  // YouTube / Vimeo (needs URL parsing)
+  // YouTube / Vimeo / Loom / Google Drive (needs URL parsing)
   if (parsed) {
     const ytId = extractYouTubeId(parsed);
     if (ytId) {
@@ -172,6 +195,20 @@ export function resolveVideo(input: VideoEmbedInput): ResolvedVideo | null {
         title,
       };
     }
+
+    const loomId = extractLoomId(parsed);
+    if (loomId) {
+      const embedUrl = `https://www.loom.com/embed/${loomId}`;
+      const openUrl = `https://www.loom.com/share/${loomId}`;
+      return { kind: "embed", provider: "loom", url: trimmed, embedUrl, openUrl, title };
+    }
+
+    const driveId = extractDriveId(parsed);
+    if (driveId) {
+      const embedUrl = `https://drive.google.com/file/d/${driveId}/preview`;
+      const openUrl = `https://drive.google.com/file/d/${driveId}/view`;
+      return { kind: "embed", provider: "drive", url: trimmed, embedUrl, openUrl, title };
+    }
   }
 
   // Direct/self-hosted files (can be relative paths)
@@ -185,6 +222,12 @@ export function resolveVideo(input: VideoEmbedInput): ResolvedVideo | null {
       poster,
       mimeType: guessMimeType(trimmed),
     };
+  }
+
+  // Unknown / unembeddable URL — return a link fallback
+  if (parsed && (trimmed.startsWith("http://") || trimmed.startsWith("https://"))) {
+    const displayDomain = parsed.hostname.replace(/^www\./, "").toLowerCase();
+    return { kind: "link", url: trimmed, displayDomain, title };
   }
 
   return null;

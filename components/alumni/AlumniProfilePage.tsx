@@ -63,6 +63,8 @@ interface AlumniProfileProps {
   sheetSpotlights?: SheetSpotlightRow[];
   /** Highlights loaded server-side from the Spotlights & Highlights sheet tab */
   sheetHighlights?: SheetSpotlightRow[];
+  /** oEmbed metadata fetched server-side for each reel video URL */
+  videoMeta?: ReadonlyArray<{ title?: string; aspectRatio?: string }>;
 }
 
 const HEADER_HEIGHT = "84px"; // ✅ Adjust if your header height changes
@@ -126,6 +128,7 @@ export default function AlumniProfilePage({
   upcomingEvent,
   sheetSpotlights = [],
   sheetHighlights = [],
+  videoMeta = [],
 }: AlumniProfileProps) {
   const d = (data || {}) as any;
 
@@ -188,6 +191,19 @@ export default function AlumniProfilePage({
 
   // Featured link from primarySocial
   const featuredLink = (d as any).featuredLink as { url: string; label: string } | undefined;
+
+  // Featured Videos
+  const reelVideoUrl1 = cleanStr(d.reelVideoUrl1);
+  const reelVideoUrl2 = cleanStr(d.reelVideoUrl2);
+  const reelVideoUrl3 = cleanStr(d.reelVideoUrl3);
+  const videoTitle1 = cleanStr(d.videoTitle1);
+  const videoTitle2 = cleanStr(d.videoTitle2);
+  const videoTitle3 = cleanStr(d.videoTitle3);
+  const videoAspect1 = cleanStr(d.videoAspect1);
+  const videoAspect2 = cleanStr(d.videoAspect2);
+  const videoAspect3 = cleanStr(d.videoAspect3);
+  const videoAutoplay = String(d.videoAutoplay ?? "").trim() || undefined;
+  const videoFullBleed = String(d.videoFullBleed ?? "").trim().toLowerCase() === "true";
 
   // NOTE: updates shape is handled inside ProfileCard; we just pass through.
   const updates = (d.updates ?? []) as any[];
@@ -385,6 +401,18 @@ alumniId={alumniId || undefined}
                 secondLocation={secondLocation || undefined}
                 isBiCoastal={isBiCoastal}
                 upcomingEvent={upcomingEvent}
+                reelVideoUrl1={reelVideoUrl1}
+                reelVideoUrl2={reelVideoUrl2}
+                reelVideoUrl3={reelVideoUrl3}
+                videoTitle1={videoTitle1}
+                videoTitle2={videoTitle2}
+                videoTitle3={videoTitle3}
+                videoAspect1={videoAspect1}
+                videoAspect2={videoAspect2}
+                videoAspect3={videoAspect3}
+                videoAutoplay={videoAutoplay}
+                videoFullBleed={videoFullBleed}
+                videoMeta={videoMeta}
               />
             </div>
           </section>
