@@ -40,7 +40,6 @@ function groupByCollection(items: MediaItem[]): Collection[] {
   return Array.from(map.values()).filter((c) => c.items.length > 0);
 }
 
-const MAX_PANELS = 6;
 const MIN_COLLECTION_SIZE = 3; // fewer than this → pooled into catch-all
 
 // DAT brand tints — one per panel slot, cycling if there are more collections
@@ -139,12 +138,18 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
       : full;
   }, [collections]);
 
-  // Pagination — page through MAX_PANELS collections at a time
-  const totalPages        = Math.ceil(accordionCollections.length / MAX_PANELS);
-  const safePage          = Math.min(page, Math.max(0, totalPages - 1));
+  // 3 panels on mobile, 6 on tablet/desktop
+  const maxPanels = isMobile ? 3 : 6;
+
+  // Reset to page 0 when viewport class or collection list changes
+  useEffect(() => { setPage(0); setHoveredIdx(0); }, [maxPanels, accordionCollections.length]);
+
+  // Pagination — page through maxPanels collections at a time
+  const totalPages         = Math.ceil(accordionCollections.length / maxPanels);
+  const safePage           = Math.min(page, Math.max(0, totalPages - 1));
   const visibleCollections = accordionCollections.slice(
-    safePage * MAX_PANELS,
-    (safePage + 1) * MAX_PANELS,
+    safePage * maxPanels,
+    (safePage + 1) * maxPanels,
   );
 
   const goToPage = useCallback((p: number) => {
@@ -153,9 +158,6 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
     setOpenIdx(null);
     userInteracted.current = false; // restart auto-cycle on the new page
   }, []);
-
-  // Reset to page 0 whenever the underlying collection list changes
-  useEffect(() => { setPage(0); }, [accordionCollections.length]);
 
   // Auto-cycle through visible panels when user hasn't interacted
   useEffect(() => {
@@ -237,22 +239,34 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "flex-end",
-              gap: 10,
-              padding: "10px 16px 6px",
+              gap: 12,
+              padding: "12px 20px 8px",
             }}
           >
+            {/* Prev */}
             <button
               type="button"
               onClick={() => goToPage(safePage - 1)}
               disabled={safePage === 0}
               aria-label="Previous collections"
               style={{
-                background: "none", border: "none", padding: "2px 6px",
-                fontSize: 20, lineHeight: 1, cursor: safePage === 0 ? "default" : "pointer",
-                color: safePage === 0 ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.65)",
-                transition: "color 0.15s",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: 30, height: 30, borderRadius: "50%", padding: 0,
+                background: safePage === 0 ? "transparent" : "rgba(255,255,255,0.07)",
+                border: `1px solid ${safePage === 0 ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.18)"}`,
+                cursor: safePage === 0 ? "default" : "pointer",
+                color: safePage === 0 ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.7)",
+                transition: "background 0.2s, border-color 0.2s, color 0.2s",
+                flexShrink: 0,
               }}
-            >‹</button>
+            >
+              <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden="true">
+                <path d="M6 1L1 6L6 11" stroke="currentColor" strokeWidth="1.5"
+                  strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+
+            {/* Page dots */}
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
               {Array.from({ length: totalPages }, (_, i) => (
                 <button
@@ -261,33 +275,44 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
                   onClick={() => goToPage(i)}
                   aria-label={`Page ${i + 1}`}
                   style={{
-                    width: i === safePage ? 18 : 6,
+                    width: i === safePage ? 20 : 6,
                     height: 6,
                     borderRadius: 3,
                     padding: 0,
                     border: "none",
                     background: i === safePage
-                      ? "rgba(255,255,255,0.75)"
-                      : "rgba(255,255,255,0.22)",
-                    cursor: "pointer",
-                    transition: "width 0.2s, background 0.2s",
+                      ? "rgba(255,255,255,0.8)"
+                      : "rgba(255,255,255,0.2)",
+                    cursor: i === safePage ? "default" : "pointer",
+                    transition: "width 0.25s ease, background 0.2s",
+                    flexShrink: 0,
                   }}
                 />
               ))}
             </div>
+
+            {/* Next */}
             <button
               type="button"
               onClick={() => goToPage(safePage + 1)}
               disabled={safePage === totalPages - 1}
               aria-label="Next collections"
               style={{
-                background: "none", border: "none", padding: "2px 6px",
-                fontSize: 20, lineHeight: 1,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: 30, height: 30, borderRadius: "50%", padding: 0,
+                background: safePage === totalPages - 1 ? "transparent" : "rgba(255,255,255,0.07)",
+                border: `1px solid ${safePage === totalPages - 1 ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.18)"}`,
                 cursor: safePage === totalPages - 1 ? "default" : "pointer",
-                color: safePage === totalPages - 1 ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.65)",
-                transition: "color 0.15s",
+                color: safePage === totalPages - 1 ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.7)",
+                transition: "background 0.2s, border-color 0.2s, color 0.2s",
+                flexShrink: 0,
               }}
-            >›</button>
+            >
+              <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden="true">
+                <path d="M1 1L6 6L1 11" stroke="currentColor" strokeWidth="1.5"
+                  strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
           </div>
         )}
 
