@@ -14,6 +14,12 @@ html, body {
   width: 100%;
   min-height: 100vh;
   background: none;
+  overflow-x: clip; /* prevent fanned/protruding elements from creating horizontal scroll */
+}
+
+/* Prevent long text from escaping its container on any screen size */
+* {
+  overflow-wrap: break-word;
 }
 
 html {

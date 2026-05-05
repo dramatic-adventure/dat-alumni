@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSwipeable } from "react-swipeable";
 import Image from "next/image";
 import Lightbox from "@/components/shared/Lightbox";
 
@@ -24,6 +25,8 @@ export default function JoinTheJourneyPanel({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [startIndex, setStartIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  // Which photo is frontmost in the fan (index into IMAGE_URLS)
+  const [activeIndex, setActiveIndex] = useState(IMAGE_URLS.length - 1);
 
   const MAX_CARD_HEIGHT = 560; // lifesize cap
 
@@ -38,12 +41,25 @@ export default function JoinTheJourneyPanel({
   // Fan layout: a bit tighter on mobile
   const rotations = isMobile ? [-10, -3, 7, 14] : [-12, -4, 6, 15];
   const xOffsets = isMobile ? [-90, -30, 30, 90] : [-160, -70, 45, 130];
-  const zOrder = [10, 20, 30, 40];
+
+  // Active photo is always on top; others stack behind by distance from active
+  const getZIndex = (i: number): number => {
+    const dist = (IMAGE_URLS.length + i - activeIndex) % IMAGE_URLS.length;
+    return (IMAGE_URLS.length - dist) * 10;
+  };
 
   const openLightbox = (i: number) => {
     setStartIndex(i);
     setLightboxOpen(true);
   };
+
+  // Swipe left → advance active photo; swipe right → go back
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => setActiveIndex((i) => (i + 1) % IMAGE_URLS.length),
+    onSwipedRight: () =>
+      setActiveIndex((i) => (i + IMAGE_URLS.length - 1) % IMAGE_URLS.length),
+    trackMouse: false,
+  });
 
   // Centered container, clamped at 70vw; overflow allowed for the fanned edges.
   const containerStyles: React.CSSProperties = {
@@ -59,25 +75,33 @@ export default function JoinTheJourneyPanel({
   return (
     <section
       className="relative text-center px-6 py-16 md:py-20"
-      style={{ overflow: "visible" }}
+      style={{ overflowX: "clip" }}
     >
-      <div className="mx-auto max-w-6xl" style={{ overflow: "visible" }}>
+      <div className="mx-auto max-w-6xl" style={{ overflowX: "clip" }}>
         {/* Centered fan container (70vw cap) */}
         <div
           className="jj-pile"
           style={containerStyles}
           aria-label="DAT photo pile"
           role="region"
+          {...swipeHandlers}
         >
           {IMAGE_URLS.map((src, i) => {
             const rotation = rotations[i % rotations.length];
             const dx = xOffsets[i % xOffsets.length];
-            const z = zOrder[i % zOrder.length];
+            const z = getZIndex(i);
 
             return (
               <button
                 key={`${src}-${i}`}
-                onClick={() => openLightbox(i)}
+                onClick={() => {
+                  // On mobile: tap a non-active photo to bring it front; tap active to open lightbox
+                  if (isMobile && i !== activeIndex) {
+                    setActiveIndex(i);
+                  } else {
+                    openLightbox(i);
+                  }
+                }}
                 aria-label={`Open image ${i + 1}`}
                 style={{
                   position: "absolute",

@@ -847,7 +847,7 @@ export default function StoryMap({
 
       .mapboxgl-popup { z-index: 10; }
 
-      .storymap-map { position: relative; }
+      .storymap-map { position: relative; z-index: 1; }
       .storymap-overlay { position:absolute; inset:0; pointer-events:none; z-index: 5; }
       .storymap-overlay > * { pointer-events:auto; }
 
