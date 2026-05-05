@@ -154,8 +154,8 @@ export default function AlumniPage({
               journey continues to inspire.
             </p>
 
-            <div style={{ display: "flex", gap: "1rem", alignItems: "stretch" }}>
-              <div style={{ flex: 1, height: "47px" }}>
+            <div className="alumni-search-row">
+              <div style={{ flex: 1 }}>
                 <AlumniSearch
                   enrichedData={enrichedData}
                   onResults={(primary, secondary, q) => {
@@ -170,30 +170,51 @@ export default function AlumniPage({
               <Link
                 href="/directory"
                 prefetch
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: "47px",
-                  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                  fontWeight: 600,
-                  backgroundColor: "#6C00AF",
-                  color: "#f2f2f2",
-                  padding: "0 1rem",
-                  border: "none",
-                  borderRadius: "6px",
-                  textDecoration: "none",
-                  fontSize: "1rem",
-                  letterSpacing: "0.1rem",
-                  whiteSpace: "nowrap",
-                  transition: "opacity 0.3s ease",
-                }}
+                className="alumni-dir-link"
                 onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
                 onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
               >
-                DIVE DEEPER IN THE DIRECTORY
+                Full Directory
               </Link>
             </div>
+
+            <style>{`
+              .alumni-search-row {
+                display: flex;
+                gap: 0.6rem;
+                align-items: stretch;
+              }
+              .alumni-dir-link {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 47px;
+                font-family: var(--font-space-grotesk), system-ui, sans-serif;
+                font-weight: 600;
+                background-color: #6C00AF;
+                color: #f2f2f2;
+                padding: 0 1rem;
+                border-radius: 6px;
+                text-decoration: none;
+                font-size: 0.85rem;
+                letter-spacing: 0.08rem;
+                white-space: nowrap;
+                flex-shrink: 0;
+                transition: opacity 0.3s ease;
+              }
+              @media (max-width: 480px) {
+                .alumni-search-row {
+                  flex-direction: column;
+                  gap: 0.5rem;
+                }
+                .alumni-dir-link {
+                  height: 42px;
+                  font-size: 0.8rem;
+                  justify-content: center;
+                  width: 100%;
+                }
+              }
+            `}</style>
           </section>
 
           {/* Results */}
