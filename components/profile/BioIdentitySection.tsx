@@ -5,9 +5,7 @@ import Link from "next/link";
 import AlumniTagSections from "@/components/alumni/AlumniTagSections";
 import useIsMobile from "@/hooks/useIsMobile";
 import { parseLanguages } from "@/lib/languages";
-import SpotlightPanel from "@/components/alumni/SpotlightPanel";
-import HighlightPanel from "@/components/alumni/HighlightPanel";
-import SpotlightHighlightArchive from "@/components/alumni/SpotlightHighlightArchive";
+import ArtistMarqueeSection from "@/components/alumni/ArtistMarqueeSection";
 import type { SpotlightUpdate } from "@/components/alumni/SpotlightPanel";
 import type { HighlightCard } from "@/components/alumni/HighlightPanel";
 
@@ -20,6 +18,7 @@ interface BioIdentitySectionProps {
   directlyBelowHero?: boolean;
   spotlightUpdates?: SpotlightUpdate[];
   highlightCards?: HighlightCard[];
+  name?: string;
 }
 
 export default function BioIdentitySection({
@@ -31,6 +30,7 @@ export default function BioIdentitySection({
   directlyBelowHero = false,
   spotlightUpdates = [],
   highlightCards = [],
+  name,
 }: BioIdentitySectionProps) {
   const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
@@ -43,11 +43,8 @@ export default function BioIdentitySection({
     exploreCareTags.length > 0 ||
     languageList.length > 0;
   const bio = artistStatement?.trim() ?? "";
-  const hasSpotlight = spotlightUpdates.length > 0;
-  const hasHighlight = highlightCards.length > 0;
-  const hasPanels = hasSpotlight || hasHighlight;
 
-  if (!bio && !hasAnyTags && !hasPanels) return null;
+  if (!bio && !hasAnyTags) return null;
 
   // Split bio into lead paragraph and body
   let leadText = "";
@@ -79,66 +76,6 @@ export default function BioIdentitySection({
 
   const hasBio = bio.length > 0;
   const useGrid = !isMobile && hasBio && hasAnyTags;
-
-  // ── Full-width panels-only layout ─────────────────────────────────────────
-  // When an alum has no bio or identity tags but DOES have spotlight/highlight,
-  // render the panels prominently full-width so the profile still feels intentional.
-  if (!hasBio && !hasAnyTags && hasPanels) {
-    return (
-      <section
-        style={{
-          background: "linear-gradient(160deg, #1a0a2e 0%, #241123 60%, #19657c 100%)",
-          padding: isMobile
-            ? `${paddingTop} 24px 3.5rem`
-            : `${paddingTop} clamp(3rem, 6vw, 6rem) 5rem`,
-        }}
-      >
-        {/* Subtle section label */}
-        <p
-          style={{
-            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-            fontSize: "0.65rem",
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.22em",
-            color: "rgba(242,242,242,0.38)",
-            margin: "0 0 2rem 0",
-          }}
-        >
-          {hasSpotlight ? "DAT Spotlight" : "Highlight"}
-        </p>
-
-        <div
-          style={{
-            display: isMobile ? "flex" : "grid",
-            flexDirection: isMobile ? "column" : undefined,
-            gridTemplateColumns:
-              !isMobile && hasSpotlight && hasHighlight ? "1fr 1fr" : "1fr",
-            gap: "1.5rem",
-            maxWidth: hasSpotlight && hasHighlight ? "none" : "680px",
-          }}
-        >
-          {hasSpotlight && (
-            <SpotlightPanel
-              updates={spotlightUpdates}
-              compact={false}
-            />
-          )}
-          {hasHighlight && (
-            <HighlightPanel
-              cards={highlightCards}
-              compact={false}
-            />
-          )}
-        </div>
-        <SpotlightHighlightArchive
-          spotlights={spotlightUpdates ?? []}
-          highlights={highlightCards ?? []}
-        />
-      </section>
-    );
-  }
-  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <section
@@ -209,19 +146,19 @@ export default function BioIdentitySection({
                   type="button"
                   onClick={() => setExpanded((e) => !e)}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "#F23359";
+                    e.currentTarget.style.color = "#FFCC00";
                     e.currentTarget.style.letterSpacing = "0.25rem";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "#19657c";
+                    e.currentTarget.style.color = "#6C00AF";
                     e.currentTarget.style.letterSpacing = "0.15rem";
                   }}
                   onFocus={(e) => {
-                    e.currentTarget.style.color = "#F23359";
+                    e.currentTarget.style.color = "#FFCC00";
                     e.currentTarget.style.letterSpacing = "0.25rem";
                   }}
                   onBlur={(e) => {
-                    e.currentTarget.style.color = "#19657c";
+                    e.currentTarget.style.color = "#6C00AF";
                     e.currentTarget.style.letterSpacing = "0.15rem";
                   }}
                   style={{
@@ -229,7 +166,7 @@ export default function BioIdentitySection({
                     marginTop: "1rem",
                     background: "none",
                     border: "none",
-                    color: "#19657c",
+                    color: "#6C00AF",
                     fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                     fontSize: "0.75rem",
                     fontWeight: 800,
@@ -244,18 +181,18 @@ export default function BioIdentitySection({
                 </button>
               )}
 
-              {/* Spotlight / Highlight panels — compact, admin or alum voice */}
-              {hasPanels && (
-                <div style={{ marginTop: "2.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                  {hasSpotlight && <SpotlightPanel updates={spotlightUpdates} compact />}
-                  {hasHighlight && <HighlightPanel cards={highlightCards} compact />}
-                  <SpotlightHighlightArchive
-                    spotlights={spotlightUpdates ?? []}
-                    highlights={highlightCards ?? []}
-                  />
-                </div>
-              )}
             </div>
+
+            {/* ── Spotlight / highlight card ──────────────────────────── */}
+            {(spotlightUpdates.length > 0 || highlightCards.length > 0) && (
+              <div style={{ marginTop: "clamp(1.5rem, 3vw, 2rem)" }}>
+                <ArtistMarqueeSection
+                  spotlightUpdates={spotlightUpdates}
+                  highlightCards={highlightCards}
+                  name={name}
+                />
+              </div>
+            )}
           </div>
         )}
 

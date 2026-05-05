@@ -20,8 +20,6 @@ import MobileProfileHeader from "@/components/alumni/MobileProfileHeader";
 import DesktopProfileHeader from "@/components/alumni/DesktopProfileHeader";
 import useIsMobile from "@/hooks/useIsMobile";
 
-import SpotlightPanel from "@/components/alumni/SpotlightPanel";
-import HighlightPanel from "@/components/alumni/HighlightPanel";
 import type { HighlightCard as UIHighlightCard } from "@/components/alumni/HighlightPanel";
 
 import PublicMediaSection from "@/components/profile/PublicMediaSection";
@@ -759,7 +757,7 @@ const hasStories = storiesForFeatured.length > 0;
         );
       })()}
 
-      {/* WHO I AM — bio + identity tags + languages + spotlight/highlight */}
+      {/* WHO I AM — bio + identity tags + languages + spotlight card */}
       <BioIdentitySection
         identityTags={identityTags}
         practiceTags={practiceTags}
@@ -769,6 +767,7 @@ const hasStories = storiesForFeatured.length > 0;
         directlyBelowHero={!props.upcomingEvent}
         spotlightUpdates={spotlightUpdates}
         highlightCards={highlightUpdates}
+        name={props.name}
       />
 
       {/* What Matters to Me — drama clubs + impact causes */}

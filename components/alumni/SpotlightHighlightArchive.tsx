@@ -198,11 +198,14 @@ function ArchiveRow({ item }: { item: ArchiveItem }) {
 interface SpotlightHighlightArchiveProps {
   spotlights: SpotlightUpdate[];
   highlights: HighlightCard[];
+  /** When true (default), skip index 0 of each array (primary already shown above). Set false to show all passed items. */
+  skipFirst?: boolean;
 }
 
 export default function SpotlightHighlightArchive({
   spotlights,
   highlights,
+  skipFirst = true,
 }: SpotlightHighlightArchiveProps) {
   const [open, setOpen] = useState(false);
 
@@ -218,14 +221,13 @@ export default function SpotlightHighlightArchive({
       ...highlights.filter((c) => !c.evergreen),
     ];
 
-    // Skip the primary item (index 0) from each — those are already displayed above
     const extra = [
-      ...sortedSpotlights.slice(1).map(toArchiveSpotlight),
-      ...sortedHighlights.slice(1).map(toArchiveHighlight),
+      ...(skipFirst ? sortedSpotlights.slice(1) : sortedSpotlights).map(toArchiveSpotlight),
+      ...(skipFirst ? sortedHighlights.slice(1) : sortedHighlights).map(toArchiveHighlight),
     ];
 
     return extra;
-  }, [spotlights, highlights]);
+  }, [spotlights, highlights, skipFirst]);
 
   if (archiveItems.length === 0) return null;
 
