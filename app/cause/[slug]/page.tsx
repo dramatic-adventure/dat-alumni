@@ -1055,7 +1055,7 @@ function ArtistGrid({ artists }: { artists: AlumniRow[] }) {
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
         gap: "1rem",
         justifyItems: "center",
       }}

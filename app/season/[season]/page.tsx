@@ -263,7 +263,7 @@ export default async function SeasonPage(
                         <div
                           style={{
                             display: "grid",
-                            gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                            gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
                             gap: "1rem",
                             justifyItems: "center",
                             marginTop: "1rem",
@@ -342,7 +342,7 @@ export default async function SeasonPage(
                             <div
                               style={{
                                 display: "grid",
-                                gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+                                gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
                                 gap: "1rem",
                                 justifyItems: "center",
                                 marginTop: "1rem",

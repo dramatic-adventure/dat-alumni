@@ -466,7 +466,7 @@ export default function DirectoryPageClient({
                     style={{
                       display: "grid",
                       gap: "0.5rem",
-                      gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
+                      gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))",
                     }}
                   >
                     {filterOptions.map((filter) => (

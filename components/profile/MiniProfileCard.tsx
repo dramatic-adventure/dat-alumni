@@ -316,7 +316,7 @@ const handleError = useCallback(() => {
     >
       <div
         className="flex flex-col items-start"
-        style={{ width: "144px", ...customStyle }}
+        style={{ width: "100%", ...customStyle }}
       >
         {/* Headshot */}
         <div
@@ -360,7 +360,7 @@ const handleError = useCallback(() => {
             onError={handleError}
             fill
             className="object-cover transition-all duration-300"
-            sizes="144px"
+            sizes="(max-width: 640px) calc(50vw - 3rem), 144px"
             loading={priority ? "eager" : "lazy"}
             fetchPriority={priority ? "high" : "auto"}
             draggable={false}
