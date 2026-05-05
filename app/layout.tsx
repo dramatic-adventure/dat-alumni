@@ -116,8 +116,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {/* give bottom clearance so in-page footer nav can't hide behind Footer */}
           <main className="grow w-full p-0 m-0 pb-24">{children}</main>
 
-          {/* force Footer above any page overlays */}
-          <div className="mt-auto relative z-50">
+          {/* footer sits above normal page content but below the fixed header (z-50) */}
+          <div className="mt-auto relative z-10">
             <Footer />
           </div>
         </Providers>

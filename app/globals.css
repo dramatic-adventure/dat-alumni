@@ -787,6 +787,37 @@ footer .footer-cta {
   border-color: rgba(242, 242, 242, 0.5) !important;
 }
 
+/* ===============================
+   📱 Mobile Type Scale Floor
+   Prevents text from rendering below readable minimums on
+   small viewports. Scoped to ≤640px to avoid touching desktop.
+=============================== */
+
+@media (max-width: 640px) {
+  /* Body copy should never drop below 15px */
+  body, p, li, td, th {
+    font-size: max(0.9375rem, 1em);
+  }
+
+  /* Headings: guard against over-small clamp minimums */
+  h1 { font-size: max(1.6rem, 1em); }
+  h2 { font-size: max(1.3rem, 1em); }
+  h3 { font-size: max(1.1rem, 1em); }
+  h4, h5, h6 { font-size: max(0.95rem, 1em); }
+
+  /* Prevent the common pattern of very small label/eyebrow text from
+     going below 10px on narrow screens */
+  .poster-eyebrow { font-size: max(0.625rem, 1em); }
+  .meta-role { font-size: max(0.875rem, 1em); }
+  .meta-location { font-size: max(0.8rem, 1em); }
+
+  /* Alumni profile page: column goes full-width */
+  .alumni-profile-page {
+    max-width: 100%;
+    border-radius: 0;
+  }
+}
+
 /* -----------------------------------------------------------
    EventPanel: responsive field rows in Profile Studio
 ----------------------------------------------------------- */

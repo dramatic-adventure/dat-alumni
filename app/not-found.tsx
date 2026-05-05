@@ -55,7 +55,7 @@ export default function NotFound() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          padding: "5rem 1.5rem 6rem",
+          padding: "clamp(7rem, 15vw, 9rem) 1.5rem 6rem",
           textAlign: "center",
         }}
       >

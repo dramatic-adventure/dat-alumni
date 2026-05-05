@@ -529,7 +529,7 @@ export default function CommunitySection({
             margin: "0 0 1.5rem 0",
           }}
         >
-          What Matters to Me
+          Clubs I Believe In
         </p>
 
         {hasClubs && (

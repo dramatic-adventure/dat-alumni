@@ -95,6 +95,17 @@ export default function FeaturedAlumni({ highlights }: FeaturedAlumniProps) {
                   el.style.transform = `translateY(0) rotate(0deg) scale(1)`;
                   el.style.boxShadow = `4px 8px 16px rgba(0,0,0,0.25)`;
                 }}
+                onTouchStart={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  const randomTilt = Math.random() * 4 - 2;
+                  el.style.transform = `translateY(-8px) rotate(${randomTilt}deg) scale(1.05)`;
+                  el.style.boxShadow = `0 16px 32px rgba(0,0,0,0.32)`;
+                }}
+                onTouchEnd={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.transform = `translateY(0) rotate(0deg) scale(1)`;
+                  el.style.boxShadow = `4px 8px 16px rgba(0,0,0,0.25)`;
+                }}
               >
                 {/* ✅ Image */}
                 <div

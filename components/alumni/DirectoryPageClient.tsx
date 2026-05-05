@@ -356,57 +356,69 @@ export default function DirectoryPageClient({
               Explore our global community.
             </h2>
 
-            {/* Search + Sort */}
-            <div style={{ display: "flex", gap: "1rem", alignItems: "stretch" }}>
-              <div style={{ flex: 1, height: "47px" }}>
-                <AlumniSearch
-                  enrichedData={enrichedData}
-                  filters={filters}
-                  onResults={(primary: ProfileLiveRow[], secondary: ProfileLiveRow[], q: string) => {
-                    setPrimaryResults(
-                      primary.map((r) =>
-                        liveRowToAlumniItem(r, enrichedBySlug, primaryRoleBySlug)
-                      )
-                    );
-                    setSecondaryResults(
-                      secondary.map((r) =>
-                        liveRowToAlumniItem(r, enrichedBySlug, primaryRoleBySlug)
-                      )
-                    );
-                    setQuery(q);
+            {/* Search + Sort — stacks to column on mobile */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+              {/* Row 1: search input + filter toggle */}
+              <div style={{ display: "flex", gap: "0.6rem", alignItems: "stretch" }}>
+                <div style={{ flex: 1 }}>
+                  <AlumniSearch
+                    enrichedData={enrichedData}
+                    filters={filters}
+                    onResults={(primary: ProfileLiveRow[], secondary: ProfileLiveRow[], q: string) => {
+                      setPrimaryResults(
+                        primary.map((r) =>
+                          liveRowToAlumniItem(r, enrichedBySlug, primaryRoleBySlug)
+                        )
+                      );
+                      setSecondaryResults(
+                        secondary.map((r) =>
+                          liveRowToAlumniItem(r, enrichedBySlug, primaryRoleBySlug)
+                        )
+                      );
+                      setQuery(q);
+                    }}
+                    showAllIfEmpty={true}
+                    debug={false}
+                  />
+                </div>
+
+                <button
+                  onClick={() => setAdvancedOpen(!advancedOpen)}
+                  style={{
+                    height: "47px",
+                    fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                    fontWeight: 600,
+                    backgroundColor: advancedOpen ? "#4a007a" : "#6C00AF",
+                    color: "#f2f2f2",
+                    padding: "0 0.85rem",
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontSize: "0.78rem",
+                    letterSpacing: "0.08rem",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    transition: "opacity 0.3s ease, background-color 0.2s ease",
                   }}
-                  showAllIfEmpty={true}
-                  debug={false}
-                />
+                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+                  onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                >
+                  Filters
+                </button>
               </div>
 
-              <button
-                onClick={() => setAdvancedOpen(!advancedOpen)}
-                style={{
-                  height: "47px",
-                  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                  fontWeight: 600,
-                  backgroundColor: "#6C00AF",
-                  color: "#f2f2f2",
-                  padding: "0 1rem",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontSize: "1rem",
-                  letterSpacing: "0.1rem",
-                  transition: "opacity 0.3s ease",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-              >
-                ADVANCED SEARCH
-              </button>
-
-              {/* Hide sort buttons if query exists */}
+              {/* Row 2: sort — only shown when no query active */}
               {!query && (
-                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                  <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", color: "#F6E4C1" }}>
-                    Sort by:
+                <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
+                  <span style={{
+                    fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                    color: "#F6E4C1",
+                    fontSize: "0.8rem",
+                    opacity: 0.7,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                  }}>
+                    Sort:
                   </span>
                   {(["last", "first", "recent"] as const).map((opt) => (
                     <button
@@ -415,18 +427,20 @@ export default function DirectoryPageClient({
                       style={{
                         backgroundColor: sortOption === opt ? "#6C00AF" : "#F6E4C1",
                         color: sortOption === opt ? "#f2f2f2" : "#241123",
-                        padding: "0.4rem 0.8rem",
+                        padding: "0.3rem 0.65rem",
                         border: "none",
                         borderRadius: "6px",
                         fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                         fontWeight: 500,
+                        fontSize: "0.78rem",
                         cursor: "pointer",
                         transition: "opacity 0.3s ease",
+                        whiteSpace: "nowrap",
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
                       onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                     >
-                      {opt === "last" ? "Last Name" : opt === "first" ? "First Name" : "Recently Updated"}
+                      {opt === "last" ? "Last" : opt === "first" ? "First" : "Recent"}
                     </button>
                   ))}
                 </div>
@@ -573,7 +587,7 @@ export default function DirectoryPageClient({
               style={{
                 display: "grid",
                 justifyContent: "center",
-                gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))",
+                gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))",
                 gap: "1.5rem",
                 background: "rgba(36, 17, 35, 0.2)",
                 borderRadius: "8px",
@@ -635,7 +649,7 @@ export default function DirectoryPageClient({
                 style={{
                   display: "grid",
                   justifyContent: "center",
-                  gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))",
+                  gridTemplateColumns: "repeat(auto-fill,minmax(130px,1fr))",
                   gap: "1.5rem",
                   background: "rgba(36, 17, 35, 0.2)",
                   borderRadius: "8px",

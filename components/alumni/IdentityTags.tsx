@@ -5,7 +5,7 @@ import { slugifyTag } from "@/lib/tags";
 
 export default function IdentityTags({
   tags,
-  buttonSpacing = "0.75rem", // default spacing = 12px
+  buttonSpacing = "0.5rem",
 }: {
   tags: string[];
   buttonSpacing?: string;
@@ -13,39 +13,55 @@ export default function IdentityTags({
   const router = useRouter();
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexWrap: "wrap",
-        justifyContent: "flex-end",
-        gap: buttonSpacing,
-      }}
-    >
-      {tags.map((tag, i) => (
-        <button
-          key={i}
-          onClick={() => router.push(`/tag/${slugifyTag(tag)}`)} // ✅ NEW route
-          className="px-5 py-3 rounded-full text-[#F2F2F2] text-sm font-bold uppercase tracking-wider text-center transition-colors duration-150"
-          style={{
-            backgroundColor: "#16697A",
-            fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
-            letterSpacing: "0.2rem",
-            padding: "1.25rem",
-            lineHeight: "1.2",
-            minHeight: "3.6rem",
-            border: "none",
-            boxShadow: "none",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#0f4f5c";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#16697A";
-          }}
-        >
-          {tag}
-        </button>
-      ))}
-    </div>
+    <>
+      <style>{`
+        .identity-tag {
+          background-color: #16697A;
+          font-family: var(--font-space-grotesk), system-ui, sans-serif;
+          letter-spacing: 0.15rem;
+          padding: 0.65rem 1rem;
+          line-height: 1.2;
+          min-height: 2.6rem;
+          border: none;
+          box-shadow: none;
+          border-radius: 999px;
+          color: #F2F2F2;
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: background-color 150ms ease;
+          -webkit-tap-highlight-color: transparent;
+        }
+        @media (min-width: 641px) {
+          .identity-tag {
+            padding: 0.9rem 1.25rem;
+            min-height: 3rem;
+            font-size: 0.8rem;
+          }
+        }
+        .identity-tag:hover {
+          background-color: #0f4f5c;
+        }
+      `}</style>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "flex-end",
+          gap: buttonSpacing,
+        }}
+      >
+        {tags.map((tag, i) => (
+          <button
+            key={i}
+            onClick={() => router.push(`/tag/${slugifyTag(tag)}`)}
+            className="identity-tag"
+          >
+            {tag}
+          </button>
+        ))}
+      </div>
+    </>
   );
 }

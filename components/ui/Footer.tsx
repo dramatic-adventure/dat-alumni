@@ -147,7 +147,7 @@ export default function Footer() {
           style={{
             fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
             color: "#A7A9BE",
-            fontSize: "clamp(0.539rem, 1.4vw, 0.75rem)",
+            fontSize: "clamp(0.65rem, 1.4vw, 0.75rem)",
             marginBottom: "4.5em",
             letterSpacing: "0.01em",
             maxWidth: "100vw",

@@ -180,20 +180,19 @@ export default function Header() {
   function topLevelButtonStyle(isFirst: boolean) {
     return {
       fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
-      fontWeight: 500,
+      fontWeight: 600,
       color: '#f2f2f2',
       background: 'none',
       border: 'none',
       textAlign: 'left' as const,
       width: '100%',
-      paddingTop: isTight ? 10 : 15,   // was 15, compress to ~10 in tight mode
-      paddingBottom: isTight ? 10 : 15,
+      paddingTop: isTight ? 10 : 14,
+      paddingBottom: isTight ? 10 : 14,
       paddingLeft: 5,
       paddingRight: 0,
-      // margin-top for first item ("ABOUT")
-      marginTop: isFirst ? (isTight ? '1rem' : '2rem') : undefined,
-      lineHeight: isTight ? 1.05 : 1.1, // tighter line-height in tight mode
-      fontSize: '2.1rem',               // keep same font size
+      marginTop: isFirst ? (isTight ? '0.75rem' : '1.5rem') : undefined,
+      lineHeight: isTight ? 1.05 : 1.1,
+      fontSize: '1.75rem',
     };
   }
 
@@ -205,17 +204,17 @@ export default function Header() {
   }
   function subItemInnerStyle() {
     return {
-      color: '#f2f2f2',
+      color: 'rgba(242,242,242,0.88)',
       background: 'none',
       textTransform: 'uppercase' as const,
-      fontWeight: 500,
+      fontWeight: 400,
       letterSpacing: '0.05em',
-      fontSize: '2.1rem',
+      fontSize: '1.25rem',
       width: '100%',
       marginLeft: '3rem',
-      paddingTop: isTight ? '0.5rem' : '1rem',
-      paddingBottom: isTight ? '0.5rem' : '1rem',
-      lineHeight: isTight ? 1.05 : 1.1,
+      paddingTop: isTight ? '0.45rem' : '0.75rem',
+      paddingBottom: isTight ? '0.45rem' : '0.75rem',
+      lineHeight: isTight ? 1.1 : 1.2,
     };
   }
 
@@ -354,36 +353,54 @@ export default function Header() {
                 {/* Back button */}
                 <button
                   onClick={() => setShowSubmenu(null)}
-                  className="force-grotesk flex items-center gap-3 ml-[3rem] transition"
+                  className="force-grotesk flex items-center gap-2 ml-[3rem] transition"
                   style={{
                     background: 'none',
                     border: 'none',
-                    marginTop: isTight ? '1rem' : '2rem',
-                    color: '#f2f2f2',
-                    opacity: '0.6',
-                    fontSize: '2rem',
-                    fontWeight: 500,
+                    marginTop: isTight ? '1rem' : '1.5rem',
+                    marginBottom: isTight ? '0.5rem' : '0.75rem',
+                    color: 'rgba(242,242,242,0.65)',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
                     textTransform: 'uppercase',
-                    letterSpacing: '0.1em',
-                    lineHeight: 1.1,
+                    letterSpacing: '0.15em',
+                    lineHeight: 1.2,
                     cursor: 'pointer',
+                    padding: '0.5rem 0',
                   }}
-                  // hover -> DAT yellow
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLElement).style.color = COLORS.hover;
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.color = '#f2f2f2';
+                    (e.currentTarget as HTMLElement).style.color = 'rgba(242,242,242,0.65)';
                   }}
                 >
                   <span
-                    className="leading-none -mr-2"
-                    style={{ fontSize: '2.5rem', lineHeight: 1, fontWeight: 300, }}
+                    className="leading-none"
+                    style={{ fontSize: '1.1rem', lineHeight: 1, fontWeight: 400 }}
                   >
                     ‹
                   </span>
-                  <span>Back</span>
+                  <span>All sections</span>
                 </button>
+
+                {/* Section label */}
+                <div
+                  style={{
+                    marginLeft: '3rem',
+                    marginBottom: isTight ? '0.5rem' : '1rem',
+                    paddingBottom: '0.6rem',
+                    borderBottom: '1px solid rgba(255,255,255,0.18)',
+                    color: '#f2f2f2',
+                    fontSize: '1.75rem',
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  {showSubmenu}
+                </div>
 
                 {/* Submenu list */}
                 {NAV_ITEMS.find((item) => item.label === showSubmenu)?.submenu?.map(
@@ -441,7 +458,7 @@ export default function Header() {
                         key={item.label}
                         className="w-full flex justify-center"
                         style={{
-                          marginTop: isTight ? '0.5rem' : '1rem',
+                          marginTop: isTight ? '1rem' : '1.5rem',
                           marginBottom: isTight ? '1rem' : '2rem',
                         }}
                       >
@@ -469,72 +486,67 @@ export default function Header() {
                   // items with submenu
                   if ('submenu' in item) {
                     return (
-                      <button
-                        key={item.label}
-                        className={topLevelButtonBase(
-                          item.label === 'ABOUT' ? '' : ''
-                        )}
-                        onClick={() => setShowSubmenu(item.label)}
-                        style={{
-                          ...topLevelButtonStyle(item.label === 'ABOUT'),
-                          cursor: 'pointer',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                        }}
-                        // hover -> DAT yellow
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLElement).style.color =
-                            COLORS.hover;
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLElement).style.color =
-                            '#f2f2f2';
-                        }}
-                      >
-                        <span>
-                          {item.label} <span style={{ fontWeight: 300 }}>›</span>
-
-                        </span>
-                      </button>
+                      <div key={item.label} style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', marginLeft: '3rem', marginRight: '2rem' }}>
+                        <button
+                          className={topLevelButtonBase(
+                            item.label === 'ABOUT' ? '' : ''
+                          )}
+                          onClick={() => setShowSubmenu(item.label)}
+                          style={{
+                            ...topLevelButtonStyle(item.label === 'ABOUT'),
+                            cursor: 'pointer',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            marginLeft: 0,
+                            paddingRight: 0,
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLElement).style.color =
+                              COLORS.hover;
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLElement).style.color =
+                              '#f2f2f2';
+                          }}
+                        >
+                          <span>{item.label}</span>
+                          <span style={{ fontSize: '1.3rem', lineHeight: 1, fontWeight: 300, opacity: 0.7 }}>›</span>
+                        </button>
+                      </div>
                     );
                   }
 
                   // plain link
                   return (
-                    <Link
-                      key={item.label}
-                      href={item.href}
-                      onClick={() => setIsOpen(false)}
-                      className="w-full"
-                      style={{ textDecoration: 'none' }}
-                    >
-                      <button
-                        className={topLevelButtonBase()}
-                        style={{
-                          ...topLevelButtonStyle(false),
-                          cursor: 'pointer',
-                        }}
-                        // hover -> DAT yellow
-                        onMouseEnter={(e) => {
-                          (e.currentTarget as HTMLElement).style.color =
-                            COLORS.hover;
-                        }}
-                        onMouseLeave={(e) => {
-                          (e.currentTarget as HTMLElement).style.color =
-                            '#f2f2f2';
-                        }}
+                    <div key={item.label} style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', marginLeft: '3rem', marginRight: '2rem' }}>
+                      <Link
+                        href={item.href}
+                        onClick={() => setIsOpen(false)}
+                        className="w-full"
+                        style={{ textDecoration: 'none', display: 'block' }}
                       >
-                        <span>{item.label}</span>
-                        {/* keep “›” placeholder to balance flex, but invisible */}
-                        <span
-                          className="leading-none opacity-0 select-none pointer-events-none"
-                          style={{ fontSize: '2.25rem', lineHeight: 1, fontWeight: 300, }}
+                        <button
+                          className={topLevelButtonBase()}
+                          style={{
+                            ...topLevelButtonStyle(false),
+                            cursor: 'pointer',
+                            marginLeft: 0,
+                            paddingRight: 0,
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLElement).style.color =
+                              COLORS.hover;
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLElement).style.color =
+                              '#f2f2f2';
+                          }}
                         >
-                          ›
-                        </span>
-                      </button>
-                    </Link>
+                          <span>{item.label}</span>
+                        </button>
+                      </Link>
+                    </div>
                   );
                 })}
               </>
