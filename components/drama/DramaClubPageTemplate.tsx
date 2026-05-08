@@ -1187,7 +1187,7 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
       cards.push({
         id: "artists-served",
         value: approxYouth,
-        label: "Club artists served",
+        label: "Youth artists",
         helper: "Across workshops and drama club sessions",
       });
     }
@@ -1196,7 +1196,7 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
       cards.push({
         id: "local-audience",
         value: approxAudience,
-        label: "Local audience reached",
+        label: "Audience reached",
         helper: "School and community performances in the territory",
       });
     }
@@ -1205,7 +1205,7 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
       cards.push({
         id: "years-with-community",
         value: yearsActive.toString(),
-        label: "Years with this community",
+        label: "Years running",
         helper: "A partnership that grows deeper each season",
       });
     }
@@ -1651,6 +1651,8 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
   const visibleLeadTeam = dramaClubLeadTeam.slice(0, 5);
   const hasMoreLeadTeam = dramaClubLeadTeam.length > 5;
   const firstProgram = activePrograms[0] ?? null;
+  // Cap marquee at 8 unique artists; fewer than 4 renders as a static row
+  const marqueeItemsCapped = marqueeItems.slice(0, 8);
 
   const layoutClass = ["dc-layout", !hasVoicesSection ? "dc-layout--single" : ""]
     .filter(Boolean)
@@ -2283,6 +2285,8 @@ const voicesHeading = `Voices from ${voicesFrom}`;
                                 slug={slug}
                                 headshotUrl={(person as any).avatarSrc}
                                 variant="light"
+                                nameFontSize={12}
+                                roleFontSize={11}
                               />
                             </div>
                           );
@@ -2300,21 +2304,46 @@ const voicesHeading = `Voices from ${voicesFrom}`;
                     </div>
                   )}
 
-                  {/* Lineage marquee — visiting artists merged */}
-                  {marqueeItems.length > 0 && (
+                  {/* Lineage — visiting artists merged; static row for <4, marquee for 4+ */}
+                  {marqueeItemsCapped.length > 0 && (
                     <div className="dc-artist-full__marquee">
-                      <p className="dc-mini-label font-sans">Artists who’ve worked here</p>
-                      <ArtistLineageMarquee
-                        showHeader={false}
-                        artists={marqueeItems}
-                        pinLocalMastersCount={2}
-                      />
+                      <p className="dc-mini-label font-sans">Artists who&#8217;ve worked here</p>
+                      {marqueeItemsCapped.length < 4 ? (
+                        <div className="dc-lineage-static-row">
+                          {marqueeItemsCapped.map((a, idx) => {
+                            const aSlug = (a.slug || "").trim() || `artist-${idx}`;
+                            const aRole = (a.role || "").trim();
+                            const aHeadshot = (a.headshotUrl || "").trim() || undefined;
+                            const aHref = (a.href || "").trim() || undefined;
+                            return (
+                              <div key={`${aSlug}-${idx}`} className="dc-lineage-static-item">
+                                <MiniProfileCard
+                                  name={a.name}
+                                  role={aRole}
+                                  slug={aSlug}
+                                  headshotUrl={aHeadshot}
+                                  href={aHref}
+                                  variant="light"
+                                  nameFontSize={12}
+                                  roleFontSize={11}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <ArtistLineageMarquee
+                          showHeader={false}
+                          artists={marqueeItemsCapped}
+                          pinLocalMastersCount={2}
+                        />
+                      )}
                       <div className="dc-inline-cta dc-inline-cta--alumni">
                         <Link
                           href="/alumni"
                           className="dc-link dc-link--artist font-sans"
                         >
-                          Meet the full DAT alumni community →
+                          Meet the full DAT alumni community &#8594;
                         </Link>
                       </div>
                     </div>
@@ -2396,20 +2425,27 @@ const voicesHeading = `Voices from ${voicesFrom}`;
               </p>
               <div className="dc-other-clubs__grid">
                 {otherClubs.map((c) => {
-                  const img = (c as unknown as { cardImage?: string; heroImage?: string }).cardImage
+                  const rawImg = (c as unknown as { cardImage?: string; heroImage?: string }).cardImage
                     || (c as unknown as { heroImage?: string }).heroImage;
+                  // Never show the shared fallback image across cards — treat it as no image
+                  const CLUB_FALLBACK = "/images/drama-clubs/club-fallback.jpg";
+                  const img = rawImg && rawImg !== CLUB_FALLBACK ? rawImg : undefined;
                   const geo = getGeoLine(c);
                   return (
                     <Link
                       key={c.slug}
                       href={getDramaClubHref(c)}
-                      className="dc-other-clubs__card"
+                      className={`dc-other-clubs__card${img ? "" : " dc-other-clubs__card--noimg"}`}
                     >
-                      <div
-                        className="dc-other-clubs__img"
-                        style={img ? { backgroundImage: `url('${img}')` } : undefined}
-                        aria-hidden="true"
-                      />
+                      {img ? (
+                        <div
+                          className="dc-other-clubs__img"
+                          style={{ backgroundImage: `url('${img}')` }}
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <div className="dc-other-clubs__img dc-other-clubs__img--kraft" aria-hidden="true" />
+                      )}
                       <div className="dc-other-clubs__info">
                         {geo && (
                           <p className="dc-other-clubs__geo font-sans">{geo}</p>
