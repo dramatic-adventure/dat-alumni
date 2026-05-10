@@ -707,6 +707,23 @@ export function buildTitleBuckets(alumni: AlumniRow[]) {
   return buckets;
 }
 
+/** Return a human-readable label for a bucket key.
+ * Fixed buckets use their curated label; dynamic title:/pathway: buckets are
+ * derived from the key slug (e.g. "title:actors" → "Actors").
+ */
+export function getLabelForBucketKey(key: string): string {
+  if (key in FIXED_BUCKETS) {
+    return FIXED_BUCKETS[key as keyof typeof FIXED_BUCKETS].label;
+  }
+  const slug = key.startsWith("title:") ? key.slice(6)
+    : key.startsWith("pathway:") ? key.slice(8)
+    : key;
+  return slug
+    .split("-")
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
 /** Compute preferred bucket route slug(s) for a raw title token */
 export function getBucketSlugsForTitleToken(tokenRaw: string): string[] {
   const keys = bucketsForTitleToken(tokenRaw);

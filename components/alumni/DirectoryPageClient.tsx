@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { parseLanguages } from "@/lib/languages";
-import { bucketsForTitleToken, splitTitles } from "@/lib/titles";
+import { bucketsForTitleToken, splitTitles, getLabelForBucketKey } from "@/lib/titles";
 import { normalizeLocation } from "@/lib/locations";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
@@ -219,9 +219,18 @@ export default function DirectoryPageClient({
   }, [alumni]);
 
   const roles = useMemo(() => {
-    const set = new Set<string>();
-    alumni.forEach((a) => a.roles?.forEach((r) => set.add(r)));
-    return Array.from(set).sort();
+    // Collect distinct bucket labels (e.g. "Actors", "Designers") rather than every
+    // exact role string — mirrors the /title bucket taxonomy so the dropdown stays clean.
+    const bucketMap = new Map<string, string>(); // key → label
+    alumni.forEach((a) => {
+      for (const role of a.roles || []) {
+        if (!role) continue;
+        for (const key of bucketsForTitleToken(role)) {
+          if (!bucketMap.has(key)) bucketMap.set(key, getLabelForBucketKey(key));
+        }
+      }
+    });
+    return Array.from(bucketMap.values()).sort();
   }, [alumni]);
 
   const languageOptions = useMemo(() => {
@@ -258,10 +267,16 @@ export default function DirectoryPageClient({
     if (filters.program) result = result.filter((a) => a.programs?.includes(filters.program));
     if (filters.season) result = result.filter((a) => a.seasons?.includes(filters.season));
     if (filters.location) result = result.filter((a) => a.location === filters.location || a.secondLocation === filters.location);
-    if (filters.role) result = result.filter((a) =>
-      a.roles?.includes(filters.role) ||
-      ctMatchesRoleFilter(a.currentTitle, filters.role)
-    );
+    if (filters.role) {
+      const filterBuckets = bucketsForTitleToken(filters.role);
+      result = result.filter((a) => {
+        // Check merged roles via bucket routing (e.g. "Lighting Designer" → "designers" bucket)
+        const roleMatch = filterBuckets.length > 0 && (a.roles || []).some(
+          (r) => r && bucketsForTitleToken(r).some((b) => filterBuckets.includes(b))
+        );
+        return roleMatch || ctMatchesRoleFilter(a.currentTitle, filters.role);
+      });
+    }
     if (filters.statusFlag) result = result.filter((a) => a.statusFlags?.includes(filters.statusFlag));
     if (filters.identityTag) result = result.filter((a) => a.identityTags?.includes(filters.identityTag));
     if (filters.language) result = result.filter((a) => {

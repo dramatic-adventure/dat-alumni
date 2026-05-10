@@ -47,6 +47,23 @@ function passesTokenFilter(
 }
 
 /**
+ * Check if an alumni's merged roles match a bucket-based role filter.
+ * Used in useAlumniSearch to replace the exact-token passesTokenFilter check.
+ */
+function mergedRolesMatchBucketFilter(
+  mergedRoles: string[] | undefined,
+  filterRole: string | undefined
+): boolean {
+  if (!filterRole) return true;
+  const filterBuckets = bucketsForTitleToken(filterRole);
+  if (!filterBuckets.length) return false;
+  for (const role of mergedRoles || []) {
+    if (role && bucketsForTitleToken(role).some((b) => filterBuckets.includes(b))) return true;
+  }
+  return false;
+}
+
+/**
  * Check if a currentTitle matches a role filter using the same token-bucket routing
  * as /title — mirrors the logic in DirectoryPageClient.ctMatchesRoleFilter.
  */
@@ -409,7 +426,7 @@ export function useAlumniSearch(
       const gated: SearchRow[] = (enrichedData ?? []).filter((item) => {
         if (!passesTokenFilter(filters.program, item.programTokens)) return false;
         if (
-          !passesTokenFilter(filters.role, item.roleTokens) &&
+          !mergedRolesMatchBucketFilter(item.mergedRoles, filters.role) &&
           !ctMatchesRoleFilter(item.currentTitle, filters.role)
         ) return false;
         if (!passesTokenFilter(filters.location, item.locationTokens)) return false;
@@ -1442,7 +1459,7 @@ const candidateQueries =
         if (
           !passesTokenFilter(filters.program, it.programTokens) ||
           (
-            !passesTokenFilter(filters.role, it.roleTokens) &&
+            !mergedRolesMatchBucketFilter(it.mergedRoles, filters.role) &&
             !ctMatchesRoleFilter(it.currentTitle, filters.role)
           ) ||
           !passesTokenFilter(filters.location, it.locationTokens) ||
