@@ -423,16 +423,16 @@ export default function DirectoryPageClient({
 
                 {/* Sort controls — inline on desktop, hidden on mobile */}
                 {isDesktop && !query && (
-                  <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexShrink: 0 }}>
+                  <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexShrink: 0, marginLeft: "0.5rem", paddingLeft: "0.75rem", borderLeft: "1px solid rgba(246,228,193,0.2)" }}>
                     <span style={{
                       fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
                       color: "#F6E4C1",
-                      fontSize: "0.8rem",
-                      opacity: 0.7,
-                      letterSpacing: "0.06em",
+                      fontSize: "0.7rem",
+                      opacity: 0.5,
+                      letterSpacing: "0.08em",
                       textTransform: "uppercase",
                     }}>
-                      Sort:
+                      Sort
                     </span>
                     {(["last", "first", "recent"] as const).map((opt) => (
                       <button
@@ -450,12 +450,11 @@ export default function DirectoryPageClient({
                           cursor: "pointer",
                           transition: "opacity 0.3s ease",
                           whiteSpace: "nowrap",
-                          height: "47px",
                         }}
                         onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
                         onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                       >
-                        {opt === "last" ? "Last" : opt === "first" ? "First" : "Recently Updated"}
+                        {opt === "last" ? "Last" : opt === "first" ? "First" : "Updated"}
                       </button>
                     ))}
                   </div>
