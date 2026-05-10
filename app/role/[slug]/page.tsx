@@ -78,42 +78,8 @@ function normalizeFlagForSlug(
   return { label: raw, slug: fallbackSlugify(raw) };
 }
 
-// Build all valid role slugs at build time
-export async function generateStaticParams() {
-  const [alumniRaw, roleAssignments] = await Promise.all([
-    loadVisibleAlumni(),
-    loadRoleAssignments(),
-  ]);
-
-  const alumni: AlumniRow[] = alumniRaw.map((a) => {
-    const mergedRoles = getOrderedProfileRoles(
-      a.profileId || a.slug,
-      a.roles || [],
-      roleAssignments
-    );
-
-    const primaryRole =
-      getPrimaryDatRoleForProfile(a.slug, a.roles || [], roleAssignments) ||
-      mergedRoles[0] ||
-      a.role;
-
-    return {
-      ...a,
-      role: primaryRole,
-      roles: mergedRoles,
-    };
-  });
-  const slugs = new Set<string>();
-
-  for (const artist of alumni) {
-    for (const flag of artist.statusFlags ?? []) {
-      const norm = normalizeFlagForSlug(flag);
-      if (norm?.slug) slugs.add(norm.slug);
-    }
-  }
-
-  return Array.from(slugs).map((slug) => ({ slug }));
-}
+// No generateStaticParams — pages render on-demand as ISR (revalidate = 3600)
+// Removed to prevent concurrent Google Sheets quota errors during Netlify builds.
 
 // Helpful metadata per role page
 export async function generateMetadata({

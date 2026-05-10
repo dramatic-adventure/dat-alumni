@@ -135,31 +135,8 @@ function titleCase(input: string) {
     .join(" ");
 }
 
-export async function generateStaticParams() {
-  const alumni: AlumniRow[] = await loadAlumniWithMergedRoles();
-  const buckets = buildTitleBuckets(alumni);
-  const valid = Array.from(buckets.values()).filter((b) => b.people.size > 0);
-
-  const seen = new Set<string>();
-  const out: { slug: string }[] = [];
-  for (const b of valid) {
-    const keySlug = String(b.meta.key); // fixed buckets: use key (e.g., "playwrights")
-    const labelSlug = slugifyTitle(b.meta.label); // dynamic buckets: use label
-    const isDynamic = keySlug.startsWith("title:") || keySlug.startsWith("pathway:");
-    const canonical = isDynamic ? labelSlug : keySlug;
-
-    if (!seen.has(canonical)) {
-      out.push({ slug: canonical });
-      seen.add(canonical);
-    }
-    // also allow labelSlug for fixed (non-dynamic) buckets as an alias
-    if (!isDynamic && !seen.has(labelSlug)) {
-      out.push({ slug: labelSlug });
-      seen.add(labelSlug);
-    }
-  }
-  return out;
-}
+// No generateStaticParams — pages render on-demand as ISR (revalidate = 3600)
+// Removed to prevent concurrent Google Sheets quota errors during Netlify builds.
 
 export async function generateMetadata({
   params,
