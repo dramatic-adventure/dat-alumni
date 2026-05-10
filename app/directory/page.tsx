@@ -15,6 +15,7 @@ import {
 } from "@/lib/alumniSheetsPublic.server";
 import { programMap } from "@/lib/programMap";
 import { productionMap } from "@/lib/productionMap";
+import { normSlug } from "@/lib/slugAliases";
 
 import type { EnrichedProfileLiveRow } from "@/components/alumni/AlumniSearch/enrichAlumniData.server";
 
@@ -42,29 +43,38 @@ export default async function DirectoryPage() {
     ])
   );
 
-  const normSlug = (s: string) => String(s || "").trim().toLowerCase();
+  // Mirror the /title page pattern: index project roles from programMap + productionMap
+  const projectRolesBySlug = new Map<string, string[]>();
+  const addProjectRoles = (artistSlug: string, roles: string[]) => {
+    const key = normSlug(artistSlug);
+    if (!key) return;
+    const existing = projectRolesBySlug.get(key) ?? [];
+    projectRolesBySlug.set(key, [...existing, ...roles]);
+  };
+  for (const key in programMap) {
+    const prog = (programMap as Record<string, any>)[key];
+    for (const [slug, roles] of Object.entries(prog?.artists ?? {})) {
+      if (Array.isArray(roles)) addProjectRoles(slug, roles);
+    }
+  }
+  for (const key in productionMap) {
+    const prod = (productionMap as Record<string, any>)[key];
+    for (const [slug, roles] of Object.entries(prod?.artists ?? {})) {
+      if (Array.isArray(roles)) addProjectRoles(slug, roles);
+    }
+  }
 
-  // Build programs, seasons, and project roles per alumni slug from programMap + productionMap
+  // Programs + seasons index (programMap only — seasons come from program participation)
   const programsBySlug = new Map<string, Set<string>>();
   const seasonsBySlug = new Map<string, Set<string>>();
-  const projectRolesBySlug = new Map<string, string[]>();
-
-  for (const prog of Object.values(programMap)) {
-    for (const [artistSlug, artistRoles] of Object.entries(prog.artists)) {
+  for (const key in programMap) {
+    const prog = (programMap as Record<string, any>)[key];
+    for (const artistSlug of Object.keys(prog?.artists ?? {})) {
       const ns = normSlug(artistSlug);
       if (!programsBySlug.has(ns)) programsBySlug.set(ns, new Set());
       programsBySlug.get(ns)!.add(prog.program);
       if (!seasonsBySlug.has(ns)) seasonsBySlug.set(ns, new Set());
       seasonsBySlug.get(ns)!.add(`Season ${prog.season}`);
-      if (!projectRolesBySlug.has(ns)) projectRolesBySlug.set(ns, []);
-      projectRolesBySlug.get(ns)!.push(...artistRoles);
-    }
-  }
-  for (const prod of Object.values(productionMap)) {
-    for (const [artistSlug, artistRoles] of Object.entries(prod.artists)) {
-      const ns = normSlug(artistSlug);
-      if (!projectRolesBySlug.has(ns)) projectRolesBySlug.set(ns, []);
-      projectRolesBySlug.get(ns)!.push(...artistRoles);
     }
   }
 
