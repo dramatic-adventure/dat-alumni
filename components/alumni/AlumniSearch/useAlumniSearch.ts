@@ -46,6 +46,23 @@ function passesTokenFilter(
   return hasToken(tokens, n);
 }
 
+/**
+ * Check if a currentTitle matches a role filter using the same token-bucket routing
+ * as /title — mirrors the logic in DirectoryPageClient.ctMatchesRoleFilter.
+ */
+function ctMatchesRoleFilter(ct: string | undefined, filterRole: string | undefined): boolean {
+  if (!ct || !filterRole) return false;
+  const filterBuckets = bucketsForTitleToken(filterRole);
+  if (!filterBuckets.length) {
+    return normalizeText(ct).includes(normalizeText(filterRole));
+  }
+  for (const token of splitTitles(ct)) {
+    if (!token.trim()) continue;
+    if (bucketsForTitleToken(token).some((b) => filterBuckets.includes(b))) return true;
+  }
+  return false;
+}
+
 /** Flatten all searchable tokens on a row into one set */
 function buildFlatTokenSet(item: EnrichedProfileLiveRow): Set<string> {
   return new Set<string>([
@@ -393,8 +410,7 @@ export function useAlumniSearch(
         if (!passesTokenFilter(filters.program, item.programTokens)) return false;
         if (
           !passesTokenFilter(filters.role, item.roleTokens) &&
-          !(filters.role && item.currentTitle &&
-            normalizeText(item.currentTitle).includes(normalizeText(filters.role)))
+          !ctMatchesRoleFilter(item.currentTitle, filters.role)
         ) return false;
         if (!passesTokenFilter(filters.location, item.locationTokens)) return false;
         if (!passesTokenFilter(filters.statusFlag, item.statusTokens)) return false;
@@ -1427,8 +1443,7 @@ const candidateQueries =
           !passesTokenFilter(filters.program, it.programTokens) ||
           (
             !passesTokenFilter(filters.role, it.roleTokens) &&
-            !(filters.role && it.currentTitle &&
-              normalizeText(it.currentTitle).includes(normalizeText(filters.role)))
+            !ctMatchesRoleFilter(it.currentTitle, filters.role)
           ) ||
           !passesTokenFilter(filters.location, it.locationTokens) ||
           !passesTokenFilter(filters.statusFlag, it.statusTokens) ||

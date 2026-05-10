@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { parseLanguages } from "@/lib/languages";
+import { bucketsForTitleToken, splitTitles } from "@/lib/titles";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import AlumniSearch from "@/components/alumni/AlumniSearch/AlumniSearch";
@@ -57,6 +58,25 @@ function driveUrlFromId(id?: string | null) {
   const v = String(id ?? "").trim();
   if (!v) return "";
   return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(v)}`;
+}
+
+/**
+ * Check if an alumni's currentTitle matches a role filter using the same
+ * token-bucket routing as /title — avoids false positives like "Director of Education"
+ * matching a "Director" filter.
+ */
+function ctMatchesRoleFilter(ct: string | undefined, filterRole: string): boolean {
+  if (!ct || !filterRole) return false;
+  const filterBuckets = bucketsForTitleToken(filterRole);
+  if (!filterBuckets.length) {
+    // filterRole doesn't route to any known bucket — fall back to simple substring match
+    return ct.toLowerCase().includes(filterRole.toLowerCase());
+  }
+  for (const token of splitTitles(ct)) {
+    if (!token.trim()) continue;
+    if (bucketsForTitleToken(token).some((b) => filterBuckets.includes(b))) return true;
+  }
+  return false;
 }
 
 /** Convert Profile-Live row (string-ish fields) into the directory AlumniItem shape */
@@ -239,7 +259,7 @@ export default function DirectoryPageClient({
     if (filters.location) result = result.filter((a) => a.location === filters.location || a.secondLocation === filters.location);
     if (filters.role) result = result.filter((a) =>
       a.roles?.includes(filters.role) ||
-      (a.currentTitle && a.currentTitle.toLowerCase().includes(filters.role.toLowerCase()))
+      ctMatchesRoleFilter(a.currentTitle, filters.role)
     );
     if (filters.statusFlag) result = result.filter((a) => a.statusFlags?.includes(filters.statusFlag));
     if (filters.identityTag) result = result.filter((a) => a.identityTags?.includes(filters.identityTag));
@@ -659,12 +679,17 @@ export default function DirectoryPageClient({
                     ? "teaching artist"
                     : rawQuery.toLowerCase();
                 const ct = alum.currentTitle || "";
-                // Show via label when searching OR when a role filter is active and currentTitle matches
+                // Show via label when searching OR when a role filter is active and currentTitle matches.
+                // When matching via role filter (no query), use the filter term as the label (e.g. "Director")
+                // rather than the full currentTitle ("Artistic Director at Denver Center").
                 const matchTerm = q || (filters.role ? filters.role.toLowerCase() : "");
-                const ctVia =
-                  ct && matchTerm && ct.toLowerCase().includes(matchTerm) && !primaryRole.toLowerCase().includes(matchTerm)
-                    ? { viaLabel: ct, viaSource: "current-title" as const }
-                    : undefined;
+                const viaLabel = filters.role && !q ? filters.role : ct;
+                const ctViaMatch = ct && matchTerm && (
+                  filters.role && !q
+                    ? ctMatchesRoleFilter(ct, filters.role) && !ctMatchesRoleFilter(primaryRole, filters.role)
+                    : ct.toLowerCase().includes(matchTerm) && !primaryRole.toLowerCase().includes(matchTerm)
+                );
+                const ctVia = ctViaMatch ? { viaLabel, viaSource: "current-title" as const } : undefined;
                 return (
                   <MiniProfileCard
                     key={alum.slug || String(idx)}
@@ -724,10 +749,13 @@ export default function DirectoryPageClient({
                       : rawQuery.toLowerCase();
                   const ct = alum.currentTitle || "";
                   const matchTerm = q || (filters.role ? filters.role.toLowerCase() : "");
-                  const ctVia =
-                    ct && matchTerm && ct.toLowerCase().includes(matchTerm) && !primaryRole.toLowerCase().includes(matchTerm)
-                      ? { viaLabel: ct, viaSource: "current-title" as const }
-                      : undefined;
+                  const viaLabel = filters.role && !q ? filters.role : ct;
+                  const ctViaMatch = ct && matchTerm && (
+                    filters.role && !q
+                      ? ctMatchesRoleFilter(ct, filters.role) && !ctMatchesRoleFilter(primaryRole, filters.role)
+                      : ct.toLowerCase().includes(matchTerm) && !primaryRole.toLowerCase().includes(matchTerm)
+                  );
+                  const ctVia = ctViaMatch ? { viaLabel, viaSource: "current-title" as const } : undefined;
                   return (
                     <MiniProfileCard
                       key={alum.slug || String(idx)}
