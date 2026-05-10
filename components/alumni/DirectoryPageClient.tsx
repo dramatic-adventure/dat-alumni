@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { parseLanguages } from "@/lib/languages";
@@ -138,6 +138,15 @@ export default function DirectoryPageClient({
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>("last");
   const [query, setQuery] = useState<string>("");
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   const enrichedBySlug = useMemo(() => {
     const m = new Map<string, EnrichedProfileLiveRow>();
@@ -234,7 +243,7 @@ export default function DirectoryPageClient({
         : "";
       return parseLanguages(raw).some(({ name }) => name === filters.language);
     });
-    if (filters.updatedOnly) result = result.filter((a) => a.updatedRecently);
+    if (filters.updatedOnly) result = result.filter((a) => (a.updatedAt || 0) > 0);
 
     // Keep relevance order if query is active; otherwise apply selected alpha/recent sort
     if (!query) {
@@ -358,7 +367,7 @@ export default function DirectoryPageClient({
 
             {/* Search + Sort — stacks to column on mobile */}
             <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
-              {/* Row 1: search input + filter toggle */}
+              {/* Row 1: search input + filter toggle (+ sort on desktop) */}
               <div style={{ display: "flex", gap: "0.6rem", alignItems: "stretch" }}>
                 <div style={{ flex: 1 }}>
                   <AlumniSearch
@@ -405,10 +414,50 @@ export default function DirectoryPageClient({
                 >
                   Filters
                 </button>
+
+                {/* Sort controls — inline on desktop, hidden on mobile */}
+                {isDesktop && !query && (
+                  <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexShrink: 0 }}>
+                    <span style={{
+                      fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                      color: "#F6E4C1",
+                      fontSize: "0.8rem",
+                      opacity: 0.7,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                    }}>
+                      Sort:
+                    </span>
+                    {(["last", "first", "recent"] as const).map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setSortOption(opt)}
+                        style={{
+                          backgroundColor: sortOption === opt ? "#6C00AF" : "#F6E4C1",
+                          color: sortOption === opt ? "#f2f2f2" : "#241123",
+                          padding: "0.3rem 0.65rem",
+                          border: "none",
+                          borderRadius: "6px",
+                          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                          fontWeight: 500,
+                          fontSize: "0.78rem",
+                          cursor: "pointer",
+                          transition: "opacity 0.3s ease",
+                          whiteSpace: "nowrap",
+                          height: "47px",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+                        onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                      >
+                        {opt === "last" ? "Last" : opt === "first" ? "First" : "Recently Updated"}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Row 2: sort — only shown when no query active */}
-              {!query && (
+              {/* Row 2: sort — mobile only, hidden when query active */}
+              {!isDesktop && !query && (
                 <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
                   <span style={{
                     fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
@@ -440,7 +489,7 @@ export default function DirectoryPageClient({
                       onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
                       onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                     >
-                      {opt === "last" ? "Last" : opt === "first" ? "First" : "Recent"}
+                      {opt === "last" ? "Last" : opt === "first" ? "First" : "Recently Updated"}
                     </button>
                   ))}
                 </div>
