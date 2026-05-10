@@ -250,7 +250,8 @@ export default function DirectoryPageClient({
     });
     if (filters.updatedOnly) result = result.filter((a) => (a.updatedAt || 0) > 0);
 
-    // Keep relevance order if query is active; otherwise apply selected alpha/recent sort
+    // Keep relevance order if query is active; otherwise apply selected alpha/recent sort.
+    // When updatedOnly filter is active, always sort by most recently updated.
     if (!query) {
       result.sort((a, b) => {
         const nameA = a.name || "";
@@ -260,7 +261,7 @@ export default function DirectoryPageClient({
         const lastA = nameA.split(" ").slice(-1)[0] || "";
         const lastB = nameB.split(" ").slice(-1)[0] || "";
 
-        if (sortOption === "recent") return (b.updatedAt || 0) - (a.updatedAt || 0);
+        if (filters.updatedOnly || sortOption === "recent") return (b.updatedAt || 0) - (a.updatedAt || 0);
         if (sortOption === "first") return firstA.localeCompare(firstB);
         if (lastA === lastB) return firstA.localeCompare(firstB);
         return lastA.localeCompare(lastB);

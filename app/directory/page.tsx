@@ -53,6 +53,16 @@ export default async function DirectoryPage() {
     }
   }
 
+  // Build updatedAt per slug from Profile-Live rows — that sheet has the timestamps
+  const updatedAtBySlug = new Map<string, number>();
+  for (const r of profileLiveRows) {
+    if (r.updatedAt && !Number.isNaN(Date.parse(r.updatedAt))) {
+      const ts = new Date(r.updatedAt).getTime();
+      if (r.slug) updatedAtBySlug.set(r.slug, ts);
+      if ((r as any).canonicalSlug) updatedAtBySlug.set((r as any).canonicalSlug, ts);
+    }
+  }
+
   const now = new Date();
   const alumniWithPrimary = alumni.map((a) => ({
     ...a,
@@ -62,12 +72,7 @@ export default async function DirectoryPage() {
       : a.statusFlags || [],
     programs: Array.from(programsBySlug.get(a.slug) || []),
     seasons: Array.from(seasonsBySlug.get(a.slug) || []),
-    updatedAt:
-      a.lastModified instanceof Date ? a.lastModified.getTime() : undefined,
-    updatedRecently:
-      a.lastModified instanceof Date
-        ? Date.now() - a.lastModified.getTime() < 1000 * 60 * 60 * 24 * 90
-        : false,
+    updatedAt: updatedAtBySlug.get(a.slug),
   }));
 
   return (
