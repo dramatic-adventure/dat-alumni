@@ -252,7 +252,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
                   gap: "1rem",
-                  justifyItems: "center",
+                  
                 }}
               >
                 {people.map(({ alum, roles }) => (

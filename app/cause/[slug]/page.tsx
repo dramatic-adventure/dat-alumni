@@ -1057,7 +1057,7 @@ function ArtistGrid({ artists }: { artists: AlumniRow[] }) {
         display: "grid",
         gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
         gap: "1rem",
-        justifyItems: "center",
+        
       }}
     >
       {artists.map((artist) => (

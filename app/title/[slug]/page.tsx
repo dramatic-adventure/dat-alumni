@@ -384,7 +384,7 @@ const groupedSections =
                         gridTemplateColumns:
                           "repeat(auto-fill, minmax(130px, 1fr))",
                         gap: "1rem",
-                        justifyItems: "center",
+                        
                       }}
                     >
                       {group.people.map((artist) => {
@@ -413,7 +413,7 @@ const groupedSections =
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
                   gap: "1rem",
-                  justifyItems: "center",
+                  
                 }}
               >
                 {flatSelected.map((artist) => {

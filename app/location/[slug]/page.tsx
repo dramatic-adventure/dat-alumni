@@ -288,7 +288,7 @@ export default async function LocationPage({
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
                   gap: "1rem",
-                  justifyItems: "center",
+                  
                 }}
               >
                 {artistsInLocation.map((artist) => (
@@ -343,7 +343,7 @@ export default async function LocationPage({
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))",
                   gap: "1rem",
-                  justifyItems: "center",
+                  
                 }}
               >
                 {nearby.map((n) => (
