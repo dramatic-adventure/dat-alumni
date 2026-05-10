@@ -5,6 +5,7 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { parseLanguages } from "@/lib/languages";
 import { bucketsForTitleToken, splitTitles } from "@/lib/titles";
+import { normalizeLocation } from "@/lib/locations";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import AlumniSearch from "@/components/alumni/AlumniSearch/AlumniSearch";
@@ -111,8 +112,8 @@ function liveRowToAlumniItem(
     roles: mergedRoles,
     primaryRole: primaryRoleBySlug[r.slug] || mergedRoles[0] || "",
     allRoles: mergedRoles,
-    location: r.location || "",
-    secondLocation: (r as any).secondLocation || "",
+    location: normalizeLocation(r.location) ?? r.location ?? "",
+    secondLocation: normalizeLocation((r as any).secondLocation) ?? (r as any).secondLocation ?? "",
     programs,
     seasons,
     statusFlags,

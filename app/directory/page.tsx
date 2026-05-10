@@ -16,6 +16,7 @@ import {
 import { programMap } from "@/lib/programMap";
 import { productionMap } from "@/lib/productionMap";
 import { normSlug } from "@/lib/slugAliases";
+import { normalizeLocation } from "@/lib/locations";
 
 import type { EnrichedProfileLiveRow } from "@/components/alumni/AlumniSearch/enrichAlumniData.server";
 
@@ -101,6 +102,8 @@ export default async function DirectoryPage() {
     );
     return {
       ...a,
+      location: normalizeLocation(a.location) ?? a.location ?? "",
+      secondLocation: normalizeLocation((a as any).secondLocation) ?? (a as any).secondLocation ?? "",
       roles: mergedRoles,
       primaryRole: mergedRoles[0] || primaryRoleBySlug[a.slug] || "",
       statusFlags: deriveBoardStatus(a.slug, roleAssignments, now)
