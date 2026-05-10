@@ -23,6 +23,7 @@ interface AlumniItem {
   /** All merged roles (Role-Assignments + programMap/productionMap + Profile-Live). */
   allRoles?: string[];
   location?: string;
+  secondLocation?: string;
   programs?: string[];
   seasons?: string[];
   statusFlags?: string[];
@@ -91,6 +92,7 @@ function liveRowToAlumniItem(
     primaryRole: primaryRoleBySlug[r.slug] || mergedRoles[0] || "",
     allRoles: mergedRoles,
     location: r.location || "",
+    secondLocation: (r as any).secondLocation || "",
     programs,
     seasons,
     statusFlags,
@@ -188,7 +190,10 @@ export default function DirectoryPageClient({
 
   const locations = useMemo(() => {
     const set = new Set<string>();
-    alumni.forEach((a) => a.location && set.add(a.location));
+    alumni.forEach((a) => {
+      if (a.location) set.add(a.location);
+      if (a.secondLocation) set.add(a.secondLocation);
+    });
     return Array.from(set).sort();
   }, [alumni]);
 
@@ -231,7 +236,7 @@ export default function DirectoryPageClient({
 
     if (filters.program) result = result.filter((a) => a.programs?.includes(filters.program));
     if (filters.season) result = result.filter((a) => a.seasons?.includes(filters.season));
-    if (filters.location) result = result.filter((a) => a.location === filters.location);
+    if (filters.location) result = result.filter((a) => a.location === filters.location || a.secondLocation === filters.location);
     if (filters.role) result = result.filter((a) => a.roles?.includes(filters.role));
     if (filters.statusFlag) result = result.filter((a) => a.statusFlags?.includes(filters.statusFlag));
     if (filters.identityTag) result = result.filter((a) => a.identityTags?.includes(filters.identityTag));
