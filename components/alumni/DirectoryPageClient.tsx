@@ -237,7 +237,10 @@ export default function DirectoryPageClient({
     if (filters.program) result = result.filter((a) => a.programs?.includes(filters.program));
     if (filters.season) result = result.filter((a) => a.seasons?.includes(filters.season));
     if (filters.location) result = result.filter((a) => a.location === filters.location || a.secondLocation === filters.location);
-    if (filters.role) result = result.filter((a) => a.roles?.includes(filters.role));
+    if (filters.role) result = result.filter((a) =>
+      a.roles?.includes(filters.role) ||
+      (a.currentTitle && a.currentTitle.toLowerCase().includes(filters.role.toLowerCase()))
+    );
     if (filters.statusFlag) result = result.filter((a) => a.statusFlags?.includes(filters.statusFlag));
     if (filters.identityTag) result = result.filter((a) => a.identityTags?.includes(filters.identityTag));
     if (filters.language) result = result.filter((a) => {
@@ -656,8 +659,10 @@ export default function DirectoryPageClient({
                     ? "teaching artist"
                     : rawQuery.toLowerCase();
                 const ct = alum.currentTitle || "";
+                // Show via label when searching OR when a role filter is active and currentTitle matches
+                const matchTerm = q || (filters.role ? filters.role.toLowerCase() : "");
                 const ctVia =
-                  ct && q && ct.toLowerCase().includes(q) && !primaryRole.toLowerCase().includes(q)
+                  ct && matchTerm && ct.toLowerCase().includes(matchTerm) && !primaryRole.toLowerCase().includes(matchTerm)
                     ? { viaLabel: ct, viaSource: "current-title" as const }
                     : undefined;
                 return (
@@ -718,8 +723,9 @@ export default function DirectoryPageClient({
                       ? "teaching artist"
                       : rawQuery.toLowerCase();
                   const ct = alum.currentTitle || "";
+                  const matchTerm = q || (filters.role ? filters.role.toLowerCase() : "");
                   const ctVia =
-                    ct && q && ct.toLowerCase().includes(q) && !primaryRole.toLowerCase().includes(q)
+                    ct && matchTerm && ct.toLowerCase().includes(matchTerm) && !primaryRole.toLowerCase().includes(matchTerm)
                       ? { viaLabel: ct, viaSource: "current-title" as const }
                       : undefined;
                   return (

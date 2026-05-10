@@ -391,7 +391,11 @@ export function useAlumniSearch(
 
       const gated: SearchRow[] = (enrichedData ?? []).filter((item) => {
         if (!passesTokenFilter(filters.program, item.programTokens)) return false;
-        if (!passesTokenFilter(filters.role, item.roleTokens)) return false;
+        if (
+          !passesTokenFilter(filters.role, item.roleTokens) &&
+          !(filters.role && item.currentTitle &&
+            normalizeText(item.currentTitle).includes(normalizeText(filters.role)))
+        ) return false;
         if (!passesTokenFilter(filters.location, item.locationTokens)) return false;
         if (!passesTokenFilter(filters.statusFlag, item.statusTokens)) return false;
         if (!passesTokenFilter(filters.identityTag, item.identityTokens)) return false;
@@ -1421,7 +1425,11 @@ const candidateQueries =
       secondaryCandidates.forEach((it) => {
         if (
           !passesTokenFilter(filters.program, it.programTokens) ||
-          !passesTokenFilter(filters.role, it.roleTokens) ||
+          (
+            !passesTokenFilter(filters.role, it.roleTokens) &&
+            !(filters.role && it.currentTitle &&
+              normalizeText(it.currentTitle).includes(normalizeText(filters.role)))
+          ) ||
           !passesTokenFilter(filters.location, it.locationTokens) ||
           !passesTokenFilter(filters.statusFlag, it.statusTokens) ||
           !passesTokenFilter(filters.identityTag, it.identityTokens) ||
