@@ -47,6 +47,15 @@ export default async function DirectoryPage() {
     statusFlags: deriveBoardStatus(a.slug, roleAssignments, now)
       ? Array.from(new Set([...(a.statusFlags || []), "Board Member"]))
       : a.statusFlags || [],
+    // Wire up filter-ready fields from AlumniRow's differently-named fields
+    programs: a.programBadges || [],
+    seasons: (a.programSeasons || []).map((n) => `Season ${n}`),
+    updatedAt:
+      a.lastModified instanceof Date ? a.lastModified.getTime() : undefined,
+    updatedRecently:
+      a.lastModified instanceof Date
+        ? Date.now() - a.lastModified.getTime() < 1000 * 60 * 60 * 24 * 90
+        : false,
   }));
 
   return (

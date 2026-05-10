@@ -2,7 +2,7 @@
 
 // /components/alumni/AlumniSearch/AlumniSearch.tsx
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams, usePathname } from "next/navigation";
 import { useAlumniSearch } from "./useAlumniSearch";
 
@@ -62,6 +62,16 @@ export default function AlumniSearch({
     onResults,
     debug
   );
+
+  /** ✅ Responsive placeholder — longer on desktop */
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   /** ✅ Sync initial query from URL when component mounts or changes */
   useEffect(() => {
@@ -123,7 +133,11 @@ export default function AlumniSearch({
         {/* ✅ Search Input */}
         <input
           type="text"
-          placeholder="Search by name, program, location…"
+          placeholder={
+            isDesktop
+              ? "Search by name, role, program, location, season, language, production…"
+              : "Search alumni…"
+          }
           value={query}
           onChange={(e) => {
             const v = e.target.value;
