@@ -1242,18 +1242,19 @@ useEffect(() => {
         storyShowOnMap: boolCell(j?.storyShowOnMap || p.storyShowOnMap),
         storyKey: String(j?.storyKey || p.storyKey || ""),
 
-        // Featured Videos
-        reelVideoUrl1:  String(j?.reelVideoUrl1  || p.reelVideoUrl1  || ""),
-        reelVideoUrl2:  String(j?.reelVideoUrl2  || p.reelVideoUrl2  || ""),
-        reelVideoUrl3:  String(j?.reelVideoUrl3  || p.reelVideoUrl3  || ""),
-        videoTitle1:    String(j?.videoTitle1    || p.videoTitle1    || ""),
-        videoTitle2:    String(j?.videoTitle2    || p.videoTitle2    || ""),
-        videoTitle3:    String(j?.videoTitle3    || p.videoTitle3    || ""),
-        videoAspect1:   String(j?.videoAspect1   || p.videoAspect1   || ""),
-        videoAspect2:   String(j?.videoAspect2   || p.videoAspect2   || ""),
-        videoAspect3:   String(j?.videoAspect3   || p.videoAspect3   || ""),
-        videoAutoplay:  String(j?.videoAutoplay  || p.videoAutoplay  || ""),
-        videoFullBleed: String(j?.videoFullBleed || p.videoFullBleed || ""),
+        // Featured Videos — use ?? not || so an intentional empty string
+        // (cleared title/url) is not resurrected from the stale p.* fallback.
+        reelVideoUrl1:  String(j?.reelVideoUrl1  ?? p.reelVideoUrl1  ?? ""),
+        reelVideoUrl2:  String(j?.reelVideoUrl2  ?? p.reelVideoUrl2  ?? ""),
+        reelVideoUrl3:  String(j?.reelVideoUrl3  ?? p.reelVideoUrl3  ?? ""),
+        videoTitle1:    String(j?.videoTitle1    ?? p.videoTitle1    ?? ""),
+        videoTitle2:    String(j?.videoTitle2    ?? p.videoTitle2    ?? ""),
+        videoTitle3:    String(j?.videoTitle3    ?? p.videoTitle3    ?? ""),
+        videoAspect1:   String(j?.videoAspect1   ?? p.videoAspect1   ?? ""),
+        videoAspect2:   String(j?.videoAspect2   ?? p.videoAspect2   ?? ""),
+        videoAspect3:   String(j?.videoAspect3   ?? p.videoAspect3   ?? ""),
+        videoAutoplay:  String(j?.videoAutoplay  ?? p.videoAutoplay  ?? ""),
+        videoFullBleed: String(j?.videoFullBleed ?? p.videoFullBleed ?? ""),
       }));
 
       if (j?.assets) setAssets(j.assets as PointerAssets);
@@ -1727,18 +1728,19 @@ async function rehydrate() {
         storyShowOnMap: boolCell(j?.storyShowOnMap || p.storyShowOnMap),
         storyKey: String(j?.storyKey || p.storyKey || ""),
 
-        // Featured Videos
-        reelVideoUrl1:  String(j?.reelVideoUrl1  || p.reelVideoUrl1  || ""),
-        reelVideoUrl2:  String(j?.reelVideoUrl2  || p.reelVideoUrl2  || ""),
-        reelVideoUrl3:  String(j?.reelVideoUrl3  || p.reelVideoUrl3  || ""),
-        videoTitle1:    String(j?.videoTitle1    || p.videoTitle1    || ""),
-        videoTitle2:    String(j?.videoTitle2    || p.videoTitle2    || ""),
-        videoTitle3:    String(j?.videoTitle3    || p.videoTitle3    || ""),
-        videoAspect1:   String(j?.videoAspect1   || p.videoAspect1   || ""),
-        videoAspect2:   String(j?.videoAspect2   || p.videoAspect2   || ""),
-        videoAspect3:   String(j?.videoAspect3   || p.videoAspect3   || ""),
-        videoAutoplay:  String(j?.videoAutoplay  || p.videoAutoplay  || ""),
-        videoFullBleed: String(j?.videoFullBleed || p.videoFullBleed || ""),
+        // Featured Videos — use ?? not || so an intentional empty string
+        // (cleared title/url) is not resurrected from the stale p.* fallback.
+        reelVideoUrl1:  String(j?.reelVideoUrl1  ?? p.reelVideoUrl1  ?? ""),
+        reelVideoUrl2:  String(j?.reelVideoUrl2  ?? p.reelVideoUrl2  ?? ""),
+        reelVideoUrl3:  String(j?.reelVideoUrl3  ?? p.reelVideoUrl3  ?? ""),
+        videoTitle1:    String(j?.videoTitle1    ?? p.videoTitle1    ?? ""),
+        videoTitle2:    String(j?.videoTitle2    ?? p.videoTitle2    ?? ""),
+        videoTitle3:    String(j?.videoTitle3    ?? p.videoTitle3    ?? ""),
+        videoAspect1:   String(j?.videoAspect1   ?? p.videoAspect1   ?? ""),
+        videoAspect2:   String(j?.videoAspect2   ?? p.videoAspect2   ?? ""),
+        videoAspect3:   String(j?.videoAspect3   ?? p.videoAspect3   ?? ""),
+        videoAutoplay:  String(j?.videoAutoplay  ?? p.videoAutoplay  ?? ""),
+        videoFullBleed: String(j?.videoFullBleed ?? p.videoFullBleed ?? ""),
       };
 
       return next;

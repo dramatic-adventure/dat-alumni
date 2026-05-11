@@ -267,16 +267,22 @@ export default function VideoSection({ videos, fullBleed = true }: VideoSectionP
     .dat-vs-theatre {
       background: linear-gradient(160deg, #0d0618 0%, #06101e 55%, #090c18 100%);
       font-family: var(--font-dm-sans), system-ui, sans-serif;
-      /* Desktop: tight horizontal padding so the video fills the card width */
+      /* Desktop: interior padding so the video "floats" in the dark theatre. */
       padding: clamp(2rem, 3vw, 3rem) 1rem;
+    }
+    /* Full-bleed variant: no padding — video fills the section edge-to-edge */
+    .dat-vs-theatre.dat-vs-full {
+      padding: 0;
     }
     /* Tablet — nearly full width */
     @media (max-width: 1024px) {
       .dat-vs-theatre { padding: 2rem 1.5rem; }
+      .dat-vs-theatre.dat-vs-full { padding: 0; }
     }
     /* Mobile — essentially full width */
     @media (max-width: 640px) {
       .dat-vs-theatre { padding: 1.5rem 0.75rem; }
+      .dat-vs-theatre.dat-vs-full { padding: 0; }
     }
 
     /* Rounded card — no outline, directional ombre glow:
@@ -331,7 +337,9 @@ export default function VideoSection({ videos, fullBleed = true }: VideoSectionP
   if (count === 1) {
     if (!fullBleed) {
       // Not full-bleed: floats to the right, clears the headshot on the left.
-      // On tablet/mobile there's no headshot overlap so it can be wider.
+      // Desktop: increased max-width so the video uses more of the available
+      // space to the right of the headshot, without negative margins.
+      // On tablet/mobile there's no headshot overlap so it goes full width.
       return (
         <>
           <style>{sharedStyle}{`
@@ -340,7 +348,7 @@ export default function VideoSection({ videos, fullBleed = true }: VideoSectionP
               justify-content: flex-end;
             }
             .dat-vs-float-right .dat-vs-glow {
-              width: min(460px, 54%);
+              width: min(600px, 62%);
             }
             @media (max-width: 1024px) {
               .dat-vs-float-right .dat-vs-glow { width: 100%; }
@@ -354,14 +362,13 @@ export default function VideoSection({ videos, fullBleed = true }: VideoSectionP
         </>
       );
     }
-    // Full-bleed: centred, floating in the theatre section
+    // Full-bleed: video fills the theatre section edge-to-edge.
+    // No inner glow wrapper — no padding, no rounded corners, no overflow clip.
     return (
       <>
         <style>{sharedStyle}</style>
-        <div className="dat-vs-theatre">
-          <div className="dat-vs-glow">
-            <VideoSlot item={primary} />
-          </div>
+        <div className="dat-vs-theatre dat-vs-full">
+          <VideoSlot item={primary} />
         </div>
       </>
     );
