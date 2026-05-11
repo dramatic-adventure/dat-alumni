@@ -267,8 +267,8 @@ export default function VideoSection({ videos, fullBleed = true }: VideoSectionP
     .dat-vs-theatre {
       background: linear-gradient(160deg, #0d0618 0%, #06101e 55%, #090c18 100%);
       font-family: var(--font-dm-sans), system-ui, sans-serif;
-      /* Desktop default: big, breathing room on the sides */
-      padding: clamp(2.5rem, 4vw, 4rem) clamp(5rem, 10vw, 9rem);
+      /* Desktop: less horizontal padding → bigger video */
+      padding: clamp(2.5rem, 4vw, 4rem) clamp(3rem, 6vw, 5.5rem);
     }
     /* Tablet — nearly full width */
     @media (max-width: 1024px) {
@@ -279,17 +279,16 @@ export default function VideoSection({ videos, fullBleed = true }: VideoSectionP
       .dat-vs-theatre { padding: 1.5rem 0.75rem; }
     }
 
-    /* Rounded card with vivid DAT pink + blue glow */
+    /* Rounded card — no outline, directional ombre glow:
+       DAT pink bleeds from upper-right, DAT blue from lower-left,
+       like ambient light spilling from a screen into a dark theatre. */
     .dat-vs-glow {
       border-radius: 14px;
       overflow: hidden;
       box-shadow:
-        0 0 0 1px rgba(36,147,169,0.22),
-        0 10px 48px rgba(0,0,0,0.70),
-        0 0  80px rgba(242,51,89,0.38),
-        0 0 140px rgba(242,51,89,0.18),
-        0 0 120px rgba(36,147,169,0.35),
-        0 0 200px rgba(36,147,169,0.16);
+        0 12px 50px rgba(0,0,0,0.68),
+        60px -50px 130px rgba(242,51,89,0.18),
+        -60px 50px 130px rgba(36,147,169,0.20);
     }
 
     /* Multi-video grid */
