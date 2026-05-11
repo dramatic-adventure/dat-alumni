@@ -259,107 +259,135 @@ export default function VideoSection({ videos, fullBleed = true }: VideoSectionP
   const primary = validVideos[0];
   const secondaries = validVideos.slice(1, 3);
 
-  // ── Shared theatre-mode section wrapper ──────────────────────────────────
-  const theatreSection: React.CSSProperties = {
-    background: "linear-gradient(160deg, #0d0618 0%, #06101e 55%, #090c18 100%)",
-    padding: "clamp(2rem, 5vw, 3.5rem) clamp(1.5rem, 7vw, 5rem)",
-    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-  };
+  // ── Shared CSS: theatre wrapper + responsive padding + glow ──────────────
+  // Desktop: generous horizontal padding so the video "floats" in the dark.
+  // Tablet/mobile: nearly full width — just enough padding to feel distinct
+  // from a true edge-to-edge full-bleed.
+  const sharedStyle = `
+    .dat-vs-theatre {
+      background: linear-gradient(160deg, #0d0618 0%, #06101e 55%, #090c18 100%);
+      font-family: var(--font-dm-sans), system-ui, sans-serif;
+      /* Desktop default: big, breathing room on the sides */
+      padding: clamp(2.5rem, 4vw, 4rem) clamp(5rem, 10vw, 9rem);
+    }
+    /* Tablet — nearly full width */
+    @media (max-width: 1024px) {
+      .dat-vs-theatre { padding: 2rem 1.5rem; }
+    }
+    /* Mobile — essentially full width */
+    @media (max-width: 640px) {
+      .dat-vs-theatre { padding: 1.5rem 0.75rem; }
+    }
 
-  // Rounded wrapper + glow that makes the video feel like a lit screen in a
-  // dark room — teal/purple bleed matching DAT brand palette.
-  const theatreVideoWrap: React.CSSProperties = {
-    borderRadius: 14,
-    overflow: "hidden",
-    boxShadow: [
-      "0 0 0 1px rgba(91,191,211,0.10)",
-      "0 8px 40px rgba(0,0,0,0.65)",
-      "0 0 90px rgba(75,20,100,0.30)",
-      "0 0 160px rgba(25,101,124,0.18)",
-    ].join(", "),
-  };
+    /* Rounded card with vivid DAT pink + blue glow */
+    .dat-vs-glow {
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(36,147,169,0.22),
+        0 10px 48px rgba(0,0,0,0.70),
+        0 0  80px rgba(242,51,89,0.38),
+        0 0 140px rgba(242,51,89,0.18),
+        0 0 120px rgba(36,147,169,0.35),
+        0 0 200px rgba(36,147,169,0.16);
+    }
+
+    /* Multi-video grid */
+    .dat-vs-multi {
+      display: flex;
+      flex-direction: column;
+    }
+    .dat-vs-rail {
+      display: flex;
+      flex-direction: row;
+      gap: 2px;
+    }
+    .dat-vs-secondary {
+      flex: 1;
+      position: relative;
+      padding-top: 56.25%;
+      background: #120820;
+    }
+    @media (min-width: 680px) {
+      .dat-vs-multi {
+        display: grid;
+        grid-template-columns: ${count === 2 ? "1fr 1fr" : "2fr 1fr"};
+        gap: 2px;
+        align-items: stretch;
+      }
+      .dat-vs-rail {
+        flex-direction: column;
+        gap: 2px;
+        height: 100%;
+      }
+      .dat-vs-secondary {
+        padding-top: 0;
+        flex: 1;
+        min-height: 0;
+      }
+    }
+  `;
 
   // ── Single video ──────────────────────────────────────────────────────────
   if (count === 1) {
-    // Not full-bleed: smaller video that floats to the right so it doesn't
-    // conflict with the headshot on the left side of the profile card.
     if (!fullBleed) {
+      // Not full-bleed: floats to the right, clears the headshot on the left.
+      // On tablet/mobile there's no headshot overlap so it can be wider.
       return (
-        <div style={{ ...theatreSection, display: "flex", justifyContent: "flex-end" }}>
-          <div style={{ width: "min(460px, 54%)", ...theatreVideoWrap }}>
+        <>
+          <style>{sharedStyle}{`
+            .dat-vs-float-right {
+              display: flex;
+              justify-content: flex-end;
+            }
+            .dat-vs-float-right .dat-vs-glow {
+              width: min(460px, 54%);
+            }
+            @media (max-width: 1024px) {
+              .dat-vs-float-right .dat-vs-glow { width: 100%; }
+            }
+          `}</style>
+          <div className="dat-vs-theatre dat-vs-float-right">
+            <div className="dat-vs-glow">
+              <VideoSlot item={primary} />
+            </div>
+          </div>
+        </>
+      );
+    }
+    // Full-bleed: centred, floating in the theatre section
+    return (
+      <>
+        <style>{sharedStyle}</style>
+        <div className="dat-vs-theatre">
+          <div className="dat-vs-glow">
             <VideoSlot item={primary} />
           </div>
         </div>
-      );
-    }
-    // Full-bleed: centre-padded, floating in the theatre section
-    return (
-      <div style={theatreSection}>
-        <div style={theatreVideoWrap}>
-          <VideoSlot item={primary} />
-        </div>
-      </div>
+      </>
     );
   }
 
-  // ── 2–3 videos: theatre background with grid layout ───────────────────────
+  // ── 2–3 videos ────────────────────────────────────────────────────────────
   return (
-    <div style={theatreSection}>
-      <style>{`
-        .dat-vs-multi {
-          display: flex;
-          flex-direction: column;
-        }
-        .dat-vs-rail {
-          display: flex;
-          flex-direction: row;
-          gap: 2px;
-        }
-        /* Mobile: secondaries use padding-top to maintain aspect ratio */
-        .dat-vs-secondary {
-          flex: 1;
-          position: relative;
-          padding-top: 56.25%;
-          background: #120820;
-        }
-        @media (min-width: 680px) {
-          .dat-vs-multi {
-            display: grid;
-            grid-template-columns: ${count === 2 ? "1fr 1fr" : "2fr 1fr"};
-            gap: 2px;
-            align-items: stretch;
-          }
-          .dat-vs-rail {
-            flex-direction: column;
-            gap: 2px;
-            height: 100%;
-          }
-          /* Desktop: fill the grid row height instead */
-          .dat-vs-secondary {
-            padding-top: 0;
-            flex: 1;
-            min-height: 0;
-          }
-        }
-      `}</style>
-
-      <div style={theatreVideoWrap}>
-        <div className="dat-vs-multi">
-          {/* Primary — left column, sets the row height via its aspect ratio */}
-          <div style={{ lineHeight: 0 }}>
-            <VideoSlot item={primary} />
-          </div>
-
-          {/* Right rail — secondaries stretch to match primary height */}
-          <div className="dat-vs-rail">
-            {secondaries.map((v, i) => (
-              <div key={i} className="dat-vs-secondary">
-                <VideoSlot item={v} secondary={count >= 3} fillHeight />
-              </div>
-            ))}
+    <>
+      <style>{sharedStyle}</style>
+      <div className="dat-vs-theatre">
+        <div className="dat-vs-glow">
+          <div className="dat-vs-multi">
+            <div style={{ lineHeight: 0 }}>
+              <VideoSlot item={primary} />
+            </div>
+            <div className="dat-vs-rail">
+              {secondaries.map((v, i) => (
+                <div key={i} className="dat-vs-secondary">
+                  <VideoSlot item={v} secondary={count >= 3} fillHeight />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
