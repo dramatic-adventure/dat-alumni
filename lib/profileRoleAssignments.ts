@@ -332,7 +332,11 @@ function buildAssignmentRoleLabel(
     } else if (String(a.roleCode ?? "").trim().toUpperCase() === "BOARD") {
       label = `${contextual}, ${base}`;
     } else if (scopeType === "COUNTRY") {
-      label = `${base} in ${contextual}`;
+      // Guard against double-appending when roleLabel already encodes the country
+      // (e.g. "Manager of Community Partnerships in Czechia & Slovakia" + scope "Czechia and Slovakia").
+      const normBase = baseLower.replace(/&/g, "and").replace(/\s+/g, " ");
+      const normContextual = contextualLower.replace(/&/g, "and").replace(/\s+/g, " ");
+      label = normBase.includes(normContextual) ? base : `${base} in ${contextual}`;
     } else if (scopeType === "CLUB") {
       label = `${base} for ${contextual}`;
     } else {
