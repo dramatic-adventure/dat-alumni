@@ -783,7 +783,8 @@ export default function MediaPanel({
                 placeholder="https://… (YouTube, Vimeo, Loom, Google Drive, etc.)"
                 style={inputStyle}
               />
-              {/* Title always visible so users can see/edit it at any time */}
+              {/* Custom title — always visible so users can see/edit/clear it */}
+              <label style={smallLabel}>Custom title <span style={{ opacity: 0.45, fontWeight: 400 }}>(optional — leave blank to use auto-detected title)</span></label>
               <input
                 type="text" value={titleValue}
                 onChange={(e) => {
@@ -791,7 +792,7 @@ export default function MediaPanel({
                   setProfile?.((p: any) => ({ ...p, [titleKey]: e.target.value }));
                   setVideoDirty(true);
                 }}
-                placeholder="Custom title (optional — auto-detected if blank)"
+                placeholder="e.g. Jesse's 2024 Performance Reel"
                 style={inputStyle}
               />
               {/* Aspect ratio only revealed once a URL is present */}

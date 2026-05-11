@@ -353,6 +353,16 @@ export default function VideoSection({ videos, fullBleed = true }: VideoSectionP
             @media (max-width: 1024px) {
               .dat-vs-float-right .dat-vs-glow { width: 100%; }
             }
+            /* Non-full-bleed single video: generous padding on all sides */
+            .dat-vs-theatre.dat-vs-float-right {
+              padding: 5rem 3rem;
+            }
+            @media (max-width: 1024px) {
+              .dat-vs-theatre.dat-vs-float-right { padding: 2rem 1.5rem; }
+            }
+            @media (max-width: 640px) {
+              .dat-vs-theatre.dat-vs-float-right { padding: 1.5rem 0.75rem; }
+            }
           `}</style>
           <div className="dat-vs-theatre dat-vs-float-right">
             <div className="dat-vs-glow">
