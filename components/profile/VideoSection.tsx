@@ -355,7 +355,7 @@ export default function VideoSection({ videos, fullBleed = true }: VideoSectionP
             }
             /* Non-full-bleed single video: generous padding on all sides */
             .dat-vs-theatre.dat-vs-float-right {
-              padding: 5rem 3rem;
+              padding: 5rem 5rem;
             }
             @media (max-width: 1024px) {
               .dat-vs-theatre.dat-vs-float-right { padding: 2rem 1.5rem; }
