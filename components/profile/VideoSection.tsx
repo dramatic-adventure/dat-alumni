@@ -251,7 +251,7 @@ function VideoSlot({
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-export default function VideoSection({ videos }: VideoSectionProps) {
+export default function VideoSection({ videos, fullBleed = true }: VideoSectionProps) {
   const validVideos = videos.filter((v) => v.url?.trim());
   if (validVideos.length === 0) return null;
 
@@ -259,8 +259,27 @@ export default function VideoSection({ videos }: VideoSectionProps) {
   const primary = validVideos[0];
   const secondaries = validVideos.slice(1, 3);
 
-  // ── Single video: full-bleed edge-to-edge ─────────────────────────────────
+  // ── Single video ──────────────────────────────────────────────────────────
   if (count === 1) {
+    // Not full-bleed: smaller video that floats to the right so it doesn't
+    // conflict with the headshot on the left side of the profile card.
+    if (!fullBleed) {
+      return (
+        <div
+          style={{
+            backgroundColor: "#1a0a2e",
+            display: "flex",
+            justifyContent: "flex-end",
+            padding: "0 clamp(1rem, 5vw, 3rem) 1.5rem",
+          }}
+        >
+          <div style={{ width: "min(460px, 54%)" }}>
+            <VideoSlot item={primary} />
+          </div>
+        </div>
+      );
+    }
+    // Full-bleed: edge-to-edge (original behaviour)
     return (
       <div style={{ position: "relative", backgroundColor: "#1a0a2e" }}>
         <VideoSlot item={primary} />

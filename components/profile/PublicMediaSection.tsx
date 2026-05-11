@@ -29,6 +29,13 @@ function toThumbUrl(item: MediaItem, w = 1200): string {
   return "";
 }
 
+/** Full-size URL used by the lightbox (bypasses the thumb resizer). */
+function toLightboxUrl(item: MediaItem): string {
+  if (item.fileId) return `/api/img?fileId=${encodeURIComponent(item.fileId)}`;
+  if (item.externalUrl) return `/api/img?url=${encodeURIComponent(item.externalUrl)}`;
+  return "";
+}
+
 function groupByCollection(items: MediaItem[]): Collection[] {
   const map = new Map<string, Collection>();
   for (const item of items) {
@@ -206,12 +213,77 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
   const collapsedWidth  = isMobile ? 44 : 58;
   const openCollection  = openIdx !== null ? (visibleCollections[openIdx] ?? null) : null;
 
-  // ── Single-collection bypass: skip accordion, show grid directly ──────────
+  // ── Single-collection bypass: skip accordion, show full-bleed cover + grid ─
   if (accordionCollections.length === 1) {
+    const singleCol = accordionCollections[0];
+    const coverItem = singleCol.items.find((it) => it.isFeatured) ?? singleCol.items[0];
+    const coverSrc  = coverItem ? toThumbUrl(coverItem, 1600) : "";
+
     return (
       <section aria-label="Photos & Media" style={{ background: "#0d2c38", overflow: "hidden" }}>
+        {/* Full-bleed cover photo */}
+        {coverSrc && (
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              height: isMobile ? 260 : 420,
+              overflow: "hidden",
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={coverSrc}
+              alt={singleCol.title}
+              loading="eager"
+              // @ts-expect-error — fetchpriority is valid HTML but not yet in React types
+              fetchpriority="high"
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+            {/* Gradient overlay */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background:
+                  "linear-gradient(to top, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.12) 55%, transparent 100%)",
+                pointerEvents: "none",
+              }}
+            />
+            {/* Title + count */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                padding: `1rem clamp(20px, 5vw, 60px) 1.25rem`,
+              }}
+            >
+              <div style={labelStyle}>{singleCol.title}</div>
+              <div
+                style={{
+                  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                  fontSize: isMobile ? 20 : 30,
+                  fontWeight: 700,
+                  color: "#fff",
+                  lineHeight: 1.15,
+                }}
+              >
+                {singleCol.items.length} photo{singleCol.items.length !== 1 ? "s" : ""}
+              </div>
+            </div>
+          </div>
+        )}
+
         <ThumbnailGrid
-          collection={accordionCollections[0]}
+          collection={singleCol}
           isMobile={isMobile}
           onThumbClick={openLightboxFor}
         />
@@ -579,7 +651,9 @@ function ThumbnailGrid({
 }) {
   const [showAll, setShowAll] = useState(false);
 
-  const allUrls = collection.items.map((it) => toThumbUrl(it, 1600));
+  // Lightbox-ready URLs — bypass thumb resizer so lightbox gets full quality.
+  // Also used for hover-preloading in ThumbnailCell.
+  const allUrls = collection.items.map(toLightboxUrl);
   const cols = isMobile ? 3 : 5;
   const hasMore = collection.items.length > THUMB_PAGE;
   const visible = showAll ? collection.items : collection.items.slice(0, THUMB_PAGE);
@@ -625,9 +699,10 @@ function ThumbnailGrid({
         {visible.map((item, idx) => (
           <ThumbnailCell
             key={item.fileId || idx}
-            src={toThumbUrl(item, 500)}
+            src={toThumbUrl(item, 800)}
             alt={item.note || `Photo ${idx + 1}`}
             onClick={() => onThumbClick(allUrls, idx)}
+            preloadUrl={allUrls[idx]}
           />
         ))}
       </div>
@@ -677,12 +752,17 @@ function ThumbnailCell({
   src,
   alt,
   onClick,
+  preloadUrl,
 }: {
   src: string;
   alt: string;
   onClick: () => void;
+  preloadUrl?: string;
 }) {
   const [hovered, setHovered] = useState(false);
+  // Track whether we've already kicked off the preload so we don't redo it
+  // every time the user re-enters the cell.
+  const preloadedRef = useRef(false);
 
   return (
     <button
@@ -701,7 +781,16 @@ function ThumbnailCell({
         display: "block",
         width: "100%",
       }}
-      onMouseEnter={() => setHovered(true)}
+      onMouseEnter={() => {
+        setHovered(true);
+        // Kick off a background load of the full-size lightbox image so it's
+        // already (or partially) cached by the time the user clicks.
+        if (preloadUrl && !preloadedRef.current) {
+          preloadedRef.current = true;
+          const img = new window.Image();
+          img.src = preloadUrl;
+        }
+      }}
       onMouseLeave={() => setHovered(false)}
     >
       {src && (

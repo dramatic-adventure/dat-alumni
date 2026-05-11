@@ -147,9 +147,11 @@ export default function MediaPanel({
   const [videoAutoplay, setVideoAutoplay] = useState(
     () => String(profile?.videoAutoplay || "").trim(),
   );
-  const [videoFullBleed, setVideoFullBleed] = useState(
-    () => String(profile?.videoFullBleed || "").trim() === "true",
-  );
+  // Default to true (checked) when no explicit value has been saved yet.
+  const [videoFullBleed, setVideoFullBleed] = useState(() => {
+    const v = String(profile?.videoFullBleed ?? "").trim();
+    return v === "" ? true : v === "true";
+  });
 
   // ── Video dirty tracking ──────────────────────────────────────────────────
   const [videoDirty, setVideoDirty] = useState(false);
@@ -165,7 +167,8 @@ export default function MediaPanel({
     setVideoAspect2(String(profile?.videoAspect2 || ""));
     setVideoAspect3(String(profile?.videoAspect3 || ""));
     setVideoAutoplay(String(profile?.videoAutoplay || "").trim());
-    setVideoFullBleed(String(profile?.videoFullBleed || "").trim() === "true");
+    const fbv = String(profile?.videoFullBleed ?? "").trim();
+    setVideoFullBleed(fbv === "" ? true : fbv === "true");
     setVideoDirty(false);
   }, [
     profile?.reelVideoUrl1, profile?.reelVideoUrl2, profile?.reelVideoUrl3,

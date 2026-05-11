@@ -149,7 +149,7 @@ export const FIXED_BUCKETS: Record<
   "board-of-directors": {
     key: "board-of-directors",
     label: "Board of Directors",
-    icon: "🪑",
+    icon: "🧭",
     color: "#4A0080", // deep violet
   },
   "managers-community-partnerships": {
@@ -203,7 +203,7 @@ export const FIXED_BUCKETS: Record<
   staff: {
     key: "staff",
     label: "Staff",
-    icon: "🏢",
+    icon: "⭐️",
     color: "#3E3A36", // matches flags.ts Staff color
   },
 };
