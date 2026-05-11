@@ -134,50 +134,30 @@ export default function MediaPanel({
   // ── Picker state ─────────────────────────────────────────────────────────────
   const [openColId, setOpenColId] = useState<string | null>(null);
 
-  // ── Featured Video URL + metadata state ─────────────────────────────────────
-  const [reelUrl1, setReelUrl1] = useState(() => String(profile?.reelVideoUrl1 || ""));
-  const [reelUrl2, setReelUrl2] = useState(() => String(profile?.reelVideoUrl2 || ""));
-  const [reelUrl3, setReelUrl3] = useState(() => String(profile?.reelVideoUrl3 || ""));
-  const [videoTitle1, setVideoTitle1] = useState(() => String(profile?.videoTitle1 || ""));
-  const [videoTitle2, setVideoTitle2] = useState(() => String(profile?.videoTitle2 || ""));
-  const [videoTitle3, setVideoTitle3] = useState(() => String(profile?.videoTitle3 || ""));
-  const [videoAspect1, setVideoAspect1] = useState(() => String(profile?.videoAspect1 || ""));
-  const [videoAspect2, setVideoAspect2] = useState(() => String(profile?.videoAspect2 || ""));
-  const [videoAspect3, setVideoAspect3] = useState(() => String(profile?.videoAspect3 || ""));
-  const [videoAutoplay, setVideoAutoplay] = useState(
-    () => String(profile?.videoAutoplay || "").trim(),
-  );
-  // Default to true (checked) when no explicit value has been saved yet.
-  const [videoFullBleed, setVideoFullBleed] = useState(() => {
+  // ── Featured Video fields — derived directly from profile prop ───────────────
+  // These are NOT kept in local useState. Deriving from profile ensures the
+  // inputs always reflect the saved value when the panel first loads (no timing
+  // dependency on a useState initializer or async useEffect sync). setProfile is
+  // already called on every keystroke, so the round-trip through the parent is
+  // the same render cycle as before.
+  const reelUrl1     = String(profile?.reelVideoUrl1  ?? "");
+  const reelUrl2     = String(profile?.reelVideoUrl2  ?? "");
+  const reelUrl3     = String(profile?.reelVideoUrl3  ?? "");
+  const videoTitle1  = String(profile?.videoTitle1    ?? "");
+  const videoTitle2  = String(profile?.videoTitle2    ?? "");
+  const videoTitle3  = String(profile?.videoTitle3    ?? "");
+  const videoAspect1 = String(profile?.videoAspect1   ?? "");
+  const videoAspect2 = String(profile?.videoAspect2   ?? "");
+  const videoAspect3 = String(profile?.videoAspect3   ?? "");
+  const videoAutoplay = String(profile?.videoAutoplay ?? "").trim();
+  // Default full-bleed to true when no explicit value has been saved yet.
+  const videoFullBleed = (() => {
     const v = String(profile?.videoFullBleed ?? "").trim();
     return v === "" ? true : v === "true";
-  });
+  })();
 
   // ── Video dirty tracking ──────────────────────────────────────────────────
   const [videoDirty, setVideoDirty] = useState(false);
-
-  useEffect(() => {
-    setReelUrl1(String(profile?.reelVideoUrl1 || ""));
-    setReelUrl2(String(profile?.reelVideoUrl2 || ""));
-    setReelUrl3(String(profile?.reelVideoUrl3 || ""));
-    setVideoTitle1(String(profile?.videoTitle1 || ""));
-    setVideoTitle2(String(profile?.videoTitle2 || ""));
-    setVideoTitle3(String(profile?.videoTitle3 || ""));
-    setVideoAspect1(String(profile?.videoAspect1 || ""));
-    setVideoAspect2(String(profile?.videoAspect2 || ""));
-    setVideoAspect3(String(profile?.videoAspect3 || ""));
-    setVideoAutoplay(String(profile?.videoAutoplay || "").trim());
-    const fbv = String(profile?.videoFullBleed ?? "").trim();
-    setVideoFullBleed(fbv === "" ? true : fbv === "true");
-    // Do NOT reset videoDirty here — this effect re-runs whenever setProfile()
-    // reflects a local edit back through the parent, which would immediately
-    // clear the dirty flag the user just set.  dirty is only cleared on save.
-  }, [
-    profile?.reelVideoUrl1, profile?.reelVideoUrl2, profile?.reelVideoUrl3,
-    profile?.videoTitle1, profile?.videoTitle2, profile?.videoTitle3,
-    profile?.videoAspect1, profile?.videoAspect2, profile?.videoAspect3,
-    profile?.videoAutoplay, profile?.videoFullBleed,
-  ]);
 
   // ── Fetch library ────────────────────────────────────────────────────────────
   const fetchLibrary = useCallback(async (bust = false) => {
@@ -753,30 +733,29 @@ export default function MediaPanel({
             [
               {
                 label: "Video 1", show: true,
-                urlValue: reelUrl1, urlKey: "reelVideoUrl1" as const, urlSetter: setReelUrl1,
-                titleValue: videoTitle1, titleKey: "videoTitle1" as const, titleSetter: setVideoTitle1,
-                aspectValue: videoAspect1, aspectKey: "videoAspect1" as const, aspectSetter: setVideoAspect1,
+                urlValue: reelUrl1, urlKey: "reelVideoUrl1" as const,
+                titleValue: videoTitle1, titleKey: "videoTitle1" as const,
+                aspectValue: videoAspect1, aspectKey: "videoAspect1" as const,
               },
               {
                 label: "Video 2", show: showVideo2,
-                urlValue: reelUrl2, urlKey: "reelVideoUrl2" as const, urlSetter: setReelUrl2,
-                titleValue: videoTitle2, titleKey: "videoTitle2" as const, titleSetter: setVideoTitle2,
-                aspectValue: videoAspect2, aspectKey: "videoAspect2" as const, aspectSetter: setVideoAspect2,
+                urlValue: reelUrl2, urlKey: "reelVideoUrl2" as const,
+                titleValue: videoTitle2, titleKey: "videoTitle2" as const,
+                aspectValue: videoAspect2, aspectKey: "videoAspect2" as const,
               },
               {
                 label: "Video 3", show: showVideo3,
-                urlValue: reelUrl3, urlKey: "reelVideoUrl3" as const, urlSetter: setReelUrl3,
-                titleValue: videoTitle3, titleKey: "videoTitle3" as const, titleSetter: setVideoTitle3,
-                aspectValue: videoAspect3, aspectKey: "videoAspect3" as const, aspectSetter: setVideoAspect3,
+                urlValue: reelUrl3, urlKey: "reelVideoUrl3" as const,
+                titleValue: videoTitle3, titleKey: "videoTitle3" as const,
+                aspectValue: videoAspect3, aspectKey: "videoAspect3" as const,
               },
             ] as const
-          ).filter(({ show }) => show).map(({ label, urlValue, urlKey, urlSetter, titleValue, titleKey, titleSetter, aspectValue, aspectKey, aspectSetter }) => (
+          ).filter(({ show }) => show).map(({ label, urlValue, urlKey, titleValue, titleKey, aspectValue, aspectKey }) => (
             <div key={label} style={{ display: "grid", gap: 8 }}>
               <label style={smallLabel}>{label}</label>
               <input
                 type="url" value={urlValue}
                 onChange={(e) => {
-                  urlSetter(e.target.value);
                   setProfile?.((p: any) => ({ ...p, [urlKey]: e.target.value }));
                   setVideoDirty(true);
                 }}
@@ -788,7 +767,6 @@ export default function MediaPanel({
               <input
                 type="text" value={titleValue}
                 onChange={(e) => {
-                  titleSetter(e.target.value);
                   setProfile?.((p: any) => ({ ...p, [titleKey]: e.target.value }));
                   setVideoDirty(true);
                 }}
@@ -801,7 +779,6 @@ export default function MediaPanel({
                   <select
                     value={aspectValue}
                     onChange={(e) => {
-                      aspectSetter(e.target.value);
                       setProfile?.((p: any) => ({ ...p, [aspectKey]: e.target.value }));
                       setVideoDirty(true);
                     }}
@@ -825,7 +802,6 @@ export default function MediaPanel({
             <select
               value={videoAutoplay}
               onChange={(e) => {
-                setVideoAutoplay(e.target.value);
                 setProfile?.((p: any) => ({ ...p, videoAutoplay: e.target.value }));
                 setVideoDirty(true);
               }}
@@ -851,7 +827,6 @@ export default function MediaPanel({
                 <input
                   type="checkbox" checked={videoFullBleed} disabled={multipleVideos}
                   onChange={(e) => {
-                    setVideoFullBleed(e.target.checked);
                     setProfile?.((p: any) => ({ ...p, videoFullBleed: e.target.checked ? "true" : "false" }));
                     setVideoDirty(true);
                   }}
