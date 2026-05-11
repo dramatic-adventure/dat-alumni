@@ -213,25 +213,36 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
   const collapsedWidth  = isMobile ? 44 : 58;
   const openCollection  = openIdx !== null ? (visibleCollections[openIdx] ?? null) : null;
 
-  // ── Single-collection bypass: skip accordion, show full-bleed cover + grid ─
+  // ── Single-collection bypass: full-bleed cover + click-to-reveal grid ──────
+  // Reuses openIdx===0 as the "grid open" toggle so no extra state is needed.
   if (accordionCollections.length === 1) {
-    const singleCol = accordionCollections[0];
-    const coverItem = singleCol.items.find((it) => it.isFeatured) ?? singleCol.items[0];
-    const coverSrc  = coverItem ? toThumbUrl(coverItem, 1600) : "";
+    const singleCol   = accordionCollections[0];
+    const coverItem   = singleCol.items.find((it) => it.isFeatured) ?? singleCol.items[0];
+    const coverSrc    = coverItem ? toThumbUrl(coverItem, 1600) : "";
+    const singleOpen  = openIdx === 0;
 
     return (
       <section aria-label="Photos & Media" style={{ background: "#0d2c38", overflow: "hidden" }}>
-        {/* Full-bleed cover photo */}
-        {coverSrc && (
-          <div
-            style={{
-              position: "relative",
-              width: "100%",
-              height: isMobile ? 260 : 420,
-              overflow: "hidden",
-            }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+        {/* Full-bleed cover — clicking toggles the thumbnail grid */}
+        <div
+          role="button"
+          tabIndex={0}
+          aria-expanded={singleOpen}
+          aria-label={`${singleCol.title} — ${singleCol.items.length} photo${singleCol.items.length !== 1 ? "s" : ""}`}
+          onClick={() => setOpenIdx(singleOpen ? null : 0)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpenIdx(singleOpen ? null : 0); }
+          }}
+          style={{
+            position: "relative",
+            width: "100%",
+            height: isMobile ? 260 : 420,
+            overflow: "hidden",
+            cursor: "pointer",
+          }}
+        >
+          {coverSrc && (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={coverSrc}
               alt={singleCol.title}
@@ -245,48 +256,107 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
                 height: "100%",
                 objectFit: "cover",
                 display: "block",
-              }}
-            />
-            {/* Gradient overlay */}
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background:
-                  "linear-gradient(to top, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.12) 55%, transparent 100%)",
                 pointerEvents: "none",
+                userSelect: "none",
               }}
             />
-            {/* Title + count */}
+          )}
+
+          {/* Gradient overlay */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.18) 55%, transparent 100%)",
+              pointerEvents: "none",
+            }}
+          />
+
+          {/* Gold top-bar — matches the open-panel indicator in multi-album */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0, left: 0, right: 0,
+              height: 3,
+              background: "#FFCC00",
+              opacity: singleOpen ? 1 : 0,
+              transition: "opacity 0.3s ease",
+              zIndex: 10,
+              pointerEvents: "none",
+            }}
+          />
+
+          {/* Label bar — exact same typography as the multi-album active panel */}
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0, left: 0, right: 0,
+              padding: "14px 16px 16px",
+              pointerEvents: "none",
+            }}
+          >
             <div
               style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                padding: `1rem clamp(20px, 5vw, 60px) 1.25rem`,
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                fontSize: 10,
+                fontWeight: 700,
+                color: "#FFCC00",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                marginBottom: 5,
               }}
             >
-              <div style={labelStyle}>{singleCol.title}</div>
-              <div
+              {singleCol.items.length} photo{singleCol.items.length !== 1 ? "s" : ""}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                fontSize: isMobile ? 14 : 18,
+                fontWeight: 600,
+                color: "#fff",
+                lineHeight: 1.2,
+                marginBottom: 8,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {singleCol.title}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <span
                 style={{
                   fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                  fontSize: isMobile ? 20 : 30,
-                  fontWeight: 700,
-                  color: "#fff",
-                  lineHeight: 1.15,
+                  fontSize: 11,
+                  color: singleOpen ? "rgba(255,204,0,0.85)" : "rgba(255,255,255,0.45)",
+                  letterSpacing: "0.06em",
+                  transition: "color 0.2s ease",
                 }}
               >
-                {singleCol.items.length} photo{singleCol.items.length !== 1 ? "s" : ""}
-              </div>
+                {singleOpen ? "▲ hide" : "▼ browse"}
+              </span>
             </div>
           </div>
-        )}
+        </div>
 
-        <ThumbnailGrid
-          collection={singleCol}
-          isMobile={isMobile}
-          onThumbClick={openLightboxFor}
-        />
+        {/* Thumbnail grid — same animated reveal as multi-album */}
+        <div
+          style={{
+            overflow: "hidden",
+            maxHeight: singleOpen ? "9999px" : "0px",
+            transition: "max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+          }}
+        >
+          {singleOpen && (
+            <ThumbnailGrid
+              collection={singleCol}
+              isMobile={isMobile}
+              onThumbClick={openLightboxFor}
+            />
+          )}
+        </div>
+
         {lightboxOpen && lightboxImages.length > 0 && (
           <Lightbox
             images={lightboxImages}
