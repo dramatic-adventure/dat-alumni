@@ -132,7 +132,8 @@ function VideoSlot({
   fillHeight?: boolean;
 }) {
   const resolved = React.useMemo(() => resolveVideo(item.url), [item.url]);
-  const displayTitle = item.title?.trim() || item.autoTitle?.trim() || undefined;
+  // Custom title only — blank means no title on the video (autoTitle is not used)
+  const displayTitle = item.title?.trim() || undefined;
   const aspect = item.aspect || "16/9";
   const doAutoplay = !!item.autoplay && canAutoplayEmbed(resolved);
   const doMute = item.muted !== false;
