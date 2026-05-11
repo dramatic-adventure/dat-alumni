@@ -259,42 +259,52 @@ export default function VideoSection({ videos, fullBleed = true }: VideoSectionP
   const primary = validVideos[0];
   const secondaries = validVideos.slice(1, 3);
 
+  // ── Shared theatre-mode section wrapper ──────────────────────────────────
+  const theatreSection: React.CSSProperties = {
+    background: "linear-gradient(160deg, #0d0618 0%, #06101e 55%, #090c18 100%)",
+    padding: "clamp(2rem, 5vw, 3.5rem) clamp(1.5rem, 7vw, 5rem)",
+    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+  };
+
+  // Rounded wrapper + glow that makes the video feel like a lit screen in a
+  // dark room — teal/purple bleed matching DAT brand palette.
+  const theatreVideoWrap: React.CSSProperties = {
+    borderRadius: 14,
+    overflow: "hidden",
+    boxShadow: [
+      "0 0 0 1px rgba(91,191,211,0.10)",
+      "0 8px 40px rgba(0,0,0,0.65)",
+      "0 0 90px rgba(75,20,100,0.30)",
+      "0 0 160px rgba(25,101,124,0.18)",
+    ].join(", "),
+  };
+
   // ── Single video ──────────────────────────────────────────────────────────
   if (count === 1) {
     // Not full-bleed: smaller video that floats to the right so it doesn't
     // conflict with the headshot on the left side of the profile card.
     if (!fullBleed) {
       return (
-        <div
-          style={{
-            backgroundColor: "#1a0a2e",
-            display: "flex",
-            justifyContent: "flex-end",
-            padding: "0 clamp(1rem, 5vw, 3rem) 1.5rem",
-          }}
-        >
-          <div style={{ width: "min(460px, 54%)" }}>
+        <div style={{ ...theatreSection, display: "flex", justifyContent: "flex-end" }}>
+          <div style={{ width: "min(460px, 54%)", ...theatreVideoWrap }}>
             <VideoSlot item={primary} />
           </div>
         </div>
       );
     }
-    // Full-bleed: edge-to-edge (original behaviour)
+    // Full-bleed: centre-padded, floating in the theatre section
     return (
-      <div style={{ position: "relative", backgroundColor: "#1a0a2e" }}>
-        <VideoSlot item={primary} />
+      <div style={theatreSection}>
+        <div style={theatreVideoWrap}>
+          <VideoSlot item={primary} />
+        </div>
       </div>
     );
   }
 
-  // ── 2–3 videos: full-bleed primary left, right rail for secondaries ────────
+  // ── 2–3 videos: theatre background with grid layout ───────────────────────
   return (
-    <div
-      style={{
-        backgroundColor: "#1a0a2e",
-        fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-      }}
-    >
+    <div style={theatreSection}>
       <style>{`
         .dat-vs-multi {
           display: flex;
@@ -333,19 +343,21 @@ export default function VideoSection({ videos, fullBleed = true }: VideoSectionP
         }
       `}</style>
 
-      <div className="dat-vs-multi">
-        {/* Primary — left column, sets the row height via its aspect ratio */}
-        <div style={{ lineHeight: 0 }}>
-          <VideoSlot item={primary} />
-        </div>
+      <div style={theatreVideoWrap}>
+        <div className="dat-vs-multi">
+          {/* Primary — left column, sets the row height via its aspect ratio */}
+          <div style={{ lineHeight: 0 }}>
+            <VideoSlot item={primary} />
+          </div>
 
-        {/* Right rail — secondaries stretch to match primary height */}
-        <div className="dat-vs-rail">
-          {secondaries.map((v, i) => (
-            <div key={i} className="dat-vs-secondary">
-              <VideoSlot item={v} secondary={count >= 3} fillHeight />
-            </div>
-          ))}
+          {/* Right rail — secondaries stretch to match primary height */}
+          <div className="dat-vs-rail">
+            {secondaries.map((v, i) => (
+              <div key={i} className="dat-vs-secondary">
+                <VideoSlot item={v} secondary={count >= 3} fillHeight />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

@@ -169,7 +169,9 @@ export default function MediaPanel({
     setVideoAutoplay(String(profile?.videoAutoplay || "").trim());
     const fbv = String(profile?.videoFullBleed ?? "").trim();
     setVideoFullBleed(fbv === "" ? true : fbv === "true");
-    setVideoDirty(false);
+    // Do NOT reset videoDirty here — this effect re-runs whenever setProfile()
+    // reflects a local edit back through the parent, which would immediately
+    // clear the dirty flag the user just set.  dirty is only cleared on save.
   }, [
     profile?.reelVideoUrl1, profile?.reelVideoUrl2, profile?.reelVideoUrl3,
     profile?.videoTitle1, profile?.videoTitle2, profile?.videoTitle3,
@@ -781,18 +783,20 @@ export default function MediaPanel({
                 placeholder="https://… (YouTube, Vimeo, Loom, Google Drive, etc.)"
                 style={inputStyle}
               />
+              {/* Title always visible so users can see/edit it at any time */}
+              <input
+                type="text" value={titleValue}
+                onChange={(e) => {
+                  titleSetter(e.target.value);
+                  setProfile?.((p: any) => ({ ...p, [titleKey]: e.target.value }));
+                  setVideoDirty(true);
+                }}
+                placeholder="Custom title (optional — auto-detected if blank)"
+                style={inputStyle}
+              />
+              {/* Aspect ratio only revealed once a URL is present */}
               {urlValue.trim() && (
                 <div className="_mp_videoExtra" style={{ display: "grid", gap: 6 }}>
-                  <input
-                    type="text" value={titleValue}
-                    onChange={(e) => {
-                      titleSetter(e.target.value);
-                      setProfile?.((p: any) => ({ ...p, [titleKey]: e.target.value }));
-                      setVideoDirty(true);
-                    }}
-                    placeholder="Custom title (optional — auto-detected if blank)"
-                    style={inputStyle}
-                  />
                   <select
                     value={aspectValue}
                     onChange={(e) => {
