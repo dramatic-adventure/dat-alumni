@@ -327,6 +327,8 @@ const handleError = useCallback(() => {
             boxShadow: "2px 3px 4px rgba(36,17,35,0.5)",
             transformOrigin: "center center",
             borderRadius: 0,
+            backgroundImage: "url('/images/default-headshot.png')",
+            backgroundSize: "cover",
             outline: highlightFrame
               ? "3px solid rgba(255, 204, 0, 0.95)"
               : undefined,

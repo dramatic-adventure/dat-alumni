@@ -37,6 +37,10 @@ interface AlumniItem {
   headshotCacheKey?: string | number;
   /** Present-day professional title outside DAT (from Profile-Live / enrichment). */
   currentTitle?: string;
+  /** "current" | "past" | undefined — used to populate the Staff bucket (mirrors /title logic). */
+  datStaffStatus?: string;
+  /** "current" | "past" | undefined — used to populate the Executive Directors bucket. */
+  execDirStatus?: string;
 }
 
 type SortOption = "last" | "first" | "recent";
@@ -62,20 +66,15 @@ function driveUrlFromId(id?: string | null) {
 }
 
 /**
- * Check if an alumni's currentTitle matches a role filter using the same
- * token-bucket routing as /title — avoids false positives like "Director of Education"
- * matching a "Director" filter.
+ * Check if an alumni's currentTitle maps to the given bucket key — avoids false positives
+ * like "Director of Education" matching the "title:directors" filter.
+ * bucketKey is a pre-computed TitleBucketKey (e.g. "title:actors", "teaching-artists").
  */
-function ctMatchesRoleFilter(ct: string | undefined, filterRole: string): boolean {
-  if (!ct || !filterRole) return false;
-  const filterBuckets = bucketsForTitleToken(filterRole);
-  if (!filterBuckets.length) {
-    // filterRole doesn't route to any known bucket — fall back to simple substring match
-    return ct.toLowerCase().includes(filterRole.toLowerCase());
-  }
+function ctMatchesRoleFilter(ct: string | undefined, bucketKey: string): boolean {
+  if (!ct || !bucketKey) return false;
   for (const token of splitTitles(ct)) {
     if (!token.trim()) continue;
-    if (bucketsForTitleToken(token).some((b) => filterBuckets.includes(b))) return true;
+    if ((bucketsForTitleToken(token) as string[]).includes(bucketKey)) return true;
   }
   return false;
 }
@@ -218,19 +217,30 @@ export default function DirectoryPageClient({
     return Array.from(set).sort();
   }, [alumni]);
 
-  const roles = useMemo(() => {
-    // Collect distinct bucket labels (e.g. "Actors", "Designers") rather than every
-    // exact role string — mirrors the /title bucket taxonomy so the dropdown stays clean.
-    const bucketMap = new Map<string, string>(); // key → label
+  /**
+   * Bucket keys for the ROLE dropdown — mirrors the /title taxonomy.
+   * Stores raw bucket keys (e.g. "title:actors", "teaching-artists") so that filter
+   * matching is a direct set-membership check rather than re-routing through
+   * bucketsForTitleToken (which would double-process and produce keys like "title:actorss").
+   * Labels are derived at render time via getLabelForBucketKey.
+   */
+  const roleOptions = useMemo((): string[] => {
+    const keys = new Set<string>();
+
     alumni.forEach((a) => {
       for (const role of a.roles || []) {
         if (!role) continue;
         for (const key of bucketsForTitleToken(role)) {
-          if (!bucketMap.has(key)) bucketMap.set(key, getLabelForBucketKey(key));
+          keys.add(key);
         }
       }
+      if (a.datStaffStatus) keys.add("staff");
+      if (a.execDirStatus === "current" || a.execDirStatus === "past") keys.add("executive-directors");
     });
-    return Array.from(bucketMap.values()).sort();
+
+    return Array.from(keys).sort((a, b) =>
+      getLabelForBucketKey(a).localeCompare(getLabelForBucketKey(b))
+    );
   }, [alumni]);
 
   const languageOptions = useMemo(() => {
@@ -268,13 +278,12 @@ export default function DirectoryPageClient({
     if (filters.season) result = result.filter((a) => a.seasons?.includes(filters.season));
     if (filters.location) result = result.filter((a) => a.location === filters.location || a.secondLocation === filters.location);
     if (filters.role) {
-      const filterBuckets = bucketsForTitleToken(filters.role);
+      const selectedBucket = filters.role; // already a bucket key — no re-routing needed
       result = result.filter((a) => {
-        // Check merged roles via bucket routing (e.g. "Lighting Designer" → "designers" bucket)
-        const roleMatch = filterBuckets.length > 0 && (a.roles || []).some(
-          (r) => r && bucketsForTitleToken(r).some((b) => filterBuckets.includes(b))
-        );
-        return roleMatch || ctMatchesRoleFilter(a.currentTitle, filters.role);
+        if ((a.roles || []).some((r) => r && (bucketsForTitleToken(r) as string[]).includes(selectedBucket))) return true;
+        if (selectedBucket === "staff" && a.datStaffStatus) return true;
+        if (selectedBucket === "executive-directors" && (a.execDirStatus === "current" || a.execDirStatus === "past")) return true;
+        return ctMatchesRoleFilter(a.currentTitle, selectedBucket);
       });
     }
     if (filters.statusFlag) result = result.filter((a) => a.statusFlags?.includes(filters.statusFlag));
@@ -328,7 +337,7 @@ export default function DirectoryPageClient({
     { name: "program", label: "PROGRAM", options: programs },
     { name: "season", label: "SEASON", options: seasons },
     { name: "location", label: "LOCATION", options: locations },
-    { name: "role", label: "ROLE", options: roles },
+    { name: "role", label: "ROLE", options: roleOptions },
     ...(statusFlagOptions.length > 0
       ? [{ name: "statusFlag" as const, label: "INVOLVEMENT", options: statusFlagOptions }]
       : []),
@@ -591,7 +600,7 @@ export default function DirectoryPageClient({
                         <option value="">{filter.label}</option>
                         {filter.options.map((opt) => (
                           <option key={opt} value={opt}>
-                            {opt}
+                            {filter.name === "role" ? getLabelForBucketKey(opt) : opt}
                           </option>
                         ))}
                       </select>
@@ -699,7 +708,7 @@ export default function DirectoryPageClient({
                 // When matching via role filter (no query), use the filter term as the label (e.g. "Director")
                 // rather than the full currentTitle ("Artistic Director at Denver Center").
                 const matchTerm = q || (filters.role ? filters.role.toLowerCase() : "");
-                const viaLabel = filters.role && !q ? filters.role : ct;
+                const viaLabel = filters.role && !q ? getLabelForBucketKey(filters.role) : ct;
                 const ctViaMatch = ct && matchTerm && (
                   filters.role && !q
                     ? ctMatchesRoleFilter(ct, filters.role) && !ctMatchesRoleFilter(primaryRole, filters.role)
@@ -765,7 +774,7 @@ export default function DirectoryPageClient({
                       : rawQuery.toLowerCase();
                   const ct = alum.currentTitle || "";
                   const matchTerm = q || (filters.role ? filters.role.toLowerCase() : "");
-                  const viaLabel = filters.role && !q ? filters.role : ct;
+                  const viaLabel = filters.role && !q ? getLabelForBucketKey(filters.role) : ct;
                   const ctViaMatch = ct && matchTerm && (
                     filters.role && !q
                       ? ctMatchesRoleFilter(ct, filters.role) && !ctMatchesRoleFilter(primaryRole, filters.role)

@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
 import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
-import { getPrimaryDatRoleForProfile, getOrderedProfileRoles, deriveBoardStatus } from "@/lib/profileRoleAssignments";
+import { getPrimaryDatRoleForProfile, getOrderedProfileRoles, deriveBoardStatus, getStaffStatusForProfile, getExecDirStatusForProfile } from "@/lib/profileRoleAssignments";
 import DirectoryPageClient from "@/components/alumni/DirectoryPageClient";
 
 import { enrichAlumniData } from "@/components/alumni/AlumniSearch/enrichAlumniData.server";
@@ -100,12 +100,18 @@ export default async function DirectoryPage() {
       now,
       projectRoles
     );
+    const id = a.profileId || a.slug;
+    const datStaffStatus = getStaffStatusForProfile(id, roleAssignments) ?? undefined;
+    const execDirStatus = getExecDirStatusForProfile(id, roleAssignments) ?? undefined;
+
     return {
       ...a,
       location: normalizeLocation(a.location) ?? a.location ?? "",
       secondLocation: normalizeLocation((a as any).secondLocation) ?? (a as any).secondLocation ?? "",
       roles: mergedRoles,
       primaryRole: mergedRoles[0] || primaryRoleBySlug[a.slug] || "",
+      datStaffStatus,
+      execDirStatus,
       statusFlags: deriveBoardStatus(a.slug, roleAssignments, now)
         ? Array.from(new Set([...(a.statusFlags || []), "Board Member"]))
         : a.statusFlags || [],
