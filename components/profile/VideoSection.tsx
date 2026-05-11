@@ -267,8 +267,8 @@ export default function VideoSection({ videos, fullBleed = true }: VideoSectionP
     .dat-vs-theatre {
       background: linear-gradient(160deg, #0d0618 0%, #06101e 55%, #090c18 100%);
       font-family: var(--font-dm-sans), system-ui, sans-serif;
-      /* Desktop: less horizontal padding → bigger video */
-      padding: clamp(2.5rem, 4vw, 4rem) clamp(3rem, 6vw, 5.5rem);
+      /* Desktop: tight horizontal padding so the video fills the card width */
+      padding: clamp(2rem, 3vw, 3rem) 1rem;
     }
     /* Tablet — nearly full width */
     @media (max-width: 1024px) {
