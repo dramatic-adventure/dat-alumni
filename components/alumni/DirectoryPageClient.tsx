@@ -230,8 +230,13 @@ export default function DirectoryPageClient({
     alumni.forEach((a) => {
       for (const role of a.roles || []) {
         if (!role) continue;
-        for (const key of bucketsForTitleToken(role)) {
-          keys.add(key);
+        // Split compound role strings (e.g. "Actor, Musician") before bucketing,
+        // mirroring how buildTitleBuckets works in lib/titles.ts.
+        for (const token of splitTitles(role)) {
+          if (!token.trim()) continue;
+          for (const key of bucketsForTitleToken(token)) {
+            keys.add(key);
+          }
         }
       }
       if (a.datStaffStatus) keys.add("staff");
@@ -280,7 +285,7 @@ export default function DirectoryPageClient({
     if (filters.role) {
       const selectedBucket = filters.role; // already a bucket key — no re-routing needed
       result = result.filter((a) => {
-        if ((a.roles || []).some((r) => r && (bucketsForTitleToken(r) as string[]).includes(selectedBucket))) return true;
+        if ((a.roles || []).some((r) => r && splitTitles(r).some((token) => token && (bucketsForTitleToken(token) as string[]).includes(selectedBucket)))) return true;
         if (selectedBucket === "staff" && a.datStaffStatus) return true;
         if (selectedBucket === "executive-directors" && (a.execDirStatus === "current" || a.execDirStatus === "past")) return true;
         return ctMatchesRoleFilter(a.currentTitle, selectedBucket);
@@ -502,7 +507,7 @@ export default function DirectoryPageClient({
                         onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
                         onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                       >
-                        {opt === "last" ? "Last" : opt === "first" ? "First" : "Updated"}
+                        {opt === "last" ? "Last Name" : opt === "first" ? "First Name" : "Recently Updated"}
                       </button>
                     ))}
                   </div>
