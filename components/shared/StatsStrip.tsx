@@ -15,6 +15,8 @@ export type StatsStripProps = {
   boxed?: boolean;
   boxBg?: string;
   boxRadius?: string;
+  /** Max columns on desktop. Defaults to 6. Pass e.g. 4 when showing fewer stats. */
+  columns?: number;
 };
 
 const DEFAULT_STATS: Stat[] = [
@@ -117,7 +119,11 @@ export default function StatsStrip({
   boxed = true,
   boxBg = "rgba(36, 17, 35, 0.2)",
   boxRadius = "12px",
+  columns = 6,
 }: StatsStripProps) {
+  // On tablet, use the same column count if ≤4 (fits in one row); otherwise cap at 3.
+  const tabletCols = columns <= 4 ? columns : 3;
+  const desktopCols = columns;
   const sectionRef = useRef<HTMLElement | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
 
@@ -275,16 +281,14 @@ export default function StatsStrip({
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
         @media (min-width: 640px) {
-          /* TABLET: 3 columns (2 rows) */
           .stats-container {
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(${tabletCols}, 1fr);
             gap: 1.25rem 1.25rem;
           }
         }
         @media (min-width: 1024px) {
-          /* DESKTOP: 6 columns (1 row) */
           .stats-container {
-            grid-template-columns: repeat(6, 1fr);
+            grid-template-columns: repeat(${desktopCols}, 1fr);
             gap: 1.25rem 1.5rem;
           }
         }

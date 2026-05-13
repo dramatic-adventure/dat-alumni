@@ -10,8 +10,9 @@ import {
   COUNTRY_COUNT,
   CLUB_COUNT,
   SEASON_COUNT,
-  ALUMNI_COUNT_DISPLAY,
+  ALUMNI_COUNT,
 } from "@/lib/datStats";
+import StatsStrip from "@/components/shared/StatsStrip";
 import { dramaClubs } from "@/lib/dramaClubMap";
 import { productionMap, getSortYear } from "@/lib/productionMap";
 import {
@@ -98,6 +99,15 @@ function StoryMedia({ url, title }: { url: string; title: string }) {
     />
   );
 }
+
+/* ─── Home page stats ───────────────────────────────────────────────── */
+
+const HOME_STATS = [
+  { value: SEASON_COUNT,   label: "Seasons" },
+  { value: COUNTRY_COUNT,  label: "Countries" },
+  { value: CLUB_COUNT,     label: "Drama Clubs" },
+  { value: ALUMNI_COUNT,   label: "Alumni Artists" },
+];
 
 /* ─── Page ──────────────────────────────────────────────────────────── */
 
@@ -376,37 +386,18 @@ export default function Page() {
       </section>
 
       {/* ════════════════════════════════════════════════
-          STATS BAND — dark, compact credibility bar
+          STATS BAND
       ════════════════════════════════════════════════ */}
-      <section
-        className="hp-stats-band"
-        aria-label="DAT by the numbers"
-        style={{ background: "#241123" }}
-      >
-        <div className="hp-stats-inner">
-
-          <div className="hp-stat">
-            <span className="hp-stat-number">{SEASON_COUNT}</span>
-            <span className="hp-stat-label">Seasons</span>
-          </div>
-          <div className="hp-stat-sep" aria-hidden="true" />
-          <div className="hp-stat">
-            <span className="hp-stat-number">{COUNTRY_COUNT}</span>
-            <span className="hp-stat-label">Countries</span>
-          </div>
-          <div className="hp-stat-sep" aria-hidden="true" />
-          <div className="hp-stat">
-            <span className="hp-stat-number">{CLUB_COUNT}</span>
-            <span className="hp-stat-label">Drama Clubs</span>
-          </div>
-          <div className="hp-stat-sep" aria-hidden="true" />
-          <div className="hp-stat">
-            <span className="hp-stat-number">{ALUMNI_COUNT_DISPLAY}</span>
-            <span className="hp-stat-label">Artists</span>
-          </div>
-
-        </div>
-      </section>
+      <StatsStrip
+        stats={HOME_STATS}
+        background="#241123"
+        accentColor="#FFCC00"
+        textColor="rgba(246,228,193,0.62)"
+        boxed={false}
+        columns={4}
+        maxWidth="1200px"
+        id="hp-stats"
+      />
 
       {/* ════════════════════════════════════════════════
           LIVE STORY STRIP — kraft background, editorial cards
@@ -1062,52 +1053,6 @@ main a:active { text-decoration: none !important; }
   0%   { box-shadow: 0 0 0   6px rgba(255,204,0,0);   }
   50%  { box-shadow: 0 0 0  10px rgba(255,204,0,0.28); }
   100% { box-shadow: 0 0 0   6px rgba(255,204,0,0);   }
-}
-
-/* ══════════════════════════════════════════════════════════
-   STATS BAND
-══════════════════════════════════════════════════════════ */
-.hp-stats-band { padding: 2.25rem 2rem; }
-.hp-stats-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-.hp-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0.75rem 3rem;
-  flex: 1 1 140px;
-}
-.hp-stat-number {
-  font-family: "Anton", sans-serif;
-  font-size: clamp(2.8rem, 5vw, 4.5rem);
-  color: #FFCC00;
-  line-height: 1;
-  letter-spacing: 0.02em;
-}
-.hp-stat-label {
-  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: rgba(246,228,193,0.62);
-  margin-top: 0.45rem;
-}
-.hp-stat-sep {
-  width: 1px; height: 2.5rem;
-  background: rgba(255,255,255,0.14);
-  flex: 0 0 auto; align-self: center;
-}
-@media (max-width: 600px) {
-  .hp-stat-sep { display: none; }
-  .hp-stat { padding: 0.6rem 1.25rem; flex: 1 1 90px; }
-  .hp-stat-label { font-size: 0.68rem; letter-spacing: 0.12em; }
 }
 
 /* ══════════════════════════════════════════════════════════
