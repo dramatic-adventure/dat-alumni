@@ -7,6 +7,9 @@ import SeasonCardAlt from "./SeasonCardAlt";
 export default function SeasonsCarouselAlt() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+  // Pause auto-scroll while the user is touching the carousel
+  const [isTouching, setIsTouching] = useState(false);
+  const touchStartX = useRef<number | null>(null);
 
   // ✅ Toggle to reverse order
   const reverseOrder = true; // change to true for reversed order
@@ -18,7 +21,7 @@ export default function SeasonsCarouselAlt() {
   const SCROLL_SPEED = 0.8;
   const AUTOSCROLL_INTERVAL = 16;
 
-  // ✅ Auto-scroll logic
+  // ✅ Auto-scroll logic — pauses on hover OR touch
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -28,7 +31,7 @@ export default function SeasonsCarouselAlt() {
     const startScroll = () => {
       if (scrollInterval) return;
       scrollInterval = setInterval(() => {
-        if (!isHovered) {
+        if (!isHovered && !isTouching) {
           container.scrollLeft += SCROLL_SPEED;
 
           // ✅ Reset scroll when end reached for infinite loop effect
@@ -47,12 +50,29 @@ export default function SeasonsCarouselAlt() {
     return () => {
       if (scrollInterval) clearInterval(scrollInterval);
     };
-  }, [isHovered]);
+  }, [isHovered, isTouching]);
 
   const scrollByAmount = (amount: number) => {
     if (containerRef.current) {
       containerRef.current.scrollBy({ left: amount, behavior: "smooth" });
     }
+  };
+
+  // ✅ Touch swipe: record start position, then on release calculate delta and scroll
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    setIsTouching(true);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    setIsTouching(false);
+    if (touchStartX.current === null) return;
+    const dx = touchStartX.current - e.changedTouches[0].clientX;
+    // Only trigger a programmatic scroll for deliberate swipes (>40px)
+    if (Math.abs(dx) > 40) {
+      scrollByAmount(dx * 1.5);
+    }
+    touchStartX.current = null;
   };
 
   return (
@@ -86,13 +106,18 @@ export default function SeasonsCarouselAlt() {
       {/* ✅ Carousel Container */}
       <div
         ref={containerRef}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         style={{
           display: "flex",
-          gap: "clamp(24px, 4vw, 48px)",
+          // Tighter gap on mobile so more of the next card peeks in
+          gap: "clamp(16px, 4vw, 48px)",
           overflowX: "auto",
           scrollBehavior: "smooth",
           scrollbarWidth: "none",
-          padding: "3rem 4rem",
+          // Fixed 4rem side padding was 128px on a 375px screen — replaced with
+          // clamp so mobile gets ~1rem and desktop retains the original 4rem.
+          padding: "3rem clamp(1rem, 5vw, 4rem)",
         }}
       >
         {loopedSeasons.map((s, index) => (
