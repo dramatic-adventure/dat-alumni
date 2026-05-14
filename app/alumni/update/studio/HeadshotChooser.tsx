@@ -13,20 +13,6 @@ type HeadshotItem = {
   drive?: DriveMeta;
 };
 
-// Inline SVG lock icon for original headshots
-function LockIcon() {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
-    </svg>
-  );
-}
 
 export default function HeadshotChooser({
   alumniId,
@@ -322,7 +308,6 @@ export default function HeadshotChooser({
             {displayItems.map((it) => {
               const isCurr = !!it.isCurrent;
               const isDeletable = it.isOriginal === false && !!it.fileId;
-              const isLocked = it.isOriginal === true;
               const isBeingDeleted = deleting === it.fileId;
 
               return (
@@ -359,33 +344,15 @@ export default function HeadshotChooser({
                     />
                   </button>
 
-                  {/* Lock icon for original (protected) headshots */}
-                  {isLocked && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: 4,
-                        right: 4,
-                        background: "rgba(0,0,0,0.55)",
-                        borderRadius: 3,
-                        padding: "2px 3px",
-                        color: "#fff",
-                        lineHeight: 0,
-                        pointerEvents: "none",
-                      }}
-                      title="Original headshot — cannot be deleted"
-                    >
-                      <LockIcon />
-                    </div>
-                  )}
-
                   {/* Delete button for non-original Drive headshots */}
                   {isDeletable && (
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDelete(it.fileId);
+                        if (window.confirm("Delete this headshot? This cannot be undone.")) {
+                          handleDelete(it.fileId);
+                        }
                       }}
                       disabled={!!parentLoading || !!deleting}
                       title="Delete this headshot"
