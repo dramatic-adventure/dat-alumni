@@ -6235,3 +6235,654 @@ a.dc-link.dc-link--teal:hover {
 .dc-active-program-tag--past {
   color: #2493a9;
 }
+
+/* ═══════════════════════════════════════════════════
+   DESIGN POLISH PASS — intentional sizing, rhythm,
+   proportion. Placed last so specificity wins cleanly.
+   ═══════════════════════════════════════════════════ */
+
+/* ── 1. LEAD TEAM — contact-sheet portrait grid ── */
+
+/* Reset all prior conflicting definitions for this wrap */
+.dc-artist-full .dc-lead-mini-wrap {
+  display: grid !important;
+  grid-template-columns: repeat(5, 1fr) !important;
+  gap: 12px !important;
+  align-items: start !important;
+  justify-items: stretch !important;
+  max-width: 860px !important;
+  margin-top: 1rem;
+}
+
+.dc-artist-full .dc-lead-mini-wrap > *,
+.dc-artist-full .dc-lead-mini-item {
+  width: 100% !important;
+  max-width: 160px !important;
+  min-width: 0 !important;
+}
+
+/* Tablet: 3 columns */
+@media (max-width: 1023px) {
+  .dc-artist-full .dc-lead-mini-wrap {
+    grid-template-columns: repeat(3, 1fr) !important;
+    max-width: 520px !important;
+  }
+}
+
+/* Mobile: 2 columns */
+@media (max-width: 599px) {
+  .dc-artist-full .dc-lead-mini-wrap {
+    grid-template-columns: repeat(2, 1fr) !important;
+    max-width: 340px !important;
+    gap: 10px !important;
+  }
+
+  .dc-artist-full .dc-lead-mini-wrap > *,
+  .dc-artist-full .dc-lead-mini-item {
+    max-width: 100% !important;
+  }
+}
+
+/* Name and role inside lead team portraits */
+.dc-artist-full .dc-lead-mini-item h3 {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  font-variant: small-caps !important;
+  letter-spacing: 0.04em !important;
+  margin-top: 8px !important;
+  line-height: 1.3 !important;
+}
+
+.dc-artist-full .dc-lead-mini-item p {
+  font-size: 11px !important;
+  color: rgba(36, 17, 35, 0.55) !important;
+  margin-top: 2px !important;
+  line-height: 1.3 !important;
+}
+
+/* ── 2. VOICES — scrim + dark-panel alignment ── */
+
+/* Photo panels: solid dark scrim instead of gradient */
+.dc-voice-portrait__panel--photo .dc-voice-portrait__scrim {
+  background: rgba(0, 0, 0, 0.55) !important;
+}
+
+/* Dark (no-photo) panels: quote vertically centered, not anchored to bottom */
+.dc-voice-portrait__panel--dark .dc-voice-portrait__quote-area {
+  align-items: center !important;
+  text-align: center !important;
+  padding: 1.25rem !important;
+}
+
+/* Dark panels: use a serif/italic treatment */
+.dc-voice-portrait__panel--dark .dc-voice-portrait__text {
+  font-size: clamp(0.88rem, 1.5vw, 1.05rem) !important;
+  line-height: 1.55 !important;
+}
+
+/* Dark panels: slightly more opaque for readability */
+.dc-voice-portrait__panel--dark {
+  background: #241123 !important;
+}
+
+/* Voices grid: explicit equal-width, equal-height columns */
+.dc-voices-grid {
+  grid-template-columns: 1fr 1fr !important;
+  align-items: start !important;
+}
+
+/* ── 3. MARQUEE — static row for sparse clubs ── */
+
+.dc-lineage-static-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 1rem;
+}
+
+.dc-lineage-static-item {
+  width: 140px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .dc-lineage-static-item {
+    width: calc(50% - 6px);
+  }
+}
+
+/* ── 4. OTHER DRAMA CLUBS — no-image kraft card ── */
+
+.dc-other-clubs__img--kraft {
+  background-color: #d4b896;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(36, 17, 35, 0.04) 2px,
+      rgba(36, 17, 35, 0.04) 3px
+    );
+  position: relative;
+}
+
+.dc-other-clubs__card--noimg .dc-other-clubs__name {
+  font-size: clamp(1rem, 2vw, 1.3rem);
+}
+
+/* When no image, make the info panel taller to compensate */
+.dc-other-clubs__card--noimg .dc-other-clubs__info {
+  padding: 1.5rem 1rem;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* ── 5. STATS BAND — wider label column, prevent 3-line wrap ── */
+
+.dc-footprint-band__label {
+  font-size: clamp(0.68rem, 1vw, 0.78rem) !important;
+  max-width: 13em !important;
+  line-height: 1.35 !important;
+}
+
+.dc-footprint-band__value {
+  margin-right: 0.65em !important;
+  flex-shrink: 0;
+}
+
+/* Give each stat a comfortable min-width so it doesn't compress */
+.dc-footprint-band__stat {
+  flex: 0 1 auto !important;
+  min-width: max-content;
+}
+
+/* ── 6. STAND WITH CTA — primary-moment sizing ── */
+
+.dc-stand-with__cta.dc-cta {
+  padding: 14px 28px !important;
+  font-size: 0.8rem !important;
+  font-weight: 800 !important;
+}
+
+/* ── 7. HERO — CTA vertically centered on large desktop ── */
+
+/* On true desktop (>1200px) where content is not absolutely positioned,
+   center the right-column CTA against the left headline block */
+@media (min-width: 1201px) {
+  .dc-hero-main {
+    align-items: center !important;
+  }
+}
+
+/* Mobile: CTA stacks below the place subtitle with breathing room */
+@media (max-width: 719px) {
+  .dc-hero-cta-row {
+    margin-top: 1.5rem !important;
+  }
+}
+
+/* ── 8. SECTION RHYTHM — consistent vertical spacing ── */
+
+/* Between groupings: 96–120px desktop, 64–80px mobile */
+.dc-group-gap {
+  height: clamp(72px, 9vw, 120px) !important;
+}
+
+/* Within card: each section gets consistent top padding */
+.dc-card > section,
+.dc-card > .dc-community-row,
+.dc-card > .dc-section {
+  padding-top: clamp(48px, 5vw, 80px);
+  padding-bottom: clamp(48px, 5vw, 80px);
+}
+
+/* Artist section full-width already has its own padding via .dc-artist-full */
+.dc-artist-section--full {
+  padding: 0;
+}
+
+.dc-artist-full {
+  padding-top: clamp(48px, 5vw, 80px) !important;
+  padding-bottom: clamp(48px, 5vw, 80px) !important;
+}
+
+/* Stand With section: generous padding */
+.dc-stand-with {
+  padding: clamp(48px, 6vw, 96px) 0 !important;
+}
+
+/* Footprint band: slightly tighter padding (it's a dense typographic band) */
+.dc-footprint-band {
+  padding: clamp(2rem, 3.5vw, 2.75rem) 0 !important;
+}
+
+/* ── 9. MARQUEE EYEBROW — match dc-mini-label treatment ── */
+
+/* The heading "Artists who've worked here" already uses .dc-mini-label.
+   This rule ensures the marquee eyebrow inside dc-artist-full__marquee
+   has the same top spacing as other eyebrows in the section. */
+.dc-artist-full__marquee > .dc-mini-label {
+  margin-bottom: 0.75rem;
+}
+
+/* ────────────────────────────────────────────── */
+/* GROUP GAP — breathing room between groupings  */
+/* ────────────────────────────────────────────── */
+
+.dc-group-gap {
+  height: clamp(64px, 8vw, 112px);
+}
+
+/* ────────────────────────────────────────────── */
+/* VOICE PORTRAIT CARD                           */
+/* ────────────────────────────────────────────── */
+
+.dc-voices-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+@media (max-width: 520px) {
+  .dc-voices-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dc-voice-portrait {
+  display: flex;
+  flex-direction: column;
+}
+
+.dc-voice-portrait__panel {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+}
+
+.dc-voice-portrait__panel--photo {
+  cursor: zoom-in;
+}
+
+.dc-voice-portrait__panel--dark {
+  background: rgba(36, 17, 35, 0.9);
+}
+
+.dc-voice-portrait__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dc-voice-portrait__scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(36, 17, 35, 0.82) 0%, rgba(36, 17, 35, 0.2) 55%, transparent 100%);
+}
+
+.dc-voice-portrait__quote-area {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 1rem;
+}
+
+.dc-voice-portrait__text {
+  font-size: clamp(0.82rem, 1.4vw, 1rem);
+  font-weight: 400;
+  line-height: 1.45;
+  color: #f6e4c1;
+  margin: 0;
+  font-style: italic;
+}
+
+.dc-voice-portrait__attribution {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: rgba(36, 17, 35, 0.55);
+  margin: 0.5rem 0 0;
+  text-transform: uppercase;
+}
+
+/* ────────────────────────────────────────────── */
+/* FOOTPRINT BAND — typographic stat row         */
+/* ────────────────────────────────────────────── */
+
+.dc-footprint-band {
+  background: #241123;
+  padding: clamp(2rem, 4vw, 3rem) 0;
+  width: 100%;
+}
+
+.dc-footprint-band__inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 clamp(1.25rem, 5vw, 3rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  flex-wrap: wrap;
+}
+
+.dc-footprint-band__stat {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 0 1 auto;
+}
+
+.dc-footprint-band__divider {
+  display: block;
+  width: 1px;
+  height: 2.5em;
+  background: rgba(246, 228, 193, 0.2);
+  margin: 0 clamp(1.5rem, 4vw, 3rem);
+  flex-shrink: 0;
+}
+
+.dc-footprint-band__value {
+  font-size: clamp(2.4rem, 5vw, 4.2rem);
+  font-weight: 400;
+  color: #f6e4c1;
+  line-height: 1;
+  margin-right: 0.55em;
+}
+
+.dc-footprint-band__label {
+  font-size: clamp(0.65rem, 1vw, 0.78rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(246, 228, 193, 0.6);
+  max-width: 8em;
+  line-height: 1.3;
+}
+
+@media (max-width: 600px) {
+  .dc-footprint-band__inner {
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+
+  .dc-footprint-band__divider {
+    display: none;
+  }
+
+  .dc-footprint-band__stat {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+  }
+}
+
+/* ────────────────────────────────────────────── */
+/* STAND WITH                                    */
+/* ────────────────────────────────────────────── */
+
+.dc-stand-with {
+  padding: clamp(3rem, 6vw, 5rem) 0;
+}
+
+.dc-stand-with__inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 clamp(1.25rem, 5vw, 3rem);
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: clamp(2rem, 5vw, 4rem);
+  align-items: start;
+}
+
+@media (max-width: 820px) {
+  .dc-stand-with__inner {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dc-stand-with__eyebrow {
+  margin-bottom: 0.5rem;
+}
+
+.dc-stand-with__title {
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-weight: 400;
+  color: #241123;
+  line-height: 1.05;
+  margin: 0 0 1.25rem;
+}
+
+.dc-stand-with-full {
+  display: inline;
+}
+
+.dc-stand-with-short {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .dc-stand-with-full {
+    display: none;
+  }
+  .dc-stand-with-short {
+    display: inline;
+  }
+}
+
+.dc-stand-with__body {
+  font-size: clamp(0.9rem, 1.5vw, 1.05rem);
+  line-height: 1.7;
+  color: rgba(36, 17, 35, 0.78);
+  margin: 0 0 1.75rem;
+  max-width: 55ch;
+}
+
+.dc-stand-with__cta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.dc-stand-with__cta {
+  align-self: flex-start;
+}
+
+.dc-stand-with__fineprint {
+  font-size: 0.75rem;
+  color: rgba(36, 17, 35, 0.45);
+  margin: 0;
+}
+
+/* Compact unlock list */
+.dc-unlock-list {
+  margin-top: 1.5rem;
+}
+
+.dc-unlock-list__label {
+  margin-bottom: 0.75rem;
+}
+
+.dc-unlock-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.dc-unlock-items__item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  font-size: 0.88rem;
+  color: rgba(36, 17, 35, 0.75);
+  line-height: 1.4;
+}
+
+.dc-unlock-items__value {
+  font-size: 1.25rem;
+  color: #6c00af;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.dc-unlock-items__text {
+  opacity: 0.85;
+}
+
+/* Impact partners sidebar */
+.dc-stand-with__partners {
+  background: rgba(36, 17, 35, 0.03);
+  border: 1px solid rgba(36, 17, 35, 0.08);
+  border-radius: 4px;
+  padding: 1.5rem;
+}
+
+.dc-partners-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  color: rgba(36, 17, 35, 0.78);
+}
+
+.dc-stand-with__propose {
+  font-size: 0.78rem;
+  display: inline-block;
+  margin-top: 0.25rem;
+}
+
+/* ────────────────────────────────────────────── */
+/* ARTIST PATHWAYS — full-width                  */
+/* ────────────────────────────────────────────── */
+
+.dc-artist-section--full .dc-artist-inner {
+  display: block;
+}
+
+.dc-artist-full {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: clamp(2.5rem, 5vw, 4rem) clamp(1.25rem, 5vw, 3rem);
+}
+
+.dc-artist-full__intro {
+  max-width: 65ch;
+  margin-bottom: 1.25rem;
+}
+
+.dc-artist-full__marquee {
+  margin-top: 2.5rem;
+}
+
+.dc-lead-mini-more {
+  display: inline-block;
+  margin-top: 1rem;
+  font-size: 0.82rem;
+}
+
+/* ────────────────────────────────────────────── */
+/* OTHER DRAMA CLUBS                             */
+/* ────────────────────────────────────────────── */
+
+.dc-other-clubs {
+  padding: clamp(2.5rem, 5vw, 4rem) 0;
+}
+
+.dc-other-clubs__eyebrow {
+  margin-bottom: 1.25rem;
+}
+
+.dc-other-clubs__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .dc-other-clubs__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Show only first 2 cards on mobile */
+  .dc-other-clubs__card:nth-child(n+3) {
+    display: none;
+  }
+}
+
+.dc-other-clubs__card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+  background: rgba(36, 17, 35, 0.06);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.dc-other-clubs__card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(36, 17, 35, 0.18);
+}
+
+.dc-other-clubs__img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(36, 17, 35, 0.1);
+}
+
+.dc-other-clubs__info {
+  padding: 0.75rem 0.85rem 0.9rem;
+}
+
+.dc-other-clubs__geo {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(36, 17, 35, 0.45);
+  margin: 0 0 0.25rem;
+}
+
+.dc-other-clubs__name {
+  font-size: clamp(0.9rem, 1.8vw, 1.15rem);
+  font-weight: 400;
+  color: #241123;
+  margin: 0;
+  line-height: 1.15;
+}
+
+.dc-other-clubs__card:hover .dc-other-clubs__name {
+  color: #6c00af;
+}
+
+.dc-other-clubs__map-link {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(36, 17, 35, 0.45);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.dc-other-clubs__map-link:hover {
+  color: #241123;
+}

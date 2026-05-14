@@ -7,7 +7,6 @@ import {
   useCallback,
   type ReactNode,
   type CSSProperties,
-  type FormEvent,
 } from "react";
 
 import Image from "next/image";
@@ -166,7 +165,7 @@ export interface DramaClubPageTemplateProps {
 
   /**
    * ✅ Optional (recommended): computed server-side from programs/projects.
-   * Use this for the Artist Lineage marquee so it can be “right artists → right club”.
+   * Use this for the Artist Lineage marquee so it can be "right artists → right club".
    */
   lineageArtists?: PersonRef[];
 
@@ -602,6 +601,61 @@ function RoomVideoBlock({ video }: { video: EmbeddableVideo }) {
   );
 }
 
+/* ===================== VOICE PORTRAIT CARD ===================== */
+
+/**
+ * 4:5 portrait panel for voices — photo with quote overlaid (semi-transparent scrim),
+ * or a dark/kraft panel when no photo is available. Attribution sits beneath.
+ */
+function VoicePortraitCard({
+  imageSrc,
+  imageAlt,
+  quote,
+  attribution,
+  onImageClick,
+}: {
+  imageSrc?: string;
+  imageAlt?: string;
+  quote: string;
+  attribution?: string;
+  onImageClick?: () => void;
+}) {
+  const hasImage = !!imageSrc;
+  return (
+    <div className="dc-voice-portrait">
+      <div
+        className={`dc-voice-portrait__panel${hasImage ? " dc-voice-portrait__panel--photo" : " dc-voice-portrait__panel--dark"}`}
+        onClick={hasImage && onImageClick ? onImageClick : undefined}
+        role={hasImage && onImageClick ? "button" : undefined}
+        tabIndex={hasImage && onImageClick ? 0 : -1}
+        onKeyDown={
+          hasImage && onImageClick
+            ? (e) => { if (e.key === "Enter") onImageClick(); }
+            : undefined
+        }
+      >
+        {hasImage && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={imageSrc}
+            alt={imageAlt || ""}
+            className="dc-voice-portrait__img"
+            loading="lazy"
+            decoding="async"
+          />
+        )}
+        <div className="dc-voice-portrait__scrim" />
+        <div className="dc-voice-portrait__quote-area">
+          <p className="dc-voice-portrait__text font-display">"{quote}"</p>
+        </div>
+      </div>
+      {attribution && (
+        <p className="dc-voice-portrait__attribution font-sans">{attribution}</p>
+      )}
+    </div>
+  );
+}
+
 /* ===================== TEMPLATE ===================== */
 
 
@@ -653,59 +707,6 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
-  // EMAIL UPDATES (right column, below the dark teal card)
-  const [updatesEmail, setUpdatesEmail] = useState("");
-  const [updatesStatus, setUpdatesStatus] = useState<
-    "idle" | "loading" | "success" | "error"
-  >("idle");
-  const [updatesMessage, setUpdatesMessage] = useState<string>("");
-
-  const handleUpdatesSubmit = useCallback(
-    async (e: FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-
-      const email = updatesEmail.trim().toLowerCase();
-      if (!email || !email.includes("@")) {
-        setUpdatesStatus("error");
-        setUpdatesMessage("Please enter a valid email.");
-        return;
-      }
-
-      setUpdatesStatus("loading");
-      setUpdatesMessage("");
-
-      try {
-        const payload = {
-          email,
-          clubName: (club?.name ?? "").trim(),
-          clubSlug: (club as any)?.slug ? String((club as any).slug).trim() : "",
-          pagePath: typeof window !== "undefined" ? window.location.pathname : "",
-          source: "drama_club_updates_form",
-          userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
-        };
-
-        const res = await fetch("/api/drama-club-updates", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok || !data?.ok) {
-          throw new Error(data?.error || "Signup failed");
-        }
-
-        setUpdatesStatus("success");
-        setUpdatesMessage("You’re on the list.");
-        setUpdatesEmail("");
-      } catch {
-        setUpdatesStatus("error");
-        setUpdatesMessage("Something went wrong. Please try again.");
-      }
-    },
-    [updatesEmail, club]
-  );
 
   const ageRange =
     ageRangeProp ?? ((club as unknown as { ageRange?: string }).ageRange);
@@ -942,42 +943,6 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
     return clampLine(whatHappensParas[0], 140) || undefined;
   })();
 
-  const storyMapSummary: string | undefined = (() => {
-    const region = (club as unknown as { region?: string }).region;
-    const rawLabel = (club as unknown as { youthCountLabel?: string })
-      .youthCountLabel;
-    const youthLabel = rawLabel?.trim();
-
-    const hasYouth =
-      typeof youthTotalRaw === "number" &&
-      Number.isFinite(youthTotalRaw) &&
-      youthTotalRaw > 0;
-
-    const hasYouthLabel = !!youthLabel;
-
-    if (
-      !hasYouth &&
-      !hasYouthLabel &&
-      !locationLine &&
-      !region &&
-      !club.country &&
-      !roomToneText
-    ) {
-      return undefined;
-    }
-
-    const place =
-      region && club.country
-        ? `${region}, ${club.country}`
-        : locationLine || club.country || "this community";
-
-    if (hasYouth || hasYouthLabel) {
-      const youthText = hasYouth ? `~${youthTotalRaw}` : youthLabel || "local";
-      return `Keeps ${youthText} youth artists gathering regularly in ${place}.`;
-    }
-
-    return roomToneText || undefined;
-  })();
 
   const communityIdentity = firstString(
     (club as unknown as { communityIdentity?: string }).communityIdentity,
@@ -1169,18 +1134,6 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
   const effectiveImpactMetrics = rawImpactMetrics.slice(0, 4);
   const hasImpactMetrics = effectiveImpactMetrics.length > 0;
 
-  // ✅ hero metrics (subset of impact metrics, for the hero band)
-  const heroMetrics = effectiveImpactMetrics
-    .filter((m) => !!m.label && !!m.value)
-    .slice(0, 3);
-  const hasHeroMetrics = heroMetrics.length > 0;
-
-  const safeImpactResources: DramaClubResource[] = (impactResources ?? []).filter(
-    (r): r is DramaClubResource =>
-      !!r && typeof r.href === "string" && typeof r.label === "string"
-  );
-
-  const hasImpactResources = safeImpactResources.length > 0;
 
   // ✅ Impact band cards (3 per row max, 2 rows: "Right now" + "With your sponsorship")
   const impactBandNowCards: ImpactBandMetric[] = useMemo(() => {
@@ -1234,7 +1187,7 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
       cards.push({
         id: "artists-served",
         value: approxYouth,
-        label: "Club artists served",
+        label: "Youth artists",
         helper: "Across workshops and drama club sessions",
       });
     }
@@ -1243,7 +1196,7 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
       cards.push({
         id: "local-audience",
         value: approxAudience,
-        label: "Local audience reached",
+        label: "Audience reached",
         helper: "School and community performances in the territory",
       });
     }
@@ -1252,7 +1205,7 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
       cards.push({
         id: "years-with-community",
         value: yearsActive.toString(),
-        label: "Years with this community",
+        label: "Years running",
         helper: "A partnership that grows deeper each season",
       });
     }
@@ -1517,22 +1470,22 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
     });
   }, [allClubs]);
 
-  const navTriplet = useMemo(() => {
-    if (!sortedAllClubs.length) return null;
-
-    const index = sortedAllClubs.findIndex(
-      (c) => getDramaClubHref(c) === currentHref
+  // Three "Other Drama Clubs" cards — different-country, deterministically selected
+  const otherClubs = useMemo(() => {
+    if (!sortedAllClubs.length) return [];
+    const diffCountry = sortedAllClubs.filter(
+      (c) => c.country !== club.country && getDramaClubHref(c) !== currentHref
     );
-    if (index < 0) return null;
-
-    const prev =
-      sortedAllClubs[
-        (index - 1 + sortedAllClubs.length) % sortedAllClubs.length
-      ];
-    const next = sortedAllClubs[(index + 1) % sortedAllClubs.length];
-
-    return { prev, current: sortedAllClubs[index], next };
-  }, [sortedAllClubs, currentHref]);
+    if (diffCountry.length === 0) return [];
+    if (diffCountry.length <= 3) return diffCountry;
+    // Evenly-spaced indices for cacheability and predictability
+    const n = diffCountry.length;
+    return [
+      diffCountry[0],
+      diffCountry[Math.floor(n / 3)],
+      diffCountry[Math.floor((2 * n) / 3)],
+    ];
+  }, [sortedAllClubs, currentHref, club.country]);
 
   // ======================
   // Artist lineage marquee data
@@ -1558,7 +1511,7 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
       return m?.[1] ? decodeURIComponent(m[1]) : undefined;
     };
 
-    // Build “lead team” exclusion sets (by href + by normalized name)
+    // Build "lead team" exclusion sets (by href + by normalized name)
     const leadHrefSet = new Set(
       (dramaClubLeadTeam ?? [])
         .map((p) => normHref((p as any)?.href))
@@ -1695,6 +1648,12 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
     return out.map((x) => x.item);
   }, [lineageArtists, visitingArtists, dramaClubLeadTeam]);
 
+  const visibleLeadTeam = dramaClubLeadTeam.slice(0, 5);
+  const hasMoreLeadTeam = dramaClubLeadTeam.length > 5;
+  const firstProgram = activePrograms[0] ?? null;
+  // Cap marquee at 8 unique artists; fewer than 4 renders as a static row
+  const marqueeItemsCapped = marqueeItems.slice(0, 8);
+
   const layoutClass = ["dc-layout", !hasVoicesSection ? "dc-layout--single" : ""]
     .filter(Boolean)
     .join(" ");
@@ -1711,10 +1670,7 @@ const voicesHeading = `Voices from ${voicesFrom}`;
     <div className="dc-page-shell font-sans">
       <main
         className="min-h-screen"
-        style={{
-          // ✅ extra room so the kraft footer nav cannot get clipped on shorter viewports
-          paddingBottom: navTriplet ? 96 : 40,
-        }}
+        style={{ paddingBottom: 64 }}
       >
         {/* HERO — landscape / texture */}
         <section className="dc-hero">
@@ -1769,28 +1725,8 @@ const voicesHeading = `Voices from ${voicesFrom}`;
                 )}
               </div>
 
-              <div className="dc-hero-right">
-                {/* ✅ HERO METRICS — above the CTA (no helper/meta line) */}
-                {hasHeroMetrics && (
-                  <div
-                    className="dc-hero-metrics"
-                    aria-label="Drama Club impact highlights"
-                  >
-                    {heroMetrics.map((m) => (
-                      <div key={m.label} className="dc-hero-metric">
-                        <span className="dc-hero-metric-value font-display">
-                          {m.value}
-                        </span>
-                        <span className="dc-hero-metric-label font-sans">
-                          {m.label}
-                        </span>
-                        {/* ✅ intentionally NO helper line in hero */}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {sponsorLink && (
+              {sponsorLink && (
+                <div className="dc-hero-right">
                   <div className="dc-hero-cta-row">
                     <DATButtonLink
                       href={sponsorLink}
@@ -1799,12 +1735,10 @@ const voicesHeading = `Voices from ${voicesFrom}`;
                     >
                       Sponsor this Drama Club
                     </DATButtonLink>
-
-                    {/* buffer under CTA */}
                     <div className="dc-hero-cta-buffer" aria-hidden="true" />
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -1935,92 +1869,67 @@ const voicesHeading = `Voices from ${voicesFrom}`;
                       ))}
                     </dl>
                   )}
-
-                  <footer className="dc-snapshot-footer">
-                    <Link
-                      href={storyMapLinkHref}
-                      className="dc-snapshot-footer-link dc-snapshot-footer-link--pulse"
-                      aria-label={
-                        storyMapSummary ??
-                        `Open the Story Map for ${
-                          club.name || "this Drama Club"
-                        }`
-                      }
-                    >
-                      Explore the Story Map →
-                    </Link>
-                  </footer>
                 </aside>
               </div>
             </div>
 
-            {/* UPCOMING COMMUNITY SHOWCASES — near-top callout */}
+            {/* Story map text link beneath the snapshot card */}
+            <div className="dc-snapshot-map-row">
+              <Link
+                href={storyMapLinkHref}
+                className="dc-snapshot-map-link dc-link font-sans"
+                aria-label={`Explore the Story Map for ${club.name || "this Drama Club"}`}
+              >
+                Explore the Story Map →
+              </Link>
+            </div>
+
+            {/* UPCOMING COMMUNITY SHOWCASES — compact inline row */}
             {upcomingShowcases.length > 0 && (
-              <div className="dc-upcoming-showcases">
-                {upcomingShowcases.map((ev) => {
-                  const img = getEventImage(ev);
-                  return (
-                    <div
-                      key={ev.id}
-                      className="dc-showcase-callout"
-                      style={img ? { "--showcase-bg": `url('${img}')` } as React.CSSProperties : {}}
-                    >
-                      {img && (
-                        <div className="dc-showcase-callout__bg" aria-hidden="true" />
-                      )}
-                      <div className="dc-showcase-callout__inner">
-                        <div className="dc-showcase-callout__label-row">
-                          <span className="dc-showcase-callout__eyebrow">Community Showcase</span>
-                          <span className="dc-showcase-callout__date">
-                            {ev.endDate
-                              ? `${shortMonth(ev.date)} ${dayOfMonth(ev.date)}–${dayOfMonth(ev.endDate)}, ${eventYear(ev.date)}`
-                              : `${shortMonth(ev.date)} ${dayOfMonth(ev.date)}, ${eventYear(ev.date)}`}
-                          </span>
-                        </div>
-                        <h2 className="dc-showcase-callout__title font-display">{ev.title}</h2>
-                        {(ev.venue || ev.city) && (
-                          <p className="dc-showcase-callout__venue font-sans">
-                            {[ev.venue, ev.city, ev.country].filter(Boolean).join(" · ")}
-                          </p>
-                        )}
-                        {ev.description && (
-                          <p className="dc-showcase-callout__desc font-sans">{ev.description}</p>
-                        )}
-                        <div className="dc-showcase-callout__actions">
-                          {ev.ticketUrl ? (
-                            <DATButtonLink
-                              href={ev.ticketUrl}
-                              variant="yellow"
-                              size="md"
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              {ev.ticketPrice ?? "Get Tickets →"}
-                            </DATButtonLink>
-                          ) : null}
-                          {ev.contactEmail && (
-                            <DATButtonLink
-                              href={`mailto:${ev.contactEmail}?subject=${encodeURIComponent(`Attendance Request: ${ev.title}`)}`}
-                              variant="teal"
-                              size="md"
-                            >
-                              Request an Invite →
-                            </DATButtonLink>
-                          )}
-                          {!ev.ticketUrl && !ev.contactEmail && (
-                            <DATButtonLink href="/events" variant="teal" size="md">
-                              See All Events →
-                            </DATButtonLink>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="dc-upcoming-row">
+                {upcomingShowcases.map((ev) => (
+                  <div key={ev.id} className="dc-upcoming-row__item">
+                    <span className="dc-upcoming-row__date font-sans">
+                      {ev.endDate
+                        ? `${shortMonth(ev.date)} ${dayOfMonth(ev.date)}–${dayOfMonth(ev.endDate)}, ${eventYear(ev.date)}`
+                        : `${shortMonth(ev.date)} ${dayOfMonth(ev.date)}, ${eventYear(ev.date)}`}
+                    </span>
+                    <span className="dc-upcoming-row__sep" aria-hidden="true">·</span>
+                    <span className="dc-upcoming-row__title font-sans">{ev.title}</span>
+                    {(ev.venue || ev.city) && (
+                      <>
+                        <span className="dc-upcoming-row__sep" aria-hidden="true">·</span>
+                        <span className="dc-upcoming-row__venue font-sans">
+                          {[ev.venue, ev.city].filter(Boolean).join(", ")}
+                        </span>
+                      </>
+                    )}
+                    {ev.ticketUrl ? (
+                      <a
+                        href={ev.ticketUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="dc-upcoming-row__link dc-link font-sans"
+                      >
+                        {ev.ticketPrice ?? "Tickets →"}
+                      </a>
+                    ) : ev.contactEmail ? (
+                      <a
+                        href={`mailto:${ev.contactEmail}?subject=${encodeURIComponent(`Attendance Request: ${ev.title}`)}`}
+                        className="dc-upcoming-row__link dc-link font-sans"
+                      >
+                        Request invite →
+                      </a>
+                    ) : null}
+                  </div>
+                ))}
               </div>
             )}
 
-            {/* SECTION A + B */}
+            {/* ── STORY GROUPING ───────────────────────────────── */}
+            <div className="dc-group-gap" aria-hidden="true" />
+
+            {/* The place where it happens + Voices */}
             <div className={layoutClass}>
               <section className="dc-section">
                 <h2 className="dc-section-head font-sans">
@@ -2083,103 +1992,48 @@ const voicesHeading = `Voices from ${voicesFrom}`;
                 {hasClubVideo && clubVideo && <RoomVideoBlock video={clubVideo} />}
               </section>
 
-              {/* ✅ Voices section: skip the ENTIRE column + header if there’s nothing inside */}
+              {/* Voices: 4:5 portrait cards — skip column entirely if nothing to show */}
               {hasVoicesSection && (
                 <aside className="dc-section dc-section--right">
                   <h2 className="dc-section-head font-sans">
                     {voicesHeading}
                   </h2>
 
-                  {hasEldersQuote && effectiveEldersQuote && (
-                    <section className="elder-quote-block">
-                      <div
-                        className={`elder-quote-shell ${
-                          effectiveEldersQuote.avatarSrc
-                            ? "elder-quote-shell--has-image"
-                            : "elder-quote-shell--no-image"
-                        }`}
-                        onClick={() =>
+                  <div className="dc-voices-grid">
+                    {hasEldersQuote && effectiveEldersQuote && (
+                      <VoicePortraitCard
+                        imageSrc={effectiveEldersQuote.avatarSrc}
+                        imageAlt={effectiveEldersQuote.name || "Community elder"}
+                        quote={effectiveEldersQuote.text}
+                        attribution={[
+                          effectiveEldersQuote.name,
+                          effectiveEldersQuote.role,
+                        ]
+                          .filter(Boolean)
+                          .join(", ")}
+                        onImageClick={() =>
                           effectiveEldersQuote.avatarSrc &&
                           openLightboxFor(effectiveEldersQuote.avatarSrc)
                         }
-                        role={effectiveEldersQuote.avatarSrc ? "button" : undefined}
-                        tabIndex={effectiveEldersQuote.avatarSrc ? 0 : -1}
-                        onKeyDown={(e) => {
-                          if (!effectiveEldersQuote.avatarSrc || e.key !== "Enter")
-                            return;
-                          openLightboxFor(effectiveEldersQuote.avatarSrc);
-                        }}
-                      >
-                        {effectiveEldersQuote.avatarSrc && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={effectiveEldersQuote.avatarSrc}
-                            alt={effectiveEldersQuote.name || "Community elder"}
-                            className="elder-quote-bg"
-                            loading="lazy"
-                            decoding="async"
-                          />
-                        )}
+                      />
+                    )}
 
-                        <div className="elder-quote-overlay" />
-
-                        <div className="elder-quote-content">
-                          <p className="elder-quote-label font-sans">
-                            From a community elder
-                          </p>
-                          <p className="elder-quote-text font-display">
-                            “{effectiveEldersQuote.text}”
-                          </p>
-
-                          {(effectiveEldersQuote.name ||
-                            effectiveEldersQuote.role) && (
-                            <p className="elder-quote-meta">
-                              {effectiveEldersQuote.name && (
-                                <span className="elder-name">
-                                  {effectiveEldersQuote.name}
-                                </span>
-                              )}
-                              {effectiveEldersQuote.role && (
-                                <span className="elder-role">
-                                  , {effectiveEldersQuote.role}
-                                </span>
-                              )}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </section>
-                  )}
-
-                  {hasAlumniQuote && alumniQuote && (
-                    <figure className="dc-quote-block dc-quote-block--alumni">
-                      <blockquote className="font-display">
-                        “{alumniQuote.text}”
-                      </blockquote>
-                      <figcaption className="font-sans">
-                        {alumniQuote.name && <>— {alumniQuote.name}</>}
-                        {alumniQuote.role && (
-                          <span className="dc-alumni-quote-role">
-                            {" "}
-                            · {alumniQuote.role}
-                          </span>
-                        )}
-                      </figcaption>
-                    </figure>
-                  )}
-
-                  {/* ✅ subtle sponsor CTA under quotes */}
-                  {sponsorLink && (
-                    <div className="dc-inline-cta dc-inline-cta--voices">
-                      <a
-                        href={sponsorLink}
-                        className="dc-link dc-link--artist font-sans"
-                      >
-                        Help this community keep telling their stories → Sponsor
-                        this drama club
-                      </a>
-                    </div>
-                  )}
+                    {hasAlumniQuote && alumniQuote && (
+                      <VoicePortraitCard
+                        imageSrc={(alumniQuote as any).avatarSrc}
+                        imageAlt={alumniQuote.name}
+                        quote={alumniQuote.text}
+                        attribution={[
+                          alumniQuote.name
+                            ? `— ${alumniQuote.name}`
+                            : undefined,
+                          alumniQuote.role,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      />
+                    )}
+                  </div>
                 </aside>
               )}
             </div>
@@ -2193,169 +2047,101 @@ const voicesHeading = `Voices from ${voicesFrom}`;
               />
             )}
 
-            {/* COMMUNITY & CONTEXT + IMPACT PARTNERS */}
-            {(hasCommunityPartners ||
-              hasCommunityNeeds ||
-              hasLocalContext ||
-              hasCauses ||
-              hasImpactPartners) && (
+            {/* COMMUNITY & CONTEXT */}
+            {(hasCommunityPartners || hasCommunityNeeds || hasLocalContext || hasCauses) && (
               <section className="dc-community-row">
-                {(hasCommunityPartners ||
-                  hasCommunityNeeds ||
-                  hasLocalContext ||
-                  hasCauses) && (
-                  <div className="dc-community-main">
-                    <section className="dc-section">
-                      <h2 className="dc-section-head font-sans">
-                        Community &amp; context
-                      </h2>
+                <section className="dc-section">
+                  <h2 className="dc-section-head font-sans">
+                    Community &amp; context
+                  </h2>
 
-                      {hasLocalContext &&
-                        localContextParas.map((p: string, i: number) => (
-                          <p key={i} className="dc-body font-sans">
-                            {p}
-                          </p>
+                  {hasLocalContext &&
+                    localContextParas.map((p: string, i: number) => (
+                      <p key={i} className="dc-body font-sans">
+                        {p}
+                      </p>
+                    ))}
+
+                  {hasCommunityNeeds && (
+                    <div className="dc-needs-block dc-needs-block--community-needs dc-needs-block--community">
+                      <p className="dc-mini-label font-sans">
+                        Shared community needs
+                      </p>
+                      <ul className="dc-needs-list font-sans">
+                        {needsSafe.map((need: string, i: number) => (
+                          <li key={`${need}-${i}`}>{need}</li>
                         ))}
+                      </ul>
 
-                      {hasCommunityNeeds && (
-                        <div className="dc-needs-block dc-needs-block--community-needs dc-needs-block--community">
-                          <p className="dc-mini-label font-sans">
-                            Shared community needs
-                          </p>
-                          <ul className="dc-needs-list font-sans">
-                            {needsSafe.map((need: string, i: number) => (
-                              <li key={`${need}-${i}`}>{need}</li>
-                            ))}
-                          </ul>
-
-                          {/* ✅ CTA under needs (yellow → purple hover) */}
-                          {sponsorLink && (
-                            <div className="dc-inline-cta">
-                              <a
-                                href={sponsorLink}
-                                className="dc-link dc-link--yellow-pink font-sans"
-                              >
-                                See how your support can meet these needs →
-                              </a>
-                            </div>
-                          )}
+                      {sponsorLink && (
+                        <div className="dc-inline-cta">
+                          <a
+                            href={sponsorLink}
+                            className="dc-link dc-link--yellow-pink font-sans"
+                          >
+                            See how your support can meet these needs →
+                          </a>
                         </div>
                       )}
+                    </div>
+                  )}
 
-                      {hasCauses && (
-                        <div id="dc-causes" className="dc-cause-block">
-                          <p className="dc-mini-label font-sans">
-                            Causes we champion
-                          </p>
-                          <div className="dc-cause-chips">
-                            {resolvedCauses.map((cause) => (
-                              <Link
-                                key={cause.href}
-                                href={cause.href}
-                                className="dc-cause-chip font-sans"
-                              >
-                                {cause.label}
-                              </Link>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </section>
-                  </div>
-                )}
-
-                {hasImpactPartners && (
-                  <aside className="dc-impact-col">
-                    <div className="impact-partners-block">
-                      <p className="support-eyebrow-tight">IMPACT PARTNERS</p>
-
-                      <div className="partner-list">
-                        {combinedImpactPartners.map((p: DramaClubPartner) => {
-                          if (!p?.name) return null;
-
-                          const hasLogo =
-                            typeof p.logoSrc === "string" &&
-                            p.logoSrc.trim().length > 0;
-
-                          const content = (
-                            <>
-                              {hasLogo && (
-                                <div className="partner-logo-shell">
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src={p.logoSrc!}
-                                    alt={p.logoAlt || p.name}
-                                    className="partner-logo"
-                                    loading="lazy"
-                                    decoding="async"
-                                  />
-                                </div>
-                              )}
-
-                              <div className="partner-text">
-                                <span className="partner-name">{p.name}</span>
-                                {p.kind && (
-                                  <span className="partner-kind">{p.kind}</span>
-                                )}
-                              </div>
-                            </>
-                          );
-
-                          return p.href ? (
-                            <a
-                              key={p.name}
-                              href={p.href}
-                              className={`partner-bar ${hasLogo ? "" : "partner-no-logo"}`}
-                              target="_blank"
-                              rel="noreferrer"
-                            >
-                              {content}
-                            </a>
-                          ) : (
-                            <div
-                              key={p.name}
-                              className={`partner-bar ${hasLogo ? "" : "partner-no-logo"}`}
-                            >
-                              {content}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* ✅ partnership CTA (purple → pink hover) */}
-                      <div className="dc-inline-cta dc-inline-cta--partners">
-                        <Link
-                          href="/partners/propose-project"
-                          className="dc-link dc-link--artist font-sans"
-                        >
-                          Institution, foundation, or community leader? Start a
-                          conversation about partnering with DAT →
-                        </Link>
+                  {hasCauses && (
+                    <div id="dc-causes" className="dc-cause-block">
+                      <p className="dc-mini-label font-sans">
+                        Causes we champion
+                      </p>
+                      <div className="dc-cause-chips">
+                        {resolvedCauses.map((cause) => (
+                          <Link
+                            key={cause.href}
+                            href={cause.href}
+                            className="dc-cause-chip font-sans"
+                          >
+                            {cause.label}
+                          </Link>
+                        ))}
                       </div>
                     </div>
-                  </aside>
-                )}
+                  )}
+                </section>
               </section>
             )}
 
-            {/* SECTION D — Impact */}
-            {(hasImpactBandNow ||
-              hasImpactBandUnlock ||
-              hasImpactResources ||
-              sponsorLink) && (
-              <section className="dc-impact-section">
-                <div className="dc-impact-inner">
-                  {/* LEFT COLUMN */}
-                  <div className="dc-impact-left">
-                    <p className="dc-mini-label dc-impact-eyebrow font-sans">
+            {/* ── ACTION grouping separator ───────────────────── */}
+            <div className="dc-group-gap" />
+
+            {/* ── FOOTPRINT BAND — typographic stats, kraft/dark, full width ── */}
+            {hasImpactBandNow && (
+              <section className="dc-footprint-band" aria-label="Current footprint">
+                <div className="dc-footprint-band__inner">
+                  {impactBandNowCards.map((card, i) => (
+                    <div key={card.id} className="dc-footprint-band__stat">
+                      {i > 0 && <span className="dc-footprint-band__divider" aria-hidden="true" />}
+                      <span className="dc-footprint-band__value font-display">{card.value}</span>
+                      <span className="dc-footprint-band__label font-sans">{card.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* ── STAND WITH — two columns: left CTA + unlock list / right impact partners ── */}
+            {(hasImpactBandUnlock || hasImpactPartners || sponsorLink) && (
+              <section className="dc-stand-with">
+                <div className="dc-stand-with__inner">
+                  {/* LEFT */}
+                  <div className="dc-stand-with__left">
+                    <p className="dc-mini-label dc-stand-with__eyebrow font-sans">
                       Support this Drama Club
                     </p>
 
-                    <h2 className="dc-impact-title font-display">
-                      Stand with {club.name || "this Drama Club"}.
+                    <h2 className="dc-stand-with__title font-display">
+                      <span className="dc-stand-with-full">Stand with {club.name || "this Drama Club"}.</span>
+                      <span className="dc-stand-with-short">Support.</span>
                     </h2>
 
-                    <p className="dc-impact-body font-sans">
+                    <p className="dc-stand-with__body font-sans">
                       Your support helps young artists access mentorship, arts
                       education, and a creative home where they can process
                       real-world challenges and imagine new futures rooted in
@@ -2363,444 +2149,206 @@ const voicesHeading = `Voices from ${voicesFrom}`;
                     </p>
 
                     {sponsorLink && (
-                      <div className="dc-impact-cta-stack">
-                        <a href={sponsorLink} className="dc-cta dc-impact-cta">
+                      <div className="dc-stand-with__cta-row">
+                        <a href={sponsorLink} className="dc-cta dc-stand-with__cta">
                           Sponsor this Drama Club
                         </a>
-
-                        <p className="dc-impact-fineprint font-sans">
-                          501(c)(3) • Donations are tax-deductible
+                        <p className="dc-stand-with__fineprint font-sans">
+                          501(c)(3) · Donations are tax-deductible
                         </p>
+                      </div>
+                    )}
+
+                    {hasImpactBandUnlock && (
+                      <div className="dc-unlock-list">
+                        <p className="dc-mini-label dc-unlock-list__label font-sans">
+                          What your sponsorship makes possible
+                        </p>
+                        <ul className="dc-unlock-items font-sans">
+                          {impactBandUnlockCards.map((card) => (
+                            <li key={card.id} className="dc-unlock-items__item">
+                              <span className="dc-unlock-items__value font-display">{card.value}</span>
+                              <span className="dc-unlock-items__text">{card.label}{card.helper ? ` — ${card.helper}` : ""}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                   </div>
 
-                  {/* RIGHT COLUMN (dark teal card) + (moved) email below on light teal */}
-                  {(hasImpactBandNow ||
-                    hasImpactBandUnlock ||
-                    hasImpactResources ||
-                    sponsorLink) && (
-                    <div className="dc-impact-right">
-                      <aside className="dc-impact-card">
-                        {hasImpactBandNow && (
-                          <div className="dc-impact-band-block dc-impact-band-block--muted">
-                            <p className="dc-impact-band-eyebrow font-sans">
-                              Current footprint
-                            </p>
-
-                            <div className="dc-impact-band-grid">
-                              {impactBandNowCards.map((card) => (
-                                <article
-                                  key={card.id}
-                                  className="dc-impact-band-card"
-                                >
-                                  <p className="dc-impact-band-value font-display">
-                                    {card.value}
-                                  </p>
-                                  <p className="dc-impact-band-label font-sans">
-                                    {card.label}
-                                  </p>
-                                </article>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {hasImpactBandUnlock && (
-                          <div className="dc-impact-band-block dc-impact-band-block--bottom">
-                            <p className="dc-impact-band-eyebrow font-sans">
-                              What your sponsorship makes possible
-                            </p>
-
-                            <div className="dc-impact-band-grid">
-                              {impactBandUnlockCards.map((card) => (
-                                <article
-                                  key={card.id}
-                                  className="dc-impact-band-card"
-                                >
-                                  <p className="dc-impact-band-value font-display">
-                                    {card.value}
-                                  </p>
-                                  <p className="dc-impact-band-label font-sans">
-                                    {card.label}
-                                  </p>
-                                  {card.helper && (
-                                    <p className="dc-impact-band-helper font-sans">
-                                      {card.helper}
-                                    </p>
-                                  )}
-                                </article>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {hasImpactResources && (
-                          <div className="dc-impact-resources">
-                            <p className="dc-mini-label font-sans">
-                              Learn more about this work
-                            </p>
-                            <ul>
-                              {safeImpactResources.map((r: DramaClubResource) => (
-                                <li key={r.href}>
-                                  <a
-                                    href={r.href}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="dc-resource-link font-sans"
-                                  >
-                                    {r.label}
-                                  </a>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* keep in the dark teal card; just normalize size via CSS below */}
-                        <Link
-                          href="/partners/propose-project?type=drama-club"
-                          className="dc-link dc-link--teal font-sans"
-                        >
-                          Start a conversation about Drama Club sponsorship →
-                        </Link>
-                      </aside>
-
-                      {/* EMAIL SIGNUP — now below the dark teal card, sitting in the light teal */}
-                      {sponsorLink && (
-                        <form
-                          className="dc-impact-updates-form dc-impact-updates-form--below-card dc-impact-updates-form--compact"
-                          onSubmit={handleUpdatesSubmit}
-                        >
-                          <label className="dc-impact-updates-label dc-impact-updates-label--grotesk">
-                            Get updates on {club?.name || "this Drama Club"}
-                          </label>
-
-                          <div className="dc-impact-updates-fields">
-                            <input
-                              type="email"
-                              name="email"
-                              className="dc-input dc-impact-email-input font-sans"
-                              placeholder="Your email"
-                              aria-label="Email address"
-                              autoComplete="email"
-                              inputMode="email"
-                              value={updatesEmail}
-                              onChange={(e) => {
-                                setUpdatesEmail(e.target.value);
-                                if (updatesStatus !== "idle") {
-                                  setUpdatesStatus("idle");
-                                  setUpdatesMessage("");
-                                }
-                              }}
-                            />
-
-                            <button
-                              type="submit"
-                              className="dc-impact-email-button dc-impact-email-button--grotesk"
-                              disabled={updatesStatus === "loading"}
-                              aria-disabled={updatesStatus === "loading"}
-                            >
-                              SIGN UP
-                            </button>
-                          </div>
-
-                          {/* Subtle status line (renders only when needed) */}
-                          {updatesMessage ? (
-                            <p
-                              className="dc-impact-updates-status font-sans"
-                              role="status"
-                              aria-live="polite"
-                            >
-                              {updatesMessage}
-                            </p>
-                          ) : null}
-                        </form>
-                      )}
-                    </div>
+                  {/* RIGHT — impact partners */}
+                  {hasImpactPartners && (
+                    <aside className="dc-stand-with__partners">
+                      <p className="dc-mini-label font-sans">Impact partners</p>
+                      <ul className="dc-partners-list font-sans">
+                        {combinedImpactPartners.map((p) => (
+                          <li key={p.name}>
+                            {p.href ? (
+                              <a href={p.href} target="_blank" rel="noreferrer" className="dc-link dc-link--purple-pink">
+                                {p.name}
+                              </a>
+                            ) : (
+                              <span>{p.name}</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                      <Link
+                        href="/partners/propose-project?type=drama-club"
+                        className="dc-link dc-link--teal font-sans dc-stand-with__propose"
+                      >
+                        Propose a partnership →
+                      </Link>
+                    </aside>
                   )}
                 </div>
               </section>
             )}
 
-            {/* SECTION — Artist pathways */}
+            {/* SECTION — Artist pathways (full-width) */}
             {hasArtistPathways && (
-              <section className="dc-artist-section">
-                <div className="dc-artist-inner">
-                  <div className="dc-artist-left">
-                    <h2 className="dc-section-head font-sans">
-                      Artist pathways &amp; projects
-                    </h2>
+              <section className="dc-artist-section dc-artist-section--full">
+                <div className="dc-artist-full">
+                  <h2 className="dc-section-head font-sans">
+                    Artist pathways &amp; projects
+                  </h2>
 
-                    {(club as unknown as { artistPathwaysBlurb?: string })
-                      .artistPathwaysBlurb && (
-                      <p className="dc-body font-sans">
-                        {
-                          (club as unknown as { artistPathwaysBlurb?: string })
-                            .artistPathwaysBlurb
-                        }
-                      </p>
-                    )}
+                  {(club as unknown as { artistPathwaysBlurb?: string })
+                    .artistPathwaysBlurb && (
+                    <p className="dc-body font-sans dc-artist-full__intro">
+                      {
+                        (club as unknown as { artistPathwaysBlurb?: string })
+                          .artistPathwaysBlurb
+                      }
+                    </p>
+                  )}
 
-                    {/* ✅ MOVED + UPDATED: artist CTA under intro paragraph and ABOVE Lead Team */}
-                    <div className="dc-inline-cta dc-inline-cta--artists">
+                  <div className="dc-inline-cta dc-inline-cta--artists">
+                    <a
+                      href="https://www.dramaticadventure.com/get-involved"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="dc-link dc-link--artist font-sans"
+                    >
+                      Artists — see how you can work with DAT’s Drama Clubs →
+                    </a>
+                  </div>
+
+                  {/* First active program only */}
+                  {firstProgram && (
+                    <div className="dc-active-programs">
                       <a
-                        href="https://www.dramaticadventure.com/get-involved"
+                        href={firstProgram.displayUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="dc-link dc-link--artist font-sans"
+                        className={`dc-active-program-card${firstProgram.isPast ? " dc-active-program-card--past" : ""}`}
                       >
-                        Artists — see how you can work with DAT’s Drama Clubs →
+                        <span className={`dc-active-program-tag${firstProgram.isPast ? " dc-active-program-tag--past" : ""}`}>
+                          {firstProgram.isPast ? "Past Program" : "Now Accepting"}
+                        </span>
+                        <span className="dc-active-program-title font-display">
+                          {firstProgram.title}
+                        </span>
+                        <span className="dc-active-program-meta font-sans">
+                          Season {firstProgram.season} &middot; {firstProgram.year}
+                        </span>
+                        <span className="dc-active-program-cta font-sans">
+                          {firstProgram.isPast
+                            ? "Find a similar program ↗"
+                            : "Learn more & apply ↗"}
+                        </span>
                       </a>
                     </div>
+                  )}
 
-                    {/* Active program invitations — only renders when programs are live */}
-                    {activePrograms.length > 0 && (
-                      <div className="dc-active-programs">
-                        {activePrograms.map((prog) => (
-                          <a
-                            key={prog.slug}
-                            href={prog.displayUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className={`dc-active-program-card${prog.isPast ? " dc-active-program-card--past" : ""}`}
-                          >
-                            <span className={`dc-active-program-tag${prog.isPast ? " dc-active-program-tag--past" : ""}`}>
-                              {prog.isPast ? "Past Program" : "Now Accepting"}
-                            </span>
-                            <span className="dc-active-program-title font-display">
-                              {prog.title}
-                            </span>
-                            <span className="dc-active-program-meta font-sans">
-                              Season {prog.season} · {prog.year}
-                            </span>
-                            <span className="dc-active-program-cta font-sans">
-                              {prog.isPast
-                                ? "Find a similar program ↗"
-                                : "Learn more & apply ↗"}
-                            </span>
-                          </a>
-                        ))}
+                  {/* Lead team — capped at 5 */}
+                  {visibleLeadTeam.length > 0 && (
+                    <div className="dc-needs-block">
+                      <p className="dc-mini-label font-sans">Lead team</p>
+                      <div className="dc-lead-mini-wrap">
+                        {visibleLeadTeam.map((person, idx) => {
+                          if (!person?.name) return null;
+                          const personHref = (person as any).href as string | undefined;
+                          const slugFromHref =
+                            typeof personHref === "string" && personHref.includes("/alumni/")
+                              ? personHref.split("/alumni/")[1]?.split(/[?#]/)[0]
+                              : undefined;
+                          const slug = (
+                            slugFromHref || slugify(person.name || `artist-${idx}`)
+                          ).trim();
+                          const roleSafe = (((person as any).subtitle ?? "") as string).trim();
+                          return (
+                            <div key={`${slug}-${idx}`} className="dc-lead-mini-item">
+                              <MiniProfileCard
+                                name={person.name}
+                                role={roleSafe}
+                                slug={slug}
+                                headshotUrl={(person as any).avatarSrc}
+                                variant="light"
+                                nameFontSize={12}
+                                roleFontSize={11}
+                              />
+                            </div>
+                          );
+                        })}
                       </div>
-                    )}
+                      {hasMoreLeadTeam && (
+                        <Link
+                          href={`/alumni?dramaClub=${encodeURIComponent(club.slug)}`}
+                          className="dc-link dc-link--artist font-sans dc-lead-mini-more"
+                        >
+                          {/* TODO: link will show all alumni when dramaClub filter is supported */}
+                          See all team &amp; alumni &#8594;
+                        </Link>
+                      )}
+                    </div>
+                  )}
 
-                    {/* Lead team */}
-                    {dramaClubLeadTeam.length > 0 && (
-                      <div className="dc-needs-block">
-                        <p className="dc-mini-label font-sans">Lead team</p>
-
-                        <div className="dc-lead-mini-wrap">
-                          {dramaClubLeadTeam.map((person, idx) => {
-                            if (!person?.name) return null;
-
-                            const href = (person as any).href as
-                              | string
-                              | undefined;
-
-                            const slugFromHref =
-                              typeof href === "string" &&
-                              href.includes("/alumni/")
-                                ? href
-                                    .split("/alumni/")[1]
-                                    ?.split(/[?#]/)[0]
-                                : undefined;
-
-                            const slug = (
-                              slugFromHref ||
-                              slugify(person.name || `artist-${idx}`)
-                            ).trim();
-
-                            const roleSafe = (
-                              ((person as any).subtitle ?? "") as string
-                            ).trim();
-
+                  {/* Lineage — visiting artists merged; static row for <4, marquee for 4+ */}
+                  {marqueeItemsCapped.length > 0 && (
+                    <div className="dc-artist-full__marquee">
+                      <p className="dc-mini-label font-sans">Artists who&#8217;ve worked here</p>
+                      {marqueeItemsCapped.length < 4 ? (
+                        <div className="dc-lineage-static-row">
+                          {marqueeItemsCapped.map((a, idx) => {
+                            const aSlug = (a.slug || "").trim() || `artist-${idx}`;
+                            const aRole = (a.role || "").trim();
+                            const aHeadshot = (a.headshotUrl || "").trim() || undefined;
+                            const aHref = (a.href || "").trim() || undefined;
                             return (
-                              <div
-                                key={`${slug}-${idx}`}
-                                className="dc-lead-mini-item"
-                              >
+                              <div key={`${aSlug}-${idx}`} className="dc-lineage-static-item">
                                 <MiniProfileCard
-                                  name={person.name}
-                                  role={roleSafe}
-                                  slug={slug}
-                                  headshotUrl={(person as any).avatarSrc}
+                                  name={a.name}
+                                  role={aRole}
+                                  slug={aSlug}
+                                  headshotUrl={aHeadshot}
+                                  href={aHref}
                                   variant="light"
+                                  nameFontSize={12}
+                                  roleFontSize={11}
                                 />
                               </div>
                             );
                           })}
                         </div>
+                      ) : (
+                        <ArtistLineageMarquee
+                          showHeader={false}
+                          artists={marqueeItemsCapped}
+                          pinLocalMastersCount={2}
+                        />
+                      )}
+                      <div className="dc-inline-cta dc-inline-cta--alumni">
+                        <Link
+                          href="/alumni"
+                          className="dc-link dc-link--artist font-sans"
+                        >
+                          Meet the full DAT alumni community &#8594;
+                        </Link>
                       </div>
-                    )}
-
-                    {/* ✅ Current projects block + sponsor CTA (purple → pink hover) */}
-                    {!!(club as unknown as { currentProjects?: string[] })
-                      .currentProjects?.length && (
-                      <div className="dc-needs-block dc-needs-block--current-projects dc-needs-block--projects">
-                        <p className="dc-mini-label font-sans">
-                          Current projects
-                        </p>
-                        <ul className="dc-needs-list font-sans">
-                          {(
-                            club as unknown as { currentProjects?: string[] }
-                          ).currentProjects!.map((proj: string) => (
-                            <li key={proj}>{proj}</li>
-                          ))}
-                        </ul>
-
-                        {sponsorLink && (
-                          <div className="dc-inline-cta">
-                            <a
-                              href={sponsorLink}
-                              className="dc-link dc-link--yellow-pink font-sans"
-                            >
-                              See how your support can move these projects
-                              forward →
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <aside className="dc-artist-right">
-                    {(() => {
-                      // Local stewardship + “How it works” data
-                      const stewardshipBlurb =
-                        (
-                          (club as any).localStewardshipBlurb ||
-                          (club as any).stewardshipBlurb ||
-                          (club as any).localStewardshipCopy ||
-                          ""
-                        )
-                          .toString()
-                          .trim() ||
-                        `This Drama Club is stewarded locally by youth leaders and community partners${
-                          anchorName ? ` in collaboration with ${anchorName}` : ""
-                        }. DAT supports with training, playmaking toolkits, and periodic visiting artists — but the heartbeat of the club lives here.`;
-
-                      const rawRoles = (
-                        (club as any).localStewardshipRoles ||
-                        (club as any).stewardshipRoles ||
-                        (club as any).howItWorksRoles ||
-                        []
-                      ) as unknown[];
-
-                      const rawProtocols = (
-                        (club as any).localStewardshipProtocols ||
-                        (club as any).stewardshipProtocols ||
-                        (club as any).howItWorksProtocols ||
-                        []
-                      ) as unknown[];
-
-                      const safeRoles = rawRoles
-                        .filter(
-                          (x): x is string =>
-                            typeof x === "string" && x.trim().length > 0
-                        )
-                        .map((s) => s.trim());
-
-                      const safeProtocols = rawProtocols
-                        .filter(
-                          (x): x is string =>
-                            typeof x === "string" && x.trim().length > 0
-                        )
-                        .map((s) => s.trim());
-
-                      const roles =
-                        safeRoles.length > 0
-                          ? safeRoles
-                          : [
-                              "Youth leaders host sessions and guide rehearsal culture",
-                              "A local steward coordinates space, schedules, and community communication",
-                              "DAT provides mentorship, tools, and periodic artist visits",
-                            ];
-
-                      const protocols =
-                        safeProtocols.length > 0
-                          ? safeProtocols
-                          : [
-                              "Consent-first storytelling and documentation",
-                              "Respect for local elders, customs, and community protocols",
-                              "Care-first rehearsal norms (safety, inclusion, accountability)",
-                            ];
-
-                      return (
-                        <>
-                          {/* Local stewardship (no shaded panel) */}
-                          <section className="dc-stewardship-block">
-                            <p className="dc-mini-label font-sans">
-                              Local stewardship
-                            </p>
-                            <p className="dc-body font-sans dc-stewardship-body">
-                              {stewardshipBlurb}
-                            </p>
-                          </section>
-
-                          {/* How it works here */}
-                          <div className="dc-needs-block">
-                            <p className="dc-mini-label font-sans">
-                              How it works here
-                            </p>
-
-                            <div className="dc-how-grid">
-                              <div className="dc-how-col">
-                                <p className="dc-how-subhead font-sans">
-                                  Roles
-                                </p>
-                                <ul className="dc-needs-list font-sans">
-                                  {roles.map((r) => (
-                                    <li key={r}>{r}</li>
-                                  ))}
-                                </ul>
-                              </div>
-
-                              <div className="dc-how-col">
-                                <p className="dc-how-subhead font-sans">
-                                  Protocols
-                                </p>
-                                <ul className="dc-needs-list font-sans">
-                                  {protocols.map((p) => (
-                                    <li key={p}>{p}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            </div>
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </aside>
-                </div>
-              </section>
-            )}
-
-            {/* SECTION — Visiting artists (header + paragraph + “meet all alumni” + marquee) */}
-            {marqueeItems.length > 0 && (
-              <section className="dc-artist-section dc-artist-section--visiting">
-                <div className="dc-artist-inner">
-                  <div className="dc-artist-left">
-                    <h2 className="dc-section-head font-sans">Visiting artists</h2>
-                    <p className="dc-body font-sans">
-                      A living lineage of artists who’ve made work with this club.
-                    </p>
-
-                    <div className="dc-inline-cta dc-inline-cta--alumni">
-                      <Link
-                        href="/alumni"
-                        className="dc-link dc-link--artist font-sans"
-                      >
-                        Meet the full DAT alumni community →
-                      </Link>
                     </div>
-                  </div>
+                  )}
                 </div>
-
-                <ArtistLineageMarquee
-                  showHeader={false}
-                  artists={marqueeItems}
-                  pinLocalMastersCount={2}
-                />
               </section>
             )}
           </article>
@@ -2868,47 +2416,48 @@ const voicesHeading = `Voices from ${voicesFrom}`;
           </section>
         )}
 
-        {/* BELOW THE CARD (on kraft paper): footer nav */}
-        {navTriplet && (
-          <section
-            className="dc-kraft-footer-nav"
-            aria-label="Drama Club navigation"
-          >
-            {/* ✅ centered + aligned to card width via container class */}
-            <div className="dc-kraft-container dc-kraft-footer-inner">
-              {/* LEFT: Prev */}
-              <Link
-                href={getDramaClubHref(navTriplet.prev)}
-                className="dc-kraft-nav-item dc-kraft-nav-item--prev"
-              >
-                <span className="dc-kraft-nav-pill">
-                  ← {navTriplet.prev.name}
-                </span>
-                {getGeoLine(navTriplet.prev) && (
-                  <span className="dc-kraft-nav-geo font-sans">
-                    {getGeoLine(navTriplet.prev)}
-                  </span>
-                )}
-              </Link>
-
-              {/* CENTER: Index */}
-              <Link href={backToIndexHref} className="dc-kraft-nav-index">
-                All Drama Clubs
-              </Link>
-
-              {/* RIGHT: Next */}
-              <Link
-                href={getDramaClubHref(navTriplet.next)}
-                className="dc-kraft-nav-item dc-kraft-nav-item--next"
-              >
-                <span className="dc-kraft-nav-pill">
-                  {navTriplet.next.name} →
-                </span>
-                {getGeoLine(navTriplet.next) && (
-                  <span className="dc-kraft-nav-geo font-sans">
-                    {getGeoLine(navTriplet.next)}
-                  </span>
-                )}
+        {/* BELOW THE CARD (on kraft paper): other drama clubs + story map link */}
+        {otherClubs.length > 0 && (
+          <section className="dc-other-clubs" aria-label="Other Drama Clubs">
+            <div className="dc-kraft-container">
+              <p className="dc-mini-label dc-other-clubs__eyebrow font-sans">
+                More Drama Clubs
+              </p>
+              <div className="dc-other-clubs__grid">
+                {otherClubs.map((c) => {
+                  const rawImg = (c as unknown as { cardImage?: string; heroImage?: string }).cardImage
+                    || (c as unknown as { heroImage?: string }).heroImage;
+                  // Never show the shared fallback image across cards — treat it as no image
+                  const CLUB_FALLBACK = "/images/drama-clubs/club-fallback.jpg";
+                  const img = rawImg && rawImg !== CLUB_FALLBACK ? rawImg : undefined;
+                  const geo = getGeoLine(c);
+                  return (
+                    <Link
+                      key={c.slug}
+                      href={getDramaClubHref(c)}
+                      className={`dc-other-clubs__card${img ? "" : " dc-other-clubs__card--noimg"}`}
+                    >
+                      {img ? (
+                        <div
+                          className="dc-other-clubs__img"
+                          style={{ backgroundImage: `url('${img}')` }}
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <div className="dc-other-clubs__img dc-other-clubs__img--kraft" aria-hidden="true" />
+                      )}
+                      <div className="dc-other-clubs__info">
+                        {geo && (
+                          <p className="dc-other-clubs__geo font-sans">{geo}</p>
+                        )}
+                        <p className="dc-other-clubs__name font-display">{c.name}</p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+              <Link href="/story-map" className="dc-other-clubs__map-link font-sans">
+                Explore all clubs on the Story Map →
               </Link>
             </div>
           </section>
@@ -2923,7 +2472,7 @@ const voicesHeading = `Voices from ${voicesFrom}`;
         )}
 
         {/* styles moved to components/drama/dramaClubPage.css */}
-        {/* ✅ minimal “notes fixes” shipped here so they work immediately */}
+        {/* ✅ minimal "notes fixes" shipped here so they work immediately */}
         <style jsx global>{`
           /* Global inline link behavior */
           .dc-link {
@@ -2936,7 +2485,7 @@ const voicesHeading = `Voices from ${voicesFrom}`;
             letter-spacing: 0.02em;
           }
 
-          /* “teal → pink hover” CTAs */
+          /* "teal → pink hover" CTAs */
           .dc-link--purple-pink {
             color: #2493a9;
           }
