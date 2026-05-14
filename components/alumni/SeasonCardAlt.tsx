@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface SeasonCardProps {
   slug: string;
@@ -18,8 +19,16 @@ export default function SeasonCardAlt({
   projects,
 }: SeasonCardProps) {
   const [isOpen, setIsOpen] = useState(false);
+  // Hover tracked in JS so "−" can clear it and reliably unflip the card.
+  // CSS-only hover fought React state: clicking "−" removed .flipped but
+  // the cursor was still on the card so the CSS rule kept it visually flipped.
+  const [isHovering, setIsHovering] = useState(false);
+  const [ctaHovered, setCtaHovered] = useState(false);
+  const router = useRouter();
+
   const imageUrl = `/seasons/${slug}.jpg`;
   const seasonUrl = `/season/${slug.replace("season-", "")}`;
+  const isFlipped = isOpen || isHovering;
 
   return (
     <div
@@ -31,7 +40,7 @@ export default function SeasonCardAlt({
       }}
     >
       <div
-        className={`season-card ${isOpen ? "flipped" : ""}`}
+        className={`season-card ${isFlipped ? "flipped" : ""}`}
         style={{
           position: "relative",
           width: "100%",
@@ -42,12 +51,18 @@ export default function SeasonCardAlt({
           transformStyle: "preserve-3d",
           transition: "transform 0.6s ease",
           minHeight: "420px",
-          // Front face: pointer signals the card is interactive (flips on click).
-          // Back face: default since navigation is via the explicit CTA button.
-          cursor: isOpen ? "default" : "pointer",
+          cursor: "pointer",
         }}
-        // Clicking the front flips to the back (discover) — navigation is on the back CTA.
-        onClick={() => { if (!isOpen) setIsOpen(true); }}
+        onMouseEnter={() => setIsHovering(true)}
+        onMouseLeave={() => setIsHovering(false)}
+        onClick={() => {
+          // Front click → flip to back. Back click → navigate.
+          if (isFlipped) {
+            router.push(seasonUrl);
+          } else {
+            setIsOpen(true);
+          }
+        }}
       >
         {/* ── FRONT ─────────────────────────────────────────────────────── */}
         <div
@@ -88,7 +103,6 @@ export default function SeasonCardAlt({
             />
           </div>
 
-          {/* Season title & year */}
           <h3
             style={{
               fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
@@ -113,13 +127,13 @@ export default function SeasonCardAlt({
             {years}
           </p>
 
-          {/* "+" hint: tapping/clicking flips to projects */}
+          {/* "+" — absolute bottom-right, same position as "−" on the back */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               setIsOpen(true);
             }}
-            style={closeButtonStyle}
+            style={cornerButtonStyle}
             aria-label="Show projects"
           >
             +
@@ -132,7 +146,8 @@ export default function SeasonCardAlt({
             position: "absolute",
             width: "100%",
             height: "100%",
-            padding: "1rem",
+            // Extra bottom padding keeps the project list and CTA clear of the "−" button
+            padding: "1rem 1rem 3.5rem",
             transform: "rotateY(180deg)",
             backfaceVisibility: "hidden",
             backgroundColor: "#241123",
@@ -165,7 +180,7 @@ export default function SeasonCardAlt({
             {years}
           </p>
 
-          {/* Project list — grows to fill available space */}
+          {/* Project list */}
           <ul
             style={{
               listStyle: "none",
@@ -191,58 +206,53 @@ export default function SeasonCardAlt({
             ))}
           </ul>
 
-          {/* Bottom row: explicit CTA on the left, close button on the right */}
-          <div
+          {/* CTA — sits in flow above the "−" button area */}
+          <Link
+            href={seasonUrl}
+            onClick={(e) => e.stopPropagation()}
+            onMouseEnter={() => setCtaHovered(true)}
+            onMouseLeave={() => setCtaHovered(false)}
             style={{
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
-              justifyContent: "space-between",
-              marginTop: "1rem",
+              gap: "0.35rem",
+              marginTop: "0.75rem",
+              padding: "0.55rem 1.1rem",
+              backgroundColor: "#FFCC00",
+              color: "#241123",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+              fontSize: "0.85rem",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.07em",
+              borderRadius: "6px",
+              textDecoration: "none",
+              opacity: ctaHovered ? 0.72 : 1,
+              transition: "opacity 0.18s ease",
             }}
           >
-            <Link
-              href={seasonUrl}
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.35rem",
-                padding: "0.55rem 1.1rem",
-                backgroundColor: "#FFCC00",
-                color: "#241123",
-                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                fontSize: "0.85rem",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.07em",
-                borderRadius: "6px",
-                textDecoration: "none",
-              }}
-            >
-              EXPLORE SEASON
-            </Link>
+            Explore Season →
+          </Link>
 
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsOpen(false);
-              }}
-              style={closeButtonStyle}
-              aria-label="Close projects"
-            >
-              −
-            </button>
-          </div>
+          {/* "−" — absolute bottom-right, same position as "+" on the front.
+              Also clears isHovering so the card reliably returns to the front. */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsOpen(false);
+              setIsHovering(false);
+            }}
+            style={cornerButtonStyle}
+            aria-label="Close projects"
+          >
+            −
+          </button>
         </div>
       </div>
 
-      {/* Hover flip on desktop only — reveals the back so the CTA is visible on hover */}
+      {/* Flip is driven entirely by JS state (isFlipped = isOpen || isHovering).
+          No CSS hover rule needed — that was causing "−" to appear broken. */}
       <style jsx>{`
-        @media (hover: hover) {
-          .season-card:hover {
-            transform: rotateY(180deg);
-          }
-        }
         .season-card.flipped {
           transform: rotateY(180deg);
         }
@@ -251,10 +261,13 @@ export default function SeasonCardAlt({
   );
 }
 
-const closeButtonStyle: React.CSSProperties = {
+// Shared style for "+" (front) and "−" (back) — both absolute at bottom-right.
+const cornerButtonStyle: React.CSSProperties = {
+  position: "absolute",
+  bottom: "0",
+  right: "0",
   width: "50px",
   height: "50px",
-  flexShrink: 0,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -264,4 +277,5 @@ const closeButtonStyle: React.CSSProperties = {
   fontWeight: "normal",
   color: "#FFCC00",
   cursor: "pointer",
+  zIndex: 50,
 };
