@@ -1,12 +1,13 @@
 "use client";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useEffect, useRef, useState } from "react";
+import { createRoot } from "react-dom/client";
 import mapboxgl from "mapbox-gl";
 import Supercluster from "supercluster";
 import { clientDebug, clientWarn } from "@/lib/clientDebug";
 import { dramaClubs } from "@/lib/dramaClubMap";
 import type { DramaClub } from "@/lib/dramaClubMap";
-import MicroDramaClubCard from "@/components/drama/MicroDramaClubCard";
+import DramaClubCard from "@/components/drama/DramaClubCard";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
 
@@ -837,10 +838,7 @@ export default function StoryMap({
   const onZoomOrMoveRef = useRef<(() => void) | null>(null);
   const renderClustersRef = useRef<() => void>(() => {});
 
-  const [selectedDramaClub, setSelectedDramaClub] = useState<DramaClub | null>(null);
-  const [clubCardPos, setClubCardPos] = useState<{ x: number; y: number } | null>(null);
-  const dramaClubMarkersRef = useRef<mapboxgl.Marker[]>([]);
-  const selectedClubCoordsRef = useRef<[number, number] | null>(null);
+  const dramaClubPopupRef = useRef<mapboxgl.Popup | null>(null);
 
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
 
@@ -1017,6 +1015,19 @@ export default function StoryMap({
       }
       @media (max-width: 640px), (pointer: coarse) {
         .zoom-hint { display: none !important; }
+      }
+
+      .drama-club-popup .mapboxgl-popup-content {
+        padding: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border-radius: 26px !important;
+        overflow: visible !important;
+        max-width: none !important;
+        width: 320px !important;
+      }
+      .drama-club-popup .mapboxgl-popup-content::after {
+        display: none !important;
       }
 
     `;
@@ -1206,9 +1217,11 @@ useEffect(() => {
         currentPopupCoords.current = null;
       }
 
-      // Also close any open drama club card
-      setSelectedDramaClub(null);
-      selectedClubCoordsRef.current = null;
+      // Also close any open drama club popup
+      if (dramaClubPopupRef.current) {
+        dramaClubPopupRef.current.remove();
+        dramaClubPopupRef.current = null;
+      }
     };
     map.on("click", clickHandler);
 
@@ -1228,8 +1241,10 @@ useEffect(() => {
       map.off("click", clickHandler);
       markersRef.current.forEach((m) => m.remove());
       markersRef.current = [];
-      dramaClubMarkersRef.current.forEach((mk) => mk.remove());
-      dramaClubMarkersRef.current = [];
+      if (dramaClubPopupRef.current) {
+        dramaClubPopupRef.current.remove();
+        dramaClubPopupRef.current = null;
+      }
       window.removeEventListener("mouseup", globalMouseUp);
       map.remove();
       mapRef.current = null;
@@ -1247,9 +1262,6 @@ useEffect(() => {
     let canceled = false;
 
     const loadData = async () => {
-      // Drama clubs are static — render immediately before the async story fetch
-      renderDramaClubMarkers(m);
-
       const attachZoomMoveHandler = () => {
         const onZoomOrMove = () => {
           const desired = milesToPixelRadius(
@@ -1271,12 +1283,6 @@ useEffect(() => {
           }
 
           renderClustersRef.current();
-
-          // Keep drama club card anchored to its pin during pan/zoom
-          if (selectedClubCoordsRef.current) {
-            const pos = m.project(selectedClubCoordsRef.current);
-            setClubCardPos({ x: pos.x, y: pos.y });
-          }
         };
 
         // Detach previous handler if any
@@ -1374,7 +1380,15 @@ useEffect(() => {
           clientDebug("[StoryMap] sanity hits — drama:", dramaHits, "A Girl without Wings:", girlHits);
         }
 
-        featuresRef.current = feats || [];
+        // Merge drama club features into Supercluster so they cluster with stories
+        const clubFeats = dramaClubs
+          .filter((club) => typeof club.lat === "number" && typeof club.lng === "number" && club.slug)
+          .map((club) => ({
+            type: "Feature" as const,
+            geometry: { type: "Point" as const, coordinates: [club.lng as number, club.lat as number] as [number, number] },
+            properties: { __isDramaClub: true, clubSlug: club.slug } as any,
+          }));
+        featuresRef.current = [...(feats || []), ...clubFeats];
 
         const z = m.getZoom();
         const lat = m.getCenter().lat;
@@ -1389,7 +1403,7 @@ useEffect(() => {
           reduce: () => {},
         });
 
-        indexRef.current.load((feats || []) as any);
+        indexRef.current.load(featuresRef.current as any);
         renderClusters();
 
         attachZoomMoveHandler();
@@ -1472,7 +1486,68 @@ useEffect(() => {
         const mk = new mapboxgl.Marker({ element: el }).setLngLat([lon, lat]).addTo(m);
         markersRef.current.push(mk);
       } else {
-        const props = c.properties as FeatureProps;
+        const anyProps = c.properties as any;
+
+        // Drama club pin
+        if (anyProps.__isDramaClub) {
+          const club = dramaClubs.find((dc) => dc.slug === anyProps.clubSlug) as unknown as DramaClub | undefined;
+          if (!club) return;
+
+          const mk = new mapboxgl.Marker({ color: "#6C00AF" })
+            .setLngLat([lon, lat])
+            .addTo(m);
+
+          mk.getElement().setAttribute("title", club.name);
+
+          mk.getElement().addEventListener("click", (e) => {
+            e.stopPropagation();
+            // Close story popup
+            if (sharedPopupRef.current) {
+              sharedPopupRef.current.remove();
+              currentPopupRef.current = null;
+              currentPopupCoords.current = null;
+            }
+            // Close existing drama club popup
+            if (dramaClubPopupRef.current) {
+              dramaClubPopupRef.current.remove();
+              dramaClubPopupRef.current = null;
+            }
+
+            const container = document.createElement("div");
+            const popup = new mapboxgl.Popup({
+              className: "drama-club-popup",
+              closeButton: false,
+              closeOnClick: false,
+              closeOnMove: false,
+              anchor: "bottom",
+              offset: 11,
+            });
+            popup.setDOMContent(container);
+            popup.setLngLat([lon, lat]);
+            popup.addTo(m);
+            dramaClubPopupRef.current = popup;
+
+            const root = createRoot(container);
+            root.render(<DramaClubCard club={club} />);
+
+            popup.on("close", () => {
+              root.unmount();
+              if (dramaClubPopupRef.current === popup) {
+                dramaClubPopupRef.current = null;
+              }
+            });
+
+            m.easeTo({ center: [lon, lat], offset: [0, popupOffsetY()], duration: 300 });
+          });
+
+          mk.getElement().addEventListener("mousedown", () => m.dragPan.disable());
+          mk.getElement().addEventListener("mouseup", () => m.dragPan.enable());
+          mk.getElement().addEventListener("mouseleave", () => m.dragPan.enable());
+          markersRef.current.push(mk);
+          return;
+        }
+
+        const props = anyProps as FeatureProps;
 
         const mk = new mapboxgl.Marker({ color: colorMap[props.category] || "#3FB1CE" })
           .setLngLat([lon, lat])
@@ -1482,9 +1557,11 @@ useEffect(() => {
           e.stopPropagation();
           (e as any).preventDefault?.();
 
-          // Close any open drama club card
-          setSelectedDramaClub(null);
-          selectedClubCoordsRef.current = null;
+          // Close any open drama club popup
+          if (dramaClubPopupRef.current) {
+            dramaClubPopupRef.current.remove();
+            dramaClubPopupRef.current = null;
+          }
 
           // Close any existing popup (shared)
           if (sharedPopupRef.current) {
@@ -1531,47 +1608,6 @@ useEffect(() => {
 
   // Keep ref pointing at the latest renderClusters implementation
   renderClustersRef.current = renderClusters;
-
-  /* ===========================
-     Drama Club markers (static, non-clustered)
-     =========================== */
-  const renderDramaClubMarkers = (m: mapboxgl.Map) => {
-    dramaClubMarkersRef.current.forEach((mk) => mk.remove());
-    dramaClubMarkersRef.current = [];
-
-    for (const club of dramaClubs) {
-      if (typeof club.lat !== "number" || typeof club.lng !== "number") continue;
-      if (!club.slug) continue;
-
-      const mk = new mapboxgl.Marker({ color: "#6C00AF" })
-        .setLngLat([club.lng as number, club.lat as number])
-        .addTo(m);
-
-      mk.getElement().setAttribute("title", club.name);
-
-      mk.getElement().addEventListener("click", (e) => {
-        e.stopPropagation();
-        // Close any open story popup
-        if (sharedPopupRef.current) {
-          sharedPopupRef.current.remove();
-          currentPopupRef.current = null;
-          currentPopupCoords.current = null;
-        }
-        const coords: [number, number] = [club.lng as number, club.lat as number];
-        selectedClubCoordsRef.current = coords;
-        const pos = m.project(coords);
-        setClubCardPos({ x: pos.x, y: pos.y });
-        setSelectedDramaClub(club as unknown as DramaClub);
-        m.easeTo({ center: coords, offset: [0, popupOffsetY()], duration: 300 });
-      });
-
-      mk.getElement().addEventListener("mousedown", () => m.dragPan.disable());
-      mk.getElement().addEventListener("mouseup", () => m.dragPan.enable());
-      mk.getElement().addEventListener("mouseleave", () => m.dragPan.enable());
-
-      dramaClubMarkersRef.current.push(mk);
-    }
-  };
 
   /* ===========================
      Search
@@ -1662,12 +1698,10 @@ useEffect(() => {
     }
 
     const filteredFeatures = feats.filter((f) => {
+      if ((f.properties as any).__isDramaClub) return true;
       const txt = String((f.properties as any).__search || "");
       return scoreMatch(txt, exact, tokens, phrase) > 0;
     });
-
-
-
 
     const r = milesToPixelRadius(CLUSTER_DISTANCE_MILES, m.getZoom(), m.getCenter().lat);
     currentRadiusRef.current = r;
@@ -1690,15 +1724,16 @@ useEffect(() => {
 
     renderClusters();
 
-    // Auto-zoom ONLY if there is exactly one *mappable* match
-    if (filteredFeatures.length === 1) {
+    // Auto-zoom based on story matches only (exclude drama club features)
+    const storyFeatures = filteredFeatures.filter((f) => !(f.properties as any).__isDramaClub);
+    if (storyFeatures.length === 1) {
       m.flyTo({
-        center: filteredFeatures[0].geometry.coordinates,
+        center: storyFeatures[0].geometry.coordinates,
         zoom: 8,
         duration: 500,
       });
-    } else if (filteredFeatures.length > 1) {
-      const cs = filteredFeatures.map((f) => f.geometry.coordinates);
+    } else if (storyFeatures.length > 1) {
+      const cs = storyFeatures.map((f) => f.geometry.coordinates);
       const lons = cs.map((c) => c[0]);
       const lats = cs.map((c) => c[1]);
       m.fitBounds(
@@ -1877,85 +1912,6 @@ useEffect(() => {
           )}
         </div>
       </div>
-
-      {/* Drama club card popup — React-rendered overlay, above Mapbox popups */}
-      {selectedDramaClub && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 20,
-            pointerEvents: "none",
-          }}
-        >
-          <div
-            className="drama-club-card-popup"
-            style={{
-              position: "absolute",
-              pointerEvents: "auto",
-              ...(isSmallScreen()
-                ? {
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    padding: "0 12px 16px",
-                  }
-                : clubCardPos
-                ? {
-                    left: clubCardPos.x,
-                    top: clubCardPos.y,
-                    transform: "translateX(-50%) translateY(calc(-100% - 14px))",
-                    width: 340,
-                  }
-                : {
-                    left: "50%",
-                    top: "40%",
-                    transform: "translate(-50%, -60%)",
-                    width: 340,
-                  }),
-            }}
-          >
-            <div style={{ position: "relative" }}>
-              <button
-                onClick={() => {
-                  setSelectedDramaClub(null);
-                  selectedClubCoordsRef.current = null;
-                }}
-                aria-label="Close drama club card"
-                style={{
-                  position: "absolute",
-                  top: 8,
-                  right: 8,
-                  zIndex: 2,
-                  background: "rgba(255,255,255,0.88)",
-                  border: "none",
-                  borderRadius: "50%",
-                  width: 28,
-                  height: 28,
-                  cursor: "pointer",
-                  fontSize: "1.1rem",
-                  lineHeight: "28px",
-                  textAlign: "center",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.22)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                ×
-              </button>
-              <MicroDramaClubCard
-                club={selectedDramaClub}
-                onClick={() => {
-                  window.location.assign(
-                    `/drama-club/${encodeURIComponent(selectedDramaClub.slug)}`
-                  );
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {process.env.NODE_ENV !== "production" && DEBUG && (
         <div
