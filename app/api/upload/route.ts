@@ -5,6 +5,7 @@ import { getFolderIdForKind, MediaKind } from "@/lib/profileFolders";
 import { PassThrough } from "stream";
 import { requireAuth } from "@/lib/requireAuth";
 import { rateLimit, rateKey } from "@/lib/rateLimit";
+import { isAdmin } from "@/lib/ownership";
 
 export const runtime = "nodejs";
 
@@ -785,27 +786,34 @@ export async function POST(req: Request) {
       );
 
     if (!rowAlreadyExists) {
+      // isOriginal: admin uploads are originals; alumni self-uploads are not.
+      // Only meaningful for headshots; leave empty for other kinds.
+      const isOriginalVal = kind === "headshot"
+        ? (isAdmin(uploaderEmail) ? "TRUE" : "FALSE")
+        : "";
+
       await withRetry(
         () =>
           sheets.spreadsheets.values.append({
             spreadsheetId,
-            range: "Profile-Media!A:L",
+            range: "Profile-Media!A:M",
             valueInputOption: "RAW",
             requestBody: {
               values: [
                 [
-                  alumniId, // A: alumniId
-                  kind, // B: kind
+                  alumniId,         // A: alumniId
+                  kind,             // B: kind
                   collectionId ?? "", // C: collectionId
                   collectionTitle ?? "", // D: collectionTitle
-                  fileId, // E: fileId
-                  "", // F: externalUrl
-                  uploaderEmail, // G: uploadedByEmail
-                  nowIso, // H: uploadedAt
-                  "", // I: isCurrent (set in batch for headshot)
-                  "", // J: isFeatured (set in batch)
-                  sortIndex ?? "", // K: sortIndex
-                  note ?? "", // L: note
+                  fileId,           // E: fileId
+                  "",               // F: externalUrl
+                  uploaderEmail,    // G: uploadedByEmail
+                  nowIso,           // H: uploadedAt
+                  "",               // I: isCurrent (set in batch for headshot)
+                  "",               // J: isFeatured (set in batch)
+                  sortIndex ?? "",  // K: sortIndex
+                  note ?? "",       // L: note
+                  isOriginalVal,    // M: isOriginal
                 ],
               ],
             },

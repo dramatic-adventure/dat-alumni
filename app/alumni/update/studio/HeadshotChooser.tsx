@@ -9,8 +9,24 @@ type HeadshotItem = {
   isCurrent?: boolean;
   externalUrl?: string;
   isSynthetic?: boolean;
+  isOriginal?: boolean;
   drive?: DriveMeta;
 };
+
+// Inline SVG lock icon for original headshots
+function LockIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
+    </svg>
+  );
+}
 
 export default function HeadshotChooser({
   alumniId,
@@ -35,6 +51,8 @@ export default function HeadshotChooser({
   // profileHeadshotId is absent (e.g. Profile-Live's currentHeadshotId column is empty
   // or missing in production) so we don't inject a phantom synthetic URL slot.
   const [apiCurrentFileId, setApiCurrentFileId] = useState("");
+  const [deleting, setDeleting] = useState("");
+  const [deleteErr, setDeleteErr] = useState("");
 
   useEffect(() => {
     if (!alumniId) return;
@@ -91,6 +109,46 @@ export default function HeadshotChooser({
     );
     setApiCurrentFileId(fileId); // user chose this Drive file; keep sentinel current
     onFeatured(fileId);
+  }
+
+  async function handleDelete(fileId: string) {
+    if (!fileId || !alumniId) return;
+    setDeleting(fileId);
+    setDeleteErr("");
+    try {
+      const res = await fetch(
+        `/api/alumni/media/headshot?alumniId=${encodeURIComponent(alumniId)}&fileId=${encodeURIComponent(fileId)}`,
+        { method: "DELETE", cache: "no-store" }
+      );
+      const j = await res.json();
+      if (!res.ok) throw new Error(j?.error || "Delete failed");
+
+      const { newCurrentFileId } = j as { newCurrentFileId?: string };
+
+      // Remove deleted item from local state
+      setItems((prev) => prev.filter((it) => it.fileId !== fileId));
+
+      // If the deleted item was current, update parent + local isCurrent state
+      const wasCurrentItem = items.find((it) => it.fileId === fileId)?.isCurrent;
+      if (wasCurrentItem) {
+        if (newCurrentFileId) {
+          onFeatured(newCurrentFileId);
+          setItems((prev) =>
+            prev
+              .filter((it) => it.fileId !== fileId)
+              .map((it) => ({ ...it, isCurrent: it.fileId === newCurrentFileId }))
+          );
+          setApiCurrentFileId(newCurrentFileId);
+        } else {
+          onFeatured("");
+          setApiCurrentFileId("");
+        }
+      }
+    } catch (e: any) {
+      setDeleteErr(e?.message || "Delete failed");
+    } finally {
+      setDeleting("");
+    }
   }
 
   const thumbUrl = (it: HeadshotItem): string => {
@@ -184,8 +242,10 @@ export default function HeadshotChooser({
 
   return (
     <div>
-      {err && (
-        <div style={{ marginBottom: 10, fontSize: 13, color: "#f87171" }}>{err}</div>
+      {(err || deleteErr) && (
+        <div style={{ marginBottom: 10, fontSize: 13, color: "#f87171" }}>
+          {err || deleteErr}
+        </div>
       )}
 
       <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 20, alignItems: "start" }}>
@@ -261,36 +321,99 @@ export default function HeadshotChooser({
           >
             {displayItems.map((it) => {
               const isCurr = !!it.isCurrent;
+              const isDeletable = it.isOriginal === false && !!it.fileId;
+              const isLocked = it.isOriginal === true;
+              const isBeingDeleted = deleting === it.fileId;
+
               return (
-                <button
+                <div
                   key={it.fileId || `url:${it.externalUrl}`}
-                  type="button"
-                  onClick={() => !isCurr && select(it.fileId, it.externalUrl)}
-                  disabled={!!parentLoading}
-                  style={{
-                    flexShrink: 0,
-                    width: 72,
-                    aspectRatio: "4 / 5",
-                    borderRadius: 8,
-                    overflow: "hidden",
-                    border: isCurr
-                      ? "2px solid rgba(108,0,175,0.9)"
-                      : "2px solid rgba(255,255,255,0.2)",
-                    cursor: isCurr ? "default" : "pointer",
-                    background: "rgba(255,255,255,0.06)",
-                    padding: 0,
-                    position: "relative",
-                    transition: "border-color 0.15s",
-                  }}
+                  style={{ position: "relative", flexShrink: 0 }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={thumbUrl(it)}
-                    alt={it.drive?.name || it.fileId}
-                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                  />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => !isCurr && select(it.fileId, it.externalUrl)}
+                    disabled={!!parentLoading || isBeingDeleted}
+                    style={{
+                      width: 72,
+                      aspectRatio: "4 / 5",
+                      borderRadius: 8,
+                      overflow: "hidden",
+                      border: isCurr
+                        ? "2px solid rgba(108,0,175,0.9)"
+                        : "2px solid rgba(255,255,255,0.2)",
+                      cursor: isCurr ? "default" : "pointer",
+                      background: "rgba(255,255,255,0.06)",
+                      padding: 0,
+                      position: "relative",
+                      transition: "border-color 0.15s",
+                      opacity: isBeingDeleted ? 0.4 : 1,
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={thumbUrl(it)}
+                      alt={it.drive?.name || it.fileId}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                    />
+                  </button>
+
+                  {/* Lock icon for original (protected) headshots */}
+                  {isLocked && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 4,
+                        right: 4,
+                        background: "rgba(0,0,0,0.55)",
+                        borderRadius: 3,
+                        padding: "2px 3px",
+                        color: "#fff",
+                        lineHeight: 0,
+                        pointerEvents: "none",
+                      }}
+                      title="Original headshot — cannot be deleted"
+                    >
+                      <LockIcon />
+                    </div>
+                  )}
+
+                  {/* Delete button for non-original Drive headshots */}
+                  {isDeletable && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(it.fileId);
+                      }}
+                      disabled={!!parentLoading || !!deleting}
+                      title="Delete this headshot"
+                      style={{
+                        position: "absolute",
+                        top: 2,
+                        right: 2,
+                        width: 18,
+                        height: 18,
+                        borderRadius: "50%",
+                        background: "rgba(220,38,38,0.85)",
+                        border: "none",
+                        color: "#fff",
+                        fontSize: 11,
+                        lineHeight: "18px",
+                        textAlign: "center",
+                        cursor: "pointer",
+                        padding: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        opacity: deleting ? 0.5 : 1,
+                      }}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>

@@ -85,6 +85,7 @@ export async function GET(
             "Content-Type": contentType,
             "Cache-Control": BROWSER_CACHE,
             "Netlify-CDN-Cache-Control": CDN_CACHE,
+            "Netlify-Cache-Tag": `headshot-${fileId}`,
           },
         });
       }
@@ -110,6 +111,7 @@ export async function GET(
         "Content-Type": contentType,
         "Cache-Control": BROWSER_CACHE,
         "Netlify-CDN-Cache-Control": CDN_CACHE,
+        "Netlify-Cache-Tag": `headshot-${fileId}`,
       },
     });
   } catch (e: any) {

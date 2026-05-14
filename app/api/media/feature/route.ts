@@ -88,7 +88,7 @@ export async function POST(req: Request) {
             () =>
               sheets.spreadsheets.values.append({
                 spreadsheetId,
-                range: "Profile-Media!A:L",
+                range: "Profile-Media!A:M",
                 valueInputOption: "RAW",
                 requestBody: {
                   values: [
@@ -105,6 +105,7 @@ export async function POST(req: Request) {
                       "", // J: isFeatured (set by flip)
                       "", // K: sortIndex
                       "stub from /api/media/feature (url)", // L: note
+                      "FALSE", // M: isOriginal
                     ],
                   ],
                 },
@@ -140,7 +141,7 @@ export async function POST(req: Request) {
           () =>
             sheets.spreadsheets.values.append({
               spreadsheetId,
-              range: "Profile-Media!A:L",
+              range: "Profile-Media!A:M",
               valueInputOption: "RAW",
               requestBody: {
                 values: [
@@ -157,6 +158,7 @@ export async function POST(req: Request) {
                     "", // J: isFeatured (set by flip)
                     "", // K: sortIndex
                     "stub from /api/media/feature", // L: note
+                    "FALSE", // M: isOriginal
                   ],
                 ],
               },

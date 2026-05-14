@@ -20,6 +20,7 @@ type MediaItem = {
   isFeatured?: boolean;
   sortIndex?: string;
   note?: string;
+  isOriginal?: boolean;
   drive?: {
     name?: string;
     webViewLink?: string;
@@ -222,7 +223,7 @@ export async function GET(req: Request) {
         () =>
           sheets.spreadsheets.values.get({
             spreadsheetId,
-            range: "Profile-Media!A:L",
+            range: "Profile-Media!A:M",
             valueRenderOption: "UNFORMATTED_VALUE",
           }),
         "Sheets get Profile-Media"
@@ -248,6 +249,7 @@ export async function GET(req: Request) {
       const idxIsFeat = idxOf(header, ["isfeatured"]);
       const idxSort = idxOf(header, ["sortindex", "sort index"]);
       const idxNote = idxOf(header, ["note", "notes"]);
+      const idxIsOriginal = idxOf(header, ["isoriginal", "is original"]);
 
       const filtered = rows.filter((r) => {
         const aid = idxAid !== -1 ? String(r[idxAid] || "").trim().toLowerCase() : "";
@@ -279,6 +281,7 @@ export async function GET(req: Request) {
           isFeatured: idxIsFeat !== -1 ? truthyCell(r[idxIsFeat]) : false,
           sortIndex: idxSort !== -1 ? String(r[idxSort] || "") : "",
           note: idxNote !== -1 ? String(r[idxNote] || "") : "",
+          isOriginal: idxIsOriginal !== -1 ? truthyCell(r[idxIsOriginal]) : undefined,
         };
       });
 
