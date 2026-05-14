@@ -7,7 +7,6 @@ import { clientDebug, clientWarn } from "@/lib/clientDebug";
 import { dramaClubs } from "@/lib/dramaClubMap";
 import type { DramaClub } from "@/lib/dramaClubMap";
 import MicroDramaClubCard from "@/components/drama/MicroDramaClubCard";
-import { DRAMA_CUBE_SVG_HTML } from "@/components/map/DramaClubCubePin";
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
 
@@ -1020,17 +1019,6 @@ export default function StoryMap({
         .zoom-hint { display: none !important; }
       }
 
-      .drama-club-cube-marker {
-        width: 36px; height: 36px;
-        cursor: pointer; pointer-events: auto !important;
-        display: flex; align-items: center; justify-content: center;
-        filter: drop-shadow(0 2px 5px rgba(0,0,0,0.40));
-        transition: transform 150ms ease, filter 150ms ease;
-      }
-      .drama-club-cube-marker:hover {
-        transform: scale(1.18) translateY(-2px);
-        filter: drop-shadow(0 4px 10px rgba(108,0,175,0.60));
-      }
     `;
     document.head.appendChild(style);
     return () => {
@@ -1555,12 +1543,13 @@ useEffect(() => {
       if (typeof club.lat !== "number" || typeof club.lng !== "number") continue;
       if (!club.slug) continue;
 
-      const el = document.createElement("div");
-      el.className = "drama-club-cube-marker";
-      el.innerHTML = DRAMA_CUBE_SVG_HTML;
-      el.setAttribute("title", club.name);
+      const mk = new mapboxgl.Marker({ color: "#6C00AF" })
+        .setLngLat([club.lng as number, club.lat as number])
+        .addTo(m);
 
-      el.addEventListener("click", (e) => {
+      mk.getElement().setAttribute("title", club.name);
+
+      mk.getElement().addEventListener("click", (e) => {
         e.stopPropagation();
         // Close any open story popup
         if (sharedPopupRef.current) {
@@ -1576,13 +1565,9 @@ useEffect(() => {
         m.easeTo({ center: coords, offset: [0, popupOffsetY()], duration: 300 });
       });
 
-      el.addEventListener("mousedown", () => m.dragPan.disable());
-      el.addEventListener("mouseup", () => m.dragPan.enable());
-      el.addEventListener("mouseleave", () => m.dragPan.enable());
-
-      const mk = new mapboxgl.Marker({ element: el })
-        .setLngLat([club.lng as number, club.lat as number])
-        .addTo(m);
+      mk.getElement().addEventListener("mousedown", () => m.dragPan.disable());
+      mk.getElement().addEventListener("mouseup", () => m.dragPan.enable());
+      mk.getElement().addEventListener("mouseleave", () => m.dragPan.enable());
 
       dramaClubMarkersRef.current.push(mk);
     }
