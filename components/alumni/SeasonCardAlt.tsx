@@ -231,7 +231,7 @@ export default function SeasonCardAlt({
               transition: "opacity 0.18s ease",
             }}
           >
-            Explore Season →
+            Explore Season
           </Link>
 
           {/* "−" — absolute bottom-right, same position as "+" on the front.
