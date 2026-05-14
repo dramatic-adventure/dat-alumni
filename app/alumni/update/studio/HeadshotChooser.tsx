@@ -308,7 +308,7 @@ export default function HeadshotChooser({
             {displayItems.map((it) => {
               const isCurr = !!it.isCurrent;
               const isDeletable = it.isOriginal === false && !!it.fileId;
-              const isBeingDeleted = deleting === it.fileId;
+              const isBeingDeleted = !!it.fileId && deleting === it.fileId;
 
               return (
                 <div
