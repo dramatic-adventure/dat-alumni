@@ -624,7 +624,7 @@ export default function CommunitySection({
               </>
             )}
 
-            {visibleCausePills.length > 0 && (
+            {(featuredCause || visibleCausePills.length > 0) && (
               <div
                 style={{
                   display: "flex",
@@ -633,6 +633,37 @@ export default function CommunitySection({
                   marginTop: featuredCause ? "0.9rem" : 0,
                 }}
               >
+                {featuredCause && (
+                  <Link
+                    href={`/cause/${featuredCause.id}`}
+                    style={{
+                      display: "inline-block",
+                      padding: "4px 12px",
+                      borderRadius: 999,
+                      fontFamily: FF_GROTESK,
+                      fontSize: "0.72rem",
+                      fontWeight: 600,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08rem",
+                      color: "#D9A919",
+                      background: "rgba(217,169,25,0.10)",
+                      border: "1px solid rgba(217,169,25,0.25)",
+                      textDecoration: "none",
+                      cursor: "pointer",
+                      transition: "background 140ms, border-color 140ms",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(217,169,25,0.20)";
+                      e.currentTarget.style.borderColor = "rgba(217,169,25,0.45)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "rgba(217,169,25,0.10)";
+                      e.currentTarget.style.borderColor = "rgba(217,169,25,0.25)";
+                    }}
+                  >
+                    {featuredCause.label}
+                  </Link>
+                )}
                 {visibleCausePills.map(({ id, label }) => (
                   <Link
                     key={id}
