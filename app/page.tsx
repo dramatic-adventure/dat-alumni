@@ -13,6 +13,7 @@ import {
   ALUMNI_COUNT,
 } from "@/lib/datStats";
 import StatsStrip from "@/components/shared/StatsStrip";
+import PhotoStrip from "@/components/shared/PhotoStrip";
 import { dramaClubs } from "@/lib/dramaClubMap";
 import { productionMap, getSortYear } from "@/lib/productionMap";
 import {
@@ -251,7 +252,7 @@ export default function Page() {
   const productionUrl = featuredProduction
     ? featuredProduction.url || `/story/${featuredProduction.slug}`
     : "/story-map";
-  const prodCtaLabel = isUpcoming ? "Get Your Seat →" : "Explore the Story →";
+  const prodCtaLabel = isUpcoming ? "Get Your Seat" : "Explore the Story";
   const prodSectionLabel = isUpcoming ? "UPCOMING PRODUCTION" : "RECENT PRODUCTION";
 
   /* ── Render ───────────────────────────────────────── */
@@ -293,6 +294,11 @@ export default function Page() {
           </div>
         </div>
       </div>
+
+      {/* ════════════════════════════════════════════════
+          PHOTO STRIP — below hero
+      ════════════════════════════════════════════════ */}
+      <PhotoStrip />
 
       {/* ════════════════════════════════════════════════
           CTA — three doors, editorial cards with hover reveal
