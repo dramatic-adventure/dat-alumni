@@ -130,7 +130,7 @@ export default function ComingSoonModal() {
                 onClick={dismiss}
                 type="button"
               >
-                Start Exploring →
+                Start Exploring
               </button>
               <a
                 href="https://dramaticadventure.com"

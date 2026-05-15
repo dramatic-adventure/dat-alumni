@@ -1,15 +1,8 @@
 // app/privacy/page.tsx
 // Privacy policy — required for Facebook/Instagram Graph API app review.
 // Publicly accessible at /privacy on the production site.
-
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Privacy Policy — Dramatic Adventure Theatre",
-  description:
-    "Privacy policy for the Dramatic Adventure Theatre alumni platform and connected services.",
-  robots: { index: true, follow: true },
-};
+// Metadata lives in app/privacy/layout.tsx (required since this is a Client Component).
+"use client";
 
 export default function PrivacyPage() {
   const contact = "jesse@dramaticadventure.com";
