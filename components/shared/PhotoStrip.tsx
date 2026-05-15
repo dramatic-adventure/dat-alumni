@@ -178,26 +178,6 @@ export default function PhotoStrip({ images, instagramHandle = "dramaticadventur
           className="ps-logo-img"
         />
       </div>
-      {/* Instagram handle — sits below logo, doesn't affect vertical centering */}
-      <span
-        style={{
-          position: "absolute",
-          top: "100%",
-          left: "50%",
-          transform: "translateX(-50%)",
-          marginTop: "6px",
-          whiteSpace: "nowrap",
-          fontSize: "0.68rem",
-          fontFamily: 'var(--font-dm-sans, "DM Sans", system-ui, sans-serif)',
-          fontWeight: 600,
-          letterSpacing: "0.07em",
-          color: "rgba(255,204,0,0.82)",
-          textShadow: "0 1px 4px rgba(0,0,0,0.7)",
-          zIndex: 2,
-        }}
-      >
-        @{instagramHandle}
-      </span>
     </Link>
   );
 
@@ -225,19 +205,6 @@ export default function PhotoStrip({ images, instagramHandle = "dramaticadventur
               justifyContent: "center",
             }}
           />
-          <p style={{
-            textAlign: "center",
-            margin: 0,
-            padding: "8px 0 9px",
-            fontSize: "0.72rem",
-            fontWeight: 600,
-            letterSpacing: "0.06em",
-            fontFamily: 'var(--font-dm-sans, "DM Sans", system-ui, sans-serif)',
-            color: "rgba(255,204,0,0.85)",
-            background: "#241123",
-          }}>
-            @{instagramHandle}
-          </p>
         </div>
       ) : (
         /* ── DESKTOP: full-bleed squares, logo overlaid ─────── */
