@@ -62,24 +62,45 @@ export default function PhotoStrip({
     ...Array(Math.max(0, 8 - photos.length)).fill(null),
   ];
 
-  const renderImg = (photo: PhotoStripImage | null, i: number, sizes: string) => {
-    if (!photo) return <div key={i} className="strip-cell strip-cell--empty" aria-hidden="true" />;
-    // Every image links: to the specific IG post if we have one, otherwise to the profile.
+  // Inline styles for cells — styled-jsx doesn't scope elements returned from
+  // helper functions, so layout-critical styles must be inline.
+  const cellStyle: React.CSSProperties = {
+    flex: "1 1 0%",
+    position: "relative",
+    overflow: "hidden",
+    display: "block",
+    minWidth: 0,
+  };
+  const emptyCellStyle: React.CSSProperties = {
+    ...cellStyle,
+    background: "rgba(255,255,255,0.04)",
+  };
+  const mobileCellStyle: React.CSSProperties = {
+    position: "relative",
+    overflow: "hidden",
+  };
+
+  const renderImg = (photo: PhotoStripImage | null, i: number, sizes: string, mobile = false) => {
+    const style = mobile ? mobileCellStyle : (photo ? cellStyle : emptyCellStyle);
+    if (!photo) return <div key={i} style={style} aria-hidden="true" />;
     const linkHref = photo.href ?? igUrl;
-    const inner = (
-      <Image
-        src={photo.src}
-        alt={photo.alt}
-        fill
-        sizes={sizes}
-        style={{ objectFit: "cover" }}
-        loading={i < 3 ? "eager" : "lazy"}
-      />
-    );
     return (
-      <div key={i} className="strip-cell">
-        <a href={linkHref} target="_blank" rel="noopener noreferrer" aria-label={photo.alt}>
-          {inner}
+      <div key={i} style={style}>
+        <a
+          href={linkHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={photo.alt}
+          style={{ position: "absolute", inset: 0, display: "block" }}
+        >
+          <Image
+            src={photo.src}
+            alt={photo.alt}
+            fill
+            sizes={sizes}
+            style={{ objectFit: "cover", transition: "transform 0.4s ease, filter 0.4s ease" }}
+            loading={i < 3 ? "eager" : "lazy"}
+          />
         </a>
       </div>
     );
@@ -119,7 +140,7 @@ export default function PhotoStrip({
       {/* ── MOBILE ─────────────────────────────────────────────── */}
       <div className="strip-mobile" aria-hidden="true">
         <div className="strip-grid">
-          {slots.map((p, i) => renderImg(p, i, "50vw"))}
+          {slots.map((p, i) => renderImg(p, i, "50vw", true))}
           {/* Logo floats centered over the grid */}
           <Link
             href={igUrl}
