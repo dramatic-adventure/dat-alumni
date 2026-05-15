@@ -8,99 +8,86 @@ import { useState, useEffect } from "react";
 export type PhotoStripImage = {
   src: string;
   alt: string;
-  href?: string; // optional: link to specific IG post
+  href?: string;
 };
 
 type Props = {
-  /** Override images entirely — skips the Instagram fetch. */
   images?: PhotoStripImage[];
-  /** Instagram handle without @. Defaults to "dramaticadventure". */
   instagramHandle?: string;
 };
 
-// ─── Static fallback ──────────────────────────────────────────────────────────
 const DEFAULT_IMAGES: PhotoStripImage[] = [
-  { src: "/images/teaching-amazon.jpg",                             alt: "Teaching in the Amazon" },
-  { src: "/images/performing-zanzibar.jpg",                         alt: "Performing in Zanzibar" },
-  { src: "/images/teaching-andes.jpg",                              alt: "Teaching in the Andes" },
-  { src: "/images/rehearsing-nitra.jpg",                            alt: "Rehearsing in Nitra" },
-  { src: "/images/Andean_Mask_Work.jpg",                            alt: "Andean mask work" },
-  { src: "/images/projects/archive/ACTion-Tanzania-3-hike.webp",   alt: "ACTion Tanzania" },
-  { src: "/images/projects/archive/Creative-Trek-Zimbabwe.webp",   alt: "Creative Trek Zimbabwe" },
-  { src: "/images/theatre/archive/esmeraldas_dumbshow.webp",       alt: "Theatre in Esmeraldas" },
+  { src: "/images/teaching-amazon.jpg",                           alt: "Teaching in the Amazon" },
+  { src: "/images/performing-zanzibar.jpg",                       alt: "Performing in Zanzibar" },
+  { src: "/images/teaching-andes.jpg",                            alt: "Teaching in the Andes" },
+  { src: "/images/rehearsing-nitra.jpg",                          alt: "Rehearsing in Nitra" },
+  { src: "/images/Andean_Mask_Work.jpg",                          alt: "Andean mask work" },
+  { src: "/images/projects/archive/ACTion-Tanzania-3-hike.webp", alt: "ACTion Tanzania" },
+  { src: "/images/projects/archive/Creative-Trek-Zimbabwe.webp", alt: "Creative Trek Zimbabwe" },
+  { src: "/images/theatre/archive/esmeraldas_dumbshow.webp",     alt: "Theatre in Esmeraldas" },
 ];
 
-export default function PhotoStrip({
-  images,
-  instagramHandle = "dramaticadventure",
-}: Props) {
-  const [photos, setPhotos] = useState<PhotoStripImage[]>(
-    images ?? DEFAULT_IMAGES
-  );
+export default function PhotoStrip({ images, instagramHandle = "dramaticadventure" }: Props) {
+  const [photos, setPhotos] = useState<PhotoStripImage[]>(images ?? DEFAULT_IMAGES);
+  const [isMobile, setIsMobile] = useState(false);
 
+  // Detect viewport — drives conditional render instead of CSS show/hide
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 767);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // Instagram feed fetch
   useEffect(() => {
     if (images) return;
     fetch("/api/instagram-feed")
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { images?: PhotoStripImage[] } | null) => {
-        if (data?.images && data.images.length >= 4) {
-          setPhotos(data.images.slice(0, 8));
-        }
+        if (data?.images && data.images.length >= 4) setPhotos(data.images.slice(0, 8));
       })
       .catch(() => {});
   }, [images]);
 
   const igUrl = `https://www.instagram.com/${instagramHandle}/`;
 
-  // Always exactly 8 slots
   const slots: (PhotoStripImage | null)[] = [
     ...photos.slice(0, 8),
     ...Array(Math.max(0, 8 - photos.length)).fill(null),
   ];
 
-  // Cell style — must be inline because renderImg is a helper (styled-jsx scoping gap)
+  // ─── Cell style (inline — avoids styled-jsx scoping gaps) ──────────────────
+  // Square via padding-bottom trick: height=0, paddingBottom=12.5vw (100vw/8)
   const cellStyle: React.CSSProperties = {
     flex: "1 1 0%",
     minWidth: 0,
     position: "relative",
-    overflow: "hidden",
-    // aspect-ratio via padding-bottom trick for broad browser support
-    paddingBottom: "12.5vw", // 100vw / 8 images = square
     height: 0,
-  };
-  const emptyCellStyle: React.CSSProperties = {
-    ...cellStyle,
-    background: "#1a0f1e",
+    paddingBottom: "12.5vw",
+    overflow: "hidden",
   };
 
   const renderCell = (photo: PhotoStripImage | null, i: number) => {
-    const style = photo ? cellStyle : emptyCellStyle;
-    if (!photo) return <div key={i} style={style} aria-hidden="true" />;
-
-    const linkHref = photo.href ?? igUrl;
+    if (!photo) {
+      return <div key={i} style={{ ...cellStyle, background: "#1a0f1e" }} aria-hidden="true" />;
+    }
     return (
-      <div key={i} style={style}>
+      <div key={i} style={cellStyle}>
         <a
-          href={linkHref}
+          href={photo.href ?? igUrl}
           target="_blank"
           rel="noopener noreferrer"
           aria-label={photo.alt}
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "block",
-            overflow: "hidden",
-          }}
+          style={{ position: "absolute", inset: 0 }}
+          className="strip-cell-link"
         >
           <Image
             src={photo.src}
             alt={photo.alt}
             fill
             sizes="12.5vw"
-            style={{
-              objectFit: "cover",
-              transition: "transform 0.45s ease, filter 0.45s ease",
-            }}
+            style={{ objectFit: "cover" }}
             loading={i < 3 ? "eager" : "lazy"}
           />
         </a>
@@ -108,211 +95,155 @@ export default function PhotoStrip({
     );
   };
 
-  return (
-    <div className="photo-strip" role="region" aria-label="Photo gallery">
-
-      {/* ── Full-bleed image row ─────────────────────────── */}
-      <div className="strip-row">
-        {slots.map((p, i) => renderCell(p, i))}
-      </div>
-
-      {/* ── Logo overlay — sits ON TOP of the images ────── */}
-      <Link
-        href={igUrl}
+  // ─── Mobile cell ───────────────────────────────────────────────────────────
+  const renderMobileCell = (photo: PhotoStripImage | null, i: number) => {
+    if (!photo) {
+      return <div key={i} style={{ background: "#1a0f1e", aspectRatio: "1/1" }} aria-hidden="true" />;
+    }
+    return (
+      <a
+        key={i}
+        href={photo.href ?? igUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="strip-logo-overlay"
-        aria-label={`@${instagramHandle} on Instagram`}
+        aria-label={photo.alt}
+        style={{ display: "block", position: "relative", aspectRatio: "1/1", overflow: "hidden" }}
+        className="strip-cell-link"
       >
-        {/* Purple glow disc */}
-        <span className="strip-logo-glow" aria-hidden="true" />
-        {/* Logo */}
-        <Image
-          src="/images/dat-logo7.svg"
-          alt="Dramatic Adventure Theatre"
-          width={220}
-          height={220}
-          className="strip-logo-img"
-          priority
-        />
-        {/* Handle */}
-        <span className="strip-ig-handle" aria-hidden="true">
-          @{instagramHandle}
-        </span>
-      </Link>
+        <Image src={photo.src} alt={photo.alt} fill sizes="50vw" style={{ objectFit: "cover" }} loading={i < 2 ? "eager" : "lazy"} />
+      </a>
+    );
+  };
 
-      {/* ── Mobile grid (2 cols, logo centred) ──────────── */}
-      <div className="strip-mobile" aria-hidden="true">
-        <div className="strip-mobile-grid">
-          {slots.map((p, i) => {
-            if (!p) return <div key={i} style={{ background: "#1a0f1e", aspectRatio: "1/1" }} />;
-            return (
-              <a
-                key={i}
-                href={p.href ?? igUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ display: "block", position: "relative", aspectRatio: "1/1", overflow: "hidden" }}
-              >
-                <Image
-                  src={p.src}
-                  alt={p.alt}
-                  fill
-                  sizes="50vw"
-                  style={{ objectFit: "cover" }}
-                  loading={i < 2 ? "eager" : "lazy"}
-                />
-              </a>
-            );
-          })}
-          {/* Centred logo over the grid */}
+  // ─── Logo overlay — ALL positioning via inline style ──────────────────────
+  const logoOverlayStyle: React.CSSProperties = {
+    position: "absolute",
+    left: "22%",
+    top: "50%",
+    transform: "translate(-50%, -50%)",
+    zIndex: 6,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "4px",
+    textDecoration: "none",
+    padding: "24px 0",
+  };
+
+  return (
+    <div style={{ position: "relative", width: "100%", overflow: "visible", zIndex: 2 }}>
+
+      {isMobile ? (
+        /* ── MOBILE ── 2-col square grid, logo centred ─── */
+        <div style={{ position: "relative" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", width: "100%" }}>
+            {slots.map((p, i) => renderMobileCell(p, i))}
+          </div>
+          {/* Logo centred over the grid */}
           <Link
             href={igUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="strip-mobile-logo"
-            tabIndex={-1}
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              zIndex: 6,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            aria-label={`@${instagramHandle} on Instagram`}
           >
-            <span className="strip-logo-glow strip-logo-glow--mobile" aria-hidden="true" />
-            <Image src="/images/dat-logo7.svg" alt="" width={120} height={120} />
+            <span className="strip-glow strip-glow--mobile" aria-hidden="true" />
+            <Image src="/images/dat-logo7.svg" alt="Dramatic Adventure Theatre" width={120} height={120} style={{ position: "relative", zIndex: 2 }} />
           </Link>
+          <p style={{ textAlign: "center", margin: 0, padding: "7px 0 8px", fontSize: "0.72rem", fontWeight: 600, letterSpacing: "0.06em", color: "rgba(255,204,0,0.85)", background: "#241123" }}>
+            @{instagramHandle}
+          </p>
         </div>
-        <p className="strip-mobile-handle">@{instagramHandle}</p>
-      </div>
+      ) : (
+        /* ── DESKTOP ── full-bleed squares, logo overlaid ─ */
+        <>
+          {/* Image row */}
+          <div style={{ display: "flex", width: "100%", overflow: "hidden" }}>
+            {slots.map((p, i) => renderCell(p, i))}
+          </div>
 
+          {/* Logo overlay */}
+          <Link
+            href={igUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={logoOverlayStyle}
+            aria-label={`@${instagramHandle} on Instagram`}
+            className="strip-logo-overlay"
+          >
+            {/* Purple glow disc */}
+            <span className="strip-glow" aria-hidden="true" />
+            <Image
+              src="/images/dat-logo7.svg"
+              alt="Dramatic Adventure Theatre"
+              width={230}
+              height={230}
+              priority
+              style={{ position: "relative", zIndex: 2, filter: "drop-shadow(0 4px 18px rgba(0,0,0,0.55))" }}
+              className="strip-logo-img"
+            />
+            <span style={{
+              fontSize: "0.68rem",
+              fontFamily: 'var(--font-dm-sans, "DM Sans", system-ui, sans-serif)',
+              fontWeight: 600,
+              letterSpacing: "0.07em",
+              color: "rgba(255,204,0,0.8)",
+              textTransform: "lowercase",
+              position: "relative",
+              zIndex: 2,
+              textShadow: "0 1px 4px rgba(0,0,0,0.7)",
+            }}>
+              @{instagramHandle}
+            </span>
+          </Link>
+        </>
+      )}
+
+      {/* Decorative styles only — no layout-critical rules here */}
       <style jsx>{`
-        /* ── Outer wrapper ─────────────────────────────────
-           overflow:visible so logo bleeds above & below     */
-        .photo-strip {
-          position: relative;
-          width: 100%;
-          overflow: visible;
-          z-index: 2;
-        }
-
-        /* ── Full-bleed desktop image row ─────────────────── */
-        .strip-row {
-          display: flex;
-          width: 100%;
-          overflow: hidden;
-        }
-        /* Hover zoom applied via :global since cells use inline styles */
-        .strip-row :global(a:hover img) {
+        /* Hover zoom on images */
+        :global(.strip-cell-link:hover img) {
           transform: scale(1.06);
           filter: brightness(1.1);
+          transition: transform 0.45s ease, filter 0.45s ease;
         }
 
-        /* ── Logo overlay ─────────────────────────────────── */
-        .strip-logo-overlay {
-          position: absolute;
-          /* ~22% from left, centred vertically on the strip */
-          left: 22%;
-          top: 50%;
-          transform: translate(-50%, -50%);
-          z-index: 6;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 4px;
-          text-decoration: none;
-          /* bleed above+below by making this element tall enough */
-          padding: 20px 0;
+        /* Logo hover */
+        :global(.strip-logo-overlay:hover .strip-logo-img) {
+          transform: scale(1.04);
+          transition: transform 0.25s ease;
         }
 
-        /* Soft purple glow disc behind the logo */
-        .strip-logo-glow {
+        /* Purple glow disc behind logo */
+        :global(.strip-glow) {
           position: absolute;
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          width: 320px;
-          height: 320px;
+          width: 340px;
+          height: 340px;
           border-radius: 50%;
           background: radial-gradient(
             circle,
-            rgba(108, 0, 175, 0.55) 0%,
-            rgba(70,  0, 120, 0.3)  38%,
-            transparent             70%
+            rgba(108, 0, 175, 0.6) 0%,
+            rgba(70,  0, 120, 0.32) 38%,
+            transparent 68%
           );
           pointer-events: none;
-          z-index: -1;
+          z-index: 1;
         }
-
-        .strip-logo-img {
-          position: relative;
-          z-index: 2;
-          filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5));
-          transition: transform 0.25s ease;
-        }
-        .strip-logo-overlay:hover .strip-logo-img {
-          transform: scale(1.04);
-        }
-
-        .strip-ig-handle {
-          font-size: 0.68rem;
-          font-family: var(--font-dm-sans, "DM Sans", system-ui, sans-serif);
-          font-weight: 600;
-          letter-spacing: 0.07em;
-          color: rgba(255, 204, 0, 0.8);
-          text-transform: lowercase;
-          position: relative;
-          z-index: 2;
-          text-shadow: 0 1px 4px rgba(0,0,0,0.7);
-        }
-
-        /* ── Hide mobile on desktop ───────────────────────── */
-        .strip-mobile { display: none; }
-
-        /* ── Mobile ───────────────────────────────────────── */
-        @media (max-width: 767px) {
-          .strip-row          { display: none; }
-          .strip-logo-overlay { display: none; }
-          .strip-mobile       { display: block; position: relative; }
-
-          .strip-mobile-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            width: 100%;
-            position: relative;
-          }
-
-          .strip-mobile-logo {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 6;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-          .strip-logo-glow--mobile {
-            width: 180px;
-            height: 180px;
-          }
-
-          .strip-mobile-handle {
-            text-align: center;
-            padding: 7px 0 8px;
-            margin: 0;
-            font-size: 0.72rem;
-            font-family: var(--font-dm-sans, "DM Sans", system-ui, sans-serif);
-            font-weight: 600;
-            letter-spacing: 0.06em;
-            color: rgba(255, 204, 0, 0.85);
-            background: #241123;
-          }
-        }
-
-        /* ── Tablet: slightly smaller logo ───────────────── */
-        @media (min-width: 768px) and (max-width: 1023px) {
-          .strip-logo-overlay {
-            left: 20%;
-          }
-          .strip-logo-glow {
-            width: 240px;
-            height: 240px;
-          }
+        :global(.strip-glow--mobile) {
+          width: 200px;
+          height: 200px;
         }
       `}</style>
     </div>
