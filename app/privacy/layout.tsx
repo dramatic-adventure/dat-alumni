@@ -1,6 +1,7 @@
 // app/privacy/layout.tsx
 // Holds metadata for the privacy page (must be a Server Component).
-import type { Metadata, ReactNode } from "next";
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — Dramatic Adventure Theatre",
