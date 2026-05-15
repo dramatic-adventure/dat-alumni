@@ -27,6 +27,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NextResponse } from "next/server";
+import { configGet, INSTAGRAM_TOKEN_KEY } from "@/lib/blobConfig";
 
 export const revalidate = 3600; // re-fetch at most once per hour
 
@@ -56,7 +57,10 @@ const STATIC_FALLBACK = [
 ];
 
 export async function GET() {
-  const token = process.env.INSTAGRAM_ACCESS_TOKEN;
+  // Blob token is written by the monthly refresh-instagram-token function and
+  // takes priority.  The env var is the initial seed (set once after Meta approval).
+  const token =
+    (await configGet(INSTAGRAM_TOKEN_KEY)) ?? process.env.INSTAGRAM_ACCESS_TOKEN;
 
   if (!token) {
     return NextResponse.json({ images: STATIC_FALLBACK, source: "static" });
