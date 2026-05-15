@@ -111,7 +111,8 @@ export default function PhotoStrip({
 
       {/* ── DESKTOP ────────────────────────────────────────────── */}
       <div className="strip-desktop">
-        {/* Logo block */}
+
+        {/* Logo block — overflows above + below the strip */}
         <Link
           href={igUrl}
           target="_blank"
@@ -122,9 +123,10 @@ export default function PhotoStrip({
           <Image
             src="/images/dat-logo7.svg"
             alt="Dramatic Adventure Theatre"
-            width={130}
-            height={130}
+            width={240}
+            height={240}
             className="strip-logo-img"
+            style={{ position: "relative", zIndex: 2 }}
           />
           <span className="strip-ig-handle" aria-hidden="true">
             @{instagramHandle}
@@ -135,6 +137,7 @@ export default function PhotoStrip({
         <div className="strip-row">
           {slots.map((p, i) => renderImg(p, i, "(max-width: 768px) 50vw, 12vw"))}
         </div>
+
       </div>
 
       {/* ── MOBILE ─────────────────────────────────────────────── */}
@@ -158,7 +161,7 @@ export default function PhotoStrip({
             />
           </Link>
         </div>
-        {/* Visible handle below grid */}
+        {/* Teal handle band */}
         <Link
           href={igUrl}
           target="_blank"
@@ -171,71 +174,53 @@ export default function PhotoStrip({
       </div>
 
       <style jsx>{`
-        /* ── Shared ──────────────────────────────────────── */
+        /* ══ Outer wrapper ══════════════════════════════════
+           overflow: visible so the logo can bleed above/below */
         .photo-strip {
           width: 100%;
-          overflow: hidden;
-          background: #1a0f1e;
-        }
-
-        .strip-cell {
           position: relative;
-          overflow: hidden;
-          display: block;
-        }
-        .strip-cell a {
-          display: block;
-          width: 100%;
-          height: 100%;
-          position: absolute;
-          inset: 0;
-        }
-        .strip-cell :global(img) {
-          transition: transform 0.4s ease, filter 0.4s ease;
-        }
-        .strip-cell:hover :global(img) {
-          transform: scale(1.06);
-          filter: brightness(1.08);
-        }
-        .strip-cell--empty {
-          background: rgba(255,255,255,0.04);
+          z-index: 2;
+          overflow: visible;
         }
 
-        /* ── Desktop layout ──────────────────────────────── */
+        /* ══ Desktop row ════════════════════════════════════ */
         .strip-desktop {
           display: flex;
           align-items: stretch;
           height: ${height}px;
+          background: #241123;
         }
 
-        /* Logo block */
+        /* Logo block — clips at the row height but the image
+           itself is larger (set in JSX) and overflows visually */
         .strip-logo-block {
           flex-shrink: 0;
-          width: 170px;
+          width: 220px;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 10px;
+          gap: 6px;
           background: #241123;
-          padding: 16px 12px;
+          padding: 0 12px;
           text-decoration: none;
-          border-right: 1px solid rgba(255,255,255,0.07);
+          position: relative;
+          overflow: visible;   /* logo bleeds above + below */
+          z-index: 3;
           transition: background 0.2s;
         }
         .strip-logo-block:hover {
           background: #2e1630;
         }
-        .strip-logo-img {
-          filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
-        }
         .strip-ig-handle {
-          font-size: 0.72rem;
+          font-size: 0.68rem;
           font-family: var(--font-dm-sans, "DM Sans", system-ui, sans-serif);
           font-weight: 600;
-          letter-spacing: 0.04em;
-          color: rgba(255,204,0,0.85);
+          letter-spacing: 0.05em;
+          color: rgba(255, 204, 0, 0.7);
           text-transform: lowercase;
+          position: relative;
+          z-index: 3;
         }
 
         /* Image row */
@@ -244,17 +229,8 @@ export default function PhotoStrip({
           flex: 1;
           overflow: hidden;
         }
-        .strip-row .strip-cell {
-          flex: 1;
-          height: ${height}px;
-          cursor: pointer;
-        }
-        .strip-row .strip-cell--empty {
-          flex: 1;
-          height: ${height}px;
-        }
 
-        /* ── Mobile ──────────────────────────────────────── */
+        /* ══ Mobile ═════════════════════════════════════════ */
         .strip-mobile {
           display: none;
         }
@@ -268,32 +244,27 @@ export default function PhotoStrip({
             display: grid;
             grid-template-columns: 1fr 1fr;
             grid-template-rows: repeat(4, 28vw);
-          }
-          .strip-grid .strip-cell,
-          .strip-grid .strip-cell--empty {
-            height: 28vw;
+            background: #241123;
           }
 
-          /* Logo centered over the 2×4 grid */
+          /* Logo centered over grid, bleeds outward */
           .strip-mobile-logo {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 10;
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: radial-gradient(
+              circle,
+              rgba(36, 17, 35, 0.75) 38%,
+              transparent 68%
+            );
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 110px;
-            height: 110px;
-            border-radius: 50%;
-            /* subtle scrim behind logo so it reads over any image */
-            background: radial-gradient(
-              circle,
-              rgba(26,15,30,0.72) 40%,
-              transparent 72%
-            );
-            padding: 4px;
             transition: transform 0.2s;
           }
           .strip-mobile-logo:hover {
@@ -304,31 +275,20 @@ export default function PhotoStrip({
             display: block;
             text-align: center;
             padding: 8px 0 10px;
-            font-size: 0.78rem;
+            font-size: 0.75rem;
             font-family: var(--font-dm-sans, "DM Sans", system-ui, sans-serif);
             font-weight: 600;
             letter-spacing: 0.05em;
-            color: rgba(255,204,0,0.85);
+            color: rgba(255, 204, 0, 0.85);
             text-decoration: none;
-            background: #1a0f1e;
-          }
-          .strip-mobile-handle:hover {
-            color: #ffcc00;
+            background: #241123;
           }
         }
 
-        /* ── Tablet tweak ─────────────────────────────────── */
+        /* ══ Tablet ════════════════════════════════════════ */
         @media (min-width: 768px) and (max-width: 1023px) {
-          .strip-logo-block {
-            width: 140px;
-          }
-          .strip-desktop {
-            height: ${Math.round(height * 0.85)}px;
-          }
-          .strip-row .strip-cell,
-          .strip-row .strip-cell--empty {
-            height: ${Math.round(height * 0.85)}px;
-          }
+          .strip-logo-block { width: 180px; }
+          .strip-desktop    { height: ${Math.round(height * 0.82)}px; }
         }
       `}</style>
     </div>
