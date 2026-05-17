@@ -73,6 +73,8 @@ const NAV_ITEMS = [
   {
     label: 'GET INVOLVED',
     submenu: [
+      { label: 'Opportunities Portal', href: '/opportunities' },
+      { label: 'PLX — Internships & Apprenticeships', href: '/professional-leadership-experience' },
       { label: 'Alumni Network', href: '/alumni/update' },
       { label: 'Friends of DAT', href: '/friends' },
       { label: 'Join the Team', href: '/get-involved/join' },

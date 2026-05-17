@@ -301,6 +301,54 @@ export default function Page() {
       <PhotoStrip />
 
       {/* ════════════════════════════════════════════════
+          STORY MAP TEASER — teal, 20-year celebration
+      ════════════════════════════════════════════════ */}
+      <section className="hp-smt-section" aria-labelledby="hp-smt-heading">
+
+        {/* Image is a direct child of the section so absolute positioning
+            always pins it to the section's bottom-left corner */}
+        <div className="hp-smt-img-col" aria-hidden="true">
+          <Image
+            src="/images/story-map-teaser.webp"
+            alt=""
+            width={2140}
+            height={1038}
+            className="hp-smt-img"
+          />
+        </div>
+
+        <div className="hp-smt-inner">
+          <div className="hp-smt-text-col">
+            <p className="hp-smt-eyebrow">Celebrating</p>
+            <h2 id="hp-smt-heading" className="hp-smt-years">20 YEARS</h2>
+            <p className="hp-smt-subtitle">of Cross-Cultural Storytelling</p>
+            <p className="hp-smt-body">
+              From the Amazon to the Andes, from Slovakia to New York — for the past two decades,
+              Dramatic Adventure Theatre has remained dedicated to uniting artists and communities
+              through story, travel, and human connection.
+            </p>
+            <p className="hp-smt-body">
+              Explore the experiences and moments that have changed lives along this journey.
+            </p>
+            <div className="hp-smt-actions">
+              <Link href="/story-map" className="hp-smt-btn hp-smt-btn--pink">
+                Explore Story Map
+              </Link>
+              <a
+                href="https://dramaticadventure.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hp-smt-btn hp-smt-btn--purple"
+              >
+                Learn More About DAT
+              </a>
+            </div>
+          </div>
+        </div>{/* /hp-smt-inner */}
+
+      </section>
+
+      {/* ════════════════════════════════════════════════
           CTA — three doors, editorial cards with hover reveal
       ════════════════════════════════════════════════ */}
       <section className="hp-cta-section" aria-label="Find your path">
@@ -1771,6 +1819,183 @@ main a:active { text-decoration: none !important; }
 }
 .hp-event-card-wrap:hover .hp-event-ticket-cta { color: #fff; }
 .hp-event-card-wrap:hover .hp-event-ticket-cta--link { color: #fff; }
+
+/* ══════════════════════════════════════════════════════════
+   STORY MAP TEASER — teal band with globe illustration
+══════════════════════════════════════════════════════════ */
+
+/* Section is the positioning context for the absolute image */
+.hp-smt-section {
+  position: relative;
+  background: #2493A9;
+  overflow: hidden;
+  min-height: 420px;
+}
+
+/* Image: always pinned to bottom-left of the section */
+.hp-smt-img-col {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 44%;
+  max-width: 500px;
+  z-index: 0;
+  pointer-events: none;
+}
+.hp-smt-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Inner wrapper: centers text and keeps it above the image */
+.hp-smt-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+}
+
+/* Text column: pushed into the right ~58% on desktop */
+.hp-smt-text-col {
+  margin-left: auto;
+  width: 58%;
+  padding: 3.5rem 3rem 3.5rem 2.5rem;
+}
+
+/* Eyebrow: "Celebrating" */
+.hp-smt-eyebrow {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-size: clamp(0.95rem, 1.6vw, 1.25rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: #174f5c;
+  margin: 0 0 0.1rem;
+}
+
+/* "20 YEARS" headline */
+.hp-smt-years {
+  font-family: "Anton", sans-serif !important;
+  font-size: clamp(4rem, 10vw, 8.5rem);
+  line-height: 0.9;
+  color: #f6e4c1;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+/* Subtitle */
+.hp-smt-subtitle {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-size: clamp(0.78rem, 1.4vw, 1rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #174f5c;
+  margin: 0.45rem 0 1.5rem;
+}
+
+/* Body copy */
+.hp-smt-body {
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-size: clamp(0.88rem, 1.3vw, 1rem);
+  line-height: 1.65;
+  color: rgba(255,255,255,0.9);
+  margin: 0 0 0.85rem;
+  max-width: 480px;
+}
+.hp-smt-body:last-of-type { margin-bottom: 0; }
+
+/* Button row */
+.hp-smt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 1.75rem;
+}
+.hp-smt-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem 2rem;
+  border-radius: 10px;
+  border: none;
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  text-decoration: none !important;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  white-space: nowrap;
+}
+.hp-smt-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+}
+.hp-smt-btn--pink   { background: #F23359; color: #fff; }
+.hp-smt-btn--purple { background: #6C00AF; color: #fff; }
+
+/* ── Small tablet (581–900px) ──────────────────────────────────────────
+   Text spans full width from the top. Buttons are pushed down and to the
+   right of the globe via margin-top:auto + padding-left equal to the
+   globe's capped width — copy never touches the illustration.
+─────────────────────────────────────────────────────────────────────── */
+/* ── Small tablet (581–900px) ──────────────────────────────────────────
+   Globe: quarter bleeds off the left edge, freeing space for text.
+   Text column sits to the right of the visible ~75% of the globe.
+─────────────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .hp-smt-inner { min-height: 0; align-items: flex-start; }
+  .hp-smt-img-col {
+    width: 48%;
+    max-width: 320px;
+    transform: translateX(-25%); /* 1/4 bleeds off left edge */
+  }
+  .hp-smt-text-col {
+    /* visible globe ≈ 48% × 75% = 36% — sit just past that */
+    margin-left: 34%;
+    width: 66%;
+    padding: 2.5rem 2rem 160px 1.5rem;
+  }
+  .hp-smt-eyebrow  { font-size: clamp(0.9rem, 2vw, 1.4rem); }
+  .hp-smt-years    { font-size: clamp(4rem, 10vw, 7rem); }
+  .hp-smt-subtitle { font-size: clamp(0.8rem, 1.6vw, 1.1rem); }
+  .hp-smt-body     { max-width: 100%; margin-bottom: 1rem; }
+  .hp-smt-body:last-of-type { margin-bottom: 1.25rem; }
+  .hp-smt-actions  { margin-top: 1.5rem; flex-wrap: wrap; }
+}
+
+/* ── Mobile (≤580px) ───────────────────────────────────────────────────
+   Copy and buttons stack full-width above the globe.
+   Globe stays bottom-left with the same quarter-bleed.
+─────────────────────────────────────────────────────────────────────── */
+@media (max-width: 580px) {
+  .hp-smt-img-col {
+    width: 65%;
+    max-width: 260px;
+    transform: translateX(-25%);
+  }
+  .hp-smt-text-col {
+    margin-left: 0;
+    width: 100%;
+    /* padding-bottom clears the globe (≈126px tall at 260px wide) */
+    padding: 1.75rem 1.25rem 140px;
+  }
+  .hp-smt-eyebrow  { font-size: 0.85rem; }
+  .hp-smt-years    { font-size: clamp(3.5rem, 12vw, 5rem); }
+  .hp-smt-subtitle { font-size: 0.8rem; }
+  .hp-smt-body     { max-width: 100%; margin-bottom: 0.85rem; font-size: 0.88rem; }
+  .hp-smt-body:last-of-type { margin-bottom: 1rem; }
+  .hp-smt-actions  { margin-top: 1rem; flex-direction: column; }
+  .hp-smt-btn      { width: 100%; justify-content: center; }
+}
 
       `}</style>
 

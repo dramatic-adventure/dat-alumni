@@ -38,9 +38,9 @@ const DEFAULT_IMAGES: PhotoStripImage[] = [
 const LOGO_DESKTOP = "18vw";
 const LOGO_MOBILE  = "38vw";
 
-// Glow is proportionally larger than the logo
-const GLOW_DESKTOP = "30vw";
-const GLOW_MOBILE  = "58vw";
+// Glow circle is smaller than the logo — blur spreads it outward
+const GLOW_DESKTOP = "12vw";
+const GLOW_MOBILE  = "26vw";
 
 export default function PhotoStrip({ images, instagramHandle = "dramaticadventure" }: Props) {
   const [photos, setPhotos]   = useState<PhotoStripImage[]>(images ?? DEFAULT_IMAGES);
@@ -162,7 +162,8 @@ export default function PhotoStrip({ images, instagramHandle = "dramaticadventur
           width: glowSize,
           height: glowSize,
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(108,0,175,0.62) 0%, rgba(70,0,120,0.3) 38%, transparent 68%)",
+          background: "#6C00AF",
+          filter: "blur(1.8vw)",
           pointerEvents: "none",
           zIndex: 1,
         }}
