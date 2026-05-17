@@ -1,5 +1,6 @@
 // app/opportunities/page.tsx
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { loadOpportunities } from "@/lib/loadOpportunities";
 import OpportunitiesClient from "./OpportunitiesClient";
 
@@ -19,5 +20,11 @@ export const metadata: Metadata = {
 
 export default async function OpportunitiesPage() {
   const opportunities = await loadOpportunities();
-  return <OpportunitiesClient opportunities={opportunities} />;
+  // OpportunitiesClient calls useSearchParams(), which in Next.js 15+ requires
+  // a Suspense boundary to allow the page to prerender at build time.
+  return (
+    <Suspense fallback={null}>
+      <OpportunitiesClient opportunities={opportunities} />
+    </Suspense>
+  );
 }
