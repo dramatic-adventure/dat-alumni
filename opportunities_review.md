@@ -1,8 +1,9 @@
 # Opportunities Seed — Repo Findings & Review
 
-_Updated 2026-05-18 (v3). Reflects Season 20 / Ecuador hub strategy pass: 52 records (up from 48),
+_Updated 2026-05-18 (v4). Reflects Season 20 / Ecuador hub strategy pass: 52 records (up from 48),
 4 new Ecuador/Quito listings, compensation/incentive framing overhaul, travel language corrected,
-timeline labels fixed on `coming_soon` records. Read before touching the Sheet or publishing anything._
+timeline labels fixed on `coming_soon` records. v4: `data/opportunities.json` is now an
+evergreen-only fallback (25 records). Read before touching the Sheet or publishing anything._
 
 ---
 
@@ -376,3 +377,54 @@ The data is valid JSON, all 52 records pass schema validation, all enum values a
 ---
 
 _No production code was changed. No commits were made. No Sheet writes were performed._
+
+---
+
+## 12. Fallback Strategy — `data/opportunities.json` is Evergreen-Only (v4)
+
+### What changed
+
+As of v4 (2026-05-18), **`data/opportunities.json` is no longer a full mirror of `opportunities_seed_records.json`**. It contains only the 25 records whose `status` is `"evergreen"` — roles with no deadline, no season dependency, and no time-sensitive copy that would become misleading if the Google Sheet is unreachable for days or weeks.
+
+### Why
+
+The live Google Sheet ("Opportunities" tab, `ALUMNI_SHEET_ID`) is the source of truth for all 52 records. The fallback file is only shown when the Sheets API call in `lib/loadOpportunities.ts` fails. A full copy of the Sheet in the fallback would quickly fall out of date — stale deadlines, closed roles still showing as open, completed projects still recruiting.
+
+The evergreen-only fallback is always safe to display because evergreen roles are rolling, have no expiry, and carry no specific deadline or season.
+
+### What is in the fallback (25 records)
+
+| Category | IDs |
+|---|---|
+| Artist roster | `traveling-ensemble-artist`, `actor-devising-performer`, `director-facilitator`, `playwright-adaptor`, `dramaturg-researcher`, `teaching-artist`, `local-artist-cultural-collaborator`, `designer`, `stage-manager`, `musician-composer-sound-artist`, `movement-director-choreographer`, `visual-artist-maker`, `documentation-artist` |
+| Volunteer | `fundraising-ambassador`, `alumni-outreach-captain`, `story-collector`, `event-volunteer`, `grant-research-volunteer`, `data-crm-volunteer`, `program-recruitment-ambassador`, `travel-logistics-research-volunteer`, `community-partner-liaison` |
+| Governance | `board-committee-member`, `host-committee-member` |
+| Ecuador | `ecuador-local-producer` |
+
+### What is intentionally excluded from the fallback
+
+- All `coming_soon` records (13 PLX interns/apprentices, Ecuador admin roles, Managing Producer, Communications Lead, etc.)
+- All `open` staff searches (`executive-director`, `development-partnerships-lead`, `bookkeeper-finance-admin`, `local-project-producer`, `participant-donor-coordinator`)
+- `passage-slovakia-2026-artist` and `slovakia-2026-local-producer` — time-sensitive / project-specific
+- `drama-club-teaching-artist-lead` — project-specific / coming_soon
+- All Ecuador admin roles except `ecuador-local-producer` (the others are `coming_soon`)
+
+### How to regenerate the fallback
+
+If evergreen records change in `opportunities_seed_records.json`, re-run:
+
+```bash
+python3 -c "
+import json
+with open('opportunities_seed_records.json') as f:
+    seed = json.load(f)
+evergreen = [r for r in seed if r.get('status') == 'evergreen']
+with open('data/opportunities.json', 'w') as out:
+    json.dump(evergreen, out, indent=2, ensure_ascii=False)
+    out.write('\n')
+print(f'Written {len(evergreen)} evergreen records.')
+"
+```
+
+Do **not** use `cp opportunities_seed_records.json data/opportunities.json` — that would restore the full 52-record set including time-sensitive listings.
+
