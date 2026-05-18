@@ -195,12 +195,12 @@ export const TYPE_GROUP_META: Record<TypeGroup, { label: string; color: string; 
 };
 
 export const HUB_META: Record<OpportunityHub, { label: string; country: string }> = {
-  nyc:      { label: "NYC",       country: "USA" },
-  quito:    { label: "Quito",     country: "Ecuador" },
-  brno:     { label: "Brno",      country: "Czechia" },
-  bagamoyo: { label: "Bagamoyo",  country: "Tanzania" },
-  sydney:   { label: "Sydney",    country: "Australia" },
-  remote:   { label: "Remote",    country: "Anywhere" },
+  nyc:      { label: "United States",  country: "NYC, Baltimore & Beyond" },
+  quito:    { label: "Ecuador",        country: "Quito + Field Sites" },
+  brno:     { label: "Central Europe", country: "Czechia / Slovakia · Prague → Košice" },
+  bagamoyo: { label: "Tanzania",       country: "Bagamoyo, Dar & Zanzibar" },
+  sydney:   { label: "Sydney",         country: "Australia" },
+  remote:   { label: "Remote",         country: "Global / Distributed" },
 };
 
 export const COMMITMENT_LABELS: Record<OpportunityCommitmentType, string> = {

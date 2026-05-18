@@ -32,12 +32,12 @@ const PATH_PRESETS: Record<"artist" | "admin" | "volunteer" | "seasonal", TypeGr
 };
 
 const HUB_LIST: { key: OpportunityHub; label: string }[] = [
-  { key: "nyc", label: "New York" },
-  { key: "quito", label: "Quito" },
-  { key: "brno", label: "Brno" },
-  { key: "bagamoyo", label: "Bagamoyo" },
-  { key: "sydney", label: "Sydney" },
-  { key: "remote", label: "Remote" },
+  { key: "nyc",      label: "United States" },
+  { key: "quito",    label: "Ecuador" },
+  { key: "brno",     label: "Central Europe" },
+  { key: "bagamoyo", label: "Tanzania" },
+  { key: "sydney",   label: "Sydney" },
+  { key: "remote",   label: "Remote" },
 ];
 
 /* ─── Icons ─────────────────────────────────────────────────────────── */
@@ -409,8 +409,8 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
             <span className="op-hero-headline-yellow">EVERYONE.</span>
           </h1>
           <p className="op-hero-sub">
-            The work is happening — in NYC, in Quito, in Brno, in Bagamoyo, in Sydney, and everywhere
-            in between. Find your scene with DAT.
+            The work is happening — across the United States, in Ecuador, through Czechia and Slovakia,
+            in Tanzania, in Sydney, and everywhere in between. Find your scene with DAT.
           </p>
 
           <div className="op-hero-hubs">
