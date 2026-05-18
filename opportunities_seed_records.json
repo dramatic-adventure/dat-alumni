@@ -1,0 +1,2584 @@
+[
+  {
+    "id": "executive-director",
+    "title": "Executive Director",
+    "type": "job",
+    "role_types": "arts_admin",
+    "hub": "remote",
+    "description": "Lead DAT's organizational operations, financial strategy, and institutional partnerships. The ED partners with the Artistic Director to drive the company's growth at a pivotal moment in its evolution.",
+    "commitment": "Full-time",
+    "commitment_type": "full-time",
+    "is_paid": "TRUE",
+    "compensation": "Salary commensurate with experience",
+    "status": "open",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "TRUE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=executive-director",
+    "learn_more_url": "",
+    "order": 1,
+    "hero_image": "",
+    "long_description": "DAT is at an inflection point. After fifteen years of building international theatre — Drama Clubs in Slovakia and Ecuador, ACTion expeditions to Tanzania, Czechia, and beyond, a growing alumni network, and a storytelling platform — we need an Executive Director who can hold the organization while we reach for what's next.\n\nThis is a rare seat: direct partnership with the Artistic Director, meaningful creative proximity, and real institutional work. The ED will oversee operations, finance, development infrastructure, partnerships, and staff — and will help shape what DAT becomes over the next five years.",
+    "what_youll_do": [
+      "Oversee organizational operations, financial management, budgeting, and reporting",
+      "Manage and grow a lean staff team and network of contractors and PLX alumni",
+      "Drive institutional fundraising strategy alongside the Development team",
+      "Build and steward partnerships with funders, government bodies, universities, and community organizations",
+      "Serve as the primary liaison to the Board of Directors",
+      "Lead HR, compliance, and legal/organizational matters",
+      "Collaborate with the Artistic Director on strategic planning and season-level decisions"
+    ],
+    "who_you_are": [
+      "A builder — you've run organizations or departments before and you know what good systems feel like",
+      "Comfortable in financial complexity — budgets, reporting, and sustainability planning",
+      "A collaborative partner — you bring out the best in creative colleagues without needing to be the creative one",
+      "Committed to DAT's values: cross-cultural exchange, community rootedness, artistic rigor",
+      "Low-ego, high-ownership, ready to roll up your sleeves"
+    ],
+    "requirements": [
+      "5+ years of nonprofit leadership or equivalent experience",
+      "Financial management experience — budgets, cash flow, audit-readiness",
+      "Strong background in fundraising, grant management, or development infrastructure",
+      "Proven experience managing staff or teams",
+      "US-based or willing to work US hours",
+      "Ability to travel internationally at least once per year"
+    ],
+    "perks": [
+      "Salary commensurate with experience (range shared with qualified applicants)",
+      "Full benefits package",
+      "Direct creative proximity to a working international theatre company",
+      "Annual international travel to a DAT expedition",
+      "Remote-first with quarterly team gatherings"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Introductory Calls",
+        "detail": "Ongoing"
+      },
+      {
+        "label": "Target Start",
+        "detail": "Fall 2026 or Winter 2027"
+      }
+    ],
+    "faq": [
+      {
+        "q": "Is the salary posted?",
+        "a": "We share the range directly with qualified applicants. Write to jobs@dramaticadventure.com to learn more."
+      },
+      {
+        "q": "Does DAT have a Board?",
+        "a": "Yes. The ED reports to the Board and works closely with the Artistic Director."
+      },
+      {
+        "q": "Is this truly remote?",
+        "a": "Core team is distributed. Quarterly in-person gatherings and annual international expedition travel."
+      }
+    ],
+    "contact_email": "jobs@dramaticadventure.com"
+  },
+  {
+    "id": "development-partnerships-lead",
+    "title": "Development & Partnerships Lead",
+    "type": "job",
+    "role_types": "arts_admin,development",
+    "hub": "remote",
+    "description": "Build and steward DAT's funding base and institutional relationships. Lead grant strategy, major-donor cultivation, and the partnerships that sustain DAT's international work.",
+    "commitment": "Full-time or fractional (open to both)",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Salary or contract rate commensurate with experience",
+    "status": "open",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "TRUE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=development-partnerships-lead",
+    "learn_more_url": "",
+    "order": 2,
+    "hero_image": "",
+    "long_description": "DAT has a loyal donor base, a compelling story, and a track record of producing work across three continents. What we need is someone who can build the infrastructure around all that — a Development & Partnerships Lead who treats fundraising as a craft, not a chore.\n\nThis role is open to a full-time hire or a fractional/contract arrangement for the right person. You'll drive our grant calendar, deepen individual-donor relationships, and build the institutional connections that make international theatre possible.",
+    "what_youll_do": [
+      "Lead DAT's annual grant calendar — research, write, track, report",
+      "Cultivate and steward a portfolio of individual major donors",
+      "Identify and pursue new institutional partnerships (universities, foundations, government arts agencies, corporate sponsors)",
+      "Manage our development database and donor communications cadence",
+      "Draft annual-fund campaigns, year-end appeals, and campaign-specific donor materials",
+      "Represent DAT at key partnership meetings and convenings",
+      "Collaborate with Comms on donor-facing storytelling"
+    ],
+    "who_you_are": [
+      "An experienced development professional with a strong writing portfolio",
+      "Comfortable asking for money and comfortable cultivating the relationship before the ask",
+      "Organized, deadline-driven, and genuinely curious about DAT's work",
+      "Able to work independently and communicate proactively"
+    ],
+    "requirements": [
+      "3+ years of nonprofit development experience",
+      "Demonstrated grant-writing success",
+      "Strong relationship-management instincts",
+      "Proficient with a CRM (Salesforce NPSP or similar)",
+      "US-based, remote-capable"
+    ],
+    "perks": [
+      "Compensation commensurate with experience (salary or contract)",
+      "Meaningful mission with direct creative proximity",
+      "Annual international travel to a DAT expedition",
+      "Remote-first"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Introductory Calls",
+        "detail": "Ongoing"
+      },
+      {
+        "label": "Target Start",
+        "detail": "Fall 2026"
+      }
+    ],
+    "faq": [],
+    "contact_email": "jobs@dramaticadventure.com"
+  },
+  {
+    "id": "managing-producer",
+    "title": "Managing Producer / Program Operations Lead",
+    "type": "job",
+    "role_types": "arts_admin",
+    "hub": "remote",
+    "description": "Keep DAT's multi-continent program engine running. The Managing Producer owns logistics, timelines, budgets, and coordination across productions, residencies, and program cycles.",
+    "commitment": "Full-time or part-time",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Salary or contract rate commensurate with experience",
+    "status": "open",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "TRUE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=managing-producer",
+    "learn_more_url": "",
+    "order": 3,
+    "hero_image": "",
+    "long_description": "DAT's work runs across multiple countries, programs, and time zones simultaneously. Someone has to hold the map.\n\nThe Managing Producer is the operational core of the company: tracking timelines, managing program budgets, coordinating artists and staff, and making sure the productions, residencies, ACTion expeditions, and Drama Club seasons all stay on track and on budget. This is not a desk job. It's a craft role for someone who loves the systems that make creative work possible.",
+    "what_youll_do": [
+      "Manage production and program timelines across all active DAT projects",
+      "Oversee logistics for ACTion expeditions — travel, housing, visas, on-the-ground coordination",
+      "Build and track program budgets in partnership with the ED",
+      "Coordinate artists, staff, contractors, and local partners across productions",
+      "Manage the PLX program calendar and mentorship schedules",
+      "Keep project documentation current — reports, contracts, tracking sheets",
+      "Identify and problem-solve operational bottlenecks before they become crises"
+    ],
+    "who_you_are": [
+      "A producer by instinct — you see the whole board and the next three moves",
+      "Comfortable with international logistics and the chaos that comes with them",
+      "Detail-oriented without losing the big picture",
+      "Calm under pressure, generous in a crunch"
+    ],
+    "requirements": [
+      "3+ years producing theatre, events, or international programs",
+      "Strong project-management skills (Asana, Notion, or similar)",
+      "Budget management experience",
+      "Ability to travel internationally 1–2 times per year",
+      "Remote-capable and proactive communicator"
+    ],
+    "perks": [
+      "Compensation commensurate with experience",
+      "Creative proximity to a working international theatre company",
+      "Annual international expedition travel",
+      "Remote-first"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Target Start",
+        "detail": "Fall 2026"
+      }
+    ],
+    "faq": [],
+    "contact_email": "jobs@dramaticadventure.com"
+  },
+  {
+    "id": "communications-story-lead",
+    "title": "Communications & Story Lead",
+    "type": "job",
+    "role_types": "arts_admin,marketing",
+    "hub": "remote",
+    "description": "Shape how DAT tells its story to the world. Lead content strategy, editorial voice, social media, and the communications infrastructure that connects our work to audiences, donors, and partners.",
+    "commitment": "Part-time (20–30 hrs/wk) or full-time",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Salary or contract rate commensurate with experience",
+    "status": "open",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "TRUE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=communications-story-lead",
+    "learn_more_url": "",
+    "order": 4,
+    "hero_image": "",
+    "long_description": "DAT has been making extraordinary work quietly for fifteen years. It's time to stop being quiet.\n\nThe Communications & Story Lead will build the editorial and content infrastructure that lets DAT's work speak — across social media, the alumni storytelling platform, donor communications, press, and digital campaigns. This is a role for a writer-thinker who can hold DAT's voice with care while moving fast enough to capture the work as it happens.",
+    "what_youll_do": [
+      "Own DAT's editorial voice across all public channels",
+      "Build and maintain a content calendar tied to the season, programs, and fundraising cycles",
+      "Write and produce content for social (IG, TikTok, LinkedIn), email, and the alumni storytelling platform",
+      "Lead press outreach and media relations",
+      "Draft donor-facing narratives in partnership with Development",
+      "Coach teaching artists and field staff on documentation and content capture",
+      "Build and maintain DAT's communications infrastructure (email platform, templates, social scheduling)"
+    ],
+    "who_you_are": [
+      "A strong writer with a distinctive voice — you write like a human, not a press release",
+      "Fluent in social-content thinking, especially short-form video and editorial IG",
+      "Organized enough to build systems, scrappy enough to not need perfect conditions",
+      "Genuinely excited by DAT's story"
+    ],
+    "requirements": [
+      "3+ years in communications, content, journalism, or related field",
+      "Writing portfolio required",
+      "Social media fluency (IG, TikTok, LinkedIn)",
+      "Email platform experience (Mailchimp, Klaviyo, or similar)",
+      "Remote-capable"
+    ],
+    "perks": [
+      "Compensation commensurate with experience",
+      "Annual international expedition travel",
+      "Remote-first",
+      "Direct access to extraordinary stories"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Target Start",
+        "detail": "Fall 2026"
+      }
+    ],
+    "faq": [],
+    "contact_email": "jobs@dramaticadventure.com"
+  },
+  {
+    "id": "bookkeeper-finance-admin",
+    "title": "Bookkeeper / Finance Admin",
+    "type": "job",
+    "role_types": "arts_admin",
+    "hub": "remote",
+    "description": "Keep DAT's books clean, accurate, and audit-ready. Support the ED and Managing Producer with financial reporting, expense tracking, and grant financial documentation.",
+    "commitment": "Part-time (5–10 hrs/wk)",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Contract rate TBD; hourly or monthly retainer",
+    "status": "open",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=bookkeeper-finance-admin",
+    "learn_more_url": "",
+    "order": 5,
+    "hero_image": "",
+    "long_description": "DAT needs a part-time bookkeeper to own our financial hygiene — monthly reconciliation, expense categorization, payroll support, and clean reporting for grants and the Board. This is a fractional/contract role, ideal for a bookkeeper with nonprofit experience who manages a small portfolio of clients.",
+    "what_youll_do": [
+      "Monthly bank and credit card reconciliation",
+      "Categorize expenses by program and grant",
+      "Prepare financial reports for the ED and Board",
+      "Support grant financial reporting (actuals vs. budget)",
+      "Coordinate with payroll processor",
+      "Flag compliance concerns or irregularities"
+    ],
+    "who_you_are": [
+      "Detail-oriented and reliable",
+      "Comfortable with nonprofit fund accounting",
+      "Discreet and trustworthy with financial information"
+    ],
+    "requirements": [
+      "Bookkeeping or accounting experience",
+      "QuickBooks Online proficiency (or equivalent)",
+      "Nonprofit experience preferred",
+      "US-based, remote"
+    ],
+    "perks": [
+      "Flexible hours",
+      "Steady retainer or hourly contract",
+      "Meaningful mission"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Start",
+        "detail": "ASAP"
+      }
+    ],
+    "faq": [],
+    "contact_email": "jobs@dramaticadventure.com"
+  },
+  {
+    "id": "local-project-producer",
+    "title": "Local Project Producer",
+    "type": "job",
+    "role_types": "arts_admin,community_engagement",
+    "hub": "remote",
+    "description": "Lead local production logistics for a specific DAT project — from an ACTion expedition to a Drama Club season or community residency. Project-based role tied to a specific geography and timeline.",
+    "commitment": "2–6 months (project-based)",
+    "commitment_type": "short-term",
+    "is_paid": "TRUE",
+    "compensation": "Project-based contract fee; rate TBD",
+    "status": "coming_soon",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "TRUE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=local-project-producer",
+    "learn_more_url": "",
+    "order": 6,
+    "hero_image": "",
+    "long_description": "DAT's next wave of projects — PASSAGE Slovakia 2026, Ecuador, new Drama Club hubs — each needs a producer on the ground who knows the territory.\n\nThe Local Project Producer is a project-based contract role: you come in for a specific project, own the local logistics, and leave with a strong credit and a standing invitation to come back. We're building a bench of project producers across our active hubs for Season 19 and beyond.",
+    "what_youll_do": [
+      "Own logistics for a specific DAT project in your city or region",
+      "Coordinate with local partners, venues, housing, and transport",
+      "Manage the local project budget and timeline",
+      "Serve as primary liaison between DAT HQ and on-the-ground reality",
+      "Support artist arrivals, orientations, and day-to-day production needs",
+      "Document the project for DAT's records and storytelling channels"
+    ],
+    "who_you_are": [
+      "Based in or deeply familiar with the project hub (Slovakia, Ecuador, NYC, etc.)",
+      "A practical, resourceful producer — you've managed logistics under pressure",
+      "Warm, bridge-building energy",
+      "Familiar with local arts, cultural, or community organizations"
+    ],
+    "requirements": [
+      "2+ years of producing or event/project management experience",
+      "Based in or able to relocate to the project hub for the duration",
+      "References from prior production or community work"
+    ],
+    "perks": [
+      "Project-based contract fee",
+      "Housing support where applicable",
+      "DAT alumni network access",
+      "First right of refusal on future projects in your hub"
+    ],
+    "timeline": [
+      {
+        "label": "Slovakia 2026",
+        "detail": "Inquiry now; producing period Aug–Nov 2026"
+      },
+      {
+        "label": "Other Hubs",
+        "detail": "Inquire; we'll match you when the right project opens"
+      }
+    ],
+    "faq": [],
+    "contact_email": "jobs@dramaticadventure.com"
+  },
+  {
+    "id": "participant-donor-coordinator",
+    "title": "Participant & Donor Coordinator",
+    "type": "job",
+    "role_types": "arts_admin,community_engagement",
+    "hub": "remote",
+    "description": "Manage communications and relationships with program participants, travelers, and donors. Own the inbox, CRM hygiene, and the day-to-day connections that keep DAT's community close.",
+    "commitment": "Part-time (15–20 hrs/wk)",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Contract rate TBD; hourly or monthly",
+    "status": "open",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=participant-donor-coordinator",
+    "learn_more_url": "",
+    "order": 7,
+    "hero_image": "",
+    "long_description": "DAT's community is its greatest asset — artists, donors, travelers, Drama Club families, alumni, volunteers. The Participant & Donor Coordinator is the warm human voice that keeps these relationships alive between programs.\n\nYou'll manage communications workflows, CRM records, and the day-to-day touchpoints that make people feel seen and appreciated.",
+    "what_youll_do": [
+      "Manage participant and donor communications workflows and templates",
+      "Maintain CRM records — data entry, segmentation, tagging",
+      "Coordinate donor acknowledgements, gift processing, and tax receipts",
+      "Support program enrollment communications for ACTion, Drama Clubs, and PLX",
+      "Assist with event RSVPs, follow-up, and logistics",
+      "Flag relationship opportunities and at-risk donor signals to the Development team"
+    ],
+    "who_you_are": [
+      "Warm, organized, and genuinely people-oriented",
+      "Comfortable managing a busy inbox and a CRM simultaneously",
+      "Takes pride in clear, friendly communication",
+      "Good at reading between the lines of a donor or participant relationship"
+    ],
+    "requirements": [
+      "1–2 years in donor relations, customer service, program coordination, or similar",
+      "CRM experience (Salesforce, HubSpot, or similar)",
+      "Remote-capable, reliable with deadlines"
+    ],
+    "perks": [
+      "Flexible hours",
+      "Remote",
+      "Steady contract",
+      "Direct relationship with DAT community"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Start",
+        "detail": "As soon as possible"
+      }
+    ],
+    "faq": [],
+    "contact_email": "jobs@dramaticadventure.com"
+  },
+  {
+    "id": "fundraising-ambassador",
+    "title": "Fundraising Ambassador",
+    "type": "volunteer",
+    "role_types": "development,general",
+    "hub": "remote",
+    "description": "Help DAT grow its individual-donor base by sharing the story with your network. No cold calling — just warm connections and a genuine belief in what DAT does.",
+    "commitment": "2–4 hrs/month",
+    "commitment_type": "flexible",
+    "is_paid": "FALSE",
+    "compensation": "Volunteer",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=fundraising-ambassador",
+    "learn_more_url": "",
+    "order": 1,
+    "hero_image": "",
+    "long_description": "DAT's most effective fundraisers are the people who've been changed by the work — alumni, travelers, Drama Club families, friends. The Fundraising Ambassador formalizes what many of you already do: tell the story, make the introduction, invite someone into the community. We'll give you the tools, the talking points, and the support.",
+    "what_youll_do": [
+      "Identify 5–10 people in your network who might connect with DAT",
+      "Share DAT's story through personal outreach or social media",
+      "Invite prospects to events, the alumni platform, or a direct conversation",
+      "Participate in a monthly Ambassadors call (optional but encouraged)",
+      "Report back on connections made"
+    ],
+    "who_you_are": [
+      "A genuine DAT believer — you've seen the work, been part of it, or been moved by it",
+      "Comfortable having personal conversations about causes you care about",
+      "Connected in arts, education, philanthropy, or community"
+    ],
+    "requirements": [
+      "18 years or older",
+      "DAT alumni or close community member preferred"
+    ],
+    "perks": [
+      "Direct briefings from Jesse on DAT's strategy and vision",
+      "Invitations to donor events and salons",
+      "Recognition in DAT's annual report",
+      "First look at new programs and projects"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Join anytime"
+      },
+      {
+        "label": "Monthly Ambassadors Call",
+        "detail": "Optional; first Monday of the month"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "alumni-outreach-captain",
+    "title": "Alumni Outreach Captain",
+    "type": "volunteer",
+    "role_types": "community_engagement,general",
+    "hub": "remote",
+    "description": "Help DAT reconnect with lost alumni, re-engage lapsed community members, and keep the network alive and growing. A role for someone with strong relationship instincts and a long memory.",
+    "commitment": "3–5 hrs/month",
+    "commitment_type": "flexible",
+    "is_paid": "FALSE",
+    "compensation": "Volunteer",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=alumni-outreach-captain",
+    "learn_more_url": "",
+    "order": 2,
+    "hero_image": "",
+    "long_description": "DAT has thousands of alumni across every continent. Many haven't heard from us in years. The Alumni Outreach Captain helps us change that — making personal connections, sharing news, and inviting people back into the fold. This is a warm, relationship-first role for someone who loves people and understands what it means to belong to something.",
+    "what_youll_do": [
+      "Identify alumni in your region or cohort who've gone quiet",
+      "Reach out personally — a message, an email, an introduction",
+      "Invite alumni to update their stories on the alumni platform",
+      "Flag high-engagement alumni who might be ready for a deeper role",
+      "Contribute to a quarterly Alumni Network report"
+    ],
+    "who_you_are": [
+      "A natural connector",
+      "A DAT alumnus or close community member with strong network instincts",
+      "Warm, persistent, and genuinely interested in people"
+    ],
+    "requirements": [
+      "18 years or older",
+      "DAT alumni preferred",
+      "Comfortable with email outreach and social media"
+    ],
+    "perks": [
+      "Invitations to alumni events and salons",
+      "Quarterly briefings from the DAT team",
+      "Recognition in DAT's network communications"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Join anytime"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "story-collector",
+    "title": "Story Collector",
+    "type": "volunteer",
+    "role_types": "community_engagement,storyteller",
+    "hub": "remote",
+    "description": "Gather stories from DAT alumni, participants, and community members for the alumni storytelling platform and campaigns. A role for interviewers, writers, and people who love listening.",
+    "commitment": "3–6 hrs/month",
+    "commitment_type": "flexible",
+    "is_paid": "FALSE",
+    "compensation": "Volunteer",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=story-collector",
+    "learn_more_url": "",
+    "order": 3,
+    "hero_image": "",
+    "long_description": "The alumni storytelling platform at stories.dramaticadventure.com is only as rich as the stories it holds. Story Collectors conduct short interviews with DAT alumni and participants, transcribe or summarize them, and hand them off to the Comms team for publishing. It's close listening work — and it matters.",
+    "what_youll_do": [
+      "Conduct 1–2 story interviews per month (30–45 min, video or phone)",
+      "Transcribe or summarize interview content for the editorial team",
+      "Coordinate with the Comms team on story priorities and upcoming campaign themes",
+      "Keep a simple tracking log of interviews conducted and stories submitted"
+    ],
+    "who_you_are": [
+      "A good listener first",
+      "A writer or interviewer who knows how to draw people out",
+      "Patient and warm, genuinely curious about other people's experiences"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Comfortable conducting video or phone interviews",
+      "Basic writing or transcription ability",
+      "Reliable with deadlines"
+    ],
+    "perks": [
+      "Byline credit on published stories (by arrangement)",
+      "Deep access to DAT's extraordinary community",
+      "Writing/interview samples for your portfolio",
+      "Invitations to DAT events"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Join anytime"
+      },
+      {
+        "label": "Story assignments",
+        "detail": "Monthly from the Comms team"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "event-volunteer",
+    "title": "Event Volunteer",
+    "type": "volunteer",
+    "role_types": "general",
+    "hub": "nyc",
+    "description": "Support DAT events in New York — front of house, hospitality, setup, and audience experience. A great way to stay connected to the work and meet the community.",
+    "commitment": "Flexible (1+ events/season)",
+    "commitment_type": "flexible",
+    "is_paid": "FALSE",
+    "compensation": "Complimentary event tickets",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=event-volunteer",
+    "learn_more_url": "",
+    "order": 4,
+    "hero_image": "",
+    "long_description": "DAT runs 20–30 events a year in NYC — performances, salons, fundraisers, community nights, donor gatherings. Behind every one is a team of volunteers who make the room feel alive. This is the entry point for many people into DAT's wider community.\n\nFlexible commitment — come to one event or become a regular. Most volunteers do 2–4 events a season.",
+    "what_youll_do": [
+      "Help with setup and breakdown",
+      "Greet audiences and check in ticket holders",
+      "Support hospitality — atmosphere, flow, guest experience",
+      "Help with merch and program distribution",
+      "Act as audience-experience host during shows"
+    ],
+    "who_you_are": [
+      "Friendly, reliable, and easy to be around",
+      "Comfortable on your feet for 3–4 hours",
+      "Love live performance and want to be near it"
+    ],
+    "requirements": [
+      "18 years or older (16+ for non-alcohol events)",
+      "NYC area",
+      "Available for at least one event per season"
+    ],
+    "perks": [
+      "Complimentary tickets to the event you work",
+      "Free tickets to two other DAT events per season",
+      "Dinner with the team at quarterly volunteer nights",
+      "First look at auditions and PLX opportunities"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Apply anytime"
+      },
+      {
+        "label": "Onboarding",
+        "detail": "30-minute call within 2 weeks"
+      },
+      {
+        "label": "First Event",
+        "detail": "Your choice"
+      }
+    ],
+    "faq": [],
+    "contact_email": "events@dramaticadventure.com"
+  },
+  {
+    "id": "grant-research-volunteer",
+    "title": "Grant Research Volunteer",
+    "type": "volunteer",
+    "role_types": "development,general",
+    "hub": "remote",
+    "description": "Identify new grant and funding opportunities for DAT. Research foundations, government programs, and corporate sponsors that align with DAT's international, community-rooted mission.",
+    "commitment": "3–5 hrs/month",
+    "commitment_type": "flexible",
+    "is_paid": "FALSE",
+    "compensation": "Volunteer",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=grant-research-volunteer",
+    "learn_more_url": "",
+    "order": 5,
+    "hero_image": "",
+    "long_description": "DAT's Development team can't read every RFP. The Grant Research Volunteer helps fill the gap — scanning foundations, government programs, and arts funding databases for opportunities that match our work. You'll submit a monthly research brief that the Development team uses to prioritize its grant calendar.",
+    "what_youll_do": [
+      "Research 3–5 new grant prospects per month using GrantStation, Foundation Directory, NEA, state arts councils, and other sources",
+      "Summarize each prospect in a short brief (eligibility, deadline, fit, notes)",
+      "Flag high-priority opportunities to the Development team",
+      "Maintain a running prospect tracker"
+    ],
+    "who_you_are": [
+      "Methodical and curious",
+      "Comfortable with database research",
+      "Interested in arts funding, nonprofit finance, or development as a field"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Comfortable with online research",
+      "Basic spreadsheet skills",
+      "Reliable with monthly deadlines"
+    ],
+    "perks": [
+      "Development experience for your portfolio",
+      "Briefings from DAT's Development team on grant strategy",
+      "Letter of reference available"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Join anytime"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "data-crm-volunteer",
+    "title": "Data / CRM Volunteer",
+    "type": "volunteer",
+    "role_types": "arts_admin,general",
+    "hub": "remote",
+    "description": "Help DAT maintain clean, organized, and useful data across our donor, alumni, and participant databases. Ideal for someone with spreadsheet or CRM experience who wants to contribute with precision.",
+    "commitment": "2–4 hrs/month",
+    "commitment_type": "flexible",
+    "is_paid": "FALSE",
+    "compensation": "Volunteer",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=data-crm-volunteer",
+    "learn_more_url": "",
+    "order": 6,
+    "hero_image": "",
+    "long_description": "Clean data is the unglamorous foundation of everything DAT does — from donor stewardship to alumni engagement to grant reporting. The Data/CRM Volunteer helps us maintain it: deduplicating records, updating contact information, tagging and segmenting, and flagging inconsistencies.",
+    "what_youll_do": [
+      "Audit and clean CRM records on a monthly basis",
+      "Update contact info, tags, and segmentation",
+      "Deduplicate alumni and donor records",
+      "Assist with data imports after events, campaigns, or program cycles",
+      "Flag systemic data issues to the Coordinator"
+    ],
+    "who_you_are": [
+      "Detail-oriented and careful",
+      "Comfortable with spreadsheets and CRMs",
+      "Not bothered by repetitive precision work"
+    ],
+    "requirements": [
+      "18 years or older",
+      "CRM or spreadsheet experience",
+      "Reliable with monthly tasks"
+    ],
+    "perks": [
+      "Data/CRM experience for your portfolio",
+      "Letter of reference available"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Join anytime"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "program-recruitment-ambassador",
+    "title": "Program Recruitment Ambassador",
+    "type": "volunteer",
+    "role_types": "community_engagement,general",
+    "hub": "remote",
+    "description": "Help DAT find the next wave of ACTion participants, Drama Club students, PLX applicants, and traveling artists. Share opportunities in your community, on your campus, or through your professional network.",
+    "commitment": "2–4 hrs/month",
+    "commitment_type": "flexible",
+    "is_paid": "FALSE",
+    "compensation": "Volunteer",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=program-recruitment-ambassador",
+    "learn_more_url": "",
+    "order": 7,
+    "hero_image": "",
+    "long_description": "DAT's programs fill from word of mouth. The Program Recruitment Ambassador formalizes that — sharing application deadlines, program descriptions, and personal recommendations with communities that should know about DAT's work. University contacts, community centers, arts organizations, theatre departments — your network is our pipeline.",
+    "what_youll_do": [
+      "Share DAT opportunity announcements with your network, on campus, or in your community",
+      "Identify organizations and institutions to add to DAT's outreach list",
+      "Post or share program deadlines on social media",
+      "Participate in a quarterly recruitment check-in call"
+    ],
+    "who_you_are": [
+      "Plugged into a community where DAT's programs would resonate",
+      "Enthusiastic about DAT's mission",
+      "Natural sharer"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Active in a relevant community or institution"
+    ],
+    "perks": [
+      "First look at new program announcements",
+      "Invitations to DAT events",
+      "Reference letter available"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Join anytime"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "travel-logistics-research-volunteer",
+    "title": "Travel & Logistics Research Volunteer",
+    "type": "volunteer",
+    "role_types": "arts_admin,general",
+    "hub": "remote",
+    "description": "Support DAT's producing team by researching housing, transport, visa requirements, venues, and logistics for upcoming expeditions and residencies.",
+    "commitment": "Project-based (5–10 hrs per project)",
+    "commitment_type": "flexible",
+    "is_paid": "FALSE",
+    "compensation": "Volunteer",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=travel-logistics-research-volunteer",
+    "learn_more_url": "",
+    "order": 8,
+    "hero_image": "",
+    "long_description": "Planning an international theatre expedition requires a lot of ground-level research — housing options, local transport, visa requirements, cultural considerations, local contacts. The Travel & Logistics Research Volunteer helps our producing team build the picture before the decisions get made. Project-based, you'll be assigned specific research tasks with clear deliverables and deadlines.",
+    "what_youll_do": [
+      "Research housing options for a specific expedition (DAT typically houses 6–15 artists)",
+      "Map transport logistics — airport transfers, local travel, vehicle hire",
+      "Summarize visa requirements for a mixed-nationality ensemble",
+      "Identify potential local partners, venues, or service providers",
+      "Submit a structured research brief to the Managing Producer"
+    ],
+    "who_you_are": [
+      "Methodical, resourceful, comfortable with international research",
+      "May have experience with travel logistics, event production, or study abroad"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Comfortable with online research in English and other languages (with tools)",
+      "Available for a 2–3 week project window"
+    ],
+    "perks": [
+      "Producing/logistics experience for your portfolio",
+      "Letter of reference available",
+      "Insight into the real infrastructure of international theatre-making"
+    ],
+    "timeline": [
+      {
+        "label": "Project-based",
+        "detail": "Assigned as expedition planning windows open"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "community-partner-liaison",
+    "title": "Community Partner Liaison",
+    "type": "volunteer",
+    "role_types": "community_engagement,general",
+    "hub": "remote",
+    "description": "Help DAT build and maintain relationships with community organizations, arts institutions, and cultural partners in your city or region. A bridge-building role for natural connectors with strong local ties.",
+    "commitment": "2–5 hrs/month",
+    "commitment_type": "flexible",
+    "is_paid": "FALSE",
+    "compensation": "Volunteer",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=community-partner-liaison",
+    "learn_more_url": "",
+    "order": 9,
+    "hero_image": "",
+    "long_description": "DAT's partnerships are the arteries of the organization — local drama clubs, community centers, universities, cultural organizations, arts agencies. The Community Partner Liaison helps us build those relationships in cities and regions where we work or plan to work. You know the landscape; we'll give you the context and the introduction.",
+    "what_youll_do": [
+      "Identify and introduce DAT to relevant organizations in your region",
+      "Represent DAT at local arts or community events",
+      "Maintain a simple log of relationships and conversations",
+      "Facilitate introductions between DAT staff and local contacts",
+      "Report quarterly on the partnership landscape in your hub"
+    ],
+    "who_you_are": [
+      "Deeply embedded in your local arts, education, or community sector",
+      "A natural bridge-builder with a warm reputation",
+      "Patient with relationship timelines"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Strong local network in a city or region relevant to DAT",
+      "Comfortable representing an organization in community settings"
+    ],
+    "perks": [
+      "DAT community access",
+      "Invitations to relevant DAT programs in your region",
+      "Reference letter available"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Join anytime"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "development-intern",
+    "title": "Development Intern",
+    "type": "plx",
+    "role_types": "arts_admin,development",
+    "hub": "remote",
+    "description": "Support DAT's fundraising and grant strategy. Research prospects, assist with grant writing, maintain donor records, and learn the craft of development inside a global arts nonprofit.",
+    "commitment": "10 hrs/wk · 12 weeks",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Internship stipend; amount TBD",
+    "status": "coming_soon",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "FALSE",
+    "plx_program": "internship",
+    "apply_url": "/apply?opp=development-intern",
+    "learn_more_url": "/internships",
+    "order": 10,
+    "hero_image": "",
+    "long_description": "The Development Intern works alongside DAT's Development team to support grant research, writing, donor communications, and CRM maintenance. You'll learn the mechanics of arts fundraising from the inside — deadlines, relationships, the ask, the story.",
+    "what_youll_do": [
+      "Research new grant and funding prospects",
+      "Assist in drafting grant narratives and reports",
+      "Maintain and clean the donor CRM",
+      "Draft donor acknowledgements and communications",
+      "Support annual-fund and campaign logistics",
+      "Participate in weekly Development team meetings"
+    ],
+    "who_you_are": [
+      "Interested in arts fundraising, nonprofit finance, or development as a career path",
+      "Strong writer, organized, deadline-driven",
+      "Curious about how theatre gets funded"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Enrolled in or recently graduated from a degree program",
+      "Available 10 hrs/wk for 12 weeks",
+      "Reliable internet"
+    ],
+    "perks": [
+      "Stipend (amount TBD)",
+      "Academic credit available",
+      "Mentorship from DAT's Development team",
+      "Portfolio of real grant and donor work",
+      "DAT alumni network access"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Program Cycles",
+        "detail": "Fall and Spring"
+      },
+      {
+        "label": "Orientation",
+        "detail": "Week 1 of program"
+      }
+    ],
+    "faq": [
+      {
+        "q": "Do I need fundraising experience?",
+        "a": "No. We'll teach you. Bring curiosity and a strong writing sample."
+      }
+    ],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "communications-storytelling-intern",
+    "title": "Communications & Storytelling Intern",
+    "type": "plx",
+    "role_types": "arts_admin,marketing",
+    "hub": "remote",
+    "description": "Help tell DAT's story across social media, the alumni platform, email, and editorial content. A great fit for writers, content creators, and aspiring communications professionals.",
+    "commitment": "10 hrs/wk · 12 weeks",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Internship stipend; amount TBD",
+    "status": "coming_soon",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "FALSE",
+    "plx_program": "internship",
+    "apply_url": "/apply?opp=communications-storytelling-intern",
+    "learn_more_url": "/internships",
+    "order": 11,
+    "hero_image": "",
+    "long_description": "The Communications & Storytelling Intern works with DAT's Comms team to draft, produce, and publish content across social media, email, and the alumni storytelling platform. You'll write in DAT's voice, edit alumni stories, draft social copy, and help build the editorial calendar.",
+    "what_youll_do": [
+      "Draft social media posts across IG, TikTok, and LinkedIn",
+      "Write and edit alumni stories for the storytelling platform",
+      "Assist with email newsletter drafts",
+      "Support content calendar maintenance",
+      "Conduct story interviews with alumni or participants (optional)",
+      "Contribute to campaign content as needed"
+    ],
+    "who_you_are": [
+      "A writer with a distinct voice",
+      "Comfortable in social media content creation",
+      "Genuinely curious about DAT's work and community",
+      "Detail-oriented about tone and accuracy"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Writing sample required",
+      "Comfortable with social platforms",
+      "Reliable internet"
+    ],
+    "perks": [
+      "Stipend (amount TBD)",
+      "Bylines on published content",
+      "Academic credit available",
+      "Portfolio of published pieces",
+      "DAT alumni network access"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Program Cycles",
+        "detail": "Fall and Spring"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "program-operations-intern",
+    "title": "Program Operations Intern",
+    "type": "plx",
+    "role_types": "arts_admin",
+    "hub": "remote",
+    "description": "Support the logistics and operations of DAT's programs — ACTion, Drama Clubs, PLX, and residencies. A great fit for aspiring producers and arts administrators who love the systems behind the work.",
+    "commitment": "10 hrs/wk · 12 weeks",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Internship stipend; amount TBD",
+    "status": "coming_soon",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "FALSE",
+    "plx_program": "internship",
+    "apply_url": "/apply?opp=program-operations-intern",
+    "learn_more_url": "/internships",
+    "order": 12,
+    "hero_image": "",
+    "long_description": "The Program Operations Intern supports the producing and program team with the logistics that keep DAT's work moving — tracking timelines, managing documentation, coordinating communications, and supporting program delivery across multiple active projects.",
+    "what_youll_do": [
+      "Maintain project trackers and documentation",
+      "Support logistics coordination for active programs",
+      "Assist with scheduling and communications across teams",
+      "Help with program enrollment and participant onboarding",
+      "Research tools, vendors, and logistics solutions as needed",
+      "Participate in weekly team meetings"
+    ],
+    "who_you_are": [
+      "Organized and proactive",
+      "Interested in arts administration, producing, or nonprofit management",
+      "Comfortable working across multiple projects simultaneously"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Enrolled in or recently graduated from a degree program",
+      "Comfortable with project management tools (Notion, Asana, Google Workspace)",
+      "Reliable internet"
+    ],
+    "perks": [
+      "Stipend (amount TBD)",
+      "Academic credit available",
+      "Hands-on producing experience",
+      "DAT alumni network access"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Program Cycles",
+        "detail": "Fall and Spring"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "alumni-community-engagement-intern",
+    "title": "Alumni & Community Engagement Intern",
+    "type": "plx",
+    "role_types": "community_engagement,arts_admin",
+    "hub": "remote",
+    "description": "Help DAT stay connected to its global alumni community. Support outreach, events, the storytelling platform, and the relationships that keep the DAT network alive.",
+    "commitment": "10 hrs/wk · 12 weeks",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Internship stipend; amount TBD",
+    "status": "coming_soon",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "FALSE",
+    "plx_program": "internship",
+    "apply_url": "/apply?opp=alumni-community-engagement-intern",
+    "learn_more_url": "/internships",
+    "order": 13,
+    "hero_image": "",
+    "long_description": "The Alumni & Community Engagement Intern supports DAT's relationship with its global alumni network — helping with outreach, event logistics, the alumni storytelling platform, and the communications that keep people connected to each other and to the organization.",
+    "what_youll_do": [
+      "Support alumni outreach campaigns and re-engagement efforts",
+      "Help maintain the alumni database and storytelling platform",
+      "Assist with community event logistics (virtual and NYC-based)",
+      "Conduct alumni check-in calls or surveys",
+      "Draft alumni communications and updates",
+      "Contribute to quarterly alumni newsletters"
+    ],
+    "who_you_are": [
+      "People-oriented, warm, and organized",
+      "Interested in community building, alumni relations, or nonprofit engagement",
+      "Comfortable doing outreach and relationship management"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Enrolled in or recently graduated from a degree program",
+      "Comfortable with email outreach and CRM tools",
+      "Reliable internet"
+    ],
+    "perks": [
+      "Stipend (amount TBD)",
+      "Academic credit available",
+      "Deep access to DAT's global community",
+      "DAT alumni network access"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Program Cycles",
+        "detail": "Fall and Spring"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "digital-website-intern",
+    "title": "Digital / Website Intern",
+    "type": "plx",
+    "role_types": "arts_admin,marketing",
+    "hub": "remote",
+    "description": "Support the maintenance, updates, and improvement of DAT's digital properties — the main site, the alumni storytelling platform, and digital assets. A great fit for web-savvy students with an interest in arts and nonprofits.",
+    "commitment": "10 hrs/wk · 12 weeks",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Internship stipend; amount TBD",
+    "status": "coming_soon",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "FALSE",
+    "plx_program": "internship",
+    "apply_url": "/apply?opp=digital-website-intern",
+    "learn_more_url": "/internships",
+    "order": 14,
+    "hero_image": "",
+    "long_description": "The Digital/Website Intern helps DAT's small team maintain and improve its digital presence. You might help update alumni profiles, fix small UX issues, improve page content, support SEO, or build simple reporting dashboards. This is a hands-on role for someone comfortable with web tools and willing to learn.",
+    "what_youll_do": [
+      "Help maintain and update website content and alumni profiles",
+      "Support small front-end improvements or content updates",
+      "Assist with digital asset organization",
+      "Research SEO and accessibility improvements",
+      "Build simple reporting tools or dashboards",
+      "Test and document bugs or UX issues"
+    ],
+    "who_you_are": [
+      "Web-comfortable — HTML/CSS, CMS tools, or basic Next.js experience welcome",
+      "Detail-oriented and methodical",
+      "Interested in arts, nonprofits, or digital storytelling"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Comfortable with web basics",
+      "Experience with at least one CMS or web platform",
+      "Reliable internet"
+    ],
+    "perks": [
+      "Stipend (amount TBD)",
+      "Academic credit available",
+      "Portfolio of live digital work",
+      "DAT alumni network access"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Program Cycles",
+        "detail": "Fall and Spring"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "production-intern",
+    "title": "Production Intern",
+    "type": "plx",
+    "role_types": "arts_admin,designer",
+    "hub": "remote",
+    "description": "Support the production logistics and documentation of DAT's active projects — from design coordination to schedules to production research. A great fit for aspiring production managers and all-around theatre-makers.",
+    "commitment": "10 hrs/wk · 12 weeks",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Internship stipend; amount TBD",
+    "status": "coming_soon",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "FALSE",
+    "plx_program": "internship",
+    "apply_url": "/apply?opp=production-intern",
+    "learn_more_url": "/internships",
+    "order": 15,
+    "hero_image": "",
+    "long_description": "The Production Intern supports DAT's producing team with the technical and logistical work of mounting theatre in unusual places. You might research venue options in Slovakia, coordinate with a set designer in Ecuador, maintain a production calendar for a NYC performance, or help document a Drama Club residency. The work varies. The rigor doesn't.",
+    "what_youll_do": [
+      "Support production timelines and technical coordination across active projects",
+      "Research venues, equipment, and vendors for upcoming productions",
+      "Assist with production documentation — schedules, contact sheets, run-of-show",
+      "Help coordinate with designers and technical staff",
+      "Attend production and design meetings (remote)",
+      "Contribute to post-production documentation and wrap reports"
+    ],
+    "who_you_are": [
+      "Interested in production, stage management, or technical theatre",
+      "Organized, detail-oriented, calm under pressure",
+      "Genuinely curious about how theatre gets made in unconventional spaces"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Background or coursework in theatre production, stage management, or technical theatre preferred",
+      "Comfortable with remote coordination and documentation tools"
+    ],
+    "perks": [
+      "Stipend (amount TBD)",
+      "Academic credit available",
+      "Real production credits",
+      "DAT alumni network access"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Program Cycles",
+        "detail": "Fall and Spring"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "research-dramaturgy-intern",
+    "title": "Research & Dramaturgy Intern",
+    "type": "plx",
+    "role_types": "arts_admin,storyteller",
+    "hub": "remote",
+    "description": "Support the dramaturgical and research needs of DAT's active productions and residencies. Dig into history, context, and source material to help DAT's artists make richer, more grounded work.",
+    "commitment": "10 hrs/wk · 12 weeks",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Internship stipend; amount TBD",
+    "status": "coming_soon",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "FALSE",
+    "plx_program": "internship",
+    "apply_url": "/apply?opp=research-dramaturgy-intern",
+    "learn_more_url": "/internships",
+    "order": 16,
+    "hero_image": "",
+    "long_description": "The Research & Dramaturgy Intern works with DAT's artistic team to dig into the historical, cultural, and textual context of our current projects. For Slovakia 2026, this might mean researching Roma cultural history, Velvet Revolution theatre, and contemporary Czech civil society. For an Ecuador-based piece, it might mean indigenous Kichwa storytelling traditions. The work is specific; the stakes are real.",
+    "what_youll_do": [
+      "Conduct dramaturgical and contextual research for active productions",
+      "Compile and summarize research into accessible briefs for the artistic team",
+      "Identify relevant source texts, historical events, and cultural context",
+      "Support adaptation and script development research as needed",
+      "Contribute to the production's archive and documentation",
+      "Participate in regular artistic team check-ins"
+    ],
+    "who_you_are": [
+      "A researcher with intellectual rigor and genuine curiosity",
+      "Background in theatre studies, history, cultural studies, anthropology, or a related field",
+      "Comfortable with ambiguity and open-ended inquiry"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Enrolled in or recently graduated from a relevant degree program",
+      "Strong research and writing skills",
+      "Comfortable working with primary and secondary sources",
+      "Reliable internet"
+    ],
+    "perks": [
+      "Stipend (amount TBD)",
+      "Academic credit available",
+      "Dramaturgical credits on active productions",
+      "DAT alumni network access"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Program Cycles",
+        "detail": "Fall and Spring"
+      },
+      {
+        "label": "Current Focus",
+        "detail": "Slovakia 2026 research"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "producing-apprentice",
+    "title": "Producing Apprentice",
+    "type": "plx",
+    "role_types": "arts_admin",
+    "hub": "remote",
+    "description": "A 10-month producing apprenticeship for early-career arts administrators. Work alongside DAT's producing team, lead real projects, and gain deep hands-on experience in international theatre production.",
+    "commitment": "20 hrs/wk · 10 months",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Stipend; amount TBD",
+    "status": "coming_soon",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "FALSE",
+    "plx_program": "apprenticeship",
+    "apply_url": "/apply?opp=producing-apprentice",
+    "learn_more_url": "/apprenticeships",
+    "order": 20,
+    "hero_image": "",
+    "long_description": "The Producing Apprentice is a core member of DAT's producing team for the season — owning a real portfolio of work, managing logistics, supporting productions across multiple hubs, and building a producing career from the inside out. This is not a shadow experience. You'll have responsibility, autonomy, and a team behind you.",
+    "what_youll_do": [
+      "Own a producing portfolio across one or more active DAT programs",
+      "Manage logistics for an ACTion expedition or residency",
+      "Lead coordination with artists, local partners, and vendors",
+      "Support the Managing Producer with timeline and budget tracking",
+      "Travel with DAT on at least one in-field expedition",
+      "Mentor PLX Interns in your department"
+    ],
+    "who_you_are": [
+      "1–3 years of producing, stage management, or arts admin experience",
+      "Action-oriented and resourceful",
+      "Comfortable with international logistics",
+      "Ready to take real ownership of real work"
+    ],
+    "requirements": [
+      "21 years or older",
+      "Available 20 hrs/wk for 10 months",
+      "Willing to travel internationally at least once",
+      "Reliable internet and communication tools",
+      "References from prior producing or arts admin work"
+    ],
+    "perks": [
+      "Producing stipend (amount TBD)",
+      "International expedition travel",
+      "Pro-dev workshops and retreats",
+      "DAT alumni network access",
+      "Strong letter of recommendation"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Program Cycles",
+        "detail": "Fall intake"
+      },
+      {
+        "label": "Expedition Travel",
+        "detail": "Within program year"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "teaching-artist-apprentice",
+    "title": "Teaching Artist Apprentice",
+    "type": "plx",
+    "role_types": "teaching_artist,community_engagement",
+    "hub": "remote",
+    "description": "A 10-month apprenticeship for artists developing their teaching practice. Co-lead Drama Club sessions, design curriculum, and build your pedagogy inside a community-engaged theatre company.",
+    "commitment": "20 hrs/wk · 10 months",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Stipend; amount TBD",
+    "status": "coming_soon",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "FALSE",
+    "plx_program": "apprenticeship",
+    "apply_url": "/apply?opp=teaching-artist-apprentice",
+    "learn_more_url": "/apprenticeships",
+    "order": 21,
+    "hero_image": "",
+    "long_description": "The Teaching Artist Apprentice works with DAT's education team to develop their practice — co-leading Drama Club sessions, designing curriculum, learning DAT's devising and storytelling pedagogy, and eventually leading sessions independently. This apprenticeship builds a strong foundation for a career as a community-engaged teaching artist.",
+    "what_youll_do": [
+      "Co-lead DAT Drama Club sessions with a mentor teaching artist",
+      "Design and test curriculum for youth and community settings",
+      "Develop your personal teaching artist statement and toolkit",
+      "Lead at least one independent session per semester",
+      "Participate in teaching artist training workshops",
+      "Travel to or observe at least one international residency"
+    ],
+    "who_you_are": [
+      "An artist with a genuine interest in teaching, community, and pedagogy",
+      "Patient, warm, and energized by working with young people and communities",
+      "In the early stages of your teaching artist career"
+    ],
+    "requirements": [
+      "21 years or older",
+      "Background as a performer, director, musician, or teaching artist",
+      "Available 20 hrs/wk for 10 months",
+      "Willing to travel for at least one residency observation"
+    ],
+    "perks": [
+      "Teaching artist stipend (amount TBD)",
+      "Curriculum development credits",
+      "Formal pedagogy training",
+      "DAT alumni network access",
+      "Strong letter of recommendation"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Program Cycles",
+        "detail": "Fall intake"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "community-engagement-apprentice",
+    "title": "Community Engagement Apprentice",
+    "type": "plx",
+    "role_types": "community_engagement,arts_admin",
+    "hub": "remote",
+    "description": "A 10-month apprenticeship for practitioners building community-engagement and partnership skills. Work alongside DAT's program team to build, deepen, and document community relationships across DAT's active hubs.",
+    "commitment": "20 hrs/wk · 10 months",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Stipend; amount TBD",
+    "status": "coming_soon",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "FALSE",
+    "plx_program": "apprenticeship",
+    "apply_url": "/apply?opp=community-engagement-apprentice",
+    "learn_more_url": "/apprenticeships",
+    "order": 22,
+    "hero_image": "",
+    "long_description": "The Community Engagement Apprentice builds DAT's relationships with communities — facilitating listening sessions, managing partner communications, supporting local producers, and helping translate DAT's mission into local partnerships that are authentic and equitable. This apprenticeship is for someone who wants to make community engagement a craft, not a checkbox.",
+    "what_youll_do": [
+      "Manage communications with community partners in one or more DAT hubs",
+      "Co-facilitate community listening sessions and workshops",
+      "Support local producers and community liaisons",
+      "Develop and maintain a partner relationship log",
+      "Contribute to EDI training and equity audits of DAT programs",
+      "Travel to at least one in-field community engagement residency"
+    ],
+    "who_you_are": [
+      "Deeply committed to equitable, community-rooted practice",
+      "A thoughtful listener and communicator",
+      "Background in community organizing, social work, education, or arts-based community work"
+    ],
+    "requirements": [
+      "21 years or older",
+      "Experience in community engagement, organizing, or related field",
+      "Available 20 hrs/wk for 10 months",
+      "Willing to travel for at least one residency"
+    ],
+    "perks": [
+      "Community engagement stipend (amount TBD)",
+      "Formal EDI training",
+      "International travel",
+      "DAT alumni network access",
+      "Strong letter of recommendation"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Program Cycles",
+        "detail": "Fall intake"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "stage-management-production-apprentice",
+    "title": "Stage Management / Production Apprentice",
+    "type": "plx",
+    "role_types": "arts_admin,designer",
+    "hub": "remote",
+    "description": "A 10-month apprenticeship for stage managers and production practitioners. Work across DAT's active productions — managing rehearsal processes, coordinating logistics, and building a career in international theatre production.",
+    "commitment": "20 hrs/wk · 10 months",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Stipend; amount TBD",
+    "status": "coming_soon",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "FALSE",
+    "plx_program": "apprenticeship",
+    "apply_url": "/apply?opp=stage-management-production-apprentice",
+    "learn_more_url": "/apprenticeships",
+    "order": 23,
+    "hero_image": "",
+    "long_description": "The Stage Management/Production Apprentice works with DAT's producing team to manage the production logistics of active projects — calling rehearsals, building and maintaining schedules, coordinating with designers and technical staff, and serving as the operational spine of at least one production. You'll work in unusual spaces, across cultures, and often without a full technical infrastructure. If you bring rigor to the unexpected, we want to know about you.",
+    "what_youll_do": [
+      "Serve as stage manager or ASM on at least one active DAT production",
+      "Build and maintain production schedules, call sheets, and run-of-show documents",
+      "Coordinate with designers, technical staff, and artists",
+      "Manage rehearsal processes and communication flow",
+      "Travel in-field for at least one production",
+      "Mentor Production Interns"
+    ],
+    "who_you_are": [
+      "1–3 years of stage management or production experience",
+      "Precise, organized, and calm under pressure",
+      "Comfortable working in non-traditional and international settings"
+    ],
+    "requirements": [
+      "21 years or older",
+      "Demonstrated stage management or production experience",
+      "Available 20 hrs/wk for 10 months",
+      "Willing to travel internationally for at least one production"
+    ],
+    "perks": [
+      "Production stipend (amount TBD)",
+      "SM/Production credits on active shows",
+      "International production experience",
+      "DAT alumni network access",
+      "Strong letter of recommendation"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Program Cycles",
+        "detail": "Fall intake"
+      },
+      {
+        "label": "Production Credits",
+        "detail": "Within program year"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "documentation-apprentice",
+    "title": "Documentation Apprentice",
+    "type": "plx",
+    "role_types": "arts_admin,marketing",
+    "hub": "remote",
+    "description": "A 10-month apprenticeship for photographers, videographers, and documentary storytellers. Build DAT's archive while developing your documentary practice at the intersection of art, community, and theatre.",
+    "commitment": "20 hrs/wk · 10 months",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Stipend; amount TBD",
+    "status": "coming_soon",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "FALSE",
+    "plx_program": "apprenticeship",
+    "apply_url": "/apply?opp=documentation-apprentice",
+    "learn_more_url": "/apprenticeships",
+    "order": 24,
+    "hero_image": "",
+    "long_description": "The Documentation Apprentice builds DAT's visual and narrative archive while developing their own documentary practice. You'll photograph, film, and narrate DAT's work — in rehearsal, in community, in the field — and work with the Comms team to shape that material into stories, reels, and a permanent institutional record.",
+    "what_youll_do": [
+      "Document active DAT productions, workshops, and community sessions",
+      "Build a visual archive for each project — photos, video, audio",
+      "Collaborate with the Comms team on content production for social and digital channels",
+      "Develop a personal documentary series about a DAT project or community",
+      "Travel in the field for at least one ACTion expedition or residency",
+      "Contribute to DAT's permanent institutional archive"
+    ],
+    "who_you_are": [
+      "A documentary photographer, videographer, or multimedia storyteller",
+      "Comfortable working in community and performance settings",
+      "Thoughtful about the ethics of documentation and representation"
+    ],
+    "requirements": [
+      "21 years or older",
+      "Portfolio of documentary photography or video required",
+      "Own equipment preferred (camera, audio tools)",
+      "Available 20 hrs/wk for 10 months",
+      "Willing to travel internationally"
+    ],
+    "perks": [
+      "Documentation stipend (amount TBD)",
+      "Published portfolio work",
+      "International travel",
+      "DAT alumni network access",
+      "Strong letter of recommendation"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Program Cycles",
+        "detail": "Fall intake"
+      },
+      {
+        "label": "Field Work",
+        "detail": "At least one expedition within program year"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "devising-ensemble-apprentice",
+    "title": "Devising / Ensemble Apprentice",
+    "type": "plx",
+    "role_types": "performer,ensemble_artist,actor",
+    "hub": "remote",
+    "description": "A 10-month artist-development apprenticeship for ensemble performers and devisors. Work inside DAT's creative process, develop your devising practice, and perform in at least one project during the season.",
+    "commitment": "20 hrs/wk · 10 months",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Stipend; amount TBD",
+    "status": "coming_soon",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "FALSE",
+    "plx_program": "apprenticeship",
+    "apply_url": "/apply?opp=devising-ensemble-apprentice",
+    "learn_more_url": "/apprenticeships",
+    "order": 25,
+    "hero_image": "",
+    "long_description": "The Devising/Ensemble Apprentice is an artist-development placement for performers and devisors ready to deepen their ensemble practice. You'll work inside DAT's creative process — learning DAT's devising methods, participating in rehearsals and workshops, contributing to original work, and performing in at least one production during the season. This is a rigorous, immersive apprenticeship designed for artists who are ready to grow.",
+    "what_youll_do": [
+      "Participate in DAT ensemble rehearsals and devising sessions",
+      "Contribute to the creation of original material",
+      "Perform in at least one production during the program year",
+      "Receive mentorship from DAT's core artistic team",
+      "Lead a workshop or session for PLX Interns",
+      "Travel to at least one in-field ACTion or residency"
+    ],
+    "who_you_are": [
+      "A performer or devisor with 1–3 years of experience in ensemble or devised work",
+      "Collaborative, generous, and comfortable in the unknown",
+      "Ready to make real work, not just observe it"
+    ],
+    "requirements": [
+      "21 years or older",
+      "Strong performance or devising portfolio",
+      "Available 20 hrs/wk for 10 months",
+      "Willing to travel internationally",
+      "Comfortable with physical, vocal, and storytelling-based work"
+    ],
+    "perks": [
+      "Artist development stipend (amount TBD)",
+      "Performance credits",
+      "International travel",
+      "DAT alumni artist network access",
+      "Strong letter of recommendation"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Program Cycles",
+        "detail": "Fall intake"
+      },
+      {
+        "label": "Performance Work",
+        "detail": "Within program year"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "dramaturgy-adaptation-apprentice",
+    "title": "Dramaturgy / Adaptation Apprentice",
+    "type": "plx",
+    "role_types": "arts_admin,storyteller",
+    "hub": "remote",
+    "description": "A 10-month literary and dramaturgical apprenticeship for researchers, playwrights, and script developers. Work inside DAT's adaptation and devising process, building scripts, research archives, and your own dramaturgical practice.",
+    "commitment": "20 hrs/wk · 10 months",
+    "commitment_type": "part-time",
+    "is_paid": "TRUE",
+    "compensation": "Stipend; amount TBD",
+    "status": "coming_soon",
+    "deadline": "",
+    "season": "2026–2027",
+    "featured": "FALSE",
+    "plx_program": "apprenticeship",
+    "apply_url": "/apply?opp=dramaturgy-adaptation-apprentice",
+    "learn_more_url": "/apprenticeships",
+    "order": 26,
+    "hero_image": "",
+    "long_description": "The Dramaturgy/Adaptation Apprentice works with DAT's artistic team on the textual and research infrastructure of active productions — adapting source material, building dramaturgical archives, contributing to script development, and developing their own literary practice. This is an ideal placement for playwrights, dramaturgs, literary managers, and script developers who want to make work in community-engaged, international contexts.",
+    "what_youll_do": [
+      "Conduct dramaturgical research for active productions and adaptations",
+      "Contribute to script development and adaptation of source material",
+      "Build and maintain production dramaturgical archives",
+      "Co-facilitate story research sessions with the artistic team",
+      "Contribute to at least one new text or adaptation during the program year",
+      "Travel to at least one in-field project for on-the-ground research"
+    ],
+    "who_you_are": [
+      "A playwright, dramaturg, or literary practitioner with 1–3 years of experience",
+      "Strong research and writing skills",
+      "Genuinely interested in cross-cultural storytelling and community-rooted work"
+    ],
+    "requirements": [
+      "21 years or older",
+      "Writing or dramaturgical portfolio required",
+      "Available 20 hrs/wk for 10 months",
+      "Willing to travel internationally"
+    ],
+    "perks": [
+      "Dramaturgy stipend (amount TBD)",
+      "Literary and dramaturgical credits",
+      "International travel",
+      "DAT alumni network access",
+      "Strong letter of recommendation"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Open",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Program Cycles",
+        "detail": "Fall intake"
+      }
+    ],
+    "faq": [],
+    "contact_email": "info@dramaticadventure.com"
+  },
+  {
+    "id": "traveling-ensemble-artist",
+    "title": "Traveling Ensemble Artist",
+    "type": "artist",
+    "role_types": "ensemble_artist,actor,performer",
+    "hub": "brno",
+    "description": "Join DAT's traveling ensemble for an international ACTion project. Devised, community-rooted work. Housing, travel, and artist fee included. Current call: PASSAGE Slovakia 2026.",
+    "commitment": "4–6 weeks in-field",
+    "commitment_type": "short-term",
+    "is_paid": "TRUE",
+    "compensation": "Artist fee + housing + round-trip travel",
+    "status": "open",
+    "deadline": "2026-08-15",
+    "season": "Season 19",
+    "featured": "TRUE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=traveling-ensemble-artist",
+    "learn_more_url": "",
+    "order": 1,
+    "hero_image": "",
+    "long_description": "DAT builds ensembles of traveling artists for each major international project — PASSAGE, ACTion, and CASTAWAY productions. The ensemble devises original work with local communities, performs in non-traditional spaces, and documents the process for DAT's storytelling channels.\n\nThis call is currently focused on PASSAGE Slovakia 2026: 4–6 weeks in Bratislava and Brno, working with Roma communities, Slovak youth, and Central European theatre-makers. Housing, round-trip travel, and an artist fee are included.",
+    "what_youll_do": [
+      "Devise and perform an original piece with an international ensemble",
+      "Co-lead community workshops with local youth and community members",
+      "Adapt your practice to non-traditional performance spaces",
+      "Contribute to documentation and storytelling for the project",
+      "Participate in post-residency sharings and presentations"
+    ],
+    "who_you_are": [
+      "An experienced ensemble performer or devisor",
+      "Comfortable working across language and culture",
+      "A listener first — genuinely interested in other people's stories",
+      "Ready to be changed by the work"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Valid passport with 6+ months remaining",
+      "Available in-field for the project window (Slovakia 2026: Sept–Nov 2026)",
+      "Experience in devised, physical, or community-engaged performance",
+      "Comfortable living and working in ensemble housing"
+    ],
+    "perks": [
+      "Artist fee (rate confirmed upon engagement)",
+      "Round-trip travel included",
+      "Ensemble housing included",
+      "Per-diem on workshop days",
+      "Portfolio documentation",
+      "DAT alumni artist network"
+    ],
+    "timeline": [
+      {
+        "label": "Applications Reviewed",
+        "detail": "Rolling"
+      },
+      {
+        "label": "Slovakia 2026 Ensemble Decisions",
+        "detail": "By Aug 15, 2026"
+      },
+      {
+        "label": "In-Field",
+        "detail": "Sept–Nov 2026 (exact dates TBD)"
+      }
+    ],
+    "faq": [
+      {
+        "q": "Do I need to speak Slovak or Czech?",
+        "a": "No. We work in English with local translation support."
+      },
+      {
+        "q": "What does 'devised' mean exactly?",
+        "a": "We build the piece together from scratch — no pre-existing script. Come with stories, movement, and questions."
+      },
+      {
+        "q": "Is housing communal?",
+        "a": "Yes. Ensemble housing is shared. If that's a constraint, let us know."
+      }
+    ],
+    "contact_email": "casting@dramaticadventure.com"
+  },
+  {
+    "id": "actor-devising-performer",
+    "title": "Actor / Devising Performer",
+    "type": "artist",
+    "role_types": "actor,performer,ensemble_artist",
+    "hub": "remote",
+    "description": "Actors and devising performers for DAT's international productions, ACTion expeditions, and CASTAWAY co-productions. Open call for the general roster — applied to productions as they open.",
+    "commitment": "Varies by project (2 weeks – 3 months)",
+    "commitment_type": "flexible",
+    "is_paid": "TRUE",
+    "compensation": "Paid when placed; rate varies by project",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=actor-devising-performer",
+    "learn_more_url": "",
+    "order": 2,
+    "hero_image": "",
+    "long_description": "DAT casts from a standing roster of actors and devising performers — pulled when the right project opens. Join the roster with a strong bio, work samples, and a note about your practice. We cast across genres, training backgrounds, and career stages. What we care about: ensemble instinct, story generosity, and the ability to work in the unknown.",
+    "what_youll_do": [
+      "Submit bio, headshot/reel, and a short note on your practice",
+      "Get matched to relevant casting calls",
+      "Audition or interview when a project fits",
+      "Join an ensemble, make something together"
+    ],
+    "who_you_are": [
+      "An actor or devising performer with ensemble instincts",
+      "Comfortable with physical, text-based, or hybrid devising approaches",
+      "Genuinely interested in community-engaged and international contexts"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Work samples required (reel or links)",
+      "Passport and ability to travel internationally preferred"
+    ],
+    "perks": [
+      "Artist fee when placed",
+      "First look at casting calls",
+      "DAT alumni artist network",
+      "Invitation to DAT artist events and gatherings"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Submit anytime"
+      },
+      {
+        "label": "Reviewed",
+        "detail": "Quarterly"
+      },
+      {
+        "label": "Matched",
+        "detail": "When the right project opens"
+      }
+    ],
+    "faq": [],
+    "contact_email": "casting@dramaticadventure.com"
+  },
+  {
+    "id": "director-facilitator",
+    "title": "Director / Facilitator",
+    "type": "artist",
+    "role_types": "director,ensemble_artist",
+    "hub": "remote",
+    "description": "Directors and facilitators for DAT's devised productions, ACTion expeditions, and community-engaged residencies. General roster — matched to projects as they open.",
+    "commitment": "Varies by project",
+    "commitment_type": "flexible",
+    "is_paid": "TRUE",
+    "compensation": "Paid when placed; rate varies by project",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=director-facilitator",
+    "learn_more_url": "",
+    "order": 3,
+    "hero_image": "",
+    "long_description": "DAT works with directors and facilitators who can hold a devising room, build community trust, and navigate the beautiful complexity of making original work across cultures. If you have a practice at the intersection of directing and facilitation — and if you're drawn to international, community-rooted work — we want to know about you.",
+    "what_youll_do": [
+      "Submit portfolio, bio, and a note on your practice",
+      "Get matched to directing and facilitation opportunities as they open",
+      "Work with DAT's artistic team to shape and direct an original piece",
+      "Lead ensemble and community facilitation sessions"
+    ],
+    "who_you_are": [
+      "An experienced director or facilitator with devising and/or community-engaged experience",
+      "Culturally humble, flexible, and at ease in the unknown",
+      "Strong listener and room-holder"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Portfolio of directing or facilitation work",
+      "Ability to travel internationally for project periods"
+    ],
+    "perks": [
+      "Director fee when placed",
+      "DAT alumni artist network",
+      "Invitation to DAT artistic convenings"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Submit anytime"
+      },
+      {
+        "label": "Reviewed",
+        "detail": "Quarterly"
+      }
+    ],
+    "faq": [],
+    "contact_email": "casting@dramaticadventure.com"
+  },
+  {
+    "id": "playwright-adaptor",
+    "title": "Playwright / Adaptor",
+    "type": "artist",
+    "role_types": "storyteller,ensemble_artist",
+    "hub": "remote",
+    "description": "Playwrights and adaptors for DAT's original productions and CASTAWAY co-productions. General roster — matched to commissions and adaptation projects as they open.",
+    "commitment": "Varies by project",
+    "commitment_type": "flexible",
+    "is_paid": "TRUE",
+    "compensation": "Commission fee; rate varies by project",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=playwright-adaptor",
+    "learn_more_url": "",
+    "order": 4,
+    "hero_image": "",
+    "long_description": "DAT commissions original scripts and adaptations for its productions — often derived from community stories, historical research, and in-the-field devising. We're building a roster of playwrights and adaptors who understand community-engaged dramaturgical practice and who can work inside a collaborative creative process. If you write from listening, we want to know about you.",
+    "what_youll_do": [
+      "Submit portfolio and a note on your practice",
+      "Get matched to commission and adaptation opportunities",
+      "Collaborate with the artistic team on source material and development",
+      "Attend in-field research or residency when relevant",
+      "Deliver draft texts on production timelines"
+    ],
+    "who_you_are": [
+      "A playwright or adaptor with a community-rooted or world-theatre lens",
+      "Comfortable with collaborative development and dramaturgical revision",
+      "Strong voice, strong ear, strong process"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Writing portfolio required",
+      "Comfort with collaborative development",
+      "Ability to travel for research or residency when relevant"
+    ],
+    "perks": [
+      "Commission fee when placed",
+      "Publication/documentation of your work",
+      "DAT alumni artist network"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Submit anytime"
+      },
+      {
+        "label": "Reviewed",
+        "detail": "Quarterly"
+      }
+    ],
+    "faq": [],
+    "contact_email": "casting@dramaticadventure.com"
+  },
+  {
+    "id": "dramaturg-researcher",
+    "title": "Dramaturg / Researcher",
+    "type": "artist",
+    "role_types": "storyteller,arts_admin",
+    "hub": "remote",
+    "description": "Dramaturgs and researchers for DAT's active productions and residencies. Deep knowledge of cultural context, world theatre, or community-based practice especially valued.",
+    "commitment": "Varies by project",
+    "commitment_type": "flexible",
+    "is_paid": "TRUE",
+    "compensation": "Paid when placed; rate varies by project",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=dramaturg-researcher",
+    "learn_more_url": "",
+    "order": 5,
+    "hero_image": "",
+    "long_description": "DAT's productions are research-rich — built from history, community stories, cultural context, and textual adaptation. We work with dramaturgs who can hold the intellectual and ethical weight of that research, translate it for an ensemble, and stay inside the creative process as the work evolves.\n\nIf you have deep knowledge of Central Europe, Latin America, East Africa, or another DAT hub region, we especially want to hear from you.",
+    "what_youll_do": [
+      "Conduct contextual research for a specific production or residency",
+      "Build and maintain a dramaturgical archive",
+      "Present research to the ensemble in accessible, actionable form",
+      "Advise on cultural accuracy, representation, and ethical storytelling",
+      "Attend rehearsals or workshops when relevant"
+    ],
+    "who_you_are": [
+      "A dramaturg or researcher with experience in community-engaged or world-theatre contexts",
+      "Intellectually rigorous and creatively flexible",
+      "Committed to ethical representation of community stories"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Dramaturgical or research portfolio",
+      "Language skills or deep cultural knowledge of DAT's hub regions is a significant plus"
+    ],
+    "perks": [
+      "Dramaturgical fee when placed",
+      "Credits on production materials",
+      "DAT alumni artist network"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Submit anytime"
+      },
+      {
+        "label": "Reviewed",
+        "detail": "Quarterly"
+      }
+    ],
+    "faq": [],
+    "contact_email": "casting@dramaticadventure.com"
+  },
+  {
+    "id": "teaching-artist",
+    "title": "Teaching Artist",
+    "type": "artist",
+    "role_types": "teaching_artist,community_engagement",
+    "hub": "remote",
+    "description": "Teaching artists for DAT's Drama Clubs, school residencies, and community storytelling programs. We place teaching artists locally and internationally — across NYC, Slovakia, Ecuador, and beyond.",
+    "commitment": "Varies by project (semester, residency, or workshop-based)",
+    "commitment_type": "flexible",
+    "is_paid": "TRUE",
+    "compensation": "Teaching artist fee; rate varies by program",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "TRUE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=teaching-artist",
+    "learn_more_url": "",
+    "order": 6,
+    "hero_image": "",
+    "long_description": "DAT's teaching artist practice is the heartbeat of the organization — rooted in Drama Club seasons, school residencies, community storytelling workshops, and the training of local teaching artists in each hub we work in.\n\nWe place teaching artists who are genuine artists first, who bring their practice into rooms with young people and community members, and who understand the difference between teaching skills and opening possibility. If you are a teaching artist — or an artist who wants to develop a teaching practice — we want to know about you.",
+    "what_youll_do": [
+      "Lead Drama Club sessions, school residencies, or community workshops",
+      "Design curriculum in collaboration with DAT's education team",
+      "Develop youth and community voices through storytelling, devising, and performance",
+      "Document your teaching practice for DAT's educational archive",
+      "Participate in DAT's teaching artist training and professional development",
+      "Travel to international hubs if relevant and available"
+    ],
+    "who_you_are": [
+      "An artist first — a practitioner with a real creative practice",
+      "Warm, patient, and energized by working with young people and communities",
+      "Comfortable in both structured and open-ended educational settings",
+      "Interested in developing and refining your teaching artist pedagogy"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Experience as a teaching artist or artist-educator",
+      "Work samples and references required",
+      "Background check required for youth-serving programs",
+      "Passport and willingness to travel for international placements"
+    ],
+    "perks": [
+      "Teaching artist fee (rate by program)",
+      "International placement opportunities",
+      "Formal pedagogy training through DAT",
+      "DAT alumni teaching artist network",
+      "Letter of recommendation available"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Submit anytime"
+      },
+      {
+        "label": "Placement",
+        "detail": "When the right program opening matches your profile"
+      }
+    ],
+    "faq": [
+      {
+        "q": "Do I need curriculum-writing experience?",
+        "a": "Helpful but not required. We train you on DAT's curriculum frameworks."
+      },
+      {
+        "q": "Are international placements paid?",
+        "a": "Yes. Travel and housing are included for international residency placements."
+      }
+    ],
+    "contact_email": "casting@dramaticadventure.com"
+  },
+  {
+    "id": "local-artist-cultural-collaborator",
+    "title": "Local Artist / Cultural Collaborator",
+    "type": "participant",
+    "role_types": "ensemble_artist,community_engagement",
+    "hub": "remote",
+    "description": "Local artists, cultural practitioners, and community members who partner with DAT's visiting ensembles. Based in one of DAT's hub cities — Slovakia, Ecuador, Tanzania, or beyond — and open to making work across cultures.",
+    "commitment": "Varies (2 weeks – 2 months, project-based)",
+    "commitment_type": "short-term",
+    "is_paid": "TRUE",
+    "compensation": "Collaboration fee; rate varies by project",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=local-artist-cultural-collaborator",
+    "learn_more_url": "",
+    "order": 7,
+    "hero_image": "",
+    "long_description": "DAT's work only works because of local artists and cultural collaborators. When we arrive in Bratislava, Quito, or Bagamoyo, we come to listen — and local artists are the people we listen to first and most.\n\nThis call is for artists, cultural practitioners, community leaders, and creative people who are based in a DAT hub region and open to collaborating with an international ensemble. The relationship is reciprocal and honest.",
+    "what_youll_do": [
+      "Introduce DAT's visiting ensemble to your community, practice, and place",
+      "Co-create material for an original devised piece",
+      "Lead or co-lead a community workshop from your own practice",
+      "Serve as a cultural guide and creative collaborator throughout the residency",
+      "Perform in or co-present the final work if relevant and desired"
+    ],
+    "who_you_are": [
+      "A local artist, cultural practitioner, community leader, or creative person based in a DAT hub region",
+      "Genuinely interested in cross-cultural creative exchange",
+      "Comfortable in collaborative and ensemble settings"
+    ],
+    "requirements": [
+      "16 years or older",
+      "Based in or deeply connected to a DAT hub region",
+      "Ability to communicate in English (with support) or in the local language with a translator"
+    ],
+    "perks": [
+      "Collaboration fee when engaged",
+      "Documentation and portfolio materials",
+      "Cross-cultural artistic exchange",
+      "DAT alumni international network"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Register your interest anytime"
+      },
+      {
+        "label": "Matched",
+        "detail": "When the right project in your region opens"
+      }
+    ],
+    "faq": [
+      {
+        "q": "Which regions does DAT currently work in?",
+        "a": "Slovakia/Czechia, Ecuador, Tanzania, and NYC are our primary active hubs. We're scouting Australia and other regions."
+      }
+    ],
+    "contact_email": "casting@dramaticadventure.com"
+  },
+  {
+    "id": "designer",
+    "title": "Designer",
+    "type": "artist",
+    "role_types": "designer",
+    "hub": "remote",
+    "description": "Designers for DAT's productions — set, costume, lighting, sound, or projection. We work in non-traditional spaces and value designers who can make meaningful work with limited resources.",
+    "commitment": "Varies by project",
+    "commitment_type": "flexible",
+    "is_paid": "TRUE",
+    "compensation": "Design fee; rate varies by project",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=designer",
+    "learn_more_url": "",
+    "order": 8,
+    "hero_image": "",
+    "long_description": "DAT makes theatre in fields, courtyards, community centers, and found spaces around the world. Our designers are creative problem-solvers who work with the space, not against it — and who find beauty in constraints. We're building a roster of designers across disciplines for our upcoming productions and residencies.",
+    "what_youll_do": [
+      "Submit portfolio and design statement",
+      "Get matched to design opportunities on upcoming productions",
+      "Collaborate with the director and ensemble on design concept",
+      "Execute design within production constraints (budget, space, travel)",
+      "Travel in-field for applicable productions"
+    ],
+    "who_you_are": [
+      "A designer with experience in non-traditional, site-specific, or touring contexts",
+      "Resourceful and collaborative",
+      "Comfortable with ambiguity and design constraints"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Design portfolio required",
+      "Ability to travel for applicable productions",
+      "Experience designing for non-traditional spaces preferred"
+    ],
+    "perks": [
+      "Design fee when placed",
+      "Portfolio documentation",
+      "DAT alumni artist network"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Submit anytime"
+      },
+      {
+        "label": "Reviewed",
+        "detail": "Quarterly"
+      }
+    ],
+    "faq": [],
+    "contact_email": "casting@dramaticadventure.com"
+  },
+  {
+    "id": "stage-manager",
+    "title": "Stage Manager",
+    "type": "artist",
+    "role_types": "arts_admin,designer",
+    "hub": "remote",
+    "description": "Stage managers for DAT's productions — NYC performances, ACTion expeditions, and international residencies. Comfort with non-traditional spaces, devised process, and international work is essential.",
+    "commitment": "Varies by project",
+    "commitment_type": "flexible",
+    "is_paid": "TRUE",
+    "compensation": "SM fee; rate varies by project",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=stage-manager",
+    "learn_more_url": "",
+    "order": 9,
+    "hero_image": "",
+    "long_description": "DAT's stage managers are the production's center of gravity — holding the process together across devising, community workshops, technical rehearsals, and performance. We work in unusual spaces, across cultures, and often without a full technical infrastructure. If you bring rigor to the unexpected, we want to know about you.",
+    "what_youll_do": [
+      "Stage manage rehearsals, community workshops, and performances",
+      "Build and maintain schedules, contact sheets, and run-of-show documents",
+      "Coordinate with designers, technical staff, and artists",
+      "Call the show, manage the deck, manage the process",
+      "Travel in-field when applicable"
+    ],
+    "who_you_are": [
+      "An experienced stage manager — preferably with devised or non-traditional experience",
+      "Precise, calm, and relationship-forward",
+      "Comfortable managing process, not just performance"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Demonstrated SM experience",
+      "Union or non-union welcome",
+      "Ability to travel internationally for applicable productions"
+    ],
+    "perks": [
+      "SM fee when placed",
+      "DAT alumni artist network",
+      "Production credits"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Submit anytime"
+      },
+      {
+        "label": "Reviewed",
+        "detail": "Quarterly"
+      }
+    ],
+    "faq": [],
+    "contact_email": "casting@dramaticadventure.com"
+  },
+  {
+    "id": "musician-composer-sound-artist",
+    "title": "Musician / Composer / Sound Artist",
+    "type": "artist",
+    "role_types": "performer,designer",
+    "hub": "remote",
+    "description": "Musicians, composers, and sound artists for DAT's productions and residencies. We work with live music, original composition, and sound design — often in community and site-specific contexts.",
+    "commitment": "Varies by project",
+    "commitment_type": "flexible",
+    "is_paid": "TRUE",
+    "compensation": "Artist fee; rate varies by project",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=musician-composer-sound-artist",
+    "learn_more_url": "",
+    "order": 10,
+    "hero_image": "",
+    "long_description": "Music and sound are central to DAT's work — not as decoration, but as language. We work with musicians who can compose, improvise, teach, and perform in the same breath, and with sound artists who understand the texture of a room, a community, a culture. We're building a roster of musicians, composers, and sound artists for our upcoming productions and residencies.",
+    "what_youll_do": [
+      "Submit bio, work samples, and a note on your practice",
+      "Get matched to musical or sound design opportunities",
+      "Compose or arrange original music for a production",
+      "Lead a music-based community workshop",
+      "Travel in-field for applicable productions"
+    ],
+    "who_you_are": [
+      "A musician, composer, or sound artist with experience in theatre, community, or site-specific contexts",
+      "Comfortable improvising and collaborating",
+      "Interested in cross-cultural musical exchange"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Work samples required",
+      "Ability to travel internationally for applicable productions",
+      "Teaching experience a plus"
+    ],
+    "perks": [
+      "Artist fee when placed",
+      "Documentation and portfolio materials",
+      "DAT alumni artist network",
+      "Cross-cultural musical exchange"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Submit anytime"
+      },
+      {
+        "label": "Reviewed",
+        "detail": "Quarterly"
+      }
+    ],
+    "faq": [],
+    "contact_email": "casting@dramaticadventure.com"
+  },
+  {
+    "id": "movement-director-choreographer",
+    "title": "Movement Director / Choreographer",
+    "type": "artist",
+    "role_types": "director,performer",
+    "hub": "remote",
+    "description": "Movement directors and choreographers for DAT's devised productions and physical theatre work. We value movement practitioners who work from the body and the community — not just the stage picture.",
+    "commitment": "Varies by project",
+    "commitment_type": "flexible",
+    "is_paid": "TRUE",
+    "compensation": "Artist fee; rate varies by project",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=movement-director-choreographer",
+    "learn_more_url": "",
+    "order": 11,
+    "hero_image": "",
+    "long_description": "DAT's productions are physical — they live in the body before they live on the page. We work with movement directors and choreographers who can work in ensemble, across cultures, and with non-professional community members as well as trained performers. If your practice is rooted in the body as a storytelling instrument, we want to hear from you.",
+    "what_youll_do": [
+      "Lead movement work with ensemble and community participants",
+      "Develop physical vocabulary for an original production",
+      "Teach and facilitate movement workshops",
+      "Collaborate with the director on staging and physical language",
+      "Travel in-field for applicable productions"
+    ],
+    "who_you_are": [
+      "A movement director or choreographer with ensemble and/or community-engaged experience",
+      "Committed to accessibility and invitation in physical work",
+      "Comfortable working cross-culturally"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Portfolio of movement direction or choreography",
+      "Ability to travel internationally for applicable productions"
+    ],
+    "perks": [
+      "Artist fee when placed",
+      "Documentation and portfolio materials",
+      "DAT alumni artist network"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Submit anytime"
+      },
+      {
+        "label": "Reviewed",
+        "detail": "Quarterly"
+      }
+    ],
+    "faq": [],
+    "contact_email": "casting@dramaticadventure.com"
+  },
+  {
+    "id": "visual-artist-maker",
+    "title": "Visual Artist / Maker / Artisan",
+    "type": "artist",
+    "role_types": "designer,ensemble_artist",
+    "hub": "remote",
+    "description": "Visual artists, makers, and artisans who want to collaborate with DAT on set, props, installations, or community-art projects. We especially value handcraft, site-specificity, and work made from local materials.",
+    "commitment": "Varies by project",
+    "commitment_type": "flexible",
+    "is_paid": "TRUE",
+    "compensation": "Artist fee; rate varies by project",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=visual-artist-maker",
+    "learn_more_url": "",
+    "order": 12,
+    "hero_image": "",
+    "long_description": "DAT's productions live in real places — and we want the physical world of the show to live there too. We work with visual artists, makers, and artisans who can build set elements, props, installations, and community-art pieces from local materials, in local traditions, in collaboration with the people who live there. If you make things with your hands and you're curious about what art can do in a community, we want to hear from you.",
+    "what_youll_do": [
+      "Collaborate with DAT's design team on visual and physical elements of a production",
+      "Source and work with local materials and artisans",
+      "Lead a making workshop with community members",
+      "Build installation, set, or prop elements in the field",
+      "Contribute to documentation of the making process"
+    ],
+    "who_you_are": [
+      "A visual artist, sculptor, maker, or artisan with community or site-specific experience",
+      "Comfortable working with limited resources in unusual spaces",
+      "Generous collaborator"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Portfolio of visual or making work",
+      "Ability to travel for applicable productions",
+      "Comfort with physical labor and hands-on making"
+    ],
+    "perks": [
+      "Artist fee when placed",
+      "Documentation and portfolio materials",
+      "DAT alumni artist network"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Submit anytime"
+      },
+      {
+        "label": "Reviewed",
+        "detail": "Quarterly"
+      }
+    ],
+    "faq": [],
+    "contact_email": "casting@dramaticadventure.com"
+  },
+  {
+    "id": "documentation-artist",
+    "title": "Documentation Artist",
+    "type": "artist",
+    "role_types": "marketing,ensemble_artist",
+    "hub": "remote",
+    "description": "Photographers, videographers, and documentary storytellers for DAT's productions and residencies. We want documentation that captures the truth of the work — not just the performance.",
+    "commitment": "Varies by project (1–6 weeks in-field)",
+    "commitment_type": "flexible",
+    "is_paid": "TRUE",
+    "compensation": "Artist fee; rate varies by project",
+    "status": "evergreen",
+    "deadline": "",
+    "season": "",
+    "featured": "FALSE",
+    "plx_program": "",
+    "apply_url": "/apply?opp=documentation-artist",
+    "learn_more_url": "",
+    "order": 13,
+    "hero_image": "",
+    "long_description": "DAT's work happens in fields, studios, community centers, and living rooms around the world — and most of it is never seen by anyone outside the room. The Documentation Artist changes that.\n\nWe're building a roster of photographers, videographers, and documentary storytellers who want to capture the real texture of the work — the listening, the rehearsal, the moment before the show, the meal afterward. If you can make a frame that tells the truth, we want to hear from you.",
+    "what_youll_do": [
+      "Document productions, workshops, and community sessions in the field",
+      "Build a project archive — photo, video, audio",
+      "Collaborate with the Comms team on content production",
+      "Develop your own documentary project around the work",
+      "Contribute to DAT's permanent institutional archive"
+    ],
+    "who_you_are": [
+      "A photographer, videographer, or documentary storyteller",
+      "Comfortable working in community and performance settings",
+      "Thoughtful about the ethics of documentation"
+    ],
+    "requirements": [
+      "18 years or older",
+      "Portfolio of documentary photography or video",
+      "Own equipment preferred",
+      "Ability to travel in-field for applicable projects"
+    ],
+    "perks": [
+      "Artist fee when placed",
+      "Published portfolio work",
+      "International travel",
+      "DAT alumni artist network"
+    ],
+    "timeline": [
+      {
+        "label": "Rolling",
+        "detail": "Submit anytime"
+      },
+      {
+        "label": "Reviewed",
+        "detail": "Quarterly"
+      }
+    ],
+    "faq": [],
+    "contact_email": "casting@dramaticadventure.com"
+  }
+]
