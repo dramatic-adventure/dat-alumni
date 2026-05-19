@@ -800,8 +800,8 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
                       src="/images/opportunities/admin-collab.jpg"
                       alt=""
                       fill
-                      sizes="(max-width:600px) 100vw, clamp(140px,26%,220px)"
-                      style={{ objectFit: "cover", objectPosition: "center 40%" }}
+                      sizes="(max-width:600px) 100vw, clamp(280px,44%,440px)"
+                      style={{ objectFit: "cover", objectPosition: "center" }}
                     />
                   </div>
                   <div className="op-lib-sec-content">
@@ -832,8 +832,8 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
                       src="/images/opportunities/artist-development.jpg"
                       alt=""
                       fill
-                      sizes="(max-width:600px) 100vw, clamp(140px,26%,220px)"
-                      style={{ objectFit: "cover", objectPosition: "center 30%" }}
+                      sizes="(max-width:600px) 100vw, clamp(280px,44%,440px)"
+                      style={{ objectFit: "cover", objectPosition: "center" }}
                     />
                   </div>
                   <div className="op-lib-sec-content">
@@ -864,8 +864,8 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
                       src="/images/opportunities/volunteer-popup.jpg"
                       alt=""
                       fill
-                      sizes="(max-width:600px) 100vw, clamp(140px,26%,220px)"
-                      style={{ objectFit: "cover", objectPosition: "center 50%" }}
+                      sizes="(max-width:600px) 100vw, clamp(280px,44%,440px)"
+                      style={{ objectFit: "cover", objectPosition: "center" }}
                     />
                   </div>
                   <div className="op-lib-sec-content">
@@ -1241,27 +1241,30 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
         .op-lib-sec {
           border-radius: 14px;
           overflow: hidden;
-          display: grid;
-          grid-template-columns: clamp(200px, 32%, 300px) 1fr;
+          display: flex;
+          flex-direction: row;
+          align-items: stretch;
         }
-        /* Image column — left side, full opacity. 5:4 landscape ratio. */
+        /* Image column — left side. Wide so the photo isn't tightly cropped.
+           min-height ≈ 4/3 of that width; flexbox stretch fills content height. */
         .op-lib-sec-imgcol {
           position: relative;
-          aspect-ratio: 5 / 4;
+          width: clamp(280px, 44%, 440px);
+          min-height: clamp(210px, 33vw, 330px);
           overflow: hidden;
           flex-shrink: 0;
         }
         /* Content column — right side */
         .op-lib-sec-content {
+          flex: 1;
           padding: 1.25rem 1.4rem;
           display: flex;
           flex-direction: column;
           min-width: 0;
         }
         @media (max-width: 600px) {
-          .op-lib-sec { grid-template-columns: 1fr; }
-          .op-lib-sec-imgcol { height: 150px; grid-row: 1; }
-          .op-lib-sec-content { grid-row: 2; }
+          .op-lib-sec { flex-direction: column; }
+          .op-lib-sec-imgcol { width: 100%; min-height: 0; height: 150px; }
         }
         .op-lib-sec--staff {
           background: rgba(108,0,175,0.22);
