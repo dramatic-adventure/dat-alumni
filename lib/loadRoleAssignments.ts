@@ -80,19 +80,34 @@ export async function loadRoleAssignments(): Promise<RoleAssignmentRow[]> {
   }
 
   const spreadsheetId = process.env.ALUMNI_SHEET_ID || "";
-  if (!spreadsheetId) throw new Error("Missing ALUMNI_SHEET_ID");
+  if (!spreadsheetId) {
+    console.warn("[loadRoleAssignments] Missing ALUMNI_SHEET_ID — returning []");
+    _cache = [];
+    _cacheAt = Date.now();
+    return [];
+  }
 
   const roleAssignmentsTab =
     process.env.ROLE_ASSIGNMENTS_TAB || "Role-Assignments";
 
-  const sheets = sheetsClient();
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range: `${roleAssignmentsTab}!A:ZZ`,
-    valueRenderOption: "UNFORMATTED_VALUE",
-  });
+  let all: unknown[][];
+  try {
+    const sheets = sheetsClient();
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${roleAssignmentsTab}!A:ZZ`,
+      valueRenderOption: "UNFORMATTED_VALUE",
+    });
+    all = (res.data.values ?? []) as unknown[][];
+  } catch (err) {
+    console.warn("[loadRoleAssignments] Sheets API fetch failed:", err);
+    // Return stale cache if we have one, otherwise empty array.
+    if (_cache !== null) return _cache;
+    _cache = [];
+    _cacheAt = Date.now();
+    return [];
+  }
 
-  const all = (res.data.values ?? []) as unknown[][];
   if (!all.length) {
     _cache = [];
     _cacheAt = Date.now();

@@ -30,6 +30,19 @@ import {
 
 const SHEET_TAB = "Opportunities";
 
+/* ──────────────────────────────────────────────────────────
+ * Module-level snapshot cache
+ * Mirrors the loadRoleAssignments pattern. One Sheets API call per TTL window
+ * per Node.js worker process — prevents 429 quota errors during Netlify builds
+ * where many pages are pre-rendered in the same process.
+ * Default TTL matches the page revalidate (3600s), overridable via env var.
+ * ────────────────────────────────────────────────────────── */
+let _cache: Opportunity[] | null = null;
+let _cacheAt = 0;
+const OPPORTUNITIES_TTL_MS = Number(
+  process.env.OPPORTUNITIES_TTL_MS || 3_600_000
+);
+
 async function fetchFromSheet(): Promise<Opportunity[] | null> {
   const spreadsheetId = String(process.env.ALUMNI_SHEET_ID || "").trim();
   if (!spreadsheetId) return null;
@@ -62,13 +75,25 @@ async function fetchFromSheet(): Promise<Opportunity[] | null> {
 /**
  * Server-only loader. Reads the "Opportunities" tab via the Sheets API and
  * falls back to data/opportunities.json (the seeded snapshot) if the API
- * call fails or the env vars aren't configured. React-cached so multiple
- * server components in the same request share one read.
+ * call fails or the env vars aren't configured.
+ *
+ * Uses a module-level cache (one Sheets call per TTL per worker process) so
+ * that the Netlify static-generation pass — which pre-renders many pages in the
+ * same process — doesn't hammer the Sheets API quota. React cache() provides
+ * additional deduplication within a single render request.
  */
 export const loadOpportunities = cache(async (): Promise<Opportunity[]> => {
+  const now = Date.now();
+  if (_cache !== null && now - _cacheAt < OPPORTUNITIES_TTL_MS) {
+    return _cache;
+  }
+
   const live = await fetchFromSheet();
-  if (live && live.length > 0) return live;
-  return getOpportunitiesSync();
+  const result = live && live.length > 0 ? live : getOpportunitiesSync();
+
+  _cache = result;
+  _cacheAt = Date.now();
+  return result;
 });
 
 /** Find a single opportunity by id (uses the live loader). */
