@@ -801,7 +801,7 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
                       alt=""
                       fill
                       sizes="(max-width:600px) 100vw, clamp(280px,44%,440px)"
-                      style={{ objectFit: "cover", objectPosition: "center" }}
+                      style={{ objectFit: "cover" }}
                     />
                   </div>
                   <div className="op-lib-sec-content">
@@ -833,7 +833,7 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
                       alt=""
                       fill
                       sizes="(max-width:600px) 100vw, clamp(280px,44%,440px)"
-                      style={{ objectFit: "cover", objectPosition: "center" }}
+                      style={{ objectFit: "cover" }}
                     />
                   </div>
                   <div className="op-lib-sec-content">
@@ -865,7 +865,7 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
                       alt=""
                       fill
                       sizes="(max-width:600px) 100vw, clamp(280px,44%,440px)"
-                      style={{ objectFit: "cover", objectPosition: "center" }}
+                      style={{ objectFit: "cover" }}
                     />
                   </div>
                   <div className="op-lib-sec-content">
@@ -1245,14 +1245,15 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
           flex-direction: row;
           align-items: stretch;
         }
-        /* Image column — left side. Wide so the photo isn't tightly cropped.
-           min-height ≈ 4/3 of that width; flexbox stretch fills content height. */
+        /* Image column — left side. Height is driven by the content column;
+           photo crops from the bottom via object-position: center top. */
         .op-lib-sec-imgcol {
           position: relative;
-          width: clamp(280px, 44%, 440px);
-          min-height: clamp(210px, 33vw, 330px);
+          width: clamp(200px, 36%, 440px);
+          min-height: 150px;
           overflow: hidden;
           flex-shrink: 0;
+          align-self: stretch;
         }
         /* Content column — right side */
         .op-lib-sec-content {
@@ -1262,9 +1263,14 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
           flex-direction: column;
           min-width: 0;
         }
-        @media (max-width: 600px) {
+        /* Desktop: anchor top — if image is taller than content, crop the bottom */
+        .op-lib-sec-imgcol img { object-position: center top; }
+        /* Stack on small tablets and mobile */
+        @media (max-width: 820px) {
           .op-lib-sec { flex-direction: column; }
-          .op-lib-sec-imgcol { width: 100%; min-height: 0; height: 150px; }
+          .op-lib-sec-imgcol { width: 100%; min-height: 0; height: 200px; }
+          /* Stacked landscape: bias focus toward top so heads stay in frame */
+          .op-lib-sec-imgcol img { object-position: center 20%; }
         }
         .op-lib-sec--staff {
           background: rgba(108,0,175,0.22);
