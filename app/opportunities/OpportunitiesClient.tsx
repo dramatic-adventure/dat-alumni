@@ -294,7 +294,6 @@ interface FilterState {
   hubs: OpportunityHub[];
   commitments: OpportunityCommitmentType[];
   paidOnly: boolean;
-  showClosed: boolean;
   seasonalOnly: boolean;
 }
 
@@ -323,7 +322,6 @@ const EMPTY_FILTERS: FilterState = {
   hubs: [],
   commitments: [],
   paidOnly: false,
-  showClosed: false,
   seasonalOnly: false,
 };
 
@@ -348,6 +346,11 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
   const volunteerRef = useRef<HTMLDivElement>(null);
 
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
+  const [showNotice, setShowNotice] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("notice") === "closed") setShowNotice(true);
+  }, [searchParams]);
 
   // Browse mode: activated by ?browse=1 or any filter param in the URL
   const isBrowseMode =
@@ -357,8 +360,7 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
       searchParams.get("hub") ||
       searchParams.get("commit") ||
       searchParams.get("paid") ||
-      searchParams.get("season") ||
-      searchParams.get("closed")
+      searchParams.get("season")
     );
 
   useEffect(() => {
@@ -367,7 +369,6 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
       hubs: parseListParam(searchParams.get("hub"), OPPORTUNITY_HUBS as readonly string[]) as OpportunityHub[],
       commitments: parseListParam(searchParams.get("commit"), OPPORTUNITY_COMMITMENTS as readonly string[]) as OpportunityCommitmentType[],
       paidOnly: searchParams.get("paid") === "1",
-      showClosed: searchParams.get("closed") === "1",
       seasonalOnly: searchParams.get("season") === "1",
     });
   }, [searchParams]);
@@ -381,7 +382,6 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
     if (next.hubs.length) params.set("hub", next.hubs.join(","));
     if (next.commitments.length) params.set("commit", next.commitments.join(","));
     if (next.paidOnly) params.set("paid", "1");
-    if (next.showClosed) params.set("closed", "1");
     if (next.seasonalOnly) params.set("season", "1");
     router.replace(`/opportunities?${params.toString()}`, { scroll: false });
   };
@@ -396,7 +396,6 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
     if (next.hubs.length) params.set("hub", next.hubs.join(","));
     if (next.commitments.length) params.set("commit", next.commitments.join(","));
     if (next.paidOnly) params.set("paid", "1");
-    if (next.showClosed) params.set("closed", "1");
     if (next.seasonalOnly) params.set("season", "1");
     router.push(`/opportunities?${params.toString()}`, { scroll: false });
     // Scroll to filter bar after navigation settles
@@ -431,7 +430,6 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
   const toggleCommit = (c: OpportunityCommitmentType) =>
     updateFilters({ ...filters, commitments: filters.commitments.includes(c) ? filters.commitments.filter((x) => x !== c) : [...filters.commitments, c] });
   const togglePaid = () => updateFilters({ ...filters, paidOnly: !filters.paidOnly });
-  const toggleClosed = () => updateFilters({ ...filters, showClosed: !filters.showClosed });
   const toggleSeasonal = () => updateFilters({ ...filters, seasonalOnly: !filters.seasonalOnly });
 
   // Clear filters — stays in browse mode if active
@@ -504,7 +502,7 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
     const commitments = new Set<OpportunityCommitmentType>();
     let seasonalCount = 0;
     for (const o of opportunities) {
-      if (o.status === "closed" && !filters.showClosed) continue;
+      if (o.status === "closed") continue;
       groups.add(TYPE_TO_GROUP[o.type]);
       hubs.add(o.hub);
       commitments.add(o.commitmentType);
@@ -512,12 +510,12 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
       if (o.season && activeDatSeasonEndYears.some(y => o.season.includes(String(y)))) seasonalCount++;
     }
     return { availableGroups: groups, availableHubs: hubs, availableCommitments: commitments, hasSeasonal: seasonalCount > 0 };
-  }, [opportunities, filters.showClosed, activeDatSeasonEndYears]);
+  }, [opportunities, activeDatSeasonEndYears]);
 
   // ── Filtered list (browse mode) ──────────────────────────────────────
   const filtered = useMemo(() => {
     return opportunities.filter((o) => {
-      if (!filters.showClosed && o.status === "closed") return false;
+      if (o.status === "closed") return false;
       if (filters.typeGroups.length) {
         const group = TYPE_TO_GROUP[o.type];
         if (!filters.typeGroups.includes(group)) return false;
@@ -539,10 +537,8 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
     filters.hubs.length +
     filters.commitments.length +
     (filters.paidOnly ? 1 : 0) +
-    (filters.showClosed ? 1 : 0) +
     (filters.seasonalOnly ? 1 : 0);
 
-  const closedCount = opportunities.filter((o) => o.status === "closed").length;
   const visibleTotal = opportunities.filter((o) => o.status !== "closed").length;
 
   return (
@@ -588,6 +584,27 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
           </div>
         </div>
       </section>
+
+      {/* ─────────────────────── CLOSED NOTICE ──────────────────────── */}
+      {showNotice && (
+        <div style={{
+          background: "rgba(36,17,35,0.92)",
+          color: "#fff",
+          padding: "0.75rem 1.25rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "1rem",
+          fontSize: "0.95rem",
+        }}>
+          <span>That opportunity is no longer available.</span>
+          <button
+            onClick={() => setShowNotice(false)}
+            aria-label="Dismiss"
+            style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "1.2rem", lineHeight: 1 }}
+          >×</button>
+        </div>
+      )}
 
       {/* ─────────────────────── BROWSE MODE ─────────────────────────── */}
       {isBrowseMode ? (
@@ -698,11 +715,6 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
                     <span>This season</span>
                   </label>
                 )}
-                <label className={`op-toggle${filters.showClosed ? " op-toggle--on" : ""}`}>
-                  <input type="checkbox" checked={filters.showClosed} onChange={toggleClosed} />
-                  <span className="op-toggle-track"><span className="op-toggle-thumb" /></span>
-                  <span>Show closed{closedCount > 0 ? ` (${closedCount})` : ""}</span>
-                </label>
               </div>
 
               {activeFilterCount > 0 && (

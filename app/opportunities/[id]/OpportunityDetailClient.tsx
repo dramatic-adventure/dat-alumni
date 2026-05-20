@@ -112,17 +112,21 @@ export default function OpportunityDetailClient({
           </Link>
 
           <div className="od-hero-badges">
-            <span className="od-typebadge">{meta.label}</span>
-            <StatusPill status={o.status} />
-            {o.featured && <span className="od-featured-star">★ Featured</span>}
+            <Link href={`/opportunities?type=${TYPE_TO_GROUP[o.type]}&browse=1`} className="od-typebadge">{meta.label}</Link>
+            <Link href={`/opportunities?browse=1`} style={{ textDecoration: "none" }}><StatusPill status={o.status} /></Link>
+            {o.featured && <Link href="/opportunities?browse=1" className="od-featured-star">★ Featured</Link>}
           </div>
 
           <h1 className="od-hero-title">{o.title}</h1>
 
           <p className="od-hero-meta">
             <span>{hub.label}</span>
-            <span className="od-dot">·</span>
-            <span>{hub.country}</span>
+            {o.hub !== "remote" && (
+              <>
+                <span className="od-dot">·</span>
+                <span>{hub.country}</span>
+              </>
+            )}
             <span className="od-dot">·</span>
             <span>{COMMITMENT_LABELS[o.commitmentType]}</span>
             {o.season && (
@@ -177,7 +181,7 @@ export default function OpportunityDetailClient({
           </div>
           <div className="od-ribbon-cell">
             <span className="od-ribbon-label">
-              {showDeadline ? "Apply By" : o.status === "evergreen" ? "Status" : "Status"}
+              {showDeadline ? "Apply By" : o.status === "evergreen" ? "Availability" : "Status"}
             </span>
             <span className="od-ribbon-value od-ribbon-value--accent">
               {showDeadline
@@ -204,12 +208,28 @@ export default function OpportunityDetailClient({
             </Section>
           )}
 
+          {o.timeline.length > 0 && (
+            <Section eyebrow="Timeline" accent={meta.color}>
+              <ol className="od-timeline od-timeline--light">
+                {o.timeline.map((t, i) => (
+                  <li key={i}>
+                    <span className="od-timeline-num">{i + 1}</span>
+                    <div>
+                      <strong className="od-timeline-label">{t.label}</strong>
+                      {t.detail && <div className="od-timeline-detail">{t.detail}</div>}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </Section>
+          )}
+
           {o.whatYoullDo.length > 0 && (
             <Section eyebrow="What you'll do" accent={meta.color}>
-              <ul className="od-list">
+              <ul className="od-list od-list--do">
                 {o.whatYoullDo.map((item, i) => (
                   <li key={i}>
-                    <span className="od-list-mark" style={{ background: meta.color }} />
+                    <span className="od-list-mark" style={{ background: meta.color }} aria-hidden="true" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -247,22 +267,6 @@ export default function OpportunityDetailClient({
             </Section>
           )}
 
-          {o.timeline.length > 0 && (
-            <Section eyebrow="Timeline" accent={meta.color}>
-              <ol className="od-timeline">
-                {o.timeline.map((t, i) => (
-                  <li key={i}>
-                    <span className="od-timeline-num">{String(i + 1).padStart(2, "0")}</span>
-                    <div>
-                      <strong className="od-timeline-label">{t.label}</strong>
-                      {t.detail && <div className="od-timeline-detail">{t.detail}</div>}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </Section>
-          )}
-
           {o.faq.length > 0 && (
             <Section eyebrow="FAQ" accent={meta.color}>
               <div className="od-faq">
@@ -279,6 +283,7 @@ export default function OpportunityDetailClient({
 
         {/* ── SIDE: apply card + perks ─────────────── */}
         <aside className="od-side">
+          <div className="od-side-inner">
           <div className="od-applycard">
             <span className="od-applycard-eyebrow">Ready to step in?</span>
             <h3 className="od-applycard-title">
@@ -320,14 +325,15 @@ export default function OpportunityDetailClient({
           {o.perks.length > 0 && (
             <div className="od-perks">
               <span className="od-perks-eyebrow" style={{ color: meta.color }}>What's included</span>
-              <ul>
+              {/* TODO: tighten perk copy — pills can be verbose */}
+              <div className="od-perks-pills">
                 {o.perks.map((p, i) => (
-                  <li key={i}>
-                    <span className="od-perks-check" style={{ color: meta.color }}>✓</span>
-                    <span>{p}</span>
-                  </li>
+                  <span key={i} className="od-perk-pill" style={{ ["--pill-accent" as string]: meta.color }}>
+                    <span className="od-perk-pill-check">✓</span>
+                    {p}
+                  </span>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
 
@@ -343,6 +349,7 @@ export default function OpportunityDetailClient({
               </div>
             </div>
           )}
+          </div>{/* end od-side-inner */}
         </aside>
       </div>
       </div>
@@ -373,8 +380,27 @@ export default function OpportunityDetailClient({
                 );
               })}
             </div>
+            <div className="od-related-footer">
+              <Link href="/opportunities" className="od-related-all">
+                Browse all opportunities →
+              </Link>
+            </div>
           </div>
         </section>
+      )}
+
+      {/* ── MOBILE STICKY CTA ───────────────────────── */}
+      {o.applyUrl && !isClosed && (
+        <div className="od-mobile-cta" aria-label="Quick apply">
+          <a
+            href={o.applyUrl}
+            className="od-mobile-cta-btn"
+            target={o.applyUrl.startsWith("http") ? "_blank" : undefined}
+            rel={o.applyUrl.startsWith("http") ? "noopener noreferrer" : undefined}
+          >
+            {o.status === "coming_soon" ? "Get Notified" : "Apply Now"}
+          </a>
+        </div>
       )}
 
       {/* ── STYLES ──────────────────────────────────── */}
@@ -384,7 +410,7 @@ export default function OpportunityDetailClient({
         /* ── Hero ── */
         .od-hero {
           position: relative;
-          min-height: 64vh;
+          min-height: 68vh;
           display: flex;
           align-items: flex-end;
           overflow: hidden;
@@ -394,12 +420,12 @@ export default function OpportunityDetailClient({
         .od-hero-overlay {
           position: absolute; inset: 0; z-index: 1;
           background:
-            linear-gradient(to right, rgba(8,3,12,0.62) 0%, rgba(8,3,12,0.32) 45%, rgba(8,3,12,0.08) 80%, rgba(8,3,12,0) 100%),
-            linear-gradient(to top, rgba(8,3,12,0.72) 0%, rgba(8,3,12,0) 55%);
+            linear-gradient(to right, rgba(8,3,12,0.68) 0%, rgba(8,3,12,0.38) 45%, rgba(8,3,12,0.1) 80%, rgba(8,3,12,0) 100%),
+            linear-gradient(to top, rgba(8,3,12,0.88) 0%, rgba(8,3,12,0) 60%);
         }
         .od-hero-glow {
           position: absolute; inset: 0; z-index: 1;
-          background: radial-gradient(ellipse 50% 50% at 80% 30%, color-mix(in srgb, var(--accent) 18%, transparent) 0%, transparent 70%);
+          background: radial-gradient(ellipse 50% 50% at 80% 30%, color-mix(in srgb, var(--accent) 22%, transparent) 0%, transparent 70%);
         }
         .od-hero-content {
           position: relative; z-index: 2;
@@ -409,7 +435,9 @@ export default function OpportunityDetailClient({
           padding: clamp(4rem, 8vw, 6rem) clamp(1.25rem, 5vw, 3rem) clamp(2.5rem, 5vw, 4rem);
         }
         .od-back {
-          display: inline-block;
+          display: inline-flex;
+          align-items: center;
+          min-height: 44px;
           font-family: var(--font-dm-sans), sans-serif;
           font-size: 0.72rem;
           font-weight: 700;
@@ -417,7 +445,7 @@ export default function OpportunityDetailClient({
           text-transform: uppercase;
           color: rgba(255,255,255,0.5);
           text-decoration: none;
-          margin-bottom: 1.5rem;
+          margin-bottom: 1rem;
           transition: color 160ms ease;
         }
         .od-back:hover { color: #FFCC00; }
@@ -433,6 +461,8 @@ export default function OpportunityDetailClient({
           border-radius: 6px;
           background: var(--accent);
           color: #fff;
+          text-decoration: none;
+          cursor: pointer;
         }
         .od-statuspill {
           font-family: var(--font-dm-sans), sans-serif;
@@ -455,10 +485,12 @@ export default function OpportunityDetailClient({
           background: rgba(255,204,0,0.12);
           border: 1px solid rgba(255,204,0,0.4);
           border-radius: 6px;
+          text-decoration: none;
+          cursor: pointer;
         }
         .od-hero-title {
           font-family: var(--font-anton), sans-serif;
-          font-size: clamp(2.5rem, 7vw, 5.5rem);
+          font-size: clamp(2.2rem, 7vw, 5.5rem);
           font-weight: 400;
           line-height: 1;
           color: #fff;
@@ -469,18 +501,18 @@ export default function OpportunityDetailClient({
         }
         .od-hero-meta {
           font-family: var(--font-space-grotesk), sans-serif;
-          font-size: 0.92rem;
-          color: #fff;
-          margin: 0 0 1.25rem;
-          display: flex; flex-wrap: wrap; gap: 0.45rem;
+          font-size: 0.88rem;
+          color: rgba(255,255,255,0.82);
+          margin: 0 0 1.15rem;
+          display: flex; flex-wrap: wrap; gap: 0.35rem;
           text-shadow: 0 2px 12px rgba(0,0,0,0.85);
         }
-        .od-dot { opacity: 0.55; }
+        .od-dot { opacity: 0.4; }
         .od-hero-tease {
           font-family: var(--font-space-grotesk), sans-serif;
-          font-size: clamp(1rem, 1.7vw, 1.18rem);
-          line-height: 1.65;
-          color: #fff;
+          font-size: clamp(0.98rem, 1.7vw, 1.18rem);
+          line-height: 1.68;
+          color: rgba(255,255,255,0.92);
           max-width: 760px;
           margin: 0 0 1.75rem;
           text-shadow: 0 3px 14px rgba(0,0,0,0.95), 0 0 4px rgba(0,0,0,0.7);
@@ -517,67 +549,125 @@ export default function OpportunityDetailClient({
 
         /* ── Ribbon ── */
         .od-ribbon {
-          background: #241123;
-          color: #fff;
-          padding: 1.5rem clamp(1.25rem, 5vw, 3rem);
+          background: #2411233c;
+          color: #f2f2f2;
+          padding: 0 clamp(1.25rem, 5vw, 3rem);
           border-bottom: 1px solid rgba(255,255,255,0.06);
         }
         .od-ribbon-inner {
           max-width: 1180px;
           margin: 0 auto;
           display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 1.5rem;
+          grid-template-columns: 0.7fr 1.4fr 1fr 0.9fr;
+          gap: 0;
         }
-        @media (max-width: 720px) { .od-ribbon-inner { grid-template-columns: repeat(2, 1fr); } }
-        .od-ribbon-cell { display: flex; flex-direction: column; gap: 0.25rem; }
+        .od-ribbon-cell {
+          display: flex;
+          flex-direction: column;
+          gap: 0.3rem;
+          padding: 1.25rem 1.25rem 1.25rem 0;
+          border-right: 1px solid rgba(255,255,255,0.07);
+        }
+        .od-ribbon-cell:first-child { padding-left: 0; }
+        .od-ribbon-cell:last-child { border-right: none; padding-left: 1.25rem; padding-right: 0; }
+        .od-ribbon-cell:not(:first-child):not(:last-child) { padding-left: 1.25rem; }
+        @media (max-width: 720px) {
+          .od-ribbon { padding-top: 0; padding-bottom: 0; }
+          .od-ribbon-inner { grid-template-columns: 1fr 1fr; }
+          .od-ribbon-cell {
+            padding: 1.1rem 1rem;
+            border-right: 1px solid rgba(255,255,255,0.07);
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+          }
+          .od-ribbon-cell:nth-child(2n) { border-right: none; }
+          .od-ribbon-cell:nth-child(n+3) { border-bottom: none; }
+        }
         .od-ribbon-label {
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.62rem;
+          font-size: 0.59rem;
           font-weight: 700;
           letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: rgba(255,255,255,0.4);
+          color: rgba(255,255,255,0.35);
         }
         .od-ribbon-value {
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: 0.98rem;
           font-weight: 600;
           color: #fff;
+          line-height: 1.3;
         }
         .od-ribbon-value--accent { color: #FFCC00; }
 
         /* ── Body ── */
         .od-body-wrap {
-          padding: clamp(2rem, 4vw, 3rem) clamp(1.25rem, 5vw, 3rem);
+          padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1rem, 4vw, 2.5rem);
+        }
+        @media (max-width: 520px) {
+          .od-body-wrap { padding: 1rem 0.75rem; }
         }
         .od-body {
           max-width: 1220px;
           margin: 0 auto;
-          background: rgba(254,250,242,0.78);
-          backdrop-filter: blur(4px);
-          -webkit-backdrop-filter: blur(4px);
-          border: 1px solid rgba(255,255,255,0.5);
+          background: transparent;
+          border: 1px solid rgba(36,17,35,0.1);
           border-radius: 20px;
-          box-shadow: 0 6px 32px rgba(36,17,35,0.05), inset 0 1px 0 rgba(255,255,255,0.5);
-          padding: clamp(2rem, 5vw, 3.5rem);
+          box-shadow: 0 12px 52px rgba(36,17,35,0.15), 0 3px 10px rgba(36,17,35,0.07);
+          padding: 0;
           display: grid;
-          grid-template-columns: 1fr 360px;
-          gap: clamp(2rem, 5vw, 4rem);
+          grid-template-columns: 1fr 340px;
+          gap: 0;
           align-items: start;
+          overflow: clip;
         }
         @media (max-width: 960px) { .od-body { grid-template-columns: 1fr; } }
-
-        .od-section { margin-bottom: clamp(2rem, 4vw, 3rem); }
+        .od-body-main {
+          background: #fdf9e3b3;
+          padding: clamp(1.75rem, 5vw, 3.5rem);
+          padding-right: clamp(2rem, 4vw, 3rem);
+        }
+        @media (max-width: 520px) { .od-body-main { padding: 1.5rem 1.25rem; } }
+        .od-side {
+          border-left: 1px solid rgba(255,255,255,0.07);
+          background: #24112383;
+          align-self: stretch;
+          padding: 0;
+        }
+        .od-side-inner {
+          position: sticky;
+          top: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+          padding: clamp(1.75rem, 4vw, 2.5rem) clamp(1.25rem, 3vw, 2rem);
+        }
+        @media (max-width: 960px) {
+          .od-side {
+            border-left: none;
+            border-top: 1px solid rgba(255,255,255,0.07);
+            background: #000;
+          }
+          .od-side-inner {
+            position: static;
+            padding: clamp(1.5rem, 4vw, 2rem);
+          }
+        }
+        @media (max-width: 520px) { .od-side-inner { padding: 1.5rem 1.25rem; } }
+        .od-section { margin-bottom: clamp(1.75rem, 3.5vw, 2.75rem); }
         .od-section:last-child { margin-bottom: 0; }
+        .od-section + .od-section {
+          padding-top: clamp(1.5rem, 3vw, 2rem);
+          border-top: 1px solid rgba(36,17,35,0.07);
+        }
         .od-section-eyebrow {
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.72rem;
-          font-weight: 700;
-          letter-spacing: 0.22em;
+          font-size: 1.05rem;
+          font-weight: 900;
+          letter-spacing: 0.15em;
           text-transform: uppercase;
           display: block;
-          margin-bottom: 0.6rem;
+          margin-bottom: 1rem;
+          line-height: 1.4;
         }
         .od-section-title {
           font-family: var(--font-anton), sans-serif;
@@ -593,19 +683,20 @@ export default function OpportunityDetailClient({
         .od-prose p {
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: 1.02rem;
-          line-height: 1.75;
-          color: rgba(36,17,35,0.85);
+          line-height: 1.78;
+          color: rgba(36,17,35,0.82);
           margin: 0 0 1.15rem;
         }
         .od-prose p:last-child { margin: 0; }
 
+        /* ── Lists ── */
         .od-list {
           list-style: none;
           padding: 0;
           margin: 0;
           display: flex;
           flex-direction: column;
-          gap: 0.85rem;
+          gap: 0.65rem;
         }
         .od-list li {
           display: flex;
@@ -627,7 +718,37 @@ export default function OpportunityDetailClient({
           background: transparent;
           border: 2px solid;
         }
-        .od-list--pillars li { display: block; line-height: 1.6; }
+
+        /* "What you'll do" — accent-line editorial */
+        .od-list--do { gap: 0; }
+        .od-list--do > li {
+          padding: 0.95rem 0;
+          border-bottom: 1px solid rgba(36,17,35,0.07);
+          align-items: center;
+          gap: 1.1rem;
+        }
+        .od-list--do > li:first-child { padding-top: 0; }
+        .od-list--do > li:last-child { border-bottom: none; padding-bottom: 0; }
+        .od-list--do .od-list-mark { display: none; }
+        .od-list--do > li::before {
+          content: '';
+          flex: 0 0 22px;
+          height: 2.5px;
+          background: var(--accent);
+          border-radius: 2px;
+          align-self: center;
+        }
+
+        /* "Who you are" — pillar cards */
+        .od-list--pillars { gap: 0.55rem; }
+        .od-list--pillars li {
+          display: block;
+          line-height: 1.6;
+          background: #6c00af1f;
+          border-radius: 10px;
+          padding: 0.85rem 1rem;
+          border-left: 3px solid var(--accent);
+        }
         .od-pillar-head {
           font-family: var(--font-space-grotesk), sans-serif;
           font-weight: 700;
@@ -635,9 +756,10 @@ export default function OpportunityDetailClient({
         }
         .od-pillar-tail {
           font-family: var(--font-space-grotesk), sans-serif;
-          color: rgba(36,17,35,0.78);
+          color: rgba(36,17,35,0.72);
         }
 
+        /* ── Timeline ── */
         .od-timeline {
           list-style: none;
           padding: 0;
@@ -648,48 +770,80 @@ export default function OpportunityDetailClient({
         .od-timeline li {
           position: relative;
           display: flex;
-          gap: 1rem;
-          padding: 0.85rem 0;
-          border-bottom: 1px solid rgba(36,17,35,0.08);
+          gap: 1.1rem;
+          padding: 0 0 1.5rem 0;
         }
-        .od-timeline li:last-child { border-bottom: none; }
+        .od-timeline li:last-child { padding-bottom: 0; }
+        .od-timeline li:not(:last-child)::before {
+          content: '';
+          position: absolute;
+          left: 1.1rem;
+          top: 2.2rem;
+          bottom: 0;
+          width: 2px;
+          background: rgba(255,255,255,0.12);
+          z-index: 0;
+        }
         .od-timeline-num {
-          font-family: var(--font-anton), sans-serif;
-          font-size: 1.5rem;
-          color: var(--accent);
-          font-weight: 400;
           flex: 0 0 2.2rem;
-          line-height: 1.1;
+          width: 2.2rem;
+          height: 2.2rem;
+          border-radius: 50%;
+          background: var(--accent);
+          color: #fff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.75rem;
+          font-weight: 800;
+          position: relative;
+          z-index: 1;
+          flex-shrink: 0;
+          align-self: flex-start;
         }
         .od-timeline-label {
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: 0.98rem;
           font-weight: 700;
-          color: #241123;
+          color: #fff;
           display: block;
+          padding-top: 0.3rem;
         }
         .od-timeline-detail {
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: 0.92rem;
-          color: rgba(36,17,35,0.65);
-          margin-top: 0.15rem;
+          color: rgba(255,255,255,0.55);
+          margin-top: 0.2rem;
+          line-height: 1.6;
         }
 
+        /* Light-background variant (left column) */
+        .od-timeline--light .od-timeline-label { color: #241123; }
+        .od-timeline--light .od-timeline-detail { color: rgba(36,17,35,0.6); }
+        .od-timeline--light li:not(:last-child)::before { background: rgba(36,17,35,0.12); }
+
+        /* ── FAQ ── */
         .od-faq { display: flex; flex-direction: column; gap: 0.5rem; }
         .od-faq-item {
-          background: rgba(36,17,35,0.03);
+          background: #24112308;
           border: 1px solid rgba(36,17,35,0.08);
           border-radius: 12px;
           padding: 0 1.25rem;
-          transition: background 160ms ease;
+          transition: background 160ms ease, border-left 160ms ease;
         }
-        .od-faq-item[open] { background: rgba(36,17,35,0.05); }
+        .od-faq-item[open] {
+          background: rgba(36,17,35,0.05);
+          border-left: 3px solid var(--accent);
+          padding-left: calc(1.25rem - 2px);
+        }
         .od-faq-item summary {
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: 1rem;
           font-weight: 700;
           color: #241123;
           padding: 1rem 0;
+          min-height: 56px;
           cursor: pointer;
           list-style: none;
           display: flex;
@@ -699,31 +853,46 @@ export default function OpportunityDetailClient({
         }
         .od-faq-item summary::-webkit-details-marker { display: none; }
         .od-faq-item summary::after {
-          content: "+";
-          font-family: var(--font-anton), sans-serif;
-          font-size: 1.3rem;
-          color: var(--accent);
+          content: "";
+          width: 8px;
+          height: 8px;
+          border-right: 2.5px solid var(--accent);
+          border-bottom: 2.5px solid var(--accent);
+          transform: rotate(45deg);
+          flex-shrink: 0;
           transition: transform 200ms ease;
         }
-        .od-faq-item[open] summary::after { transform: rotate(45deg); }
+        .od-faq-item[open] summary::after { transform: rotate(-135deg); }
         .od-faq-item p {
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: 0.95rem;
-          line-height: 1.7;
-          color: rgba(36,17,35,0.78);
-          margin: 0 0 1rem;
+          line-height: 1.75;
+          color: rgba(36,17,35,0.75);
+          margin: 0 0 1.1rem;
         }
 
         /* ── Side column ── */
-        .od-side { display: flex; flex-direction: column; gap: 1.5rem; position: sticky; top: 1.5rem; }
-        @media (max-width: 960px) { .od-side { position: static; } }
+
         .od-applycard {
-          background: linear-gradient(160deg, #241123 0%, #3a1a3a 100%);
-          color: #fff;
+          position: relative;
+          overflow: hidden;
+          background: #FFCC00;
+          color: #241123;
           padding: 1.75rem 1.5rem 1.5rem;
           border-radius: 18px;
-          border: 1px solid rgba(255,204,0,0.18);
-          box-shadow: 0 10px 36px rgba(36,17,35,0.18);
+          border: none;
+          box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+        }
+        .od-applycard::after {
+          content: "★";
+          position: absolute;
+          right: -0.75rem;
+          bottom: -1.5rem;
+          font-size: 9rem;
+          line-height: 1;
+          color: rgba(0,0,0,0.07);
+          pointer-events: none;
+          user-select: none;
         }
         .od-applycard-eyebrow {
           font-family: var(--font-dm-sans), sans-serif;
@@ -731,9 +900,10 @@ export default function OpportunityDetailClient({
           font-weight: 700;
           letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: #FFCC00;
+          color: rgba(36,17,35,0.55);
           display: block;
           margin-bottom: 0.6rem;
+          position: relative; z-index: 1;
         }
         .od-applycard-title {
           font-family: var(--font-anton), sans-serif;
@@ -741,14 +911,17 @@ export default function OpportunityDetailClient({
           font-weight: 400;
           margin: 0 0 0.7rem;
           line-height: 1.05;
+          color: #241123;
+          position: relative; z-index: 1;
         }
         .od-applycard-deadline {
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: 0.92rem;
-          color: rgba(255,255,255,0.78);
+          color: rgba(36,17,35,0.65);
           margin: 0 0 1.25rem;
+          position: relative; z-index: 1;
         }
-        .od-applycard-deadline strong { color: #FFCC00; font-weight: 700; }
+        .od-applycard-deadline strong { color: #241123; font-weight: 700; }
         .od-applycard-btn {
           display: block;
           text-align: center;
@@ -758,102 +931,110 @@ export default function OpportunityDetailClient({
           letter-spacing: 0.16em;
           text-transform: uppercase;
           padding: 1rem 1.4rem;
-          background: #FFCC00;
-          color: #241123;
+          background: #241123;
+          color: #FFCC00;
           border-radius: 12px;
           text-decoration: none;
           margin-bottom: 1rem;
+          position: relative; z-index: 1;
           transition: transform 160ms ease, opacity 160ms ease;
         }
-        .od-applycard-btn:hover { transform: translateY(-2px); opacity: 0.94; }
+        .od-applycard-btn:hover { transform: translateY(-2px); opacity: 0.88; }
         .od-applycard-closed {
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: 0.88rem;
           line-height: 1.6;
-          color: rgba(255,255,255,0.72);
+          color: rgba(36,17,35,0.7);
           margin: 0 0 1rem;
+          position: relative; z-index: 1;
         }
         .od-applycard-contact {
           font-family: var(--font-dm-sans), sans-serif;
           font-size: 0.78rem;
-          color: rgba(255,255,255,0.55);
+          color: rgba(36,17,35,0.5);
           padding-top: 1rem;
-          border-top: 1px solid rgba(255,255,255,0.08);
+          border-top: 1px solid rgba(36,17,35,0.12);
+          position: relative; z-index: 1;
         }
-        .od-applycard-contact a { color: #FFCC00; text-decoration: none; }
+        .od-applycard-contact a { color: #241123; text-decoration: none; font-weight: 600; }
         .od-applycard-contact a:hover { text-decoration: underline; }
 
         .od-perks {
-          background: #fff;
-          padding: 1.5rem;
-          border-radius: 16px;
-          border: 1px solid rgba(36,17,35,0.08);
+          padding-top: 0.9rem;
+          border-top: 1px solid rgba(255,255,255,0.1);
         }
         .od-perks-eyebrow {
           font-family: var(--font-dm-sans), sans-serif;
           font-size: 0.68rem;
-          font-weight: 700;
+          font-weight: 1200;
           letter-spacing: 0.22em;
           text-transform: uppercase;
           display: block;
           margin-bottom: 0.85rem;
+          color: #ffcc00 !important;
         }
-        .od-perks ul {
-          list-style: none;
-          padding: 0;
-          margin: 0;
+        .od-perks-pills {
           display: flex;
           flex-direction: column;
-          gap: 0.6rem;
-        }
-        .od-perks li {
-          display: flex;
           align-items: flex-start;
-          gap: 0.65rem;
-          font-family: var(--font-space-grotesk), sans-serif;
-          font-size: 0.92rem;
-          line-height: 1.5;
-          color: rgba(36,17,35,0.82);
+          gap: 0.45rem;
         }
-        .od-perks-check { flex: 0 0 1rem; font-weight: 700; }
+        .od-perk-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.6rem;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: #fff2bd;
+          background: #d9a91928;
+          border-radius: 999px;
+          padding: 0.3rem 1rem;
+        }
+        .od-perk-pill-check {
+          font-size: 0.8rem;
+          color: #ffcc00 !important;
+          font-weight: 800;
+          flex-shrink: 0;
+        }
 
         .od-roles {
-          background: #fff;
-          padding: 1.5rem;
-          border-radius: 16px;
-          border: 1px solid rgba(36,17,35,0.08);
+          padding-top: 0.85rem;
+          border-top: 1px solid rgba(255,255,255,0.1);
         }
-        .od-roles-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+        .od-roles-list { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.1rem; }
         .od-roletag {
           font-family: var(--font-dm-sans), sans-serif;
-          font-size: 0.7rem;
+          font-size: 0.8rem;
           font-weight: 600;
-          padding: 0.3rem 0.7rem;
+          padding: 0.35rem 0.8rem;
           border-radius: 999px;
-          background: rgba(36,17,35,0.05);
-          color: rgba(36,17,35,0.7);
+          background: #d9a9191f;
+          border: 0.5px solid #ffcc00d8;
+          color: #fff2bd;
+          transition: background 140ms ease;
         }
+        .od-roletag:hover { background: #ffcc0038; }
 
         /* ── Related ── */
         .od-related {
-          background: rgba(36,17,35,0.04);
+          background: transparent;
           padding: clamp(3rem, 6vw, 5rem) clamp(1.25rem, 5vw, 3rem);
-          border-top: 1px solid rgba(36,17,35,0.08);
         }
         .od-related-inner { max-width: 1180px; margin: 0 auto; }
         .od-related-eyebrow {
           font-family: var(--font-dm-sans), sans-serif;
           font-size: 0.72rem;
-          font-weight: 700;
+          font-weight: 800;
           letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: rgba(36,17,35,0.5);
+          color: #241123;
           display: block;
-          margin-bottom: 0.6rem;
+          margin-bottom: 0.5rem;
         }
         .od-related-title {
           font-family: var(--font-anton), sans-serif;
-          font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+          font-size: clamp(2.8rem, 3.5vw, 3.6rem);
           font-weight: 400;
           margin: 0 0 1.75rem;
           color: #241123;
@@ -861,35 +1042,49 @@ export default function OpportunityDetailClient({
         .od-related-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 1.25rem;
+          gap: 1rem;
         }
-        @media (max-width: 820px) { .od-related-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 820px) { .od-related-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 520px) {
+          .od-related-grid {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            gap: 0.85rem;
+            padding-bottom: 0.75rem;
+            scrollbar-width: none;
+          }
+          .od-related-grid::-webkit-scrollbar { display: none; }
+          .od-related-card { flex: 0 0 240px; scroll-snap-align: start; }
+        }
         .od-related-card {
           position: relative;
           display: flex;
           flex-direction: column;
-          gap: 0.55rem;
-          background: #fff;
-          padding: 1.5rem;
+          gap: 0.5rem;
+          background: #f2f2f22b;
+          padding: 1.35rem;
           border-radius: 14px;
-          border: 1px solid rgba(36,17,35,0.08);
-          border-top: 3px solid var(--ca);
+          border: none;
+          border-top: 0px solid var(--ca);
+          box-shadow: 0 4px 20px rgba(36,17,35,0.18);
           text-decoration: none;
           color: inherit;
           transition: transform 200ms ease, box-shadow 200ms ease;
         }
-        .od-related-card:hover { transform: translateY(-4px); box-shadow: 0 14px 36px rgba(36,17,35,0.12); }
+        .od-related-card:hover { transform: translateY(-4px); box-shadow: 0 10px 36px rgba(36,17,35,0.28); }
         .od-related-card-type {
           font-family: var(--font-dm-sans), sans-serif;
           font-size: 0.62rem;
           font-weight: 700;
           letter-spacing: 0.2em;
           text-transform: uppercase;
-          color: var(--ca);
+          color: #ffcc00;
         }
         .od-related-card-title {
           font-family: var(--font-anton), sans-serif;
-          font-size: 1.35rem;
+          font-size: 1.8rem;
           font-weight: 400;
           color: #241123;
           margin: 0;
@@ -898,17 +1093,69 @@ export default function OpportunityDetailClient({
         .od-related-card-meta {
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: 0.85rem;
-          color: rgba(36,17,35,0.6);
+          color: #241123a8;
           margin: 0;
         }
         .od-related-card-arrow {
           font-family: var(--font-anton), sans-serif;
-          color: var(--ca);
-          font-size: 1.2rem;
-          margin-top: 0.5rem;
+          color: #ffcc00;
+          font-size: 1.5rem;
+          margin-top: auto;
+          padding-top: 0.25rem;
           transition: transform 200ms ease;
         }
         .od-related-card:hover .od-related-card-arrow { transform: translateX(4px); }
+
+        .od-related-footer {
+          margin-top: 1.5rem;
+          text-align: center;
+        }
+        .od-related-all {
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.78rem;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: #ffcc00;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          min-height: 44px;
+          transition: color 160ms ease;
+        }
+        .od-related-all:hover { color: #241123; }
+
+        /* ── Mobile sticky CTA ── */
+        .od-mobile-cta {
+          display: none;
+          position: fixed;
+          bottom: 0; left: 0; right: 0;
+          z-index: 80;
+          padding: 0.85rem 1.25rem;
+          background: rgba(36,17,35,0.97);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        @media (max-width: 960px) { .od-mobile-cta { display: block; } }
+        @media (max-width: 960px) { .od-root { padding-bottom: 5.5rem; } }
+        .od-mobile-cta-btn {
+          display: block;
+          text-align: center;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.88rem;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          padding: 1rem 1.4rem;
+          background: #FFCC00;
+          color: #241123;
+          border-radius: 12px;
+          text-decoration: none;
+          transition: opacity 160ms ease;
+        }
+        .od-mobile-cta-btn:hover { opacity: 0.9; }
       `}</style>
     </main>
   );

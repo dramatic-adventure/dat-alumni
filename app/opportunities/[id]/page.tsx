@@ -1,6 +1,6 @@
 // app/opportunities/[id]/page.tsx
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { allOpportunityIds } from "@/lib/opportunities";
 import { findOpportunity, loadOpportunities } from "@/lib/loadOpportunities";
 import OpportunityDetailClient from "./OpportunityDetailClient";
@@ -51,6 +51,7 @@ export default async function OpportunityDetailPage({
   ]);
 
   if (!opportunity) notFound();
+  if (opportunity.status === "closed") redirect("/opportunities?notice=closed");
 
   // Related: same type, different id, status open / coming_soon / evergreen
   const related = all
