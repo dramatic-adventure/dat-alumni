@@ -13,5 +13,23 @@
   // CSS linters: ignore unknown at-rules (Tailwind etc.)
   "css.lint.unknownAtRules": "ignore",
   "scss.lint.unknownAtRules": "ignore",
-  "less.lint.unknownAtRules": "ignore"
+  "less.lint.unknownAtRules": "ignore",
+
+  // Exclude build artifacts from file watching, search, and TypeScript scanning.
+  // VSCode holding read locks on .next files during webpack's atomic rename
+  // causes pack-file write failures that corrupt the dev server state.
+  "files.watcherExclude": {
+    "**/.next/**": true,
+    "**/node_modules/**": true
+  },
+  "files.exclude": {
+    "**/.next": true
+  },
+  "search.exclude": {
+    "**/.next/**": true,
+    "**/node_modules/**": true
+  },
+  "typescript.tsserver.watchOptions": {
+    "excludeDirectories": [".next", "node_modules"]
+  }
 }
