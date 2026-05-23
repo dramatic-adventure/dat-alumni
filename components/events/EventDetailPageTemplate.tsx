@@ -10,6 +10,7 @@ import EventBilingualContent from "@/components/events/EventBilingualContent";
 import MailingListForm from "@/components/events/MailingListForm";
 import { productionMap } from "@/lib/productionMap";
 import { productionDetailsMap, type ProductionExtra } from "@/lib/productionDetailsMap";
+import { buildRelated, type RelatedItem } from "@/lib/buildRelated";
 import type { ResolvedPerformanceEvent } from "@/lib/events/resolvePerformanceEvent";
 import { dramaClubs as rawDramaClubs } from "@/lib/dramaClubMap";
 import {
@@ -69,7 +70,7 @@ const THEME_BY_CATEGORY: Record<
     surface2: "#3a0013",
     glow: "rgba(242, 51, 89, 0.18)",
     heroOverlay:
-      "linear-gradient(to top, rgba(13,8,18,0.97) 0%, rgba(13,8,18,0.80) 22%, rgba(13,8,18,0.22) 52%, rgba(13,8,18,0.04) 75%, rgba(13,8,18,0) 100%)",
+      "linear-gradient(to bottom, rgba(13,8,18,0.42) 0%, rgba(13,8,18,0.18) 35%, rgba(13,8,18,0.05) 65%, rgba(13,8,18,0) 100%)",
     buttonText: "#ffffff",
   },
   festival: {
@@ -78,7 +79,7 @@ const THEME_BY_CATEGORY: Record<
     surface2: "#052f3d",
     glow: "rgba(36, 147, 169, 0.18)",
     heroOverlay:
-      "linear-gradient(to top, rgba(5,20,26,0.97) 0%, rgba(5,20,26,0.80) 22%, rgba(5,20,26,0.22) 52%, rgba(5,20,26,0.04) 75%, rgba(5,20,26,0) 100%)",
+      "linear-gradient(to bottom, rgba(5,20,26,0.42) 0%, rgba(5,20,26,0.18) 35%, rgba(5,20,26,0.05) 65%, rgba(5,20,26,0) 100%)",
     buttonText: "#ffffff",
   },
   fundraiser: {
@@ -87,7 +88,7 @@ const THEME_BY_CATEGORY: Record<
     surface2: "#2e2000",
     glow: "rgba(255, 204, 0, 1)",
     heroOverlay:
-      "linear-gradient(to top, rgba(20,12,4,0.97) 0%, rgba(20,12,4,0.80) 22%, rgba(20,12,4,0.22) 52%, rgba(20,12,4,0.04) 75%, rgba(20,12,4,0) 100%)",
+      "linear-gradient(to bottom, rgba(20,12,4,0.42) 0%, rgba(20,12,4,0.18) 35%, rgba(20,12,4,0.05) 65%, rgba(20,12,4,0) 100%)",
     buttonText: "#241123",
   },
 };
@@ -148,8 +149,8 @@ function getPrimaryAction(event: DatEvent):
       href: `mailto:${event.contactEmail}?subject=${encodeURIComponent(
         `Attendance Request: ${event.title}`,
       )}`,
-      label: "Request an Invite →",
-      esLabel: "Solicitar Invitación →",
+      label: "Request an Invite",
+      esLabel: "Solicitar Invitación",
       tone: "invite",
     };
   }
@@ -158,16 +159,16 @@ function getPrimaryAction(event: DatEvent):
 
   const label =
     event.ticketType === "free"
-      ? "Register Free →"
+      ? "Register Free"
       : event.ticketType === "pay-what-you-can"
-        ? "Get Your Ticket →"
-        : "Reserve Your Seat →";
+        ? "Get Your Ticket"
+        : "Reserve Your Seat";
   const esLabel =
     event.ticketType === "free"
-      ? "Registrarse Gratis →"
+      ? "Registrarse Gratis"
       : event.ticketType === "pay-what-you-can"
-        ? "Obtener tu Entrada →"
-        : "Reservar tu Lugar →";
+        ? "Obtener tu Entrada"
+        : "Reservar tu Lugar";
   return { href: event.ticketUrl, label, esLabel, external: true, tone: "primary" };
 }
 
@@ -475,84 +476,185 @@ type ArchivedEventInfoBandProps = {
   event: DatEvent;
   routeKind: EventDetailRouteKind;
   relatedProduction?: { slug: string };
+  eventUrl: string;
 };
 
 function ArchivedEventInfoBand({
   event,
   routeKind,
   relatedProduction,
+  eventUrl,
 }: ArchivedEventInfoBandProps) {
-  return (
-    <div className="evd-ticket-bar">
-      <div className="evd-ticket-bar-inner">
-        <div className="evd-ticket-row1">
-          <div className="evd-ticket-when-where">
-            <span className="evd-tww-date">{formatDateRange(event.date, event.endDate)}</span>
-            <span className="evd-tww-venue">
-              {event.venue}
-              {event.city !== "Worldwide"
-                ? ` · ${event.city}${event.country ? `, ${event.country}` : ""}`
-                : ""}
-            </span>
-          </div>
+  const isBilingual = !!event.translations && Object.keys(event.translations).length > 0;
 
-          <div className="evd-ticket-purchase">
-            <Link href="/donate?mode=new-work&freq=monthly" className="evd-btn-ticket">
-              {event.translations ? (
+  // Chips: split archiveSummary by " · ", then category, season
+  const archiveChips: Array<{ label: string; primary: boolean }> = [];
+  if (event.archiveSummary) {
+    event.archiveSummary.split(/\s*·\s*/).filter(Boolean)
+      .forEach((p, i) => archiveChips.push({ label: p.trim(), primary: i === 0 }));
+  }
+  const categoryLabel = event.category
+    ? (event.category.charAt(0).toUpperCase() + event.category.slice(1))
+    : null;
+  const seasonLabel = (event as any).season ? `Season ${(event as any).season}` : null;
+  const hasChips = archiveChips.length > 0 || !!categoryLabel || !!seasonLabel;
+
+  // Venue / location
+  const venueText = event.venue || null;
+  const locationText = event.city && event.city !== "Worldwide"
+    ? [event.city, event.country].filter(Boolean).join(", ")
+    : null;
+
+  // Archive back-link
+  const archiveLabel =
+    routeKind === "festivals" ? "Festival Archive"
+    : routeKind === "gatherings" ? "Gatherings Archive"
+    : "Theatre Archive";
+  const archiveHref = `/${routeKind}`;
+
+  return (
+    <div className="evd-ticket-bar evd-ticket-bar--archive">
+      <div className="evd-arc-inner">
+
+        {/* ── Section 1: Venue (left) + Presented date (right) ── */}
+        <div className="evd-arc-section evd-arc-venue-row">
+          <div className="evd-arc-venue-block">
+            {venueText ? (
+              <p className="evd-arc-venue-name">
+                {event.venueUrl ? (
+                  <a href={event.venueUrl} target="_blank" rel="noopener noreferrer">
+                    {venueText}
+                  </a>
+                ) : venueText}
+              </p>
+            ) : null}
+            {locationText ? (
+              <p className="evd-arc-venue-loc">{locationText}</p>
+            ) : null}
+          </div>
+          <div className="evd-arc-date-block">
+            <p className="evd-arc-presented-label">
+              {isBilingual ? (
                 <>
-                  <span className="evd-bilingual-wrap-default">Sponsor New Works Like This →</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Apoya Nuevas Obras →</span>
+                  <span className="evd-bilingual-wrap-default">Presented</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Presentado</span>
                 </>
-              ) : "Sponsor New Works Like This →"}
-            </Link>
+              ) : "Presented"}
+            </p>
+            <p className="evd-arc-presented-date">{formatDateRange(event.date, event.endDate)}</p>
           </div>
         </div>
 
+        {/* ── Section 2: Type chips ───────────────────────────── */}
+        {hasChips ? (
+          <div className="evd-arc-section evd-arc-chips-row">
+            {archiveChips.map((chip, i) => (
+              <span key={i} className={`evd-archive-chip${chip.primary ? " evd-archive-chip--primary" : ""}`}>
+                {chip.label}
+              </span>
+            ))}
+            {categoryLabel ? <span className="evd-archive-chip">{categoryLabel}</span> : null}
+            {seasonLabel ? <span className="evd-archive-chip">{seasonLabel}</span> : null}
+          </div>
+        ) : null}
+
+        {/* ── Section 3: Runtime / language / suitability chips ── */}
         {(event.runtime || event.language || event.suitability) ? (
-          <div className="evd-ticket-chips">
+          <div className="evd-arc-section evd-arc-meta-row">
             {event.runtime ? (
-              <span className="evd-tmeta-chip">{event.runtime}</span>
+              <span className="evd-tmeta-chip">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                {isBilingual && event.translations?.["es"]?.runtime ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">{event.runtime}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].runtime}</span>
+                  </>
+                ) : event.runtime}
+              </span>
             ) : null}
             {event.language ? (
-              <span className="evd-tmeta-chip">{event.language}</span>
+              <span className="evd-tmeta-chip">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                {isBilingual && event.translations?.["es"]?.language ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">{event.language}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].language}</span>
+                  </>
+                ) : event.language}
+              </span>
             ) : null}
             {event.suitability ? (
-              <span className="evd-tmeta-chip">{event.suitability}</span>
+              <span className="evd-tmeta-chip">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                {isBilingual && event.translations?.["es"]?.suitability ? (
+                  <>
+                    <span className="evd-bilingual-wrap-default">{event.suitability}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].suitability}</span>
+                  </>
+                ) : event.suitability}
+              </span>
             ) : null}
           </div>
         ) : null}
 
-        {event.archiveSummary ? (
-          <div className="evd-a11y-inline">
-            <span>{event.archiveSummary}</span>
+        {/* ── Section 4: Actions ─────────────────────────────── */}
+        <div className="evd-arc-section evd-arc-actions-row">
+          <div className="evd-arc-actions-left">
+            <Link href={archiveHref} className="evd-archive-nav-link">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+              {isBilingual ? (
+                <>
+                  <span className="evd-bilingual-wrap-default">{archiveLabel}</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Archivo</span>
+                </>
+              ) : archiveLabel}
+            </Link>
+            <span className="evd-arc-divider" aria-hidden="true">|</span>
+            <EventShareButton
+              url={eventUrl}
+              title={`${event.title} — Dramatic Adventure Theatre`}
+              description={event.description}
+              shareLabel={isBilingual ? (
+                <>
+                  <span className="evd-bilingual-wrap-default">Share</span>
+                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Compartir</span>
+                </>
+              ) : undefined}
+            />
           </div>
-        ) : event.accessibility ? (
+          <Link href="/donate?mode=new-work&freq=monthly" className="evd-btn-ticket">
+            {isBilingual ? (
+              <>
+                <span className="evd-bilingual-wrap-default">Sponsor New Works Like This</span>
+                <span className="evd-bilingual-wrap-alt evd-bilingual-es">Apoya Nuevas Obras</span>
+              </>
+            ) : "Sponsor New Works Like This"}
+          </Link>
+        </div>
+
+        {/* Accessibility note */}
+        {event.accessibility ? (
           <div className="evd-a11y-inline">
-            <svg
-              width="11"
-              height="11"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-              style={{ flexShrink: 0, opacity: 0.4 }}
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 8v4m0 4h.01" />
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0, opacity: 0.4 }}>
+              <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
             </svg>
-            {event.translations?.["es"]?.accessibility ? (
+            {isBilingual ? (
               <>
                 <span className="evd-bilingual-wrap-default">{event.accessibility}</span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].accessibility}</span>
+                <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations?.["es"]?.accessibility ?? event.accessibility}</span>
               </>
-            ) : (
-              <span>{event.accessibility}</span>
-            )}
+            ) : <span>{event.accessibility}</span>}
           </div>
         ) : null}
+
       </div>
     </div>
   );
@@ -848,6 +950,11 @@ export default async function EventDetailPageTemplate({
   // Used to determine where the DAT logo sticker should appear.
   const showCycleSection = ((relatedProduction ? 1 : 0) + productionCycle.length) > 1;
 
+  // Related plays & projects — same `buildRelated` logic used in ProductionPageTemplate
+  const relatedPlayItems: RelatedItem[] = event.production
+    ? (buildRelated(event.production, 8).items ?? []).filter((ri) => !!ri?.slug && !!ri?.title)
+    : [];
+
   // Archive-enriched eyebrow: "Live Theatre · Season 8 (2013)" with linked season
   const archiveEyebrowNode =
     isArchiveView && relatedProduction?.season
@@ -857,13 +964,13 @@ export default async function EventDetailPageTemplate({
             <span className="evd-bilingual-wrap-default">
               {getEventEyebrow(event)}{" · "}
               <Link href={`/season/${relatedProduction.season}`} className="evd-hero-season-link">
-                {`Season ${relatedProduction.season}`}{relatedProduction.year ? ` (${relatedProduction.year})` : ""}
+                {`Season ${relatedProduction.season}`}
               </Link>
             </span>
             <span className="evd-bilingual-wrap-alt evd-bilingual-es">
               {getEventEyebrowEs(event)}{" · "}
               <Link href={`/season/${relatedProduction.season}`} className="evd-hero-season-link">
-                {`Temporada ${relatedProduction.season}`}{relatedProduction.year ? ` (${relatedProduction.year})` : ""}
+                {`Temporada ${relatedProduction.season}`}
               </Link>
             </span>
           </>
@@ -872,7 +979,7 @@ export default async function EventDetailPageTemplate({
           <>
             {getEventEyebrow(event)}{" · "}
             <Link href={`/season/${relatedProduction.season}`} className="evd-hero-season-link">
-              {`Season ${relatedProduction.season}`}{relatedProduction.year ? ` (${relatedProduction.year})` : ""}
+              {`Season ${relatedProduction.season}`}
             </Link>
           </>
         )
@@ -906,8 +1013,10 @@ export default async function EventDetailPageTemplate({
     <>
       <div className="evd-hero" style={heroVars}>
         <div className="evd-hero-overlay" />
+        <div className="evd-hero-text-shade" aria-hidden="true" />
         <div className="evd-hero-glow" />
         <div className="evd-hero-content">
+          {!isArchiveView && (
           <nav className="evd-breadcrumb" aria-label="Breadcrumb">
             <Link href="/events">
               {isBilingual ? (
@@ -944,17 +1053,18 @@ export default async function EventDetailPageTemplate({
               ) : event.title}
             </span>
           </nav>
+          )}
 
           {isArchiveView ? (
             <div className="evd-archive-badge-wrap">
-              <span className="evd-archive-badge">
+              <Link href="/theatre" className="evd-archive-badge evd-archive-badge--link">
                 {isBilingual ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">Archived</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Archivado</span>
+                    <span className="evd-bilingual-wrap-default">Theatre Archive</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Archivo de Teatro</span>
                   </>
-                ) : "Archived"}
-              </span>
+                ) : "Theatre Archive"}
+              </Link>
             </div>
           ) : null}
 
@@ -1005,6 +1115,7 @@ export default async function EventDetailPageTemplate({
             event={event}
             routeKind={routeKind}
             relatedProduction={relatedProduction}
+            eventUrl={eventUrl}
             />
         ) : (
             <UpcomingEventInfoBand
@@ -1018,12 +1129,16 @@ export default async function EventDetailPageTemplate({
         )}
         </section>
 
-      {/* ── White Content Card: description → creative team ─────────────── */}
+      {/* ── White Content Card: only render when there is substantive content ─ */}
+      {(event.description || paragraphs.length > 0 || editorialImg1 ||
+        (photoGallery?.length ?? 0) > 0 || (fieldGalleryImages?.length ?? 0) > 0 ||
+        castCredits.length > 0 || creativeCredits.length > 0 || videoEmbedUrl ||
+        event.pressQuotes?.length || linkedDramaClubs.length > 0) ? (
       <section className="evd-content-section" style={{ "--evd-accent": theme.accent } as CSSProperties}>
         <div className="evd-container">
           <div
             className="evd-content-card"
-            style={editorialImg1 ? { "--evd-card-bg": `url('${editorialImg1}')` } as CSSProperties : undefined}
+            style={editorialImg1 ? { "--evd-card-bg-img": `url('${editorialImg1}')` } as CSSProperties : undefined}
           >
 
             {/* Card-level title — frames the whole card */}
@@ -1036,99 +1151,12 @@ export default async function EventDetailPageTemplate({
               ) : "Inside the Work"}
             </p>
 
-            {/* Event description intro — moved from hero standfirst */}
-            {event.description && (
-              <div className="evd-card-intro">
-                {isBilingual ? (
-                  <>
-                    <p className="evd-card-intro-text evd-bilingual-default">
-                      {event.description}
-                    </p>
-                    <p className="evd-card-intro-text evd-bilingual-alt evd-bilingual-es">
-                      {event.translations?.["es"]?.description ?? event.description}
-                    </p>
-                  </>
-                ) : (
-                  <p className="evd-card-intro-text">{event.description}</p>
-                )}
-              </div>
-            )}
 
-            {/* Two-column content: LEFT quote-image + about / RIGHT reviews + community impact */}
+            {/* Two-column content: LEFT about / RIGHT reviews + community impact */}
             <div className={`evd-dashboard-grid${editorialImg1 || event.pressQuotes?.length || linkedDramaClubs.length > 0 ? "" : " evd-dashboard-grid--single"}`}>
 
-              {/* ── LEFT (60%): horizontal artist image → About → Video ── */}
+              {/* ── LEFT (60%): About → Resources → Video ── */}
               <div className="evd-dashboard-left">
-
-                {/* Horizontal image+artist note — ABOVE About */}
-                {editorialImg1 ? (
-                  <div className="evd-elder-shell evd-elder-shell--horizontal">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={editorialImg1}
-                      alt={artistNote?.by || event.title}
-                      className="evd-elder-bg"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <div className="evd-elder-overlay" aria-hidden="true" />
-                    <div className="evd-elder-content">
-                      {artistNote ? (
-                        isBilingual ? (
-                          <>
-                            {/* EN artist note — default (base event is always EN) */}
-                            <p className="evd-elder-text evd-bilingual-default">&ldquo;{artistNote.note}&rdquo;</p>
-                            {artistNote.by && (
-                              <p className="evd-elder-meta evd-bilingual-default">
-                                {resolved.artistNoteHref ? (
-                                  <a href={resolved.artistNoteHref} target="_blank" rel="noopener noreferrer" className="evd-elder-attribution-link">
-                                    <span className="evd-elder-name">{artistNote.by}</span>
-                                  </a>
-                                ) : (
-                                  <span className="evd-elder-name">{artistNote.by}</span>
-                                )}
-                              </p>
-                            )}
-                            {/* ES artist note — alt */}
-                            <p className="evd-elder-text evd-bilingual-alt evd-bilingual-es">
-                              &ldquo;{event.translations?.["es"]?.artistNote ?? artistNote.note}&rdquo;
-                            </p>
-                            {(event.translations?.["es"]?.artistNoteBy ?? artistNote.by) ? (
-                              <p className="evd-elder-meta evd-bilingual-alt evd-bilingual-es">
-                                {resolved.artistNoteHref ? (
-                                  <a href={resolved.artistNoteHref} target="_blank" rel="noopener noreferrer" className="evd-elder-attribution-link">
-                                    <span className="evd-elder-name">
-                                      {event.translations?.["es"]?.artistNoteBy ?? artistNote.by}
-                                    </span>
-                                  </a>
-                                ) : (
-                                  <span className="evd-elder-name">
-                                    {event.translations?.["es"]?.artistNoteBy ?? artistNote.by}
-                                  </span>
-                                )}
-                              </p>
-                            ) : null}
-                          </>
-                        ) : (
-                          <>
-                            <p className="evd-elder-text">&ldquo;{artistNote.note}&rdquo;</p>
-                            {artistNote.by ? (
-                              <p className="evd-elder-meta">
-                                {resolved.artistNoteHref ? (
-                                  <a href={resolved.artistNoteHref} target="_blank" rel="noopener noreferrer" className="evd-elder-attribution-link">
-                                    <span className="evd-elder-name">{artistNote.by}</span>
-                                  </a>
-                                ) : (
-                                  <span className="evd-elder-name">{artistNote.by}</span>
-                                )}
-                              </p>
-                            ) : null}
-                          </>
-                        )
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
 
                 {/* About section */}
                 {paragraphs.length > 0 ? (
@@ -1225,7 +1253,7 @@ export default async function EventDetailPageTemplate({
                         {resolvedThemes.map((t, i) => (
                           <a
                             key={i}
-                            href={`/theme/${t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`}
+                            href={`/theme/${t.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`}
                             className="evd-theme-pill"
                           >{t}</a>
                         ))}
@@ -1268,9 +1296,48 @@ export default async function EventDetailPageTemplate({
 
               </div>
 
-              {/* ── RIGHT (40%): press reviews → Community Impact ── */}
-              {(linkedDramaClubs.length > 0 || event.pressQuotes?.length || event.donateLink || event.impactBlurb || resolvedCauses?.length || resolvedPartners?.length) ? (
+              {/* ── RIGHT (40%): editorial image → press reviews → Community Impact ── */}
+              {(editorialImg1 || linkedDramaClubs.length > 0 || event.pressQuotes?.length || event.donateLink || event.impactBlurb || resolvedCauses?.length || resolvedPartners?.length) ? (
                 <div className="evd-dashboard-right">
+
+                  {/* Editorial image with artist quote — sits at top of right column */}
+                  {editorialImg1 ? (
+                    <div className={`evd-elder-shell evd-elder-shell--horizontal${editorialImg1 ? " evd-elder-shell--has-image" : ""}`}>
+                      <img
+                        src={editorialImg1}
+                        alt={artistNote?.by || event.title}
+                        className="evd-elder-bg"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                      <div className="evd-elder-overlay" aria-hidden="true" />
+                      <div className="evd-elder-content">
+                        {artistNote ? (
+                          isBilingual ? (
+                            <>
+                              <p className="evd-elder-text evd-bilingual-default">&ldquo;{artistNote.note}&rdquo;</p>
+                              {artistNote.by && (
+                                <p className="evd-elder-meta evd-bilingual-default">— {artistNote.by}</p>
+                              )}
+                              <p className="evd-elder-text evd-bilingual-alt evd-bilingual-es">
+                                &ldquo;{event.translations?.["es"]?.artistNote ?? artistNote.note}&rdquo;
+                              </p>
+                              {artistNote.by && (
+                                <p className="evd-elder-meta evd-bilingual-alt evd-bilingual-es">— {artistNote.by}</p>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <p className="evd-elder-text">&ldquo;{artistNote.note}&rdquo;</p>
+                              {artistNote.by ? (
+                                <p className="evd-elder-meta">— {artistNote.by}</p>
+                              ) : null}
+                            </>
+                          )
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
 
                   {/* Press / audience reviews */}
                   {event.pressQuotes?.length ? (
@@ -1471,13 +1538,13 @@ export default async function EventDetailPageTemplate({
                         {isBilingual ? (
                           <>
                             <span className="evd-bilingual-wrap-default">
-                              {isArchiveView ? "Sponsor New Works Like This →" : "Sponsor This New Work →"}
+                              {isArchiveView ? "Sponsor New Works Like This" : "Sponsor This New Work"}
                             </span>
                             <span className="evd-bilingual-wrap-alt evd-bilingual-es">
-                              {isArchiveView ? "Apoyar Nuevas Obras →" : "Apoyar Esta Nueva Obra →"}
+                              {isArchiveView ? "Apoyar Nuevas Obras" : "Apoyar Esta Nueva Obra"}
                             </span>
                           </>
-                        ) : (isArchiveView ? "Sponsor New Works Like This →" : "Sponsor This New Work →")}
+                        ) : (isArchiveView ? "Sponsor New Works Like This" : "Sponsor This New Work")}
                       </a>
                       {linkedDramaClubs.length > 0 && (
                         <a
@@ -1486,10 +1553,10 @@ export default async function EventDetailPageTemplate({
                         >
                           {isBilingual ? (
                             <>
-                              <span className="evd-bilingual-wrap-default">Sponsor this Drama Club →</span>
-                              <span className="evd-bilingual-wrap-alt evd-bilingual-es">Apoyar este Club de Teatro →</span>
+                              <span className="evd-bilingual-wrap-default">Sponsor this Drama Club</span>
+                              <span className="evd-bilingual-wrap-alt evd-bilingual-es">Apoyar este Club de Teatro</span>
                             </>
-                          ) : "Sponsor this Drama Club →"}
+                          ) : "Sponsor this Drama Club"}
                         </a>
                       )}
                     </div>
@@ -1650,6 +1717,7 @@ export default async function EventDetailPageTemplate({
           </div>
         </div>
       </section>
+      ) : null}
 
       {/* ── Related Productions Cycle ────────────────────────────────── */}
       {/* Show only when total entries > 1 (relatedProduction counts as 1 entry) */}
@@ -1724,13 +1792,13 @@ export default async function EventDetailPageTemplate({
                           {isBilingual ? (
                             <>
                               <span className="evd-bilingual-wrap-default">
-                                {badge.isUpcoming ? "Explore Production →" : "View Archive →"}
+                                {badge.isUpcoming ? "Explore Production" : "EXPLORE PRODUCTION"}
                               </span>
                               <span className="evd-bilingual-wrap-alt evd-bilingual-es">
-                                {badge.isUpcoming ? "Explorar Producción →" : "Ver Archivo →"}
+                                {badge.isUpcoming ? "Explorar Producción" : "EXPLORAR PRODUCCIÓN"}
                               </span>
                             </>
-                          ) : (badge.isUpcoming ? "Explore Production →" : "View Archive →")}
+                          ) : (badge.isUpcoming ? "Explore Production" : "EXPLORE PRODUCTION")}
                         </span>
                       </div>
                     </Link>
@@ -1765,13 +1833,13 @@ export default async function EventDetailPageTemplate({
                           {isBilingual ? (
                             <>
                               <span className="evd-bilingual-wrap-default">
-                                {cycleBadge.isUpcoming ? "Explore Production →" : "View Archive →"}
+                                {cycleBadge.isUpcoming ? "Explore Production" : "EXPLORE PRODUCTION"}
                               </span>
                               <span className="evd-bilingual-wrap-alt evd-bilingual-es">
-                                {cycleBadge.isUpcoming ? "Explorar Producción →" : "Ver Archivo →"}
+                                {cycleBadge.isUpcoming ? "Explorar Producción" : "EXPLORAR PRODUCCIÓN"}
                               </span>
                             </>
-                          ) : (cycleBadge.isUpcoming ? "Explore Production →" : "View Archive →")}
+                          ) : (cycleBadge.isUpcoming ? "Explore Production" : "EXPLORE PRODUCTION")}
                         </span>
                       </div>
                     </Link>
@@ -1783,43 +1851,111 @@ export default async function EventDetailPageTemplate({
             {/* Related upcoming event — archive promo */}
             {isArchiveView && relatedUpcomingEvent ? (
               <div className="evd-related-upcoming">
-                <p className="evd-related-upcoming-eyebrow">
-                  {isBilingual ? (
-                    <>
-                      <span className="evd-bilingual-wrap-default">The Work Returns</span>
-                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">La Obra Regresa</span>
-                    </>
-                  ) : "The Work Returns"}
-                </p>
-                <Link href={canonicalEventPath(relatedUpcomingEvent)} className="evd-related-upcoming-link">
-                  <div className="evd-related-upcoming-copy">
-                    <p className="evd-related-upcoming-title">
-                      {isBilingual ? (
-                        <>
-                          <span className="evd-bilingual-wrap-default">{relatedUpcomingEvent.title}</span>
-                          <span className="evd-bilingual-wrap-alt evd-bilingual-es">
-                            {relatedUpcomingEvent.translations?.["es"]?.title ?? relatedUpcomingEvent.title}
-                          </span>
-                        </>
-                      ) : relatedUpcomingEvent.title}
+                {/* Background image layer — revealed on hover */}
+                {relatedUpcomingEvent.image && (
+                  <div
+                    className="evd-related-upcoming-bg"
+                    style={{ backgroundImage: `url('${relatedUpcomingEvent.image}')` }}
+                    aria-hidden="true"
+                  />
+                )}
+                {/* Persistent dark overlay so text stays legible over the image */}
+                <div className="evd-related-upcoming-overlay" aria-hidden="true" />
+                <div className="evd-related-upcoming-inner">
+                  {/* Decorative rule + eyebrow */}
+                  <div className="evd-related-upcoming-header">
+                    <span className="evd-related-upcoming-rule" aria-hidden="true" />
+                    <p className="evd-related-upcoming-eyebrow">
+                      {(() => {
+                        const upCity = relatedUpcomingEvent.city && relatedUpcomingEvent.city !== "Worldwide"
+                          ? relatedUpcomingEvent.city.toUpperCase() : null;
+                        const upCountry = relatedUpcomingEvent.country
+                          ? relatedUpcomingEvent.country.toUpperCase() : null;
+                        const locationSuffix = upCity
+                          ? ` IN ${upCity}${upCountry ? `, ${upCountry}` : ""}` : "";
+                        const locationSuffixEs = upCity
+                          ? ` EN ${upCity}${upCountry ? `, ${upCountry}` : ""}` : "";
+                        return isBilingual ? (
+                          <>
+                            <span className="evd-bilingual-wrap-default">THE WORK CONTINUES{locationSuffix}</span>
+                            <span className="evd-bilingual-wrap-alt evd-bilingual-es">LA OBRA CONTINÚA{locationSuffixEs}</span>
+                          </>
+                        ) : `THE WORK CONTINUES${locationSuffix}`;
+                      })()}
                     </p>
-                    <p className="evd-related-upcoming-meta">
-                      {formatDateRange(relatedUpcomingEvent.date, relatedUpcomingEvent.endDate)}
-                      {relatedUpcomingEvent.venue ? ` · ${relatedUpcomingEvent.venue}` : ""}
-                      {relatedUpcomingEvent.city ? `, ${relatedUpcomingEvent.city}` : ""}
-                    </p>
+                    <span className="evd-related-upcoming-rule" aria-hidden="true" />
                   </div>
-                  <span className="evd-related-upcoming-cta">
+
+                  {/* Title */}
+                  <p className="evd-related-upcoming-title">
                     {isBilingual ? (
                       <>
-                        <span className="evd-bilingual-wrap-default">See What&apos;s Next →</span>
-                        <span className="evd-bilingual-wrap-alt evd-bilingual-es">Ver Lo Que Sigue →</span>
+                        <span className="evd-bilingual-wrap-default">{relatedUpcomingEvent.title}</span>
+                        <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                          {relatedUpcomingEvent.translations?.["es"]?.title ?? relatedUpcomingEvent.title}
+                        </span>
                       </>
-                    ) : "See What's Next →"}
-                  </span>
-                </Link>
+                    ) : relatedUpcomingEvent.title}
+                  </p>
+
+                  {/* Meta */}
+                  <p className="evd-related-upcoming-meta">
+                    {formatDateRange(relatedUpcomingEvent.date, relatedUpcomingEvent.endDate)}
+                    {relatedUpcomingEvent.venue ? ` · ${relatedUpcomingEvent.venue}` : ""}
+                  </p>
+
+                  {/* CTA */}
+                  <Link href={canonicalEventPath(relatedUpcomingEvent)} className="evd-related-upcoming-link">
+                    <span className="evd-related-upcoming-cta">
+                      {isBilingual ? (
+                        <>
+                          <span className="evd-bilingual-wrap-default">RESERVE YOUR SEAT</span>
+                          <span className="evd-bilingual-wrap-alt evd-bilingual-es">RESERVA TU LUGAR</span>
+                        </>
+                      ) : "RESERVE YOUR SEAT"}
+                    </span>
+                  </Link>
+                </div>
               </div>
             ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      {/* ── Related Plays & Projects — only when no Full Cycle ──────────── */}
+      {!showCycleSection && relatedPlayItems.length > 0 ? (
+        <section className="evd-related-plays-band">
+          {/* DAT logo sticker — same placement as on the Full Cycle band */}
+          <div className="evd-cycle-logo-sticker" aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/dat-logo7.svg" alt="" className="evd-cycle-logo-img" />
+          </div>
+          <div className="evd-container">
+            <div className="evd-section-head">
+              <p className="evd-section-eyebrow">More From DAT</p>
+              <h2 className="evd-section-title">Related Plays &amp; Projects</h2>
+            </div>
+            <div className="evd-rp-scroll-outer">
+              <div className="evd-rp-scroll" aria-label="Related Plays & Projects">
+                {relatedPlayItems.map((ri) => {
+                  const href = ri.kind === "project" ? `/project/${ri.slug}` : `/theatre/${ri.slug}`;
+                  return (
+                    <Link key={ri.slug} href={href} className="evd-rp-card" aria-label={ri.title}>
+                      <div
+                        className="evd-rp-img"
+                        style={{ backgroundImage: `url('${ri.heroImageUrl || "/posters/fallback-16x9.jpg"}')` }}
+                      />
+                      <div className="evd-rp-body">
+                        <p className="evd-rp-title">{ri.title}</p>
+                        {(ri.seasonLabel || ri.dates) ? (
+                          <p className="evd-rp-meta">{[ri.seasonLabel, ri.dates].filter(Boolean).join(" · ")}</p>
+                        ) : null}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </section>
       ) : null}
@@ -1827,8 +1963,8 @@ export default async function EventDetailPageTemplate({
       {/* ── Related Upcoming Events ────────────────────────────────────── */}
       {relatedEvents.length > 0 ? (
         <section className="evd-related-events-band">
-          {/* DAT logo sticker — only shown here when the cycle section is absent */}
-          {!showCycleSection && (
+          {/* DAT logo sticker — shown here only when both cycle and related plays are absent */}
+          {!showCycleSection && relatedPlayItems.length === 0 && (
             <div className="evd-cycle-logo-sticker" aria-hidden="true">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/dat-logo7.svg" alt="" className="evd-cycle-logo-img" />
@@ -1847,10 +1983,10 @@ export default async function EventDetailPageTemplate({
               <h2 className="evd-section-title">
                 {isBilingual ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">The Work Continues</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">La Obra Continúa</span>
+                    <span className="evd-bilingual-wrap-default">Meet Us There</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Encuéntranos Allí</span>
                   </>
-                ) : "The Work Continues"}
+                ) : "Meet Us There"}
               </h2>
             </div>
             <div className="evd-rel-events-grid">
@@ -1890,43 +2026,43 @@ export default async function EventDetailPageTemplate({
                 <Link href="/events/performances" className="evd-bottom-link evd-bottom-link--pink">
                   {isBilingual ? (
                     <>
-                      <span className="evd-bilingual-wrap-default">Upcoming Performances →</span>
-                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Próximas Funciones →</span>
+                      <span className="evd-bilingual-wrap-default">Upcoming Performances</span>
+                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Próximas Funciones</span>
                     </>
-                  ) : "Upcoming Performances →"}
+                  ) : "Upcoming Performances"}
                 </Link>
                 <Link href="/events/fundraisers" className="evd-bottom-link evd-bottom-link--gold">
                   {isBilingual ? (
                     <>
-                      <span className="evd-bilingual-wrap-default">Fundraisers &amp; Community Nights →</span>
-                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Recaudaciones y Comunidad →</span>
+                      <span className="evd-bilingual-wrap-default">Fundraisers &amp; Community Nights</span>
+                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Recaudaciones y Comunidad</span>
                     </>
-                  ) : "Fundraisers & Community Nights →"}
+                  ) : "Fundraisers & Community Nights"}
                 </Link>
                 <Link href="/events/festivals" className="evd-bottom-link evd-bottom-link--teal">
                   {isBilingual ? (
                     <>
-                      <span className="evd-bilingual-wrap-default">Festivals &amp; Showcases →</span>
-                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Festivales y Exhibiciones →</span>
+                      <span className="evd-bilingual-wrap-default">Festivals &amp; Showcases</span>
+                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Festivales y Exhibiciones</span>
                     </>
-                  ) : "Festivals & Showcases →"}
+                  ) : "Festivals & Showcases"}
                 </Link>
                 <Link href="/theatre" className="evd-bottom-link evd-bottom-link--muted">
                   {isBilingual ? (
                     <>
-                      <span className="evd-bilingual-wrap-default">Theatre Archive →</span>
-                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Archivo de Teatro →</span>
+                      <span className="evd-bilingual-wrap-default">Theatre Archive</span>
+                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Archivo de Teatro</span>
                     </>
-                  ) : "Theatre Archive →"}
+                  ) : "Theatre Archive"}
                 </Link>
               </div>
               <Link href="/events" className="evd-btn-ghost evd-rel-all-events-btn">
                 {isBilingual ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">Find Your Show →</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Encuentra Tu Función →</span>
+                    <span className="evd-bilingual-wrap-default">Find Your Show</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Encuentra Tu Función</span>
                   </>
-                ) : "Find Your Show →"}
+                ) : "Find Your Show"}
               </Link>
             </div>
           </div>
@@ -1935,8 +2071,8 @@ export default async function EventDetailPageTemplate({
 
       {/* ── Newsletter ─────────────────────────────────────────────────── */}
       <section className="evd-newsletter-band">
-        {/* DAT logo sticker — only when both cycle and related events are absent */}
-        {!showCycleSection && relatedEvents.length === 0 && (
+        {/* DAT logo sticker — only when cycle, related plays, and related events are all absent */}
+        {!showCycleSection && relatedPlayItems.length === 0 && relatedEvents.length === 0 && (
           <div className="evd-cycle-logo-sticker" aria-hidden="true">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/dat-logo7.svg" alt="" className="evd-cycle-logo-img" />
@@ -2046,6 +2182,25 @@ export default async function EventDetailPageTemplate({
           pointer-events: none;
         }
 
+        /* Localized blur-glow behind text content only — keeps image crisp elsewhere */
+        .evd-hero-text-shade {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          width: 80%;
+          height: 75%;
+          background: linear-gradient(
+            to top right,
+            rgba(0,0,0,0.80) 0%,
+            rgba(0,0,0,0.55) 28%,
+            rgba(0,0,0,0.20) 56%,
+            rgba(0,0,0,0) 80%
+          );
+          filter: blur(18px);
+          z-index: 1;
+          pointer-events: none;
+        }
+
         .evd-hero-glow {
           position: absolute;
           inset: 0;
@@ -2101,6 +2256,7 @@ export default async function EventDetailPageTemplate({
         .evd-eyebrow {
           color: var(--evd-accent);
           margin: 0 0 0.85rem;
+          text-shadow: 0 1px 4px rgba(0,0,0,0.95), 0 4px 16px rgba(0,0,0,0.75);
         }
         /* Breadcrumb nav in hero */
         .evd-breadcrumb {
@@ -2136,7 +2292,10 @@ export default async function EventDetailPageTemplate({
           margin: 0 0 0.9rem;
           letter-spacing: 0.01em;
           text-transform: uppercase;
-          text-shadow: 0 2px 24px rgba(0,0,0,0.5);
+          text-shadow:
+            0 2px 6px rgba(0,0,0,0.95),
+            0 6px 24px rgba(0,0,0,0.85),
+            0 16px 48px rgba(0,0,0,0.6);
           padding-right: clamp(0.5rem, 4vw, 2rem);
         }
 
@@ -2147,6 +2306,7 @@ export default async function EventDetailPageTemplate({
           color: rgba(255,255,255,0.86);
           line-height: 1.4;
           margin: 0 0 1rem;
+          text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 4px 16px rgba(0,0,0,0.7);
         }
 
         .evd-standfirst {
@@ -2204,6 +2364,48 @@ export default async function EventDetailPageTemplate({
           z-index: 5;
         }
 
+        /* Archive context label — prominent eyebrow at top of archive band */
+        .evd-archive-context {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.13em;
+          text-transform: uppercase;
+          color: var(--evd-accent);
+          margin: 0 0 0.6rem;
+          opacity: 0.9;
+        }
+
+        /* Archive nav row — bottom of archive band */
+        .evd-archive-nav-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          flex-wrap: wrap;
+          margin-top: 0.5rem;
+          padding-top: 0.6rem;
+          border-top: 1px solid rgba(255,255,255,0.07);
+        }
+        .evd-archive-nav-link,
+        .evd-archive-nav-link:link,
+        .evd-archive-nav-link:visited {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.68rem;
+          font-weight: 600;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.52) !important;
+          text-decoration: none !important;
+          transition: color 0.16s ease, letter-spacing 0.16s ease;
+        }
+        .evd-archive-nav-link:hover,
+        .evd-archive-nav-link:focus-visible {
+          color: #ffcc00 !important;
+          letter-spacing: 0.18em;
+          text-decoration: none !important;
+        }
+
         /* Full-bleed ticket bar — spans viewport edge to edge */
         .evd-ticket-bar {
           background: rgba(0,0,0,0.50);
@@ -2212,6 +2414,139 @@ export default async function EventDetailPageTemplate({
           box-shadow: 0 8px 32px rgba(0,0,0,0.55);
           position: relative;
           z-index: 10;
+        }
+        /* Archive variant — no accent stripe */
+        .evd-ticket-bar--archive {
+          border-top: none;
+        }
+        /* Archive inner container — sections stack vertically, each ruled */
+        .evd-arc-inner {
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+        /* Each section has horizontal padding + bottom rule */
+        .evd-arc-section {
+          padding: 0.85rem clamp(1.75rem, 4vw, 3rem);
+          border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        /* Section 1: chips row */
+        .evd-arc-chips-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          align-items: center;
+        }
+        .evd-archive-chip {
+          display: inline-block;
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.13em;
+          text-transform: uppercase;
+          padding: 3px 9px;
+          border-radius: 2px;
+          border: 1px solid rgba(245,240,236,0.18);
+          color: rgba(245,240,236,0.45);
+        }
+        .evd-archive-chip--primary {
+          border-color: rgba(245,183,49,0.4);
+          color: #F5B731;
+        }
+        /* Section 2: venue (left) + presented date (right) */
+        .evd-arc-venue-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          gap: 1.5rem;
+          flex-wrap: wrap;
+        }
+        .evd-arc-venue-block {
+          min-width: 0;
+        }
+        .evd-arc-venue-name {
+          font-size: clamp(15px, 2.2vw, 19px);
+          font-weight: 800;
+          color: #F5F0EC;
+          line-height: 1.2;
+        }
+        .evd-arc-venue-name a {
+          color: inherit;
+          text-decoration: none;
+          transition: color 180ms ease, letter-spacing 180ms ease;
+        }
+        .evd-arc-venue-name a:hover {
+          color: #F5B731;
+          letter-spacing: 0.04em;
+        }
+        .evd-arc-venue-loc {
+          font-size: 13px;
+          color: rgba(245,240,236,0.42);
+          margin-top: 3px;
+        }
+        .evd-arc-date-block {
+          text-align: right;
+          flex-shrink: 0;
+        }
+        .evd-arc-presented-label {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: rgba(245,240,236,0.32);
+          margin-bottom: 3px;
+        }
+        .evd-arc-presented-date {
+          font-size: 17px;
+          font-weight: 800;
+          color: #F5F0EC;
+          font-variant-numeric: tabular-nums;
+        }
+        /* Section 3: runtime / language / suitability chips (reuse evd-tmeta-chip) */
+        .evd-arc-meta-row {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 0.6rem;
+        }
+        /* Section 4: actions — back link + share (left) | CTA (right) */
+        .evd-arc-actions-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          flex-wrap: wrap;
+          border-bottom: none !important;
+        }
+        .evd-arc-actions-left {
+          display: flex;
+          align-items: center;
+          gap: 0.65rem;
+          flex-wrap: wrap;
+        }
+        .evd-arc-divider {
+          color: rgba(255,255,255,0.14);
+          font-size: 12px;
+          user-select: none;
+        }
+        /* Mobile: venue row stacks, date left-aligns, CTA full-width */
+        @media (max-width: 640px) {
+          .evd-arc-venue-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+          }
+          .evd-arc-date-block {
+            text-align: left;
+          }
+          .evd-arc-actions-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+          }
+          .evd-arc-actions-row .evd-btn-ticket {
+            width: 100%;
+            text-align: center;
+            justify-content: center;
+          }
         }
         .evd-ticket-bar-inner {
           max-width: 1200px;
@@ -2546,10 +2881,11 @@ export default async function EventDetailPageTemplate({
           background: radial-gradient(circle at top left, rgba(108,0,175,0.18), rgba(36,17,35,0.85));
           box-shadow: 0 14px 30px rgba(0,0,0,0.35);
         }
-        /* Horizontal variant: landscape aspect ratio for left-column placement */
+        /* Portrait variant — sits in the right column above Community Impact */
         .evd-elder-shell--horizontal {
           min-height: unset;
-          aspect-ratio: 16 / 9;
+          aspect-ratio: 3 / 4;
+          max-height: 520px;
         }
         .evd-elder-shell--has-image {
           cursor: default;
@@ -2760,9 +3096,9 @@ export default async function EventDetailPageTemplate({
           letter-spacing: 0.10em;
           text-transform: uppercase;
           text-align: center;
-          color: var(--evd-accent, #F23359);
+          color: #241123;
           margin: 0 0 0.5rem;
-          text-shadow: 0 2px 16px rgba(242,51,89,0.18), 0 1px 2px rgba(36,17,35,0.45);
+          text-shadow: none;
         }
 
         /* ── 3a-i. Card intro description ─────────────────────────────── */
@@ -2787,12 +3123,16 @@ export default async function EventDetailPageTemplate({
           padding: clamp(1.5rem, 3vw, 2.5rem) 0 calc(140px + 2rem);
         }
         .evd-content-card {
+          --evd-card-pad: clamp(1.5rem, 3.5vw, 2.8rem);
           background: rgba(255,255,255,0.62);
           border-radius: 18px;
-          box-shadow: 0 18px 48px rgba(36,17,35,0.12);
+          box-shadow:
+            0 4px 12px rgba(0,0,0,0.30),
+            0 18px 48px rgba(0,0,0,0.50),
+            0 40px 80px rgba(0,0,0,0.35);
           border: 1px solid rgba(36,17,35,0.08);
           backdrop-filter: saturate(1.05);
-          padding: clamp(1.5rem, 3.5vw, 2.8rem) clamp(1.5rem, 3.5vw, 2.8rem);
+          padding: var(--evd-card-pad);
           overflow: hidden;
           position: relative;
           isolation: isolate;
@@ -2800,22 +3140,23 @@ export default async function EventDetailPageTemplate({
           max-width: 1200px;
           margin: 0 auto;
         }
-        /* Background image treatment — subtle landscape image behind card content */
+        /* Background image treatment — full-opacity ombre: 100% at top, fades to 0 */
         .evd-content-card[style*="--evd-card-bg-img"]::after {
           content: "";
           position: absolute;
           top: 5px; /* sits beneath accent stripe */
           left: 0;
           right: 0;
-          bottom: 0;
+          height: clamp(220px, 30vw, 480px);
           z-index: -1;
           background-image: var(--evd-card-bg-img);
           background-size: cover;
           background-position: center 25%;
-          opacity: 0.06;
+          opacity: 1;
           pointer-events: none;
-          -webkit-mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 88%);
-          mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 88%);
+          border-radius: 18px 18px 0 0;
+          -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+          mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
         }
         /* Category accent stripe across the top of the white card */
         .evd-content-card::before {
@@ -3661,12 +4002,12 @@ export default async function EventDetailPageTemplate({
           border-color: rgba(47,168,115,0.5);
         }
 
-        /* Archive cards — visually recede to signal past productions */
+        /* Archive cards — full colour, no desaturation */
         .evd-cycle-card:not(.evd-cycle-card--upcoming) .evd-cycle-img {
-          filter: saturate(0.65) brightness(0.8);
+          filter: none;
         }
         .evd-cycle-card:not(.evd-cycle-card--upcoming):hover .evd-cycle-img {
-          filter: saturate(0.85) brightness(0.95);
+          filter: none;
         }
         .evd-cycle-card:not(.evd-cycle-card--upcoming) .evd-cycle-title {
           color: rgba(255,255,255,0.72);
@@ -3694,6 +4035,71 @@ export default async function EventDetailPageTemplate({
         .evd-cycle-card--upcoming .evd-cycle-title {
           color: #fff;
         }
+
+        /* ── 8b. Related Plays & Projects ──────────────────────────────── */
+        .evd-related-plays-band {
+          background: #111118;
+          padding: clamp(3rem, 6vw, 5rem) 0 clamp(2rem, 4vw, 3.5rem);
+          border-top: 1px solid rgba(255,255,255,0.06);
+          position: relative;
+          overflow: visible;
+        }
+        .evd-rp-scroll-outer {
+          overflow-x: auto;
+          overflow-y: visible;
+          margin-left: calc(-1 * clamp(1.25rem, 5vw, 3rem));
+          margin-right: calc(-1 * clamp(1.25rem, 5vw, 3rem));
+          padding-bottom: 0.5rem;
+        }
+        .evd-rp-scroll {
+          display: flex;
+          gap: 1.1rem;
+          padding: 0.25rem clamp(1.25rem, 5vw, 3rem);
+          min-width: max-content;
+        }
+        .evd-rp-card {
+          flex-shrink: 0;
+          width: 220px;
+          text-decoration: none !important;
+          border-radius: 6px;
+          overflow: hidden;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.07);
+          transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+          display: flex;
+          flex-direction: column;
+        }
+        .evd-rp-card:hover {
+          transform: translateY(-4px) scale(1.02);
+          box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+          border-color: rgba(255,255,255,0.18);
+        }
+        .evd-rp-img {
+          width: 100%;
+          aspect-ratio: 16 / 9;
+          background: rgba(255,255,255,0.06) center / cover no-repeat;
+        }
+        .evd-rp-body {
+          padding: 0.65rem 0.8rem 0.8rem;
+        }
+        .evd-rp-title {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: #fff;
+          margin: 0 0 0.25rem;
+          line-height: 1.3;
+        }
+        .evd-rp-meta {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.68rem;
+          color: rgba(255,255,255,0.45);
+          margin: 0;
+          letter-spacing: 0.05em;
+        }
+        .evd-rp-scroll-outer::-webkit-scrollbar { height: 6px; background: transparent; }
+        .evd-rp-scroll-outer::-webkit-scrollbar-thumb { background: transparent; border-radius: 999px; }
+        .evd-rp-scroll-outer:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); }
 
         /* ── 9. Related Upcoming Events ────────────────────────────────── */
         /* Shared section header (used by cycle + related events) */
@@ -4187,15 +4593,22 @@ export default async function EventDetailPageTemplate({
 
         /* Archive eyebrow season link */
         .evd-hero-season-link {
+          display: inline-flex;
+          align-items: center;
+          padding: 1.5rem 1.4rem;
+          margin: -1.5rem -1.4rem;
+          position: relative;
+          z-index: 2;
           color: rgba(255,255,255,0.52);
-          text-decoration: none;
-          transition: color 0.16s ease;
+          text-decoration: none !important;
+          transition: color 0.16s ease, letter-spacing 0.16s ease;
           cursor: pointer;
         }
-        .evd-hero-season-link:hover {
+        .evd-hero-season-link:hover,
+        .evd-hero-season-link:focus-visible {
           color: #ffcc00;
-          text-decoration: underline;
-          text-underline-offset: 3px;
+          letter-spacing: 0.38em;
+          text-decoration: none !important;
         }
 
         /* Archive badge in hero */
@@ -4214,6 +4627,18 @@ export default async function EventDetailPageTemplate({
           text-transform: uppercase;
           color: rgba(255,255,255,0.6);
           background: rgba(0,0,0,0.22);
+          text-decoration: none !important;
+        }
+        .evd-archive-badge--link {
+          cursor: pointer;
+          transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+        }
+        .evd-archive-badge--link:hover,
+        .evd-archive-badge--link:focus-visible {
+          color: var(--evd-accent) !important;
+          border-color: var(--evd-accent);
+          background: rgba(0,0,0,0.38);
+          text-decoration: none !important;
         }
 
         /* About: theme pills — DAT teal */
@@ -4361,73 +4786,153 @@ export default async function EventDetailPageTemplate({
           transition: color 0.15s;
         }
 
-        /* Related upcoming event — archive promo */
+        /* Related upcoming event — archive spotlight */
         .evd-related-upcoming {
+          position: relative;
           margin-top: 2.5rem;
-          padding-top: 2rem;
-          border-top: 1px solid rgba(255,255,255,0.08);
+          border-radius: 14px;
+          overflow: hidden;
+          background: linear-gradient(135deg, #1a0a2e 0%, #2a0a3e 40%, #1c1040 70%, #0e0818 100%);
+          border: 1px solid rgba(217,169,25,0.28);
+          box-shadow: 0 0 0 1px rgba(217,169,25,0.1), 0 12px 48px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+        /* Photo layer — hidden at rest, snaps into view quickly on hover */
+        .evd-related-upcoming-bg {
+          position: absolute;
+          inset: 0;
+          background-size: cover;
+          background-position: center;
+          opacity: 0;
+          filter: blur(6px) saturate(0.7);
+          transform: scale(1.06);
+          transition: opacity 420ms ease-out, filter 380ms ease-out, transform 420ms ease-out;
+        }
+        .evd-related-upcoming:hover .evd-related-upcoming-bg {
+          opacity: 1;
+          filter: blur(0px) saturate(1.1);
+          transform: scale(1.01);
+        }
+        /* Dark gradient overlay — lightens on hover so image punches through */
+        .evd-related-upcoming-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            to top,
+            rgba(8,4,18,0.88) 0%,
+            rgba(12,5,25,0.70) 45%,
+            rgba(18,8,35,0.52) 100%
+          );
+          transition: background 420ms ease-out;
+          pointer-events: none;
+        }
+        .evd-related-upcoming:hover .evd-related-upcoming-overlay {
+          background: linear-gradient(
+            to top,
+            rgba(8,4,18,0.72) 0%,
+            rgba(12,5,25,0.45) 45%,
+            rgba(18,8,35,0.28) 100%
+          );
+        }
+        /* Gold shimmer sweep */
+        .evd-related-upcoming:before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(105deg, transparent 30%, rgba(217,169,25,0.06) 50%, transparent 70%);
+          background-size: 200% 100%;
+          animation: evd-shimmer 3.6s ease-in-out infinite;
+          pointer-events: none;
+          border-radius: inherit;
+        }
+        @keyframes evd-shimmer {
+          0%   { background-position: 200% center; }
+          100% { background-position: -200% center; }
+        }
+        .evd-related-upcoming-inner {
+          position: relative;
+          z-index: 2;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          padding: clamp(2rem, 5vw, 3rem) clamp(1.5rem, 5vw, 3rem);
+          gap: 1rem;
+        }
+        /* Eyebrow row: rule — label — rule */
+        .evd-related-upcoming-header {
+          display: flex;
+          align-items: center;
+          gap: 0.85rem;
+          width: 100%;
+          max-width: 480px;
+        }
+        .evd-related-upcoming-rule {
+          flex: 1;
+          height: 1px;
+          background: linear-gradient(to right, transparent, rgba(217,169,25,0.55), transparent);
         }
         .evd-related-upcoming-eyebrow {
           font-family: "DM Sans", sans-serif;
-          font-size: 0.68rem;
-          font-weight: 800;
-          letter-spacing: 0.28em;
+          font-size: 0.72rem;
+          font-weight: 900;
+          letter-spacing: 0.35em;
           text-transform: uppercase;
           color: #D9A919;
-          margin: 0 0 0.9rem;
-        }
-        .evd-related-upcoming-link {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 1.5rem;
-          padding: 1.25rem 1.5rem;
-          border: 1px solid rgba(217,169,25,0.22);
-          border-radius: 8px;
-          text-decoration: none;
-          background: rgba(217,169,25,0.04);
-          box-shadow: 0 0 0 1px rgba(217,169,25,0.08);
-          transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
-        }
-        .evd-related-upcoming-link:hover {
-          background: rgba(217,169,25,0.08);
-          border-color: rgba(217,169,25,0.42);
-          box-shadow: 0 8px 28px rgba(217,169,25,0.14), 0 0 0 1px rgba(217,169,25,0.16);
-        }
-        .evd-related-upcoming-copy {
-          display: flex;
-          flex-direction: column;
-          gap: 0.3rem;
+          margin: 0;
+          white-space: nowrap;
+          text-shadow: 0 0 18px rgba(217,169,25,0.45);
         }
         .evd-related-upcoming-title {
-          font-family: "DM Serif Display", serif;
-          font-size: 1.2rem;
-          color: rgba(255,255,255,0.95);
+          font-family: "Anton", "DM Serif Display", serif;
+          font-size: clamp(1.8rem, 4.5vw, 2.9rem);
+          font-weight: 400;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          color: #fff;
           margin: 0;
+          line-height: 1.05;
+          text-shadow: 0 3px 18px rgba(0,0,0,0.7);
         }
         .evd-related-upcoming-meta {
           font-family: "DM Sans", sans-serif;
-          font-size: 0.8rem;
-          color: rgba(255,255,255,0.52);
+          font-size: 0.85rem;
+          font-weight: 500;
+          color: rgba(255,255,255,0.58);
           margin: 0;
+          letter-spacing: 0.03em;
+        }
+        /* CTA — solid gold fill button */
+        .evd-related-upcoming-link {
+          display: inline-block;
+          margin-top: 0.5rem;
+          text-decoration: none;
         }
         .evd-related-upcoming-cta {
+          display: inline-block;
           font-family: "DM Sans", sans-serif;
-          font-size: 0.75rem;
-          font-weight: 800;
-          letter-spacing: 0.1em;
+          font-size: 0.8rem;
+          font-weight: 900;
+          letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: #D9A919;
-          white-space: nowrap;
-          flex-shrink: 0;
-          padding: 0.45rem 1rem;
-          border: 1.5px solid rgba(217,169,25,0.35);
+          color: #111118;
+          background: #D9A919;
+          padding: 0.7em 1.8em;
           border-radius: 999px;
-          transition: border-color 0.15s, background 0.15s;
+          border: none;
+          box-shadow: 0 4px 20px rgba(217,169,25,0.45), 0 0 0 0 rgba(217,169,25,0.35);
+          transition: background 0.2s, transform 0.2s, box-shadow 0.2s, letter-spacing 0.2s;
+          animation: evd-pulse-cta 2.8s ease-in-out infinite;
+        }
+        @keyframes evd-pulse-cta {
+          0%, 100% { box-shadow: 0 4px 20px rgba(217,169,25,0.45), 0 0 0 0 rgba(217,169,25,0.3); }
+          50%       { box-shadow: 0 4px 28px rgba(217,169,25,0.65), 0 0 0 8px rgba(217,169,25,0); }
         }
         .evd-related-upcoming-link:hover .evd-related-upcoming-cta {
-          border-color: rgba(217,169,25,0.65);
-          background: rgba(217,169,25,0.08);
+          background: #f0bc1a;
+          transform: translateY(-2px) scale(1.03);
+          box-shadow: 0 8px 32px rgba(217,169,25,0.65);
+          letter-spacing: 0.24em;
+          animation: none;
         }
 
         /* ── 14. Responsive overrides ──────────────────────────────────── */
@@ -4435,10 +4940,22 @@ export default async function EventDetailPageTemplate({
           .evd-dashboard-grid {
             grid-template-columns: 1fr;
           }
+          /* Right column elder-shell: cap height when full-width in single-column layout */
+          .evd-elder-shell--horizontal {
+            aspect-ratio: 3 / 4;
+            max-height: 440px;
+          }
         }
         @media (max-width: 760px) {
           .evd-newsletter-inner {
             grid-template-columns: 1fr;
+          }
+          /* Related upcoming event: tighter padding */
+          .evd-related-upcoming-inner {
+            padding: 2rem 1.5rem 1.75rem;
+          }
+          .evd-related-upcoming-title {
+            font-size: clamp(1.5rem, 6vw, 2rem);
           }
         }
         @media (max-width: 640px) {
@@ -4479,6 +4996,62 @@ export default async function EventDetailPageTemplate({
           }
           .evd-cycle-logo-sticker {
             top: -80px;
+          }
+          /* Cast grid: exactly 2 per row on mobile */
+          .evd-cast-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+          }
+          /* Elder-shell: portrait on mobile, capped height */
+          .evd-elder-shell--horizontal {
+            aspect-ratio: 3 / 4;
+            max-height: 380px;
+          }
+          /* Content card padding tighter */
+          .evd-content-card {
+            --evd-card-pad: clamp(1rem, 4vw, 1.5rem);
+          }
+          /* Press quotes more compact */
+          .evd-voices-blockquote {
+            font-size: 0.95rem;
+          }
+          /* Related events grid: single column */
+          .evd-rel-events-grid {
+            grid-template-columns: 1fr;
+          }
+          /* Full cycle cards: tighter */
+          .evd-cycle-cards {
+            gap: 1rem;
+          }
+          /* Bottom links: stack vertically */
+          .evd-rel-footer-nav {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          /* Hero adjustments */
+          .evd-hero-title {
+            font-size: clamp(1.8rem, 8vw, 2.4rem);
+          }
+          /* Breadcrumb: smaller on mobile */
+          .evd-breadcrumb {
+            font-size: 0.72rem;
+          }
+        }
+        @media (max-width: 480px) {
+          /* Archive bar chips: wrap gracefully */
+          .evd-archive-chips {
+            gap: 4px;
+          }
+          .evd-archive-chip {
+            font-size: 9px;
+            padding: 2px 7px;
+          }
+          /* Cast card name smaller */
+          .evd-cast-name {
+            font-size: 0.82rem;
+          }
+          .evd-cast-role {
+            font-size: 0.72rem;
           }
         }
       `}</style>

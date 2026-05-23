@@ -1889,7 +1889,7 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           color: #f2f2f2; opacity: 0.75;
           transition: opacity 160ms ease, letter-spacing 160ms ease, color 160ms ease;
         }
-        .hit-area{ display:inline-block; padding:20px 14px; margin-left:-8px; margin-top:-4px; margin-bottom:-2px; }
+        .hit-area{ display:inline-flex; align-items:center; padding:24px 18px; margin:-24px -18px; position:relative; z-index:2; }
         .season-link:hover .season-eyebrow{ color:#FFCC00 !important; letter-spacing:0.30em; opacity:1 !important; }
 
         .hero-title{
