@@ -837,6 +837,27 @@ export const events: DatEvent[] = [
     ],
     contactEmail: "hello@dramaticadventure.com",
   },
+
+  // ── Archived explicit event: overrides the synthesised derivation ──────────
+  {
+    id: "a-girl-without-wings",
+    title: "A Girl Without Wings",
+    category: "performance",
+    status: "past",
+    date: "2013-06-01",
+    venue: "Teatro IATI",
+    venueUrl: "https://iatitheater.org",
+    city: "NYC",
+    country: "USA",
+    archiveSummary: "World premiere · Off-Off-Broadway",
+    description: "Off-Off-Broadway world premiere. A solitary condor and the wingless shepherdess who stole his heart — a love story told through puppets, Andean myth, and original music.",
+    image: "/posters/a-girl-without-wings-landscape.jpg",
+    runtime: "80 min · No interval",
+    suitability: "Ages 10+",
+    ticketType: "ticketed",
+    production: "a-girl-without-wings",
+    tags: ["Off-Off-Broadway", "New York Times Critics Pick", "puppetry", "original music", "world premiere"],
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

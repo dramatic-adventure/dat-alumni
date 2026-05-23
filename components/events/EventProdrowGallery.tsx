@@ -1,7 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+
+/** Returns true when window width is ≤ 640px (mobile). SSR-safe. */
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return isMobile;
+}
 import Link from "next/link";
 import Lightbox from "@/components/shared/Lightbox";
 
@@ -60,6 +73,8 @@ function PhotoRowSection({
 }) {
   const [open, setOpen] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const isMobile = useIsMobile();
+  const effectiveMax = isMobile ? 2 : maxVisible;
 
   const safeImages = useMemo(() => {
     return (images ?? []).flatMap((img) => {
@@ -71,8 +86,8 @@ function PhotoRowSection({
 
   if (!safeImages.length) return null;
 
-  const hasMore = safeImages.length > maxVisible;
-  const visible = expanded ? safeImages : safeImages.slice(0, maxVisible);
+  const hasMore = safeImages.length > effectiveMax;
+  const visible = expanded ? safeImages : safeImages.slice(0, effectiveMax);
   const photographerSafe = cleanStr(photoCredit);
   const photographerHrefSafe = cleanHref(photographerHref);
   const albumHrefSafe = cleanHref(albumHref);
@@ -202,6 +217,8 @@ function FieldGridSection({
 }) {
   const [open, setOpen] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const isMobile = useIsMobile();
+  const effectiveMax = isMobile ? 2 : 3;
 
   const safeTitle = cleanStr(title) ?? "From the Field";
   const safeTitleEs = cleanStr(titleEs) ?? "Del Campo";
@@ -216,8 +233,8 @@ function FieldGridSection({
 
   if (!safeImages.length) return null;
 
-  const hasMore = safeImages.length > 3;
-  const visible = expanded ? safeImages : safeImages.slice(0, 3);
+  const hasMore = safeImages.length > effectiveMax;
+  const visible = expanded ? safeImages : safeImages.slice(0, effectiveMax);
   const albumHrefSafe = cleanHref(albumHref);
 
   return (
