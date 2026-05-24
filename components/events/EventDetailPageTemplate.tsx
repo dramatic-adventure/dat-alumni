@@ -412,6 +412,26 @@ function getProductionBadge(productionSlug: string): {
 }
 
 /**
+ * Same as getProductionBadge but ignores one specific event (the current page's
+ * event). Used for the relatedProduction cycle card so that a revival event on
+ * this page doesn't bleed its "Upcoming" status onto the original production card.
+ */
+function getProductionBadgeExcluding(
+  productionSlug: string,
+  excludeEventId: string,
+): ReturnType<typeof getProductionBadge> {
+  const prodEvents = events.filter(
+    (e) => e.production === productionSlug && e.status !== "cancelled" && e.id !== excludeEventId,
+  );
+  if (prodEvents.length === 0) {
+    return { label: "Archive", cls: "archive", isUpcoming: false };
+  }
+  const active = prodEvents.find((e) => !isElapsed(e));
+  if (active) return getEventBadge(active.date, active.endDate);
+  return { label: "Archive", cls: "archive", isUpcoming: false };
+}
+
+/**
  * Finds a related upcoming event for an archived event's linked production.
  * Tries the production's relatedUpcomingEventId first, then any event sharing
  * the same production slug.
@@ -607,8 +627,9 @@ function ArchivedEventInfoBand({
         <div className="evd-arc-section evd-arc-actions-row">
           <div className="evd-arc-actions-left">
             <Link href={archiveHref} className="evd-archive-nav-link">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <polyline points="15 18 9 12 15 6"/>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="19" y1="12" x2="5" y2="12"/>
+                <polyline points="12 19 5 12 12 5"/>
               </svg>
               {isBilingual ? (
                 <>
@@ -1152,8 +1173,8 @@ export default async function EventDetailPageTemplate({
             </p>
 
 
-            {/* Two-column content: LEFT about / RIGHT reviews + community impact */}
-            <div className={`evd-dashboard-grid${editorialImg1 || event.pressQuotes?.length || linkedDramaClubs.length > 0 ? "" : " evd-dashboard-grid--single"}`}>
+            {/* Two-column content: LEFT about / RIGHT community impact */}
+            <div className={`evd-dashboard-grid${editorialImg1 || linkedDramaClubs.length > 0 ? "" : " evd-dashboard-grid--single"}`}>
 
               {/* ── LEFT (60%): About → Resources → Video ── */}
               <div className="evd-dashboard-left">
@@ -1296,8 +1317,8 @@ export default async function EventDetailPageTemplate({
 
               </div>
 
-              {/* ── RIGHT (40%): editorial image → press reviews → Community Impact ── */}
-              {(editorialImg1 || linkedDramaClubs.length > 0 || event.pressQuotes?.length || event.donateLink || event.impactBlurb || resolvedCauses?.length || resolvedPartners?.length) ? (
+              {/* ── RIGHT (40%): editorial image → Community Impact ── */}
+              {(editorialImg1 || linkedDramaClubs.length > 0 || event.donateLink || event.impactBlurb || resolvedCauses?.length || resolvedPartners?.length) ? (
                 <div className="evd-dashboard-right">
 
                   {/* Editorial image with artist quote — sits at top of right column */}
@@ -1339,63 +1360,6 @@ export default async function EventDetailPageTemplate({
                     </div>
                   ) : null}
 
-                  {/* Press / audience reviews */}
-                  {event.pressQuotes?.length ? (
-                    <div className="evd-voices-quotes">
-                      {event.translations ? (
-                        <>
-                          <h2 className="evd-about-head evd-voices-head evd-bilingual-default">The Response</h2>
-                          <h2 className="evd-about-head evd-voices-head evd-bilingual-alt evd-bilingual-es">La Respuesta</h2>
-                        </>
-                      ) : (
-                        <h2 className="evd-about-head evd-voices-head">The Response</h2>
-                      )}
-                      {isBilingual ? (
-                        <>
-                          {/* EN quotes — default (base event pressQuotes, with hrefs) */}
-                          <div className="evd-bilingual-default">
-                            {event.pressQuotes!.map((q, i) => (
-                              <figure key={i} className="evd-voices-quote">
-                                <blockquote className="evd-voices-blockquote">&ldquo;{q.text}&rdquo;</blockquote>
-                                <figcaption className="evd-voices-figcaption">
-                                  {q.href ? (
-                                    <a href={q.href} target="_blank" rel="noopener noreferrer">{q.attribution}</a>
-                                  ) : q.attribution}
-                                </figcaption>
-                              </figure>
-                            ))}
-                          </div>
-                          {/* ES quotes — alt (translations.es.pressQuotes) */}
-                          <div className="evd-bilingual-alt evd-bilingual-es">
-                            {(event.translations?.["es"]?.pressQuotes ?? event.pressQuotes!).map((q, i) => (
-                              <figure key={i} className="evd-voices-quote">
-                                <blockquote className="evd-voices-blockquote">&ldquo;{q.text}&rdquo;</blockquote>
-                                <figcaption className="evd-voices-figcaption">
-                                  {q.href ? (
-                                    <a href={q.href} target="_blank" rel="noopener noreferrer">{q.attribution}</a>
-                                  ) : q.attribution}
-                                </figcaption>
-                              </figure>
-                            ))}
-                          </div>
-                        </>
-                      ) : (
-                        event.pressQuotes!.map((q, i) => (
-                          <figure key={i} className="evd-voices-quote">
-                            <blockquote className="evd-voices-blockquote">
-                              &ldquo;{q.text}&rdquo;
-                            </blockquote>
-                            <figcaption className="evd-voices-figcaption">
-                              {q.href ? (
-                                <a href={q.href} target="_blank" rel="noopener noreferrer">{q.attribution}</a>
-                              ) : q.attribution}
-                            </figcaption>
-                          </figure>
-                        ))
-                      )}
-                    </div>
-                  ) : null}
-
                   {/* Community Impact: drama club badge + impact blurb + donate CTA */}
                   {(linkedDramaClubs.length > 0 || event.donateLink || event.impactBlurb || resolvedCauses?.length || resolvedPartners?.length) ? (
                     <div className="evd-community-impact evd-section-block">
@@ -1434,9 +1398,7 @@ export default async function EventDetailPageTemplate({
                                   ) : "This production supports"}
                                 </p>
                                 <p className="evd-impact-club-name">{club.name}</p>
-                                {club.location ? (
-                                  <p className="evd-impact-club-loc">{club.location}</p>
-                                ) : null}
+                                <p className="evd-impact-club-loc">DAT Drama Club</p>
                               </div>
                             </Link>
                           ))}
@@ -1564,6 +1526,61 @@ export default async function EventDetailPageTemplate({
                 </div>
               ) : null}
             </div>
+
+            {/* Full-width The Response — spans full card width, above video */}
+            {event.pressQuotes?.length ? (
+              <div className="evd-voices-quotes evd-voices-quotes--full">
+                {event.translations ? (
+                  <>
+                    <h2 className="evd-about-head evd-voices-head evd-bilingual-default">The Response</h2>
+                    <h2 className="evd-about-head evd-voices-head evd-bilingual-alt evd-bilingual-es">La Respuesta</h2>
+                  </>
+                ) : (
+                  <h2 className="evd-about-head evd-voices-head">The Response</h2>
+                )}
+                {isBilingual ? (
+                  <>
+                    <div className="evd-bilingual-default evd-voices-quotes-grid">
+                      {event.pressQuotes!.map((q, i) => (
+                        <figure key={i} className="evd-voices-quote">
+                          <blockquote className="evd-voices-blockquote">&ldquo;{q.text}&rdquo;</blockquote>
+                          <figcaption className="evd-voices-figcaption">
+                            {q.href ? (
+                              <a href={q.href} target="_blank" rel="noopener noreferrer">{q.attribution}</a>
+                            ) : q.attribution}
+                          </figcaption>
+                        </figure>
+                      ))}
+                    </div>
+                    <div className="evd-bilingual-alt evd-bilingual-es evd-voices-quotes-grid">
+                      {(event.translations?.["es"]?.pressQuotes ?? event.pressQuotes!).map((q, i) => (
+                        <figure key={i} className="evd-voices-quote">
+                          <blockquote className="evd-voices-blockquote">&ldquo;{q.text}&rdquo;</blockquote>
+                          <figcaption className="evd-voices-figcaption">
+                            {q.href ? (
+                              <a href={q.href} target="_blank" rel="noopener noreferrer">{q.attribution}</a>
+                            ) : q.attribution}
+                          </figcaption>
+                        </figure>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="evd-voices-quotes-grid">
+                    {event.pressQuotes!.map((q, i) => (
+                      <figure key={i} className="evd-voices-quote">
+                        <blockquote className="evd-voices-blockquote">&ldquo;{q.text}&rdquo;</blockquote>
+                        <figcaption className="evd-voices-figcaption">
+                          {q.href ? (
+                            <a href={q.href} target="_blank" rel="noopener noreferrer">{q.attribution}</a>
+                          ) : q.attribution}
+                        </figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
 
             {/* Full-width video — spans both columns */}
             {videoEmbedUrl ? (
@@ -1755,11 +1772,13 @@ export default async function EventDetailPageTemplate({
 
                 {/* ── Current linked production — dynamic status badge ── */}
                 {relatedProduction && event.production ? (() => {
-                  // Use isArchiveView (isElapsed) as the authoritative check — respects
-                  // event.status="past" even when the date hasn't passed yet.
+                  // Use isArchiveView as the authoritative check for past events.
+                  // For upcoming events, derive the badge from the production's OTHER events
+                  // (excluding the current one) so a revival doesn't make the original
+                  // production card show "Upcoming" when its own run is archived.
                   const badge = isArchiveView
                     ? { label: "Archive", cls: "archive" as const, isUpcoming: false }
-                    : getEventBadge(event.date, event.endDate);
+                    : getProductionBadgeExcluding(event.production, event.id);
                   return (
                     <Link
                       href={`/theatre/${event.production}`}
@@ -2302,8 +2321,8 @@ export default async function EventDetailPageTemplate({
         .evd-subtitle {
           font-family: "Space Grotesk", sans-serif;
           font-size: clamp(1rem, 2vw, 1.35rem);
-          font-weight: 700;
-          color: rgba(255,255,255,0.86);
+          font-weight: 300;
+          color: #f2f2f2db;
           line-height: 1.4;
           margin: 0 0 1rem;
           text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 4px 16px rgba(0,0,0,0.7);
@@ -2390,6 +2409,9 @@ export default async function EventDetailPageTemplate({
         .evd-archive-nav-link,
         .evd-archive-nav-link:link,
         .evd-archive-nav-link:visited {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
           font-family: "DM Sans", sans-serif;
           font-size: 0.68rem;
           font-weight: 600;
@@ -2397,12 +2419,11 @@ export default async function EventDetailPageTemplate({
           text-transform: uppercase;
           color: rgba(255,255,255,0.52) !important;
           text-decoration: none !important;
-          transition: color 0.16s ease, letter-spacing 0.16s ease;
+          transition: color 0.16s ease;
         }
         .evd-archive-nav-link:hover,
         .evd-archive-nav-link:focus-visible {
           color: #ffcc00 !important;
-          letter-spacing: 0.18em;
           text-decoration: none !important;
         }
 
@@ -2426,7 +2447,7 @@ export default async function EventDetailPageTemplate({
         }
         /* Each section has horizontal padding + bottom rule */
         .evd-arc-section {
-          padding: 0.85rem clamp(1.75rem, 4vw, 3rem);
+          padding: 0.65rem clamp(1.75rem, 4vw, 3rem);
           border-bottom: 1px solid rgba(255,255,255,0.08);
         }
         /* Section 1: chips row */
@@ -2440,9 +2461,9 @@ export default async function EventDetailPageTemplate({
           display: inline-block;
           font-size: 10px;
           font-weight: 700;
-          letter-spacing: 0.13em;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
-          padding: 3px 9px;
+          padding: 2px 8px;
           border-radius: 2px;
           border: 1px solid rgba(245,240,236,0.18);
           color: rgba(245,240,236,0.45);
@@ -2451,54 +2472,60 @@ export default async function EventDetailPageTemplate({
           border-color: rgba(245,183,49,0.4);
           color: #F5B731;
         }
-        /* Section 2: venue (left) + presented date (right) */
+        /* Section 2: venue (left) + presented date (right) — high and tight */
         .evd-arc-venue-row {
           display: flex;
           justify-content: space-between;
           align-items: flex-end;
           gap: 1.5rem;
           flex-wrap: wrap;
+          padding-top: 1.5rem !important;
+          padding-bottom: 1.2rem !important;
         }
         .evd-arc-venue-block {
           min-width: 0;
         }
         .evd-arc-venue-name {
-          font-size: clamp(15px, 2.2vw, 19px);
-          font-weight: 800;
-          color: #F5F0EC;
-          line-height: 1.2;
+          font-family: "Space Grotesk", var(--font-space-grotesk), sans-serif;
+          font-size: clamp(17px, 2.4vw, 22px);
+          font-weight: 700;
+          color: #D9A919;
+          line-height: 1.15;
+          margin: 0;
         }
         .evd-arc-venue-name a {
           color: inherit;
           text-decoration: none;
-          transition: color 180ms ease, letter-spacing 180ms ease;
+          transition: color 180ms ease;
         }
         .evd-arc-venue-name a:hover {
-          color: #F5B731;
-          letter-spacing: 0.04em;
+          color: #FFCC00;
         }
         .evd-arc-venue-loc {
-          font-size: 13px;
+          font-size: 12px;
           color: rgba(245,240,236,0.42);
-          margin-top: 3px;
+          margin: 1px 0 0;
         }
         .evd-arc-date-block {
           text-align: right;
           flex-shrink: 0;
         }
         .evd-arc-presented-label {
-          font-size: 10px;
+          font-size: 9px;
           font-weight: 700;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
-          color: rgba(245,240,236,0.32);
-          margin-bottom: 3px;
+          color: rgba(245,240,236,0.28);
+          margin: 0 0 1px;
         }
         .evd-arc-presented-date {
-          font-size: 17px;
-          font-weight: 800;
-          color: #F5F0EC;
+          font-family: "Space Grotesk", var(--font-space-grotesk), sans-serif;
+          font-size: clamp(17px, 1.8vw, 22px);
+          font-weight: 700;
+          color: #d9a919c2;
           font-variant-numeric: tabular-nums;
+          line-height: 1.15;
+          margin: 0;
         }
         /* Section 3: runtime / language / suitability chips (reuse evd-tmeta-chip) */
         .evd-arc-meta-row {
@@ -2514,7 +2541,9 @@ export default async function EventDetailPageTemplate({
           justify-content: space-between;
           gap: 1rem;
           flex-wrap: wrap;
+          padding-top: 0.8rem !important;
           border-bottom: none !important;
+          padding-bottom: 1rem !important;
         }
         .evd-arc-actions-left {
           display: flex;
@@ -2668,7 +2697,7 @@ export default async function EventDetailPageTemplate({
           text-transform: uppercase;
           text-decoration: none;
           background: #F23359;
-          color: #fff;
+          color: #f2f2f2;
           border: none;
           white-space: nowrap;
           transition: opacity 0.18s ease;
@@ -3002,6 +3031,22 @@ export default async function EventDetailPageTemplate({
           letter-spacing: 0.04em;
         }
 
+        /* Full-width Response layout */
+        .evd-voices-quotes--full {
+          margin-top: clamp(1.5rem, 3vw, 2.5rem);
+        }
+        .evd-voices-quotes-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 0.9rem;
+          margin-top: 0.5rem;
+        }
+        @media (min-width: 700px) {
+          .evd-voices-quotes-grid {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          }
+        }
+
         /* ── Community Impact section ───────────────────────────────────── */
         .evd-impact-clubs {
           display: flex;
@@ -3050,7 +3095,7 @@ export default async function EventDetailPageTemplate({
           margin-top: 2.25rem;
           padding: 0.7rem 1.5rem;
           background: #6c00af;
-          color: #fff;
+          color: #f2f2f2;
           font-family: "DM Sans", sans-serif;
           font-size: 0.82rem;
           font-weight: 700;

@@ -2256,6 +2256,9 @@ if (ageRecText) metaValues.push({ value: ageRecText });
           border-radius: 18px; overflow: hidden; background: #0f0a10; color: #fff;
         }
         .quote-img{ position: relative; min-height: 260px; }
+        @media (min-width: 900px) {
+          .quote-img{ aspect-ratio: 1 / 1; min-height: 0; align-self: start; }
+        }
         .quote-copy{ padding: clamp(16px,2.2vw,24px); display:flex; flex-direction:column; justify-content:center; }
         .big-quote{
           font-family: var(--font-anton, system-ui, sans-serif);
