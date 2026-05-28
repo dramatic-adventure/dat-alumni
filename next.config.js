@@ -59,6 +59,7 @@ const nextConfig = {
       { protocol: "https", hostname: "i.ytimg.com", pathname: "**" },
       { protocol: "https", hostname: "img.youtube.com", pathname: "**" },
       { protocol: "https", hostname: "media.licdn.com", pathname: "**" },
+      { protocol: "https", hostname: "**.cdninstagram.com", pathname: "**" },
     ],
   },
 };
