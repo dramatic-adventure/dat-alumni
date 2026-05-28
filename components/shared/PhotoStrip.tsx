@@ -100,8 +100,10 @@ export default function PhotoStrip({ images, instagramHandle = "dramaticadventur
             src={photo.src}
             alt={photo.alt}
             fill
-            sizes="12.5vw"
+            sizes="(min-width: 1920px) 240px, 12.5vw"
+            quality={90}
             style={{ objectFit: "cover" }}
+            priority={i === 0}
             loading={i < 3 ? "eager" : "lazy"}
           />
         </a>
@@ -127,7 +129,9 @@ export default function PhotoStrip({ images, instagramHandle = "dramaticadventur
           alt={photo.alt}
           fill
           sizes="50vw"
+          quality={90}
           style={{ objectFit: "cover" }}
+          priority={i === 0}
           loading={i < 2 ? "eager" : "lazy"}
         />
       </a>
