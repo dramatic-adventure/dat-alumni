@@ -23,6 +23,13 @@ export type Story = {
    * These plug directly into DramaClubCauseCategory + DramaClubCauseSubcategory.
    */
   causes?: DramaClubCause[];
+
+  /**
+   * Project slugs this story came out of (keys in lib/programMap).
+   * Tagging a story here makes it appear in "What It Left Behind" on the
+   * matching /projects/[slug] page automatically. Empty/absent = not shown.
+   */
+  projectSlugs?: string[];
 };
 
 export const stories: Story[] = [

@@ -17,6 +17,19 @@ const nextConfig = {
     ...(isCanaryPPR ? { ppr: true } : {}),
   },
 
+  // 308 permanent redirect: the old /programs/[slug] roster pages were
+  // replaced by the richer /projects/[slug] archive pages. Preserves SEO and
+  // any existing inbound links.
+  async redirects() {
+    return [
+      {
+        source: "/programs/:slug",
+        destination: "/projects/:slug",
+        permanent: true,
+      },
+    ];
+  },
+
   // Use in-memory webpack cache in dev — filesystem pack writes fail with
   // an atomic rename error on this machine and corrupt .next mid-session.
   webpack: (config, { dev }) => {

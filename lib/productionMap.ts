@@ -11,6 +11,12 @@ export interface Production {
   venue?: string;     // specific space/theatre (optional)
   festival?: string;
   dramaClubSlugs?: string[];
+  /**
+   * Project slugs this production grew out of (keys in lib/programMap).
+   * Tagging a production here makes it appear in "The Work" on the matching
+   * /projects/[slug] page automatically. Empty/absent = not shown there.
+   */
+  projectSlugs?: string[];
   url?: string;     // 👈 optional override
   posterUrl?: string;
   artists: Record<string, string[]>;
