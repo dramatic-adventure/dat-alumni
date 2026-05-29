@@ -147,6 +147,18 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
     "id",
   ]);
 
+  // ✅ Single authoritative headshot URL.
+  // Uploaded headshots are stored as a Drive fileId (currentHeadshotId) with an
+  // empty currentHeadshotUrl. Resolve those through the AUTHENTICATED, sized,
+  // path-cached thumbnail endpoint — NOT the public drive.google.com/uc?export=view
+  // proxy (unauthenticated, full-resolution, rate-limited, made next/image fall
+  // back to the default headshot). External (non-Drive) URLs are kept as-is.
+  const resolvedHeadshotUrl =
+    headshotUrl ||
+    (currentHeadshotId
+      ? `/api/media/thumb/${encodeURIComponent(currentHeadshotId)}?w=900`
+      : "");
+
 
   // ✅ Bio/Artist Statement: support Live + legacy
   const bioLong = getFirstCI(row, [
@@ -304,7 +316,7 @@ export function normalizeAlumniRow(row: Record<string, any>): AlumniRow | null {
     roles,
 
     location,
-    headshotUrl,
+    headshotUrl: resolvedHeadshotUrl,
     currentHeadshotId: currentHeadshotId || undefined,
     alumniId: alumniId || undefined,
 

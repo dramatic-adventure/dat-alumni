@@ -67,6 +67,52 @@ function addCacheBust(url: string, cacheKey?: string | number) {
 }
 
 /**
+ * Drive-backed headshots must load through the AUTHENTICATED, sized
+ * `/api/media/thumb/[fileId]` endpoint. Some callers still hand us the unreliable
+ * public Drive `uc?export=view` URL — raw, or wrapped in `/api/img?url=...`. Pull a
+ * Drive fileId out of any of those shapes and rewrite to the thumbnail endpoint.
+ * Non-Drive URLs (e.g. Squarespace CDN) are returned unchanged.
+ */
+function extractDriveFileId(raw: string): string {
+  let s = String(raw || "").trim();
+  if (!s) return "";
+
+  // Unwrap our own image proxy: /api/img?url=<encoded upstream>
+  if (s.startsWith("/api/img")) {
+    const m = s.match(/[?&]url=([^&]+)/i);
+    if (m) {
+      try {
+        s = decodeURIComponent(m[1]);
+      } catch {
+        s = m[1];
+      }
+    }
+  }
+
+  if (!/drive\.google\.com/i.test(s)) return "";
+
+  // uc?export=view&id=FILEID  /  open?id=FILEID
+  const byId = s.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
+  if (byId) return byId[1];
+
+  // /file/d/FILEID/
+  const byPath = s.match(/\/file\/d\/([a-zA-Z0-9_-]{10,})/);
+  if (byPath) return byPath[1];
+
+  return "";
+}
+
+function toReliableHeadshotSrc(raw: string): string {
+  const s = String(raw || "").trim();
+  if (!s || s.startsWith("/api/media/thumb/")) return s;
+
+  const fileId = extractDriveFileId(s);
+  if (fileId) return `/api/media/thumb/${encodeURIComponent(fileId)}?w=480`;
+
+  return s;
+}
+
+/**
  * If /api/img is in "redirect fallback" mode (302), Next/Image can behave inconsistently.
  * So we HEAD with redirect:manual and if we see Location, we bypass the proxy and use that src directly.
  */
@@ -234,19 +280,15 @@ export default function MiniProfileCard({
   }, [alumniId, hs?.url, headshotUrl]);
 
   const baseSrc = useMemo(() => {
-    // 1) ✅ Provider (authoritative when mounted)
+    // Priority: 1) provider (authoritative when mounted), 2) local hydrator
+    // (routes without provider), 3) prop fallback (legacy). Whatever we pick is
+    // normalized so Drive-backed sources always route through /api/media/thumb.
     const ctx = String(hs?.url || "").trim();
-    if (ctx) return ctx;
-
-    // 2) ✅ Local hydrator (for routes without provider)
     const hyd = String(hydratedHeadshotUrl || "").trim();
-    if (hyd) return hyd;
-
-    // 3) Prop fallback (legacy)
     const prop = String(headshotUrl ?? "").trim().replace(/\s+/g, "");
-    if (prop) return prop;
 
-    return defaultImage;
+    const raw = ctx || hyd || prop;
+    return raw ? toReliableHeadshotSrc(raw) : defaultImage;
   }, [hs?.url, hydratedHeadshotUrl, headshotUrl, defaultImage]);
 
   const effectiveCacheKey = cacheKey ?? hs?.cacheKey;
