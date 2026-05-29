@@ -228,6 +228,10 @@ export default async function ProjectArchivePage({
                 textTransform: "uppercase",
                 color: C.gold,
                 margin: "0 0 0.5rem",
+                // Lift above the oversized h1 below it — the title's box
+                // overlaps this row and would otherwise swallow link clicks.
+                position: "relative",
+                zIndex: 2,
               }}
             >
               {familyHref ? (
@@ -1012,7 +1016,10 @@ export default async function ProjectArchivePage({
 
       {/* Hover/interaction styles (DAT fonts via CSS vars; no arrows in buttons) */}
       <style>{`
-        .proj-eyebrow-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+        /* Eyebrow links: no underline (per site convention) — affordance is
+           the color shift on hover. */
+        .proj-eyebrow-link { transition: color 0.15s ease; }
+        .proj-eyebrow-link:hover { color: #ffffff; }
 
         .proj-btnrow { display: flex; flex-wrap: wrap; gap: 0.7rem; }
         .proj-btn {

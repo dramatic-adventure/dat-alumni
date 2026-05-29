@@ -32,6 +32,7 @@ import {
   type ProjectNarrative,
 } from "@/lib/projectNarratives";
 import { resolveProjectHeroImage } from "@/lib/projectHeroImage";
+import { familySlug } from "@/lib/projectFamily";
 
 /** A category-level cause derived from the project's drama clubs. */
 export type ProjectCause = {
@@ -268,6 +269,15 @@ export async function getProjectArchiveData(
       campaign.status === "ended" || campaign.status === "archived";
   }
 
+  // ── Family link: only link the program eyebrow when the family has 2+
+  // projects (a single-project family page is too thin to be worth a link). ──
+  const famSlug = familySlug(program.program);
+  const familyProjectCount = Object.values(programMap).filter(
+    (p) => familySlug(p.program) === famSlug
+  ).length;
+  const familyHref =
+    familyProjectCount >= 2 ? `/projects/program/${famSlug}` : undefined;
+
   // ── Stats inputs ──
   const footprintCount = program.footprints?.length ?? 0;
   let regionLabel = "Country";
@@ -284,7 +294,10 @@ export async function getProjectArchiveData(
     familyLabel: familyLabel(program.program, program.location),
     seasonLabel: `Season ${program.season}`,
     seasonHref: `/season/${program.season}`,
-    familyHref: program.url,
+    // Program eyebrow → the family archive (only when 2+ projects exist;
+    // see familyHref above). NOT program.url, which points at non-existent
+    // /passage etc.
+    familyHref,
     recruitingUrl: program.externalUrl || program.url,
     heroImage: resolveProjectHeroImage(slug, program.season),
     essence: resolveProjectEssence(slug, program.program),
