@@ -680,6 +680,36 @@ export const events: DatEvent[] = [
   },
 
   {
+    id: "regiony-festival-hradec-kralove-2026",
+    title: "DAT at REGIONY — Hradec Králové",
+    subtitle: "An Associate Artistic Director Residency — Puppetry, Partnerships & NYU Prague",
+    category: "festival",
+    status: "upcoming",
+    date: "2026-06-16",
+    endDate: "2026-06-24",
+    venue: "REGIONY International Theatre Festival · Drak & Klicpera Theatres",
+    city: "Hradec Králové",
+    country: "Czech Republic",
+    description:
+      "DAT travels to the Czech Republic for REGIONY, the country's largest international theatre festival and a home of legendary Czech puppetry. Resident Playwright & Associate Artistic Director Jason Williamson scouts new work and deepens DAT's partnerships — including with NYU's Global Media Lab and NYU Prague.",
+    longDescription:
+      "REGIONY is the largest theatre showcase in the Czech Republic — an international festival in Hradec Králové co-created by the Klicpera Theatre, the world-renowned Drak Theatre, and kontrapunkt. Founded in 1958, Drak helped shape the course of Czech and global puppetry, and each summer REGIONY fills the city's venues and public squares with puppet theatre, devised and visual work, dance, and immersive performance — much of it reaching Czech audiences for the very first time.\n\nBased out of Prague, DAT's Resident Playwright and Associate Artistic Director Jason Williamson travels to the 31st edition of the festival to immerse himself in the international puppetry circuit: studying technique and devising methods, meeting companies and artists, and tracking the collaborators who could shape DAT's next work.\n\nThe trip also strengthens DAT's cross-institutional ties. As a member of NYU's Global Media Lab, Jason bridges DAT's field practice with academic research and the NYU Prague community — connecting a festival rooted in puppetry tradition with the kind of exchange that turns a visit into a lasting partnership. Follow along for dispatches from the Czech Republic, and reach out if you'll be in Prague or Hradec Králové and want to connect.",
+    image: "/images/theatre/archive/agwow-condor.webp",
+    ticketUrl: "https://www.festivalregiony.cz/?lang=en",
+    ticketPrice: "Many events free · festival programme ticketed",
+    ticketType: "free",
+    featured: true,
+    tags: ["Czech Republic", "Hradec Králové", "Prague", "puppetry", "REGIONY", "Drak Theatre", "scouting", "partnerships", "NYU Global Media Lab", "NYU Prague", "international"],
+    artistNote:
+      "Puppetry is where DAT's storytelling has always come most alive — from A Girl Without Wings to the work ahead. Drak and REGIONY are where the form's deepest traditions and its boldest experiments share the same stage. That's exactly where I want to be listening.",
+    artistNoteBy: "Jason Williamson, Resident Playwright & Associate Artistic Director",
+    donateLink: "/donate",
+    impactBlurb:
+      "Every partnership DAT builds at festivals like REGIONY — and through ties with institutions like NYU's Global Media Lab and NYU Prague — becomes a future co-production, residency, or community collaboration. Your support is what lets us show up, scout, and turn connections into the next adventure.",
+    contactEmail: "hello@dramaticadventure.com",
+  },
+
+  {
     id: "iberoamerican-theatre-bogota-2026",
     title: "Festival Iberoamericano de Teatro",
     subtitle: "DAT in Bogotá",
