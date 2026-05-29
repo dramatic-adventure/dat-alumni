@@ -316,16 +316,6 @@ function addLanguageTokens(set: Set<string>, raw?: string) {
   }
 }
 
-function headshotUrlFrom(item: ProfileLiveRow): string {
-  const id = String(item.currentHeadshotId ?? "").trim();
-  if (id) {
-    return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`;
-  }
-
-  const u = String(item.currentHeadshotUrl ?? "").trim();
-  return u;
-}
-
 function getProgramGeoParts(prog: {
   location?: string;
   country?: string;
@@ -354,12 +344,6 @@ export type ProfileMediaRow = {
   isCurrent?: string | boolean; // sheet readers may return boolean true/false
   sortIndex?: string; // optional; if present, can break ties deterministically
 };
-
-function driveUrlFromId(id: string) {
-  // More reliable than /thumbnail for returning an actual image/* response
-  return `https://drive.google.com/uc?export=view&id=${encodeURIComponent(id)}`;
-}
-
 
 function withVersion(url: string, v?: string) {
   const raw = String(url || "").trim();
@@ -425,7 +409,7 @@ function pickBestHeadshot(media: ProfileMediaRow[] | undefined) {
   // return empty so the fallback image is shown rather than a stale deleted headshot.
   const rows = (media ?? []).filter((r) => kindIsHeadshot(r.kind) && isTrue(r.isCurrent));
 
-  if (!rows.length) return { upstreamUrl: "", cacheKey: "" };
+  if (!rows.length) return { fileId: "", externalUrl: "", cacheKey: "" };
 
   rows.sort((a, b) => {
     // 0) newest uploadedAt wins (PRIMARY — all rows already have isCurrent=true)
@@ -457,10 +441,9 @@ function pickBestHeadshot(media: ProfileMediaRow[] | undefined) {
   const externalUrl = String(best.externalUrl || "").trim();
   const uploadedAt = String(best.uploadedAt || "").trim();
 
-  const upstreamUrl = fileId ? driveUrlFromId(fileId) : externalUrl;
   const cacheKey = uploadedAt || fileId || externalUrl;
 
-  return { upstreamUrl, cacheKey };
+  return { fileId, externalUrl, cacheKey };
 }
 
 export async function enrichAlumniData(
@@ -571,16 +554,34 @@ export async function enrichAlumniData(
       resolvedHeadshot.cacheKey ||
       String(item.updatedAt || item.currentHeadshotId || item.currentHeadshotUrl || "");
 
-    // Fallback to Profile-Live only if Profile-Media has nothing usable
-    const upstreamRaw = resolvedHeadshot.upstreamUrl || headshotUrlFrom(item) || "";
+    // Resolve the authoritative source. Prefer Profile-Media's current headshot,
+    // then fall back to Profile-Live's currentHeadshotId/currentHeadshotUrl.
+    const headshotFileId =
+      resolvedHeadshot.fileId || String(item.currentHeadshotId ?? "").trim();
+    const headshotExternalUrl =
+      resolvedHeadshot.externalUrl || String(item.currentHeadshotUrl ?? "").trim();
 
-    // ✅ VERSION the upstream URL so caches can't serve stale bytes when headshot changes
-    const upstream = upstreamRaw ? withVersion(upstreamRaw, resolvedHeadshotCacheKey) : "";
-
-    // ✅ All UI must route through /api/img?url=...
-    const resolvedHeadshotUrl = upstream
-      ? `/api/img?url=${encodeURIComponent(upstream)}`
-      : "/images/default-headshot.png";
+    // ✅ Single authoritative headshot URL for all UI.
+    // Drive-backed headshots (a fileId) route through the AUTHENTICATED, sized,
+    // path-cached thumbnail endpoint — not the public `drive.google.com/uc?export=view`
+    // proxy. The uc endpoint serves the full-resolution original (often multiple MB),
+    // is unauthenticated (fails for non-public files), and is rate-limited, which made
+    // next/image time out and fall back to the default headshot across the directory.
+    // External (non-Drive) URLs still proxy through /api/img.
+    let resolvedHeadshotUrl: string;
+    if (headshotFileId) {
+      const v = resolvedHeadshotCacheKey
+        ? `&v=${encodeURIComponent(resolvedHeadshotCacheKey)}`
+        : "";
+      resolvedHeadshotUrl = `/api/media/thumb/${encodeURIComponent(
+        headshotFileId
+      )}?w=900${v}`;
+    } else if (headshotExternalUrl) {
+      const upstream = withVersion(headshotExternalUrl, resolvedHeadshotCacheKey);
+      resolvedHeadshotUrl = `/api/img?url=${encodeURIComponent(upstream)}`;
+    } else {
+      resolvedHeadshotUrl = "/images/default-headshot.png";
+    }
 
     // Normalized slug set for joining against programMap/productionMap keys
     const aliasesNorm = new Set<string>();
