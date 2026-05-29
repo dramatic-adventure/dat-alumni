@@ -722,7 +722,7 @@ export const productionDetailsMap: Record<string, ProductionExtra> = {
 
     pullQuote: {
       quote:
-        "This piece was born in the Andes, carried across the Atlantic, and rebuilt from scratch for every community it visited. The condor still flies. The girl is still brave. That never changes.",
+        "The condor still flies. The girl is still brave. That never changes.",
       attribution: "Kathleen Amshoff, Director",
     },
 

@@ -171,7 +171,7 @@ function scoreMatch(txt: string, exactPhrases: string[], tokens: string[], phras
   }
 
   // Google-ish: if they typed multiple meaningful tokens, require all of them.
-  // (If there’s only 1 token, any hit is fine.)
+  // (If there's only 1 token, any hit is fine.)
   if (tokens.length >= 2 && hits < tokens.length) return 0;
 
   // Slight bonus for longer queries that fully match
@@ -201,6 +201,87 @@ const milesToPixelRadius = (miles: number, zoom: number, lat: number) => {
 
 // Popup offset that feels right on each form factor
 const popupOffsetY = () => (isSmallScreen() ? 140 : 220);
+
+
+// Popup shown when multiple co-located stories share the same cluster
+function createMultiItemHTML(leaves: any[]): string {
+  // Derive a location label from the first leaf that has one
+  let locationLabel = "";
+  for (const leaf of leaves) {
+    const p = leaf.properties;
+    if (p.__isDramaClub) {
+      const club = dramaClubs.find((dc: DramaClub) => dc.slug === p.clubSlug);
+      if (club) { locationLabel = [club.city, club.country].filter(Boolean).join(", "); break; }
+    } else {
+      const loc = (p["Location Name"] || p.Country || "").trim();
+      if (loc) { locationLabel = loc; break; }
+    }
+  }
+
+  const countLabel = leaves.length === 1 ? "1 item" : `${leaves.length} items`;
+
+  const rows = leaves.map((leaf) => {
+    const props = leaf.properties;
+
+    // Shared image box styles
+    const imgBox = (gradient: string, emoji: string, imgSrc: string) =>
+      `<div style="width:88px;min-width:88px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:32px;background:${gradient};border-right:1.5px solid rgba(0,0,0,0.07);overflow:hidden;position:relative;">` +
+      emoji +
+      (imgSrc ? `<img src="${imgSrc}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.remove();" />` : "") +
+      `</div>`;
+
+    // ── Drama club row ──────────────────────────────────────────────
+    if (props.__isDramaClub) {
+      const club = dramaClubs.find((dc: DramaClub) => dc.slug === props.clubSlug);
+      if (!club) return "";
+      const meta = [club.city, club.country].filter(Boolean).join(" · ");
+      return `
+        <div class="chooser-card chooser-card--club" data-chooser-club="${encodeURIComponent(club.slug)}" style="display:flex;align-items:stretch;border-radius:14px;overflow:hidden;border:1.5px solid #e0cef5;cursor:pointer;background:#f8f2ff;text-decoration:none;transition:border-color 0.15s,box-shadow 0.15s,transform 0.15s;">
+          ${imgBox("linear-gradient(160deg,#e8d0ff 0%,#bf80ff 100%)", "🌍", club.cardImage || "")}
+          <div style="flex:1;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0;">
+            <div style="display:flex;align-items:center;gap:7px;font-family:var(--font-space-grotesk),system-ui,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#6C00AF;">Drama Club<div style="flex:1;height:1px;background:#6C00AF;opacity:0.2;"></div></div>
+            <div style="font-family:var(--font-anton),system-ui,sans-serif;font-size:17px;color:#1a1a1a;text-transform:uppercase;letter-spacing:0.4px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${club.name}</div>
+            ${meta ? `<div style="font-family:var(--font-space-grotesk),system-ui,sans-serif;font-size:11px;color:#bbb;">${meta}</div>` : ""}
+          </div>
+        </div>`;
+    }
+
+    // ── Story row ───────────────────────────────────────────────────
+    const d = props as FeatureProps;
+    const slug = String(d.Slug || (d as any).slug || "").trim();
+    const imgSrc = d.mediaUrl || d["Image URL"] || "";
+    const meta = [d.Program, d.Country, d["Year(s)"]].filter(Boolean).join(" · ");
+    const authorText = d.Author ? `by ${d.Author}` : "";
+    return `
+      <div class="chooser-card chooser-card--story" data-chooser-story="${slug}" style="display:flex;align-items:stretch;border-radius:14px;overflow:hidden;border:1.5px solid #f0e8c0;cursor:pointer;background:#fffcee;text-decoration:none;transition:border-color 0.15s,box-shadow 0.15s,transform 0.15s;">
+        ${imgBox("linear-gradient(160deg,#fff3b0 0%,#ffe55a 100%)", "🎭", imgSrc)}
+        <div style="flex:1;padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0;">
+          <div style="display:flex;align-items:center;gap:7px;font-family:var(--font-space-grotesk),system-ui,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#b38a00;">Story<div style="flex:1;height:1px;background:#b38a00;opacity:0.2;"></div></div>
+          <div style="font-family:var(--font-anton),system-ui,sans-serif;font-size:17px;color:#1a1a1a;text-transform:uppercase;letter-spacing:0.4px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.Title || "(Untitled)"}</div>
+          ${authorText ? `<div style="font-family:var(--font-space-grotesk),system-ui,sans-serif;font-size:12px;color:#999;font-style:italic;">${authorText}</div>` : ""}
+          ${meta ? `<div style="font-family:var(--font-space-grotesk),system-ui,sans-serif;font-size:11px;color:#bbb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${meta}</div>` : ""}
+        </div>
+      </div>`;
+  }).filter(Boolean).join("");
+
+  return `
+    <style>
+      .chooser-card--story:hover { border-color:#FFCC00 !important; box-shadow:0 4px 16px rgba(255,204,0,0.25); transform:translateY(-2px); }
+      .chooser-card--club:hover  { border-color:#6C00AF !important; box-shadow:0 4px 16px rgba(108,0,175,0.2); transform:translateY(-2px); }
+    </style>
+    <div style="font-family:var(--font-space-grotesk),system-ui,sans-serif;">
+      <div style="background:#6C00AF;padding:14px 18px 12px;display:flex;align-items:center;gap:10px;border-radius:24px 24px 0 0;margin:-1px -1px 0;">
+        <div style="width:22px;height:22px;background:#FFCC00;border-radius:50% 50% 50% 0;transform:rotate(-45deg);flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+          <div style="width:8px;height:8px;background:#6C00AF;border-radius:50%;transform:rotate(45deg);"></div>
+        </div>
+        <span style="color:#fff;font-family:var(--font-anton),system-ui,sans-serif;font-size:17px;letter-spacing:1px;text-transform:uppercase;">${locationLabel || "This Location"}</span>
+        <span style="margin-left:auto;color:rgba(255,255,255,0.6);font-size:12px;font-style:italic;white-space:nowrap;">${countLabel}</span>
+      </div>
+      <div style="padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px;">
+        ${rows}
+      </div>
+    </div>`;
+}
 
 function createPopupHTML(d: FeatureProps) {
   let media = "";
@@ -839,6 +920,7 @@ export default function StoryMap({
   const renderClustersRef = useRef<() => void>(() => {});
 
   const dramaClubPopupRef = useRef<mapboxgl.Popup | null>(null);
+  const chooserLeavesRef = useRef<any[]>([]);
 
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
 
@@ -896,6 +978,9 @@ export default function StoryMap({
         display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:bold;
         pointer-events:auto!important; cursor:pointer!important; box-shadow:0 2px 8px rgba(0,0,0,.12);
       }
+      .cluster-marker--colocation {
+        background:#F23359; color:#fff;
+      }
 
       .mapboxgl-canvas {
         filter: drop-shadow(0 18px 44px rgba(0,0,0,0.35))
@@ -911,6 +996,11 @@ export default function StoryMap({
         border-radius: 24px !important; box-shadow: 0 4px 14px rgba(0,0,0,0.18);
         padding: 0.75rem 1.5rem 1.5rem;
         max-width: 92vw !important;
+      }
+      .popup-chooser .mapboxgl-popup-content {
+        padding: 0 !important;
+        width: 380px !important;
+        overflow: hidden;
       }
       .mapboxgl-popup-tip { display: none !important; }
       .mapboxgl-popup-content::after {
@@ -1113,22 +1203,96 @@ useEffect(() => {
     const target = e.target as HTMLElement | null;
     if (!target) return;
 
+    // ── Chooser: story card → open story preview ────────────────────
+    const storyCard = target.closest("[data-chooser-story]") as HTMLElement | null;
+    if (storyCard) {
+      e.preventDefault();
+      e.stopPropagation();
+      const slug = storyCard.getAttribute("data-chooser-story") || "";
+      const leaf = chooserLeavesRef.current.find((l: any) =>
+        String(l.properties?.Slug || l.properties?.slug || "").trim() === slug
+      );
+      const coords = currentPopupCoords.current;
+      const m = mapRef.current;
+      if (!leaf || !coords || !m) return;
+
+      // Close chooser
+      if (sharedPopupRef.current) {
+        sharedPopupRef.current.remove();
+        sharedPopupRef.current = null;
+        currentPopupRef.current = null;
+      }
+      // Open story preview
+      const popup = new mapboxgl.Popup({
+        closeButton: false, closeOnClick: false, closeOnMove: false,
+        anchor: "bottom", offset: 11,
+      });
+      popup.on("close", () => {
+        if (currentPopupRef.current === popup) {
+          currentPopupRef.current = null;
+          currentPopupCoords.current = null;
+        }
+      });
+      popup.setLngLat(coords).setHTML(createPopupHTML(leaf.properties as FeatureProps)).addTo(m);
+      sharedPopupRef.current = popup;
+      currentPopupRef.current = popup;
+      currentPopupCoords.current = coords;
+      m.easeTo({ center: coords, offset: [0, popupOffsetY()], duration: 300 });
+      return;
+    }
+
+    // ── Chooser: club card → open club preview ──────────────────────
+    const clubCard = target.closest("[data-chooser-club]") as HTMLElement | null;
+    if (clubCard) {
+      e.preventDefault();
+      e.stopPropagation();
+      const slug = decodeURIComponent(clubCard.getAttribute("data-chooser-club") || "");
+      const club = dramaClubs.find((dc: DramaClub) => dc.slug === slug);
+      const coords = currentPopupCoords.current;
+      const m = mapRef.current;
+      if (!club || !coords || !m) return;
+
+      // Close chooser
+      if (sharedPopupRef.current) {
+        sharedPopupRef.current.remove();
+        sharedPopupRef.current = null;
+        currentPopupRef.current = null;
+      }
+      if (dramaClubPopupRef.current) {
+        dramaClubPopupRef.current.remove();
+        dramaClubPopupRef.current = null;
+      }
+      // Open club preview
+      const container = document.createElement("div");
+      const popup = new mapboxgl.Popup({
+        className: "drama-club-popup",
+        closeButton: false, closeOnClick: false, closeOnMove: false,
+        anchor: "bottom", offset: 11,
+      });
+      popup.setDOMContent(container).setLngLat(coords).addTo(m);
+      dramaClubPopupRef.current = popup;
+      const root = createRoot(container);
+      root.render(<DramaClubCard club={club} />);
+      popup.on("close", () => {
+        root.unmount();
+        if (dramaClubPopupRef.current === popup) dramaClubPopupRef.current = null;
+      });
+      m.easeTo({ center: coords, offset: [0, popupOffsetY()], duration: 300 });
+      return;
+    }
+
+    // ── Standalone story link navigation ───────────────────────────
     const link = target.closest(
       'a[data-explore-story="1"]'
     ) as HTMLAnchorElement | null;
     if (!link) return;
 
-    // Don’t let Mapbox / map click handlers eat this
     e.preventDefault();
     e.stopPropagation();
-
     link.setAttribute("target", "_self");
     link.removeAttribute("rel");
-
     const href = link.getAttribute("href") || "";
     if (!href || href === "#") return;
-
-    // Force same-tab navigation
     window.location.assign(href);
   };
 
@@ -1462,16 +1626,69 @@ useEffect(() => {
       const [lon, lat] = c.geometry.coordinates as [number, number];
 
       if (c.properties.cluster) {
+        // Compute expansion zoom up-front so both the marker style and the
+        // onclick closure can use it without a second Supercluster call.
+        let expansionZoom: number;
+        try {
+          expansionZoom = index.getClusterExpansionZoom(c.properties.cluster_id);
+        } catch {
+          expansionZoom = CLUSTER_MAX_ZOOM + 1;
+        }
+        const isPermanent = expansionZoom >= CLUSTER_MAX_ZOOM;
+
         const el = document.createElement("div");
-        el.className = "cluster-marker";
+        // Permanent co-location clusters get a distinct red marker so users
+        // know clicking reveals a chooser, not a zoom action.
+        el.className = isPermanent
+          ? "cluster-marker cluster-marker--colocation"
+          : "cluster-marker";
         el.textContent = String(c.properties.point_count);
+
         el.onclick = () => {
           if (currentPopupRef.current) {
             currentPopupRef.current.remove();
             currentPopupRef.current = null;
           }
           currentPopupCoords.current = null;
-          const nextZoom = Math.min(m.getZoom() + 3, 18);
+
+          if (isPermanent) {
+            // Truly co-located pins — show a chooser popup listing all items.
+            let leaves: any[] = [];
+            try { leaves = index.getLeaves(c.properties.cluster_id, 500); } catch {}
+
+            if (leaves.length >= 1) {
+              if (!sharedPopupRef.current) {
+                sharedPopupRef.current = new mapboxgl.Popup({
+                  closeButton: false,
+                  closeOnClick: false,
+                  closeOnMove: false,
+                  anchor: "bottom",
+                  offset: 11,
+                  className: "popup-chooser",
+                });
+                sharedPopupRef.current.on("close", () => {
+                  if (currentPopupRef.current === sharedPopupRef.current) {
+                    currentPopupRef.current = null;
+                    currentPopupCoords.current = null;
+                  }
+                });
+              }
+
+              chooserLeavesRef.current = leaves;
+              sharedPopupRef.current
+                .setLngLat([lon, lat])
+                .setHTML(createMultiItemHTML(leaves))
+                .addTo(m);
+
+              currentPopupRef.current = sharedPopupRef.current;
+              currentPopupCoords.current = [lon, lat];
+              m.easeTo({ center: [lon, lat], offset: [0, popupOffsetY()], duration: 300 });
+              return;
+            }
+          }
+
+          // Geographic cluster — zoom to the level where it first breaks apart.
+          const nextZoom = Math.min(expansionZoom + 0.5, 20);
           m.easeTo({
             center: [lon, lat],
             zoom: nextZoom,

@@ -1315,6 +1315,21 @@ export default async function EventDetailPageTemplate({
                   </div>
                 ) : null}
 
+                {/* Video — below Resources in left column (desktop only) */}
+                {videoEmbedUrl ? (
+                  <div className="evd-dash-video evd-section-block evd-video-desktop">
+                    <div className="evd-video-frame-wrap">
+                      <iframe
+                        src={videoEmbedUrl}
+                        title={videoData?.title ?? `${event.title} video`}
+                        className="evd-video-frame"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  </div>
+                ) : null}
+
               </div>
 
               {/* ── RIGHT (40%): editorial image → Community Impact ── */}
@@ -1323,7 +1338,7 @@ export default async function EventDetailPageTemplate({
 
                   {/* Editorial image with artist quote — sits at top of right column */}
                   {editorialImg1 ? (
-                    <div className={`evd-elder-shell evd-elder-shell--horizontal${editorialImg1 ? " evd-elder-shell--has-image" : ""}`}>
+                    <div className={`evd-elder-shell evd-elder-shell--horizontal${editorialImg1 ? " evd-elder-shell--has-image" : ""}`} style={{ marginTop: "1.5rem" }}>
                       <img
                         src={editorialImg1}
                         alt={artistNote?.by || event.title}
@@ -1527,9 +1542,40 @@ export default async function EventDetailPageTemplate({
               ) : null}
             </div>
 
-            {/* Full-width The Response — spans full card width, above video */}
+            {/* Photo Gallery */}
+            {(photoGallery?.length || fieldGalleryImages?.length) ? (
+              <div className="evd-card-gallery">
+                <EventProdrowGallery
+                  images={photoGallery ?? []}
+                  photoCredit={photoCredit}
+                  photographerHref={photographerHref}
+                  albumHref={albumHref}
+                  fieldImages={fieldGalleryImages}
+                  fieldGalleryTitle={fieldGalleryTitle}
+                  fieldAlbumHref={fieldAlbumHref}
+                  bilingual={!!event.translations}
+                />
+              </div>
+            ) : null}
+
+            {/* Video — mobile only, after galleries */}
+            {videoEmbedUrl ? (
+              <div className="evd-dash-video evd-video-mobile">
+                <div className="evd-video-frame-wrap">
+                  <iframe
+                    src={videoEmbedUrl}
+                    title={videoData?.title ?? `${event.title} video`}
+                    className="evd-video-frame"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            {/* The Response — after both photo galleries */}
             {event.pressQuotes?.length ? (
-              <div className="evd-voices-quotes evd-voices-quotes--full">
+              <div className="evd-voices-quotes evd-voices-quotes--full" data-quote-count={event.pressQuotes.length}>
                 {event.translations ? (
                   <>
                     <h2 className="evd-about-head evd-voices-head evd-bilingual-default">The Response</h2>
@@ -1579,37 +1625,24 @@ export default async function EventDetailPageTemplate({
                     ))}
                   </div>
                 )}
-              </div>
-            ) : null}
-
-            {/* Full-width video — spans both columns */}
-            {videoEmbedUrl ? (
-              <div className="evd-dash-video evd-dash-video--full">
-                <div className="evd-video-frame-wrap">
-                  <iframe
-                    src={videoEmbedUrl}
-                    title={videoData?.title ?? `${event.title} video`}
-                    className="evd-video-frame"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
-              </div>
-            ) : null}
-
-            {/* Photo Gallery */}
-            {(photoGallery?.length || fieldGalleryImages?.length) ? (
-              <div className="evd-card-gallery">
-                <EventProdrowGallery
-                  images={photoGallery ?? []}
-                  photoCredit={photoCredit}
-                  photographerHref={photographerHref}
-                  albumHref={albumHref}
-                  fieldImages={fieldGalleryImages}
-                  fieldGalleryTitle={fieldGalleryTitle}
-                  fieldAlbumHref={fieldAlbumHref}
-                  bilingual={!!event.translations}
-                />
+                <button type="button" className="evd-quotes-toggle">
+                  <span className="evd-qt-more">
+                    {isBilingual ? (
+                      <>
+                        <span className="evd-bilingual-wrap-default">See more</span>
+                        <span className="evd-bilingual-wrap-alt evd-bilingual-es">Ver más</span>
+                      </>
+                    ) : "See more"}
+                  </span>
+                  <span className="evd-qt-less" style={{ display: "none" }}>
+                    {isBilingual ? (
+                      <>
+                        <span className="evd-bilingual-wrap-default">See less</span>
+                        <span className="evd-bilingual-wrap-alt evd-bilingual-es">Ver menos</span>
+                      </>
+                    ) : "See less"}
+                  </span>
+                </button>
               </div>
             ) : null}
 
@@ -1735,6 +1768,44 @@ export default async function EventDetailPageTemplate({
         </div>
       </section>
       ) : null}
+
+      {/* ── Quote toggle script ─────────────────────────────────────────── */}
+      <script dangerouslySetInnerHTML={{ __html: `
+(function(){
+  function initQuoteToggles(){
+    document.querySelectorAll('.evd-voices-quotes--full[data-quote-count]').forEach(function(section){
+      var total=parseInt(section.getAttribute('data-quote-count'),10);
+      var btn=section.querySelector('.evd-quotes-toggle');
+      if(!btn)return;
+      var more=btn.querySelector('.evd-qt-more');
+      var less=btn.querySelector('.evd-qt-less');
+      function getLimit(){
+        if(window.innerWidth<=640)return 1;
+        if(window.innerWidth<=860)return 2;
+        return Infinity;
+      }
+      function update(){
+        var limit=getLimit();
+        var needs=total>limit&&limit<Infinity;
+        btn.style.display=needs?'inline-flex':'none';
+        if(!needs){
+          section.classList.remove('evd-voices-quotes--expanded');
+          more.style.display='';less.style.display='none';
+        }
+      }
+      btn.addEventListener('click',function(){
+        section.classList.toggle('evd-voices-quotes--expanded');
+        var exp=section.classList.contains('evd-voices-quotes--expanded');
+        more.style.display=exp?'none':'';less.style.display=exp?'':'none';
+      });
+      update();
+      var t;window.addEventListener('resize',function(){clearTimeout(t);t=setTimeout(update,100);});
+    });
+  }
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initQuoteToggles);}
+  else{initQuoteToggles();}
+})();
+      `}} />
 
       {/* ── Related Productions Cycle ────────────────────────────────── */}
       {/* Show only when total entries > 1 (relatedProduction counts as 1 entry) */}
@@ -2823,7 +2894,6 @@ export default async function EventDetailPageTemplate({
           display: flex;
           flex-direction: column;
           gap: 0;
-          margin-top: 18px;
         }
         .evd-video-frame-wrap {
           position: relative;
@@ -2910,10 +2980,10 @@ export default async function EventDetailPageTemplate({
           background: radial-gradient(circle at top left, rgba(108,0,175,0.18), rgba(36,17,35,0.85));
           box-shadow: 0 14px 30px rgba(0,0,0,0.35);
         }
-        /* Portrait variant — sits in the right column above Community Impact */
+        /* Square variant — sits in the right column above Community Impact */
         .evd-elder-shell--horizontal {
           min-height: unset;
-          aspect-ratio: 3 / 4;
+          aspect-ratio: 1 / 1;
           max-height: 520px;
         }
         .evd-elder-shell--has-image {
@@ -2996,7 +3066,7 @@ export default async function EventDetailPageTemplate({
         .evd-voices-quotes {
           display: flex;
           flex-direction: column;
-          gap: 0.9rem;
+          gap: 0rem;
           border-top: 1px solid rgba(36,17,35,0.12);
           padding-top: 14px;
         }
@@ -3039,8 +3109,26 @@ export default async function EventDetailPageTemplate({
           display: grid;
           grid-template-columns: 1fr;
           gap: 0.9rem;
-          margin-top: 0.5rem;
+          margin-top: 0;
         }
+        .evd-quotes-toggle {
+          display: none;
+          align-items: center;
+          gap: 0.35rem;
+          margin-top: 0.75rem;
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.72rem;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #6c00af;
+          padding: 0;
+          transition: color 0.18s;
+        }
+        .evd-quotes-toggle:hover { color: #F23359; }
         @media (min-width: 700px) {
           .evd-voices-quotes-grid {
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -3091,7 +3179,8 @@ export default async function EventDetailPageTemplate({
           margin-bottom: 1rem;
         }
         .evd-impact-donate-btn {
-          display: inline-block;
+          display: block;
+          text-align: center;
           margin-top: 2.25rem;
           padding: 0.7rem 1.5rem;
           background: #6c00af;
@@ -3106,6 +3195,8 @@ export default async function EventDetailPageTemplate({
           transition: transform 0.16s, box-shadow 0.16s, background 0.16s;
           box-shadow: 0 4px 18px rgba(108,0,175,0.3);
         }
+        .evd-video-desktop { display: block; }
+        .evd-video-mobile  { display: none; }
         .evd-impact-donate-btn:hover {
           transform: translateY(-2px);
           box-shadow: 0 8px 26px rgba(108,0,175,0.45);
@@ -3165,17 +3256,17 @@ export default async function EventDetailPageTemplate({
         .evd-content-section {
           background: var(--evd-surface);
           /* Extra bottom padding so white card clears the DAT logo (121px above next section top) */
-          padding: clamp(1.5rem, 3vw, 2.5rem) 0 calc(140px + 2rem);
+          padding: clamp(2.5rem, 5vw, 4rem) 0 calc(140px + 2rem);
         }
         .evd-content-card {
           --evd-card-pad: clamp(1.5rem, 3.5vw, 2.8rem);
-          background: rgba(255,255,255,0.62);
+          background: rgba(242, 242, 242, 0.75);
           border-radius: 18px;
           box-shadow:
-            0 4px 12px rgba(0,0,0,0.30),
-            0 18px 48px rgba(0,0,0,0.50),
-            0 40px 80px rgba(0,0,0,0.35);
-          border: 1px solid rgba(36,17,35,0.08);
+            0 4px 10px rgba(0,0,0,0.15),
+            0 12px 30px rgba(0,0,0,0.25),
+            0 8px 55px rgba(0,0,0,0.18);
+          border: 0px solid rgba(36,17,35,0.08);
           backdrop-filter: saturate(1.05);
           padding: var(--evd-card-pad);
           overflow: hidden;
@@ -3189,7 +3280,7 @@ export default async function EventDetailPageTemplate({
         .evd-content-card[style*="--evd-card-bg-img"]::after {
           content: "";
           position: absolute;
-          top: 5px; /* sits beneath accent stripe */
+          top: 0px; /* sits beneath accent stripe */
           left: 0;
           right: 0;
           height: clamp(220px, 30vw, 480px);
@@ -3200,8 +3291,8 @@ export default async function EventDetailPageTemplate({
           opacity: 1;
           pointer-events: none;
           border-radius: 18px 18px 0 0;
-          -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
-          mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+          -webkit-mask-image: linear-gradient(to bottom, black 10%, transparent 90%);
+          mask-image: linear-gradient(to bottom, black 10%, transparent 90%);
         }
         /* Category accent stripe across the top of the white card */
         .evd-content-card::before {
@@ -3210,7 +3301,7 @@ export default async function EventDetailPageTemplate({
           top: 0;
           left: 0;
           right: 0;
-          height: 5px;
+          height: 8px;
           background: var(--evd-accent, #F23359);
           border-radius: 18px 18px 0 0;
         }
@@ -4990,6 +5081,17 @@ export default async function EventDetailPageTemplate({
             aspect-ratio: 3 / 4;
             max-height: 440px;
           }
+          /* Video: hide in left column, show after galleries */
+          .evd-video-desktop { display: none; }
+          .evd-video-mobile  { display: block; margin-top: clamp(1.5rem, 3vw, 2rem); }
+          /* Quotes: hide beyond 2nd, show toggle */
+          .evd-voices-quotes-grid .evd-voices-quote:nth-child(n+3) { display: none; }
+          .evd-voices-quotes--expanded .evd-voices-quotes-grid .evd-voices-quote:nth-child(n+3) { display: block; }
+        }
+        @media (max-width: 640px) {
+          /* Quotes: hide beyond 1st */
+          .evd-voices-quotes-grid .evd-voices-quote:nth-child(n+2) { display: none; }
+          .evd-voices-quotes--expanded .evd-voices-quotes-grid .evd-voices-quote:nth-child(n+2) { display: block; }
         }
         @media (max-width: 760px) {
           .evd-newsletter-inner {

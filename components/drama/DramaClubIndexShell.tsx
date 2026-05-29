@@ -561,7 +561,7 @@ export default function DramaClubIndexShell({
 
         /* 🔳 MATCHES StatsStrip card */
         .dc-card {
-          background: rgba(36, 17, 35, 0.2);
+          background: rgba(36, 17, 35, 0.4);
           border-radius: 12px;
           padding: 1.25rem;
           border: 1px solid rgba(36, 17, 35, 0.12);

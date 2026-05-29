@@ -75,9 +75,9 @@ export default function JoinTheJourneyPanel({
   return (
     <section
       className="relative text-center px-6 py-16 md:py-20"
-      style={{ overflowX: "clip" }}
+      style={{ overflow: "visible" }}
     >
-      <div className="mx-auto max-w-6xl" style={{ overflowX: "clip" }}>
+      <div className="mx-auto max-w-6xl" style={{ overflow: "visible" }}>
         {/* Centered fan container (70vw cap) */}
         <div
           className="jj-pile"

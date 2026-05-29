@@ -485,7 +485,7 @@ export const events: DatEvent[] = [
     videoTitle: "Watch: Trailer — A Girl Without Wings",
 
     artistNote:
-      "This piece was born in the Andes, travelled across three continents, and was rebuilt from scratch for every community that received it. What you see tonight is not a simple revival — it is a re-rooting. The condor still flies. The girl is still brave. That never changes.",
+      "The condor still flies. The girl is still brave. That never changes.",
     artistNoteBy: "Kathleen Amshoff, Director",
 
     // Cast & creative team — English roles as base; Spanish roles in translations.es.

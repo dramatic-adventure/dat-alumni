@@ -205,7 +205,7 @@ export const programMap: Record<string, ProgramData> = {
 "dat-retreat-bratislava-2026": {
   title: "DAT Retreat: Bratislava 2026",
   slug: "dat-retreat-bratislava-2026",
-  program: "Company Retreat",
+  program: "DAT Retreat",
   location: "Bratislava",
   country: "Slovakia",
   city: "Bratislava",
@@ -264,7 +264,7 @@ export const programMap: Record<string, ProgramData> = {
 "dat-retreat-berkshires-2023": {
   title: "DAT Retreat: Berkshires 2023",
   slug: "dat-retreat-berkshires-2023",
-  program: "Company Retreat",
+  program: "DAT Retreat",
   location: "Berkshires",
   country: "USA",
   region: "Berkshires",
@@ -570,7 +570,7 @@ export const programMap: Record<string, ProgramData> = {
 "dat-retreat-queens-2011": {
   title: "DAT Retreat: Queens 2011",
   slug: "dat-retreat-queens-2011",
-  program: "Company Retreat",
+  program: "DAT Retreat",
   location: "Queens",
   country: "USA",
   region: "Queens",
@@ -618,7 +618,7 @@ export const programMap: Record<string, ProgramData> = {
 "dat-retreat-space-2010": {
   title: "DAT Retreat: SPACE on Ryder Farm 2010",
   slug: "dat-retreat-space-2010",
-  program: "Company Retreat",
+  program: "DAT Retreat",
   location: "SPACE on Ryder Farm",
   country: "USA",
   region: "Hudson Valley",
@@ -701,7 +701,7 @@ export const programMap: Record<string, ProgramData> = {
 "dat-retreat-space-2009": {
   title: "DAT Retreat: SPACE on Ryder Farm 2009",
   slug: "dat-retreat-space-2009",
-  program: "Company Retreat",
+  program: "DAT Retreat",
   location: "SPACE on Ryder Farm",
   country: "USA",
   region: "Hudson Valley",

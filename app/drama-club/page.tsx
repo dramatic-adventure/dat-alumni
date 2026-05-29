@@ -162,6 +162,47 @@ export default function DramaClubIndexPage() {
     }
   }
 
+  /* 🖼️ Intro card two-column layout */
+  .dc-intro-layout {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1.25rem, 3vw, 2rem);
+  }
+  .dc-intro-image {
+    position: relative;
+    width: 100%;
+    flex-shrink: 0;
+    height: clamp(200px, 55vw, 320px);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  @media (min-width: 768px) {
+    .dc-intro-layout {
+      flex-direction: row;
+    }
+    .dc-intro-image {
+      width: 40%;
+      height: auto;
+    }
+  }
+
+  /* 🩷 Card text link — gold base, DAT pink on hover */
+  .dc-link--card {
+    color: #ffcc00;
+    opacity: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.75rem;
+    font-weight: 800;
+    transition:
+      color 150ms ease-out,
+      letter-spacing 130ms ease-out;
+  }
+  .dc-link--card:hover {
+    color: #F23359;
+    letter-spacing: 0.19em;
+  }
+
   /* 🎭 Shared 2-column layout (Section 2 + Supporting section) */
   .drama-club-layout {
     display: grid;
@@ -176,39 +217,6 @@ export default function DramaClubIndexPage() {
     }
   }
 
-  /* =========================
-     HOW A DRAMA CLUB TAKES ROOT
-     Width + centering controls
-  ========================== */
-
-  .drama-roots-section {
-    padding: 3rem 0;
-  }
-
-  @media (min-width: 768px) {
-    .drama-roots-section {
-      padding: 4rem 0;
-    }
-  }
-
-  .drama-roots-container {
-    width: 90vw;
-    max-width: 72rem; /* ~1152px, tweak if needed */
-    margin: 0 auto;
-    display: flex;
-    justify-content: center;
-  }
-
-  .drama-roots-wrapper {
-    width: 100%;       /* full width on mobile/tablet */
-    max-width: 980px;  /* hard cap so it never gets huge */
-  }
-
-  @media (min-width: 1024px) {
-    .drama-roots-wrapper {
-      width: 65%;      /* ← PLAY WITH THIS PERCENTAGE */
-    }
-  }
 `}</style>
 
 
@@ -297,106 +305,138 @@ export default function DramaClubIndexPage() {
         </section>
 
 {/* =========================
-    SECTION 2 – WHAT IS A DRAMA CLUB? + ROOTS SIDEBAR
+    SECTION 2 – WHAT IS A DRAMA CLUB?
 ========================== */}
 <section>
-  <div className="mx-auto w-[90vw] max-w-6xl py-8 md:py-10">
-    <div className="drama-club-layout">
-      {/* LEFT: main copy + CTAs */}
-      <div className="max-w-[640px]">
-        <h2
-          style={{
-            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-            color: "#530087ff",
-            opacity: 0.9,
-            fontSize: "clamp(2rem, 5vw, 2.8rem)",
-            fontWeight: 800,
-            marginBottom: "0.75rem",
-          }}
-        >
-          Community theatre-making rooted in local story
-        </h2>
+  <div style={{
+    margin: "0 auto",
+    width: "90vw",
+    maxWidth: "52rem",
+    paddingTop: "clamp(3.5rem, 8vw, 5.5rem)",
+    paddingBottom: "clamp(2rem, 5vw, 3rem)",
+  }}>
+    <div style={{
+      backgroundColor: "rgba(45, 0, 78, 0.80)",
+      border: "1px solid rgba(160, 60, 240, 0.18)",
+      borderRadius: "22px",
+      padding: "clamp(1.5rem, 4vw, 2.25rem)",
+      boxShadow: "0 8px 40px rgba(20, 0, 40, 0.55), 0 2px 8px rgba(0,0,0,0.3)",
+      overflow: "hidden",
+    }}>
 
-        <h3
-          style={{
+      {/* Image + content two-column layout */}
+      <div className="dc-intro-layout">
+
+        {/* LEFT: image */}
+        <div className="dc-intro-image">
+          <Image
+            src="/images/drama-clubs/boy-with-wings.jpg"
+            alt="A young DAT Drama Club performer wearing paper wings."
+            fill
+            className="object-cover object-top"
+            sizes="(max-width: 768px) 90vw, 20vw"
+          />
+        </div>
+
+        {/* RIGHT: text + CTAs */}
+        <div style={{ flex: "1 1 0", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+
+          {/* Eyebrow */}
+          <p style={{
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+            fontSize: "0.68rem",
+            letterSpacing: "0.24em",
+            textTransform: "uppercase",
+            color: "rgba(242, 51, 89, 0.9)",
+            margin: 0,
+            marginBottom: "0.7rem",
+          }}>
+            Drama Clubs
+          </p>
+
+          {/* Headline */}
+          <h2 style={{
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+            color: "#f2f2f2",
+            fontSize: "clamp(1.5rem, 3.5vw, 2.2rem)",
+            fontWeight: 800,
+            lineHeight: 1.15,
+            margin: 0,
+            marginBottom: "1rem",
+          }}>
+            Where young people become the storytellers
+          </h2>
+
+          {/* Thin rule */}
+          <div style={{
+            width: "2.5rem",
+            height: "2px",
+            backgroundColor: "#ffe478",
+            marginBottom: "1.1rem",
+            opacity: 0.7,
+          }} />
+
+          {/* Lead paragraph */}
+          <p style={{
             fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
             color: "#f2f2f2",
-            opacity: 0.8,
-            fontSize: "clamp(1rem, 2vw, 1.9rem)",
+            fontSize: "clamp(0.88rem, 2vw, 1rem)",
             fontWeight: 500,
-            marginBottom: "0.75rem",
-          }}
-        >
-          DAT Drama Clubs support young artists through mentorship and workshops
-          as they shape and share stories rooted in their lives, landscapes, and
-          local traditions.
-        </h3>
+            lineHeight: 1.65,
+            margin: 0,
+            marginBottom: "0.85rem",
+            opacity: 0.9,
+          }}>
+            DAT Drama Clubs give young artists a place to build confidence,
+            strengthen their voice, and create theatre drawn from their own lives,
+            landscapes, histories, folklore, and local traditions.
+          </p>
 
-        <p
-          style={{
+          {/* Body paragraph */}
+          <p style={{
             fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-            fontWeight: 500,
-            color: "#ffe478ff",
-            opacity: 0.8,
-            fontSize: "clamp(0.98rem, 1.05rem, 1.8rem)",
-            lineHeight: 1.7,
-          }}
-        >
-          Drama Clubs grow out of DAT residencies and continue long after. Young
-          artists gather in courtyards, community centers, jungle clearings, and
-          living rooms to create performances drawn from their lived experiences.
-          Co-created with our community partners, these clubs become creative
-          homes where imagination is practiced, confidence develops, and young
-          people begin to understand their power to shape the next chapter of
-          their story.
-        </p>
+            color: "#ffe478",
+            fontSize: "clamp(0.82rem, 1.5vw, 0.92rem)",
+            fontWeight: 400,
+            lineHeight: 1.75,
+            margin: 0,
+            marginBottom: "1.5rem",
+            opacity: 0.82,
+          }}>
+            With mentorship and workshops from local and international DAT artists,
+            participants begin to see that their stories matter. As they honor the
+            culture they come from, these young artists use theatre to explore who
+            they are now — and imagine the future they want to help create for
+            themselves, their communities, and one another.
+          </p>
 
-        <p
-          style={{
-            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-            fontWeight: 500,
-            color: "#ffe478ff",
-            opacity: 0.8,
-            fontSize: "clamp(0.98rem, 1.05rem, 1.8rem)",
-            lineHeight: 1.7,
-            marginTop: "1rem",
-          }}
-        >
-          Each club — youth-led and supported by local artists, educators, and
-          DAT teaching artists — reflects the spirit and needs of its community.
-          Ensembles devise new plays and cultivate emerging artist-leaders
-          shaped by local folklore, traditional arts, community elders, and the
-          causes that matter most to the people who gather there.
-        </p><br/>
+          {/* CTAs */}
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "stretch",
+            gap: "0.85rem",
+          }}>
+            <DATButtonLink href="/cause/drama-clubs" variant="yellow" size="md" fullWidth>
+              Sponsor a Drama Club
+            </DATButtonLink>
+            <Link
+              href="/programs"
+              className="dc-link dc-link--card"
+              style={{
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                fontSize: "0.65rem",
+                letterSpacing: "0.18em",
+                textAlign: "center",
+              }}
+            >
+              I&apos;m an artist → Explore programs connected to Drama Clubs
+            </Link>
+          </div>
 
-        {/* CTAs live INSIDE the left column now */}
-<div className="mt-4">
-  <DATButtonLink href="/cause/drama-clubs" variant="yellow" size="md">
-    Sponsor a Drama Club
-  </DATButtonLink>
-
-  {/* Explicit padding above the artist link */}
-  <div style={{ paddingTop: "0.9rem" }}>
-    <Link
-      href="/programs"
-      className="dc-link dc-link--light"
-      style={{
-        fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-      }}
-    >
-      I&apos;m an artist → programs connected to Drama Clubs
-    </Link>
-  </div>
-</div>
-
-
-</div>
-
-
-      {/* RIGHT: Roots sidebar */}
-      <div className="mt-8 md:mt-0 md:ml-10 lg:ml-16 max-w-[840px] w-full">
-        <DramaClubRootsSidebar />
+        </div>
       </div>
+
     </div>
   </div>
 </section>
@@ -420,6 +460,15 @@ export default function DramaClubIndexPage() {
   <br />
 </section>
 
+
+        {/* =========================
+            HOW A DRAMA CLUB TAKES ROOT
+        ========================== */}
+        <section className="py-10 md:py-14">
+          <div style={{ margin: "0 auto", width: "min(66vw, 90vw)" }}>
+            <DramaClubRootsSidebar />
+          </div>
+        </section>
 
         {/* =========================
             IMPACT BAND: STATS + PHOTO SPLAY
