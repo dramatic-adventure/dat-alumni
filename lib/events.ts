@@ -651,26 +651,32 @@ export const events: DatEvent[] = [
 
   {
     id: "edinburgh-fringe-2026",
-    title: "Edinburgh Festival Fringe",
-    subtitle: "DAT in Residence — Summerhall",
+    title: "DAT at the Edinburgh Fringe",
+    subtitle: "An Artistic Director Residency — Scouting the Next Adventure",
     category: "festival",
     status: "upcoming",
-    date: "2026-08-01",
-    endDate: "2026-08-23",
-    venue: "Summerhall",
+    date: "2026-08-06",
+    endDate: "2026-08-10",
+    venue: "Edinburgh Festival Fringe",
     city: "Edinburgh",
     country: "UK",
     description:
-      "Three weeks. The world's biggest arts festival. DAT returns to Summerhall with The Rainbow of San Luis and a programme of community events, workshops, and late-night conversations.",
+      "DAT lands at the world's largest arts festival. Fresh off PASSAGE: Slovakia, Artistic Director Jesse Baxter spends three full days at the Fringe scouting international work and building the partnerships that become DAT's next adventures.",
     longDescription:
-      "DAT's Edinburgh residency at Summerhall spans three weeks of the Fringe. Beyond the main production, we're hosting an open studio, a post-show Q&A series, and a free community workshop for Edinburgh-based young artists.",
+      "Coming off the momentum of PASSAGE: Slovakia, DAT heads to Edinburgh for the world's biggest celebration of live performance. Over three full days at the Fringe, Artistic Director Jesse Baxter is seeing work across the international circuit — devised, documentary, and ensemble theatre — meeting fellow companies and presenters, and tracking the artists and collaborators who could shape DAT's next co-production.\n\nThis is DAT plugged into the global field: not a single show, but a working residency in the place where the international theatre community gathers each August. Follow along for dispatches from the festival, and reach out if you're in Edinburgh and want to connect.",
     image: "/images/theatre/archive/esmeraldas_dumbshow.webp",
     ticketUrl: "https://www.edfringe.com",
-    ticketPrice: "Varies by event — from Free",
-    ticketType: "ticketed",
-    featured: false,
-    tags: ["Edinburgh Fringe", "festival", "residency", "community"],
-    contactEmail: "hello@dramaticadventure.com",
+    ticketPrice: "Free to follow along",
+    ticketType: "free",
+    featured: true,
+    tags: ["Edinburgh Fringe", "festival", "scouting", "partnerships", "PASSAGE", "international"],
+    artistNote:
+      "PASSAGE: Slovakia reminded me why we travel to make this work — the next adventure always starts with showing up where the world's artists are. Edinburgh in August is exactly that place.",
+    artistNoteBy: "Jesse Baxter, Artistic Director",
+    donateLink: "/donate",
+    impactBlurb:
+      "Every partnership DAT builds at festivals like the Fringe becomes a future co-production, residency, or community collaboration. Your support is what lets us show up, scout, and turn connections into the next adventure.",
+    contactEmail: "jesse@dramaticadventure.com",
   },
 
   {
