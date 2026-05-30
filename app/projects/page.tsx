@@ -17,6 +17,8 @@ import Image from "next/image";
 import { seasons as seasonData } from "@/lib/seasonData";
 import { showcasesBySeason, type DatEvent } from "@/lib/events";
 import { dramaClubs } from "@/lib/dramaClubMap";
+import { programMap, type ProgramData } from "@/lib/programMap";
+import { resolveProjectHeroImage } from "@/lib/projectHeroImage";
 
 // ─── Colour palette ────────────────────────────────────────────────────────────
 const C = {
@@ -176,6 +178,47 @@ const HOUSEKEEPING_EXACT = new Set(["Covid-19 Hiatus", "Founding Year", "TBA"]);
 
 function isHousekeeping(project: string): boolean {
   return HOUSEKEEPING_EXACT.has(project.trim());
+}
+
+// ─── Detail-page projects (the HYBRID) ────────────────────────────────────────
+// programMap holds the structured projects that have a /projects/[slug] detail
+// page. We render those as auto-generated, linked CARDS and HIDE the matching
+// freeform string from the plain-text list so nothing is duplicated. Everything
+// in seasonData without a programMap match (festivals, readings, travelogues,
+// housekeeping) keeps rendering as text exactly as it did before.
+
+// Normalize a title for matching: lowercase, fold diacritics, keep letters only.
+// Dropping non-letters also drops the trailing year that programMap titles carry
+// (seasonData strings have none), so "PASSAGE: Slovakia 2026" matches "PASSAGE: Slovakia".
+function normalizeTitle(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // strip diacritics
+    .replace(/[^a-z]/g, "");          // keep letters only (drops year/punct/space)
+}
+
+// Group programMap entries by season — derived from Object.values so that ADDING
+// a new programMap entry automatically produces a new card with zero extra wiring.
+const PROGRAMS_BY_SEASON: Map<number, ProgramData[]> = (() => {
+  const m = new Map<number, ProgramData[]>();
+  for (const prog of Object.values(programMap)) {
+    const list = m.get(prog.season) ?? [];
+    list.push(prog);
+    m.set(prog.season, list);
+  }
+  return m;
+})();
+
+// Accent for detail-page cards — the teal used across the /projects/[slug] pages.
+// Deliberately distinct from the Theatre Archive's purple so the two card sets
+// read as siblings, not duplicates.
+const PROJECT_ACCENT = "#2493a9";
+
+// Card heading: drop the trailing year (it's already shown in the meta row),
+// e.g. "PASSAGE: Slovakia 2026" → "PASSAGE: Slovakia".
+function projectCardTitle(title: string): string {
+  return title.replace(/\s+\d{4}$/, "").trim();
 }
 
 // ─── Stats helpers ────────────────────────────────────────────────────────────
@@ -815,6 +858,16 @@ export default function ProjectsIndexPage() {
                         );
                         if (!sdEntry) return null;
 
+                        // Detail-page projects for this season → linked cards.
+                        const seasonPrograms = PROGRAMS_BY_SEASON.get(sn) ?? [];
+                        const matchedNorms = new Set(
+                          seasonPrograms.map((p) => normalizeTitle(p.title))
+                        );
+                        // Freeform strings with no card → keep as text (incl. housekeeping).
+                        const listProjects = sdEntry.projects.filter(
+                          (p) => !matchedNorms.has(normalizeTitle(p))
+                        );
+
                         return (
                           <div key={sn} id={`season-${sn}`}>
 
@@ -928,8 +981,12 @@ export default function ProjectsIndexPage() {
                               </div>
                             </div>
 
-                            {/* Project list — each entry a line in the journal */}
-                            <ProjectList projects={sdEntry.projects} seasonNum={sn} />
+                            {/* Detail-page cards — auto-generated from programMap */}
+                            <ProjectArchiveCards programs={seasonPrograms} />
+
+                            {/* Project list — freeform entries with no detail page
+                                (festivals, readings, travelogues, housekeeping) */}
+                            <ProjectList projects={listProjects} seasonNum={sn} />
 
                             {/* Community Showcases — auto-populated from events data */}
                             <ShowcaseArchiveRows showcases={showcaseMap.get(sn)} />
@@ -1100,6 +1157,23 @@ export default function ProjectsIndexPage() {
           transform: scale(1.05);
         }
 
+        /* ── Detail-page project cards (mirror Theatre cards, teal accent) ── */
+        .project-card {
+          box-shadow: 0 2px 10px rgba(36,17,35,0.15), 0 1px 3px rgba(36,17,35,0.1);
+          transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+        }
+        .project-card:hover {
+          box-shadow: 0 8px 32px rgba(36,147,169,0.2), 0 2px 6px rgba(36,147,169,0.1);
+          transform: translateY(-3px);
+          border-color: rgba(36,147,169,0.45) !important;
+        }
+        .project-card-img {
+          transition: transform 0.5s ease;
+        }
+        .project-card:hover .project-card-img {
+          transform: scale(1.05);
+        }
+
         /* ── Era photo ── */
         .project-era-photo {
           transition: transform 0.6s ease;
@@ -1205,6 +1279,142 @@ const SUBCATEGORY_BADGE: Record<string, { label: string; color: string; border: 
     bg:    "rgba(36,147,169,0.07)",
   },
 };
+
+// ─── Detail-page project cards ──────────────────────────────────────────────────
+// One linked card per programMap entry in a season, pointing at /projects/[slug].
+// Auto-generated, so a new programMap entry produces a new card with no extra code.
+function ProjectArchiveCards({ programs }: { programs: ProgramData[] }) {
+  if (programs.length === 0) return null;
+
+  return (
+    <div style={{ marginBottom: "1.1rem" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(195px, 1fr))",
+          gap: "1rem",
+        }}
+      >
+        {programs.map((p) => {
+          const imgSrc = resolveProjectHeroImage(p.slug, p.season);
+          const title  = projectCardTitle(p.title);
+
+          return (
+            <Link
+              key={p.slug}
+              href={`/projects/${p.slug}`}
+              className="project-card"
+              style={{
+                display:         "flex",
+                flexDirection:   "column",
+                overflow:        "hidden",
+                borderRadius:    "12px",
+                border:          "1px solid rgba(36,17,35,0.2)",
+                textDecoration:  "none",
+                backgroundColor: "#f2f2f2",
+              }}
+            >
+              {/* Hero image */}
+              <div
+                style={{
+                  position:        "relative",
+                  height:          "160px",
+                  flexShrink:      0,
+                  overflow:        "hidden",
+                  backgroundColor: C.ink,
+                }}
+              >
+                <Image
+                  src={imgSrc}
+                  alt={title}
+                  fill
+                  className="object-cover object-center project-card-img"
+                  sizes="(max-width: 860px) 50vw, 240px"
+                  style={{ filter: "brightness(1.06) contrast(1.04) saturate(1.05)" }}
+                />
+              </div>
+
+              {/* Info — mirrors the Theatre production card, teal-accented */}
+              <div
+                style={{
+                  flex:          1,
+                  display:       "flex",
+                  flexDirection: "column",
+                  gap:           "0.3rem",
+                  padding:       "0.8rem 1rem 1rem",
+                  borderTop:     `1.5px solid rgba(36,147,169,0.32)`,
+                }}
+              >
+                <div
+                  style={{
+                    display:        "flex",
+                    justifyContent: "space-between",
+                    alignItems:     "center",
+                    gap:            "0.5rem",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily:    "var(--font-dm-sans), system-ui, sans-serif",
+                      fontSize:      "0.72rem",
+                      fontWeight:    800,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.12em",
+                      color:         C.ink,
+                    }}
+                  >
+                    {p.year} · S{p.season}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily:   "var(--font-dm-sans), system-ui, sans-serif",
+                      fontSize:     "0.68rem",
+                      fontWeight:   600,
+                      color:        C.inkMid,
+                      textAlign:    "right",
+                      overflow:     "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace:   "nowrap",
+                      maxWidth:     "55%",
+                    }}
+                  >
+                    {p.location}
+                  </span>
+                </div>
+                <h3
+                  style={{
+                    fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                    fontSize:   "1.05rem",
+                    fontWeight: 700,
+                    color:      C.ink,
+                    lineHeight: 1.25,
+                    margin:     0,
+                  }}
+                >
+                  {title}
+                </h3>
+                <p
+                  style={{
+                    fontFamily:    "var(--font-dm-sans), system-ui, sans-serif",
+                    fontSize:      "0.68rem",
+                    fontWeight:    700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                    color:         PROJECT_ACCENT,
+                    margin:        "auto 0 0",
+                    paddingTop:    "0.4rem",
+                  }}
+                >
+                  {p.program}
+                </p>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 // ─── Community Showcase cards — shown under each season that has archived showcases ─
 function ShowcaseArchiveRows({ showcases }: { showcases?: DatEvent[] }) {
