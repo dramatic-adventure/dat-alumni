@@ -241,7 +241,7 @@ export default async function SeasonPage(
               {Object.entries(programsByGroup).map(([label, group]) => (
                 <div key={label}>
                   <h3 style={{ margin: "3rem 0 1rem" }}>
-                    {renderMaybeLink((group as any)[0].url, label, "project-link")}
+                    {renderMaybeLink(`/projects/${(group as any)[0].slug}`, label, "project-link")}
                   </h3>
 
                   {(group as any).map((program: any) => {
@@ -336,7 +336,7 @@ export default async function SeasonPage(
                               padding: "2rem",
                             }}
                           >
-                            {renderMaybeLink(prod.url, prod.title, "production-link")}
+                            {renderMaybeLink(prod.url || `/theatre/${prod.slug}`, prod.title, "production-link")}
 
                             <div
                               style={{
