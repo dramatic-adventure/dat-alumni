@@ -37,7 +37,7 @@ import {
   type DatEvent,
   type EventCategory,
 } from "@/lib/events";
-import EventPoster, { FeaturedModule, DateChip, CAT, PLUM, CREAM, isOnlineEvent, cityLabel } from "./EventPoster";
+import EventPoster, { FeaturedModule, DateChip, DateChipStyles, CAT, PLUM, CREAM, isOnlineEvent, cityLabel } from "./EventPoster";
 import { PerformanceDetail, ArchiveDetail } from "./DetailViews";
 
 // Two independent facets the visitor can combine: a Format (where) and a Type
@@ -103,7 +103,7 @@ const HEROES: Record<"all" | EventCategory, HeroConfig> = {
     overlay: "linear-gradient(to right, rgba(8,3,12,0.62) 0%, rgba(8,3,12,0.3) 45%, rgba(8,3,12,0) 100%)",
     glow: "radial-gradient(ellipse 80% 60% at 70% 50%, rgba(242,51,89,0.06) 0%, transparent 70%), radial-gradient(ellipse 60% 80% at 20% 80%, rgba(36,147,169,0.05) 0%, transparent 60%), radial-gradient(ellipse 50% 50% at 80% 20%, rgba(217,169,25,0.04) 0%, transparent 60%)",
     grid: true,
-    eyebrow: "Events", eyebrowColor: "rgba(255,255,255,0.4)",
+    eyebrow: "Events", eyebrowColor: "rgba(255,255,255,0.92)",
     headline: ["THE STAGE", "IS EVERYWHERE."],
     sub: "Performances, festivals, and community nights — live and in the room with you. Find DAT near you, or join us from wherever you are.",
     extra: "cats",
@@ -154,11 +154,15 @@ function HeroBanner({
   counts,
   festivals,
   setFilter,
+  advOpen,
+  onToggleAdv,
 }: {
   activeKey: "all" | EventCategory;
   counts: Record<CountKey, number>;
   festivals: DatEvent[];
   setFilter: (f: CategoryKey) => void;
+  advOpen: boolean;
+  onToggleAdv: () => void;
 }) {
   const h = HEROES[activeKey];
   return (
@@ -230,6 +234,12 @@ function HeroBanner({
             <span className="eh-pill">🤲 Pay What You Can</span>
           </div>
         )}
+
+        <button className="eh-hero-advtoggle" onClick={onToggleAdv} aria-expanded={advOpen}>
+          <span className="eh-hero-advtoggle-icon" aria-hidden="true">⌗</span>
+          {advOpen ? "Hide filters" : "Advanced filters"}
+          <span className="eh-hero-advtoggle-caret" aria-hidden="true">{advOpen ? "▴" : "▾"}</span>
+        </button>
       </div>
     </header>
   );
@@ -424,6 +434,7 @@ export default function EventsPrototypePage() {
   const [format, setFormat] = useState<FormatKey>("all");
   const [category, setCategory] = useState<CategoryKey>("all");
   const [location, setLocation] = useState<string | null>(null);
+  const [advOpen, setAdvOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showAllPast, setShowAllPast] = useState(false);
   const [pastOpen, setPastOpen] = useState(false);
@@ -531,81 +542,90 @@ export default function EventsPrototypePage() {
 
   return (
     <div className="eh">
+      <DateChipStyles />
       <HeroBanner
         activeKey={activeHeroKey}
         counts={counts}
         festivals={events.filter((e) => e.category === "festival")}
-        setFilter={(c) => { setCategory(c); setLocation(null); }}
+        setFilter={(c) => { setCategory(c); setLocation(null); setAdvOpen(true); }}
+        advOpen={advOpen}
+        onToggleAdv={() => setAdvOpen((o) => !o)}
       />
 
       {/* Surface: top half = hero's deep overlay colour, bottom half fades to
           transparent so the kraft paper shows through under the listing. */}
       <div className="eh-surface" style={{ background: surfaceBg }}>
 
-      {/* ── Navigation cluster: filters + quiet location strip ─────────────── */}
-      <div className="eh-nav">
-        <div className="eh-nav-inner">
-          <div className="eh-filterbar">
-            <div className="eh-filtergroup" role="group" aria-label="Format">
-              <span className="eh-filtergroup-label">Format</span>
-              {FORMAT_FILTERS.map((f) => {
-                const active = format === f.key;
-                return (
-                  <button
-                    key={f.key}
-                    className={`eh-chip ${active ? "is-active" : ""}`}
-                    style={active ? { background: CREAM, borderColor: CREAM, color: PLUM } : undefined}
-                    onClick={() => setFormat(f.key)}
-                    aria-pressed={active}
-                  >
-                    {f.label}<span className="eh-chip-count">{counts[f.key]}</span>
-                  </button>
-                );
-              })}
-            </div>
+      {/* ── Advanced filter panel (opened from the hero) ───────────────────── */}
+      {advOpen && (
+        <div className="eh-nav">
+          <div className="eh-nav-inner">
+            <div className="eh-filterbar">
+              <div className="eh-filtergroup" role="group" aria-label="Format">
+                <span className="eh-filtergroup-label">Format</span>
+                {FORMAT_FILTERS.map((f) => {
+                  const active = format === f.key;
+                  return (
+                    <button
+                      key={f.key}
+                      className={`eh-chip ${active ? "is-active" : ""}`}
+                      style={active ? { background: CREAM, borderColor: CREAM, color: PLUM } : undefined}
+                      onClick={() => setFormat(f.key)}
+                      aria-pressed={active}
+                    >
+                      {f.label}<span className="eh-chip-count">{counts[f.key]}</span>
+                    </button>
+                  );
+                })}
+              </div>
 
-            <div className="eh-filtergroup" role="group" aria-label="Type">
-              <span className="eh-filtergroup-label">Type</span>
-              {CATEGORY_FILTERS.map((f) => {
-                const active = category === f.key;
-                return (
-                  <button
-                    key={f.key}
-                    className={`eh-chip ${active ? "is-active" : ""}`}
-                    style={active ? { background: f.color ?? CREAM, borderColor: f.color ?? CREAM, color: !f.color ? PLUM : f.key === "fundraiser" ? PLUM : "#fff" }
-                      : f.color ? { ["--chip-color" as string]: f.color } : undefined}
-                    onClick={() => setCategory(f.key)}
-                    aria-pressed={active}
-                  >
-                    {f.label}<span className="eh-chip-count">{counts[f.key]}</span>
-                  </button>
-                );
-              })}
-            </div>
+              <div className="eh-filtergroup" role="group" aria-label="Type">
+                <span className="eh-filtergroup-label">Type</span>
+                {CATEGORY_FILTERS.map((f) => {
+                  const active = category === f.key;
+                  return (
+                    <button
+                      key={f.key}
+                      className={`eh-chip ${active ? "is-active" : ""}`}
+                      style={active ? { background: f.color ?? CREAM, borderColor: f.color ?? CREAM, color: !f.color ? PLUM : f.key === "fundraiser" ? PLUM : "#fff" }
+                        : f.color ? { ["--chip-color" as string]: f.color } : undefined}
+                      onClick={() => setCategory(f.key)}
+                      aria-pressed={active}
+                    >
+                      {f.label}<span className="eh-chip-count">{counts[f.key]}</span>
+                    </button>
+                  );
+                })}
+              </div>
 
-            <div className="eh-filtergroup" role="group" aria-label="Country">
-              <span className="eh-filtergroup-label">Country</span>
-              <label className="eh-locselect" data-active={location ? "1" : "0"}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11z" />
-                  <circle cx="12" cy="10" r="2.5" />
-                </svg>
-                <select
-                  aria-label="Filter by country"
-                  value={location ?? ""}
-                  onChange={(e) => setLocation(e.target.value || null)}
-                >
-                  <option value="">All countries</option>
-                  {locations.map((loc) => (
-                    <option key={loc} value={loc}>{countryDisplay(loc)}</option>
-                  ))}
-                </select>
-                <span className="eh-locselect-caret" aria-hidden="true">▾</span>
-              </label>
+              <div className="eh-filtergroup" role="group" aria-label="Country">
+                <span className="eh-filtergroup-label">Country</span>
+                <label className="eh-locselect" data-active={location ? "1" : "0"}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11z" />
+                    <circle cx="12" cy="10" r="2.5" />
+                  </svg>
+                  <span className="eh-locselect-value">
+                    {location ? countryDisplay(location) : "All countries"}
+                  </span>
+                  <span className="eh-locselect-caret" aria-hidden="true">▾</span>
+                  <select
+                    className="eh-locselect-native"
+                    aria-label="Filter by country"
+                    value={location ?? ""}
+                    onChange={(e) => setLocation(e.target.value || null)}
+                  >
+                    <option value="">All countries</option>
+                    {locations.map((loc) => (
+                      <option key={loc} value={loc}>{countryDisplay(loc)}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {activeTags.length > 0 && (
         <div className="eh-activefilters">
@@ -675,17 +695,14 @@ export default function EventsPrototypePage() {
           </>
         )}
 
-        {/* ── Rich category content (hub → category page) ───────────────── */}
-        {category !== "all" && (
-          <CategoryContext category={category} />
-        )}
-
-        {/* ── Past / archive (revealed on demand via a small button) ─────── */}
+        {/* ── Past / archive (revealed on demand; sits right under More Events) ── */}
         {past.length > 0 && (
           !pastOpen ? (
-            <button className="eh-pastreveal" onClick={() => setPastOpen(true)}>
-              Past &amp; Archive <span aria-hidden="true">↓</span>
-            </button>
+            <div className="eh-pastreveal-row">
+              <button className="eh-pastreveal" onClick={() => setPastOpen(true)}>
+                Past &amp; Archive <span aria-hidden="true">↓</span>
+              </button>
+            </div>
           ) : (
             <section className="eh-section eh-section--panel eh-past">
               <div className="eh-section-head">
@@ -717,6 +734,11 @@ export default function EventsPrototypePage() {
               )}
             </section>
           )
+        )}
+
+        {/* ── Rich category content (hub → category page) ───────────────── */}
+        {category !== "all" && (
+          <CategoryContext category={category} />
         )}
       </main>
       </div>{/* /eh-surface */}
@@ -784,10 +806,14 @@ function Styles() {
       /* Bottom-anchored scrim: keeps the headline + sub legible while the rest of
          the image stays bright and prominent. */
       .eh-hero-scrim {
-        position: absolute; left: 0; right: 0; bottom: 0; height: 78%; z-index: 2; pointer-events: none;
+        position: absolute; left: 0; right: 0; bottom: 0; height: 100%; z-index: 2; pointer-events: none;
         background:
-          radial-gradient(135% 105% at 0% 108%, rgba(5,2,8,0.88) 0%, rgba(5,2,8,0.55) 30%, rgba(5,2,8,0.2) 55%, transparent 78%),
-          linear-gradient(to top, rgba(5,2,8,0.5) 0%, rgba(5,2,8,0.2) 28%, transparent 62%);
+          /* organic dark core in the bottom-left corner, fading outward */
+          radial-gradient(108% 112% at 0% 100%, rgba(4,1,7,0.9) 0%, rgba(4,1,7,0.64) 30%, rgba(4,1,7,0.36) 52%, rgba(4,1,7,0.14) 74%, transparent 90%),
+          /* soft vertical band shading the left column where the text lives */
+          linear-gradient(to right, rgba(4,1,7,0.52) 0%, rgba(4,1,7,0.27) 34%, rgba(4,1,7,0.1) 56%, transparent 72%),
+          /* faint bottom wash so the right side keeps a touch of grounding */
+          linear-gradient(to top, rgba(5,2,8,0.3) 0%, rgba(5,2,8,0.08) 28%, transparent 48%);
       }
       .eh-hero-grid {
         background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
@@ -803,14 +829,31 @@ function Styles() {
       .eh-breadcrumb {
         display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;
         font-family: var(--font-dm-sans), sans-serif; font-size: 0.74rem; font-weight: 600;
-        letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.4);
+        letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.78);
+        margin-left: 0.25em;
+        text-shadow: 0 1px 12px rgba(0,0,0,0.75);
       }
-      .eh-breadcrumb button { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; font: inherit; letter-spacing: inherit; text-transform: inherit; }
+      .eh-breadcrumb button { background: none; border: none; padding: 0; margin: 0; color: rgba(255,255,255,0.78); cursor: pointer; font: inherit; letter-spacing: inherit; text-transform: inherit; }
       .eh-breadcrumb button:hover { color: #fff; }
       .eh-hero-eyebrow {
-        font-family: var(--font-dm-sans), sans-serif; font-size: 0.72rem; font-weight: 700;
+        font-family: var(--font-dm-sans), sans-serif; font-size: 0.74rem; font-weight: 700;
         letter-spacing: 0.28em; text-transform: uppercase; margin: 0 0 1rem;
+        /* small indent so the letter-spaced label lines up with the headline below */
+        margin-left: 0.25em;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.9), 0 2px 14px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.7);
       }
+      /* Advanced-filters toggle, sitting under the hero category buttons. */
+      .eh-hero-advtoggle {
+        display: inline-flex; align-items: center; gap: 0.45rem; margin-top: 1.4rem; cursor: pointer;
+        font-family: var(--font-dm-sans), sans-serif; font-size: 0.68rem; font-weight: 700;
+        letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.72);
+        background: rgba(8,3,12,0.4); border: 1px solid rgba(255,255,255,0.18);
+        padding: 0.5rem 1rem; border-radius: 50px; backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+        transition: color 0.18s, border-color 0.18s, background 0.18s;
+      }
+      .eh-hero-advtoggle:hover { color: #fff; border-color: rgba(255,255,255,0.4); background: rgba(8,3,12,0.55); }
+      .eh-hero-advtoggle-icon { font-size: 0.85rem; opacity: 0.85; }
+      .eh-hero-advtoggle-caret { font-size: 0.58rem; }
       .eh-hero-headline {
         font-family: var(--font-anton), sans-serif; font-size: clamp(3rem, 8.5vw, 7.5rem);
         font-weight: 400; line-height: 0.9; color: #fff; margin: 0 0 1.4rem; letter-spacing: 0.01em;
@@ -842,7 +885,7 @@ function Styles() {
 
       /* ── Navigation cluster (not sticky) ────────────────────────────────── */
       .eh-nav { }
-      .eh-nav-inner { max-width: 1140px; margin: 0 auto; padding: 0.9rem clamp(1.25rem, 5vw, 3rem); }
+      .eh-nav-inner { max-width: 1140px; margin: 0 auto; padding: 0.9rem clamp(1.25rem, 5vw, 3rem); display: flex; flex-direction: column; align-items: flex-start; gap: 0.7rem; }
       /* Stacked segments: Format / Type / Country, each on its own row. */
       .eh-filterbar { display: flex; flex-direction: column; gap: 0.7rem; align-items: flex-start; }
       .eh-filtergroup { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
@@ -871,12 +914,17 @@ function Styles() {
       }
       .eh-locselect:hover { border-color: rgba(247,244,239,0.5); color: #fff; }
       .eh-locselect[data-active="1"] { border-color: ${CREAM}; color: ${CREAM}; }
-      .eh-locselect select {
-        appearance: none; -webkit-appearance: none; background: none; border: none; cursor: pointer;
-        font-family: var(--font-dm-sans), sans-serif; font-size: 0.74rem; font-weight: 700;
-        letter-spacing: 0.1em; text-transform: uppercase; color: inherit; padding-right: 0.2rem; outline: none;
+      /* The native select covers the whole pill so a click anywhere opens it. */
+      .eh-locselect-native {
+        position: absolute; inset: 0; width: 100%; height: 100%;
+        opacity: 0; cursor: pointer; border: none; margin: 0; padding: 0;
+        font-size: 16px; /* avoids iOS zoom-on-focus */
       }
-      .eh-locselect select option { color: #241123; }
+      .eh-locselect-native option { color: #241123; }
+      .eh-locselect-value {
+        font-family: var(--font-dm-sans), sans-serif; font-size: 0.74rem; font-weight: 700;
+        letter-spacing: 0.1em; text-transform: uppercase; color: inherit; white-space: nowrap;
+      }
       .eh-locselect-caret { font-size: 0.7rem; color: inherit; pointer-events: none; }
 
       /* ── Active-filter summary (combinable filters made visible) ─────────── */
@@ -998,8 +1046,9 @@ function Styles() {
       .eh-ctx-link:hover { opacity: 0.75; }
 
       /* ── Past / archive (muted) ─────────────────────────────────────────── */
+      .eh-pastreveal-row { display: flex; justify-content: flex-end; margin-top: clamp(-2rem, -3vw, -1.25rem); }
       .eh-pastreveal {
-        display: flex; align-items: center; gap: 0.5rem; width: fit-content; margin: 0 auto;
+        display: flex; align-items: center; gap: 0.5rem; width: fit-content;
         background: rgba(247,244,239,0.06); border: 1.5px solid rgba(247,244,239,0.2);
         color: rgba(247,244,239,0.7); cursor: pointer;
         font-family: var(--font-dm-sans), sans-serif; font-size: 0.72rem; font-weight: 700;

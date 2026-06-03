@@ -470,7 +470,16 @@ function PosterStyles() {
         text-shadow: 0 2px 18px rgba(0,0,0,0.4);
       }
 
-      /* ── Date chip — the promoted date element ─────────────────────────── */
+    `}</style>
+  );
+}
+
+// DateChip styles live separately so they apply anywhere a DateChip is rendered —
+// including the Featured module on its own (e.g. when a country filter leaves no
+// rail cards on the page, which previously left the chip unstyled).
+export function DateChipStyles() {
+  return (
+    <style>{`
       .ep-datechip {
         display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap;
         padding: 0.35rem 0.7rem; border-radius: 8px; line-height: 1;
@@ -559,8 +568,9 @@ function FeaturedStyles() {
         color: rgba(247,244,239,0.7); margin: 0.6rem 0 0;
       }
       .epf-when {
-        font-family: var(--font-space-grotesk), system-ui, sans-serif;
-        font-size: 1rem; font-weight: 600; color: ${CREAM}; margin: 0.9rem 0 0.1rem;
+        font-family: var(--font-anton), system-ui, sans-serif;
+        font-size: 1.35rem; font-weight: 400; letter-spacing: 0.02em; text-transform: uppercase;
+        color: var(--ep-accent); margin: 0.9rem 0 0.15rem; line-height: 1.05;
       }
       .epf-where {
         font-family: var(--font-space-grotesk), system-ui, sans-serif;
