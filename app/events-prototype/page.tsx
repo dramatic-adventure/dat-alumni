@@ -564,8 +564,6 @@ export default function EventsPrototypePage() {
               })}
             </div>
 
-            <span className="eh-filterdivider" aria-hidden="true" />
-
             <div className="eh-filtergroup" role="group" aria-label="Type">
               <span className="eh-filtergroup-label">Type</span>
               {CATEGORY_FILTERS.map((f) => {
@@ -584,26 +582,28 @@ export default function EventsPrototypePage() {
                 );
               })}
             </div>
-          </div>
 
-          {/* Quiet location element — one simple dropdown filter. */}
-          <label className="eh-locselect" data-active={location ? "1" : "0"}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11z" />
-              <circle cx="12" cy="10" r="2.5" />
-            </svg>
-            <select
-              aria-label="Filter by location"
-              value={location ?? ""}
-              onChange={(e) => setLocation(e.target.value || null)}
-            >
-              <option value="">All countries</option>
-              {locations.map((loc) => (
-                <option key={loc} value={loc}>{countryDisplay(loc)}</option>
-              ))}
-            </select>
-            <span className="eh-locselect-caret" aria-hidden="true">▾</span>
-          </label>
+            <div className="eh-filtergroup" role="group" aria-label="Country">
+              <span className="eh-filtergroup-label">Country</span>
+              <label className="eh-locselect" data-active={location ? "1" : "0"}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11z" />
+                  <circle cx="12" cy="10" r="2.5" />
+                </svg>
+                <select
+                  aria-label="Filter by country"
+                  value={location ?? ""}
+                  onChange={(e) => setLocation(e.target.value || null)}
+                >
+                  <option value="">All countries</option>
+                  {locations.map((loc) => (
+                    <option key={loc} value={loc}>{countryDisplay(loc)}</option>
+                  ))}
+                </select>
+                <span className="eh-locselect-caret" aria-hidden="true">▾</span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -784,8 +784,10 @@ function Styles() {
       /* Bottom-anchored scrim: keeps the headline + sub legible while the rest of
          the image stays bright and prominent. */
       .eh-hero-scrim {
-        position: absolute; left: 0; right: 0; bottom: 0; height: 62%; z-index: 2; pointer-events: none;
-        background: linear-gradient(to top, rgba(5,2,8,0.82) 0%, rgba(5,2,8,0.5) 30%, rgba(5,2,8,0.18) 60%, transparent 100%);
+        position: absolute; left: 0; right: 0; bottom: 0; height: 78%; z-index: 2; pointer-events: none;
+        background:
+          radial-gradient(135% 105% at 0% 108%, rgba(5,2,8,0.88) 0%, rgba(5,2,8,0.55) 30%, rgba(5,2,8,0.2) 55%, transparent 78%),
+          linear-gradient(to top, rgba(5,2,8,0.5) 0%, rgba(5,2,8,0.2) 28%, transparent 62%);
       }
       .eh-hero-grid {
         background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
@@ -840,16 +842,16 @@ function Styles() {
 
       /* ── Navigation cluster (not sticky) ────────────────────────────────── */
       .eh-nav { }
-      .eh-nav-inner { max-width: 1140px; margin: 0 auto; padding: 0.9rem clamp(1.25rem, 5vw, 3rem); display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-      .eh-filterbar { display: flex; gap: 0.5rem 0.85rem; flex-wrap: wrap; align-items: center; }
-      .eh-filtergroup { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+      .eh-nav-inner { max-width: 1140px; margin: 0 auto; padding: 0.9rem clamp(1.25rem, 5vw, 3rem); }
+      /* Stacked segments: Format / Type / Country, each on its own row. */
+      .eh-filterbar { display: flex; flex-direction: column; gap: 0.7rem; align-items: flex-start; }
+      .eh-filtergroup { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
       .eh-filtergroup-label {
-        font-family: var(--font-dm-sans), sans-serif; font-size: 0.6rem; font-weight: 700;
+        flex: 0 0 auto; width: 4.75rem;
+        font-family: var(--font-dm-sans), sans-serif; font-size: 0.62rem; font-weight: 700;
         letter-spacing: 0.16em; text-transform: uppercase; color: rgba(247,244,239,0.4);
-        margin-right: 0.1rem;
       }
-      .eh-filterdivider { width: 1px; align-self: stretch; min-height: 1.6rem; background: rgba(247,244,239,0.16); }
-      @media (max-width: 640px) { .eh-filterdivider { display: none; } .eh-filterbar { gap: 0.5rem; } }
+      @media (max-width: 480px) { .eh-filtergroup-label { width: 100%; } }
       .eh-chip {
         display: inline-flex; align-items: center; gap: 0.45rem; cursor: pointer; white-space: nowrap;
         font-family: var(--font-dm-sans), sans-serif; font-size: 0.74rem; font-weight: 700;
@@ -872,7 +874,7 @@ function Styles() {
       .eh-locselect select {
         appearance: none; -webkit-appearance: none; background: none; border: none; cursor: pointer;
         font-family: var(--font-dm-sans), sans-serif; font-size: 0.74rem; font-weight: 700;
-        letter-spacing: 0.06em; color: inherit; padding-right: 0.2rem; outline: none;
+        letter-spacing: 0.1em; text-transform: uppercase; color: inherit; padding-right: 0.2rem; outline: none;
       }
       .eh-locselect select option { color: #241123; }
       .eh-locselect-caret { font-size: 0.7rem; color: inherit; pointer-events: none; }
