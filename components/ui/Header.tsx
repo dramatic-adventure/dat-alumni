@@ -85,14 +85,7 @@ const NAV_ITEMS = [
       { label: 'Propose a Project', href: '/partners/propose-project' },
     ],
   },
-  {
-    label: 'EVENTS',
-    submenu: [
-      { label: 'Upcoming Performances', href: '/events/performances' },
-      { label: 'Festivals & Showcases', href: '/events/festivals' },
-      { label: 'Fundraisers & Community Nights', href: '/events/fundraisers' },
-    ],
-  },
+  { label: 'EVENTS', href: '/events' },
   { label: 'SPONSOR THE STORY', href: '/donate', cta: true },
 ];
 

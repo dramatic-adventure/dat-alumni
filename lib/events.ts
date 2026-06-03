@@ -1009,7 +1009,7 @@ export const categoryMeta: Record<
     label: "Fundraiser",
     plural: "Fundraisers & Community Nights",
     color: "#D9A919",
-    href: "/events/fundraisers",
+    href: "/events/community",
     eyebrow: "Community & Giving",
   },
 };

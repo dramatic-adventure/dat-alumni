@@ -2121,7 +2121,7 @@ export default async function EventDetailPageTemplate({
                     </>
                   ) : "Upcoming Performances"}
                 </Link>
-                <Link href="/events/fundraisers" className="evd-bottom-link evd-bottom-link--gold">
+                <Link href="/events/community" className="evd-bottom-link evd-bottom-link--gold">
                   {isBilingual ? (
                     <>
                       <span className="evd-bilingual-wrap-default">Fundraisers &amp; Community Nights</span>

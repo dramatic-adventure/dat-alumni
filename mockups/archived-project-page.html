@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DAT — Archived Project Page (mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;700&family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#241123; --ink-mid:#4a2a56; --gold:#FFCC00;
+    --teal:#2493a9; --pink:#F23359; --grape:#7b4fa6; --yellow:#f5c842; --green:#3b6d11;
+    --white:#f2f2f2; --kraft:#d6c7a4; --paper:#f4eee1;
+    --anton:'Anton',system-ui,sans-serif;
+    --grotesk:'Space Grotesk',system-ui,sans-serif;
+    --dm:'DM Sans',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; color:var(--ink); font-family:var(--grotesk);
+    background:
+      radial-gradient(circle at 20% 10%, rgba(255,255,255,.35), transparent 40%),
+      repeating-linear-gradient(135deg, rgba(36,17,35,.015) 0 2px, transparent 2px 7px),
+      var(--kraft);}
+  a{color:inherit; text-decoration:none; cursor:pointer;}
+  .lnk{transition:color .15s;}
+  .lnk:hover{color:var(--purple,#6C00AF); text-decoration:underline; text-underline-offset:3px;}
+
+  .toggle{position:sticky; top:0; z-index:50; display:flex; gap:1.4rem; align-items:center;
+    justify-content:center; flex-wrap:wrap; padding:.7rem; background:rgba(36,17,35,.95);}
+  .tgroup{display:flex; gap:.4rem; align-items:center;}
+  .toggle span{font-family:var(--dm); font-size:.66rem; font-weight:700; letter-spacing:.16em;
+    text-transform:uppercase; color:rgba(255,255,255,.55); margin-right:.3rem;}
+  .toggle button{font-family:var(--dm); font-weight:700; font-size:.76rem; letter-spacing:.03em;
+    border:1.5px solid rgba(255,204,0,.5); background:transparent; color:var(--white);
+    padding:.4em 1em; border-radius:6px; cursor:pointer; transition:.18s;}
+  .toggle button.on{background:var(--gold); color:var(--ink); border-color:var(--gold);}
+
+  .wrap{max-width:1120px; margin:0 auto; width:92vw;}
+  .sheet{background:var(--paper); border-radius:24px; padding:2.6rem 2.6rem 3rem;
+    margin:2.5rem auto 3.5rem; position:relative; z-index:5; box-shadow:0 6px 26px rgba(36,17,35,.16);}
+
+  .hero{position:relative; height:82vh; min-height:520px; overflow:hidden; box-shadow:0 0 40px rgba(36,17,35,.5);}
+  .hero .bg{position:absolute; inset:0; background-size:cover; background-position:center;}
+  .hero .scrim{position:absolute; inset:0;
+    background:linear-gradient(to top, rgba(36,17,35,.92) 0%, rgba(36,17,35,.3) 48%, transparent 72%);}
+  .hero .inner{position:absolute; left:0; right:0; bottom:0; padding:0 0 3rem;}
+  .eyebrow{font-family:var(--dm); font-size:.92rem; font-weight:900; letter-spacing:.2em;
+    text-transform:uppercase; color:var(--gold); margin:0 0 .5rem;}
+  .eyebrow a:hover{text-decoration:underline; text-underline-offset:3px;}
+  h1.title{font-family:var(--anton); text-transform:uppercase; color:var(--white);
+    font-size:clamp(3rem,8vw,7rem); line-height:.95; margin:0; text-shadow:0 8px 24px rgba(0,0,0,.8);}
+  .place{font-family:var(--grotesk); color:var(--white); opacity:.85; margin:.7rem 0 0;
+    font-size:clamp(1rem,2vw,1.35rem); text-shadow:0 3px 10px rgba(0,0,0,.8);}
+  .essence{font-family:var(--grotesk); font-style:italic; color:var(--gold); opacity:.95;
+    margin:.5rem 0 0; font-size:clamp(1rem,1.8vw,1.25rem); font-weight:500;}
+
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    background:var(--ink); border-radius:16px; overflow:hidden; margin:0; box-shadow:0 8px 24px rgba(36,17,35,.22);}
+  .stat{padding:1.3rem 1.4rem; text-align:center; border-right:1px solid rgba(242,242,242,.12);}
+  .stat:last-child{border-right:none;}
+  .stat .n{font-family:var(--anton); color:var(--gold); font-size:clamp(2.2rem,5vw,3.2rem); line-height:1;}
+  .stat .l{font-family:var(--grotesk); font-weight:700; text-transform:uppercase; letter-spacing:.1em;
+    font-size:.8rem; color:var(--white); margin-top:.35rem;}
+  .stat .s{font-family:var(--dm); font-size:.7rem; color:rgba(242,242,242,.6); margin-top:.2rem;}
+
+  section.block{padding:3rem 0 0;}
+  .kicker{font-family:var(--dm); font-size:.8rem; font-weight:900; letter-spacing:.2em;
+    text-transform:uppercase; color:var(--ink); opacity:.65; margin:0 0 .4rem;}
+  h2.sec{font-family:var(--anton); text-transform:uppercase; color:var(--ink);
+    font-size:clamp(1.8rem,4vw,2.7rem); line-height:1; margin:0 0 1.2rem;}
+  p.lede{font-family:var(--grotesk); font-size:1.05rem; line-height:1.75; max-width:64ch; opacity:.9;}
+
+  /* campaign module */
+  .camp{margin:3rem 0 0; border-radius:16px; padding:1.8rem 2rem; border:2px solid;}
+  .camp.live{background:rgba(36,147,169,.1); border-color:var(--teal);}
+  .camp.done{background:rgba(59,109,17,.1); border-color:var(--green);}
+  .camp .ctag{font-family:var(--dm); font-weight:900; letter-spacing:.16em; text-transform:uppercase;
+    font-size:.72rem; margin:0 0 .5rem;}
+  .camp.live .ctag{color:var(--teal);} .camp.done .ctag{color:var(--green);}
+  .camp h3{font-family:var(--anton); text-transform:uppercase; font-size:clamp(1.5rem,3vw,2.1rem);
+    margin:0 0 .6rem; color:var(--ink);}
+  .bar{height:14px; border-radius:8px; background:rgba(36,17,35,.12); overflow:hidden; margin:.8rem 0 .5rem;}
+  .bar > div{height:100%; background:var(--teal);}
+  .camp .row{display:flex; justify-content:space-between; font-family:var(--dm); font-weight:700;
+    font-size:.9rem; color:var(--ink);}
+  .camp p{font-family:var(--grotesk); line-height:1.65; opacity:.85; margin:.4rem 0 1rem; max-width:60ch;}
+
+  /* drama clubs — place of honor */
+  .honor{margin:3rem 0 0; background:var(--ink); border-radius:18px; padding:2.4rem 2rem;}
+  .honor .kicker{color:var(--yellow); opacity:.9;}
+  .honor h2{font-family:var(--anton); text-transform:uppercase; color:var(--white);
+    font-size:clamp(1.8rem,4vw,2.7rem); margin:0 0 1.4rem;}
+  .clubs{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.2rem;}
+  .club{border-radius:14px; overflow:hidden; background:rgba(242,242,242,.06);
+    border:1px solid rgba(242,242,242,.14); transition:.18s; display:flex; flex-direction:column;}
+  .club:hover{transform:translateY(-3px); box-shadow:0 10px 28px rgba(0,0,0,.4);}
+  .club .hero{position:relative; height:140px; background-size:cover; background-position:center;}
+  .club .hero .scr{position:absolute; inset:0; background:linear-gradient(to top, rgba(36,17,35,.85), transparent 70%);}
+  .club .stamp{position:absolute; top:.7rem; left:.7rem; width:46px; height:46px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; text-align:center; font-family:var(--dm);
+    font-weight:900; font-size:.46rem; line-height:1.05; color:#fff; text-transform:uppercase; padding:5px;
+    box-shadow:0 2px 6px rgba(0,0,0,.5);}
+  .club .hero .ch{position:absolute; bottom:.6rem; left:.85rem; right:.85rem; font-family:var(--anton);
+    text-transform:uppercase; font-size:1.15rem; color:var(--white); line-height:1; text-shadow:0 2px 8px rgba(0,0,0,.8);}
+  .club .cinfo{padding:.85rem 1rem 1rem;}
+  .club .cinfo .cs{font-family:var(--dm); font-size:.78rem; color:rgba(242,242,242,.65);}
+  .club .cinfo .cl{font-family:var(--dm); font-size:.74rem; font-weight:700; color:var(--yellow); margin-top:.35rem;}
+
+  /* productions — featured */
+  .posters{display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:1.2rem; margin-top:1rem;}
+  .poster{position:relative; border-radius:12px; overflow:hidden; aspect-ratio:2/3; background-size:cover;
+    background-position:center; transition:.2s; box-shadow:0 6px 18px rgba(36,17,35,.2); display:block;}
+  .poster:hover{transform:translateY(-4px) scale(1.01); box-shadow:0 14px 34px rgba(36,17,35,.32);}
+  .poster .pscr{position:absolute; inset:0; background:linear-gradient(to top, rgba(36,17,35,.92) 8%, rgba(36,17,35,.15) 55%, transparent 75%);}
+  .poster .ptag{position:absolute; top:.7rem; left:.7rem; font-family:var(--dm); font-size:.58rem; font-weight:800;
+    letter-spacing:.16em; text-transform:uppercase; color:var(--ink); background:var(--gold); border-radius:4px; padding:.2rem .55rem;}
+  .poster .pbody{position:absolute; bottom:0; left:0; right:0; padding:1rem .9rem;}
+  .poster .pt{font-family:var(--anton); text-transform:uppercase; font-size:1.3rem; line-height:.95; color:var(--white);
+    text-shadow:0 2px 8px rgba(0,0,0,.8);}
+  .poster .ps{font-family:var(--dm); font-size:.74rem; color:rgba(242,242,242,.8); margin-top:.3rem;}
+
+  .ripple-more{display:inline-block; margin-top:1.4rem; font-family:var(--dm); font-weight:800; letter-spacing:.1em;
+    text-transform:uppercase; font-size:.78rem; color:var(--teal); border:1.5px solid var(--teal);
+    border-radius:8px; padding:.7em 1.3em; transition:.18s;}
+  .ripple-more:hover{background:var(--teal); color:#fff;}
+
+  /* ripples */
+  .ripples{display:flex; flex-direction:column; gap:.2rem; margin-top:1rem;}
+  .ripple{display:flex; gap:1rem; align-items:flex-start; padding:1rem 0; border-bottom:1px solid rgba(36,17,35,.1);}
+  .ripple:last-child{border-bottom:none;}
+  .ripple .ico{flex-shrink:0; width:30px; height:30px; border-radius:50%; margin-top:2px;
+    border:2px solid var(--teal); box-shadow:0 0 0 4px rgba(36,147,169,.18), 0 0 0 9px rgba(36,147,169,.08);}
+  .ripple .rt{font-family:var(--grotesk); font-size:1.02rem; line-height:1.6; color:var(--ink);}
+  .ripple .rt a{font-weight:700; color:var(--grape); text-decoration:underline; text-underline-offset:3px;}
+
+  /* causes */
+  .causes{display:flex; flex-wrap:wrap; gap:.6rem; margin-top:1rem;}
+  .cause{display:inline-flex; align-items:center; gap:.5rem; background:rgba(255,255,255,.45);
+    border:1px solid rgba(36,17,35,.18); border-radius:999px; padding:.55rem 1.1rem;
+    font-family:var(--dm); font-weight:700; font-size:.84rem; color:var(--ink); transition:.18s;}
+  .cause:hover{background:var(--gold); border-color:var(--gold);}
+  .cause i{width:9px; height:9px; border-radius:50%;}
+
+  /* itinerary chapters */
+  .chapters{display:flex; flex-direction:column; margin-top:1.2rem;}
+  .chapter{display:flex; gap:1.2rem; padding:1.15rem 0; border-bottom:1px solid rgba(36,17,35,.1);}
+  .chapter:last-child{border-bottom:none;}
+  .chapter .num{flex-shrink:0; width:38px; height:38px; border-radius:50%; background:var(--ink); color:var(--gold);
+    font-family:var(--anton); display:flex; align-items:center; justify-content:center; font-size:1.1rem; margin-top:2px;}
+  .chapter h4{font-family:var(--grotesk); font-weight:700; font-size:1.12rem; color:var(--ink); margin:.1rem 0 .35rem;}
+  .chapter p{font-family:var(--dm); font-size:.9rem; line-height:1.6; opacity:.8; margin:0; max-width:60ch;}
+
+  .btnrow{display:flex; flex-wrap:wrap; gap:.7rem;}
+
+  /* roster */
+  .roster{display:grid; grid-template-columns:repeat(auto-fill,minmax(128px,1fr)); gap:1rem; margin-top:1rem;}
+  .card{background:rgba(255,255,255,.4); border:1px solid rgba(36,17,35,.12); border-radius:12px;
+    padding:1rem .8rem; text-align:center; transition:.18s;}
+  .card:hover{background:rgba(255,255,255,.65); transform:translateY(-3px); box-shadow:0 8px 22px rgba(36,17,35,.16);}
+  .ava{width:60px; height:60px; border-radius:50%; margin:0 auto .6rem; display:flex; align-items:center;
+    justify-content:center; font-family:var(--anton); font-size:1.45rem; color:var(--white);}
+  .card .cn{font-family:var(--grotesk); font-weight:700; font-size:.9rem; color:var(--ink); line-height:1.2;}
+  .card .cr{font-family:var(--dm); font-size:.7rem; color:var(--ink); opacity:.6; margin-top:.25rem; line-height:1.3;}
+
+  /* journey cards */
+  .jcards{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:1rem; margin-top:1rem;}
+  .jc{position:relative; border-radius:12px; overflow:hidden; aspect-ratio:16/9; background:#f7f3ea;
+    border:1px solid rgba(36,17,35,.18); padding:.9rem 1rem; display:flex; flex-direction:column;
+    justify-content:space-between; transition:.2s;}
+  .jc:hover{transform:translateY(-3px) rotate(-.5deg); box-shadow:0 10px 26px rgba(36,17,35,.22);}
+  .jc .word{font-family:var(--anton); text-transform:uppercase; font-size:1.5rem; color:var(--teal); line-height:.9;}
+  .jc .word small{display:block; font-size:.7rem; color:var(--pink); letter-spacing:.1em;}
+  .jc .who{font-family:var(--grotesk); font-weight:700; font-size:.95rem; color:var(--ink);}
+  .jc .who small{display:block; font-family:var(--dm); font-weight:500; font-size:.72rem; opacity:.6; margin-top:.15rem;}
+  .jc .pin{position:absolute; top:.8rem; right:.8rem; width:34px; height:34px; border-radius:50%;
+    background:var(--grape); opacity:.85;}
+
+  /* legacy */
+  .legacy{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:1rem; margin-top:1rem;}
+  .lcard{border-radius:12px; overflow:hidden; border:1.5px solid rgba(36,17,35,.18); background:#fbf8f0;
+    display:flex; flex-direction:column; transition:.2s;}
+  .lcard:hover{transform:translateY(-3px); box-shadow:0 8px 24px rgba(36,17,35,.18);}
+  .lcard .top{height:115px; background-size:cover; background-position:center; position:relative;}
+  .lcard .tag{position:absolute; bottom:.5rem; left:.55rem; font-family:var(--dm); font-size:.6rem;
+    font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:#fff; border-radius:4px; padding:.2rem .5rem;}
+  .lcard .body{padding:.8rem .9rem 1rem;}
+  .lcard h4{font-family:var(--grotesk); font-weight:700; font-size:.96rem; color:var(--ink); margin:0 0 .25rem; line-height:1.25;}
+  .lcard .meta{font-family:var(--dm); font-size:.72rem; color:var(--ink); opacity:.55;}
+
+  /* thread */
+  .thread{display:flex; flex-wrap:wrap; gap:.6rem; margin-top:1rem;}
+  .chip{background:var(--ink); color:var(--white); border-radius:8px; padding:.6rem 1rem;
+    font-family:var(--dm); font-weight:700; font-size:.82rem; transition:.18s;}
+  .chip:hover{background:var(--grape);}
+  .chip .y{color:var(--gold); margin-left:.4rem; font-weight:800;}
+
+  /* dual CTA */
+  .ctas{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.2rem; margin:3.4rem 0 0;}
+  .ctabox{border-radius:18px; padding:2.2rem 1.8rem; text-align:center;}
+  .ctabox.donor{background:var(--ink);}
+  .ctabox.artist{background:var(--teal);}
+  .ctabox h3{font-family:var(--anton); text-transform:uppercase; color:var(--white);
+    font-size:clamp(1.4rem,3vw,2rem); margin:0 0 .5rem;}
+  .ctabox p{font-family:var(--grotesk); color:rgba(255,255,255,.85); margin:0 auto 1.2rem; line-height:1.6; max-width:38ch; font-size:.95rem;}
+  .btn{display:inline-block; font-family:var(--dm); font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+    font-size:.82rem; padding:.8em 1.8em; border-radius:8px; transition:.18s;}
+  .btn.gold{background:var(--gold); color:var(--ink);}
+  .btn.white{background:var(--white); color:var(--ink);}
+  .btn:hover{transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.25);}
+
+  .backnav{padding:2.4rem 0 0; display:flex; justify-content:space-between; flex-wrap:wrap; gap:1rem;}
+  .backnav a{font-family:var(--dm); font-weight:800; letter-spacing:.13em; text-transform:uppercase;
+    font-size:.78rem; color:var(--ink); opacity:.7;}
+  .backnav a:hover{opacity:1; color:var(--grape);}
+  .note{font-family:var(--dm); font-size:.74rem; color:var(--ink); opacity:.5; font-style:italic; margin-top:.6rem;}
+</style>
+</head>
+<body>
+
+<div class="toggle">
+  <div class="tgroup"><span>Data</span>
+    <button id="b-rich" class="on" onclick="setMode('rich')">Rich (recent)</button>
+    <button id="b-sparse" onclick="setMode('sparse')">Sparse (historical)</button>
+  </div>
+  <div class="tgroup"><span>Campaign</span>
+    <button id="c-live" class="on" onclick="setCamp('live')">Live</button>
+    <button id="c-done" onclick="setCamp('done')">Concluded</button>
+  </div>
+</div>
+
+<div id="page"></div>
+
+<script>
+let MODE="rich", CAMP="live";
+
+const DATA = {
+  rich: {
+    family:"PASSAGE", familyHref:"/passage", season:"Season 20", seasonHref:"/season/20",
+    title:"PASSAGE: Slovakia 2026", place:"Košice · Zemplínska Teplica · Slovenský Raj · Bratislava",
+    essence:"Where the journey changes the maker.", heroColor:"#3a2230",
+    stats:[
+      {n:"5", l:"Company artists", s:"+ local collaborators"},
+      {n:"4", l:"Regions", s:"across Slovakia"},
+      {n:"2", l:"Drama clubs", s:"in partnership"},
+      {n:"3", l:"Weeks", s:"in the field"},
+    ],
+    campaign:{ goal:12000, live:{raised:4300, donors:38}, done:{raised:12450, donors:61} },
+    lede:"An immersive three-week artistic adventure across Slovakia — from the cultural capitals of Bratislava and Košice to the village of Zemplínska Teplica and the mountains of Slovenský Raj — culminating in an evening of eclectic performance shaped by travel, cross-cultural exchange, and shared creative work with Roma youth.",
+    itinerary:[
+      {t:"Acclimate in Bratislava", d:"The journey begins in Slovakia's capital — its lively old town, cobblestone streets, and towering castle set the stage, alongside the first creative workshops and meeting fellow traveling artists."},
+      {t:"Engage in Košice", d:"East to Košice, Europe's 2017 Capital of Culture and a UNESCO center for digital arts, where artists expand their work through co-creative workshops with a local theatre company."},
+      {t:"Connect in Zemplínska Teplica", d:"In a quiet village, we join long-time partner ETP Slovensko for community-driven storytelling workshops with Roma youth, building stories to perform together on stage."},
+      {t:"Create in Slovenský Raj", d:"In the mountain wilderness of 'Slovak Paradise,' artists rest, reflect, and develop their work among gorges, waterfalls, and the UNESCO-recognized Dobšinská Ice Cave."},
+      {t:"Perform in Košice", d:"Back in Košice's old town, the journey climaxes in a celebratory evening of eclectic shared work — acting, song, film, dance — inspired by the cross-cultural experience."},
+    ],
+    clubs:[
+      {n:"Luník IX Collective", loc:"Košice, Slovakia", cause:"Arts education access · Roma youth", c:"#F23359", img:"#6b2233", href:"/drama-club/lunik-ix-collective"},
+      {n:"Zemplínska Teplica Ensemble", loc:"Zemplínska Teplica", cause:"Youth empowerment & belonging", c:"#2493a9", img:"#1a5560", href:"/drama-club/zemplinska-teplica-ensemble"},
+    ],
+    productions:[
+      {t:"The Roma Sessions", s:"Devised performance · Bratislava", tag:"Premiere", img:"#5a2440", href:"/theatre/the-roma-sessions"},
+      {t:"The Rebel Bird", s:"Workshop production · NYC", tag:"Developed from", img:"#234a52", href:"/theatre/the-rebel-bird"},
+    ],
+    ripples:[
+      {t:`The <a href="/drama-club/lunik-ix-collective">Luník IX Collective</a> kept meeting weekly through the school year.`},
+      {t:`Two traveling artists returned as teaching artists in the 2027 residency.`},
+      {t:`A piece born in Zemplínska Teplica had its New York debut the following season.`},
+    ],
+    causes:[
+      {t:"Arts, Culture & Storytelling", c:"#F23359", href:"/cause/arts-culture-storytelling-representation"},
+      {t:"Youth Empowerment & Wellbeing", c:"#2493a9", href:"/cause/youth-empowerment-mental-health-wellbeing"},
+      {t:"Education Access & Equity", c:"#7b4fa6", href:"/cause/education-access-equity-opportunity"},
+      {t:"Social Justice & Human Rights", c:"#3b6d11", href:"/cause/social-justice-human-rights-equity"},
+    ],
+    roster:[
+      {n:"Jesse Baxter", r:"Artistic Director", c:"#7b4fa6", href:"/alumni/jesse-baxter"},
+      {n:"Christen Madrazo", r:"Dir. of Creative Learning", c:"#2493a9", href:"/alumni/christen-madrazo"},
+      {n:"Jason Williamson", r:"Resident Playwright", c:"#D85A30", href:"/alumni/jason-williamson"},
+      {n:"Ása Williamson", r:"Artist Apprentice", c:"#185FA5", href:"/alumni/asa-williamson"},
+      {n:"Vida Williamson", r:"Artist Apprentice", c:"#F23359", href:"/alumni/vida-williamson"},
+    ],
+    journeyCards:[
+      {who:"Jesse Baxter", role:"Artistic Director", href:"/alumni/jesse-baxter"},
+      {who:"Christen Madrazo", role:"Creative Learning", href:"/alumni/christen-madrazo"},
+      {who:"Jason Williamson", role:"Resident Playwright", href:"/alumni/jason-williamson"},
+    ],
+    legacy:[
+      {h:"Drama Works", meta:"Story from the field", tag:"Story", tagc:"#7b4fa6", img:"#4a2a56", href:"/story/drama-works"},
+      {h:"A Night at the Roma Museum", meta:"Story from the field", tag:"Story", tagc:"#7b4fa6", img:"#3b6d11", href:"/story/night-at-the-roma-museum"},
+      {h:"Joint Drama Club Showcase", meta:"Košice · community performance", tag:"Showcase", tagc:"#2493a9", img:"#0f6e56", href:"/drama-club/lunik-ix-collective"},
+    ],
+    thread:[{t:"Creative Trek: Slovakia",y:"2012",href:"/projects/creative-trek-slovakia-2012"},{t:"ACTion: Heart of Europe",y:"2013",href:"/projects/action-heart-of-europe-2013"},{t:"Teaching Artist Residency: Košice",y:"2024",href:"/projects/teaching-artist-residency-kosice-2024"}],
+  },
+  sparse: {
+    family:"Creative Trek", familyHref:"/creative-trek", season:"Season 1", seasonHref:"/season/1",
+    title:"Creative Trek: Zimbabwe 2007", place:"Zimbabwe",
+    essence:"Where the company began.", heroColor:"#2c2620",
+    stats:[{n:"6", l:"Artists", s:"the founding company"},{n:"1", l:"Country", s:"Zimbabwe"},{n:"1", l:"Drama club", s:"in partnership"},{n:"S1", l:"First season", s:"2006 / 2007"}],
+    campaign:null,
+    lede:"DAT's very first journey. A small founding company traveled to Zimbabwe to make theatre in relationship with local communities — the trek that set the template for everything that followed.",
+    itinerary:[],
+    clubs:[{n:"Bulawayo Young Company", loc:"Bulawayo, Zimbabwe", cause:"Arts access for youth", c:"#D85A30", img:"#5a3210", href:"/drama-club/bulawayo-young-company"}],
+    causes:[],
+    productions:[],
+    ripples:[
+      {t:`The first of what became <a href="/projects">20+ seasons across four continents</a>.`},
+      {t:`Founding artists who went on to shape DAT's model for the next two decades.`},
+      {t:`Set the template: theatre made in real relationship with community.`},
+    ],
+    roster:[
+      {n:"Jesse Baxter", r:"Artistic Director", c:"#7b4fa6", href:"/alumni/jesse-baxter"},
+      {n:"Mary K. Baxter", r:"Executive Director", c:"#2493a9", href:"/alumni/mary-k-baxter"},
+      {n:"Kathleen Amshoff", r:"Assoc. Artistic Dir.", c:"#D85A30", href:"/alumni/kathleen-amshoff"},
+      {n:"Isabel Martinez", r:"Actor", c:"#185FA5", href:"/alumni/isabel-martinez"},
+      {n:"Lisa Bearpark", r:"Actor", c:"#F23359", href:"/alumni/lisa-bearpark"},
+      {n:"Oscar Manzini", r:"Road Manager", c:"#854f0b", href:"/alumni/oscar-manzini"},
+    ],
+    journeyCards:[],
+    legacy:[{h:"Bulawayo Young Company", meta:"Community partner →", tag:"Drama Club", tagc:"#BA7517", img:"#854f0b", href:"/drama-club/bulawayo-young-company"}],
+    thread:[{t:"Creative Trek: Ecuador",y:"2008",href:"/projects/creative-trek-ecuador-2008"},{t:"Creative Trek: Slovakia",y:"2012",href:"/projects/creative-trek-slovakia-2012"},{t:"Creative Trek: Ecuador (refresh)",y:"2025",href:"/projects/creative-trek-ecuador-2025"}],
+  }
+};
+
+function initials(n){return n.split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();}
+function setMode(m){MODE=m; render();}
+function setCamp(c){CAMP=c; render();}
+
+function render(){
+  const d=DATA[MODE];
+  document.getElementById("b-rich").classList.toggle("on",MODE==="rich");
+  document.getElementById("b-sparse").classList.toggle("on",MODE==="sparse");
+  document.getElementById("c-live").classList.toggle("on",CAMP==="live");
+  document.getElementById("c-done").classList.toggle("on",CAMP==="done");
+
+  const hasItin=d.itinerary.length>0, hasCauses=d.causes.length>0, hasJC=d.journeyCards.length>0,
+        hasRipples=(d.ripples||[]).length>0, hasProds=(d.productions||[]).length>0;
+
+  let campHtml="";
+  if(d.campaign){
+    const g=d.campaign.goal;
+    if(CAMP==="live"){
+      const r=d.campaign.live, pct=Math.round(r.raised/g*100);
+      campHtml=`<div class="camp live">
+        <p class="ctag">● Live campaign</p>
+        <h3>Help send this cohort</h3>
+        <p>Your gift opens this project to more artists — including less-resourced traveling artists and the local artists whose presence is essential to the work.</p>
+        <div class="bar"><div style="width:${pct}%"></div></div>
+        <div class="row"><span>$${r.raised.toLocaleString()} raised</span><span>Goal $${g.toLocaleString()} · ${pct}%</span></div>
+        <div style="margin-top:1.1rem;"><a class="btn gold">Give now</a></div>
+      </div>`;
+    } else {
+      const r=d.campaign.done;
+      campHtml=`<div class="camp done">
+        <p class="ctag">✓ Made possible by ${r.donors} donors</p>
+        <h3>Because you helped make this work possible</h3>
+        <p>Thank you to every donor who helped open PASSAGE to more artists and bring shared creative work to life in Slovakia. What was built here — voice, confidence, belonging, leadership, and possibility — keeps rippling outward through the artists, the community, and the relationships that continue beyond the summer.</p>
+        <div class="row"><span>$${r.raised.toLocaleString()} raised from ${r.donors} donors</span><span>Goal met ✓</span></div>
+        <div style="margin-top:1.1rem;"><a class="btn gold" href="#">See what your support made possible</a></div>
+      </div>`;
+    }
+  }
+
+  const html=`
+  <div class="hero">
+    <div class="bg" style="background-color:${d.heroColor}; background-image:repeating-linear-gradient(115deg, rgba(255,255,255,.04) 0 14px, transparent 14px 30px);"></div>
+    <div class="scrim"></div>
+    <div class="inner"><div class="wrap">
+      <p class="eyebrow"><a href="${d.familyHref}">${d.family}</a> · <a href="${d.seasonHref}">${d.season}</a></p>
+      <h1 class="title">${d.title}</h1>
+      <p class="place">${d.place}</p>
+      <p class="essence">${d.essence}</p>
+    </div></div>
+  </div>
+
+  <div class="wrap sheet">
+    <div class="stats">${d.stats.map(s=>`<div class="stat"><div class="n">${s.n}</div><div class="l">${s.l}</div><div class="s">${s.s}</div></div>`).join("")}</div>
+
+    ${campHtml}
+
+    <section class="block">
+      <p class="kicker">What this was</p><h2 class="sec">The Journey</h2>
+      <p class="lede">${d.lede}</p>
+      ${hasItin?`<div class="chapters">${d.itinerary.map((s,i)=>`<div class="chapter"><div class="num">${i+1}</div><div><h4>${s.t}</h4><p>${s.d}</p></div></div>`).join("")}</div>`
+        :`<p class="note">No itinerary on record for this project — the page leans on the people and the partnership instead.</p>`}
+    </section>
+
+    <div class="honor">
+      <p class="kicker">The heart of this project</p>
+      <h2>In Partnership With</h2>
+      <div class="clubs">${d.clubs.map(c=>`<a class="club" href="${c.href}">
+        <div class="hero" style="background-color:${c.img}; background-image:repeating-linear-gradient(125deg, rgba(255,255,255,.05) 0 12px, transparent 12px 26px);">
+          <div class="stamp" style="background:${c.c}">${c.n}</div><div class="scr"></div><div class="ch">${c.n}</div></div>
+        <div class="cinfo"><div class="cs">${c.loc}</div><div class="cl">${c.cause} →</div></div></a>`).join("")}</div>
+    </div>
+
+    ${hasCauses?`<section class="block">
+      <p class="kicker">Why it matters</p><h2 class="sec">The Causes We Served</h2>
+      <div class="causes">${d.causes.map(c=>`<a class="cause" href="${c.href}"><i style="background:${c.c}"></i>${c.t}</a>`).join("")}</div>
+    </section>`:""}
+
+    <section class="block">
+      <p class="kicker">The company</p><h2 class="sec">Who Made It</h2>
+      <div class="roster">${d.roster.map(a=>`<a class="card" href="${a.href}"><div class="ava" style="background:${a.c}">${initials(a.n)}</div><div class="cn">${a.n}</div><div class="cr">${a.r}</div></a>`).join("")}</div>
+    </section>
+
+    ${hasJC?`<section class="block">
+      <p class="kicker">A closer look</p><h2 class="sec">An Artist's Journey</h2>
+      <p class="lede" style="margin-bottom:0;">An opportunity for each of our artists to share their unique experience on ${d.title} — notes, sights, and sounds from the road.</p>
+      <div class="jcards">${d.journeyCards.map(j=>`<a class="jc" href="${j.href}"><div class="pin"></div><div class="word">PASSAGE<small>SLOVAKIA 2026</small></div><div class="who">${j.who}<small>${j.role}</small></div></a>`).join("")}</div>
+    </section>`:""}
+
+    ${hasProds?`<section class="block">
+      <p class="kicker">What we made</p><h2 class="sec">The Work</h2>
+      <p class="lede" style="margin-bottom:0;">Theatre that grew out of this journey — devised in the field, carried onto the stage.</p>
+      <div class="posters">${d.productions.map(p=>`<a class="poster" href="${p.href}" style="background-color:${p.img}; background-image:repeating-linear-gradient(125deg, rgba(255,255,255,.05) 0 12px, transparent 12px 26px);">
+        <div class="pscr"></div><span class="ptag">${p.tag}</span>
+        <div class="pbody"><div class="pt">${p.t}</div><div class="ps">${p.s}</div></div></a>`).join("")}</div>
+    </section>`:""}
+
+    <section class="block">
+      <p class="kicker">On the ground</p><h2 class="sec">${MODE==="rich"?"What It Left Behind":"The Partnership"}</h2>
+      <div class="legacy">${d.legacy.map(l=>`<a class="lcard" href="${l.href}"><div class="top" style="background-color:${l.img}; background-image:repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0 10px, transparent 10px 22px);"><span class="tag" style="background:${l.tagc}">${l.tag}</span></div><div class="body"><h4>${l.h}</h4><div class="meta">${l.meta}</div></div></a>`).join("")}</div>
+    </section>
+
+    ${hasRipples?`<section class="block" id="ripples">
+      <p class="kicker">What's still unfolding</p><h2 class="sec">The Ripples</h2>
+      <p class="lede" style="margin-bottom:0;">The work doesn't end when the project does. Here's what kept going:</p>
+      <div class="ripples">${d.ripples.map(r=>`<div class="ripple"><div class="ico"></div><div class="rt">${r.t}</div></div>`).join("")}</div>
+      <a class="ripple-more" href="/ripple-effect">Explore the Artist Ripple Effect</a>
+    </section>`:`<span id="ripples"></span>`}
+
+    <section class="block">
+      <p class="kicker">The through-line</p><h2 class="sec">The Thread</h2>
+      <p class="lede" style="margin-bottom:0;">One chapter in a longer story. Follow the ${d.family} thread across the seasons:</p>
+      <div class="thread">${d.thread.map(t=>`<a class="chip" href="${t.href}">${t.t}<span class="y">${t.y}</span></a>`).join("")}</div>
+    </section>
+
+    <div class="ctas">
+      <div class="ctabox donor"><h3>Help make the next one possible</h3><p>Your support opens the next project to more artists and more communities.</p><a class="btn gold" href="/donate">Support DAT</a></div>
+      <div class="ctabox artist"><h3>Make work like this</h3><p>Want to join a future ${d.family} journey? See what's coming and how to take part.</p><a class="btn white" href="${d.familyHref}">Explore ${d.family}</a></div>
+    </div>
+
+    <div class="backnav"><a href="/projects">← Back to the Project Archive</a><a href="${d.seasonHref}">${d.season} →</a></div>
+  </div>`;
+  document.getElementById("page").innerHTML=html;
+  window.scrollTo(0,0);
+}
+render();
+</script>
+</body>
+</html>
