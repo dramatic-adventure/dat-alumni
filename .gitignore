@@ -71,3 +71,9 @@ service-account.json
 
 .next/
 .next-local/
+
+# Local mockups & planning docs
+mockups/
+docs/
+app/journey-card-mockup/
+*.docx
