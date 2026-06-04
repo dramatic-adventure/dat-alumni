@@ -2,6 +2,8 @@
 import { productionMap } from "@/lib/productionMap";
 import { productionDetailsMap } from "@/lib/productionDetailsMap";
 import { PRODUCTION_FUNDRAISING_BY_SLUG } from "@/lib/productionFundraising";
+import type { DonationSelectOption } from "@/lib/donations";
+import { upcomingEvents, isElapsed, isCommunityShowcase } from "@/lib/events";
 
 function toDate(value?: string) {
   if (!value) return null;
@@ -51,29 +53,56 @@ function isUpcomingOrCurrent(args: {
   return true;
 }
 
-export function getActiveProductions() {
-  return Object.values(productionMap)
-    .flatMap((p) => {
-      const extra = productionDetailsMap[p.slug];
-      const meta = PRODUCTION_FUNDRAISING_BY_SLUG[p.slug];
+export function getActiveProductions(): DonationSelectOption[] {
+  // Dedupe everything by option id (production slug OR event id).
+  const byId = new Map<string, DonationSelectOption>();
 
-      if (meta?.is_hidden) return [];
+  // 1) Upcoming/current productions derived from productionMap.
+  for (const p of Object.values(productionMap)) {
+    const extra = productionDetailsMap[p.slug];
+    const meta = PRODUCTION_FUNDRAISING_BY_SLUG[p.slug];
 
-      const include = isUpcomingOrCurrent({
-        runStartISO: cleanStr((extra as any)?.runStartISO),
-        runEndISO: cleanStr((extra as any)?.runEndISO),
-        dates: cleanStr((extra as any)?.dates) ?? cleanStr(p.festival) ?? String(p.year),
-      });
+    if (meta?.is_hidden) continue;
 
-      if (!include) return [];
+    const include = isUpcomingOrCurrent({
+      runStartISO: cleanStr((extra as any)?.runStartISO),
+      runEndISO: cleanStr((extra as any)?.runEndISO),
+      // Always fold the production's own year into the evidence so a yearless
+      // `dates`/`festival` string can't mask a clearly-past production and leak
+      // it into the donate selector as a placeholder. ISO run dates still win.
+      dates: [cleanStr((extra as any)?.dates), cleanStr(p.festival), String(p.year)]
+        .filter(Boolean)
+        .join(" "),
+    });
 
-      return [
-        {
-          id: p.slug,
-          label: meta?.label ?? p.title,
-          ...(meta?.subline ? { subline: meta.subline } : {}),
-        },
-      ];
-    })
-    .sort((a, b) => a.label.localeCompare(b.label));
+    if (!include) continue;
+
+    byId.set(p.slug, {
+      id: p.slug,
+      label: meta?.label ?? p.title,
+      ...(meta?.subline ? { subline: meta.subline } : {}),
+    });
+  }
+
+  // Track which production slugs are already represented so events that link an
+  // existing production don't create a duplicate option.
+  const productionSlugs = new Set(byId.keys());
+
+  for (const e of upcomingEvents) {
+    if (isElapsed(e)) continue;
+
+    // 2) Upcoming performance events (deduped against productions above).
+    if (e.category === "performance" && !isCommunityShowcase(e)) {
+      if (e.production && productionSlugs.has(e.production)) continue; // already represented
+      if (!byId.has(e.id)) byId.set(e.id, { id: e.id, label: e.title });
+      continue;
+    }
+
+    // 3) Community showcases fit both modes — include here too.
+    if (isCommunityShowcase(e)) {
+      if (!byId.has(e.id)) byId.set(e.id, { id: e.id, label: e.title });
+    }
+  }
+
+  return Array.from(byId.values()).sort((a, b) => a.label.localeCompare(b.label));
 }

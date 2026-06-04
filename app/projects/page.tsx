@@ -12,10 +12,11 @@
 // and assign era images to public/images/projects/. That is the only manual
 // step required when a new chapter of the company's history begins.
 
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { seasons as seasonData } from "@/lib/seasonData";
-import { showcasesBySeason, type DatEvent } from "@/lib/events";
+import { showcasesBySeason, archivedProjectEventsBySeason, canonicalEventPath, type DatEvent } from "@/lib/events";
 import { dramaClubs } from "@/lib/dramaClubMap";
 import { programMap, type ProgramData } from "@/lib/programMap";
 import { resolveProjectHeroImage } from "@/lib/projectHeroImage";
@@ -311,6 +312,10 @@ export default function ProjectsIndexPage() {
 
   // Community showcases grouped by season — auto-derived from events data
   const showcaseMap = showcasesBySeason();
+
+  // Past non-production events (festivals, community nights, fundraisers, etc.)
+  // grouped by season — auto-derived by date, no manual status flip needed.
+  const projectEventMap = archivedProjectEventsBySeason();
 
   return (
     <div style={{ minHeight: "100vh", background: "transparent" }}>
@@ -988,6 +993,10 @@ export default function ProjectsIndexPage() {
                                 (festivals, readings, travelogues, housekeeping) */}
                             <ProjectList projects={listProjects} seasonNum={sn} />
 
+                            {/* Past events — festivals, community nights, fundraisers,
+                                etc. auto-populated from events data once elapsed */}
+                            <ArchivedEventRows events={projectEventMap.get(sn)} />
+
                             {/* Community Showcases — auto-populated from events data */}
                             <ShowcaseArchiveRows showcases={showcaseMap.get(sn)} />
 
@@ -1148,7 +1157,7 @@ export default function ProjectsIndexPage() {
         .project-showcase-card:hover {
           box-shadow: 0 8px 28px rgba(47,168,115,0.18), 0 2px 6px rgba(47,168,115,0.1);
           transform: translateY(-3px);
-          border-color: rgba(47,168,115,0.5) !important;
+          border-color: var(--card-hover-border, rgba(47,168,115,0.5)) !important;
         }
         .showcase-card-img {
           transition: transform 0.5s ease;
@@ -1417,6 +1426,160 @@ function ProjectArchiveCards({ programs }: { programs: ProgramData[] }) {
 }
 
 // ─── Community Showcase cards — shown under each season that has archived showcases ─
+// Badge styling per event category for the auto-archived project events.
+// `hoverBorder` matches the per-category colors used on /events
+// (festival → DAT blue #2493A9, Community → DAT yellow #D9A919).
+const CATEGORY_BADGE: Record<
+  string,
+  { label: string; color: string; border: string; hoverBorder: string }
+> = {
+  performance: { label: "Performance", color: "rgba(242,51,89,0.9)",  border: "rgba(242,51,89,0.35)",  hoverBorder: "rgba(242,51,89,0.6)" },
+  festival:    { label: "Festival",    color: "rgba(36,147,169,0.9)", border: "rgba(36,147,169,0.35)", hoverBorder: "rgba(36,147,169,0.6)" },
+  fundraiser:  { label: "Community",   color: "rgba(217,169,25,0.95)", border: "rgba(217,169,25,0.4)",  hoverBorder: "rgba(217,169,25,0.65)" },
+};
+
+// Past festivals / community nights / fundraisers / non-production performances.
+// Mirrors the showcase card style; each card links to the event's own page.
+function ArchivedEventRows({ events }: { events?: DatEvent[] }) {
+  if (!events || events.length === 0) return null;
+
+  return (
+    <div style={{ marginTop: "1.25rem" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(185px, 1fr))",
+          gap: "1rem",
+        }}
+      >
+        {events.map((ev) => {
+          const badge   = CATEGORY_BADGE[ev.category] ?? CATEGORY_BADGE.festival;
+          const imgSrc  = ev.image ?? "/images/Andean_Mask_Work.jpg";
+          const href    = canonicalEventPath(ev);
+          const d       = new Date(ev.date + "T12:00:00Z");
+          const dateStr = d.toLocaleString("en-US", { month: "short", timeZone: "UTC" })
+            + " " + d.getUTCDate() + ", " + d.getUTCFullYear();
+          const loc = [ev.city, ev.country].filter(Boolean).join(", ");
+
+          return (
+            <Link
+              key={ev.id}
+              href={href}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                borderRadius: "12px",
+                overflow: "hidden",
+                border: `1.5px solid ${badge.border}`,
+                textDecoration: "none",
+                backgroundColor: "#f2f2f2",
+                ["--card-hover-border" as string]: badge.hoverBorder,
+              } as CSSProperties}
+              className="project-showcase-card"
+            >
+              {/* Image */}
+              <div
+                style={{
+                  position: "relative",
+                  height: "140px",
+                  flexShrink: 0,
+                  overflow: "hidden",
+                  backgroundColor: "#241123",
+                }}
+              >
+                <Image
+                  src={imgSrc}
+                  alt={ev.title}
+                  fill
+                  className="object-cover showcase-card-img"
+                  style={{ objectPosition: "center 30%" }}
+                  sizes="(max-width: 860px) 50vw, 200px"
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: "linear-gradient(to top, rgba(36,17,35,0.55) 0%, transparent 55%)",
+                  }}
+                />
+                <span
+                  style={{
+                    position: "absolute",
+                    bottom: "0.5rem",
+                    left: "0.6rem",
+                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                    fontSize: "0.56rem",
+                    fontWeight: 800,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "#fff",
+                    background: badge.color,
+                    borderRadius: "4px",
+                    padding: "0.18rem 0.5rem",
+                  }}
+                >
+                  {badge.label}
+                </span>
+              </div>
+
+              {/* Info */}
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.25rem",
+                  padding: "0.7rem 0.9rem 0.85rem",
+                  borderTop: `1.5px solid ${badge.border}`,
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                    fontSize: "0.64rem",
+                    fontWeight: 700,
+                    color: badge.color,
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  {dateStr}
+                </span>
+                <h4
+                  style={{
+                    fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                    fontSize: "0.9rem",
+                    fontWeight: 700,
+                    color: "#241123",
+                    margin: 0,
+                    lineHeight: 1.25,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  } as React.CSSProperties}
+                >
+                  {ev.title}
+                </h4>
+                {loc && (
+                  <span
+                    style={{
+                      fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                      fontSize: "0.7rem",
+                      color: "rgba(36,17,35,0.5)",
+                    }}
+                  >
+                    {loc}
+                  </span>
+                )}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function ShowcaseArchiveRows({ showcases }: { showcases?: DatEvent[] }) {
   if (!showcases || showcases.length === 0) return null;
 
@@ -1468,7 +1631,8 @@ function ShowcaseArchiveRows({ showcases }: { showcases?: DatEvent[] }) {
                   src={imgSrc}
                   alt={club?.name ?? ev.title}
                   fill
-                  className="object-cover object-center showcase-card-img"
+                  className="object-cover showcase-card-img"
+                  style={{ objectPosition: "center 30%" }}
                   sizes="(max-width: 860px) 50vw, 200px"
                 />
                 <div
