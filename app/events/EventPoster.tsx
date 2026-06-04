@@ -157,7 +157,10 @@ export function PosterLayers({
         className="ep-photo"
         style={{
           backgroundImage: image ? `url('${image}')` : undefined,
-          backgroundPosition: focus ?? "center",
+          // Default focal point biased toward the upper-middle, where a person's
+          // head usually sits in a photo — keeps faces in frame across poster
+          // sizes and on mobile. Any explicit event.imageFocus overrides this.
+          backgroundPosition: focus ?? "center 30%",
           filter: "contrast(1.04) saturate(1.05)",
         }}
         aria-hidden="true"

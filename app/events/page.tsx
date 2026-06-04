@@ -1026,7 +1026,11 @@ function Styles() {
         padding: 0.95rem 0.5rem; transition: background 0.15s, padding-left 0.2s;
       }
       .eh-row:hover { background: rgba(247,244,239,0.05); padding-left: 0.9rem; }
-      .eh-row-date { display: flex; flex-direction: column; align-items: center; min-width: 42px; }
+      /* Fixed-width date column so every row's date occupies the same width
+         (single days, double-digit days, and same-month ranges like "16–24"
+         all line up, and the titles start at a consistent left edge). */
+      .eh-row-date { display: flex; flex-direction: column; align-items: stretch; width: 6rem; flex: 0 0 6rem; }
+      .eh-row-date .ep-datechip { width: 100%; justify-content: center; box-sizing: border-box; }
       .eh-row-day { font-family: var(--font-anton), sans-serif; font-size: 1.4rem; color: ${CREAM}; line-height: 1; }
       .eh-row-mon { font-family: var(--font-dm-sans), sans-serif; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; color: rgba(247,244,239,0.5); }
       .eh-row-dot { width: 8px; height: 8px; border-radius: 50%; }

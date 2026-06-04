@@ -7,6 +7,7 @@ import "./donationPage.restore.css";
 import { LEFT_COLUMN_BY_MODE } from "@/lib/donate/leftColumnContent";
 import { productionMap } from "@/lib/productionMap";
 import { productionDetailsMap } from "@/lib/productionDetailsMap";
+import { eventById, getEventImage } from "@/lib/events";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -460,6 +461,54 @@ function inferProductionImage(slug?: string) {
   return `/posters/${safeSlug}-landscape.jpg`;
 }
 
+/**
+ * Resolve the hero image for a selected donate option id that maps to a DatEvent
+ * (production-linked or not). Returns undefined when the id isn't an event or the
+ * event has no image, so callers can fall back to the category default.
+ */
+function eventHeroImageForId(id?: string): string | undefined {
+  const safeId = cleanText(id);
+  if (!safeId) return undefined;
+  const ev = eventById(safeId);
+  if (!ev) return undefined;
+  return normalizePublicImagePath(getEventImage(ev));
+}
+
+/**
+ * Left-column image that falls back to the category default when the resolved
+ * event/production image is missing or fails to load (broken file/404).
+ */
+function DonateLeftImage({
+  src,
+  fallbackSrc,
+  alt,
+}: {
+  src: string;
+  fallbackSrc: string;
+  alt: string;
+}) {
+  const [errored, setErrored] = useState(false);
+  // Reset whenever the requested image changes (new selection).
+  useEffect(() => {
+    setErrored(false);
+  }, [src]);
+
+  const finalSrc = errored && fallbackSrc ? fallbackSrc : src;
+
+  return (
+    <Image
+      src={finalSrc}
+      alt={alt}
+      width={900}
+      height={500}
+      className="donateLeftImage"
+      onError={() => {
+        if (!errored) setErrored(true);
+      }}
+    />
+  );
+}
+
 function getCauseDisplayLabel(
   category?: DramaClubCauseCategory,
   subcategory?: DramaClubCauseSubcategory
@@ -860,6 +909,7 @@ const [allCauses, setAllCauses] = useState(() => !initialCause.category);
           description: clubDescription,
           imageSrc: clubImage,
           imageAlt: clubName,
+          imageFallbackSrc: base.imageSrc,
         };
       }
 
@@ -887,6 +937,7 @@ const [allCauses, setAllCauses] = useState(() => !initialCause.category);
         "Support the next phase of this production’s development.";
 
       const productionImage =
+        eventHeroImageForId(production) ??
         normalizePublicImagePath(selectedProductionExtra?.heroImageUrl) ??
         normalizePublicImagePath(selectedProductionBase?.posterUrl) ??
         inferProductionImage(production) ??
@@ -898,6 +949,7 @@ const [allCauses, setAllCauses] = useState(() => !initialCause.category);
         description: productionDescription,
         imageSrc: productionImage,
         imageAlt: productionTitle,
+        imageFallbackSrc: base.imageSrc,
       };
     }
 
@@ -908,10 +960,15 @@ const [allCauses, setAllCauses] = useState(() => !initialCause.category);
         cleanText((selectedProject as any)?.subline) ??
         "Support this focused project and the work it makes possible.";
 
+      const projectImage = eventHeroImageForId(project) ?? base.imageSrc;
+
       return {
         ...base,
         title: projectTitle,
         description: projectSubline,
+        imageSrc: projectImage,
+        imageAlt: projectTitle,
+        imageFallbackSrc: base.imageSrc,
       };
     }
 
@@ -2771,12 +2828,12 @@ const ctaDisabled =
     <div className="donateTierTwoColLeft" aria-label="Sponsorship details">
       <div className="donateLeftInner">
         <div className="donateLeftImageWrap">
-          <Image
+          <DonateLeftImage
             src={leftContent.imageSrc}
+            fallbackSrc={
+              (leftContent as any).imageFallbackSrc ?? leftContent.imageSrc
+            }
             alt={leftContent.imageAlt}
-            width={900}
-            height={500}
-            className="donateLeftImage"
           />
         </div>
 

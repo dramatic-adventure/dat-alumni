@@ -44,6 +44,20 @@ export interface ProgramData {
 
   year: number;
   season: number;
+
+  /**
+   * Real run dates for the program, ISO "YYYY-MM-DD".
+   * Optional — added starting with the current season as concrete dates firm up.
+   * `startDate` is the first day on the ground; `endDate` the last day.
+   * When omitted, callers fall back to season-level approximation.
+   *
+   * Example (PASSAGE: Slovakia 2026):
+   *   startDate: "2026-07-12",
+   *   endDate:   "2026-08-02",
+   */
+  startDate?: string;
+  endDate?: string;
+
   url?: string;
 
   artists: ProgramArtistsBySlug;
@@ -144,6 +158,8 @@ export const programMap: Record<string, ProgramData> = {
   ],
   year: 2026,
   season: 20,
+  startDate: "2026-07-12",
+  endDate: "2026-08-02",
   url: "/passage",
   externalUrl: "https://www.dramaticadventure.com/passage",
   dramaClubSlugs: ["lunik-ix-collective", "zemplinska-teplica-ensemble"],

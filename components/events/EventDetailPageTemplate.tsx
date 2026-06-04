@@ -501,7 +501,6 @@ type ArchivedEventInfoBandProps = {
 
 function ArchivedEventInfoBand({
   event,
-  routeKind,
   relatedProduction,
   eventUrl,
 }: ArchivedEventInfoBandProps) {
@@ -513,9 +512,13 @@ function ArchivedEventInfoBand({
     event.archiveSummary.split(/\s*·\s*/).filter(Boolean)
       .forEach((p, i) => archiveChips.push({ label: p.trim(), primary: i === 0 }));
   }
-  const categoryLabel = event.category
-    ? (event.category.charAt(0).toUpperCase() + event.category.slice(1))
-    : null;
+  // Public-facing category label: "fundraiser" is internal — show "Community".
+  const CATEGORY_DISPLAY_LABEL: Record<DatEvent["category"], string> = {
+    performance: "Performance",
+    festival: "Festival",
+    fundraiser: "Community",
+  };
+  const categoryLabel = CATEGORY_DISPLAY_LABEL[event.category] ?? null;
   const seasonLabel = (event as any).season ? `Season ${(event as any).season}` : null;
   const hasChips = archiveChips.length > 0 || !!categoryLabel || !!seasonLabel;
 
@@ -525,12 +528,16 @@ function ArchivedEventInfoBand({
     ? [event.city, event.country].filter(Boolean).join(", ")
     : null;
 
-  // Archive back-link
-  const archiveLabel =
-    routeKind === "festivals" ? "Festival Archive"
-    : routeKind === "gatherings" ? "Gatherings Archive"
-    : "Theatre Archive";
-  const archiveHref = `/${routeKind}`;
+  // Archive back-link: production events return to the Theatre archive; all other
+  // (non-production) events return to the Projects archive.
+  const archiveLabel = event.production ? "Theatre Archive" : "Projects Archive";
+  const archiveHref = event.production ? "/theatre" : "/projects";
+
+  // Sponsor CTA: production events drive "new works"; non-production events drive
+  // the donate page's Special Projects mode.
+  const sponsor = event.production
+    ? { href: "/donate?mode=new-work&freq=monthly", label: "Sponsor New Works Like This", labelEs: "Apoya Nuevas Obras" }
+    : { href: "/donate?mode=special-project&freq=monthly", label: "Sponsor Projects Like This", labelEs: "Apoya Proyectos Como Este" };
 
   return (
     <div className="evd-ticket-bar evd-ticket-bar--archive">
@@ -651,13 +658,13 @@ function ArchivedEventInfoBand({
               ) : undefined}
             />
           </div>
-          <Link href="/donate?mode=new-work&freq=monthly" className="evd-btn-ticket">
+          <Link href={sponsor.href} className="evd-btn-ticket">
             {isBilingual ? (
               <>
-                <span className="evd-bilingual-wrap-default">Sponsor New Works Like This</span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-es">Apoya Nuevas Obras</span>
+                <span className="evd-bilingual-wrap-default">{sponsor.label}</span>
+                <span className="evd-bilingual-wrap-alt evd-bilingual-es">{sponsor.labelEs}</span>
               </>
-            ) : "Sponsor New Works Like This"}
+            ) : sponsor.label}
           </Link>
         </div>
 
@@ -896,6 +903,14 @@ export default async function EventDetailPageTemplate({
 
   const isArchiveView = isElapsed(event);
 
+  // Where a past event is archived: events tied to a production live in the
+  // Theatre archive; everything else (festivals, community nights, fundraisers,
+  // non-production performances) lives in the Projects archive. Drives the hero
+  // badge and the archive back-link for all current and future events.
+  const archiveDest = event.production
+    ? { href: "/theatre", label: "Theatre Archive", labelEs: "Archivo de Teatro" }
+    : { href: "/projects", label: "Projects Archive", labelEs: "Archivo de Proyectos" };
+
   const relatedProduction = event.production ? productionMap[event.production] : undefined;
   const productionExtra = event.production ? productionDetailsMap[event.production] : undefined;
 
@@ -1021,7 +1036,9 @@ export default async function EventDetailPageTemplate({
 
   const heroVars = {
     backgroundImage: `url('${heroImage}')`,
-    backgroundPosition: event.imageFocus ?? "center",
+    // Default focal point biased to the upper-middle (where a head usually is),
+    // so faces stay in frame across hero sizes / mobile. Explicit imageFocus wins.
+    backgroundPosition: event.imageFocus ?? "center 30%",
     ["--evd-accent" as string]: theme.accent,
     ["--evd-surface" as string]: theme.surface,
     ["--evd-surface-2" as string]: theme.surface2,
@@ -1078,13 +1095,13 @@ export default async function EventDetailPageTemplate({
 
           {isArchiveView ? (
             <div className="evd-archive-badge-wrap">
-              <Link href="/theatre" className="evd-archive-badge evd-archive-badge--link">
+              <Link href={archiveDest.href} className="evd-archive-badge evd-archive-badge--link">
                 {isBilingual ? (
                   <>
-                    <span className="evd-bilingual-wrap-default">Theatre Archive</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Archivo de Teatro</span>
+                    <span className="evd-bilingual-wrap-default">{archiveDest.label}</span>
+                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{archiveDest.labelEs}</span>
                   </>
-                ) : "Theatre Archive"}
+                ) : archiveDest.label}
               </Link>
             </div>
           ) : null}
@@ -2096,7 +2113,7 @@ export default async function EventDetailPageTemplate({
                         className="evd-rel-card-img"
                         style={{
                           backgroundImage: `url('${getEventImage(re)}')`,
-                          backgroundPosition: re.imageFocus ?? "center",
+                          backgroundPosition: re.imageFocus ?? "center 30%",
                         }}
                       />
                     ) : (
