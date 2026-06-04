@@ -567,7 +567,7 @@ export default async function DramaClubPage({ params }: PageProps) {
   const whatHappensCopy = club.whatHappens ?? club.description;
   const localContext = club.localContext ?? club.originStory;
 
-  const sponsorLink = `/cause/drama-clubs?club=${encodeURIComponent(club.slug)}`;
+  const sponsorLink = `/donate?club=${encodeURIComponent(club.slug)}`;
 
   const [alumniRows, roleAssignments, activePrograms] = await Promise.all([
     loadVisibleAlumni(),
