@@ -314,7 +314,9 @@ export default function EventPoster({
       }}
       aria-label={`${event.title} — view details`}
     >
-      <PosterLayers image={image} focus={event.imageFocus} category={event.category} />
+      <div className="ep-clip">
+        <PosterLayers image={image} focus={event.imageFocus} category={event.category} />
+      </div>
 
       <div className="ep-body">
         {online && <span className="ep-mode">Online</span>}
@@ -375,7 +377,9 @@ export function FeaturedModule({
         }}
         aria-label={`${event.title} — view details`}
       >
-        <PosterLayers image={image} focus={event.imageFocus} category={event.category} intensity="hero" />
+        <div className="ep-clip">
+          <PosterLayers image={image} focus={event.imageFocus} category={event.category} intensity="hero" />
+        </div>
         <span className="epf-poster-flag" style={{ background: cat.color, color: cat.onAccent }}>
           {isFeaturedPick ? "★ Featured" : "Next Up"}
         </span>
@@ -409,7 +413,9 @@ function PosterStyles() {
       .ep {
         position: relative;
         isolation: isolate;
-        overflow: hidden;
+        /* No overflow:hidden/mask on the card itself — that would clip the hover
+           box-shadow glow. The photo is clipped by the inner .ep-clip layer, which
+           carries the rounded -webkit-mask that fixes Safari's corner flash. */
         border-radius: 16px;
         cursor: pointer;
         background: ${PLUM};
@@ -426,7 +432,14 @@ function PosterStyles() {
         box-shadow: 0 0 0 1.5px var(--ep-glow), 0 0 44px 6px var(--ep-glow), 0 0 70px rgba(0,0,0,0.28);
       }
 
-      .ep-photo, .ep-scrim, .ep-grain { position: absolute; inset: 0; }
+      .ep-clip {
+        position: absolute; inset: 0; z-index: 0;
+        border-radius: inherit; overflow: hidden;
+        /* Safari: forces the rounded clip onto the composited layer so the
+           scaling photo's corners stay rounded throughout the hover transition. */
+        -webkit-mask-image: -webkit-radial-gradient(white, black);
+      }
+      .ep-photo, .ep-scrim, .ep-grain { position: absolute; inset: 0; border-radius: inherit; }
       .ep-photo { background-size: cover; transition: transform 0.5s ease; }
       .ep:hover .ep-photo { transform: scale(1.045); }
       .ep-grain { background-image: ${GRAIN_URL}; background-size: 160px 160px; mix-blend-mode: overlay; opacity: 0.12; pointer-events: none; }
@@ -435,11 +448,15 @@ function PosterStyles() {
         position: relative; z-index: 2; width: 100%; height: 100%;
         display: flex; flex-direction: column; justify-content: flex-end;
         padding: 1.25rem; gap: 1rem;
+        border-radius: inherit;
       }
       /* Dark readability scrim behind the text, independent of the photo, so the
-         headline + meta stay legible over any image. */
+         headline + meta stay legible over any image. Rounded to match the card —
+         it lives outside .ep-clip, so without this its opaque bottom would paint
+         square corners now that .ep no longer clips (it can't, or it'd cut the glow). */
       .ep-body::before {
         content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+        border-radius: inherit;
         background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.45) 20%, rgba(0,0,0,0.12) 40%, transparent 58%);
       }
       .ep-loc {
@@ -527,7 +544,7 @@ function FeaturedStyles() {
       @media (max-width: 780px) { .epf { grid-template-columns: 1fr; } }
 
       .epf-poster {
-        position: relative; isolation: isolate; overflow: hidden;
+        position: relative; isolation: isolate;
         border-radius: 16px; min-height: clamp(320px, 42vw, 460px);
         background: ${PLUM}; cursor: pointer;
         display: flex; align-items: flex-end; justify-content: flex-start;
@@ -539,7 +556,14 @@ function FeaturedStyles() {
       .epf-poster:hover {
         box-shadow: 0 0 0 1.5px var(--ep-glow), 0 0 48px 6px var(--ep-glow), 0 0 70px rgba(0,0,0,0.28);
       }
-      .epf-poster .ep-photo, .epf-poster .ep-scrim, .epf-poster .ep-grain { position: absolute; inset: 0; }
+      .epf-poster .ep-clip {
+        position: absolute; inset: 0; z-index: 0;
+        border-radius: inherit; overflow: hidden;
+        /* Safari: rounded mask on the inner layer fixes the hover corner flash
+           without clipping the poster's box-shadow glow (see .ep-clip). */
+        -webkit-mask-image: -webkit-radial-gradient(white, black);
+      }
+      .epf-poster .ep-photo, .epf-poster .ep-scrim, .epf-poster .ep-grain { position: absolute; inset: 0; border-radius: inherit; }
       .epf-poster .ep-photo { background-size: cover; transition: transform 0.6s ease; }
       .epf-poster:hover .ep-photo { transform: scale(1.04); }
       .epf-poster .ep-grain { background-image: ${GRAIN_URL}; background-size: 160px 160px; mix-blend-mode: overlay; opacity: 0.11; pointer-events: none; }
