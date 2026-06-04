@@ -6235,3 +6235,26 @@ a.dc-link.dc-link--teal:hover {
 .dc-active-program-tag--past {
   color: #2493a9;
 }
+
+/* ============================================================
+   ✅ Safari fix — sponsor CTA showed SHARP corners on hover
+   (same root cause as the /events poster cards).
+
+   The impact CTA's glow comes from an external `filter: drop-shadow`
+   (its pseudo-halos are disabled via content:none), and hover applies a
+   transform. In Safari that combo re-rasterizes the button at its square
+   border-box and drops the border-radius. Because the glow lives OUTSIDE
+   the box, we can clip the face to its radius without clipping the glow,
+   and force a composited layer so the rounding survives the hover transform.
+   ============================================================ */
+a.dc-cta.dc-impact-cta {
+  overflow: hidden;
+  -webkit-transform: translateZ(0);
+          transform: translateZ(0);
+}
+
+a.dc-cta.dc-impact-cta:hover,
+a.dc-cta.dc-impact-cta:focus-visible {
+  -webkit-transform: translateY(-1px) translateZ(0);
+          transform: translateY(-1px) translateZ(0);
+}
