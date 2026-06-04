@@ -43,7 +43,8 @@
 
 .donateHeroImg {
   object-fit: cover;
-  object-position: center;
+  /* Bias toward the upper-middle so faces stay in frame (matches event hero). */
+  object-position: center 30%;
 }
 
 .donateHeroOverlay {
@@ -2130,7 +2131,8 @@
 /* 4) Ensure the Next/Image fill behaves the same */
 .donateHeroImg {
   object-fit: cover;
-  object-position: center;
+  /* Bias toward the upper-middle so faces stay in frame (matches event hero). */
+  object-position: center 30%;
 }
 
 /* 5) Typography spacing like production */
