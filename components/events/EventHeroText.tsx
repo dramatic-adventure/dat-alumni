@@ -120,6 +120,21 @@ export default function EventHeroText({
   const title = overrides.title ?? base.title;
   const subtitle = overrides.subtitle ?? base.subtitle;
 
+  // The inactive language's title, shown as a subdued line under the H1
+  // (mirrors the drama-club local-name treatment — no explanatory label,
+  // the pairing is self-explanatory). Hidden when the titles match.
+  const inactiveLang =
+    activeLang === defaultLang
+      ? langCodes.find((c) => c !== defaultLang)
+      : defaultLang;
+  const inactiveTitle = inactiveLang
+    ? inactiveLang === defaultLang
+      ? base.title
+      : translations[inactiveLang]?.title
+    : undefined;
+  const altTitle =
+    inactiveTitle && inactiveTitle !== title ? inactiveTitle : undefined;
+
   return (
     <>
       {/* Language toggle — above the eyebrow */}
@@ -143,13 +158,59 @@ export default function EventHeroText({
         {eyebrowNode ?? (eyebrowEn && activeLang !== defaultLang ? eyebrowEn : eyebrow)}
       </p>
 
-      <h1 className="evd-title">{title}</h1>
+      {altTitle ? (
+        /* Shrink-wrapped block so the other-language title right-aligns to the
+           title's own width — same tuck as the drama club hero's local name.
+           Pure CSS staggered lockup (see .evd-title-block styles below):
+           single-line titles are unaffected; wrapped titles right-justify
+           their LAST row so the tuck always lands under its edge. */
+        <div className="evd-title-block">
+          <h1 className="evd-title">{title}</h1>
+          <p className="evd-alt-title" lang={inactiveLang}>{altTitle}</p>
+        </div>
+      ) : (
+        <h1 className="evd-title">{title}</h1>
+      )}
 
       {subtitle ? (
         <p className="evd-subtitle">{subtitle}</p>
       ) : null}
 
       <style jsx>{`
+        /* Other-language title — same treatment as the drama club hero's
+           local-language name (.dc-local-name / .dc-local-text). The wrapper
+           shrink-wraps to the title's width so the line tucks under the
+           title's right edge, like the drama club's 640px column does. */
+        .evd-title-block {
+          display: table;
+          position: relative;
+        }
+        /* Staggered lockup, all viewports, no JS: the table wrapper hugs the
+           widest title row, rows stay left-justified, and only the LAST row
+           right-justifies. A single-line title spans the full block, so the
+           rule has no visible effect there — wrapped titles get the stagger. */
+        .evd-title-block .evd-title {
+          text-align: left;
+          text-align-last: right;
+        }
+        .evd-alt-title {
+          font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: #ffcc00;
+          opacity: 0.9;
+          width: fit-content;
+          white-space: nowrap;
+          padding-right: 4rem;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          line-height: 1.3;
+          /* .evd-title carries 0.9rem bottom margin; pull up so the visual
+             gap matches the drama club's 0.18rem title ↔ local-name tuck.
+             margin-left auto keeps the fit-content line right-aligned. */
+          margin: -0.72rem 0 0.65rem auto;
+          text-shadow: 0 3px 8px rgba(0, 0, 0, 0.95);
+        }
         .evd-lang-toggle {
           display: inline-flex;
           align-items: center;

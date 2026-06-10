@@ -120,6 +120,61 @@ function splitParagraphs(text?: string): string[] {
     .filter(Boolean);
 }
 
+// ── Multilingual chrome ──────────────────────────────────────────────
+// UI labels for the alternate-language mode of bilingual event pages.
+// English is always the base; "es" entries preserve the original Spanish UI.
+// A language without an entry for a key falls back to the English label,
+// so a partial dictionary is always safe (English-first model).
+const CHROME: Record<string, Record<string, string>> = {
+  es: {
+    presented: "Presentado", archive: "Archivo", share: "Compartir",
+    addToCalendar: "Agregar al Calendario", bringGroup: "Traer un Grupo",
+    events: "Eventos", insideTheWork: "Dentro de la Obra", about: "Sobre la Obra",
+    resources: "Recursos", communityImpact: "Impacto Comunitario",
+    supports: "Esta producci\u00f3n apoya", causes: "Causas que Apoyamos",
+    partners: "Alianzas y Socios", sponsorClub: "Apoyar este Club de Teatro",
+    response: "La Respuesta", seeMore: "Ver m\u00e1s", seeLess: "Ver menos",
+    cast: "Elenco", productionHistory: "Historia de Producci\u00f3n",
+    fullCycle: "El Ciclo Completo", workContinues: "LA OBRA CONTIN\u00daA",
+    reserveSeat: "RESERVA TU LUGAR", nextUp: "Lo Que Sigue",
+    meetUsThere: "Encu\u00e9ntranos All\u00ed", upcomingPerformances: "Pr\u00f3ximas Funciones",
+    fundraisersCommunity: "Recaudaciones y Comunidad",
+    festivalsShowcases: "Festivales y Exhibiciones", theatreArchive: "Archivo de Teatro",
+    findYourShow: "Encuentra Tu Funci\u00f3n", fromTheField: "Desde el Terreno",
+    season: "Temporada", stayWithWork: "Mantente cerca de la obra.",
+    beInRoom: "S\u00e9 parte de la sala.",
+    newsletterBody: "Los eventos se anuncian primero en nuestra lista comunitaria. S\u00e9 la primera persona en saber cu\u00e1ndo llegan nuevos espect\u00e1culos, festivales y noches comunitarias.",
+  },
+  sk: {
+    presented: "Uvedenie", archive: "Arch\u00edv", share: "Zdie\u013ea\u0165",
+    addToCalendar: "Prida\u0165 do kalend\u00e1ra", bringGroup: "Pr\u00ed\u010fte ako skupina",
+    events: "Podujatia", insideTheWork: "O tvorbe", about: "O podujat\u00ed",
+    resources: "Zdroje", communityImpact: "Dopad na komunity",
+    supports: "Toto podujatie podporuje", causes: "T\u00e9my, ktor\u00e9 podporujeme",
+    partners: "Partneri", sponsorClub: "Podporte tento divadeln\u00fd klub",
+    response: "Ohlasy", seeMore: "Zobrazi\u0165 viac", seeLess: "Zobrazi\u0165 menej",
+    cast: "Obsadenie", productionHistory: "Hist\u00f3ria inscen\u00e1cie",
+    fullCycle: "Cel\u00fd cyklus", workContinues: "PR\u00cdBEH POKRA\u010cUJE",
+    reserveSeat: "REZERVOVA\u0164 MIESTO", nextUp: "Najbli\u017e\u0161ie",
+    meetUsThere: "Stretnime sa tam", upcomingPerformances: "Nadch\u00e1dzaj\u00face predstavenia",
+    fundraisersCommunity: "Benefi\u010dn\u00e9 a komunitn\u00e9 ve\u010dery",
+    festivalsShowcases: "Festivaly a prehliadky", theatreArchive: "Divadeln\u00fd arch\u00edv",
+    findYourShow: "N\u00e1jdite si predstavenie", fromTheField: "Z ter\u00e9nu",
+    season: "Sez\u00f3na", stayWithWork: "Zosta\u0148te v obraze.",
+    beInRoom: "Bu\u010fte pri tom.",
+    newsletterBody: "O podujatiach sa na\u0161a komunita dozved\u00e1 ako prv\u00e1. Bu\u010fte medzi prv\u00fdmi, ktor\u00ed sa dozvedia o nov\u00fdch predstaveniach, festivaloch a komunitn\u00fdch ve\u010deroch.",
+    eyebrowCommunityShowcase: "Komunitn\u00e1 prehliadka", eyebrowBenefit: "Benefi\u010dn\u00e9 podujatie",
+    eyebrowScreening: "Projekcia", eyebrowPerformance: "\u017div\u00e9 divadlo",
+    eyebrowFestival: "Festivaly", eyebrowFundraiser: "Komunita a podpora",
+  },
+};
+
+/** First non-English translation key on the event — the page's alternate language. */
+function getAltLang(event: DatEvent): string {
+  const keys = Object.keys(event.translations ?? {});
+  return keys.find((k) => k !== "en") ?? "es";
+}
+
 function getEventEyebrow(event: DatEvent): string {
   if (isCommunityShowcase(event)) return "Community Showcase";
   if (event.subcategory === "benefit") return "Benefit Event";
@@ -139,6 +194,22 @@ function getEventEyebrowEs(event: DatEvent): string {
     fundraiser: "Comunidad y Solidaridad",
   };
   return esMap[event.category];
+}
+
+function getEventEyebrowAlt(event: DatEvent, lang: string): string {
+  if (lang === "es") return getEventEyebrowEs(event);
+  const c = CHROME[lang];
+  const en = getEventEyebrow(event);
+  if (!c) return en;
+  if (isCommunityShowcase(event)) return c.eyebrowCommunityShowcase ?? en;
+  if (event.subcategory === "benefit") return c.eyebrowBenefit ?? en;
+  if (event.subcategory === "screening") return c.eyebrowScreening ?? en;
+  const byCategory: Record<DatEvent["category"], string | undefined> = {
+    performance: c.eyebrowPerformance,
+    festival: c.eyebrowFestival,
+    fundraiser: c.eyebrowFundraiser,
+  };
+  return byCategory[event.category] ?? en;
 }
 
 function getPrimaryAction(event: DatEvent):
@@ -505,6 +576,8 @@ function ArchivedEventInfoBand({
   eventUrl,
 }: ArchivedEventInfoBandProps) {
   const isBilingual = !!event.translations && Object.keys(event.translations).length > 0;
+  const altLang = getAltLang(event);
+  const C = CHROME[altLang] ?? {};
 
   // Chips: split archiveSummary by " · ", then category, season
   const archiveChips: Array<{ label: string; primary: boolean }> = [];
@@ -564,7 +637,7 @@ function ArchivedEventInfoBand({
               {isBilingual ? (
                 <>
                   <span className="evd-bilingual-wrap-default">Presented</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Presentado</span>
+                  <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.presented ?? "Presented"}</span>
                 </>
               ) : "Presented"}
             </p>
@@ -593,10 +666,10 @@ function ArchivedEventInfoBand({
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                 </svg>
-                {isBilingual && event.translations?.["es"]?.runtime ? (
+                {isBilingual && event.translations?.[altLang]?.runtime ? (
                   <>
                     <span className="evd-bilingual-wrap-default">{event.runtime}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].runtime}</span>
+                    <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{event.translations[altLang].runtime}</span>
                   </>
                 ) : event.runtime}
               </span>
@@ -606,10 +679,10 @@ function ArchivedEventInfoBand({
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
                 </svg>
-                {isBilingual && event.translations?.["es"]?.language ? (
+                {isBilingual && event.translations?.[altLang]?.language ? (
                   <>
                     <span className="evd-bilingual-wrap-default">{event.language}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].language}</span>
+                    <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{event.translations[altLang].language}</span>
                   </>
                 ) : event.language}
               </span>
@@ -619,10 +692,10 @@ function ArchivedEventInfoBand({
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
-                {isBilingual && event.translations?.["es"]?.suitability ? (
+                {isBilingual && event.translations?.[altLang]?.suitability ? (
                   <>
                     <span className="evd-bilingual-wrap-default">{event.suitability}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].suitability}</span>
+                    <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{event.translations[altLang].suitability}</span>
                   </>
                 ) : event.suitability}
               </span>
@@ -641,7 +714,7 @@ function ArchivedEventInfoBand({
               {isBilingual ? (
                 <>
                   <span className="evd-bilingual-wrap-default">{archiveLabel}</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Archivo</span>
+                  <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.archive ?? "Archive"}</span>
                 </>
               ) : archiveLabel}
             </Link>
@@ -653,7 +726,7 @@ function ArchivedEventInfoBand({
               shareLabel={isBilingual ? (
                 <>
                   <span className="evd-bilingual-wrap-default">Share</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Compartir</span>
+                  <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.share ?? "Share"}</span>
                 </>
               ) : undefined}
             />
@@ -662,7 +735,7 @@ function ArchivedEventInfoBand({
             {isBilingual ? (
               <>
                 <span className="evd-bilingual-wrap-default">{sponsor.label}</span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-es">{sponsor.labelEs}</span>
+                <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{altLang === "es" ? sponsor.labelEs : sponsor.label}</span>
               </>
             ) : sponsor.label}
           </Link>
@@ -677,7 +750,7 @@ function ArchivedEventInfoBand({
             {isBilingual ? (
               <>
                 <span className="evd-bilingual-wrap-default">{event.accessibility}</span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations?.["es"]?.accessibility ?? event.accessibility}</span>
+                <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{event.translations?.[altLang]?.accessibility ?? event.accessibility}</span>
               </>
             ) : <span>{event.accessibility}</span>}
           </div>
@@ -706,6 +779,8 @@ function UpcomingEventInfoBand({
   eventUrl,
 }: UpcomingEventInfoBandProps) {
   const isBilingual = !!event.translations && Object.keys(event.translations).length > 0;
+  const altLang = getAltLang(event);
+  const C = CHROME[altLang] ?? {};
   return (
     <div className="evd-ticket-bar">
       <div className="evd-ticket-bar-inner">
@@ -732,10 +807,10 @@ function UpcomingEventInfoBand({
           <div className="evd-ticket-purchase">
             {event.ticketPrice ? (
               <span className="evd-tmeta-price">
-                {event.translations?.["es"]?.ticketPrice ? (
+                {event.translations?.[altLang]?.ticketPrice ? (
                   <>
                     <span className="evd-bilingual-wrap-default">{event.ticketPrice}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].ticketPrice}</span>
+                    <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{event.translations[altLang].ticketPrice}</span>
                   </>
                 ) : event.ticketPrice}
               </span>
@@ -750,7 +825,7 @@ function UpcomingEventInfoBand({
                 {isBilingual && primaryAction.esLabel ? (
                   <>
                     <span className="evd-bilingual-wrap-default">{primaryAction.label}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{primaryAction.esLabel}</span>
+                    <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{altLang === "es" && primaryAction.esLabel ? primaryAction.esLabel : primaryAction.label}</span>
                   </>
                 ) : primaryAction.label}
               </a>
@@ -763,10 +838,10 @@ function UpcomingEventInfoBand({
             {event.runtime ? (
               <span className="evd-tmeta-chip">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                {event.translations?.["es"]?.runtime ? (
+                {event.translations?.[altLang]?.runtime ? (
                   <>
                     <span className="evd-bilingual-wrap-default">{event.runtime}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].runtime}</span>
+                    <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{event.translations[altLang].runtime}</span>
                   </>
                 ) : event.runtime}
               </span>
@@ -774,10 +849,10 @@ function UpcomingEventInfoBand({
             {event.language ? (
               <span className="evd-tmeta-chip">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                {event.translations?.["es"]?.language ? (
+                {event.translations?.[altLang]?.language ? (
                   <>
                     <span className="evd-bilingual-wrap-default">{event.language}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].language}</span>
+                    <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{event.translations[altLang].language}</span>
                   </>
                 ) : event.language}
               </span>
@@ -785,10 +860,10 @@ function UpcomingEventInfoBand({
             {event.suitability ? (
               <span className="evd-tmeta-chip">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                {event.translations?.["es"]?.suitability ? (
+                {event.translations?.[altLang]?.suitability ? (
                   <>
                     <span className="evd-bilingual-wrap-default">{event.suitability}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{event.translations["es"].suitability}</span>
+                    <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{event.translations[altLang].suitability}</span>
                   </>
                 ) : event.suitability}
               </span>
@@ -802,8 +877,8 @@ function UpcomingEventInfoBand({
             {isBilingual ? (
               <>
                 <span className="evd-bilingual-wrap-default">{event.accessibility}</span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-es">
-                  {event.translations?.["es"]?.accessibility ?? event.accessibility}
+                <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>
+                  {event.translations?.[altLang]?.accessibility ?? event.accessibility}
                 </span>
               </>
             ) : (
@@ -820,7 +895,7 @@ function UpcomingEventInfoBand({
             shareLabel={isBilingual ? (
               <>
                 <span className="evd-bilingual-wrap-default">Share</span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-es">Compartir</span>
+                <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.share ?? "Share"}</span>
               </>
             ) : undefined}
           />
@@ -838,7 +913,7 @@ function UpcomingEventInfoBand({
               {isBilingual ? (
                 <>
                   <span className="evd-bilingual-wrap-default">Add to Calendar</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Agregar al Calendario</span>
+                  <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.addToCalendar ?? "Add to Calendar"}</span>
                 </>
               ) : "Add to Calendar"}
             </button>
@@ -868,7 +943,7 @@ function UpcomingEventInfoBand({
               {isBilingual ? (
                 <>
                   <span className="evd-bilingual-wrap-default">Bring a Group</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Traer un Grupo</span>
+                  <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.bringGroup ?? "Bring a Group"}</span>
                 </>
               ) : "Bring a Group"}
             </a>
@@ -930,6 +1005,8 @@ export default async function EventDetailPageTemplate({
   // from the original base fields so switching still works.
   const hasLegacyEnTrans = !!event.translations?.["en"];
   const isBilingual = !!event.translations && Object.keys(event.translations).length > 0;
+  const altLang = getAltLang(event);
+  const C = CHROME[altLang] ?? {};
   const heroBase = hasLegacyEnTrans
     ? {
         title: event.translations!["en"].title ?? event.title,
@@ -1003,10 +1080,10 @@ export default async function EventDetailPageTemplate({
                 {`Season ${relatedProduction.season}`}
               </Link>
             </span>
-            <span className="evd-bilingual-wrap-alt evd-bilingual-es">
-              {getEventEyebrowEs(event)}{" · "}
+            <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>
+              {getEventEyebrowAlt(event, altLang)}{" · "}
               <Link href={`/season/${relatedProduction.season}`} className="evd-hero-season-link">
-                {`Temporada ${relatedProduction.season}`}
+                {`${C.season ?? "Season"} ${relatedProduction.season}`}
               </Link>
             </span>
           </>
@@ -1060,7 +1137,7 @@ export default async function EventDetailPageTemplate({
               {isBilingual ? (
                 <>
                   <span className="evd-bilingual-wrap-default">Events</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Eventos</span>
+                  <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.events ?? "Events"}</span>
                 </>
               ) : "Events"}
             </Link>
@@ -1071,7 +1148,7 @@ export default async function EventDetailPageTemplate({
                   <span className="evd-bilingual-wrap-default">
                     {routeKind === "theatre" ? "Performances" : routeKind === "festivals" ? "Festivals" : "Gatherings"}
                   </span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                  <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>
                     {routeKind === "theatre" ? "Funciones" : routeKind === "festivals" ? "Festivales" : "Encuentros"}
                   </span>
                 </>
@@ -1084,8 +1161,8 @@ export default async function EventDetailPageTemplate({
               {isBilingual ? (
                 <>
                   <span className="evd-bilingual-wrap-default">{event.title}</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">
-                    {event.translations?.["es"]?.title ?? event.title}
+                  <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>
+                    {event.translations?.[altLang]?.title ?? event.title}
                   </span>
                 </>
               ) : event.title}
@@ -1099,7 +1176,7 @@ export default async function EventDetailPageTemplate({
                 {isBilingual ? (
                   <>
                     <span className="evd-bilingual-wrap-default">{archiveDest.label}</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">{archiveDest.labelEs}</span>
+                    <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{altLang === "es" ? archiveDest.labelEs : archiveDest.label}</span>
                   </>
                 ) : archiveDest.label}
               </Link>
@@ -1109,7 +1186,7 @@ export default async function EventDetailPageTemplate({
           <EventHeroText
             defaultLang={heroDefaultLang}
             eyebrow={getEventEyebrow(event)}
-            eyebrowEn={isBilingual ? getEventEyebrowEs(event) : undefined}
+            eyebrowEn={isBilingual ? getEventEyebrowAlt(event, altLang) : undefined}
             eyebrowNode={archiveEyebrowNode}
             base={heroBase}
             translations={heroTranslations}
@@ -1184,7 +1261,7 @@ export default async function EventDetailPageTemplate({
               {isBilingual ? (
                 <>
                   <span className="evd-bilingual-wrap-default">Inside the Work</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Dentro de la Obra</span>
+                  <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.insideTheWork ?? "Inside the Work"}</span>
                 </>
               ) : "Inside the Work"}
             </p>
@@ -1202,7 +1279,7 @@ export default async function EventDetailPageTemplate({
                     {isBilingual ? (
                       <>
                         <h2 className="evd-about-head evd-bilingual-default">About</h2>
-                        <h2 className="evd-about-head evd-bilingual-alt evd-bilingual-es">Sobre la Obra</h2>
+                        <h2 className={`evd-about-head evd-bilingual-alt evd-bilingual-${altLang}`}>{C.about ?? "About"}</h2>
                       </>
                     ) : (
                       <h2 className="evd-about-head">About</h2>
@@ -1233,10 +1310,10 @@ export default async function EventDetailPageTemplate({
                         })()}
                         {/* ES — tagline above if not in body; inline-styled at position if found in body */}
                         {(() => {
-                          const esTagline = event.translations?.["es"]?.subtitle;
+                          const esTagline = event.translations?.[altLang]?.subtitle;
                           const esParagraphs = splitParagraphs(
-                            event.translations?.["es"]?.longDescription ??
-                            event.translations?.["es"]?.description ??
+                            event.translations?.[altLang]?.longDescription ??
+                            event.translations?.[altLang]?.description ??
                             ""
                           );
                           const esTaglineInBody = esTagline
@@ -1245,11 +1322,11 @@ export default async function EventDetailPageTemplate({
                           return (
                             <>
                               {esTagline && !esTaglineInBody && (
-                                <p className="evd-tagline-inline evd-bilingual-alt evd-bilingual-es">
+                                <p className={`evd-tagline-inline evd-bilingual-alt evd-bilingual-${altLang}`} lang={altLang}>
                                   {esTagline}
                                 </p>
                               )}
-                              <div className="evd-bilingual-alt evd-bilingual-es">
+                              <div className={`evd-bilingual-alt evd-bilingual-${altLang}`} lang={altLang}>
                                 {esParagraphs.map((p, i) =>
                                   esTaglineInBody && esTagline && p === esTagline.trim() ? (
                                     <p key={i} className="evd-tagline-inline">{p}</p>
@@ -1306,7 +1383,7 @@ export default async function EventDetailPageTemplate({
                     {event.translations ? (
                       <>
                         <h2 className="evd-about-head evd-bilingual-default">Resources</h2>
-                        <h2 className="evd-about-head evd-bilingual-alt evd-bilingual-es">Recursos</h2>
+                        <h2 className={`evd-about-head evd-bilingual-alt evd-bilingual-${altLang}`}>{C.resources ?? "Resources"}</h2>
                       </>
                     ) : (
                       <h2 className="evd-about-head">Resources</h2>
@@ -1372,11 +1449,11 @@ export default async function EventDetailPageTemplate({
                               {artistNote.by && (
                                 <p className="evd-elder-meta evd-bilingual-default">— {artistNote.by}</p>
                               )}
-                              <p className="evd-elder-text evd-bilingual-alt evd-bilingual-es">
-                                &ldquo;{event.translations?.["es"]?.artistNote ?? artistNote.note}&rdquo;
+                              <p className={`evd-elder-text evd-bilingual-alt evd-bilingual-${altLang}`} lang={altLang}>
+                                &ldquo;{event.translations?.[altLang]?.artistNote ?? artistNote.note}&rdquo;
                               </p>
                               {artistNote.by && (
-                                <p className="evd-elder-meta evd-bilingual-alt evd-bilingual-es">— {artistNote.by}</p>
+                                <p className={`evd-elder-meta evd-bilingual-alt evd-bilingual-${altLang}`}>— {artistNote.by}</p>
                               )}
                             </>
                           ) : (
@@ -1398,7 +1475,7 @@ export default async function EventDetailPageTemplate({
                       {isBilingual ? (
                         <>
                           <h2 className="evd-about-head evd-bilingual-default">Community Impact</h2>
-                          <h2 className="evd-about-head evd-bilingual-alt evd-bilingual-es">Impacto Comunitario</h2>
+                          <h2 className={`evd-about-head evd-bilingual-alt evd-bilingual-${altLang}`}>{C.communityImpact ?? "Community Impact"}</h2>
                         </>
                       ) : (
                         <h2 className="evd-about-head">Community Impact</h2>
@@ -1425,7 +1502,7 @@ export default async function EventDetailPageTemplate({
                                   {isBilingual ? (
                                     <>
                                       <span className="evd-bilingual-wrap-default">This production supports</span>
-                                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Esta producción apoya</span>
+                                      <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.supports ?? "This production supports"}</span>
                                     </>
                                   ) : "This production supports"}
                                 </p>
@@ -1446,9 +1523,9 @@ export default async function EventDetailPageTemplate({
                               {event.impactBlurb}
                             </p>
                             {/* ES impact blurb — alt */}
-                            {event.translations?.["es"]?.impactBlurb && (
-                              <p className="evd-body-text evd-about-body evd-impact-blurb evd-bilingual-alt evd-bilingual-es">
-                                {event.translations["es"].impactBlurb}
+                            {event.translations?.[altLang]?.impactBlurb && (
+                              <p className={`evd-body-text evd-about-body evd-impact-blurb evd-bilingual-alt evd-bilingual-${altLang}`} lang={altLang}>
+                                {event.translations[altLang].impactBlurb}
                               </p>
                             )}
                           </>
@@ -1466,7 +1543,7 @@ export default async function EventDetailPageTemplate({
                             {isBilingual ? (
                               <>
                                 <span className="evd-bilingual-wrap-default">Causes We Champion</span>
-                                <span className="evd-bilingual-wrap-alt evd-bilingual-es">Causas que Apoyamos</span>
+                                <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.causes ?? "Causes We Champion"}</span>
                               </>
                             ) : "Causes We Champion"}
                           </p>
@@ -1491,7 +1568,7 @@ export default async function EventDetailPageTemplate({
                             {isBilingual ? (
                               <>
                                 <span className="evd-bilingual-wrap-default">Partners</span>
-                                <span className="evd-bilingual-wrap-alt evd-bilingual-es">Alianzas y Socios</span>
+                                <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.partners ?? "Partners"}</span>
                               </>
                             ) : "Partners"}
                           </p>
@@ -1534,7 +1611,7 @@ export default async function EventDetailPageTemplate({
                             <span className="evd-bilingual-wrap-default">
                               {isArchiveView ? "Sponsor New Works Like This" : "Sponsor This New Work"}
                             </span>
-                            <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                            <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>
                               {isArchiveView ? "Apoyar Nuevas Obras" : "Apoyar Esta Nueva Obra"}
                             </span>
                           </>
@@ -1548,7 +1625,7 @@ export default async function EventDetailPageTemplate({
                           {isBilingual ? (
                             <>
                               <span className="evd-bilingual-wrap-default">Sponsor this Drama Club</span>
-                              <span className="evd-bilingual-wrap-alt evd-bilingual-es">Apoyar este Club de Teatro</span>
+                              <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.sponsorClub ?? "Sponsor this Drama Club"}</span>
                             </>
                           ) : "Sponsor this Drama Club"}
                         </a>
@@ -1571,6 +1648,7 @@ export default async function EventDetailPageTemplate({
                   fieldGalleryTitle={fieldGalleryTitle}
                   fieldAlbumHref={fieldAlbumHref}
                   bilingual={!!event.translations}
+                  altLang={altLang}
                 />
               </div>
             ) : null}
@@ -1596,7 +1674,7 @@ export default async function EventDetailPageTemplate({
                 {event.translations ? (
                   <>
                     <h2 className="evd-about-head evd-voices-head evd-bilingual-default">The Response</h2>
-                    <h2 className="evd-about-head evd-voices-head evd-bilingual-alt evd-bilingual-es">La Respuesta</h2>
+                    <h2 className={`evd-about-head evd-voices-head evd-bilingual-alt evd-bilingual-${altLang}`}>{C.response ?? "The Response"}</h2>
                   </>
                 ) : (
                   <h2 className="evd-about-head evd-voices-head">The Response</h2>
@@ -1615,8 +1693,8 @@ export default async function EventDetailPageTemplate({
                         </figure>
                       ))}
                     </div>
-                    <div className="evd-bilingual-alt evd-bilingual-es evd-voices-quotes-grid">
-                      {(event.translations?.["es"]?.pressQuotes ?? event.pressQuotes!).map((q, i) => (
+                    <div className={`evd-bilingual-alt evd-bilingual-${altLang} evd-voices-quotes-grid`} lang={altLang}>
+                      {(event.translations?.[altLang]?.pressQuotes ?? event.pressQuotes!).map((q, i) => (
                         <figure key={i} className="evd-voices-quote">
                           <blockquote className="evd-voices-blockquote">&ldquo;{q.text}&rdquo;</blockquote>
                           <figcaption className="evd-voices-figcaption">
@@ -1647,7 +1725,7 @@ export default async function EventDetailPageTemplate({
                     {isBilingual ? (
                       <>
                         <span className="evd-bilingual-wrap-default">See more</span>
-                        <span className="evd-bilingual-wrap-alt evd-bilingual-es">Ver más</span>
+                        <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.seeMore ?? "See more"}</span>
                       </>
                     ) : "See more"}
                   </span>
@@ -1655,7 +1733,7 @@ export default async function EventDetailPageTemplate({
                     {isBilingual ? (
                       <>
                         <span className="evd-bilingual-wrap-default">See less</span>
-                        <span className="evd-bilingual-wrap-alt evd-bilingual-es">Ver menos</span>
+                        <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.seeLess ?? "See less"}</span>
                       </>
                     ) : "See less"}
                   </span>
@@ -1672,7 +1750,7 @@ export default async function EventDetailPageTemplate({
                     {isBilingual ? (
                       <>
                         <span className="evd-bilingual-wrap-default">Cast</span>
-                        <span className="evd-bilingual-wrap-alt evd-bilingual-es">Elenco</span>
+                        <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.cast ?? "Cast"}</span>
                       </>
                     ) : "Cast"}
                   </p>
@@ -1682,7 +1760,7 @@ export default async function EventDetailPageTemplate({
                   {castCredits.map((c, i) => {
                     // Base credits are EN roles; ES roles come from translations.es.credits
                     const esRole = isBilingual
-                      ? (event.translations?.["es"]?.credits ?? []).find(
+                      ? (event.translations?.[altLang]?.credits ?? []).find(
                           (ec) => ec.name === c.name && ec.group === "cast"
                         )?.role
                       : undefined;
@@ -1714,7 +1792,7 @@ export default async function EventDetailPageTemplate({
                           {esRole ? (
                             <>
                               <span className="evd-bilingual-wrap-default">{c.role}</span>
-                              <span className="evd-bilingual-wrap-alt evd-bilingual-es">{esRole}</span>
+                              <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{esRole}</span>
                             </>
                           ) : c.role}
                         </p>
@@ -1741,7 +1819,7 @@ export default async function EventDetailPageTemplate({
                         <span className="evd-bilingual-wrap-default">
                           {castCredits.length > 0 ? "Creative Team" : "The Company"}
                         </span>
-                        <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                        <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>
                           {castCredits.length > 0 ? "Equipo Creativo" : "La Compañía"}
                         </span>
                       </>
@@ -1755,7 +1833,7 @@ export default async function EventDetailPageTemplate({
                   {creativeCredits.map((c, i) => {
                     // Base credits are EN roles; ES roles come from translations.es.credits
                     const esRole = isBilingual
-                      ? (event.translations?.["es"]?.credits ?? []).find(
+                      ? (event.translations?.[altLang]?.credits ?? []).find(
                           (ec) => ec.name === c.name && (ec.group === "creative" || !ec.group)
                         )?.role
                       : undefined;
@@ -1765,7 +1843,7 @@ export default async function EventDetailPageTemplate({
                           {esRole ? (
                             <>
                               <span className="evd-bilingual-wrap-default">{c.role}</span>
-                              <span className="evd-bilingual-wrap-alt evd-bilingual-es">{esRole}</span>
+                              <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{esRole}</span>
                             </>
                           ) : c.role}
                         </p>
@@ -1841,7 +1919,7 @@ export default async function EventDetailPageTemplate({
                 {isBilingual ? (
                   <>
                     <span className="evd-bilingual-wrap-default">Production History</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Historia de Producción</span>
+                    <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.productionHistory ?? "Production History"}</span>
                   </>
                 ) : "Production History"}
               </p>
@@ -1849,7 +1927,7 @@ export default async function EventDetailPageTemplate({
                 {isBilingual ? (
                   <>
                     <span className="evd-bilingual-wrap-default">The Full Cycle</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">El Ciclo Completo</span>
+                    <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.fullCycle ?? "The Full Cycle"}</span>
                   </>
                 ) : "The Full Cycle"}
               </h2>
@@ -1901,7 +1979,7 @@ export default async function EventDetailPageTemplate({
                               <span className="evd-bilingual-wrap-default">
                                 {badge.isUpcoming ? "Explore Production" : "EXPLORE PRODUCTION"}
                               </span>
-                              <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                              <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>
                                 {badge.isUpcoming ? "Explorar Producción" : "EXPLORAR PRODUCCIÓN"}
                               </span>
                             </>
@@ -1942,7 +2020,7 @@ export default async function EventDetailPageTemplate({
                               <span className="evd-bilingual-wrap-default">
                                 {cycleBadge.isUpcoming ? "Explore Production" : "EXPLORE PRODUCTION"}
                               </span>
-                              <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                              <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>
                                 {cycleBadge.isUpcoming ? "Explorar Producción" : "EXPLORAR PRODUCCIÓN"}
                               </span>
                             </>
@@ -1985,7 +2063,7 @@ export default async function EventDetailPageTemplate({
                         return isBilingual ? (
                           <>
                             <span className="evd-bilingual-wrap-default">THE WORK CONTINUES{locationSuffix}</span>
-                            <span className="evd-bilingual-wrap-alt evd-bilingual-es">LA OBRA CONTINÚA{locationSuffixEs}</span>
+                            <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.workContinues ?? "THE WORK CONTINUES"}{altLang === "es" ? locationSuffixEs : locationSuffix}</span>
                           </>
                         ) : `THE WORK CONTINUES${locationSuffix}`;
                       })()}
@@ -1998,8 +2076,8 @@ export default async function EventDetailPageTemplate({
                     {isBilingual ? (
                       <>
                         <span className="evd-bilingual-wrap-default">{relatedUpcomingEvent.title}</span>
-                        <span className="evd-bilingual-wrap-alt evd-bilingual-es">
-                          {relatedUpcomingEvent.translations?.["es"]?.title ?? relatedUpcomingEvent.title}
+                        <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>
+                          {relatedUpcomingEvent.translations?.[altLang]?.title ?? relatedUpcomingEvent.title}
                         </span>
                       </>
                     ) : relatedUpcomingEvent.title}
@@ -2017,7 +2095,7 @@ export default async function EventDetailPageTemplate({
                       {isBilingual ? (
                         <>
                           <span className="evd-bilingual-wrap-default">RESERVE YOUR SEAT</span>
-                          <span className="evd-bilingual-wrap-alt evd-bilingual-es">RESERVA TU LUGAR</span>
+                          <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.reserveSeat ?? "RESERVE YOUR SEAT"}</span>
                         </>
                       ) : "RESERVE YOUR SEAT"}
                     </span>
@@ -2083,7 +2161,7 @@ export default async function EventDetailPageTemplate({
                 {isBilingual ? (
                   <>
                     <span className="evd-bilingual-wrap-default">Next Up</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Lo Que Sigue</span>
+                    <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.nextUp ?? "Next Up"}</span>
                   </>
                 ) : "Next Up"}
               </p>
@@ -2091,7 +2169,7 @@ export default async function EventDetailPageTemplate({
                 {isBilingual ? (
                   <>
                     <span className="evd-bilingual-wrap-default">Meet Us There</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Encuéntranos Allí</span>
+                    <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.meetUsThere ?? "Meet Us There"}</span>
                   </>
                 ) : "Meet Us There"}
               </h2>
@@ -2134,7 +2212,7 @@ export default async function EventDetailPageTemplate({
                   {isBilingual ? (
                     <>
                       <span className="evd-bilingual-wrap-default">Upcoming Performances</span>
-                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Próximas Funciones</span>
+                      <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.upcomingPerformances ?? "Upcoming Performances"}</span>
                     </>
                   ) : "Upcoming Performances"}
                 </Link>
@@ -2142,7 +2220,7 @@ export default async function EventDetailPageTemplate({
                   {isBilingual ? (
                     <>
                       <span className="evd-bilingual-wrap-default">Fundraisers &amp; Community Nights</span>
-                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Recaudaciones y Comunidad</span>
+                      <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.fundraisersCommunity ?? "Fundraisers & Community Nights"}</span>
                     </>
                   ) : "Fundraisers & Community Nights"}
                 </Link>
@@ -2150,7 +2228,7 @@ export default async function EventDetailPageTemplate({
                   {isBilingual ? (
                     <>
                       <span className="evd-bilingual-wrap-default">Festivals &amp; Showcases</span>
-                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Festivales y Exhibiciones</span>
+                      <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.festivalsShowcases ?? "Festivals & Showcases"}</span>
                     </>
                   ) : "Festivals & Showcases"}
                 </Link>
@@ -2158,7 +2236,7 @@ export default async function EventDetailPageTemplate({
                   {isBilingual ? (
                     <>
                       <span className="evd-bilingual-wrap-default">Theatre Archive</span>
-                      <span className="evd-bilingual-wrap-alt evd-bilingual-es">Archivo de Teatro</span>
+                      <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.theatreArchive ?? "Theatre Archive"}</span>
                     </>
                   ) : "Theatre Archive"}
                 </Link>
@@ -2167,7 +2245,7 @@ export default async function EventDetailPageTemplate({
                 {isBilingual ? (
                   <>
                     <span className="evd-bilingual-wrap-default">Find Your Show</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">Encuentra Tu Función</span>
+                    <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.findYourShow ?? "Find Your Show"}</span>
                   </>
                 ) : "Find Your Show"}
               </Link>
@@ -2191,7 +2269,7 @@ export default async function EventDetailPageTemplate({
               {isBilingual ? (
                 <>
                   <span className="evd-bilingual-wrap-default">From the Field</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">Desde el Terreno</span>
+                  <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.fromTheField ?? "From the Field"}</span>
                 </>
               ) : "From the Field"}
             </p>
@@ -2203,10 +2281,10 @@ export default async function EventDetailPageTemplate({
                       ? "Stay with the work."
                       : "Be in the room."}
                   </span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">
+                  <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>
                     {isArchiveView
-                      ? "Mantente cerca de la obra."
-                      : "Sé parte de la sala."}
+                      ? (C.stayWithWork ?? "Stay with the work.")
+                      : (C.beInRoom ?? "Be in the room.")}
                   </span>
                 </>
               ) : (isArchiveView
@@ -2219,8 +2297,8 @@ export default async function EventDetailPageTemplate({
                   <span className="evd-bilingual-wrap-default">
                     Events are announced first to our community list. Be the first to know when new shows, festivals, and community nights land.
                   </span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">
-                    Los eventos se anuncian primero en nuestra lista comunitaria. Sé la primera persona en saber cuándo llegan nuevos espectáculos, festivales y noches comunitarias.
+                  <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>
+                    {C.newsletterBody ?? "Events are announced first to our community list. Be the first to know when new shows, festivals, and community nights land."}
                   </span>
                 </>
               ) : "Events are announced first to our community list. Be the first to know when new shows, festivals, and community nights land."}
@@ -3626,14 +3704,15 @@ export default async function EventDetailPageTemplate({
            No other language attribute is needed for EN — removing the attr restores EN. */
         /* Block-level: alternate (non-EN) language content hidden by default */
         .evd-bilingual-alt { display: none; }
-        /* When :root[data-evd-lang="es"]: hide English defaults, show Spanish alts */
-        :root[data-evd-lang="es"] .evd-bilingual-default { display: none !important; }
-        :root[data-evd-lang="es"] .evd-bilingual-alt.evd-bilingual-es { display: block !important; }
+        /* When :root[data-evd-lang matches this page's alternate language]:
+           hide English defaults, show alternate-language alts */
+        :root[data-evd-lang="${altLang}"] .evd-bilingual-default { display: none !important; }
+        :root[data-evd-lang="${altLang}"] .evd-bilingual-alt.evd-bilingual-${altLang} { display: block !important; }
         /* Inline/flex wrap — use display:contents so text flows naturally */
         .evd-bilingual-wrap-default { display: contents; }
         .evd-bilingual-wrap-alt { display: none; }
-        :root[data-evd-lang="es"] .evd-bilingual-wrap-default { display: none !important; }
-        :root[data-evd-lang="es"] .evd-bilingual-wrap-alt.evd-bilingual-es { display: contents !important; }
+        :root[data-evd-lang="${altLang}"] .evd-bilingual-wrap-default { display: none !important; }
+        :root[data-evd-lang="${altLang}"] .evd-bilingual-wrap-alt.evd-bilingual-${altLang} { display: contents !important; }
 
         /* ── 8b. Cycle band: DAT logo sticker ──────────────────────────── */
         .evd-cycle-band { position: relative; }

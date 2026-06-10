@@ -40,6 +40,8 @@ interface EventProdrowGalleryProps {
   fieldAlbumHref?: string;
   /** Whether the page is bilingual (ES/EN toggle active) */
   bilingual?: boolean;
+  /** Alternate (non-English) language code for the page, e.g. "es" or "sk" */
+  altLang?: string;
 }
 
 function cleanStr(val: string | null | undefined): string | undefined {
@@ -53,6 +55,25 @@ function cleanHref(val: string | null | undefined): string | undefined {
   return s;
 }
 
+/* Alternate-language chrome labels. "es" preserves the original Spanish UI;
+   languages without an entry fall back to the English label. */
+const GALLERY_CHROME: Record<string, Record<string, string>> = {
+  es: {
+    productionGallery: "Galer\u00eda de Producci\u00f3n",
+    photosBy: "Fotos por",
+    seeLess: "VER MENOS",
+    seeMore: "VER M\u00c1S",
+    openAlbum: "ABRIR \u00c1LBUM COMPLETO",
+  },
+  sk: {
+    productionGallery: "Fotogal\u00e9ria",
+    photosBy: "Foto:",
+    seeLess: "ZOBRAZI\u0164 MENEJ",
+    seeMore: "ZOBRAZI\u0164 VIAC",
+    openAlbum: "OTVORI\u0164 CEL\u00dd ALBUM",
+  },
+};
+
 /* ─── Main production gallery (3-col grid) ───────────────────────────────── */
 function PhotoRowSection({
   images,
@@ -62,6 +83,7 @@ function PhotoRowSection({
   albumLabel,
   maxVisible = 3,
   bilingual,
+  altLang = "es",
 }: {
   images: ProdrowImage[];
   photoCredit?: string;
@@ -70,6 +92,7 @@ function PhotoRowSection({
   albumLabel?: string;
   maxVisible?: number;
   bilingual?: boolean;
+  altLang?: string;
 }) {
   const [open, setOpen] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -100,7 +123,7 @@ function PhotoRowSection({
           {bilingual ? (
             <>
               <span className="evd-bilingual-wrap-default">Production Gallery</span>
-              <span className="evd-bilingual-wrap-alt evd-bilingual-es">Galería de Producción</span>
+              <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{GALLERY_CHROME[altLang]?.productionGallery ?? "Production Gallery"}</span>
             </>
           ) : "Production Gallery"}
         </h3>
@@ -109,7 +132,7 @@ function PhotoRowSection({
             {bilingual ? (
               <>
                 <span className="evd-bilingual-wrap-default">Photos by{" "}</span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-es">Fotos por{" "}</span>
+                <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{GALLERY_CHROME[altLang]?.photosBy ?? "Photos by"}{" "}</span>
               </>
             ) : "Photos by "}
             {photographerHrefSafe ? (
@@ -159,12 +182,12 @@ function PhotoRowSection({
                 expanded ? (
                   <>
                     <span className="evd-bilingual-wrap-default">SEE LESS</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">VER MENOS</span>
+                    <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{GALLERY_CHROME[altLang]?.seeLess ?? "SEE LESS"}</span>
                   </>
                 ) : (
                   <>
                     <span className="evd-bilingual-wrap-default">SEE MORE</span>
-                    <span className="evd-bilingual-wrap-alt evd-bilingual-es">VER MÁS</span>
+                    <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{GALLERY_CHROME[altLang]?.seeMore ?? "SEE MORE"}</span>
                   </>
                 )
               ) : (expanded ? "SEE LESS" : "SEE MORE")}
@@ -182,7 +205,7 @@ function PhotoRowSection({
               {bilingual ? (
                 <>
                   <span className="evd-bilingual-wrap-default">{baseLabel} ↗</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">ABRIR ÁLBUM COMPLETO ↗</span>
+                  <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{GALLERY_CHROME[altLang]?.openAlbum ?? "OPEN FULL ALBUM"} ↗</span>
                 </>
               ) : `${baseLabel} ↗`}
             </a>
@@ -208,12 +231,14 @@ function FieldGridSection({
   titleEs,
   albumHref,
   bilingual,
+  altLang = "es",
 }: {
   images: ProdrowImage[];
   title?: string;
   titleEs?: string;
   albumHref?: string;
   bilingual?: boolean;
+  altLang?: string;
 }) {
   const [open, setOpen] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -243,7 +268,7 @@ function FieldGridSection({
         {bilingual ? (
           <>
             <span className="evd-bilingual-wrap-default">{safeTitle}</span>
-            <span className="evd-bilingual-wrap-alt evd-bilingual-es">{safeTitleEs}</span>
+            <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{altLang === "es" && safeTitleEs ? safeTitleEs : safeTitle}</span>
           </>
         ) : safeTitle}
       </h3>
@@ -284,12 +309,12 @@ function FieldGridSection({
               expanded ? (
                 <>
                   <span className="evd-bilingual-wrap-default">SEE LESS</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">VER MENOS</span>
+                  <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{GALLERY_CHROME[altLang]?.seeLess ?? "SEE LESS"}</span>
                 </>
               ) : (
                 <>
                   <span className="evd-bilingual-wrap-default">SEE MORE</span>
-                  <span className="evd-bilingual-wrap-alt evd-bilingual-es">VER MÁS</span>
+                  <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{GALLERY_CHROME[altLang]?.seeMore ?? "SEE MORE"}</span>
                 </>
               )
             ) : (expanded ? "SEE LESS" : "SEE MORE")}
@@ -305,7 +330,7 @@ function FieldGridSection({
             {bilingual ? (
               <>
                 <span className="evd-bilingual-wrap-default">OPEN FULL ALBUM ↗</span>
-                <span className="evd-bilingual-wrap-alt evd-bilingual-es">ABRIR ÁLBUM COMPLETO ↗</span>
+                <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{GALLERY_CHROME[altLang]?.openAlbum ?? "OPEN FULL ALBUM"} ↗</span>
               </>
             ) : "OPEN FULL ALBUM ↗"}
           </a>
@@ -336,6 +361,7 @@ export default function EventProdrowGallery({
   fieldGalleryTitleEs,
   fieldAlbumHref,
   bilingual,
+  altLang = "es",
 }: EventProdrowGalleryProps) {
   const hasMain = (images?.length ?? 0) > 0;
   const hasField = (fieldImages?.length ?? 0) > 0;
@@ -353,6 +379,7 @@ export default function EventProdrowGallery({
           albumLabel={albumLabel}
           maxVisible={maxVisible}
           bilingual={bilingual}
+          altLang={altLang}
         />
       )}
       {hasField && (
@@ -362,6 +389,7 @@ export default function EventProdrowGallery({
           titleEs={fieldGalleryTitleEs}
           albumHref={fieldAlbumHref}
           bilingual={bilingual}
+          altLang={altLang}
         />
       )}
     </>

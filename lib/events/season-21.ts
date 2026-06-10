@@ -249,7 +249,7 @@ export const season21Events: DatEvent[] = [
         ],
       },
     },
-    hidden: true
+    hidden: false
   },
 
   {
@@ -339,20 +339,20 @@ export const season21Events: DatEvent[] = [
     category: "fundraiser",
     status: "upcoming",
     date: "2026-11-15",
-    time: "1:00 PM ET",
+    time: "1:00 PM ET / 7:00 PM CET",
     venue: "Online — Zoom",
     city: "Worldwide",
     country: "Online",
     description:
-      "A special edition of DAT’s Travelogue series featuring live storytelling, music, and conversation inspired by PASSAGE, global journeys, and the adventures that shape us.",
+      "A special edition of DAT’s Travelogue series — and a PASSAGE: Slovakia reunion — featuring live storytelling, music, and conversation inspired by global journeys and the adventures that shape us.",
     longDescription:
-      "Travelogue is Dramatic Adventure Theatre’s interactive travel-storytelling series, where artists, travelers, and special guests share stories, songs, poems, and reflections shaped by meaningful journeys. This special edition, Stories from PASSAGE, features PASSAGE artists alongside invited guests from across the DAT community for an evening of live storytelling, music, and conversation. Rooted in the spirit of adventure, artistic exchange, and human connection, the event invites audiences to listen, reflect, and even share an adventure of their own.",
+      "Travelogue is Dramatic Adventure Theatre’s interactive travel-storytelling series, where artists, travelers, and special guests share stories, songs, poems, and reflections shaped by meaningful journeys. This special edition, Stories from PASSAGE, doubles as a reunion of the PASSAGE: Slovakia cohort — gathering the artists, collaborators, and friends of the journey alongside invited guests from across the DAT community for an afternoon (evening in Central Europe) of live storytelling, music, and conversation. The online format means the whole circle can be in the room: PASSAGE artists, Slovak partners, and the worldwide DAT community. Rooted in the spirit of adventure, artistic exchange, and human connection, the event invites audiences to listen, reflect, and even share an adventure of their own.",
     image: "/images/theatre/archive/tembo.webp",
     ticketUrl: "https://dramaticadventure.com/travelogue",
     ticketPrice: "Free — registration required",
     ticketType: "free",
     featured: false,
-    tags: ["Travelogue", "storytelling", "cabaret", "music", "online", "PASSAGE"],
+    tags: ["Travelogue", "storytelling", "cabaret", "music", "online", "PASSAGE", "reunion"],
     contactEmail: "hello@dramaticadventure.com",
   },
 

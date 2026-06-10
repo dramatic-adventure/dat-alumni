@@ -36,6 +36,37 @@
 //              so you usually don't need to flip this by hand.
 // DATES:     "YYYY-MM-DD". Add `endDate` for multi-day runs.
 // IMAGES:    paths under /public, e.g. "/posters/show-landscape.jpg".
+//
+// BILINGUAL EVENTS (plug and play — data only, no code changes):
+//   English is always the base. Add a `translations` block with any ISO 639-1
+//   code and the event page does the rest automatically:
+//     • EN | XX toggle in the hero (persists, honors ?lang=xx deep links and
+//       first-visit browser language)
+//     • the other language's title shows as a small gold line tucked under
+//       the title (staggered when the title wraps) — no label needed
+//     • every translated field overlays its English counterpart; anything
+//       you leave out simply stays English
+//
+//     translations: {
+//       sk: {
+//         title: "Po stretnutí",            // omit to keep the same title
+//         subtitle: "...",
+//         description: "...",               // hero standfirst + card teaser
+//         longDescription: "...\n\n...",    // About section (\n\n = paragraphs)
+//         impactBlurb: "...",               // Community Impact section
+//         ticketPrice: "...", language: "...", accessibility: "...",
+//         // also available: artistNote(By), videoTitle, pressQuotes,
+//         // credits (translated roles), runtime, suitability
+//       },
+//     },
+//     defaultLang: "en",
+//
+//   UI labels (Share, Cast, section heads…) are already localized for "es"
+//   and "sk". For a new language they fall back to English until you add a
+//   block to CHROME in components/events/EventDetailPageTemplate.tsx (and
+//   GALLERY_CHROME in EventProdrowGallery.tsx) — copy the sk block.
+//   Live examples: "the-consequence-of-meeting-kosice-2026" (season-20, SK)
+//   and "agwow-malayerba-quito-2026" (season-21, ES).
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { DatEvent } from "@/lib/events";

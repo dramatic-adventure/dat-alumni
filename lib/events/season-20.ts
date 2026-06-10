@@ -136,6 +136,68 @@ export const season20Events: DatEvent[] = [
   },
 
   {
+    id: "the-consequence-of-meeting-kosice-2026",
+    title: "The Consequence of Meeting",
+    subtitle: "A bilingual performance event with all proceeds benefiting ETP Slovensko",
+    category: "performance",
+    subcategory: "benefit",
+    status: "upcoming",
+    date: "2026-08-01",
+    time: "Evening",
+    venue: "TBA",
+    city: "Košice",
+    country: "Slovakia",
+    language: "Performed in English & Slovak",
+    accessibility: "In person + online stream",
+    dramaClubs: ["zemplinska-teplica-ensemble", "lunik-ix-collective"],
+    description:
+      "Theatre, spoken word, song, movement, story, and what happens when a chance encounter becomes the passage you didn’t know you needed.",
+    longDescription:
+      "Dramatic Adventure Theatre presents The Consequence of Meeting / Po stretnutí, a one-night bilingual performance event bringing together international artists, local collaborators, and community voices, with all proceeds benefiting ETP Slovensko.\n\n" +
+      "Created at the close of DAT’s 2026 Slovakia artist journey, the evening features original performance, new writing, spoken word, song, movement, and story shaped by collaboration, exchange, and the charged act of coming face to face.\n\n" +
+      "This is not a showcase of finished answers. It is a live encounter with the questions that remain after people share space: What changes when we meet honestly? What do we carry afterward? What becomes possible — and what becomes complicated — because we were in the room together?\n\n" +
+      "The evening will feature original work from DAT artists, creative offerings developed with local Slovak collaborators, and possible guest performances from young people connected to DAT’s community-based teaching residencies.\n\n" +
+      "The work is intimate, immediate, and alive — shaped not only by what artists made, but by who they met, what they witnessed, and what those encounters asked of them.\n\n" +
+      "The Consequence of Meeting / Po stretnutí is a night of performance, witness, language, friction, humor, tenderness, discomfort, and transformation — a public gathering for anyone interested in what happens when meeting becomes more than a moment, and begins to change the way through.",
+    impactBlurb:
+      "This event supports ETP Slovensko, DAT’s community partner in Eastern Slovakia. Through education, mentorship, community development, and long-term local engagement, ETP Slovensko works with children, families, and communities to expand opportunity and strengthen pathways forward. Your attendance, donation, or sponsorship helps support this vital work while also making space for artists and communities to gather through story, performance, and creative exchange. All donations and event proceeds benefit ETP Slovensko.",
+    ticketPrice: "Free admission · donations welcome",
+    ticketType: "free",
+    featured: true,
+    tags: [
+      "bilingual",
+      "benefit",
+      "ETP Slovensko",
+      "PASSAGE",
+      "DAT Lab",
+      "Slovakia",
+      "Košice",
+    ],
+    contactEmail: "hello@dramaticadventure.com",
+    defaultLang: "en",
+    translations: {
+      sk: {
+        title: "Po stretnutí",
+        subtitle: "Bilingválne performatívne podujatie, ktorého výťažok podporí ETP Slovensko",
+        description:
+          "Divadlo, hovorené slovo, pieseň, pohyb, príbeh a to, čo sa stane, keď sa náhodné stretnutie zmení na cestu, o ktorej ste netušili, že ju potrebujete.",
+        longDescription:
+          "Dramatic Adventure Theatre uvádza The Consequence of Meeting / Po stretnutí, jednorazové bilingválne performatívne podujatie, ktoré spája medzinárodných umelcov, miestnych spolupracovníkov a hlasy komunity. Výťažok z podujatia podporí ETP Slovensko.\n\n" +
+          "Večer vzniká na záver umeleckej cesty DAT na Slovensku v roku 2026. Prinesie pôvodnú performanciu, nové texty, hovorené slovo, pieseň, pohyb a príbehy formované spoluprácou, výmenou a silou osobného stretnutia.\n\n" +
+          "Nie je to prehliadka hotových odpovedí. Je to živé stretnutie s otázkami, ktoré zostávajú po tom, čo ľudia zdieľajú jeden priestor: Čo sa zmení, keď sa stretneme úprimne? Čo si odnášame? Čo sa stane možným — a čo sa skomplikuje — pretože sme boli spolu v jednej miestnosti?\n\n" +
+          "Večer predstaví pôvodnú tvorbu umelcov DAT, kreatívne výstupy vytvorené v spolupráci s miestnymi slovenskými umelcami a podľa možností aj hosťovské vystúpenia mladých ľudí zapojených do komunitných tvorivých dielní DAT.\n\n" +
+          "Tvorba je intímna, bezprostredná a živá — formovaná nielen tým, čo umelci vytvorili, ale aj tým, koho stretli, čoho boli svedkami a čo od nich tieto stretnutia žiadali.\n\n" +
+          "The Consequence of Meeting / Po stretnutí je večer performancie, svedectva, jazyka, napätia, humoru, nežnosti, nepohodlia a premeny — verejné stretnutie pre všetkých, ktorých zaujíma, čo sa stane, keď stretnutie prestane byť iba okamihom a začne meniť cestu ďalej.",
+        impactBlurb:
+          "Toto podujatie podporuje ETP Slovensko, komunitného partnera DAT na východnom Slovensku. Prostredníctvom vzdelávania, mentoringu, komunitného rozvoja a dlhodobej lokálnej práce ETP Slovensko podporuje deti, rodiny a komunity pri rozširovaní príležitostí a posilňovaní ciest vpred. Vaša účasť, dobrovoľný príspevok alebo sponzorská podpora pomáha tejto dôležitej práci a zároveň vytvára priestor, kde sa umelci a komunity môžu stretnúť prostredníctvom príbehu, performance a tvorivej výmeny. Všetky dobrovoľné príspevky a výťažok z podujatia podporia ETP Slovensko.",
+        ticketPrice: "Vstup voľný · dobrovoľné príspevky vítané",
+        language: "V angličtine a slovenčine",
+        accessibility: "Naživo aj online",
+      },
+    },
+  },
+
+  {
     id: "rainbow-san-luis-edinburgh-2026",
     title: "The Rainbow of San Luis",
     subtitle: "A DAT Original Production",
