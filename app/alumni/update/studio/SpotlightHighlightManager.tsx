@@ -123,30 +123,16 @@ const cardStyle: CSSProperties = {
   marginBottom: 10,
 };
 
-const smallBtn = (accent: string): CSSProperties => ({
+// Filled, high-contrast action buttons so they read clearly against the dark
+// studio background (outlined/ghost buttons were hard to see).
+const actionBtnBase: CSSProperties = {
   borderRadius: 9,
-  padding: "6px 12px",
+  padding: "7px 14px",
   fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-  fontWeight: 600,
+  fontWeight: 700,
   fontSize: 12,
   letterSpacing: "0.04em",
-  background: "transparent",
-  color: COLOR.snow,
-  border: `1px solid ${accent}`,
-  cursor: "pointer",
-  whiteSpace: "nowrap",
-});
-
-const dangerBtn: CSSProperties = {
-  borderRadius: 9,
-  padding: "6px 12px",
-  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-  fontWeight: 600,
-  fontSize: 12,
-  letterSpacing: "0.04em",
-  background: "transparent",
-  color: COLOR.red,
-  border: `1px solid ${COLOR.red}`,
+  border: "1px solid transparent",
   cursor: "pointer",
   whiteSpace: "nowrap",
 };
@@ -246,7 +232,19 @@ export default function SpotlightHighlightManager({
   const [error, setError] = useState<string | null>(null);
   const [busyTitle, setBusyTitle] = useState<string | null>(null);
   const [confirmTitle, setConfirmTitle] = useState<string | null>(null);
+  const [purgeTitle, setPurgeTitle] = useState<string | null>(null);
   const [showHidden, setShowHidden] = useState(false);
+
+  // Text color that sits on top of the accent fill (matches the Save button).
+  const onAccent = (saveButtonStyle.color as string) || COLOR.snow;
+  const editBtn: CSSProperties = { ...actionBtnBase, background: accent, color: onAccent };
+  const deleteBtn: CSSProperties = { ...actionBtnBase, background: COLOR.red, color: COLOR.snow };
+  const neutralBtn: CSSProperties = {
+    ...actionBtnBase,
+    background: "rgba(255,255,255,0.14)",
+    color: COLOR.snow,
+    border: "1px solid rgba(255,255,255,0.30)",
+  };
 
   const reload = useCallback(async () => {
     if (!profileSlug) {
@@ -373,6 +371,24 @@ export default function SpotlightHighlightManager({
     setBusyTitle(item.title);
     try {
       await postRow(item, false);
+      await reload();
+    } catch {
+      /* ignore */
+    } finally {
+      setBusyTitle(null);
+    }
+  };
+
+  // Permanent purge — removes every underlying sheet row for this item.
+  const handlePurge = async (item: SpotlightItem) => {
+    setBusyTitle(item.title);
+    setPurgeTitle(null);
+    try {
+      await fetch("/api/alumni/spotlight", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileSlug, kind, title: (item.title ?? "").trim() }),
+      });
       await reload();
     } catch {
       /* ignore */
@@ -665,15 +681,15 @@ export default function SpotlightHighlightManager({
                     <>
                       <button
                         type="button"
-                        style={{ ...dangerBtn, opacity: busy ? 0.6 : 1 }}
+                        style={{ ...deleteBtn, opacity: busy ? 0.6 : 1 }}
                         onClick={() => handleDelete(item)}
                         disabled={busy}
                       >
-                        {busy ? "Deleting…" : "Confirm"}
+                        {busy ? "Hiding…" : "Confirm"}
                       </button>
                       <button
                         type="button"
-                        style={smallBtn(accent)}
+                        style={neutralBtn}
                         onClick={() => setConfirmTitle(null)}
                         disabled={busy}
                       >
@@ -684,7 +700,7 @@ export default function SpotlightHighlightManager({
                     <>
                       <button
                         type="button"
-                        style={smallBtn(accent)}
+                        style={editBtn}
                         onClick={() => openEdit(item)}
                         disabled={busy}
                       >
@@ -692,7 +708,7 @@ export default function SpotlightHighlightManager({
                       </button>
                       <button
                         type="button"
-                        style={dangerBtn}
+                        style={deleteBtn}
                         onClick={() => setConfirmTitle(item.title)}
                         disabled={busy}
                       >
@@ -735,10 +751,23 @@ export default function SpotlightHighlightManager({
 
           {showHidden && (
             <div style={{ marginTop: 10 }}>
+              <p
+                style={{
+                  fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                  fontSize: 12,
+                  color: COLOR.snow,
+                  opacity: 0.55,
+                  margin: "0 0 10px",
+                }}
+              >
+                These are removed from the profile. Restore one to bring it back, or delete it
+                permanently to remove it for good.
+              </p>
               {hidden.map((item, i) => {
                 const busy = busyTitle === item.title;
+                const purging = purgeTitle === item.title;
                 return (
-                  <div key={`hidden-${item.title}-${i}`} style={{ ...cardStyle, opacity: 0.7 }}>
+                  <div key={`hidden-${item.title}-${i}`} style={{ ...cardStyle, opacity: 0.85 }}>
                     <div style={{ minWidth: 0 }}>
                       <div
                         style={{
@@ -764,14 +793,47 @@ export default function SpotlightHighlightManager({
                         </div>
                       ) : null}
                     </div>
-                    <button
-                      type="button"
-                      style={{ ...smallBtn(accent), opacity: busy ? 0.6 : 1 }}
-                      onClick={() => handleRestore(item)}
-                      disabled={busy}
-                    >
-                      {busy ? "Restoring…" : "Restore"}
-                    </button>
+                    <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                      {purging ? (
+                        <>
+                          <button
+                            type="button"
+                            style={{ ...deleteBtn, opacity: busy ? 0.6 : 1 }}
+                            onClick={() => handlePurge(item)}
+                            disabled={busy}
+                          >
+                            {busy ? "Deleting…" : "Delete forever"}
+                          </button>
+                          <button
+                            type="button"
+                            style={neutralBtn}
+                            onClick={() => setPurgeTitle(null)}
+                            disabled={busy}
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            style={{ ...editBtn, opacity: busy ? 0.6 : 1 }}
+                            onClick={() => handleRestore(item)}
+                            disabled={busy}
+                          >
+                            {busy ? "Restoring…" : "Restore"}
+                          </button>
+                          <button
+                            type="button"
+                            style={deleteBtn}
+                            onClick={() => setPurgeTitle(item.title)}
+                            disabled={busy}
+                          >
+                            Delete permanently
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 );
               })}

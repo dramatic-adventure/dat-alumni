@@ -198,3 +198,75 @@ export async function appendSpotlightRow(row: Omit<SpotlightRow, "evergreen" | "
     requestBody: { values },
   });
 }
+
+/**
+ * Permanently remove every row for a given (profileSlug + kind + title) from the
+ * sheet — used by the "Delete permanently" action. Unlike soft-delete (which
+ * appends a hidden row), this physically deletes the underlying rows, so all
+ * append-history versions of the item are purged. Returns the number removed.
+ */
+export async function deleteSpotlightRows(params: {
+  profileSlug: string;
+  kind: "highlight" | "spotlight";
+  title: string;
+  slugAliases?: Set<string> | string[];
+}): Promise<number> {
+  if (!SHEET_ID) throw new Error("Missing ALUMNI_SHEET_ID");
+
+  const aliasSet = new Set<string>();
+  aliasSet.add(norm(params.profileSlug));
+  if (params.slugAliases) {
+    for (const a of params.slugAliases) aliasSet.add(norm(a));
+  }
+  const targetTitle = norm(params.title);
+  const matchKind = params.kind === "spotlight" ? isSpotlightType : isHighlightType;
+
+  const sheets = sheetsClient();
+
+  // Row deletion needs the tab's numeric sheetId (gid), not just its title.
+  const meta = await sheets.spreadsheets.get({
+    spreadsheetId: SHEET_ID,
+    fields: "sheets(properties(sheetId,title))",
+  });
+  const gid = (meta.data.sheets ?? []).find(
+    (s) => s.properties?.title === TAB
+  )?.properties?.sheetId;
+  if (gid == null) throw new Error(`Tab not found: ${TAB}`);
+
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: `${TAB}!A:P`,
+    valueRenderOption: "UNFORMATTED_VALUE",
+  });
+  const values = (res.data.values ?? []) as string[][];
+  if (values.length < 2) return 0;
+
+  const rawHeader = (values[0] ?? []).map((h) => String(h ?? "").trim());
+
+  // 0-based sheet row indices to delete (row 0 is the header, never matched).
+  const indices: number[] = [];
+  for (let i = 1; i < values.length; i++) {
+    const r = rowToObj(rawHeader, values[i]);
+    if (!aliasSet.has(norm(r.profileSlug ?? ""))) continue;
+    if (norm(r.title ?? "") !== targetTitle) continue;
+    if (!matchKind(r.type ?? "")) continue;
+    indices.push(i);
+  }
+  if (indices.length === 0) return 0;
+
+  // Delete bottom-up so earlier indices remain valid as rows are removed.
+  const requests = indices
+    .sort((a, b) => b - a)
+    .map((idx) => ({
+      deleteDimension: {
+        range: { sheetId: gid, dimension: "ROWS", startIndex: idx, endIndex: idx + 1 },
+      },
+    }));
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SHEET_ID,
+    requestBody: { requests },
+  });
+
+  return indices.length;
+}

@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/requireAuth";
 import {
   loadSpotlightsForSlug,
   appendSpotlightRow,
+  deleteSpotlightRows,
   type SpotlightRow,
 } from "@/lib/loadSpotlightsFromSheet";
 
@@ -89,5 +90,39 @@ export async function POST(req: Request) {
   } catch (err: any) {
     console.error("[spotlight POST]", err);
     return noStore({ error: err?.message ?? "Failed to save" }, { status: 500 });
+  }
+}
+
+// ── DELETE /api/alumni/spotlight — permanent purge, admin only ─────────────────
+export async function DELETE(req: Request) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return auth.response;
+  if (!auth.isAdmin) {
+    return noStore({ error: "Admin only" }, { status: 403 });
+  }
+
+  let body: { profileSlug?: string; kind?: string; title?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return noStore({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const profileSlug = (body.profileSlug ?? "").trim();
+  const kind = (body.kind ?? "").trim();
+  const title = (body.title ?? "").trim();
+
+  if (!profileSlug) return noStore({ error: "profileSlug is required" }, { status: 400 });
+  if (kind !== "highlight" && kind !== "spotlight") {
+    return noStore({ error: "kind must be 'highlight' or 'spotlight'" }, { status: 400 });
+  }
+  if (!title) return noStore({ error: "title is required" }, { status: 400 });
+
+  try {
+    const removed = await deleteSpotlightRows({ profileSlug, kind, title });
+    return noStore({ ok: true, removed });
+  } catch (err: any) {
+    console.error("[spotlight DELETE]", err);
+    return noStore({ error: err?.message ?? "Failed to delete" }, { status: 500 });
   }
 }
