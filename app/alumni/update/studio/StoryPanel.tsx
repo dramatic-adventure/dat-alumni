@@ -161,9 +161,12 @@ export default function StoryPanel(props: {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [showDeleted, setShowDeleted] = useState(false);
 
-  // Dynamic country list (curated DAT base ∪ countries already used in stories).
+  // Dynamic option lists (pulled from the maps so the dropdowns stay current).
   const [countries, setCountries] = useState<string[]>([]);
   const [countryOther, setCountryOther] = useState(false);
+  const [programs, setPrograms] = useState<string[]>([]);
+  const [productions, setProductions] = useState<string[]>([]);
+  const [programOther, setProgramOther] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -173,15 +176,24 @@ export default function StoryPanel(props: {
         if (alive && Array.isArray(d?.countries)) setCountries(d.countries);
       })
       .catch(() => {});
+    fetch("/api/map/programs")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!alive) return;
+        if (Array.isArray(d?.programs)) setPrograms(d.programs);
+        if (Array.isArray(d?.productions)) setProductions(d.productions);
+      })
+      .catch(() => {});
     return () => {
       alive = false;
     };
   }, []);
 
-  // Reset the Other toggle whenever a different story is loaded into the editor.
+  // Reset the Other toggles whenever a different story is loaded into the editor.
   const storyKey = String(profile?.storyKey || "");
   useEffect(() => {
     setCountryOther(false);
+    setProgramOther(false);
   }, [storyKey]);
 
   const activeStories = useMemo(
@@ -214,52 +226,98 @@ export default function StoryPanel(props: {
     if (ok) setView("list");
   };
 
-  // ── Custom Country field (dynamic options + Other → manual entry) ────────────
-  const currentCountry = String(profile?.storyCountry || "");
-  const known = countries.includes(currentCountry);
-  const effectiveOther =
-    countryOther || (!!currentCountry && countries.length > 0 && !known);
-  const selectValue = effectiveOther ? OTHER : known ? currentCountry : "";
+  // ── Shared dynamic-select field (grouped options + Other → manual entry) ─────
+  // Used for both Country and Associated Program so they look and behave the same.
+  const setField = (key: string) => (v: string) =>
+    setProfile((p: any) => ({ ...p, [key]: v }));
 
-  const setCountry = (v: string) =>
-    setProfile((p: any) => ({ ...p, storyCountry: v }));
+  const renderDynamicSelect = (opts: {
+    label: string;
+    value: string;
+    setValue: (v: string) => void;
+    groups: { label?: string; options: string[] }[];
+    other: boolean;
+    setOther: (b: boolean) => void;
+    otherPlaceholder: string;
+  }) => {
+    const allOptions = opts.groups.flatMap((g) => g.options);
+    const known = allOptions.includes(opts.value);
+    const effectiveOther =
+      opts.other || (!!opts.value && allOptions.length > 0 && !known);
+    const selectValue = effectiveOther ? OTHER : known ? opts.value : "";
 
-  const countryField = (
-    <div className={fieldWrapClass}>
-      <label className={fieldLabelClass}>Country</label>
-      <select
-        className={fieldInputClass}
-        value={selectValue}
-        onChange={(e) => {
-          const v = e.target.value;
-          if (v === OTHER) {
-            setCountryOther(true);
-          } else {
-            setCountryOther(false);
-            setCountry(v);
-          }
-        }}
-      >
-        <option value="">Select…</option>
-        {countries.map((c) => (
-          <option key={c} value={c}>
-            {c}
-          </option>
-        ))}
-        <option value={OTHER}>Other (type it in)</option>
-      </select>
+    return (
+      <div className={fieldWrapClass}>
+        <label className={fieldLabelClass}>{opts.label}</label>
+        <select
+          className={fieldInputClass}
+          value={selectValue}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === OTHER) {
+              opts.setOther(true);
+            } else {
+              opts.setOther(false);
+              opts.setValue(v);
+            }
+          }}
+        >
+          <option value="">Select…</option>
+          {opts.groups.map((g, gi) =>
+            g.label ? (
+              <optgroup key={gi} label={g.label}>
+                {g.options.map((o) => (
+                  <option key={o} value={o}>
+                    {o}
+                  </option>
+                ))}
+              </optgroup>
+            ) : (
+              g.options.map((o) => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ))
+            )
+          )}
+          <option value={OTHER}>Other (type it in)</option>
+        </select>
 
-      {effectiveOther && (
-        <input
-          type="text"
-          className={`${fieldInputClass} mt-2`}
-          value={currentCountry}
-          placeholder="Type the country name"
-          onChange={(e) => setCountry(e.target.value)}
-        />
-      )}
-    </div>
-  );
+        {effectiveOther && (
+          <input
+            type="text"
+            className={`${fieldInputClass} mt-2`}
+            value={opts.value}
+            placeholder={opts.otherPlaceholder}
+            onChange={(e) => opts.setValue(e.target.value)}
+          />
+        )}
+      </div>
+    );
+  };
+
+  const programField = renderDynamicSelect({
+    label: "Associated Program",
+    value: String(profile?.storyProgram || ""),
+    setValue: setField("storyProgram"),
+    groups: [
+      { label: "Programs", options: programs },
+      { label: "Productions", options: productions },
+    ],
+    other: programOther,
+    setOther: setProgramOther,
+    otherPlaceholder: "Type a program or production",
+  });
+
+  const countryField = renderDynamicSelect({
+    label: "Country",
+    value: String(profile?.storyCountry || ""),
+    setValue: setField("storyCountry"),
+    groups: [{ options: countries }],
+    other: countryOther,
+    setOther: setCountryOther,
+    otherPlaceholder: "Type the country name",
+  });
 
   // ── LIST VIEW ────────────────────────────────────────────────────────────────
   if (view === "list") {
@@ -513,9 +571,10 @@ export default function StoryPanel(props: {
       ) : (
         <>
           <Section title="Basics" open={openGroups.basics} onToggle={() => toggleGroup("basics")}>
-            {renderFieldsOrNull(["storyTitle", "storyProgram"], { helpAsPlaceholder: true })}
-            <div style={{ marginTop: 12 }}>{countryField}</div>
-            <div style={{ marginTop: 12 }}>
+            <div className="flex flex-col gap-3">
+              {renderFieldsOrNull(["storyTitle"], { helpAsPlaceholder: true })}
+              {programField}
+              {countryField}
               {renderFieldsOrNull(["storyYears", "storyLocationName"], { helpAsPlaceholder: true })}
             </div>
           </Section>
