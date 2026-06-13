@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import LoginButton from "./LoginButton";
+import EmailCodeForm from "./EmailCodeForm";
 import {
   ALUMNI_COUNT_DISPLAY,
   COUNTRY_COUNT,
@@ -52,6 +53,8 @@ function errorMessage(code: string | undefined): string | null {
       return "Something hiccuped on Google's end. Give it another go — it almost always works on the second try.";
     case "SessionRequired":
       return "You need to be signed in to view that page. Sign in below and we'll drop you back where you were.";
+    case "CredentialsSignin":
+      return "That email and password didn't match. Try again, or set a password below.";
     default:
       return "We couldn't complete sign-in. Try again, or reach out if it keeps happening.";
   }
@@ -346,24 +349,74 @@ export default async function LoginPage({
             >
               {hasInvite
                 ? "You've been invited to claim your place in the DAT community. Sign in and we'll carry the invite through — so you land exactly where you need to be."
-                : "Sign in to claim your profile, update your information, share what you're making, and connect with like-minded artists, collaborators, and opportunities around the world."}
+                : "Whether you're a returning DAT alum or an artist joining us for the first time, sign in to claim or create your profile, update your information, share what you're making, and connect with collaborators and opportunities around the world."}
             </p>
 
             {/* Google sign-in */}
             <LoginButton callbackUrl={callbackUrl} />
 
-            {/* Trust line */}
+            {/* ── Divider ──────────────────────────────────── */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "1rem",
+                margin: "1.5rem 0",
+                fontFamily:
+                  "var(--font-special-elite), ui-monospace, monospace",
+                fontSize: "0.58rem",
+                letterSpacing: "0.42em",
+                textTransform: "uppercase",
+                color: "rgba(245,236,217,0.38)",
+              }}
+            >
+              <span
+                aria-hidden
+                style={{
+                  flex: 1,
+                  height: "1px",
+                  backgroundColor: "rgba(245,236,217,0.12)",
+                }}
+              />
+              Or
+              <span
+                aria-hidden
+                style={{
+                  flex: 1,
+                  height: "1px",
+                  backgroundColor: "rgba(245,236,217,0.12)",
+                }}
+              />
+            </div>
+
+            {/* ── Email + password sign-in (works for any email — Google or not) ── */}
+            <p
+              style={{
+                fontFamily: "var(--font-special-elite), ui-monospace, monospace",
+                fontSize: "0.6rem",
+                letterSpacing: "0.38em",
+                textTransform: "uppercase",
+                color: "rgba(245,236,217,0.55)",
+                marginBottom: "0.85rem",
+                textAlign: "center",
+              }}
+            >
+              Sign in with email & password
+            </p>
+            <EmailCodeForm callbackUrl={callbackUrl} />
+
+            {/* Trust line — covers both sign-in methods */}
             <p
               style={{
                 fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
                 fontSize: "0.72rem",
                 lineHeight: 1.6,
                 color: "rgba(245,236,217,0.38)",
-                marginTop: "0.9rem",
+                marginTop: "1.25rem",
                 textAlign: "center",
               }}
             >
-              We use Google sign-in only to match you with your profile.
+              We only use your sign-in to match you with your profile.
             </p>
 
             {/* ── Divider ──────────────────────────────────── */}
@@ -389,7 +442,7 @@ export default async function LoginPage({
                   backgroundColor: "rgba(245,236,217,0.12)",
                 }}
               />
-              No Google account?
+              Need help?
               <span
                 aria-hidden
                 style={{
@@ -417,10 +470,10 @@ export default async function LoginPage({
                   marginBottom: "0.85rem",
                 }}
               >
-                Email us and we&rsquo;ll help you get set up.
+                Email us and we&rsquo;ll help you get signed in or set up.
               </p>
               <a
-                href={`mailto:alumni@dramaticadventure.com?subject=${encodeURIComponent(
+                href={`mailto:hello@dramaticadventure.com?subject=${encodeURIComponent(
                   "Alumni profile help"
                 )}&body=${encodeURIComponent(
                   "Hi DAT — I'd like help accessing my alumni profile.\n\nName:\nYears / projects with DAT:\nPreferred email:\n"
@@ -438,7 +491,7 @@ export default async function LoginPage({
                 }}
                 className="text-[#F23359] tracking-[0.01em] hover:text-[#FFCC00] hover:tracking-[0.06em] focus-visible:underline focus-visible:outline-none"
               >
-                alumni@dramaticadventure.com
+                hello@dramaticadventure.com
                 <span aria-hidden>→</span>
               </a>
             </div>
@@ -462,7 +515,7 @@ export default async function LoginPage({
               >
                 community guidelines
               </Link>
-              . Not an alumnus?{" "}
+              .{" "}
               <Link
                 href="/"
                 className="hover:underline underline-offset-4 focus-visible:underline focus-visible:outline-none"

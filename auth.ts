@@ -1,7 +1,10 @@
 // /auth.ts
 import type { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { getServerSession } from "next-auth/next";
+import { getCredential } from "@/lib/accountCredentials";
+import { verifyPassword } from "@/lib/passwordHash";
 
 // Canonical env vars (per CLAUDE.md + Netlify):
 //   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / NEXTAUTH_SECRET
@@ -36,6 +39,30 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
+    }),
+    // Email + password — for artists without a Google account. Accounts are
+    // created/reset via /api/auth/account/set-password, which gates the
+    // change behind the email sign-in code (see lib/emailLoginCodes).
+    CredentialsProvider({
+      id: "password",
+      name: "Email and password",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const email = String(credentials?.email || "").trim().toLowerCase();
+        const password = String(credentials?.password || "");
+        if (!email || !password) return null;
+
+        const cred = await getCredential(email);
+        if (!cred) return null;
+
+        const valid = await verifyPassword(password, cred.passwordHash);
+        if (!valid) return null;
+
+        return { id: email, email };
+      },
     }),
   ],
   callbacks: {
