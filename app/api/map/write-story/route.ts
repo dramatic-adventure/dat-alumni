@@ -199,30 +199,15 @@ function colToA1(idx0: number) {
   return s;
 }
 
-// Make sure a named header column exists on the sheet (appends it at the end if
-// missing). Lets soft-delete persist a "Deleted" flag without a manual sheet edit.
-async function ensureHeaderColumn(opts: {
-  sheets: ReturnType<typeof sheetsClient>;
-  spreadsheetId: string;
-  sheetName: string;
-  headerRowNumber: number;
-  name: string;
-}) {
-  const { sheets, spreadsheetId, sheetName, headerRowNumber, name } = opts;
-  const headerRows = await getSheetValues({
-    sheets,
-    spreadsheetId,
-    range: `${sheetName}!A${headerRowNumber}:ZZ${headerRowNumber}`,
-  });
-  const header = headerRows[0] ?? [];
-  if (typeof headerIndexMap(header)[name] === "number") return;
-  const col = colToA1(header.length);
-  await sheets.spreadsheets.values.update({
-    spreadsheetId,
-    range: `${sheetName}!${col}${headerRowNumber}`,
-    valueInputOption: "RAW",
-    requestBody: { values: [[name]] },
-  });
+// Loose header key (case/space/punctuation-insensitive) so we can match
+// "Show on Map?" / "ShowOnMap" / "show on map" etc. to the real column.
+function normHeader(s: any) {
+  return String(s ?? "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+// Index of the first header column whose normalized name matches `key`, or -1.
+function colIndexByKey(header: any[], key: string) {
+  return header.findIndex((h) => normHeader(h) === key);
 }
 
 function computeFieldsChanged(before: Record<string, any> | null, after: Record<string, any>) {
@@ -295,75 +280,98 @@ export async function POST(req: Request) {
     // ── Soft delete / restore ─────────────────────────────────────────────
     // Operates directly on the Map Data row by storyKey. We NEVER remove the
     // row — delete just flags it (Deleted=TRUE) and pulls it off the public map
-    // (Show on Map?=FALSE); restore clears the flag. Both are logged to Story-Edits.
+    // (Show on Map?=FALSE); restore clears the flag. We flip ONLY the relevant
+    // cells (not the whole row), matching headers loosely so naming variants
+    // ("Show on Map?" vs "ShowOnMap") still work. Both are logged to Story-Edits.
     if (mode === "delete" || mode === "restore") {
-      const rowNumber = await findRowNumberByHeaderValue({
-        sheets,
-        spreadsheetId,
-        sheetName: "Map Data",
-        headerName: "storyKey",
-        value: incomingStoryKey,
-      });
-      if (!rowNumber) {
-        return NextResponse.json(
-          { ok: false, error: "storyKey not found in Map Data", storyKey: incomingStoryKey },
-          { status: 404 }
-        );
-      }
-
       const { header, rows, headerRowNumber } = await loadSheet({
         sheets,
         spreadsheetId,
         sheetName: "Map Data",
       });
-      const beforeRow = rows[rowNumber - (headerRowNumber + 1)];
-      const beforeObj = rowToObject(header, beforeRow);
 
-      // Guarantee the flag has a home before we write it.
-      await ensureHeaderColumn({
-        sheets,
-        spreadsheetId,
-        sheetName: "Map Data",
-        headerRowNumber,
-        name: "Deleted",
-      });
+      const keyIdx = colIndexByKey(header, "storykey");
+      if (keyIdx < 0) {
+        return NextResponse.json(
+          { ok: false, error: 'Map Data is missing a "storyKey" column' },
+          { status: 500 }
+        );
+      }
+
+      const dataRowIdx = rows.findIndex(
+        (r: any[]) => String(r?.[keyIdx] ?? "").trim() === incomingStoryKey
+      );
+      if (dataRowIdx < 0) {
+        return NextResponse.json(
+          { ok: false, error: "storyKey not found in Map Data", storyKey: incomingStoryKey },
+          { status: 404 }
+        );
+      }
+      const rowNumber = dataRowIdx + headerRowNumber + 1; // 1-based sheet row
+
+      // Ensure a "Deleted" column exists (append it to the header row if needed).
+      let deletedIdx = colIndexByKey(header, "deleted");
+      if (deletedIdx < 0) {
+        deletedIdx = header.length;
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `Map Data!${colToA1(deletedIdx)}${headerRowNumber}`,
+          valueInputOption: "RAW",
+          requestBody: { values: [["Deleted"]] },
+        });
+      }
 
       const nowIso = new Date().toISOString();
-      const afterObj: Record<string, any> = {
-        ...beforeObj,
-        Deleted: mode === "delete" ? "TRUE" : "FALSE",
-        updatedTs: nowIso,
-      };
-      // Deleting also unpublishes; restore leaves it as an unpublished draft so
-      // the author re-publishes intentionally.
-      if (mode === "delete") afterObj["Show on Map?"] = "FALSE";
-
-      await updateRowAlignedToHeaders({
-        sheets,
-        spreadsheetId,
-        sheetName: "Map Data",
-        rowNumber,
-        rowByHeader: afterObj,
-      });
-
-      await appendRowAlignedToHeaders({
-        sheets,
-        spreadsheetId,
-        sheetName: "Story-Edits",
-        rowByHeader: {
-          ts: nowIso,
-          storyKey: incomingStoryKey,
-          alumniId,
-          editorAlumniId,
-          editorSlug,
-          action: mode,
-          fieldsChanged: mode === "delete" ? "Deleted, Show on Map?" : "Deleted",
-          beforeJson: JSON.stringify(beforeObj),
-          afterJson: JSON.stringify(afterObj),
+      const data: { range: string; values: string[][] }[] = [
+        {
+          range: `Map Data!${colToA1(deletedIdx)}${rowNumber}`,
+          values: [[mode === "delete" ? "TRUE" : "FALSE"]],
         },
+      ];
+
+      const showIdx = colIndexByKey(header, "showonmap");
+      if (mode === "delete" && showIdx >= 0) {
+        data.push({ range: `Map Data!${colToA1(showIdx)}${rowNumber}`, values: [["FALSE"]] });
+      }
+
+      const tsIdx = colIndexByKey(header, "updatedts");
+      if (tsIdx >= 0) {
+        data.push({ range: `Map Data!${colToA1(tsIdx)}${rowNumber}`, values: [[nowIso]] });
+      }
+
+      await sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId,
+        requestBody: { valueInputOption: "RAW", data },
       });
 
-      return NextResponse.json({ ok: true, mode, storyKey: incomingStoryKey });
+      // Audit log (best-effort — never block the delete on a logging hiccup).
+      try {
+        await appendRowAlignedToHeaders({
+          sheets,
+          spreadsheetId,
+          sheetName: "Story-Edits",
+          rowByHeader: {
+            ts: nowIso,
+            storyKey: incomingStoryKey,
+            alumniId,
+            editorAlumniId,
+            editorSlug,
+            action: mode,
+            fieldsChanged: mode === "delete" ? "Deleted, Show on Map?" : "Deleted",
+            beforeJson: "",
+            afterJson: "",
+          },
+        });
+      } catch (logErr) {
+        console.error("[write-story] Story-Edits log failed:", logErr);
+      }
+
+      console.log(
+        `[write-story] ${mode} storyKey=${incomingStoryKey} row=${rowNumber} ` +
+          `deletedCol=${colToA1(deletedIdx)} showOnMapCol=${showIdx >= 0 ? colToA1(showIdx) : "n/a"}`
+      );
+
+      return NextResponse.json({ ok: true, mode, storyKey: incomingStoryKey, rowNumber });
     }
 
     // 1) Read Profile-Live row for the alumni
