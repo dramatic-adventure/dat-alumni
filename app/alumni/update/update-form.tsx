@@ -796,6 +796,9 @@ type MyStory = {
   storyCountry?: string;
   storyShowOnMap?: any;
 
+  // soft-delete flag (true = removed from profile but preserved in the backend)
+  deleted?: boolean;
+
   // timestamp (Map Data is usually `ts`; your editor buffer uses `storyTimeStamp`)
   ts?: string;
   storyTimeStamp?: string;
@@ -882,6 +885,11 @@ const refreshMyStories = useCallback(
           ),
           storyCountry: String(it?.storyCountry || it?.country || it?.Country || ""),
           storyShowOnMap: it?.storyShowOnMap ?? it?.showOnMap ?? it?.ShowOnMap,
+
+          deleted: (() => {
+            const v = String(it?.deleted ?? it?.Deleted ?? "").trim().toLowerCase();
+            return v === "true" || v === "1" || v === "yes" || v === "y";
+          })(),
 
           ts: String(it?.ts || it?.TS || ""),
           storyTimeStamp: String(it?.storyTimeStamp || it?.timestamp || it?.timeStamp || ""),
@@ -1751,17 +1759,17 @@ async function rehydrate() {
   }
 }
 
-async function saveStoryMapViaWriter(opts?: { clearAfter?: boolean }) {
+async function saveStoryMapViaWriter(opts?: { clearAfter?: boolean }): Promise<boolean> {
   const targetId = String(stableAlumniId || "").trim();
   if (!targetId) {
     showToastRef.current?.("Profile not loaded yet.", "error");
-    return;
+    return false;
   }
 
   const viewerId = String(viewerAlumniId || "").trim();
   if (!viewerId) {
     showToastRef.current?.("You must be signed in to publish.", "error");
-    return;
+    return false;
   }
 
   setLoading(true);
@@ -1777,7 +1785,7 @@ async function saveStoryMapViaWriter(opts?: { clearAfter?: boolean }) {
 
     if (required.some((x) => !x)) {
       showToastRef.current?.("Please fill Title, Program, Location Name, and Country.", "error");
-      return;
+      return false;
     }
     const mode = keyNow ? "edit" : "create";
 
@@ -1873,12 +1881,59 @@ async function saveStoryMapViaWriter(opts?: { clearAfter?: boolean }) {
       clearStoryEditor();
     }
 
+    return true;
   } catch (err: any) {
     showToastRef.current?.(err?.message || "Story publish failed", "error");
+    return false;
   } finally {
     setLoading(false);
   }
 }
+
+// Soft delete / restore a story. The backend keeps the row forever; delete just
+// hides it (and pulls it off the public map), restore brings it back as a draft.
+async function setStoryDeleted(storyKey: string, deleted: boolean) {
+  const key = String(storyKey || "").trim();
+  if (!key) return;
+  const targetId = String(stableAlumniId || "").trim();
+  const viewerId = String(viewerAlumniId || "").trim();
+  if (!targetId || !viewerId) {
+    showToastRef.current?.("You must be signed in to manage stories.", "error");
+    return;
+  }
+  setLoading(true);
+  try {
+    const res = await fetch("/api/map/write-story", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        alumniId: targetId,
+        editorAlumniId: viewerId,
+        editorSlug: String(currentSlug || profile.slug || "").trim() || "unknown",
+        mode: deleted ? "delete" : "restore",
+        storyKey: key,
+      }),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || !j?.ok) throw new Error(j?.error || `Request failed (${res.status})`);
+
+    // If the editor was holding the story we just deleted, clear the buffer.
+    if (deleted && String(profile?.storyKey || "").trim() === key) clearStoryEditor();
+
+    showToastRef.current?.(
+      deleted ? "Story deleted — kept safe in your archive." : "Story restored.",
+      "success"
+    );
+    await refreshMyStories(targetId);
+  } catch (err: any) {
+    showToastRef.current?.(err?.message || "Request failed", "error");
+  } finally {
+    setLoading(false);
+  }
+}
+
+const deleteStory = (storyKey: string) => setStoryDeleted(storyKey, true);
+const restoreStory = (storyKey: string) => setStoryDeleted(storyKey, false);
 
 /* per-category save + uploads */
 async function saveCategory({
@@ -2473,6 +2528,8 @@ return (
         myStoriesLoading={myStoriesLoading}
         refreshMyStories={refreshMyStories}
         onSelectStoryFromMyStories={onSelectStoryFromMyStories}
+        deleteStory={deleteStory}
+        restoreStory={restoreStory}
         renderFieldsOrNull={renderFieldsOrNull}
         storyMapEditKeys={StoryMapEditKeys}
         manualFallback={
