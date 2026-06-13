@@ -198,7 +198,6 @@ export default function StoryPanel(props: {
   const openEditorForNew = () => {
     clearStoryEditor();
     setCountryOther(false);
-    setConfirmEditorDelete(false);
     setOpenGroups({ basics: true, story: false, media: false });
     setView("editor");
   };
@@ -206,7 +205,6 @@ export default function StoryPanel(props: {
   const openEditorForEdit = async (key: string) => {
     await onSelectStoryFromMyStories(key);
     setCountryOther(false);
-    setConfirmEditorDelete(false);
     setOpenGroups({ basics: true, story: false, media: false });
     setView("editor");
   };
