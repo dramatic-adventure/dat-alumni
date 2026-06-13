@@ -5,7 +5,11 @@ import { sheetsClient } from "@/lib/googleClients";
 const SHEET_ID = process.env.ALUMNI_SHEET_ID || "";
 const TAB = "Spotlights & Highlights";
 
-// Column order matches the sheet headers exactly
+// Column order matches the sheet headers exactly.
+// `hidden` (column P) is appended after the original 15 columns. It is read by
+// POSITION (HIDDEN_IDX) rather than by sheet-header name, so the sheet does NOT
+// need a manually-added "hidden" header for soft-delete to work — older rows
+// simply read as empty (= not hidden).
 const HEADERS = [
   "profileSlug",
   "type",
@@ -22,7 +26,10 @@ const HEADERS = [
   "featured",
   "sortDate",
   "tags",
+  "hidden",
 ] as const;
+
+const HIDDEN_IDX = HEADERS.indexOf("hidden");
 
 export type SpotlightRow = {
   profileSlug: string;
@@ -40,6 +47,8 @@ export type SpotlightRow = {
   featured: boolean;
   sortDate: string;
   tags: string;
+  /** Soft-delete flag — hidden rows are excluded from the visible spotlight/highlight lists. */
+  hidden: boolean;
 };
 
 function coerceBool(v: string): boolean {
@@ -83,10 +92,12 @@ export async function loadSpotlightsForSlug(
 ): Promise<{
   spotlights: SpotlightRow[];
   highlights: SpotlightRow[];
+  hiddenSpotlights: SpotlightRow[];
+  hiddenHighlights: SpotlightRow[];
   all: SpotlightRow[];
 }> {
   if (!SHEET_ID) {
-    return { spotlights: [], highlights: [], all: [] };
+    return { spotlights: [], highlights: [], hiddenSpotlights: [], hiddenHighlights: [], all: [] };
   }
 
   // Build a normalized set of all slugs to match against
@@ -99,20 +110,22 @@ export async function loadSpotlightsForSlug(
   const sheets = sheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
-    range: `${TAB}!A:O`,
+    range: `${TAB}!A:P`,
     valueRenderOption: "UNFORMATTED_VALUE",
   });
 
   const values = (res.data.values ?? []) as string[][];
-  if (values.length < 2) return { spotlights: [], highlights: [], all: [] };
+  if (values.length < 2) return { spotlights: [], highlights: [], hiddenSpotlights: [], hiddenHighlights: [], all: [] };
 
   const rawHeader = (values[0] ?? []).map((h) => String(h ?? "").trim());
   const dataRows = values.slice(1);
 
   const rawRows: SpotlightRow[] = dataRows
-    .map((row) => rowToObj(rawHeader, row))
-    .filter((r) => aliasSet.has(norm(r.profileSlug ?? "")))
-    .map((r) => ({
+    // Keep the raw array alongside the named-object view so `hidden` can be read
+    // by POSITION (HIDDEN_IDX) even when the sheet has no "hidden" header cell.
+    .map((row) => ({ r: rowToObj(rawHeader, row), raw: row }))
+    .filter(({ r }) => aliasSet.has(norm(r.profileSlug ?? "")))
+    .map(({ r, raw }) => ({
       profileSlug: r.profileSlug ?? "",
       type: r.type ?? "",
       title: r.title ?? "",
@@ -128,6 +141,12 @@ export async function loadSpotlightsForSlug(
       featured: coerceBool(r.featured ?? ""),
       sortDate: r.sortDate ?? "",
       tags: r.tags ?? "",
+      // Prefer a named "hidden" header if the sheet has one, else fall back to position.
+      hidden: coerceBool(
+        r.hidden !== undefined && r.hidden !== ""
+          ? r.hidden
+          : String(raw[HIDDEN_IDX] ?? "")
+      ),
     }));
 
   // Deduplicate by (type + title): since the POST API appends new rows rather than
@@ -141,15 +160,23 @@ export async function loadSpotlightsForSlug(
   }
   const rows = Array.from(seen.values());
 
-  const spotlights = rows.filter((r) => isSpotlightType(r.type));
-  const highlights = rows.filter((r) => isHighlightType(r.type));
+  // Soft-deleted (hidden) rows are kept out of the visible lists the profile
+  // renders, but surfaced separately so the admin UI can offer a restore.
+  const visible = rows.filter((r) => !r.hidden);
+  const hidden = rows.filter((r) => r.hidden);
 
-  return { spotlights, highlights, all: rows };
+  const spotlights = visible.filter((r) => isSpotlightType(r.type));
+  const highlights = visible.filter((r) => isHighlightType(r.type));
+  const hiddenSpotlights = hidden.filter((r) => isSpotlightType(r.type));
+  const hiddenHighlights = hidden.filter((r) => isHighlightType(r.type));
+
+  return { spotlights, highlights, hiddenSpotlights, hiddenHighlights, all: rows };
 }
 
-export async function appendSpotlightRow(row: Omit<SpotlightRow, "evergreen" | "featured"> & {
+export async function appendSpotlightRow(row: Omit<SpotlightRow, "evergreen" | "featured" | "hidden"> & {
   evergreen: boolean;
   featured: boolean;
+  hidden?: boolean;
 }): Promise<void> {
   if (!SHEET_ID) throw new Error("Missing ALUMNI_SHEET_ID");
 
@@ -165,7 +192,7 @@ export async function appendSpotlightRow(row: Omit<SpotlightRow, "evergreen" | "
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
-    range: `${TAB}!A:O`,
+    range: `${TAB}!A:P`,
     valueInputOption: "USER_ENTERED",
     insertDataOption: "INSERT_ROWS",
     requestBody: { values },

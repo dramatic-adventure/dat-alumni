@@ -78,6 +78,9 @@ export async function POST(req: Request) {
     featured: Boolean(body.featured),
     sortDate: (body.sortDate ?? "").trim() || new Date().toISOString().split("T")[0],
     tags: (body.tags ?? "").trim(),
+    // Soft-delete / restore: POST with hidden:true to hide, hidden:false to restore.
+    // De-dup is last-row-wins by (type + title), so the newest row decides visibility.
+    hidden: Boolean(body.hidden),
   };
 
   try {

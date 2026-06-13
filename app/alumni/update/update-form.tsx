@@ -264,8 +264,8 @@ const lookupUrl = useMemo(() => {
     let alive = true;
     fetch(`/api/alumni/spotlight?slug=${encodeURIComponent(currentSlug)}`)
       .then((r) => r.json())
-      .then((data) => { if (alive) setSpotlightPreload({ spotlights: data?.spotlights ?? [], highlights: data?.highlights ?? [] }); })
-      .catch(() => { if (alive) setSpotlightPreload({ spotlights: [], highlights: [] }); });
+      .then((data) => { if (alive) setSpotlightPreload({ spotlights: data?.spotlights ?? [], highlights: data?.highlights ?? [], hiddenSpotlights: data?.hiddenSpotlights ?? [], hiddenHighlights: data?.hiddenHighlights ?? [] }); })
+      .catch(() => { if (alive) setSpotlightPreload({ spotlights: [], highlights: [], hiddenSpotlights: [], hiddenHighlights: [] }); });
     return () => { alive = false; };
   }, [currentSlug]);
 
