@@ -72,7 +72,6 @@ const fieldLabelClass =
   "block mb-1 text-[11px] tracking-wider uppercase text-gray-600 font-medium";
 const fieldInputClass =
   "w-full rounded-xl border border-black/10 bg-white/80 px-3 py-2 text-[15px] text-[#241123] shadow-sm outline-none focus:ring-2 focus:ring-black/10";
-const fieldHelpClass = "mt-1 text-xs text-gray-500";
 
 const OTHER = "__other__";
 
@@ -126,7 +125,7 @@ export default function StoryPanel(props: {
   restoreStory: (storyKey: string) => Promise<void> | void;
 
   // rendering helpers
-  renderFieldsOrNull: (keys: string[]) => ReactNode;
+  renderFieldsOrNull: (keys: string[], opts?: { helpAsPlaceholder?: boolean }) => ReactNode;
   storyMapEditKeys: string[];
   manualFallback: ReactNode;
 }) {
@@ -155,7 +154,6 @@ export default function StoryPanel(props: {
     basics: true,
     story: false,
     media: false,
-    publish: false,
   });
   const toggleGroup = (k: keyof typeof openGroups) =>
     setOpenGroups((g) => ({ ...g, [k]: !g[k] }));
@@ -200,14 +198,16 @@ export default function StoryPanel(props: {
   const openEditorForNew = () => {
     clearStoryEditor();
     setCountryOther(false);
-    setOpenGroups({ basics: true, story: false, media: false, publish: false });
+    setConfirmEditorDelete(false);
+    setOpenGroups({ basics: true, story: false, media: false });
     setView("editor");
   };
 
   const openEditorForEdit = async (key: string) => {
     await onSelectStoryFromMyStories(key);
     setCountryOther(false);
-    setOpenGroups({ basics: true, story: false, media: false, publish: false });
+    setConfirmEditorDelete(false);
+    setOpenGroups({ basics: true, story: false, media: false });
     setView("editor");
   };
 
@@ -260,10 +260,6 @@ export default function StoryPanel(props: {
           onChange={(e) => setCountry(e.target.value)}
         />
       )}
-
-      <p className={fieldHelpClass}>
-        Country associated with this story. Choose “Other” to add one that isn’t listed yet.
-      </p>
     </div>
   );
 
@@ -273,8 +269,7 @@ export default function StoryPanel(props: {
       <div>
         <div id="studio-story-anchor" />
         <p style={explainStyleLocal}>
-          Your stories become map pins + memories. Add as many as you like — edit or remove any of
-          them anytime. Deleting only hides a story; we keep a copy in the backend.
+          Your stories become map pins + memories. Add as many as you like — edit or remove any anytime.
         </p>
 
         <span style={subheadChipStyle} className="subhead-chip">
@@ -498,42 +493,40 @@ export default function StoryPanel(props: {
     <div>
       <div id="studio-story-anchor" />
 
-      <button
-        type="button"
-        style={{ ...neutralBtn, marginBottom: 14 }}
-        disabled={loading}
-        onClick={() => setView("list")}
-      >
-        ← Your stories
-      </button>
+      <div style={{ marginBottom: 12 }}>
+        <button
+          type="button"
+          style={neutralBtn}
+          disabled={loading}
+          onClick={() => setView("list")}
+        >
+          ← Your stories
+        </button>
+      </div>
 
-      <span style={subheadChipStyle} className="subhead-chip">
-        {storyKey ? "Edit Story" : "New Story"}
-      </span>
-
-      <p style={{ ...explainStyleLocal, marginTop: 12 }}>
-        If you paste media, use a direct URL to the file.
-      </p>
+      <div style={{ marginBottom: 4 }}>
+        <span style={subheadChipStyle} className="subhead-chip">
+          {storyKey ? "Edit Story" : "New Story"}
+        </span>
+      </div>
 
       {!fieldsAvailable ? (
         manualFallback
       ) : (
         <>
           <Section title="Basics" open={openGroups.basics} onToggle={() => toggleGroup("basics")}>
-            {renderFieldsOrNull(["storyTitle", "storyProgram"])}
+            {renderFieldsOrNull(["storyTitle", "storyProgram"], { helpAsPlaceholder: true })}
             <div style={{ marginTop: 12 }}>{countryField}</div>
             <div style={{ marginTop: 12 }}>
-              {renderFieldsOrNull(["storyYears", "storyLocationName"])}
+              {renderFieldsOrNull(["storyYears", "storyLocationName"], { helpAsPlaceholder: true })}
             </div>
           </Section>
 
           <Section title="The Story" open={openGroups.story} onToggle={() => toggleGroup("story")}>
-            {renderFieldsOrNull([
-              "storyShortStory",
-              "storyQuote",
-              "storyQuoteAttribution",
-              "storyPartners",
-            ])}
+            {renderFieldsOrNull(
+              ["storyShortStory", "storyQuote", "storyQuoteAttribution", "storyPartners"],
+              { helpAsPlaceholder: true }
+            )}
           </Section>
 
           <Section
@@ -541,15 +534,7 @@ export default function StoryPanel(props: {
             open={openGroups.media}
             onToggle={() => toggleGroup("media")}
           >
-            {renderFieldsOrNull(["storyMediaUrl", "storyMoreInfoUrl"])}
-          </Section>
-
-          <Section
-            title="Publish"
-            open={openGroups.publish}
-            onToggle={() => toggleGroup("publish")}
-          >
-            {renderFieldsOrNull(["storyShowOnMap"])}
+            {renderFieldsOrNull(["storyMediaUrl", "storyMoreInfoUrl"], { helpAsPlaceholder: true })}
           </Section>
         </>
       )}

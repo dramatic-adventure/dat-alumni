@@ -1488,7 +1488,7 @@ const byKeys = (keys: string[]) => {
 
 
 
-const renderFieldsOrNull = (keys: string[]) => {
+const renderFieldsOrNull = (keys: string[], opts?: { helpAsPlaceholder?: boolean }) => {
   const fields = byKeys(keys);
   if (!fields.length) return null;
   return (
@@ -1497,6 +1497,7 @@ const renderFieldsOrNull = (keys: string[]) => {
       onChange={(next) => setProfile(next as any)}
       fields={fields}
       baseline={liveBaseline as any}
+      helpAsPlaceholder={opts?.helpAsPlaceholder}
     />
   );
 };
@@ -1807,7 +1808,9 @@ async function saveStoryMapViaWriter(opts?: { clearAfter?: boolean }): Promise<b
           storyMediaUrl: String(profile.storyMediaUrl || "").trim(),
           storyMoreInfoUrl: String(profile.storyMoreInfoUrl || "").trim(),
           storyCountry: String(profile.storyCountry || "").trim(),
-          storyShowOnMap: boolCell(profile.storyShowOnMap),
+          // Publishing a story always means "show it on the map" — the explicit
+          // toggle was removed from the UI, so we set it here.
+          storyShowOnMap: boolCell(true),
 
           // pointer + edit session
           storyKey: keyNow || "",
@@ -1896,9 +1899,11 @@ async function setStoryDeleted(storyKey: string, deleted: boolean) {
   const key = String(storyKey || "").trim();
   if (!key) return;
   const targetId = String(stableAlumniId || "").trim();
-  const viewerId = String(viewerAlumniId || "").trim();
+  // Fall back to the target id for attribution so a missing viewer id doesn't
+  // silently block delete/restore.
+  const viewerId = String(viewerAlumniId || stableAlumniId || "").trim();
   if (!targetId || !viewerId) {
-    showToastRef.current?.("You must be signed in to manage stories.", "error");
+    showToastRef.current?.("Profile not loaded yet.", "error");
     return;
   }
   setLoading(true);
@@ -1920,11 +1925,14 @@ async function setStoryDeleted(storyKey: string, deleted: boolean) {
     // If the editor was holding the story we just deleted, clear the buffer.
     if (deleted && String(profile?.storyKey || "").trim() === key) clearStoryEditor();
 
-    showToastRef.current?.(
-      deleted ? "Story deleted — kept safe in your archive." : "Story restored.",
-      "success"
+    // Optimistically reflect the change in the list immediately. We intentionally
+    // do NOT refetch here: Google Sheets can briefly return the pre-write row, and
+    // a stale refetch would make it look like the delete didn't take.
+    setMyStories((list) =>
+      list.map((s) => (String(s.storyKey || "").trim() === key ? { ...s, deleted } : s))
     );
-    await refreshMyStories(targetId);
+
+    showToastRef.current?.(deleted ? "Story deleted." : "Story restored.", "success");
   } catch (err: any) {
     showToastRef.current?.(err?.message || "Request failed", "error");
   } finally {

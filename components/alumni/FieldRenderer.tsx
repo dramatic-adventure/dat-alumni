@@ -61,11 +61,15 @@ function FieldRow({
   value,
   onChange,
   baseline,
+  helpAsPlaceholder,
 }: {
   def: FieldDef;
   value: AlumniProfile;
   onChange: (next: AlumniProfile) => void;
   baseline?: AlumniProfile | null;
+  /** When true, fold each field's help text into its placeholder and hide the
+   *  separate help line (keeps dense forms calmer). */
+  helpAsPlaceholder?: boolean;
 }) {
   const path = def.path || (def.key as string);
   const raw = getByPath(value, path);
@@ -80,7 +84,7 @@ function FieldRow({
     </label>
   );
 
-  const help = def.help ? (
+  const help = def.help && !helpAsPlaceholder ? (
     <p className="mt-1 text-xs text-gray-500">{def.help}</p>
   ) : null;
 
@@ -94,9 +98,13 @@ function FieldRow({
 
   // If draft is blank, use baseline as placeholder fallback.
   // Never overwrite draft; this is purely display guidance.
+  // In helpAsPlaceholder mode, fall back to the field's help text as the
+  // placeholder when no explicit placeholder is defined.
+  const placeholderFallback =
+    def.placeholder || (helpAsPlaceholder ? def.help : "") || "";
   const computedPlaceholder = isBlank(raw)
-    ? toPlaceholderValue(baseRaw) || def.placeholder
-    : def.placeholder;
+    ? toPlaceholderValue(baseRaw) || placeholderFallback
+    : placeholderFallback;
 
   // For UI controls where placeholder isn’t meaningful, show “Currently saved…”
   const showCurrentLine =
@@ -381,11 +389,13 @@ export default function FieldRenderer({
   onChange,
   fields,
   baseline,
+  helpAsPlaceholder,
 }: {
   value: AlumniProfile;
   onChange: (next: AlumniProfile) => void;
   fields: FieldDef[];
   baseline?: AlumniProfile | null;
+  helpAsPlaceholder?: boolean;
 }) {
   const safeFields = useMemo(() => (Array.isArray(fields) ? fields : []), [fields]);
 
@@ -400,6 +410,7 @@ export default function FieldRenderer({
             value={value}
             onChange={onChange}
             baseline={baseline ?? null}
+            helpAsPlaceholder={helpAsPlaceholder}
           />
         );
       })}
