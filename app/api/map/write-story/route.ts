@@ -279,10 +279,12 @@ export async function POST(req: Request) {
 
     // ── Soft delete / restore ─────────────────────────────────────────────
     // Operates directly on the Map Data row by storyKey. We NEVER remove the
-    // row — delete just flags it (Deleted=TRUE) and pulls it off the public map
-    // (Show on Map?=FALSE); restore clears the flag. We flip ONLY the relevant
-    // cells (not the whole row), matching headers loosely so naming variants
-    // ("Show on Map?" vs "ShowOnMap") still work. Both are logged to Story-Edits.
+    // row — delete just hides it via the existing "Show on Map?" column
+    // (delete → FALSE, restore → TRUE). We deliberately reuse that column
+    // instead of adding a new one: the sheet's grid is capped at its current
+    // column count, so appending a column fails ("exceeds grid limits"). Since
+    // publishing always sets Show on Map? = TRUE, FALSE reliably means "hidden".
+    // Headers are matched loosely so naming variants still work; logged to Story-Edits.
     if (mode === "delete" || mode === "restore") {
       const { header, rows, headerRowNumber } = await loadSheet({
         sheets,
@@ -309,30 +311,21 @@ export async function POST(req: Request) {
       }
       const rowNumber = dataRowIdx + headerRowNumber + 1; // 1-based sheet row
 
-      // Ensure a "Deleted" column exists (append it to the header row if needed).
-      let deletedIdx = colIndexByKey(header, "deleted");
-      if (deletedIdx < 0) {
-        deletedIdx = header.length;
-        await sheets.spreadsheets.values.update({
-          spreadsheetId,
-          range: `Map Data!${colToA1(deletedIdx)}${headerRowNumber}`,
-          valueInputOption: "RAW",
-          requestBody: { values: [["Deleted"]] },
-        });
+      const showIdx = colIndexByKey(header, "showonmap");
+      if (showIdx < 0) {
+        return NextResponse.json(
+          { ok: false, error: 'Map Data is missing a "Show on Map?" column' },
+          { status: 500 }
+        );
       }
 
       const nowIso = new Date().toISOString();
       const data: { range: string; values: string[][] }[] = [
         {
-          range: `Map Data!${colToA1(deletedIdx)}${rowNumber}`,
-          values: [[mode === "delete" ? "TRUE" : "FALSE"]],
+          range: `Map Data!${colToA1(showIdx)}${rowNumber}`,
+          values: [[mode === "delete" ? "FALSE" : "TRUE"]],
         },
       ];
-
-      const showIdx = colIndexByKey(header, "showonmap");
-      if (mode === "delete" && showIdx >= 0) {
-        data.push({ range: `Map Data!${colToA1(showIdx)}${rowNumber}`, values: [["FALSE"]] });
-      }
 
       const tsIdx = colIndexByKey(header, "updatedts");
       if (tsIdx >= 0) {
@@ -357,7 +350,7 @@ export async function POST(req: Request) {
             editorAlumniId,
             editorSlug,
             action: mode,
-            fieldsChanged: mode === "delete" ? "Deleted, Show on Map?" : "Deleted",
+            fieldsChanged: "Show on Map?",
             beforeJson: "",
             afterJson: "",
           },
@@ -368,7 +361,7 @@ export async function POST(req: Request) {
 
       console.log(
         `[write-story] ${mode} storyKey=${incomingStoryKey} row=${rowNumber} ` +
-          `deletedCol=${colToA1(deletedIdx)} showOnMapCol=${showIdx >= 0 ? colToA1(showIdx) : "n/a"}`
+          `showOnMap=${mode === "delete" ? "FALSE" : "TRUE"} col=${colToA1(showIdx)}`
       );
 
       return NextResponse.json({ ok: true, mode, storyKey: incomingStoryKey, rowNumber });

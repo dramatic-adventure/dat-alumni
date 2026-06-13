@@ -886,9 +886,15 @@ const refreshMyStories = useCallback(
           storyCountry: String(it?.storyCountry || it?.country || it?.Country || ""),
           storyShowOnMap: it?.storyShowOnMap ?? it?.showOnMap ?? it?.ShowOnMap,
 
+          // Soft-deleted = hidden from the map. Publishing always sets
+          // "Show on Map?" = TRUE, so FALSE/blank reliably means deleted.
           deleted: (() => {
-            const v = String(it?.deleted ?? it?.Deleted ?? "").trim().toLowerCase();
-            return v === "true" || v === "1" || v === "yes" || v === "y";
+            const v = String(
+              it?.storyShowOnMap ?? it?.showOnMap ?? it?.ShowOnMap ?? ""
+            )
+              .trim()
+              .toLowerCase();
+            return !(v === "true" || v === "1" || v === "yes" || v === "y");
           })(),
 
           ts: String(it?.ts || it?.TS || ""),
