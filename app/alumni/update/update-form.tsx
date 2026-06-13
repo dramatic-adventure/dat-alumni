@@ -1908,18 +1908,23 @@ async function setStoryDeleted(storyKey: string, deleted: boolean) {
   }
   setLoading(true);
   try {
+    const reqBody = {
+      alumniId: targetId,
+      editorAlumniId: viewerId,
+      editorSlug: String(currentSlug || profile.slug || "").trim() || "unknown",
+      mode: deleted ? "delete" : "restore",
+      storyKey: key,
+    };
+    // eslint-disable-next-line no-console
+    console.log("[story delete] →", reqBody);
     const res = await fetch("/api/map/write-story", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        alumniId: targetId,
-        editorAlumniId: viewerId,
-        editorSlug: String(currentSlug || profile.slug || "").trim() || "unknown",
-        mode: deleted ? "delete" : "restore",
-        storyKey: key,
-      }),
+      body: JSON.stringify(reqBody),
     });
     const j = await res.json().catch(() => ({}));
+    // eslint-disable-next-line no-console
+    console.log("[story delete] ←", res.status, j);
     if (!res.ok || !j?.ok) throw new Error(j?.error || `Request failed (${res.status})`);
 
     // If the editor was holding the story we just deleted, clear the buffer.
