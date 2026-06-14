@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { COLOR, subheadChipStyle, explainStyleLocal } from "@/app/alumni/update/updateStyles";
 import {
   GLASS_CSS,
@@ -117,11 +117,9 @@ function metaLine(e: EventItem): string {
 
 export default function EventManager({
   alumniId,
-  profile,
   onSaved,
 }: {
   alumniId: string;
-  profile: any;
   onSaved?: () => void;
 }) {
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -143,29 +141,6 @@ export default function EventManager({
   const [imageSource, setImageSource] = useState<"upload" | "url">("upload");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Existing single event (legacy profile fields) — carried over until the
-  // owner has at least one event in the new collection.
-  const legacy = useMemo<EventItem | null>(() => {
-    const title = String(profile?.upcomingEventTitle || "").trim();
-    if (!title) return null;
-    return {
-      eventId: "",
-      title,
-      link: String(profile?.upcomingEventLink || ""),
-      date: String(profile?.upcomingEventDate || ""),
-      expiresAt: String(profile?.upcomingEventExpiresAt || ""),
-      description: String(profile?.upcomingEventDescription || ""),
-      city: String(profile?.upcomingEventCity || ""),
-      stateCountry: String(profile?.upcomingEventStateCountry || ""),
-      mediaType: String(profile?.upcomingEventMediaType || ""),
-      mediaUrl: String(profile?.upcomingEventMediaUrl || ""),
-      mediaFileId: String(profile?.featuredEventId || ""),
-      mediaAlt: String(profile?.upcomingEventMediaAlt || ""),
-      videoAutoplay: String(profile?.upcomingEventVideoAutoplay || ""),
-      __legacy: true,
-    };
-  }, [profile]);
 
   useEffect(() => {
     let alive = true;
@@ -190,10 +165,8 @@ export default function EventManager({
     };
   }, [alumniId]);
 
-  const collectionEmpty = events.length === 0 && hidden.length === 0;
-  const baseActive = collectionEmpty && legacy ? [legacy] : events;
-  const upcoming = baseActive.filter((e) => !isExpired(e));
-  const archived = baseActive.filter((e) => isExpired(e));
+  const upcoming = events.filter((e) => !isExpired(e));
+  const archived = events.filter((e) => isExpired(e));
 
   const set =
     (key: keyof EventForm) =>

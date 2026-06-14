@@ -9,7 +9,7 @@ export const glassSelectClass = "dat-glass-input dat-glass-select";
 export const GLASS_CSS = `
 .dat-glass-label{display:block;margin-bottom:8px;font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:rgba(242,242,242,.6);font-weight:500;}
 .dat-glass-input{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid rgba(255,255,255,.15);background-color:rgba(255,255,255,.06);padding:13px 15px;font-size:15px;color:#F2F2F2;outline:none;font-family:inherit;transition:border-color .15s,box-shadow .15s;}
-.dat-glass-input::placeholder{color:rgba(242,242,242,.4);}
+.dat-glass-input::placeholder{color:rgba(242,242,242,.55);}
 .dat-glass-input:hover{border-color:rgba(255,255,255,.28);}
 .dat-glass-input:focus{border-color:rgba(36,147,169,.75);box-shadow:0 0 0 3px rgba(36,147,169,.25);}
 .dat-glass-input option{color:#241123;background:#F2F2F2;}

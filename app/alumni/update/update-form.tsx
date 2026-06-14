@@ -2568,7 +2568,6 @@ return (
     eventPanel={
       <EventManager
         alumniId={stableAlumniId}
-        profile={profile}
         onSaved={() => {
           showToastRef.current?.("Event saved — reload your profile to see it.", "success");
           if (eventSavedTimeoutRef.current) clearTimeout(eventSavedTimeoutRef.current);

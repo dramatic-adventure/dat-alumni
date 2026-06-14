@@ -6,17 +6,6 @@ import { PROFILE_GROUPS } from "@/components/alumni/fields";
 // schema cannot drift out of sync.
 // ------------------------------------------------------------
 
-export const UpcomingEventEditKeys =
-  PROFILE_GROUPS["Upcoming Event"] ?? [
-    "upcomingEventTitle",
-    "upcomingEventLink",
-    "upcomingEventDate",
-    "upcomingEventExpiresAt",
-    "upcomingEventDescription",
-    "upcomingEventCity",
-    "upcomingEventStateCountry",
-  ];
-
 export const ContactEditKeys =
   PROFILE_GROUPS["Contact"] ?? [
     "website",

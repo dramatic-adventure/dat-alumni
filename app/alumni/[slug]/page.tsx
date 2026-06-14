@@ -597,21 +597,6 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
                 mediaAlt: nextEvent.mediaAlt || undefined,
                 videoAutoplay: nextEvent.videoAutoplay === "true",
               }
-            : (normalizedAlumni as any).upcomingEventTitle
-            ? {
-                title: (normalizedAlumni as any).upcomingEventTitle as string,
-                link: (normalizedAlumni as any).upcomingEventLink || undefined,
-                date: (normalizedAlumni as any).upcomingEventDate || undefined,
-                expiresAt: (normalizedAlumni as any).upcomingEventExpiresAt || undefined,
-                description: (normalizedAlumni as any).upcomingEventDescription || undefined,
-                city: (normalizedAlumni as any).upcomingEventCity || undefined,
-                stateCountry: (normalizedAlumni as any).upcomingEventStateCountry || undefined,
-                mediaType: ((normalizedAlumni as any).upcomingEventMediaType || undefined) as "image" | "video" | undefined,
-                mediaFileId: (normalizedAlumni as any).featuredEventId || undefined,
-                mediaUrl: (normalizedAlumni as any).upcomingEventMediaUrl || undefined,
-                mediaAlt: (normalizedAlumni as any).upcomingEventMediaAlt || undefined,
-                videoAutoplay: (normalizedAlumni as any).upcomingEventVideoAutoplay === "true",
-              }
             : undefined
         }
       />
