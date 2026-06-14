@@ -779,7 +779,7 @@ const hasStories = storiesForFeatured.length > 0;
       />
 
       {/* ✅ Public media section — only renders when alumni has featured album/reel items */}
-      <PublicMediaSection alumniId={alumniIdForMedia} />
+      <PublicMediaSection key={alumniIdForMedia} alumniId={alumniIdForMedia} />
 
       {featuredProductions.length > 0 && (
         <div className="bg-[#19657c] py-[30px] px-[30px]">

@@ -104,6 +104,7 @@ export default function PublicMediaSection({ alumniId }: { alumniId: string }) {
   useEffect(() => {
     if (!alumniId) return;
     let alive = true;
+    setCollections([]); // clear previous profile's photos immediately to avoid stale flash
     setLoading(true);
 
     (async () => {
