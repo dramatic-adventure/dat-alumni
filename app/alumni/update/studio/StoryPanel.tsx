@@ -169,9 +169,8 @@ export default function StoryPanel(props: {
   const [countryOther, setCountryOther] = useState(false);
   const [programs, setPrograms] = useState<string[]>([]);
   const [productions, setProductions] = useState<string[]>([]);
-  const [programOther, setProgramOther] = useState(false);
-  // Productions are a long list, so they stay hidden until explicitly requested.
-  const [showProductions, setShowProductions] = useState(false);
+  // Which source the Associated Program field is pulling from.
+  const [programMode, setProgramMode] = useState<"program" | "production" | "custom">("program");
 
   useEffect(() => {
     let alive = true;
@@ -198,9 +197,18 @@ export default function StoryPanel(props: {
   const storyKey = String(profile?.storyKey || "");
   useEffect(() => {
     setCountryOther(false);
-    setProgramOther(false);
-    setShowProductions(false);
   }, [storyKey]);
+
+  // Pick the right Associated Program mode for the loaded story (and re-derive
+  // when the program/production lists arrive). Not keyed on every keystroke.
+  useEffect(() => {
+    const v = String(profile?.storyProgram || "").trim();
+    if (!v) setProgramMode("program");
+    else if (programs.includes(v)) setProgramMode("program");
+    else if (productions.includes(v)) setProgramMode("production");
+    else setProgramMode("custom");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storyKey, programs, productions]);
 
   const activeStories = useMemo(
     () => (myStories || []).filter((s) => !s.deleted),
@@ -241,16 +249,15 @@ export default function StoryPanel(props: {
     label: string;
     value: string;
     setValue: (v: string) => void;
-    groups: { label?: string; options: string[] }[];
+    options: string[];
     other: boolean;
     setOther: (b: boolean) => void;
+    placeholder: string;
     otherPlaceholder: string;
-    footer?: ReactNode;
   }) => {
-    const allOptions = opts.groups.flatMap((g) => g.options);
-    const known = allOptions.includes(opts.value);
+    const known = opts.options.includes(opts.value);
     const effectiveOther =
-      opts.other || (!!opts.value && allOptions.length > 0 && !known);
+      opts.other || (!!opts.value && opts.options.length > 0 && !known);
     const selectValue = effectiveOther ? OTHER : known ? opts.value : "";
 
     return (
@@ -269,80 +276,103 @@ export default function StoryPanel(props: {
             }
           }}
         >
-          <option value="">Select…</option>
-          {opts.groups.map((g, gi) =>
-            g.label ? (
-              <optgroup key={gi} label={g.label}>
-                {g.options.map((o) => (
-                  <option key={o} value={o}>
-                    {o}
-                  </option>
-                ))}
-              </optgroup>
-            ) : (
-              g.options.map((o) => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
-              ))
-            )
-          )}
+          <option value="">{opts.placeholder}</option>
+          {opts.options.map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
           <option value={OTHER}>Other (type it in)</option>
         </select>
 
         {effectiveOther && (
           <input
             type="text"
-            className={`${fieldInputClass} mt-2`}
+            className={`${fieldInputClass} mt-3`}
             value={opts.value}
             placeholder={opts.otherPlaceholder}
             onChange={(e) => opts.setValue(e.target.value)}
           />
         )}
-
-        {opts.footer}
       </div>
     );
   };
 
-  // Productions stay hidden until requested — or auto-reveal if this story already
-  // has a production selected (so the saved value is recognized, not shown as "Other").
+  // ── Associated Program — pick a source first (Program / Production / Other),
+  //    then one control. Productions stay out of sight until that tab is chosen.
   const currentProgram = String(profile?.storyProgram || "");
-  const showProds = showProductions || productions.includes(currentProgram);
-  const programGroups = showProds
-    ? [
-        { label: "Programs", options: programs },
-        { label: "Productions", options: productions },
-      ]
-    : [{ label: "Programs", options: programs }];
+  const programModes: {
+    id: "program" | "production" | "custom";
+    label: string;
+    options: string[] | null;
+  }[] = [
+    { id: "program", label: "Program", options: programs },
+    { id: "production", label: "Production", options: productions },
+    { id: "custom", label: "Other", options: null },
+  ];
+  const activeProgramMode =
+    programModes.find((m) => m.id === programMode) ?? programModes[0];
 
-  const programField = renderDynamicSelect({
-    label: "Associated Program",
-    value: currentProgram,
-    setValue: setField("storyProgram"),
-    groups: programGroups,
-    other: programOther,
-    setOther: setProgramOther,
-    otherPlaceholder: "Type a program or production",
-    footer:
-      !showProds && productions.length > 0 ? (
-        <button
-          type="button"
-          className="mt-2 text-[13px] font-medium text-[#2493A9] hover:underline"
-          onClick={() => setShowProductions(true)}
+  const programChipClass = (active: boolean) =>
+    [
+      "px-3.5 py-1.5 rounded-full text-[12px] cursor-pointer transition border",
+      active
+        ? "bg-[#2493A9] text-white border-[#2493A9] font-semibold"
+        : "bg-black/[0.04] text-[#241123]/80 border-black/10 font-medium hover:bg-black/[0.07]",
+    ].join(" ");
+
+  const programField = (
+    <div className={fieldWrapClass}>
+      <label className={fieldLabelClass}>Associated Program</label>
+      <div className="flex flex-wrap gap-2 mb-3">
+        {programModes.map((m) => (
+          <button
+            key={m.id}
+            type="button"
+            className={programChipClass(programMode === m.id)}
+            onClick={() => setProgramMode(m.id)}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+      {activeProgramMode.options ? (
+        <select
+          className={fieldInputClass}
+          value={
+            activeProgramMode.options.includes(currentProgram) ? currentProgram : ""
+          }
+          onChange={(e) => setField("storyProgram")(e.target.value)}
         >
-          + Choose a production instead
-        </button>
-      ) : null,
-  });
+          <option value="">
+            {programMode === "production" ? "Select a production…" : "Select a program…"}
+          </option>
+          {activeProgramMode.options.map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          type="text"
+          className={fieldInputClass}
+          value={currentProgram}
+          placeholder="Type a program or production name"
+          onChange={(e) => setField("storyProgram")(e.target.value)}
+        />
+      )}
+    </div>
+  );
 
   const countryField = renderDynamicSelect({
     label: "Country",
     value: String(profile?.storyCountry || ""),
     setValue: setField("storyCountry"),
-    groups: [{ options: countries }],
+    options: countries,
     other: countryOther,
     setOther: setCountryOther,
+    placeholder: "Select a country…",
     otherPlaceholder: "Type the country name",
   });
 
@@ -598,13 +628,13 @@ export default function StoryPanel(props: {
       ) : (
         <>
           <Section title="Basics" open={openGroups.basics} onToggle={() => toggleGroup("basics")}>
-            <div className="flex flex-col gap-5">
-              {renderFieldsOrNull(["storyTitle"], { helpAsPlaceholder: true, gapClass: "gap-5" })}
+            <div className="flex flex-col gap-6">
+              {renderFieldsOrNull(["storyTitle"], { helpAsPlaceholder: true, gapClass: "gap-6" })}
               {programField}
               {countryField}
               {renderFieldsOrNull(["storyYears", "storyLocationName"], {
                 helpAsPlaceholder: true,
-                gapClass: "gap-5",
+                gapClass: "gap-6",
               })}
             </div>
           </Section>
@@ -612,7 +642,7 @@ export default function StoryPanel(props: {
           <Section title="The Story" open={openGroups.story} onToggle={() => toggleGroup("story")}>
             {renderFieldsOrNull(
               ["storyShortStory", "storyQuote", "storyQuoteAttribution", "storyPartners"],
-              { helpAsPlaceholder: true, gapClass: "gap-5" }
+              { helpAsPlaceholder: true, gapClass: "gap-6" }
             )}
           </Section>
 
@@ -623,7 +653,7 @@ export default function StoryPanel(props: {
           >
             {renderFieldsOrNull(["storyMediaUrl", "storyMoreInfoUrl"], {
               helpAsPlaceholder: true,
-              gapClass: "gap-5",
+              gapClass: "gap-6",
             })}
           </Section>
         </>
