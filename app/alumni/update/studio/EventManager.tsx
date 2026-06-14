@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { COLOR, subheadChipStyle, explainStyleLocal } from "@/app/alumni/update/updateStyles";
 import {
   GLASS_CSS,
@@ -139,6 +139,11 @@ export default function EventManager({
   const [showArchived, setShowArchived] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
 
+  // Image media: upload to Drive (fileId) or paste a URL.
+  const [imageSource, setImageSource] = useState<"upload" | "url">("upload");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Existing single event (legacy profile fields) — carried over until the
   // owner has at least one event in the new collection.
   const legacy = useMemo<EventItem | null>(() => {
@@ -208,6 +213,7 @@ export default function EventManager({
   const openAdd = () => {
     setForm(BLANK);
     setEditingId(null);
+    setImageSource("upload");
     setError(null);
     setView("form");
   };
@@ -228,9 +234,32 @@ export default function EventManager({
       videoAutoplay: ev.videoAutoplay,
     });
     setEditingId(ev.eventId || ""); // "" = legacy → save creates a real event
+    setImageSource(ev.mediaFileId ? "upload" : "url");
     setError(null);
     setView("form");
   };
+
+  async function uploadImage(file: File) {
+    if (!alumniId) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("alumniId", alumniId);
+      fd.append("kind", "event");
+      fd.append("name", file.name);
+      fd.append("isFeatured", "FALSE"); // don't touch the legacy single-event pointer
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j?.ok || !j?.fileId) throw new Error(j?.error || "Upload failed");
+      setForm((f) => ({ ...f, mediaType: "image", mediaFileId: String(j.fileId), mediaUrl: "" }));
+    } catch (err: any) {
+      setError(err?.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -406,6 +435,28 @@ export default function EventManager({
   if (view === "form") {
     const isEdit = Boolean(editingId);
     const isVideo = form.mediaType === "video";
+    const mailtoHref = (() => {
+      const subject = encodeURIComponent(
+        form.title ? `DAT Promotion Request: ${form.title}` : "DAT Promotion Request"
+      );
+      const body = encodeURIComponent(
+        [
+          "Hi DAT team,",
+          "",
+          "I'd like to request consideration for broader promotion of my event.",
+          "",
+          form.title ? `Event: ${form.title}` : "",
+          form.link ? `Link: ${form.link}` : "",
+          "",
+          "How this aligns with DAT's mission:",
+          "",
+          "(Please share how this connects to adventurous storytelling, community engagement, cross-cultural exchange, or alumni collaboration.)",
+          "",
+          "Thank you,",
+        ].join("\n")
+      );
+      return `mailto:hello@dramaticadventure.com?subject=${subject}&body=${body}`;
+    })();
     const chip = (active: boolean): CSSProperties => ({
       border: 0,
       cursor: "pointer",
@@ -489,31 +540,136 @@ export default function EventManager({
                   key="none"
                   type="button"
                   style={chip(false)}
-                  onClick={() => setForm((f) => ({ ...f, mediaType: "", mediaUrl: "", mediaAlt: "", videoAutoplay: "" }))}
+                  onClick={() => setForm((f) => ({ ...f, mediaType: "", mediaUrl: "", mediaFileId: "", mediaAlt: "", videoAutoplay: "" }))}
                 >
                   None
                 </button>
               ) : null}
             </div>
-            {form.mediaType ? (
-              <input
-                className={fieldInput}
-                type="url"
-                value={form.mediaUrl}
-                onChange={set("mediaUrl")}
-                placeholder={isVideo ? "https://… YouTube, Vimeo, MP4, or WebM" : "https://… direct image link (jpg, png, webp)"}
-              />
-            ) : null}
+
             {form.mediaType === "image" && (
-              <input className={fieldInput} style={{ marginTop: 12 }} value={form.mediaAlt} onChange={set("mediaAlt")} placeholder="Image description (alt text)" />
+              <>
+                <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                  <button
+                    type="button"
+                    style={chip(imageSource === "upload")}
+                    onClick={() => {
+                      setImageSource("upload");
+                      setForm((f) => ({ ...f, mediaUrl: "" }));
+                    }}
+                  >
+                    Upload
+                  </button>
+                  <button
+                    type="button"
+                    style={chip(imageSource === "url")}
+                    onClick={() => {
+                      setImageSource("url");
+                      setForm((f) => ({ ...f, mediaFileId: "" }));
+                    }}
+                  >
+                    Paste URL
+                  </button>
+                </div>
+
+                {imageSource === "upload" ? (
+                  <div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      style={{ display: "none" }}
+                      onChange={(e) => {
+                        const fl = e.target.files;
+                        if (fl && fl[0]) uploadImage(fl[0]);
+                        e.target.value = "";
+                      }}
+                    />
+                    {form.mediaFileId ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={`/api/media/thumb/${encodeURIComponent(form.mediaFileId)}?w=200`}
+                        alt=""
+                        style={{ height: 80, borderRadius: 8, display: "block", objectFit: "cover", marginBottom: 8 }}
+                      />
+                    ) : null}
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button type="button" style={neutralBtn} disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+                        {uploading ? "Uploading…" : form.mediaFileId ? "Change image" : "Choose image"}
+                      </button>
+                      {form.mediaFileId ? (
+                        <button type="button" style={deleteBtn} onClick={() => setForm((f) => ({ ...f, mediaFileId: "" }))}>
+                          Remove
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : (
+                  <input
+                    className={fieldInput}
+                    type="url"
+                    value={form.mediaUrl}
+                    onChange={set("mediaUrl")}
+                    placeholder="https://… direct image link (jpg, png, webp)"
+                  />
+                )}
+
+                <input className={fieldInput} style={{ marginTop: 12 }} value={form.mediaAlt} onChange={set("mediaAlt")} placeholder="Image description (alt text)" />
+              </>
             )}
+
             {isVideo && (
-              <label style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12, cursor: "pointer", color: COLOR.snow, fontSize: 13 }}>
-                <input type="checkbox" checked={form.videoAutoplay === "true"} onChange={set("videoAutoplay")} style={{ width: 16, height: 16, accentColor: COLOR.teal }} />
-                Autoplay silently (muted loop)
-              </label>
+              <>
+                <input
+                  className={fieldInput}
+                  type="url"
+                  value={form.mediaUrl}
+                  onChange={set("mediaUrl")}
+                  placeholder="https://… YouTube, Vimeo, MP4, or WebM"
+                />
+                <label style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12, cursor: "pointer", color: COLOR.snow, fontSize: 13 }}>
+                  <input type="checkbox" checked={form.videoAutoplay === "true"} onChange={set("videoAutoplay")} style={{ width: 16, height: 16, accentColor: COLOR.teal }} />
+                  Autoplay silently (muted loop)
+                </label>
+              </>
             )}
           </div>
+        </div>
+
+        <div
+          style={{
+            marginTop: 22,
+            padding: "14px 16px",
+            borderRadius: 12,
+            border: "1px solid rgba(108,0,175,0.5)",
+            background: "rgba(108,0,175,0.26)",
+          }}
+        >
+          <p style={{ margin: "0 0 6px", fontSize: 12.5, fontWeight: 700, color: "rgba(255,255,255,0.92)" }}>
+            Want DAT to help amplify this event?
+          </p>
+          <p style={{ margin: "0 0 12px", fontSize: 12, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>
+            If it aligns with DAT&apos;s mission — adventurous storytelling, community engagement,
+            cross-cultural exchange, or alumni collaboration — we may be able to feature it beyond
+            your profile.
+          </p>
+          <a
+            href={mailtoHref}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "7px 16px",
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#c4b5fd",
+              background: "rgba(139,92,246,0.22)",
+              border: "1px solid rgba(139,92,246,0.55)",
+              textDecoration: "none",
+            }}
+          >
+            Reach Out
+          </a>
         </div>
 
         {error && (
