@@ -57,17 +57,18 @@ const NAV_ITEMS = [
     submenu: [
       { label: 'Travel Opportunities', href: 'https://www.dramaticadventure.com/travel-opportunities', external: true },
       { label: 'PASSAGE', href: 'https://www.dramaticadventure.com/passage', external: true },
-      { label: 'DAT LAB', href: 'https://www.dramaticadventure.com/dat-lab', external: true },
-      { label: 'RAW', href: 'https://www.dramaticadventure.com/raw', external: true },
+      // hidden 2026-06: no live page yet — keep in config to restore once published (see docs/post-interview-website-backlog.md)
+      { label: 'DAT LAB', href: 'https://www.dramaticadventure.com/dat-lab', external: true, hidden: true },
+      { label: 'RAW', href: 'https://www.dramaticadventure.com/raw', external: true, hidden: true },
       { label: 'ACTion', href: 'https://www.dramaticadventure.com/action', external: true },
       { label: 'Creative Treks', href: 'https://www.dramaticadventure.com/creative-trek', external: true },
       { label: 'Teaching Artist Residencies', href: 'https://www.dramaticadventure.com/teaching-artist-residency', external: true },
-      { label: 'CASTAWAY', href: 'https://www.dramaticadventure.com/castaway', external: true },
-      { label: 'SceneShift', href: 'https://www.dramaticadventure.com/sceneshift', external: true },
-      { label: 'NYC Weekend', href: 'https://www.dramaticadventure.com/nyc-weekend', external: true },
-      { label: 'Drama Clubs', href: 'https://www.dramaticadventure.com/drama-clubs', external: true },
-      { label: 'Global Play Initiative', href: 'https://www.dramaticadventure.com/global-play', external: true },
-      { label: 'Adventure Days', href: 'https://www.dramaticadventure.com/adventure-days', external: true },
+      { label: 'CASTAWAY', href: 'https://www.dramaticadventure.com/castaway', external: true, hidden: true },
+      { label: 'SceneShift', href: 'https://www.dramaticadventure.com/sceneshift', external: true, hidden: true },
+      { label: 'NYC Weekend', href: 'https://www.dramaticadventure.com/nyc-hub', external: true },
+      { label: 'Drama Clubs', href: '/drama-club' },
+      { label: 'Global Play Initiative', href: 'https://www.dramaticadventure.com/global-play-initiative', external: true },
+      { label: 'Adventure Days', href: 'https://www.dramaticadventure.com/adventure-days', external: true, hidden: true },
     ],
   },
   {
@@ -398,7 +399,7 @@ export default function Header() {
                 </div>
 
                 {/* Submenu list */}
-                {NAV_ITEMS.find((item) => item.label === showSubmenu)?.submenu?.map(
+                {NAV_ITEMS.find((item) => item.label === showSubmenu)?.submenu?.filter((sub) => !(sub as any).hidden).map(
                   (sub) => {
                     const inner = (
                       <div
