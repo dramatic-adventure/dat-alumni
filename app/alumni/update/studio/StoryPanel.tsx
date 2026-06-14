@@ -167,6 +167,8 @@ export default function StoryPanel(props: {
   const [programs, setPrograms] = useState<string[]>([]);
   const [productions, setProductions] = useState<string[]>([]);
   const [programOther, setProgramOther] = useState(false);
+  // Productions are a long list, so they stay hidden until explicitly requested.
+  const [showProductions, setShowProductions] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -194,6 +196,7 @@ export default function StoryPanel(props: {
   useEffect(() => {
     setCountryOther(false);
     setProgramOther(false);
+    setShowProductions(false);
   }, [storyKey]);
 
   const activeStories = useMemo(
@@ -239,6 +242,7 @@ export default function StoryPanel(props: {
     other: boolean;
     setOther: (b: boolean) => void;
     otherPlaceholder: string;
+    footer?: ReactNode;
   }) => {
     const allOptions = opts.groups.flatMap((g) => g.options);
     const known = allOptions.includes(opts.value);
@@ -292,21 +296,41 @@ export default function StoryPanel(props: {
             onChange={(e) => opts.setValue(e.target.value)}
           />
         )}
+
+        {opts.footer}
       </div>
     );
   };
 
+  // Productions stay hidden until requested — or auto-reveal if this story already
+  // has a production selected (so the saved value is recognized, not shown as "Other").
+  const currentProgram = String(profile?.storyProgram || "");
+  const showProds = showProductions || productions.includes(currentProgram);
+  const programGroups = showProds
+    ? [
+        { label: "Programs", options: programs },
+        { label: "Productions", options: productions },
+      ]
+    : [{ label: "Programs", options: programs }];
+
   const programField = renderDynamicSelect({
     label: "Associated Program",
-    value: String(profile?.storyProgram || ""),
+    value: currentProgram,
     setValue: setField("storyProgram"),
-    groups: [
-      { label: "Programs", options: programs },
-      { label: "Productions", options: productions },
-    ],
+    groups: programGroups,
     other: programOther,
     setOther: setProgramOther,
     otherPlaceholder: "Type a program or production",
+    footer:
+      !showProds && productions.length > 0 ? (
+        <button
+          type="button"
+          className="mt-2 text-[13px] font-medium text-[#2493A9] hover:underline"
+          onClick={() => setShowProductions(true)}
+        >
+          + Choose a production instead
+        </button>
+      ) : null,
   });
 
   const countryField = renderDynamicSelect({
