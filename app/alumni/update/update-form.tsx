@@ -9,12 +9,10 @@ import { boolCell } from "@/app/alumni/update/helpers/boolean";
 import { baselineFromLookup } from "@/app/alumni/update/helpers/baseline";
 import { toLiveSavableProfile, totalBytes, prettyMB } from "@/app/alumni/update/helpers/liveMap";
 import {
-  UpcomingEventEditKeys,
   ContactEditKeys,
   StoryMapEditKeys,
 } from "@/app/alumni/update/constants/editKeys";
 import ManualStoryMapFallback from "@/app/alumni/update/fallbacks/ManualStoryMapFallback";
-import ManualUpcomingEventFallback from "@/app/alumni/update/fallbacks/ManualUpcomingEventFallback";
 import { UploadProgressSection } from "@/app/alumni/update/uploads/UploadControls";
 
 
@@ -58,7 +56,7 @@ import ImpactPanel from "@/app/alumni/update/studio/ImpactPanel";
 import MediaPanel from "@/app/alumni/update/studio/MediaPanel";
 import ContactPanel from "@/app/alumni/update/studio/ContactPanel";
 import StoryPanel from "@/app/alumni/update/studio/StoryPanel";
-import EventPanel from "@/app/alumni/update/studio/EventPanel";
+import EventManager from "@/app/alumni/update/studio/EventManager";
 import SpotlightAdminPanel from "@/app/alumni/update/studio/SpotlightAdminPanel";
 import type { SpotlightPreloadData } from "@/app/alumni/update/studio/SpotlightAdminPanel";
 import HighlightStudioPanel from "@/app/alumni/update/studio/HighlightStudioPanel";
@@ -2568,36 +2566,15 @@ return (
       />
     }
     eventPanel={
-      <EventPanel
-        loading={loading}
-        explainStyleLocal={explainStyleLocal}
-        subheadChipStyle={subheadChipStyle}
-        labelStyle={labelStyle}
-        inputStyle={inputStyle}
-        datButtonLocal={datButtonLocal}
+      <EventManager
+        alumniId={stableAlumniId}
         profile={profile}
-        setProfile={setProfile}
-        renderFieldsOrNull={renderFieldsOrNull}
-        eventEditKeys={UpcomingEventEditKeys}
-        saveCategory={saveCategory as any}
-        eventFieldKeys={UpcomingEventEditKeys}
-        eventFile={eventFiles[0] ?? null}
-        onEventFileChange={(f) => setEventFiles(f ? [f] : [])}
-        savedRecently={eventSavedRecently}
         onSaved={() => {
+          showToastRef.current?.("Event saved — reload your profile to see it.", "success");
           if (eventSavedTimeoutRef.current) clearTimeout(eventSavedTimeoutRef.current);
           setEventSavedRecently(true);
           eventSavedTimeoutRef.current = setTimeout(() => setEventSavedRecently(false), 2500);
         }}
-        manualFallback={
-          <ManualUpcomingEventFallback
-            profile={profile}
-            setProfile={setProfile}
-            labelStyle={labelStyle}
-            inputStyle={inputStyle}
-            explainStyleLocal={explainStyleLocal}
-          />
-        }
       />
     }
     highlightPanel={

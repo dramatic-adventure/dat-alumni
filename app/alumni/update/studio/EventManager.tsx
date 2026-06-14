@@ -1,0 +1,615 @@
+"use client";
+
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { COLOR, subheadChipStyle, explainStyleLocal } from "@/app/alumni/update/updateStyles";
+import {
+  GLASS_CSS,
+  glassLabelClass,
+  glassInputClass,
+} from "@/app/alumni/update/studio/glassStyles";
+
+type EventItem = {
+  eventId: string;
+  title: string;
+  link: string;
+  date: string;
+  expiresAt: string;
+  description: string;
+  city: string;
+  stateCountry: string;
+  mediaType: string;
+  mediaUrl: string;
+  mediaFileId: string;
+  mediaAlt: string;
+  videoAutoplay: string;
+  hidden?: boolean;
+  __legacy?: boolean;
+};
+
+type EventForm = Omit<EventItem, "eventId" | "hidden" | "__legacy">;
+
+const BLANK: EventForm = {
+  title: "",
+  link: "",
+  date: "",
+  expiresAt: "",
+  description: "",
+  city: "",
+  stateCountry: "",
+  mediaType: "",
+  mediaUrl: "",
+  mediaFileId: "",
+  mediaAlt: "",
+  videoAutoplay: "",
+};
+
+// ── Buttons (filled, high-contrast — match the story/spotlight managers) ───────
+const actionBtnBase: CSSProperties = {
+  borderRadius: 9,
+  padding: "7px 14px",
+  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+  fontWeight: 700,
+  fontSize: 12,
+  letterSpacing: "0.04em",
+  border: "1px solid transparent",
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+};
+const editBtn: CSSProperties = { ...actionBtnBase, background: COLOR.teal, color: COLOR.snow };
+const deleteBtn: CSSProperties = { ...actionBtnBase, background: COLOR.red, color: COLOR.snow };
+const neutralBtn: CSSProperties = {
+  ...actionBtnBase,
+  background: "rgba(255,255,255,0.14)",
+  color: COLOR.snow,
+  border: "1px solid rgba(255,255,255,0.30)",
+};
+const primaryBtn: CSSProperties = {
+  ...actionBtnBase,
+  padding: "11px 20px",
+  fontSize: 13,
+  background: COLOR.teal,
+  color: COLOR.snow,
+};
+
+const cardStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  gap: 12,
+  padding: "12px 14px",
+  borderRadius: 12,
+  border: "1px solid rgba(255,255,255,0.12)",
+  background: "rgba(255,255,255,0.04)",
+  marginBottom: 10,
+};
+
+const fieldLabel = glassLabelClass;
+const fieldInput = glassInputClass;
+
+function isExpired(e: { date?: string; expiresAt?: string }): boolean {
+  const now = Date.now();
+  const exp = String(e.expiresAt ?? "").trim();
+  const date = String(e.date ?? "").trim();
+  if (exp) {
+    const t = Date.parse(exp);
+    return Number.isFinite(t) ? t < now : false;
+  }
+  if (date) {
+    const t = Date.parse(date);
+    return Number.isFinite(t) ? t + 24 * 60 * 60 * 1000 < now : false;
+  }
+  return false;
+}
+
+function fmtDate(d: string): string {
+  const s = String(d ?? "").trim();
+  if (!s) return "";
+  const t = Date.parse(s);
+  if (!Number.isFinite(t)) return s;
+  return new Date(t).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+function metaLine(e: EventItem): string {
+  return [fmtDate(e.date), [e.city, e.stateCountry].filter(Boolean).join(", ")]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+export default function EventManager({
+  alumniId,
+  profile,
+  onSaved,
+}: {
+  alumniId: string;
+  profile: any;
+  onSaved?: () => void;
+}) {
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [hidden, setHidden] = useState<EventItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [view, setView] = useState<"list" | "form">("list");
+  const [form, setForm] = useState<EventForm>(BLANK);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
+  const [showDeleted, setShowDeleted] = useState(false);
+
+  // Existing single event (legacy profile fields) — carried over until the
+  // owner has at least one event in the new collection.
+  const legacy = useMemo<EventItem | null>(() => {
+    const title = String(profile?.upcomingEventTitle || "").trim();
+    if (!title) return null;
+    return {
+      eventId: "",
+      title,
+      link: String(profile?.upcomingEventLink || ""),
+      date: String(profile?.upcomingEventDate || ""),
+      expiresAt: String(profile?.upcomingEventExpiresAt || ""),
+      description: String(profile?.upcomingEventDescription || ""),
+      city: String(profile?.upcomingEventCity || ""),
+      stateCountry: String(profile?.upcomingEventStateCountry || ""),
+      mediaType: String(profile?.upcomingEventMediaType || ""),
+      mediaUrl: String(profile?.upcomingEventMediaUrl || ""),
+      mediaFileId: String(profile?.featuredEventId || ""),
+      mediaAlt: String(profile?.upcomingEventMediaAlt || ""),
+      videoAutoplay: String(profile?.upcomingEventVideoAutoplay || ""),
+      __legacy: true,
+    };
+  }, [profile]);
+
+  useEffect(() => {
+    let alive = true;
+    if (!alumniId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    fetch(`/api/alumni/events?alumniId=${encodeURIComponent(alumniId)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!alive) return;
+        setEvents(Array.isArray(d?.events) ? d.events : []);
+        setHidden(Array.isArray(d?.hidden) ? d.hidden : []);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [alumniId]);
+
+  const collectionEmpty = events.length === 0 && hidden.length === 0;
+  const baseActive = collectionEmpty && legacy ? [legacy] : events;
+  const upcoming = baseActive.filter((e) => !isExpired(e));
+  const archived = baseActive.filter((e) => isExpired(e));
+
+  const set =
+    (key: keyof EventForm) =>
+    (
+      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    ) => {
+      const val =
+        e.target.type === "checkbox"
+          ? (e.target as HTMLInputElement).checked
+            ? "true"
+            : ""
+          : e.target.value;
+      setForm((f) => ({ ...f, [key]: val }));
+      setError(null);
+    };
+
+  const openAdd = () => {
+    setForm(BLANK);
+    setEditingId(null);
+    setError(null);
+    setView("form");
+  };
+
+  const openEdit = (ev: EventItem) => {
+    setForm({
+      title: ev.title,
+      link: ev.link,
+      date: ev.date,
+      expiresAt: ev.expiresAt,
+      description: ev.description,
+      city: ev.city,
+      stateCountry: ev.stateCountry,
+      mediaType: ev.mediaType,
+      mediaUrl: ev.mediaUrl,
+      mediaFileId: ev.mediaFileId,
+      mediaAlt: ev.mediaAlt,
+      videoAutoplay: ev.videoAutoplay,
+    });
+    setEditingId(ev.eventId || ""); // "" = legacy → save creates a real event
+    setError(null);
+    setView("form");
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.title.trim()) {
+      setError("Event title is required.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const mode = editingId ? "edit" : "create";
+      const res = await fetch("/api/alumni/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          alumniId,
+          mode,
+          event: { ...form, eventId: editingId || undefined },
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j?.ok) throw new Error(j?.error || `Failed (${res.status})`);
+
+      const savedItem: EventItem = { ...form, eventId: String(j.eventId || editingId || ""), hidden: false };
+      if (mode === "edit" && editingId) {
+        setEvents((list) => list.map((x) => (x.eventId === editingId ? savedItem : x)));
+      } else {
+        setEvents((list) => [...list, savedItem]);
+      }
+      setForm(BLANK);
+      setEditingId(null);
+      setView("list");
+      onSaved?.();
+    } catch (err: any) {
+      setError(err?.message || "Network error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const mutateHidden = async (ev: EventItem, hide: boolean) => {
+    if (!ev.eventId) return;
+    setBusyId(ev.eventId);
+    setConfirmDelete(null);
+    try {
+      const res = await fetch("/api/alumni/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ alumniId, mode: hide ? "delete" : "restore", eventId: ev.eventId }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j?.ok) throw new Error(j?.error || `Failed (${res.status})`);
+      // Optimistic move between lists (no refetch — sheet reads can lag).
+      if (hide) {
+        setEvents((list) => list.filter((x) => x.eventId !== ev.eventId));
+        setHidden((list) => [...list, { ...ev, hidden: true }]);
+      } else {
+        setHidden((list) => list.filter((x) => x.eventId !== ev.eventId));
+        setEvents((list) => [...list, { ...ev, hidden: false }]);
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  // ── EVENT CARD ───────────────────────────────────────────────────────────────
+  const renderCard = (ev: EventItem, kind: "upcoming" | "archived" | "deleted") => {
+    const meta = metaLine(ev);
+    const busy = busyId === ev.eventId;
+    const confirming = confirmDelete === ev.eventId && ev.eventId !== "";
+    return (
+      <div key={ev.eventId || "legacy"} style={{ ...cardStyle, opacity: kind === "deleted" ? 0.85 : 1 }}>
+        <div style={{ minWidth: 0 }}>
+          <div
+            style={{
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+              fontSize: 15,
+              fontWeight: 600,
+              color: COLOR.snow,
+            }}
+          >
+            {ev.title || "(untitled event)"}
+            {kind === "archived" ? (
+              <span
+                style={{
+                  marginLeft: 8,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: COLOR.gold,
+                  border: `1px solid ${COLOR.gold}`,
+                  borderRadius: 6,
+                  padding: "1px 6px",
+                  verticalAlign: "middle",
+                }}
+              >
+                Past
+              </span>
+            ) : null}
+          </div>
+          {meta ? (
+            <div
+              style={{
+                fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+                fontSize: 13,
+                color: COLOR.snow,
+                opacity: 0.7,
+                marginTop: 2,
+              }}
+            >
+              {meta}
+            </div>
+          ) : null}
+        </div>
+        <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+          {kind === "deleted" ? (
+            <button
+              type="button"
+              style={{ ...editBtn, opacity: busy ? 0.6 : 1 }}
+              disabled={busy}
+              onClick={() => mutateHidden(ev, false)}
+            >
+              {busy ? "Restoring…" : "Restore"}
+            </button>
+          ) : confirming ? (
+            <>
+              <button
+                type="button"
+                style={{ ...deleteBtn, opacity: busy ? 0.6 : 1 }}
+                disabled={busy}
+                onClick={() => mutateHidden(ev, true)}
+              >
+                {busy ? "Deleting…" : "Confirm"}
+              </button>
+              <button type="button" style={neutralBtn} disabled={busy} onClick={() => setConfirmDelete(null)}>
+                Cancel
+              </button>
+            </>
+          ) : (
+            <>
+              <button type="button" style={editBtn} disabled={busy} onClick={() => openEdit(ev)}>
+                Edit
+              </button>
+              {ev.eventId ? (
+                <button
+                  type="button"
+                  style={deleteBtn}
+                  disabled={busy}
+                  onClick={() => setConfirmDelete(ev.eventId)}
+                >
+                  Delete
+                </button>
+              ) : null}
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div id="studio-event-anchor" style={{ padding: "24px 0", opacity: 0.5, color: COLOR.snow, fontSize: 14 }}>
+        Loading…
+      </div>
+    );
+  }
+
+  // ── FORM VIEW ────────────────────────────────────────────────────────────────
+  if (view === "form") {
+    const isEdit = Boolean(editingId);
+    const isVideo = form.mediaType === "video";
+    const chip = (active: boolean): CSSProperties => ({
+      border: 0,
+      cursor: "pointer",
+      borderRadius: 999,
+      padding: "6px 16px",
+      fontSize: 13,
+      fontFamily: "inherit",
+      fontWeight: active ? 600 : 500,
+      background: active ? COLOR.teal : "transparent",
+      color: active ? "#fff" : "rgba(242,242,242,0.8)",
+    });
+    return (
+      <form onSubmit={handleSubmit}>
+        <style dangerouslySetInnerHTML={{ __html: GLASS_CSS }} />
+        <div id="studio-event-anchor" />
+
+        <div style={{ marginBottom: 12 }}>
+          <button type="button" style={neutralBtn} disabled={saving} onClick={() => setView("list")}>
+            ← Your events
+          </button>
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <span style={subheadChipStyle} className="subhead-chip">
+            {isEdit ? "Edit Event" : "New Event"}
+          </span>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div>
+            <label className={fieldLabel}>Event title</label>
+            <input className={fieldInput} value={form.title} onChange={set("title")} placeholder="e.g. Opening night of Into the Woods" />
+          </div>
+
+          <div>
+            <label className={fieldLabel}>Link</label>
+            <input className={fieldInput} type="url" value={form.link} onChange={set("link")} placeholder="https://… tickets or info" />
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div>
+              <label className={fieldLabel}>Date</label>
+              <input className={fieldInput} type="date" value={form.date} onChange={set("date")} />
+            </div>
+            <div>
+              <label className={fieldLabel}>Hide after</label>
+              <input className={fieldInput} type="date" value={form.expiresAt} onChange={set("expiresAt")} />
+            </div>
+          </div>
+
+          <div>
+            <label className={fieldLabel}>Description</label>
+            <textarea className={`${fieldInput} dat-glass-textarea`} value={form.description} onChange={set("description")} placeholder="A sentence about the event." />
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div>
+              <label className={fieldLabel}>City</label>
+              <input className={fieldInput} value={form.city} onChange={set("city")} placeholder="e.g. New York" />
+            </div>
+            <div>
+              <label className={fieldLabel}>State / Country</label>
+              <input className={fieldInput} value={form.stateCountry} onChange={set("stateCountry")} placeholder="e.g. NY or Slovakia" />
+            </div>
+          </div>
+
+          <div>
+            <label className={fieldLabel}>Media</label>
+            <div style={{ display: "inline-flex", background: "rgba(255,255,255,0.08)", borderRadius: 999, padding: 4, gap: 2, marginBottom: 12 }}>
+              {(["image", "video"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  style={chip(form.mediaType === t)}
+                  onClick={() => setForm((f) => ({ ...f, mediaType: t }))}
+                >
+                  {t === "image" ? "Image" : "Video"}
+                </button>
+              ))}
+              {form.mediaType ? (
+                <button
+                  key="none"
+                  type="button"
+                  style={chip(false)}
+                  onClick={() => setForm((f) => ({ ...f, mediaType: "", mediaUrl: "", mediaAlt: "", videoAutoplay: "" }))}
+                >
+                  None
+                </button>
+              ) : null}
+            </div>
+            {form.mediaType ? (
+              <input
+                className={fieldInput}
+                type="url"
+                value={form.mediaUrl}
+                onChange={set("mediaUrl")}
+                placeholder={isVideo ? "https://… YouTube, Vimeo, MP4, or WebM" : "https://… direct image link (jpg, png, webp)"}
+              />
+            ) : null}
+            {form.mediaType === "image" && (
+              <input className={fieldInput} style={{ marginTop: 12 }} value={form.mediaAlt} onChange={set("mediaAlt")} placeholder="Image description (alt text)" />
+            )}
+            {isVideo && (
+              <label style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 12, cursor: "pointer", color: COLOR.snow, fontSize: 13 }}>
+                <input type="checkbox" checked={form.videoAutoplay === "true"} onChange={set("videoAutoplay")} style={{ width: 16, height: 16, accentColor: COLOR.teal }} />
+                Autoplay silently (muted loop)
+              </label>
+            )}
+          </div>
+        </div>
+
+        {error && (
+          <p style={{ color: COLOR.red, fontSize: 13, fontFamily: "var(--font-dm-sans), system-ui, sans-serif", margin: "14px 0 0" }}>{error}</p>
+        )}
+
+        <div
+          style={{
+            marginTop: 26,
+            paddingTop: 18,
+            borderTop: "1px solid rgba(255,255,255,0.10)",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 14,
+          }}
+        >
+          <button type="button" style={neutralBtn} disabled={saving} onClick={() => setView("list")}>
+            Cancel
+          </button>
+          <button type="submit" style={{ ...primaryBtn, opacity: saving ? 0.6 : 1 }} disabled={saving}>
+            {saving ? "Saving…" : isEdit ? "Save Event" : "Add Event"}
+          </button>
+        </div>
+      </form>
+    );
+  }
+
+  // ── LIST VIEW ────────────────────────────────────────────────────────────────
+  return (
+    <div>
+      <div id="studio-event-anchor" />
+      <p style={explainStyleLocal}>
+        Add events people can catch you at. The soonest upcoming one shows on your profile; once an
+        event passes it moves to your archive, where you can still edit, reuse, or remove it.
+      </p>
+
+      <span style={subheadChipStyle} className="subhead-chip">
+        Your Events
+      </span>
+
+      <div style={{ marginTop: 16 }}>
+        {upcoming.length === 0 ? (
+          <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: 14, color: COLOR.snow, opacity: 0.6, marginBottom: 14 }}>
+            No upcoming events.
+          </p>
+        ) : (
+          <div style={{ marginBottom: 16 }}>{upcoming.map((e) => renderCard(e, "upcoming"))}</div>
+        )}
+
+        <button type="button" style={primaryBtn} onClick={openAdd}>
+          + Add an Event
+        </button>
+
+        {archived.length > 0 && (
+          <div style={{ marginTop: 22 }}>
+            <button
+              type="button"
+              onClick={() => setShowArchived((v) => !v)}
+              style={collapseToggleStyle}
+            >
+              {showArchived ? "▾" : "▸"} Archived ({archived.length})
+            </button>
+            {showArchived && <div style={{ marginTop: 10 }}>{archived.map((e) => renderCard(e, "archived"))}</div>}
+          </div>
+        )}
+
+        {hidden.length > 0 && (
+          <div style={{ marginTop: 18 }}>
+            <button type="button" onClick={() => setShowDeleted((v) => !v)} style={collapseToggleStyle}>
+              {showDeleted ? "▾" : "▸"} Deleted ({hidden.length})
+            </button>
+            {showDeleted && (
+              <div style={{ marginTop: 10 }}>
+                <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: 12, color: COLOR.snow, opacity: 0.55, margin: "0 0 10px" }}>
+                  Removed from your profile but kept here. Restore any to bring it back.
+                </p>
+                {hidden.map((e) => renderCard(e, "deleted"))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const collapseToggleStyle: CSSProperties = {
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  padding: 0,
+  fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+  fontSize: 12,
+  fontWeight: 600,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  color: COLOR.snow,
+  opacity: 0.6,
+};

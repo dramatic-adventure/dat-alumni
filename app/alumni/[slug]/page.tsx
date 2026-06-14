@@ -27,6 +27,7 @@ import { getOrderedProfileRoles, deriveBoardStatus, getBoardRoleLabelForProfile 
 import { programMap } from "@/lib/programMap";
 import { productionMap } from "@/lib/productionMap";
 import { loadSpotlightsForSlug } from "@/lib/loadSpotlightsFromSheet";
+import { loadNextUpcomingEvent } from "@/lib/loadEventsFromSheet";
 import { fetchVideoMeta } from "@/lib/media/fetchVideoMeta";
 
 type PageProps = {
@@ -404,12 +405,13 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
   const alumniId =
     (alumni as any).alumniId || (alumni as any).id || (alumni as any).recordId || "";
 
-  const [coll, spotlightData] = await Promise.all([
+  const [coll, spotlightData, nextEvent] = await Promise.all([
     loadCollectionsFor({ aliases, alumniId: String(alumniId || "") }),
     loadSpotlightsForSlug(canonicalOrIncoming || incoming, aliases).catch((err) => {
       console.error("[alumni/page] loadSpotlightsForSlug failed — falling back to updates-derived data:", err);
       return { spotlights: [], highlights: [], all: [] };
     }),
+    loadNextUpcomingEvent(String(alumniId || "")).catch(() => null),
   ]);
 
   const mergedImageUrls =
@@ -580,7 +582,22 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
         sheetSpotlights={spotlightData.spotlights}
         sheetHighlights={spotlightData.highlights}
         upcomingEvent={
-          (normalizedAlumni as any).upcomingEventTitle
+          nextEvent
+            ? {
+                title: nextEvent.title,
+                link: nextEvent.link || undefined,
+                date: nextEvent.date || undefined,
+                expiresAt: nextEvent.expiresAt || undefined,
+                description: nextEvent.description || undefined,
+                city: nextEvent.city || undefined,
+                stateCountry: nextEvent.stateCountry || undefined,
+                mediaType: (nextEvent.mediaType || undefined) as "image" | "video" | undefined,
+                mediaFileId: nextEvent.mediaFileId || undefined,
+                mediaUrl: nextEvent.mediaUrl || undefined,
+                mediaAlt: nextEvent.mediaAlt || undefined,
+                videoAutoplay: nextEvent.videoAutoplay === "true",
+              }
+            : (normalizedAlumni as any).upcomingEventTitle
             ? {
                 title: (normalizedAlumni as any).upcomingEventTitle as string,
                 link: (normalizedAlumni as any).upcomingEventLink || undefined,

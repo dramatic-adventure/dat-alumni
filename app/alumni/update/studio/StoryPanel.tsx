@@ -4,6 +4,12 @@ import { useEffect, useMemo, useState, type ReactNode, type CSSProperties } from
 
 import { ghostButton as studioGhostButton } from "@/components/alumni/update/ProfileStudio";
 import { COLOR } from "@/app/alumni/update/updateStyles";
+import {
+  GLASS_CSS,
+  glassLabelClass,
+  glassInputClass,
+  glassSelectClass,
+} from "@/app/alumni/update/studio/glassStyles";
 
 type MyStory = {
   storyKey: string;
@@ -65,24 +71,10 @@ const sectionHeaderStyle: CSSProperties = {
   color: COLOR.snow,
 };
 
-// Frosted-glass field styling (matches the FieldRenderer "glass" variant) so the
-// custom Project/Country controls blend in with the sheet-driven fields. The
-// actual look lives in the GLASS_CSS <style> block injected in the editor view.
-const fieldLabelClass = "dat-glass-label";
-const fieldInputClass = "dat-glass-input";
-const fieldSelectClass = "dat-glass-input dat-glass-select";
-
-// Frosted theme for the story editor — defined as real CSS so ::placeholder and
-// :focus work (inline styles can't), and so it never depends on Tailwind JIT.
-const GLASS_CSS = `
-.dat-glass-label{display:block;margin-bottom:8px;font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:rgba(242,242,242,.6);font-weight:500;}
-.dat-glass-input{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid rgba(255,255,255,.15);background-color:rgba(255,255,255,.06);padding:13px 15px;font-size:15px;color:#F2F2F2;outline:none;font-family:inherit;transition:border-color .15s,box-shadow .15s;}
-.dat-glass-input::placeholder{color:rgba(242,242,242,.4);}
-.dat-glass-input:hover{border-color:rgba(255,255,255,.28);}
-.dat-glass-input:focus{border-color:rgba(36,147,169,.75);box-shadow:0 0 0 3px rgba(36,147,169,.25);}
-.dat-glass-input option{color:#241123;background:#F2F2F2;}
-.dat-glass-select{appearance:none;-webkit-appearance:none;padding-right:42px;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='16'%20height='16'%20fill='none'%20stroke='%23F2F2F2'%20stroke-opacity='0.6'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M4%206l4%204%204-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 15px center;}
-`;
+// Frosted-glass field styling (shared with the events editor via glassStyles).
+const fieldLabelClass = glassLabelClass;
+const fieldInputClass = glassInputClass;
+const fieldSelectClass = glassSelectClass;
 
 const OTHER = "__other__";
 
