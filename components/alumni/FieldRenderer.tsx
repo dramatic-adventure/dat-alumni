@@ -390,20 +390,20 @@ export default function FieldRenderer({
   fields,
   baseline,
   helpAsPlaceholder,
-  gapClass = "gap-3",
+  gapPx = 12,
 }: {
   value: AlumniProfile;
   onChange: (next: AlumniProfile) => void;
   fields: FieldDef[];
   baseline?: AlumniProfile | null;
   helpAsPlaceholder?: boolean;
-  /** Tailwind gap utility for vertical spacing between fields (default "gap-3"). */
-  gapClass?: string;
+  /** Vertical spacing (px) between fields. Inline so it never depends on Tailwind JIT. */
+  gapPx?: number;
 }) {
   const safeFields = useMemo(() => (Array.isArray(fields) ? fields : []), [fields]);
 
   return (
-    <div className={`grid ${gapClass}`}>
+    <div style={{ display: "grid", gap: gapPx }}>
       {safeFields.map((def, i) => {
         const key = String(def.path || def.key);
         return (

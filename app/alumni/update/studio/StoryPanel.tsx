@@ -127,7 +127,7 @@ export default function StoryPanel(props: {
   // rendering helpers
   renderFieldsOrNull: (
     keys: string[],
-    opts?: { helpAsPlaceholder?: boolean; gapClass?: string }
+    opts?: { helpAsPlaceholder?: boolean; gapPx?: number }
   ) => ReactNode;
   storyMapEditKeys: string[];
   manualFallback: ReactNode;
@@ -288,7 +288,8 @@ export default function StoryPanel(props: {
         {effectiveOther && (
           <input
             type="text"
-            className={`${fieldInputClass} mt-3`}
+            className={fieldInputClass}
+            style={{ marginTop: 12 }}
             value={opts.value}
             placeholder={opts.otherPlaceholder}
             onChange={(e) => opts.setValue(e.target.value)}
@@ -324,7 +325,7 @@ export default function StoryPanel(props: {
   const programField = (
     <div className={fieldWrapClass}>
       <label className={fieldLabelClass}>Associated Program</label>
-      <div className="flex flex-wrap gap-2 mb-3">
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
         {programModes.map((m) => (
           <button
             key={m.id}
@@ -628,13 +629,13 @@ export default function StoryPanel(props: {
       ) : (
         <>
           <Section title="Basics" open={openGroups.basics} onToggle={() => toggleGroup("basics")}>
-            <div className="flex flex-col gap-6">
-              {renderFieldsOrNull(["storyTitle"], { helpAsPlaceholder: true, gapClass: "gap-6" })}
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              {renderFieldsOrNull(["storyTitle"], { helpAsPlaceholder: true, gapPx: 20 })}
               {programField}
               {countryField}
               {renderFieldsOrNull(["storyYears", "storyLocationName"], {
                 helpAsPlaceholder: true,
-                gapClass: "gap-6",
+                gapPx: 20,
               })}
             </div>
           </Section>
@@ -642,7 +643,7 @@ export default function StoryPanel(props: {
           <Section title="The Story" open={openGroups.story} onToggle={() => toggleGroup("story")}>
             {renderFieldsOrNull(
               ["storyShortStory", "storyQuote", "storyQuoteAttribution", "storyPartners"],
-              { helpAsPlaceholder: true, gapClass: "gap-6" }
+              { helpAsPlaceholder: true, gapPx: 20 }
             )}
           </Section>
 
@@ -653,7 +654,7 @@ export default function StoryPanel(props: {
           >
             {renderFieldsOrNull(["storyMediaUrl", "storyMoreInfoUrl"], {
               helpAsPlaceholder: true,
-              gapClass: "gap-6",
+              gapPx: 20,
             })}
           </Section>
         </>
