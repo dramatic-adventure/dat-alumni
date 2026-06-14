@@ -65,13 +65,24 @@ const sectionHeaderStyle: CSSProperties = {
   color: COLOR.snow,
 };
 
-// White-card field styling, matched to FieldRenderer so the custom Country
-// control blends in with the sheet-driven fields around it.
-const fieldWrapClass = "rounded-2xl bg-white/70 p-3";
-const fieldLabelClass =
-  "block mb-1 text-[11px] tracking-wider uppercase text-gray-600 font-medium";
-const fieldInputClass =
-  "w-full rounded-xl border border-black/10 bg-white/80 px-3 py-2 text-[15px] text-[#241123] shadow-sm outline-none focus:ring-2 focus:ring-black/10";
+// Frosted-glass field styling (matches the FieldRenderer "glass" variant) so the
+// custom Project/Country controls blend in with the sheet-driven fields. The
+// actual look lives in the GLASS_CSS <style> block injected in the editor view.
+const fieldLabelClass = "dat-glass-label";
+const fieldInputClass = "dat-glass-input";
+const fieldSelectClass = "dat-glass-input dat-glass-select";
+
+// Frosted theme for the story editor — defined as real CSS so ::placeholder and
+// :focus work (inline styles can't), and so it never depends on Tailwind JIT.
+const GLASS_CSS = `
+.dat-glass-label{display:block;margin-bottom:8px;font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:rgba(242,242,242,.6);font-weight:500;}
+.dat-glass-input{width:100%;box-sizing:border-box;border-radius:12px;border:1px solid rgba(255,255,255,.15);background-color:rgba(255,255,255,.06);padding:13px 15px;font-size:15px;color:#F2F2F2;outline:none;font-family:inherit;transition:border-color .15s,box-shadow .15s;}
+.dat-glass-input::placeholder{color:rgba(242,242,242,.4);}
+.dat-glass-input:hover{border-color:rgba(255,255,255,.28);}
+.dat-glass-input:focus{border-color:rgba(36,147,169,.75);box-shadow:0 0 0 3px rgba(36,147,169,.25);}
+.dat-glass-input option{color:#241123;background:#F2F2F2;}
+.dat-glass-select{appearance:none;-webkit-appearance:none;padding-right:42px;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='16'%20height='16'%20fill='none'%20stroke='%23F2F2F2'%20stroke-opacity='0.6'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M4%206l4%204%204-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 15px center;}
+`;
 
 const OTHER = "__other__";
 
@@ -261,10 +272,10 @@ export default function StoryPanel(props: {
     const selectValue = effectiveOther ? OTHER : known ? opts.value : "";
 
     return (
-      <div className={fieldWrapClass}>
+      <div>
         <label className={fieldLabelClass}>{opts.label}</label>
         <select
-          className={fieldInputClass}
+          className={fieldSelectClass}
           value={selectValue}
           onChange={(e) => {
             const v = e.target.value;
@@ -314,23 +325,37 @@ export default function StoryPanel(props: {
   const activeProgramMode =
     programModes.find((m) => m.id === programMode) ?? programModes[0];
 
-  const programChipClass = (active: boolean) =>
-    [
-      "px-3.5 py-1.5 rounded-full text-[12px] cursor-pointer transition border",
-      active
-        ? "bg-[#2493A9] text-white border-[#2493A9] font-semibold"
-        : "bg-black/[0.04] text-[#241123]/80 border-black/10 font-medium hover:bg-black/[0.07]",
-    ].join(" ");
+  const programChipStyle = (active: boolean): CSSProperties => ({
+    border: 0,
+    cursor: "pointer",
+    borderRadius: 999,
+    padding: "6px 16px",
+    fontSize: 13,
+    fontFamily: "inherit",
+    fontWeight: active ? 600 : 500,
+    background: active ? COLOR.teal : "transparent",
+    color: active ? "#fff" : "rgba(242,242,242,0.8)",
+    transition: "background 140ms, color 140ms",
+  });
 
   const programField = (
-    <div className={fieldWrapClass}>
-      <label className={fieldLabelClass}>Associated Program</label>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+    <div>
+      <label className={fieldLabelClass}>Associated Project</label>
+      <div
+        style={{
+          display: "inline-flex",
+          background: "rgba(255,255,255,0.08)",
+          borderRadius: 999,
+          padding: 4,
+          gap: 2,
+          marginBottom: 12,
+        }}
+      >
         {programModes.map((m) => (
           <button
             key={m.id}
             type="button"
-            className={programChipClass(programMode === m.id)}
+            style={programChipStyle(programMode === m.id)}
             onClick={() => setProgramMode(m.id)}
           >
             {m.label}
@@ -339,7 +364,7 @@ export default function StoryPanel(props: {
       </div>
       {activeProgramMode.options ? (
         <select
-          className={fieldInputClass}
+          className={fieldSelectClass}
           value={
             activeProgramMode.options.includes(currentProgram) ? currentProgram : ""
           }
@@ -605,6 +630,7 @@ export default function StoryPanel(props: {
   // ── EDITOR VIEW ──────────────────────────────────────────────────────────────
   return (
     <div>
+      <style>{GLASS_CSS}</style>
       <div id="studio-story-anchor" />
 
       <div style={{ marginBottom: 12 }}>
@@ -630,12 +656,17 @@ export default function StoryPanel(props: {
         <>
           <Section title="Basics" open={openGroups.basics} onToggle={() => toggleGroup("basics")}>
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              {renderFieldsOrNull(["storyTitle"], { helpAsPlaceholder: true, gapPx: 20 })}
+              {renderFieldsOrNull(["storyTitle"], {
+                helpAsPlaceholder: true,
+                gapPx: 20,
+                variant: "glass",
+              })}
               {programField}
               {countryField}
               {renderFieldsOrNull(["storyYears", "storyLocationName"], {
                 helpAsPlaceholder: true,
                 gapPx: 20,
+                variant: "glass",
               })}
             </div>
           </Section>
@@ -643,7 +674,7 @@ export default function StoryPanel(props: {
           <Section title="The Story" open={openGroups.story} onToggle={() => toggleGroup("story")}>
             {renderFieldsOrNull(
               ["storyShortStory", "storyQuote", "storyQuoteAttribution", "storyPartners"],
-              { helpAsPlaceholder: true, gapPx: 20 }
+              { helpAsPlaceholder: true, gapPx: 20, variant: "glass" }
             )}
           </Section>
 
@@ -655,6 +686,7 @@ export default function StoryPanel(props: {
             {renderFieldsOrNull(["storyMediaUrl", "storyMoreInfoUrl"], {
               helpAsPlaceholder: true,
               gapPx: 20,
+              variant: "glass",
             })}
           </Section>
         </>

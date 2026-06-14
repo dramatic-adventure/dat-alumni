@@ -62,6 +62,7 @@ function FieldRow({
   onChange,
   baseline,
   helpAsPlaceholder,
+  variant = "light",
 }: {
   def: FieldDef;
   value: AlumniProfile;
@@ -70,7 +71,10 @@ function FieldRow({
   /** When true, fold each field's help text into its placeholder and hide the
    *  separate help line (keeps dense forms calmer). */
   helpAsPlaceholder?: boolean;
+  /** "glass" swaps to the frosted dark theme (story editor); "light" is the default. */
+  variant?: "light" | "glass";
 }) {
+  const isGlass = variant === "glass";
   const path = def.path || (def.key as string);
   const raw = getByPath(value, path);
 
@@ -78,20 +82,31 @@ function FieldRow({
   const baseRaw = baseline ? getByPath(baseline, path) : undefined;
 
   const commonLabel = (
-    <label className="block mb-1 text-[11px] tracking-wider uppercase text-gray-600 font-medium">
+    <label
+      className={
+        isGlass
+          ? "dat-glass-label"
+          : "block mb-1 text-[11px] tracking-wider uppercase text-gray-600 font-medium"
+      }
+    >
       {def.label}
       {def.required ? <span className="ml-1 text-red-500">*</span> : null}
     </label>
   );
 
   const help = def.help && !helpAsPlaceholder ? (
-    <p className="mt-1 text-xs text-gray-500">{def.help}</p>
+    <p className={isGlass ? "mt-1 text-xs" : "mt-1 text-xs text-gray-500"} style={isGlass ? { color: "rgba(242,242,242,0.55)" } : undefined}>{def.help}</p>
   ) : null;
 
   const counter =
     typeof def.maxLen === "number" &&
     (def.kind === "text" || def.kind === "textarea") ? (
-      <div className="mt-1 text-[11px] text-gray-400 text-right">
+      <div
+        className={
+          isGlass ? "mt-1 text-[11px] text-right" : "mt-1 text-[11px] text-gray-400 text-right"
+        }
+        style={isGlass ? { color: "rgba(242,242,242,0.45)" } : undefined}
+      >
         {String(raw || "").length}/{def.maxLen}
       </div>
     ) : null;
@@ -147,15 +162,20 @@ function FieldRow({
   // --- UI renderers (keep simple, resilient) ---
   const baseLine =
     showCurrentLine ? (
-      <p className="mt-1 text-xs text-gray-500">
-        Currently saved: <span className="font-medium">{toPlaceholderValue(baseRaw)}</span>
+      <p
+        className={isGlass ? "mt-1 text-xs" : "mt-1 text-xs text-gray-500"}
+        style={isGlass ? { color: "rgba(242,242,242,0.55)" } : undefined}
+      >
+        Currently saved:{" "}
+        <span className="font-medium">{toPlaceholderValue(baseRaw)}</span>
       </p>
     ) : null;
 
-  const commonInputClass =
-    "w-full rounded-xl border border-black/10 bg-white/80 px-3 py-2 text-[15px] text-[#241123] shadow-sm outline-none focus:ring-2 focus:ring-black/10";
+  const commonInputClass = isGlass
+    ? "dat-glass-input"
+    : "w-full rounded-xl border border-black/10 bg-white/80 px-3 py-2 text-[15px] text-[#241123] shadow-sm outline-none focus:ring-2 focus:ring-black/10";
 
-  const wrapClass = "rounded-2xl bg-white/70 p-3";
+  const wrapClass = isGlass ? "" : "rounded-2xl bg-white/70 p-3";
 
   const renderTextLike = (type: "text" | "email" | "url" = "text") => (
     <div className={wrapClass}>
@@ -391,6 +411,7 @@ export default function FieldRenderer({
   baseline,
   helpAsPlaceholder,
   gapPx = 12,
+  variant = "light",
 }: {
   value: AlumniProfile;
   onChange: (next: AlumniProfile) => void;
@@ -399,6 +420,8 @@ export default function FieldRenderer({
   helpAsPlaceholder?: boolean;
   /** Vertical spacing (px) between fields. Inline so it never depends on Tailwind JIT. */
   gapPx?: number;
+  /** "glass" = frosted dark theme (story editor); "light" = default. */
+  variant?: "light" | "glass";
 }) {
   const safeFields = useMemo(() => (Array.isArray(fields) ? fields : []), [fields]);
 
@@ -414,6 +437,7 @@ export default function FieldRenderer({
             onChange={onChange}
             baseline={baseline ?? null}
             helpAsPlaceholder={helpAsPlaceholder}
+            variant={variant}
           />
         );
       })}
