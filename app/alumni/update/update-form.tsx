@@ -1494,7 +1494,10 @@ const byKeys = (keys: string[]) => {
 
 
 
-const renderFieldsOrNull = (keys: string[], opts?: { helpAsPlaceholder?: boolean }) => {
+const renderFieldsOrNull = (
+  keys: string[],
+  opts?: { helpAsPlaceholder?: boolean; gapClass?: string }
+) => {
   const fields = byKeys(keys);
   if (!fields.length) return null;
   return (
@@ -1504,6 +1507,7 @@ const renderFieldsOrNull = (keys: string[], opts?: { helpAsPlaceholder?: boolean
       fields={fields}
       baseline={liveBaseline as any}
       helpAsPlaceholder={opts?.helpAsPlaceholder}
+      gapClass={opts?.gapClass}
     />
   );
 };

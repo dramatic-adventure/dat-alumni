@@ -125,7 +125,10 @@ export default function StoryPanel(props: {
   restoreStory: (storyKey: string) => Promise<void> | void;
 
   // rendering helpers
-  renderFieldsOrNull: (keys: string[], opts?: { helpAsPlaceholder?: boolean }) => ReactNode;
+  renderFieldsOrNull: (
+    keys: string[],
+    opts?: { helpAsPlaceholder?: boolean; gapClass?: string }
+  ) => ReactNode;
   storyMapEditKeys: string[];
   manualFallback: ReactNode;
 }) {
@@ -595,18 +598,21 @@ export default function StoryPanel(props: {
       ) : (
         <>
           <Section title="Basics" open={openGroups.basics} onToggle={() => toggleGroup("basics")}>
-            <div className="flex flex-col gap-3">
-              {renderFieldsOrNull(["storyTitle"], { helpAsPlaceholder: true })}
+            <div className="flex flex-col gap-5">
+              {renderFieldsOrNull(["storyTitle"], { helpAsPlaceholder: true, gapClass: "gap-5" })}
               {programField}
               {countryField}
-              {renderFieldsOrNull(["storyYears", "storyLocationName"], { helpAsPlaceholder: true })}
+              {renderFieldsOrNull(["storyYears", "storyLocationName"], {
+                helpAsPlaceholder: true,
+                gapClass: "gap-5",
+              })}
             </div>
           </Section>
 
           <Section title="The Story" open={openGroups.story} onToggle={() => toggleGroup("story")}>
             {renderFieldsOrNull(
               ["storyShortStory", "storyQuote", "storyQuoteAttribution", "storyPartners"],
-              { helpAsPlaceholder: true }
+              { helpAsPlaceholder: true, gapClass: "gap-5" }
             )}
           </Section>
 
@@ -615,7 +621,10 @@ export default function StoryPanel(props: {
             open={openGroups.media}
             onToggle={() => toggleGroup("media")}
           >
-            {renderFieldsOrNull(["storyMediaUrl", "storyMoreInfoUrl"], { helpAsPlaceholder: true })}
+            {renderFieldsOrNull(["storyMediaUrl", "storyMoreInfoUrl"], {
+              helpAsPlaceholder: true,
+              gapClass: "gap-5",
+            })}
           </Section>
         </>
       )}
