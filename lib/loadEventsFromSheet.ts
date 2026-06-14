@@ -140,6 +140,35 @@ export async function loadEventsForAlumniId(
   };
 }
 
+/**
+ * Load all visible, non-expired upcoming events across all alumni.
+ * Used to synthesize Community Feed items when the Events tab is the canonical source.
+ * Silently returns [] if the tab doesn't exist or the sheet ID is unset.
+ */
+export async function loadAllUpcomingEvents(): Promise<EventRow[]> {
+  if (!SHEET_ID) return [];
+  const sheets = sheetsClient();
+  let values: string[][] = [];
+  try {
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: `${TAB}!A:${LAST_COL}`,
+      valueRenderOption: "UNFORMATTED_VALUE",
+    });
+    values = (res.data.values ?? []) as string[][];
+  } catch {
+    return [];
+  }
+  if (values.length < 2) return [];
+  const header = (values[0] ?? []).map((h) => String(h ?? "").trim());
+  const rows = values
+    .slice(1)
+    .map((r) => toEventRow(rowToObj(header, r)))
+    .filter((r) => r.eventId && r.alumniId && r.title.trim() && !r.hidden && !isEventExpired(r));
+  // Newest-first by createdTs so recently-added events surface higher in the feed.
+  return rows.sort((a, b) => (Date.parse(b.createdTs) || 0) - (Date.parse(a.createdTs) || 0));
+}
+
 /** Public helper: the soonest non-expired, non-hidden event for a profile (or null). */
 export async function loadNextUpcomingEvent(alumniId: string): Promise<EventRow | null> {
   const { events } = await loadEventsForAlumniId(alumniId);

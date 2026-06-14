@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { loadProfileChanges } from "@/lib/loadProfileChanges";
 import { loadProfileLiveMini } from "@/lib/loadProfileLiveMini";
 import { buildCommunityFeedItems } from "@/lib/communityFeed";
+import { loadAllUpcomingEvents } from "@/lib/loadEventsFromSheet";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,16 +50,32 @@ export async function GET(req: Request) {
       Math.max(1, Number.isFinite(limitRaw) ? limitRaw : 5)
     );
 
-    const [changesAll, liveById] = await Promise.all([
+    const [changesAll, liveById, eventRows] = await Promise.all([
       loadProfileChanges(days),
       loadProfileLiveMini(), // Record<alumniId, { name, slug, currentUpdateText, ... }>
+      loadAllUpcomingEvents(),
     ]);
 
     // ✅ Belt-and-suspenders: never allow undone rows to enter the feed pipeline.
     const changes = (changesAll || []).filter((c: any) => !isTrue(c?.isUndone));
 
+    // Synthesize ProfileChangeRow-shaped objects from the Events tab so that
+    // buildCommunityFeedItems can surface upcoming events alongside other activity.
+    // The Events tab is the canonical source; these rows use the same field name
+    // ("upcomingEventTitle") that the feed scorer already recognises (kind="event").
+    const syntheticEventRows = (eventRows || []).map((e) => ({
+      ts: e.createdTs || e.sortDate || e.date || "",
+      alumniId: e.alumniId,
+      field: "upcomingEventTitle",
+      before: "",
+      after: e.title,
+    }));
+
+    // Merge so the feed builder sees both profile-change history and Events tab entries.
+    const allChanges = [...changes, ...syntheticEventRows];
+
     // Broad items (whatever your builder decides)
-    const built = buildCommunityFeedItems(changes, liveById, limit);
+    const built = buildCommunityFeedItems(allChanges, liveById, limit);
 
     const items = Array.isArray(built) ? built : [];
 
