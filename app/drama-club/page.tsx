@@ -417,11 +417,11 @@ export default function DramaClubIndexPage() {
             alignItems: "stretch",
             gap: "0.85rem",
           }}>
-            <DATButtonLink href="/cause/drama-clubs" variant="yellow" size="md" fullWidth>
+            <DATButtonLink href="/donate?mode=drama-club&freq=monthly" variant="yellow" size="md" fullWidth>
               Sponsor a Drama Club
             </DATButtonLink>
-            <Link
-              href="/programs"
+            <a
+              href="https://www.dramaticadventure.com/get-involved"
               className="dc-link dc-link--card"
               style={{
                 fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
@@ -431,7 +431,7 @@ export default function DramaClubIndexPage() {
               }}
             >
               I&apos;m an artist → Explore programs connected to Drama Clubs
-            </Link>
+            </a>
           </div>
 
         </div>
@@ -661,7 +661,7 @@ export default function DramaClubIndexPage() {
           }}
         >
           {/* Custom DAT-style CTA (no DATButton / no variants) */}
-          <Link href="/cause/drama-clubs/" className="dc-cta">
+          <Link href="/donate?mode=drama-club&freq=monthly" className="dc-cta">
             Sponsor a Drama Club
           </Link>
 

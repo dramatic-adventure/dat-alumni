@@ -717,7 +717,7 @@ export default function TheatreIndexPage() {
                                 margin: 0,
                               }}
                             >
-                              Image coming this summer
+                              2025–present
                             </p>
                           </div>
                         )}

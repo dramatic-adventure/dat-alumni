@@ -251,26 +251,29 @@ export default function RippleEffectPage() {
             </div>
           </article>
 
-          {/* Placeholder cards */}
+          {/* Recurring patterns — the shapes the ripple keeps taking across the network. */}
+          <p style={{ margin: "0 0 1.5rem", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "clamp(0.9rem, 1.4vw, 1rem)", color: "rgba(242,242,242,0.7)", lineHeight: 1.65, maxWidth: 680 }}>
+            Beyond any single story, the same shapes keep recurring:
+          </p>
           <div className="re-placeholder-grid">
             {[
               {
-                label: "Future Story — Teaching Artist",
-                placeholder: "A DAT alum brings the devising process home to their high school drama classroom. Their students devise work about their own community. The methodology travels.",
+                label: "Teaching Artists",
+                body: "A DAT alum brings the devising process home to their high-school drama classroom. Their students devise work about their own community. The methodology travels.",
                 accent: "#6C00AF",
                 accentBg: "rgba(108,0,175,0.07)",
                 accentBorder: "rgba(108,0,175,0.3)",
               },
               {
-                label: "Future Story — New Company",
-                placeholder: "Two artists who met during a DAT program found a company together. The show they make five years later still carries traces of the room where they first devised something together.",
+                label: "New Companies",
+                body: "Two artists who meet during a DAT program found a company together. The show they make five years later still carries traces of the room where they first devised something.",
                 accent: "#FFCC00",
                 accentBg: "rgba(255,204,0,0.06)",
                 accentBorder: "rgba(255,204,0,0.28)",
               },
               {
-                label: "Future Story — Community Work",
-                placeholder: "An alum goes home and starts a drama club. Then another. Then a regional festival. The community has a new relationship with storytelling.",
+                label: "Community Roots",
+                body: "An alum goes home and starts a drama club. Then another. Then a regional festival. A community builds a new relationship with storytelling.",
                 accent: "#6C00AF",
                 accentBg: "rgba(108,0,175,0.07)",
                 accentBorder: "rgba(108,0,175,0.3)",
@@ -278,19 +281,16 @@ export default function RippleEffectPage() {
             ].map((ph) => (
               <article
                 key={ph.label}
-                style={{ background: ph.accentBg, border: `1.5px dashed ${ph.accentBorder}`, borderRadius: 18, padding: "1.75rem 1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}
+                style={{ background: ph.accentBg, border: `1.5px solid ${ph.accentBorder}`, borderRadius: 18, padding: "1.75rem 1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}
               >
                 <span style={{ display: "inline-block", alignSelf: "flex-start", padding: "0.22rem 0.7rem", borderRadius: 7, background: "rgba(255,255,255,0.05)", border: `1px solid ${ph.accentBorder}`, fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: ph.accent }}>
-                  Placeholder — Story to Be Curated
+                  A Recurring Pattern
                 </span>
-                <h3 style={{ margin: 0, fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "1rem", fontWeight: 700, color: "rgba(242,242,242,0.55)", lineHeight: 1.25 }}>
+                <h3 style={{ margin: 0, fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "1rem", fontWeight: 700, color: ph.accent, lineHeight: 1.25 }}>
                   {ph.label}
                 </h3>
-                <p style={{ margin: 0, fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.88rem", lineHeight: 1.7, color: "rgba(242,242,242,0.5)", fontStyle: "italic" }}>
-                  {ph.placeholder}
-                </p>
-                <p style={{ margin: "0.25rem 0 0", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.72rem", color: "rgba(242,242,242,0.32)", letterSpacing: "0.1em" }}>
-                  This card is a placeholder for alumni-contributed content.
+                <p style={{ margin: 0, fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.88rem", lineHeight: 1.7, color: "rgba(242,242,242,0.8)" }}>
+                  {ph.body}
                 </p>
               </article>
             ))}

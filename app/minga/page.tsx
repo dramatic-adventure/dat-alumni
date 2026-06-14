@@ -1041,9 +1041,9 @@ export default function MingaPage() {
             <Link href="/drama-club" className="minga-btn-yellow">
               Explore Drama Clubs
             </Link>
-            <Link href="/programs" className="minga-btn-outline-light">
+            <a href="https://www.dramaticadventure.com/get-involved" className="minga-btn-outline-light">
               Programs for Artists
-            </Link>
+            </a>
             <Link href="/partners" className="minga-btn-outline-light">
               All Partnership Pathways
             </Link>

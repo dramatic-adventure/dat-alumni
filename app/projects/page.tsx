@@ -777,7 +777,7 @@ export default function ProjectsIndexPage() {
                                 margin:        0,
                               }}
                             >
-                              Image coming soon
+                              2025–present
                             </p>
                           </div>
                         )}
