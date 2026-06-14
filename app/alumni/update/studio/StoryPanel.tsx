@@ -138,7 +138,7 @@ export default function StoryPanel(props: {
   // rendering helpers
   renderFieldsOrNull: (
     keys: string[],
-    opts?: { helpAsPlaceholder?: boolean; gapPx?: number }
+    opts?: { helpAsPlaceholder?: boolean; gapPx?: number; variant?: "light" | "glass" }
   ) => ReactNode;
   storyMapEditKeys: string[];
   manualFallback: ReactNode;
