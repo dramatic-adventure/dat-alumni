@@ -10,6 +10,15 @@ const CHECKOUT_DISPLAY_NAME = "Dramatic Adventure Theatre";
 const DEFAULT_CAMPAIGN = "sponsor-the-story";
 const DEFAULT_CURRENCY = "usd";
 
+// Server-side amount bounds (minor units). UI enforces >= $1; mirror it here so
+// invalid amounts can never reach Stripe. Max is Stripe's hard cap for USD.
+const MIN_AMOUNT_MINOR = 100; // $1.00
+const MAX_AMOUNT_MINOR = 99_999_999; // $999,999.99 (Stripe maximum)
+
+// All DAT campaigns are USD. Locking this prevents display/charge divergence
+// (e.g. zero-decimal currencies like JPY would charge 100x the displayed value).
+const ALLOWED_CURRENCIES = new Set(["usd"]);
+
 function jsonError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
@@ -17,8 +26,14 @@ function jsonError(message: string, status = 400) {
 function toAmountMinor(amount: unknown): number | null {
   if (typeof amount !== "number" || !Number.isFinite(amount)) return null;
   const cents = Math.round(amount * 100);
-  if (cents <= 0) return null;
+  if (cents < MIN_AMOUNT_MINOR || cents > MAX_AMOUNT_MINOR) return null;
   return cents;
+}
+
+// Light format check only — Stripe rejects malformed emails with an opaque 500
+// otherwise. Not meant to be exhaustive RFC validation.
+function isPlausibleEmail(s: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) && s.length <= 254;
 }
 
 function humanizeId(input: string) {
@@ -245,12 +260,18 @@ export async function POST(req: Request) {
   }
 
   const amountMinor = toAmountMinor(body?.amount);
-  if (!amountMinor) return jsonError("amount must be a positive number");
+  if (!amountMinor) {
+    return jsonError("amount must be between $1 and $999,999.99");
+  }
 
   const currency =
     typeof body?.currency === "string" && body.currency
       ? String(body.currency).toLowerCase()
       : DEFAULT_CURRENCY;
+
+  if (!ALLOWED_CURRENCIES.has(currency)) {
+    return jsonError(`Unsupported currency: ${currency}`);
+  }
 
   const mode = typeof body?.mode === "string" ? body.mode : null;
 
@@ -285,7 +306,11 @@ export async function POST(req: Request) {
   const donorKey =
     typeof body?.donorKey === "string" && body.donorKey ? body.donorKey : null;
 
-  const email = typeof body?.email === "string" && body.email ? body.email : null;
+  const emailRaw = typeof body?.email === "string" ? body.email.trim() : "";
+  if (emailRaw && !isPlausibleEmail(emailRaw)) {
+    return jsonError("Invalid email address.");
+  }
+  const email = emailRaw || null;
   const donorName = getString(body, "donorName") ?? getString(body, "name");
 
   const amountType: "tier" | "custom" = tierId && tierId !== "custom" ? "tier" : "custom";
@@ -411,37 +436,48 @@ export async function POST(req: Request) {
     },
   };
 
-  const session =
-    frequency === "one_time"
-      ? await stripe.checkout.sessions.create({
-          ...common,
-          mode: "payment",
+  let session: Stripe.Checkout.Session;
+  try {
+    session =
+      frequency === "one_time"
+        ? await stripe.checkout.sessions.create({
+            ...common,
+            mode: "payment",
 
-          // ✅ Allowed ONLY in payment mode
-          customer_creation: "always",
+            // ✅ Allowed ONLY in payment mode
+            customer_creation: "always",
 
-          submit_type: "donate",
-          line_items: [lineItem],
+            submit_type: "donate",
+            line_items: [lineItem],
 
-          payment_intent_data: {
-            metadata: datMeta,
-            description: checkoutContextLabel ?? undefined,
-          },
-        })
-      : await stripe.checkout.sessions.create({
-          ...common,
-          mode: "subscription",
+            payment_intent_data: {
+              metadata: datMeta,
+              description: checkoutContextLabel ?? undefined,
+            },
+          })
+        : await stripe.checkout.sessions.create({
+            ...common,
+            mode: "subscription",
 
-          // ✅ IMPORTANT: do NOT set customer_creation here (Stripe rejects it)
-          submit_type: "donate" as any,
-          line_items: [lineItem],
+            // ✅ IMPORTANT: do NOT set customer_creation here (Stripe rejects it)
+            submit_type: "donate" as any,
+            line_items: [lineItem],
 
-          // ✅ Put the metadata on the subscription too (durable across invoices)
-          subscription_data: {
-            metadata: datMeta,
-            description: checkoutContextLabel ?? undefined,
-          },
-        });
+            // ✅ Put the metadata on the subscription too (durable across invoices)
+            subscription_data: {
+              metadata: datMeta,
+              description: checkoutContextLabel ?? undefined,
+            },
+          });
+  } catch (err) {
+    // Don't leak Stripe internals to the client; log server-side only.
+    // eslint-disable-next-line no-console
+    console.error(
+      "[stripe/checkout] session create failed:",
+      err instanceof Error ? err.message : err
+    );
+    return jsonError("Unable to start checkout. Please try again.", 502);
+  }
 
   return NextResponse.json({
     id: session.id,

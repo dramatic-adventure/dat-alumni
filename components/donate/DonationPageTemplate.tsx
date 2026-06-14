@@ -1086,6 +1086,20 @@ const [allCauses, setAllCauses] = useState(() => !initialCause.category);
   const [receiptError, setReceiptError] = useState<string | null>(null);
   const [isReceiptLoading, setIsReceiptLoading] = useState(false);
 
+  // ✅ Only claim a completed donation once Stripe actually confirms it.
+  // (The URL param alone is not proof of payment.)
+  const receiptConfirmed = useMemo(() => {
+    if (!receipt) return false;
+    if (receipt.mode === "subscription") {
+      return (
+        receipt.status === "active" ||
+        receipt.status === "trialing" ||
+        receipt.paymentStatus === "paid"
+      );
+    }
+    return receipt.paymentStatus === "paid";
+  }, [receipt]);
+
   const fetchReceipt = useCallback(async () => {
     if (!returnSessionId) return;
     setIsReceiptLoading(true);
@@ -1999,7 +2013,9 @@ const ctaDisabled =
                   <div className="donateReturnTopbar">
                     <div className="donateReturnKicker font-sans">
                       {checkoutKind === "success"
-                        ? "DONATION COMPLETE"
+                        ? receiptConfirmed
+                          ? "DONATION COMPLETE"
+                          : "CHECKOUT COMPLETE"
                         : "CHECKOUT CANCELED"}
                     </div>
 
@@ -2023,7 +2039,8 @@ const ctaDisabled =
                             : "Thank you."}
                         </h2>
 
-                        <p className="donateReturnSub font-sans">
+                        {/* div, not p: this block contains a nested paragraph (invalid inside <p>, breaks hydration) */}
+                        <div className="donateReturnSub font-sans">
                           {receipt?.mode === "subscription" ? (
   <p className="donateReceiptHelp font-sans">
     Need to change or cancel your monthly sponsorship? Email{" "}
@@ -2036,14 +2053,16 @@ const ctaDisabled =
 
                           {receipt
                             ? receipt.mode === "subscription"
-                              ? <span className="donateSubActive">Your subscription is active.</span>
+                              ? receiptConfirmed
+                                ? <span className="donateSubActive">Your subscription is active.</span>
+                                : "Your monthly gift is being set up."
                               : receipt.paymentStatus === "paid"
                               ? "Your donation is confirmed."
                               : "Your donation is processing."
                             : receiptError
                             ? "We couldn’t load the receipt details yet — your gift may still be confirmed in Stripe."
                             : "Loading your receipt…"}
-                        </p>
+                        </div>
 
                         <div className="donateReturnRefRow">
                           <div className="donateReturnRefLabel font-sans">

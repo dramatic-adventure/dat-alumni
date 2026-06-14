@@ -420,7 +420,13 @@ export async function POST(req: Request) {
       switch (canonicalType) {
         /**
          * ONE-TIME + SUBSCRIPTION CHECKOUT COMPLETION
+         *
+         * ✅ Also handle async_payment_succeeded: delayed payment methods
+         * (e.g. ACH) emit checkout.session.completed with payment_status
+         * "unpaid" (skipped below), then this event once funds clear.
+         * Same Checkout Session payload, so the same handler applies.
          */
+        case "checkout.session.async_payment_succeeded":
         case "checkout.session.completed": {
           const session = event.data.object as Stripe.Checkout.Session;
           const meta = md(session);
