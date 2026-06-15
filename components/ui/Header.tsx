@@ -32,11 +32,12 @@ const NAV_ITEMS = [
     label: 'ABOUT',
     submenu: [
       { label: 'Our Mission & Ethos', href: 'https://www.dramaticadventure.com/who-we-are', external: true },
-      { label: 'Community Impact', href: '/ripple-effect' },
       { label: 'Meet the Team', href: 'https://www.dramaticadventure.com/company', external: true },
       { label: 'Partners & Supporters', href: '/partners' },
       { label: 'Financials', href: 'https://app.candid.org/profile/9883629/dramatic-adventure-theatre-inc-80-0178507', external: true },
       { label: 'Contact', href: 'https://www.dramaticadventure.com/contact', external: true },
+      // hidden 2026-06: /ripple-effect currently only covers the "ripple effect", not a full community-impact section — restore when the page is broader
+      { label: 'Community Impact', href: '/ripple-effect', hidden: true },
       // hidden 2026-06: duplicate of "Our Mission & Ethos" (both -> who-we-are); restore if a dedicated history page is published
       { label: 'Timeline & History', href: 'https://www.dramaticadventure.com/who-we-are', external: true, hidden: true },
     ],
