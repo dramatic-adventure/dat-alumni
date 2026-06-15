@@ -12,19 +12,17 @@ import {
   SEASON_COUNT,
   ALUMNI_COUNT,
 } from "@/lib/datStats";
-import StatsStrip from "@/components/shared/StatsStrip";
 import PhotoStrip from "@/components/shared/PhotoStrip";
 import { dramaClubs } from "@/lib/dramaClubMap";
 import { productionMap, getSortYear } from "@/lib/productionMap";
+import { productionDetailsMap } from "@/lib/productionDetailsMap";
 import {
   upcomingEvents,
-  categoryMeta,
-  getEventImage,
-  shortMonth,
-  dayOfMonth,
-  formatDateRange,
-  isCommunityShowcase,
+  isElapsed,
+  eventById,
+  canonicalEventPath,
 } from "@/lib/events";
+import EventPoster, { DateChipStyles } from "./events/EventPoster";
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 
@@ -104,11 +102,78 @@ function StoryMedia({ url, title }: { url: string; title: string }) {
 /* ─── Home page stats ───────────────────────────────────────────────── */
 
 const HOME_STATS = [
-  { value: SEASON_COUNT,   label: "Seasons" },
-  { value: COUNTRY_COUNT,  label: "Countries" },
-  { value: CLUB_COUNT,     label: "Drama Clubs" },
-  { value: ALUMNI_COUNT,   label: "Alumni Artists" },
+  { value: SEASON_COUNT,  label: "Seasons",        sub: "2006–present" },
+  { value: COUNTRY_COUNT, label: "Countries",      sub: "where the work was born" },
+  { value: CLUB_COUNT,    label: "Drama Clubs",    sub: "community-rooted ensembles" },
+  { value: ALUMNI_COUNT,  label: "Alumni Artists", sub: "directors, actors & makers" },
 ];
+
+const ARCHIVE_FALLBACK_HEADLINE = "Some stories keep echoing long after the final bow.";
+
+/* Productions that must never surface in "From the Archives" (by slug or title) */
+const ARCHIVE_EXCLUDE_SLUGS = new Set<string>(["ubinadamu"]);
+const ARCHIVE_EXCLUDE_TITLES = new Set<string>(["ubinadamu"]);
+
+/* ─── Home mailing-list form (green band, source: "home") ───────────────── */
+
+function HomeMailingListForm() {
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [honey, setHoney] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setStatus("loading");
+    try {
+      const res = await fetch("/api/mailing-list", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name, source: "home", website: honey }),
+      });
+      if (!res.ok) throw new Error("submit-failed");
+      setStatus("success");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  if (status === "success") {
+    return (
+      <div className="eh-ml-success">
+        <span className="eh-ml-check">✓</span>
+        <div>
+          <p className="eh-ml-success-title">You&apos;re on the list.</p>
+          <p className="eh-ml-success-sub">We&apos;ll be in touch when something exciting is happening.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form className="eh-ml-form" onSubmit={handleSubmit} noValidate>
+      <input aria-hidden="true" tabIndex={-1} name="website" value={honey}
+        onChange={(e) => setHoney(e.target.value)} style={{ display: "none" }} autoComplete="off" />
+      <div className="eh-ml-inputs">
+        <input type="text" placeholder="Your name (optional)" value={name}
+          onChange={(e) => setName(e.target.value)} className="eh-ml-input" autoComplete="name" />
+        <input type="email" required placeholder="your@email.com" value={email}
+          onChange={(e) => setEmail(e.target.value)} className="eh-ml-input eh-ml-input--email" autoComplete="email" />
+      </div>
+      <button type="submit" className="eh-ml-btn" disabled={status === "loading"}>
+        {status === "loading" ? "Signing up…" : "Join the List"}
+      </button>
+      {status === "error" && (
+        <p className="eh-ml-error">
+          Something went wrong — email us at{" "}
+          <a href="mailto:hello@dramaticadventure.com">hello@dramaticadventure.com</a>
+        </p>
+      )}
+      <p className="eh-ml-fine">No spam, ever. Unsubscribe any time by replying to any email.</p>
+    </form>
+  );
+}
 
 /* ─── Page ──────────────────────────────────────────────────────────── */
 
@@ -124,41 +189,81 @@ export default function Page() {
       .then((r) => r.json())
       .then((data) => {
         if (data?.ok && Array.isArray(data.stories)) {
-          setStories(data.stories.slice(0, 3));
+          setStories(data.stories.slice(0, 4));
         }
       })
       .catch(() => {})
       .finally(() => setStoriesLoading(false));
   }, []);
 
-  /* ── Featured drama club (rotates daily) ─────────── */
-  const featuredClub = useMemo(() => {
-    const active = dramaClubs.filter(
-      (c) =>
-        (c.status === "ongoing" || c.status === "new") &&
-        (c.heroImage || c.cardImage)
-    );
-    const pool = active.length > 0 ? active : dramaClubs;
-    const dayIndex = Math.floor(Date.now() / 86_400_000);
-    return pool[dayIndex % pool.length];
-  }, []);
+  /* ── Live (date-filtered) upcoming events ─────────── */
+  const liveEvents = useMemo(
+    () => upcomingEvents.filter((e) => !isElapsed(e)),
+    []
+  );
 
-  /* ── Featured production — prefer upcoming, fall back to most recent ── */
-  const { featuredProduction, isUpcoming } = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const all = Object.values(productionMap);
+  const openEvent = (id: string) => {
+    const ev = eventById(id);
+    if (ev) router.push(canonicalEventPath(ev));
+  };
 
-    const upcoming = all
-      .filter((p) => getSortYear(p) >= currentYear)
-      .sort((a, b) => getSortYear(a) - getSortYear(b));
+  /* ── Drama club + archive pools ───────────────────── */
+  const clubPool = useMemo(
+    () => dramaClubs.filter((c) => c.heroImage || c.cardImage),
+    []
+  );
+  const archivePool = useMemo(
+    () =>
+      Object.values(productionMap).filter(
+        (p) =>
+          p.posterUrl &&
+          getSortYear(p) < new Date().getFullYear() &&
+          !ARCHIVE_EXCLUDE_SLUGS.has(p.slug?.toLowerCase()) &&
+          !ARCHIVE_EXCLUDE_TITLES.has(p.title?.trim().toLowerCase())
+      ),
+    []
+  );
 
-    if (upcoming.length > 0) {
-      return { featuredProduction: upcoming[0], isUpcoming: true };
+  /* ── Randomized indices (client-only — set after mount) ── */
+  const [clubIdx, setClubIdx] = useState(0);
+  const [archIdx, setArchIdx] = useState(0);
+
+  useEffect(() => {
+    try {
+      const visit =
+        (parseInt(sessionStorage.getItem("dat_home_visit") || "0", 10) || 0) + 1;
+      sessionStorage.setItem("dat_home_visit", String(visit));
+
+      // Drama club — re-rolls every OTHER visit
+      if (clubPool.length) {
+        let cIdx = parseInt(sessionStorage.getItem("dat_home_club") ?? "", 10);
+        if (isNaN(cIdx) || visit % 2 === 1) {
+          cIdx = Math.floor(Math.random() * clubPool.length);
+          sessionStorage.setItem("dat_home_club", String(cIdx));
+        }
+        setClubIdx(cIdx % clubPool.length);
+      }
+
+      // Archive — re-rolls every 3rd visit (different cadence)
+      if (archivePool.length) {
+        let aIdx = parseInt(sessionStorage.getItem("dat_home_arch") ?? "", 10);
+        if (isNaN(aIdx) || visit % 3 === 1) {
+          aIdx = Math.floor(Math.random() * archivePool.length);
+          sessionStorage.setItem("dat_home_arch", String(aIdx));
+        }
+        setArchIdx(aIdx % archivePool.length);
+      }
+    } catch {
+      /* sessionStorage unavailable — keep deterministic defaults */
     }
+  }, [clubPool.length, archivePool.length]);
 
-    const past = [...all].sort((a, b) => getSortYear(b) - getSortYear(a));
-    return { featuredProduction: past[0] ?? null, isUpcoming: false };
-  }, []);
+  const featuredClub = clubPool.length
+    ? clubPool[clubIdx % clubPool.length]
+    : null;
+  const archiveProd = archivePool.length
+    ? archivePool[archIdx % archivePool.length]
+    : null;
 
   /* ── Community accordion data ─────────────────────── */
   const cards: CardSpec[] = useMemo(
@@ -248,13 +353,6 @@ export default function Page() {
     requestAnimationFrame(measureOpen);
   }, [openIndex, measureOpen]);
 
-  /* ── Derived production values ────────────────────── */
-  const productionUrl = featuredProduction
-    ? featuredProduction.url || `/story/${featuredProduction.slug}`
-    : "/story-map";
-  const prodCtaLabel = isUpcoming ? "Get Your Seat" : "Explore the Story";
-  const prodSectionLabel = isUpcoming ? "UPCOMING PRODUCTION" : "RECENT PRODUCTION";
-
   /* ── Render ───────────────────────────────────────── */
   return (
     <main style={{ background: "transparent" }}>
@@ -264,11 +362,11 @@ export default function Page() {
       ════════════════════════════════════════════════ */}
       <div className="hp-hero">
         <Image
-          src="/images/alumni-hero.jpg"
-          alt="DAT artists performing in the field"
+          src="/images/agwow-flying.webp"
+          alt="A DAT performer in flight with outstretched woven wings on a darkened stage"
           fill
           priority
-          style={{ objectFit: "cover", objectPosition: "center 30%" }}
+          style={{ objectFit: "cover", objectPosition: "center 35%" }}
         />
         <div className="hp-hero-overlay" aria-hidden="true" />
         <div className="hp-hero-content-outer">
@@ -349,414 +447,306 @@ export default function Page() {
       </section>
 
       {/* ════════════════════════════════════════════════
-          CTA — three doors, editorial cards with hover reveal
+          FROM THE ARCHIVES — random past production
       ════════════════════════════════════════════════ */}
-      <section className="hp-cta-section" aria-label="Find your path">
-        <div className="hp-cta-inner">
+      {archiveProd && (
+        <section className="hp-arch-section" aria-labelledby="hp-arch-heading">
+          <div className="hp-arch-inner">
+            <div className="hp-field-header">
+              <p className="hp-eyebrow-label hp-eyebrow-gold-muted">From the Archives</p>
+              <h2 id="hp-arch-heading" className="hp-arch-section-title">
+                {productionDetailsMap[archiveProd.slug]?.subtitle ||
+                  ARCHIVE_FALLBACK_HEADLINE}
+              </h2>
+            </div>
+            <div className="hp-arch-grid">
+              {archiveProd.posterUrl && (
+                <button
+                  type="button"
+                  className="hp-arch-poster-wrap"
+                  onClick={() =>
+                    router.push(archiveProd.url || `/theatre/${archiveProd.slug}`)
+                  }
+                  aria-label={`Explore ${archiveProd.title}`}
+                >
+                  <img
+                    src={archiveProd.posterUrl}
+                    alt={`${archiveProd.title} poster`}
+                    className="hp-arch-poster"
+                  />
+                </button>
+              )}
+              <div className="hp-arch-text">
+                <h3 className="hp-arch-headline">{archiveProd.title}</h3>
+                <p className="hp-arch-meta">
+                  {[
+                    archiveProd.location,
+                    archiveProd.season ? `Season ${archiveProd.season}` : null,
+                    archiveProd.festival || archiveProd.venue || null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+                <div className="hp-arch-actions">
+                  <button
+                    className="hp-arch-btn"
+                    onClick={() =>
+                      router.push(archiveProd.url || `/theatre/${archiveProd.slug}`)
+                    }
+                  >
+                    Explore the Story
+                  </button>
+                  <Link href="/theatre" className="hp-arch-alt-link">
+                    Full archive →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
-          <p className="hp-eyebrow-label hp-eyebrow-ink hp-cta-intro-label">Find Your Path</p>
+      {/* ════════════════════════════════════════════════
+          WHAT'S ON — compact editorial preview (links to /events)
+      ════════════════════════════════════════════════ */}
+      {liveEvents.length > 0 && (() => {
+        const featuredEv = liveEvents.find((e) => e.featured) ?? liveEvents[0];
+        const panelEvents = [
+          featuredEv,
+          ...liveEvents.filter((e) => e.id !== featuredEv.id),
+        ].slice(0, 5);
+        return (
+          <section className="hp-whatson-section" aria-labelledby="hp-whatson-heading">
+            <DateChipStyles />
+            <div className="hp-whatson-inner">
+              <div className="hp-whatson-header">
+                <div>
+                  <p className="hp-eyebrow-label hp-eyebrow-gold-muted">Live &amp; Coming Up</p>
+                  <h2 id="hp-whatson-heading" className="hp-whatson-title">What&apos;s On</h2>
+                </div>
+              </div>
 
-          <div className="hp-cta-wrapper">
+              <div className="hp-whatson-panels">
+                {panelEvents.map((e) => (
+                  <div key={e.id} className="hp-whatson-panel">
+                    <EventPoster variant="card" event={e} onOpen={openEvent} />
+                  </div>
+                ))}
+              </div>
 
-            {/* ── Artists ── */}
-            <div className="hp-cta-card hp-cta-card--pink">
+              <div className="hp-whatson-gallery-foot">
+                <Link href="/events" className="hp-whatson-viewall">View full season →</Link>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* ════════════════════════════════════════════════
+          FROM THE FIELD — editorial live stories
+      ════════════════════════════════════════════════ */}
+      {(storiesLoading || stories.length > 0) && (
+        <section className="hp-field-section" aria-labelledby="hp-field-heading">
+          <div className="hp-field-inner">
+            <div className="hp-field-header">
+              <p className="hp-eyebrow-label hp-eyebrow-fieldink">From the Field</p>
+              <h2 id="hp-field-heading" className="hp-field-title">
+                Stories that started somewhere — and didn&apos;t stop there.
+              </h2>
+            </div>
+
+            {storiesLoading && (
+              <div className="hp-field-grid">
+                <div className="hp-skeleton-card" style={{ minHeight: 420 }} />
+                <div className="hp-field-list">
+                  <div className="hp-skeleton-card" style={{ minHeight: 80 }} />
+                  <div className="hp-skeleton-card" style={{ minHeight: 80 }} />
+                  <div className="hp-skeleton-card" style={{ minHeight: 80 }} />
+                </div>
+              </div>
+            )}
+
+            {!storiesLoading && stories.length > 0 && (() => {
+              const s = stories[0];
+              const loc = [s["Location Name"], s.Country].filter(Boolean).join(" · ");
+              const excerpt = s["Short Story"];
+              const more = stories.slice(1, 5);
+              return (
+                <>
+                  {/* Newest story — editorial dispatch: photo beside excerpt + CTA */}
+                  <div className="hp-dispatch">
+                    <Link href={`/story/${s.slug}`} className="hp-dispatch-media" aria-label={s.Title}>
+                      <StoryMedia url={s["Image URL"]} title={s.Title} />
+                    </Link>
+                    <div className="hp-dispatch-body">
+                      {loc && <span className="hp-dispatch-loc">{loc}</span>}
+                      <h3 className="hp-dispatch-title">{s.Title}</h3>
+                      {excerpt && <p className="hp-dispatch-excerpt">{excerpt}</p>}
+                      {s.Author && (
+                        <p className="hp-dispatch-author">
+                          by{" "}
+                          {s.authorSlug ? (
+                            <Link href={`/alumni/${s.authorSlug}`} className="hp-dispatch-author-link">
+                              {s.Author}
+                            </Link>
+                          ) : (
+                            s.Author
+                          )}
+                        </p>
+                      )}
+                      <Link href={`/story/${s.slug}`} className="hp-dispatch-cta">
+                        Read the story →
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* More dispatches — compact thumbnail row of the remaining stories */}
+                  {more.length > 0 && (
+                    <div className="hp-dispatch-more">
+                      <div className="hp-dispatch-more-head">
+                        <span className="hp-dispatch-more-label">More Dispatches</span>
+                        <Link href="/story-map" className="hp-dispatch-more-all">
+                          Explore all stories →
+                        </Link>
+                      </div>
+                      <div className="hp-dispatch-more-grid">
+                        {more.map((m) => (
+                          <Link key={m.slug} href={`/story/${m.slug}`} className="hp-dispatch-thumb">
+                            <div className="hp-dispatch-thumb-img">
+                              <StoryMedia url={m["Image URL"]} title={m.Title} />
+                            </div>
+                            <span className="hp-dispatch-thumb-loc">
+                              {[m["Location Name"], m.Country].filter(Boolean).join(" · ")}
+                            </span>
+                            <span className="hp-dispatch-thumb-title">{m.Title}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        </section>
+      )}
+
+      {/* ════════════════════════════════════════════════
+          STEP IN — engage primary (kraft) + Community accordion
+      ════════════════════════════════════════════════ */}
+      <section className="hp-engage-section" aria-labelledby="hp-engage-heading">
+        <div className="hp-engage-inner">
+
+          {/* Stat bar — mirrors /theatre, anchored to the Step In section */}
+          <div className="hp-statbar">
+            <div className="hp-statbar-grid">
+              {HOME_STATS.map((s) => (
+                <div key={s.label} className="hp-statbar-cell">
+                  <div className="hp-statbar-num">{s.value}</div>
+                  <div className="hp-statbar-label">{s.label}</div>
+                  <div className="hp-statbar-sub">{s.sub}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="hp-engage-header">
+            <p className="hp-eyebrow-label hp-eyebrow-ink">Step In</p>
+            <h2 id="hp-engage-heading" className="hp-engage-title">Your story starts here.</h2>
+          </div>
+
+          <div className="hp-engage-grid">
+
+            {/* Artists — permanently largest */}
+            <div className="hp-engage-primary hp-engage-card">
               <div
-                className="hp-cta-card-bg"
+                className="hp-engage-card-bg"
                 style={{ backgroundImage: "url('/images/performing-zanzibar.jpg')" }}
                 aria-hidden="true"
               />
-              <div className="hp-cta-card-overlay" aria-hidden="true" />
-              <div className="hp-cta-card-content">
-                <div className="hp-cta-text-group">
-                  <p className="hp-cta-card-label">FOR ARTISTS</p>
-                  <h3 className="hp-cta-card-h3">Take the Stage</h3>
-                  <p className="hp-cta-card-p">
-                    Join residencies, expeditions, and workshops that spark meaningful new work — onstage and beyond.
-                  </p>
-                </div>
+              <div className="hp-engage-card-scrim" aria-hidden="true" />
+              <div className="hp-engage-primary-body">
+                <span className="hp-engage-eyebrow hp-engage-eyebrow--gold">For artists &amp; students</span>
+                <h3 className="hp-engage-primary-title">Take the Stage</h3>
+                <p className="hp-engage-primary-p">
+                  Devise, teach, and perform theatre that matters — through residencies and
+                  expeditions in Ecuador, Tanzania, Slovakia, and beyond. Credit-bearing options available.
+                </p>
                 <a
                   href="https://dramaticadventure.com/travel-opportunities"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hp-cta-card-btn hp-cta-card-btn--pink"
+                  className="hp-engage-primary-btn"
                 >
-                  Join the Adventure
+                  Explore Programs
                 </a>
               </div>
             </div>
 
-            {/* ── Audiences ── */}
-            <div className="hp-cta-card hp-cta-card--teal">
-              <div
-                className="hp-cta-card-bg"
-                style={{ backgroundImage: "url('/images/Andean_Mask_Work.jpg')" }}
-                aria-hidden="true"
-              />
-              <div className="hp-cta-card-overlay" aria-hidden="true" />
-              <div className="hp-cta-card-content">
-                <div className="hp-cta-text-group">
-                  <p className="hp-cta-card-label">FOR AUDIENCES</p>
-                  <h3 className="hp-cta-card-h3">Follow the Journey</h3>
-                  <p className="hp-cta-card-p">
-                    Explore a season of bold journeys, deep listening, unique collaborations, and daring creativity.
-                  </p>
-                </div>
-                <button
-                  className="hp-cta-card-btn hp-cta-card-btn--teal"
-                  onClick={() => router.push("/events")}
-                >
-                  Experience the Work
-                </button>
-              </div>
-            </div>
+            {/* Secondary column */}
+            <div className="hp-engage-right">
 
-            {/* ── Supporters ── */}
-            <div className="hp-cta-card hp-cta-card--gold">
-              <div
-                className="hp-cta-card-bg"
-                style={{ backgroundImage: "url('/images/teaching-andes.jpg')" }}
-                aria-hidden="true"
-              />
-              <div className="hp-cta-card-overlay" aria-hidden="true" />
-              <div className="hp-cta-card-content">
-                <div className="hp-cta-text-group">
-                  <p className="hp-cta-card-label">FOR SUPPORTERS &amp; FUNDERS</p>
-                  <h3 className="hp-cta-card-h3">Make Magic Possible</h3>
-                  <p className="hp-cta-card-p">
-                    Support responsive, community-powered theatre — where story is needed most.
-                  </p>
-                </div>
-                <button
-                  className="hp-cta-card-btn hp-cta-card-btn--gold"
-                  onClick={() => router.push("/donate")}
-                >
-                  Sponsor the Story
-                </button>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* ════════════════════════════════════════════════
-          STATS BAND
-      ════════════════════════════════════════════════ */}
-      <StatsStrip
-        stats={HOME_STATS}
-        background="#241123"
-        accentColor="#FFCC00"
-        textColor="rgba(246,228,193,0.62)"
-        boxed={false}
-        columns={4}
-        maxWidth="1200px"
-        id="hp-stats"
-      />
-
-      {/* ════════════════════════════════════════════════
-          LIVE STORY STRIP — kraft background, editorial cards
-      ════════════════════════════════════════════════ */}
-      <section
-        className="hp-stories-section"
-        aria-labelledby="hp-stories-heading"
-        style={{ background: "transparent" }}
-      >
-        <div className="hp-stories-inner">
-
-          <div className="hp-stories-header">
-            <p id="hp-stories-heading" className="hp-eyebrow-label hp-eyebrow-ink">
-              From the Field
-            </p>
-            <Link href="/story-map" className="hp-see-all-link">
-              Explore all stories →
-            </Link>
-          </div>
-
-          {/* Loading skeletons */}
-          {storiesLoading && (
-            <div className="hp-stories-grid">
-              <div className="hp-skeleton-card" />
-              <div className="hp-skeleton-card" />
-              <div className="hp-skeleton-card" />
-            </div>
-          )}
-
-          {/* Story cards */}
-          {!storiesLoading && stories.length > 0 && (
-            <div className="hp-stories-grid">
-              {stories.map((s) => (
-                <Link
-                  key={s.slug}
-                  href={`/story/${s.slug}`}
-                  className="hp-story-card"
-                >
-                  <div className="hp-story-img-shell">
-                    <StoryMedia url={s["Image URL"]} title={s.Title} />
-                  </div>
-                  <div className="hp-story-body">
-                    <p className="hp-story-location">
-                      {[s["Location Name"], s.Country].filter(Boolean).join(" · ")}
+              {/* Audiences */}
+              <div className="hp-engage-sec hp-engage-card">
+                <div
+                  className="hp-engage-card-bg"
+                  style={{ backgroundImage: "url('/images/Andean_Mask_Work.jpg')" }}
+                  aria-hidden="true"
+                />
+                <div className="hp-engage-card-scrim" aria-hidden="true" />
+                <div className="hp-engage-sec-body">
+                  <span className="hp-engage-eyebrow hp-engage-eyebrow--teal">For audiences</span>
+                  <h4 className="hp-engage-sec-title">Follow the Journey</h4>
+                  <p className="hp-engage-sec-teaser">Catch a season of bold journeys.</p>
+                  <div className="hp-engage-sec-more">
+                    <p className="hp-engage-sec-more-p">
+                      Deep listening, unique collaborations, and daring creativity — on tour and at home.
                     </p>
-                    <h3 className="hp-story-title">{s.Title}</h3>
-                    {s.Author && (
-                      <p className="hp-story-author">by {s.Author}</p>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-
-          {/* Empty state */}
-          {!storiesLoading && stories.length === 0 && (
-            <p className="hp-stories-empty">
-              Stories are live on the{" "}
-              <Link href="/story-map" className="hp-inline-link">Story Map</Link>.
-            </p>
-          )}
-
-        </div>
-      </section>
-
-      {/* ════════════════════════════════════════════════
-          DRAMA CLUB SPOTLIGHT — teal, community-rooted
-      ════════════════════════════════════════════════ */}
-      {featuredClub && (
-        <section
-          className="hp-club-section"
-          aria-labelledby="hp-club-heading"
-          style={{ background: "#2493A9" }}
-        >
-          <div className="hp-club-inner">
-
-            <div className="hp-club-text">
-              <p className="hp-eyebrow-label hp-eyebrow-muted">DRAMA CLUB SPOTLIGHT</p>
-              <h2 id="hp-club-heading" className="hp-club-name">
-                {featuredClub.name}
-              </h2>
-              <p className="hp-club-location">
-                {[featuredClub.city, featuredClub.country].filter(Boolean).join(", ")}
-              </p>
-              <p className="hp-club-desc">
-                {featuredClub.shortBlurb
-                  ? featuredClub.shortBlurb
-                  : typeof featuredClub.description === "string"
-                  ? featuredClub.description.length > 240
-                    ? featuredClub.description.slice(0, 240) + "…"
-                    : featuredClub.description
-                  : ""}
-              </p>
-              <div className="hp-club-actions">
-                <button
-                  className="hp-club-btn"
-                  onClick={() => router.push(`/drama-club/${featuredClub.slug}`)}
-                >
-                  Meet the Club
-                </button>
-                <Link href="/drama-club" className="hp-club-alt-link">
-                  See all clubs →
-                </Link>
-              </div>
-            </div>
-
-            {(featuredClub.heroImage || featuredClub.cardImage) && (
-              <div className="hp-club-img-wrap">
-                <img
-                  src={(featuredClub.heroImage || featuredClub.cardImage) as string}
-                  alt={featuredClub.name}
-                  className="hp-club-img"
-                />
-              </div>
-            )}
-
-          </div>
-        </section>
-      )}
-
-      {/* ════════════════════════════════════════════════
-          PRODUCTION — marquee treatment, theatrical
-      ════════════════════════════════════════════════ */}
-      {featuredProduction && (
-        <section className="hp-prod-section" aria-labelledby="hp-prod-heading">
-          {/* Archive image texture */}
-          <div className="hp-prod-stage-texture" aria-hidden="true" />
-          {/* Gradient vignette over texture */}
-          <div className="hp-prod-stage-vignette" aria-hidden="true" />
-
-          <div className="hp-prod-inner">
-
-            {featuredProduction.posterUrl && (
-              <div className="hp-prod-poster-wrap">
-                <img
-                  src={featuredProduction.posterUrl}
-                  alt={`${featuredProduction.title} poster`}
-                  className="hp-prod-poster"
-                />
-                <div className="hp-prod-poster-glow" aria-hidden="true" />
-              </div>
-            )}
-
-            <div className="hp-prod-text">
-              <p className="hp-eyebrow-label hp-eyebrow-gold-muted">{prodSectionLabel}</p>
-              <h2 id="hp-prod-heading" className="hp-prod-title">
-                {featuredProduction.title}
-              </h2>
-              <div className="hp-prod-meta-block">
-                <p className="hp-prod-meta">
-                  {featuredProduction.location}
-                  {featuredProduction.year ? ` · Season ${featuredProduction.season}` : ""}
-                </p>
-                {featuredProduction.venue && (
-                  <p className="hp-prod-sub">{featuredProduction.venue}</p>
-                )}
-                {featuredProduction.festival && (
-                  <p className="hp-prod-sub hp-prod-italic">{featuredProduction.festival}</p>
-                )}
-              </div>
-              <div className="hp-prod-actions">
-                <button
-                  className="hp-prod-btn"
-                  onClick={() => router.push(productionUrl)}
-                >
-                  {prodCtaLabel}
-                </button>
-                <Link href="/story-map" className="hp-prod-alt-link">
-                  Full archive →
-                </Link>
-              </div>
-            </div>
-
-          </div>
-        </section>
-      )}
-
-      {/* ════════════════════════════════════════════════
-          EVENTS — upcoming events strip
-      ════════════════════════════════════════════════ */}
-      {upcomingEvents.length > 0 && (
-        <section className="hp-events-section" aria-labelledby="hp-events-heading">
-          <div className="hp-events-stage-texture" aria-hidden="true" />
-          <div className="hp-events-inner">
-
-            <div className="hp-events-header">
-              <div>
-                <p className="hp-eyebrow-label hp-eyebrow-gold-muted">Live &amp; Coming Up</p>
-                <h2 id="hp-events-heading" className="hp-events-title">What&apos;s On</h2>
-              </div>
-              <Link href="/events" className="hp-events-see-all">
-                All Events →
-              </Link>
-            </div>
-
-            <div className="hp-events-grid">
-              {upcomingEvents.slice(0, 2).map((ev) => {
-                const meta = categoryMeta[ev.category];
-                const img = getEventImage(ev);
-                const isShowcase = isCommunityShowcase(ev);
-                // Community showcases: link to the drama club page (invite button lives there)
-                const cardHref = isShowcase && ev.dramaClub
-                  ? `/drama-club/${ev.dramaClub}`
-                  : meta.href;
-                const hasInvite = isShowcase && !!ev.contactEmail;
-                return (
-                  <div key={ev.id} className="hp-event-card-wrap">
-                    <Link
-                      href={cardHref}
-                      className="hp-event-card"
-                      aria-label={`${ev.title} — ${ev.city}`}
+                    <button
+                      className="hp-engage-sec-btn hp-engage-sec-btn--teal"
+                      type="button"
+                      onClick={() => router.push("/events")}
                     >
-                      <div
-                        className="hp-event-card-img"
-                        style={img ? { backgroundImage: `url('${img}')` } : undefined}
-                      />
-                      <div className="hp-event-card-overlay" />
-                      <div className="hp-event-card-body">
-                        <div
-                          className="hp-event-date-badge"
-                          style={{ background: meta.color }}
-                        >
-                          <span className="hp-event-badge-day">{dayOfMonth(ev.date)}</span>
-                          <span className="hp-event-badge-mo">{shortMonth(ev.date)}</span>
-                        </div>
-                        <div className="hp-event-card-text">
-                          <span
-                            className="hp-event-cat-label"
-                            style={{ color: meta.color }}
-                          >
-                            {meta.eyebrow}
-                          </span>
-                          <p className="hp-event-card-title">{ev.title}</p>
-                          <p className="hp-event-card-venue">
-                            {ev.venue}
-                            {ev.city ? ` · ${ev.city}` : ""}
-                          </p>
-                          {ev.endDate ? (
-                            <p className="hp-event-card-dates">
-                              {formatDateRange(ev.date, ev.endDate)}
-                            </p>
-                          ) : null}
-                        </div>
-                      </div>
-                    </Link>
-                    {/* CTA bar lives outside the Link so invite anchors are valid HTML */}
-                    {(ev.ticketUrl || hasInvite) && (
-                      <div className="hp-event-card-ticket-bar" style={{ borderTopColor: meta.color }}>
-                        {ev.ticketUrl ? (
-                          <>
-                            <span style={{ color: meta.color }}>
-                              {ev.ticketType === "free" ? "Free" : ev.ticketPrice ?? "Tickets"}
-                            </span>
-                            <a
-                              href={ev.ticketUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hp-event-ticket-cta hp-event-ticket-cta--link"
-                            >
-                              {ev.ticketType === "free" ? "Register →" : "Get Tickets →"}
-                            </a>
-                          </>
-                        ) : hasInvite ? (
-                          <>
-                            <span style={{ color: meta.color }}>Community Showcase</span>
-                            <a
-                              href={`mailto:${ev.contactEmail}?subject=${encodeURIComponent(`Attendance Request: ${ev.title}`)}`}
-                              className="hp-event-ticket-cta hp-event-ticket-cta--link"
-                            >
-                              Request an Invite →
-                            </a>
-                          </>
-                        ) : null}
-                      </div>
-                    )}
+                      Experience the Work
+                    </button>
                   </div>
-                );
-              })}
+                </div>
+              </div>
+
+              {/* Supporters */}
+              <div className="hp-engage-sec hp-engage-sec--gold hp-engage-card">
+                <div
+                  className="hp-engage-card-bg"
+                  style={{ backgroundImage: "url('/images/teaching-andes.jpg')" }}
+                  aria-hidden="true"
+                />
+                <div className="hp-engage-card-scrim" aria-hidden="true" />
+                <div className="hp-engage-sec-body">
+                  <span className="hp-engage-eyebrow hp-engage-eyebrow--goldlabel">For supporters</span>
+                  <h4 className="hp-engage-sec-title">Make Magic Possible</h4>
+                  <p className="hp-engage-sec-teaser">Power theatre where story is needed most.</p>
+                  <div className="hp-engage-sec-more">
+                    <p className="hp-engage-sec-more-p">
+                      Sponsor an artist or a club and watch the impact multiply as they return home to create.
+                    </p>
+                    <button
+                      className="hp-engage-sec-btn hp-engage-sec-btn--gold"
+                      type="button"
+                      onClick={() => router.push("/donate")}
+                    >
+                      Sponsor the Story
+                    </button>
+                  </div>
+                </div>
+              </div>
+
             </div>
-
-          </div>
-        </section>
-      )}
-
-      {/* ════════════════════════════════════════════════
-          COMMUNITY — kraft, four constituent doors
-      ════════════════════════════════════════════════ */}
-      <section
-        className="hp-community-band"
-        aria-labelledby="hp-community-heading"
-        style={{ background: "transparent" }}
-      >
-        <div className="hp-community-wrap">
-
-          <div className="hp-community-band-header">
-            <p className="hp-community-eyebrow">Community</p>
-            <h2 id="hp-community-heading" className="hp-community-band-title">
-              Moved to Act.
-            </h2>
-            <p className="hp-community-band-sub">
-              Alumni, partners, and friends who carry the work forward — on stage, in the field, at home, and around the world.
-            </p>
           </div>
 
+          {/* Divider into "More Ways In" */}
+          <div className="hp-engage-divider"><span>More Ways In</span></div>
+
+          {/* ── Community accordion (UNCHANGED) ── */}
           <div className="hp-community-grid">
             {cards.map((card, i) => {
               const expanded = openIndex === i;
@@ -830,6 +820,82 @@ export default function Page() {
       </section>
 
       {/* ════════════════════════════════════════════════
+          DRAMA CLUB SPOTLIGHT — teal, community-rooted
+      ════════════════════════════════════════════════ */}
+      {featuredClub && (
+        <section
+          className="hp-club-section"
+          aria-labelledby="hp-club-heading"
+          style={{ background: "#2493A9" }}
+        >
+          <div className="hp-club-inner">
+
+            <div className="hp-club-text">
+              <p className="hp-eyebrow-label hp-eyebrow-muted">DRAMA CLUB SPOTLIGHT</p>
+              <h2 id="hp-club-heading" className="hp-club-name">
+                {featuredClub.name}
+              </h2>
+              <p className="hp-club-location">
+                {[featuredClub.city, featuredClub.country].filter(Boolean).join(", ")}
+              </p>
+              <p className="hp-club-desc">
+                {featuredClub.shortBlurb
+                  ? featuredClub.shortBlurb
+                  : typeof featuredClub.description === "string"
+                  ? featuredClub.description.length > 240
+                    ? featuredClub.description.slice(0, 240) + "…"
+                    : featuredClub.description
+                  : ""}
+              </p>
+              <div className="hp-club-actions">
+                <button
+                  className="hp-club-btn"
+                  onClick={() => router.push(`/drama-club/${featuredClub.slug}`)}
+                >
+                  Meet the Club
+                </button>
+                <button
+                  className="hp-club-btn hp-club-btn--ghost"
+                  onClick={() => router.push("/donate?mode=drama-club&freq=monthly")}
+                >
+                  Sponsor this Club
+                </button>
+                <Link href="/drama-club" className="hp-club-alt-link">
+                  See all clubs →
+                </Link>
+              </div>
+            </div>
+
+            {(featuredClub.heroImage || featuredClub.cardImage) && (
+              <div className="hp-club-img-wrap">
+                <img
+                  src={(featuredClub.heroImage || featuredClub.cardImage) as string}
+                  alt={featuredClub.name}
+                  className="hp-club-img"
+                />
+              </div>
+            )}
+
+          </div>
+        </section>
+      )}
+
+      {/* ════════════════════════════════════════════════
+          SUBSCRIBE — green mailing-list band (mirrors /events)
+      ════════════════════════════════════════════════ */}
+      <section className="eh-bottom-band" aria-labelledby="hp-subscribe-heading">
+        <div className="eh-container">
+          <p className="eh-bottom-eyebrow">From the Field to Your Inbox</p>
+          <h2 id="hp-subscribe-heading" className="eh-bottom-title">Don&apos;t miss the next adventure.</h2>
+          <p className="eh-bottom-body">
+            Stories from the field, new work taking shape, artists finding their way across the
+            world, and the next dramatic adventures on the horizon — sent your way a few times a season.
+          </p>
+          <HomeMailingListForm />
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════
           STYLES — plain <style>, hp- prefix throughout
       ════════════════════════════════════════════════ */}
       <style>{`
@@ -890,13 +956,13 @@ main a:active { text-decoration: none !important; }
 ══════════════════════════════════════════════════════════ */
 .hp-hero {
   position: relative;
-  height: 70vh;
-  min-height: 520px;
+  height: 82vh;
+  min-height: 620px;
   overflow: hidden;
   z-index: 0;
 }
-@media (max-width: 1024px) { .hp-hero { height: 65vh; min-height: 460px; } }
-@media (max-width: 767px)  { .hp-hero { height: 58vh; min-height: 380px; } }
+@media (max-width: 1024px) { .hp-hero { height: 74vh; min-height: 540px; } }
+@media (max-width: 767px)  { .hp-hero { height: 66vh; min-height: 440px; } }
 
 .hp-hero-overlay {
   position: absolute;
@@ -915,7 +981,7 @@ main a:active { text-decoration: none !important; }
   position: absolute;
   bottom: 0; left: 0; right: 0;
   z-index: 2;
-  padding-bottom: 2.75rem;
+  padding-bottom: 4.75rem;
 }
 .hp-hero-content-inner {
   max-width: 1200px;
@@ -950,7 +1016,7 @@ main a:active { text-decoration: none !important; }
   line-height: 1.45;
 }
 @media (max-width: 540px) {
-  .hp-hero-content-outer { padding-bottom: 1.75rem; }
+  .hp-hero-content-outer { padding-bottom: 3rem; }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1268,9 +1334,9 @@ main a:active { text-decoration: none !important; }
 /* ══════════════════════════════════════════════════════════
    DRAMA CLUB SPOTLIGHT
 ══════════════════════════════════════════════════════════ */
-.hp-club-section { padding: 3.5rem 2rem; }
+.hp-club-section { padding: 3.5rem 0; }
 .hp-club-inner {
-  max-width: 1200px; margin: 0 auto;
+  max-width: 1200px; margin: 0 auto; padding: 0 2rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 3rem;
@@ -1877,15 +1943,35 @@ main a:active { text-decoration: none !important; }
   margin: 0 0 0.1rem;
 }
 
-/* "20 YEARS" headline */
+/* "20 YEARS" headline — cream letters with a slow specular gold glint that
+   sweeps across once, then the word rests before the next pass. */
 .hp-smt-years {
   font-family: "Anton", sans-serif !important;
   font-size: clamp(4rem, 10vw, 8.5rem);
   line-height: 0.9;
-  color: #f6e4c1;
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.01em;
+  color: #f6e4c1;
+  background-image: linear-gradient(
+    100deg,
+    #f6e4c1 0%, #f6e4c1 40%,
+    #ffeec2 50%,
+    #f6e4c1 60%, #f6e4c1 100%
+  );
+  background-size: 200% 100%;
+  background-position: 0% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: hp-smt-shimmer 7s ease-in-out infinite alternate;
+}
+@keyframes hp-smt-shimmer {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hp-smt-years { animation: none; }
 }
 
 /* Subtitle */
@@ -1996,6 +2082,667 @@ main a:active { text-decoration: none !important; }
   .hp-smt-actions  { margin-top: 1rem; flex-direction: column; }
   .hp-smt-btn      { width: 100%; justify-content: center; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   DRAMA CLUB — ghost "Sponsor this Club" button
+══════════════════════════════════════════════════════════ */
+.hp-club-btn--ghost {
+  background: transparent;
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.85);
+  box-shadow: none;
+  padding: 0.6rem 1.3rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+}
+.hp-club-btn--ghost:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: #fff;
+  transform: translateY(-1px);
+}
+
+/* ══════════════════════════════════════════════════════════
+   WHAT'S ON — compact editorial preview on a dark band
+══════════════════════════════════════════════════════════ */
+.hp-whatson-section {
+  position: relative;
+  background: #0d0812;
+  padding: 1.75rem 0 4rem;
+  overflow: hidden;
+}
+.hp-whatson-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; position: relative; z-index: 1; }
+.hp-whatson-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.6rem;
+}
+.hp-whatson-title {
+  font-family: "Anton", sans-serif;
+  font-size: clamp(2rem, 4.5vw, 3.2rem);
+  font-weight: 400;
+  color: #fff;
+  margin: 0.4rem 0 0;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* What's On — expanding poster panels. The active event fills to full poster
+   width; hovering another event expands it in place (no reordering, no flicker).
+   Echoes the /alumni profile photo gallery's hover-to-reveal feel. */
+.hp-whatson-panels {
+  display: flex;
+  /* gap:0 so there is no dead-zone between panels — sweeping across never lands
+     in an un-hovered gap, which is what made the expand jitter. Cards keep their
+     own rounded corners + shadow, so they still read as separate posters. */
+  gap: 0;
+  height: clamp(360px, 46vw, 520px);
+}
+.hp-whatson-panel {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 4px;
+  /* No overflow:hidden — it would clip the poster's hover ring + glow (the card
+     clips its own image via .ep-clip), so the /events border/glow shows here too. */
+  transition: flex-grow 0.45s cubic-bezier(.2,.7,.2,1),
+              flex-basis 0.45s cubic-bezier(.2,.7,.2,1);
+}
+/* Pure-CSS expand (no JS = no re-render jitter). We animate a FIXED poster width
+   (flex-basis) rather than flex-grow + max-width — the latter overshoots wide and
+   then snaps back. The expanded panel never grows past its poster width, the
+   collapsed ones absorb the rest. Default = upcoming event; hover swaps it. */
+.hp-whatson-panels:not(:hover) .hp-whatson-panel:first-child,
+.hp-whatson-panel:hover {
+  flex: 0 0 clamp(248px, 31vw, 355px);
+}
+/* Each poster card fills its panel */
+.hp-whatson-panel .ep--card {
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  border-radius: 14px;
+}
+/* Keep titles from spilling out of the narrow (collapsed) posters */
+.hp-whatson-panel .ep-body { overflow: hidden; }
+
+/* Centered "view all" pill — mirrors the gallery's show-all control */
+.hp-whatson-gallery-foot { text-align: center; margin-top: 1.6rem; }
+.hp-whatson-viewall {
+  display: inline-block;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 24px;
+  padding: 0.6rem 1.7rem;
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-size: 0.74rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(255,204,0,0.82) !important;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.hp-whatson-viewall:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,204,0,0.4);
+  color: #FFCC00 !important;
+}
+/* Mobile: show only the upcoming poster */
+/* Progressive density: drop one event at a time as the viewport narrows… */
+@media (max-width: 1100px) { .hp-whatson-panel:nth-child(n+5) { display: none; } }
+@media (max-width: 900px)  { .hp-whatson-panel:nth-child(n+4) { display: none; } }
+@media (max-width: 720px)  { .hp-whatson-panel:nth-child(n+3) { display: none; } }
+/* …down to a single upcoming poster at iPhone width */
+@media (max-width: 480px) {
+  .hp-whatson-panels { height: auto; }
+  .hp-whatson-panel { display: none; }
+  .hp-whatson-panel:first-child {
+    display: block;
+    flex: none !important;
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto;
+    padding: 0;
+    aspect-ratio: 2 / 3;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   FROM THE FIELD — editorial stories (eggplant)
+══════════════════════════════════════════════════════════ */
+.hp-field-section {
+  background: #f6e4c1;
+  padding: 3.5rem 0 4rem;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 18px 30px -22px rgba(36, 17, 35, 0.35);
+}
+/* From the Field eyebrow — ink on the gold band */
+.hp-eyebrow-fieldink { color: #241123 !important; }
+.hp-field-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+.hp-field-header { margin-bottom: 1.9rem; }
+.hp-field-title {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif !important;
+  font-weight: 700;
+  font-size: clamp(1.6rem, 3.4vw, 2.6rem);
+  color: #241123;
+  margin: 0.4rem 0 0;
+  line-height: 1.08;
+  max-width: 760px;
+}
+.hp-field-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 1.6rem;
+}
+@media (max-width: 760px) { .hp-field-grid { grid-template-columns: 1fr; } }
+
+/* Featured story */
+.hp-field-feature {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  min-height: 420px;
+  display: flex;
+  align-items: flex-end;
+}
+.hp-field-feature-img { position: absolute; inset: 0; }
+.hp-field-feature-img .hp-story-img,
+.hp-field-feature-img .hp-story-video-placeholder,
+.hp-field-feature-img .hp-story-img-placeholder {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.hp-field-feature-scrim {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(16,7,24,0.92), rgba(16,7,24,0) 70%);
+}
+.hp-field-feature-body { position: relative; z-index: 1; padding: 2rem; }
+.hp-field-feature-eyebrow {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-size: 0.66rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.18em;
+  color: #FFCC00; display: block; margin-bottom: 0.5rem;
+}
+.hp-field-feature-title {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif !important;
+  font-weight: 700; font-size: clamp(1.5rem, 3vw, 2rem);
+  color: #fff; margin: 0 0 0.4rem; line-height: 1.15;
+}
+.hp-field-feature-author {
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  color: rgba(255,255,255,0.78); font-style: italic; margin: 0;
+}
+
+/* Story list */
+.hp-field-list { display: flex; flex-direction: column; gap: 1.4rem; }
+.hp-field-list-item { display: flex; gap: 1rem; align-items: center; }
+.hp-field-list-thumb {
+  position: relative;
+  width: 120px; height: 80px; flex-shrink: 0;
+  border-radius: 10px; overflow: hidden; background: rgba(255,255,255,0.06);
+}
+.hp-field-list-thumb .hp-story-img,
+.hp-field-list-thumb .hp-story-video-placeholder,
+.hp-field-list-thumb .hp-story-img-placeholder {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.hp-field-list-loc {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-size: 0.58rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.16em;
+  color: #185b68; display: block; margin-bottom: 0.2rem;
+}
+.hp-field-list-title {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-weight: 700; color: #241123; font-size: 1.05rem; margin: 0; line-height: 1.25;
+}
+.hp-field-explore-link {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  color: #241123 !important; font-weight: 700; font-size: 0.9rem;
+  margin-top: auto;
+}
+.hp-field-explore-link:hover { color: #6C00AF !important; }
+
+/* Equal feature cards for 1–3 stories (avoids a lonely featured + gap) */
+.hp-field-cards {
+  display: grid;
+  gap: 1.6rem;
+}
+.hp-field-cards[data-count="1"] {
+  grid-template-columns: 1fr;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.hp-field-cards[data-count="2"] { grid-template-columns: repeat(2, 1fr); }
+.hp-field-cards[data-count="3"] { grid-template-columns: repeat(3, 1fr); }
+.hp-field-card { min-height: 360px; }
+.hp-field-cards-footer { margin-top: 1.4rem; }
+@media (max-width: 760px) {
+  .hp-field-cards[data-count="2"],
+  .hp-field-cards[data-count="3"] { grid-template-columns: 1fr; }
+}
+
+/* Editorial dispatch — single story: photo beside an excerpt + CTA */
+.hp-dispatch {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: clamp(1.4rem, 3vw, 2.6rem);
+  align-items: center;
+  max-width: 980px;
+  margin: 0 auto;
+}
+@media (max-width: 760px) { .hp-dispatch { grid-template-columns: 1fr; } }
+.hp-dispatch-media {
+  position: relative; display: block;
+  border-radius: 16px; overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background: rgba(36,17,35,0.06);
+  box-shadow: 0 18px 40px -18px rgba(36,17,35,0.5);
+}
+.hp-dispatch-media .hp-story-img,
+.hp-dispatch-media .hp-story-video-placeholder,
+.hp-dispatch-media .hp-story-img-placeholder {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.hp-dispatch-media:hover .hp-story-img { transform: scale(1.04); }
+.hp-dispatch-body { min-width: 0; }
+.hp-dispatch-loc {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-size: 0.66rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.18em;
+  color: #9e7900; display: block; margin-bottom: 0.6rem;
+}
+.hp-dispatch-title {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-weight: 700; font-size: clamp(1.5rem, 3vw, 2.2rem);
+  color: #241123; margin: 0 0 0.9rem; line-height: 1.12;
+}
+.hp-dispatch-excerpt {
+  position: relative;
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-size: 1.02rem; line-height: 1.7; color: rgba(36,17,35,0.78);
+  margin: 0 0 1rem; padding-left: 1rem;
+  border-left: 3px solid #D9A919;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+}
+.hp-dispatch-author {
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-style: italic; color: rgba(36,17,35,0.6); margin: 0 0 1.4rem;
+}
+.hp-dispatch-author-link {
+  color: #241123 !important; font-weight: 600;
+  transition: color 0.18s ease;
+}
+.hp-dispatch-author-link:hover {
+  color: #6C00AF !important;
+}
+.hp-dispatch-cta {
+  display: inline-block;
+  background: #241123; color: #f6e4c1 !important;
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-weight: 700; font-size: 0.78rem;
+  text-transform: uppercase; letter-spacing: 0.14em;
+  padding: 0.8rem 1.6rem; border-radius: 10px;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+.hp-dispatch-cta:hover { transform: translateY(-2px); background: #3a1f38; }
+
+/* More dispatches — compact thumbnail row beneath the dispatch */
+.hp-dispatch-more { max-width: 980px; margin: 2.4rem auto 0; }
+.hp-dispatch-more-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap;
+  border-top: 1px solid rgba(36,17,35,0.16); padding-top: 1.2rem; margin-bottom: 1.1rem;
+}
+.hp-dispatch-more-label {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-size: 0.66rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.2em; color: #9e7900;
+}
+.hp-dispatch-more-all {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-size: 0.78rem; font-weight: 700; color: #241123 !important;
+}
+.hp-dispatch-more-all:hover { color: #6C00AF !important; }
+.hp-dispatch-more-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+.hp-dispatch-thumb { display: block; }
+.hp-dispatch-thumb-img {
+  position: relative; aspect-ratio: 4 / 3;
+  border-radius: 10px; overflow: hidden;
+  background: rgba(36,17,35,0.06); margin-bottom: 0.5rem;
+}
+.hp-dispatch-thumb-img .hp-story-img,
+.hp-dispatch-thumb-img .hp-story-video-placeholder,
+.hp-dispatch-thumb-img .hp-story-img-placeholder {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform 0.4s ease;
+}
+.hp-dispatch-thumb:hover .hp-dispatch-thumb-img .hp-story-img { transform: scale(1.05); }
+.hp-dispatch-thumb-loc {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-size: 0.56rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.14em; color: #185b68; display: block; margin-bottom: 0.15rem;
+}
+.hp-dispatch-thumb-title {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-weight: 700; font-size: 0.92rem; color: #241123; line-height: 1.2; display: block;
+}
+
+/* ══════════════════════════════════════════════════════════
+   FROM THE ARCHIVES — clean poster, dark
+══════════════════════════════════════════════════════════ */
+.hp-arch-section { background: #0d0812; padding: 3.5rem 0 1.75rem; }
+.hp-arch-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+.hp-arch-section-title {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif !important;
+  font-weight: 700; font-size: clamp(1.6rem, 3.4vw, 2.6rem);
+  color: #fff; margin: 0.4rem 0 0; line-height: 1.08;
+}
+.hp-arch-grid {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+@media (max-width: 760px) { .hp-arch-grid { grid-template-columns: 1fr; } }
+.hp-arch-poster-wrap {
+  display: block; width: 100%; padding: 0; border: none;
+  background: transparent; cursor: pointer;
+  border-radius: 12px; overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+  transition: box-shadow 0.3s ease;
+}
+@media (max-width: 760px) {
+  .hp-arch-poster-wrap { max-width: 320px; margin: 0 auto; }
+}
+/* Hover: gold glow + image zoom, like the What's On posters — but the frame
+   itself does not change size (overflow clips the zoom). */
+.hp-arch-poster-wrap:hover {
+  box-shadow: 0 0 0 1.5px rgba(255,204,0,0.7),
+              0 0 46px 6px rgba(255,204,0,0.45),
+              0 24px 60px rgba(0,0,0,0.55);
+}
+.hp-arch-poster { width: 100%; height: auto; display: block; transition: transform 0.5s ease; }
+.hp-arch-poster-wrap:hover .hp-arch-poster { transform: scale(1.05); }
+.hp-arch-prod-label {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.22em;
+  color: rgba(255,204,0,0.78);
+  margin: 0 0 0.6rem;
+}
+.hp-arch-headline {
+  font-family: "Anton", sans-serif !important;
+  color: #FFCC00;
+  font-size: clamp(2rem, 5vw, 3.6rem);
+  line-height: 1.02;
+  margin: 0 0 0.7rem;
+  text-transform: uppercase;
+}
+.hp-arch-meta {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  color: rgba(246,228,193,0.78);
+  font-size: 1rem;
+  border-left: 3px solid rgba(255,204,0,0.35);
+  padding-left: 1rem;
+  margin: 0 0 1.5rem;
+}
+.hp-arch-actions { display: flex; gap: 1.4rem; align-items: center; flex-wrap: wrap; }
+.hp-arch-btn {
+  display: inline-flex; align-items: center;
+  background: #FFCC00; color: #241123;
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-weight: 800; font-size: 0.9rem;
+  text-transform: uppercase; letter-spacing: 0.18em;
+  padding: 0.95rem 2.1rem; border: none; border-radius: 11px; cursor: pointer;
+  box-shadow: 0 6px 24px rgba(255,204,0,0.25);
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+.hp-arch-btn:hover { background: #ffe640; transform: translateY(-2px); }
+.hp-arch-alt-link {
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  color: rgba(246,228,193,0.55) !important; font-weight: 600; font-size: 0.9rem;
+  transition: color 0.18s ease;
+}
+.hp-arch-alt-link:hover { color: rgba(246,228,193,0.9) !important; }
+
+/* ══════════════════════════════════════════════════════════
+   STEP IN — engage zone (kraft)
+══════════════════════════════════════════════════════════ */
+.hp-engage-section { background: transparent; padding: 3.5rem 0 4rem; }
+
+/* Stat bar — mirrors the /theatre stats block, anchored above Step In */
+.hp-statbar { margin-bottom: 2.6rem; }
+.hp-statbar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  background-color: rgba(36, 17, 35, 0.16);
+  border-radius: 18px;
+  border: 1px solid rgba(36,17,35,0.22);
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(36, 17, 35, 0.18);
+}
+.hp-statbar-cell {
+  padding: 1.75rem 2rem;
+  text-align: center;
+  border-right: 1px solid rgba(36,17,35,0.12);
+}
+.hp-statbar-cell:last-child { border-right: none; }
+.hp-statbar-num {
+  font-family: "Anton", system-ui, sans-serif;
+  font-size: clamp(2.8rem, 6vw, 4rem);
+  color: #FFCC00; line-height: 1; margin-bottom: 0.35rem;
+}
+.hp-statbar-label {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-size: 0.95rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; color: #f2f2f2;
+}
+.hp-statbar-sub {
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-size: 0.78rem; font-weight: 500;
+  color: rgba(242,242,242,0.62); margin-top: 0.25rem; line-height: 1.4;
+}
+.hp-engage-inner { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+.hp-engage-header { margin-bottom: 1.9rem; }
+.hp-engage-title {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif !important;
+  font-weight: 700; font-size: clamp(1.6rem, 3.4vw, 2.6rem);
+  color: #241123; margin: 0.4rem 0 0; line-height: 1.08;
+}
+.hp-engage-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.4rem;
+}
+@media (max-width: 760px) { .hp-engage-grid { grid-template-columns: 1fr; } }
+
+.hp-engage-eyebrow {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-size: 0.62rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.22em;
+  display: block;
+}
+.hp-engage-eyebrow--gold { color: #FFCC00; }
+.hp-engage-eyebrow--teal { color: #1a7a8f; }
+.hp-engage-eyebrow--goldlabel { color: #9e7900; }
+
+/* Shared card image-reveal mechanics */
+.hp-engage-card { position: relative; overflow: hidden; }
+.hp-engage-card-bg {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  opacity: 0; transform: scale(1.07);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  z-index: 0;
+}
+.hp-engage-card:hover .hp-engage-card-bg { opacity: 1; transform: scale(1); }
+.hp-engage-card-scrim {
+  position: absolute; inset: 0;
+  background: rgba(20,6,22,0.78);
+  opacity: 0; transition: opacity 0.5s ease;
+  z-index: 1; pointer-events: none;
+}
+.hp-engage-card:hover .hp-engage-card-scrim { opacity: 1; }
+
+/* Primary (artist) card — never resizes */
+.hp-engage-primary {
+  position: relative;
+  border-radius: 16px;
+  min-height: 400px;
+  display: flex;
+  align-items: flex-end;
+  background: linear-gradient(135deg, rgba(36,17,35,1), rgba(36,17,35,0.86));
+  transition: transform 0.2s ease;
+}
+.hp-engage-primary:hover { transform: translateY(-3px); }
+
+/* Primary card is image-forward: at rest the image shows under a dark gradient so
+   the copy reads; on hover the copy fades out, the image brightens and takes over,
+   and the (now pulsing) button is the only thing that stays. */
+.hp-engage-primary .hp-engage-card-bg { opacity: 1; transform: scale(1); }
+.hp-engage-primary:hover .hp-engage-card-bg { transform: scale(1.05); }
+.hp-engage-primary .hp-engage-card-scrim {
+  opacity: 1;
+  background: linear-gradient(to top,
+    rgba(20,6,22,0.92) 0%, rgba(20,6,22,0.6) 45%, rgba(20,6,22,0.3) 100%);
+}
+.hp-engage-primary:hover .hp-engage-card-scrim { opacity: 0; }
+.hp-engage-primary .hp-engage-eyebrow,
+.hp-engage-primary-title,
+.hp-engage-primary-p { transition: opacity 0.35s ease; }
+.hp-engage-primary:hover .hp-engage-eyebrow,
+.hp-engage-primary:hover .hp-engage-primary-title,
+.hp-engage-primary:hover .hp-engage-primary-p { opacity: 0; }
+.hp-engage-primary:hover .hp-engage-primary-btn {
+  animation: hp-engage-pulse 1.5s ease-in-out infinite;
+}
+@keyframes hp-engage-pulse {
+  0%, 100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(242,51,89,0.55); }
+  50%      { transform: scale(1.06); box-shadow: 0 0 0 12px rgba(242,51,89,0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hp-engage-primary:hover .hp-engage-primary-btn { animation: none; }
+}
+
+.hp-engage-primary-body { position: relative; z-index: 2; padding: 2.2rem; }
+.hp-engage-primary-title {
+  font-family: "Anton", sans-serif !important;
+  color: #fff; font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+  line-height: 1; margin: 0.4rem 0 0.6rem; text-transform: uppercase;
+}
+.hp-engage-primary-p {
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  color: rgba(255,255,255,0.85); max-width: 520px; line-height: 1.6; margin: 0 0 1.4rem;
+}
+.hp-engage-primary-btn {
+  display: inline-flex; align-items: center;
+  background: #F23359; color: #fff;
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-weight: 700; font-size: 0.82rem;
+  text-transform: uppercase; letter-spacing: 0.16em;
+  padding: 1rem 2rem; border-radius: 10px; border: none; cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+.hp-engage-primary-btn:hover { transform: translateY(-2px); background: #ff486c; }
+
+/* Secondary column */
+.hp-engage-right {
+  display: flex; flex-direction: column; gap: 1.2rem; min-height: 400px;
+}
+.hp-engage-sec {
+  background: #EADCC1;
+  border-radius: 12px;
+  border-left: 5px solid #2493A9;
+  flex-grow: 1; flex-basis: 0;
+  display: flex; flex-direction: column;
+  transition: flex-grow 0.35s ease, box-shadow 0.2s ease;
+}
+.hp-engage-sec--gold { border-left-color: #D9A919; }
+.hp-engage-sec:hover { flex-grow: 2.6; box-shadow: 0 14px 30px rgba(36,17,35,0.26); }
+.hp-engage-sec-body { position: relative; z-index: 2; padding: 1.2rem 1.3rem; }
+.hp-engage-sec:hover .hp-engage-eyebrow { color: #FFCC00; }
+.hp-engage-sec-title {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-weight: 700; font-size: 1.25rem; color: #241123; margin: 0.3rem 0 0;
+}
+.hp-engage-sec:hover .hp-engage-sec-title { color: #fff; }
+.hp-engage-sec-teaser {
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  color: rgba(36,17,35,0.6); font-size: 0.82rem; line-height: 1.45; margin-top: 0.3rem;
+}
+.hp-engage-sec:hover .hp-engage-sec-teaser { color: rgba(255,255,255,0.85); }
+.hp-engage-sec-more {
+  max-height: 0; opacity: 0; overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.25s ease;
+}
+.hp-engage-sec:hover .hp-engage-sec-more { max-height: 200px; opacity: 1; margin-top: 0.8rem; }
+.hp-engage-sec-more-p {
+  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  color: rgba(255,255,255,0.85); font-size: 0.86rem; line-height: 1.5; margin: 0 0 0.9rem;
+}
+.hp-engage-sec-btn {
+  display: inline-flex; align-items: center;
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-weight: 700; font-size: 0.72rem;
+  text-transform: uppercase; letter-spacing: 0.14em;
+  padding: 0.6rem 1.1rem; border-radius: 9px; border: none; cursor: pointer;
+}
+.hp-engage-sec-btn--teal { background: #2493A9; color: #fff; }
+.hp-engage-sec-btn--gold { background: #FFCC00; color: #241123; }
+
+/* Divider into More Ways In */
+.hp-engage-divider { display: flex; align-items: center; gap: 1rem; margin: 2.8rem 0 1.6rem; }
+.hp-engage-divider span {
+  font-family: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.22em;
+  font-size: 0.72rem; color: rgba(36,17,35,0.6); white-space: nowrap;
+}
+.hp-engage-divider::after { content: ""; height: 1px; background: rgba(36,17,35,0.2); flex: 1; }
+
+/* Mobile: secondaries full-size, all content visible */
+@media (max-width: 760px) {
+  .hp-engage-primary { min-height: 300px; }
+  .hp-engage-right { min-height: 0; }
+  .hp-engage-sec { flex-grow: 0; }
+  .hp-engage-sec-more { max-height: 220px; opacity: 1; margin-top: 0.8rem; }
+  .hp-engage-sec-more-p { color: rgba(36,17,35,0.72); }
+  .hp-engage-sec-teaser { color: rgba(36,17,35,0.6); }
+  .hp-engage-sec-title { color: #241123; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   SUBSCRIBE — green mailing-list band (cloned from /events)
+══════════════════════════════════════════════════════════ */
+.eh-container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+.eh-bottom-band { background: #145c37; padding: clamp(3rem, 6vw, 5rem) 0; }
+.eh-bottom-eyebrow { font-family: var(--font-dm-sans), sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin: 0 0 0.6rem; }
+.eh-bottom-title { font-family: var(--font-anton), sans-serif; font-size: clamp(2rem, 4vw, 3rem); font-weight: 400; color: #fff; margin: 0 0 0.75rem; }
+.eh-bottom-body { font-family: var(--font-space-grotesk), sans-serif; font-size: 0.95rem; color: rgba(255,255,255,0.55); line-height: 1.65; margin: 0 0 1.5rem; max-width: 540px; }
+.eh-bottom-links { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
+.eh-bottom-link { font-family: var(--font-dm-sans), sans-serif; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; color: rgba(255,255,255,0.6); border: 1.5px solid rgba(255,255,255,0.18); padding: 0.7rem 1.5rem; border-radius: 10px; transition: color 0.2s, border-color 0.2s; }
+.eh-bottom-link:hover { color: #fff; border-color: rgba(255,255,255,0.45); }
+.eh-ml-form { display: flex; flex-direction: column; gap: 0.75rem; align-items: flex-start; }
+.eh-ml-inputs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.eh-ml-input { font-family: var(--font-space-grotesk), sans-serif; font-size: 0.9rem; background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.18); color: #fff; padding: 0.7rem 1rem; border-radius: 8px; flex: 1 1 160px; min-width: 0; outline: none; transition: border-color 0.18s; }
+.eh-ml-input::placeholder { color: rgba(255,255,255,0.35); }
+.eh-ml-input:focus { border-color: rgba(217,169,25,0.6); }
+.eh-ml-input--email { flex: 2 1 200px; }
+.eh-ml-btn { font-family: var(--font-dm-sans), sans-serif; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; background: #D9A919; color: #241123; border: none; padding: 0.7rem 1.4rem; border-radius: 8px; cursor: pointer; transition: opacity 0.18s, transform 0.15s; }
+.eh-ml-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+.eh-ml-btn:disabled { opacity: 0.55; cursor: default; }
+.eh-ml-fine { font-family: var(--font-dm-sans), sans-serif; font-size: 0.72rem; color: rgba(255,255,255,0.28); margin: 0; }
+.eh-ml-error { font-family: var(--font-dm-sans), sans-serif; font-size: 0.82rem; color: #F23359; margin: 0; }
+.eh-ml-error a { color: #F23359; }
+.eh-ml-success { display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem 1.25rem; background: rgba(47,168,115,0.12); border: 1.5px solid rgba(47,168,115,0.3); border-radius: 10px; }
+.eh-ml-check { font-size: 1.1rem; color: #2FA873; }
+.eh-ml-success-title { font-family: var(--font-space-grotesk), sans-serif; font-size: 0.95rem; font-weight: 700; color: #2FA873; margin: 0 0 0.2rem; }
+.eh-ml-success-sub { font-family: var(--font-dm-sans), sans-serif; font-size: 0.82rem; color: rgba(255,255,255,0.55); margin: 0; }
 
       `}</style>
 

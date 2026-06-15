@@ -249,7 +249,7 @@ export const season21Events: DatEvent[] = [
         ],
       },
     },
-    hidden: false
+    hidden: true
   },
 
   {
