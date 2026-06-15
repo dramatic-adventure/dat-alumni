@@ -335,7 +335,7 @@ export default function Page() {
                 Explore Story Map
               </Link>
               <a
-                href="https://dramaticadventure.com"
+                href="https://www.dramaticadventure.com/who-we-are"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hp-smt-btn hp-smt-btn--purple"
