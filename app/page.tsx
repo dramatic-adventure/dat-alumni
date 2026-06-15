@@ -403,7 +403,7 @@ export default function Page() {
                 </div>
                 <button
                   className="hp-cta-card-btn hp-cta-card-btn--teal"
-                  onClick={() => router.push("/story-map")}
+                  onClick={() => router.push("/events")}
                 >
                   Experience the Work
                 </button>
