@@ -1013,7 +1013,7 @@ function Styles() {
       }
       /* Pull the rail's header/arrows down so the gap to the first card matches
          the other sections (compensates for the rail's tall top padding). */
-      .eh-section--rail .eh-section-head { margin-bottom: -2.25rem; }
+      .eh-section--rail .eh-section-head { margin-bottom: -2.25rem; position: relative; z-index: 2; }
       .eh-rail::-webkit-scrollbar { height: 6px; }
       .eh-rail::-webkit-scrollbar-thumb { background: rgba(247,244,239,0.2); border-radius: 50px; }
 
