@@ -251,9 +251,9 @@ export default function RippleEffectPage() {
             </div>
           </article>
 
-          {/* Recurring patterns — the shapes the ripple keeps taking across the network. */}
+          {/* Ripples still unfolding — the shapes the ripple keeps taking across the network. */}
           <p style={{ margin: "0 0 1.5rem", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "clamp(0.9rem, 1.4vw, 1rem)", color: "rgba(242,242,242,0.7)", lineHeight: 1.65, maxWidth: 680 }}>
-            Beyond any single story, the same shapes keep recurring:
+            Beyond any single story, these are ripples still unfolding — the shapes the work keeps taking as alumni carry it into the world:
           </p>
           <div className="re-placeholder-grid">
             {[
@@ -284,7 +284,7 @@ export default function RippleEffectPage() {
                 style={{ background: ph.accentBg, border: `1.5px solid ${ph.accentBorder}`, borderRadius: 18, padding: "1.75rem 1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}
               >
                 <span style={{ display: "inline-block", alignSelf: "flex-start", padding: "0.22rem 0.7rem", borderRadius: 7, background: "rgba(255,255,255,0.05)", border: `1px solid ${ph.accentBorder}`, fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: ph.accent }}>
-                  A Recurring Pattern
+                  Ripples Still Unfolding
                 </span>
                 <h3 style={{ margin: 0, fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "1rem", fontWeight: 700, color: ph.accent, lineHeight: 1.25 }}>
                   {ph.label}

@@ -55,7 +55,7 @@ export default function ComingSoonModal() {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Coming soon — Dramatic Adventure Theatre"
+        aria-label="Dramatic Adventure Theatre — live archive preview"
         className={`csm-wrap ${isExiting ? "csm-wrap--out" : "csm-wrap--in"}`}
       >
         <div className="csm-modal">
@@ -85,20 +85,12 @@ export default function ComingSoonModal() {
           {/* ── Content ──────────────────────────────────────────────────── */}
           <div className="csm-content">
 
-            {/* Top badge */}
-            <div className="csm-badge-row">
-              <div className="csm-badge">
-                <span className="csm-badge-dot" />
-                In Development
-              </div>
-            </div>
-
             {/* Eyebrow */}
-            <p className="csm-eyebrow">stories.dramaticadventure.com</p>
+            <p className="csm-eyebrow">Live Preview</p>
 
             {/* Headline */}
             <h2 className="csm-headline">
-              THE<br />CURTAIN<br />IS RISING.
+              The Story<br />Continues
             </h2>
 
             {/* Gold divider with star */}
@@ -108,19 +100,24 @@ export default function ComingSoonModal() {
               <span className="csm-divider-line" />
             </div>
 
+            {/* Subhead */}
+            <p className="csm-body"><strong>We&apos;re building a living home for DAT&apos;s past, present, and future.</strong></p>
+
             {/* Body */}
             <p className="csm-body">
-              <strong>{SEASON_COUNT} seasons.</strong>{" "}
-              <strong>{PRODUCTION_COUNT} original plays.</strong>{" "}
-              <strong>{CLUB_COUNT} drama clubs</strong> around the world. More than{" "}
-              <strong>{ALUMNI_COUNT_DISPLAY} artists</strong> have helped shape this story.
+              For nearly two decades, DAT has brought artists and communities together around the
+              world to create original theatre — across <strong>{SEASON_COUNT} seasons</strong>,{" "}
+              <strong>{PRODUCTION_COUNT} original plays</strong>, and <strong>{CLUB_COUNT} drama clubs</strong>, with{" "}
+              <strong>{ALUMNI_COUNT_DISPLAY} artists</strong>.
             </p>
             <p className="csm-body">
-              We&apos;re building the platform these stories deserve: alumni pages, production
-              archives, and an interactive story map — coming soon.
+              As we approach our 20th year, we are gathering the work that brought us here and
+              stepping into the story ahead. Some pages are complete; others are still being
+              restored, expanded, and brought into view.
             </p>
             <p className="csm-body csm-body--em">
-              For now, take a look around. Much is already here, and more will soon take the stage.
+              For current programs, travel opportunities, donations, and contact information,
+              visit dramaticadventure.com.
             </p>
 
             {/* Actions */}
@@ -130,15 +127,15 @@ export default function ComingSoonModal() {
                 onClick={dismiss}
                 type="button"
               >
-                Start Exploring
+                Explore the Stories
               </button>
               <a
-                href="https://dramaticadventure.com"
+                href="https://www.dramaticadventure.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="csm-btn-secondary"
               >
-                Visit DAT Main Site
+                Visit Main Site
               </a>
             </div>
 
@@ -218,9 +215,11 @@ export default function ComingSoonModal() {
         /* ─ Modal box ───────────────────────────────────────────────────── */
         .csm-modal {
           position: relative;
+          display: flex;
+          flex-direction: column;
           width: 100%;
           max-width: 560px;
-          min-height: 480px;
+          max-height: calc(100dvh - 5rem);
           border-radius: 20px;
           overflow: hidden;
           pointer-events: all;
@@ -314,6 +313,8 @@ export default function ComingSoonModal() {
         .csm-content {
           position: relative;
           z-index: 2;
+          min-height: 0;
+          overflow-y: auto;
           padding: clamp(2rem, 5vw, 2.75rem) clamp(1.75rem, 5vw, 2.75rem) clamp(1.75rem, 4vw, 2.25rem);
           display: flex;
           flex-direction: column;
@@ -365,7 +366,7 @@ export default function ComingSoonModal() {
         /* Headline */
         .csm-headline {
           font-family: "Anton", sans-serif;
-          font-size: clamp(3rem, 9vw, 5.5rem);
+          font-size: clamp(2.75rem, 9vw, 5rem);
           font-weight: 400;
           line-height: 0.9;
           letter-spacing: 0.01em;
