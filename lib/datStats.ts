@@ -142,6 +142,15 @@ export const COMMUNITY_SHOWCASES = dramaClubs.reduce(
   0
 );
 
+/** Mingas — community-designed & led service projects run by drama clubs. */
+export const MINGAS_COUNT = dramaClubs.reduce(
+  (sum, c) => sum + (c.mingasCount ?? 0),
+  0
+);
+
+/** Combined "Mingas & Community Showcases" headline number. */
+export const MINGAS_AND_SHOWCASES = MINGAS_COUNT + COMMUNITY_SHOWCASES;
+
 // ── Founding / tenure ──────────────────────────────────────────────────────
 
 /** Years since DAT's founding in 2006. */
@@ -176,7 +185,11 @@ export const GLOBAL_IMPACT_STATS: ImpactStat[] = [
   { value: TRAVELING_ARTIST_COUNT, label: "Traveling Artists" },
   { value: COUNTRY_COUNT, label: "Countries" },
   { value: CLUB_COUNT, label: "Drama Clubs" },
-  { value: COMMUNITY_SHOWCASES, label: "Community Showcases" },
+  {
+    value: MINGAS_AND_SHOWCASES,
+    label: "Mingas* & Community Showcases",
+    subLabel: "*Community-Designed & Led Service Projects",
+  },
   { value: PRODUCTION_COUNT, label: "New Plays" },
   { value: YOUTH_REACHED, label: "Youth Reached" },
 ];

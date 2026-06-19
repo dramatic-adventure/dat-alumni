@@ -116,6 +116,7 @@ export type DramaClubDraft = {
 
   showcasesCount?: number;
   communityShowcases?: number;
+  mingasCount?: number;
   approxCommunityAudience?: number;
   playsCount?: number;
 
@@ -318,6 +319,11 @@ export type DramaClub = {
   communityShowcases?: number;
 
   /**
+   * Mingas — community-designed & led service projects.
+   */
+  mingasCount?: number;
+
+  /**
    * Cumulative audience members across showcases / share-backs.
    */
   approxCommunityAudience?: number;
@@ -499,6 +505,7 @@ export const DRAMA_CLUB_TEMPLATE: DramaClubDraft = {
 
   showcasesCount: undefined,
   communityShowcases: undefined,
+  mingasCount: undefined,
   approxCommunityAudience: undefined,
 
   currentImpactStats: [],
@@ -550,6 +557,7 @@ export const dramaClubMap = {
   "quito-collective": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "quito-collective",
+    mingasCount: 4,
     name: "Quito Collective",
     country: "Ecuador",
     region: "Andes Mountains",
@@ -640,6 +648,7 @@ export const dramaClubMap = {
   "cuenca-creative-lab": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "cuenca-creative-lab",
+    mingasCount: 2,
     approxYouthServed: 90,
     name: "Cuenca Creative Lab",
     country: "Ecuador",
@@ -704,6 +713,7 @@ export const dramaClubMap = {
   "quilotoa-collective": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "quilotoa-collective",
+    mingasCount: 3,
     name: "Quilotoa Collective",
     country: "Ecuador",
     region: "Andes Mountains",
@@ -783,6 +793,7 @@ export const dramaClubMap = {
   "ayumpum-jintia-colectivo": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "ayumpum-jintia-colectivo",
+    mingasCount: 4,
     name: "Ayumpum Jintia Colectivo",
     country: "Ecuador",
     region: "Amazon",
@@ -905,6 +916,7 @@ export const dramaClubMap = {
   "la-selva-lab": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "la-selva-lab",
+    mingasCount: 2,
     approxYouthServed: 75,
     name: "La Selva Lab",
     country: "Ecuador",
@@ -972,6 +984,7 @@ export const dramaClubMap = {
   "floreana-youth-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "floreana-youth-ensemble",
+    mingasCount: 1,
     name: "Floreana Youth Ensemble",
     country: "Ecuador",
     region: "Galápagos",
@@ -1046,6 +1059,7 @@ export const dramaClubMap = {
   "san-cristobal-collective": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "san-cristobal-collective",
+    mingasCount: 3,
     approxYouthServed: 110,
     name: "San Cristóbal Collective",
     country: "Ecuador",
@@ -1110,6 +1124,7 @@ export const dramaClubMap = {
   "esmeraldas-youth-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "esmeraldas-youth-ensemble",
+    mingasCount: 3,
     approxYouthServed: 140,
     name: "Esmeraldas Youth Ensemble",
     country: "Ecuador",
@@ -1177,6 +1192,7 @@ export const dramaClubMap = {
   "slum-dog-theatre": {
   ...DRAMA_CLUB_TEMPLATE,
   slug: "slum-dog-theatre",
+  mingasCount: 5,
   name: "Slum Dog Theatre",
   country: "Slovakia",
   region: "Eastern Slovakia",
@@ -1260,6 +1276,7 @@ export const dramaClubMap = {
   "sunflower-youth-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "sunflower-youth-ensemble",
+    mingasCount: 3,
     approxYouthServed: 130,
     name: "Sunflower Youth Ensemble",
     country: "Slovakia",
@@ -1320,6 +1337,7 @@ export const dramaClubMap = {
   "kosice-creative-lab": {
   ...DRAMA_CLUB_TEMPLATE,
   slug: "kosice-creative-lab",
+  mingasCount: 4,
   name: "Košice Creative lab",
   country: "Slovakia",
   region: "Eastern Slovakia",
@@ -1393,6 +1411,7 @@ export const dramaClubMap = {
   "zemplinska-teplica-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "zemplinska-teplica-ensemble",
+    mingasCount: 2,
     approxYouthServed: 95,
     name: "Zemplínska Teplica Youth Ensemble",
     country: "Slovakia",
@@ -1454,6 +1473,7 @@ export const dramaClubMap = {
   "lunik-ix-collective": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "lunik-ix-collective",
+    mingasCount: 5,
     approxYouthServed: 160,
     name: "Luník IX Collective",
     country: "Slovakia",
@@ -1514,6 +1534,7 @@ export const dramaClubMap = {
   "camp-etp-slovensko": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "camp-etp-slovensko",
+    mingasCount: 3,
     name: "Camp ETP Slovensko",
     country: "Slovakia",
     region: "Eastern Slovakia",
@@ -1584,6 +1605,7 @@ export const dramaClubMap = {
   "stara-lubovna-story-circle": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "stara-lubovna-story-circle",
+    mingasCount: 2,
     approxYouthServed: 85,
     name: "Stará Ľubovňa Story Circle",
     country: "Slovakia",
@@ -1644,6 +1666,7 @@ export const dramaClubMap = {
   "bratislava-drama-lab": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "bratislava-drama-lab",
+    mingasCount: 1,
     approxYouthServed: 70,
     name: "Bratislava Drama Lab",
     country: "Slovakia",
@@ -1707,6 +1730,7 @@ export const dramaClubMap = {
   "roma-youth-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "roma-youth-ensemble",
+    mingasCount: 4,
     approxYouthServed: 145,
     name: "Roma Youth Ensemble",
     country: "Czechia",
@@ -1770,6 +1794,7 @@ export const dramaClubMap = {
   "mloka-collective": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "mloka-collective",
+    mingasCount: 3,
     approxYouthServed: 100,
     name: "Mloka Collective",
     country: "Tanzania",
@@ -1831,6 +1856,7 @@ export const dramaClubMap = {
   "moshi-story-circle": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "moshi-story-circle",
+    mingasCount: 3,
     approxYouthServed: 115,
     name: "Moshi Story Circle",
     country: "Tanzania",
@@ -1889,6 +1915,7 @@ export const dramaClubMap = {
   "light-in-africa-story-laboratory": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "light-in-africa-story-laboratory",
+    mingasCount: 5,
     approxYouthServed: 180,
     name: "Light-in-Africa Story Laboratory",
     country: "Tanzania",
@@ -1949,6 +1976,7 @@ export const dramaClubMap = {
   "bagamoyo-young-company": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "bagamoyo-young-company",
+    mingasCount: 3,
     approxYouthServed: 125,
     name: "Bagamoyo Young Company",
     country: "Tanzania",
@@ -2008,6 +2036,7 @@ export const dramaClubMap = {
   "dar-collective": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "dar-collective",
+    mingasCount: 4,
     approxYouthServed: 150,
     name: "Dar Collective",
     country: "Tanzania",
@@ -2071,6 +2100,7 @@ export const dramaClubMap = {
   "stone-town-youth-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "stone-town-youth-ensemble",
+    mingasCount: 2,
     approxYouthServed: 105,
     name: "Stone Town Youth Ensemble",
     country: "Tanzania",
@@ -2130,6 +2160,7 @@ export const dramaClubMap = {
   "matemwe-young-company": {
   ...DRAMA_CLUB_TEMPLATE,
   slug: "matemwe-young-company",
+  mingasCount: 2,
   approxYouthServed: 90,
   name: "Matemwe Young Company",
   country: "Tanzania",
@@ -2212,6 +2243,7 @@ export const dramaClubMap = {
   "bulawayo-young-company": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "bulawayo-young-company",
+    mingasCount: 3,
     name: "Bulawayo Young Company",
     country: "Zimbabwe",
     region: "Southern Africa",
@@ -2281,6 +2313,7 @@ export const dramaClubMap = {
   "matopos-youth-drama-camp": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "matopos-youth-drama-camp",
+    mingasCount: 4,
     approxYouthServed: 200,
     name: "Matopos Youth Drama Camp",
     country: "Zimbabwe",
@@ -2342,6 +2375,7 @@ export const dramaClubMap = {
   "wanezi-youth-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "wanezi-youth-ensemble",
+    mingasCount: 2,
     approxYouthServed: 110,
     name: "Wanezi Youth Ensemble",
     country: "Zimbabwe",
@@ -2416,6 +2450,7 @@ export const dramaClubMap = {
   "harare-youth-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "harare-youth-ensemble",
+    mingasCount: 3,
     approxYouthServed: 135,
     name: "Harare Youth Ensemble",
     country: "Zimbabwe",
@@ -2480,6 +2515,7 @@ export const dramaClubMap = {
   "nyc-drama-lab": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "nyc-drama-lab",
+    mingasCount: 1,
     approxYouthServed: 120,
     name: "NYC Drama Lab",
     country: "United States",
@@ -2656,6 +2692,7 @@ export const DRAMA_CLUB_TEMPLATE_FULL = {
 
   showcasesCount: undefined,
   communityShowcases: undefined,
+  mingasCount: undefined,
   approxCommunityAudience: undefined,
 
   currentImpactStats: [] as DramaClubImpactStat[],
