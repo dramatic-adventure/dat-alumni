@@ -223,7 +223,7 @@ export default function JoinTheJourneyPanel({
               style={{ marginBottom: "2.5rem" }}
             >
               <a
-                href="/submit-your-story"
+                href="/login"
                 style={{
                   fontFamily:
                     "var(--font-space-grotesk), system-ui, sans-serif",
@@ -254,7 +254,7 @@ export default function JoinTheJourneyPanel({
               </a>
               <br />
               <a
-                href="/get-involved"
+                href="https://dramaticadventure.com/travel-opportunities"
                 style={{
                   fontFamily:
                     "var(--font-space-grotesk), system-ui, sans-serif",
