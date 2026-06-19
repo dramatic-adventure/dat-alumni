@@ -575,7 +575,7 @@ export async function enrichAlumniData(
         : "";
       resolvedHeadshotUrl = `/api/media/thumb/${encodeURIComponent(
         headshotFileId
-      )}?w=900${v}`;
+      )}?w=1200${v}`;
     } else if (headshotExternalUrl) {
       const upstream = withVersion(headshotExternalUrl, resolvedHeadshotCacheKey);
       resolvedHeadshotUrl = `/api/img?url=${encodeURIComponent(upstream)}`;

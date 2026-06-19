@@ -118,7 +118,14 @@ export default function FeaturedAlumni({ highlights }: FeaturedAlumniProps) {
                     marginBottom: "0.75rem",
                   }}
                 >
-                  <Image src={imgSrc} alt={alum.name} fill className="object-cover" />
+                  <Image
+                    src={imgSrc}
+                    alt={alum.name}
+                    fill
+                    sizes="(max-width: 600px) 280px, 260px"
+                    quality={90}
+                    className="object-cover"
+                  />
                   <div
                     style={{
                       position: "absolute",
