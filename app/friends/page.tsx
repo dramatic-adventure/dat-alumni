@@ -7,7 +7,7 @@ import {
   COUNTRY_COUNT,
   CLUB_COUNT,
   SEASON_COUNT,
-  ALUMNI_COUNT_DISPLAY,
+  TRAVELING_ARTIST_COUNT_DISPLAY,
 } from "@/lib/datStats";
 
 /* ─── What friends do ─────────────────────────────────────────── */
@@ -50,7 +50,7 @@ const reasons = [
   },
   {
     title: "You make the next season possible.",
-    body: `${ALUMNI_COUNT_DISPLAY} artists. ${COUNTRY_COUNT} countries. ${SEASON_COUNT} seasons of original work. None of it happens without a community of people who show up.`,
+    body: `${TRAVELING_ARTIST_COUNT_DISPLAY} artist journeys. ${COUNTRY_COUNT} countries. ${SEASON_COUNT} seasons of original work. None of it happens without a community of people who show up.`,
   },
 ];
 
@@ -176,8 +176,8 @@ export default function FriendsPage() {
           </div>
           <div className="fr-stat-sep" aria-hidden="true" />
           <div className="fr-stat">
-            <span className="fr-stat-num">{ALUMNI_COUNT_DISPLAY}</span>
-            <span className="fr-stat-lbl">Artists</span>
+            <span className="fr-stat-num">{TRAVELING_ARTIST_COUNT_DISPLAY}</span>
+            <span className="fr-stat-lbl">Traveling Artists</span>
           </div>
         </div>
       </section>

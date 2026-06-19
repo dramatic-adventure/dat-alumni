@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ALUMNI_COUNT_DISPLAY, SEASON_COUNT, PRODUCTION_COUNT, CLUB_COUNT } from "@/lib/datStats";
+import { TRAVELING_ARTIST_COUNT_DISPLAY, SEASON_COUNT, PRODUCTION_COUNT, CLUB_COUNT } from "@/lib/datStats";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shows once per calendar day. Once dismissed, localStorage records today's
@@ -108,7 +108,7 @@ export default function ComingSoonModal() {
               For nearly two decades, DAT has brought artists and communities together around the
               world to create original theatre — across <strong>{SEASON_COUNT} seasons</strong>,{" "}
               <strong>{PRODUCTION_COUNT} original plays</strong>, and <strong>{CLUB_COUNT} drama clubs</strong>, with{" "}
-              <strong>{ALUMNI_COUNT_DISPLAY} artists</strong>.
+              <strong>{TRAVELING_ARTIST_COUNT_DISPLAY} artist journeys</strong>.
             </p>
             <p className="csm-body">
               As we approach our 20th year, we are gathering the work that brought us here and

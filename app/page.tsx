@@ -10,7 +10,7 @@ import {
   COUNTRY_COUNT,
   CLUB_COUNT,
   SEASON_COUNT,
-  ALUMNI_COUNT,
+  TRAVELING_ARTIST_COUNT,
 } from "@/lib/datStats";
 import PhotoStrip from "@/components/shared/PhotoStrip";
 import { dramaClubs } from "@/lib/dramaClubMap";
@@ -105,7 +105,7 @@ const HOME_STATS = [
   { value: SEASON_COUNT,  label: "Seasons",        sub: "2006–present" },
   { value: COUNTRY_COUNT, label: "Countries",      sub: "where the work was born" },
   { value: CLUB_COUNT,    label: "Drama Clubs",    sub: "community-rooted ensembles" },
-  { value: ALUMNI_COUNT,  label: "Alumni Artists", sub: "directors, actors & makers" },
+  { value: TRAVELING_ARTIST_COUNT,  label: "Traveling Artists", sub: "journeys taken since 2006" },
 ];
 
 const ARCHIVE_FALLBACK_HEADLINE = "Some stories keep echoing long after the final bow.";

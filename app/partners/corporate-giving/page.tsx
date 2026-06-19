@@ -3,11 +3,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { dramaClubs } from "@/lib/dramaClubMap";
 import JoinTheJourneyPanel from "@/components/shared/JoinTheJourneyPanel";
-
-const COUNTRY_COUNT = new Set(dramaClubs.map((c) => c.country).filter(Boolean)).size;
-const CLUB_COUNT    = dramaClubs.length;
+import {
+  COUNTRY_COUNT,
+  CLUB_COUNT,
+  PRODUCTION_COUNT,
+  TRAVELING_ARTIST_COUNT_DISPLAY,
+} from "@/lib/datStats";
 
 /* ─── Partnership types ──────────────────────────────────── */
 const partnershipTypes = [
@@ -108,8 +110,8 @@ export default function CorporateGivingPage() {
           {[
             { value: `${COUNTRY_COUNT}`, label: "Countries with DAT Clubs", sub: "active community partnerships" },
             { value: `${CLUB_COUNT}+`, label: "Drama Clubs Created", sub: "and counting" },
-            { value: "32", label: "New Plays", sub: "devised with community artists" },
-            { value: "350+", label: "DAT Alumni", sub: "artists worldwide" },
+            { value: `${PRODUCTION_COUNT}`, label: "New Plays", sub: "devised with community artists" },
+            { value: TRAVELING_ARTIST_COUNT_DISPLAY, label: "Traveling Artists", sub: "journeys taken with DAT" },
           ].map((s) => (
             <div key={s.label} style={{ display: "flex", flexDirection: "column", gap: "0.2rem", textAlign: "center" }}>
               <span style={{ fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "clamp(2rem, 4.5vw, 3rem)", fontWeight: 700, color: "#2FA873", lineHeight: 1 }}>{s.value}</span>

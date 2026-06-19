@@ -6,7 +6,7 @@ import Image from "next/image";
 import LoginButton from "./LoginButton";
 import EmailCodeForm from "./EmailCodeForm";
 import {
-  ALUMNI_COUNT_DISPLAY,
+  TRAVELING_ARTIST_COUNT_DISPLAY,
   COUNTRY_COUNT,
   SEASON_COUNT,
 } from "@/lib/datStats";
@@ -63,7 +63,7 @@ function errorMessage(code: string | undefined): string | null {
 const CARD_BG = "rgba(54, 18, 82, 0.97)";
 
 const STATS = [
-  { number: ALUMNI_COUNT_DISPLAY, label: "Alumni Artists" },
+  { number: TRAVELING_ARTIST_COUNT_DISPLAY, label: "Traveling Artists" },
   { number: String(COUNTRY_COUNT), label: "Countries" },
   { number: String(SEASON_COUNT), label: "Seasons" },
 ];

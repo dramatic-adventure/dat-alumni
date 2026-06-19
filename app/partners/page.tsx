@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRef, useEffect } from "react";
 import JoinTheJourneyPanel from "@/components/shared/JoinTheJourneyPanel";
-import { COUNTRY_COUNT, CLUB_COUNT, SEASON_COUNT, ALUMNI_COUNT_DISPLAY } from "@/lib/datStats";
+import { COUNTRY_COUNT, CLUB_COUNT, SEASON_COUNT, TRAVELING_ARTIST_COUNT_DISPLAY } from "@/lib/datStats";
 
 /* ─── Partnership pathways ───────────────────────────────── */
 const pathways = [
@@ -122,7 +122,7 @@ export default function PartnersPage() {
           {[
             { value: `${COUNTRY_COUNT}`, label: "Countries" },
             { value: `${CLUB_COUNT}+`, label: "Drama Clubs Created" },
-            { value: ALUMNI_COUNT_DISPLAY, label: "DAT Alumni Artists" },
+            { value: TRAVELING_ARTIST_COUNT_DISPLAY, label: "Traveling Artists" },
             { value: `${SEASON_COUNT}`, label: "Seasons of Global Work" },
           ].map((s) => (
             <div key={s.label} style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>

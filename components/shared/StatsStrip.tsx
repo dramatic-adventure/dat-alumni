@@ -19,18 +19,8 @@ export type StatsStripProps = {
   columns?: number;
 };
 
-const DEFAULT_STATS: Stat[] = [
-  { value: 350, label: "Traveling Artists" },
-  { value: 9, label: "Countries" },
-  { value: 107, label: "International Communities Engaged" },
-  {
-    value: 75,
-    label: "Mingas* & Community Showcases",
-    subLabel: "*Community-Designed & Led Service Projects",
-  },
-  { value: 32, label: "New Plays" },
-  { value: 3000, label: "Youth Reached" },
-];
+// Presentational only — no hardcoded numbers live here. Callers pass `stats`
+// sourced from lib/datStats.ts (the single source of truth). See GLOBAL_IMPACT_STATS.
 
 const easeOutQuint = (t: number) => 1 - Math.pow(1 - t, 5);
 
@@ -110,7 +100,7 @@ function animateFlipCount(
 }
 
 export default function StatsStrip({
-  stats = DEFAULT_STATS,
+  stats = [],
   background = "transparent",
   accentColor = "#D9A919",
   textColor = "#f2f2f2",

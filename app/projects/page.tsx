@@ -16,6 +16,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { seasons as seasonData } from "@/lib/seasonData";
+import { SEASON_COUNT, COUNTRY_COUNT } from "@/lib/datStats";
 import { showcasesBySeason, archivedProjectEventsBySeason, canonicalEventPath, type DatEvent } from "@/lib/events";
 import { dramaClubs } from "@/lib/dramaClubMap";
 import { programMap, type ProgramData } from "@/lib/programMap";
@@ -300,13 +301,13 @@ const eyebrowOnKraft: React.CSSProperties = {
 // ─── Page ──────────────────────────────────────────────────────────────────────
 export default function ProjectsIndexPage() {
 
-  // ── Stats (all derived dynamically from seasonData) ──
-  const totalSeasons    = seasonData.length;
+  // ── Stats ──
+  // Seasons & Countries come from lib/datStats.ts (single source of truth) so
+  // they match every other page. Projects & Continents are specific to this page.
   const totalProjects   = seasonData.reduce(
     (sum, s) => sum + s.projects.filter((p) => !isHousekeeping(p)).length,
     0
   );
-  const allCountries    = extractAllCountries(seasonData);
   const allContinents   = extractAllContinents(seasonData);
   const jumpSeasons     = allSeasonNums();
 
@@ -420,7 +421,7 @@ export default function ProjectsIndexPage() {
           >
             {[
               {
-                n:     String(totalSeasons),
+                n:     String(SEASON_COUNT),
                 label: "Seasons",
                 sub:   "2006–present",
               },
@@ -430,7 +431,7 @@ export default function ProjectsIndexPage() {
                 sub:   "treks, residencies & more",
               },
               {
-                n:     String(allCountries.size),
+                n:     String(COUNTRY_COUNT),
                 label: "Countries",
                 sub:   "across four continents",
               },

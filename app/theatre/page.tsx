@@ -5,6 +5,12 @@ import { productionMap, type Production, getSortYear } from "@/lib/productionMap
 import { seasons as seasonData } from "@/lib/seasonData";
 import { showcasesBySeason, type DatEvent } from "@/lib/events";
 import { dramaClubs } from "@/lib/dramaClubMap";
+import {
+  SEASON_COUNT,
+  PRODUCTION_COUNT,
+  COUNTRY_COUNT,
+  TRAVELING_ARTIST_COUNT,
+} from "@/lib/datStats";
 
 const FALLBACK_POSTER = "/posters/fallback-16x9.jpg";
 const CARD_BG = "#f2f2f2";
@@ -175,24 +181,10 @@ export default function TheatreIndexPage() {
   // Community showcases grouped by season — auto-derived from events data
   const showcaseMap = showcasesBySeason();
 
-  // Stats — all derived dynamically from data
+  // Stats come from lib/datStats.ts (single source of truth) so the numbers
+  // match every other page. Do not re-derive them locally here.
   const years = allProductions.map(getSortYear).filter(Boolean);
   const earliestYear = Math.min(...years);
-  const totalSeasons = seasonData.length; // always accurate as seasons are added
-
-  const uniqueCountries = new Set<string>();
-  for (const p of allProductions) {
-    const parts = p.location.split(",");
-    const country = parts.length > 1 ? parts[parts.length - 1].trim() : p.location.trim();
-    if (country) uniqueCountries.add(country);
-  }
-
-  const uniqueArtists = new Set<string>();
-  for (const p of allProductions) {
-    for (const key of Object.keys(p.artists)) {
-      if (!key.startsWith("[")) uniqueArtists.add(key);
-    }
-  }
 
   const featured = allProductions[0];
 
@@ -302,10 +294,10 @@ export default function TheatreIndexPage() {
             }}
           >
             {[
-              { n: String(totalSeasons),         label: "Seasons",        sub: "2006–present" },
-              { n: String(allProductions.length), label: "Productions",    sub: "original works & adaptations" },
-              { n: String(uniqueArtists.size),    label: "Alumni Artists", sub: "directors, actors & designers" },
-              { n: String(uniqueCountries.size),  label: "Countries",      sub: "where the work was born" },
+              { n: String(SEASON_COUNT),             label: "Seasons",          sub: "2006–present" },
+              { n: String(PRODUCTION_COUNT),         label: "Productions",      sub: "original works & adaptations" },
+              { n: String(TRAVELING_ARTIST_COUNT),   label: "Traveling Artists", sub: "directors, actors & designers" },
+              { n: String(COUNTRY_COUNT),            label: "Countries",        sub: "where the work was born" },
             ].map(({ n, label, sub }, i, arr) => (
               <div
                 key={label}

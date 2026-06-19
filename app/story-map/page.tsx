@@ -3,6 +3,7 @@ import Image from "next/image";
 import StoryMapClient from "@/components/map/StoryMapClient";
 import StatsStrip from "@/components/shared/StatsStrip";
 import JoinTheJourneyPanel from "@/components/shared/JoinTheJourneyPanel";
+import { GLOBAL_IMPACT_STATS } from "@/lib/datStats";
 
 
 export const metadata = { title: "Story Map | Dramatic Adventure Theatre" };
@@ -125,8 +126,8 @@ export default function StoryMapPage() {
         </div>
       </section>
 
-      {/* ✅ STATS under the StoryMap */}
-      <StatsStrip />
+      {/* ✅ STATS under the StoryMap — sourced from lib/datStats.ts */}
+      <StatsStrip stats={GLOBAL_IMPACT_STATS} />
 
 <JoinTheJourneyPanel />
 

@@ -14,6 +14,13 @@ import {
 import { DATButtonLink } from "@/components/ui/DATButton";
 import DramaClubRootsSidebar from "@/components/drama/DramaClubRootsSidebar";
 import DramaClubIndexShell from "@/components/drama/DramaClubIndexShell";
+import {
+  YOUTH_REACHED,
+  COMMUNITY_SHOWCASES,
+  CLUB_COUNT,
+  CLUB_COUNTRY_COUNT,
+  YEARS_OF_WORK,
+} from "@/lib/datStats";
 
 export const revalidate = 3600;
 
@@ -32,7 +39,6 @@ const statusOrder: Record<DramaClubStatus, number> = {
 
 export default function DramaClubIndexPage() {
   const nowYear = new Date().getFullYear();
-  const yearsOfImpact = nowYear - 2006; // DAT founded in 2006
 
   // ---------- Sort by status → country → name ----------
   const sortedClubs: DramaClub[] = [...dramaClubs].sort((a, b) => {
@@ -64,16 +70,8 @@ export default function DramaClubIndexPage() {
     statusCounts[status] += 1;
   });
 
-  // ---------- Stats base values ----------
-  const totalYouth = sortedClubs.reduce(
-    (sum, club) => sum + (club.approxYouthServed ?? 0),
-    0
-  );
-  const totalShowcases = sortedClubs.reduce(
-    (sum, club) => sum + (club.showcasesCount ?? 0),
-    0
-  );
-  const countryCount = new Set(sortedClubs.map((c) => c.country)).size;
+  // Shared impact numbers come from lib/datStats.ts (single source of truth).
+  // Only the page-specific "long-term communities" stat is computed locally.
 
   // ---------- Multi-year communities (3+ years) ----------
   const multiYearCommunities = new Set<string>();
@@ -111,27 +109,27 @@ export default function DramaClubIndexPage() {
   // ---------- Final stats (6) ----------
   const dramaStats = [
     {
-      value: totalYouth,
+      value: YOUTH_REACHED,
       label: "Youth Reached",
       subLabel: "through Drama Clubs",
     },
     {
-      value: totalShowcases,
+      value: COMMUNITY_SHOWCASES,
       label: "Community Performances",
       subLabel: "original showcases & sharings",
     },
     {
-      value: sortedClubs.length,
+      value: CLUB_COUNT,
       label: "Drama Clubs",
       subLabel: "created with local partners",
     },
     {
-      value: countryCount,
+      value: CLUB_COUNTRY_COUNT,
       label: "Countries",
       subLabel: "hosting Drama Clubs",
     },
     {
-      value: yearsOfImpact,
+      value: YEARS_OF_WORK,
       label: "Years of Drama Club Work",
       subLabel: "since October 21, 2006",
     },

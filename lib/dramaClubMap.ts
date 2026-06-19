@@ -640,6 +640,7 @@ export const dramaClubMap = {
   "cuenca-creative-lab": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "cuenca-creative-lab",
+    approxYouthServed: 90,
     name: "Cuenca Creative Lab",
     country: "Ecuador",
     region: "Andes Mountains",
@@ -904,6 +905,7 @@ export const dramaClubMap = {
   "la-selva-lab": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "la-selva-lab",
+    approxYouthServed: 75,
     name: "La Selva Lab",
     country: "Ecuador",
     region: "Amazon",
@@ -1044,6 +1046,7 @@ export const dramaClubMap = {
   "san-cristobal-collective": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "san-cristobal-collective",
+    approxYouthServed: 110,
     name: "San Cristóbal Collective",
     country: "Ecuador",
     region: "Galápagos",
@@ -1107,6 +1110,7 @@ export const dramaClubMap = {
   "esmeraldas-youth-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "esmeraldas-youth-ensemble",
+    approxYouthServed: 140,
     name: "Esmeraldas Youth Ensemble",
     country: "Ecuador",
     region: "Pacific Coast",
@@ -1256,6 +1260,7 @@ export const dramaClubMap = {
   "sunflower-youth-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "sunflower-youth-ensemble",
+    approxYouthServed: 130,
     name: "Sunflower Youth Ensemble",
     country: "Slovakia",
     region: "Eastern Slovakia",
@@ -1388,6 +1393,7 @@ export const dramaClubMap = {
   "zemplinska-teplica-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "zemplinska-teplica-ensemble",
+    approxYouthServed: 95,
     name: "Zemplínska Teplica Youth Ensemble",
     country: "Slovakia",
     region: "Eastern Slovakia",
@@ -1448,6 +1454,7 @@ export const dramaClubMap = {
   "lunik-ix-collective": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "lunik-ix-collective",
+    approxYouthServed: 160,
     name: "Luník IX Collective",
     country: "Slovakia",
     region: "Eastern Slovakia",
@@ -1577,6 +1584,7 @@ export const dramaClubMap = {
   "stara-lubovna-story-circle": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "stara-lubovna-story-circle",
+    approxYouthServed: 85,
     name: "Stará Ľubovňa Story Circle",
     country: "Slovakia",
     region: "Northern Slovakia",
@@ -1636,6 +1644,7 @@ export const dramaClubMap = {
   "bratislava-drama-lab": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "bratislava-drama-lab",
+    approxYouthServed: 70,
     name: "Bratislava Drama Lab",
     country: "Slovakia",
     region: "Western Slovakia",
@@ -1698,6 +1707,7 @@ export const dramaClubMap = {
   "roma-youth-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "roma-youth-ensemble",
+    approxYouthServed: 145,
     name: "Roma Youth Ensemble",
     country: "Czechia",
     region: "South Moravia",
@@ -1760,6 +1770,7 @@ export const dramaClubMap = {
   "mloka-collective": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "mloka-collective",
+    approxYouthServed: 100,
     name: "Mloka Collective",
     country: "Tanzania",
     region: "Southern Tanzania",
@@ -1820,6 +1831,7 @@ export const dramaClubMap = {
   "moshi-story-circle": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "moshi-story-circle",
+    approxYouthServed: 115,
     name: "Moshi Story Circle",
     country: "Tanzania",
     region: "Kilimanjaro",
@@ -1877,6 +1889,7 @@ export const dramaClubMap = {
   "light-in-africa-story-laboratory": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "light-in-africa-story-laboratory",
+    approxYouthServed: 180,
     name: "Light-in-Africa Story Laboratory",
     country: "Tanzania",
     region: "Kilimanjaro",
@@ -1936,6 +1949,7 @@ export const dramaClubMap = {
   "bagamoyo-young-company": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "bagamoyo-young-company",
+    approxYouthServed: 125,
     name: "Bagamoyo Young Company",
     country: "Tanzania",
     region: "Coastal Tanzania",
@@ -1994,6 +2008,7 @@ export const dramaClubMap = {
   "dar-collective": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "dar-collective",
+    approxYouthServed: 150,
     name: "Dar Collective",
     country: "Tanzania",
     region: "Coastal Tanzania",
@@ -2056,6 +2071,7 @@ export const dramaClubMap = {
   "stone-town-youth-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "stone-town-youth-ensemble",
+    approxYouthServed: 105,
     name: "Stone Town Youth Ensemble",
     country: "Tanzania",
     region: "Zanzibar",
@@ -2114,6 +2130,7 @@ export const dramaClubMap = {
   "matemwe-young-company": {
   ...DRAMA_CLUB_TEMPLATE,
   slug: "matemwe-young-company",
+  approxYouthServed: 90,
   name: "Matemwe Young Company",
   country: "Tanzania",
   region: "Zanzibar",
@@ -2264,6 +2281,7 @@ export const dramaClubMap = {
   "matopos-youth-drama-camp": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "matopos-youth-drama-camp",
+    approxYouthServed: 200,
     name: "Matopos Youth Drama Camp",
     country: "Zimbabwe",
     region: "Southern Africa",
@@ -2324,6 +2342,7 @@ export const dramaClubMap = {
   "wanezi-youth-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "wanezi-youth-ensemble",
+    approxYouthServed: 110,
     name: "Wanezi Youth Ensemble",
     country: "Zimbabwe",
     region: "Southern Africa",
@@ -2397,6 +2416,7 @@ export const dramaClubMap = {
   "harare-youth-ensemble": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "harare-youth-ensemble",
+    approxYouthServed: 135,
     name: "Harare Youth Ensemble",
     country: "Zimbabwe",
     region: "Southern Africa",
@@ -2460,6 +2480,7 @@ export const dramaClubMap = {
   "nyc-drama-lab": {
     ...DRAMA_CLUB_TEMPLATE,
     slug: "nyc-drama-lab",
+    approxYouthServed: 120,
     name: "NYC Drama Lab",
     country: "United States",
     region: "New York",
