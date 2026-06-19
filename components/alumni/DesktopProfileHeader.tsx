@@ -613,7 +613,7 @@ export default function DesktopProfileHeader({
                   </div>
                 )}
                 {location && (
-                  <div style={{ marginTop: "0.4rem" }}>
+                  <div style={{ marginTop: "1.4rem" }}>
                     <LocationDisplay size="1.2rem" />
                   </div>
                 )}
