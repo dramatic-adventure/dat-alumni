@@ -782,7 +782,7 @@ const hasStories = storiesForFeatured.length > 0;
       <PublicMediaSection key={alumniIdForMedia} alumniId={alumniIdForMedia} />
 
       {featuredProductions.length > 0 && (
-        <div className="bg-[#19657c] py-[30px] px-[30px]">
+        <div className="bg-[#19657c] pt-[5rem] pb-[30px] px-[30px]">
           <h2
             className="text-6xl text-[#D9A919] mb-4"
             style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif" }}
