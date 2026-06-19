@@ -71,8 +71,7 @@ export default function BioIdentitySection({
   const showToggle = isLong && hasBody;
   const showBody = !showToggle || expanded;
 
-  const paddingTop =
-    !isMobile && directlyBelowHero ? "5rem" : isMobile ? "2.5rem" : "4rem";
+  const paddingTop = isMobile ? "2.5rem" : "6rem";
 
   const hasBio = bio.length > 0;
   const useGrid = !isMobile && hasBio && hasAnyTags;
