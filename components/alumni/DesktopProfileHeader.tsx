@@ -126,6 +126,13 @@ export default function DesktopProfileHeader({
           const idx = preferredUrl ? unique.indexOf(preferredUrl) : -1;
           setCurrentHeadshotIndex(idx >= 0 ? idx : 0);
           unique.forEach(url => { try { new window.Image().src = url; } catch {} });
+        } else {
+          // New profile has no gallery images. Clear any stale gallery carried
+          // over from a previously viewed profile (client-side nav reuses this
+          // component instance), otherwise the prior profile's photos persist
+          // until a hard refresh.
+          setGalleryUrls([]);
+          setCurrentHeadshotIndex(0);
         }
       } catch { /* AbortError or network — ignore */ }
     }
