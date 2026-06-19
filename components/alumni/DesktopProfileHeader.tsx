@@ -341,7 +341,7 @@ export default function DesktopProfileHeader({
       </div>
 
       {/* Name + meta */}
-      <div style={{ backgroundColor: "#C39B6C", color: "#F6E4C1", textAlign: "left", paddingLeft: "415px", paddingTop: "2rem", paddingBottom: "2rem" }}>
+      <div style={{ backgroundColor: "#C39B6C", color: "#F6E4C1", textAlign: "left", paddingLeft: "415px", paddingTop: "2rem", paddingBottom: "5rem" }}>
         <ScaledName firstName={firstName} lastName={lastName} containerWidth={360} gapRem={0.6} />
 
         {(titleLinks.length > 0 || currentTitle || location) && (
