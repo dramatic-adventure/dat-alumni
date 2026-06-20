@@ -104,6 +104,33 @@ function stripDiacritics(s: string) {
   return s.normalize("NFD").replace(/\p{Diacritic}/gu, "");
 }
 
+/* ---------------- United States country-suffix stripping ----------------
+ * For /location browsing, a trailing United-States country name is redundant
+ * (we group by city/state, not country). This is intentionally US-only — other
+ * countries keep their suffix (e.g. "Paris, France"). Variants handled, with any
+ * mix of commas/spaces/periods before them:
+ *   USA · US · U.S. · U.S.A. · United States · United States of America · America
+ * So "New York, NY, USA" (and "…, NY USA", "…, NY US", "…, NY United States", etc.)
+ * normalizes to "New York, NY", which then aliases to "New York City".
+ */
+const US_COUNTRY_ALT =
+  "(?:united states of america|united states|u\\.?\\s*s\\.?\\s*a\\.?|u\\.?\\s*s\\.?|usa|us|america)";
+/** Matches a trailing US country token preceded by a comma/space separator. */
+const US_COUNTRY_SUFFIX_RE = new RegExp(`[\\s,]+${US_COUNTRY_ALT}\\.?[\\s.]*$`, "i");
+/** Matches a string that is *only* a US country name (nothing to browse by). */
+const US_COUNTRY_FULL_RE = new RegExp(`^${US_COUNTRY_ALT}\\.?$`, "i");
+
+/** Remove a trailing US country suffix; loops to handle doubled suffixes. */
+function stripUsCountrySuffix(value: string): string {
+  let v = value.trim();
+  let prev: string;
+  do {
+    prev = v;
+    v = v.replace(US_COUNTRY_SUFFIX_RE, "").replace(/[\s,]+$/g, "").trim();
+  } while (v !== prev && v.length > 0);
+  return v;
+}
+
 function titleCaseCity(s: string) {
   return s
     .trim()
@@ -121,7 +148,13 @@ export function slugifyLocation(label: string): string {
 
 export function normalizeLocation(raw?: string | null): string | null {
   if (!raw) return null;
-  const trimmed = raw.trim().replace(/^based in:\s*/i, "");
+  let trimmed = raw.trim().replace(/^based in:\s*/i, "");
+
+  // 🇺🇸 US-only: drop a redundant trailing United-States country suffix.
+  if (US_COUNTRY_FULL_RE.test(trimmed)) return null; // only a country → nothing to browse by
+  trimmed = stripUsCountrySuffix(trimmed);
+  if (!trimmed) return null;
+
   const lower = stripDiacritics(trimmed).toLowerCase();
   if (EXCLUDED.has(lower)) return null;
 
