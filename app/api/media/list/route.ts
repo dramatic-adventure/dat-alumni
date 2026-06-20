@@ -81,7 +81,7 @@ function toISOOrEmpty(v: string) {
   return "";
 }
 
-function cacheHeaders(opts: { includeDrive: boolean }) {
+function cacheHeaders(opts: { includeDrive: boolean }): Record<string, string> {
   // "Nicer option":
   // - Cache the list for a short window at the edge/CDN
   // - Allow stale-while-revalidate for snappy repeat loads
