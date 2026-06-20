@@ -695,10 +695,11 @@ export function buildTitleBuckets(alumni: AlumniRow[]) {
           fixedBucket.people.add(a.slug);
         }
 
-        // Professional Pathways: always create pathway:* buckets from currentTitle
-        const plural = pluralizeToken(title);
-        const pathwayKey = `pathway:${slugifyTitle(plural)}` as TitleBucketKey;
-        const pathwayBucket = ensurePathwayBucket(pathwayKey, plural);
+        // Professional Pathways: always create pathway:* buckets from currentTitle.
+        // Use the singular form (no pluralization) for pathway labels/keys.
+        const singular = title;
+        const pathwayKey = `pathway:${slugifyTitle(singular)}` as TitleBucketKey;
+        const pathwayBucket = ensurePathwayBucket(pathwayKey, singular);
         pathwayBucket.people.add(a.slug);
       }
     }
@@ -792,8 +793,9 @@ export function getViaBucketToken(
     if (ct && typeof ct === "string") {
       for (const t of splitCurrentTitles(ct)) {
         if (!t.trim() || isJunkCurrentTitle(t)) continue;
-        const plural = pluralizeToken(t.trim());
-        if (slugifyTitle(plural) === pathwaySlug) {
+        // Pathway slugs are generated from the singular currentTitle token.
+        const singular = t.trim();
+        if (slugifyTitle(singular) === pathwaySlug) {
           return { label: t.trim(), source: "current-title" };
         }
       }
