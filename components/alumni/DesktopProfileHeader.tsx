@@ -341,7 +341,7 @@ export default function DesktopProfileHeader({
       </div>
 
       {/* Name + meta */}
-      <div style={{ backgroundColor: "#C39B6C", color: "#F6E4C1", textAlign: "left", paddingLeft: "415px", paddingTop: "3.2rem", paddingBottom: "2.6rem" }}>
+      <div style={{ backgroundColor: "#C39B6C", color: "#F6E4C1", textAlign: "left", paddingLeft: "415px", paddingTop: "3.2rem", paddingBottom: "2.5rem" }}>
         <ScaledName firstName={firstName} lastName={lastName} containerWidth={360} gapRem={0.6} />
 
         {(titleLinks.length > 0 || currentTitle || location) && (
@@ -411,7 +411,7 @@ export default function DesktopProfileHeader({
 
                 {/* Location row — sits between titles and DAT pill */}
                 {location && (
-                  <div style={{ marginTop: "1.2rem" }}>
+                  <div style={{ marginTop: "1.1rem" }}>
                     <LocationDisplay size="1.05rem" />
                   </div>
                 )}
@@ -613,7 +613,7 @@ export default function DesktopProfileHeader({
                   </div>
                 )}
                 {location && (
-                  <div style={{ marginTop: "1.2rem" }}>
+                  <div style={{ marginTop: "1.1rem" }}>
                     <LocationDisplay size="1.2rem" />
                   </div>
                 )}
