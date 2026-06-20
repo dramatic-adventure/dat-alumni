@@ -94,13 +94,16 @@ function cacheHeaders(opts: { includeDrive: boolean }) {
     };
   }
 
+  // This list is per-alumni and distinguished ONLY by the ?alumniId= query param.
+  // Netlify's CDN (via @netlify/plugin-nextjs) keys cache entries by path and was
+  // serving one alumni's media list for a different alumniId — the exact
+  // cross-query-param hazard already guarded against for /api/media/thumb. A
+  // shared cache here makes one profile's photos bleed onto other profiles until a
+  // hard refresh. Keep it private + no-store so the CDN never caches it.
   return {
-    // max-age=0: browser always revalidates (cover-photo changes are visible immediately).
-    // s-maxage=30: CDN caches for 30 s — short enough that cover updates show within
-    //   half a minute without hammering the Sheets API on every public-profile load.
-    // stale-while-revalidate=10: CDN can serve the tail-end stale window while it
-    //   fetches fresh, keeping the response snappy.
-    "Cache-Control": "public, max-age=0, s-maxage=30, stale-while-revalidate=10",
+    "Cache-Control": "private, no-store",
+    "CDN-Cache-Control": "no-store",
+    "Netlify-CDN-Cache-Control": "no-store",
   };
 }
 

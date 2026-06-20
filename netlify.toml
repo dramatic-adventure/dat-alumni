@@ -21,3 +21,15 @@
     Cache-Control = "private, max-age=31536000, stale-while-revalidate=86400"
     CDN-Cache-Control = "no-store"
     Netlify-CDN-Cache-Control = "no-store"
+
+# Same cross-query-param caching hazard as the thumbnail proxy above: the media
+# list is distinguished only by the ?alumniId= query string, and Netlify's CDN
+# was serving one profile's album for another alumniId — so a profile's photos
+# bled onto other (often empty) profiles until a hard refresh. Force no-store at
+# the CDN config layer so each alumniId's list is always fetched fresh.
+[[headers]]
+  for = "/api/media/list"
+  [headers.values]
+    Cache-Control = "private, no-store"
+    CDN-Cache-Control = "no-store"
+    Netlify-CDN-Cache-Control = "no-store"

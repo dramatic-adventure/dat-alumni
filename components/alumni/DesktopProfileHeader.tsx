@@ -126,13 +126,6 @@ export default function DesktopProfileHeader({
           const idx = preferredUrl ? unique.indexOf(preferredUrl) : -1;
           setCurrentHeadshotIndex(idx >= 0 ? idx : 0);
           unique.forEach(url => { try { new window.Image().src = url; } catch {} });
-        } else {
-          // New profile has no gallery images. Clear any stale gallery carried
-          // over from a previously viewed profile (client-side nav reuses this
-          // component instance), otherwise the prior profile's photos persist
-          // until a hard refresh.
-          setGalleryUrls([]);
-          setCurrentHeadshotIndex(0);
         }
       } catch { /* AbortError or network — ignore */ }
     }
@@ -348,7 +341,7 @@ export default function DesktopProfileHeader({
       </div>
 
       {/* Name + meta */}
-      <div style={{ backgroundColor: "#C39B6C", color: "#F6E4C1", textAlign: "left", paddingLeft: "415px", paddingTop: "3rem", paddingBottom: "2.8rem" }}>
+      <div style={{ backgroundColor: "#C39B6C", color: "#F6E4C1", textAlign: "left", paddingLeft: "415px", paddingTop: "3.2rem", paddingBottom: "2.6rem" }}>
         <ScaledName firstName={firstName} lastName={lastName} containerWidth={360} gapRem={0.6} />
 
         {(titleLinks.length > 0 || currentTitle || location) && (
@@ -418,7 +411,7 @@ export default function DesktopProfileHeader({
 
                 {/* Location row — sits between titles and DAT pill */}
                 {location && (
-                  <div style={{ marginTop: "1.65rem" }}>
+                  <div style={{ marginTop: "1.2rem" }}>
                     <LocationDisplay size="1.05rem" />
                   </div>
                 )}
@@ -620,7 +613,7 @@ export default function DesktopProfileHeader({
                   </div>
                 )}
                 {location && (
-                  <div style={{ marginTop: "1.4rem" }}>
+                  <div style={{ marginTop: "1.2rem" }}>
                     <LocationDisplay size="1.2rem" />
                   </div>
                 )}
