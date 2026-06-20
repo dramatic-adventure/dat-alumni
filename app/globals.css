@@ -13,7 +13,16 @@ html { box-sizing: border-box; }
 html, body {
   width: 100%;
   min-height: 100vh;
-  background: none;
+  /* Fallback texture so any area the fixed kraft layer (body::before) doesn't
+     cover — iOS safe-areas, dynamic-toolbar transitions — shows the SAME kraft
+     texture instead of the browser's default white canvas. Mirrors the image +
+     color vars that body::before and AlumniProfileBackdrop use, so there is no
+     flat-color seam. No background-attachment: fixed here (buggy on iOS). */
+  background-color: var(--page-bg-color, #f6e4c1);
+  background-image: var(--page-bg-image, url("/texture/kraft-paper.png"));
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   overflow-x: clip; /* prevent fanned/protruding elements from creating horizontal scroll */
 }
 

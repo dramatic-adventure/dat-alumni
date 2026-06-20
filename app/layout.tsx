@@ -1,6 +1,7 @@
 // app/layout.tsx
 import "@/app/globals.css";
 import type { ReactNode } from "react";
+import type { Viewport } from "next";
 
 import WarmNameStackHints from "@/components/WarmNameStackHints";
 import Providers from "./providers";
@@ -73,6 +74,16 @@ export const metadata = {
   metadataBase: resolveMetadataBase(),
 };
 
+// ✅ viewportFit: "cover" lets the page (and its fixed kraft background) extend
+// into the iOS safe-area / notch regions instead of being letterboxed with
+// white bars in landscape. themeColor keeps the safe areas brand-colored.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#241123",
+};
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   // ✅ Server-side guard: never allow reload-loop helpers during local dev
   const enableChunkRecovery = process.env.NODE_ENV === "production";
@@ -100,7 +111,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     >
       <head>
         <link rel="preload" as="image" href="/texture/kraft-paper.png" />
-        <meta name="theme-color" content="#241123" />
       </head>
 
       <body className="min-h-screen flex flex-col text-black">

@@ -43,7 +43,11 @@ export default function AlumniProfileBackdrop({
         className="fixed inset-0 bg-cover bg-center"
         style={{
           backgroundImage,
-          backgroundAttachment: "fixed",
+          // NOTE: do NOT use backgroundAttachment: "fixed" here. The element is
+          // already position:fixed, so it tracks the visual viewport correctly.
+          // Adding attachment:fixed makes iOS size the texture to the collapsed-
+          // toolbar viewport, leaving a white gap at the bottom when the toolbar
+          // is expanded (top of scroll).
           backgroundSize: "cover",
           backgroundPosition: "center",
           zIndex: -1,
