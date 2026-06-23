@@ -60,6 +60,7 @@ import EventManager from "@/app/alumni/update/studio/EventManager";
 import SpotlightAdminPanel from "@/app/alumni/update/studio/SpotlightAdminPanel";
 import type { SpotlightPreloadData } from "@/app/alumni/update/studio/SpotlightAdminPanel";
 import HighlightStudioPanel from "@/app/alumni/update/studio/HighlightStudioPanel";
+import JourneyStudioPanel from "@/app/alumni/update/studio/JourneyStudioPanel";
 
 
 import MediaPickerModal from "@/components/media/MediaPickerModal";
@@ -199,7 +200,7 @@ const lookupUrl = useMemo(() => {
     if (didInitTabFromQuery.current) return;
 
     const raw = String(searchParams?.get("tab") || "").toLowerCase();
-    const allowed: StudioTab[] = ["basics", "identity", "media", "contact", "story", "event", "highlight", "spotlight"];
+    const allowed: StudioTab[] = ["basics", "identity", "media", "contact", "story", "event", "highlight", "journey", "spotlight"];
 
     if (allowed.includes(raw as StudioTab)) {
       setStudioTab(raw as StudioTab);
@@ -220,6 +221,7 @@ const lookupUrl = useMemo(() => {
         story: "StoryMap",
         event: "UpcomingEvent",
         highlight: "Basics", // alum highlight tab — falls back to Basics module (unused)
+        journey: "Basics", // alum Journey Card tab — falls back to Basics module (unused)
         spotlight: "Basics", // admin-only tab — falls back to Basics module (unused)
       }) as const satisfies Record<StudioTab, ModuleKey>,
     []
@@ -2582,6 +2584,15 @@ return (
         initialData={spotlightPreload}
         onSaved={() => {
           showToastRef.current?.("Highlight added — reload your profile to see it.", "success");
+        }}
+      />
+    }
+    journeyPanel={
+      <JourneyStudioPanel
+        profileSlug={currentSlug || String(targetAlumniId || "")}
+        isAdmin={isAdmin}
+        onSaved={() => {
+          showToastRef.current?.("Journey Card saved — view it on your journeys page.", "success");
         }}
       />
     }

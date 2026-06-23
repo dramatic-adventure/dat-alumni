@@ -12,9 +12,15 @@ interface FeaturedAlumniProps {
     slug: string;
     headshotUrl?: string;
   }[];
+  /** Dense mode: pack as many cards per row as comfortably fit (slightly
+   *  smaller cards), instead of the default 2-up feature layout. */
+  dense?: boolean;
+  /** Base path each tile links to (default "/alumni"). The Journey Archive's
+   *  "by person" view passes "/journeys" so tiles open that person's journeys. */
+  linkBase?: string;
 }
 
-export default function FeaturedAlumni({ highlights }: FeaturedAlumniProps) {
+export default function FeaturedAlumni({ highlights, dense = false, linkBase = "/alumni" }: FeaturedAlumniProps) {
   const [displayHighlights, setDisplayHighlights] = useState(highlights);
   const isInitialized = useRef(false);
 
@@ -51,7 +57,10 @@ export default function FeaturedAlumni({ highlights }: FeaturedAlumniProps) {
 
   return (
     <section style={{ margin: "0 auto", padding: "0 10px", marginBottom: "4rem" }}>
-      <div className="featured-alumni-grid">
+      <div
+        className="featured-alumni-grid"
+        style={dense ? { gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 32 } : undefined}
+      >
         {displayHighlights.map((alum, index) => {
           const imgSrc = alum.headshotUrl
             ? alum.headshotUrl.replace(/^http:\/\//, "https://")
@@ -60,7 +69,7 @@ export default function FeaturedAlumni({ highlights }: FeaturedAlumniProps) {
           return (
             <Link
               key={index}
-              href={`/alumni/${alum.slug}`}
+              href={`${linkBase}/${alum.slug}`}
               style={{
                 textDecoration: "none",
                 color: "inherit",
@@ -75,7 +84,7 @@ export default function FeaturedAlumni({ highlights }: FeaturedAlumniProps) {
                   borderRadius: "8px",
                   boxShadow: "4px 8px 16px rgba(0,0,0,0.25)",
                   overflow: "hidden",
-                  width: "260px",
+                  width: dense ? "210px" : "260px",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
