@@ -207,9 +207,12 @@ function PLXBand({ items }: { items: Opportunity[] }) {
   if (!hasActivePlx(items)) return null;
   const plx = items.filter(
     (o) =>
-      (o.plxProgram === "apprenticeship" || o.plxProgram === "fellowship") &&
+      (o.plxProgram === "internship" ||
+        o.plxProgram === "apprenticeship" ||
+        o.plxProgram === "fellowship") &&
       (o.status === "open" || o.status === "coming_soon"),
   );
+  const intern = plx.find((p) => p.plxProgram === "internship");
   const apprentice = plx.find((p) => p.plxProgram === "apprenticeship");
   const fellow = plx.find((p) => p.plxProgram === "fellowship");
   const allPlxCount = items.filter((o) => o.type === "plx" && o.status !== "closed").length;
@@ -232,21 +235,23 @@ function PLXBand({ items }: { items: Opportunity[] }) {
             PLX <span className="op-plx-title-em">— Professional Leadership Experience</span>
           </h2>
           <p className="op-plx-sub">
-            DAT's flagship training program for emerging arts administrators. Real-world experience,
-            paid stipends, and direct mentorship — across theatre, eco-travel, and global community work.
+            DAT's flagship training ladder for emerging arts administrators and artists — from a
+            credit-bearing entry Internship to paid Apprenticeships and Fellowships. Real-world experience
+            and direct mentorship across theatre, eco-travel, and global community work.
           </p>
           <Link href="/professional-leadership-experience" className="op-plx-learnmore" style={{ display: "inline-block", marginTop: "1rem" }}>
             What is PLX? →
           </Link>
           {allPlxCount > 2 && (
             <p className="op-plx-band-note">
-              {allPlxCount}{" "}total listings — apprenticeships &amp; fellowships across development,
-              comms, production, teaching, and more.
+              {allPlxCount}{" "}total listings — internships, apprenticeships &amp; fellowships across
+              development, comms, production, teaching, and more.
             </p>
           )}
         </div>
 
         <div className="op-plx-grid">
+          {intern && <PlxTile o={intern} accent="#0FB5A8" />}
           {apprentice && <PlxTile o={apprentice} accent="#FFCC00" />}
           {fellow && <PlxTile o={fellow} accent="#F23359" />}
         </div>
@@ -261,14 +266,19 @@ function PLXBand({ items }: { items: Opportunity[] }) {
   );
 }
 
+const PLX_RUNG_LABEL: Record<string, string> = {
+  internship: "Internship",
+  apprenticeship: "Apprenticeship",
+  fellowship: "Fellowship",
+};
+
 function PlxTile({ o, accent }: { o: Opportunity; accent: string }) {
   const applyHref = o.applyUrl || `/apply?opp=${o.id}`;
   const learnHref = o.learnMoreUrl || `/opportunities/${o.id}`;
+  const rungLabel = PLX_RUNG_LABEL[o.plxProgram] ?? "Apprenticeship";
   return (
     <div className="op-plx-tile" style={{ ["--accent" as string]: accent }}>
-      <span className="op-plx-tile-tag">
-        {o.plxProgram === "fellowship" ? "Fellowship" : "Apprenticeship"}
-      </span>
+      <span className="op-plx-tile-tag">{rungLabel}</span>
       <h3 className="op-plx-tile-title">{o.title}</h3>
       <p className="op-plx-tile-desc">{o.description}</p>
       <dl className="op-plx-tile-meta">
@@ -281,7 +291,7 @@ function PlxTile({ o, accent }: { o: Opportunity; accent: string }) {
           Learn More
         </Link>
         <a href={applyHref} className="op-plx-tile-cta op-plx-tile-cta--primary">
-          Apply for the {o.plxProgram === "fellowship" ? "Fellowship" : "Apprenticeship"}
+          Apply for the {rungLabel}
         </a>
       </div>
     </div>
@@ -1547,7 +1557,7 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
           text-shadow: 0 2px 10px rgba(0,0,0,0.85);
         }
         .op-plx-sub { font-family: var(--font-space-grotesk), sans-serif; font-size: 1.04rem; line-height: 1.7; color: rgba(255,255,255,0.92); margin: 0; text-shadow: 0 3px 14px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.7); }
-        .op-plx-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+        .op-plx-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
         @media (max-width: 820px) { .op-plx-grid { grid-template-columns: 1fr; } }
         .op-plx-tile {
           background: rgba(15,8,28,0.55); border: 1.5px solid rgba(255,255,255,0.14);

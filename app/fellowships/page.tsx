@@ -69,7 +69,7 @@ const COPY: PlxProgramCopy = {
     { q: "When does the next cohort open?", a: "One Fellow per season. Apply by August 1 for the upcoming cohort." },
     { q: "Can international applicants apply?", a: "Yes. We've had Fellows from Ecuador, Czechia, Tanzania, and the US." },
   ],
-  crossLink: { href: "/apprenticeships", label: "Apprenticeships" },
+  crossLink: { href: "/project-based-internships", label: "New here? Start with the Internship" },
   contactEmail: "info@dramaticadventure.com",
   accent: "#F23359",
 };

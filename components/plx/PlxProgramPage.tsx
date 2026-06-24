@@ -18,8 +18,18 @@ export interface PlxProgramCopy {
   introTitle: string;
   introBody: string;
   compensationBullets: { head: string; tail: string }[];
+  // Optional — the compensation column label + fallback heading. Default to the
+  // paid-program values so /apprenticeships and /fellowships render unchanged.
+  // Fee-based programs (e.g. the Project-Based Internship) override these.
+  compensationEyebrow?: string;  // default "Compensation"
+  compensationHeading?: string;  // default "Stipend + travel grant"
   requirements: string[];
   whoYouAre: { head: string; tail: string }[];
+  // Optional — the "Who you are" section labels. Default to the current values so
+  // the two existing pages render unchanged. The internship page reuses this grid
+  // as a fixed menu of tracks, so it overrides these.
+  whoYouAreEyebrow?: string;  // default "Who you are"
+  whoYouAreTitle?: string;    // default "Ready to roll up your sleeves?"
   timeline: { label: string; detail: string }[];
   closingLine: string;
   faq: { q: string; a: string }[];
@@ -129,8 +139,8 @@ export default function PlxProgramPage({
 
           {/* Compensation */}
           <div className="pp-col">
-            <span className="pp-eyebrow">Compensation</span>
-            <h2 className="pp-col-title">{opp?.compensation || "Stipend + travel grant"}</h2>
+            <span className="pp-eyebrow">{copy.compensationEyebrow ?? "Compensation"}</span>
+            <h2 className="pp-col-title">{opp?.compensation || copy.compensationHeading || "Stipend + travel grant"}</h2>
             <ul className="pp-comp-list">
               {copy.compensationBullets.map((b, i) => (
                 <li key={i}>
@@ -146,8 +156,8 @@ export default function PlxProgramPage({
       {/* WHO YOU ARE */}
       <section className="pp-who">
         <div className="pp-who-inner">
-          <span className="pp-eyebrow pp-eyebrow--light">Who you are</span>
-          <h2 className="pp-who-title">Ready to roll up your sleeves?</h2>
+          <span className="pp-eyebrow pp-eyebrow--light">{copy.whoYouAreEyebrow ?? "Who you are"}</span>
+          <h2 className="pp-who-title">{copy.whoYouAreTitle ?? "Ready to roll up your sleeves?"}</h2>
           <ol className="pp-who-list">
             {copy.whoYouAre.map((r, i) => (
               <li key={i}>

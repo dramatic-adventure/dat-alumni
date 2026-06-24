@@ -51,10 +51,10 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // 🔀 PLX rename: the old /internships program is now the Global Apprenticeship.
-  // (A later phase will repoint /internships to a new page.)
+  // 🔀 PLX: the old /internships path now points to the Project-Based Internship,
+  // the entry rung of the PLX ladder (Intern → Apprentice → Fellow).
   if (pathname === "/internships" || pathname === "/internships/") {
-    const loc = new URL("/apprenticeships", origin);
+    const loc = new URL("/project-based-internships", origin);
     if (search) loc.search = search;
     return NextResponse.redirect(loc, 301);
   }

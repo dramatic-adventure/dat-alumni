@@ -24,7 +24,7 @@ const BENEFITS = [
   { icon: "🧭", title: "Mentorship", body: "Weekly 1:1s with a DAT staff member who's done the job." },
   { icon: "📈", title: "Pro-dev workshops", body: "Resume reviews, pitch coaching, grant writing, EDI training." },
   { icon: "🌍", title: "International travel", body: "ACTion expeditions to Tanzania, Ecuador, Slovakia, Czechia — travel grants available." },
-  { icon: "💰", title: "Stipends", body: "Both programs are paid. We believe in compensating early-career work." },
+  { icon: "💰", title: "Paid + credit-bearing", body: "The Apprenticeship and Fellowship are paid; the entry Internship is fee-based and earns academic credit." },
   { icon: "🤝", title: "DAT alumni network", body: "Lifetime access to a global community of artists and arts admins." },
   { icon: "🎟️", title: "Free event tickets", body: "Performances, festivals, fundraisers — wherever we're working." },
   { icon: "📝", title: "Real portfolio + reference", body: "Leave with a body of work and a letter from someone who knows it." },
@@ -40,9 +40,19 @@ const ROLE_BLURBS: { value: string; head: string; tail: string }[] = [
   { value: "07", head: "You are a good soul.", tail: "Generous, kind, and listening." },
 ];
 
+// PLX ladder metadata — entry → intermediate → advanced.
+const PLX_RUNGS = {
+  internship: { label: "Internship", href: "/project-based-internships", color: "#0FB5A8" },
+  apprenticeship: { label: "Apprenticeship", href: "/apprenticeships", color: "#FFCC00" },
+  fellowship: { label: "Fellowship", href: "/fellowships", color: "#F23359" },
+} as const;
+
 function PlxProgramTile({ o, color }: { o: Opportunity; color: string }) {
-  const programLabel = o.plxProgram === "fellowship" ? "Fellowship" : "Apprenticeship";
-  const learnHref = o.plxProgram === "fellowship" ? "/fellowships" : "/apprenticeships";
+  const rung = o.plxProgram === "fellowship" || o.plxProgram === "internship"
+    ? PLX_RUNGS[o.plxProgram]
+    : PLX_RUNGS.apprenticeship;
+  const programLabel = rung.label;
+  const learnHref = rung.href;
   return (
     <article className="plx-tile" style={{ ["--accent" as string]: color }}>
       <div className="plx-tile-top">
@@ -77,8 +87,12 @@ function PlxProgramTile({ o, color }: { o: Opportunity; color: string }) {
 export default async function PLXLandingPage() {
   const all = await loadOpportunities();
   const plxItems = all.filter(
-    (o) => o.plxProgram === "apprenticeship" || o.plxProgram === "fellowship",
+    (o) =>
+      o.plxProgram === "internship" ||
+      o.plxProgram === "apprenticeship" ||
+      o.plxProgram === "fellowship",
   );
+  const intern = plxItems.find((p) => p.plxProgram === "internship");
   const apprentice = plxItems.find((p) => p.plxProgram === "apprenticeship");
   const fellow = plxItems.find((p) => p.plxProgram === "fellowship");
 
@@ -130,14 +144,16 @@ export default async function PLXLandingPage() {
       {/* ── PROGRAMS ──────────────────────── */}
       <section id="programs" className="plx-programs">
         <div className="plx-programs-inner">
-          <span className="plx-programs-eyebrow">Two Programs · One Mission</span>
-          <h2 className="plx-programs-title">Find the right path.</h2>
+          <span className="plx-programs-eyebrow">Three Programs · One Ladder</span>
+          <h2 className="plx-programs-title">Find the right rung.</h2>
           <p className="plx-programs-sub">
-            The <strong>Apprenticeship</strong> is an introduction — a 12-week window into the work for students
-            and recent grads. The <strong>Fellowship</strong> is a 10-month leadership track for
-            early-career arts administrators ready to own real work.
+            The <strong>Internship</strong> is the entry point — a few weeks embedded in one production or
+            expedition, fee-based and credit-bearing. The <strong>Apprenticeship</strong> is a paid 12-week
+            introduction to the work for students and recent grads. The <strong>Fellowship</strong> is a
+            paid 10-month leadership track for early-career arts administrators ready to own real work.
           </p>
-          <div className="plx-programs-grid">
+          <div className="plx-programs-grid plx-programs-grid--three">
+            {intern && <PlxProgramTile o={intern} color="#0FB5A8" />}
             {apprentice && <PlxProgramTile o={apprentice} color="#FFCC00" />}
             {fellow && <PlxProgramTile o={fellow} color="#F23359" />}
           </div>
@@ -194,6 +210,9 @@ export default async function PLXLandingPage() {
             we want to know you, not just your resume.
           </p>
           <div className="plx-closing-actions">
+            <Link href="/project-based-internships" className="plx-cta plx-cta--primary plx-cta--entry">
+              Internship Details
+            </Link>
             <Link href="/apprenticeships" className="plx-cta plx-cta--primary">
               Apprenticeship Details
             </Link>
@@ -282,6 +301,8 @@ export default async function PLXLandingPage() {
         .plx-cta--primary:hover { transform: translateY(-2px); background: #ffd633; }
         .plx-cta--alt { background: #F23359; color: #fff; }
         .plx-cta--alt:hover { background: #d92a4d; }
+        .plx-cta--entry { background: #0FB5A8; color: #241123; }
+        .plx-cta--entry:hover { background: #13c9bb; }
         .plx-cta--ghost {
           background: transparent; color: #f2f2f2;
           border: 1.5px solid rgba(242,242,242,0.4);
@@ -346,6 +367,7 @@ export default async function PLXLandingPage() {
           grid-template-columns: repeat(2, 1fr);
           gap: 1.5rem;
         }
+        .plx-programs-grid--three { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
         @media (max-width: 820px) { .plx-programs-grid { grid-template-columns: 1fr; } }
 
         .plx-tile {
