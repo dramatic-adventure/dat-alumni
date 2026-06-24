@@ -10,11 +10,11 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "PLX — Professional Leadership Experience · DAT",
   description:
-    "Global Internships & Apprenticeships at Dramatic Adventure Theatre. Hands-on experience, mentorship, and in-the-field international training for emerging arts administrators.",
+    "Global Apprenticeships & Fellowships at Dramatic Adventure Theatre. Hands-on experience, mentorship, and in-the-field international training for emerging arts administrators.",
   openGraph: {
     title: "PLX — Professional Leadership Experience · DAT",
     description:
-      "Global Internships & Apprenticeships at Dramatic Adventure Theatre. Hands-on experience, mentorship, and in-the-field international training for emerging arts administrators.",
+      "Global Apprenticeships & Fellowships at Dramatic Adventure Theatre. Hands-on experience, mentorship, and in-the-field international training for emerging arts administrators.",
     images: ["/images/opportunities/PLX-hero.jpg"],
   },
 };
@@ -41,8 +41,8 @@ const ROLE_BLURBS: { value: string; head: string; tail: string }[] = [
 ];
 
 function PlxProgramTile({ o, color }: { o: Opportunity; color: string }) {
-  const programLabel = o.plxProgram === "internship" ? "Internship" : "Apprenticeship";
-  const learnHref = o.plxProgram === "internship" ? "/internships" : "/apprenticeships";
+  const programLabel = o.plxProgram === "fellowship" ? "Fellowship" : "Apprenticeship";
+  const learnHref = o.plxProgram === "fellowship" ? "/fellowships" : "/apprenticeships";
   return (
     <article className="plx-tile" style={{ ["--accent" as string]: color }}>
       <div className="plx-tile-top">
@@ -77,10 +77,10 @@ function PlxProgramTile({ o, color }: { o: Opportunity; color: string }) {
 export default async function PLXLandingPage() {
   const all = await loadOpportunities();
   const plxItems = all.filter(
-    (o) => o.plxProgram === "internship" || o.plxProgram === "apprenticeship",
+    (o) => o.plxProgram === "apprenticeship" || o.plxProgram === "fellowship",
   );
-  const intern = plxItems.find((p) => p.plxProgram === "internship");
   const apprentice = plxItems.find((p) => p.plxProgram === "apprenticeship");
+  const fellow = plxItems.find((p) => p.plxProgram === "fellowship");
 
   return (
     <main className="plx-root">
@@ -102,7 +102,7 @@ export default async function PLXLandingPage() {
           <span className="plx-hero-eyebrow">Professional Leadership Experience</span>
           <h1 className="plx-hero-title">
             PLX.<br />
-            <span className="plx-hero-title-em">Global Internships<br />&amp; Apprenticeships.</span>
+            <span className="plx-hero-title-em">Global Apprenticeships<br />&amp; Fellowships.</span>
           </h1>
           <p className="plx-hero-sub">
             Hands-on experience coupled with mentorship and professional development.
@@ -133,13 +133,13 @@ export default async function PLXLandingPage() {
           <span className="plx-programs-eyebrow">Two Programs · One Mission</span>
           <h2 className="plx-programs-title">Find the right path.</h2>
           <p className="plx-programs-sub">
-            The <strong>Internship</strong> is an introduction — a 12-week window into the work for students
-            and recent grads. The <strong>Apprenticeship</strong> is a 10-month leadership track for
+            The <strong>Apprenticeship</strong> is an introduction — a 12-week window into the work for students
+            and recent grads. The <strong>Fellowship</strong> is a 10-month leadership track for
             early-career arts administrators ready to own real work.
           </p>
           <div className="plx-programs-grid">
-            {intern && <PlxProgramTile o={intern} color="#FFCC00" />}
-            {apprentice && <PlxProgramTile o={apprentice} color="#F23359" />}
+            {apprentice && <PlxProgramTile o={apprentice} color="#FFCC00" />}
+            {fellow && <PlxProgramTile o={fellow} color="#F23359" />}
           </div>
         </div>
       </section>
@@ -194,11 +194,11 @@ export default async function PLXLandingPage() {
             we want to know you, not just your resume.
           </p>
           <div className="plx-closing-actions">
-            <Link href="/internships" className="plx-cta plx-cta--primary">
-              Internship Details
-            </Link>
-            <Link href="/apprenticeships" className="plx-cta plx-cta--primary plx-cta--alt">
+            <Link href="/apprenticeships" className="plx-cta plx-cta--primary">
               Apprenticeship Details
+            </Link>
+            <Link href="/fellowships" className="plx-cta plx-cta--primary plx-cta--alt">
+              Fellowship Details
             </Link>
           </div>
           <p className="plx-closing-contact">

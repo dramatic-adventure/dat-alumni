@@ -79,7 +79,7 @@ const NAV_ITEMS = [
     label: 'GET INVOLVED',
     submenu: [
       { label: 'Opportunities Portal', href: '/opportunities' },
-      { label: 'Internships & Apprenticeships', href: '/professional-leadership-experience' },
+      { label: 'Apprenticeships & Fellowships', href: '/professional-leadership-experience' },
       { label: 'Alumni Network', href: '/alumni/update' },
       { label: 'Friends of DAT', href: '/friends' },
       { label: 'University Partnerships', href: '/partners/universities' },

@@ -30,7 +30,7 @@
 //     is_paid          →  TRUE | FALSE
 //     status           →  open | closed | coming_soon | evergreen
 //     featured         →  TRUE | FALSE
-//     plx_program      →  internship | apprenticeship | (blank)
+//     plx_program      →  apprenticeship | fellowship | (legacy: internship) | (blank)
 //     deadline         →  ISO date (YYYY-MM-DD) or blank for evergreen
 //     order            →  integer for manual sort within a `type`
 //     hero_image       →  path under /public, e.g. /images/opportunities/PLX-hero.jpg
@@ -97,7 +97,11 @@ export const OPPORTUNITY_STATUSES = [
 ] as const;
 export type OpportunityStatus = (typeof OPPORTUNITY_STATUSES)[number];
 
-export type PlxProgram = "internship" | "apprenticeship" | "";
+// TODO(jesse): Update the live Sheet's `plx_program` column rows — the 10-month
+// leadership program should now be tagged "fellowship" (was "apprenticeship"),
+// and the 12-week intro program should be tagged "apprenticeship" (was
+// "internship"). "internship" is kept here only for legacy/back-compat.
+export type PlxProgram = "internship" | "apprenticeship" | "fellowship" | "";
 
 /**
  * Canonical role-type taxonomy for opportunities. This is intentionally a
@@ -294,7 +298,7 @@ function coerceStatus(v: unknown): OpportunityStatus {
 
 function coercePlx(v: unknown): PlxProgram {
   const s = String(v ?? "").trim().toLowerCase();
-  if (s === "internship" || s === "apprenticeship") return s;
+  if (s === "internship" || s === "apprenticeship" || s === "fellowship") return s;
   return "";
 }
 
@@ -522,7 +526,9 @@ export function formatDeadline(iso: string): string {
 export function hasActivePlx(items: Opportunity[]): boolean {
   return items.some(
     (o) =>
-      (o.plxProgram === "internship" || o.plxProgram === "apprenticeship") &&
+      (o.plxProgram === "internship" ||
+        o.plxProgram === "apprenticeship" ||
+        o.plxProgram === "fellowship") &&
       (o.status === "open" || o.status === "coming_soon"),
   );
 }

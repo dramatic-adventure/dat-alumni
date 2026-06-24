@@ -1,5 +1,5 @@
 // components/plx/PlxProgramPage.tsx
-// Shared template for /internships and /apprenticeships — sub-program pages.
+// Shared template for /apprenticeships and /fellowships — sub-program pages.
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -8,9 +8,9 @@ import {
 } from "@/lib/opportunities";
 
 export interface PlxProgramCopy {
-  programLabel: string; // "Global Internship" | "Global Apprenticeship"
+  programLabel: string; // "Global Apprenticeship" | "Global Fellowship"
   heroImage: string;
-  eyebrow: string;      // "Global Internships" | "Global Apprenticeships"
+  eyebrow: string;      // "Global Apprenticeship" | "Global Fellowship"
   headlineLine1: string;
   headlineLine2: string;
   pitch: string;        // hero sub

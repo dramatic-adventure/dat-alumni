@@ -207,11 +207,11 @@ function PLXBand({ items }: { items: Opportunity[] }) {
   if (!hasActivePlx(items)) return null;
   const plx = items.filter(
     (o) =>
-      (o.plxProgram === "internship" || o.plxProgram === "apprenticeship") &&
+      (o.plxProgram === "apprenticeship" || o.plxProgram === "fellowship") &&
       (o.status === "open" || o.status === "coming_soon"),
   );
-  const intern = plx.find((p) => p.plxProgram === "internship");
   const apprentice = plx.find((p) => p.plxProgram === "apprenticeship");
+  const fellow = plx.find((p) => p.plxProgram === "fellowship");
   const allPlxCount = items.filter((o) => o.type === "plx" && o.status !== "closed").length;
 
   return (
@@ -240,15 +240,15 @@ function PLXBand({ items }: { items: Opportunity[] }) {
           </Link>
           {allPlxCount > 2 && (
             <p className="op-plx-band-note">
-              {allPlxCount}{" "}total listings — internships &amp; apprenticeships across development,
+              {allPlxCount}{" "}total listings — apprenticeships &amp; fellowships across development,
               comms, production, teaching, and more.
             </p>
           )}
         </div>
 
         <div className="op-plx-grid">
-          {intern && <PlxTile o={intern} accent="#FFCC00" />}
-          {apprentice && <PlxTile o={apprentice} accent="#F23359" />}
+          {apprentice && <PlxTile o={apprentice} accent="#FFCC00" />}
+          {fellow && <PlxTile o={fellow} accent="#F23359" />}
         </div>
 
         <div className="op-plx-footer-links">
@@ -267,7 +267,7 @@ function PlxTile({ o, accent }: { o: Opportunity; accent: string }) {
   return (
     <div className="op-plx-tile" style={{ ["--accent" as string]: accent }}>
       <span className="op-plx-tile-tag">
-        {o.plxProgram === "internship" ? "Internship" : "Apprenticeship"}
+        {o.plxProgram === "fellowship" ? "Fellowship" : "Apprenticeship"}
       </span>
       <h3 className="op-plx-tile-title">{o.title}</h3>
       <p className="op-plx-tile-desc">{o.description}</p>
@@ -281,7 +281,7 @@ function PlxTile({ o, accent }: { o: Opportunity; accent: string }) {
           Learn More
         </Link>
         <a href={applyHref} className="op-plx-tile-cta op-plx-tile-cta--primary">
-          Apply for the {o.plxProgram === "internship" ? "Internship" : "Apprenticeship"}
+          Apply for the {o.plxProgram === "fellowship" ? "Fellowship" : "Apprenticeship"}
         </a>
       </div>
     </div>

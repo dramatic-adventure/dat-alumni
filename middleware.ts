@@ -51,6 +51,14 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // 🔀 PLX rename: the old /internships program is now the Global Apprenticeship.
+  // (A later phase will repoint /internships to a new page.)
+  if (pathname === "/internships" || pathname === "/internships/") {
+    const loc = new URL("/apprenticeships", origin);
+    if (search) loc.search = search;
+    return NextResponse.redirect(loc, 301);
+  }
+
   // ✅ Only canonicalize exact alumni profile paths:
   // /alumni/{slug} or /alumni/{slug}/
   const m = pathname.match(/^\/alumni\/([^\/?#]+)\/?$/i);
