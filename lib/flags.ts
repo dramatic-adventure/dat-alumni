@@ -83,7 +83,7 @@ export const flagGroupNames: Partial<Record<FlagLabel, string>> = {
  */
 export const flagHeroSubtitles: Partial<Record<FlagLabel, string>> = {
   "Collective Artist":
-    "Recognizing the DAT Collective — frequent collaborators who keep returning across projects, expeditions, and productions",
+    "Recognizing DAT’s recurring artists and creative collaborators.",
 };
 
 /** ✅ Normalize any label to its canonical form */
