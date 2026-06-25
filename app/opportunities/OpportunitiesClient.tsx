@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   COMMITMENT_LABELS,
@@ -271,10 +271,21 @@ function PLXBand({ items }: { items: Opportunity[] }) {
           )}
         </div>
 
-        <div className="op-plx-grid">
-          {intern && <PlxTile o={intern} accent="#0FB5A8" />}
-          {apprentice && <PlxTile o={apprentice} accent="#FFCC00" />}
-          {fellow && <PlxTile o={fellow} accent="#F23359" />}
+        <div className="op-plx-ladder">
+          {(
+            [
+              intern && { o: intern, accent: "#0FB5A8" },
+              apprentice && { o: apprentice, accent: "#FFCC00" },
+              fellow && { o: fellow, accent: "#F23359" },
+            ].filter(Boolean) as { o: Opportunity; accent: string }[]
+          ).map((t, i) => (
+            <Fragment key={t.o.id}>
+              {i > 0 && (
+                <span className="op-plx-connector" aria-hidden="true">→</span>
+              )}
+              <PlxTile o={t.o} accent={t.accent} />
+            </Fragment>
+          ))}
         </div>
 
         <div className="op-plx-footer-links">
@@ -300,23 +311,34 @@ function PlxTile({ o, accent }: { o: Opportunity; accent: string }) {
   const applyHref = o.applyUrl || `/apply?opp=${o.id}`;
   const learnHref = o.learnMoreUrl || `/opportunities/${o.id}`;
   const rungLabel = PLX_RUNG_LABEL[o.plxProgram] ?? "Apprenticeship";
+  const fundLabel =
+    o.funding === "paid"
+      ? "Paid"
+      : o.funding === "fee"
+        ? o.earnsCredit
+          ? "Fee · earns credit"
+          : "Fee"
+        : "Volunteer";
   return (
     <div className="op-plx-tile" style={{ ["--accent" as string]: accent }}>
       <span className="op-plx-tile-tag">{rungLabel}</span>
-      <h3 className="op-plx-tile-title">{o.title}</h3>
-      <p className="op-plx-tile-desc">{o.description}</p>
-      <dl className="op-plx-tile-meta">
-        <div><dt>Commitment</dt><dd>{o.commitment}</dd></div>
-        <div><dt>Compensation</dt><dd>{o.compensation}</dd></div>
-        {o.deadline && <div><dt>Apply By</dt><dd>{formatDeadline(o.deadline)}</dd></div>}
-      </dl>
+      <h3 className="op-plx-tile-title">
+        <Link href={learnHref} className="op-plx-tile-titlelink">{o.title}</Link>
+      </h3>
+      <div className="op-plx-tile-meta-line">
+        <span className="op-plx-tile-commit">{o.commitment}</span>
+        <span className="op-plx-tile-fund">{fundLabel}</span>
+        {o.deadline && (
+          <span className="op-plx-tile-commit op-plx-tile-deadline">
+            Apply by {formatDeadline(o.deadline)}
+          </span>
+        )}
+      </div>
       <div className="op-plx-tile-actions">
-        <Link href={learnHref} className="op-plx-tile-cta op-plx-tile-cta--ghost">
-          Learn More
-        </Link>
         <a href={applyHref} className="op-plx-tile-cta op-plx-tile-cta--primary">
-          Apply for the {rungLabel}
+          Apply
         </a>
+        <Link href={learnHref} className="op-plx-tile-learn">Learn more</Link>
       </div>
     </div>
   );
@@ -1607,31 +1629,46 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
           text-shadow: 0 2px 10px rgba(0,0,0,0.85);
         }
         .op-plx-sub { font-family: var(--font-space-grotesk), sans-serif; font-size: 1.04rem; line-height: 1.7; color: rgba(255,255,255,0.92); margin: 0; text-shadow: 0 3px 14px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.7); }
-        .op-plx-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
-        @media (max-width: 820px) { .op-plx-grid { grid-template-columns: 1fr; } }
+        /* Compact 3-up ladder: slim rungs that fit Intern → Apprentice → Fellow
+           without crowding, and degrade cleanly to 1 or 2 rungs. */
+        .op-plx-ladder { display: flex; align-items: stretch; gap: 0.85rem; }
+        .op-plx-connector {
+          flex: 0 0 auto; align-self: center;
+          font-size: 1.6rem; line-height: 1; color: rgba(255,255,255,0.38);
+        }
+        @media (max-width: 820px) {
+          .op-plx-ladder { flex-direction: column; }
+          .op-plx-connector { transform: rotate(90deg); align-self: center; }
+        }
         .op-plx-tile {
+          flex: 1 1 0; min-width: 0;
           background: rgba(15,8,28,0.55); border: 1.5px solid rgba(255,255,255,0.14);
-          border-top: 4px solid var(--accent); border-radius: 18px; padding: 1.75rem 1.75rem 1.5rem;
+          border-top: 4px solid var(--accent); border-radius: 16px; padding: 1.5rem 1.4rem;
           display: flex; flex-direction: column;
           backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
           box-shadow: 0 18px 48px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
           transition: transform 250ms ease, border-color 250ms ease, background 250ms ease;
         }
         .op-plx-tile:hover { transform: translateY(-4px); background: rgba(15,8,28,0.7); border-color: rgba(255,255,255,0.28); }
-        .op-plx-tile-tag { align-self: flex-start; font-family: var(--font-dm-sans), sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; padding: 0.35rem 0.8rem; border-radius: 6px; background: var(--accent); color: #241123; margin-bottom: 1rem; }
-        .op-plx-tile-title { font-family: var(--font-anton), sans-serif; font-size: clamp(1.5rem, 2.6vw, 2rem); font-weight: 400; line-height: 1.05; margin: 0 0 0.85rem; color: #fff; }
-        .op-plx-tile-desc { font-family: var(--font-space-grotesk), sans-serif; font-size: 0.92rem; line-height: 1.65; color: rgba(255,255,255,0.78); margin: 0 0 1.5rem; }
-        .op-plx-tile-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 0 0 1.5rem; padding: 0; }
-        @media (max-width: 480px) { .op-plx-tile-meta { grid-template-columns: 1fr; } }
-        .op-plx-tile-meta div { display: flex; flex-direction: column; gap: 0.15rem; }
-        .op-plx-tile-meta dt { font-family: var(--font-dm-sans), sans-serif; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.5); }
-        .op-plx-tile-meta dd { font-family: var(--font-space-grotesk), sans-serif; font-size: 0.92rem; font-weight: 600; color: #fff; margin: 0; }
-        .op-plx-tile-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
-        .op-plx-tile-cta { font-family: var(--font-dm-sans), sans-serif; font-size: 0.76rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; padding: 0.85rem 1.3rem; border-radius: 10px; text-decoration: none; transition: transform 160ms ease, opacity 160ms ease, background 160ms ease; }
-        .op-plx-tile-cta--primary { background: var(--accent); color: #241123; }
+        .op-plx-tile-tag { display: inline-block; align-self: flex-start; font-family: var(--font-dm-sans), sans-serif; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.85rem; }
+        .op-plx-tile-title { font-family: var(--font-anton), sans-serif; font-size: clamp(1.35rem, 2vw, 1.7rem); font-weight: 400; line-height: 1.06; margin: 0 0 0.75rem; }
+        .op-plx-tile-titlelink { color: #fff; text-decoration: none; transition: color 160ms ease; }
+        .op-plx-tile-titlelink:hover { color: var(--accent); }
+        .op-plx-tile-meta-line { display: flex; flex-direction: column; align-items: flex-start; gap: 0.45rem; margin: 0 0 1.4rem; }
+        .op-plx-tile-commit { font-family: var(--font-space-grotesk), sans-serif; font-size: 0.9rem; line-height: 1.45; color: rgba(255,255,255,0.82); }
+        .op-plx-tile-deadline { color: rgba(255,255,255,0.6); font-size: 0.82rem; }
+        .op-plx-tile-fund {
+          font-family: var(--font-dm-sans), sans-serif; font-size: 0.62rem; font-weight: 700;
+          letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent);
+          padding: 0.22rem 0.55rem; border-radius: 5px;
+          background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+        }
+        .op-plx-tile-actions { display: flex; flex-direction: column; align-items: center; gap: 0.85rem; margin-top: auto; }
+        .op-plx-tile-cta { font-family: var(--font-dm-sans), sans-serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.9rem 1.15rem; border-radius: 10px; text-decoration: none; text-align: center; transition: transform 160ms ease, opacity 160ms ease, background 160ms ease; }
+        .op-plx-tile-cta--primary { width: 100%; background: var(--accent); color: #241123; }
         .op-plx-tile-cta--primary:hover { transform: translateY(-2px); opacity: 0.94; }
-        .op-plx-tile-cta--ghost { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.35); }
-        .op-plx-tile-cta--ghost:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+        .op-plx-tile-learn { font-family: var(--font-dm-sans), sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.6); text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.25); padding-bottom: 0.1rem; transition: color 160ms ease, border-color 160ms ease; }
+        .op-plx-tile-learn:hover { color: #fff; border-color: rgba(255,255,255,0.6); }
         .op-plx-band-note {
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: 0.82rem; color: rgba(255,255,255,0.55);

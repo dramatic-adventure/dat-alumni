@@ -55,30 +55,34 @@ function PlxProgramTile({ o, color }: { o: Opportunity; color: string }) {
   const learnHref = rung.href;
   return (
     <article className="plx-tile" style={{ ["--accent" as string]: color }}>
-      <div className="plx-tile-top">
-        <span className="plx-tile-tag">{programLabel}</span>
-        {o.status === "open" && <span className="plx-tile-status">Now Accepting</span>}
-        {o.status === "coming_soon" && <span className="plx-tile-status plx-tile-status--soon">Coming Soon</span>}
-        {o.status === "closed" && <span className="plx-tile-status plx-tile-status--closed">Applications Closed</span>}
+      <div className="plx-tile-main">
+        <div className="plx-tile-top">
+          <span className="plx-tile-tag">{programLabel}</span>
+          {o.status === "open" && <span className="plx-tile-status">Now Accepting</span>}
+          {o.status === "coming_soon" && <span className="plx-tile-status plx-tile-status--soon">Coming Soon</span>}
+          {o.status === "closed" && <span className="plx-tile-status plx-tile-status--closed">Applications Closed</span>}
+        </div>
+        <h3 className="plx-tile-title">{o.title}</h3>
+        <p className="plx-tile-desc">{o.description}</p>
       </div>
-      <h3 className="plx-tile-title">{o.title}</h3>
-      <p className="plx-tile-desc">{o.description}</p>
-      <dl className="plx-tile-meta">
-        <div><dt>Commitment</dt><dd>{o.commitment}</dd></div>
-        <div><dt>Compensation</dt><dd>{o.compensation}</dd></div>
-        {o.deadline && o.status === "open" && (
-          <div><dt>Apply By</dt><dd>{formatDeadline(o.deadline)}</dd></div>
-        )}
-      </dl>
-      <div className="plx-tile-actions">
-        {o.applyUrl && (o.status === "open" || o.status === "coming_soon") && (
-          <a href={o.applyUrl} className="plx-tile-cta plx-tile-cta--primary">
-            {o.status === "coming_soon" ? "Get Notified" : "Apply Today"}
-          </a>
-        )}
-        <Link href={learnHref} className="plx-tile-cta plx-tile-cta--ghost">
-          Full Program Details
-        </Link>
+      <div className="plx-tile-side">
+        <dl className="plx-tile-meta">
+          <div><dt>Commitment</dt><dd>{o.commitment}</dd></div>
+          <div><dt>Compensation</dt><dd>{o.compensation}</dd></div>
+          {o.deadline && o.status === "open" && (
+            <div><dt>Apply By</dt><dd>{formatDeadline(o.deadline)}</dd></div>
+          )}
+        </dl>
+        <div className="plx-tile-actions">
+          {o.applyUrl && (o.status === "open" || o.status === "coming_soon") && (
+            <a href={o.applyUrl} className="plx-tile-cta plx-tile-cta--primary">
+              {o.status === "coming_soon" ? "Get Notified" : "Apply Today"}
+            </a>
+          )}
+          <Link href={learnHref} className="plx-tile-cta plx-tile-cta--ghost">
+            Full Program Details
+          </Link>
+        </div>
       </div>
     </article>
   );
@@ -152,7 +156,7 @@ export default async function PLXLandingPage() {
             introduction to the work for students and recent grads. The <strong>Fellowship</strong> is a
             paid 10-month leadership track for early-career arts administrators ready to own real work.
           </p>
-          <div className="plx-programs-grid plx-programs-grid--three">
+          <div className="plx-programs-grid">
             {intern && <PlxProgramTile o={intern} color="#0FB5A8" />}
             {apprentice && <PlxProgramTile o={apprentice} color="#FFCC00" />}
             {fellow && <PlxProgramTile o={fellow} color="#F23359" />}
@@ -363,23 +367,36 @@ export default async function PLXLandingPage() {
         }
         .plx-programs-sub strong { color: #241123; font-weight: 700; }
         .plx-programs-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
         }
-        .plx-programs-grid--three { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-        @media (max-width: 820px) { .plx-programs-grid { grid-template-columns: 1fr; } }
 
         .plx-tile {
           background: #fff;
           border: 1.5px solid rgba(36,17,35,0.1);
           border-top: 4px solid var(--accent);
+          border-left: 4px solid var(--accent);
+          border-top-width: 1.5px;
           border-radius: 18px;
-          padding: 1.75rem 1.75rem 1.5rem;
-          display: flex; flex-direction: column;
+          padding: 1.75rem 2rem;
+          display: flex; flex-direction: row; align-items: center; gap: 2rem;
           transition: transform 220ms ease, box-shadow 220ms ease;
         }
         .plx-tile:hover { transform: translateY(-4px); box-shadow: 0 18px 48px rgba(36,17,35,0.13); }
+        .plx-tile-main { flex: 1 1 auto; min-width: 0; }
+        .plx-tile-side {
+          flex: 0 0 270px; display: flex; flex-direction: column; gap: 1.25rem;
+          padding-left: 2rem; border-left: 1px solid rgba(36,17,35,0.1);
+        }
+        @media (max-width: 760px) {
+          .plx-tile {
+            flex-direction: column; align-items: stretch; gap: 1.25rem;
+            border-left-width: 1.5px; border-top-width: 4px;
+            padding: 1.75rem 1.75rem 1.5rem;
+          }
+          .plx-tile-side { flex: none; padding-left: 0; border-left: none; }
+        }
 
         .plx-tile-top { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.85rem; flex-wrap: wrap; }
         .plx-tile-tag {
@@ -410,13 +427,12 @@ export default async function PLXLandingPage() {
           font-family: var(--font-space-grotesk), sans-serif;
           font-size: 0.95rem; line-height: 1.65;
           color: rgba(36,17,35,0.72);
-          margin: 0 0 1.5rem;
+          margin: 0;
         }
         .plx-tile-meta {
-          display: grid; grid-template-columns: repeat(3, 1fr);
-          gap: 1rem; margin: 0 0 1.5rem; padding: 0;
+          display: flex; flex-direction: column;
+          gap: 0.75rem; margin: 0; padding: 0;
         }
-        @media (max-width: 480px) { .plx-tile-meta { grid-template-columns: 1fr; } }
         .plx-tile-meta div { display: flex; flex-direction: column; gap: 0.18rem; }
         .plx-tile-meta dt {
           font-family: var(--font-dm-sans), sans-serif;
@@ -429,13 +445,13 @@ export default async function PLXLandingPage() {
           font-size: 0.92rem; font-weight: 600;
           color: #241123; margin: 0;
         }
-        .plx-tile-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: auto; }
+        .plx-tile-actions { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0; }
         .plx-tile-cta {
           font-family: var(--font-dm-sans), sans-serif;
           font-size: 0.76rem; font-weight: 700;
           letter-spacing: 0.14em; text-transform: uppercase;
           padding: 0.85rem 1.3rem; border-radius: 10px;
-          text-decoration: none;
+          text-decoration: none; text-align: center;
           transition: transform 160ms ease, background 160ms ease, opacity 160ms ease;
         }
         .plx-tile-cta--primary { background: var(--accent); color: #241123; }
