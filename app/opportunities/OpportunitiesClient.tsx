@@ -513,9 +513,21 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
   };
 
   // ── Zone categorization ──────────────────────────────────────────────
-  // Zone 1: featured + currently open → full card treatment
+  // Zone 1: the two most urgent featured + currently open listings → full card
+  // treatment. "Most urgent" = soonest application deadline; dated listings rank
+  // ahead of undated ones. Any other featured listings fall through to their
+  // library section below (Zone 2), so nothing is dropped.
   const zone1Items = useMemo(
-    () => opportunities.filter((o) => o.featured && o.status === "open"),
+    () =>
+      opportunities
+        .filter((o) => o.featured && o.status === "open")
+        .sort((a, b) => {
+          if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);
+          if (a.deadline) return -1;
+          if (b.deadline) return 1;
+          return 0;
+        })
+        .slice(0, 2),
     [opportunities],
   );
   const zone1Ids = useMemo(() => new Set(zone1Items.map((o) => o.id)), [zone1Items]);
