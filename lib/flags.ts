@@ -43,7 +43,7 @@ export const flagStyles: Record<FlagLabel, string> = {
   "Artist-in-Residence": "#4C8C86",
   "Collective Artist": "#C13584",
   Fellow: "#0066CC",
-  Apprentice: "#B5651D",
+  Apprentice: "#E2711D",
   Intern: "#924E75",
   Volunteer: "#659157",
 };

@@ -52,7 +52,7 @@ const ARTIST_FOCUS_OPTIONS: { id: ArtistImpactFocus; label: string; blurb: strin
   { id: "sustained_participation", label: "Sustained participation", blurb: "Help artists stay in the work long enough to grow and contribute deeply." },
   { id: "creative_breakthrough", label: "Creative breakthrough", blurb: "Enable artistic risk, new work development, and expanded responsibility." },
   { id: "artist_leadership", label: "Artist leadership", blurb: "Support mentors and ensemble anchors who build culture and capacity." },
-  { id: "long_term_fellowship", label: "Long-term fellowship", blurb: "Invest in future co-creators and sustained artistic partnerships." },
+  { id: "long_term_fellowship", label: "Long-term residency", blurb: "Invest in future co-creators and sustained artistic partnerships." },
 ];
 
 function prettyArtistFocus(focus: ArtistImpactFocus | null | undefined) {

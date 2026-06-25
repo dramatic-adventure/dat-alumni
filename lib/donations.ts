@@ -366,7 +366,7 @@ export const CAMPAIGN_BY_MODE: Record<
           id: "artist-m500-fellow",
           amount: 500,
           frequency: "monthly",
-          title: "Advance a Fellow",
+          title: "Sponsor an Artist",
           eyebrow:
             "Invest in long-form leadership—multi-stage, multi-season artistic growth.",
           bullets: [
@@ -409,14 +409,14 @@ export const CAMPAIGN_BY_MODE: Record<
           id: "artist-o2500-fellowship-builder",
           amount: 2500,
           frequency: "one_time",
-          title: "Fellowship Builder",
+          title: "Residency Builder",
           eyebrow: "Seeds a major leadership and mentorship pathway.",
         },
         {
           id: "artist-o5000-fellowship-underwriter",
           amount: 5000,
           frequency: "one_time",
-          title: "Fellowship Underwriter",
+          title: "Residency Underwriter",
           eyebrow: "Sustains an artist’s long-form arc with real stability.",
         },
       ],

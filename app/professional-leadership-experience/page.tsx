@@ -10,11 +10,11 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "PLX — Professional Leadership Experience · DAT",
   description:
-    "Global Apprenticeships & Fellowships at Dramatic Adventure Theatre. Hands-on experience, mentorship, and in-the-field international training for emerging arts administrators.",
+    "Internships, Apprenticeships & Fellowships at Dramatic Adventure Theatre. Hands-on experience, mentorship, and in-the-field international training for emerging artists and arts administrators.",
   openGraph: {
     title: "PLX — Professional Leadership Experience · DAT",
     description:
-      "Global Apprenticeships & Fellowships at Dramatic Adventure Theatre. Hands-on experience, mentorship, and in-the-field international training for emerging arts administrators.",
+      "Internships, Apprenticeships & Fellowships at Dramatic Adventure Theatre. Hands-on experience, mentorship, and in-the-field international training for emerging artists and arts administrators.",
     images: ["/images/opportunities/PLX-hero.jpg"],
   },
 };
