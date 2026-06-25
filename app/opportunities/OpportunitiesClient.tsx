@@ -281,6 +281,9 @@ function PLXBand({ items }: { items: Opportunity[] }) {
           <Link href="/opportunities?browse=1&type=plx" className="op-plx-learnmore op-plx-learnmore--dim">
             Browse all {allPlxCount} listings →
           </Link>
+          <Link href="/project-based-internships/credit" className="op-plx-learnmore op-plx-learnmore--dim">
+            Students: earn academic credit at your own school →
+          </Link>
         </div>
       </div>
     </section>

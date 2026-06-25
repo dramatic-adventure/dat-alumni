@@ -70,6 +70,13 @@ const COPY: PlxProgramCopy = {
     { q: "Can international applicants apply?", a: "Yes. We've had Fellows from Ecuador, Czechia, Tanzania, and the US." },
   ],
   crossLink: { href: "/project-based-internships", label: "New here? Start with the Internship" },
+  creditCallout: {
+    href: "/project-based-internships/credit",
+    eyebrow: "For Students",
+    title: "Still in school? Earn credit first.",
+    body: "Before the 10-month Fellowship, take a short credit-bearing internship role on a DAT project — no formal partnership required. We supply the learning agreement and supervisor your registrar needs.",
+    cta: "See how to earn credit →",
+  },
   contactEmail: "info@dramaticadventure.com",
   accent: "#F23359",
 };

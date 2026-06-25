@@ -67,6 +67,13 @@ const COPY: PlxProgramCopy = {
     { q: "What if I miss the deadline?", a: "Apply for the next cohort. We run PLX twice a year." },
   ],
   crossLink: { href: "/fellowships", label: "Fellowship" },
+  creditCallout: {
+    href: "/project-based-internships/credit",
+    eyebrow: "For Students",
+    title: "Want academic credit at your own school?",
+    body: "Not ready for the 12-week Apprenticeship? Take a short, credit-bearing internship role on a DAT project — no formal partnership required. We supply the learning agreement and supervisor your registrar needs.",
+    cta: "See how to earn credit →",
+  },
   contactEmail: "info@dramaticadventure.com",
   accent: "#FFCC00",
 };

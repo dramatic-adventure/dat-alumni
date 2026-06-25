@@ -91,6 +91,13 @@ const COPY: PlxProgramCopy = {
     { q: "What do I leave with?", a: "A production or expedition credit, concrete portfolio deliverables, a reference from your supervisor, and a foot in DAT's global network." },
   ],
   crossLink: { href: "/apprenticeships", label: "Next: Apprenticeship" },
+  creditCallout: {
+    href: "/project-based-internships/credit",
+    eyebrow: "For Students",
+    title: "Earn academic credit at your own school.",
+    body: "Your school doesn't need a formal DAT partnership. Take a defined internship role, cover the participation fee, and we'll hand you the learning agreement, site supervisor, and outcomes your registrar needs.",
+    cta: "See how to earn credit →",
+  },
   contactEmail: "info@dramaticadventure.com",
   accent: "#0FB5A8",
 };

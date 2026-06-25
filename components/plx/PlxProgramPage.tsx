@@ -34,6 +34,9 @@ export interface PlxProgramCopy {
   closingLine: string;
   faq: { q: string; a: string }[];
   crossLink: { href: string; label: string };
+  // Optional — a prominent banner pointing students to the for-credit on-ramp.
+  // Only rendered when present, so existing pages without it are unchanged.
+  creditCallout?: { href: string; eyebrow: string; title: string; body: string; cta: string };
   contactEmail: string;
   accent: string;       // CSS color
 }
@@ -110,6 +113,22 @@ export default function PlxProgramPage({
           <p className="pp-hook-body">{copy.introBody}</p>
         </div>
       </section>
+
+      {/* CREDIT CALLOUT (optional — student for-credit on-ramp) */}
+      {copy.creditCallout && (
+        <section className="pp-credit">
+          <div className="pp-credit-inner">
+            <div className="pp-credit-text">
+              <span className="pp-credit-eyebrow">{copy.creditCallout.eyebrow}</span>
+              <h2 className="pp-credit-title">{copy.creditCallout.title}</h2>
+              <p className="pp-credit-body">{copy.creditCallout.body}</p>
+            </div>
+            <Link href={copy.creditCallout.href} className="pp-cta pp-cta--primary pp-credit-cta">
+              {copy.creditCallout.cta}
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* WHEN + COMPENSATION (two-column) */}
       <section className="pp-grid-section">
@@ -350,6 +369,41 @@ export default function PlxProgramPage({
           line-height: 1.75; color: rgba(255,255,255,0.82);
           margin: 0;
         }
+
+        /* CREDIT CALLOUT */
+        .pp-credit {
+          padding: clamp(2rem, 4vw, 3rem) clamp(1.25rem, 5vw, 3rem) 0;
+        }
+        .pp-credit-inner {
+          max-width: 1220px; margin: 0 auto;
+          display: flex; align-items: center; justify-content: space-between;
+          flex-wrap: wrap; gap: 1.5rem;
+          padding: clamp(1.75rem, 3vw, 2.5rem);
+          border-radius: 20px;
+          background: color-mix(in srgb, var(--accent) 12%, #fff);
+          border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
+          box-shadow: 0 6px 32px rgba(36,17,35,0.05);
+        }
+        .pp-credit-text { flex: 1 1 420px; }
+        .pp-credit-eyebrow {
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.72rem; font-weight: 700;
+          letter-spacing: 0.22em; text-transform: uppercase;
+          color: var(--accent);
+          display: block; margin-bottom: 0.5rem;
+        }
+        .pp-credit-title {
+          font-family: var(--font-anton), sans-serif;
+          font-size: clamp(1.5rem, 3vw, 2.1rem);
+          font-weight: 400; line-height: 1.08;
+          color: #241123; margin: 0 0 0.6rem;
+        }
+        .pp-credit-body {
+          font-family: var(--font-space-grotesk), sans-serif;
+          font-size: 0.98rem; line-height: 1.6;
+          color: rgba(36,17,35,0.78); margin: 0; max-width: 640px;
+        }
+        .pp-credit-cta { flex: 0 0 auto; white-space: nowrap; }
 
         /* TWO-COLUMN GRID */
         .pp-grid-section { padding: clamp(3rem, 5vw, 5rem) clamp(1.25rem, 5vw, 3rem); }
