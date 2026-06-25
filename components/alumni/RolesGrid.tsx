@@ -9,6 +9,7 @@ import {
   getCanonicalFlag,
   slugifyFlag,
   displayFlagLabel,
+  ROLE_DISPLAY_ORDER,
   FlagLabel,
 } from "@/lib/flags";
 import { pluralizeTitle } from "@/lib/pluralizeTitle";
@@ -19,20 +20,8 @@ interface RolesGridProps {
   alumni: AlumniRow[];
 }
 
-const ROLE_ORDER: FlagLabel[] = [
-  "Founding Member",
-  "Board Member",
-  "Staff",
-  "Resident Artist",
-  "Associate Artist",
-  "Fellow",
-  "Artist-in-Residence",
-  "Volunteer",
-  "Intern",
-];
-
 const ROLE_ORDER_INDEX = new Map(
-  ROLE_ORDER.map((role, index) => [role, index])
+  ROLE_DISPLAY_ORDER.map((role, index) => [role, index])
 );
 
 export default function RolesGrid({ roles, alumni }: RolesGridProps) {

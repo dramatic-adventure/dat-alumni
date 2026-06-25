@@ -100,6 +100,8 @@ export function pluralizeToken(token: string): string {
 const EXCLUDED_TITLES = new Set([
   "intern",
   "fellow",
+  "apprentice",          // status flag, not a creative-title bucket
+  "collective artist",   // status flag, not a creative-title bucket
   "volunteer",
   "cos", // no COS button
   // ✅ Emeritus is a modifier/status, not a standalone DAT title bucket.

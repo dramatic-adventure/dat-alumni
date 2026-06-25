@@ -21,6 +21,8 @@ import {
   displayFlagLabel,
   getCanonicalFlag,
   slugifyFlag,
+  flagDescriptions,
+  flagGroupNames,
   type FlagLabel,
 } from "@/lib/flags";
 
@@ -178,6 +180,14 @@ export default async function RolePage({
 
   const pluralLabel = pluralizeTitle(displayLabel);
 
+  // Optional registry metadata (description blurb + collective group name)
+  const canonicalFlag = getCanonicalFlag(displayLabel) as FlagLabel | null;
+  const roleDescription = canonicalFlag ? flagDescriptions[canonicalFlag] : undefined;
+  const groupName = canonicalFlag ? flagGroupNames[canonicalFlag] : undefined;
+  const heroSubtitle = groupName
+    ? `Recognizing ${groupName}`
+    : `Recognizing our incredible ${pluralLabel.toLowerCase()}`;
+
   return (
     <div>
       {/* HERO */}
@@ -223,7 +233,7 @@ export default async function RolePage({
               textAlign: "right",
             }}
           >
-            Recognizing our incredible {pluralLabel.toLowerCase()}
+            {heroSubtitle}
           </p>
         </div>
       </div>
@@ -256,6 +266,21 @@ export default async function RolePage({
           >
             {pluralLabel}
           </h3>
+
+          {roleDescription && (
+            <p
+              style={{
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                fontSize: "1.15rem",
+                lineHeight: 1.6,
+                color: "#241123",
+                maxWidth: "60ch",
+                margin: "0 0 1.5rem",
+              }}
+            >
+              {roleDescription}
+            </p>
+          )}
 
           <div
             style={{

@@ -116,7 +116,7 @@ export default async function PLXLandingPage() {
           <span className="plx-hero-eyebrow">Professional Leadership Experience</span>
           <h1 className="plx-hero-title">
             PLX.<br />
-            <span className="plx-hero-title-em">Global Apprenticeships<br />&amp; Fellowships.</span>
+            <span className="plx-hero-title-em">Internships, Apprenticeships<br />&amp; Fellowships.</span>
           </h1>
           <p className="plx-hero-sub">
             Hands-on experience coupled with mentorship and professional development.

@@ -1,6 +1,8 @@
 // lib/pluralizeTitle.ts
 const IRREGULAR_PLURALS: Record<string, string> = {
   Fellow: "Fellows",
+  Apprentice: "Apprentices",
+  "Collective Artist": "Collective Artists",
   Alumni: "Alumni", // already plural
   Artist: "Artists",
   Partner: "Partners",

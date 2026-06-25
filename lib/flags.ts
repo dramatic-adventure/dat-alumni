@@ -4,38 +4,77 @@
 export type FlagLabel =
   | "Board Member"
   | "Intern"
+  | "Apprentice"
   | "Volunteer"
-  | "Artist-in-Residence" 
+  | "Artist-in-Residence"
+  | "Collective Artist"
   | "Fellow"
   | "Associate Artist"
   | "Resident Artist"
   | "Staff"
   | "Founding Member";
 
+/**
+ * 📐 Canonical display order for role listings (RolesGrid, etc.).
+ * Founding Members → Board → Staff → Resident → Associate → Artists-in-Residence
+ * → Collective Artists → Fellows → Apprentices → Interns → Volunteers.
+ */
+export const ROLE_DISPLAY_ORDER: FlagLabel[] = [
+  "Founding Member",
+  "Board Member",
+  "Staff",
+  "Resident Artist",
+  "Associate Artist",
+  "Artist-in-Residence",
+  "Collective Artist",
+  "Fellow",
+  "Apprentice",
+  "Intern",
+  "Volunteer",
+];
+
 /** 🎨 Colors per status (source of truth for role chips/buttons) */
 export const flagStyles: Record<FlagLabel, string> = {
   "Founding Member": "#E6B24A",
-  Staff: "#3E3A36",
   "Board Member": "#A15C40",
+  Staff: "#3E3A36",
+  "Resident Artist": "#F25C4D",
+  "Associate Artist": "#6C00AF",
   "Artist-in-Residence": "#4C8C86",
+  "Collective Artist": "#C13584",
   Fellow: "#0066CC",
+  Apprentice: "#B5651D",
   Intern: "#924E75",
   Volunteer: "#659157",
-  "Associate Artist": "#6C00AF",
-  "Resident Artist": "#F25C4D",
 };
 
 /** 🖼️ Icons per status (source of truth for role chips/buttons) */
 export const iconMap: Record<FlagLabel, string> = {
+  "Founding Member": "🛠️",
+  "Board Member": "🧭",
+  Staff: "⭐️",
+  "Resident Artist": "🌟",
+  "Associate Artist": "✨",
+  "Artist-in-Residence": "🪐",
+  "Collective Artist": "🌀",
+  Fellow: "💫",
+  Apprentice: "🔨",
   Intern: "🌱",
   Volunteer: "🫶",
-  "Artist-in-Residence": "🪐",
-  Fellow: "💫",
-  "Associate Artist": "✨",
-  "Resident Artist": "🌟",
-  Staff: "⭐️",
-  "Board Member": "🧭",
-  "Founding Member": "🛠️",
+};
+
+/**
+ * 📝 Optional one-line descriptions per role (shown on /role/[slug] when present).
+ * Fellow = Global Fellowship credential; Apprentice = Global Apprenticeship credential.
+ */
+export const flagDescriptions: Partial<Record<FlagLabel, string>> = {
+  "Collective Artist":
+    "Frequent collaborators who have returned to DAT across multiple projects, expeditions, or productions.",
+};
+
+/** 🏷️ Optional collective group name per role (e.g. "the DAT Collective"). */
+export const flagGroupNames: Partial<Record<FlagLabel, string>> = {
+  "Collective Artist": "the DAT Collective",
 };
 
 /** ✅ Normalize any label to its canonical form */
@@ -50,6 +89,8 @@ export function getCanonicalFlag(label: string): FlagLabel | null {
   if (dehyphen === "board member") return "Board Member";
   if (dehyphen === "associate artist" || dehyphen === "associate artists") return "Associate Artist";
   if (dehyphen === "resident artist" || dehyphen === "resident artists") return "Resident Artist";
+  if (dehyphen === "collective artist" || dehyphen === "collective artists") return "Collective Artist";
+  if (dehyphen === "apprentice" || dehyphen === "apprentices") return "Apprentice";
 
   const candidates = Object.keys(flagStyles) as FlagLabel[];
   return (
