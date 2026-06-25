@@ -28,6 +28,7 @@ import {
   slugifyFlag,
   flagDescriptions,
   flagGroupNames,
+  flagHeroSubtitles,
   type FlagLabel,
 } from "@/lib/flags";
 
@@ -210,9 +211,12 @@ export default async function RolePage({
   const canonicalFlag = getCanonicalFlag(displayLabel) as FlagLabel | null;
   const roleDescription = canonicalFlag ? flagDescriptions[canonicalFlag] : undefined;
   const groupName = canonicalFlag ? flagGroupNames[canonicalFlag] : undefined;
-  const heroSubtitle = groupName
-    ? `Recognizing ${groupName}`
-    : `Recognizing our incredible ${pluralLabel.toLowerCase()}`;
+  const customHeroSubtitle = canonicalFlag ? flagHeroSubtitles[canonicalFlag] : undefined;
+  const heroSubtitle = customHeroSubtitle
+    ? customHeroSubtitle
+    : groupName
+      ? `Recognizing ${groupName}`
+      : `Recognizing our incredible ${pluralLabel.toLowerCase()}`;
 
   return (
     <div>

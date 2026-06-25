@@ -64,17 +64,26 @@ export const iconMap: Record<FlagLabel, string> = {
 };
 
 /**
- * 📝 Optional one-line descriptions per role (shown on /role/[slug] when present).
- * Fellow = Global Fellowship credential; Apprentice = Global Apprenticeship credential.
+ * 📝 Optional one-line descriptions per role (shown as a paragraph below the
+ * heading on /role/[slug] when present). Left empty intentionally: the Collective
+ * Artist blurb now lives in the hero subtitle (see flagHeroSubtitles). Add an
+ * entry here to surface a body paragraph for a role.
  */
-export const flagDescriptions: Partial<Record<FlagLabel, string>> = {
-  "Collective Artist":
-    "Frequent collaborators who have returned to DAT across multiple projects, expeditions, or productions.",
-};
+export const flagDescriptions: Partial<Record<FlagLabel, string>> = {};
 
 /** 🏷️ Optional collective group name per role (e.g. "the DAT Collective"). */
 export const flagGroupNames: Partial<Record<FlagLabel, string>> = {
   "Collective Artist": "the DAT Collective",
+};
+
+/**
+ * 🎯 Optional hero subtitle per role (shown under the headline on /role/[slug]).
+ * Overrides the default "Recognizing …" line when present. Keep it concise — the
+ * full blurb still renders as the paragraph below the heading.
+ */
+export const flagHeroSubtitles: Partial<Record<FlagLabel, string>> = {
+  "Collective Artist":
+    "Recognizing the DAT Collective — frequent collaborators who keep returning across projects, expeditions, and productions",
 };
 
 /** ✅ Normalize any label to its canonical form */
