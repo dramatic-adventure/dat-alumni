@@ -8,9 +8,9 @@
 // TO ADD A NEW SEASON: add a new SeasonInfo entry to lib/seasonData.ts.
 // Stats, jump nav, project counts, and era groupings all update automatically.
 //
-// TO ADD A NEW ERA: append a new EraConfig object to the ERAS array below
-// and assign era images to public/images/projects/. That is the only manual
-// step required when a new chapter of the company's history begins.
+// TO ADD A NEW ERA: edit DAT_ERAS in lib/eras.ts (shared by /theatre and
+// Collective Artist ordering), then add the era's image to the ERA_IMAGES map
+// below (keyed by the same era id) and to public/images/projects/.
 
 import type { CSSProperties } from "react";
 import Link from "next/link";
@@ -21,6 +21,7 @@ import { showcasesBySeason, archivedProjectEventsBySeason, canonicalEventPath, t
 import { dramaClubs } from "@/lib/dramaClubMap";
 import { programMap, type ProgramData } from "@/lib/programMap";
 import { resolveProjectHeroImage } from "@/lib/projectHeroImage";
+import { DAT_ERAS, type DatEra } from "@/lib/eras";
 
 // ─── Colour palette ────────────────────────────────────────────────────────────
 const C = {
@@ -39,104 +40,70 @@ const C = {
 // objectPosition: controls which part of the image is shown at 4:5 aspect ratio.
 // filter: optional CSS filter for per-image tone correction.
 
-interface EraConfig {
-  id:             string;
-  label:          string;
-  seasons:        readonly number[];
-  years:          string;
-  geography:      string;
+// Era STRUCTURE (label, seasons, years, geography) is the shared single source
+// of truth in lib/eras.ts (DAT_ERAS) — the same eras used on /theatre and in
+// Collective Artist ordering. This page supplies only its own per-era images.
+interface EraImage {
   src:            string | null;
   alt:            string;
   objectPosition: string;
   filter?:        string;
 }
 
+type EraConfig = DatEra & EraImage;
+
 // ─── MANUAL MAINTENANCE POINT ─────────────────────────────────────────────────
-// Add a new EraConfig here when a new era begins. See comment at top of file.
-const ERAS: EraConfig[] = [
-  {
-    id:             "era-1",
-    label:          "The Beginning",
-    seasons:        [1, 2],
-    years:          "2006–2008",
-    geography:      "Zimbabwe · Ecuador · USA",
+// To add a new ERA, edit DAT_ERAS in lib/eras.ts; then add its image here,
+// keyed by the same era id. To restyle an existing era's image, edit it here.
+const ERA_IMAGES: Record<string, EraImage> = {
+  "era-1": {
     src:            "/images/projects/archive/Creative-Trek-Zimbabwe.webp",
     alt:            "Creative Trek: Zimbabwe — DAT Season 1",
     objectPosition: "center",
   },
-  {
-    id:             "era-2",
-    label:          "Hecho en Ecuador",
-    seasons:        [3],
-    years:          "2008–2009",
-    geography:      "Ecuador · NYC",
+  "era-2": {
     src:            "/images/projects/archive/creative-trek-ecuador-teatro-la-catanga.webp",
     alt:            "Creative Trek: Ecuador — Teatro La Catanga",
     objectPosition: "50% 20%",   // subject in upper portion of frame
   },
-  {
-    id:             "era-3",
-    label:          "Finding the Form",
-    seasons:        [4, 5, 6],
-    years:          "2009–2012",
-    geography:      "Ecuador · Slovakia · Washington D.C.",
+  "era-3": {
     src:            "/images/projects/archive/teaching-artist-residency-esmeraldas.webp",
     alt:            "Teaching Artist Residency: Esmeraldas, Ecuador — Season 5",
     objectPosition: "center",
   },
-  {
-    id:             "era-4",
-    label:          "The Story Deepens",
-    seasons:        [7, 8],
-    years:          "2012–2014",
-    geography:      "Slovakia · Ecuador · NYC",
+  "era-4": {
     src:            "/images/projects/archive/action-heart-of-europe-street-theatre.webp",
     alt:            "ACTion: Heart of Europe — Street Theatre, Slovakia",
     objectPosition: "50% 80%",   // crop top, focus lower half of frame
     filter:         "brightness(1.08) contrast(1.22) saturate(1.3)",  // sharpen dull tones
   },
-  {
-    id:             "era-5",
-    label:          "The Wide World",
-    seasons:        [9, 10],
-    years:          "2014–2016",
-    geography:      "Tanzania · Zanzibar · Slovakia · Ecuador",
+  "era-5": {
     src:            "/images/projects/archive/ACTion-Tanzania-7-kids.webp",
     alt:            "ACTion: Tanzania — Season 10",
     objectPosition: "50% 60%",   // slightly lower than center
   },
-  {
-    id:             "era-6",
-    label:          "Into the Margins",
-    seasons:        [11, 12, 13, 14, 15],
-    years:          "2016–2021",
-    geography:      "Ecuador · Galápagos · Slovakia · USA",
+  "era-6": {
     src:            "/images/projects/archive/teaching-artist-residency-slovakia-camp.webp",
     alt:            "Teaching Artist Residency: Slovakia — Season 12",
     objectPosition: "50% 60%",   // slightly lower than center
   },
-  {
-    id:             "era-7",
-    label:          "The Present Tense",
-    seasons:        [16, 17, 18, 19],
-    years:          "2021–2025",
-    geography:      "Ecuador · Slovakia · Hudson Valley",
+  "era-7": {
     src:            "/images/projects/archive/travelogue-on-clubhouse-4-17-21.webp",
     alt:            "Travelogue on Clubhouse — Season 15/16",
     objectPosition: "50% 20%",   // subject in upper portion of frame
     filter:         "brightness(1.08) contrast(1.06) saturate(1.05)",
   },
-  {
-    id:             "era-8",
-    label:          "A New Era",
-    seasons:        [20],
-    years:          "2025–present",
-    geography:      "TBA",
+  "era-8": {
     src:            null,   // image coming soon — placeholder rendered below
     alt:            "",
     objectPosition: "center",
   },
-];
+};
+
+const ERAS: EraConfig[] = DAT_ERAS.map((era) => ({
+  ...era,
+  ...ERA_IMAGES[era.id],
+}));
 
 // ─── Countries logic ──────────────────────────────────────────────────────────
 // An explicit map handles ambiguous or compound geography.

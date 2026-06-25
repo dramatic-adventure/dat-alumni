@@ -10,6 +10,7 @@
 import { programMap } from "@/lib/programMap";
 import { productionMap } from "@/lib/productionMap";
 import { ROLE_DISPLAY_ORDER, getCanonicalFlag } from "@/lib/flags";
+import { eraRecencyWeightForSeason as eraWeight } from "@/lib/eras";
 
 /**
  * Local copy of lib/slugAliases#normSlug. Inlined so this stays a pure,
@@ -74,10 +75,25 @@ function isInternationalProgram(prog: {
   return known.some((c) => !isDomesticCountry(c));
 }
 
+/**
+ * Recency weighting comes from the SHARED DAT eras in lib/eras.ts — the same
+ * eras rendered on /theatre and /projects. Each engagement is weighted by the
+ * era its season falls in; the most recent era carries the most weight and it
+ * degrades era by era. 🔧 To change the eras, edit DAT_ERAS in lib/eras.ts and
+ * everything (both archive pages + this ordering) updates together.
+ *
+ * International travel is the most valuable signal: an international PROGRAM
+ * engagement is worth this multiple of a domestic one, on top of its era
+ * weight. Productions carry no structured country, so they score as domestic.
+ * 🔧 Tune freely.
+ */
+export const INTERNATIONAL_MULTIPLIER = 5;
+
 type Involvement = {
   intlPrograms: Set<string>; // distinct international programMap slugs
   allPrograms: Set<string>; // distinct programMap slugs (intl + domestic)
   productions: Set<string>; // distinct productionMap slugs (deduped via projectSlugs)
+  score: number; // era + international weighted ordering score
 };
 
 function emptyInvolvement(): Involvement {
@@ -85,6 +101,7 @@ function emptyInvolvement(): Involvement {
     intlPrograms: new Set<string>(),
     allPrograms: new Set<string>(),
     productions: new Set<string>(),
+    score: 0,
   };
 }
 
@@ -117,13 +134,16 @@ const involvementIndex: Map<string, Involvement> = (() => {
       country?: string;
       footprints?: { country?: string }[];
       artists?: Record<string, unknown>;
+      season?: number;
     };
     const intl = isInternationalProgram(prog);
+    const points = eraWeight(prog.season) * (intl ? INTERNATIONAL_MULTIPLIER : 1);
     for (const artistSlug of Object.keys(prog?.artists ?? {})) {
       const rec = recFor(artistSlug);
       if (!rec) continue;
       rec.allPrograms.add(normSlug(programSlug));
       if (intl) rec.intlPrograms.add(normSlug(programSlug));
+      rec.score += points;
     }
   }
 
@@ -132,8 +152,11 @@ const involvementIndex: Map<string, Involvement> = (() => {
     const prod = productionMap[prodSlug] as {
       projectSlugs?: string[];
       artists?: Record<string, unknown>;
+      season?: number;
     };
     const projectSlugs = (prod?.projectSlugs ?? []).map((s) => normSlug(s));
+    // Productions carry no structured country → scored as domestic (no intl premium).
+    const points = eraWeight(prod.season);
     for (const artistSlug of Object.keys(prod?.artists ?? {})) {
       const rec = recFor(artistSlug);
       if (!rec) continue;
@@ -141,6 +164,7 @@ const involvementIndex: Map<string, Involvement> = (() => {
       const dedup = projectSlugs.some((p) => rec.allPrograms.has(p));
       if (dedup) continue;
       rec.productions.add(normSlug(prodSlug));
+      rec.score += points;
     }
   }
 
@@ -170,13 +194,20 @@ export function deriveCollectiveArtistQualifies(slug: string): boolean {
 }
 
 /**
- * Sort key for the /role/collective-artist page (most involved first). Implicit
+ * Sort key for the /role/collective-artist page (highest first). Implicit
  * ordering only — never surface this number in the UI.
+ *
+ * Each engagement contributes
+ *   eraWeight(season) × (international program ? INTERNATIONAL_MULTIPLIER : 1)
+ * summed across the artist's deduped programs + productions. This rewards
+ * RECENT travel (era weights, most-recent era highest) and INTERNATIONAL
+ * travel (the multiplier). Edit DAT_ERAS in lib/eras.ts to change the eras, or
+ * INTERNATIONAL_MULTIPLIER above, to retune the ordering.
  */
 export function collectiveInvolvementScore(slug: string): number {
   const rec = involvementIndex.get(normSlug(slug));
   if (!rec) return 0;
-  return rec.intlPrograms.size * 1000 + rec.allPrograms.size + rec.productions.size;
+  return rec.score;
 }
 
 const COLLECTIVE_RANK = ROLE_DISPLAY_ORDER.indexOf("Collective Artist");

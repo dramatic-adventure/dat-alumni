@@ -11,6 +11,7 @@ import {
   COUNTRY_COUNT,
   TRAVELING_ARTIST_COUNT,
 } from "@/lib/datStats";
+import { DAT_ERAS, type DatEra } from "@/lib/eras";
 
 const FALLBACK_POSTER = "/posters/fallback-16x9.jpg";
 const CARD_BG = "#f2f2f2";
@@ -27,106 +28,73 @@ const C = {
 } as const;
 
 // ─── Era definitions ───────────────────────────────────────────────────────────
-// Each era anchors a block of seasons with a signature image.
+// Era STRUCTURE (label, seasons, years, geography) is the shared single source
+// of truth in lib/eras.ts (DAT_ERAS) — the same eras used on /projects and in
+// Collective Artist ordering. This page supplies only its own per-era images,
+// keyed by era id below, and merges them onto the shared structure.
+//
 // src: null = no image yet — renders a "New Era" placeholder.
 // objectPosition: controls which part of the image shows (use "top" when the
 //   subject is near the top so it isn't cropped).
 
-interface EraConfig {
-  id: string;
-  label: string;
-  seasons: readonly number[];
-  years: string;
-  geography: string;
+interface EraImage {
   src: string | null;
   alt: string;
   objectPosition: string;
   filter?: string;          // optional CSS filter for per-image tone correction
 }
 
-const ERAS: EraConfig[] = [
-  {
-    id: "era-1",
-    label: "The Beginning",
-    seasons: [1, 2],
-    years: "2006–2008",
-    geography: "Zimbabwe · Ecuador · USA",
+type EraConfig = DatEra & EraImage;
+
+// Theatre Archive images, keyed by the shared era id (see lib/eras.ts).
+const ERA_IMAGES: Record<string, EraImage> = {
+  "era-1": {
     src: "/posters/flight-360-landscape.jpg",
     alt: "Flight 360 — DAT Season 2, Ecuador",
     objectPosition: "top",          // subject sits high in the frame
   },
-  {
-    id: "era-2",
-    label: "Hecho en Ecuador",
-    seasons: [3],
-    years: "2008–2009",
-    geography: "Ecuador · NYC",
+  "era-2": {
     src: "/images/theatre/archive/hotel_millionaire.webp",
     alt: "Hotel Millionaire — DAT Season 3, Ecuador",
     objectPosition: "center",
   },
-  {
-    id: "era-3",
-    label: "Finding the Form",
-    seasons: [4, 5, 6],
-    years: "2009–2012",
-    geography: "Ecuador · Slovakia · Washington D.C.",
+  "era-3": {
     src: "/images/theatre/archive/esmeraldas_dumbshow.webp",
     alt: "Esmeraldas Dumbshow — DAT Season 4, Ecuador",
     objectPosition: "center",
   },
-  {
-    id: "era-4",
-    label: "The Story Deepens",
-    seasons: [7, 8],
-    years: "2012–2014",
-    geography: "Slovakia · Ecuador · NYC",
+  "era-4": {
     src: "/images/theatre/archive/agwow-condor.webp",
     alt: "A Girl Without Wings — the Condor, the Andes",
     objectPosition: "top",   // subject near top — cut from bottom
   },
-  {
-    id: "era-5",
-    label: "The Wide World",
-    seasons: [9, 10],
-    years: "2014–2016",
-    geography: "Tanzania · Zanzibar · Slovakia · Ecuador",
+  "era-5": {
     src: "/images/theatre/archive/tembo.webp",
     alt: "Tembo — DAT Season 10, Tanzania",
     objectPosition: "center",
   },
-  {
-    id: "era-6",
-    label: "Into the Margins",
-    seasons: [11, 12, 13, 14, 15],
-    years: "2016–2021",
-    geography: "Ecuador · Galápagos · Slovakia · USA",
+  "era-6": {
     src: "/images/theatre/archive/blackfish_mommy.webp",
     alt: "Blackfish — DAT Season 12",
     objectPosition: "top",   // subject near top — cut from bottom
   },
-  {
-    id: "era-7",
-    label: "The Present Tense",
-    seasons: [16, 17, 18, 19],
-    years: "2021–2025",
-    geography: "Ecuador · Slovakia · Hudson Valley",
+  "era-7": {
     src: "/images/theatre/archive/the-rainbow-of-san-luis-puppets.jpeg",
     alt: "The Rainbow of San Luis — DAT Season 16, Ecuador",
     objectPosition: "60% 30%",      // subject upper-right of frame
     filter: "contrast(1.18) saturate(1.3) brightness(1.04)", // sharpen and enrich the image
   },
-  {
-    id: "era-8",
-    label: "A New Era",
-    seasons: [20],
-    years: "2025–present",
-    geography: "TBA",
+  "era-8": {
     src: null,               // image coming this summer — placeholder rendered below
     alt: "",
     objectPosition: "center",
   },
-];
+};
+
+const ERAS: EraConfig[] = DAT_ERAS.map((era) => ({
+  ...era,
+  ...ERA_IMAGES[era.id],
+}));
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 function posterSrc(p: Production): string {
