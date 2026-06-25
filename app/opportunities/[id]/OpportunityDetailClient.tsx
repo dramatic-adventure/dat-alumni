@@ -69,6 +69,16 @@ export default function OpportunityDetailClient({
   const isClosed = o.status === "closed";
   const showDeadline = !!o.deadline && o.status === "open";
 
+  // Money direction — mirror the portal card: paid shows the pay line, fee shows
+  // the participation-fee line (never "Volunteer"), volunteer shows "Volunteer".
+  const fundingLabel = o.funding === "fee" ? "Participation Fee" : "Compensation";
+  const fundingValue =
+    o.funding === "paid"
+      ? o.compensation || "Paid"
+      : o.funding === "fee"
+        ? o.compensation || "Participation fee"
+        : "Volunteer";
+
   const [shareCopied, setShareCopied] = useState(false);
   const onShare = async () => {
     const url = typeof window !== "undefined" ? window.location.href : `https://stories.dramaticadventure.com/opportunities/${o.id}`;
@@ -115,6 +125,7 @@ export default function OpportunityDetailClient({
             <Link href={`/opportunities?type=${TYPE_TO_GROUP[o.type]}&browse=1`} className="od-typebadge">{meta.label}</Link>
             <Link href={`/opportunities?browse=1`} style={{ textDecoration: "none" }}><StatusPill status={o.status} /></Link>
             {o.featured && <Link href="/opportunities?browse=1" className="od-featured-star">★ Featured</Link>}
+            {o.earnsCredit && <span className="od-credit-badge">Earns academic credit</span>}
           </div>
 
           <h1 className="od-hero-title">{o.title}</h1>
@@ -170,10 +181,8 @@ export default function OpportunityDetailClient({
             <span className="od-ribbon-value">{o.commitment}</span>
           </div>
           <div className="od-ribbon-cell">
-            <span className="od-ribbon-label">Compensation</span>
-            <span className="od-ribbon-value">
-              {o.isPaid ? o.compensation || "Paid" : "Volunteer"}
-            </span>
+            <span className="od-ribbon-label">{fundingLabel}</span>
+            <span className="od-ribbon-value">{fundingValue}</span>
           </div>
           <div className="od-ribbon-cell">
             <span className="od-ribbon-label">Location</span>
@@ -487,6 +496,18 @@ export default function OpportunityDetailClient({
           border-radius: 6px;
           text-decoration: none;
           cursor: pointer;
+        }
+        .od-credit-badge {
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.66rem;
+          font-weight: 700;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: #7fd9ec;
+          padding: 0.32rem 0.7rem;
+          background: rgba(36,147,169,0.18);
+          border: 1px solid rgba(36,147,169,0.5);
+          border-radius: 6px;
         }
         .od-hero-title {
           font-family: var(--font-anton), sans-serif;

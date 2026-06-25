@@ -61,6 +61,23 @@ const IconPin = () => (
     <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="3" />
   </svg>
 );
+// Neutral fee/ticket icon — used for fee-based programs (participant pays).
+const IconTicket = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2 2 2 0 0 0 0-4Z" /><path d="M13 7v10" />
+  </svg>
+);
+
+/* ─── Funding (money-direction) display ─────────────────────────────────
+ * paid      → dollar icon + the compensation pay line
+ * fee       → neutral ticket icon + the compensation fee line (NEVER "Volunteer")
+ * volunteer → heart icon + the word "Volunteer"
+ */
+function fundingDisplay(o: Opportunity): { icon: React.ReactNode; text: string } {
+  if (o.funding === "paid") return { icon: <IconDollar />, text: o.compensation || "Paid" };
+  if (o.funding === "fee") return { icon: <IconTicket />, text: o.compensation || "Participation fee" };
+  return { icon: <IconHeart />, text: "Volunteer" };
+}
 
 /* ─── Full opportunity card (unchanged) ─────────────────────────────── */
 function OpportunityCard({ o, index }: { o: Opportunity; index: number }) {
@@ -74,6 +91,7 @@ function OpportunityCard({ o, index }: { o: Opportunity; index: number }) {
   const learnHref = o.learnMoreUrl || `/opportunities/${o.id}`;
   const applyHref = o.applyUrl || `/apply?opp=${o.id}`;
   const heroImage = o.heroImage || "/images/opportunities/collaboration-joy.jpg";
+  const money = fundingDisplay(o);
 
   return (
     <article
@@ -127,11 +145,14 @@ function OpportunityCard({ o, index }: { o: Opportunity; index: number }) {
             <span>{o.commitment}</span>
           </div>
           <div className="op-card-meta-row">
-            <span className="op-card-meta-icon">
-              {o.isPaid ? <IconDollar /> : <IconHeart />}
-            </span>
-            <span>{o.isPaid ? o.compensation : "Volunteer"}</span>
+            <span className="op-card-meta-icon">{money.icon}</span>
+            <span>{money.text}</span>
           </div>
+          {o.earnsCredit && (
+            <div className="op-card-meta-row">
+              <span className="op-card-credit-badge">Earns academic credit</span>
+            </div>
+          )}
           {o.deadline && o.status === "open" && (
             <div className="op-card-meta-row op-card-meta-row--deadline">
               <span className="op-card-deadline-label">Apply by</span>
@@ -304,6 +325,7 @@ interface FilterState {
   hubs: OpportunityHub[];
   commitments: OpportunityCommitmentType[];
   paidOnly: boolean;
+  creditOnly: boolean;
   seasonalOnly: boolean;
 }
 
@@ -332,6 +354,7 @@ const EMPTY_FILTERS: FilterState = {
   hubs: [],
   commitments: [],
   paidOnly: false,
+  creditOnly: false,
   seasonalOnly: false,
 };
 
@@ -370,6 +393,7 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
       searchParams.get("hub") ||
       searchParams.get("commit") ||
       searchParams.get("paid") ||
+      searchParams.get("credit") ||
       searchParams.get("season")
     );
 
@@ -379,6 +403,7 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
       hubs: parseListParam(searchParams.get("hub"), OPPORTUNITY_HUBS as readonly string[]) as OpportunityHub[],
       commitments: parseListParam(searchParams.get("commit"), OPPORTUNITY_COMMITMENTS as readonly string[]) as OpportunityCommitmentType[],
       paidOnly: searchParams.get("paid") === "1",
+      creditOnly: searchParams.get("credit") === "1",
       seasonalOnly: searchParams.get("season") === "1",
     });
   }, [searchParams]);
@@ -392,6 +417,7 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
     if (next.hubs.length) params.set("hub", next.hubs.join(","));
     if (next.commitments.length) params.set("commit", next.commitments.join(","));
     if (next.paidOnly) params.set("paid", "1");
+    if (next.creditOnly) params.set("credit", "1");
     if (next.seasonalOnly) params.set("season", "1");
     router.replace(`/opportunities?${params.toString()}`, { scroll: false });
   };
@@ -406,6 +432,7 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
     if (next.hubs.length) params.set("hub", next.hubs.join(","));
     if (next.commitments.length) params.set("commit", next.commitments.join(","));
     if (next.paidOnly) params.set("paid", "1");
+    if (next.creditOnly) params.set("credit", "1");
     if (next.seasonalOnly) params.set("season", "1");
     router.push(`/opportunities?${params.toString()}`, { scroll: false });
     // Scroll to filter bar after navigation settles
@@ -440,6 +467,7 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
   const toggleCommit = (c: OpportunityCommitmentType) =>
     updateFilters({ ...filters, commitments: filters.commitments.includes(c) ? filters.commitments.filter((x) => x !== c) : [...filters.commitments, c] });
   const togglePaid = () => updateFilters({ ...filters, paidOnly: !filters.paidOnly });
+  const toggleCredit = () => updateFilters({ ...filters, creditOnly: !filters.creditOnly });
   const toggleSeasonal = () => updateFilters({ ...filters, seasonalOnly: !filters.seasonalOnly });
 
   // Clear filters — stays in browse mode if active
@@ -506,20 +534,22 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
   const activeDatSeasonEndYears = useMemo(() => getActiveDatSeasonEndYears(), []);
 
   // ── Dynamic filter availability (browse mode) ────────────────────────
-  const { availableGroups, availableHubs, availableCommitments, hasSeasonal } = useMemo(() => {
+  const { availableGroups, availableHubs, availableCommitments, hasSeasonal, hasCredit } = useMemo(() => {
     const groups = new Set<TypeGroup>();
     const hubs = new Set<OpportunityHub>();
     const commitments = new Set<OpportunityCommitmentType>();
     let seasonalCount = 0;
+    let creditCount = 0;
     for (const o of opportunities) {
       if (o.status === "closed") continue;
       groups.add(TYPE_TO_GROUP[o.type]);
       hubs.add(o.hub);
       commitments.add(o.commitmentType);
+      if (o.earnsCredit) creditCount++;
       // Only count listings that match the current (or imminent) DAT season
       if (o.season && activeDatSeasonEndYears.some(y => o.season.includes(String(y)))) seasonalCount++;
     }
-    return { availableGroups: groups, availableHubs: hubs, availableCommitments: commitments, hasSeasonal: seasonalCount > 0 };
+    return { availableGroups: groups, availableHubs: hubs, availableCommitments: commitments, hasSeasonal: seasonalCount > 0, hasCredit: creditCount > 0 };
   }, [opportunities, activeDatSeasonEndYears]);
 
   // ── Filtered list (browse mode) ──────────────────────────────────────
@@ -532,7 +562,8 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
       }
       if (filters.hubs.length && !filters.hubs.includes(o.hub)) return false;
       if (filters.commitments.length && !filters.commitments.includes(o.commitmentType)) return false;
-      if (filters.paidOnly && !o.isPaid) return false;
+      if (filters.paidOnly && o.funding !== "paid") return false;
+      if (filters.creditOnly && !o.earnsCredit) return false;
       if (filters.seasonalOnly) {
         // Match listings whose season field contains the current (or upcoming) DAT season end-year.
         // Works with formats like "2025-26", "AY2026", "Season 2026", etc.
@@ -547,6 +578,7 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
     filters.hubs.length +
     filters.commitments.length +
     (filters.paidOnly ? 1 : 0) +
+    (filters.creditOnly ? 1 : 0) +
     (filters.seasonalOnly ? 1 : 0);
 
   const visibleTotal = opportunities.filter((o) => o.status !== "closed").length;
@@ -718,6 +750,13 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
                   <span className="op-toggle-track"><span className="op-toggle-thumb" /></span>
                   <span>Paid only</span>
                 </label>
+                {hasCredit && (
+                  <label className={`op-toggle${filters.creditOnly ? " op-toggle--on" : ""}`}>
+                    <input type="checkbox" checked={filters.creditOnly} onChange={toggleCredit} />
+                    <span className="op-toggle-track"><span className="op-toggle-thumb" /></span>
+                    <span>For credit</span>
+                  </label>
+                )}
                 {hasSeasonal && (
                   <label className={`op-toggle${filters.seasonalOnly ? " op-toggle--on" : ""}`}>
                     <input type="checkbox" checked={filters.seasonalOnly} onChange={toggleSeasonal} />
@@ -1497,6 +1536,14 @@ export default function OpportunitiesClient({ opportunities }: { opportunities: 
           text-transform: uppercase; color: rgba(36,17,35,0.5);
         }
         .op-card-deadline-value { font-weight: 700; color: var(--ca); }
+        .op-card-credit-badge {
+          display: inline-flex; align-items: center;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.64rem; font-weight: 700; letter-spacing: 0.12em;
+          text-transform: uppercase; padding: 0.28rem 0.6rem; border-radius: 999px;
+          background: rgba(36,147,169,0.12); color: #1a7a8c;
+          border: 1px solid rgba(36,147,169,0.4);
+        }
         .op-card-roles { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 1.15rem; }
         .op-card-role-tag {
           font-family: var(--font-dm-sans), sans-serif;

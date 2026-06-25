@@ -14,21 +14,33 @@
 // ─── Sheet shape (read by lib/loadOpportunities.ts) ──────────────────────────
 //
 //   Tab name: "Opportunities" (same spreadsheet as alumni, ALUMNI_SHEET_ID)
-//   Row 1, exact column order (27 columns, A through AA):
+//   Row 1 columns (order within the row does not matter — the loader maps by
+//   header name — but the canonical set is):
 //
 //     id | title | type | role_types | hub | description | commitment |
-//     commitment_type | is_paid | compensation | status | deadline | season |
-//     featured | plx_program | apply_url | learn_more_url | order |
-//     hero_image | long_description | what_youll_do | who_you_are |
-//     requirements | perks | timeline | faq | contact_email
+//     commitment_type | is_paid | funding | earns_credit | compensation |
+//     status | deadline | season | featured | plx_program | apply_url |
+//     learn_more_url | order | hero_image | long_description | what_youll_do |
+//     who_you_are | requirements | perks | timeline | faq | contact_email
 //
 //   Allowed values:
 //     type             →  plx | artist | audition | arts_admin | job | volunteer | participant
 //     role_types       →  comma-separated, drawn from OPPORTUNITY_ROLE_TYPES below
 //     hub              →  nyc | quito | brno | bagamoyo | sydney | remote
 //     commitment_type  →  full-time | part-time | short-term | one-time | flexible
-//     is_paid          →  TRUE | FALSE
+//     is_paid          →  TRUE | FALSE  (legacy money flag; still read)
+//     funding          →  paid | fee | volunteer   (money direction; see below)
+//     earns_credit     →  TRUE | FALSE  (offers academic credit)
 //     status           →  open | closed | coming_soon | evergreen
+//
+//   Money direction (`funding`):
+//     - "paid"      → DAT pays the participant; `compensation` carries the pay line
+//                     (e.g. "$1,800 stipend").
+//     - "fee"       → the participant pays DAT; `compensation` carries the fee line
+//                     (e.g. "Participation fee — $X + travel"). Never shows "Volunteer".
+//     - "volunteer" → no money changes hands.
+//     If `funding` is blank, it is DERIVED for backward-compat from `is_paid`:
+//     TRUE → "paid", otherwise → "volunteer".
 //     featured         →  TRUE | FALSE
 //     plx_program      →  apprenticeship | fellowship | (legacy: internship) | (blank)
 //     deadline         →  ISO date (YYYY-MM-DD) or blank for evergreen
@@ -102,6 +114,17 @@ export type OpportunityStatus = (typeof OPPORTUNITY_STATUSES)[number];
 // and the 12-week intro program should be tagged "apprenticeship" (was
 // "internship"). "internship" is kept here only for legacy/back-compat.
 export type PlxProgram = "internship" | "apprenticeship" | "fellowship" | "";
+
+/**
+ * Money direction for an opportunity. The legacy `is_paid` boolean only knew
+ * "paid" vs. "not paid" (which the portal rendered as "Volunteer"). `funding`
+ * adds a third direction, "fee", for programs the participant pays into
+ * (e.g. the Project-Based Internship, PASSAGE) — these must never render as
+ * "Volunteer". The `compensation` string carries the money-line text for both
+ * "paid" and "fee".
+ */
+export const OPPORTUNITY_FUNDING = ["paid", "fee", "volunteer"] as const;
+export type OpportunityFunding = (typeof OPPORTUNITY_FUNDING)[number];
 
 /**
  * Canonical role-type taxonomy for opportunities. This is intentionally a
@@ -243,6 +266,10 @@ export interface Opportunity {
   commitment: string;
   commitmentType: OpportunityCommitmentType;
   isPaid: boolean;
+  /** Money direction. Derived from `isPaid` when the Sheet column is blank. */
+  funding: OpportunityFunding;
+  /** True when the opportunity offers academic credit. */
+  earnsCredit: boolean;
   compensation: string;
   status: OpportunityStatus;
   /** ISO date string or "" */
@@ -302,6 +329,15 @@ function coercePlx(v: unknown): PlxProgram {
   return "";
 }
 
+function coerceFunding(v: unknown, isPaid: boolean): OpportunityFunding {
+  const s = String(v ?? "").trim().toLowerCase();
+  if ((OPPORTUNITY_FUNDING as readonly string[]).includes(s)) {
+    return s as OpportunityFunding;
+  }
+  // Backward-compat: derive from the legacy is_paid flag when the column is blank.
+  return isPaid ? "paid" : "volunteer";
+}
+
 function coerceBool(v: unknown): boolean {
   if (typeof v === "boolean") return v;
   const s = String(v ?? "").trim().toLowerCase();
@@ -334,6 +370,8 @@ export type SeedRow = {
   commitment: string;
   commitment_type: string;
   is_paid: boolean | string;
+  funding?: string;
+  earns_credit?: boolean | string;
   compensation: string;
   status: string;
   deadline: string;
@@ -390,6 +428,7 @@ function parseFaq(v: unknown): FaqItem[] {
 }
 
 export function normalize(row: Partial<SeedRow>): Opportunity {
+  const isPaid = coerceBool(row.is_paid);
   return {
     id: String(row.id ?? "").trim(),
     title: String(row.title ?? "").trim(),
@@ -399,7 +438,9 @@ export function normalize(row: Partial<SeedRow>): Opportunity {
     description: String(row.description ?? "").trim(),
     commitment: String(row.commitment ?? "").trim(),
     commitmentType: coerceCommitment(row.commitment_type),
-    isPaid: coerceBool(row.is_paid),
+    isPaid,
+    funding: coerceFunding(row.funding, isPaid),
+    earnsCredit: coerceBool(row.earns_credit),
     compensation: String(row.compensation ?? "").trim(),
     status: coerceStatus(row.status),
     deadline: String(row.deadline ?? "").trim(),
@@ -452,6 +493,8 @@ export function csvRowsToSeed(rows: string[][]): SeedRow[] {
     commitment: cell(r, "commitment"),
     commitment_type: cell(r, "commitment_type"),
     is_paid: cell(r, "is_paid"),
+    funding: cell(r, "funding"),
+    earns_credit: cell(r, "earns_credit"),
     compensation: cell(r, "compensation"),
     status: cell(r, "status"),
     deadline: cell(r, "deadline"),
