@@ -24,6 +24,7 @@ import { CanonicalSlugGate } from "@/components/alumni/CanonicalSlugGate";
 
 import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
 import { getOrderedProfileRoles, deriveBoardStatus, getBoardRoleLabelForProfile } from "@/lib/profileRoleAssignments";
+import { shouldFlagCollectiveArtist } from "@/lib/deriveCollectiveArtist";
 import { programMap } from "@/lib/programMap";
 import { productionMap } from "@/lib/productionMap";
 import { loadSpotlightsForSlug } from "@/lib/loadSpotlightsFromSheet";
@@ -517,11 +518,18 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
       ? [...mergedRolesBase, boardLabel]
       : mergedRolesBase;
 
+  // Derived "Board Member" first; then the earned "Collective Artist" rung,
+  // ladder-gated so it never overrides a higher-ranked flag (manual or derived).
+  const baseStatusFlags = [
+    ...((normalizedAlumni as any).statusFlags || []),
+    ...(deriveBoardStatus(profileId, roleAssignments) ? ["Board Member"] : []),
+  ];
   const mergedStatusFlags = Array.from(
-    new Set([
-      ...((normalizedAlumni as any).statusFlags || []),
-      ...(deriveBoardStatus(profileId, roleAssignments) ? ["Board Member"] : []),
-    ])
+    new Set(
+      shouldFlagCollectiveArtist(canonicalOrIncoming, baseStatusFlags)
+        ? [...baseStatusFlags, "Collective Artist"]
+        : baseStatusFlags
+    )
   );
 
   const bgChoice = (normalizedAlumni as any).backgroundChoice || "";

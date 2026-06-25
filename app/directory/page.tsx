@@ -6,6 +6,7 @@ import { connection } from "next/server";
 import { loadVisibleAlumni } from "@/lib/loadAlumni";
 import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
 import { getPrimaryDatRoleForProfile, getOrderedProfileRoles, deriveBoardStatus, getStaffStatusForProfile, getExecDirStatusForProfile, getStaffViaLabelForProfile, getExecDirViaLabelForProfile } from "@/lib/profileRoleAssignments";
+import { shouldFlagCollectiveArtist } from "@/lib/deriveCollectiveArtist";
 import DirectoryPageClient from "@/components/alumni/DirectoryPageClient";
 
 import { enrichAlumniData } from "@/components/alumni/AlumniSearch/enrichAlumniData.server";
@@ -106,6 +107,19 @@ export default async function DirectoryPage() {
     const staffViaLabel = getStaffViaLabelForProfile(id, roleAssignments) ?? undefined;
     const execDirViaTitle = getExecDirViaLabelForProfile(id, roleAssignments) ?? undefined;
 
+    // Additive status flags: derived "Board Member" + earned "Collective Artist"
+    // (ladder-gated against any higher-ranked flag, incl. the derived Board flag).
+    const baseStatusFlags = deriveBoardStatus(a.slug, roleAssignments, now)
+      ? [...(a.statusFlags || []), "Board Member"]
+      : a.statusFlags || [];
+    const mergedStatusFlags = Array.from(
+      new Set(
+        shouldFlagCollectiveArtist(a.slug, baseStatusFlags)
+          ? [...baseStatusFlags, "Collective Artist"]
+          : baseStatusFlags
+      )
+    );
+
     return {
       ...a,
       location: normalizeLocation(a.location) ?? a.location ?? "",
@@ -116,9 +130,7 @@ export default async function DirectoryPage() {
       execDirStatus,
       staffViaLabel,
       execDirViaTitle,
-      statusFlags: deriveBoardStatus(a.slug, roleAssignments, now)
-        ? Array.from(new Set([...(a.statusFlags || []), "Board Member"]))
-        : a.statusFlags || [],
+      statusFlags: mergedStatusFlags,
       programs: Array.from(programsBySlug.get(ns) || []),
       seasons: Array.from(seasonsBySlug.get(ns) || []),
       updatedAt: updatedAtBySlug.get(ns),

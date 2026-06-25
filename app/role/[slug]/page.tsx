@@ -11,7 +11,12 @@ import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
 import {
   getOrderedProfileRoles,
   getPrimaryDatRoleForProfile,
+  deriveBoardStatus,
 } from "@/lib/profileRoleAssignments";
+import {
+  shouldFlagCollectiveArtist,
+  collectiveInvolvementScore,
+} from "@/lib/deriveCollectiveArtist";
 import type { AlumniRow } from "@/lib/types";
 import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
@@ -143,10 +148,22 @@ export default async function RolePage({
       mergedRoles[0] ||
       a.role;
 
+    // Additively derive the earned "Collective Artist" rung so /role/collective-artist
+    // populates even with zero manual Sheet tags. A derived "Board Member" is folded in
+    // only to gate suppression (it is NOT surfaced here — other role pages are unchanged).
+    const sheetFlags = a.statusFlags ?? [];
+    const gateFlags = deriveBoardStatus(a.profileId || a.slug, roleAssignments)
+      ? [...sheetFlags, "Board Member"]
+      : sheetFlags;
+    const statusFlags = shouldFlagCollectiveArtist(a.slug, gateFlags)
+      ? Array.from(new Set([...sheetFlags, "Collective Artist"]))
+      : sheetFlags;
+
     return {
       ...a,
       role: primaryRole,
       roles: mergedRoles,
+      statusFlags,
     };
   });
 
@@ -158,11 +175,20 @@ export default async function RolePage({
     })
   );
 
+  // On the Collective Artist page only, order by involvement (most → least);
+  // the ordering is implicit — no counts or levels are ever displayed.
+  const isCollectivePage = slugLower === slugifyFlag("Collective Artist");
+
   // Dedupe and stable-sort by last name → first name (prevents layout jumps)
   const seen = new Set<string>();
   const filtered = filteredRaw
     .filter((a) => (a.slug ? !seen.has(a.slug) && seen.add(a.slug) : false))
     .sort((a, b) => {
+      if (isCollectivePage) {
+        const diff =
+          collectiveInvolvementScore(b.slug) - collectiveInvolvementScore(a.slug);
+        if (diff !== 0) return diff;
+      }
       const [af, al] = splitName(a.name);
       const [bf, bl] = splitName(b.name);
       return bl.localeCompare(al) || af.localeCompare(bf);
