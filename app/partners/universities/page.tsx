@@ -69,6 +69,30 @@ const benefits = [
   { icon: "♻️", label: "Lasting Impact", desc: "Relationships between your institution and DAT communities can deepen over multiple cohorts, creating real continuity of care." },
 ];
 
+/* ─── For-credit: built for the registrar ───────────────── */
+const registrarPoints = [
+  "A signed Learning Agreement — goals, responsibilities, supervisor, hours — your office can countersign.",
+  "A named DAT site supervisor, with your faculty as the academic supervisor of record.",
+  "Defined weekly hours and a fixed term, mapped to your credit-hour expectations.",
+  "Measurable learning outcomes, a midpoint check-in, and a final evaluation + reflection.",
+  "Project-based learning — a recognized experiential pedagogy, structured so the student is the primary beneficiary: supervised, learning, earning credit, never displacing paid staff.",
+];
+
+/* ─── For-credit: three ways to set it up ───────────────── */
+const creditSetups = [
+  { num: "01", title: "For-Credit Internship", body: "Individual students earn internship or practicum credit on a single project. The simplest entry point." },
+  { num: "02", title: "Embedded Course", body: "Pair a DAT project with a faculty-led course or seminar; we co-design the outcomes and assessment with you." },
+  { num: "03", title: "Study-Away Cohort", body: "A group of your students travels together for a credit-bearing field program, run through your study-away office." },
+];
+
+/* ─── For-credit: why faculty say yes ───────────────────── */
+const facultyReasons = [
+  { label: "Experiential & global-competency goals", desc: "Cross-cultural, community-engaged, devised practice in the field — not a tour with a workshop bolted on." },
+  { label: "Open to any major", desc: "Theatre first, but also writing, anthropology, design, communications, and business." },
+  { label: "Financial aid may apply", desc: "Because the experience is credit-bearing through your institution, students can often apply aid or scholarships toward the participation fee (confirm with your financial-aid office)." },
+  { label: "No off-the-shelf tour", desc: "Every partnership is co-designed around your calendar and learning goals." },
+];
+
 export default function UniversityPartnersPage() {
   return (
     <main style={{ background: "transparent", overflowX: "hidden" }}>
@@ -194,6 +218,90 @@ export default function UniversityPartnersPage() {
         </div>
       </section>
 
+      {/* ── FOR-CREDIT PARTNERSHIP ───────────────────────────── */}
+      <section id="for-credit" style={{ padding: "5rem 2rem", background: "#fff", borderTop: "4px solid #FFCC00" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+
+          {/* Header */}
+          <div style={{ maxWidth: 760, marginBottom: "3rem" }}>
+            <span style={{ display: "block", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase", color: "#6C00AF", marginBottom: "0.5rem" }}>FOR FACULTY &amp; INTERNSHIP COORDINATORS</span>
+            <h2 style={{ margin: "0 0 1rem", fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)", fontWeight: 800, color: "#241123", lineHeight: 1.15 }}>
+              Your students earn a real production credit — and real academic credit.
+            </h2>
+            <p style={{ margin: 0, fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "1.05rem", lineHeight: 1.7, color: "rgba(36,17,35,0.82)" }}>
+              DAT&apos;s project-based internships place students inside a working international production or expedition, structured from day one to satisfy your credit requirements.
+            </p>
+          </div>
+
+          {/* A real role, not an observership */}
+          <div style={{ maxWidth: 760, marginBottom: "3rem" }}>
+            <h3 style={{ margin: "0 0 0.75rem", fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "1.25rem", fontWeight: 800, color: "#6C00AF" }}>
+              A real role, not an observership
+            </h3>
+            <p style={{ margin: 0, fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.98rem", lineHeight: 1.75, color: "rgba(36,17,35,0.82)" }}>
+              A DAT internship is a defined position on an active project — Production / Stage Management, Dramaturgy &amp; Research, Community Engagement &amp; Teaching, Company &amp; Tour Management, Documentation, or Devising Ensemble. Students do the actual work of the department under a DAT site supervisor, alongside professional artists, and leave with a credit on a real production and a portfolio to show for it.
+            </p>
+          </div>
+
+          {/* Built for the registrar */}
+          <div style={{ marginBottom: "3rem" }}>
+            <h3 style={{ margin: "0 0 1.25rem", fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "1.25rem", fontWeight: 800, color: "#6C00AF" }}>
+              Built for the registrar
+            </h3>
+            <p style={{ margin: "0 0 1.25rem", fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.98rem", lineHeight: 1.7, color: "rgba(36,17,35,0.82)" }}>
+              Everything your credit process asks for is in place before the student arrives:
+            </p>
+            <ul className="u-cred-list">
+              {registrarPoints.map((point) => (
+                <li key={point}>{point}</li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Three ways to set it up */}
+          <div style={{ marginBottom: "3rem" }}>
+            <h3 style={{ margin: "0 0 1.25rem", fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "1.25rem", fontWeight: 800, color: "#6C00AF" }}>
+              Three ways to set it up
+            </h3>
+            <div className="u-programs-grid">
+              {creditSetups.map((s) => (
+                <div key={s.num} className="u-step">
+                  <span style={{ display: "block", fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "2.5rem", fontWeight: 800, color: "#6C00AF", opacity: 0.22, lineHeight: 1, marginBottom: "0.5rem" }}>{s.num}</span>
+                  <h4 style={{ margin: "0 0 0.4rem", fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "1.05rem", fontWeight: 800, color: "#6C00AF" }}>{s.title}</h4>
+                  <p style={{ margin: 0, fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.88rem", lineHeight: 1.65, color: "rgba(36,17,35,0.78)" }}>{s.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Why faculty say yes */}
+          <div style={{ marginBottom: "3rem" }}>
+            <h3 style={{ margin: "0 0 1.25rem", fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "1.25rem", fontWeight: 800, color: "#6C00AF" }}>
+              Why faculty say yes
+            </h3>
+            <div className="u-benefits-grid">
+              {facultyReasons.map((r) => (
+                <div key={r.label} className="u-benefit">
+                  <h4 style={{ margin: "0 0 0.35rem", fontFamily: "var(--font-space-grotesk), sans-serif", fontSize: "0.95rem", fontWeight: 800, color: "#6C00AF" }}>{r.label}</h4>
+                  <p style={{ margin: 0, fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.86rem", lineHeight: 1.65, color: "rgba(36,17,35,0.75)" }}>{r.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div style={{ borderTop: "1px solid rgba(108,0,175,0.15)", paddingTop: "2.5rem" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.85rem", marginBottom: "1rem" }}>
+              <Link href="/partners/propose-project?type=university" className="u-btn-purple">Start a For-Credit Partnership</Link>
+            </div>
+            <p style={{ margin: 0, fontFamily: "var(--font-dm-sans), sans-serif", fontSize: "0.95rem", lineHeight: 1.7, color: "rgba(36,17,35,0.7)", maxWidth: 620 }}>
+              Want to scope outcomes with your registrar first? Start a conversation — we&apos;ll bring a draft learning agreement to the call.
+            </p>
+          </div>
+
+        </div>
+      </section>
+
       {/* ── QUOTE ────────────────────────────────────────────── */}
       <section style={{ position: "relative", minHeight: 420, display: "flex", alignItems: "center", overflow: "hidden" }}>
         <div style={{ position: "absolute", inset: 0 }}>
@@ -286,6 +394,32 @@ export default function UniversityPartnersPage() {
           letter-spacing: 0.1em;
           text-transform: uppercase;
           color: #FFCC00;
+        }
+
+        .u-cred-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.9rem; max-width: 820px; }
+        .u-cred-list li {
+          position: relative;
+          padding-left: 1.9rem;
+          font-family: var(--font-dm-sans), sans-serif;
+          font-size: 0.95rem;
+          line-height: 1.6;
+          color: rgba(36,17,35,0.82);
+        }
+        .u-cred-list li::before {
+          content: "✓";
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 1.3rem;
+          height: 1.3rem;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          background: rgba(108,0,175,0.12);
+          color: #6C00AF;
+          font-size: 0.72rem;
+          font-weight: 700;
         }
 
         .u-benefits-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
