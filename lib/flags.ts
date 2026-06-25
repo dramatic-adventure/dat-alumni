@@ -58,7 +58,7 @@ export const iconMap: Record<FlagLabel, string> = {
   "Artist-in-Residence": "🪐",
   "Collective Artist": "🌀",
   Fellow: "💫",
-  Apprentice: "🔨",
+  Apprentice: "🔭",
   Intern: "🌱",
   Volunteer: "🫶",
 };
