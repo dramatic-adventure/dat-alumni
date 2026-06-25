@@ -30,7 +30,13 @@ function normSlug(v: string | null | undefined): string {
  * unaffected: exclusion only suppresses the automatic derivation. Use canonical
  * alumni slugs; lookups are normalized via normSlug.
  */
-const COLLECTIVE_EXCLUDE = new Set<string>([]);
+const COLLECTIVE_EXCLUDE = new Set<string>([
+  // Temporarily suppressed (working relationship ended) — hide from the
+  // Collective Artist designation for now. Remove a slug to restore.
+  "santi-baxter",
+  "petra-slovakova",
+  "rachel-wiese",
+]);
 
 /** Country values treated as domestic (US). Everything else is international. */
 const DOMESTIC_COUNTRIES = new Set<string>([
