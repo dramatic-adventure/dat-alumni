@@ -5,8 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
 
 import { MODULES, type ModuleKey } from "./liveModules";
-import { boolCell } from "@/app/alumni/update/helpers/boolean";
+import { boolCell, isTrue } from "@/app/alumni/update/helpers/boolean";
 import { baselineFromLookup } from "@/app/alumni/update/helpers/baseline";
+import { deriveProfileState } from "@/app/alumni/update/helpers/deriveProfileState";
 import { toLiveSavableProfile, totalBytes, prettyMB } from "@/app/alumni/update/helpers/liveMap";
 import {
   ContactEditKeys,
@@ -80,8 +81,24 @@ import { createUploader, type UploadKind, type UploadTask } from "@/lib/uploader
 import { useDraft } from "@/lib/useDraft";
 
 import Feed from "@/app/alumni/update/community/Feed";
+import PublicProfilePreview from "@/components/alumni/update/PublicProfilePreview";
 
 const SHOW_LEGACY_SECTIONS = false; // legacy UI removed; Studio only
+
+// Mirror of ProfileStudio's TAB_ANCHOR_ID — used so "Take it further" tiles
+// (which live ABOVE the studio) can reliably scroll the target panel into view.
+const STUDIO_TAB_ANCHOR: Record<StudioTab, string> = {
+  basics: "studio-basics-anchor",
+  identity: "studio-identity-anchor",
+  impact: "studio-impact-anchor",
+  media: "studio-media-anchor",
+  contact: "studio-contact-anchor",
+  story: "studio-story-anchor",
+  event: "studio-event-anchor",
+  highlight: "studio-highlight-anchor",
+  journey: "studio-journey-anchor",
+  spotlight: "studio-spotlight-anchor",
+};
 
 export default function UpdateForm({
   email,
@@ -1030,6 +1047,79 @@ const openEventAndScroll = () => {
     ?.scrollIntoView({ behavior: "smooth", block: "start" });
 }, 120);
 };
+
+// Studio + composer scroll targets for the "Your public profile" preview card.
+const studioRef = useRef<HTMLDivElement | null>(null);
+const composerSectionRef = useRef<HTMLDivElement | null>(null);
+
+// Open a Studio tab AND scroll the matching panel into view. ProfileStudio runs
+// uncontrolled here (defaultTab + onTabChange), so its own anchor-scroll fires on
+// a *change* of tab — but not when the target tab is already active. This explicit
+// scroll (mirroring openEventAndScroll) guarantees the panel comes into view in
+// every case, since the tiles live above the studio.
+const openStudioTab = (tab: StudioTab) => {
+  setStudioTab(tab);
+  window.setTimeout(() => {
+    const target =
+      document.getElementById(STUDIO_TAB_ANCHOR[tab]) ?? studioRef.current;
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 120);
+};
+
+// Scroll to the community composer and focus its textarea (preventScroll keeps the
+// smooth scroll from snapping). Posting there calls postCurrentUpdate, which
+// optimistically updates currentUpdateText so the preview headline refreshes live.
+const focusComposer = () => {
+  const el = composerSectionRef.current;
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+  window.setTimeout(() => {
+    const ta = el.querySelector("textarea");
+    if (ta) (ta as HTMLTextAreaElement).focus({ preventScroll: true });
+  }, 120);
+};
+
+// One memoized selector over live form state → powers the preview card, the
+// progress bar, and the "Take it further" tiles. No fetches; everything is live.
+const profileState = useMemo(() => {
+  const p: any = profile;
+  const present = (v: any) => String(v ?? "").trim().length > 0;
+  const SOCIAL_KEYS = [
+    "instagram", "x", "tiktok", "threads", "bluesky", "linkedin",
+    "youtube", "vimeo", "linktree", "newsletter", "facebook",
+  ];
+  const hasConnect =
+    present(p.website) || present(p.publicEmail) || SOCIAL_KEYS.some((k) => present(p[k]));
+
+  return deriveProfileState({
+    name,
+    currentTitle: String(p.currentTitle ?? ""),
+    location,
+    secondLocation: String(p.secondLocation ?? ""),
+    isBiCoastal: isTrue(p.isBiCoastal),
+    headshotUrl: String(p.currentHeadshotUrl ?? ""),
+    hasHeadshot: present(p.currentHeadshotUrl) || present(p.currentHeadshotId),
+    headline: String(p.currentUpdateText ?? ""),
+    slug: currentSlug,
+    bioLong: String(p.bioLong ?? ""),
+    identityTags: String(p.identityTags ?? ""),
+    practiceTags: String(p.practiceTags ?? ""),
+    exploreCareTags: String(p.exploreCareTags ?? ""),
+    languages: String(p.languages ?? ""),
+    hasConnect,
+    // Feature flags — default to "show the ad" when data isn't readily in state.
+    hasMedia: [
+      p.featuredAlbumId, p.featuredReelId,
+      p.reelVideoUrl1, p.reelVideoUrl2, p.reelVideoUrl3,
+    ].some(present),
+    hasStoryMapStory: (myStories || []).some((s) => !s?.deleted),
+    hasJourneyCard: false, // not readily in form state → keep the explainer ad visible
+    hasHighlight: (spotlightPreload?.highlights?.length ?? 0) > 0,
+    hasUpcomingEvent: present(p.upcomingEventTitle),
+  });
+}, [profile, name, location, currentSlug, myStories, spotlightPreload]);
+
+const publicHref = currentSlug ? `/alumni/${currentSlug}` : null;
 
 
 
@@ -2262,6 +2352,29 @@ return (
           Signed in as <strong>{email}</strong>
           {isAdmin ? " (admin)" : ""}
         </p>
+        {currentSlug ? (
+          <a
+            href={`/alumni/${currentSlug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "block",
+              marginLeft: "auto",
+              marginTop: 6,
+              width: "fit-content",
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: ".06em",
+              color: "rgba(242,242,242,0.92)",
+              textDecoration: "underline",
+              textUnderlineOffset: 3,
+              textShadow: "0 2px 8px rgba(0,0,0,0.85)",
+            }}
+          >
+            View public profile →
+          </a>
+        ) : null}
         <button
           type="button"
           onClick={() => void signOut({ callbackUrl: "/" })}
@@ -2303,7 +2416,11 @@ return (
         zIndex: 10,
       }}
     > 
-      <div style={{ width: "90%", margin: "0 auto" }}>
+      <div
+        ref={composerSectionRef}
+        id="community-ledger"
+        style={{ width: "90%", margin: "0 auto", scrollMarginTop: 24 }}
+      >
         {/* ====== COMMUNITY LEDGER (Composer + Feed, one container) ====== */}
         <Feed
           email={email}
@@ -2367,7 +2484,17 @@ return (
         to { transform: rotate(360deg); }
       }
     `}</style>
+
+  {/* "Your public profile" preview + Take-it-further upgrades (onboarding nudge) */}
+  <PublicProfilePreview
+    state={profileState}
+    publicHref={publicHref}
+    onOpenTab={openStudioTab}
+    onShareUpdate={focusComposer}
+  />
+
   <div
+    ref={studioRef}
     style={{
       display: "flex",
       alignItems: "center",
@@ -2382,6 +2509,7 @@ return (
       marginBottom: 12,
       paddingLeft: 2,
       paddingRight: 2,
+      scrollMarginTop: 24,
     }}
   >
     <span>Profile Studio</span>
