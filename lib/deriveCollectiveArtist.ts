@@ -135,16 +135,34 @@ const involvementIndex: Map<string, Involvement> = (() => {
       footprints?: { country?: string }[];
       artists?: Record<string, unknown>;
       season?: number;
+      cluster?: string;
     };
+    // Cluster siblings (e.g. PASSAGE: Slovakia 2026 = PASSAGE + TAR + DAT Lab)
+    // are ONE engagement: dedupe both the program sets and the score by the
+    // cluster key, never the raw slug. Cluster members share country + season,
+    // so the era/international weight is identical across them — counting the
+    // first-seen member once is correct. (See ProgramStamps for the matching
+    // single-stamp behavior.)
+    const countKey = normSlug(prog.cluster ?? programSlug);
     const intl = isInternationalProgram(prog);
     const points = eraWeight(prog.season) * (intl ? INTERNATIONAL_MULTIPLIER : 1);
     for (const artistSlug of Object.keys(prog?.artists ?? {})) {
       const rec = recFor(artistSlug);
       if (!rec) continue;
-      rec.allPrograms.add(normSlug(programSlug));
-      if (intl) rec.intlPrograms.add(normSlug(programSlug));
-      rec.score += points;
+      const alreadyCounted = rec.allPrograms.has(countKey);
+      rec.allPrograms.add(countKey);
+      if (intl) rec.intlPrograms.add(countKey);
+      if (!alreadyCounted) rec.score += points; // score the cluster only once
     }
+  }
+
+  // Map every programMap slug to its cluster key (umbrella slug, or itself when
+  // unclustered) so production projectSlugs that reference a clustered
+  // sub-program still dedupe against the cluster the artist is counted in.
+  const clusterKeyForProgram = new Map<string, string>();
+  for (const s in programMap) {
+    const c = (programMap[s] as { cluster?: string }).cluster;
+    clusterKeyForProgram.set(normSlug(s), normSlug(c ?? s));
   }
 
   // 2) Productions (deduped against the slug's program set)
@@ -154,7 +172,10 @@ const involvementIndex: Map<string, Involvement> = (() => {
       artists?: Record<string, unknown>;
       season?: number;
     };
-    const projectSlugs = (prod?.projectSlugs ?? []).map((s) => normSlug(s));
+    const projectSlugs = (prod?.projectSlugs ?? []).map((s) => {
+      const ns = normSlug(s);
+      return clusterKeyForProgram.get(ns) ?? ns;
+    });
     // Productions carry no structured country → scored as domestic (no intl premium).
     const points = eraWeight(prod.season);
     for (const artistSlug of Object.keys(prod?.artists ?? {})) {

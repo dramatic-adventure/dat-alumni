@@ -33,13 +33,44 @@ export default function ProgramStamps({ artistSlug, slugAliases = [] }: ProgramS
 
   // ✅ Alias-aware matching against programMap artists keys
   const programs = useMemo(() => {
-    return Object.values(programMap).filter((p) => {
+    const matched = Object.values(programMap).filter((p) => {
       if (!p?.artists) return false;
       for (const key of Object.keys(p.artists)) {
         if (slugSet.has(normSlugish(key))) return true;
       }
       return false;
     });
+
+    // Collapse cluster siblings into a single umbrella stamp — but ONLY for
+    // artists who actually did the umbrella program. Several entries that are
+    // really one engagement (e.g. PASSAGE: Slovakia 2026 = PASSAGE + TAR + DAT
+    // Lab) share a `cluster` key. An artist listed on the umbrella entry (whose
+    // slug === cluster) gets ONE umbrella stamp that absorbs the sub-programs.
+    // An artist who only did a sub-program (TAR-only / DAT-Lab-only, not on the
+    // umbrella) keeps that sub-program's own stamp — they don't get a PASSAGE
+    // stamp they didn't earn. (The Collective Artist count still treats the
+    // whole cluster as one project — see lib/deriveCollectiveArtist.ts.)
+    const umbrellaClusters = new Set<string>();
+    for (const p of matched) {
+      if (p.cluster && p.slug === p.cluster) umbrellaClusters.add(p.cluster);
+    }
+
+    const seen = new Set<string>();
+    const collapsed: typeof matched = [];
+    for (const p of matched) {
+      if (p.cluster && umbrellaClusters.has(p.cluster)) {
+        // Did the umbrella: one stamp for the whole trip, sub-programs hidden.
+        if (seen.has(p.cluster)) continue;
+        seen.add(p.cluster);
+        collapsed.push(programMap[p.cluster] ?? p);
+      } else {
+        // Standalone project, or a cluster sub-program done WITHOUT the umbrella.
+        if (seen.has(p.slug)) continue;
+        seen.add(p.slug);
+        collapsed.push(p);
+      }
+    }
+    return collapsed;
   }, [slugSet]);
 
   if (!programs.length) return null; // ✅ after hooks

@@ -42,6 +42,19 @@ export interface ProgramData {
   // Complex case (optional)
   footprints?: ProgramFootprint[];
 
+  /**
+   * OPTIONAL cluster/umbrella key. Several programMap entries that are really
+   * ONE engagement (e.g. PASSAGE: Slovakia 2026 = PASSAGE + Teaching Artist
+   * Residency + DAT Lab, run as a single trip) share the same `cluster` value.
+   * Surfaces that should treat the cluster as one project — the profile passport
+   * stamps and the Collective Artist count — dedupe by `cluster ?? slug`. By
+   * convention the umbrella/primary entry's `slug` IS the cluster value, so its
+   * metadata (title/location/year) is used for display.
+   *
+   * Leave undefined for standalone projects (the default).
+   */
+  cluster?: string;
+
   year: number;
   season: number;
 
@@ -150,6 +163,9 @@ export const programMap: Record<string, ProgramData> = {
   location: "Slovakia",
   country: "Slovakia",
   region: "Eastern Slovakia",
+  // Umbrella of the Slovakia 2026 trip (PASSAGE + TAR + DAT Lab). Its own slug
+  // is the cluster key, so this entry is the primary used for the single stamp.
+  cluster: "passage-slovakia-2026",
   footprints: [
     { country: "Slovakia", city: "Košice" },
     { country: "Slovakia", city: "Zemplínska Teplica" },
@@ -180,6 +196,8 @@ export const programMap: Record<string, ProgramData> = {
   country: "Slovakia",
   region: "Eastern Slovakia",
   city: "Košice",
+  // Part of the PASSAGE: Slovakia 2026 trip — counts as one project.
+  cluster: "passage-slovakia-2026",
   year: 2026,
   season: 20,
   url: "/dat-lab",
@@ -199,6 +217,8 @@ export const programMap: Record<string, ProgramData> = {
   location: "Eastern Slovakia",
   country: "Slovakia",
   region: "Eastern Slovakia",
+  // Part of the PASSAGE: Slovakia 2026 trip — counts as one project.
+  cluster: "passage-slovakia-2026",
   footprints: [
     { country: "Slovakia", city: "Košice" },
     { country: "Slovakia", city: "Zemplínska Teplica" },
