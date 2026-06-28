@@ -51,6 +51,7 @@
     "slugify": "^1.6.6",
     "string-strip-html": "^13.4.12",
     "stripe": "^20.1.0",
+    "supercluster": "^7.1.5",
     "tailwind-scrollbar-hide": "^4.0.0"
   },
   "devDependencies": {
