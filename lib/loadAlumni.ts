@@ -320,6 +320,12 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
   const linktreeIdx = idxOf(header, ["linktree"]);
   const newsletterIdx = idxOf(header, ["newsletter"]);
 
+  // Current Update (auto-archives via currentUpdateExpiresAt; currentUpdateLink, when
+  // present, makes the update a clickable note in the hero)
+  const currentUpdateTextIdx = idxOf(header, ["currentupdatetext", "current update text", "currentUpdateText"]);
+  const currentUpdateLinkIdx = idxOf(header, ["currentupdatelink", "current update link", "currentUpdateLink"]);
+  const currentUpdateExpiresAtIdx = idxOf(header, ["currentupdateexpiresat", "current update expires at", "currentUpdateExpiresAt"]);
+
   const upcomingEventTitleIdx = idxOf(header, ["upcomingeventtitle", "upcoming event title", "upcomingEventTitle"]);
   const upcomingEventLinkIdx = idxOf(header, ["upcomingeventlink", "upcoming event link", "upcomingEventLink"]);
   const upcomingEventDateIdx = idxOf(header, ["upcomingeventdate", "upcoming event date", "upcomingEventDate"]);
@@ -467,6 +473,10 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
 
     const normalized = normalizeAlumniRow(normalizedKeys as any);
     if (normalized) {
+      (normalized as any).currentUpdateText = cell(r, currentUpdateTextIdx);
+      (normalized as any).currentUpdateLink = cell(r, currentUpdateLinkIdx);
+      (normalized as any).currentUpdateExpiresAt = cell(r, currentUpdateExpiresAtIdx);
+
       (normalized as any).upcomingEventTitle = cell(r, upcomingEventTitleIdx);
       (normalized as any).upcomingEventLink = cell(r, upcomingEventLinkIdx);
       (normalized as any).upcomingEventDate = cell(r, upcomingEventDateIdx);

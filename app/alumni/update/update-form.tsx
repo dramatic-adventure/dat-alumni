@@ -1066,6 +1066,27 @@ const openStudioTab = (tab: StudioTab) => {
   }, 120);
 };
 
+// Open Basics, scroll to the headshot block, and draw the eye there with a brief
+// highlight (the headshot uploader isn't a single focusable input).
+const openHeadshotEditor = () => {
+  setStudioTab("basics");
+  window.setTimeout(() => {
+    const el = document.getElementById("studio-basics-headshot");
+    if (!el) {
+      studioRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.focus({ preventScroll: true });
+    const prev = el.style.boxShadow;
+    el.style.transition = "box-shadow 200ms ease";
+    el.style.boxShadow = "0 0 0 3px rgba(217,169,25,0.75)";
+    window.setTimeout(() => {
+      el.style.boxShadow = prev;
+    }, 1500);
+  }, 140);
+};
+
 // Scroll to the community composer and focus its textarea (preventScroll keeps the
 // smooth scroll from snapping). Posting there calls postCurrentUpdate, which
 // optimistically updates currentUpdateText so the preview headline refreshes live.
@@ -1091,14 +1112,22 @@ const profileState = useMemo(() => {
   const hasConnect =
     present(p.website) || present(p.publicEmail) || SOCIAL_KEYS.some((k) => present(p[k]));
 
+  // Mirror BasicsPanel: prefer the ID-based thumbnail (reflects picker selection),
+  // fall back to the direct URL — so picker/upload headshots show in the preview.
+  const headshotId = String(p.currentHeadshotId ?? "").trim();
+  const headshotUrlRaw = String(p.currentHeadshotUrl ?? "").trim();
+  const headshotResolved = headshotId
+    ? `/api/media/thumb/${encodeURIComponent(headshotId)}?w=240`
+    : headshotUrlRaw;
+
   return deriveProfileState({
     name,
     currentTitle: String(p.currentTitle ?? ""),
     location,
     secondLocation: String(p.secondLocation ?? ""),
     isBiCoastal: isTrue(p.isBiCoastal),
-    headshotUrl: String(p.currentHeadshotUrl ?? ""),
-    hasHeadshot: present(p.currentHeadshotUrl) || present(p.currentHeadshotId),
+    headshotUrl: headshotResolved,
+    hasHeadshot: present(headshotUrlRaw) || present(headshotId),
     headline: String(p.currentUpdateText ?? ""),
     slug: currentSlug,
     bioLong: String(p.bioLong ?? ""),
@@ -2352,58 +2381,68 @@ return (
           Signed in as <strong>{email}</strong>
           {isAdmin ? " (admin)" : ""}
         </p>
-        {currentSlug ? (
-          <a
-            href={`/alumni/${currentSlug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: "block",
-              marginLeft: "auto",
-              marginTop: 6,
-              width: "fit-content",
-              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: ".06em",
-              color: "rgba(242,242,242,0.92)",
-              textDecoration: "underline",
-              textUnderlineOffset: 3,
-              textShadow: "0 2px 8px rgba(0,0,0,0.85)",
-            }}
-          >
-            View public profile →
-          </a>
-        ) : null}
-        <button
-          type="button"
-          onClick={() => void signOut({ callbackUrl: "/" })}
-          onMouseEnter={() => setSignOutHover(true)}
-          onMouseLeave={() => setSignOutHover(false)}
+        <div
           style={{
-            display: "block",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            gap: 10,
             marginLeft: "auto",
-            marginTop: 6,
-            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: ".1em",
-            textTransform: "uppercase",
-            background: signOutHover ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.07)",
-            color: signOutHover ? "rgba(242,242,242,1)" : "rgba(242,242,242,0.6)",
-            border: signOutHover
-              ? "1px solid rgba(242,242,242,0.55)"
-              : "1px solid rgba(242,242,242,0.25)",
-            borderRadius: 4,
-            cursor: "pointer",
-            padding: "4px 12px",
-            textShadow: "0 1px 4px rgba(0,0,0,0.8)",
-            transition: "background 0.15s, color 0.15s, border-color 0.15s",
-            outline: "none",
+            marginTop: 8,
+            width: "fit-content",
           }}
         >
-          Sign out
-        </button>
+          {currentSlug ? (
+            <a
+              href={`/alumni/${currentSlug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: ".1em",
+                textTransform: "uppercase",
+                color: "#f2f2f2",
+                background: "transparent",
+                border: "1px solid rgba(242,242,242,0.55)",
+                borderRadius: 14,
+                padding: "6px 16px",
+                textDecoration: "none",
+                textShadow: "0 1px 4px rgba(0,0,0,0.8)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              View public profile
+            </a>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => void signOut({ callbackUrl: "/" })}
+            onMouseEnter={() => setSignOutHover(true)}
+            onMouseLeave={() => setSignOutHover(false)}
+            style={{
+              fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: ".1em",
+              textTransform: "uppercase",
+              background: signOutHover ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.07)",
+              color: signOutHover ? "rgba(242,242,242,1)" : "rgba(242,242,242,0.6)",
+              border: signOutHover
+                ? "1px solid rgba(242,242,242,0.55)"
+                : "1px solid rgba(242,242,242,0.25)",
+              borderRadius: 14,
+              cursor: "pointer",
+              padding: "6px 16px",
+              textShadow: "0 1px 4px rgba(0,0,0,0.8)",
+              transition: "background 0.15s, color 0.15s, border-color 0.15s",
+              outline: "none",
+            }}
+          >
+            Sign out
+          </button>
+        </div>
       </div>
     </div>
 
@@ -2461,6 +2500,25 @@ return (
 ) : null}
 
 
+{/* ====== YOUR PUBLIC PROFILE (preview + Take-it-further, above the Studio) ====== */}
+<div
+  style={{
+    margin: "0.25rem 0 1.5rem",
+    paddingLeft: "clamp(0.25rem, 5vw, 4rem)",
+    paddingRight: "clamp(0.25rem, 5vw, 4rem)",
+    boxSizing: "border-box",
+  }}
+>
+  <PublicProfilePreview
+    state={profileState}
+    publicHref={publicHref}
+    onOpenTab={openStudioTab}
+    onShareUpdate={focusComposer}
+    onEditHeadshot={openHeadshotEditor}
+  />
+</div>
+
+
 <div
   style={{
     margin: "0.25rem 0 3.25rem",
@@ -2484,14 +2542,6 @@ return (
         to { transform: rotate(360deg); }
       }
     `}</style>
-
-  {/* "Your public profile" preview + Take-it-further upgrades (onboarding nudge) */}
-  <PublicProfilePreview
-    state={profileState}
-    publicHref={publicHref}
-    onOpenTab={openStudioTab}
-    onShareUpdate={focusComposer}
-  />
 
   <div
     ref={studioRef}

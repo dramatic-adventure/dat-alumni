@@ -1,16 +1,20 @@
 "use client";
 
 /**
- * PublicProfilePreview — the encouraging "Your public profile" card that sits at
- * the top of the Profile Studio, plus the dynamic "Take it further" upgrade tiles.
+ * PublicProfilePreview — the encouraging "Your public profile" onboarding block
+ * that sits ABOVE the Profile Studio (its own translucent gold section, not inside
+ * the plum studio container). Two warm kraft cards, each independently collapsible:
+ *   1. the at-a-glance public-profile preview + completeness meter (with an
+ *      expandable "what's missing" accordion)
+ *   2. the dynamic "Take it further" upgrade tiles
  *
- * Deliberately a friendly NUDGE card on the warm kraft surface (not a faithful
- * clone of the real profile hero). Fully driven by props derived from live form
- * state via deriveProfileState — it does no data loading of its own.
+ * Deliberately a friendly NUDGE block, not a faithful clone of the real profile
+ * hero. Fully driven by props derived from live form state via deriveProfileState
+ * — it does no data loading of its own.
  */
 
 import { useEffect, useState } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { StudioTab } from "@/components/alumni/update/ProfileStudio";
 import type { DerivedProfileState } from "@/app/alumni/update/helpers/deriveProfileState";
 
@@ -18,8 +22,10 @@ const COLOR = {
   ink: "#241123",
   brand: "#6C00AF",
   gold: "#D9A919",
-  snow: "#F2F2F2",
+  green: "#5f7d3b",
   kraft: "#dac9a6",
+  goldBg: "rgba(217, 169, 25, 0.25)",
+  snow: "#F2F2F2",
 };
 
 const FF_GROTESK = "var(--font-space-grotesk), system-ui, sans-serif";
@@ -32,20 +38,26 @@ type FlagKey =
   | "hasHighlight"
   | "hasUpcomingEvent";
 
+type IconName = "image" | "pin" | "route" | "star" | "calendar";
+
 type Tile = {
   key: string;
   tab: StudioTab;
   flag: FlagKey;
+  icon: IconName;
   title: string;
   body: string;
+  /** Journey is the wide explainer tile — it spans both columns. */
+  wide?: boolean;
 };
 
-// Canonical order = priority order. "Next up" is the first incomplete tile here.
+// Canonical order. "Next up" is the first incomplete one.
 const TILES: Tile[] = [
   {
     key: "media",
     tab: "media",
     flag: "hasMedia",
+    icon: "image",
     title: "Share photos or video",
     body: "Feature a reel, trailer, production photos, or a collection from your travels and projects.",
   },
@@ -53,6 +65,7 @@ const TILES: Tile[] = [
     key: "story",
     tab: "story",
     flag: "hasStoryMapStory",
+    icon: "pin",
     title: "Pin your story on the map",
     body: "Map one special moment from your DAT journey on the global Story Map.",
   },
@@ -60,13 +73,16 @@ const TILES: Tile[] = [
     key: "journey",
     tab: "journey",
     flag: "hasJourneyCard",
+    icon: "route",
     title: "Trace your journey with DAT",
     body: "Create a Journey Card for a past program, reflecting on where you went, what you made, and what stayed with you.",
+    wide: true,
   },
   {
     key: "highlight",
     tab: "highlight",
     flag: "hasHighlight",
+    icon: "star",
     title: "Add a recent highlight",
     body: "Celebrate your work by sharing a project, award, press mention, or creative milestone.",
   },
@@ -74,65 +90,156 @@ const TILES: Tile[] = [
     key: "event",
     tab: "event",
     flag: "hasUpcomingEvent",
+    icon: "calendar",
     title: "Share an upcoming event",
     body: "Add your next performance, screening, workshop, exhibition, opening, or other public event.",
   },
 ];
 
-function EyeIcon() {
+// Completeness keys (from deriveProfileState) → label + where to edit it.
+const ESSENTIAL_META: Record<string, { label: string; tab: StudioTab }> = {
+  headshot: { label: "Headshot", tab: "basics" },
+  title: { label: "Current title", tab: "basics" },
+  location: { label: "Location", tab: "basics" },
+  bio: { label: "Bio", tab: "basics" },
+  identityTags: { label: "Identity tags", tab: "identity" },
+  practiceTags: { label: "Practice tags", tab: "identity" },
+  exploreCareTags: { label: "Explore & Care tags", tab: "identity" },
+  languages: { label: "Languages", tab: "identity" },
+  connect: { label: "A way to connect", tab: "contact" },
+};
+
+/* ── Icons (inline SVG, stroke = currentColor) ──────────────────── */
+
+const svgBase: CSSProperties = { display: "block", flex: "none" };
+
+function Chevron({ open, size = 18 }: { open: boolean; size?: number }) {
   return (
     <svg
-      width="13"
-      height="13"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="2.25"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
-      style={{ display: "block" }}
+      style={{ ...svgBase, transform: open ? "rotate(180deg)" : "none", transition: "transform 180ms ease" }}
     >
-      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
-      <circle cx="12" cy="12" r="3" />
+      <polyline points="6 9 12 15 18 9" />
     </svg>
   );
 }
 
-function ChevronRight({ color }: { color: string }) {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      style={{ display: "block", flex: "none" }}
-    >
-      <polyline points="9 6 15 12 9 18" />
-    </svg>
-  );
+function TileIcon({ name, size = 18 }: { name: IconName; size?: number }) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+    style: svgBase,
+  };
+  switch (name) {
+    case "image":
+      return (
+        <svg {...common}>
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <circle cx="8.5" cy="8.5" r="1.5" />
+          <path d="M21 15l-5-5L5 21" />
+        </svg>
+      );
+    case "pin":
+      return (
+        <svg {...common}>
+          <path d="M12 21s-7-6.4-7-11a7 7 0 0 1 14 0c0 4.6-7 11-7 11z" />
+          <circle cx="12" cy="10" r="2.5" />
+        </svg>
+      );
+    case "route":
+      return (
+        <svg {...common}>
+          <circle cx="6" cy="19" r="2.5" />
+          <circle cx="18" cy="5" r="2.5" />
+          <path d="M8.5 19H15a3 3 0 0 0 3-3V7.5" />
+        </svg>
+      );
+    case "star":
+      return (
+        <svg {...common}>
+          <polygon points="12 3 14.8 8.6 21 9.5 16.5 13.9 17.6 20 12 17.1 6.4 20 7.5 13.9 3 9.5 9.2 8.6 12 3" />
+        </svg>
+      );
+    case "calendar":
+      return (
+        <svg {...common}>
+          <rect x="3" y="4.5" width="18" height="16" rx="2" />
+          <path d="M3 9h18M8 2.5v4M16 2.5v4" />
+        </svg>
+      );
+  }
 }
 
 const eyebrowStyle: CSSProperties = {
   fontFamily: FF_GROTESK,
-  fontSize: 11,
+  fontSize: 12,
   fontWeight: 800,
-  letterSpacing: ".14em",
+  letterSpacing: ".16em",
   textTransform: "uppercase",
   color: COLOR.ink,
-  opacity: 0.7,
+  opacity: 0.6,
 };
+
+/** Clickable card header that toggles collapse. */
+function CardHeader({
+  label,
+  collapsed,
+  onToggle,
+  right,
+}: {
+  label: string;
+  collapsed: boolean;
+  onToggle: () => void;
+  right?: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={!collapsed}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        width: "100%",
+        background: "transparent",
+        border: "none",
+        padding: 0,
+        cursor: "pointer",
+        textAlign: "left",
+      }}
+    >
+      <span style={eyebrowStyle}>{label}</span>
+      <span style={{ display: "flex", alignItems: "center", gap: 10, color: COLOR.ink, opacity: 0.85 }}>
+        {right}
+        <Chevron open={!collapsed} />
+      </span>
+    </button>
+  );
+}
 
 export default function PublicProfilePreview({
   state,
   publicHref,
   onOpenTab,
   onShareUpdate,
+  onEditHeadshot,
 }: {
   state: DerivedProfileState;
   /** Relative href to the public profile (e.g. "/alumni/jane-doe"), or null pre-publish. */
@@ -141,9 +248,15 @@ export default function PublicProfilePreview({
   onOpenTab: (tab: StudioTab) => void;
   /** Scroll to the community composer and focus its textarea. */
   onShareUpdate: () => void;
+  /** Open Basics and scroll/focus the headshot uploader. */
+  onEditHeadshot: () => void;
 }) {
   const { preview, completeness, featureFlags } = state;
   const published = Boolean(publicHref && preview.slug);
+
+  const [collapsedPreview, setCollapsedPreview] = useState(false);
+  const [collapsedFurther, setCollapsedFurther] = useState(false);
+  const [showMissing, setShowMissing] = useState(false);
 
   // Show the real public host once mounted; sensible default for SSR/first paint.
   const [host, setHost] = useState("stories.dramaticadventure.com");
@@ -155,403 +268,511 @@ export default function PublicProfilePreview({
 
   const isDone = (flag: FlagKey) => Boolean(featureFlags[flag]);
   const nextUpKey = TILES.find((t) => !isDone(t.flag))?.key ?? null;
-  // Incomplete tiles first; stable sort preserves canonical order within each group.
-  const orderedTiles = [...TILES].sort(
-    (a, b) => (isDone(a.flag) ? 1 : 0) - (isDone(b.flag) ? 1 : 0)
-  );
+
+  const cardStyle = (collapsed: boolean): CSSProperties => ({
+    background: COLOR.kraft,
+    borderRadius: 18,
+    padding: collapsed ? "16px 26px" : "22px 26px 26px",
+    color: COLOR.ink,
+  });
+
+  const goMissing = (key: string) => {
+    const meta = ESSENTIAL_META[key];
+    if (!meta) return;
+    if (key === "headshot") onEditHeadshot();
+    else onOpenTab(meta.tab);
+  };
 
   return (
-    <section
-      aria-label="Your public profile"
-      style={{
-        background: COLOR.kraft,
-        borderRadius: 16,
-        padding: "18px 18px 20px",
-        marginBottom: 18,
-        boxShadow: "0 10px 30px rgba(0,0,0,0.18)",
-        color: COLOR.ink,
-      }}
-    >
-      {/* Eyebrow + Public pill */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          marginBottom: 14,
-        }}
-      >
-        <span style={eyebrowStyle}>Your public profile</span>
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 5,
-            background: "rgba(36,17,35,0.10)",
-            color: COLOR.ink,
-            borderRadius: 999,
-            padding: "3px 10px",
-            fontFamily: FF_GROTESK,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: ".06em",
-            opacity: 0.85,
-          }}
-        >
-          <EyeIcon />
-          Public
-        </span>
-      </div>
-
-      {/* Identity row: 4:5 headshot + details */}
-      <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-        {preview.headshotUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={preview.headshotUrl}
-            alt={preview.name ? `${preview.name} headshot` : "Headshot"}
-            style={{
-              width: 92,
-              height: 115,
-              borderRadius: 12,
-              objectFit: "cover",
-              flex: "none",
-              background: "rgba(36,17,35,0.08)",
-              boxShadow: "0 6px 16px rgba(0,0,0,0.18)",
-            }}
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={() => onOpenTab("basics")}
-            style={{
-              width: 92,
-              height: 115,
-              borderRadius: 12,
-              flex: "none",
-              border: "2px dashed rgba(36,17,35,0.35)",
-              background: "rgba(255,255,255,0.35)",
-              color: COLOR.ink,
-              cursor: "pointer",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 6,
-              padding: 8,
-              fontFamily: FF_GROTESK,
-              fontSize: 11,
-              fontWeight: 700,
-              lineHeight: 1.25,
-              textAlign: "center",
-              opacity: 0.85,
-            }}
-          >
-            <span style={{ fontSize: 20, lineHeight: 1 }}>+</span>
-            Add your headshot
-          </button>
-        )}
-
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div
-            style={{
-              fontFamily: FF_GROTESK,
-              fontSize: 20,
-              fontWeight: 800,
-              lineHeight: 1.15,
-              color: COLOR.ink,
-            }}
-          >
-            {preview.name || "Your name"}
-          </div>
-
-          {preview.title ? (
-            <div style={{ fontFamily: FF_SANS, fontSize: 14, marginTop: 3, opacity: 0.9 }}>
-              {preview.title}
-            </div>
-          ) : null}
-
-          {preview.location ? (
-            <div style={{ fontFamily: FF_SANS, fontSize: 13, marginTop: 2, opacity: 0.7 }}>
-              {preview.location}
-            </div>
-          ) : null}
-
-          {/* Headline line = latest current update */}
-          <div style={{ marginTop: 8 }}>
-            {preview.headline ? (
-              <p
+    <div style={{ background: COLOR.goldBg, borderRadius: 20, padding: 16 }}>
+      <div className="mx-auto w-full max-w-6xl" style={{ display: "grid", gap: 16 }}>
+        {/* ── Card 1: public-profile preview ───────────────────────── */}
+        <section aria-label="Your public profile" style={cardStyle(collapsedPreview)}>
+          <CardHeader
+            label="Your public profile"
+            collapsed={collapsedPreview}
+            onToggle={() => setCollapsedPreview((v) => !v)}
+            right={
+              <span
                 style={{
-                  fontFamily: FF_SANS,
-                  fontSize: 14,
-                  lineHeight: 1.45,
-                  margin: 0,
-                  color: COLOR.ink,
-                }}
-              >
-                <span aria-hidden="true" style={{ opacity: 0.45, marginRight: 4 }}>
-                  “
-                </span>
-                {preview.headline}
-                <span aria-hidden="true" style={{ opacity: 0.45, marginLeft: 2 }}>
-                  ”
-                </span>
-              </p>
-            ) : (
-              <button
-                type="button"
-                onClick={onShareUpdate}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  padding: 0,
-                  cursor: "pointer",
-                  fontFamily: FF_GROTESK,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  letterSpacing: ".02em",
-                  color: COLOR.brand,
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: 4,
+                  gap: 6,
+                  background: "rgba(255,255,255,0.8)",
+                  color: COLOR.ink,
+                  border: "1px solid rgba(36,17,35,0.12)",
+                  borderRadius: 999,
+                  padding: "4px 12px",
+                  fontFamily: FF_GROTESK,
+                  fontSize: 13,
+                  fontWeight: 600,
                 }}
               >
-                Share your latest
-                <ChevronRight color={COLOR.brand} />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* URL + button on their own row (flex siblings, never overlapping) */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          marginTop: 16,
-          paddingTop: 14,
-          borderTop: "1px solid rgba(36,17,35,0.14)",
-        }}
-      >
-        {published ? (
-          <>
-            <span
-              title={`${host}${publicHref}`}
-              style={{
-                flex: 1,
-                minWidth: 0,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                fontFamily: FF_SANS,
-                fontSize: 13,
-                color: COLOR.ink,
-                opacity: 0.7,
-              }}
-            >
-              {host}
-              {publicHref}
-            </span>
-            <a
-              href={publicHref ?? "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                flex: "none",
-                textDecoration: "none",
-                borderRadius: 999,
-                padding: "8px 14px",
-                fontFamily: FF_GROTESK,
-                fontSize: 11,
-                fontWeight: 800,
-                letterSpacing: ".08em",
-                textTransform: "uppercase",
-                background: COLOR.brand,
-                color: COLOR.snow,
-                whiteSpace: "nowrap",
-              }}
-            >
-              View public profile
-            </a>
-          </>
-        ) : (
-          <>
-            <span
-              style={{
-                flex: 1,
-                minWidth: 0,
-                fontFamily: FF_SANS,
-                fontSize: 13,
-                color: COLOR.ink,
-                opacity: 0.65,
-              }}
-            >
-              Save changes to update your live profile.
-            </span>
-            <span
-              aria-disabled="true"
-              style={{
-                flex: "none",
-                borderRadius: 999,
-                padding: "8px 14px",
-                fontFamily: FF_GROTESK,
-                fontSize: 11,
-                fontWeight: 800,
-                letterSpacing: ".08em",
-                textTransform: "uppercase",
-                background: "rgba(36,17,35,0.12)",
-                color: "rgba(36,17,35,0.5)",
-                whiteSpace: "nowrap",
-                cursor: "not-allowed",
-              }}
-            >
-              View public profile
-            </span>
-          </>
-        )}
-      </div>
-
-      {/* Progress + encouragement */}
-      <div style={{ marginTop: 14 }}>
-        <div
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={completeness.total}
-          aria-valuenow={completeness.filled}
-          aria-label="Profile completeness"
-          style={{
-            height: 8,
-            borderRadius: 999,
-            background: "rgba(36,17,35,0.14)",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              width: `${completeness.pct}%`,
-              height: "100%",
-              borderRadius: 999,
-              background: COLOR.gold,
-              transition: "width 320ms ease",
-            }}
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                  style={{ display: "block" }}
+                >
+                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                Public
+              </span>
+            }
           />
-        </div>
-        <p
-          style={{
-            fontFamily: FF_SANS,
-            fontSize: 12.5,
-            lineHeight: 1.5,
-            margin: "8px 0 0",
-            color: COLOR.ink,
-            opacity: 0.75,
-          }}
-        >
-          Add your headshot and a few details to help visitors recognize you, follow your work,
-          and connect.
-        </p>
-      </div>
 
-      {/* Take it further */}
-      <div style={{ marginTop: 18 }}>
-        <div style={{ ...eyebrowStyle, marginBottom: 10 }}>Take it further</div>
-        <div style={{ display: "grid", gap: 8 }}>
-          {orderedTiles.map((tile) => {
-            const done = isDone(tile.flag);
-            const isNextUp = !done && tile.key === nextUpKey;
-            return (
-              <button
-                key={tile.key}
-                type="button"
-                onClick={() => onOpenTab(tile.tab)}
+          {!collapsedPreview && (
+            <div style={{ marginTop: 16 }}>
+              {/* Identity row: 4:5 headshot + details */}
+              <div style={{ display: "flex", gap: 18, alignItems: "flex-start" }}>
+                {preview.headshotUrl ? (
+                  <button
+                    type="button"
+                    onClick={onEditHeadshot}
+                    title="Change your headshot"
+                    style={{
+                      width: 112,
+                      height: 140,
+                      borderRadius: 14,
+                      flex: "none",
+                      padding: 0,
+                      border: "none",
+                      background: "transparent",
+                      cursor: "pointer",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={preview.headshotUrl}
+                      alt={preview.name ? `${preview.name} headshot` : "Headshot"}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        display: "block",
+                        borderRadius: 14,
+                        background: "rgba(36,17,35,0.08)",
+                      }}
+                    />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={onEditHeadshot}
+                    style={{
+                      width: 112,
+                      height: 140,
+                      borderRadius: 14,
+                      flex: "none",
+                      border: "2px dashed rgba(36,17,35,0.35)",
+                      background: "rgba(255,255,255,0.4)",
+                      color: COLOR.ink,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: 10,
+                      fontFamily: FF_GROTESK,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      textAlign: "center",
+                      opacity: 0.7,
+                    }}
+                  >
+                    Add your headshot
+                  </button>
+                )}
+
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div
+                    style={{
+                      fontFamily: FF_GROTESK,
+                      fontSize: 27,
+                      fontWeight: 800,
+                      lineHeight: 1.1,
+                      color: COLOR.ink,
+                    }}
+                  >
+                    {preview.name || "Your name"}
+                  </div>
+
+                  {preview.title ? (
+                    <div style={{ fontFamily: FF_SANS, fontSize: 16, marginTop: 6, opacity: 0.9 }}>
+                      {preview.title}
+                    </div>
+                  ) : null}
+
+                  {preview.location ? (
+                    <div style={{ fontFamily: FF_SANS, fontSize: 15, marginTop: 5, opacity: 0.65 }}>
+                      {preview.location}
+                    </div>
+                  ) : null}
+
+                  {/* Headline line = latest current update */}
+                  <div style={{ marginTop: 10 }}>
+                    {preview.headline ? (
+                      <p
+                        style={{
+                          fontFamily: FF_SANS,
+                          fontSize: 15,
+                          lineHeight: 1.45,
+                          margin: 0,
+                          color: COLOR.ink,
+                          opacity: 0.9,
+                        }}
+                      >
+                        {preview.headline}
+                      </p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={onShareUpdate}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          padding: 0,
+                          cursor: "pointer",
+                          fontFamily: FF_SANS,
+                          fontStyle: "italic",
+                          fontSize: 16,
+                          fontWeight: 500,
+                          color: COLOR.brand,
+                        }}
+                      >
+                        Share your latest
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* URL + button row (flex siblings, never overlapping) */}
+              <div
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: 12,
+                  marginTop: 20,
+                  paddingTop: 18,
+                  borderTop: "1px solid rgba(36,17,35,0.15)",
+                }}
+              >
+                {published ? (
+                  <>
+                    <span
+                      title={`${host}${publicHref}`}
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        fontFamily: FF_SANS,
+                        fontSize: 15,
+                        color: COLOR.ink,
+                        opacity: 0.7,
+                      }}
+                    >
+                      {host}
+                      {publicHref}
+                    </span>
+                    <a
+                      href={publicHref ?? "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        flex: "none",
+                        textDecoration: "none",
+                        borderRadius: 999,
+                        padding: "11px 22px",
+                        fontFamily: FF_GROTESK,
+                        fontSize: 15,
+                        fontWeight: 700,
+                        background: COLOR.brand,
+                        color: COLOR.snow,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      View public profile
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    <span
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        fontFamily: FF_SANS,
+                        fontSize: 15,
+                        color: COLOR.ink,
+                        opacity: 0.65,
+                      }}
+                    >
+                      Save changes to update your live profile.
+                    </span>
+                    <span
+                      aria-disabled="true"
+                      style={{
+                        flex: "none",
+                        borderRadius: 999,
+                        padding: "11px 22px",
+                        fontFamily: FF_GROTESK,
+                        fontSize: 15,
+                        fontWeight: 700,
+                        background: "rgba(36,17,35,0.12)",
+                        color: "rgba(36,17,35,0.5)",
+                        whiteSpace: "nowrap",
+                        cursor: "not-allowed",
+                      }}
+                    >
+                      View public profile
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {/* Encouragement + progress — click to reveal what's missing */}
+              <button
+                type="button"
+                onClick={() => setShowMissing((v) => !v)}
+                aria-expanded={showMissing}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 16,
                   width: "100%",
                   textAlign: "left",
                   cursor: "pointer",
-                  borderRadius: 12,
-                  padding: "12px 14px",
-                  border: isNextUp
-                    ? "1px solid rgba(217,169,25,0.7)"
-                    : "1px solid rgba(36,17,35,0.12)",
-                  background: done ? "rgba(255,255,255,0.28)" : "rgba(255,255,255,0.55)",
-                  opacity: done ? 0.72 : 1,
+                  marginTop: 16,
+                  background: "rgba(255,255,255,0.5)",
+                  border: "none",
+                  borderRadius: 14,
+                  padding: "14px 20px",
                 }}
               >
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div
+                <span
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    fontFamily: FF_SANS,
+                    fontSize: 15,
+                    lineHeight: 1.4,
+                    color: COLOR.ink,
+                    opacity: 0.85,
+                  }}
+                >
+                  Add your headshot and a few details to help visitors recognize you, follow your
+                  work, and connect.
+                </span>
+                <span style={{ display: "flex", alignItems: "center", gap: 12, flex: "none", color: COLOR.ink }}>
+                  <span
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={completeness.total}
+                    aria-valuenow={completeness.filled}
+                    aria-label="Profile completeness"
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      flexWrap: "wrap",
+                      display: "block",
+                      width: 120,
+                      height: 8,
+                      borderRadius: 999,
+                      background: "rgba(36,17,35,0.18)",
+                      overflow: "hidden",
                     }}
                   >
                     <span
                       style={{
-                        fontFamily: FF_GROTESK,
-                        fontSize: 14,
-                        fontWeight: 800,
-                        color: COLOR.ink,
+                        display: "block",
+                        width: `${completeness.pct}%`,
+                        height: "100%",
+                        borderRadius: 999,
+                        background: COLOR.brand,
+                        transition: "width 320ms ease",
                       }}
-                    >
-                      {tile.title}
-                    </span>
+                    />
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: FF_GROTESK,
+                      fontSize: 15,
+                      fontWeight: 700,
+                      opacity: 0.7,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {completeness.filled} / {completeness.total}
+                  </span>
+                  <Chevron open={showMissing} size={16} />
+                </span>
+              </button>
+
+              {showMissing && (
+                <div style={{ marginTop: 10, padding: "0 2px" }}>
+                  {completeness.missing.length === 0 ? (
+                    <p style={{ fontFamily: FF_SANS, fontSize: 14, margin: 0, color: COLOR.ink, opacity: 0.8 }}>
+                      You&rsquo;ve added all the essentials — nice work.
+                    </p>
+                  ) : (
+                    <>
+                      <p
+                        style={{
+                          fontFamily: FF_SANS,
+                          fontSize: 13,
+                          margin: "0 0 8px",
+                          color: COLOR.ink,
+                          opacity: 0.7,
+                        }}
+                      >
+                        Still to add — tap one to jump there:
+                      </p>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {completeness.missing.map((key) => {
+                          const meta = ESSENTIAL_META[key];
+                          if (!meta) return null;
+                          return (
+                            <button
+                              key={key}
+                              type="button"
+                              onClick={() => goMissing(key)}
+                              style={{
+                                cursor: "pointer",
+                                fontFamily: FF_GROTESK,
+                                fontSize: 13,
+                                fontWeight: 700,
+                                color: COLOR.ink,
+                                background: "rgba(255,255,255,0.55)",
+                                border: "1px solid rgba(36,17,35,0.15)",
+                                borderRadius: 999,
+                                padding: "6px 13px",
+                              }}
+                            >
+                              + {meta.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* ── Card 2: Take it further ──────────────────────────────── */}
+        <section aria-label="Take it further" style={cardStyle(collapsedFurther)}>
+          <CardHeader
+            label="Take it further"
+            collapsed={collapsedFurther}
+            onToggle={() => setCollapsedFurther((v) => !v)}
+          />
+
+          {!collapsedFurther && (
+            <div
+              style={{
+                marginTop: 16,
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gap: 14,
+              }}
+            >
+              {TILES.map((tile) => {
+                const done = isDone(tile.flag);
+                const isNextUp = !done && tile.key === nextUpKey;
+                return (
+                  <button
+                    key={tile.key}
+                    type="button"
+                    onClick={() => onOpenTab(tile.tab)}
+                    style={{
+                      gridColumn: tile.wide ? "1 / -1" : "auto",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      borderRadius: 14,
+                      padding: "16px 18px",
+                      border: isNextUp
+                        ? "1px solid rgba(217,169,25,0.75)"
+                        : "1px solid rgba(36,17,35,0.10)",
+                      background: "rgba(255,255,255,0.42)",
+                    }}
+                  >
                     {done ? (
                       <span
                         style={{
+                          display: "inline-block",
+                          marginBottom: 8,
                           fontFamily: FF_GROTESK,
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: 800,
-                          letterSpacing: ".06em",
+                          letterSpacing: ".1em",
                           textTransform: "uppercase",
-                          color: COLOR.ink,
-                          opacity: 0.6,
+                          color: COLOR.green,
                         }}
                       >
-                        Added ✓
+                        Added
                       </span>
                     ) : isNextUp ? (
                       <span
                         style={{
+                          display: "inline-block",
+                          marginBottom: 8,
                           fontFamily: FF_GROTESK,
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: 800,
-                          letterSpacing: ".08em",
+                          letterSpacing: ".1em",
                           textTransform: "uppercase",
                           color: COLOR.ink,
                           background: COLOR.gold,
                           borderRadius: 999,
-                          padding: "2px 8px",
+                          padding: "3px 10px",
                         }}
                       >
                         Next up
                       </span>
                     ) : null}
-                  </div>
-                  <p
-                    style={{
-                      fontFamily: FF_SANS,
-                      fontSize: 12.5,
-                      lineHeight: 1.45,
-                      margin: "3px 0 0",
-                      color: COLOR.ink,
-                      opacity: 0.75,
-                    }}
-                  >
-                    {tile.body}
-                  </p>
-                </div>
-                <ChevronRight color="rgba(108,0,175,0.55)" />
-              </button>
-            );
-          })}
-        </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                      <span style={{ color: COLOR.brand, opacity: 0.8 }}>
+                        <TileIcon name={tile.icon} />
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: FF_GROTESK,
+                          fontSize: 17,
+                          fontWeight: 800,
+                          color: COLOR.ink,
+                        }}
+                      >
+                        {tile.title}
+                      </span>
+                    </div>
+                    <p
+                      style={{
+                        fontFamily: FF_SANS,
+                        fontSize: 14,
+                        lineHeight: 1.45,
+                        margin: "6px 0 0",
+                        color: COLOR.ink,
+                        opacity: 0.7,
+                      }}
+                    >
+                      {tile.body}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </div>
-    </section>
+    </div>
   );
 }

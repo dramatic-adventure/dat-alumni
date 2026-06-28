@@ -11,6 +11,7 @@ import ShareButton from "@/components/ui/ShareButton";
 import Lightbox from "@/components/shared/Lightbox";
 import ContactOverlay from "@/components/shared/ContactOverlay";
 import StatusFlags from "@/components/alumni/StatusFlags";
+import CurrentUpdateNote from "@/components/alumni/CurrentUpdateNote";
 import { splitTitles, splitCurrentTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
 
 interface DesktopProfileHeaderProps {
@@ -29,6 +30,8 @@ interface DesktopProfileHeaderProps {
   currentTitle?: string;
   secondLocation?: string;
   isBiCoastal?: boolean;
+  currentUpdateText?: string;
+  currentUpdateLink?: string;
 }
 
 export default function DesktopProfileHeader({
@@ -47,6 +50,8 @@ export default function DesktopProfileHeader({
   currentTitle,
   secondLocation,
   isBiCoastal,
+  currentUpdateText,
+  currentUpdateLink,
 }: DesktopProfileHeaderProps) {
 
   const router = useRouter();
@@ -416,6 +421,13 @@ export default function DesktopProfileHeader({
                   </div>
                 )}
 
+                {/* Current update — hand-written note under the location */}
+                {currentUpdateText && (
+                  <div style={{ marginTop: "1rem" }}>
+                    <CurrentUpdateNote text={currentUpdateText} link={currentUpdateLink} size="1.6rem" />
+                  </div>
+                )}
+
                 {/* DAT pill — closing tag, always last */}
                 {titleLinks.length > 0 && (
                   <div style={{ marginTop: "0.65rem" }}>
@@ -615,6 +627,13 @@ export default function DesktopProfileHeader({
                 {location && (
                   <div style={{ marginTop: "1.1rem" }}>
                     <LocationDisplay size="1.2rem" />
+                  </div>
+                )}
+
+                {/* Current update — hand-written note under the location */}
+                {currentUpdateText && (
+                  <div style={{ marginTop: "1rem" }}>
+                    <CurrentUpdateNote text={currentUpdateText} link={currentUpdateLink} size="1.6rem" />
                   </div>
                 )}
               </>

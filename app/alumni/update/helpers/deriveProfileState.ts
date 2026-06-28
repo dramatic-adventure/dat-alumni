@@ -71,7 +71,7 @@ const nonEmpty = (v: string | null | undefined) => String(v ?? "").trim().length
 function combineLocation(loc: string, second: string, biCoastal: boolean): string {
   const a = String(loc ?? "").trim();
   const b = String(second ?? "").trim();
-  if (biCoastal && a && b) return `${a} & ${b}`;
+  if (biCoastal && a && b) return `${a} · ${b}`;
   if (biCoastal && !a && b) return b;
   return a;
 }

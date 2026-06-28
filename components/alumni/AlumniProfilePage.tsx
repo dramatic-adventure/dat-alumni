@@ -172,6 +172,10 @@ export default function AlumniProfilePage({
   const backgroundChoice =
     cleanStr(d.backgroundChoice ?? d.backgroundStyle ?? d.backgroundKey) ?? "kraft";
 
+  // Current Update one-liner (already expiry-filtered server-side in page.tsx)
+  const currentUpdateText = cleanStr(d.currentUpdateText) ?? "";
+  const currentUpdateLink = cleanStr(d.currentUpdateLink) ?? "";
+
   // Dual title + multi-city
   const currentTitle = cleanStr(d.currentTitle) ?? "";
   const secondLocation = cleanStr(d.secondLocation) ?? "";
@@ -395,6 +399,8 @@ alumniId={alumniId || undefined}
                 socials={socials}
                 featuredLink={featuredLink}
                 updates={updates}
+                currentUpdateText={currentUpdateText || undefined}
+                currentUpdateLink={currentUpdateLink || undefined}
                 sheetSpotlights={derivedSpotlights}
                 sheetHighlights={derivedHighlights}
                 currentTitle={currentTitle || undefined}

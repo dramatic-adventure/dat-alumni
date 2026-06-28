@@ -242,10 +242,15 @@ export default function BasicsTab({
 
       {/* ── Headshot ──────────────────────────────────────────── */}
       <div
+        id="studio-basics-headshot"
+        tabIndex={-1}
         style={{
           marginTop: 24,
           paddingTop: 16,
           borderTop: "1px solid rgba(255,255,255,0.12)",
+          borderRadius: 12,
+          scrollMarginTop: 16,
+          outline: "none",
         }}
       >
         <span style={subheadChipStyle} className="subhead-chip">

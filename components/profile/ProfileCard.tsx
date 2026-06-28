@@ -304,6 +304,10 @@ interface ProfileCardProps {
   isBiCoastal?: boolean;
   featuredLink?: { url: string; label: string };
   upcomingEvent?: ComingUpEvent;
+  /** Current update one-liner (expiry-filtered upstream); blank = nothing renders. */
+  currentUpdateText?: string;
+  /** Optional link for the current update; rendered as a hover-to-pink link. */
+  currentUpdateLink?: string;
   impactCauses?: string;
   supportedClubs?: string;
   featuredSupportedClub?: string;
@@ -701,6 +705,8 @@ const hasStories = storiesForFeatured.length > 0;
           secondLocation={props.secondLocation}
           isBiCoastal={props.isBiCoastal}
           featuredLink={props.featuredLink}
+          currentUpdateText={props.currentUpdateText}
+          currentUpdateLink={props.currentUpdateLink}
         />
       ) : (
         <DesktopProfileHeader
@@ -720,6 +726,8 @@ const hasStories = storiesForFeatured.length > 0;
           secondLocation={props.secondLocation}
           isBiCoastal={props.isBiCoastal}
           featuredLink={props.featuredLink}
+          currentUpdateText={props.currentUpdateText}
+          currentUpdateLink={props.currentUpdateLink}
         />
       )}
 

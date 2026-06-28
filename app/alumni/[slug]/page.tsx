@@ -454,6 +454,28 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
   ]);
   const videoMeta = [videoMeta1, videoMeta2, videoMeta3] as const;
 
+  // Current Update: surface the latest one-liner on the public profile, but respect
+  // auto-archiving — if currentUpdateExpiresAt is set and in the past, hide it.
+  // (Date-only YYYY-MM-DD comparison, mirroring ComingUpEventStrip's isExpired.)
+  const currentUpdateText = (() => {
+    const txt = String((normalizedAlumni as any).currentUpdateText || "").trim();
+    if (!txt) return "";
+    const exp = String((normalizedAlumni as any).currentUpdateExpiresAt || "").trim();
+    if (exp) {
+      const t = new Date();
+      const today = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(
+        t.getDate()
+      ).padStart(2, "0")}`;
+      if (today > exp) return "";
+    }
+    return txt;
+  })();
+
+  // Only surface the link when the update itself is showing.
+  const currentUpdateLink = currentUpdateText
+    ? String((normalizedAlumni as any).currentUpdateLink || "").trim()
+    : "";
+
   const safeArtistStatement =
     typeof (normalizedAlumni as any).artistStatement === "string"
       ? (normalizedAlumni as any).artistStatement
@@ -563,6 +585,8 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
           socials: (normalizedAlumni as any).socials || [],
           featuredLink: (normalizedAlumni as any).featuredLink,
           updates: (normalizedAlumni as any).updates || [],
+          currentUpdateText,
+          currentUpdateLink,
           currentTitle: (normalizedAlumni as any).currentTitle || "",
           secondLocation: (normalizedAlumni as any).secondLocation || "",
           isBiCoastal: !!(normalizedAlumni as any).isBiCoastal,

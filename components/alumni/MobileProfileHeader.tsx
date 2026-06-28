@@ -7,6 +7,7 @@ import ShareButton from "@/components/ui/ShareButton";
 import ContactOverlay from "@/components/shared/ContactOverlay";
 import Lightbox from "@/components/shared/Lightbox";
 import StatusFlags from "@/components/alumni/StatusFlags";
+import CurrentUpdateNote from "@/components/alumni/CurrentUpdateNote";
 
 import NameStack from "@/components/shared/NameStack";
 import { splitTitles, splitCurrentTitles, slugifyTitle, bucketsForTitleToken } from "@/lib/titles";
@@ -28,6 +29,8 @@ interface MobileProfileHeaderProps {
   secondLocation?: string;
   isBiCoastal?: boolean;
   featuredLink?: { url: string; label: string };
+  currentUpdateText?: string;
+  currentUpdateLink?: string;
 }
 
 export default function MobileProfileHeader({
@@ -46,6 +49,8 @@ export default function MobileProfileHeader({
   secondLocation,
   isBiCoastal,
   featuredLink,
+  currentUpdateText,
+  currentUpdateLink,
 }: MobileProfileHeaderProps) {
 
   const fallbackImage = "/images/default-headshot.png";
@@ -404,6 +409,13 @@ export default function MobileProfileHeader({
                   </div>
                 )}
 
+                {/* Current update — hand-written note under the location */}
+                {currentUpdateText && (
+                  <div style={{ marginTop: "0.75rem" }}>
+                    <CurrentUpdateNote text={currentUpdateText} link={currentUpdateLink} size="1.2rem" align="center" />
+                  </div>
+                )}
+
                 {/* DAT pill — closing tag, always last */}
                 {titleLinks.length > 0 && (
                   <div style={{ marginTop: "0.6rem", display: "flex", justifyContent: "center" }}>
@@ -623,6 +635,13 @@ export default function MobileProfileHeader({
                 {location && (
                   <div style={{ marginTop: "0.5rem", display: "flex", justifyContent: "center" }}>
                     <LocationDisplay size="clamp(0.8rem, 3vw, 0.95rem)" />
+                  </div>
+                )}
+
+                {/* Current update — hand-written note under the location */}
+                {currentUpdateText && (
+                  <div style={{ marginTop: "0.75rem" }}>
+                    <CurrentUpdateNote text={currentUpdateText} link={currentUpdateLink} size="1.2rem" align="center" />
                   </div>
                 )}
               </>
