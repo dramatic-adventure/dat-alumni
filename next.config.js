@@ -4,10 +4,11 @@
 const isCanaryPPR = process.env.NEXT_CANARY_PPR === "1";
 
 const nextConfig = {
-  // Keep sharp external so webpack doesn't try to bundle its native binary; it
-  // loads from node_modules at runtime. The image proxy (/api/media/thumb) and
-  // the upload route use sharp for EXIF orientation + HEIC→JPEG transcode.
-  serverExternalPackages: ["sharp"],
+  // Keep these external so webpack doesn't bundle them; they load from
+  // node_modules at runtime. sharp = EXIF orientation + JPEG/PNG/WebP/AVIF
+  // re-encode/resize; heic-convert = HEIC/HEVC decode (sharp's prebuilt binary
+  // can't decode HEIC). Both are used by /api/media/thumb and /api/upload.
+  serverExternalPackages: ["sharp", "heic-convert"],
 
   experimental: {
     // Next.js 16 added isolatedDevBuild (default: true) which redirects dev

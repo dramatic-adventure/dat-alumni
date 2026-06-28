@@ -21,6 +21,7 @@
 // binary is missing from the serverless bundle the upload still succeeds with the
 // original bytes instead of 500ing at module load. See loadSharp() below.
 import type sharpType from "sharp";
+import { decodeHeicToJpeg } from "./decodeHeic";
 
 // Cached lazy loader. Resolves to the sharp factory, or null if it can't load
 // (e.g. the native .node binary was pruned from the function bundle). The null
@@ -94,17 +95,44 @@ export async function normalizeUploadImage(
     return { buffer, mimeType, changed: false };
   }
 
-  const sharp = await loadSharp();
-  if (!sharp) return { buffer, mimeType, changed: false };
+  // HEIC/HEIF: sharp's prebuilt binary can't decode HEVC, so decode to upright
+  // JPEG with the dedicated HEIC decoder first (libheif applies the stored
+  // rotation), then hand that JPEG to sharp below for downscaling. AVIF (mime
+  // image/avif) is NOT matched here and is decoded by sharp natively.
+  const isHeic =
+    mime.includes("heic") ||
+    mime.includes("heif") ||
+    /\.(heic|heif)$/.test(nameLower);
 
-  try {
-    const meta = await sharp(buffer, { failOn: "none" }).metadata();
-    const fmt = meta.format;
-    if (!fmt || !PROCESSABLE_FORMATS.has(fmt)) {
+  let working = buffer;
+  if (isHeic) {
+    const jpeg = await decodeHeicToJpeg(buffer);
+    if (!jpeg) {
+      // No HEIC support / undecodable — leave the original untouched.
       return { buffer, mimeType, changed: false };
     }
+    working = jpeg;
+  }
+  const decodedHeic = working !== buffer;
 
-    const pipeline = sharp(buffer, { failOn: "none" })
+  // If we decoded HEIC→JPEG, that result (upright, full size) is the floor we
+  // return when sharp can't take it further — far better than an unrenderable
+  // HEIC original.
+  const heicFallback: NormalizeResult = decodedHeic
+    ? { buffer: working, mimeType: "image/jpeg", changed: true }
+    : { buffer, mimeType, changed: false };
+
+  const sharp = await loadSharp();
+  if (!sharp) return heicFallback;
+
+  try {
+    const meta = await sharp(working, { failOn: "none" }).metadata();
+    const fmt = meta.format;
+    if (!fmt || !PROCESSABLE_FORMATS.has(fmt)) {
+      return heicFallback;
+    }
+
+    const pipeline = sharp(working, { failOn: "none" })
       // Apply EXIF orientation into the pixels and drop the flag. No-op for
       // already-upright images.
       .rotate()
@@ -131,14 +159,14 @@ export async function normalizeUploadImage(
       return { buffer: out, mimeType: "image/webp", changed: true };
     }
 
-    return { buffer, mimeType, changed: false };
+    return heicFallback;
   } catch (err) {
-    // Corrupt/unsupported input — leave the original untouched so the upload
-    // still succeeds.
+    // Corrupt/unsupported input — leave the original (or the decoded HEIC JPEG)
+    // untouched so the upload still succeeds.
     console.warn(
       "normalizeUploadImage: skipped (could not process):",
       err instanceof Error ? err.message : String(err)
     );
-    return { buffer, mimeType, changed: false };
+    return heicFallback;
   }
 }

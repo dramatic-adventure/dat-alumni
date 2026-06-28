@@ -5,6 +5,12 @@
   
 [functions]
   directory = "netlify/functions"
+  # Force sharp's native binary into the function bundle. Next's file tracing can
+  # miss sharp's platform-specific @img/* native module (loaded via a runtime
+  # dynamic require), which left the SSR handler without sharp and broke the image
+  # routes. These globs resolve on the Linux build machine, so the linux-x64
+  # @img binaries ship with the function.
+  included_files = ["node_modules/sharp/**", "node_modules/@img/**"]
 
 [[plugins]]
   package = "./netlify/plugins/prune-server-handler"
