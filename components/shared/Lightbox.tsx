@@ -191,8 +191,8 @@ export default function Lightbox({
               className="relative w-full overflow-hidden"
               onClick={onClose}
               style={{
-                height: "80vh",
-                maxHeight: 760,
+                height: "86vh",
+                maxHeight: 900,
                 cursor: "pointer",
                 touchAction: "pan-y",
                 pointerEvents: "auto", // ✅ re-enable events for media footprint

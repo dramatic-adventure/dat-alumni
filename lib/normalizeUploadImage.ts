@@ -60,7 +60,12 @@ export type NormalizeResult = {
 };
 
 /**
- * Apply EXIF orientation, convert HEIC/HEIF → JPEG, and cap dimensions.
+ * Apply EXIF orientation and convert HEIC/HEIF → JPEG.
+ *
+ * - HEIC/HEIF is decoded to an upright JPEG and kept at FULL resolution (no
+ *   downscale) so the original quality is preserved on file.
+ * - Other raster formats (JPEG/PNG/WebP/AVIF) have EXIF orientation baked in and
+ *   are capped at MAX_EDGE to keep Drive lean.
  *
  * Safe by design:
  *  - `.rotate()` with no argument only applies the image's own EXIF orientation.
@@ -95,44 +100,37 @@ export async function normalizeUploadImage(
     return { buffer, mimeType, changed: false };
   }
 
-  // HEIC/HEIF: sharp's prebuilt binary can't decode HEVC, so decode to upright
-  // JPEG with the dedicated HEIC decoder first (libheif applies the stored
-  // rotation), then hand that JPEG to sharp below for downscaling. AVIF (mime
-  // image/avif) is NOT matched here and is decoded by sharp natively.
+  // HEIC/HEIF: sharp's prebuilt binary can't decode HEVC, so decode with the
+  // dedicated decoder (libheif applies the stored rotation → upright pixels).
+  // Keep HEIC uploads at FULL resolution on file — these are high-quality phone
+  // photos worth archiving; the thumb proxy downsizes per request for display,
+  // and the lightbox serves this full image. AVIF (mime image/avif) is NOT
+  // matched here and is downscaled by sharp natively below.
   const isHeic =
     mime.includes("heic") ||
     mime.includes("heif") ||
     /\.(heic|heif)$/.test(nameLower);
 
-  let working = buffer;
   if (isHeic) {
     const jpeg = await decodeHeicToJpeg(buffer);
     if (!jpeg) {
       // No HEIC support / undecodable — leave the original untouched.
       return { buffer, mimeType, changed: false };
     }
-    working = jpeg;
+    return { buffer: jpeg, mimeType: "image/jpeg", changed: true };
   }
-  const decodedHeic = working !== buffer;
-
-  // If we decoded HEIC→JPEG, that result (upright, full size) is the floor we
-  // return when sharp can't take it further — far better than an unrenderable
-  // HEIC original.
-  const heicFallback: NormalizeResult = decodedHeic
-    ? { buffer: working, mimeType: "image/jpeg", changed: true }
-    : { buffer, mimeType, changed: false };
 
   const sharp = await loadSharp();
-  if (!sharp) return heicFallback;
+  if (!sharp) return { buffer, mimeType, changed: false };
 
   try {
-    const meta = await sharp(working, { failOn: "none" }).metadata();
+    const meta = await sharp(buffer, { failOn: "none" }).metadata();
     const fmt = meta.format;
     if (!fmt || !PROCESSABLE_FORMATS.has(fmt)) {
-      return heicFallback;
+      return { buffer, mimeType, changed: false };
     }
 
-    const pipeline = sharp(working, { failOn: "none" })
+    const pipeline = sharp(buffer, { failOn: "none" })
       // Apply EXIF orientation into the pixels and drop the flag. No-op for
       // already-upright images.
       .rotate()
@@ -144,8 +142,8 @@ export async function normalizeUploadImage(
         withoutEnlargement: true,
       });
 
-    // HEIC/HEIF and JPEG → JPEG. PNG/WebP keep their format (preserves
-    // transparency where it matters).
+    // AVIF (reported by sharp as "heif") and JPEG → JPEG. PNG/WebP keep their
+    // format (preserves transparency where it matters).
     if (fmt === "heif" || fmt === "jpeg") {
       const out = await pipeline.jpeg({ quality: JPEG_QUALITY }).toBuffer();
       return { buffer: out, mimeType: "image/jpeg", changed: true };
@@ -159,14 +157,14 @@ export async function normalizeUploadImage(
       return { buffer: out, mimeType: "image/webp", changed: true };
     }
 
-    return heicFallback;
+    return { buffer, mimeType, changed: false };
   } catch (err) {
-    // Corrupt/unsupported input — leave the original (or the decoded HEIC JPEG)
-    // untouched so the upload still succeeds.
+    // Corrupt/unsupported input — leave the original untouched so the upload
+    // still succeeds.
     console.warn(
       "normalizeUploadImage: skipped (could not process):",
       err instanceof Error ? err.message : String(err)
     );
-    return heicFallback;
+    return { buffer, mimeType, changed: false };
   }
 }
