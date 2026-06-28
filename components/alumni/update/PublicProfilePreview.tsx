@@ -260,7 +260,7 @@ export default function PublicProfilePreview({
   const essentialsComplete = completeness.missing.length === 0;
 
   const [collapsedPreview, setCollapsedPreview] = useState(essentialsComplete);
-  const [collapsedFurther, setCollapsedFurther] = useState(true);
+  const [collapsedFurther, setCollapsedFurther] = useState(false);
   const [showMissing, setShowMissing] = useState(false);
   const [copied, setCopied] = useState(false);
 
