@@ -155,7 +155,7 @@ function getProgramColor(program: string) {
     case "TEACHING ARTIST RESIDENCY":
       return "#005B7A";
     case "PASSAGE":
-      return "#1F7A52"; // Green Deep (Claude Design System) — PASSAGE umbrella stamp
+      return "#14532D"; // deep forest green — PASSAGE umbrella stamp (reads dark as thin stamp ink)
     case "DAT LAB CREATIVE RESIDENCY":
       return "#6C00AF"; // DAT Purple
     case "COMPANY RETREAT":
