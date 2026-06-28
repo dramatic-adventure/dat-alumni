@@ -5,7 +5,7 @@ import { getFolderIdForKind, MediaKind } from "@/lib/profileFolders";
 import { PassThrough } from "stream";
 import { requireAuth } from "@/lib/requireAuth";
 import { rateLimit, rateKey } from "@/lib/rateLimit";
-import { isAdmin } from "@/lib/ownership";
+import { isAdmin, assertCanEditProfile } from "@/lib/ownership";
 import { normalizeUploadImage } from "@/lib/normalizeUploadImage";
 
 export const runtime = "nodejs";
@@ -656,6 +656,11 @@ export async function POST(req: Request) {
 
     const alumniId = normId(slugRaw);
     if (!alumniId) return NextResponse.json({ error: "alumniId is required" }, { status: 400 });
+
+    // Ownership/admin guard: non-admins may only upload to their own profile.
+    const editAuth = await assertCanEditProfile(req, alumniId);
+    if (!editAuth.ok) return editAuth.response;
+
     if (!["headshot", "album", "reel", "event"].includes(kind)) {
       return NextResponse.json(
         { error: "kind must be one of headshot|album|reel|event" },
