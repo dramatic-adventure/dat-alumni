@@ -1,12 +1,25 @@
 // app/api/img/route.ts
 import { NextResponse } from "next/server";
+import { decodeHeicToJpeg } from "@/lib/decodeHeic";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0; // ✅ never ISR-cache this route
 
 // Bump this any time you want to confirm you're running the expected build.
-const IMG_ROUTE_BUILD = "2026-02-02T04:35-proxy-only";
+const IMG_ROUTE_BUILD = "2026-06-27T-heic-aware";
+
+// Sniff ISO-BMFF (HEIC/HEIF) by the `ftyp` box + major brand. Used when the
+// upstream content-type is missing/ambiguous so we still catch HEIC the
+// browser can't render.
+function looksLikeHeic(buf: Buffer): boolean {
+  if (buf.length < 12) return false;
+  if (buf.toString("ascii", 4, 8) !== "ftyp") return false;
+  const brand = buf.toString("ascii", 8, 12).toLowerCase();
+  return [
+    "heic", "heix", "heim", "heis", "hevc", "hevx", "mif1", "msf1", "heif",
+  ].includes(brand);
+}
 
 // ✅ IMPORTANT: keep this allowlist tight (add only hosts you actually use)
 const ALLOWED_HOSTS = new Set<string>([
@@ -157,8 +170,10 @@ export async function HEAD(req: Request) {
 }
 
 /**
- * GET: proxy-only (no sharp). Returns upstream bytes + upstream content-type.
- * This avoids sharp native-module issues on Netlify Next runtime.
+ * GET: proxy. Returns upstream bytes + upstream content-type, except HEIC/HEIF
+ * (which browsers can't render) is transcoded to JPEG with heic-convert — a pure
+ * JS decoder, so this route still avoids sharp's native-module issues on the
+ * Netlify Next runtime.
  */
 export async function GET(req: Request) {
   try {
@@ -274,9 +289,23 @@ export async function GET(req: Request) {
       });
     }
 
-    // ✅ Proxy-only response: preserve upstream bytes and content-type.
-    const outCt = contentType || "application/octet-stream";
-    const outBuf = new Uint8Array(inputBuf);
+    // Transcode HEIC/HEIF → JPEG so the browser can render it (the lightbox
+    // loads originals through this route, and iPhone headshots are HEIC). Detect
+    // via content-type, or by sniffing the bytes when Drive returns a generic
+    // octet-stream. heic-convert is pure JS (no native binary). On failure we
+    // fall back to passing the original bytes through unchanged.
+    let outCt = contentType || "application/octet-stream";
+    let outBuf = new Uint8Array(inputBuf);
+    const maybeHeic =
+      /heic|heif/.test(ct) ||
+      ((!ct || ct.includes("octet-stream")) && looksLikeHeic(inputBuf));
+    if (maybeHeic) {
+      const jpeg = await decodeHeicToJpeg(inputBuf);
+      if (jpeg) {
+        outBuf = new Uint8Array(jpeg);
+        outCt = "image/jpeg";
+      }
+    }
 
     instanceCacheSet(cacheKey, outBuf, outCt);
 
