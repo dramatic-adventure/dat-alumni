@@ -1123,6 +1123,7 @@ const profileState = useMemo(() => {
   return deriveProfileState({
     name,
     currentTitle: String(p.currentTitle ?? ""),
+    roles: String(p.roles ?? ""),
     location,
     secondLocation: String(p.secondLocation ?? ""),
     isBiCoastal: isTrue(p.isBiCoastal),

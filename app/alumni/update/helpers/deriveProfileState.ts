@@ -13,6 +13,8 @@ export type DeriveProfileInput = {
   // ── preview ──────────────────────────────────────────────
   name: string;
   currentTitle: string;
+  /** Comma-separated DAT roles (e.g. "Actor, Director") — used as the title fallback. */
+  roles: string;
   location: string;
   secondLocation: string;
   isBiCoastal: boolean;
@@ -77,10 +79,9 @@ function combineLocation(loc: string, second: string, biCoastal: boolean): strin
 }
 
 export function deriveProfileState(form: DeriveProfileInput): DerivedProfileState {
-  // The ~9 essentials that help a visitor recognize and follow the alum.
+  // The 8 essentials that help a visitor recognize and follow the alum.
   const essentials: Array<{ key: string; filled: boolean }> = [
     { key: "headshot", filled: form.hasHeadshot },
-    { key: "title", filled: nonEmpty(form.currentTitle) },
     { key: "location", filled: nonEmpty(form.location) },
     { key: "bio", filled: nonEmpty(form.bioLong) },
     { key: "identityTags", filled: nonEmpty(form.identityTags) },
@@ -90,6 +91,16 @@ export function deriveProfileState(form: DeriveProfileInput): DerivedProfileStat
     { key: "connect", filled: form.hasConnect },
   ];
 
+  // Title shows the alum's current title if set, otherwise their first DAT role.
+  const firstRole =
+    String(form.roles ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)[0] ?? "";
+  const titleResolved = nonEmpty(form.currentTitle)
+    ? String(form.currentTitle).trim()
+    : firstRole;
+
   const total = essentials.length;
   const filled = essentials.filter((e) => e.filled).length;
   const missing = essentials.filter((e) => !e.filled).map((e) => e.key);
@@ -98,7 +109,7 @@ export function deriveProfileState(form: DeriveProfileInput): DerivedProfileStat
   return {
     preview: {
       name: String(form.name ?? "").trim(),
-      title: String(form.currentTitle ?? "").trim(),
+      title: titleResolved,
       location: combineLocation(form.location, form.secondLocation, form.isBiCoastal),
       headshotUrl: String(form.headshotUrl ?? "").trim(),
       headline: String(form.headline ?? "").trim(),

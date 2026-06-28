@@ -538,6 +538,29 @@ export default function IdentityPanel({
   // Derived — parsed language entries (lang + optional level)
   const langEntries = parseLangEntries(profile.languages);
 
+  // Role with DAT is permanent (top DAT role). "Current title" is an optional
+  // add-on for what the alum does now, outside DAT — revealed on demand.
+  const datRole = parseCommaList(profile.roles)[0] || "";
+  const [showTitleEditor, setShowTitleEditor] = useState(
+    () => Boolean(String(profile.currentTitle || "").trim())
+  );
+  const [roleLinkHover, setRoleLinkHover] = useState(false);
+
+  // The DAT role is set by DAT and not self-editable. If it's wrong, the alum
+  // can flag it via a pre-filled email that routes to an admin to correct.
+  const roleHelpHref =
+    "mailto:hello@dramaticadventure.com" +
+    "?subject=" +
+    encodeURIComponent(
+      `DAT role correction — ${String(profile.name || profile.slug || "alumni profile")}`
+    ) +
+    "&body=" +
+    encodeURIComponent(
+      `Hi DAT team,\n\nMy role with DAT currently shows as "${datRole || "(none on file)"}"` +
+        `${profile.slug ? ` on /alumni/${profile.slug}` : ""}, but it looks incorrect.\n\n` +
+        `The correct role should be:\n\nThanks!`
+    );
+
   function toggleLang(lang: string) {
     setProfile((p: any) => {
       const entries = parseLangEntries(p.languages);
@@ -575,22 +598,131 @@ export default function IdentityPanel({
       </div>
 
       <div style={{ marginTop: 8 }}>
-        {/* Current role / title */}
+        {/* Role with DAT (locked) + optional current title — same row */}
         <div style={fieldBlockStyle}>
-          <label style={labelStyle}>Current role / title</label>
-          <input
-            value={profile.currentTitle || ""}
-            onChange={(e) =>
-              setProfile((p: any) => ({ ...p, currentTitle: e.target.value }))
-            }
-            style={inputStyle}
-            placeholder="e.g. Artistic Director, Freelance Actor, Teaching Artist…"
-            disabled={loading}
-          />
-          <p style={tipStyle}>
-            How would you introduce yourself in a room right now? This appears
-            prominently on your public profile.
-          </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "auto minmax(0, 1fr)",
+              columnGap: 36,
+              rowGap: 8,
+              alignItems: "center",
+            }}
+          >
+            {/* Row 1 — labels */}
+            <label style={labelStyle}>Your role with DAT</label>
+            {showTitleEditor ? (
+              <label style={labelStyle}>What you&rsquo;re doing now</label>
+            ) : (
+              <span aria-hidden="true" />
+            )}
+
+            {/* Row 2 — locked role pill + control (add-link OR input) */}
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                padding: "9px 16px",
+                borderRadius: 999,
+                background: "rgba(0,0,0,0.22)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                color: "#f2f2f2",
+                fontFamily: FF,
+                fontSize: "0.95rem",
+                fontWeight: 600,
+                opacity: datRole ? 0.95 : 0.5,
+                cursor: "default",
+                justifySelf: "start",
+              }}
+            >
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                style={{ display: "block", opacity: 0.65 }}
+              >
+                <rect x="5" y="11" width="14" height="9" rx="2" />
+                <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+              </svg>
+              {datRole || "Not on file yet"}
+            </span>
+
+            {!showTitleEditor ? (
+              <button
+                type="button"
+                onClick={() => setShowTitleEditor(true)}
+                disabled={loading}
+                style={{
+                  background: "transparent",
+                  border: "1px solid rgba(255,204,0,0.55)",
+                  borderRadius: 999,
+                  padding: "9px 16px",
+                  cursor: loading ? "not-allowed" : "pointer",
+                  color: "#ffcc00",
+                  fontFamily: FF,
+                  fontSize: "0.85rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.01em",
+                  whiteSpace: "nowrap",
+                  justifySelf: "start",
+                }}
+              >
+                + Add what you&rsquo;re doing now
+              </button>
+            ) : (
+              <input
+                value={profile.currentTitle || ""}
+                onChange={(e) =>
+                  setProfile((p: any) => ({ ...p, currentTitle: e.target.value }))
+                }
+                style={{ ...inputStyle, width: "100%" }}
+                placeholder="Your work today, outside DAT — e.g. Actor, Teacher, Nurse, Engineer, Student…"
+                disabled={loading}
+                autoFocus
+              />
+            )}
+
+            {/* Row 3 — helpers, each under its own field */}
+            <p
+              style={{
+                ...tipStyle,
+                margin: 0,
+                opacity: 1,
+                color: "rgba(217,217,217,0.62)",
+              }}
+            >
+              Set by DAT ·{" "}
+              <a
+                href={roleHelpHref}
+                onMouseEnter={() => setRoleLinkHover(true)}
+                onMouseLeave={() => setRoleLinkHover(false)}
+                style={{
+                  color: "#ffcc00",
+                  textDecoration: "none",
+                  fontWeight: 800,
+                  opacity: roleLinkHover ? 1 : 0.62,
+                  transition: "opacity 150ms ease",
+                }}
+              >
+                Looks wrong?
+              </a>
+            </p>
+            {showTitleEditor ? (
+              <p style={{ ...tipStyle, margin: 0 }}>
+                What you&rsquo;re up to now shows on your public profile in place of
+                your DAT role.
+              </p>
+            ) : (
+              <span aria-hidden="true" />
+            )}
+          </div>
         </div>
 
         {/* Pronouns + Languages — side by side on wide, stacked on mobile */}

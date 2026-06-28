@@ -99,7 +99,6 @@ const TILES: Tile[] = [
 // Completeness keys (from deriveProfileState) → label + where to edit it.
 const ESSENTIAL_META: Record<string, { label: string; tab: StudioTab }> = {
   headshot: { label: "Headshot", tab: "basics" },
-  title: { label: "Current title", tab: "basics" },
   location: { label: "Location", tab: "basics" },
   bio: { label: "Bio", tab: "basics" },
   identityTags: { label: "Identity tags", tab: "identity" },
