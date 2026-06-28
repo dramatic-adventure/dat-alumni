@@ -4,6 +4,11 @@
 const isCanaryPPR = process.env.NEXT_CANARY_PPR === "1";
 
 const nextConfig = {
+  // Keep sharp external so webpack doesn't try to bundle its native binary; it
+  // loads from node_modules at runtime. The image proxy (/api/media/thumb) and
+  // the upload route use sharp for EXIF orientation + HEIC→JPEG transcode.
+  serverExternalPackages: ["sharp"],
+
   experimental: {
     // Next.js 16 added isolatedDevBuild (default: true) which redirects dev
     // output to .next/dev/ instead of .next/.  On this machine it causes cold

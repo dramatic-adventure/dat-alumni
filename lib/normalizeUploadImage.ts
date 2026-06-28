@@ -17,7 +17,29 @@
 // sharp's prebuilt binaries include libheif (verified for the Linux runtime
 // Netlify uses), so HEIC decode works without any extra dependency.
 
-import sharp from "sharp";
+// sharp is loaded lazily (not a top-level static import) so that if its native
+// binary is missing from the serverless bundle the upload still succeeds with the
+// original bytes instead of 500ing at module load. See loadSharp() below.
+import type sharpType from "sharp";
+
+// Cached lazy loader. Resolves to the sharp factory, or null if it can't load
+// (e.g. the native .node binary was pruned from the function bundle). The null
+// is cached so we don't retry the failing import on every request.
+let sharpPromise: Promise<typeof sharpType | null> | undefined;
+function loadSharp(): Promise<typeof sharpType | null> {
+  if (!sharpPromise) {
+    sharpPromise = import("sharp")
+      .then((m) => (m.default ?? m) as typeof sharpType)
+      .catch((err) => {
+        console.warn(
+          "normalizeUploadImage: sharp unavailable, keeping original bytes:",
+          err instanceof Error ? err.message : String(err)
+        );
+        return null;
+      });
+  }
+  return sharpPromise;
+}
 
 // Long-edge cap and JPEG quality for normalized output. 2400px is crisp on any
 // screen; the thumbnail proxy downsizes further for display.
@@ -71,6 +93,9 @@ export async function normalizeUploadImage(
   ) {
     return { buffer, mimeType, changed: false };
   }
+
+  const sharp = await loadSharp();
+  if (!sharp) return { buffer, mimeType, changed: false };
 
   try {
     const meta = await sharp(buffer, { failOn: "none" }).metadata();

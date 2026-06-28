@@ -168,19 +168,12 @@ module.exports = {
       console.log("  skipping public/ (not found in handler)");
     }
 
-    // 3. Sharp/@img native binaries.
-    // Netlify redirects Next image optimization to Netlify Image CDN, and this app
-    // does not directly import sharp in runtime code. Do not ship Sharp binaries
-    // inside the SSR handler.
-    const imgDir = path.join(HANDLER_DIR, "node_modules", "@img");
-    if (fs.existsSync(imgDir)) {
-      totalFreed += removePath(imgDir, HANDLER_DIR, utils);
-    }
-
-    const sharpDir = path.join(HANDLER_DIR, "node_modules", "sharp");
-    if (fs.existsSync(sharpDir)) {
-      totalFreed += removePath(sharpDir, HANDLER_DIR, utils);
-    }
+    // 3. Sharp/@img native binaries are intentionally KEPT.
+    // The image proxy (/api/media/thumb) and the upload route import sharp at
+    // runtime for EXIF orientation + HEIC→JPEG transcode, so sharp and its
+    // platform binary (@img/sharp-linux-*) must remain in the function bundle.
+    // (Previously pruned here on the assumption sharp was unused at runtime —
+    // that assumption is no longer true and pruning it broke headshots.)
 
     // 4. *.map files anywhere in the handler.
     const mapFiles = collectMapFiles(HANDLER_DIR);

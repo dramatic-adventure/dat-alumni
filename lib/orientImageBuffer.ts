@@ -12,7 +12,29 @@
 // strips the EXIF orientation flag) and converting HEIC/HEIF to JPEG makes every
 // size render identically and upright.
 
-import sharp from "sharp";
+// sharp is loaded lazily (not a top-level static import) so that if its native
+// binary is missing from the serverless bundle the route degrades to serving the
+// original bytes instead of 500ing at module load. See loadSharp() below.
+import type sharpType from "sharp";
+
+// Cached lazy loader. Resolves to the sharp factory, or null if it can't load
+// (e.g. the native .node binary was pruned from the function bundle). The null
+// is cached so we don't retry the failing import on every request.
+let sharpPromise: Promise<typeof sharpType | null> | undefined;
+function loadSharp(): Promise<typeof sharpType | null> {
+  if (!sharpPromise) {
+    sharpPromise = import("sharp")
+      .then((m) => (m.default ?? m) as typeof sharpType)
+      .catch((err) => {
+        console.warn(
+          "orientImageBuffer: sharp unavailable, serving original bytes:",
+          err instanceof Error ? err.message : String(err)
+        );
+        return null;
+      });
+  }
+  return sharpPromise;
+}
 
 // Formats a browser can render directly. (gif handled separately so we never
 // flatten an animation.)
@@ -40,6 +62,9 @@ export async function orientImageBuffer(
   input: Buffer,
   contentType: string
 ): Promise<OrientedImage> {
+  const sharp = await loadSharp();
+  if (!sharp) return { buffer: input, contentType };
+
   try {
     const meta = await sharp(input, { failOn: "none" }).metadata();
     const fmt = meta.format;
