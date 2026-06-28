@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { sheetsClient } from "@/lib/googleClients";
+import { assertCanEditProfile } from "@/lib/ownership";
 
 export const runtime = "nodejs";
 
@@ -261,6 +262,12 @@ export async function POST(req: Request) {
     if (!alumniId) {
       return NextResponse.json({ ok: false, error: "Missing alumniId" }, { status: 400 });
     }
+
+    // Auth + ownership: the editor must own the target profile (or be admin)
+    // before creating/editing/deleting/restoring its story on the public map.
+    const editAuth = await assertCanEditProfile(req, alumniId);
+    if (!editAuth.ok) return editAuth.response;
+
     if (mode !== "create" && mode !== "edit" && mode !== "delete" && mode !== "restore") {
       return NextResponse.json({ ok: false, error: "Invalid mode" }, { status: 400 });
     }

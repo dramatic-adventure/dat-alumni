@@ -1,6 +1,7 @@
 // app/api/map/append-story/route.ts
 import { NextResponse } from "next/server";
 import { sheetsClient } from "@/lib/googleClients";
+import { assertCanEditProfile } from "@/lib/ownership";
 
 export const runtime = "nodejs";
 
@@ -125,6 +126,10 @@ export async function POST(req: Request) {
     if (!alumniId) {
       return NextResponse.json({ ok: false, error: "Missing alumniId" }, { status: 400 });
     }
+
+    // Auth + ownership: only the profile owner (or an admin) may write its story.
+    const editAuth = await assertCanEditProfile(req, alumniId);
+    if (!editAuth.ok) return editAuth.response;
 
     const sheets = sheetsClient();
 
