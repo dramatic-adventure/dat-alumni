@@ -6,6 +6,7 @@ import { PassThrough } from "stream";
 import { requireAuth } from "@/lib/requireAuth";
 import { rateLimit, rateKey } from "@/lib/rateLimit";
 import { isAdmin } from "@/lib/ownership";
+import { normalizeUploadImage } from "@/lib/normalizeUploadImage";
 
 export const runtime = "nodejs";
 
@@ -684,6 +685,18 @@ export async function POST(req: Request) {
     ]);
     if (!allowed.has(mimeType)) {
       return NextResponse.json({ error: "Unsupported file type" }, { status: 415 });
+    }
+
+    // Normalize images before anything downstream computes the filename/extension
+    // or uploads bytes to Drive: apply+strip EXIF orientation, convert HEIC/HEIF
+    // to JPEG (browsers can't render HEIC), and cap dimensions. Videos, PDFs, and
+    // GIFs pass through untouched; any failure falls back to the original bytes.
+    {
+      const normalized = await normalizeUploadImage(buffer, mimeType, name);
+      if (normalized.changed) {
+        buffer = normalized.buffer;
+        mimeType = normalized.mimeType;
+      }
     }
 
     const drive = driveClient();

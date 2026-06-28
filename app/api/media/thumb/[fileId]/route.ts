@@ -6,6 +6,7 @@
 // observed overriding Netlify-CDN-Cache-Control on query-param routes).
 import { NextResponse } from "next/server";
 import { driveClient } from "@/lib/googleClients";
+import { orientImageBuffer } from "@/lib/orientImageBuffer";
 
 export const runtime = "nodejs";
 
@@ -79,8 +80,14 @@ export async function GET(
           throw new Error("Thumbnail too small — falling back to full file");
         }
 
-        const contentType = resp.headers.get("content-type") || "image/jpeg";
-        return new NextResponse(buf as any, {
+        const upstreamType = resp.headers.get("content-type") || "image/jpeg";
+        // Drive bakes EXIF orientation into small thumbnails but not always into
+        // larger ones, so normalize here to guarantee upright output at any size.
+        const { buffer: outBuf, contentType } = await orientImageBuffer(
+          Buffer.from(buf),
+          upstreamType
+        );
+        return new NextResponse(outBuf as any, {
           headers: {
             "Content-Type": contentType,
             "Cache-Control": BROWSER_CACHE,
@@ -101,12 +108,20 @@ export async function GET(
       { responseType: "arraybuffer" } as any
     );
 
-    const contentType =
+    const upstreamType =
       (r.headers?.["content-type"] as string) ||
       (r.headers?.["Content-Type"] as string) ||
       "image/jpeg";
 
-    return new NextResponse(r.data as any, {
+    // The full-file fallback serves raw Drive bytes (often an un-oriented HEIC).
+    // Normalize orientation and transcode HEIC/HEIF → JPEG so every browser
+    // renders it upright.
+    const { buffer: outBuf, contentType } = await orientImageBuffer(
+      Buffer.from(r.data as unknown as ArrayBuffer),
+      upstreamType
+    );
+
+    return new NextResponse(outBuf as any, {
       headers: {
         "Content-Type": contentType,
         "Cache-Control": BROWSER_CACHE,
