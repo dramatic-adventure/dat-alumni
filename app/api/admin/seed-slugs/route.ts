@@ -1,13 +1,13 @@
 // /app/api/admin/forward-slug/route.ts
 import { NextResponse } from "next/server";
 import { sheetsClient } from "@/lib/googleClients";
-import { requireAuth } from "@/lib/requireAuth";
+import { requireAdmin } from "@/lib/requireAuth";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
-    const auth = await requireAuth(req);
+    const auth = await requireAdmin(req);
     if (!auth.ok) return auth.response;
 
     const body = await req.json().catch(() => ({}));

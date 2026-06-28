@@ -1,10 +1,14 @@
 // app/api/admin/diag-loadcsv/route.ts
 import { NextResponse } from "next/server";
 import { loadCsv } from "@/lib/loadCsv";
+import { requireAdmin } from "@/lib/requireAuth";
 
 export const runtime = "nodejs"; // SA fallback + fetch timeouts rely on Node APIs
 
 export async function GET(req: Request) {
+  const auth = await requireAdmin(req);
+  if (!auth.ok) return auth.response;
+
   const { searchParams } = new URL(req.url);
 
   const url = searchParams.get("url") || "";

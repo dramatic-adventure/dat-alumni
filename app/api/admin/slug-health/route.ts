@@ -1,6 +1,7 @@
 // app/api/admin/slug-health/route.ts
 import { NextResponse } from "next/server";
 import { loadAlumni, loadVisibleAlumni, getSlugForward } from "@/lib/loadAlumni";
+import { requireAdmin } from "@/lib/requireAuth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -10,6 +11,9 @@ function norm(s: unknown) {
 }
 
 export async function GET(req: Request) {
+  const auth = await requireAdmin(req);
+  if (!auth.ok) return auth.response;
+
   const { searchParams } = new URL(req.url);
   const inSlug = norm(searchParams.get("slug"));
   if (!inSlug) {

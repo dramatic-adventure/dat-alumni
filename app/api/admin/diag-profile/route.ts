@@ -5,6 +5,7 @@ import { getAllStories } from "@/lib/loadRows";
 import { getSlugAliases, normSlug } from "@/lib/slugAliases";
 import { filterRowsByAliases } from "@/lib/rowsByAliases";
 import { loadCsv } from "@/lib/loadCsv";
+import { requireAdmin } from "@/lib/requireAuth";
 
 export const runtime = "nodejs";
 
@@ -50,6 +51,9 @@ export async function GET(req: Request) {
   if (process.env.NODE_ENV === "production") {
     return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
   }
+
+  const auth = await requireAdmin(req);
+  if (!auth.ok) return auth.response;
 
   try {
     const url = new URL(req.url);
