@@ -212,6 +212,7 @@ function CardHeader({
       type="button"
       onClick={onToggle}
       aria-expanded={!collapsed}
+      className="ppp-card-header"
       style={{
         display: "flex",
         alignItems: "center",
@@ -254,9 +255,25 @@ export default function PublicProfilePreview({
   const { preview, completeness, featureFlags } = state;
   const published = Boolean(publicHref && preview.slug);
 
-  const [collapsedPreview, setCollapsedPreview] = useState(false);
-  const [collapsedFurther, setCollapsedFurther] = useState(false);
+  // Established profiles (all essentials filled) collapse by default so the
+  // Profile Studio surfaces; new/incomplete profiles stay open for guidance.
+  const essentialsComplete = completeness.missing.length === 0;
+
+  const [collapsedPreview, setCollapsedPreview] = useState(essentialsComplete);
+  const [collapsedFurther, setCollapsedFurther] = useState(true);
   const [showMissing, setShowMissing] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const copyLink = async () => {
+    if (!publicHref) return;
+    try {
+      await navigator.clipboard.writeText(`https://${host}${publicHref}`);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard unavailable — no-op */
+    }
+  };
 
   // Show the real public host once mounted; sensible default for SSR/first paint.
   const [host, setHost] = useState("stories.dramaticadventure.com");
@@ -270,7 +287,8 @@ export default function PublicProfilePreview({
   const nextUpKey = TILES.find((t) => !isDone(t.flag))?.key ?? null;
 
   const cardStyle = (collapsed: boolean): CSSProperties => ({
-    background: COLOR.kraft,
+    // Translucent kraft so the two blocks read as lighter/secondary.
+    background: "rgba(218, 201, 166, 0.55)",
     borderRadius: 18,
     padding: collapsed ? "16px 26px" : "22px 26px 26px",
     color: COLOR.ink,
@@ -285,6 +303,49 @@ export default function PublicProfilePreview({
 
   return (
     <div style={{ background: COLOR.goldBg, borderRadius: 20, padding: 16 }}>
+      <style jsx global>{`
+        /* Card headers (Your public profile, Take it further): no lift/shadow on hover */
+        .ppp-card-header:hover {
+          box-shadow: none !important;
+          transform: none !important;
+          filter: none !important;
+        }
+
+        /* "Share your latest": no lift/shadow; color shifts to DAT pink */
+        .ppp-share-latest:hover {
+          box-shadow: none !important;
+          transform: none !important;
+          filter: none !important;
+          color: #f23359 !important;
+        }
+
+        /* Public-profile URL: working link, color change on hover, no lift/shadow */
+        .ppp-url-link {
+          transition: color 150ms ease;
+        }
+        .ppp-url-link:hover {
+          color: #6c00af !important;
+          opacity: 1 !important;
+          box-shadow: none !important;
+          transform: none !important;
+          filter: none !important;
+        }
+
+        /* "Take it further" tiles (the ads): colored border + glow on hover */
+        .ppp-tile:hover {
+          border-color: rgba(108, 0, 175, 0.85) !important;
+          box-shadow: 0 0 0 1px rgba(108, 0, 175, 0.45),
+            0 12px 30px rgba(108, 0, 175, 0.28) !important;
+          transform: translateY(-2px) !important;
+          background: rgba(255, 255, 255, 0.62) !important;
+        }
+        /* "Next up" tile keeps its gold identity — glow in DAT gold instead */
+        .ppp-tile--nextup:hover {
+          border-color: rgba(217, 169, 25, 0.95) !important;
+          box-shadow: 0 0 0 1px rgba(217, 169, 25, 0.5),
+            0 12px 30px rgba(217, 169, 25, 0.3) !important;
+        }
+      `}</style>
       <div className="mx-auto w-full max-w-6xl" style={{ display: "grid", gap: 16 }}>
         {/* ── Card 1: public-profile preview ───────────────────────── */}
         <section aria-label="Your public profile" style={cardStyle(collapsedPreview)}>
@@ -298,7 +359,7 @@ export default function PublicProfilePreview({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 6,
-                  background: "rgba(255,255,255,0.8)",
+                  background: "#ffcc00",
                   color: COLOR.ink,
                   border: "1px solid rgba(36,17,35,0.12)",
                   borderRadius: 999,
@@ -435,6 +496,7 @@ export default function PublicProfilePreview({
                       <button
                         type="button"
                         onClick={onShareUpdate}
+                        className="ppp-share-latest"
                         style={{
                           background: "transparent",
                           border: "none",
@@ -451,93 +513,129 @@ export default function PublicProfilePreview({
                       </button>
                     )}
                   </div>
+
+                  {/* Public URL + actions — right of the headshot, above the divider */}
+                  {published ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        alignItems: "center",
+                        gap: 10,
+                        marginTop: 16,
+                      }}
+                    >
+                      <a
+                        href={publicHref ?? "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ppp-url-link"
+                        title={`${host}${publicHref}`}
+                        style={{
+                          flex: "1 1 200px",
+                          minWidth: 0,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          fontFamily: FF_SANS,
+                          fontSize: 15,
+                          color: COLOR.ink,
+                          opacity: 0.8,
+                          textDecoration: "none",
+                        }}
+                      >
+                        {host}
+                        {publicHref}
+                      </a>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none" }}>
+                        <button
+                          type="button"
+                          onClick={copyLink}
+                          className="ppp-copy-btn"
+                          style={{
+                            borderRadius: 999,
+                            padding: "9px 16px",
+                            fontFamily: FF_GROTESK,
+                            fontSize: 14,
+                            fontWeight: 700,
+                            background: "transparent",
+                            color: copied ? COLOR.green : COLOR.ink,
+                            border: copied
+                              ? "1px solid rgba(95,125,59,0.8)"
+                              : "1px solid rgba(36,17,35,0.4)",
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                            transition: "border-color 150ms ease, color 150ms ease",
+                          }}
+                        >
+                          {copied ? "Copied!" : "Copy link"}
+                        </button>
+                        <a
+                          href={publicHref ?? "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            textDecoration: "none",
+                            borderRadius: 999,
+                            padding: "9px 18px",
+                            fontFamily: FF_GROTESK,
+                            fontSize: 14,
+                            fontWeight: 700,
+                            background: COLOR.brand,
+                            color: COLOR.snow,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          View public profile
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        alignItems: "center",
+                        gap: 10,
+                        marginTop: 16,
+                      }}
+                    >
+                      <span
+                        style={{
+                          flex: "1 1 200px",
+                          minWidth: 0,
+                          fontFamily: FF_SANS,
+                          fontSize: 15,
+                          color: COLOR.ink,
+                          opacity: 0.65,
+                        }}
+                      >
+                        Save changes to update your live profile.
+                      </span>
+                      <span
+                        aria-disabled="true"
+                        style={{
+                          flex: "none",
+                          borderRadius: 999,
+                          padding: "9px 18px",
+                          fontFamily: FF_GROTESK,
+                          fontSize: 14,
+                          fontWeight: 700,
+                          background: "rgba(36,17,35,0.12)",
+                          color: "rgba(36,17,35,0.5)",
+                          whiteSpace: "nowrap",
+                          cursor: "not-allowed",
+                        }}
+                      >
+                        View public profile
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* URL + button row (flex siblings, never overlapping) */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  marginTop: 20,
-                  paddingTop: 18,
-                  borderTop: "1px solid rgba(36,17,35,0.15)",
-                }}
-              >
-                {published ? (
-                  <>
-                    <span
-                      title={`${host}${publicHref}`}
-                      style={{
-                        flex: 1,
-                        minWidth: 0,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        fontFamily: FF_SANS,
-                        fontSize: 15,
-                        color: COLOR.ink,
-                        opacity: 0.7,
-                      }}
-                    >
-                      {host}
-                      {publicHref}
-                    </span>
-                    <a
-                      href={publicHref ?? "#"}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        flex: "none",
-                        textDecoration: "none",
-                        borderRadius: 999,
-                        padding: "11px 22px",
-                        fontFamily: FF_GROTESK,
-                        fontSize: 15,
-                        fontWeight: 700,
-                        background: COLOR.brand,
-                        color: COLOR.snow,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      View public profile
-                    </a>
-                  </>
-                ) : (
-                  <>
-                    <span
-                      style={{
-                        flex: 1,
-                        minWidth: 0,
-                        fontFamily: FF_SANS,
-                        fontSize: 15,
-                        color: COLOR.ink,
-                        opacity: 0.65,
-                      }}
-                    >
-                      Save changes to update your live profile.
-                    </span>
-                    <span
-                      aria-disabled="true"
-                      style={{
-                        flex: "none",
-                        borderRadius: 999,
-                        padding: "11px 22px",
-                        fontFamily: FF_GROTESK,
-                        fontSize: 15,
-                        fontWeight: 700,
-                        background: "rgba(36,17,35,0.12)",
-                        color: "rgba(36,17,35,0.5)",
-                        whiteSpace: "nowrap",
-                        cursor: "not-allowed",
-                      }}
-                    >
-                      View public profile
-                    </span>
-                  </>
-                )}
-              </div>
+              {/* Divider (line break) below the identity row */}
+              <div style={{ marginTop: 20, borderTop: "1px solid rgba(36,17,35,0.15)" }} />
 
               {/* Encouragement + progress — click to reveal what's missing */}
               <button
@@ -552,7 +650,7 @@ export default function PublicProfilePreview({
                   textAlign: "left",
                   cursor: "pointer",
                   marginTop: 16,
-                  background: "rgba(255,255,255,0.5)",
+                  background: "rgba(255,255,255,0.82)",
                   border: "none",
                   borderRadius: 14,
                   padding: "14px 20px",
@@ -647,8 +745,8 @@ export default function PublicProfilePreview({
                                 fontFamily: FF_GROTESK,
                                 fontSize: 13,
                                 fontWeight: 700,
-                                color: COLOR.ink,
-                                background: "rgba(255,255,255,0.55)",
+                                color: "#f2f2f2",
+                                background: "#2493A9",
                                 border: "1px solid rgba(36,17,35,0.15)",
                                 borderRadius: 999,
                                 padding: "6px 13px",
@@ -692,6 +790,7 @@ export default function PublicProfilePreview({
                     key={tile.key}
                     type="button"
                     onClick={() => onOpenTab(tile.tab)}
+                    className={`ppp-tile ${isNextUp ? "ppp-tile--nextup" : ""}`}
                     style={{
                       gridColumn: tile.wide ? "1 / -1" : "auto",
                       textAlign: "left",
@@ -701,44 +800,9 @@ export default function PublicProfilePreview({
                       border: isNextUp
                         ? "1px solid rgba(217,169,25,0.75)"
                         : "1px solid rgba(36,17,35,0.10)",
-                      background: "rgba(255,255,255,0.42)",
+                      background: "rgba(255,255,255,0.82)",
                     }}
                   >
-                    {done ? (
-                      <span
-                        style={{
-                          display: "inline-block",
-                          marginBottom: 8,
-                          fontFamily: FF_GROTESK,
-                          fontSize: 11,
-                          fontWeight: 800,
-                          letterSpacing: ".1em",
-                          textTransform: "uppercase",
-                          color: COLOR.green,
-                        }}
-                      >
-                        Added
-                      </span>
-                    ) : isNextUp ? (
-                      <span
-                        style={{
-                          display: "inline-block",
-                          marginBottom: 8,
-                          fontFamily: FF_GROTESK,
-                          fontSize: 11,
-                          fontWeight: 800,
-                          letterSpacing: ".1em",
-                          textTransform: "uppercase",
-                          color: COLOR.ink,
-                          background: COLOR.gold,
-                          borderRadius: 999,
-                          padding: "3px 10px",
-                        }}
-                      >
-                        Next up
-                      </span>
-                    ) : null}
-
                     <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
                       <span style={{ color: COLOR.brand, opacity: 0.8 }}>
                         <TileIcon name={tile.icon} />
@@ -753,6 +817,26 @@ export default function PublicProfilePreview({
                       >
                         {tile.title}
                       </span>
+                      {isNextUp ? (
+                        <span
+                          style={{
+                            marginLeft: "auto",
+                            flex: "none",
+                            fontFamily: FF_GROTESK,
+                            fontSize: 11,
+                            fontWeight: 800,
+                            letterSpacing: ".1em",
+                            textTransform: "uppercase",
+                            color: COLOR.ink,
+                            background: COLOR.gold,
+                            borderRadius: 999,
+                            padding: "3px 10px",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Next up
+                        </span>
+                      ) : null}
                     </div>
                     <p
                       style={{

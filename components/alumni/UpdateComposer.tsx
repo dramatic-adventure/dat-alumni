@@ -498,12 +498,13 @@ export default function UpdateComposer({
           transform: translateZ(0);
         }
         .update-composer .uc-btn-post:hover:not(:disabled) {
-          transform: translateY(-2px);
+          transform: translateY(-1px) scale(1.02);
           filter: brightness(1.06);
-          box-shadow: 0 14px 28px rgba(0, 0, 0, 0.14);
+          opacity: 1;
+          box-shadow: 0 10px 18px rgba(0, 0, 0, 0.1);
         }
         .update-composer .uc-btn-post:active:not(:disabled) {
-          transform: translateY(0px) scale(0.99);
+          transform: translateY(0px) scale(0.98);
           box-shadow: none;
         }
 
@@ -517,7 +518,7 @@ export default function UpdateComposer({
         }
 
         .update-composer .uc-btn-post:hover:not(:disabled) {
-          background: #510083ff !important;
+          background: #6c00af !important;
           color: #f2f2f2 !important;
           opacity: 1 !important;
         }

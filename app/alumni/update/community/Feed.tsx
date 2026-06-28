@@ -60,7 +60,7 @@ export default function Feed({
   explainStyleLight: React.CSSProperties;
 }) {
   return (
-    <div style={{ margin: "2rem 0 3.25rem" }}>
+    <div style={{ margin: "2rem 0 0" }}>
       <div
         style={{
           background: "#f2f2f241",

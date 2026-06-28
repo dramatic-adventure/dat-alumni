@@ -2399,17 +2399,17 @@ return (
               rel="noopener noreferrer"
               style={{
                 fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: ".1em",
+                fontSize: 13,
+                fontWeight: 800,
+                letterSpacing: ".12em",
                 textTransform: "uppercase",
                 color: "#f2f2f2",
-                background: "transparent",
-                border: "1px solid rgba(242,242,242,0.55)",
+                background: "#f23359",
+                border: "none",
                 borderRadius: 14,
-                padding: "6px 16px",
+                padding: "9px 22px",
                 textDecoration: "none",
-                textShadow: "0 1px 4px rgba(0,0,0,0.8)",
+                boxShadow: "0 8px 22px rgba(242,51,89,0.55)",
                 whiteSpace: "nowrap",
               }}
             >
@@ -2480,7 +2480,10 @@ return (
 {/* ====== PROFILE STUDIO (replaces MediaHub container) ====== */}
 
 {isAdmin && impersonating && alumniId ? (
-  <div className="flex justify-center mb-8">
+  <div
+    className="flex justify-center"
+    style={{ marginTop: "3.25rem", marginBottom: "3.25rem" }}
+  >
     <div
       style={{
         backgroundColor: "rgba(255, 204, 0, 0.6)", // soft DAT yellow
@@ -2491,7 +2494,6 @@ return (
         letterSpacing: "0.14em",
         padding: "14px 28px",   // ← clear, visible padding
         borderRadius: "18px",
-        marginBottom: "1rem",
       }}
     >
       ATTN ADMIN: Now editing as {alumniId}
@@ -2503,7 +2505,7 @@ return (
 {/* ====== YOUR PUBLIC PROFILE (preview + Take-it-further, above the Studio) ====== */}
 <div
   style={{
-    margin: "0.25rem 0 1.5rem",
+    margin: "3.25rem 0 0",
     paddingLeft: "clamp(0.25rem, 5vw, 4rem)",
     paddingRight: "clamp(0.25rem, 5vw, 4rem)",
     boxSizing: "border-box",
@@ -2521,7 +2523,7 @@ return (
 
 <div
   style={{
-    margin: "0.25rem 0 3.25rem",
+    margin: "3.25rem 0 3.25rem",
     paddingLeft: "clamp(0.25rem, 5vw, 4rem)",
     paddingRight: "clamp(0.25rem, 5vw, 4rem)",
     boxSizing: "border-box",
@@ -2925,8 +2927,11 @@ return (
 
   .alumni-update a.feed-name:hover {
     color: #f23359 !important;
-    letter-spacing: 2px !important;
+    letter-spacing: 0.1em !important;
     text-decoration: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+    filter: none !important;
   }
 
 
