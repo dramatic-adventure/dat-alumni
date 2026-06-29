@@ -18,11 +18,13 @@ export type FieldCapture = {
   captureId: string;
   programId: string;
   authorSlug: string;
-  kind: string; // "note" | "quote" (Slice A)
+  kind: string; // "note" | "quote" | "photo"
   bodyText: string;
   createdAt: string;
   dayIndex: string;
   quoteSpeaker: string;
+  driveFileId: string; // photo only; empty for note/quote
+  mimeType: string; // photo only; empty for note/quote
 };
 
 const FIELD_CAPTURES_RANGE = "Field-Captures!A:L";
@@ -52,6 +54,8 @@ export const loadCapturesForAuthor = cache(
     const iCreated = idxOf(header, ["createdat"]);
     const iDay = idxOf(header, ["dayindex"]);
     const iSpeaker = idxOf(header, ["quotespeaker"]);
+    const iDriveFile = idxOf(header, ["drivefileid"]);
+    const iMime = idxOf(header, ["mimetype"]);
     if ([iId, iProg, iAuthor, iKind, iBody, iCreated].some((i) => i === -1)) return [];
 
     const out: FieldCapture[] = [];
@@ -68,6 +72,8 @@ export const loadCapturesForAuthor = cache(
         createdAt: String(row[iCreated] ?? ""),
         dayIndex: iDay !== -1 ? String(row[iDay] ?? "") : "",
         quoteSpeaker: iSpeaker !== -1 ? String(row[iSpeaker] ?? "") : "",
+        driveFileId: iDriveFile !== -1 ? String(row[iDriveFile] ?? "") : "",
+        mimeType: iMime !== -1 ? String(row[iMime] ?? "") : "",
       });
     }
 

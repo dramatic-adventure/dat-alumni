@@ -33,34 +33,60 @@ export default function TracesList({ captures }: { captures: FieldCapture[] }) {
       <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 12 }}>
         {captures.map((c) => {
           const isQuote = c.kind === "quote";
+          const isPhoto = c.kind === "photo";
+          const label = isPhoto ? "Photo" : isQuote ? "Quote" : "Note";
+          const labelColor = isPhoto ? T.yellow : isQuote ? T.pink : T.teal;
           return (
             <li
               key={c.captureId}
               style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 16px" }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
-                <span style={{ fontFamily: FONT.grotesk, fontSize: 10.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: isQuote ? T.pink : T.teal }}>
-                  {isQuote ? "Quote" : "Note"}
+                <span style={{ fontFamily: FONT.grotesk, fontSize: 10.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: labelColor }}>
+                  {label}
                 </span>
                 <span style={{ fontFamily: FONT.dm, fontSize: 12, color: T.muted }}>{formatWhen(c.createdAt)}</span>
               </div>
-              <p
-                style={{
-                  fontFamily: FONT.dm,
-                  fontStyle: isQuote ? "italic" : "normal",
-                  fontSize: 15,
-                  lineHeight: 1.5,
-                  color: T.ink,
-                  margin: 0,
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                {isQuote ? `“${c.bodyText}”` : c.bodyText}
-              </p>
-              {isQuote && c.quoteSpeaker && (
-                <p style={{ fontFamily: FONT.dm, fontSize: 13.5, color: T.muted, margin: "6px 0 0" }}>
-                  — {c.quoteSpeaker}
-                </p>
+
+              {isPhoto ? (
+                <>
+                  {c.driveFileId && (
+                    // Private media: served only through the authorized route, never
+                    // the public /api/media/thumb proxy.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={`/api/field-kit/capture/media/${encodeURIComponent(c.driveFileId)}`}
+                      alt={c.bodyText || "Capture photo"}
+                      style={{ display: "block", width: "100%", height: "auto", borderRadius: 9, border: `1px solid ${T.border}` }}
+                    />
+                  )}
+                  {c.bodyText && (
+                    <p style={{ fontFamily: FONT.dm, fontSize: 14.5, lineHeight: 1.5, color: T.ink, margin: "10px 0 0", whiteSpace: "pre-wrap" }}>
+                      {c.bodyText}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <p
+                    style={{
+                      fontFamily: FONT.dm,
+                      fontStyle: isQuote ? "italic" : "normal",
+                      fontSize: 15,
+                      lineHeight: 1.5,
+                      color: T.ink,
+                      margin: 0,
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {isQuote ? `“${c.bodyText}”` : c.bodyText}
+                  </p>
+                  {isQuote && c.quoteSpeaker && (
+                    <p style={{ fontFamily: FONT.dm, fontSize: 13.5, color: T.muted, margin: "6px 0 0" }}>
+                      — {c.quoteSpeaker}
+                    </p>
+                  )}
+                </>
               )}
             </li>
           );

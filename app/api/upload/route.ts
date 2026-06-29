@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { driveClient, sheetsClient } from "@/lib/googleClients";
 import { getFolderIdForKind, MediaKind } from "@/lib/profileFolders";
-import { PassThrough } from "stream";
+import { findOrCreateFolder, bufferToStream } from "@/lib/driveFolders";
 import { requireAuth } from "@/lib/requireAuth";
 import { rateLimit, rateKey } from "@/lib/rateLimit";
 import { isAdmin, assertCanEditProfile } from "@/lib/ownership";
@@ -13,6 +13,7 @@ export const runtime = "nodejs";
 
 /* ────────────────────────────────────────────────────────────────────────── */
 /* Small types so TS is happy (we don't import full Google types)            */
+/* findOrCreateFolder + bufferToStream now live in @/lib/driveFolders (shared) */
 /* ────────────────────────────────────────────────────────────────────────── */
 type DriveCreateResp = { data: { id?: string } };
 type DriveListResp = {
@@ -22,12 +23,6 @@ type DriveListResp = {
 /* ────────────────────────────────────────────────────────────────────────── */
 /* Utils                                                                     */
 /* ────────────────────────────────────────────────────────────────────────── */
-function bufferToStream(buf: Buffer) {
-  const s = new PassThrough();
-  s.end(buf);
-  return s;
-}
-
 function slugify(input: string) {
   return String(input || "")
     .normalize("NFKD")
@@ -316,47 +311,6 @@ async function getDisplayNameSlug(
 /* ────────────────────────────────────────────────────────────────────────── */
 function genCollectionId() {
   return `C-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
-}
-
-async function findOrCreateFolder(
-  drive: ReturnType<typeof driveClient>,
-  parentId: string,
-  name: string
-): Promise<string> {
-  const q = `'${parentId}' in parents and trashed = false and mimeType = 'application/vnd.google-apps.folder' and name = '${name.replace(
-    /'/g,
-    "\\'"
-  )}'`;
-
-  const list = (await withRetry(
-    () =>
-      (drive.files.list as any)({
-        q,
-        fields: "files(id,name)",
-        supportsAllDrives: true,
-        includeItemsFromAllDrives: true,
-      }),
-    "Drive list folder"
-  )) as DriveListResp;
-
-  const existing = list.data.files?.[0];
-  if (existing?.id) return existing.id;
-
-  const created = (await withRetry(
-    () =>
-      (drive.files.create as any)({
-        requestBody: {
-          name,
-          parents: [parentId],
-          mimeType: "application/vnd.google-apps.folder",
-        },
-        fields: "id",
-        supportsAllDrives: true,
-      }),
-    "Drive create folder"
-  )) as DriveCreateResp;
-
-  return created.data.id!;
 }
 
 /**

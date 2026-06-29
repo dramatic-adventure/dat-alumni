@@ -1,7 +1,7 @@
 // app/api/field-kit/capture/route.ts
 //
-// Field Kit "Capture" — Slice A (text-only note/quote, online). Appends one row
-// to the Field-Captures tab in the ALUMNI_SHEET_ID workbook.
+// Field Kit "Capture" — note/quote (Slice A) + photo (Slice B1, online only).
+// Appends one row to the Field-Captures tab in the ALUMNI_SHEET_ID workbook.
 //
 // Trust model (defense in depth — never trust the layout/middleware for a direct
 // API hit): this route re-runs the SAME access resolver the pages use, derives
@@ -10,21 +10,107 @@
 // verified access record — never a constant.
 //
 // Idempotency: the client mints a ULID captureId; we scan column A for it and
-// no-op if it already landed, so a retried POST never double-writes.
+// no-op if it already landed, so a retried POST never double-writes. For photos
+// the dedup scan runs BEFORE any Drive upload, so a retry never re-uploads bytes.
 //
-// Slice B (deferred): media (photo/voice) → driveFileId + mimeType; voice cap
-// 5 min / 25 MB enforced client + server. Those columns stay empty here.
+// Privacy: captures are PRIVATE to their author. Photo bytes live in Drive under
+// DRIVE_CAPTURES_FOLDER_ID/<programId>/<authorSlug>/ and are served only through
+// the authorized route app/api/field-kit/capture/media/[fileId] — never the
+// public /api/media/thumb.
+//
+// Slice B2/C (deferred): voice (with byte/duration cap + range streaming) and the
+// offline queue.
 
 import { NextResponse } from "next/server";
-import { sheetsClient } from "@/lib/googleClients";
+import { driveClient, sheetsClient } from "@/lib/googleClients";
+import { findOrCreateFolder, bufferToStream } from "@/lib/driveFolders";
+import { envOrThrow } from "@/lib/profileFolders";
+import { normalizeUploadImage } from "@/lib/normalizeUploadImage";
 import { rateLimit, rateKey } from "@/lib/rateLimit";
 import { getFieldKitAccess, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 import { withRetry, idxOf, normId } from "@/lib/sheetsResilience";
 
 export const runtime = "nodejs";
 
+type DriveCreateResp = { data: { id?: string } };
+
 const FIELD_CAPTURES_RANGE = "Field-Captures!A:L";
-const VALID_KINDS = new Set(["note", "quote"]);
+const VALID_KINDS = new Set(["note", "quote", "photo"]);
+
+// Photo uploads are bounded server-side regardless of what the client sends.
+const MAX_PHOTO_BYTES = 25 * 1024 * 1024; // 25 MB
+
+const ALLOWED_IMAGE_MIME = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/heic",
+  "image/heif",
+]);
+
+function extFromMime(mime: string): string {
+  const m = mime.toLowerCase();
+  if (m.includes("jpeg") || m.includes("jpg")) return "jpg";
+  if (m.includes("png")) return "png";
+  if (m.includes("webp")) return "webp";
+  if (m.includes("gif")) return "gif";
+  if (m.includes("heic")) return "heic";
+  if (m.includes("heif")) return "heif";
+  return "bin";
+}
+
+type CapturePayload = {
+  captureId: string;
+  kind: string;
+  bodyText: string;
+  createdAt: string;
+  dayIndex: string;
+  quoteSpeaker: string;
+  asId?: string;
+  // Photo (multipart) only:
+  file?: { buffer: Buffer; mimeType: string; name: string };
+};
+
+// Mirror /api/upload's dual-mode parsing: multipart/form-data (photo + fields)
+// OR the existing JSON path for note/quote.
+async function readPayload(req: Request): Promise<CapturePayload> {
+  const ct = req.headers.get("content-type") || "";
+  if (ct.includes("multipart/form-data")) {
+    const form = await req.formData();
+    const f = form.get("file");
+    const file =
+      f instanceof File
+        ? {
+            buffer: Buffer.from(await f.arrayBuffer()),
+            mimeType: f.type || "application/octet-stream",
+            name: f.name || "photo",
+          }
+        : undefined;
+    return {
+      captureId: String(form.get("captureId") ?? "").trim(),
+      kind: String(form.get("kind") ?? "").trim().toLowerCase(),
+      bodyText: String(form.get("bodyText") ?? "").trim(),
+      createdAt: String(form.get("createdAt") ?? "").trim(),
+      dayIndex: String(form.get("dayIndex") ?? "").trim(),
+      quoteSpeaker: String(form.get("quoteSpeaker") ?? "").trim(),
+      asId: String(form.get("asId") ?? "").trim() || undefined,
+      file,
+    };
+  }
+
+  const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+  if (!body) throw new Error("Invalid JSON body");
+  return {
+    captureId: String(body.captureId ?? "").trim(),
+    kind: String(body.kind ?? "").trim().toLowerCase(),
+    bodyText: String(body.bodyText ?? "").trim(),
+    createdAt: String(body.createdAt ?? "").trim(),
+    dayIndex: String(body.dayIndex ?? "").trim(),
+    quoteSpeaker: String(body.quoteSpeaker ?? "").trim(),
+    asId: String(body.asId ?? "").trim() || undefined,
+  };
+}
 
 export async function POST(req: Request) {
   try {
@@ -32,21 +118,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
-    // Parse the body up front so admin impersonation (?asId via body.asId) can be
-    // fed into the SAME gate the pages use. asId is honored ONLY for admins inside
-    // getFieldKitAccess; this route adds no bypass of its own.
-    const body = (await req.json().catch(() => null)) as {
-      captureId?: unknown;
-      kind?: unknown;
-      bodyText?: unknown;
-      createdAt?: unknown;
-      dayIndex?: unknown;
-      quoteSpeaker?: unknown;
-      asId?: unknown;
-    } | null;
-    if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-
-    const asId = String(body.asId ?? "").trim() || undefined;
+    const payload = await readPayload(req);
+    const asId = payload.asId;
 
     // Same gate the pages use. Signed-out → 401, not on this roster → 403. When an
     // admin passes asId, the write attributes to the impersonated roster member.
@@ -61,27 +134,41 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing ALUMNI_SHEET_ID" }, { status: 500 });
     }
 
-    // Author + program are ALWAYS server-derived. Author is the slug the access
-    // record resolved (the impersonated member when an admin sent asId); program
-    // from the verified access record (multi-program).
+    // Author + program are ALWAYS server-derived (impersonated member when an admin
+    // sent asId); never trusted from the body.
     const authorSlug = normId(access.slug);
     if (!authorSlug) {
       return NextResponse.json({ error: "No profile linked to this account" }, { status: 403 });
     }
     const programId = access.programId;
 
-    const captureId = String(body.captureId ?? "").trim();
-    const kind = String(body.kind ?? "").trim().toLowerCase();
-    const bodyText = String(body.bodyText ?? "").trim();
-    const createdAt = String(body.createdAt ?? "").trim() || new Date().toISOString();
-    const dayIndex = String(body.dayIndex ?? "").trim();
-    const quoteSpeaker = String(body.quoteSpeaker ?? "").trim();
+    const { captureId, kind, bodyText, createdAt: createdAtRaw, dayIndex, quoteSpeaker } = payload;
+    const createdAt = createdAtRaw || new Date().toISOString();
 
     if (!captureId) return NextResponse.json({ error: "captureId is required" }, { status: 400 });
     if (!VALID_KINDS.has(kind)) {
-      return NextResponse.json({ error: "kind must be note or quote" }, { status: 400 });
+      return NextResponse.json({ error: "kind must be note, quote, or photo" }, { status: 400 });
     }
-    if (!bodyText) return NextResponse.json({ error: "bodyText is required" }, { status: 400 });
+    const isPhoto = kind === "photo";
+    // Text kinds require bodyText; for photo it's an optional caption.
+    if (!isPhoto && !bodyText) {
+      return NextResponse.json({ error: "bodyText is required" }, { status: 400 });
+    }
+
+    // Validate the photo file up front (before any Drive work).
+    let photo: { buffer: Buffer; mimeType: string; name: string } | null = null;
+    if (isPhoto) {
+      if (!payload.file) {
+        return NextResponse.json({ error: "A photo file is required" }, { status: 400 });
+      }
+      if (payload.file.buffer.byteLength > MAX_PHOTO_BYTES) {
+        return NextResponse.json({ error: "Photo too large" }, { status: 413 });
+      }
+      if (!ALLOWED_IMAGE_MIME.has(payload.file.mimeType.toLowerCase())) {
+        return NextResponse.json({ error: "Unsupported image type" }, { status: 415 });
+      }
+      photo = payload.file;
+    }
 
     const sheets = sheetsClient();
 
@@ -106,12 +193,52 @@ export async function POST(req: Request) {
       serverReceivedAt: idxOf(header, ["serverreceivedat"]),
       dayIndex: idxOf(header, ["dayindex"]),
       quoteSpeaker: idxOf(header, ["quotespeaker"]),
+      driveFileId: idxOf(header, ["drivefileid"]),
+      mimeType: idxOf(header, ["mimetype"]),
     };
     if (col.captureId === -1) throw new Error('Field-Captures missing "captureId" header');
 
+    // Dedup FIRST — before any Drive upload — so a retried photo never re-uploads.
     const want = normId(captureId);
     const deduped = rows.slice(1).some((r) => normId(r[col.captureId]) === want);
     if (deduped) return NextResponse.json({ ok: true, captureId, deduped: true });
+
+    // Upload the photo to Drive: <root>/<programId>/<authorSlug>/<captureId>.<ext>.
+    let driveFileId = "";
+    let storedMime = "";
+    if (isPhoto && photo) {
+      // Normalize before upload: HEIC/HEIF → JPEG (browsers can't render HEIC),
+      // bake+strip EXIF orientation, cap dimensions. Failure falls back to the
+      // original bytes.
+      let buffer = photo.buffer;
+      let mimeType = photo.mimeType;
+      const normalized = await normalizeUploadImage(buffer, mimeType, photo.name);
+      if (normalized.changed) {
+        buffer = normalized.buffer;
+        mimeType = normalized.mimeType;
+      }
+
+      const drive = driveClient();
+      const root = envOrThrow("DRIVE_CAPTURES_FOLDER_ID");
+      const programFolderId = await findOrCreateFolder(drive, root, programId);
+      const authorFolderId = await findOrCreateFolder(drive, programFolderId, authorSlug);
+
+      const fileName = `${captureId}.${extFromMime(mimeType)}`;
+      const createRes = (await withRetry(
+        () =>
+          (drive.files.create as any)({
+            requestBody: { name: fileName, parents: [authorFolderId] },
+            media: { mimeType, body: bufferToStream(buffer) },
+            fields: "id",
+            supportsAllDrives: true,
+          }),
+        "Drive upload capture photo"
+      )) as DriveCreateResp;
+
+      driveFileId = createRes.data.id || "";
+      if (!driveFileId) throw new Error("Drive upload returned no file id");
+      storedMime = mimeType;
+    }
 
     const nowIso = new Date().toISOString();
     const newRow: string[] = Array(header.length).fill("");
@@ -122,13 +249,14 @@ export async function POST(req: Request) {
     put(col.programId, programId);
     put(col.authorSlug, authorSlug);
     put(col.kind, kind);
-    put(col.bodyText, bodyText);
+    put(col.bodyText, bodyText); // caption for photos; body for note/quote
     put(col.createdAt, createdAt);
     put(col.serverReceivedAt, nowIso); // server-stamped
     put(col.syncState, "synced"); // server-only field
     put(col.dayIndex, dayIndex);
-    put(col.quoteSpeaker, quoteSpeaker); // only sent for quotes; empty for notes
-    // driveFileId + mimeType intentionally left empty for Slice A (text-only).
+    put(col.quoteSpeaker, quoteSpeaker); // only sent for quotes; empty otherwise
+    put(col.driveFileId, driveFileId); // photo only; empty for note/quote
+    put(col.mimeType, storedMime); // photo only; empty for note/quote
 
     await withRetry(
       () =>
@@ -141,7 +269,7 @@ export async function POST(req: Request) {
       "Sheets append Field-Captures"
     );
 
-    return NextResponse.json({ ok: true, captureId });
+    return NextResponse.json({ ok: true, captureId, ...(driveFileId ? { driveFileId } : {}) });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("FIELD-KIT CAPTURE ERROR:", msg);
