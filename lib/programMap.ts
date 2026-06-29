@@ -185,6 +185,8 @@ export const programMap: Record<string, ProgramData> = {
     "jason-williamson": ["Resident Playwright"],
     "asa-williamson": ["Artist Apprentice"],
     "vida-williamson": ["Artist Apprentice"],
+    "christina-greene": ["Writer"],
+    "adrian-pica-borjas": ["Writer"],
   },
 },
 
@@ -206,6 +208,8 @@ export const programMap: Record<string, ProgramData> = {
     "jesse-baxter": ["Artistic Director"],
     "christen-madrazo": ["Director of Creative Learning"],
     "jason-williamson": ["Resident Playwright"],
+    "christina-greene": ["Writer"],
+    "adrian-pica-borjas": ["Writer"],
   },
 },
 
@@ -235,6 +239,8 @@ export const programMap: Record<string, ProgramData> = {
     "jason-williamson": ["Resident Playwright", "Teaching Artist"],
     "asa-williamson": ["Artist Apprentice"],
     "vida-williamson": ["Artist Apprentice"],
+    "christina-greene": ["Writer"],
+    "adrian-pica-borjas": ["Writer"],
   },
 },
 

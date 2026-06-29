@@ -35,4 +35,15 @@ export const csvUrls = {
 
   // Drama club lead team
   dramaClubLeadTeam: csvFromGid(2095520301),
+
+  // Field Kit — program/itinerary store ("Field Kit Program" / "Field Kit
+  // Itinerary Chapters" / "Field Kit Itinerary Days" / "Field Kit Time
+  // Anchors" tabs). gids are TBD: filled in once the tabs
+  // exist in the alumni sheet. Until then these stay "" and lib/loadProgram.ts
+  // skips the CSV fallback (Sheets API only). Replace each with
+  // csvFromGid(<gid>) after publishing the tab to the web.
+  programMeta: "",
+  programChapters: "",
+  programDays: "",
+  programTimeAnchors: "",
 } as const;

@@ -2,7 +2,8 @@
 
 **Status:** Mockup approved → ready to build the first slice. Hand this whole file to a fresh Claude Code task as the anchoring context.
 **Prepared:** June 2026 · companion to `journey-card-BUILD-SPEC.md` (the public-artifact side, already in progress).
-**Approved visual reference (committed):** `app/journey-card-mockup/v17/traveling-artist/` — especially `shell/Shell.tsx`, `itinerary/ItineraryCompanion.tsx`, `parts.tsx`, `sampleProgram.ts`.
+**Approved visual reference:** `app/journey-card-mockup/v17/traveling-artist/` — especially `shell/Shell.tsx`, `itinerary/ItineraryCompanion.tsx`, `parts.tsx`, `sampleProgram.ts`.
+> **Location note (2026-06-28):** this directory is NOT in the working tree — it was removed in commit `ece64e8` (Jun 3) and gitignored (`.gitignore:78`). The files survive in the live design workspace at `~/Documents/dat-alumni.OLD-icloud/app/journey-card-mockup/v17/traveling-artist/`. Restore that folder into the working tree (it stays gitignored — fine) before porting components; see `field-kit-AUDIT.md` §0. The data-layer work (§4–§5) does not need the mockup and is already underway: `lib/programItinerary.ts` + `lib/loadProgram.ts` exist; the Sheet schema to create is in `field-kit-ITINERARY-SCHEMA.md`.
 **Build this slice only.** The Field Kit is large; we are building it in parts. This spec is **Slice 1**. Do not build later slices.
 
 ---

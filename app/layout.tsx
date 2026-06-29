@@ -10,8 +10,7 @@ import Providers from "./providers";
 import ChunkErrorReload from "./ChunkErrorReload";
 
 import localFont from "next/font/local";
-import Header from "@/components/ui/Header";
-import Footer from "@/components/ui/Footer";
+import SiteChrome from "@/components/ui/SiteChrome";
 import ComingSoonModal from "@/components/ui/ComingSoonModal";
 
 import {
@@ -121,15 +120,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
         <Providers>
           <ComingSoonModal />
-          <Header />
-
-          {/* give bottom clearance so in-page footer nav can't hide behind Footer */}
-          <main className="grow w-full p-0 m-0 pb-24">{children}</main>
-
-          {/* footer sits above normal page content but below the fixed header (z-50) */}
-          <div className="mt-auto relative z-10">
-            <Footer />
-          </div>
+          {/* SiteChrome renders the global Header/Footer on marketing routes and a
+              bare app surface (no header/footer) on /field-kit. */}
+          <SiteChrome>{children}</SiteChrome>
         </Providers>
       </body>
     </html>
