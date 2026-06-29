@@ -9,10 +9,11 @@
 
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { CompanionTabBar } from "@/components/field-kit/parts";
 import AccountMenu from "@/components/field-kit/AccountMenu";
 import SyncStatus from "@/components/field-kit/SyncStatus";
+import FieldKitLogo from "@/components/field-kit/FieldKitLogo";
+import ServiceWorkerRegistrar from "@/components/field-kit/ServiceWorkerRegistrar";
 import { KRAFT_PAGE, T, FONT } from "@/components/field-kit/tokens";
 import { getFieldKitAccess } from "@/lib/fieldKitAccess";
 
@@ -21,8 +22,22 @@ import { getFieldKitAccess } from "@/lib/fieldKitAccess";
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
+// Field-Kit-scoped PWA metadata: the install affordance + iOS standalone tags
+// live only on the kit (the rest of the marketing site isn't an installable app).
 export const metadata = {
   title: "PASSAGE Field Kit",
+  appleWebApp: {
+    capable: true,
+    title: "Field Kit",
+    statusBarStyle: "black-translucent" as const,
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
+};
+
+export const viewport = {
+  themeColor: "#0e0a13",
 };
 
 export default async function FieldKitLayout({ children }: { children: React.ReactNode }) {
@@ -34,6 +49,7 @@ export default async function FieldKitLayout({ children }: { children: React.Rea
 
   return (
     <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", ...KRAFT_PAGE }}>
+      <ServiceWorkerRegistrar />
       <FieldKitTopBar />
       <div style={{ flex: 1 }}>
         {access.allowed ? children : <NotInProgram email={(access as { email: string }).email} />}
@@ -70,23 +86,9 @@ function FieldKitTopBar() {
         overflow: "visible",
       }}
     >
-      {/* left: DAT badge — links home; hangs below the bar */}
-      <Link
-        href="/"
-        aria-label="Dramatic Adventure Theatre — home"
-        style={{ flexShrink: 0, display: "inline-flex", textDecoration: "none", marginBottom: -36 }}
-      >
-        <Image
-          src="/images/dat-mobile-logo.png"
-          alt="DAT"
-          width={64}
-          height={64}
-          priority
-          // #ffcc00 glow — drop-shadow follows the logo's alpha (circular badge),
-          // so it haloes the shape rather than a square box.
-          style={{ display: "block", filter: "drop-shadow(0 0 5px rgba(255,204,0,0.85)) drop-shadow(0 0 13px rgba(255,204,0,0.45))" }}
-        />
-      </Link>
+      {/* left: DAT badge — links home; hangs below the bar. When installed
+          (standalone), the badge opens "/" in the EXTERNAL browser instead. */}
+      <FieldKitLogo />
 
       {/* right: connectivity status + the "more" menu (profile, sign out, install) */}
       <div style={{ marginLeft: "auto", alignSelf: "center", display: "inline-flex", alignItems: "center", gap: 12 }}>

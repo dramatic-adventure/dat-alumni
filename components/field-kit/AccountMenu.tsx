@@ -8,11 +8,18 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { MoreVertical } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { T, FONT } from "@/components/field-kit/tokens";
+
+// Chrome/Android fires this before showing its native install prompt; we capture
+// it so the install can be triggered from our own menu item instead.
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
 
 function initialsOf(nameOrEmail: string): string {
   const s = String(nameOrEmail || "").trim();
@@ -42,6 +49,46 @@ const menuItem: React.CSSProperties = {
 export default function AccountMenu() {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
+
+  // PWA install state. `deferredPrompt` is the stashed beforeinstallprompt event
+  // (Android/desktop Chrome). `isIOS` triggers the manual Share-sheet hint where
+  // that event never fires. `standalone` hides the affordance once installed.
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isIOS, setIsIOS] = useState(false);
+  const [standalone, setStandalone] = useState(false);
+
+  useEffect(() => {
+    const inStandalone =
+      window.matchMedia?.("(display-mode: standalone)").matches ||
+      (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
+    setStandalone(Boolean(inStandalone));
+
+    const ua = window.navigator.userAgent || "";
+    // iOS Safari (incl. iPadOS reporting as Mac with touch) never fires
+    // beforeinstallprompt, so detect it to show the manual instruction instead.
+    const iOS = /iphone|ipad|ipod/i.test(ua) || (/Macintosh/.test(ua) && "ontouchend" in document);
+    setIsIOS(iOS);
+
+    const onBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    };
+    const onInstalled = () => setDeferredPrompt(null);
+    window.addEventListener("beforeinstallprompt", onBeforeInstall);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, []);
+
+  async function handleInstall() {
+    if (!deferredPrompt) return;
+    await deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    setDeferredPrompt(null);
+    setOpen(false);
+  }
 
   const user = session?.user;
   const name = user?.name || "";
@@ -149,22 +196,30 @@ export default function AccountMenu() {
               Sign out
             </button>
 
-            {/* Install — STUB. PLUG-AND-PLAY SEAM for the PWA task: wire this to
-                the install prompt (Android/desktop) / show iOS "Add to Home
-                Screen" instructions, and enable once the service worker exists. */}
-            <div style={{ borderTop: `1px solid ${T.sep}` }}>
-              <div
-                aria-disabled
-                title="Coming soon"
-                style={{ ...menuItem, cursor: "default", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, opacity: 0.55 }}
-              >
-                <span>Install the Field&nbsp;Kit</span>
-                <span style={{ fontSize: 8.5, letterSpacing: "0.12em", color: T.muted }}>Soon</span>
+            {/* Install — shown only when installable and not already running as
+                the installed app. Android/desktop get a one-tap prompt; iOS gets
+                the manual Share → Add to Home Screen instruction. */}
+            {!standalone && (deferredPrompt || isIOS) && (
+              <div style={{ borderTop: `1px solid ${T.sep}` }}>
+                {deferredPrompt ? (
+                  <>
+                    <button type="button" role="menuitem" onClick={handleInstall} style={menuItem}>
+                      Install the Field&nbsp;Kit
+                    </button>
+                    <p style={{ fontFamily: FONT.dm, fontSize: 11, lineHeight: 1.45, color: T.muted, margin: 0, padding: "0 14px 12px", textTransform: "none", letterSpacing: 0 }}>
+                      Add to your home screen for quick access in the field.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ ...menuItem, cursor: "default" }}>Install the Field&nbsp;Kit</div>
+                    <p style={{ fontFamily: FONT.dm, fontSize: 11, lineHeight: 1.45, color: T.muted, margin: 0, padding: "0 14px 12px", textTransform: "none", letterSpacing: 0 }}>
+                      Tap Share, then Add to Home Screen.
+                    </p>
+                  </>
+                )}
               </div>
-              <p style={{ fontFamily: FONT.dm, fontSize: 11, lineHeight: 1.45, color: T.muted, margin: 0, padding: "0 14px 12px", textTransform: "none", letterSpacing: 0 }}>
-                Add to your home screen for offline access — coming soon.
-              </p>
-            </div>
+            )}
           </div>
         </>
       )}
