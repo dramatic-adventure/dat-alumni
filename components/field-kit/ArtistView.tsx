@@ -159,8 +159,9 @@ export default function ArtistView({ artist }: { artist: FieldKitArtist }) {
           </Section>
         )}
 
-        {/* Full marketing profile — subtle out-of-kit link */}
-        <Link
+        {/* Full marketing profile — out-of-kit (outside the manifest scope), so a
+            plain <a> lets iOS open it in the in-app browser with a Done button. */}
+        <a
           href={`/alumni/${slug}`}
           style={{
             display: "inline-block",
@@ -175,7 +176,7 @@ export default function ArtistView({ artist }: { artist: FieldKitArtist }) {
           }}
         >
           View full profile →
-        </Link>
+        </a>
       </div>
     </div>
   );

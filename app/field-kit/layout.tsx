@@ -38,6 +38,10 @@ export const metadata = {
 
 export const viewport = {
   themeColor: "#0e0a13",
+  // Extend behind the iOS status bar / home indicator so env(safe-area-inset-*)
+  // resolve to real insets in standalone (otherwise they're 0 and the top bar
+  // would sit under the status bar).
+  viewportFit: "cover" as const,
 };
 
 export default async function FieldKitLayout({ children }: { children: React.ReactNode }) {
@@ -82,12 +86,15 @@ function FieldKitTopBar() {
         // padding, while the centered logo is large (56px) and given a negative
         // bottom margin so it hangs past the bottom border like a badge instead
         // of forcing the bar taller. overflow:visible lets it spill downward.
-        padding: "6px clamp(14px, 4vw, 24px)",
+        // In standalone, the top inset is added to the top padding so the
+        // translucent bar fills behind the iOS status bar while its content
+        // (logo, SyncStatus, menu) sits below it.
+        padding: "calc(env(safe-area-inset-top) + 6px) clamp(14px, 4vw, 24px) 6px",
         overflow: "visible",
       }}
     >
-      {/* left: DAT badge — links home; hangs below the bar. When installed
-          (standalone), the badge opens "/" in the EXTERNAL browser instead. */}
+      {/* left: DAT badge — links home; hangs below the bar. "/" is outside the
+          manifest scope, so in standalone iOS opens it in the in-app browser. */}
       <FieldKitLogo />
 
       {/* right: connectivity status + the "more" menu (profile, sign out, install) */}

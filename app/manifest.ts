@@ -1,9 +1,10 @@
 // app/manifest.ts
 //
 // Web App Manifest for the DAT Field Kit PWA. Next emits this at /manifest.webmanifest
-// automatically (MetadataRoute.Manifest). The app installs into the Field Kit
-// (start_url "/field-kit") but keeps scope "/" so in-app links to artist profiles
-// (/alumni/...) and other site routes stay inside the installed window.
+// automatically (MetadataRoute.Manifest). Scope is narrowed to "/field-kit" so the
+// whole kit (including /field-kit/artist/[slug]) stays in the installed window,
+// while same-origin links OUTSIDE the kit (the marketing site, "/", /alumni/...) are
+// treated as leaving the app — iOS opens them in the in-app browser with a Done button.
 
 import type { MetadataRoute } from "next";
 
@@ -13,7 +14,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Field Kit",
     description: "The private in-program companion for DAT artists in the field.",
     start_url: "/field-kit",
-    scope: "/",
+    scope: "/field-kit",
     display: "standalone",
     background_color: "#16101c",
     theme_color: "#0e0a13",
