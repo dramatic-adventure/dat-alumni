@@ -9,8 +9,10 @@
 // caller is an admin. Without this, anyone could fetch another member's private
 // capture media by guessing a Drive fileId.
 //
-// Streams the Drive bytes with the stored mimeType. (Range support isn't needed
-// for images; Slice B2 adds it for audio.)
+// Streams the Drive bytes with the stored mimeType. Honors HTTP Range: a request
+// with a Range header is forwarded to Drive and its 206 partial response relayed
+// (required for audio seeking — iOS won't play <audio> without it). Range-less
+// requests get a 200 full stream. Accept-Ranges: bytes is always advertised.
 
 import { NextResponse } from "next/server";
 import { Readable } from "stream";
@@ -75,22 +77,42 @@ export async function GET(
     }
 
     const storedMime = (iMime !== -1 ? String(row[iMime] || "") : "").trim();
+    const contentType = storedMime || "application/octet-stream";
+
+    // Forward a client Range header to Drive so it serves the requested byte
+    // range; relay its 206 partial response (Content-Range/-Length). Without a
+    // Range header, stream the full file (200) but still advertise Accept-Ranges.
+    const range = req.headers.get("range") || "";
 
     const drive = driveClient();
     const file = await drive.files.get(
       { fileId, alt: "media", supportsAllDrives: true } as any,
-      { responseType: "stream" } as any
+      {
+        responseType: "stream",
+        ...(range ? { headers: { Range: range } } : {}),
+      } as any
     );
 
     const nodeStream = file.data as unknown as Readable;
     const webStream = Readable.toWeb(nodeStream) as unknown as ReadableStream;
 
+    const driveHeaders = (file.headers ?? {}) as Record<string, string>;
+    const isPartial = file.status === 206;
+
+    const headers: Record<string, string> = {
+      "Content-Type": contentType,
+      "Accept-Ranges": "bytes",
+      // Private media — never cache on a shared CDN.
+      "Cache-Control": "private, max-age=3600",
+    };
+    if (isPartial) {
+      if (driveHeaders["content-range"]) headers["Content-Range"] = driveHeaders["content-range"];
+      if (driveHeaders["content-length"]) headers["Content-Length"] = driveHeaders["content-length"];
+    }
+
     return new NextResponse(webStream, {
-      headers: {
-        "Content-Type": storedMime || "application/octet-stream",
-        // Private media — never cache on a shared CDN.
-        "Cache-Control": "private, max-age=3600",
-      },
+      status: isPartial ? 206 : 200,
+      headers,
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);

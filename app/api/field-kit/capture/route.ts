@@ -1,7 +1,8 @@
 // app/api/field-kit/capture/route.ts
 //
-// Field Kit "Capture" — note/quote (Slice A) + photo (Slice B1, online only).
-// Appends one row to the Field-Captures tab in the ALUMNI_SHEET_ID workbook.
+// Field Kit "Capture" — note/quote (Slice A) + photo (Slice B1) + voice (Slice
+// B2), online only. Appends one row to the Field-Captures tab in the
+// ALUMNI_SHEET_ID workbook.
 //
 // Trust model (defense in depth — never trust the layout/middleware for a direct
 // API hit): this route re-runs the SAME access resolver the pages use, derives
@@ -13,13 +14,12 @@
 // no-op if it already landed, so a retried POST never double-writes. For photos
 // the dedup scan runs BEFORE any Drive upload, so a retry never re-uploads bytes.
 //
-// Privacy: captures are PRIVATE to their author. Photo bytes live in Drive under
-// DRIVE_CAPTURES_FOLDER_ID/<programId>/<authorSlug>/ and are served only through
-// the authorized route app/api/field-kit/capture/media/[fileId] — never the
-// public /api/media/thumb.
+// Privacy: captures are PRIVATE to their author. Photo/voice bytes live in Drive
+// under DRIVE_CAPTURES_FOLDER_ID/<programId>/<authorSlug>/ and are served only
+// through the authorized route app/api/field-kit/capture/media/[fileId] — never
+// the public /api/media/thumb.
 //
-// Slice B2/C (deferred): voice (with byte/duration cap + range streaming) and the
-// offline queue.
+// Slice C (deferred): the offline queue.
 
 import { NextResponse } from "next/server";
 import { driveClient, sheetsClient } from "@/lib/googleClients";
@@ -35,10 +35,11 @@ export const runtime = "nodejs";
 type DriveCreateResp = { data: { id?: string } };
 
 const FIELD_CAPTURES_RANGE = "Field-Captures!A:L";
-const VALID_KINDS = new Set(["note", "quote", "photo"]);
+const VALID_KINDS = new Set(["note", "quote", "photo", "voice"]);
 
-// Photo uploads are bounded server-side regardless of what the client sends.
-const MAX_PHOTO_BYTES = 25 * 1024 * 1024; // 25 MB
+// File uploads (photo + voice) are bounded server-side regardless of what the
+// client sends.
+const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25 MB
 
 const ALLOWED_IMAGE_MIME = new Set([
   "image/jpeg",
@@ -49,6 +50,16 @@ const ALLOWED_IMAGE_MIME = new Set([
   "image/heif",
 ]);
 
+// iOS Safari MediaRecorder emits audio/mp4; Chrome/Android audio/webm — allow both.
+const ALLOWED_AUDIO_MIME = new Set([
+  "audio/mp4",
+  "audio/aac",
+  "audio/mpeg",
+  "audio/ogg",
+  "audio/webm",
+  "audio/wav",
+]);
+
 function extFromMime(mime: string): string {
   const m = mime.toLowerCase();
   if (m.includes("jpeg") || m.includes("jpg")) return "jpg";
@@ -57,6 +68,12 @@ function extFromMime(mime: string): string {
   if (m.includes("gif")) return "gif";
   if (m.includes("heic")) return "heic";
   if (m.includes("heif")) return "heif";
+  if (m.includes("mp4")) return "m4a";
+  if (m.includes("aac")) return "aac";
+  if (m.includes("mpeg")) return "mp3";
+  if (m.includes("ogg")) return "ogg";
+  if (m.includes("webm")) return "webm";
+  if (m.includes("wav")) return "wav";
   return "bin";
 }
 
@@ -147,27 +164,45 @@ export async function POST(req: Request) {
 
     if (!captureId) return NextResponse.json({ error: "captureId is required" }, { status: 400 });
     if (!VALID_KINDS.has(kind)) {
-      return NextResponse.json({ error: "kind must be note, quote, or photo" }, { status: 400 });
+      return NextResponse.json({ error: "kind must be note, quote, photo, or voice" }, { status: 400 });
     }
     const isPhoto = kind === "photo";
-    // Text kinds require bodyText; for photo it's an optional caption.
-    if (!isPhoto && !bodyText) {
+    const isVoice = kind === "voice";
+    const hasFile = isPhoto || isVoice;
+    // Text kinds require bodyText; for file kinds it's an optional caption.
+    if (!hasFile && !bodyText) {
       return NextResponse.json({ error: "bodyText is required" }, { status: 400 });
     }
 
-    // Validate the photo file up front (before any Drive work).
-    let photo: { buffer: Buffer; mimeType: string; name: string } | null = null;
-    if (isPhoto) {
+    // Validate the uploaded file up front (before any Drive work). MIME allow-set
+    // is per-kind: images for photo, audio for voice.
+    let upload: { buffer: Buffer; mimeType: string; name: string } | null = null;
+    if (hasFile) {
       if (!payload.file) {
-        return NextResponse.json({ error: "A photo file is required" }, { status: 400 });
+        return NextResponse.json(
+          { error: isVoice ? "An audio file is required" : "A photo file is required" },
+          { status: 400 }
+        );
       }
-      if (payload.file.buffer.byteLength > MAX_PHOTO_BYTES) {
-        return NextResponse.json({ error: "Photo too large" }, { status: 413 });
+      if (payload.file.buffer.byteLength > MAX_FILE_BYTES) {
+        return NextResponse.json(
+          { error: isVoice ? "Recording too large" : "Photo too large" },
+          { status: 413 }
+        );
       }
-      if (!ALLOWED_IMAGE_MIME.has(payload.file.mimeType.toLowerCase())) {
-        return NextResponse.json({ error: "Unsupported image type" }, { status: 415 });
+      // Strip any parameters (e.g. MediaRecorder's "audio/webm;codecs=opus") before
+      // matching, and store the bare type — so the route stays self-sufficient
+      // regardless of whether the client normalized it (e.g. Slice C offline replay
+      // re-sends a Blob whose .type still carries the codecs param).
+      const baseMime = payload.file.mimeType.toLowerCase().split(";")[0].trim();
+      const allowed = isVoice ? ALLOWED_AUDIO_MIME : ALLOWED_IMAGE_MIME;
+      if (!allowed.has(baseMime)) {
+        return NextResponse.json(
+          { error: isVoice ? "Unsupported audio type" : "Unsupported image type" },
+          { status: 415 }
+        );
       }
-      photo = payload.file;
+      upload = { ...payload.file, mimeType: baseMime };
     }
 
     const sheets = sheetsClient();
@@ -203,19 +238,21 @@ export async function POST(req: Request) {
     const deduped = rows.slice(1).some((r) => normId(r[col.captureId]) === want);
     if (deduped) return NextResponse.json({ ok: true, captureId, deduped: true });
 
-    // Upload the photo to Drive: <root>/<programId>/<authorSlug>/<captureId>.<ext>.
+    // Upload the file to Drive: <root>/<programId>/<authorSlug>/<captureId>.<ext>.
     let driveFileId = "";
     let storedMime = "";
-    if (isPhoto && photo) {
-      // Normalize before upload: HEIC/HEIF → JPEG (browsers can't render HEIC),
+    if (hasFile && upload) {
+      let buffer = upload.buffer;
+      let mimeType = upload.mimeType;
+      // Normalize images ONLY: HEIC/HEIF → JPEG (browsers can't render HEIC),
       // bake+strip EXIF orientation, cap dimensions. Failure falls back to the
-      // original bytes.
-      let buffer = photo.buffer;
-      let mimeType = photo.mimeType;
-      const normalized = await normalizeUploadImage(buffer, mimeType, photo.name);
-      if (normalized.changed) {
-        buffer = normalized.buffer;
-        mimeType = normalized.mimeType;
+      // original bytes. Audio uploads raw, bypassing normalization.
+      if (isPhoto) {
+        const normalized = await normalizeUploadImage(buffer, mimeType, upload.name);
+        if (normalized.changed) {
+          buffer = normalized.buffer;
+          mimeType = normalized.mimeType;
+        }
       }
 
       const drive = driveClient();
@@ -249,14 +286,14 @@ export async function POST(req: Request) {
     put(col.programId, programId);
     put(col.authorSlug, authorSlug);
     put(col.kind, kind);
-    put(col.bodyText, bodyText); // caption for photos; body for note/quote
+    put(col.bodyText, bodyText); // caption for photo/voice; body for note/quote
     put(col.createdAt, createdAt);
     put(col.serverReceivedAt, nowIso); // server-stamped
     put(col.syncState, "synced"); // server-only field
     put(col.dayIndex, dayIndex);
     put(col.quoteSpeaker, quoteSpeaker); // only sent for quotes; empty otherwise
-    put(col.driveFileId, driveFileId); // photo only; empty for note/quote
-    put(col.mimeType, storedMime); // photo only; empty for note/quote
+    put(col.driveFileId, driveFileId); // photo/voice only; empty for note/quote
+    put(col.mimeType, storedMime); // photo/voice only; empty for note/quote
 
     await withRetry(
       () =>

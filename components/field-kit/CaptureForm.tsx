@@ -1,25 +1,54 @@
 // components/field-kit/CaptureForm.tsx
 //
-// Field Kit "Capture" UI — note/quote (Slice A) + photo (Slice B1, online only).
-// A minimal gated screen: a Note/Quote/Photo toggle, the relevant input(s), and
-// Save. The captureId is a client-minted ULID that doubles as the idempotency
-// key, so a retried Save never double-writes. createdAt is stamped client-side;
-// dayIndex carries the current itinerary day when the page could resolve one.
+// Field Kit "Capture" UI — note/quote (Slice A) + photo (Slice B1) + voice
+// (Slice B2), online only. A minimal gated screen: a Note/Quote/Photo/Voice
+// toggle, the relevant input(s), and Save. The captureId is a client-minted ULID
+// that doubles as the idempotency key, so a retried Save never double-writes.
+// createdAt is stamped client-side; dayIndex carries the current itinerary day
+// when the page could resolve one.
 //
-// Photo posts as multipart/form-data (file + fields); note/quote post as JSON —
-// mirroring /api/upload's dual mode. The file input uses accept="image/*" with
-// NO capture attribute, so the OS picker offers Photo Library, Take Photo, and
-// Files and the user chooses the source.
+// Photo + voice post as multipart/form-data (file + fields); note/quote post as
+// JSON — mirroring /api/upload's dual mode. The photo file input uses
+// accept="image/*" with NO capture attribute, so the OS picker offers Photo
+// Library, Take Photo, and Files. Voice prefers an in-app MediaRecorder; if the
+// browser lacks getUserMedia/MediaRecorder (or mic permission is denied) it falls
+// back to an accept="audio/*" file input.
 //
-// Slice B2/C (deferred): voice capture and the offline queue.
+// Slice C (deferred): the offline queue.
 
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { T, FONT } from "@/components/field-kit/tokens";
 
-type Kind = "note" | "quote" | "photo";
+type Kind = "note" | "quote" | "photo" | "voice";
+
+// Voice bounds — mirror the server cap; auto-stop the recorder at 5:00.
+const MAX_AUDIO_BYTES = 25 * 1024 * 1024; // 25 MB
+const MAX_RECORD_SECONDS = 300; // 5:00
+
+// MediaRecorder mimeType may carry a codecs param (e.g. "audio/webm;codecs=opus").
+// The server's allow-set matches bare types, so strip parameters before sending.
+function bareAudioType(t: string): string {
+  return (t.split(";")[0] || "").trim().toLowerCase() || "audio/webm";
+}
+
+function extForAudio(mime: string): string {
+  const m = mime.toLowerCase();
+  if (m.includes("mp4")) return "m4a";
+  if (m.includes("aac")) return "aac";
+  if (m.includes("mpeg")) return "mp3";
+  if (m.includes("ogg")) return "ogg";
+  if (m.includes("wav")) return "wav";
+  return "webm";
+}
+
+function fmtElapsed(s: number): string {
+  const mm = Math.floor(s / 60);
+  const ss = s % 60;
+  return `${mm}:${String(ss).padStart(2, "0")}`;
+}
 
 // Crockford base32 ULID: 48-bit timestamp + 80 bits of randomness. Good enough
 // as an idempotency key without pulling in a dependency.
@@ -41,6 +70,7 @@ const KINDS: { value: Kind; label: string }[] = [
   { value: "note", label: "Note" },
   { value: "quote", label: "Quote" },
   { value: "photo", label: "Photo" },
+  { value: "voice", label: "Voice" },
 ];
 
 export default function CaptureForm({ currentDayId }: { currentDayId: string }) {
@@ -55,15 +85,131 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ kind: "ok" | "error"; msg: string } | null>(null);
 
+  // Voice state. recorderSupported defaults false so SSR/first paint shows the
+  // fallback file input; the effect flips it on once the client confirms
+  // getUserMedia + MediaRecorder. (The voice panel only renders after the user
+  // picks Voice — well past hydration — so there's no visible flash.)
+  const [recorderSupported, setRecorderSupported] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [recError, setRecError] = useState<string | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<BlobPart[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const isPhoto = kind === "photo";
-  // Photo needs a file (caption optional); note/quote need text.
-  const canSave = (isPhoto ? !!file : bodyText.trim().length > 0) && !saving;
+  const isVoice = kind === "voice";
+  // Photo/voice need a file (caption optional); note/quote need text. Can't save
+  // mid-recording.
+  const canSave =
+    (isPhoto ? !!file : isVoice ? !!audioBlob && !recording : bodyText.trim().length > 0) &&
+    !saving;
+
+  useEffect(() => {
+    setRecorderSupported(
+      typeof navigator !== "undefined" &&
+        !!navigator.mediaDevices?.getUserMedia &&
+        typeof window !== "undefined" &&
+        typeof window.MediaRecorder !== "undefined"
+    );
+  }, []);
+
+  // Unmount cleanup: stop the timer and release the mic.
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+  }, []);
+
+  // Auto-stop at the cap (kept out of the interval updater so setElapsed stays pure).
+  useEffect(() => {
+    if (recording && elapsed >= MAX_RECORD_SECONDS) stopRecording();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recording, elapsed]);
+
+  function stopTracks() {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+  }
+
+  function discardAudio() {
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    setAudioUrl(null);
+    setAudioBlob(null);
+    setElapsed(0);
+    setRecError(null);
+  }
+
+  async function startRecording() {
+    setRecError(null);
+    discardAudio();
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      chunksRef.current = [];
+      const mr = new MediaRecorder(stream);
+      recorderRef.current = mr;
+      mr.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      mr.onstop = () => {
+        const type = bareAudioType(mr.mimeType || "audio/webm");
+        const blob = new Blob(chunksRef.current, { type });
+        stopTracks();
+        if (blob.size > MAX_AUDIO_BYTES) {
+          setRecError("Recording too large (max 25 MB). Try a shorter clip.");
+          return;
+        }
+        setAudioBlob(blob);
+        setAudioUrl(URL.createObjectURL(blob));
+      };
+      mr.start();
+      setRecording(true);
+      setElapsed(0);
+      timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
+    } catch {
+      // Permission denied, no mic, or insecure context → fall back to file input.
+      stopTracks();
+      setRecording(false);
+      setRecorderSupported(false);
+      setRecError(
+        "Microphone unavailable — grant mic permission (HTTPS required), or pick an audio file below."
+      );
+    }
+  }
+
+  function stopRecording() {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    const mr = recorderRef.current;
+    if (mr && mr.state !== "inactive") mr.stop();
+    setRecording(false);
+  }
+
+  // Fallback path: an audio file chosen via the file input.
+  function onAudioFile(f: File | null) {
+    if (!f) return;
+    if (f.size > MAX_AUDIO_BYTES) {
+      setRecError("Recording too large (max 25 MB).");
+      return;
+    }
+    discardAudio();
+    setAudioBlob(f);
+    setAudioUrl(URL.createObjectURL(f));
+  }
 
   function clearForm() {
     setBodyText("");
     setQuoteSpeaker("");
     setFile(null);
     if (fileRef.current) fileRef.current.value = "";
+    discardAudio();
   }
 
   async function save() {
@@ -74,13 +220,21 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
       const captureId = ulid();
       const createdAt = new Date().toISOString();
       let res: Response;
-      if (isPhoto && file) {
+      if ((isPhoto && file) || (isVoice && audioBlob)) {
         // multipart/form-data — file + fields. Don't set Content-Type; the browser
         // adds the multipart boundary.
         const fd = new FormData();
-        fd.set("file", file);
+        if (isVoice && audioBlob) {
+          // Re-wrap the recorder/selected blob as a File with a bare audio MIME so
+          // the server's exact-match allow-set accepts it (no ;codecs= param).
+          const type = bareAudioType(audioBlob.type);
+          const filePart = new File([audioBlob], `${captureId}.${extForAudio(type)}`, { type });
+          fd.set("file", filePart);
+        } else if (file) {
+          fd.set("file", file);
+        }
         fd.set("captureId", captureId);
-        fd.set("kind", "photo");
+        fd.set("kind", kind);
         fd.set("bodyText", bodyText.trim()); // optional caption
         fd.set("createdAt", createdAt);
         if (currentDayId) fd.set("dayIndex", currentDayId);
@@ -121,7 +275,7 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
         Catch it now.
       </h1>
 
-      {/* Note / Quote toggle */}
+      {/* Note / Quote / Photo / Voice toggle */}
       <div role="tablist" aria-label="Capture type" style={{ display: "inline-flex", gap: 6, padding: 4, borderRadius: 10, background: T.black, border: `1px solid ${T.border}`, marginBottom: 16 }}>
         {KINDS.map((k) => {
           const active = kind === k.value;
@@ -175,6 +329,141 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
               outline: "none",
             }}
           />
+          <input
+            type="text"
+            value={bodyText}
+            onChange={(e) => setBodyText(e.target.value)}
+            placeholder="Add a caption (optional)"
+            aria-label="Caption"
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              fontFamily: FONT.dm,
+              fontSize: 16,
+              lineHeight: 1.5,
+              color: T.ink,
+              background: T.card,
+              border: `1px solid ${T.border}`,
+              borderRadius: 12,
+              padding: "12px 16px",
+              marginTop: 12,
+              outline: "none",
+            }}
+          />
+        </>
+      ) : isVoice ? (
+        <>
+          {/* In-app recorder when supported; otherwise an audio file input.
+              getUserMedia needs a secure context (HTTPS / localhost) + mic grant. */}
+          {recorderSupported && !audioBlob ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <button
+                type="button"
+                onClick={recording ? stopRecording : startRecording}
+                style={{
+                  fontFamily: FONT.grotesk,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                  padding: "12px 26px",
+                  borderRadius: 9,
+                  border: "none",
+                  background: recording ? T.pink : T.yellow,
+                  color: T.black,
+                }}
+              >
+                {recording ? "Stop" : "Record"}
+              </button>
+              <span
+                aria-live="polite"
+                style={{ fontFamily: FONT.dm, fontSize: 15, color: recording ? T.ink : T.muted, fontVariantNumeric: "tabular-nums" }}
+              >
+                {recording ? `${fmtElapsed(elapsed)} / 5:00` : "Tap Record to start"}
+              </span>
+            </div>
+          ) : !recorderSupported && !audioBlob ? (
+            <input
+              ref={fileRef}
+              type="file"
+              accept="audio/*"
+              onChange={(e) => onAudioFile(e.target.files?.[0] ?? null)}
+              aria-label="Choose an audio file"
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                fontFamily: FONT.dm,
+                fontSize: 15,
+                color: T.ink,
+                background: T.card,
+                border: `1px solid ${T.border}`,
+                borderRadius: 12,
+                padding: "14px 16px",
+                outline: "none",
+              }}
+            />
+          ) : null}
+
+          {audioBlob && audioUrl && (
+            <div>
+              {/* Playback preview before saving. */}
+              <audio controls src={audioUrl} style={{ width: "100%", display: "block" }} />
+              <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    discardAudio();
+                    if (recorderSupported) startRecording();
+                  }}
+                  style={{
+                    fontFamily: FONT.grotesk,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    padding: "9px 18px",
+                    borderRadius: 8,
+                    border: `1px solid ${T.border}`,
+                    background: "transparent",
+                    color: T.ink,
+                  }}
+                >
+                  {recorderSupported ? "Re-record" : "Choose another"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    discardAudio();
+                    if (fileRef.current) fileRef.current.value = "";
+                  }}
+                  style={{
+                    fontFamily: FONT.grotesk,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    padding: "9px 18px",
+                    borderRadius: 8,
+                    border: `1px solid ${T.border}`,
+                    background: "transparent",
+                    color: T.muted,
+                  }}
+                >
+                  Discard
+                </button>
+              </div>
+            </div>
+          )}
+
+          {recError && (
+            <p style={{ fontFamily: FONT.dm, fontSize: 13.5, lineHeight: 1.5, color: T.pink, margin: "10px 0 0" }}>
+              {recError}
+            </p>
+          )}
+
           <input
             type="text"
             value={bodyText}

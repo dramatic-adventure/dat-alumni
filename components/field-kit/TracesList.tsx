@@ -34,8 +34,9 @@ export default function TracesList({ captures }: { captures: FieldCapture[] }) {
         {captures.map((c) => {
           const isQuote = c.kind === "quote";
           const isPhoto = c.kind === "photo";
-          const label = isPhoto ? "Photo" : isQuote ? "Quote" : "Note";
-          const labelColor = isPhoto ? T.yellow : isQuote ? T.pink : T.teal;
+          const isVoice = c.kind === "voice";
+          const label = isVoice ? "Voice" : isPhoto ? "Photo" : isQuote ? "Quote" : "Note";
+          const labelColor = isVoice ? T.green : isPhoto ? T.yellow : isQuote ? T.pink : T.teal;
           return (
             <li
               key={c.captureId}
@@ -58,6 +59,23 @@ export default function TracesList({ captures }: { captures: FieldCapture[] }) {
                       src={`/api/field-kit/capture/media/${encodeURIComponent(c.driveFileId)}`}
                       alt={c.bodyText || "Capture photo"}
                       style={{ display: "block", width: "100%", height: "auto", borderRadius: 9, border: `1px solid ${T.border}` }}
+                    />
+                  )}
+                  {c.bodyText && (
+                    <p style={{ fontFamily: FONT.dm, fontSize: 14.5, lineHeight: 1.5, color: T.ink, margin: "10px 0 0", whiteSpace: "pre-wrap" }}>
+                      {c.bodyText}
+                    </p>
+                  )}
+                </>
+              ) : isVoice ? (
+                <>
+                  {c.driveFileId && (
+                    // Private audio: streamed (with Range support) only through the
+                    // authorized media route.
+                    <audio
+                      controls
+                      src={`/api/field-kit/capture/media/${encodeURIComponent(c.driveFileId)}`}
+                      style={{ width: "100%", display: "block" }}
                     />
                   )}
                   {c.bodyText && (
