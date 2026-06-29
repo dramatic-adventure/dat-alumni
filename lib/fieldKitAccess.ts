@@ -35,7 +35,7 @@ export const clusterRoster = cache((clusterId: string): Set<string> => {
 });
 
 export type FieldKitAccess =
-  | { allowed: true; email: string; isAdmin: boolean; programId: string }
+  | { allowed: true; email: string; isAdmin: boolean; programId: string; slug: string }
   | { allowed: false; reason: "signed-out"; loginUrl: string }
   | { allowed: false; reason: "not-in-program"; email: string };
 
@@ -52,15 +52,23 @@ export const getFieldKitAccess = cache(
       };
     }
 
-    if (isAdmin(email)) return { allowed: true, email, isAdmin: true, programId };
-
-    const ownedId = await getAlumniIdForOwnerEmail(process.env.ALUMNI_SHEET_ID || "", email);
+    // Resolve the owned slug ONCE here so every caller can reuse access.slug
+    // instead of reading it again. Done before the admin short-circuit so an
+    // admin who is ALSO a cohort member still gets their own slug.
     // NOTE: Profile-Owners keys profiles by alumniId; for cohort members in this
     // codebase that is the human slug (e.g. "jesse-baxter"), which is what
     // programMap.artists uses. If a member's alumniId ever diverges from their
-    // slug, refine this to resolve slug<->alumniId. Admins bypass this entirely.
+    // slug, refine this to resolve slug<->alumniId.
+    const ownedId = await getAlumniIdForOwnerEmail(process.env.ALUMNI_SHEET_ID || "", email);
+
+    // Admins bypass the ROSTER requirement, but still get their own slug when they
+    // have a profile row (so an admin who is also a cohort member can capture).
+    if (isAdmin(email)) {
+      return { allowed: true, email, isAdmin: true, programId, slug: ownedId };
+    }
+
     if (ownedId && clusterRoster(programId).has(norm(ownedId))) {
-      return { allowed: true, email, isAdmin: false, programId };
+      return { allowed: true, email, isAdmin: false, programId, slug: ownedId };
     }
     return { allowed: false, reason: "not-in-program", email };
   }

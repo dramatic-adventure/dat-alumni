@@ -6,7 +6,6 @@
 
 import TracesList from "@/components/field-kit/TracesList";
 import { requireFieldKitPage } from "@/lib/fieldKitAccess";
-import { getAlumniIdForOwnerEmail } from "@/lib/ownership";
 import { loadCapturesForAuthor } from "@/lib/loadFieldKitCaptures";
 
 export const revalidate = 0;
@@ -17,9 +16,9 @@ export default async function TracesPage() {
   const access = await requireFieldKitPage();
   if (!access) return null; // not on the roster — the layout renders the gate.
 
-  // Author is ALWAYS the signed-in member — resolved from the session email,
-  // never read from the URL.
-  const authorSlug = await getAlumniIdForOwnerEmail(process.env.ALUMNI_SHEET_ID || "", access.email);
+  // Author is ALWAYS the signed-in member — the owned slug the access record
+  // already resolved, never read from the URL.
+  const authorSlug = access.slug;
   const captures = authorSlug ? await loadCapturesForAuthor(access.programId, authorSlug) : [];
 
   return <TracesList captures={captures} />;

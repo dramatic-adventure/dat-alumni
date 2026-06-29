@@ -19,7 +19,6 @@ import { NextResponse } from "next/server";
 import { sheetsClient } from "@/lib/googleClients";
 import { rateLimit, rateKey } from "@/lib/rateLimit";
 import { getFieldKitAccess } from "@/lib/fieldKitAccess";
-import { getAlumniIdForOwnerEmail } from "@/lib/ownership";
 import { withRetry, idxOf, normId } from "@/lib/sheetsResilience";
 
 export const runtime = "nodejs";
@@ -45,9 +44,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing ALUMNI_SHEET_ID" }, { status: 500 });
     }
 
-    // Author + program are ALWAYS server-derived. Author resolves from the
-    // session email; program from the verified access record (multi-program).
-    const authorSlug = normId(await getAlumniIdForOwnerEmail(spreadsheetId, access.email));
+    // Author + program are ALWAYS server-derived. Author is the owned slug the
+    // access record already resolved; program from the verified access record
+    // (multi-program).
+    const authorSlug = normId(access.slug);
     if (!authorSlug) {
       return NextResponse.json({ error: "No profile linked to this account" }, { status: 403 });
     }
