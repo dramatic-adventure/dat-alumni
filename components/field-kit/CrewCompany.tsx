@@ -51,6 +51,7 @@ export default function CrewCompany({
               role={m.role}
               slug={m.slug}
               headshotUrl={m.headshotUrl || ""}
+              href={`/field-kit/artist/${m.slug}`}
               variant="dark"
             />
           ))}
