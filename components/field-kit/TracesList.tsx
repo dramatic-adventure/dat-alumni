@@ -1,0 +1,87 @@
+// components/field-kit/TracesList.tsx
+//
+// "My Traces" — Slice A read view. Renders the signed-in member's own captures
+// (notes + quotes), newest first. Author-scoping is enforced by the caller +
+// loader; this is a pure presentational list.
+
+import type { FieldCapture } from "@/lib/loadFieldKitCaptures";
+import { T, FONT } from "@/components/field-kit/tokens";
+
+function formatWhen(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+export default function TracesList({ captures }: { captures: FieldCapture[] }) {
+  if (!captures.length) return <TracesEmpty />;
+
+  return (
+    <main style={{ maxWidth: 560, margin: "0 auto", padding: "40px clamp(18px, 5vw, 40px) 96px" }}>
+      <p style={{ fontFamily: FONT.grotesk, fontWeight: 700, fontSize: 11, letterSpacing: "0.28em", textTransform: "uppercase", color: T.teal, margin: "0 0 10px" }}>
+        My Traces
+      </p>
+      <h1 style={{ fontFamily: FONT.anton, fontSize: "clamp(28px, 6.5vw, 44px)", lineHeight: 0.96, textTransform: "uppercase", color: T.ink, margin: "0 0 22px" }}>
+        Everything you&apos;ve caught.
+      </h1>
+
+      <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+        {captures.map((c) => {
+          const isQuote = c.kind === "quote";
+          return (
+            <li
+              key={c.captureId}
+              style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 16px" }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
+                <span style={{ fontFamily: FONT.grotesk, fontSize: 10.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: isQuote ? T.pink : T.teal }}>
+                  {isQuote ? "Quote" : "Note"}
+                </span>
+                <span style={{ fontFamily: FONT.dm, fontSize: 12, color: T.muted }}>{formatWhen(c.createdAt)}</span>
+              </div>
+              <p
+                style={{
+                  fontFamily: FONT.dm,
+                  fontStyle: isQuote ? "italic" : "normal",
+                  fontSize: 15,
+                  lineHeight: 1.5,
+                  color: T.ink,
+                  margin: 0,
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {isQuote ? `“${c.bodyText}”` : c.bodyText}
+              </p>
+              {isQuote && c.quoteSpeaker && (
+                <p style={{ fontFamily: FONT.dm, fontSize: 13.5, color: T.muted, margin: "6px 0 0" }}>
+                  — {c.quoteSpeaker}
+                </p>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </main>
+  );
+}
+
+function TracesEmpty() {
+  return (
+    <main style={{ maxWidth: 560, margin: "0 auto", padding: "72px clamp(18px, 5vw, 40px)", textAlign: "center" }}>
+      <p style={{ fontFamily: FONT.grotesk, fontWeight: 700, fontSize: 11, letterSpacing: "0.28em", textTransform: "uppercase", color: T.teal, margin: "0 0 12px" }}>
+        My Traces
+      </p>
+      <h1 style={{ fontFamily: FONT.anton, fontSize: "clamp(28px, 6.5vw, 48px)", lineHeight: 0.96, textTransform: "uppercase", color: T.ink, margin: "0 0 16px" }}>
+        Nothing caught yet.
+      </h1>
+      <p style={{ fontFamily: FONT.dm, fontSize: 14.5, lineHeight: 1.55, color: T.ink, opacity: 0.78, margin: 0 }}>
+        Tap Capture below to jot a note or a quote — it&apos;ll show up here, newest first.
+      </p>
+    </main>
+  );
+}
