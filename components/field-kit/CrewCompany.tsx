@@ -6,20 +6,15 @@
 // voting, "with you today" presence, roll-call, and DM/contact actions are
 // intentionally OMITTED — they have no live data store yet.
 //
-// Each card is a playbill-style headshot (4:5 actor's framing) linking to the
-// member's public profile. Order is staff-first (see lib/loadFieldKitCrew).
+// Each member renders with the directory's MiniProfileCard (variant "dark" —
+// cream type on the field-kit's dark theme), so the headshots match the rest of
+// the site: a flat 4:5 portrait with the name + single top DAT role beneath, and
+// the shared /images/default-headshot.png fallback when a member has no photo.
+// Order is staff-first (see lib/loadFieldKitCrew).
 
-import Image from "next/image";
-import Link from "next/link";
-import { Pill } from "@/components/field-kit/parts";
+import MiniProfileCard from "@/components/profile/MiniProfileCard";
 import { T, FONT } from "@/components/field-kit/tokens";
 import type { CrewMember } from "@/lib/loadFieldKitCrew";
-
-/** "Jesse Baxter" → "JB" — placeholder when a member has no headshot. */
-function initialsOf(name: string): string {
-  const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
-  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "·";
-}
 
 export default function CrewCompany({
   members,
@@ -47,75 +42,20 @@ export default function CrewCompany({
           </p>
         </div>
 
-        {/* Roster grid — staff first (loader order) */}
-        <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fill, minmax(148px, 1fr))" }}>
+        {/* Roster grid — staff first (loader order), directory-style mini cards */}
+        <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fill, minmax(144px, 1fr))" }}>
           {members.map((m) => (
-            <CrewCard key={m.slug} member={m} />
+            <MiniProfileCard
+              key={m.slug}
+              name={m.name}
+              role={m.role}
+              slug={m.slug}
+              headshotUrl={m.headshotUrl || ""}
+              variant="dark"
+            />
           ))}
         </div>
       </div>
     </div>
-  );
-}
-
-function CrewCard({ member }: { member: CrewMember }) {
-  return (
-    <Link
-      href={`/alumni/${member.slug}`}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-        textDecoration: "none",
-        backgroundColor: T.card,
-        border: `1px solid ${T.border}`,
-        borderRadius: 12,
-        overflow: "hidden",
-      }}
-    >
-      {/* 4:5 portrait — actor's-headshot framing */}
-      <div style={{ position: "relative", width: "100%", aspectRatio: "4 / 5", backgroundColor: T.paper }}>
-        {member.headshotUrl ? (
-          <Image
-            src={member.headshotUrl}
-            alt={member.name}
-            fill
-            sizes="(max-width: 760px) 50vw, 180px"
-            style={{ objectFit: "cover" }}
-          />
-        ) : (
-          <span
-            aria-hidden
-            style={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontFamily: FONT.anton,
-              fontSize: 34,
-              letterSpacing: "0.04em",
-              color: T.dim,
-            }}
-          >
-            {initialsOf(member.name)}
-          </span>
-        )}
-      </div>
-
-      {/* Name + unioned roles */}
-      <div style={{ padding: "0 12px 14px", display: "flex", flexDirection: "column", gap: 7 }}>
-        <p style={{ fontFamily: FONT.dm, fontWeight: 700, fontSize: 14, color: T.ink, margin: 0, lineHeight: 1.2 }}>
-          {member.name}
-        </p>
-        {member.roles.length > 0 && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-            {member.roles.map((role) => (
-              <Pill key={role}>{role}</Pill>
-            ))}
-          </div>
-        )}
-      </div>
-    </Link>
   );
 }

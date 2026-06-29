@@ -6,22 +6,28 @@
 // uses (lib/fieldKitAccess#clusterRoster) — the union of programMap `artists`
 // across every entry that shares the trip's cluster key.
 //
-// Each crew member's roles are UNIONED across the cluster entries they appear
-// in (PASSAGE / TAR / DAT Lab), deduped, order preserved. Name + headshot come
-// from the live alumni profile (loadAlumniBySlug); a member with no profile is
-// kept with a humanized name and no photo rather than dropped.
+// Each crew member shows a SINGLE role — their top DAT role, resolved with the
+// same engine /alumni uses for a profile's primary role (getOrderedProfileRoles),
+// with this program's roster roles folded in as projectRoles so participants
+// without a DAT staff assignment still resolve to a meaningful label. Name +
+// headshot come from the live alumni profile (loadAlumniBySlug); a member with
+// no profile is kept with a humanized name and no photo rather than dropped.
 
 import "server-only";
 import { cache } from "react";
 import { clusterRoster } from "@/lib/fieldKitAccess";
 import { programMap } from "@/lib/programMap";
 import { loadAlumniBySlug } from "@/lib/loadAlumni";
+import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
+import { getOrderedProfileRoles } from "@/lib/profileRoleAssignments";
 
 export type CrewMember = {
   slug: string;
   name: string;
   headshotUrl?: string;
-  roles: string[];
+  /** Single top DAT role label — resolved the same way /alumni resolves a
+   *  profile's primary role (getOrderedProfileRoles[0]). May be "" if unknown. */
+  role: string;
 };
 
 // Staff-first ordering. A member ranks by the FIRST keyword here that any of
@@ -101,25 +107,37 @@ function renderableHeadshot(url: string | undefined): string | undefined {
 export const loadFieldKitCrew = cache(
   async (programId: string): Promise<CrewMember[]> => {
     const slugs = Array.from(clusterRoster(programId));
+    const roleAssignments = await loadRoleAssignments();
 
-    const members = await Promise.all(
-      slugs.map(async (slug): Promise<CrewMember> => {
-        const roles = rolesForSlug(programId, slug);
+    const ranked = await Promise.all(
+      slugs.map(async (slug) => {
+        const clusterRoles = rolesForSlug(programId, slug);
         const alum = await loadAlumniBySlug(slug);
-        return {
+        // Top DAT role — same resolver /alumni uses for a profile's primary role.
+        // This program's roster roles ride along as projectRoles so participants
+        // without a DAT staff assignment still resolve to a real label.
+        const ordered = getOrderedProfileRoles(
+          slug,
+          alum?.roles ?? [],
+          roleAssignments,
+          new Date(),
+          clusterRoles,
+        );
+        const member: CrewMember = {
           slug,
           name: alum?.name?.trim() || humanizeSlug(slug),
           headshotUrl: renderableHeadshot(alum?.headshotUrl),
-          roles,
+          role: ordered[0] || "",
         };
+        // Rank on the full resolved list so staff-first ordering is unchanged.
+        return { member, rank: rankOf(ordered) };
       })
     );
 
-    return members.sort((a, b) => {
-      const ra = rankOf(a.roles);
-      const rb = rankOf(b.roles);
-      if (ra !== rb) return ra - rb;
-      return a.name.localeCompare(b.name);
-    });
+    return ranked
+      .sort((a, b) =>
+        a.rank !== b.rank ? a.rank - b.rank : a.member.name.localeCompare(b.member.name),
+      )
+      .map((r) => r.member);
   }
 );
