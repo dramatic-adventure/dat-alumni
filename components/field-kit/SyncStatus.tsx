@@ -1,20 +1,32 @@
 // components/field-kit/SyncStatus.tsx
 //
-// Field Kit connectivity indicator for the top bar.
+// Field Kit connectivity + sync indicator for the top bar.
 //
-// HONEST SCOPE: there is no offline cache / sync engine yet (that's the PWA
-// task). So this reports only REAL connectivity (navigator.onLine) — no
-// fabricated "last synced 2m ago" or "N pending" until a sync layer exists to
-// back those numbers. PLUG-AND-PLAY SEAM: when the service worker + draft queue
-// land, extend this to surface last-sync time and pending-count from that layer.
+// Reports REAL connectivity (navigator.onLine) AND the live capture-queue state.
+// Slice C wired the offline queue: captures land in IndexedDB first, then the
+// drainer (lib/captureSync) syncs them. This component drives that drainer —
+// start() on mount (which also wires online/visibility triggers) — and subscribes
+// to its counts. While captures are unsynced it shows a tap-to-sync chip; that
+// count is the user's only feedback until the items reach the server (Traces still
+// reads the server, so an unsynced capture won't appear there yet).
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { T, FONT } from "@/components/field-kit/tokens";
+import { start, kick, retryFailed, subscribe, type SyncCounts } from "@/lib/captureSync";
+
+const LABEL: CSSProperties = {
+  fontFamily: FONT.grotesk,
+  fontSize: 8.5,
+  fontWeight: 700,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+};
 
 export default function SyncStatus() {
   const [online, setOnline] = useState(true);
+  const [counts, setCounts] = useState<SyncCounts>({ pending: 0, failed: 0 });
 
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
@@ -27,26 +39,54 @@ export default function SyncStatus() {
     };
   }, []);
 
+  // Drive the drainer: start() wires the online/visibility triggers (idempotent)
+  // and primes the counts we subscribe to.
+  useEffect(() => {
+    start();
+    return subscribe(setCounts);
+  }, []);
+
+  const { pending, failed } = counts;
+
   return (
-    <span
-      title={online ? "Online — data loads live" : "Offline"}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        fontFamily: FONT.grotesk,
-        fontSize: 8.5,
-        fontWeight: 700,
-        letterSpacing: "0.12em",
-        textTransform: "uppercase",
-        color: "rgba(246,239,227,0.6)",
-      }}
-    >
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 12 }}>
       <span
-        aria-hidden
-        style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: online ? T.green : T.pink, flexShrink: 0 }}
-      />
-      {online ? "Online" : "Offline"}
+        title={online ? "Online — data loads live" : "Offline — captures queue locally"}
+        style={{ ...LABEL, display: "inline-flex", alignItems: "center", gap: 6, color: "rgba(246,239,227,0.6)" }}
+      >
+        <span
+          aria-hidden
+          style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: online ? T.green : T.pink, flexShrink: 0 }}
+        />
+        {online ? "Online" : "Offline"}
+      </span>
+
+      {(pending > 0 || failed > 0) && (
+        <button
+          type="button"
+          onClick={() => (failed > 0 ? retryFailed() : kick())}
+          title={failed > 0 ? "Retry failed captures" : "Sync now"}
+          style={{
+            ...LABEL,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            cursor: "pointer",
+            border: "none",
+            background: "transparent",
+            padding: 0,
+            color: failed > 0 ? T.pink : T.yellow,
+          }}
+        >
+          <span
+            aria-hidden
+            style={{ width: 7, height: 7, borderRadius: "50%", backgroundColor: failed > 0 ? T.pink : T.yellow, flexShrink: 0 }}
+          />
+          {pending > 0 ? `${pending} to sync` : null}
+          {pending > 0 && failed > 0 ? " · " : null}
+          {failed > 0 ? `${failed} failed` : null}
+        </button>
+      )}
     </span>
   );
 }

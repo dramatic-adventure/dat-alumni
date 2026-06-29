@@ -7,20 +7,23 @@
 // createdAt is stamped client-side; dayIndex carries the current itinerary day
 // when the page could resolve one.
 //
-// Photo + voice post as multipart/form-data (file + fields); note/quote post as
-// JSON — mirroring /api/upload's dual mode. The photo file input uses
-// accept="image/*" with NO capture attribute, so the OS picker offers Photo
-// Library, Take Photo, and Files. Voice prefers an in-app MediaRecorder; if the
-// browser lacks getUserMedia/MediaRecorder (or mic permission is denied) it falls
-// back to an accept="audio/*" file input.
+// The photo file input uses accept="image/*" with NO capture attribute, so the OS
+// picker offers Photo Library, Take Photo, and Files. Voice prefers an in-app
+// MediaRecorder; if the browser lacks getUserMedia/MediaRecorder (or mic permission
+// is denied) it falls back to an accept="audio/*" file input.
 //
-// Slice C (deferred): the offline queue.
+// Slice C: Save is offline-first. It no longer POSTs directly — it writes the
+// capture to a local IndexedDB queue (lib/captureQueue) and kicks the drainer
+// (lib/captureSync), which syncs to /api/field-kit/capture when online. Captures
+// survive no signal; SyncStatus shows the pending/failed count.
 
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { T, FONT } from "@/components/field-kit/tokens";
+import { enqueue, type QueuedCapture } from "@/lib/captureQueue";
+import { kick } from "@/lib/captureSync";
 
 type Kind = "note" | "quote" | "photo" | "voice";
 
@@ -32,16 +35,6 @@ const MAX_RECORD_SECONDS = 300; // 5:00
 // The server's allow-set matches bare types, so strip parameters before sending.
 function bareAudioType(t: string): string {
   return (t.split(";")[0] || "").trim().toLowerCase() || "audio/webm";
-}
-
-function extForAudio(mime: string): string {
-  const m = mime.toLowerCase();
-  if (m.includes("mp4")) return "m4a";
-  if (m.includes("aac")) return "aac";
-  if (m.includes("mpeg")) return "mp3";
-  if (m.includes("ogg")) return "ogg";
-  if (m.includes("wav")) return "wav";
-  return "webm";
 }
 
 function fmtElapsed(s: number): string {
@@ -212,53 +205,50 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
     discardAudio();
   }
 
+  // Offline-first: write the capture to the local IndexedDB queue (instant), kick
+  // the drainer, and report success immediately. The drainer (lib/captureSync) owns
+  // the network from here — POSTing to /api/field-kit/capture when connectivity
+  // allows, with the captureId ULID as the idempotency key.
   async function save() {
     if (!canSave) return;
     setSaving(true);
     setStatus(null);
     try {
-      const captureId = ulid();
-      const createdAt = new Date().toISOString();
-      let res: Response;
-      if ((isPhoto && file) || (isVoice && audioBlob)) {
-        // multipart/form-data — file + fields. Don't set Content-Type; the browser
-        // adds the multipart boundary.
-        const fd = new FormData();
-        if (isVoice && audioBlob) {
-          // Re-wrap the recorder/selected blob as a File with a bare audio MIME so
-          // the server's exact-match allow-set accepts it (no ;codecs= param).
-          const type = bareAudioType(audioBlob.type);
-          const filePart = new File([audioBlob], `${captureId}.${extForAudio(type)}`, { type });
-          fd.set("file", filePart);
-        } else if (file) {
-          fd.set("file", file);
-        }
-        fd.set("captureId", captureId);
-        fd.set("kind", kind);
-        fd.set("bodyText", bodyText.trim()); // optional caption
-        fd.set("createdAt", createdAt);
-        if (currentDayId) fd.set("dayIndex", currentDayId);
-        if (asId) fd.set("asId", asId);
-        res = await fetch("/api/field-kit/capture", { method: "POST", body: fd });
-      } else {
-        res = await fetch("/api/field-kit/capture", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            captureId,
-            kind,
-            bodyText: bodyText.trim(),
-            createdAt,
-            dayIndex: currentDayId || undefined,
-            quoteSpeaker: kind === "quote" ? quoteSpeaker.trim() || undefined : undefined,
-            asId: asId || undefined,
-          }),
-        });
+      const online = typeof navigator === "undefined" || navigator.onLine;
+
+      // photo/voice carry the raw Blob (stored directly in IndexedDB). For voice,
+      // stamp the bare MIME (no ;codecs= param) the server's allow-set expects.
+      let blob: Blob | undefined;
+      let blobType: string | undefined;
+      if (isVoice && audioBlob) {
+        blob = audioBlob;
+        blobType = bareAudioType(audioBlob.type);
+      } else if (isPhoto && file) {
+        blob = file;
+        blobType = file.type;
       }
-      const data = (await res.json().catch(() => null)) as { error?: string } | null;
-      if (!res.ok) throw new Error(data?.error || `Save failed (${res.status})`);
+
+      const item: QueuedCapture = {
+        captureId: ulid(),
+        kind,
+        bodyText: bodyText.trim(),
+        quoteSpeaker: kind === "quote" ? quoteSpeaker.trim() || undefined : undefined,
+        createdAt: new Date().toISOString(),
+        dayIndex: currentDayId || undefined,
+        asId: asId || undefined,
+        blob,
+        blobType,
+        status: "pending",
+        attempts: 0,
+      };
+
+      await enqueue(item);
+      kick();
       clearForm();
-      setStatus({ kind: "ok", msg: "Saved." });
+      setStatus({
+        kind: "ok",
+        msg: online ? "Saved." : "Saved — will sync when you're online.",
+      });
     } catch (e) {
       setStatus({ kind: "error", msg: e instanceof Error ? e.message : "Save failed." });
     } finally {
