@@ -191,7 +191,7 @@ function DuringToday({
         {partner && <span style={{ fontFamily: FONT.dm, fontSize: 11.5, color: T.teal }}>{partner}</span>}
       </div>
 
-      {/* capture CTA — route exists as a ComingSoon stub; marked "Soon" */}
+      {/* capture CTA — /field-kit/capture is live */}
       <CaptureCta />
 
       {/* pack for today — skip when empty */}
@@ -210,8 +210,7 @@ function DuringToday({
   );
 }
 
-// One-tap capture — the route is still a ComingSoon stub, so it carries the same
-// disabled/"Soon" treatment as ItineraryCompanion's day actions.
+// One-tap capture — links to the live /field-kit/capture screen.
 function CaptureCta() {
   return (
     <Link
@@ -219,7 +218,7 @@ function CaptureCta() {
       style={{
         display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
         textDecoration: "none", backgroundColor: T.yellow, color: "#241123",
-        borderRadius: 12, padding: "13px 16px", opacity: 0.6,
+        borderRadius: 12, padding: "13px 16px",
       }}
     >
       <span>
@@ -231,7 +230,6 @@ function CaptureCta() {
         </span>
       </span>
       <span style={{ display: "inline-flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-        <span style={{ fontFamily: FONT.grotesk, fontSize: 8.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>Soon</span>
         <span aria-hidden style={{ fontSize: 22 }}>✦</span>
       </span>
     </Link>

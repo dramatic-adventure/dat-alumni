@@ -12,6 +12,7 @@
 //   • "Today" comes from resolveToday() (date-derived), with before/after-trip
 //     fallbacks, instead of a hardcoded PROGRAM.todayDayId.
 
+import Link from "next/link";
 import { Pill, ClubChip } from "@/components/field-kit/parts";
 import { partnerOrgName } from "@/components/field-kit/partnerOrgName";
 import TimeAnchorList from "@/components/field-kit/TimeAnchorList";
@@ -248,14 +249,12 @@ function DayLeaf({ day, acc, state }: { day: ItineraryDay; acc: string; state: D
         </div>
       )}
 
-      {/* today's actions — stubs this slice (no write paths yet) */}
+      {/* today's actions — Capture links to the live capture screen; Resources
+          is still a stub (no resources feature yet). */}
       {isToday && (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2, alignItems: "center" }}>
-          <StubAction filled>✎ Capture today</StubAction>
+          <LiveAction href="/field-kit/capture">✎ Capture today</LiveAction>
           <StubAction>▤ Today&apos;s resources</StubAction>
-          <span style={{ fontFamily: FONT.grotesk, fontSize: 8.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: T.muted, marginLeft: "auto" }}>
-            Soon
-          </span>
         </div>
       )}
     </div>
@@ -271,6 +270,23 @@ const actionBtn: React.CSSProperties = {
   padding: "8px 12px",
   borderRadius: 8,
 };
+
+// Live action — a real Link styled like StubAction's filled variant, at full
+// opacity, with a subtle hover. Used for the day's "Capture today" action.
+function LiveAction({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <>
+      <style>{".fk-live-action{transition:opacity .15s ease}.fk-live-action:hover{opacity:.85}"}</style>
+      <Link
+        href={href}
+        className="fk-live-action"
+        style={{ ...actionBtn, textDecoration: "none", backgroundColor: T.black, color: "#fff" }}
+      >
+        {children}
+      </Link>
+    </>
+  );
+}
 
 // Non-interactive placeholder for the day's Capture / Resources actions.
 function StubAction({ children, filled = false }: { children: React.ReactNode; filled?: boolean }) {
