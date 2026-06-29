@@ -79,40 +79,68 @@ export async function GET(
     const storedMime = (iMime !== -1 ? String(row[iMime] || "") : "").trim();
     const contentType = storedMime || "application/octet-stream";
 
-    // Forward a client Range header to Drive so it serves the requested byte
-    // range; relay its 206 partial response (Content-Range/-Length). Without a
-    // Range header, stream the full file (200) but still advertise Accept-Ranges.
-    const range = req.headers.get("range") || "";
-
+    // iOS Safari only plays <audio>/<video> from a proper Range reply: a 206 with
+    // a CORRECT Content-Length (and Content-Range). Relaying Drive's headers is
+    // unreliable through the stream client — the Content-Length doesn't survive,
+    // and a 206 without it is unplayable on iOS. So we resolve the total size
+    // ourselves and build the partial response explicitly.
     const drive = driveClient();
-    const file = await drive.files.get(
+
+    const meta = (await withRetry(
+      () => drive.files.get({ fileId, fields: "size", supportsAllDrives: true } as any),
+      "Drive capture media size"
+    )) as { data: { size?: string } };
+    const total = Number(meta.data.size || 0);
+
+    const rangeMatch = /^bytes=(\d*)-(\d*)$/.exec((req.headers.get("range") || "").trim());
+    const hasRange = !!rangeMatch && total > 0;
+
+    let start = 0;
+    let end = total > 0 ? total - 1 : 0;
+    if (hasRange) {
+      if (rangeMatch![1]) start = Math.min(Number(rangeMatch![1]), Math.max(total - 1, 0));
+      if (rangeMatch![2]) end = Math.min(Number(rangeMatch![2]), total - 1);
+      if (start > end) {
+        start = 0;
+        end = total - 1;
+      }
+    }
+
+    const dl = await drive.files.get(
       { fileId, alt: "media", supportsAllDrives: true } as any,
       {
         responseType: "stream",
-        ...(range ? { headers: { Range: range } } : {}),
+        ...(hasRange ? { headers: { Range: `bytes=${start}-${end}` } } : {}),
       } as any
     );
+    const webStream = Readable.toWeb(dl.data as unknown as Readable) as unknown as ReadableStream;
 
-    const nodeStream = file.data as unknown as Readable;
-    const webStream = Readable.toWeb(nodeStream) as unknown as ReadableStream;
-
-    const driveHeaders = (file.headers ?? {}) as Record<string, string>;
-    const isPartial = file.status === 206;
-
-    const headers: Record<string, string> = {
+    const baseHeaders: Record<string, string> = {
       "Content-Type": contentType,
       "Accept-Ranges": "bytes",
       // Private media — never cache on a shared CDN.
       "Cache-Control": "private, max-age=3600",
     };
-    if (isPartial) {
-      if (driveHeaders["content-range"]) headers["Content-Range"] = driveHeaders["content-range"];
-      if (driveHeaders["content-length"]) headers["Content-Length"] = driveHeaders["content-length"];
+
+    // Only claim 206 if Drive actually returned partial content, so Content-Length
+    // never lies about the body we're streaming.
+    if (hasRange && dl.status === 206) {
+      return new NextResponse(webStream, {
+        status: 206,
+        headers: {
+          ...baseHeaders,
+          "Content-Range": `bytes ${start}-${end}/${total}`,
+          "Content-Length": String(end - start + 1),
+        },
+      });
     }
 
     return new NextResponse(webStream, {
-      status: isPartial ? 206 : 200,
-      headers,
+      status: 200,
+      headers: {
+        ...baseHeaders,
+        ...(total > 0 ? { "Content-Length": String(total) } : {}),
+      },
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
