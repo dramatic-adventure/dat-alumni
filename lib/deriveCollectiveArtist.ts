@@ -11,6 +11,7 @@ import { programMap } from "@/lib/programMap";
 import { productionMap } from "@/lib/productionMap";
 import { ROLE_DISPLAY_ORDER, getCanonicalFlag } from "@/lib/flags";
 import { eraRecencyWeightForSeason as eraWeight } from "@/lib/eras";
+import { hasProgramBegun } from "@/lib/programTiming";
 
 /**
  * Local copy of lib/slugAliases#normSlug. Inlined so this stays a pure,
@@ -143,6 +144,13 @@ const involvementIndex: Map<string, Involvement> = (() => {
     // so the era/international weight is identical across them — counting the
     // first-seen member once is correct. (See ProgramStamps for the matching
     // single-stamp behavior.)
+    // Only EARNED projects count — skip anything not yet begun. Gate on the
+    // cluster's umbrella entry (it carries the real startDate); cluster siblings
+    // often have no date of their own. NOTE: this index is memoized at module
+    // load, so the gate re-evaluates on each cold start (fine at our cadence).
+    const timingRep = programMap[prog.cluster ?? programSlug] ?? programMap[programSlug];
+    if (!hasProgramBegun(timingRep)) continue;
+
     const countKey = normSlug(prog.cluster ?? programSlug);
     const intl = isInternationalProgram(prog);
     const points = eraWeight(prog.season) * (intl ? INTERNATIONAL_MULTIPLIER : 1);

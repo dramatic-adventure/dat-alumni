@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { programMap } from "@/lib/programMap";
+import { hasProgramBegun } from "@/lib/programTiming";
 import StampShape from "./StampShape";
 
 type ProgramStampsProps = {
@@ -70,7 +71,11 @@ export default function ProgramStamps({ artistSlug, slugAliases = [] }: ProgramS
         collapsed.push(p);
       }
     }
-    return collapsed;
+
+    // A stamp is earned only once the project has begun (passport = on the
+    // ground). Filtering the COLLAPSED list means clustered trips are gated by
+    // their umbrella entry, which carries the real startDate.
+    return collapsed.filter((p) => hasProgramBegun(p));
   }, [slugSet]);
 
   if (!programs.length) return null; // ✅ after hooks
