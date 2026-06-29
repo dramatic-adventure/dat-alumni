@@ -18,7 +18,7 @@
 import { NextResponse } from "next/server";
 import { sheetsClient } from "@/lib/googleClients";
 import { rateLimit, rateKey } from "@/lib/rateLimit";
-import { getFieldKitAccess } from "@/lib/fieldKitAccess";
+import { getFieldKitAccess, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 import { withRetry, idxOf, normId } from "@/lib/sheetsResilience";
 
 export const runtime = "nodejs";
@@ -32,8 +32,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
-    // Same gate the pages use. Signed-out → 401, not on this roster → 403.
-    const access = await getFieldKitAccess();
+    // Parse the body up front so admin impersonation (?asId via body.asId) can be
+    // fed into the SAME gate the pages use. asId is honored ONLY for admins inside
+    // getFieldKitAccess; this route adds no bypass of its own.
+    const body = (await req.json().catch(() => null)) as {
+      captureId?: unknown;
+      kind?: unknown;
+      bodyText?: unknown;
+      createdAt?: unknown;
+      dayIndex?: unknown;
+      quoteSpeaker?: unknown;
+      asId?: unknown;
+    } | null;
+    if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+
+    const asId = String(body.asId ?? "").trim() || undefined;
+
+    // Same gate the pages use. Signed-out → 401, not on this roster → 403. When an
+    // admin passes asId, the write attributes to the impersonated roster member.
+    const access = await getFieldKitAccess(FIELD_KIT_PROGRAM_ID, asId);
     if (!access.allowed) {
       const status = access.reason === "signed-out" ? 401 : 403;
       return NextResponse.json({ error: "Forbidden" }, { status });
@@ -44,24 +61,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing ALUMNI_SHEET_ID" }, { status: 500 });
     }
 
-    // Author + program are ALWAYS server-derived. Author is the owned slug the
-    // access record already resolved; program from the verified access record
-    // (multi-program).
+    // Author + program are ALWAYS server-derived. Author is the slug the access
+    // record resolved (the impersonated member when an admin sent asId); program
+    // from the verified access record (multi-program).
     const authorSlug = normId(access.slug);
     if (!authorSlug) {
       return NextResponse.json({ error: "No profile linked to this account" }, { status: 403 });
     }
     const programId = access.programId;
-
-    const body = (await req.json().catch(() => null)) as {
-      captureId?: unknown;
-      kind?: unknown;
-      bodyText?: unknown;
-      createdAt?: unknown;
-      dayIndex?: unknown;
-      quoteSpeaker?: unknown;
-    } | null;
-    if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
 
     const captureId = String(body.captureId ?? "").trim();
     const kind = String(body.kind ?? "").trim().toLowerCase();

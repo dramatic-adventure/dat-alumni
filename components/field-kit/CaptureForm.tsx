@@ -11,6 +11,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { T, FONT } from "@/components/field-kit/tokens";
 
 type Kind = "note" | "quote";
@@ -37,6 +38,9 @@ const KINDS: { value: Kind; label: string }[] = [
 ];
 
 export default function CaptureForm({ currentDayId }: { currentDayId: string }) {
+  // Admin impersonation — forwarded to the route so the capture attributes to the
+  // impersonated member. Honored ONLY for admins server-side (getFieldKitAccess).
+  const asId = useSearchParams().get("asId")?.trim() || "";
   const [kind, setKind] = useState<Kind>("note");
   const [bodyText, setBodyText] = useState("");
   const [quoteSpeaker, setQuoteSpeaker] = useState("");
@@ -60,6 +64,7 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
           createdAt: new Date().toISOString(),
           dayIndex: currentDayId || undefined,
           quoteSpeaker: kind === "quote" ? quoteSpeaker.trim() || undefined : undefined,
+          asId: asId || undefined,
         }),
       });
       const data = (await res.json().catch(() => null)) as { error?: string } | null;

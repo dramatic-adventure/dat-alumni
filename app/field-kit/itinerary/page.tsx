@@ -5,17 +5,25 @@
 // and renders the ported V17 spine. Access is gated by app/field-kit/layout.
 
 import ItineraryCompanion from "@/components/field-kit/ItineraryCompanion";
+import ImpersonationBanner from "@/components/field-kit/ImpersonationBanner";
 import { loadProgramItinerary } from "@/lib/loadProgram";
 import { resolveToday } from "@/lib/programItinerary";
-import { requireFieldKitPage } from "@/lib/fieldKitAccess";
+import { requireFieldKitPage, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 import { T, FONT } from "@/components/field-kit/tokens";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
-export default async function ItineraryPage() {
+export default async function ItineraryPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = searchParams ? await searchParams : undefined;
+  const asId = Array.isArray(sp?.asId) ? sp?.asId[0] : sp?.asId;
+
   // Defense in depth: gate BEFORE any program/itinerary data is loaded.
-  const access = await requireFieldKitPage();
+  const access = await requireFieldKitPage(FIELD_KIT_PROGRAM_ID, asId);
   if (!access) return null; // not on the roster — the layout renders the gate.
 
   // Scope strictly to the program whose roster we just verified — never fall
@@ -24,7 +32,12 @@ export default async function ItineraryPage() {
   if (!itinerary) return <ItineraryEmpty />;
 
   const today = resolveToday(itinerary);
-  return <ItineraryCompanion itinerary={itinerary} today={today} />;
+  return (
+    <>
+      {access.impersonating && <ImpersonationBanner slug={access.slug} />}
+      <ItineraryCompanion itinerary={itinerary} today={today} />
+    </>
+  );
 }
 
 function ItineraryEmpty() {

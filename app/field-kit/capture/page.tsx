@@ -6,16 +6,24 @@
 // via /api/field-kit/capture, which re-derives author + program server-side.
 
 import CaptureForm from "@/components/field-kit/CaptureForm";
-import { requireFieldKitPage } from "@/lib/fieldKitAccess";
+import ImpersonationBanner from "@/components/field-kit/ImpersonationBanner";
+import { requireFieldKitPage, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 import { loadProgramItinerary } from "@/lib/loadProgram";
 import { resolveToday } from "@/lib/programItinerary";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
-export default async function CapturePage() {
+export default async function CapturePage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = searchParams ? await searchParams : undefined;
+  const asId = Array.isArray(sp?.asId) ? sp?.asId[0] : sp?.asId;
+
   // Defense in depth: gate before loading anything.
-  const access = await requireFieldKitPage();
+  const access = await requireFieldKitPage(FIELD_KIT_PROGRAM_ID, asId);
   if (!access) return null; // not on the roster — the layout renders the gate.
 
   // Current itinerary day (readily available) → stamped onto each capture so a
@@ -23,5 +31,10 @@ export default async function CapturePage() {
   const itinerary = await loadProgramItinerary(access.programId);
   const currentDayId = itinerary ? resolveToday(itinerary).todayDayId ?? "" : "";
 
-  return <CaptureForm currentDayId={currentDayId} />;
+  return (
+    <>
+      {access.impersonating && <ImpersonationBanner slug={access.slug} />}
+      <CaptureForm currentDayId={currentDayId} />
+    </>
+  );
 }

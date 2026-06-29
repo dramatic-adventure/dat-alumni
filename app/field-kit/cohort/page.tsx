@@ -6,17 +6,25 @@
 // app/field-kit/layout AND here (defense in depth), mirroring the Itinerary.
 
 import CrewCompany from "@/components/field-kit/CrewCompany";
+import ImpersonationBanner from "@/components/field-kit/ImpersonationBanner";
 import { loadFieldKitCrew } from "@/lib/loadFieldKitCrew";
-import { requireFieldKitPage } from "@/lib/fieldKitAccess";
+import { requireFieldKitPage, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 import { programMap } from "@/lib/programMap";
 import { T, FONT } from "@/components/field-kit/tokens";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
-export default async function CohortPage() {
+export default async function CohortPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = searchParams ? await searchParams : undefined;
+  const asId = Array.isArray(sp?.asId) ? sp?.asId[0] : sp?.asId;
+
   // Defense in depth: gate BEFORE any roster/profile data is loaded.
-  const access = await requireFieldKitPage();
+  const access = await requireFieldKitPage(FIELD_KIT_PROGRAM_ID, asId);
   if (!access) return null; // not on the roster — the layout renders the gate.
 
   // Scope strictly to the program whose roster we just verified.
@@ -24,7 +32,12 @@ export default async function CohortPage() {
   if (!crew.length) return <CrewEmpty />;
 
   const programLabel = programMap[access.programId]?.title || "Field Kit";
-  return <CrewCompany members={crew} programLabel={programLabel} />;
+  return (
+    <>
+      {access.impersonating && <ImpersonationBanner slug={access.slug} />}
+      <CrewCompany members={crew} programLabel={programLabel} />
+    </>
+  );
 }
 
 function CrewEmpty() {

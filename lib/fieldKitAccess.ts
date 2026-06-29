@@ -11,7 +11,11 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { isAdmin, getAlumniIdForOwnerEmail } from "@/lib/ownership";
+import {
+  isAdmin,
+  getAlumniIdForOwnerEmail,
+  resolveSlugToAlumniId,
+} from "@/lib/ownership";
 import { programMap } from "@/lib/programMap";
 
 export const FIELD_KIT_PROGRAM_ID = process.env.FIELD_KIT_PROGRAM_ID || "passage-slovakia-2026";
@@ -35,13 +39,33 @@ export const clusterRoster = cache((clusterId: string): Set<string> => {
 });
 
 export type FieldKitAccess =
-  | { allowed: true; email: string; isAdmin: boolean; programId: string; slug: string }
+  | {
+      allowed: true;
+      email: string;
+      isAdmin: boolean;
+      programId: string;
+      slug: string;
+      impersonating: boolean;
+    }
   | { allowed: false; reason: "signed-out"; loginUrl: string }
   | { allowed: false; reason: "not-in-program"; email: string };
 
-/** Resolve whether the current session may use the Field Kit for a program. */
+/**
+ * Resolve whether the current session may use the Field Kit for a program.
+ *
+ * Admin impersonation: an ADMIN may pass `asId` (a roster member's slug, or an
+ * alumniId resolved via resolveSlugToAlumniId — mirroring /alumni/update) to act
+ * as that member. The impersonated id MUST be on this program's roster; if it
+ * doesn't resolve to a roster member the param is ignored and the admin keeps
+ * their own access (impersonation never widens scope). `asId` is honored ONLY
+ * when isAdmin — a non-admin sending it gets their normal own access. asId is
+ * part of the cache key.
+ */
 export const getFieldKitAccess = cache(
-  async (programId: string = FIELD_KIT_PROGRAM_ID): Promise<FieldKitAccess> => {
+  async (
+    programId: string = FIELD_KIT_PROGRAM_ID,
+    asId?: string
+  ): Promise<FieldKitAccess> => {
     const session = await auth();
     const email = session?.user?.email || "";
     if (!email) {
@@ -59,16 +83,43 @@ export const getFieldKitAccess = cache(
     // codebase that is the human slug (e.g. "jesse-baxter"), which is what
     // programMap.artists uses. If a member's alumniId ever diverges from their
     // slug, refine this to resolve slug<->alumniId.
-    const ownedId = await getAlumniIdForOwnerEmail(process.env.ALUMNI_SHEET_ID || "", email);
+    const spreadsheetId = process.env.ALUMNI_SHEET_ID || "";
+    const ownedId = await getAlumniIdForOwnerEmail(spreadsheetId, email);
 
     // Admins bypass the ROSTER requirement, but still get their own slug when they
     // have a profile row (so an admin who is also a cohort member can capture).
     if (isAdmin(email)) {
-      return { allowed: true, email, isAdmin: true, programId, slug: ownedId };
+      // Admin impersonation — honored ONLY for admins. Accept a slug directly, or
+      // an alumniId resolved via resolveSlugToAlumniId (same as /alumni/update).
+      // REQUIRE the result to be on this program's roster; otherwise ignore asId
+      // and fall through to the admin's own access (never widen scope).
+      const wanted = norm(asId);
+      if (wanted) {
+        let impersonatedSlug = "";
+        if (clusterRoster(programId).has(wanted)) {
+          impersonatedSlug = wanted;
+        } else {
+          const resolved = norm(await resolveSlugToAlumniId(spreadsheetId, wanted));
+          if (resolved && clusterRoster(programId).has(resolved)) {
+            impersonatedSlug = resolved;
+          }
+        }
+        if (impersonatedSlug) {
+          return {
+            allowed: true,
+            email,
+            isAdmin: true,
+            programId,
+            slug: impersonatedSlug,
+            impersonating: true,
+          };
+        }
+      }
+      return { allowed: true, email, isAdmin: true, programId, slug: ownedId, impersonating: false };
     }
 
     if (ownedId && clusterRoster(programId).has(norm(ownedId))) {
-      return { allowed: true, email, isAdmin: false, programId, slug: ownedId };
+      return { allowed: true, email, isAdmin: false, programId, slug: ownedId, impersonating: false };
     }
     return { allowed: false, reason: "not-in-program", email };
   }
@@ -95,9 +146,10 @@ type FieldKitAllowed = Extract<FieldKitAccess, { allowed: true }>;
  *     so callers scope their data load to exactly that program).
  */
 export async function requireFieldKitPage(
-  programId: string = FIELD_KIT_PROGRAM_ID
+  programId: string = FIELD_KIT_PROGRAM_ID,
+  asId?: string
 ): Promise<FieldKitAllowed | null> {
-  const access = await getFieldKitAccess(programId);
+  const access = await getFieldKitAccess(programId, asId);
   if (access.allowed) return access;
   if (access.reason === "signed-out") redirect(access.loginUrl);
   return null; // not-in-program: load nothing; the layout shows the gate.
@@ -117,9 +169,10 @@ export async function requireFieldKitPage(
  *   if (denied) return denied;
  */
 export async function guardFieldKitApi(
-  programId: string = FIELD_KIT_PROGRAM_ID
+  programId: string = FIELD_KIT_PROGRAM_ID,
+  asId?: string
 ): Promise<NextResponse | null> {
-  const access = await getFieldKitAccess(programId);
+  const access = await getFieldKitAccess(programId, asId);
   if (access.allowed) return null;
   const status = access.reason === "signed-out" ? 401 : 403;
   return NextResponse.json({ error: "Forbidden" }, { status });
