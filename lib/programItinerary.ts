@@ -423,6 +423,29 @@ export function resolveToday(it: ProgramItinerary, now: Date = new Date()): Reso
   return { state: "during", todayDayId: past?.id ?? it.todayDayId };
 }
 
+// ── change detection: a cheap, stable digest of the itinerary ─────────────────
+
+/**
+ * A cheap, deterministic digest of an itinerary, used purely for change
+ * detection (Field Kit live-refresh). It is NOT a security hash — just a stable
+ * fingerprint so a client can tell "did the published itinerary change?".
+ *
+ * Pure (no crypto/deps) so it can run on the server (the API route + the page
+ * both compute it over the SAME ProgramItinerary, so a steady state produces an
+ * identical hash and never triggers a spurious refresh). rowsToProgramItinerary
+ * builds the object with a fixed key order and deterministically sorted arrays,
+ * so plain JSON.stringify is stable across requests. Folds the serialized length
+ * in alongside a djb2 rolling hash to keep collisions vanishingly unlikely.
+ */
+export function hashItinerary(it: ProgramItinerary): string {
+  const json = JSON.stringify(it);
+  let h = 5381;
+  for (let i = 0; i < json.length; i++) {
+    h = (((h << 5) + h) ^ json.charCodeAt(i)) | 0; // h * 33 ^ c
+  }
+  return `${(h >>> 0).toString(36)}-${json.length.toString(36)}`;
+}
+
 // ── handoff: itinerary → ProgramRecord (activates mergeProgramIntoCard) ────────
 
 /**

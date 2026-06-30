@@ -6,8 +6,9 @@
 
 import ItineraryCompanion from "@/components/field-kit/ItineraryCompanion";
 import ImpersonationBanner from "@/components/field-kit/ImpersonationBanner";
+import LiveRefresh from "@/components/field-kit/LiveRefresh";
 import { loadProgramItinerary } from "@/lib/loadProgram";
-import { resolveToday } from "@/lib/programItinerary";
+import { resolveToday, hashItinerary } from "@/lib/programItinerary";
 import { requireFieldKitPage, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 import { T, FONT } from "@/components/field-kit/tokens";
 
@@ -36,6 +37,11 @@ export default async function ItineraryPage({
     <>
       {access.impersonating && <ImpersonationBanner slug={access.slug} />}
       <ItineraryCompanion itinerary={itinerary} today={today} />
+      {/* Live-refresh sentinel: keeps this page current while online without a
+          manual reload. ItineraryCompanion above stays the single renderer; this
+          only watches the canonical /api/field-kit/itinerary hash and triggers a
+          router.refresh() + "Updated" banner when the published itinerary changes. */}
+      <LiveRefresh programId={access.programId} initialHash={hashItinerary(itinerary)} />
     </>
   );
 }
