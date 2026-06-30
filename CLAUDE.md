@@ -88,6 +88,8 @@ Alumni and content pages use a slug forwarding system (`loadSlugForwardMap`) to 
 | `NETLIFY_BLOBS_*` or auto-injected | Netlify Blobs access |
 | `DATABASE_URL` | SQLite path (e.g., `file:./dev.db`) |
 | `MAPBOX_TOKEN` | Mapbox for story map |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Field Kit web push (Slice 3); see `field-kit-NOTIFICATIONS-SCHEMA.md` |
+| `CRON_SECRET` | Authorizes the notifications dispatch route from the scheduled function |
 
 ## Other Instructions
 

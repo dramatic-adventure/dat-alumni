@@ -177,3 +177,26 @@ export async function guardFieldKitApi(
   const status = access.reason === "signed-out" ? 401 : 403;
   return NextResponse.json({ error: "Forbidden" }, { status });
 }
+
+/**
+ * ADMIN-ONLY API guard for the Field Kit staff console routes. Same defense-in-
+ * depth contract as guardFieldKitApi, but additionally requires access.isAdmin.
+ * Returns the verified access record (carrying the scoped programId) when the
+ * caller is an admin, or a 401/403 NextResponse to return as-is otherwise:
+ *
+ *   const access = await guardFieldKitAdminApi(program);
+ *   if (access instanceof NextResponse) return access;
+ *   // access.programId is the verified program scope
+ */
+export async function guardFieldKitAdminApi(
+  programId: string = FIELD_KIT_PROGRAM_ID,
+  asId?: string
+): Promise<FieldKitAllowed | NextResponse> {
+  const access = await getFieldKitAccess(programId, asId);
+  if (!access.allowed) {
+    const status = access.reason === "signed-out" ? 401 : 403;
+    return NextResponse.json({ error: "Forbidden" }, { status });
+  }
+  if (!access.isAdmin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  return access;
+}

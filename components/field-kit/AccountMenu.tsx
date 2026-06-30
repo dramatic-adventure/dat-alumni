@@ -10,12 +10,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { MoreVertical, Printer, Copy, Share2 } from "lucide-react";
+import { MoreVertical, Printer, Copy, Share2, Shield } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { T, FONT } from "@/components/field-kit/tokens";
 import { fetchItinerary } from "@/lib/fetchItinerary";
 import { useItineraryShare } from "@/components/field-kit/useItineraryShare";
 import ShareWarningModal from "@/components/field-kit/ShareWarningModal";
+import TripAlerts from "@/components/field-kit/TripAlerts";
 
 // Chrome/Android fires this before showing its native install prompt; we capture
 // it so the install can be triggered from our own menu item instead.
@@ -56,7 +57,13 @@ const iconItem: React.CSSProperties = {
   gap: 9,
 };
 
-export default function AccountMenu({ programId }: { programId: string }) {
+export default function AccountMenu({
+  programId,
+  isAdmin = false,
+}: {
+  programId: string;
+  isAdmin?: boolean;
+}) {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
 
@@ -220,6 +227,15 @@ export default function AccountMenu({ programId }: { programId: string }) {
               Sign out
             </button>
 
+            {/* Staff console — convenience link, shown only to admins. The
+                /field-kit/admin page enforces admin access server-side; this
+                link is not the security boundary. */}
+            {isAdmin && (
+              <Link href="/field-kit/admin" role="menuitem" onClick={() => setOpen(false)} style={iconItem}>
+                <Shield size={15} aria-hidden /> Staff console
+              </Link>
+            )}
+
             {/* Itinerary export — warning-gated Print / Copy / Share. */}
             <div style={{ borderTop: `1px solid ${T.sep}` }}>
               <button type="button" role="menuitem" onClick={() => requestShare("print")} style={iconItem}>
@@ -234,6 +250,10 @@ export default function AccountMenu({ programId }: { programId: string }) {
                 </button>
               )}
             </div>
+
+            {/* Trip alerts (web push) opt-in. Self-gates on push support +
+                iOS-standalone; renders nothing where push isn't available. */}
+            <TripAlerts programId={programId} />
 
             {/* Install — shown only when installable and not already running as
                 the installed app. Android/desktop get a one-tap prompt; iOS gets

@@ -7,6 +7,7 @@
 
 import TodayCompanion from "@/components/field-kit/TodayCompanion";
 import ImpersonationBanner from "@/components/field-kit/ImpersonationBanner";
+import RallyPointBanner from "@/components/field-kit/RallyPointBanner";
 import { loadProgramItinerary } from "@/lib/loadProgram";
 import { resolveToday } from "@/lib/programItinerary";
 import { requireFieldKitPage, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
@@ -36,6 +37,7 @@ export default async function FieldKitHome({
   return (
     <>
       {access.impersonating && <ImpersonationBanner slug={access.slug} />}
+      {itinerary.rallyPoint && <RallyPointBanner rally={itinerary.rallyPoint} />}
       <TodayCompanion itinerary={itinerary} today={today} />
     </>
   );

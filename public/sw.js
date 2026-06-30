@@ -122,3 +122,49 @@ self.addEventListener("fetch", (event) => {
     )
   );
 });
+
+// SLICE 3 (Notifications) — web push. These handlers add notification display +
+// click routing; they do NOT touch the cache (gated HTML / /api stay uncached).
+// The push payload is { title, body, link } (lib/webPush.ts); `link` defaults to
+// the itinerary, the one route that also works offline.
+
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = {};
+  }
+  const title = data.title || "DAT Field Kit";
+  const link = data.link || "/field-kit/itinerary";
+  const options = {
+    body: data.body || "",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    data: { link },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const link = (event.notification.data && event.notification.data.link) || "/field-kit/itinerary";
+  const target = new URL(link, self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      // Already on the exact page → just focus it.
+      for (const c of clients) {
+        if (c.url === target && "focus" in c) return c.focus();
+      }
+      // Any open Field Kit window → navigate it to the target, then focus.
+      for (const c of clients) {
+        if (c.url.includes("/field-kit") && "focus" in c) {
+          if ("navigate" in c) c.navigate(target).catch(() => undefined);
+          return c.focus();
+        }
+      }
+      // Nothing open → open a new window on the target.
+      return self.clients.openWindow ? self.clients.openWindow(target) : undefined;
+    })
+  );
+});

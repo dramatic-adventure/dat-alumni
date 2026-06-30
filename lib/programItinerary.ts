@@ -123,6 +123,17 @@ export type Chapter = {
   days: ItineraryDay[];
 };
 
+// Slice 3 (Notifications) — the CURRENT rally point for a program. Carried on the
+// itinerary payload so it precaches offline with the itinerary and (being part of
+// the object hashItinerary digests) propagates to open clients via LiveRefresh.
+export type RallyPoint = {
+  location: string;
+  lookFor: string; // the "look for" cue (a landmark / sign / person)
+  meetTime: string;
+  departure: string;
+  updatedAt: string; // ISO — when staff last set it
+};
+
 export type ProgramItinerary = {
   programId: string;
   program: string;
@@ -135,6 +146,7 @@ export type ProgramItinerary = {
   todayDayId?: string;
   link?: string;
   chapters: Chapter[];
+  rallyPoint?: RallyPoint; // present only when staff have set one
 };
 
 // ── normalization helpers ──────────────────────────────────────────────────────

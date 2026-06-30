@@ -54,7 +54,7 @@ export default async function FieldKitLayout({ children }: { children: React.Rea
   return (
     <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", ...KRAFT_PAGE }}>
       <ServiceWorkerRegistrar />
-      <FieldKitTopBar programId={FIELD_KIT_PROGRAM_ID} />
+      <FieldKitTopBar programId={FIELD_KIT_PROGRAM_ID} isAdmin={access.allowed ? access.isAdmin : false} />
       <div style={{ flex: 1 }}>
         {access.allowed ? children : <NotInProgram email={(access as { email: string }).email} />}
       </div>
@@ -65,7 +65,7 @@ export default async function FieldKitLayout({ children }: { children: React.Rea
 
 // Slim in-app top bar: DAT logo links home (branding + an exit out of the app
 // surface). Sticky so it stays put; sits above content like the bottom tab bar.
-function FieldKitTopBar({ programId }: { programId: string }) {
+function FieldKitTopBar({ programId, isAdmin }: { programId: string; isAdmin: boolean }) {
   return (
     <header
       style={{
@@ -100,7 +100,7 @@ function FieldKitTopBar({ programId }: { programId: string }) {
       {/* right: connectivity status + the "more" menu (profile, sign out, install) */}
       <div style={{ marginLeft: "auto", alignSelf: "center", display: "inline-flex", alignItems: "center", gap: 12 }}>
         <SyncStatus programId={programId} />
-        <AccountMenu programId={programId} />
+        <AccountMenu programId={programId} isAdmin={isAdmin} />
       </div>
     </header>
   );

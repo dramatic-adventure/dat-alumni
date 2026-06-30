@@ -28,6 +28,7 @@ import {
   type TimeAnchorRow,
   type ProgramItinerary,
 } from "@/lib/programItinerary";
+import { getRallyPoint } from "@/lib/rallyPoint";
 
 const SHEET_ID = process.env.ALUMNI_SHEET_ID || "";
 
@@ -196,11 +197,12 @@ export const loadProgramItinerary = cache(
     const pid = norm(programId);
     if (!pid) return null;
 
-    const [programRows, chapterRows, dayRows, timeRows] = await Promise.all([
+    const [programRows, chapterRows, dayRows, timeRows, rallyPoint] = await Promise.all([
       readProgramRows(),
       readChapterRows(),
       readDayRows(),
       readTimeRows(),
+      getRallyPoint(pid), // resilient: null on any failure, never blocks the load
     ]);
 
     const program = programRows.map(toProgramRow).find((p) => norm(p.programId) === pid);
@@ -220,7 +222,12 @@ export const loadProgramItinerary = cache(
       .map(toTimeRow)
       .filter((t) => dayIdSet.has(norm(t.dayId)) && (!t.programId || norm(t.programId) === pid));
 
-    return rowsToProgramItinerary({ program, chapters, days, times });
+    const itinerary = rowsToProgramItinerary({ program, chapters, days, times });
+    // Attach the current rally point ONLY when one is set, so the serialized
+    // itinerary (and thus hashItinerary) is byte-identical to before when there
+    // is none — no spurious LiveRefresh on deploy.
+    if (rallyPoint) itinerary.rallyPoint = rallyPoint;
+    return itinerary;
   }
 );
 
