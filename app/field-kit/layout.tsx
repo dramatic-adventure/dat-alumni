@@ -15,7 +15,7 @@ import SyncStatus from "@/components/field-kit/SyncStatus";
 import FieldKitLogo from "@/components/field-kit/FieldKitLogo";
 import ServiceWorkerRegistrar from "@/components/field-kit/ServiceWorkerRegistrar";
 import { KRAFT_PAGE, T, FONT } from "@/components/field-kit/tokens";
-import { getFieldKitAccess } from "@/lib/fieldKitAccess";
+import { getFieldKitAccess, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 
 // Per-user, never statically generated or shared-CDN cached: the gate decision
 // depends on the session, so every response must render dynamically.
@@ -54,7 +54,7 @@ export default async function FieldKitLayout({ children }: { children: React.Rea
   return (
     <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", ...KRAFT_PAGE }}>
       <ServiceWorkerRegistrar />
-      <FieldKitTopBar />
+      <FieldKitTopBar programId={FIELD_KIT_PROGRAM_ID} />
       <div style={{ flex: 1 }}>
         {access.allowed ? children : <NotInProgram email={(access as { email: string }).email} />}
       </div>
@@ -65,7 +65,7 @@ export default async function FieldKitLayout({ children }: { children: React.Rea
 
 // Slim in-app top bar: DAT logo links home (branding + an exit out of the app
 // surface). Sticky so it stays put; sits above content like the bottom tab bar.
-function FieldKitTopBar() {
+function FieldKitTopBar({ programId }: { programId: string }) {
   return (
     <header
       style={{
@@ -99,8 +99,8 @@ function FieldKitTopBar() {
 
       {/* right: connectivity status + the "more" menu (profile, sign out, install) */}
       <div style={{ marginLeft: "auto", alignSelf: "center", display: "inline-flex", alignItems: "center", gap: 12 }}>
-        <SyncStatus />
-        <AccountMenu />
+        <SyncStatus programId={programId} />
+        <AccountMenu programId={programId} />
       </div>
     </header>
   );

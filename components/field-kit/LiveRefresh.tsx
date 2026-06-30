@@ -18,6 +18,7 @@
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { fetchItinerary } from "@/lib/fetchItinerary";
 import { T, FONT } from "@/components/field-kit/tokens";
 
 const POLL_MS = 30_000;
@@ -49,14 +50,13 @@ export default function LiveRefresh({
     if (inFlight.current) return;
     inFlight.current = true;
     try {
-      const params = new URLSearchParams({ program: programId });
-      if (asId) params.set("asId", asId);
-      const res = await fetch(`/api/field-kit/itinerary?${params.toString()}`, {
-        cache: "no-store",
-      });
-      if (!res.ok) return; // gate/network hiccup — a later trigger retries
-      const data = (await res.json()) as { hash?: string };
-      const next = data?.hash ?? "";
+      // fetchItinerary is network-first and writes the on-device snapshot on a
+      // successful live fetch. Act ONLY on the live path: a "cache" result means
+      // the fetch was denied / hiccuped, so behave like the old `!res.ok` no-op
+      // (the snapshot is never used to drive an online refresh).
+      const result = await fetchItinerary(programId, asId);
+      if (result.source !== "live") return; // gate/network hiccup — a later trigger retries
+      const next = result.hash ?? "";
       if (next && next !== currentHash.current) {
         currentHash.current = next; // adopt now so the refresh doesn't re-trigger
         setUpdated(true);

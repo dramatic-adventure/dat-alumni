@@ -15,6 +15,7 @@
 import Link from "next/link";
 import { Pill, ClubChip } from "@/components/field-kit/parts";
 import { partnerOrgName } from "@/components/field-kit/partnerOrgName";
+import ItineraryActions from "@/components/field-kit/ItineraryActions";
 import TimeAnchorList from "@/components/field-kit/TimeAnchorList";
 import { T, FONT, accent } from "@/components/field-kit/tokens";
 import type {
@@ -92,6 +93,10 @@ export default function ItineraryCompanion({
           {clubSlugs.size > 0 && <Stat n={String(clubSlugs.size)} label={clubSlugs.size === 1 ? "Drama club" : "Drama clubs"} color={T.purple} />}
           {partnerSlugs.size > 0 && <Stat n={String(partnerSlugs.size)} label={partnerSlugs.size === 1 ? "Partner org" : "Partner orgs"} color={T.grape} />}
         </div>
+
+        {/* Print / Copy / Share — each gated by the privacy warning. Lives here so
+            it appears in both the live and offline (snapshot) renders. */}
+        <ItineraryActions itinerary={itinerary} />
 
         {/* The spine */}
         <div style={{ position: "relative" }}>

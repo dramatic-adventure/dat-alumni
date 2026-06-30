@@ -8,11 +8,14 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, Printer, Copy, Share2 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { T, FONT } from "@/components/field-kit/tokens";
+import { fetchItinerary } from "@/lib/fetchItinerary";
+import { useItineraryShare } from "@/components/field-kit/useItineraryShare";
+import ShareWarningModal from "@/components/field-kit/ShareWarningModal";
 
 // Chrome/Android fires this before showing its native install prompt; we capture
 // it so the install can be triggered from our own menu item instead.
@@ -46,9 +49,30 @@ const menuItem: React.CSSProperties = {
   cursor: "pointer",
 };
 
-export default function AccountMenu() {
+const iconItem: React.CSSProperties = {
+  ...menuItem,
+  display: "flex",
+  alignItems: "center",
+  gap: 9,
+};
+
+export default function AccountMenu({ programId }: { programId: string }) {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
+
+  // Itinerary Print / Copy / Share — same warning-gated actions as the itinerary
+  // page, but the menu must FETCH the itinerary on demand (network-first, snapshot
+  // when offline) since the layout doesn't carry it.
+  const getItinerary = useCallback(
+    async () => (await fetchItinerary(programId)).itinerary,
+    [programId]
+  );
+  const share = useItineraryShare(getItinerary);
+
+  const requestShare = (action: Parameters<typeof share.request>[0]) => {
+    setOpen(false);
+    share.request(action);
+  };
 
   // PWA install state. `deferredPrompt` is the stashed beforeinstallprompt event
   // (Android/desktop Chrome). `isIOS` triggers the manual Share-sheet hint where
@@ -196,6 +220,21 @@ export default function AccountMenu() {
               Sign out
             </button>
 
+            {/* Itinerary export — warning-gated Print / Copy / Share. */}
+            <div style={{ borderTop: `1px solid ${T.sep}` }}>
+              <button type="button" role="menuitem" onClick={() => requestShare("print")} style={iconItem}>
+                <Printer size={15} aria-hidden /> Print / Save itinerary
+              </button>
+              <button type="button" role="menuitem" onClick={() => requestShare("copy")} style={iconItem}>
+                <Copy size={15} aria-hidden /> Copy itinerary
+              </button>
+              {share.canShare && (
+                <button type="button" role="menuitem" onClick={() => requestShare("share")} style={iconItem}>
+                  <Share2 size={15} aria-hidden /> Share itinerary
+                </button>
+              )}
+            </div>
+
             {/* Install — shown only when installable and not already running as
                 the installed app. Android/desktop get a one-tap prompt; iOS gets
                 the manual Share → Add to Home Screen instruction. */}
@@ -223,6 +262,40 @@ export default function AccountMenu() {
           </div>
         </>
       )}
+
+      {/* Warning + feedback live OUTSIDE the dropdown so they persist after the
+          menu closes (the menu closes the moment an action is requested). */}
+      <ShareWarningModal
+        open={share.pending != null}
+        action={share.pending}
+        onCancel={share.cancel}
+        onConfirm={share.confirm}
+      />
+      {share.notice && (
+        <div role="status" style={NOTICE_TOAST}>
+          {share.notice}
+        </div>
+      )}
     </div>
   );
 }
+
+const NOTICE_TOAST: React.CSSProperties = {
+  position: "fixed",
+  top: "calc(env(safe-area-inset-top) + 56px)",
+  left: "50%",
+  transform: "translateX(-50%)",
+  zIndex: 60,
+  fontFamily: FONT.grotesk,
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  color: T.ink,
+  backgroundColor: "rgba(14,10,19,0.92)",
+  border: `1px solid ${T.border}`,
+  borderRadius: 999,
+  padding: "8px 14px",
+  boxShadow: "0 8px 24px rgba(14,10,19,0.45)",
+  pointerEvents: "none",
+};

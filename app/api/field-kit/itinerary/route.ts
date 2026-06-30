@@ -14,38 +14,17 @@
 //
 // Quota: many clients polling (~30s each) must not blow the Sheets rate limit, so
 // a SHORT module-level TTL cache (per warm instance) shares one itinerary read
-// across requests. This only governs change-detection latency — the itinerary
-// PAGE stays force-dynamic and renders fresh Sheets data on every request, so the
-// displayed document is never stale; this endpoint just trails reality by ≤ TTL.
+// across requests. That cache now lives in lib/itineraryServerSnapshot so the
+// itinerary PAGE can render through the SAME getItinerarySnapshot — making the
+// page's SSR hash equal this endpoint's (no spurious live-refresh). The displayed
+// document trails live edits by ≤ TTL, which is the accepted trade.
 
 import { NextResponse } from "next/server";
 import { guardFieldKitApi, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
-import { loadProgramItinerary } from "@/lib/loadProgram";
-import { hashItinerary, type ProgramItinerary } from "@/lib/programItinerary";
+import { getItinerarySnapshot } from "@/lib/itineraryServerSnapshot";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-// Short shared cache: long enough to absorb a fleet of 30s pollers, short enough
-// that change detection stays near-real-time.
-const CACHE_TTL_MS = 8_000;
-
-type Snapshot = { itinerary: ProgramItinerary | null; hash: string };
-const snapshotCache = new Map<string, { at: number; value: Snapshot }>();
-
-// Keyed by programId only — the itinerary is program-level (identical for every
-// roster member), so asId never affects what's returned, only whether the caller
-// is allowed in (gated above).
-async function getSnapshot(programId: string): Promise<Snapshot> {
-  const now = Date.now();
-  const hit = snapshotCache.get(programId);
-  if (hit && now - hit.at < CACHE_TTL_MS) return hit.value;
-
-  const itinerary = await loadProgramItinerary(programId);
-  const value: Snapshot = { itinerary, hash: itinerary ? hashItinerary(itinerary) : "" };
-  snapshotCache.set(programId, { at: now, value });
-  return value;
-}
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -57,7 +36,7 @@ export async function GET(req: Request) {
   const denied = await guardFieldKitApi(program, asId);
   if (denied) return denied;
 
-  const { itinerary, hash } = await getSnapshot(program);
+  const { itinerary, hash } = await getItinerarySnapshot(program);
   return NextResponse.json(
     { itinerary, hash },
     { headers: { "Cache-Control": "no-store" } }

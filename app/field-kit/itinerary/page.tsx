@@ -6,9 +6,11 @@
 
 import ItineraryCompanion from "@/components/field-kit/ItineraryCompanion";
 import ImpersonationBanner from "@/components/field-kit/ImpersonationBanner";
+import ItineraryView from "@/components/field-kit/ItineraryView";
+import ItineraryPrivacyNotice from "@/components/field-kit/ItineraryPrivacyNotice";
 import LiveRefresh from "@/components/field-kit/LiveRefresh";
-import { loadProgramItinerary } from "@/lib/loadProgram";
-import { resolveToday, hashItinerary } from "@/lib/programItinerary";
+import { getItinerarySnapshot } from "@/lib/itineraryServerSnapshot";
+import { resolveToday } from "@/lib/programItinerary";
 import { requireFieldKitPage, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 import { T, FONT } from "@/components/field-kit/tokens";
 
@@ -29,19 +31,30 @@ export default async function ItineraryPage({
 
   // Scope strictly to the program whose roster we just verified — never fall
   // back to "the active program", which could belong to a different roster.
-  const itinerary = await loadProgramItinerary(access.programId);
+  // Render through the SHARED server snapshot so this page's hash equals the
+  // /api endpoint's (no spurious live-refresh); the page trails live edits by
+  // ≤ the snapshot TTL, which is the accepted trade.
+  const { itinerary, hash } = await getItinerarySnapshot(access.programId);
   if (!itinerary) return <ItineraryEmpty />;
 
   const today = resolveToday(itinerary);
   return (
     <>
       {access.impersonating && <ImpersonationBanner slug={access.slug} />}
-      <ItineraryCompanion itinerary={itinerary} today={today} />
-      {/* Live-refresh sentinel: keeps this page current while online without a
-          manual reload. ItineraryCompanion above stays the single renderer; this
-          only watches the canonical /api/field-kit/itinerary hash and triggers a
-          router.refresh() + "Updated" banner when the published itinerary changes. */}
-      <LiveRefresh programId={access.programId} initialHash={hashItinerary(itinerary)} />
+      {/* One-time privacy heads-up on first open of the itinerary (per device). */}
+      <ItineraryPrivacyNotice programId={access.programId} />
+      {/* ItineraryView keeps online users on the live path below; if the device
+          is offline it swaps in the on-device snapshot instead (and back on
+          reconnect). The snapshot is never shown to an online user. */}
+      <ItineraryView programId={access.programId}>
+        <ItineraryCompanion itinerary={itinerary} today={today} />
+        {/* Live-refresh sentinel: keeps this page current while online without a
+            manual reload. ItineraryCompanion above stays the single renderer; this
+            only watches the canonical /api/field-kit/itinerary hash and triggers a
+            router.refresh() + "Updated" banner when the published itinerary changes.
+            It also writes the on-device snapshot on every successful fetch. */}
+        <LiveRefresh programId={access.programId} initialHash={hash} />
+      </ItineraryView>
     </>
   );
 }

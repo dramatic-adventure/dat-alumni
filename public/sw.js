@@ -3,12 +3,21 @@
 // Hand-rolled service worker for the DAT Field Kit PWA. Lives in public/ so it
 // ships as a plain static asset — no next.config or build-pipeline changes.
 //
-// SLICE 1 scope: ASSET caching only. Static, same-origin GETs (Next build assets,
-// icons, fonts, images) are served stale-while-revalidate. Navigations (HTML) and
-// /api/* always pass through to the network — gated HTML and API responses are
-// per-user and must NOT be cached here (a later slice owns offline navigation).
+// ASSET caching: static, same-origin GETs (Next build assets, icons, fonts,
+// images) are served stale-while-revalidate. Gated HTML and /api/* responses are
+// per-user and are NEVER cached here.
+//
+// SLICE 2 adds OFFLINE COLD-START for the itinerary ONLY: the /field-kit/itinerary
+// navigation is network-FIRST with a fallback to a precached, NON-gated app-shell
+// (SHELL_URL) when the network fails. The shell ships no user data — it renders
+// the itinerary client-side from the IndexedDB snapshot. Every OTHER /field-kit/*
+// navigation still passes straight to the network (network-required offline).
 
-const CACHE = "fk-v1";
+const CACHE = "fk-v2";
+
+// The non-gated offline app-shell (static file in public/). Served as the offline
+// fallback for the itinerary route. Must NOT be a per-user/gated document.
+const SHELL_URL = "/field-kit-shell.html";
 
 // Best-effort precache of the install icons; failure must not abort install.
 const PRECACHE = [
@@ -18,10 +27,23 @@ const PRECACHE = [
   "/apple-touch-icon.png",
 ];
 
+// Is this a navigation to the itinerary route (the only Slice 2 offline route)?
+function isItineraryNavigation(req, url) {
+  return (
+    req.mode === "navigate" &&
+    (url.pathname === "/field-kit/itinerary" || url.pathname.startsWith("/field-kit/itinerary/"))
+  );
+}
+
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(PRECACHE).catch(() => undefined))
+    caches.open(CACHE).then(async (cache) => {
+      // Icons are best-effort; the shell is cached separately so an icon 404
+      // can't take the offline fallback down with it.
+      await cache.addAll(PRECACHE).catch(() => undefined);
+      await cache.add(SHELL_URL).catch(() => undefined);
+    })
   );
 });
 
@@ -60,8 +82,25 @@ self.addEventListener("fetch", (event) => {
   // Same-origin only.
   if (url.origin !== self.location.origin) return;
 
-  // Navigations (HTML) and API responses are per-user / gated — network only,
-  // no caching in this slice.
+  // Itinerary navigation: network-FIRST, falling back to the precached shell when
+  // offline. The live network response (gated HTML) is NEVER cached — only the
+  // static shell is, and only at install. Other /field-kit/* navigations fall
+  // through to network-only below.
+  if (isItineraryNavigation(req, url)) {
+    event.respondWith(
+      fetch(req).catch(() =>
+        caches.open(CACHE).then((cache) =>
+          cache
+            .match(SHELL_URL)
+            .then((shell) => shell || Response.error())
+        )
+      )
+    );
+    return;
+  }
+
+  // Other navigations (HTML) and API responses are per-user / gated — network
+  // only, never cached here.
   if (req.mode === "navigate") return;
   if (url.pathname.startsWith("/api/")) return;
 

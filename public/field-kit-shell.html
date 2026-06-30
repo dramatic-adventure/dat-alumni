@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0e0a13" />
+<title>PASSAGE Field Kit — Itinerary (offline)</title>
+<!--
+  Field Kit OFFLINE COLD-START SHELL (Slice 2).
+
+  This is a static, NON-GATED file. The service worker (public/sw.js) precaches it
+  and serves it for an /field-kit/itinerary navigation ONLY when the network fails
+  (installed PWA, fully offline). It deliberately ships NO user data — it boots a
+  little inline JS that reads the on-device itinerary snapshot from IndexedDB (the
+  same "dat-field-kit" DB / "itinerarySnapshot" store the app writes) and renders a
+  read-only itinerary. It mirrors components/field-kit/OfflineItinerary; because a
+  static file can't import the app's hashed React bundle, the rendering is a
+  dependency-free port (accepted drift — see Slice 2 notes).
+
+  When connectivity returns it reloads so the real, live route takes over.
+-->
+<style>
+  :root {
+    --bg:#16101c; --card:#251b2e; --ink:#f6efe3; --black:#0e0a13;
+    --yellow:#f5c842; --teal:#2fb3c9; --pink:#ff4067; --grape:#a06fd1; --purple:#b465ff;
+    --muted:rgba(246,239,227,0.52); --dim:rgba(246,239,227,0.26);
+    --sep:rgba(246,239,227,0.10); --border:rgba(246,239,227,0.14);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: linear-gradient(rgba(14,10,19,0.92), rgba(14,10,19,0.96)), var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+  }
+  .grotesk { font-family: "Space Grotesk", system-ui, sans-serif; }
+  .bar {
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    padding: calc(env(safe-area-inset-top) + 9px) 14px 9px;
+    background: rgba(255,64,103,0.12);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 5;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+  .bar .dot { width:7px; height:7px; border-radius:50%; background:var(--pink); flex:none; }
+  .bar .txt { font-size:9.5px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 30px clamp(14px,4vw,40px) 56px; }
+  .eyebrow { font-size:11px; font-weight:700; letter-spacing:0.28em; text-transform:uppercase; color:var(--teal); margin:0 0 10px; }
+  h1.title { font-size: clamp(30px,6.5vw,60px); line-height:0.94; text-transform:uppercase; margin:0 0 14px; font-weight:800; letter-spacing:-0.01em; }
+  .lede { font-style:italic; font-size: clamp(14px,1.7vw,18px); opacity:0.84; margin:0 0 22px; line-height:1.45; border-left:3px solid var(--pink); padding-left:12px; }
+  .stats { display:flex; gap:22px; flex-wrap:wrap; margin:0 0 28px; padding-bottom:20px; border-bottom:1px solid var(--sep); }
+  .stat .n { font-size:30px; line-height:1; font-weight:800; margin:0; }
+  .stat .l { font-size:9.5px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); margin:2px 0 0; }
+  .chapter { margin:0 0 26px; }
+  .chapter h2 { font-size: clamp(17px,2.4vw,22px); margin:0 0 4px; font-weight:700; }
+  .chapter .desc { font-size:14px; line-height:1.55; opacity:0.8; margin:0 0 8px; }
+  .status { display:inline-flex; align-items:center; gap:6px; font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; }
+  .status .d { width:7px; height:7px; border-radius:50%; display:inline-block; }
+  .block { margin:10px 0 12px; padding:10px 14px; border-radius:8px; background:rgba(246,239,227,0.05); border:1px solid var(--border); }
+  .block .k { font-size:8.5px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:var(--teal); margin:0 0 4px; }
+  .block p { margin:0; font-size:13px; line-height:1.5; opacity:0.85; font-style:italic; }
+  .days { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+  .day { border-radius:12px; border:1px solid var(--border); background:var(--card); padding:12px 14px; }
+  .day.today { box-shadow:0 8px 22px rgba(47,179,201,0.18); }
+  .day .head { display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:2px; }
+  .day .dn { font-size:10.5px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
+  .day.today .dn { color: var(--teal); }
+  .pill { font-size:9px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:2px 8px; border-radius:999px; color:var(--black); }
+  .day .spirit { font-style:italic; font-size:12px; color:var(--muted); margin:0 0 6px; }
+  .day h3 { font-size:15px; margin:0 0 4px; font-weight:700; }
+  .day .what { font-size:13px; line-height:1.5; opacity:0.78; margin:0 0 8px; }
+  .times { list-style:none; margin:8px 0 0; padding:0; display:flex; flex-direction:column; gap:4px; }
+  .times li { font-size:12.5px; display:flex; gap:8px; }
+  .times .t { color:var(--muted); min-width:62px; flex:none; }
+  .times .l.bold { font-weight:700; }
+  .meta { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+  .meta .who { font-size:9.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); }
+  .meta .partner { font-size:11.5px; color:var(--teal); }
+  .prep { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .prep span { font-size:11px; opacity:0.75; background:rgba(246,239,227,0.06); padding:3px 8px; border-radius:20px; border:1px solid var(--border); }
+  .empty { max-width:520px; margin:0 auto; padding:72px 24px; text-align:center; }
+  .empty h1 { font-size: clamp(26px,6vw,40px); text-transform:uppercase; line-height:0.98; margin:0 0 16px; font-weight:800; }
+  .empty p { font-size:14.5px; line-height:1.55; opacity:0.78; margin:0; }
+</style>
+</head>
+<body>
+  <div id="root" aria-live="polite"></div>
+  <script>
+  (function () {
+    var DB_NAME = "dat-field-kit", DB_VERSION = 2;
+    var CAPTURE_STORE = "captureQueue", SNAPSHOT_STORE = "itinerarySnapshot";
+    var ACCENTS = { pink:"--pink", teal:"--teal", yellow:"--yellow", grape:"--grape", purple:"--purple" };
+
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;");
+    }
+    function accentVar(a) { return "var(" + (ACCENTS[a] || "--teal") + ")"; }
+
+    function relTime(from) {
+      var s = Math.max(0, Math.round((Date.now() - from) / 1000));
+      if (s < 45) return "just now";
+      var m = Math.round(s / 60); if (m < 60) return m + "m ago";
+      var h = Math.round(m / 60); if (h < 24) return h + "h ago";
+      return Math.round(h / 24) + "d ago";
+    }
+
+    function openDb() {
+      return new Promise(function (resolve, reject) {
+        var req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = function () {
+          var db = req.result;
+          if (!db.objectStoreNames.contains(CAPTURE_STORE)) db.createObjectStore(CAPTURE_STORE, { keyPath: "captureId" });
+          if (!db.objectStoreNames.contains(SNAPSHOT_STORE)) db.createObjectStore(SNAPSHOT_STORE, { keyPath: "programId" });
+        };
+        req.onsuccess = function () { resolve(req.result); };
+        req.onerror = function () { reject(req.error); };
+      });
+    }
+
+    function readLatestSnapshot() {
+      return openDb().then(function (db) {
+        return new Promise(function (resolve, reject) {
+          if (!db.objectStoreNames.contains(SNAPSHOT_STORE)) return resolve(null);
+          var r = db.transaction(SNAPSHOT_STORE, "readonly").objectStore(SNAPSHOT_STORE).getAll();
+          r.onsuccess = function () {
+            var rows = r.result || [];
+            if (!rows.length) return resolve(null);
+            rows.sort(function (a, b) { return (b.syncedAt || 0) - (a.syncedAt || 0); });
+            resolve(rows[0]);
+          };
+          r.onerror = function () { reject(r.error); };
+        });
+      });
+    }
+
+    function allDays(it) {
+      var out = [];
+      (it.chapters || []).forEach(function (c) { (c.days || []).forEach(function (d) { out.push(d); }); });
+      return out;
+    }
+    function isoToday() {
+      var d = new Date(), p = function (n) { return String(n).padStart(2, "0"); };
+      return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+    }
+    // Compact port of resolveToday() — only needs the highlighted day id here.
+    function resolveTodayId(it) {
+      var days = allDays(it).filter(function (d) { return d.fullDate; });
+      if (!days.length) return it.todayDayId || null;
+      var sorted = days.slice().sort(function (a, b) { return a.fullDate < b.fullDate ? -1 : a.fullDate > b.fullDate ? 1 : 0; });
+      var today = isoToday();
+      var exact = sorted.filter(function (d) { return d.fullDate === today; })[0];
+      if (exact) return exact.id;
+      if (today < sorted[0].fullDate) return null;
+      if (today > sorted[sorted.length - 1].fullDate) return null;
+      var past = sorted.slice().reverse().filter(function (d) { return d.fullDate <= today; })[0];
+      return past ? past.id : (it.todayDayId || null);
+    }
+
+    function statLede(it, clubs) {
+      var nCh = (it.chapters || []).length, nDays = allDays(it).length;
+      var parts = [nCh + " " + (nCh === 1 ? "chapter" : "chapters"), nDays + " " + (nDays === 1 ? "day" : "days") + " in the field"];
+      if (clubs > 0) parts.push(clubs + " " + (clubs === 1 ? "drama club" : "drama clubs"));
+      return parts.join(", ") + ".";
+    }
+
+    var STATUS = {
+      complete: { label: "Chapter published", color: "#1f9d57" },
+      draft: { label: "Chapter in progress", color: "var(--pink)" },
+      empty: { label: "Chapter not started", color: "var(--muted)" }
+    };
+
+    function renderTimes(times) {
+      if (!times || !times.length) return "";
+      var items = times.map(function (t) {
+        var label = (t.marker ? "» " : "") + esc(t.label);
+        var note = t.note ? ' <span style="color:var(--dim)">— ' + esc(t.note) + "</span>" : "";
+        return '<li><span class="t">' + esc(t.time) + '</span><span class="l' + (t.bold ? " bold" : "") + '">' + label + note + "</span></li>";
+      }).join("");
+      return '<ul class="times">' + items + "</ul>";
+    }
+
+    function renderDay(day, acc, todayId) {
+      var isToday = todayId && day.id === todayId;
+      var html = '<div class="day' + (isToday ? " today" : "") + '"' + (isToday ? ' style="border-color:' + acc + ';background:rgba(47,179,201,0.06)"' : "") + ">";
+      html += '<div class="head"><span class="dn"' + (isToday ? ' style="color:' + acc + '"' : "") + ">Day " + esc(day.dayNum) + (day.dateLabel ? " · " + esc(day.dateLabel) : "") + "</span>";
+      if (isToday) html += '<span class="pill" style="background:' + acc + '">Today</span>';
+      html += "</div>";
+      if (day.spirit) html += '<p class="spirit"' + (isToday ? ' style="color:' + acc + '"' : "") + ">" + esc(day.spirit) + "</p>";
+      if (day.title) html += "<h3>" + esc(day.title) + "</h3>";
+      if (day.what) html += '<p class="what">' + esc(day.what) + "</p>";
+      html += renderTimes(day.times);
+      if (day.cohortNote || day.partnerOrg) {
+        html += '<div class="meta">';
+        if (day.cohortNote) html += '<span class="who">' + esc(day.cohortNote) + "</span>";
+        if (day.partnerOrg) html += '<span class="partner">' + esc(day.partnerOrg) + "</span>";
+        html += "</div>";
+      }
+      if (day.prep && day.prep.length) {
+        html += '<div class="prep">' + day.prep.map(function (p) { return "<span>◦ " + esc(p) + "</span>"; }).join("") + "</div>";
+      }
+      return html + "</div>";
+    }
+
+    function renderChapter(ch, todayId) {
+      var acc = accentVar(ch.accent);
+      var st = STATUS[ch.status] || STATUS.empty;
+      var html = '<section class="chapter">';
+      html += '<h2>' + esc(ch.verb) + ' <span style="color:' + acc + '">in ' + esc(ch.place) + "</span></h2>";
+      if (ch.description) html += '<p class="desc">' + esc(ch.description) + "</p>";
+      html += '<span class="status" style="color:' + st.color + '"><span class="d" style="background:' + st.color + '"></span>' + st.label + "</span>";
+      if (ch.goal) html += '<div class="block"><p class="k">Goal</p><p>' + esc(ch.goal) + "</p></div>";
+      if (ch.tips) html += '<div class="block" style="border-left:3px solid ' + acc + '"><p class="k" style="color:' + acc + '">Tips</p><p style="font-style:normal">' + esc(ch.tips) + "</p></div>";
+      html += '<div class="days">' + (ch.days || []).map(function (d) { return renderDay(d, acc, todayId); }).join("") + "</div>";
+      return html + "</section>";
+    }
+
+    function render(snap) {
+      var root = document.getElementById("root");
+      if (!snap || !snap.itinerary) {
+        root.innerHTML =
+          '<div class="empty"><p class="eyebrow" style="color:var(--pink)">Offline</p>' +
+          '<h1>No saved itinerary yet.</h1>' +
+          '<p>Open the itinerary once while you have a connection and it&rsquo;ll be saved here for offline use in the field.</p></div>';
+        return;
+      }
+      var it = snap.itinerary;
+      var clubs = {};
+      (it.chapters || []).forEach(function (c) {
+        if (c.dramaClub) clubs[c.dramaClub] = 1;
+        (c.days || []).forEach(function (d) { if (d.dramaClub) clubs[d.dramaClub] = 1; });
+      });
+      var nClubs = Object.keys(clubs).length;
+      var todayId = resolveTodayId(it);
+
+      var lede = [it.essence, it.dates ? esc(it.dates) + "." : "", statLede(it, nClubs)].filter(Boolean).join(" ");
+      var html = "";
+      html += '<div class="bar"><span class="dot"></span><span class="txt grotesk">Offline — showing last synced ' + esc(relTime(snap.syncedAt)) + "</span></div>";
+      html += '<div class="wrap">';
+      html += '<p class="eyebrow grotesk">' + esc(it.label) + "</p>";
+      html += '<h1 class="title">The Journey,<br>day by day.</h1>';
+      html += '<p class="lede">' + esc(lede) + "</p>";
+      html += '<div class="stats">' +
+        '<div class="stat"><p class="n" style="color:var(--pink)">' + (it.chapters || []).length + '</p><p class="l">Chapters</p></div>' +
+        '<div class="stat"><p class="n" style="color:var(--teal)">' + allDays(it).length + '</p><p class="l">Field days</p></div>' +
+        (nClubs ? '<div class="stat"><p class="n" style="color:var(--purple)">' + nClubs + '</p><p class="l">Drama clubs</p></div>' : "") +
+        "</div>";
+      html += (it.chapters || []).map(function (c) { return renderChapter(c, todayId); }).join("");
+      html += "</div>";
+      root.innerHTML = html;
+    }
+
+    // When connectivity returns, hand control back to the real (live) route.
+    window.addEventListener("online", function () { location.reload(); });
+
+    readLatestSnapshot().then(render).catch(function () { render(null); });
+  })();
+  </script>
+</body>
+</html>

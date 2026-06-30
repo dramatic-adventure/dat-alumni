@@ -9,6 +9,12 @@
 // Blobs (photo/voice bytes) are stored DIRECTLY — IndexedDB persists binary
 // natively, so no base64 bloat. SSR-safe: every entry point no-ops cleanly when
 // indexedDB is absent (no "server-only" import; this just guards the browser API).
+//
+// The "dat-field-kit" DB (and its version/upgrade) is owned by lib/fieldKitDb —
+// the itinerary snapshot store (Slice 2) shares the same database, so the open
+// path must be centralized to avoid an IndexedDB version conflict.
+
+import { openDb, hasIDB, objectStore, CAPTURE_STORE } from "@/lib/fieldKitDb";
 
 export type CaptureKind = "note" | "quote" | "photo" | "voice";
 export type QueueStatus = "pending" | "syncing" | "failed";
@@ -29,33 +35,8 @@ export type QueuedCapture = {
   lastError?: string;
 };
 
-const DB_NAME = "dat-field-kit";
-const STORE = "captureQueue";
-
-function hasIDB(): boolean {
-  return typeof indexedDB !== "undefined";
-}
-
-let dbPromise: Promise<IDBDatabase> | null = null;
-
-function openDb(): Promise<IDBDatabase> {
-  if (dbPromise) return dbPromise;
-  dbPromise = new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(STORE)) {
-        db.createObjectStore(STORE, { keyPath: "captureId" });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-  return dbPromise;
-}
-
 function store(db: IDBDatabase, mode: IDBTransactionMode): IDBObjectStore {
-  return db.transaction(STORE, mode).objectStore(STORE);
+  return objectStore(db, CAPTURE_STORE, mode);
 }
 
 // put() upserts on the keyPath, so enqueue + update share one path.
