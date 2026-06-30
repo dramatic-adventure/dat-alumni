@@ -24,6 +24,10 @@ html, body {
   background-position: center;
   background-repeat: no-repeat;
   overflow-x: clip; /* prevent fanned/protruding elements from creating horizontal scroll */
+  /* Disable the rubber-band/overscroll bounce so the dark footer (bottom) and
+     hero (top) don't detach and reveal the fixed kraft background behind them.
+     Note: also disables pull-to-refresh on mobile. */
+  overscroll-behavior-y: none;
 }
 
 /* Prevent long text from escaping its container on any screen size */
