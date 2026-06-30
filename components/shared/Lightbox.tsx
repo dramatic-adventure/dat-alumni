@@ -71,24 +71,45 @@ export default function Lightbox({
     trackMouse: true,
   });
 
+  // Lightbox display cap. The full-resolution original stays archived on Drive
+  // (and is still reachable via /api/img?fileId= for downloads/promo), but the
+  // viewer is served a large-but-bounded image so a multi-MB phone photo never
+  // gets pushed down the wire just to fill an on-screen lightbox. 2400px is the
+  // thumb proxy's max and is sharp on any display.
+  const LIGHTBOX_MAX_W = 2400;
+
   const toLightboxSrc = useCallback((src: string) => {
     const u = (src || "").trim();
     if (!u) return "";
 
-    if (u.startsWith("/api/img")) return u;
-
-    if (u.startsWith("/api/media/thumb")) {
+    // Pull a Drive fileId out of either of our fileId-based URL shapes:
+    //   /api/media/thumb/[fileId]   (new) or  /api/media/thumb?fileId=  (legacy)
+    //   /api/img?fileId=
+    const fileIdFrom = (s: string): string => {
       try {
-        const parsed = new URL(u, "http://local");
-        // New format: /api/media/thumb/[fileId] — fileId is the last path segment.
-        // Legacy format: /api/media/thumb?fileId= — kept for any cached browser URLs.
-        const fid = String(
-          parsed.pathname.split("/").pop() || parsed.searchParams.get("fileId") || ""
-        ).trim();
-        if (fid) return `/api/img?fileId=${encodeURIComponent(fid)}`;
+        const parsed = new URL(s, "http://local");
+        if (parsed.pathname.startsWith("/api/media/thumb")) {
+          return String(
+            parsed.pathname.split("/").pop() || parsed.searchParams.get("fileId") || ""
+          ).trim();
+        }
+        if (parsed.pathname.startsWith("/api/img")) {
+          return String(parsed.searchParams.get("fileId") || "").trim();
+        }
       } catch {}
-      return u;
+      return "";
+    };
+
+    // File-backed images (uploaded headshots/media) → capped display via the
+    // thumb proxy, NOT the full original.
+    const fid = fileIdFrom(u);
+    if (fid) {
+      return `/api/media/thumb/${encodeURIComponent(fid)}?w=${LIGHTBOX_MAX_W}`;
     }
+
+    // URL-backed proxy images (external hosts, no fileId) are already bounded by
+    // their source — leave them as-is.
+    if (u.startsWith("/api/img")) return u;
 
     const isDriveLike =
       u.includes("drive.google.com") ||

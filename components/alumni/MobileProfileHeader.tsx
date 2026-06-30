@@ -320,7 +320,7 @@ export default function MobileProfileHeader({
         onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); openHeadshotGallery(); } }}
         aria-label="Open headshot"
       >
-        <Image src={imageSrc} alt={`${name}'s headshot`} fill placeholder="blur" blurDataURL={fallbackImage} priority fetchPriority="high" style={{ objectFit: "cover", objectPosition: "top center" }} />
+        <Image src={imageSrc} alt={`${name}'s headshot`} fill sizes="(max-width: 400px) 90vw, 360px" placeholder="blur" blurDataURL="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc0JyBoZWlnaHQ9JzUnPjxyZWN0IHdpZHRoPSc0JyBoZWlnaHQ9JzUnIGZpbGw9JyMyNDExMjMnLz48L3N2Zz4=" priority fetchPriority="high" style={{ objectFit: "cover", objectPosition: "top center" }} />
       </div>
 
       {/* Name + meta */}
