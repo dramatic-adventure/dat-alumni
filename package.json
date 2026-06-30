@@ -14,6 +14,7 @@
     "verify:field-kit": "tsx scripts/field-kit-roster.check.ts",
     "migrate:profiles": "tsx scripts/migrateProfileDataToLive.ts",
     "migrate:profiles:dry": "DRY_RUN=1 tsx scripts/migrateProfileDataToLive.ts",
+    "setup:notification-secrets": "tsx scripts/setup-notification-secrets.ts",
     "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
     "postinstall": "echo \"skip prisma generate in postinstall\""
   },

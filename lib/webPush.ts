@@ -6,9 +6,11 @@
 // service reports dead (404/410). Pure server util — both the admin "send
 // immediately" path and the scheduled dispatch route call this.
 //
-// VAPID is configured lazily from env (NEXT_PUBLIC_VAPID_PUBLIC_KEY +
-// VAPID_PRIVATE_KEY + VAPID_SUBJECT) so importing this module never throws at
-// load when keys are absent (e.g. a preview deploy without push configured).
+// VAPID is configured lazily (NEXT_PUBLIC_VAPID_PUBLIC_KEY from env;
+// VAPID_PRIVATE_KEY + VAPID_SUBJECT from Netlify Blobs via
+// lib/notificationSecrets, env as fallback) so importing this module never
+// throws at load when keys are absent (e.g. a preview deploy without push
+// configured).
 
 import "server-only";
 import webpush from "web-push";
@@ -18,6 +20,7 @@ import {
   listSubscriptionsForProgram,
   deleteSubscriptionsByEndpoint,
 } from "@/lib/pushSubscriptions";
+import { getVapidPrivateKey, getVapidSubject } from "@/lib/notificationSecrets";
 
 export type PushMessage = { title: string; body: string; link?: string };
 
@@ -27,20 +30,19 @@ const DEFAULT_LINK = "/field-kit/itinerary";
 
 let configured = false;
 
-/** Configure web-push from env once. Returns false if VAPID keys are missing. */
-function ensureConfigured(): boolean {
+/** Configure web-push once. Returns false if VAPID keys are missing. */
+async function ensureConfigured(): Promise<boolean> {
   if (configured) return true;
   const publicKey = String(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "").trim();
-  const privateKey = String(process.env.VAPID_PRIVATE_KEY || "").trim();
-  const subject =
-    String(process.env.VAPID_SUBJECT || "").trim() || "mailto:hello@dramaticadventure.com";
+  const privateKey = await getVapidPrivateKey();
+  const subject = (await getVapidSubject()) || "mailto:hello@dramaticadventure.com";
   if (!publicKey || !privateKey) return false;
   webpush.setVapidDetails(subject, publicKey, privateKey);
   configured = true;
   return true;
 }
 
-export function isPushConfigured(): boolean {
+export function isPushConfigured(): Promise<boolean> {
   return ensureConfigured();
 }
 
@@ -53,7 +55,7 @@ export async function sendToProgram(
   programId: string,
   message: PushMessage
 ): Promise<SendResult> {
-  if (!ensureConfigured()) {
+  if (!(await ensureConfigured())) {
     throw new Error("Push not configured: missing NEXT_PUBLIC_VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY");
   }
 

@@ -88,8 +88,31 @@ Alumni and content pages use a slug forwarding system (`loadSlugForwardMap`) to 
 | `NETLIFY_BLOBS_*` or auto-injected | Netlify Blobs access |
 | `DATABASE_URL` | SQLite path (e.g., `file:./dev.db`) |
 | `MAPBOX_TOKEN` | Mapbox for story map |
-| `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Field Kit web push (Slice 3); see `field-kit-NOTIFICATIONS-SCHEMA.md` |
-| `CRON_SECRET` | Authorizes the notifications dispatch route from the scheduled function |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Field Kit web push public key (Slice 3); non-secret, stays in Builds env. See `field-kit-NOTIFICATIONS-SCHEMA.md` |
+
+### Notification secrets live in Netlify Blobs, not env
+
+`VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, and `CRON_SECRET` are **not** set as Netlify
+function environment variables. Added to the function env alongside the existing
+GCP credentials, they pushed the Lambda env bundle over AWS's 4 KB limit and broke
+deploys. They are instead stored in a site-wide, persistent Netlify Blobs store
+(`dat-notification-secrets`, no `deployID`, so it survives across deploys) and
+read at runtime via `lib/notificationSecrets.ts`, which caches the values on
+`globalThis` per warm instance.
+
+- Read path: `lib/webPush.ts`, `app/api/field-kit/push/dispatch/route.ts`, and
+  `netlify/functions/send-notifications.ts` all go through
+  `lib/notificationSecrets.ts` (`getVapidPrivateKey`, `getVapidSubject`,
+  `getCronSecret`).
+- Falls back to the same-named env var if Blobs has nothing for a key — this is
+  what makes local `next dev` work off `.env.local` without any Blobs
+  credentials, and is also what made the rollout reversible (see below).
+- To (re)write the secrets: `npm run setup:notification-secrets` (prompts for
+  each value with masked input; requires `NETLIFY_SITE_ID` +
+  `NETLIFY_AUTH_TOKEN` locally since there's no Netlify runtime to
+  auto-inject Blobs credentials outside of Netlify itself).
+- `lib/googleClients.ts` and the `GCP_SA_*` vars were deliberately left
+  untouched — only the three notification secrets moved.
 
 ## Other Instructions
 

@@ -18,25 +18,25 @@
 import { NextResponse } from "next/server";
 import { findUnsent, stampSentAt } from "@/lib/notifications";
 import { sendToProgram, isPushConfigured } from "@/lib/webPush";
+import { getCronSecret } from "@/lib/notificationSecrets";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function authorized(req: Request): boolean {
-  const secret = String(process.env.CRON_SECRET || "").trim();
-  if (!secret) return false; // not configured → refuse rather than run open
+function authorized(req: Request, secret: string): boolean {
   const header = (req.headers.get("x-cron-secret") || "").trim();
   return header === secret;
 }
 
 export async function POST(req: Request) {
-  if (!process.env.CRON_SECRET) {
+  const secret = await getCronSecret();
+  if (!secret) {
     return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 503 });
   }
-  if (!authorized(req)) {
+  if (!authorized(req, secret)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!isPushConfigured()) {
+  if (!(await isPushConfigured())) {
     return NextResponse.json({ error: "Push not configured" }, { status: 503 });
   }
 

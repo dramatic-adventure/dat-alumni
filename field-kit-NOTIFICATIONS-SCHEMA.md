@@ -43,14 +43,24 @@ One row **per program** (latest wins). Upserted by the admin "Set rally point" a
 
 ---
 
-## 2. Environment variables
+## 2. Environment variables / secrets
 
 | Variable | Where | Purpose |
 |---|---|---|
-| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | client + server | VAPID public key (non-secret by design; the browser needs it to subscribe). |
-| `VAPID_PRIVATE_KEY` | server | VAPID private key. **Secret.** |
-| `VAPID_SUBJECT` | server | `mailto:` or `https:` contact for VAPID. Optional — defaults to `mailto:hello@dramaticadventure.com`. |
-| `CRON_SECRET` | server + Netlify fn | Shared secret the scheduled function sends to authorize `/api/field-kit/push/dispatch`. **Secret.** Without it the dispatch route refuses to run. |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | client + server, **env** | VAPID public key (non-secret by design; the browser needs it to subscribe). |
+| `VAPID_PRIVATE_KEY` | server, **Netlify Blobs** | VAPID private key. **Secret.** |
+| `VAPID_SUBJECT` | server, **Netlify Blobs** | `mailto:` or `https:` contact for VAPID. Optional — defaults to `mailto:hello@dramaticadventure.com`. |
+| `CRON_SECRET` | server + Netlify fn, **Netlify Blobs** | Shared secret the scheduled function sends to authorize `/api/field-kit/push/dispatch`. **Secret.** Without it the dispatch route refuses to run. |
+
+`VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, and `CRON_SECRET` live in a site-wide
+Netlify Blobs store (`dat-notification-secrets`), not the function environment —
+added to the Lambda env alongside the GCP credentials they pushed the function
+bundle over AWS's 4 KB limit. `lib/notificationSecrets.ts` reads them at runtime
+(cached on `globalThis`), falling back to the same-named env var if Blobs has
+nothing — which is also how local `next dev` picks them up from `.env.local`.
+Write them with `npm run setup:notification-secrets` (masked prompts; requires
+`NETLIFY_SITE_ID` + `NETLIFY_AUTH_TOKEN` locally). See "Notification secrets
+live in Netlify Blobs, not env" in `CLAUDE.md` for the full rollout story.
 
 Reused (already configured): `ALUMNI_SHEET_ID`, `FIELD_KIT_PROGRAM_ID`,
 `ADMIN_EMAILS` (admin gate), `APP_BASE_URL` (dispatch base URL; falls back to
@@ -66,9 +76,10 @@ New dependency: **`web-push`** (+ `@types/web-push` dev).
 
 `netlify/functions/send-notifications.ts` runs every minute (`* * * * *`, mirrors
 `refresh-fallbacks.ts`). It is a **thin trigger**: it POSTs
-`/api/field-kit/push/dispatch` with the `x-cron-secret` header. The real work
-(authenticated Sheets read/stamp + web-push) lives in that route because it imports
-`server-only` modules that don't load in the esbuild-bundled function. The route is
+`/api/field-kit/push/dispatch` with the `x-cron-secret` header (read from Netlify
+Blobs via `lib/notificationSecrets.ts`). The real work (authenticated Sheets
+read/stamp + web-push) lives in that route because it imports `server-only`
+modules that don't load in the esbuild-bundled function. The route is
 idempotent — it claims each row by stamping `sentAt` before sending.
 
 ---
@@ -88,7 +99,10 @@ idempotent — it claims each row by stamping `sentAt` before sending.
 
 ## 5. Manual verification
 
-1. Set the four env vars; create the three tabs. `npm run dev`.
+1. Set `NEXT_PUBLIC_VAPID_PUBLIC_KEY` in env, and `VAPID_PRIVATE_KEY` /
+   `VAPID_SUBJECT` / `CRON_SECRET` either in env (local dev) or via
+   `npm run setup:notification-secrets` (Blobs, matches production); create the
+   three tabs. `npm run dev`.
 2. Install the PWA (iOS 16.4+ requires standalone). Account menu → **Get trip
    alerts** → grant permission. A row appears in `Field Kit Push Subscriptions`.
 3. **Sheet path:** add a `Field Kit Notifications` row, `notify=TRUE`, `sentAt`

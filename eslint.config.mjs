@@ -49,8 +49,11 @@ export default [
       "no-console": "off",
     },
   },
-  // Don’t lint one-off migration scripts (they’re tooling, not app code)
+  // Don’t lint one-off migration/setup scripts (they’re tooling, not app code)
   {
-    ignores: ["scripts/migrateProfileDataToLive.ts"],
+    ignores: [
+      "scripts/migrateProfileDataToLive.ts",
+      "scripts/setup-notification-secrets.ts",
+    ],
   },
 ];

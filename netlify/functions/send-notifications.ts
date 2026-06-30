@@ -1,4 +1,5 @@
 import { schedule } from "@netlify/functions";
+import { getCronSecret } from "../../lib/notificationSecrets";
 
 // Slice 3 (Notifications) — scheduled trigger for the Sheet-toggle send path.
 // Mirrors refresh-fallbacks.ts (a scheduled @netlify/functions handler), but the
@@ -8,6 +9,9 @@ import { schedule } from "@netlify/functions";
 // thin trigger: every minute it POSTs the dispatch route with the shared
 // CRON_SECRET. The route is idempotent (claims rows by stamping sentAt), so an
 // occasional overlap or retry is safe.
+//
+// CRON_SECRET itself comes from Netlify Blobs (lib/notificationSecrets), not the
+// function env — see that file for why.
 
 function baseUrl(): string {
   return (
@@ -19,7 +23,7 @@ function baseUrl(): string {
 }
 
 const baseHandler = async () => {
-  const secret = String(process.env.CRON_SECRET || "").trim();
+  const secret = await getCronSecret();
   if (!secret) {
     return { statusCode: 200, body: JSON.stringify({ ok: false, skipped: "CRON_SECRET unset" }) };
   }
