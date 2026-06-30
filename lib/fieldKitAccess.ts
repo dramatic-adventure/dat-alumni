@@ -15,14 +15,50 @@ import {
   isAdmin,
   getAlumniIdForOwnerEmail,
   resolveSlugToAlumniId,
+  normalizeGmail,
 } from "@/lib/ownership";
 import { programMap } from "@/lib/programMap";
+import { registerAlumniCacheInvalidationHook } from "@/lib/loadAlumni";
 
 export const FIELD_KIT_PROGRAM_ID = process.env.FIELD_KIT_PROGRAM_ID || "passage-slovakia-2026";
 
 function norm(s: unknown): string {
   return String(s ?? "").trim().toLowerCase();
 }
+
+/* ──────────────────────────────────────────────────────────
+ * Owner → alumniId resolution cache (per warm instance)
+ *
+ * getFieldKitAccess is React cache()'d, which is REQUEST-scoped only — so every
+ * Field Kit request was re-reading the Profile-Owners tab from Sheets in the
+ * gate. This short cross-request TTL cache (mirrors ALUMNI_TTL_MS in
+ * lib/loadAlumni) memoizes the email→alumniId answer per warm serverless slot.
+ * Negative results ("" — no owning profile) are cached too, so anon/non-roster
+ * emails don't hammer Sheets either; correctness is unchanged because the roster
+ * check still runs on the cached id. Cleared alongside the alumni cache.
+ * ────────────────────────────────────────────────────────── */
+const OWNER_RESOLVE_TTL_MS = Number(process.env.ALUMNI_TTL_MS || 60_000);
+const _ownerIdCache = new Map<string, { id: string; ts: number }>();
+
+async function resolveOwnedAlumniIdCached(
+  spreadsheetId: string,
+  email: string,
+): Promise<string> {
+  const key = `${spreadsheetId}::${normalizeGmail(email)}`;
+  const now = Date.now();
+  const hit = _ownerIdCache.get(key);
+  if (hit && now - hit.ts < OWNER_RESOLVE_TTL_MS) return hit.id;
+  const id = await getAlumniIdForOwnerEmail(spreadsheetId, email);
+  _ownerIdCache.set(key, { id, ts: now });
+  return id;
+}
+
+/** Clear the owner-resolution cache. Registered with the alumni cache reset. */
+export function invalidateFieldKitOwnerCache(): void {
+  _ownerIdCache.clear();
+}
+
+registerAlumniCacheInvalidationHook(invalidateFieldKitOwnerCache);
 
 /**
  * Every alumni slug on a trip — the union of `artists` across every programMap
@@ -84,7 +120,7 @@ export const getFieldKitAccess = cache(
     // programMap.artists uses. If a member's alumniId ever diverges from their
     // slug, refine this to resolve slug<->alumniId.
     const spreadsheetId = process.env.ALUMNI_SHEET_ID || "";
-    const ownedId = await getAlumniIdForOwnerEmail(spreadsheetId, email);
+    const ownedId = await resolveOwnedAlumniIdCached(spreadsheetId, email);
 
     // Admins bypass the ROSTER requirement, but still get their own slug when they
     // have a profile row (so an admin who is also a cohort member can capture).

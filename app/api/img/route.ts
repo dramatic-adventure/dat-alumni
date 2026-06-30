@@ -135,6 +135,21 @@ function buildDriveUcUrl(fileId: string) {
   )}`;
 }
 
+// Drive size token, e.g. "w400" / "s400" / "h800" (width / square / height).
+function isPlausibleSize(sz: string) {
+  return /^[wsh]\d{2,4}$/.test((sz || "").trim());
+}
+
+// Sized, pre-rendered Drive thumbnail. Returns a much smaller payload than the
+// full uc?export=download original (and already JPEG/PNG, so no HEIC transcode).
+function buildDriveThumbnailUrl(fileId: string, sz: string) {
+  const id = (fileId || "").trim();
+  if (!id) return "";
+  return `https://drive.google.com/thumbnail?id=${encodeURIComponent(
+    id
+  )}&sz=${encodeURIComponent(sz)}`;
+}
+
 /**
  * HEAD: allow lightweight preflight checks (no upstream fetch)
  */
@@ -182,30 +197,33 @@ export async function GET(req: Request) {
     const url = (searchParams.get("url") || "").trim();
     const fileId =
       (searchParams.get("fileId") || searchParams.get("id") || "").trim();
+    const sz = (searchParams.get("sz") || "").trim();
 
     // ✅ Validate fileId early (avoid wasted fetch/processing).
     if (fileId && !isPlausibleDriveFileId(fileId)) {
       return jsonErr(400, { error: "Invalid fileId" });
     }
 
-    // ✅ Accept either url=... OR fileId=...
-    const effectiveUrl = url || (fileId ? buildDriveUcUrl(fileId) : "");
-    if (!effectiveUrl) return jsonErr(400, { error: "Missing url" });
+    // A size cap is honored only for fileId requests (Drive thumbnails).
+    const useSize = !!fileId && isPlausibleSize(sz);
 
-    const parsed = normalizeUrlOrNull(effectiveUrl);
-    if (!parsed) return jsonErr(400, { error: "Invalid url/protocol" });
+    // ✅ Accept either url=... OR fileId=... Candidate upstreams are tried in
+    // order: for a sized fileId we try the small pre-rendered thumbnail first,
+    // then fall back to the full original so a thumbnail miss never breaks the
+    // image. url= requests have a single candidate.
+    const candidates: string[] = url
+      ? [url]
+      : fileId
+        ? useSize
+          ? [buildDriveThumbnailUrl(fileId, sz), buildDriveUcUrl(fileId)]
+          : [buildDriveUcUrl(fileId)]
+        : [];
+    if (!candidates.length) return jsonErr(400, { error: "Missing url" });
 
-    // 🔒 SSRF protection: allowlist hostnames
-    const host = parsed.hostname.toLowerCase();
-    if (!isAllowedHost(host)) {
-      return jsonErr(403, {
-        error: "Host not allowed",
-        host,
-        hint: "Add this host to ALLOWED_HOSTS in app/api/img/route.ts",
-      });
-    }
-
-    const cacheKey = fileId ? `fid:${fileId}` : `url:${effectiveUrl}`;
+    // Size is part of the cache key so different caps don't collide.
+    const cacheKey = fileId
+      ? `fid:${fileId}:${useSize ? sz : "orig"}`
+      : `url:${url}`;
     const cached = instanceCacheGet(cacheKey);
     if (cached) {
       const cacheHeaders = fileId ? fileIdCacheHeaders() : noStoreHeaders();
@@ -216,34 +234,69 @@ export async function GET(req: Request) {
     }
 
     // ✅ NOTE: we intentionally DO NOT cache upstream fetches.
-    const upstream = await fetch(parsed.toString(), {
-      cache: "no-store",
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome Safari",
-        Accept: "image/avif,image/webp,image/*,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        Referer: "https://www.dramaticadventure.com/",
-      },
-      redirect: "follow",
-    });
+    let upstream: Response | null = null;
+    let host = "";
+    let lastErr: { status: number; payload: Record<string, unknown> } | null =
+      null;
+    for (const candidate of candidates) {
+      const parsed = normalizeUrlOrNull(candidate);
+      if (!parsed) {
+        lastErr = { status: 400, payload: { error: "Invalid url/protocol" } };
+        continue;
+      }
 
-    // 🔐 Re-validate host after redirects (Drive → googleusercontent)
-    const finalUrl = new URL(upstream.url);
-    const finalHost = finalUrl.hostname.toLowerCase();
+      // 🔒 SSRF protection: allowlist hostnames
+      host = parsed.hostname.toLowerCase();
+      if (!isAllowedHost(host)) {
+        lastErr = {
+          status: 403,
+          payload: {
+            error: "Host not allowed",
+            host,
+            hint: "Add this host to ALLOWED_HOSTS in app/api/img/route.ts",
+          },
+        };
+        continue;
+      }
 
-    if (!isAllowedHost(finalHost)) {
-      return jsonErr(403, {
-        error: "Redirected host not allowed",
-        host: finalHost,
+      const res = await fetch(parsed.toString(), {
+        cache: "no-store",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome Safari",
+          Accept: "image/avif,image/webp,image/*,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
+          Referer: "https://www.dramaticadventure.com/",
+        },
+        redirect: "follow",
       });
+
+      // 🔐 Re-validate host after redirects (Drive → googleusercontent)
+      const finalHost = new URL(res.url).hostname.toLowerCase();
+      if (!isAllowedHost(finalHost)) {
+        lastErr = {
+          status: 403,
+          payload: { error: "Redirected host not allowed", host: finalHost },
+        };
+        continue;
+      }
+
+      if (!res.ok) {
+        lastErr = {
+          status: 502,
+          payload: { error: "Upstream fetch failed", status: res.status, host },
+        };
+        continue;
+      }
+
+      upstream = res;
+      break;
     }
 
-    if (!upstream.ok) {
-      return jsonErr(502, {
+    if (!upstream) {
+      return jsonErr(lastErr?.status ?? 502, {
         error: "Upstream fetch failed",
-        status: upstream.status,
-        host,
+        ...(lastErr?.payload ?? {}),
       });
     }
 

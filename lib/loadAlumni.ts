@@ -618,10 +618,29 @@ export const loadAlumniBySeason = cache(async (season: number): Promise<AlumniRo
  * Manual cache invalidation
  * ────────────────────────────────────────────────────────── */
 
+/**
+ * Other modules with their own warm-instance caches derived from alumni data
+ * (e.g. the Field Kit owner→alumniId resolution) register a reset hook here so
+ * a single invalidateAlumniCaches() clears them too. Decoupled via registration
+ * so loadAlumni keeps no import of those modules.
+ */
+const cacheInvalidationHooks = new Set<() => void>();
+
+export function registerAlumniCacheInvalidationHook(fn: () => void): void {
+  cacheInvalidationHooks.add(fn);
+}
+
 export function invalidateAlumniCaches(): void {
   alumniCache = [];
   alumniCacheAt = 0; // ✅ reset TTL clock
   slugForwardMapCache = null;
+  for (const hook of cacheInvalidationHooks) {
+    try {
+      hook();
+    } catch {
+      /* a misbehaving hook must not block the core reset */
+    }
+  }
   if (DEBUG) serverDebug("🧹 Cleared alumni + slug-forward caches");
 }
 

@@ -68,11 +68,19 @@ function rolesForSlug(programId: string, slug: string): string[] {
   return out;
 }
 
-/** Render-ready, same-origin headshot src — identical rule to loadFieldKitCrew. */
-function renderableHeadshot(url: string | undefined): string | undefined {
+/** Render-ready, same-origin headshot src — identical rule to loadFieldKitCrew:
+ *  prefer the proxy's CACHEABLE `?id=` path (with a `sz` cap) when the row has a
+ *  Drive fileId; fall back to `?url=` (no-store) only when there's no fileId. */
+function renderableHeadshot(
+  url: string | undefined,
+  fileId: string | undefined,
+  sz: string,
+): string | undefined {
   const u = (url ?? "").trim();
-  if (!u) return undefined;
   if (u.startsWith("/")) return u;
+  const id = (fileId ?? "").trim();
+  if (id) return `/api/img?id=${encodeURIComponent(id)}&sz=${sz}`;
+  if (!u) return undefined;
   return `/api/img?url=${encodeURIComponent(u.replace(/^http:\/\//, "https://"))}`;
 }
 
@@ -143,7 +151,8 @@ export const loadFieldKitArtist = cache(
     return {
       slug: clean,
       name: alum?.name?.trim() || humanizeSlug(clean),
-      headshotUrl: renderableHeadshot(alum?.headshotUrl),
+      // Artist hero renders up to ~320px wide — w800 covers 2x DPR.
+      headshotUrl: renderableHeadshot(alum?.headshotUrl, alum?.currentHeadshotId, "w800"),
       topRole: ordered[0] || "",
       programRoles: clusterRoles,
       bio: String(alum?.artistStatement || "").trim(),

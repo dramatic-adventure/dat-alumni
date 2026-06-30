@@ -88,15 +88,24 @@ function rankOf(roles: string[]): number {
 }
 
 /**
- * Turn a resolved AlumniRow.headshotUrl into a render-ready, same-origin src.
- * Uploaded headshots already resolve to a `/api/media/thumb/...` path; external
- * URLs are routed through the image proxy (the pattern used elsewhere, e.g.
- * lib/campaignLinkedContentResolvers). Empty → undefined (initials placeholder).
+ * Turn a resolved AlumniRow into a render-ready, same-origin headshot src.
+ * Uploaded headshots already resolve to a `/api/media/thumb/...` path (kept as
+ * is — already cacheable). Otherwise, when the row carries a Drive fileId we
+ * route through the image proxy's CACHEABLE `?id=` path (24h max-age + in-memory
+ * cache) instead of `?url=`, which is served no-store and re-downloads from
+ * Drive on every load. `sz` caps the payload to a thumbnail. We fall back to
+ * `?url=` only when there is no fileId. Empty → undefined (initials placeholder).
  */
-function renderableHeadshot(url: string | undefined): string | undefined {
+function renderableHeadshot(
+  url: string | undefined,
+  fileId: string | undefined,
+  sz: string,
+): string | undefined {
   const u = (url ?? "").trim();
-  if (!u) return undefined;
   if (u.startsWith("/")) return u;
+  const id = (fileId ?? "").trim();
+  if (id) return `/api/img?id=${encodeURIComponent(id)}&sz=${sz}`;
+  if (!u) return undefined;
   return `/api/img?url=${encodeURIComponent(u.replace(/^http:\/\//, "https://"))}`;
 }
 
@@ -126,7 +135,8 @@ export const loadFieldKitCrew = cache(
         const member: CrewMember = {
           slug,
           name: alum?.name?.trim() || humanizeSlug(slug),
-          headshotUrl: renderableHeadshot(alum?.headshotUrl),
+          // Roster thumbnails render in ~144px cards — w400 covers 2x DPR.
+          headshotUrl: renderableHeadshot(alum?.headshotUrl, alum?.currentHeadshotId, "w400"),
           role: ordered[0] || "",
         };
         // Rank on the full resolved list so staff-first ordering is unchanged.
