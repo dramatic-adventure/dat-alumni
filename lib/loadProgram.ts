@@ -188,15 +188,18 @@ const toTimeRow = (r: Record<string, string>): TimeAnchorRow => ({
 
 // ── public loaders ─────────────────────────────────────────────────────────────
 
-/**
- * Fully-resolved nested itinerary for one program, or null if that programId
- * isn't present yet. Request-memoized via React cache().
- */
-export const loadProgramItinerary = cache(
-  async (programId: string): Promise<ProgramItinerary | null> => {
-    const pid = norm(programId);
-    if (!pid) return null;
+// Cross-request TTL cache, keyed by programId — mirrors the _cache/_cacheAt
+// pattern in lib/loadRoleAssignments.ts. Today (app/field-kit/page.tsx) and
+// Capture (app/field-kit/capture/page.tsx) call loadProgramItinerary directly
+// (not through the itinerarySnapshot layer), so without this every load of
+// those pages re-read all 4 Sheets tabs + the rally point live. Shared program
+// data can tolerate ~60s staleness (see field-kit-NOTIFICATIONS-SCHEMA.md /
+// perf task); overridable via FIELD_KIT_ITINERARY_TTL_MS.
+const PROGRAM_ITINERARY_TTL_MS = Number(process.env.FIELD_KIT_ITINERARY_TTL_MS || 60_000);
+const _itineraryCache = new Map<string, { at: number; value: ProgramItinerary | null }>();
 
+const loadProgramItineraryUncached = cache(
+  async (pid: string): Promise<ProgramItinerary | null> => {
     const [programRows, chapterRows, dayRows, timeRows, rallyPoint] = await Promise.all([
       readProgramRows(),
       readChapterRows(),
@@ -230,6 +233,25 @@ export const loadProgramItinerary = cache(
     return itinerary;
   }
 );
+
+/**
+ * Fully-resolved nested itinerary for one program, or null if that programId
+ * isn't present yet. TTL-cached across requests (see PROGRAM_ITINERARY_TTL_MS
+ * above); request-memoized via React cache() underneath for callers within the
+ * same render.
+ */
+export async function loadProgramItinerary(programId: string): Promise<ProgramItinerary | null> {
+  const pid = norm(programId);
+  if (!pid) return null;
+
+  const now = Date.now();
+  const hit = _itineraryCache.get(pid);
+  if (hit && now - hit.at < PROGRAM_ITINERARY_TTL_MS) return hit.value;
+
+  const value = await loadProgramItineraryUncached(pid);
+  _itineraryCache.set(pid, { at: now, value });
+  return value;
+}
 
 /**
  * The active program's itinerary for Slice 1 (single live program). Resolves the

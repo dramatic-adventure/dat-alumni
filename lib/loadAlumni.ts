@@ -532,7 +532,13 @@ async function loadAlumniFromLive(): Promise<AlumniRow[]> {
  * Public exports
  * ────────────────────────────────────────────────────────── */
 
-export const loadAlumni = async (): Promise<AlumniRow[]> => {
+// React cache()'d so the many concurrent per-slug callers within ONE request
+// (e.g. loadFieldKitCrew resolving a whole roster via Promise.all) share a
+// SINGLE in-flight call instead of each independently racing the TTL check
+// below and firing its own live Sheets read (a request-scoped cache stampede
+// that was amplifying Sheets reads by the roster size on every Crew load).
+// The TTL check inside still provides the CROSS-request caching.
+export const loadAlumni = cache(async (): Promise<AlumniRow[]> => {
   const now = Date.now();
 
   if (alumniCache.length && now - alumniCacheAt < ALUMNI_TTL_MS) {
@@ -553,7 +559,7 @@ export const loadAlumni = async (): Promise<AlumniRow[]> => {
     serverError("❌ [loadAlumni] Sheets API load failed:", err);
     return [];
   }
-};
+});
 
 export const loadVisibleAlumni = cache(async (): Promise<AlumniRow[]> => {
   const all = await loadAlumni();
