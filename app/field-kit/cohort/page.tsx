@@ -23,12 +23,14 @@ export default async function CohortPage({
   const sp = searchParams ? await searchParams : undefined;
   const asId = Array.isArray(sp?.asId) ? sp?.asId[0] : sp?.asId;
 
-  // Defense in depth: gate BEFORE any roster/profile data is loaded.
-  const access = await requireFieldKitPage(FIELD_KIT_PROGRAM_ID, asId);
+  // Gate + crew read are independent (the gate always resolves to this same
+  // FIELD_KIT_PROGRAM_ID), so run them concurrently rather than waiting on the
+  // gate's Sheets round-trip before starting the roster's.
+  const [access, crew] = await Promise.all([
+    requireFieldKitPage(FIELD_KIT_PROGRAM_ID, asId),
+    loadFieldKitCrew(FIELD_KIT_PROGRAM_ID),
+  ]);
   if (!access) return null; // not on the roster — the layout renders the gate.
-
-  // Scope strictly to the program whose roster we just verified.
-  const crew = await loadFieldKitCrew(access.programId);
   if (!crew.length) return <CrewEmpty />;
 
   const programLabel = programMap[access.programId]?.title || "Field Kit";

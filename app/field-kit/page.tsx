@@ -24,13 +24,16 @@ export default async function FieldKitHome({
   const sp = searchParams ? await searchParams : undefined;
   const asId = Array.isArray(sp?.asId) ? sp?.asId[0] : sp?.asId;
 
-  // Defense in depth: gate BEFORE any program/itinerary data is loaded.
-  const access = await requireFieldKitPage(FIELD_KIT_PROGRAM_ID, asId);
+  // Defense in depth, still: nothing below is rendered until access.allowed is
+  // checked. But the itinerary read no longer WAITS on the gate — the gate
+  // always resolves to this same FIELD_KIT_PROGRAM_ID (getFieldKitAccess
+  // returns the programId it was called with), so the two Sheets round-trips
+  // are independent and run concurrently instead of serially.
+  const [access, itinerary] = await Promise.all([
+    requireFieldKitPage(FIELD_KIT_PROGRAM_ID, asId),
+    loadProgramItinerary(FIELD_KIT_PROGRAM_ID),
+  ]);
   if (!access) return null; // not on the roster — the layout renders the gate.
-
-  // Scope strictly to the program whose roster we just verified — never fall
-  // back to "the active program", which could belong to a different roster.
-  const itinerary = await loadProgramItinerary(access.programId);
   if (!itinerary) return <TodayEmpty />;
 
   const today = resolveToday(itinerary);

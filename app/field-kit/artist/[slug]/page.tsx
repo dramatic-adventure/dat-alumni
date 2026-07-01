@@ -21,12 +21,14 @@ export default async function FieldKitArtistPage({
 }) {
   const { slug } = await params;
 
-  // Defense in depth: gate BEFORE any profile data is loaded.
-  const access = await requireFieldKitPage(FIELD_KIT_PROGRAM_ID);
+  // Gate + artist read are independent (the gate always resolves to this same
+  // FIELD_KIT_PROGRAM_ID), so run them concurrently rather than waiting on the
+  // gate's Sheets round-trip before starting the profile's.
+  const [access, artist] = await Promise.all([
+    requireFieldKitPage(FIELD_KIT_PROGRAM_ID),
+    loadFieldKitArtist(FIELD_KIT_PROGRAM_ID, slug),
+  ]);
   if (!access) return null; // not on the roster — the layout renders the gate.
-
-  // Scope strictly to the program whose roster we just verified.
-  const artist = await loadFieldKitArtist(access.programId, slug);
   if (!artist) notFound();
 
   return <ArtistView artist={artist} />;

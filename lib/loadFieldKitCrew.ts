@@ -109,11 +109,21 @@ function renderableHeadshot(
   return `/api/img?url=${encodeURIComponent(u.replace(/^http:\/\//, "https://"))}`;
 }
 
+// Cross-request TTL cache, keyed by programId — mirrors PROGRAM_ITINERARY_TTL_MS
+// in lib/loadProgram.ts. Without this, every Crew load re-ran the roster's
+// per-slug role resolution (getOrderedProfileRoles) even though the underlying
+// alumni/role-assignment reads were already TTL-cached — this collapses that
+// recompute too. Cache().'d loadAlumniBySlug calls inside stay request-memoized
+// on a miss; overridable via FIELD_KIT_ITINERARY_TTL_MS (same knob as the
+// itinerary, since both tolerate the same staleness window).
+const FIELD_KIT_CREW_TTL_MS = Number(process.env.FIELD_KIT_ITINERARY_TTL_MS || 60_000);
+const _crewCache = new Map<string, { at: number; value: CrewMember[] }>();
+
 /**
  * Ordered crew for a program's cluster roster. Staff first, then alphabetical.
  * Request-memoized via React cache(). Never throws on a missing profile.
  */
-export const loadFieldKitCrew = cache(
+const loadFieldKitCrewUncached = cache(
   async (programId: string): Promise<CrewMember[]> => {
     const slugs = Array.from(clusterRoster(programId));
     const roleAssignments = await loadRoleAssignments();
@@ -151,3 +161,15 @@ export const loadFieldKitCrew = cache(
       .map((r) => r.member);
   }
 );
+
+/** TTL-cached across requests (FIELD_KIT_CREW_TTL_MS above); see loadFieldKitCrewUncached. */
+export async function loadFieldKitCrew(programId: string): Promise<CrewMember[]> {
+  const pid = norm(programId);
+  const now = Date.now();
+  const hit = _crewCache.get(pid);
+  if (hit && now - hit.at < FIELD_KIT_CREW_TTL_MS) return hit.value;
+
+  const value = await loadFieldKitCrewUncached(programId);
+  _crewCache.set(pid, { at: now, value });
+  return value;
+}

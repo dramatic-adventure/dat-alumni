@@ -25,16 +25,17 @@ export default async function ItineraryPage({
   const sp = searchParams ? await searchParams : undefined;
   const asId = Array.isArray(sp?.asId) ? sp?.asId[0] : sp?.asId;
 
-  // Defense in depth: gate BEFORE any program/itinerary data is loaded.
-  const access = await requireFieldKitPage(FIELD_KIT_PROGRAM_ID, asId);
-  if (!access) return null; // not on the roster — the layout renders the gate.
-
-  // Scope strictly to the program whose roster we just verified — never fall
-  // back to "the active program", which could belong to a different roster.
+  // Gate + snapshot read are independent (the gate always resolves to this
+  // same FIELD_KIT_PROGRAM_ID), so run them concurrently rather than waiting
+  // on the gate's Sheets round-trip before starting the snapshot's.
   // Render through the SHARED server snapshot so this page's hash equals the
   // /api endpoint's (no spurious live-refresh); the page trails live edits by
   // ≤ the snapshot TTL, which is the accepted trade.
-  const { itinerary, hash } = await getItinerarySnapshot(access.programId);
+  const [access, { itinerary, hash }] = await Promise.all([
+    requireFieldKitPage(FIELD_KIT_PROGRAM_ID, asId),
+    getItinerarySnapshot(FIELD_KIT_PROGRAM_ID),
+  ]);
+  if (!access) return null; // not on the roster — the layout renders the gate.
   if (!itinerary) return <ItineraryEmpty />;
 
   const today = resolveToday(itinerary);

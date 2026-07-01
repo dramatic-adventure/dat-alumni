@@ -22,13 +22,17 @@ export default async function CapturePage({
   const sp = searchParams ? await searchParams : undefined;
   const asId = Array.isArray(sp?.asId) ? sp?.asId[0] : sp?.asId;
 
-  // Defense in depth: gate before loading anything.
-  const access = await requireFieldKitPage(FIELD_KIT_PROGRAM_ID, asId);
+  // Gate + itinerary read are independent (the gate always resolves to this
+  // same FIELD_KIT_PROGRAM_ID), so run them concurrently rather than waiting
+  // on the gate's Sheets round-trip before starting the itinerary's.
+  const [access, itinerary] = await Promise.all([
+    requireFieldKitPage(FIELD_KIT_PROGRAM_ID, asId),
+    loadProgramItinerary(FIELD_KIT_PROGRAM_ID),
+  ]);
   if (!access) return null; // not on the roster — the layout renders the gate.
 
   // Current itinerary day (readily available) → stamped onto each capture so a
   // note knows which program day it belongs to. Blank when none resolves.
-  const itinerary = await loadProgramItinerary(access.programId);
   const currentDayId = itinerary ? resolveToday(itinerary).todayDayId ?? "" : "";
 
   return (
