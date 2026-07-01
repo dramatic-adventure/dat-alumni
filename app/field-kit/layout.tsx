@@ -109,6 +109,14 @@ function FieldKitTopBar({ programId, isAdmin }: { programId: string; isAdmin: bo
 function NotInProgram({ email }: { email: string }) {
   return (
     <main style={{ maxWidth: 560, margin: "0 auto", padding: "72px clamp(18px, 5vw, 40px)", textAlign: "center" }}>
+      {/* Marker for public/sw.js: the gate screen renders as a plain 200 at the
+          SAME url as the real page, so the service worker sniffs the rendered
+          HTML for this literal comment before ever caching a navigation. JSX
+          comments compile away and never reach the DOM, so this uses
+          dangerouslySetInnerHTML with a fixed, non-user-derived string to emit
+          a real HTML comment. Must never appear on a real page's render. See
+          field-kit-NAV-CACHE-DESIGN.md §2/§9. */}
+      <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: "<!--fk-gate-->" }} />
       <p style={{ fontFamily: FONT.grotesk, fontWeight: 700, fontSize: 11, letterSpacing: "0.28em", textTransform: "uppercase", color: T.teal, margin: "0 0 12px" }}>
         The Field Kit
       </p>

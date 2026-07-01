@@ -16,7 +16,11 @@ import { T, FONT } from "@/components/field-kit/tokens";
 import { fetchItinerary } from "@/lib/fetchItinerary";
 import { useItineraryShare } from "@/components/field-kit/useItineraryShare";
 import ShareWarningModal from "@/components/field-kit/ShareWarningModal";
+import SignOutWarningModal from "@/components/field-kit/SignOutWarningModal";
 import TripAlerts from "@/components/field-kit/TripAlerts";
+import { getAll as getQueuedCaptures } from "@/lib/captureQueue";
+import { clearAllSnapshots } from "@/lib/itinerarySnapshot";
+import { clearFieldKitCaches } from "@/lib/fieldKitCache";
 
 // Chrome/Android fires this before showing its native install prompt; we capture
 // it so the install can be triggered from our own menu item instead.
@@ -80,6 +84,35 @@ export default function AccountMenu({
     setOpen(false);
     share.request(action);
   };
+
+  // Sign-out on-device clearing (warn-then-preserve). Always safe to wipe: the
+  // cached gated pages (Cache Storage) and the itinerary snapshot (IndexedDB) —
+  // losing either just means a slower next load, nothing is lost. The capture
+  // queue is different: an item still queued here is unsynced work, so it's
+  // NEVER cleared by sign-out. If any remain, warn and let the artist choose
+  // rather than risk it silently syncing under the next signed-in user.
+  const [signOutWarningCount, setSignOutWarningCount] = useState<number | null>(null);
+
+  async function clearOnDeviceCaches() {
+    await Promise.all([clearFieldKitCaches(), clearAllSnapshots()]);
+  }
+
+  async function handleSignOutClick() {
+    setOpen(false);
+    const queued = await getQueuedCaptures();
+    if (queued.length > 0) {
+      setSignOutWarningCount(queued.length);
+      return;
+    }
+    await clearOnDeviceCaches();
+    void signOut({ callbackUrl: "/" });
+  }
+
+  async function confirmSignOutAnyway() {
+    setSignOutWarningCount(null);
+    await clearOnDeviceCaches();
+    void signOut({ callbackUrl: "/" });
+  }
 
   // PWA install state. `deferredPrompt` is the stashed beforeinstallprompt event
   // (Android/desktop Chrome). `isIOS` triggers the manual Share-sheet hint where
@@ -221,7 +254,7 @@ export default function AccountMenu({
             <button
               type="button"
               role="menuitem"
-              onClick={() => void signOut({ callbackUrl: "/" })}
+              onClick={() => void handleSignOutClick()}
               style={{ ...menuItem, color: T.pink }}
             >
               Sign out
@@ -290,6 +323,12 @@ export default function AccountMenu({
         action={share.pending}
         onCancel={share.cancel}
         onConfirm={share.confirm}
+      />
+      <SignOutWarningModal
+        open={signOutWarningCount != null}
+        count={signOutWarningCount ?? 0}
+        onCancel={() => setSignOutWarningCount(null)}
+        onConfirm={() => void confirmSignOutAnyway()}
       />
       {share.notice && (
         <div role="status" style={NOTICE_TOAST}>

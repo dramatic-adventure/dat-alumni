@@ -38,6 +38,14 @@ export async function putSnapshot(record: ItinerarySnapshotRecord): Promise<void
   notifySnapshotChange();
 }
 
+/** Wipe every on-device itinerary snapshot. Used on sign-out — see AccountMenu. */
+export async function clearAllSnapshots(): Promise<void> {
+  if (!hasIDB()) return;
+  const db = await openDb();
+  await reqToPromise(objectStore(db, SNAPSHOT_STORE, "readwrite").clear());
+  notifySnapshotChange();
+}
+
 // ── change notification ────────────────────────────────────────────────────────
 //
 // A snapshot write happens deep inside fetchItinerary; UI that surfaces the

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0e0a13" />
+<title>PASSAGE Field Kit — Offline</title>
+<!--
+  Field Kit generic OFFLINE FALLBACK (Slice 4a).
+
+  Static, NON-GATED file. The service worker (public/sw.js) precaches it and
+  serves it for any /field-kit/* navigation OTHER than /field-kit/itinerary
+  (which has its own bespoke shell, field-kit-shell.html) when the network
+  fails AND there's no cached copy of that page yet. Ships no user data.
+-->
+<style>
+  :root {
+    --bg:#16101c; --card:#251b2e; --ink:#f6efe3; --black:#0e0a13;
+    --yellow:#f5c842; --teal:#2fb3c9; --pink:#ff4067;
+    --muted:rgba(246,239,227,0.52);
+    --sep:rgba(246,239,227,0.10); --border:rgba(246,239,227,0.14);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: linear-gradient(rgba(14,10,19,0.92), rgba(14,10,19,0.96)), var(--bg);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .grotesk { font-family: "Space Grotesk", system-ui, sans-serif; }
+  .wrap { max-width: 420px; margin: 0 auto; padding: 40px clamp(20px,5vw,40px); text-align: center; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pink); display: inline-block; margin-right: 8px; vertical-align: middle; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase; color: var(--teal); margin: 0 0 16px; }
+  h1 { font-size: clamp(24px,6vw,34px); text-transform: uppercase; line-height: 1.05; margin: 0 0 14px; font-weight: 800; }
+  p { font-size: 14.5px; line-height: 1.55; opacity: 0.8; margin: 0 0 28px; }
+  .actions { display: flex; flex-direction: column; gap: 10px; }
+  a, button {
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 12px 18px;
+    border-radius: 9px;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .primary { background: var(--yellow); color: var(--black); border: none; }
+  .secondary { background: transparent; color: var(--ink); border: 1px solid var(--border); }
+</style>
+</head>
+<body>
+  <div class="wrap" aria-live="polite">
+    <p class="eyebrow grotesk"><span class="dot" aria-hidden="true"></span>Offline</p>
+    <h1>You&rsquo;re offline.</h1>
+    <p>This page isn&rsquo;t saved to your device yet. Once you&rsquo;re back in range, open it again to make it
+      available offline next time.</p>
+    <div class="actions">
+      <a class="primary grotesk" href="/field-kit">Go to Field Kit home</a>
+      <button class="secondary grotesk" type="button" onclick="location.reload()">Try again</button>
+    </div>
+  </div>
+</body>
+</html>
