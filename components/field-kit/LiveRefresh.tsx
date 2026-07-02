@@ -26,9 +26,13 @@ const POLL_MS = 30_000;
 export default function LiveRefresh({
   programId,
   initialHash,
+  label = "Itinerary updated",
 }: {
   programId: string;
   initialHash: string;
+  /** Banner copy — Today (Slice 5) passes "Today updated" since a change there
+   *  may be a roll call / company choice, not an itinerary edit. */
+  label?: string;
 }) {
   const router = useRouter();
   const asId = useSearchParams().get("asId")?.trim() || "";
@@ -111,7 +115,7 @@ export default function LiveRefresh({
     <div role="status" aria-live="polite" style={BANNER_WRAP}>
       <div style={BANNER}>
         <span aria-hidden style={DOT} />
-        <span style={LABEL}>Itinerary updated</span>
+        <span style={LABEL}>{label}</span>
         <button
           type="button"
           onClick={() => setUpdated(false)}

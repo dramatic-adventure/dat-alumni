@@ -27,6 +27,7 @@ export function CompanionTabBar() {
   const pathname = usePathname() || "/field-kit";
   return (
     <nav
+      aria-label="Field Kit"
       style={{
         position: "sticky",
         bottom: 0,

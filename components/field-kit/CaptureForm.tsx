@@ -316,7 +316,7 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
               border: `1px solid ${T.border}`,
               borderRadius: 12,
               padding: "14px 16px",
-              outline: "none",
+
             }}
           />
           <input
@@ -337,7 +337,7 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
               borderRadius: 12,
               padding: "12px 16px",
               marginTop: 12,
-              outline: "none",
+
             }}
           />
         </>
@@ -390,7 +390,7 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
                 border: `1px solid ${T.border}`,
                 borderRadius: 12,
                 padding: "14px 16px",
-                outline: "none",
+  
               }}
             />
           ) : null}
@@ -398,7 +398,7 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
           {audioBlob && audioUrl && (
             <div>
               {/* Playback preview before saving. */}
-              <audio controls src={audioUrl} style={{ width: "100%", display: "block" }} />
+              <audio controls src={audioUrl} aria-label="Recording preview" style={{ width: "100%", display: "block" }} />
               <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
                 <button
                   type="button"
@@ -472,7 +472,7 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
               borderRadius: 12,
               padding: "12px 16px",
               marginTop: 12,
-              outline: "none",
+
             }}
           />
         </>
@@ -495,7 +495,7 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
               border: `1px solid ${T.border}`,
               borderRadius: 12,
               padding: "14px 16px",
-              outline: "none",
+
             }}
           />
 
@@ -518,7 +518,7 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
                 borderRadius: 12,
                 padding: "12px 16px",
                 marginTop: 12,
-                outline: "none",
+  
               }}
             />
           )}

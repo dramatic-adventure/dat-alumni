@@ -1,16 +1,30 @@
 // app/field-kit/page.tsx
 //
 // Field Kit HOME / Today — the daily landing screen. Reads the program/itinerary
-// store (Field Kit tabs) via lib/loadProgram, resolves "today" from the device
-// clock, and renders the ported V17 Shell subset. Access is gated by
-// app/field-kit/layout. Mirrors app/field-kit/itinerary/page.tsx.
+// store via the SHARED server snapshot (lib/itineraryServerSnapshot) so this
+// page's rendered hash equals the /api/field-kit/itinerary endpoint's — the
+// LiveRefresh sentinel mounted here (Slice 5) never spurious-refreshes at
+// steady state. Resolves "today" from the device clock and renders the ported
+// V17 Shell subset. Access is gated by app/field-kit/layout.
+//
+// Slice 5: the mission-board ops modules are REAL here — the current Roll Call
+// and Company Choice ride the itinerary payload (offline-precached, LiveRefresh
+// -propagated); this device's own answers come from a per-request self lookup +
+// the on-device ops state; headcounts/tallies render only for leaders.
 
 import TodayCompanion from "@/components/field-kit/TodayCompanion";
 import ImpersonationBanner from "@/components/field-kit/ImpersonationBanner";
 import RallyPointBanner from "@/components/field-kit/RallyPointBanner";
-import { loadProgramItinerary } from "@/lib/loadProgram";
-import { resolveToday } from "@/lib/programItinerary";
+import RollCallCard from "@/components/field-kit/RollCallCard";
+import CompanyChoiceCard from "@/components/field-kit/CompanyChoiceCard";
+import LiveRefresh from "@/components/field-kit/LiveRefresh";
+import { getItinerarySnapshot } from "@/lib/itineraryServerSnapshot";
+import { resolveToday, type RollCallStatus } from "@/lib/programItinerary";
 import { requireFieldKitPage, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
+import { isFieldKitLeader } from "@/lib/fieldKitLeaders";
+import { getRollCallResponses } from "@/lib/rollCall";
+import { getCompanyChoiceVotes } from "@/lib/companyChoice";
+import { normId } from "@/lib/sheetsResilience";
 import { T, FONT } from "@/components/field-kit/tokens";
 
 export const revalidate = 0;
@@ -24,24 +38,47 @@ export default async function FieldKitHome({
   const sp = searchParams ? await searchParams : undefined;
   const asId = Array.isArray(sp?.asId) ? sp?.asId[0] : sp?.asId;
 
-  // Defense in depth, still: nothing below is rendered until access.allowed is
-  // checked. But the itinerary read no longer WAITS on the gate — the gate
-  // always resolves to this same FIELD_KIT_PROGRAM_ID (getFieldKitAccess
-  // returns the programId it was called with), so the two Sheets round-trips
-  // are independent and run concurrently instead of serially.
-  const [access, itinerary] = await Promise.all([
+  // Gate + snapshot read are independent (the gate always resolves to this same
+  // FIELD_KIT_PROGRAM_ID), so they run concurrently — same shape as before.
+  const [access, { itinerary, hash }] = await Promise.all([
     requireFieldKitPage(FIELD_KIT_PROGRAM_ID, asId),
-    loadProgramItinerary(FIELD_KIT_PROGRAM_ID),
+    getItinerarySnapshot(FIELD_KIT_PROGRAM_ID),
   ]);
   if (!access) return null; // not on the roster — the layout renders the gate.
   if (!itinerary) return <TodayEmpty />;
+
+  // Per-user + leader lookups, all TTL-cached underneath and independent of
+  // each other — one parallel wave, no waterfall.
+  const slug = normId(access.slug);
+  const [leader, rollCallResponses, choiceVotes] = await Promise.all([
+    isFieldKitLeader(access),
+    itinerary.rollCall ? getRollCallResponses(itinerary.rollCall.id) : Promise.resolve([]),
+    itinerary.companyChoice ? getCompanyChoiceVotes(itinerary.companyChoice.id) : Promise.resolve([]),
+  ]);
+  const myStatus: RollCallStatus | "" =
+    rollCallResponses.find((r) => normId(r.alumniSlug) === slug)?.status ?? "";
+  const mySelection = choiceVotes.find((v) => normId(v.alumniSlug) === slug)?.selection ?? "";
 
   const today = resolveToday(itinerary);
   return (
     <>
       {access.impersonating && <ImpersonationBanner slug={access.slug} />}
       {itinerary.rallyPoint && <RallyPointBanner rally={itinerary.rallyPoint} />}
+      {itinerary.rollCall && (
+        <RollCallCard rollCall={itinerary.rollCall} serverMyStatus={myStatus} isLeader={leader} />
+      )}
+      {itinerary.companyChoice && (
+        <CompanyChoiceCard
+          choice={itinerary.companyChoice}
+          serverMySelection={mySelection}
+          isLeader={leader}
+        />
+      )}
       <TodayCompanion itinerary={itinerary} today={today} />
+      {/* Live-refresh sentinel (Slice 5): the ops cards above ride the itinerary
+          payload, so a roll call opening or a question posting changes the hash
+          and lands here within a poll tick — same mechanism as the itinerary. */}
+      <LiveRefresh programId={access.programId} initialHash={hash} label="Today updated" />
     </>
   );
 }

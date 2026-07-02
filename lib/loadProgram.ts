@@ -29,6 +29,13 @@ import {
   type ProgramItinerary,
 } from "@/lib/programItinerary";
 import { getRallyPoint } from "@/lib/rallyPoint";
+import { getCurrentRollCall } from "@/lib/rollCall";
+import {
+  getCurrentCompanyChoice,
+  getCompanyChoiceVotes,
+  toPublicCompanyChoice,
+} from "@/lib/companyChoice";
+import { getResources } from "@/lib/resources";
 
 const SHEET_ID = process.env.ALUMNI_SHEET_ID || "";
 
@@ -200,13 +207,17 @@ const _itineraryCache = new Map<string, { at: number; value: ProgramItinerary | 
 
 const loadProgramItineraryUncached = cache(
   async (pid: string): Promise<ProgramItinerary | null> => {
-    const [programRows, chapterRows, dayRows, timeRows, rallyPoint] = await Promise.all([
-      readProgramRows(),
-      readChapterRows(),
-      readDayRows(),
-      readTimeRows(),
-      getRallyPoint(pid), // resilient: null on any failure, never blocks the load
-    ]);
+    const [programRows, chapterRows, dayRows, timeRows, rallyPoint, rollCall, choiceRow, resources] =
+      await Promise.all([
+        readProgramRows(),
+        readChapterRows(),
+        readDayRows(),
+        readTimeRows(),
+        getRallyPoint(pid), // resilient: null on any failure, never blocks the load
+        getCurrentRollCall(pid), // resilient: null on any failure (Slice 5)
+        getCurrentCompanyChoice(pid), // resilient: null on any failure (Slice 5)
+        getResources(pid), // resilient: [] on any failure (Slice 5)
+      ]);
 
     const program = programRows.map(toProgramRow).find((p) => norm(p.programId) === pid);
     if (!program) return null;
@@ -226,10 +237,30 @@ const loadProgramItineraryUncached = cache(
       .filter((t) => dayIdSet.has(norm(t.dayId)) && (!t.programId || norm(t.programId) === pid));
 
     const itinerary = rowsToProgramItinerary({ program, chapters, days, times });
-    // Attach the current rally point ONLY when one is set, so the serialized
-    // itinerary (and thus hashItinerary) is byte-identical to before when there
-    // is none — no spurious LiveRefresh on deploy.
+    // Attach ops/library state ONLY when present, so the serialized itinerary
+    // (and thus hashItinerary) is byte-identical to before when there is none —
+    // no spurious LiveRefresh on deploy. Company Choice is shaped ARTIST-SAFE
+    // here (toPublicCompanyChoice): live tallies never enter this shared,
+    // program-keyed payload; results appear only once closed, per visibility.
+    // The votes read happens only for a closed non-private question (rare, and
+    // TTL-cached in lib/companyChoice).
     if (rallyPoint) itinerary.rallyPoint = rallyPoint;
+    if (rollCall) itinerary.rollCall = rollCall;
+    if (choiceRow) {
+      const needsVotes = !!choiceRow.closedAt && choiceRow.resultsVisibility !== "private";
+      const votes = needsVotes ? await getCompanyChoiceVotes(choiceRow.id) : null;
+      itinerary.companyChoice = toPublicCompanyChoice(choiceRow, votes);
+    }
+    if (resources.length) {
+      // Strip the raw url from Drive-backed rows: the client opens those
+      // through the gated proxy (built from the id), and shipping a raw Drive
+      // link in this every-member payload would hand out a gate-bypassing
+      // shareable URL if a file is link-shared. External `link` rows keep
+      // theirs — the url IS the resource.
+      itinerary.resources = resources.map((r) =>
+        r.type === "link" ? r : { ...r, url: "" }
+      );
+    }
     return itinerary;
   }
 );

@@ -26,6 +26,15 @@
 // this one) — the existing activate fk-* sweep does the one-time migration.
 const CACHE = "fk-v3";
 
+// SLICE 5 — Field Library files (cache-on-open). Entries are written by the
+// PAGE (lib/fieldKitCache#cacheLibraryFile stores the FULL file — the SW can't,
+// because iOS audio only ever fetches Range partials); this SW serves them when
+// the network can't, slicing Range responses out of the stored full body.
+// Name is duplicated in lib/fieldKitCache.ts (LIB_CACHE_NAME) — keep in
+// lockstep. NOT purged by activate (it survives SW schema bumps); sign-out
+// clears it via the fk- prefix sweep in lib/fieldKitCache.ts.
+const LIB_CACHE = "fk-lib-v1";
+
 // The non-gated offline app-shell (static file in public/). Served as the
 // last-resort offline fallback for the itinerary route specifically, when
 // there's no cached copy of the live page yet. Must NOT be a per-user/gated
@@ -104,13 +113,70 @@ self.addEventListener("activate", (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((k) => k.startsWith("fk-") && k !== CACHE)
+            .filter((k) => k.startsWith("fk-") && k !== CACHE && k !== LIB_CACHE)
             .map((k) => caches.delete(k))
         )
       )
       .then(() => self.clients.claim())
   );
 });
+
+// SLICE 5 — is this a Field Library file fetch (gated resource proxy)?
+function isLibraryFile(url) {
+  return url.pathname.startsWith("/api/field-kit/library/file/");
+}
+
+// Serve a library file: network-first (the route revalidates auth), falling
+// back to the device-cached full copy. A Range request against the cached copy
+// gets a properly sliced 206 — iOS <audio> won't play without one.
+async function serveLibraryFile(req) {
+  try {
+    return await fetch(req);
+  } catch {
+    const cache = await caches.open(LIB_CACHE);
+    // Match by URL (the stored entry is a Range-less full GET).
+    const cached = await cache.match(req.url);
+    if (!cached) {
+      // A full-page open of a never-cached file while offline: show the kit's
+      // offline notice, not the browser's raw network-error page.
+      if (req.mode === "navigate") {
+        const fallback = await (await caches.open(CACHE)).match(OFFLINE_URL);
+        if (fallback) return fallback;
+      }
+      return Response.error();
+    }
+
+    const rangeHeader = (req.headers.get("range") || "").trim();
+    const m = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader);
+    if (!m || (!m[1] && !m[2])) return cached.clone();
+
+    const buf = await cached.clone().arrayBuffer();
+    const total = buf.byteLength;
+    let start;
+    let end;
+    if (!m[1]) {
+      // Suffix range "bytes=-N" — the LAST N bytes (matches the server route).
+      start = Math.max(total - Number(m[2]), 0);
+      end = total - 1;
+    } else {
+      start = Number(m[1]);
+      end = m[2] ? Math.min(Number(m[2]), total - 1) : total - 1;
+    }
+    if (!(start >= 0) || start > end || start >= total) {
+      start = 0;
+      end = total - 1;
+    }
+    return new Response(buf.slice(start, end + 1), {
+      status: 206,
+      headers: {
+        "Content-Type": cached.headers.get("Content-Type") || "application/octet-stream",
+        "Content-Range": `bytes ${start}-${end}/${total}`,
+        "Content-Length": String(end - start + 1),
+        "Accept-Ranges": "bytes",
+      },
+    });
+  }
+}
 
 // Decide whether a request is a cacheable static asset.
 function isStaticAsset(url) {
@@ -158,6 +224,15 @@ self.addEventListener("fetch", (event) => {
           return fallback || Response.error();
         })
     );
+    return;
+  }
+
+  // SLICE 5 — Field Library files: the one /api path with an offline story.
+  // Checked BEFORE the generic /api and navigation bails (opening a file in a
+  // new tab is a navigation). Network-first; offline falls back to the page-cached
+  // copy with real Range slicing (see serveLibraryFile).
+  if (isLibraryFile(url)) {
+    event.respondWith(serveLibraryFile(req));
     return;
   }
 

@@ -54,6 +54,7 @@ export default [
     ignores: [
       "scripts/migrateProfileDataToLive.ts",
       "scripts/setup-notification-secrets.ts",
+      "scripts/setup-field-kit-slice5-tabs.ts",
     ],
   },
 ];

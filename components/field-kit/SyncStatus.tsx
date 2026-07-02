@@ -15,6 +15,13 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { T, FONT } from "@/components/field-kit/tokens";
 import { start, kick, retryFailed, subscribe, type SyncCounts } from "@/lib/captureSync";
+import {
+  start as startOps,
+  kick as kickOps,
+  retryFailed as retryFailedOps,
+  subscribe as subscribeOps,
+  type OpsSyncCounts,
+} from "@/lib/opsSync";
 import { getSnapshot, onSnapshotChange } from "@/lib/itinerarySnapshot";
 import { formatRelativeTime } from "@/lib/relativeTime";
 
@@ -29,6 +36,8 @@ const LABEL: CSSProperties = {
 export default function SyncStatus({ programId }: { programId: string }) {
   const [online, setOnline] = useState(true);
   const [counts, setCounts] = useState<SyncCounts>({ pending: 0, failed: 0 });
+  // Slice 5 — the ops queue (check-ins/votes) counts alongside captures.
+  const [opsCounts, setOpsCounts] = useState<OpsSyncCounts>({ pending: 0, failed: 0 });
   // Last itinerary sync time (epoch ms); null until a real sync has occurred.
   const [syncedAt, setSyncedAt] = useState<number | null>(null);
   // Bumped on a timer to re-tick the relative "Xm ago" label.
@@ -45,11 +54,17 @@ export default function SyncStatus({ programId }: { programId: string }) {
     };
   }, []);
 
-  // Drive the drainer: start() wires the online/visibility triggers (idempotent)
-  // and primes the counts we subscribe to.
+  // Drive both drainers: start() wires the online/visibility triggers
+  // (idempotent) and primes the counts we subscribe to.
   useEffect(() => {
     start();
-    return subscribe(setCounts);
+    startOps();
+    const unsubCaptures = subscribe(setCounts);
+    const unsubOps = subscribeOps(setOpsCounts);
+    return () => {
+      unsubCaptures();
+      unsubOps();
+    };
   }, []);
 
   // Surface the itinerary snapshot's last-synced time. Read on mount, refresh on
@@ -72,7 +87,8 @@ export default function SyncStatus({ programId }: { programId: string }) {
     };
   }, [programId]);
 
-  const { pending, failed } = counts;
+  const pending = counts.pending + opsCounts.pending;
+  const failed = counts.failed + opsCounts.failed;
 
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 12 }}>
@@ -102,8 +118,16 @@ export default function SyncStatus({ programId }: { programId: string }) {
       {(pending > 0 || failed > 0) && (
         <button
           type="button"
-          onClick={() => (failed > 0 ? retryFailed() : kick())}
-          title={failed > 0 ? "Retry failed captures" : "Sync now"}
+          onClick={() => {
+            if (failed > 0) {
+              retryFailed();
+              retryFailedOps();
+            } else {
+              kick();
+              kickOps();
+            }
+          }}
+          title={failed > 0 ? "Retry failed items" : "Sync now"}
           style={{
             ...LABEL,
             display: "inline-flex",

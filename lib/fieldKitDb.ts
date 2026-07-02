@@ -7,18 +7,22 @@
 // centralizes that: it owns the version, the single connection promise, and the
 // ADDITIVE upgrade that creates whatever stores are missing.
 //
-// v1 → v2 upgrade is additive: a device that already has the v1 "captureQueue"
-// store keeps it (and its queued captures) untouched; v2 only ADDS the
-// "itinerarySnapshot" store. A fresh install at v2 gets both.
+// Upgrades are ADDITIVE only: a device on an older version keeps its existing
+// stores (and their queued data) untouched; each bump only ADDS the stores that
+// are missing. A fresh install at the current version gets all of them.
+//   v1 → v2: added "itinerarySnapshot" (Slice 2)
+//   v2 → v3: added "opsQueue" + "opsState" (Slice 5 — Roll Call / Company Choice)
 //
 // SSR-safe: hasIDB() guards the browser-only API so every importer no-ops cleanly
 // on the server (no "server-only" — this is imported by client code).
 
 export const DB_NAME = "dat-field-kit";
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 export const CAPTURE_STORE = "captureQueue"; // keyPath: "captureId" (Slice C)
 export const SNAPSHOT_STORE = "itinerarySnapshot"; // keyPath: "programId" (Slice 2)
+export const OPS_QUEUE_STORE = "opsQueue"; // keyPath: "opId" (Slice 5 — queued check-ins/votes)
+export const OPS_STATE_STORE = "opsState"; // keyPath: "key" (Slice 5 — this device's own response/vote)
 
 export function hasIDB(): boolean {
   return typeof indexedDB !== "undefined";
@@ -30,8 +34,8 @@ export function openDb(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
-    // Runs for a brand-new DB AND for a v1→v2 bump. Create only what's missing so
-    // the upgrade is purely additive and never drops existing data.
+    // Runs for a brand-new DB AND for any version bump. Create only what's
+    // missing so the upgrade is purely additive and never drops existing data.
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(CAPTURE_STORE)) {
@@ -40,9 +44,37 @@ export function openDb(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(SNAPSHOT_STORE)) {
         db.createObjectStore(SNAPSHOT_STORE, { keyPath: "programId" });
       }
+      if (!db.objectStoreNames.contains(OPS_QUEUE_STORE)) {
+        db.createObjectStore(OPS_QUEUE_STORE, { keyPath: "opId" });
+      }
+      if (!db.objectStoreNames.contains(OPS_STATE_STORE)) {
+        db.createObjectStore(OPS_STATE_STORE, { keyPath: "key" });
+      }
     };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    req.onsuccess = () => {
+      const db = req.result;
+      // Another tab (on a newer deploy) is version-bumping this DB: close our
+      // connection so its upgrade proceeds instead of blocking forever, and
+      // reset the memo so our next call reopens fresh.
+      db.onversionchange = () => {
+        db.close();
+        dbPromise = null;
+      };
+      resolve(db);
+    };
+    // An old-version tab holds the DB open and hasn't gotten out of the way:
+    // fail fast (callers surface an error) rather than hanging a tap forever.
+    req.onblocked = () => {
+      dbPromise = null;
+      reject(new Error("IndexedDB open blocked by another tab"));
+    };
+    // Never memoize a failure (e.g. an OLD cached bundle opening at a lower
+    // version than the DB now has throws VersionError) — the next call should
+    // retry rather than poisoning every queue/snapshot read until reload.
+    req.onerror = () => {
+      dbPromise = null;
+      reject(req.error);
+    };
   });
   return dbPromise;
 }

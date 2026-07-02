@@ -75,6 +75,7 @@ export default function TracesList({ captures }: { captures: FieldCapture[] }) {
                     <audio
                       controls
                       src={`/api/field-kit/capture/media/${encodeURIComponent(c.driveFileId)}`}
+                      aria-label={c.bodyText ? `Voice capture: ${c.bodyText}` : "Voice capture"}
                       style={{ width: "100%", display: "block" }}
                     />
                   )}

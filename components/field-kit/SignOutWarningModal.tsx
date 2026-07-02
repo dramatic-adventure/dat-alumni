@@ -1,10 +1,11 @@
 // components/field-kit/SignOutWarningModal.tsx
 //
-// Shown before sign-out ONLY when the on-device capture queue (lib/captureQueue)
-// still has unsynced items. Signing out doesn't delete the queue itself, but if
-// someone else signs in on this device afterward, the drainer would sync those
-// items under THEIR session — misattributing captures. So we warn and let the
-// artist choose, rather than silently proceeding or silently discarding.
+// Shown before sign-out ONLY when unsynced work remains on the device: queued
+// captures (lib/captureQueue) and/or queued check-ins & votes (lib/opsQueue,
+// Slice 5). The fates differ — captures stay queued (they're creative work; if
+// someone else signs in they could sync under the wrong name), while check-ins
+// and votes are discarded on confirm (a tap is safer lost than misattributed).
+// Either way it's the artist's call, never a silent default.
 
 "use client";
 
@@ -47,14 +48,14 @@ export default function SignOutWarningModal({
         style={PANEL}
         onClick={(e) => e.stopPropagation()}
       >
-        <p style={EYEBROW}>Unsynced captures</p>
+        <p style={EYEBROW}>Unsynced work</p>
         <h2 id="fk-signout-warning-title" style={TITLE}>
-          {count} unsynced {count === 1 ? "capture" : "captures"} on this device.
+          {count} unsynced {count === 1 ? "item" : "items"} on this device.
         </h2>
         <p style={BODY}>
-          You have {count} unsynced {count === 1 ? "capture" : "captures"} that will be lost if you sign
-          out on this device. They&apos;ll stay queued here, but if someone else signs in they could sync
-          under the wrong name. Stay signed in until they sync, or sign out anyway and lose them.
+          You have {count} unsynced {count === 1 ? "item" : "items"} — captures, check-ins, or votes
+          still waiting for signal. Signing out now means they won&apos;t sync under your name. Stay
+          signed in until they sync, or sign out anyway and let them go.
         </p>
         <div style={ROW}>
           <button type="button" onClick={onCancel} style={CANCEL} autoFocus>

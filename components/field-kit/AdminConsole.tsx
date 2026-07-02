@@ -13,87 +13,23 @@
 import { useCallback, useState } from "react";
 import { Megaphone, MapPin, Loader2 } from "lucide-react";
 import { T, FONT } from "@/components/field-kit/tokens";
+import {
+  label,
+  field,
+  primaryBtn,
+  smallBtn,
+  card,
+  sectionTitle,
+  sectionHint,
+} from "@/components/field-kit/adminStyles";
+import {
+  AdminRollCallSection,
+  AdminCompanyChoiceSection,
+  type AdminRollCallInitial,
+  type AdminChoiceInitial,
+} from "@/components/field-kit/AdminOps";
 import type { NotificationRow } from "@/lib/notifications";
 import type { RallyPoint } from "@/lib/programItinerary";
-
-// ── shared styles ──────────────────────────────────────────────────────────────
-const label: React.CSSProperties = {
-  display: "block",
-  fontFamily: FONT.grotesk,
-  fontSize: 10,
-  fontWeight: 700,
-  letterSpacing: "0.1em",
-  textTransform: "uppercase",
-  color: T.muted,
-  margin: "0 0 5px",
-};
-const field: React.CSSProperties = {
-  width: "100%",
-  boxSizing: "border-box",
-  fontFamily: FONT.dm,
-  fontSize: 14.5,
-  color: T.ink,
-  background: T.bg,
-  border: `1px solid ${T.border}`,
-  borderRadius: 9,
-  padding: "10px 12px",
-  marginBottom: 12,
-};
-const primaryBtn: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 8,
-  width: "100%",
-  fontFamily: FONT.grotesk,
-  fontSize: 12,
-  fontWeight: 700,
-  letterSpacing: "0.1em",
-  textTransform: "uppercase",
-  color: T.black,
-  background: T.yellow,
-  border: "none",
-  borderRadius: 9,
-  padding: "12px 16px",
-  cursor: "pointer",
-};
-const smallBtn: React.CSSProperties = {
-  fontFamily: FONT.grotesk,
-  fontSize: 9.5,
-  fontWeight: 700,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: T.ink,
-  background: "transparent",
-  border: `1px solid ${T.border}`,
-  borderRadius: 7,
-  padding: "5px 9px",
-  cursor: "pointer",
-};
-const card: React.CSSProperties = {
-  background: T.card,
-  border: `1px solid ${T.border}`,
-  borderRadius: 14,
-  padding: "16px 16px 18px",
-  marginBottom: 16,
-};
-const sectionTitle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  fontFamily: FONT.anton,
-  fontSize: 18,
-  textTransform: "uppercase",
-  color: T.ink,
-  margin: "0 0 4px",
-};
-const sectionHint: React.CSSProperties = {
-  fontFamily: FONT.dm,
-  fontSize: 12.5,
-  lineHeight: 1.45,
-  color: T.muted,
-  margin: "0 0 14px",
-};
 
 function absolute(link: string): string {
   if (!link) return "";
@@ -115,10 +51,16 @@ export default function AdminConsole({
   programId,
   initialHistory,
   initialRally,
+  initialRollCall,
+  initialChoice,
+  todayDayId,
 }: {
   programId: string;
   initialHistory: NotificationRow[];
   initialRally: RallyPoint | null;
+  initialRollCall: AdminRollCallInitial | null;
+  initialChoice: AdminChoiceInitial | null;
+  todayDayId: string;
 }) {
   const [history, setHistory] = useState<NotificationRow[]>(initialHistory);
   const [notice, setNotice] = useState<string | null>(null);
@@ -256,6 +198,16 @@ export default function AdminConsole({
       >
         Field updates
       </h1>
+
+      {/* Roll Call + Company Choice (Slice 5) — the other two mission-board
+          modules, alongside Rally Point below. */}
+      <AdminRollCallSection
+        programId={programId}
+        initial={initialRollCall}
+        todayDayId={todayDayId}
+        flash={flash}
+      />
+      <AdminCompanyChoiceSection programId={programId} initial={initialChoice} flash={flash} />
 
       {/* Send Field Update */}
       <section style={card}>

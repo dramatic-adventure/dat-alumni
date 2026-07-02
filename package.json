@@ -15,6 +15,7 @@
     "migrate:profiles": "tsx scripts/migrateProfileDataToLive.ts",
     "migrate:profiles:dry": "DRY_RUN=1 tsx scripts/migrateProfileDataToLive.ts",
     "setup:notification-secrets": "tsx scripts/setup-notification-secrets.ts",
+    "setup:field-kit-slice5-tabs": "tsx scripts/setup-field-kit-slice5-tabs.ts",
     "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
     "postinstall": "echo \"skip prisma generate in postinstall\""
   },

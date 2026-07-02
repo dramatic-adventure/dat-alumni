@@ -52,7 +52,11 @@ export default async function FieldKitLayout({ children }: { children: React.Rea
   }
 
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", ...KRAFT_PAGE }}>
+    <div className="fk-root" style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", ...KRAFT_PAGE }}>
+      {/* Slice 5 accessibility pass: a VISIBLE, on-brand focus indicator for
+          every interactive element in the kit. :focus-visible keeps it off
+          taps and on keyboard/switch navigation, where it matters. */}
+      <style>{`.fk-root :focus-visible { outline: 2px solid ${T.yellow}; outline-offset: 2px; border-radius: 4px; }`}</style>
       <ServiceWorkerRegistrar />
       <FieldKitTopBar programId={FIELD_KIT_PROGRAM_ID} isAdmin={access.allowed ? access.isAdmin : false} />
       <div style={{ flex: 1 }}>

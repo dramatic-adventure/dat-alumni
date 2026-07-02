@@ -24,6 +24,7 @@ export default function CrewCompany({
   programLabel: string;
 }) {
   const count = members.length;
+  if (count === 0) return <CrewEmpty programLabel={programLabel} />;
 
   return (
     <div style={{ padding: "32px clamp(14px, 4vw, 56px) 40px" }}>
@@ -58,5 +59,24 @@ export default function CrewCompany({
         </div>
       </div>
     </div>
+  );
+}
+
+// Empty state — the roster hasn't been entered yet ("no shame" voice; see
+// ComingSoon.tsx). Rendered instead of an awkward "0 artists" masthead.
+function CrewEmpty({ programLabel }: { programLabel: string }) {
+  return (
+    <main style={{ maxWidth: 560, margin: "0 auto", padding: "72px clamp(18px, 5vw, 40px)", textAlign: "center" }}>
+      <p style={{ fontFamily: FONT.grotesk, fontWeight: 700, fontSize: 11, letterSpacing: "0.28em", textTransform: "uppercase", color: T.teal, margin: "0 0 12px" }}>
+        {programLabel ? `${programLabel} · The Company` : "The Company"}
+      </p>
+      <h1 style={{ fontFamily: FONT.anton, fontSize: "clamp(28px, 6.5vw, 48px)", lineHeight: 0.96, textTransform: "uppercase", color: T.ink, margin: "0 0 16px" }}>
+        The company is assembling.
+      </h1>
+      <p style={{ fontFamily: FONT.dm, fontSize: 14.5, lineHeight: 1.55, color: T.ink, opacity: 0.78, margin: 0 }}>
+        Once the roster is set, everyone making this trip with you shows up here — faces, names, and
+        the roles they carry on the road.
+      </p>
+    </main>
   );
 }

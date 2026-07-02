@@ -22,7 +22,7 @@ const RANGE = `'${TAB}'!A:H`;
 
 const HEADERS = ["id", "programId", "type", "title", "body", "link", "notify", "sentAt"] as const;
 
-export type NotificationType = "update" | "rally";
+export type NotificationType = "update" | "rally" | "roll-call" | "choice";
 
 export type NotificationRow = {
   id: string;
@@ -48,7 +48,11 @@ function coerceBool(v: unknown): boolean {
 }
 
 function coerceType(v: unknown): NotificationType {
-  return normId(v) === "rally" ? "rally" : "update";
+  const s = normId(v);
+  if (s === "rally") return "rally";
+  if (s === "roll-call" || s === "rollcall" || s === "roll call") return "roll-call";
+  if (s === "choice") return "choice";
+  return "update";
 }
 
 /** Column letter for a 0-based index (A..H is all we need). */

@@ -4,11 +4,12 @@
 // (shell/Shell.tsx) ported onto live itinerary data. Server component: it only
 // renders props (no interactivity this slice).
 //
-// Honest-by-omission: the mockup's mission-board modules (Rally Point · Roll
-// Call · Company Choice · Field Updates), "Today's resources", the artist
-// headshot, the cohort avatar stack, and the offline/"X to sync" status all have
-// NO live data store yet, so they are intentionally not rendered. The screen
-// reads complete from the itinerary-derived content alone.
+// Mission-board status: Rally Point (Slice 3), Roll Call + Company Choice
+// (Slice 5) are LIVE — rendered as real cards by app/field-kit/page.tsx
+// alongside this component (RallyPointBanner, RollCallCard, CompanyChoiceCard).
+// "Today's resources" links to the Field Library (Slice 5). Still honestly
+// omitted (no live data store yet): the artist headshot and the cohort avatar
+// stack.
 //
 // NOTE: partnerOrgName is imported from the server-safe ./partnerOrgName module,
 // NOT from parts.tsx (which is "use client" — calling its functions from this
@@ -194,6 +195,12 @@ function DuringToday({
       {/* capture CTA — /field-kit/capture is live */}
       <CaptureCta />
 
+      {/* Field Library (Slice 5) — shown once the program has resources; counts
+          the picks surfaced for THIS day from the real itinerary. */}
+      {itinerary.resources && itinerary.resources.length > 0 && (
+        <LibraryLink resources={itinerary.resources} dayId={day.id} />
+      )}
+
       {/* pack for today — skip when empty */}
       {day.prep.length > 0 && (
         <div style={{ marginTop: 16 }}>
@@ -232,6 +239,47 @@ function CaptureCta() {
       <span style={{ display: "inline-flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
         <span aria-hidden style={{ fontSize: 22 }}>✦</span>
       </span>
+    </Link>
+  );
+}
+
+// The Field Library link — quiet row under the capture CTA. Surfaces how many
+// resources are pinned to today so the artist knows there's something waiting.
+function LibraryLink({
+  resources,
+  dayId,
+}: {
+  resources: NonNullable<ProgramItinerary["resources"]>;
+  dayId: string;
+}) {
+  const todayCount = resources.filter((r) => r.dayId === dayId).length;
+  return (
+    <Link
+      href="/field-kit/library"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        textDecoration: "none",
+        marginTop: 10,
+        padding: "11px 14px",
+        borderRadius: 12,
+        border: `1px solid ${T.border}`,
+        backgroundColor: T.card,
+      }}
+    >
+      <span>
+        <span style={{ display: "block", fontFamily: FONT.grotesk, fontSize: 9.5, fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase", color: T.teal, marginBottom: 2 }}>
+          The Field Library
+        </span>
+        <span style={{ fontFamily: FONT.dm, fontSize: 12, color: T.muted }}>
+          {todayCount > 0
+            ? `${todayCount} ${todayCount === 1 ? "resource" : "resources"} for today · ${resources.length} on the shelf`
+            : `${resources.length} ${resources.length === 1 ? "resource" : "resources"} on the shelf`}
+        </span>
+      </span>
+      <span aria-hidden style={{ fontFamily: FONT.grotesk, fontSize: 14, color: T.teal, flexShrink: 0 }}>→</span>
     </Link>
   );
 }

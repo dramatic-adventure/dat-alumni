@@ -134,6 +134,49 @@ export type RallyPoint = {
   updatedAt: string; // ISO — when staff last set it
 };
 
+// ── Slice 5 (Field Ops & Library) — payload-carried ops state ─────────────────
+// Like RallyPoint, these ride the itinerary payload so they precache offline and
+// propagate via LiveRefresh. They carry SHARED, artist-safe state only: per-user
+// state (this device's own response/vote) is server-derived per request, and
+// live tallies/headcounts are leader-gated reads that never enter this payload.
+
+export type RollCallStatus = "here" | "needs-help";
+
+export type RollCallState = {
+  id: string;
+  dayId: string;
+  label: string; // "Bus to Košice — 3:45pm"
+  openedAt: string; // ISO
+  closedAt: string; // ISO, or "" while the roll call is open
+};
+
+export type CompanyChoiceVisibility = "private" | "public" | "result-only";
+
+export type CompanyChoiceState = {
+  id: string;
+  question: string;
+  choices: string[];
+  deadline: string; // freeform staff text ("tonight 8pm")
+  resultsVisibility: CompanyChoiceVisibility;
+  postedAt: string; // ISO
+  closedAt: string; // ISO, or "" while voting is open
+  /** Announced result — present only once closed and visibility isn't private. */
+  outcome?: string;
+  /** Full per-choice tallies — present only once closed and visibility is public. */
+  results?: { choice: string; votes: number }[];
+};
+
+export type FieldResourceType = "text" | "audio" | "image" | "link";
+
+export type FieldResource = {
+  id: string;
+  dayId?: string; // surfaces the resource under "Relevant today" on that day
+  title: string;
+  type: FieldResourceType;
+  url: string;
+  tags: string[];
+};
+
 export type ProgramItinerary = {
   programId: string;
   program: string;
@@ -147,6 +190,9 @@ export type ProgramItinerary = {
   link?: string;
   chapters: Chapter[];
   rallyPoint?: RallyPoint; // present only when staff have set one
+  rollCall?: RollCallState; // present only when a roll call exists (Slice 5)
+  companyChoice?: CompanyChoiceState; // present only when a question exists (Slice 5)
+  resources?: FieldResource[]; // present only when the program has library rows (Slice 5)
 };
 
 // ── normalization helpers ──────────────────────────────────────────────────────

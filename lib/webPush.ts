@@ -55,13 +55,37 @@ export async function sendToProgram(
   programId: string,
   message: PushMessage
 ): Promise<SendResult> {
+  return sendToProgramFiltered(programId, message, null);
+}
+
+/**
+ * Slice 5 — send a push to a SUBSET of a program's roster (e.g. the leader tier
+ * for a "needs help" alert). `slugs` are normalized before matching; a slug not
+ * on the roster never receives anything (subset can only narrow, never widen).
+ */
+export async function sendToSlugs(
+  programId: string,
+  slugs: Iterable<string>,
+  message: PushMessage
+): Promise<SendResult> {
+  const want = new Set(Array.from(slugs, (s) => normId(s)).filter(Boolean));
+  return sendToProgramFiltered(programId, message, want);
+}
+
+async function sendToProgramFiltered(
+  programId: string,
+  message: PushMessage,
+  onlySlugs: Set<string> | null
+): Promise<SendResult> {
   if (!(await ensureConfigured())) {
     throw new Error("Push not configured: missing NEXT_PUBLIC_VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY");
   }
 
   const roster = clusterRoster(programId);
-  const subs = (await listSubscriptionsForProgram(programId)).filter((s) =>
-    roster.has(normId(s.alumniSlug))
+  const subs = (await listSubscriptionsForProgram(programId)).filter(
+    (s) =>
+      roster.has(normId(s.alumniSlug)) &&
+      (!onlySlugs || onlySlugs.has(normId(s.alumniSlug)))
   );
 
   const payload = JSON.stringify({

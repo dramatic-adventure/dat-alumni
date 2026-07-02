@@ -16,3 +16,64 @@ export async function clearFieldKitCaches(): Promise<void> {
   const keys = await caches.keys();
   await Promise.all(keys.filter((k) => k.startsWith("fk-")).map((k) => caches.delete(k)));
 }
+
+/* ── Slice 5 — Field Library file cache (cache-on-open) ─────────────────────────
+ *
+ * Library files live in their OWN named cache so the service worker's activate
+ * sweep (which purges stale fk-* page/asset caches) can keep it, while sign-out
+ * (clearFieldKitCaches above, matching the fk- prefix) still wipes it — it's
+ * gated content on a possibly shared device. The name is duplicated in
+ * public/sw.js (LIB_CACHE) — keep the two in lockstep.
+ *
+ * Caching is CLIENT-driven (an explicit fetch of the full file, then
+ * cache.put) rather than sniffed in the SW fetch handler, because iOS <audio>
+ * streams via Range requests — the SW would only ever see 206 partials, which
+ * can't be stored as the full file. The SW serves these entries when offline,
+ * slicing Range responses out of the stored full body.
+ */
+
+export const LIB_CACHE_NAME = "fk-lib-v1";
+
+/** Per-file ceiling for on-device caching — Jesse: text/audio/images only, no
+ *  video; anything larger stays online-only (mobile Safari quotas are finite
+ *  and evictable). */
+export const MAX_LIB_FILE_BYTES = 20 * 1024 * 1024; // 20 MB
+
+export type LibraryCacheResult = "cached" | "too-large" | "failed" | "unsupported";
+
+/** Fetch a library file in full and store it for offline use. */
+export async function cacheLibraryFile(url: string): Promise<LibraryCacheResult> {
+  if (typeof caches === "undefined") return "unsupported";
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok || res.status !== 200 || res.redirected) return "failed";
+    const blob = await res.blob();
+    if (blob.size > MAX_LIB_FILE_BYTES) return "too-large";
+    const cache = await caches.open(LIB_CACHE_NAME);
+    await cache.put(
+      url,
+      new Response(blob, {
+        status: 200,
+        headers: {
+          "Content-Type": res.headers.get("Content-Type") || "application/octet-stream",
+          "Content-Length": String(blob.size),
+          "Accept-Ranges": "bytes",
+        },
+      })
+    );
+    return "cached";
+  } catch {
+    return "failed";
+  }
+}
+
+/** Is this library file already saved on the device? */
+export async function isLibraryFileCached(url: string): Promise<boolean> {
+  if (typeof caches === "undefined") return false;
+  try {
+    const cache = await caches.open(LIB_CACHE_NAME);
+    return !!(await cache.match(url));
+  } catch {
+    return false;
+  }
+}
