@@ -9,7 +9,6 @@ import Providers from "./providers";
 // ✅ Keep it imported, but only render in production (see below)
 import ChunkErrorReload from "./ChunkErrorReload";
 
-import localFont from "next/font/local";
 import SiteChrome from "@/components/ui/SiteChrome";
 import ComingSoonModal from "@/components/ui/ComingSoonModal";
 
@@ -27,19 +26,6 @@ import {
   syneMono,
   zillaSlab,
 } from "./fonts";
-
-// Major Mono Display (400)
-const majorMono = localFont({
-  variable: "--font-major-mono",
-  display: "swap",
-  src: [
-    {
-      path: "../public/fonts/major-mono-display-v17-latin-regular.woff2",
-      weight: "400",
-      style: "normal",
-    },
-  ],
-});
 
 function normalizeBaseUrl(raw?: string) {
   const s = String(raw ?? "").trim();
@@ -102,7 +88,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         cutiveMono.variable,
         anonymousPro.variable,
         syneMono.variable,
-        majorMono.variable,
         zillaSlab.variable,
         "font-sans",
       ].join(" ")}
