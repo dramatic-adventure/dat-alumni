@@ -84,9 +84,21 @@ export const spaceGrotesk = localFont({
   ],
 });
 
+/* ===============================
+   Lazily-loaded fonts (preload: false)
+
+   Only Anton, DM Sans, and Space Grotesk above are preloaded on every
+   route — they're the core stacks (and the only three Field Kit uses,
+   per components/field-kit/tokens.ts). Everything below keeps its
+   @font-face registered globally but is downloaded by the browser only
+   when rendered text actually uses it, so routes that never render a
+   font never fetch its file.
+=============================== */
+
 export const rockSalt = localFont({
   src: "../public/fonts/rock-salt-v23-latin-regular.woff2",
   variable: "--font-rock-salt",
+  preload: false,
   weight: "400",
   display: "swap",
   fallback: [
@@ -103,6 +115,7 @@ export const rockSalt = localFont({
 export const gloucester = localFont({
   src: "../public/fonts/GloucesterMT-ExtraCondensed.woff2",
   variable: "--font-gloucester",
+  preload: false,
   weight: "400",
   display: "swap",
   fallback: ["Georgia", "Times New Roman", "Times", "serif"],
@@ -117,6 +130,7 @@ export const gloucester = localFont({
 export const vt323 = localFont({
   src: "../public/fonts/vt323-v17-latin-regular.woff2",
   variable: "--font-vt323",
+  preload: false,
   weight: "400",
   display: "swap",
   fallback: [
@@ -134,6 +148,7 @@ export const vt323 = localFont({
 export const specialElite = localFont({
   src: "../public/fonts/special-elite-v19-latin-regular.woff2",
   variable: "--font-special-elite",
+  preload: false,
   weight: "400",
   display: "swap",
   fallback: [
@@ -150,6 +165,7 @@ export const specialElite = localFont({
 export const shareTechMono = localFont({
   src: "../public/fonts/share-tech-mono-v15-latin-regular.woff2",
   variable: "--font-share-tech",
+  preload: false,
   weight: "400",
   display: "swap",
   fallback: [
@@ -167,6 +183,7 @@ export const shareTechMono = localFont({
 export const cutiveMono = localFont({
   src: "../public/fonts/cutive-mono-v22-latin-regular.woff2",
   variable: "--font-cutive-mono",
+  preload: false,
   weight: "400",
   display: "swap",
   fallback: [
@@ -195,6 +212,7 @@ export const anonymousPro = localFont({
     },
   ],
   variable: "--font-anonymous-pro",
+  preload: false,
   display: "swap",
   fallback: [
     "ui-monospace",
@@ -211,6 +229,7 @@ export const anonymousPro = localFont({
 export const syneMono = localFont({
   src: "../public/fonts/syne-mono-v15-latin-regular.woff2",
   variable: "--font-syne-mono",
+  preload: false,
   weight: "400",
   display: "swap",
   fallback: [
@@ -254,6 +273,7 @@ export const zillaSlab = localFont({
     },
   ],
   variable: "--font-zilla-slab",
+  preload: false,
   display: "swap",
   fallback: ["Georgia", "Times New Roman", "Times", "serif"],
 });
