@@ -16,7 +16,7 @@ import type { JourneyCard } from "@/lib/journeyCard";
 import { A } from "./journeyTheme";
 import "./journeyBoard.css";
 
-const CYCLE_MS = 4000;
+const CYCLE_MS = 6000;
 // Matches the CSS opacity transition — text swaps once the old face has faded.
 const SWAP_MS = 250;
 const TILE_STAGGER_MS = 40;
@@ -105,7 +105,12 @@ export default function JourneyBoard({
       style={{ "--jb-yellow": A.yellow, "--jb-ink": A.ink, "--jb-teal": A.teal } as CSSProperties}
     >
       <span className="jb-row1" aria-hidden="true">
-        <span className={`jb-program${swapping ? " jb-swap" : ""}`}>{face.program}</span>
+        {/* key={index}: remount on advance so the browser paints a fresh node —
+            mutating the text mid-opacity-transition can leave ghost glyphs of
+            the longer previous word (seen in Safari: PASSAGE → "ACTIONE"). */}
+        <span key={`p-${index}`} className={`jb-program${swapping ? " jb-swap" : ""}`}>
+          {face.program}
+        </span>
         <span className="jb-open">{single ? "Journey Card →" : "Journey Cards →"}</span>
       </span>
 
@@ -126,7 +131,7 @@ export default function JourneyBoard({
           )}
         </span>
         {(face.country || face.year) && (
-          <span className={`jb-where${swapping ? " jb-swap" : ""}`}>
+          <span key={`w-${index}`} className={`jb-where${swapping ? " jb-swap" : ""}`}>
             {face.country && <span className="jb-country">{face.country}</span>}
             {face.year && <span className="jb-year">{face.year}</span>}
           </span>

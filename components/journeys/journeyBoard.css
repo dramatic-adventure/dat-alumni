@@ -114,11 +114,25 @@
   transition: opacity 0.25s ease;
 }
 
-/* cross-fade phase while the board advances to the next journey */
+/* cross-fade phase while the board advances to the next journey: the outgoing
+   node fades via the transition, the incoming node (remounted with a fresh
+   key) fades in via the animation */
 .jb-swap.jb-program,
 .jb-swap .jb-country,
 .jb-swap .jb-year {
   opacity: 0;
+}
+.jb-program,
+.jb-where {
+  animation: jb-fade-in 0.25s ease;
+}
+@keyframes jb-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* ── Row 3: one mini plate per journey (hidden by TSX when only one card) ── */
@@ -174,7 +188,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .jb-cell--in {
+  .jb-cell--in,
+  .jb-program,
+  .jb-where {
     animation: none;
   }
   .jb-program,
