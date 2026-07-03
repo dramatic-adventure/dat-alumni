@@ -116,11 +116,22 @@ but-unpublished file is unreferenced and harmless, and the retry re-uses it.)
 **Q6 — Retroactive `programId`: store the programMap slug.** At publish, program facts
 (program/location/country/year) are copied from the `programMap` entry into the row's
 snapshot columns (accurate, zero data entry), and the programMap slug is stored in
-`programId`. Today the itinerary-store lookup finds nothing so the snapshot renders (the
-fallback `lib/journeyCard.ts:24` anticipates); if an itinerary record for that program is
-ever created later, live-merge activates automatically for already-published cards.
-`sortDate` is backdated to the trip year so back-catalog cards sort historically. The
-"live program facts" guarantee explicitly does not apply to the back-catalog, by design.
+`programId`. `sortDate` is backdated to the trip year so back-catalog cards sort
+historically. The "live program facts" guarantee explicitly does not apply to the
+back-catalog, by design.
+
+> **Correction (locked with Jesse, 2026-07-03).** This answer originally claimed that
+> "live-merge activates automatically" once an itinerary record exists for a card's
+> `programId`. That overstated shipped behavior: `mergeProgramIntoCard()`
+> (`lib/journeyCard.ts`) and `toProgramRecord()` (`lib/programItinerary.ts`) both exist,
+> but **nothing in the render path calls the merge** — every published card renders from
+> its own snapshot columns, and editing a program/itinerary does not propagate to
+> already-published cards. Decision: **V1 ships on per-card snapshots.** Wiring the merge
+> into the card read path (`lib/loadJourneyCards.ts` → `journeyCardRowToCard`) is an
+> explicit next-phase item, in the same phase that lights up `chaptersJson` chapter
+> rendering. `programId` is still stored on every row, so the merge can activate for
+> already-published cards when that phase ships — but it will take that wiring work, not
+> happen automatically.
 
 **Q7 — Autosave: debounced local + background server sync.** Every change autosaves to
 IndexedDB on a ~1s debounce (offline-first — "Saved on this device" is always literally
