@@ -55,6 +55,20 @@ function optionFromEntry(entry: ProgramData): RetroProgramOption {
   };
 }
 
+// Picker scope (locked with Jesse 2026-07-03): company retreats are excluded —
+// the public card's narrative spine is built for field programs — and only
+// programs that have actually ENDED are offered; artists on a live trip author
+// through Quick Capture → Composer, not the retro builder. Both rules apply to
+// isOnRetroProgram too, so draft/upload/publish enforcement matches the picker.
+const RETREAT_RE = /\bretreat\b/i;
+
+function isPastProgram(entry: ProgramData): boolean {
+  // Dates live on the cluster's umbrella entry; ISO strings compare lexically.
+  if (entry.endDate) return String(entry.endDate) < new Date().toISOString().slice(0, 10);
+  const y = Number(entry.year);
+  return Number.isFinite(y) && y < new Date().getFullYear();
+}
+
 /**
  * Every past program (deduped by cluster, umbrella entry's metadata preferred)
  * whose roster includes `slug`. Sorted newest first.
@@ -79,7 +93,7 @@ export function retroProgramsForSlug(slug: string): RetroProgramOption[] {
     }
   }
   return Array.from(byCluster.values())
-    .filter((c) => c.onRoster)
+    .filter((c) => c.onRoster && !RETREAT_RE.test(c.display.program) && isPastProgram(c.display))
     .map((c) => optionFromEntry(c.display))
     .sort((a, b) => b.year.localeCompare(a.year));
 }
