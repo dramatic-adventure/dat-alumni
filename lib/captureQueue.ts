@@ -19,6 +19,11 @@ import { openDb, hasIDB, objectStore, CAPTURE_STORE } from "@/lib/fieldKitDb";
 export type CaptureKind = "note" | "quote" | "photo" | "voice";
 export type QueueStatus = "pending" | "syncing" | "failed";
 
+// Slice 6 (Trace unification): "card" saves toward the artist's Journey Card
+// (still private until they stamp); "sealed" never leaves the private journal —
+// never reviewed, never publishable. Locked with Jesse 2026-07-02 (§4-R Q3).
+export type CaptureVisibility = "card" | "sealed";
+
 export type QueuedCapture = {
   captureId: string;
   kind: CaptureKind;
@@ -26,6 +31,10 @@ export type QueuedCapture = {
   quoteSpeaker?: string;
   createdAt: string;
   dayIndex?: string;
+  /** Itinerary chapter id (Slice 6) — derived from the current day's chapter. */
+  chapterId?: string;
+  /** Slice 6; absent (older queued items) means "card". */
+  visibility?: CaptureVisibility;
   asId?: string;
   blob?: Blob;
   blobType?: string;

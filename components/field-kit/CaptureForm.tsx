@@ -22,8 +22,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { T, FONT } from "@/components/field-kit/tokens";
-import { enqueue, type QueuedCapture } from "@/lib/captureQueue";
+import { enqueue, type QueuedCapture, type CaptureVisibility } from "@/lib/captureQueue";
 import { kick } from "@/lib/captureSync";
+import { ulid } from "@/lib/ulid";
 
 type Kind = "note" | "quote" | "photo" | "voice";
 
@@ -43,22 +44,6 @@ function fmtElapsed(s: number): string {
   return `${mm}:${String(ss).padStart(2, "0")}`;
 }
 
-// Crockford base32 ULID: 48-bit timestamp + 80 bits of randomness. Good enough
-// as an idempotency key without pulling in a dependency.
-const ULID_ENCODING = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-function ulid(): string {
-  let now = Date.now();
-  const time: string[] = new Array(10);
-  for (let i = 9; i >= 0; i--) {
-    time[i] = ULID_ENCODING[now % 32];
-    now = Math.floor(now / 32);
-  }
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  const rand = Array.from(bytes, (b) => ULID_ENCODING[b % 32]);
-  return time.join("") + rand.join("");
-}
-
 const KINDS: { value: Kind; label: string }[] = [
   { value: "note", label: "Note" },
   { value: "quote", label: "Quote" },
@@ -66,7 +51,13 @@ const KINDS: { value: Kind; label: string }[] = [
   { value: "voice", label: "Voice" },
 ];
 
-export default function CaptureForm({ currentDayId }: { currentDayId: string }) {
+export default function CaptureForm({
+  currentDayId,
+  currentChapterId = "",
+}: {
+  currentDayId: string;
+  currentChapterId?: string;
+}) {
   // Admin impersonation — forwarded to the route so the capture attributes to the
   // impersonated member. Honored ONLY for admins server-side (getFieldKitAccess).
   const asId = useSearchParams().get("asId")?.trim() || "";
@@ -77,6 +68,9 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
   const fileRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ kind: "ok" | "error"; msg: string } | null>(null);
+  // Slice 6 visibility: "card" (default — composable into your Journey Card,
+  // still private until you stamp) vs "sealed" (never leaves your journal).
+  const [sealed, setSealed] = useState(false);
 
   // Voice state. recorderSupported defaults false so SSR/first paint shows the
   // fallback file input; the effect flips it on once the client confirms
@@ -228,6 +222,7 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
         blobType = file.type;
       }
 
+      const visibility: CaptureVisibility = sealed ? "sealed" : "card";
       const item: QueuedCapture = {
         captureId: ulid(),
         kind,
@@ -235,6 +230,8 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
         quoteSpeaker: kind === "quote" ? quoteSpeaker.trim() || undefined : undefined,
         createdAt: new Date().toISOString(),
         dayIndex: currentDayId || undefined,
+        chapterId: currentChapterId || undefined,
+        visibility,
         asId: asId || undefined,
         blob,
         blobType,
@@ -524,6 +521,52 @@ export default function CaptureForm({ currentDayId }: { currentDayId: string }) 
           )}
         </>
       )}
+
+      {/* Slice 6 — sealed vs card. Sealed = Private Reflection: never reviewed,
+          never published, never offered to the Journey Card. Card (default) is
+          still private until the artist stamps in the Publish flow. */}
+      <label
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          gap: 10,
+          marginTop: 16,
+          padding: "12px 14px",
+          borderRadius: 10,
+          background: sealed ? "rgba(122, 71, 133, 0.10)" : T.card,
+          border: `1.5px ${sealed ? "dashed" : "solid"} ${T.border}`,
+          cursor: "pointer",
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={sealed}
+          onChange={(e) => setSealed(e.target.checked)}
+          aria-label="Seal this capture — private reflection, never published"
+          style={{ marginTop: 3, accentColor: T.yellow }}
+        />
+        <span>
+          <span
+            style={{
+              display: "block",
+              fontFamily: FONT.grotesk,
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: T.ink,
+              marginBottom: 2,
+            }}
+          >
+            ✦ Private reflection {sealed ? "· sealed" : ""}
+          </span>
+          <span style={{ fontFamily: FONT.dm, fontSize: 12.5, lineHeight: 1.45, color: T.muted }}>
+            {sealed
+              ? "Sealed — never reviewed, never published. It stays in your journal."
+              : "Off — this saves toward your card. Still private until you stamp."}
+          </span>
+        </span>
+      </label>
 
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 16 }}>
         <button

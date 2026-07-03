@@ -30,7 +30,15 @@ import {
   findJourneyCardRowById,
   setJourneyCardStatus,
 } from "@/lib/loadJourneyCards";
-import { formatProgramLabel, type JourneyCardRow } from "@/lib/journeyCard";
+import {
+  formatProgramLabel,
+  parseChaptersJson,
+  serializeChaptersJson,
+  MAX_CHAPTERS_JSON_CHARS,
+  MAX_CHAPTER_BLOCKS,
+  MAX_SHEET_CELL_CHARS,
+  type JourneyCardRow,
+} from "@/lib/journeyCard";
 import { getSlugAliases } from "@/lib/slugAliases";
 import { notifyJourneyTakedown } from "@/lib/notifyJourneyTakedown";
 
@@ -134,6 +142,47 @@ export async function POST(req: Request) {
     }
   }
 
+  // Structured chapters (Slice 6). Accept `chapters` (array) or `chaptersJson`
+  // (string); sanitize by parse → re-serialize so only bounded, coerced blocks
+  // ever land in the sheet. When the caller doesn't send either field (the V1
+  // studio's flat payload), an edit PRESERVES the existing card's chapters.
+  // Oversized input is an explicit 400 on BOTH paths — the sanitizers return
+  // ""/[] for over-limit payloads, and letting that through would publish
+  // ok:true with the chapters silently erased.
+  let chaptersJson = existing?.chaptersJson ?? "";
+  if (body.chapters !== undefined || body.chaptersJson !== undefined) {
+    const raw =
+      body.chapters !== undefined ? body.chapters : (() => {
+        const s = str(body.chaptersJson);
+        if (!s) return [];
+        if (s.length > MAX_CHAPTERS_JSON_CHARS) return null;
+        try {
+          return JSON.parse(s);
+        } catch {
+          return null;
+        }
+      })();
+    if (!Array.isArray(raw)) {
+      return noStore({ error: "chapters must be a JSON array" }, { status: 400 });
+    }
+    if (raw.length > MAX_CHAPTER_BLOCKS) {
+      return noStore(
+        { error: `Too many chapter blocks (${raw.length}) — the card holds at most ${MAX_CHAPTER_BLOCKS}.` },
+        { status: 400 },
+      );
+    }
+    chaptersJson = raw.length ? serializeChaptersJson(parseChaptersJson(JSON.stringify(raw))) : "";
+    if (raw.length && !chaptersJson) {
+      return noStore(
+        {
+          error:
+            "Your chapters are too long to publish in one card — trim the longest chapter text and try again.",
+        },
+        { status: 400 },
+      );
+    }
+  }
+
   const country = str(body.country) || str(body.location);
   const year = str(body.year);
   const nowIso = new Date().toISOString();
@@ -164,7 +213,20 @@ export async function POST(req: Request) {
     status: "live",
     removalReason: "",
     createdAt: existing?.createdAt || nowIso,
+    chaptersJson,
   };
+
+  // Google Sheets rejects cells over 50k chars, and the append is all-or-nothing
+  // — an oversized field would make every retry fail the same way with no
+  // actionable message. Refuse up front and name the field instead.
+  for (const [field, value] of Object.entries(row)) {
+    if (typeof value === "string" && value.length > MAX_SHEET_CELL_CHARS) {
+      return noStore(
+        { error: `"${field}" is too long to publish (${value.length} of ${MAX_SHEET_CELL_CHARS} characters max) — trim it and try again.` },
+        { status: 400 },
+      );
+    }
+  }
 
   try {
     await appendJourneyCard(row);

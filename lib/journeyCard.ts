@@ -67,6 +67,146 @@ export function parseProgramLabel(label: string): ProgramParts {
   return { program: programRaw.trim(), location, year };
 }
 
+// ── Chapter blocks (Slice 6) ──────────────────────────────────────────────────
+// The Field Kit Composer builds a card as chapters + daily-page inserts. The
+// published row stays flat for today's renderer (the flatten step below), but
+// the full structure ALSO lands in the `chaptersJson` column so the next phase
+// can render real chapter pages / ghost placeholders without anyone
+// re-publishing. Locked with Jesse 2026-07-02 (slice-6 spec §4-R Q1).
+
+export type JourneyCardChapterKind = "chapter" | "daily";
+
+export type JourneyCardChapter = {
+  /** Itinerary chapter id (live) or a retro/custom id — join key to the spine. */
+  chapterId: string;
+  kind: JourneyCardChapterKind;
+  /** Chapter number label ("01") — display only. */
+  num?: string;
+  title: string;
+  location?: string;
+  dateLabel?: string;
+  /** The single poetic response line — headlines the chapter. */
+  response?: string;
+  /** The longer prompt response — the chapter's body text. */
+  body?: string;
+  /** PUBLIC photo URLs (already promoted out of the private capture store). */
+  photoUrls?: string[];
+  /** PUBLIC audio URL, if any. */
+  audioUrl?: string;
+  accent?: string;
+  /** "empty" chapters are the ghost-placeholder slots; kept so the published
+   *  card can one day show "the passport has the slot, the page is blank". */
+  status: "written" | "empty";
+};
+
+// Sheets cells cap at 50k chars; stay well under it and bound the array so a
+// hostile payload can't bloat the tab. MAX_SHEET_CELL_CHARS guards every flat
+// cell on the write path (body, mediaUrls, …) — an over-limit cell makes the
+// whole Sheets append fail, permanently, on every retry.
+export const MAX_CHAPTERS_JSON_CHARS = 40_000;
+export const MAX_CHAPTER_BLOCKS = 40;
+export const MAX_SHEET_CELL_CHARS = 45_000;
+
+const CHAPTER_KINDS = new Set<JourneyCardChapterKind>(["chapter", "daily"]);
+
+/**
+ * Parse a `chaptersJson` cell into chapter blocks. Tolerant by design: any
+ * garbage (old rows, hand-edited cells, oversized payloads) → []. Every field
+ * is re-coerced so the result is safe to render without further checks.
+ */
+export function parseChaptersJson(raw: string | undefined | null): JourneyCardChapter[] {
+  const s = String(raw ?? "").trim();
+  if (!s || s.length > MAX_CHAPTERS_JSON_CHARS) return [];
+  let data: unknown;
+  try {
+    data = JSON.parse(s);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(data)) return [];
+  const out: JourneyCardChapter[] = [];
+  for (const item of data.slice(0, MAX_CHAPTER_BLOCKS)) {
+    if (!item || typeof item !== "object") continue;
+    const o = item as Record<string, unknown>;
+    const str = (v: unknown) => String(v ?? "").trim();
+    const kind = CHAPTER_KINDS.has(str(o.kind) as JourneyCardChapterKind)
+      ? (str(o.kind) as JourneyCardChapterKind)
+      : "chapter";
+    const photoUrls = Array.isArray(o.photoUrls)
+      ? o.photoUrls.map(str).filter(Boolean).slice(0, 12)
+      : [];
+    out.push({
+      chapterId: str(o.chapterId),
+      kind,
+      num: str(o.num) || undefined,
+      title: str(o.title),
+      location: str(o.location) || undefined,
+      dateLabel: str(o.dateLabel) || undefined,
+      response: str(o.response) || undefined,
+      body: str(o.body) || undefined,
+      photoUrls: photoUrls.length ? photoUrls : undefined,
+      audioUrl: str(o.audioUrl) || undefined,
+      accent: str(o.accent) || undefined,
+      status: str(o.status) === "empty" ? "empty" : "written",
+    });
+  }
+  return out;
+}
+
+/**
+ * Serialize chapter blocks for the `chaptersJson` cell — the write-side mirror
+ * of parseChaptersJson (parse → re-serialize), so whatever lands in the sheet
+ * is guaranteed already-sanitized and within bounds. Returns "" for nothing.
+ */
+export function serializeChaptersJson(chapters: JourneyCardChapter[]): string {
+  if (!chapters.length) return "";
+  const clean = parseChaptersJson(JSON.stringify(chapters));
+  if (!clean.length) return "";
+  const s = JSON.stringify(clean);
+  return s.length > MAX_CHAPTERS_JSON_CHARS ? "" : s;
+}
+
+/**
+ * The Q1 flatten step: chapter blocks → today's flat card fields. The current
+ * public renderer splits `body` on blank lines into paragraphs, so each written
+ * chapter contributes a heading line and its text as plain paragraphs; daily
+ * pages read as postcard one-liners. Empty (ghost) chapters are skipped here —
+ * they live only in chaptersJson until the public renderer learns placeholders.
+ * pullQuote and heroUrl are the artist's explicit picks in the Publish flow,
+ * NOT derived here.
+ */
+export function flattenChaptersToBody(chapters: JourneyCardChapter[]): string {
+  const parts: string[] = [];
+  for (const ch of chapters) {
+    if (ch.status === "empty") continue;
+    const heading = [ch.title, ch.location].filter(Boolean).join(" — ");
+    if (ch.kind === "daily") {
+      const line = ch.response || ch.body || "";
+      if (!line) continue;
+      parts.push([`◈ ${heading || "Daily page"}`, line].join("\n\n"));
+      continue;
+    }
+    const block = [heading, ch.response, ch.body].filter(Boolean).join("\n\n");
+    if (block) parts.push(block);
+  }
+  return parts.join("\n\n");
+}
+
+/** Union of every written chapter's public photo URLs, in card order, deduped. */
+export function flattenChaptersToMediaUrls(chapters: JourneyCardChapter[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const ch of chapters) {
+    if (ch.status === "empty") continue;
+    for (const url of ch.photoUrls ?? []) {
+      if (seen.has(url)) continue;
+      seen.add(url);
+      out.push(url);
+    }
+  }
+  return out;
+}
+
 // ── The dedicated "Journey Cards" sheet row ───────────────────────────────────
 // First-class columns — NOT a tags blob. The column order here is the canonical
 // header order for the "Journey Cards" tab and is mirrored by HEADERS in
@@ -101,6 +241,9 @@ export type JourneyCardRow = {
   status: string; // "live" | "removed"
   removalReason: string;
   createdAt: string;
+  // ── Structured chapters (Slice 6; appended column W so A:V rows read fine) ──
+  /** JSON array of JourneyCardChapter blocks; "" for flat/manual/legacy cards. */
+  chaptersJson: string;
 };
 
 /**
@@ -160,6 +303,8 @@ export type JourneyCard = {
   status: "live" | "removed";
   removalReason?: string;
   createdAt?: string;
+  /** Structured chapter blocks ([] for flat/manual/legacy cards). */
+  chapters: JourneyCardChapter[];
   // Derived
   /** Canonical "Program: Location Year". */
   programLabel: string;
@@ -204,6 +349,7 @@ export function journeyCardRowToCard(row: JourneyCardRow): JourneyCard {
     status,
     removalReason: row.removalReason || undefined,
     createdAt: row.createdAt || undefined,
+    chapters: parseChaptersJson(row.chaptersJson),
     programLabel: formatProgramLabel({
       program: row.program,
       location: country,

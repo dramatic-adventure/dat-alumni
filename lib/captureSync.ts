@@ -68,6 +68,8 @@ function buildFormData(item: QueuedCapture): FormData {
   fd.set("bodyText", item.bodyText);
   fd.set("createdAt", item.createdAt);
   if (item.dayIndex) fd.set("dayIndex", item.dayIndex);
+  if (item.chapterId) fd.set("chapterId", item.chapterId);
+  if (item.visibility) fd.set("visibility", item.visibility);
   if (item.quoteSpeaker) fd.set("quoteSpeaker", item.quoteSpeaker);
   if (item.asId) fd.set("asId", item.asId);
   if (item.blob) {

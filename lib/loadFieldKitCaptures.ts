@@ -18,16 +18,20 @@ export type FieldCapture = {
   captureId: string;
   programId: string;
   authorSlug: string;
-  kind: string; // "note" | "quote" | "photo"
+  kind: string; // "note" | "quote" | "photo" | "voice"
   bodyText: string;
   createdAt: string;
   dayIndex: string;
+  /** Itinerary chapter anchor (Slice 6); "" on pre-slice-6 rows. */
+  chapterId: string;
+  /** "card" | "sealed" (Slice 6); blank cells normalize to "card". */
+  visibility: "card" | "sealed";
   quoteSpeaker: string;
   driveFileId: string; // photo only; empty for note/quote
   mimeType: string; // photo only; empty for note/quote
 };
 
-const FIELD_CAPTURES_RANGE = "Field-Captures!A:L";
+const FIELD_CAPTURES_RANGE = "Field-Captures!A:N"; // A:N since Slice 6
 
 /** A member's own captures for one program, newest first. Never throws. */
 export const loadCapturesForAuthor = cache(
@@ -53,6 +57,8 @@ export const loadCapturesForAuthor = cache(
     const iBody = idxOf(header, ["bodytext"]);
     const iCreated = idxOf(header, ["createdat"]);
     const iDay = idxOf(header, ["dayindex"]);
+    const iChapter = idxOf(header, ["chapterid"]);
+    const iVisibility = idxOf(header, ["visibility"]);
     const iSpeaker = idxOf(header, ["quotespeaker"]);
     const iDriveFile = idxOf(header, ["drivefileid"]);
     const iMime = idxOf(header, ["mimetype"]);
@@ -71,6 +77,11 @@ export const loadCapturesForAuthor = cache(
         bodyText: String(row[iBody] ?? ""),
         createdAt: String(row[iCreated] ?? ""),
         dayIndex: iDay !== -1 ? String(row[iDay] ?? "") : "",
+        chapterId: iChapter !== -1 ? String(row[iChapter] ?? "").trim() : "",
+        visibility:
+          iVisibility !== -1 && String(row[iVisibility] ?? "").trim().toLowerCase() === "sealed"
+            ? "sealed"
+            : "card",
         quoteSpeaker: iSpeaker !== -1 ? String(row[iSpeaker] ?? "") : "",
         driveFileId: iDriveFile !== -1 ? String(row[iDriveFile] ?? "") : "",
         mimeType: iMime !== -1 ? String(row[iMime] ?? "") : "",

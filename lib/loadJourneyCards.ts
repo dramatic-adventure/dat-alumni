@@ -22,7 +22,8 @@ const SHEET_ID = process.env.ALUMNI_SHEET_ID || "";
 const TAB = "Journey Cards";
 
 // Canonical column order for the "Journey Cards" tab. Mirrors JourneyCardRow.
-// 22 columns → A:V.
+// 23 columns → A:W ("chaptersJson" appended in Slice 6; rows written before it
+// simply have a blank cell and parse to no chapters).
 const HEADERS = [
   "id",
   "profileSlug",
@@ -46,9 +47,10 @@ const HEADERS = [
   "status",
   "removalReason",
   "createdAt",
+  "chaptersJson",
 ] as const;
 
-const RANGE = `${TAB}!A:V`;
+const RANGE = `${TAB}!A:W`;
 
 function coerceBool(v: unknown): boolean {
   return ["1", "true", "yes", "y"].includes(String(v ?? "").trim().toLowerCase());
@@ -56,6 +58,29 @@ function coerceBool(v: unknown): boolean {
 
 function norm(s: unknown): string {
   return String(s ?? "").trim().toLowerCase();
+}
+
+/**
+ * Normalize a date cell back to ISO "YYYY-MM-DD". The append path writes with
+ * USER_ENTERED, so Sheets parses "2026-07-02" into a real date cell — which an
+ * UNFORMATTED_VALUE read then returns as a day-serial number (e.g. 45658,
+ * days since 1899-12-30). Left raw, serials break byNewest's string compare
+ * against ISO values (retroactive backdating made this visible; V1's own
+ * sortDate writes had the same latent conversion). Non-numeric values pass
+ * through untouched.
+ */
+function dateCellToIso(raw: string): string {
+  const s = String(raw ?? "").trim();
+  if (!/^\d{1,6}(\.\d+)?$/.test(s)) return s;
+  const serial = Number(s);
+  // Only convert plausible modern day-serials (~1954–2118). A bare year like
+  // "2026" (or any ≤4-digit value) is left alone — it's a label, not a date.
+  if (!Number.isFinite(serial) || serial < 20_000 || serial > 80_000) return s;
+  // Sheets epoch: 1899-12-30 (accounts for the historic Lotus leap-year bug).
+  const ms = Date.UTC(1899, 11, 30) + serial * 86_400_000;
+  const d = new Date(ms);
+  if (Number.isNaN(d.getTime())) return s;
+  return d.toISOString().slice(0, 10);
 }
 
 function rowToObj(header: string[], row: string[]): Record<string, string> {
@@ -86,10 +111,11 @@ function toRow(r: Record<string, string>): JourneyCardRow {
     ctaText: r.ctaText ?? "",
     ctaUrl: r.ctaUrl ?? "",
     featured: coerceBool(r.featured),
-    sortDate: r.sortDate ?? "",
+    sortDate: dateCellToIso(r.sortDate ?? ""),
     status: r.status ?? "",
     removalReason: r.removalReason ?? "",
-    createdAt: r.createdAt ?? "",
+    createdAt: dateCellToIso(r.createdAt ?? ""),
+    chaptersJson: r.chaptersJson ?? "",
   };
 }
 

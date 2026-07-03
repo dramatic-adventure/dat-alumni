@@ -33,7 +33,7 @@ export default async function TracesPage({
   return (
     <>
       {access.impersonating && <ImpersonationBanner slug={access.slug} />}
-      <TracesList captures={captures} />
+      <TracesList captures={captures} asId={access.impersonating ? access.slug : undefined} />
     </>
   );
 }

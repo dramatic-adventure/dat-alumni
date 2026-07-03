@@ -4,6 +4,7 @@
 // (notes + quotes), newest first. Author-scoping is enforced by the caller +
 // loader; this is a pure presentational list.
 
+import Link from "next/link";
 import type { FieldCapture } from "@/lib/loadFieldKitCaptures";
 import { T, FONT } from "@/components/field-kit/tokens";
 
@@ -18,17 +19,41 @@ function formatWhen(iso: string): string {
   });
 }
 
-export default function TracesList({ captures }: { captures: FieldCapture[] }) {
+export default function TracesList({ captures, asId }: { captures: FieldCapture[]; asId?: string }) {
   if (!captures.length) return <TracesEmpty />;
+
+  const composerHref = asId
+    ? `/field-kit/composer?asId=${encodeURIComponent(asId)}`
+    : "/field-kit/composer";
 
   return (
     <main style={{ maxWidth: 560, margin: "0 auto", padding: "40px clamp(18px, 5vw, 40px) 96px" }}>
       <p style={{ fontFamily: FONT.grotesk, fontWeight: 700, fontSize: 11, letterSpacing: "0.28em", textTransform: "uppercase", color: T.teal, margin: "0 0 10px" }}>
         My Traces
       </p>
-      <h1 style={{ fontFamily: FONT.anton, fontSize: "clamp(28px, 6.5vw, 44px)", lineHeight: 0.96, textTransform: "uppercase", color: T.ink, margin: "0 0 22px" }}>
+      <h1 style={{ fontFamily: FONT.anton, fontSize: "clamp(28px, 6.5vw, 44px)", lineHeight: 0.96, textTransform: "uppercase", color: T.ink, margin: "0 0 16px" }}>
         Everything you&apos;ve caught.
       </h1>
+
+      {/* Slice 6 — the path from traces to a published Journey Card. */}
+      <Link
+        href={composerHref}
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+          background: T.black, border: `1px solid ${T.border}`, borderRadius: 12,
+          padding: "12px 16px", marginBottom: 22, textDecoration: "none",
+        }}
+      >
+        <span>
+          <span style={{ display: "block", fontFamily: FONT.grotesk, fontSize: 9, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: T.yellow, marginBottom: 2 }}>
+            Shape your card
+          </span>
+          <span style={{ fontFamily: FONT.dm, fontSize: 12.5, color: T.muted }}>
+            Turn these traces into your Journey Card — private until you stamp it.
+          </span>
+        </span>
+        <span aria-hidden style={{ fontFamily: FONT.anton, fontSize: 18, color: T.yellow }}>→</span>
+      </Link>
 
       <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 12 }}>
         {captures.map((c) => {
@@ -43,8 +68,29 @@ export default function TracesList({ captures }: { captures: FieldCapture[] }) {
               style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 12, padding: "14px 16px" }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
-                <span style={{ fontFamily: FONT.grotesk, fontSize: 10.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: labelColor }}>
-                  {label}
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontFamily: FONT.grotesk, fontSize: 10.5, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: labelColor }}>
+                    {label}
+                  </span>
+                  {c.visibility === "sealed" && (
+                    // Slice 6 — sealed reflections never leave the journal and are
+                    // never offered to the Journey Card Composer.
+                    <span
+                      style={{
+                        fontFamily: FONT.grotesk,
+                        fontSize: 9,
+                        fontWeight: 700,
+                        letterSpacing: "0.14em",
+                        textTransform: "uppercase",
+                        color: T.muted,
+                        border: `1px dashed ${T.border}`,
+                        borderRadius: 4,
+                        padding: "2px 7px",
+                      }}
+                    >
+                      ✦ Sealed
+                    </span>
+                  )}
                 </span>
                 <span style={{ fontFamily: FONT.dm, fontSize: 12, color: T.muted }}>{formatWhen(c.createdAt)}</span>
               </div>

@@ -12,17 +12,19 @@
 // are missing. A fresh install at the current version gets all of them.
 //   v1 → v2: added "itinerarySnapshot" (Slice 2)
 //   v2 → v3: added "opsQueue" + "opsState" (Slice 5 — Roll Call / Company Choice)
+//   v3 → v4: added "journeyDrafts" (Slice 6 — Composer / Retroactive drafts)
 //
 // SSR-safe: hasIDB() guards the browser-only API so every importer no-ops cleanly
 // on the server (no "server-only" — this is imported by client code).
 
 export const DB_NAME = "dat-field-kit";
-export const DB_VERSION = 3;
+export const DB_VERSION = 4;
 
 export const CAPTURE_STORE = "captureQueue"; // keyPath: "captureId" (Slice C)
 export const SNAPSHOT_STORE = "itinerarySnapshot"; // keyPath: "programId" (Slice 2)
 export const OPS_QUEUE_STORE = "opsQueue"; // keyPath: "opId" (Slice 5 — queued check-ins/votes)
 export const OPS_STATE_STORE = "opsState"; // keyPath: "key" (Slice 5 — this device's own response/vote)
+export const DRAFT_STORE = "journeyDrafts"; // keyPath: "key" (Slice 6 — Composer/Retro drafts)
 
 export function hasIDB(): boolean {
   return typeof indexedDB !== "undefined";
@@ -49,6 +51,9 @@ export function openDb(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(OPS_STATE_STORE)) {
         db.createObjectStore(OPS_STATE_STORE, { keyPath: "key" });
+      }
+      if (!db.objectStoreNames.contains(DRAFT_STORE)) {
+        db.createObjectStore(DRAFT_STORE, { keyPath: "key" });
       }
     };
     req.onsuccess = () => {

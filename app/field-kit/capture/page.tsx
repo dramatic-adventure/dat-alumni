@@ -33,12 +33,18 @@ export default async function CapturePage({
 
   // Current itinerary day (readily available) → stamped onto each capture so a
   // note knows which program day it belongs to. Blank when none resolves.
+  // Slice 6: the day's chapter rides along too, so the Composer can group
+  // traces under the chapter they were captured in.
   const currentDayId = itinerary ? resolveToday(itinerary).todayDayId ?? "" : "";
+  const currentChapterId =
+    (currentDayId &&
+      itinerary?.chapters.find((ch) => ch.days.some((d) => d.id === currentDayId))?.id) ||
+    "";
 
   return (
     <>
       {access.impersonating && <ImpersonationBanner slug={access.slug} />}
-      <CaptureForm currentDayId={currentDayId} />
+      <CaptureForm currentDayId={currentDayId} currentChapterId={currentChapterId} />
     </>
   );
 }

@@ -62,6 +62,75 @@ It also resolves the data-model split flagged twice now: Quick Capture/Traces us
 
 ---
 
+## 4-R. RESOLVED — §4 answers (locked with Jesse, 2026-07-02)
+
+All seven questions were resolved with Jesse before any Slice 6 code was written, per the
+95%-confidence gate. Three code findings surfaced during resolution corrected the audits'
+framing and are recorded here because the decisions depend on them:
+
+- **(F1)** Production captures are already most of the "rich Entry" shape: `QueuedCapture`/
+  `FieldCapture` carry `programId`, real ISO timestamps, a Drive media ref, and queue-side
+  sync status — and `dayIndex` already stores the itinerary **day id** (`CaptureForm.tsx`
+  sends `currentDayId`), from which `chapterId` is derivable via the spine. The audits were
+  describing the mockup's loose Trace *fixture*, not shipped code.
+- **(F2)** The publish write is ONE system in shipped code, not three: a single Sheets append.
+  `loadJourneyCards.ts` reads live (no Blobs index cache exists), and profiles/index load
+  cards by slug at request time (no alumni-record reference exists). Read-side de-dupe is
+  last-row-wins by id, so a retried append with the same id is naturally idempotent.
+- **(F3)** `programMap.ts` already holds identity (program/location/country/year/artists)
+  for all 28 back-catalog programs; the itinerary store has records only for the live program.
+
+**Q1 — Serialization: flatten + `chaptersJson` column.** Publish writes today's flat fields
+via a defined flatten step — the artist picks one response line as `pullQuote` and one hero
+photo in the Publish flow; `body` = chapters merged with heading lines — so the current
+public renderer works unchanged. Additionally, ONE new column `chaptersJson` (appended,
+A:V → A:W) carries the full chapter array as JSON. Ghost-placeholder rendering on the public
+card defers to the next phase, but no structure is lost and the next phase can light it up
+without anyone re-publishing. Old rows (blank column) stay valid.
+
+**Q2 — Trace/Entry unification: additive extension, no migration.** Field-Captures remains
+THE Trace store. Add `chapterId` and `visibility` as new header-keyed sheet columns (old
+rows read fine; Slices 1–2 behavior unchanged). The Entry draft is a NEW store — a
+`JourneyDraft` document (IndexedDB + server sync) that composes traces by referencing
+`captureId`s — not a rewrite of the capture path.
+
+**Q3 — Visibility: binary `card | sealed`** (the Composer/Invitation model). `sealed` never
+leaves the private journal — never reviewed, never published, never attachable to a card;
+`card` is available to Composer and becomes public only on stamp. Matches the shipped
+"captures are PRIVATE to their author" trust model. Existing captures (blank cell) default
+to `card`. The 4-level ladder is dropped; a crew tier can grow later if crew-sharing ships.
+
+**Q4 — Retroactive gate: profile owner AND on that program's roster.** The alum must be
+signed in, own an alumni profile (`lib/ownership`), **and** appear in the `artists` of the
+`programMap` entry (cluster-aware) they're building a card for. The program picker only
+offers programs where their slug is on the roster. This is its own check, distinct from
+`fieldKitAccess.ts`'s in-program logic; the write-side gate remains `assertCanEditProfile`.
+
+**Q5 — Publish failure story: single idempotent append.** (Per F2.) The card id is minted
+client-side BEFORE publishing so retries are idempotent (last-row-wins de-dupe). Media must
+fully drain before the stamp activates. On failure: the draft stays on device with an
+explicit "publish didn't go through — retry" state. No rollback machinery — no partial
+state can exist. (Media promotion runs as an idempotent step before the append; a promoted-
+but-unpublished file is unreferenced and harmless, and the retry re-uses it.)
+
+**Q6 — Retroactive `programId`: store the programMap slug.** At publish, program facts
+(program/location/country/year) are copied from the `programMap` entry into the row's
+snapshot columns (accurate, zero data entry), and the programMap slug is stored in
+`programId`. Today the itinerary-store lookup finds nothing so the snapshot renders (the
+fallback `lib/journeyCard.ts:24` anticipates); if an itinerary record for that program is
+ever created later, live-merge activates automatically for already-published cards.
+`sortDate` is backdated to the trip year so back-catalog cards sort historically. The
+"live program facts" guarantee explicitly does not apply to the back-catalog, by design.
+
+**Q7 — Autosave: debounced local + background server sync.** Every change autosaves to
+IndexedDB on a ~1s debounce (offline-first — "Saved on this device" is always literally
+true). A queued, last-write-wins background push syncs the draft to a private server draft
+store on field blur / periodically while online, reusing the captureQueue drain pattern —
+so a lost phone doesn't lose the draft and phone-capture → desktop-compose works. The save
+bar always shows explicit state, giving save-button reassurance without the burden.
+
+---
+
 ## 5. Data model (depends on §4 answers — do not create until confirmed)
 
 - Unified **`Trace`/`Entry`** store per Q2, replacing/extending the current Capture shape.
@@ -99,3 +168,70 @@ It also resolves the data-model split flagged twice now: Quick Capture/Traces us
 - `npm run check` before committing.
 - This slice may touch `lib/journeyCard.ts`, `lib/loadJourneyCards.ts`, `app/api/alumni/journey/` — but still not `app/journeys/` or `app/alumni/update/studio/` beyond what's required to accept the new write shape, and not `app/journey-card-mockup/` at all.
 - Treat this as the last Field Kit-side slice before the Journey Card becomes the primary focus — hand off cleanly (a short note on what changed in the shared write path) for whoever picks up the next phase.
+
+---
+
+## 9. HANDOFF — what Slice 6 changed in the shared write path (built 2026-07-02)
+
+For whoever picks up the Journey Card phase next:
+
+**The "Journey Cards" tab grew one column: `chaptersJson` (column W, A:V → A:W).**
+- `lib/journeyCard.ts` now owns the chapter-block model (`JourneyCardChapter`),
+  `parseChaptersJson`/`serializeChaptersJson` (bounded: 40k chars, 40 blocks, coerced
+  fields), and the Q1 flatten helpers (`flattenChaptersToBody`/`flattenChaptersToMediaUrls`).
+  `JourneyCard.chapters` is always populated ([] for flat/legacy cards).
+- `POST /api/alumni/journey` accepts `chapters` (array) or `chaptersJson` (string),
+  sanitizes by parse→re-serialize, and — important — an edit that sends NEITHER
+  (the V1 studio's flat payload) PRESERVES the existing card's chapters. Verified.
+- **The public renderer does not read `chapters` yet.** Ghost-placeholder chapter
+  pages on the public card are the next phase's first job — the data is already
+  in every Field-Kit-published row, so no re-publishing will be needed.
+- `loadJourneyCards.ts` gained `dateCellToIso`: the append path writes with
+  USER_ENTERED, so date-like cells (sortDate/createdAt) come back from
+  UNFORMATTED_VALUE reads as day-serial numbers; the loader now normalizes
+  plausible serials (20000–80000) back to ISO. Pre-existing latent bug, surfaced
+  by retroactive backdating.
+
+**The Field-Captures tab grew two columns: `chapterId` (M) + `visibility` (N, "card"|"sealed").**
+Everything is header-keyed and additive; old rows/clients keep working. Sealed
+captures are excluded from the Composer, publish-media, and the publish flow.
+Run `npm run setup:field-kit-slice6-columns` to add the columns to a sheet that
+doesn't have them (already run on the live sheet 2026-07-02).
+
+**New stores/routes (not part of the card write path but adjacent):**
+- `JourneyDraft` (lib/journeyDraft.ts) — IndexedDB `journeyDrafts` store (DB v4)
+  + private Blobs backup via `/api/field-kit/draft` (store `dat-journey-drafts`;
+  falls back to per-process memory in local dev without Netlify creds).
+- `/api/field-kit/publish-media` — copies chosen private capture files into a
+  `published/` Drive subfolder (idempotent by `<captureId>.<ext>`) and returns
+  public `/api/media/thumb/<id>` URLs. The private originals' file ids are never
+  exposed.
+- `/api/alumni/journey-card/upload` + `/alumni/journey-card/create` — the
+  Retroactive builder (gate: `lib/retroJourneyAccess.ts` — profile owner AND on
+  the programMap roster; programId = programMap slug per §4-R Q6).
+- Audio traces can be attached to a draft but are NOT yet promoted/published
+  (the public renderer has no audio affordance) — next phase if wanted.
+
+**Write-path size limits (added after the adversarial verification pass, 2026-07-03):**
+- `POST /api/alumni/journey` now 400s (with a human, field-naming message the
+  publish UIs surface verbatim) instead of failing opaquely or losing data when:
+  any flat cell exceeds `MAX_SHEET_CELL_CHARS` (45k — Sheets rejects >50k and the
+  append would fail identically on every retry); the `chapters` array exceeds
+  `MAX_CHAPTER_BLOCKS` (40) or serializes over `MAX_CHAPTERS_JSON_CHARS` (40k).
+  Before this, an oversized `chapters` array sanitized to `""` and published
+  `ok:true` with the structured chapters silently erased.
+- `/api/field-kit/publish-media`'s idempotency listing paginates
+  (`nextPageToken`) so retries stay stable past 200 files in `published/`.
+- RetroactiveClient persists the minted `publishedCardId` to IndexedDB
+  *before* the publish POST (bypassing the autosave debounce), matching
+  PublishClient — otherwise a failed stamp + reload could mint a second id.
+
+**Known limitation (accepted, documented for the next phase):**
+`/api/media/thumb/[fileId]` serves any service-account-readable Drive file with
+no folder allowlist. An author who hand-crafts a journey POST with their own
+sealed capture's `driveFileId` (visible to them in their Traces list) can
+publish that sealed file's bytes, bypassing publish-media's sealed check. This
+is self-leak only — nobody can learn another user's fileIds — but it means the
+sealed boundary is enforced at the promotion path, not at the media proxy. If
+the next phase wants a hard guarantee, add a folder allowlist (or a
+`published/`-ancestor check) to the thumb proxy.

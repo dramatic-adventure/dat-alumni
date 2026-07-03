@@ -34,7 +34,10 @@ export const runtime = "nodejs";
 
 type DriveCreateResp = { data: { id?: string } };
 
-const FIELD_CAPTURES_RANGE = "Field-Captures!A:L";
+// A:N since Slice 6 (chapterId + visibility appended); columns resolve by header
+// NAME, so a sheet still on the old 12-column header keeps working — the new
+// fields just don't land until the header gains the columns.
+const FIELD_CAPTURES_RANGE = "Field-Captures!A:N";
 const VALID_KINDS = new Set(["note", "quote", "photo", "voice"]);
 
 // File uploads (photo + voice) are bounded server-side regardless of what the
@@ -83,6 +86,8 @@ type CapturePayload = {
   bodyText: string;
   createdAt: string;
   dayIndex: string;
+  chapterId: string;
+  visibility: string;
   quoteSpeaker: string;
   asId?: string;
   // Photo (multipart) only:
@@ -110,6 +115,8 @@ async function readPayload(req: Request): Promise<CapturePayload> {
       bodyText: String(form.get("bodyText") ?? "").trim(),
       createdAt: String(form.get("createdAt") ?? "").trim(),
       dayIndex: String(form.get("dayIndex") ?? "").trim(),
+      chapterId: String(form.get("chapterId") ?? "").trim(),
+      visibility: String(form.get("visibility") ?? "").trim().toLowerCase(),
       quoteSpeaker: String(form.get("quoteSpeaker") ?? "").trim(),
       asId: String(form.get("asId") ?? "").trim() || undefined,
       file,
@@ -124,6 +131,8 @@ async function readPayload(req: Request): Promise<CapturePayload> {
     bodyText: String(body.bodyText ?? "").trim(),
     createdAt: String(body.createdAt ?? "").trim(),
     dayIndex: String(body.dayIndex ?? "").trim(),
+    chapterId: String(body.chapterId ?? "").trim(),
+    visibility: String(body.visibility ?? "").trim().toLowerCase(),
     quoteSpeaker: String(body.quoteSpeaker ?? "").trim(),
     asId: String(body.asId ?? "").trim() || undefined,
   };
@@ -159,8 +168,16 @@ export async function POST(req: Request) {
     }
     const programId = access.programId;
 
-    const { captureId, kind, bodyText, createdAt: createdAtRaw, dayIndex, quoteSpeaker } = payload;
+    const { captureId, kind, bodyText, createdAt: createdAtRaw, dayIndex, chapterId, quoteSpeaker } = payload;
     const createdAt = createdAtRaw || new Date().toISOString();
+
+    // Slice 6 visibility: "card" (default; composable into the Journey Card) or
+    // "sealed" (never leaves the private journal). Anything else → 400 so a
+    // client bug can't silently mislabel a private reflection.
+    const visibility = payload.visibility || "card";
+    if (visibility !== "card" && visibility !== "sealed") {
+      return NextResponse.json({ error: "visibility must be card or sealed" }, { status: 400 });
+    }
 
     if (!captureId) return NextResponse.json({ error: "captureId is required" }, { status: 400 });
     if (!VALID_KINDS.has(kind)) {
@@ -227,6 +244,8 @@ export async function POST(req: Request) {
       syncState: idxOf(header, ["syncstate"]),
       serverReceivedAt: idxOf(header, ["serverreceivedat"]),
       dayIndex: idxOf(header, ["dayindex"]),
+      chapterId: idxOf(header, ["chapterid"]),
+      visibility: idxOf(header, ["visibility"]),
       quoteSpeaker: idxOf(header, ["quotespeaker"]),
       driveFileId: idxOf(header, ["drivefileid"]),
       mimeType: idxOf(header, ["mimetype"]),
@@ -291,6 +310,8 @@ export async function POST(req: Request) {
     put(col.serverReceivedAt, nowIso); // server-stamped
     put(col.syncState, "synced"); // server-only field
     put(col.dayIndex, dayIndex);
+    put(col.chapterId, chapterId); // Slice 6 — itinerary chapter anchor (may be "")
+    put(col.visibility, visibility); // Slice 6 — "card" | "sealed"
     put(col.quoteSpeaker, quoteSpeaker); // only sent for quotes; empty otherwise
     put(col.driveFileId, driveFileId); // photo/voice only; empty for note/quote
     put(col.mimeType, storedMime); // photo/voice only; empty for note/quote
