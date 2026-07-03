@@ -694,7 +694,7 @@ const hasStories = storiesForFeatured.length > 0;
 
       {isMobile ? (
         <MobileProfileHeader
-          key={alumniIdForMedia}
+          key={`header-${alumniIdForMedia}`}
           alumniId={alumniIdForMedia}
           slug={slug}
           name={name}
@@ -715,7 +715,7 @@ const hasStories = storiesForFeatured.length > 0;
         />
       ) : (
         <DesktopProfileHeader
-          key={alumniIdForMedia}
+          key={`header-${alumniIdForMedia}`}
           alumniId={alumniIdForMedia}
           slug={slug}
           name={name}
@@ -792,7 +792,7 @@ const hasStories = storiesForFeatured.length > 0;
       />
 
       {/* ✅ Public media section — only renders when alumni has featured album/reel items */}
-      <PublicMediaSection key={alumniIdForMedia} alumniId={alumniIdForMedia} />
+      <PublicMediaSection key={`media-${alumniIdForMedia}`} alumniId={alumniIdForMedia} />
 
       {featuredProductions.length > 0 && (
         <div className="bg-[#19657c] pt-[5rem] pb-[30px] px-[30px]">
