@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Journey Teaser v7 — Station Strip</title>
+<!--
+  MOCKUP v7 — the Manifest compressed to a NARROW STRIP with the station vibe
+  turned up, sitting between the passport stamps and Stories from the Field.
+
+  Variant A · THE SOLARI  — split-flap line that flips through the carded
+                            journeys in place (letters flip with a stagger)
+  Variant B · THE TICKER  — continuous rolling departure line, pauses on hover
+
+  Honest counts stay: the strip labels itself "4 stories · 9 journeys".
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;700&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&family=Rock+Salt&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#241123; --board:#180c17; --cell:#100710;
+    --teal:#2493A9; --pink:#F23359; --yellow:#f5c842; --grape:#7b4fa6;
+    --newsprint:#f2f2f2; --hlyellow:#FFCC00;
+    --anton:'Anton',system-ui,sans-serif;
+    --grotesk:'Space Grotesk',system-ui,sans-serif;
+    --dm:'DM Sans',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);font-family:var(--dm);color:var(--ink)}
+  .page{max-width:1160px;margin:0 auto;padding:48px 20px 120px}
+
+  .mockhead{color:#fff;text-align:center;margin:24px 0 56px}
+  .mockhead .kicker{font-family:var(--grotesk);font-weight:700;font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;color:var(--pink);margin:0 0 10px}
+  .mockhead h1{font-family:var(--anton);font-size:2.6rem;line-height:1;margin:0 0 12px;letter-spacing:.01em}
+  .mockhead p{font-size:1rem;opacity:.75;max-width:660px;margin:0 auto;line-height:1.5}
+  .dirlabel{margin:84px 0 22px}
+  .dirlabel .n{font-family:var(--grotesk);font-weight:700;font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;color:var(--teal);margin:0 0 6px}
+  .dirlabel h2{font-family:var(--anton);color:#fff;font-size:1.9rem;margin:0 0 8px;letter-spacing:.01em}
+  .dirlabel p{color:rgba(255,255,255,.72);font-size:.95rem;max-width:720px;margin:0;line-height:1.5}
+
+  .cardframe{border-radius:12px;overflow:hidden;box-shadow:0 18px 48px rgba(0,0,0,.35)}
+
+  /* passport stamps replica */
+  .stamps{position:relative;min-height:230px;background-color:#F6E4C1;
+          background-image:url('public/texture/passportpage.png');background-size:cover;background-position:center}
+  .stamps .tint{position:absolute;inset:0;background:#F799A8;opacity:.3}
+  .stamp{position:absolute;font-family:var(--grotesk);font-weight:700;text-transform:uppercase;
+         text-align:center;padding:10px 18px;line-height:1.35;letter-spacing:.12em;font-size:.62rem;
+         mix-blend-mode:multiply;opacity:.85}
+  .stamp.oval{border:3px solid currentColor;border-radius:50%}
+  .stamp.rect{border:3px double currentColor}
+  .stamp small{display:block;font-size:.52rem;letter-spacing:.2em}
+
+  /* stories replica */
+  .storycard{background:var(--newsprint);padding:30px}
+  .masthead{background:var(--pink);color:#000;font-family:var(--grotesk);font-size:clamp(1.7rem,4vw,2.6rem);letter-spacing:.2rem;font-weight:400;text-transform:uppercase;display:inline-block;padding:0 .4rem;margin:0 0 1rem}
+  .hl{font-family:var(--anton);background:var(--hlyellow);color:var(--ink);text-transform:uppercase;font-weight:400;display:inline;padding:0 .4rem;line-height:1.35}
+  .storyrow{display:flex;gap:1.4rem;align-items:flex-start;text-decoration:none;color:inherit;max-width:660px}
+  .storyrow img{width:150px;height:110px;object-fit:cover;background:#ddd;flex:0 0 auto}
+  .storyrow h3{font-size:1.4rem;margin:0;line-height:1.35}
+  .storyrow p{font-size:.9rem;color:#444;line-height:1.4;margin:.3rem 0 0}
+  .readlink{font-family:var(--dm);font-weight:700;color:var(--pink);display:block;margin-top:.35rem;text-decoration:none}
+
+  /* ── shared strip chrome ──────────────────────────────────────────────── */
+  .strip{display:flex;align-items:center;gap:0;background:var(--board);text-decoration:none;
+         border-top:1px solid rgba(245,238,242,.08);border-bottom:1px solid rgba(245,238,242,.08)}
+  .strip .tag{flex:0 0 auto;align-self:stretch;display:flex;flex-direction:column;justify-content:center;
+         padding:12px 20px;background:var(--pink)}
+  .strip .tag .t1{font-family:var(--grotesk);font-weight:700;font-size:.62rem;letter-spacing:.26em;
+         text-transform:uppercase;color:var(--ink);white-space:nowrap}
+  .strip .tag .t2{font-family:var(--grotesk);font-weight:700;font-size:.52rem;letter-spacing:.18em;
+         text-transform:uppercase;color:rgba(36,17,35,.65);white-space:nowrap;margin-top:3px}
+  .strip .go{flex:0 0 auto;align-self:stretch;display:flex;align-items:center;padding:0 22px;
+         font-family:var(--dm);font-weight:700;font-size:.92rem;color:var(--yellow);white-space:nowrap;
+         border-left:1px solid rgba(245,238,242,.1);transition:letter-spacing .2s ease}
+  .strip:hover .go{letter-spacing:.06em}
+
+  /* ── VARIANT A · THE SOLARI ───────────────────────────────────────────── */
+  .solari{flex:1 1 auto;display:flex;align-items:center;gap:14px;padding:14px 22px;min-width:0;overflow:hidden}
+  .solari .cells{display:flex;gap:3px;flex-wrap:nowrap}
+  .cellgroup{display:flex;gap:3px;margin-right:14px}
+  .cell{display:inline-flex;align-items:center;justify-content:center;width:1.35em;height:1.9em;
+        font-family:var(--grotesk);font-weight:700;font-size:.95rem;letter-spacing:0;
+        color:var(--yellow);background:linear-gradient(180deg,#221325 48%,#0d060d 52%);
+        border-radius:3px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 1px 2px rgba(0,0,0,.5);
+        position:relative;transform-style:preserve-3d}
+  .cell::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.65)}
+  .cell.yr{color:var(--teal)}
+  .cell.dim{color:rgba(245,238,242,.55);font-size:.72rem;width:auto;padding:0 .5em}
+  .cell.blank{background:none;box-shadow:none;width:.4em}
+  .cell.blank::after{display:none}
+  .flipping .cell{animation:flip .5s ease both}
+  @keyframes flip{
+    0%{transform:rotateX(0)}
+    49%{transform:rotateX(-88deg)}
+    51%{transform:rotateX(88deg)}
+    100%{transform:rotateX(0)}
+  }
+
+  /* ── VARIANT B · THE TICKER ───────────────────────────────────────────── */
+  .tickwrap{flex:1 1 auto;overflow:hidden;position:relative;align-self:stretch;display:flex;align-items:center}
+  .tickwrap::before,.tickwrap::after{content:"";position:absolute;top:0;bottom:0;width:42px;z-index:2;pointer-events:none}
+  .tickwrap::before{left:0;background:linear-gradient(90deg,var(--board),transparent)}
+  .tickwrap::after{right:0;background:linear-gradient(270deg,var(--board),transparent)}
+  .ticktrack{display:flex;gap:0;white-space:nowrap;animation:roll 26s linear infinite;padding:16px 0}
+  .strip:hover .ticktrack{animation-play-state:paused}
+  @keyframes roll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .tickitem{display:inline-flex;align-items:baseline;gap:12px;padding:0 26px}
+  .tickitem .yr{font-family:var(--grotesk);font-weight:700;font-size:.78rem;letter-spacing:.2em;color:var(--teal)}
+  .tickitem .dest{font-family:var(--anton);font-size:1.25rem;letter-spacing:.06em;text-transform:uppercase;color:var(--yellow)}
+  .tickitem .role{font-family:var(--dm);font-style:italic;font-size:.82rem;color:rgba(245,238,242,.5)}
+  .tickitem.latest .dest{color:#fff}
+  .tickitem.latest .yr{color:var(--pink)}
+  .tickitem.latest .yr::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
+        background:var(--pink);margin-right:7px;vertical-align:1px;animation:pulse 1.8s ease-in-out infinite}
+  .ticksep{color:var(--pink);font-size:.7rem;align-self:center}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  @media (max-width:640px){
+    .strip .tag .t2{display:none}
+    .strip .go{padding:0 14px;font-size:.8rem}
+    .solari{padding:12px 12px}
+    .cell{font-size:.8rem}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="mockhead">
+    <p class="kicker">Mockup v7 · Narrow strip, station vibe</p>
+    <h1>The Station Strip</h1>
+    <p>The manifest compressed to one line between the stamps page and the stories —
+       once as a split-flap Solari line that flips through the record, once as a rolling
+       ticker. Honest counts ride in the pink tag.</p>
+  </header>
+
+  <!-- ════════════ VARIANT A · THE SOLARI ════════════ -->
+  <div class="dirlabel">
+    <p class="n">Variant A · the split-flap</p>
+    <h2>The Solari</h2>
+    <p>One line, flap cells, teal year / yellow destination / role — it flips to the next
+       carded journey every few seconds with a staggered letter flip. With one card it
+       simply holds the line, no cycling.</p>
+  </div>
+
+  <div class="cardframe">
+    <div class="stamps">
+      <div class="tint"></div>
+      <span class="stamp oval" style="color:#14532D;left:6%;top:28px;transform:rotate(-8deg)">Passage<small>Zanzibar · 2019</small></span>
+      <span class="stamp rect" style="color:#8C1E24;left:28%;top:104px;transform:rotate(4deg)">ACTion<small>Tanzania · 2022</small></span>
+      <span class="stamp oval" style="color:#005B7A;left:50%;top:30px;transform:rotate(-3deg)">ACTion<small>The Andes · 2024</small></span>
+      <span class="stamp rect" style="color:#6C00AF;left:72%;top:112px;transform:rotate(7deg)">Passage<small>Slovakia · 2026</small></span>
+      <span class="stamp oval" style="color:#8B531F;left:86%;top:30px;transform:rotate(-6deg)">Travelogue<small>2021</small></span>
+    </div>
+
+    <!-- THE SOLARI STRIP -->
+    <a class="strip" href="#" aria-label="Journey Cards — open the field record">
+      <span class="tag">
+        <span class="t1">Field Record</span>
+        <span class="t2">4 stories · 9 journeys</span>
+      </span>
+      <span class="solari"><span class="cells" id="solari"></span></span>
+      <span class="go">Open →</span>
+    </a>
+
+    <section class="storycard">
+      <h2 class="masthead">Stories from the Field</h2>
+      <a class="storyrow" href="#">
+        <img src="public/images/rehearsing-nitra.jpg" alt="" />
+        <div>
+          <h3><span class="hl">Rehearsing in Nitra</span></h3>
+          <p>The theatre in Nitra had no working lights the week we arrived, so we rehearsed by the windows…</p>
+          <span class="readlink">Read full story →</span>
+        </div>
+      </a>
+    </section>
+  </div>
+
+  <!-- ════════════ VARIANT B · THE TICKER ════════════ -->
+  <div class="dirlabel">
+    <p class="n">Variant B · the rolling board</p>
+    <h2>The Ticker</h2>
+    <p>The whole record rolls by continuously — Anton destinations, teal years, roles in
+       italic, the newest entry pulsing. Pauses on hover; the entire strip is the link.</p>
+  </div>
+
+  <div class="cardframe">
+    <div class="stamps" style="min-height:220px">
+      <div class="tint"></div>
+      <span class="stamp oval" style="color:#14532D;left:10%;top:34px;transform:rotate(-8deg)">Passage<small>Zanzibar · 2019</small></span>
+      <span class="stamp rect" style="color:#8C1E24;left:36%;top:100px;transform:rotate(4deg)">ACTion<small>Tanzania · 2022</small></span>
+      <span class="stamp oval" style="color:#005B7A;left:60%;top:32px;transform:rotate(-3deg)">ACTion<small>The Andes · 2024</small></span>
+      <span class="stamp rect" style="color:#6C00AF;left:80%;top:110px;transform:rotate(7deg)">Passage<small>Slovakia · 2026</small></span>
+    </div>
+
+    <!-- THE TICKER STRIP -->
+    <a class="strip" href="#" aria-label="Journey Cards — open the field record">
+      <span class="tag">
+        <span class="t1">Field Record</span>
+        <span class="t2">4 stories · 9 journeys</span>
+      </span>
+      <span class="tickwrap">
+        <span class="ticktrack" id="ticktrack">
+          <!-- sequence duplicated once for the seamless loop -->
+          <span class="tickitem"><span class="yr">2019</span><span class="dest">Zanzibar</span><span class="role">Performer</span></span>
+          <span class="ticksep">●</span>
+          <span class="tickitem"><span class="yr">2022</span><span class="dest">Tanzania</span><span class="role">Ensemble · Workshop Co-Lead</span></span>
+          <span class="ticksep">●</span>
+          <span class="tickitem"><span class="yr">2024</span><span class="dest">The Andes</span><span class="role">Devising Artist</span></span>
+          <span class="ticksep">●</span>
+          <span class="tickitem latest"><span class="yr">2026</span><span class="dest">Slovakia</span><span class="role">Teaching Artist · Cohort Lead</span></span>
+          <span class="ticksep">●</span>
+          <span class="tickitem"><span class="yr">2019</span><span class="dest">Zanzibar</span><span class="role">Performer</span></span>
+          <span class="ticksep">●</span>
+          <span class="tickitem"><span class="yr">2022</span><span class="dest">Tanzania</span><span class="role">Ensemble · Workshop Co-Lead</span></span>
+          <span class="ticksep">●</span>
+          <span class="tickitem"><span class="yr">2024</span><span class="dest">The Andes</span><span class="role">Devising Artist</span></span>
+          <span class="ticksep">●</span>
+          <span class="tickitem latest"><span class="yr">2026</span><span class="dest">Slovakia</span><span class="role">Teaching Artist · Cohort Lead</span></span>
+          <span class="ticksep">●</span>
+        </span>
+      </span>
+      <span class="go">Open →</span>
+    </a>
+
+    <section class="storycard">
+      <h2 class="masthead">Stories from the Field</h2>
+      <a class="storyrow" href="#">
+        <img src="public/images/rehearsing-nitra.jpg" alt="" />
+        <div>
+          <h3><span class="hl">Rehearsing in Nitra</span></h3>
+          <p>The theatre in Nitra had no working lights the week we arrived, so we rehearsed by the windows…</p>
+          <span class="readlink">Read full story →</span>
+        </div>
+      </a>
+    </section>
+  </div>
+
+<script>
+/* Solari: flips through the carded journeys with a staggered letter flip. */
+const JOURNEYS = [
+  { yr:"2019", dest:"ZANZIBAR",  role:"PERFORMER" },
+  { yr:"2022", dest:"TANZANIA",  role:"ENSEMBLE" },
+  { yr:"2024", dest:"THE ANDES", role:"DEVISING ARTIST" },
+  { yr:"2026", dest:"SLOVAKIA",  role:"TEACHING ARTIST" },
+];
+const holder = document.getElementById("solari");
+let idx = JOURNEYS.length - 1;
+
+function renderCells(j){
+  holder.innerHTML = "";
+  const groups = [
+    { text:j.yr,  cls:"yr" },
+    { text:j.dest, cls:"" },
+    { text:j.role, cls:"dim", whole:true },
+  ];
+  groups.forEach((g,gi) => {
+    const grp = document.createElement("span");
+    grp.className = "cellgroup";
+    if (g.whole){
+      const c = document.createElement("span");
+      c.className = "cell " + g.cls;
+      c.textContent = g.text;
+      c.style.animationDelay = (gi*0.18)+"s";
+      grp.appendChild(c);
+    } else {
+      [...g.text].forEach((ch,i) => {
+        const c = document.createElement("span");
+        c.className = "cell " + (ch===" " ? "blank" : g.cls);
+        c.textContent = ch===" " ? "" : ch;
+        c.style.animationDelay = (gi*0.14 + i*0.045)+"s";
+        grp.appendChild(c);
+      });
+    }
+    holder.appendChild(grp);
+  });
+}
+function flipTo(nextIdx){
+  idx = nextIdx;
+  renderCells(JOURNEYS[idx]);
+  holder.parentElement.classList.remove("flipping");
+  void holder.parentElement.offsetWidth;   // restart animation
+  holder.parentElement.classList.add("flipping");
+}
+renderCells(JOURNEYS[idx]);
+if (JOURNEYS.length > 1 && !matchMedia("(prefers-reduced-motion: reduce)").matches){
+  setInterval(() => flipTo((idx+1) % JOURNEYS.length), 3400);
+}
+</script>
+</body>
+</html>

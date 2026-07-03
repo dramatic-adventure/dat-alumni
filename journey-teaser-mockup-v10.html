@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Journey Teaser v10 — The Enamel Board, refined</title>
+<!--
+  MOCKUP v10 — the Enamel board (v9 option 3) with Jesse's refinements:
+    · corner screws gone
+    · no artist name, no story/journey counts
+    · eyebrow = the PROGRAM of the journey on display (flips with the cycle)
+    · CITY is the giant flap word; country + year stacked beside it
+    · chips are now flat mini flap-plates (seam line, sharp corners), not pills
+    · overall slimmer
+
+  NOTE: JourneyCard has no `city` field yet — needs a new Sheet column.
+
+  Shown twice: four journeys cycling, then the one-journey state
+  (chips row hidden — the big line carries it).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;700&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#241123; --teal:#2493A9; --pink:#F23359; --yellow:#f5c842;
+    --newsprint:#f2f2f2; --hlyellow:#FFCC00;
+    --anton:'Anton',system-ui,sans-serif;
+    --grotesk:'Space Grotesk',system-ui,sans-serif;
+    --dm:'DM Sans',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);font-family:var(--dm);color:var(--ink)}
+  .page{max-width:1160px;margin:0 auto;padding:48px 20px 120px}
+
+  .mockhead{color:#fff;text-align:center;margin:24px 0 56px}
+  .mockhead .kicker{font-family:var(--grotesk);font-weight:700;font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;color:var(--pink);margin:0 0 10px}
+  .mockhead h1{font-family:var(--anton);font-size:2.6rem;line-height:1;margin:0 0 12px;letter-spacing:.01em}
+  .mockhead p{font-size:1rem;opacity:.75;max-width:660px;margin:0 auto;line-height:1.5}
+  .dirlabel{margin:84px 0 22px}
+  .dirlabel .n{font-family:var(--grotesk);font-weight:700;font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;color:var(--teal);margin:0 0 6px}
+  .dirlabel h2{font-family:var(--anton);color:#fff;font-size:1.9rem;margin:0 0 8px;letter-spacing:.01em}
+  .dirlabel p{color:rgba(255,255,255,.72);font-size:.95rem;max-width:720px;margin:0;line-height:1.5}
+
+  .cardframe{border-radius:12px;overflow:hidden;box-shadow:0 18px 48px rgba(0,0,0,.35)}
+
+  .stamps{position:relative;min-height:200px;background-color:#F6E4C1;
+          background-image:url('public/texture/passportpage.png');background-size:cover;background-position:center}
+  .stamps .tint{position:absolute;inset:0;background:#F799A8;opacity:.3}
+  .stamp{position:absolute;font-family:var(--grotesk);font-weight:700;text-transform:uppercase;
+         text-align:center;padding:10px 18px;line-height:1.35;letter-spacing:.12em;font-size:.62rem;
+         mix-blend-mode:multiply;opacity:.85}
+  .stamp.oval{border:3px solid currentColor;border-radius:50%}
+  .stamp.rect{border:3px double currentColor}
+  .stamp small{display:block;font-size:.52rem;letter-spacing:.2em}
+
+  .storycard{background:var(--newsprint);padding:30px}
+  .masthead{background:var(--pink);color:#000;font-family:var(--grotesk);font-size:clamp(1.7rem,4vw,2.6rem);letter-spacing:.2rem;font-weight:400;text-transform:uppercase;display:inline-block;padding:0 .4rem;margin:0 0 1rem}
+  .hl{font-family:var(--anton);background:var(--hlyellow);color:var(--ink);text-transform:uppercase;font-weight:400;display:inline;padding:0 .4rem;line-height:1.35}
+  .storyrow{display:flex;gap:1.4rem;align-items:flex-start;text-decoration:none;color:inherit;max-width:660px}
+  .storyrow img{width:150px;height:110px;object-fit:cover;background:#ddd;flex:0 0 auto}
+  .storyrow h3{font-size:1.4rem;margin:0;line-height:1.35}
+  .storyrow p{font-size:.9rem;color:#444;line-height:1.4;margin:.3rem 0 0}
+  .readlink{font-family:var(--dm);font-weight:700;color:var(--pink);display:block;margin-top:.35rem;text-decoration:none}
+
+  .flip{animation:flip .5s ease both}
+  @keyframes flip{0%{transform:rotateX(0)}49%{transform:rotateX(-88deg)}51%{transform:rotateX(88deg)}100%{transform:rotateX(0)}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* ═══ THE ENAMEL BOARD, REFINED ══════════════════════════════════════════ */
+  .enamel{display:block;background:var(--yellow);padding:18px clamp(16px,4vw,36px) 16px;text-decoration:none}
+
+  .enamel .row1{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px}
+  .enamel .program{font-family:var(--grotesk);font-weight:700;font-size:.7rem;letter-spacing:.34em;
+      text-transform:uppercase;color:var(--ink);margin:0;transition:opacity .25s ease}
+  .enamel .program.swap{opacity:0}
+  .enamel .open{font-family:var(--dm);font-weight:700;font-size:.9rem;color:var(--ink);white-space:nowrap;
+      transition:letter-spacing .2s ease}
+  .enamel:hover .open{letter-spacing:.05em}
+
+  .enamel .row2{display:flex;align-items:center;gap:18px;flex-wrap:nowrap;overflow:hidden}
+  .enamel .big{display:inline-flex;gap:4px;flex-wrap:nowrap}
+  .ecell{display:inline-flex;align-items:center;justify-content:center;width:1.14em;height:1.42em;
+      font-family:var(--anton);font-weight:400;font-size:clamp(1.5rem,4.4vw,2.5rem);color:var(--yellow);
+      background:linear-gradient(180deg,#2e1830 48%,#170a17 52%);border-radius:3px;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 2px 4px rgba(74,60,16,.45);position:relative}
+  .ecell.blank{background:none;box-shadow:none;width:.38em}
+  .enamel .where{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .enamel .country{font-family:var(--grotesk);font-weight:700;font-size:.78rem;letter-spacing:.26em;
+      text-transform:uppercase;color:var(--ink);white-space:nowrap;transition:opacity .25s ease}
+  .enamel .year{font-family:var(--grotesk);font-weight:700;font-size:.72rem;letter-spacing:.3em;
+      color:var(--teal);white-space:nowrap;transition:opacity .25s ease}
+  .enamel .where.swap .country,.enamel .where.swap .year{opacity:0}
+
+  .enamel .row3{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .enamel .plate{font-family:var(--grotesk);font-weight:700;font-size:.6rem;letter-spacing:.16em;
+      text-transform:uppercase;color:var(--yellow);background:linear-gradient(180deg,#2e1830 48%,#170a17 52%);
+      padding:5px 10px;border-radius:3px;position:relative;overflow:hidden;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 1px 3px rgba(74,60,16,.4);
+      transition:transform .2s ease}
+  .enamel .plate:hover{transform:translateY(-1px)}
+  .enamel .plate b{color:#fff;font-weight:700;margin-left:5px}
+  .enamel .plate.cur{background:linear-gradient(180deg,#ff4a6e 48%,#d92448 52%);color:#fff}
+  .enamel .plate.cur b{color:var(--ink)}
+
+  @media (max-width:640px){
+    .enamel .row2{gap:12px}
+    .enamel .country{font-size:.66rem;letter-spacing:.2em}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="mockhead">
+    <p class="kicker">Mockup v10 · The pick, refined</p>
+    <h1>The Enamel Board</h1>
+    <p>Screws gone, name and counts gone, program in the eyebrow, city on the big flaps
+       with country and year stacked beside, and the buttons flattened into mini
+       flap-plates. Slimmer all around.</p>
+  </header>
+
+  <!-- ════════════ FOUR JOURNEYS ════════════ -->
+  <div class="dirlabel">
+    <p class="n">Four journeys · cycling</p>
+    <h2>The Full Record</h2>
+    <p>The board flips through the record: eyebrow swaps to each journey's program,
+       the city flaps over, country and year follow. Plates below are the journey
+       buttons — current one pink.</p>
+  </div>
+
+  <div class="cardframe">
+    <div class="stamps">
+      <div class="tint"></div>
+      <span class="stamp oval" style="color:#14532D;left:6%;top:26px;transform:rotate(-8deg)">Passage<small>Zanzibar · 2019</small></span>
+      <span class="stamp rect" style="color:#8C1E24;left:28%;top:92px;transform:rotate(4deg)">ACTion<small>Tanzania · 2022</small></span>
+      <span class="stamp oval" style="color:#005B7A;left:50%;top:26px;transform:rotate(-3deg)">ACTion<small>The Andes · 2024</small></span>
+      <span class="stamp rect" style="color:#6C00AF;left:72%;top:96px;transform:rotate(7deg)">Passage<small>Slovakia · 2026</small></span>
+      <span class="stamp oval" style="color:#8B531F;left:87%;top:28px;transform:rotate(-6deg)">Travelogue<small>2021</small></span>
+    </div>
+
+    <!-- THE BOARD -->
+    <a class="enamel" href="#" aria-label="Journey Cards — open the field record" id="board1">
+      <div class="row1">
+        <p class="program" data-r="program">PASSAGE</p>
+        <span class="open">Journey Cards →</span>
+      </div>
+      <div class="row2">
+        <span class="big" data-r="big"></span>
+        <span class="where" data-r="where">
+          <span class="country">Slovakia</span>
+          <span class="year">2026</span>
+        </span>
+      </div>
+      <div class="row3" data-r="plates"></div>
+    </a>
+
+    <section class="storycard">
+      <h2 class="masthead">Stories from the Field</h2>
+      <a class="storyrow" href="#">
+        <img src="public/images/rehearsing-nitra.jpg" alt="" />
+        <div>
+          <h3><span class="hl">Rehearsing in Nitra</span></h3>
+          <p>The theatre in Nitra had no working lights the week we arrived, so we rehearsed by the windows…</p>
+          <span class="readlink">Read full story →</span>
+        </div>
+      </a>
+    </section>
+  </div>
+
+  <!-- ════════════ ONE JOURNEY ════════════ -->
+  <div class="dirlabel">
+    <p class="n">One journey · the common case</p>
+    <h2>Still Interesting Alone</h2>
+    <p>With a single card the plates row disappears and the board holds one line —
+       but city + country + program keep it specific and alive. Nothing cycles;
+       the flaps settle once on load.</p>
+  </div>
+
+  <div class="cardframe">
+    <div class="stamps" style="min-height:180px">
+      <div class="tint"></div>
+      <span class="stamp rect" style="color:#6C00AF;left:18%;top:52px;transform:rotate(-5deg)">Passage<small>Slovakia · 2026</small></span>
+      <span class="stamp oval" style="color:#005B7A;left:58%;top:60px;transform:rotate(4deg)">Teaching Artist<small>Residency</small></span>
+    </div>
+
+    <a class="enamel" href="#" aria-label="Journey Card — open the journey" id="board2">
+      <div class="row1">
+        <p class="program">PASSAGE</p>
+        <span class="open">Journey Card →</span>
+      </div>
+      <div class="row2">
+        <span class="big" data-r="bigsolo"></span>
+        <span class="where">
+          <span class="country">Slovakia</span>
+          <span class="year">2026</span>
+        </span>
+      </div>
+    </a>
+
+    <section class="storycard">
+      <h2 class="masthead">Stories from the Field</h2>
+      <a class="storyrow" href="#">
+        <img src="public/images/rehearsing-nitra.jpg" alt="" />
+        <div>
+          <h3><span class="hl">Rehearsing in Nitra</span></h3>
+          <p>The theatre in Nitra had no working lights the week we arrived, so we rehearsed by the windows…</p>
+          <span class="readlink">Read full story →</span>
+        </div>
+      </a>
+    </section>
+  </div>
+
+<script>
+/* city is new — needs a `city` column on the Journey Card sheet */
+const JOURNEYS = [
+  { program:"PASSAGE", city:"STONE TOWN", country:"Zanzibar",  yr:"2019" },
+  { program:"ACTion",  city:"ARUSHA",     country:"Tanzania",  yr:"2022" },
+  { program:"ACTion",  city:"CUSCO",      country:"Peru",      yr:"2024" },
+  { program:"PASSAGE", city:"NITRA",      country:"Slovakia",  yr:"2026" },
+];
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function flapWord(el, word, animate){
+  el.innerHTML = "";
+  [...word].forEach((ch,i)=>{
+    const c = document.createElement("span");
+    c.className = "ecell" + (ch===" " ? " blank" : "");
+    c.textContent = ch===" " ? "" : ch;
+    if (animate && ch!==" "){ c.classList.add("flip"); c.style.animationDelay=(i*.05)+"s"; }
+    el.appendChild(c);
+  });
+}
+
+/* board 1 — cycles */
+const b1 = document.getElementById("board1");
+const bigEl = b1.querySelector('[data-r="big"]');
+const progEl = b1.querySelector('[data-r="program"]');
+const whereEl = b1.querySelector('[data-r="where"]');
+const platesEl = b1.querySelector('[data-r="plates"]');
+let bi = JOURNEYS.length-1;
+
+JOURNEYS.forEach((j,i)=>{
+  const p = document.createElement("span");
+  p.className = "plate" + (i===bi ? " cur" : "");
+  p.innerHTML = j.city + "<b>’" + j.yr.slice(2) + "</b>";
+  platesEl.appendChild(p);
+});
+
+function showBoard(animate){
+  const j = JOURNEYS[bi];
+  flapWord(bigEl, j.city, animate);
+  if (animate){
+    progEl.classList.add("swap"); whereEl.classList.add("swap");
+    setTimeout(()=>{
+      progEl.textContent = j.program;
+      whereEl.querySelector(".country").textContent = j.country;
+      whereEl.querySelector(".year").textContent = j.yr;
+      progEl.classList.remove("swap"); whereEl.classList.remove("swap");
+    }, 250);
+  } else {
+    progEl.textContent = j.program;
+    whereEl.querySelector(".country").textContent = j.country;
+    whereEl.querySelector(".year").textContent = j.yr;
+  }
+  platesEl.querySelectorAll(".plate").forEach((p,i)=>p.classList.toggle("cur", i===bi));
+}
+showBoard(false);
+if (JOURNEYS.length>1 && !reduced){
+  setInterval(()=>{ bi=(bi+1)%JOURNEYS.length; showBoard(true); }, 3800);
+}
+
+/* board 2 — single journey, settles once */
+flapWord(document.querySelector('[data-r="bigsolo"]'), "NITRA", !reduced);
+</script>
+</body>
+</html>

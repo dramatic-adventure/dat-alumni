@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Journey Teaser v9 — Three Stations</title>
+<!--
+  MOCKUP v9 — three genuinely different flap boards, each modeled on a real
+  station's display language:
+
+  Option 1 · THE ZURICH   — classic Solari: white flap cells, dark board,
+                            red header rule, yellow platform chips as buttons
+  Option 2 · THE LONDON   — UK rail dot-matrix: amber LED lines on a black
+                            screen in a bezel, scrolling "calling at" line
+  Option 3 · THE ENAMEL   — Dutch-style yellow enamel sign: one giant flapping
+                            destination, journey tab buttons riding below
+
+  All sit between the passport stamps and Stories from the Field.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;700&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#241123; --teal:#2493A9; --pink:#F23359; --yellow:#f5c842;
+    --newsprint:#f2f2f2; --hlyellow:#FFCC00;
+    --anton:'Anton',system-ui,sans-serif;
+    --grotesk:'Space Grotesk',system-ui,sans-serif;
+    --dm:'DM Sans',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);font-family:var(--dm);color:var(--ink)}
+  .page{max-width:1160px;margin:0 auto;padding:48px 20px 120px}
+
+  .mockhead{color:#fff;text-align:center;margin:24px 0 56px}
+  .mockhead .kicker{font-family:var(--grotesk);font-weight:700;font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;color:var(--pink);margin:0 0 10px}
+  .mockhead h1{font-family:var(--anton);font-size:2.6rem;line-height:1;margin:0 0 12px;letter-spacing:.01em}
+  .mockhead p{font-size:1rem;opacity:.75;max-width:660px;margin:0 auto;line-height:1.5}
+  .dirlabel{margin:84px 0 22px}
+  .dirlabel .n{font-family:var(--grotesk);font-weight:700;font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;color:var(--teal);margin:0 0 6px}
+  .dirlabel h2{font-family:var(--anton);color:#fff;font-size:1.9rem;margin:0 0 8px;letter-spacing:.01em}
+  .dirlabel p{color:rgba(255,255,255,.72);font-size:.95rem;max-width:720px;margin:0;line-height:1.5}
+
+  .cardframe{border-radius:12px;overflow:hidden;box-shadow:0 18px 48px rgba(0,0,0,.35)}
+
+  .stamps{position:relative;min-height:205px;background-color:#F6E4C1;
+          background-image:url('public/texture/passportpage.png');background-size:cover;background-position:center}
+  .stamps .tint{position:absolute;inset:0;background:#F799A8;opacity:.3}
+  .stamp{position:absolute;font-family:var(--grotesk);font-weight:700;text-transform:uppercase;
+         text-align:center;padding:10px 18px;line-height:1.35;letter-spacing:.12em;font-size:.62rem;
+         mix-blend-mode:multiply;opacity:.85}
+  .stamp.oval{border:3px solid currentColor;border-radius:50%}
+  .stamp.rect{border:3px double currentColor}
+  .stamp small{display:block;font-size:.52rem;letter-spacing:.2em}
+
+  .storycard{background:var(--newsprint);padding:30px}
+  .masthead{background:var(--pink);color:#000;font-family:var(--grotesk);font-size:clamp(1.7rem,4vw,2.6rem);letter-spacing:.2rem;font-weight:400;text-transform:uppercase;display:inline-block;padding:0 .4rem;margin:0 0 1rem}
+  .hl{font-family:var(--anton);background:var(--hlyellow);color:var(--ink);text-transform:uppercase;font-weight:400;display:inline;padding:0 .4rem;line-height:1.35}
+  .storyrow{display:flex;gap:1.4rem;align-items:flex-start;text-decoration:none;color:inherit;max-width:660px}
+  .storyrow img{width:150px;height:110px;object-fit:cover;background:#ddd;flex:0 0 auto}
+  .storyrow h3{font-size:1.4rem;margin:0;line-height:1.35}
+  .storyrow p{font-size:.9rem;color:#444;line-height:1.4;margin:.3rem 0 0}
+  .readlink{font-family:var(--dm);font-weight:700;color:var(--pink);display:block;margin-top:.35rem;text-decoration:none}
+
+  .flip{animation:flip .5s ease both}
+  @keyframes flip{0%{transform:rotateX(0)}49%{transform:rotateX(-88deg)}51%{transform:rotateX(88deg)}100%{transform:rotateX(0)}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* ═══ OPTION 1 · THE ZURICH ═══════════════════════════════════════════════
+     White flap cells / dark charcoal board / thin red rule under the header /
+     yellow platform chips as the buttons. */
+  .zurich{display:block;background:#191921;padding:20px clamp(16px,4vw,34px) 22px;text-decoration:none}
+  .zurich .zhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+      padding-bottom:9px;border-bottom:2px solid #d22730;margin-bottom:4px}
+  .zurich .zhead .zt{font-family:var(--grotesk);font-weight:700;font-size:.72rem;letter-spacing:.34em;
+      text-transform:uppercase;color:#fff;margin:0}
+  .zurich .zhead .zc{font-family:var(--grotesk);font-weight:700;font-size:.58rem;letter-spacing:.22em;
+      text-transform:uppercase;color:rgba(255,255,255,.45)}
+  .zurich .cols{display:grid;grid-template-columns:5rem 1fr auto;gap:0 26px;
+      padding:8px 2px 6px;font-family:var(--grotesk);font-weight:700;font-size:.52rem;
+      letter-spacing:.26em;text-transform:uppercase;color:rgba(255,255,255,.4)}
+  .zurich .zrow{display:grid;grid-template-columns:5rem 1fr auto;gap:0 26px;align-items:center;
+      padding:7px 2px;border-top:1px solid rgba(255,255,255,.07)}
+  .zcell{display:inline-flex;align-items:center;justify-content:center;width:1.3em;height:1.8em;
+      font-family:var(--grotesk);font-weight:700;font-size:.92rem;color:#16161c;
+      background:linear-gradient(180deg,#fbfbf7 48%,#dcdcd2 52%);border-radius:2.5px;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 1px 2px rgba(0,0,0,.55);position:relative}
+  .zcell::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.28)}
+  .zcell.blank{background:none;box-shadow:none;width:.35em}
+  .zcell.blank::after{display:none}
+  .zgroup{display:inline-flex;gap:2.5px}
+  .zurich .zrole{font-family:var(--dm);font-style:italic;font-size:.82rem;color:rgba(255,255,255,.5);
+      margin-left:14px;white-space:nowrap}
+  .zurich .chip{justify-self:end;font-family:var(--grotesk);font-weight:700;font-size:.66rem;
+      letter-spacing:.16em;text-transform:uppercase;color:#16161c;background:var(--yellow);
+      padding:5px 12px;border-radius:3px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.5);
+      transition:transform .2s ease}
+  .zurich .zrow:hover .chip{transform:translateY(-1px)}
+  .zurich .zrow.latest .chip{background:var(--pink);color:#fff}
+  .zurich .zrow.latest .chip::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
+      background:#fff;margin-right:7px;vertical-align:1px;animation:pulse 1.8s ease-in-out infinite}
+  .zurich .zfoot{display:flex;justify-content:flex-end;margin-top:12px}
+  .zurich .zfoot span{font-family:var(--dm);font-weight:700;font-size:.9rem;color:var(--yellow)}
+  @media (max-width:620px){
+    .zurich .cols{grid-template-columns:4rem 1fr auto;gap:0 14px}
+    .zurich .zrow{grid-template-columns:4rem 1fr auto;gap:0 14px}
+    .zurich .zrole{display:none}
+    .zcell{font-size:.78rem}
+  }
+
+  /* ═══ OPTION 2 · THE LONDON ═══════════════════════════════════════════════
+     Amber dot-matrix on a black screen, plastic bezel, scanlines,
+     scrolling calling-at line. */
+  .london{display:block;background:#2a2a2e;padding:16px clamp(14px,3.5vw,28px);text-decoration:none}
+  .london .screen{position:relative;background:#0b0b0b;border-radius:10px;padding:18px 24px 14px;
+      box-shadow:inset 0 0 0 2px #000,inset 0 0 26px rgba(0,0,0,.9),0 2px 6px rgba(0,0,0,.5);overflow:hidden}
+  .london .screen::after{content:"";position:absolute;inset:0;pointer-events:none;
+      background:repeating-linear-gradient(0deg,rgba(0,0,0,.32) 0 1px,transparent 1px 3px)}
+  .led{font-family:var(--grotesk);font-weight:700;text-transform:uppercase;color:#ffb300;
+      letter-spacing:.24em;text-shadow:0 0 5px rgba(255,179,0,.75),0 0 14px rgba(255,179,0,.3)}
+  .london .l1{display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .london .l1 .dest{font-size:clamp(1rem,2.6vw,1.45rem)}
+  .london .l1 .plat{font-size:.72rem;color:#3ddb7e;text-shadow:0 0 5px rgba(61,219,126,.7),0 0 14px rgba(61,219,126,.28)}
+  .london .l2{margin-top:10px;overflow:hidden;position:relative}
+  .london .l2 .scrolltrack{display:inline-flex;white-space:nowrap;animation:roll 22s linear infinite}
+  .london:hover .l2 .scrolltrack{animation-play-state:paused}
+  @keyframes roll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .london .l2 .led{font-size:.68rem;letter-spacing:.3em;padding-right:60px}
+  .london .l3{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:12px;
+      border-top:1px solid rgba(255,179,0,.18);padding-top:10px}
+  .london .l3 .led{font-size:.6rem;letter-spacing:.26em;color:rgba(255,179,0,.55);text-shadow:none}
+  .london .l3 .open{color:#ffb300;text-shadow:0 0 5px rgba(255,179,0,.75);font-size:.72rem;letter-spacing:.3em}
+  .london .cursor{display:inline-block;width:.55em;height:1em;background:#ffb300;vertical-align:-2px;
+      margin-left:6px;animation:pulse 1s steps(1) infinite}
+
+  /* ═══ OPTION 3 · THE ENAMEL ═══════════════════════════════════════════════
+     DAT-yellow enamel plate, one giant flapping destination in ink cells,
+     journey tabs as buttons below. */
+  .enamel{display:block;background:var(--yellow);padding:26px clamp(16px,4vw,36px) 24px;
+      text-decoration:none;position:relative}
+  .enamel::before,.enamel::after,
+  .enamel .screw3,.enamel .screw4{content:"";position:absolute;width:9px;height:9px;border-radius:50%;
+      background:radial-gradient(circle at 35% 35%,#fff8 0 18%,#7a6420 60%,#4a3c10 100%);
+      box-shadow:inset 0 1px 2px rgba(0,0,0,.5)}
+  .enamel::before{left:12px;top:12px}
+  .enamel::after{right:12px;top:12px}
+  .enamel .screw3{left:12px;bottom:12px}
+  .enamel .screw4{right:12px;bottom:12px}
+  .enamel .ehead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px}
+  .enamel .ehead .et{font-family:var(--grotesk);font-weight:700;font-size:.66rem;letter-spacing:.34em;
+      text-transform:uppercase;color:var(--ink);margin:0}
+  .enamel .ehead .ec{font-family:var(--grotesk);font-weight:700;font-size:.56rem;letter-spacing:.22em;
+      text-transform:uppercase;color:rgba(36,17,35,.55)}
+  .enamel .big{display:flex;gap:5px;flex-wrap:nowrap;overflow:hidden;align-items:center}
+  .ecell{display:inline-flex;align-items:center;justify-content:center;width:1.16em;height:1.5em;
+      font-family:var(--anton);font-weight:400;font-size:clamp(1.7rem,5.2vw,3rem);color:var(--yellow);
+      background:linear-gradient(180deg,#2e1830 48%,#170a17 52%);border-radius:4px;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 2px 4px rgba(74,60,16,.5);position:relative}
+  .ecell::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.7)}
+  .ecell.blank{background:none;box-shadow:none;width:.4em}
+  .ecell.blank::after{display:none}
+  .ecell.yrcell{font-family:var(--grotesk);font-weight:700;font-size:clamp(.9rem,2.4vw,1.3rem);color:var(--teal);width:1.4em}
+  .enamel .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}
+  .enamel .tab{font-family:var(--grotesk);font-weight:700;font-size:.64rem;letter-spacing:.18em;
+      text-transform:uppercase;color:var(--yellow);background:var(--ink);padding:7px 14px;border-radius:999px;
+      box-shadow:0 2px 4px rgba(74,60,16,.45);transition:transform .2s ease,box-shadow .2s ease}
+  .enamel .tab:hover{transform:translateY(-2px);box-shadow:0 5px 10px rgba(74,60,16,.5)}
+  .enamel .tab b{color:#fff;font-weight:700}
+  .enamel .tab.cur{background:var(--pink);color:#fff}
+  .enamel .tab.cur b{color:var(--ink)}
+  .enamel .open{margin-left:auto;font-family:var(--dm);font-weight:700;font-size:.92rem;color:var(--ink)}
+
+  @media (max-width:640px){
+    .enamel .open{margin-left:0}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="mockhead">
+    <p class="kicker">Mockup v9 · Three stations</p>
+    <h1>Zurich, London, Utrecht</h1>
+    <p>Three different boards from three different stations — the Swiss Solari with white
+       flaps and platform chips, the UK amber dot-matrix screen, and the Dutch yellow
+       enamel plate with one giant flapping word.</p>
+  </header>
+
+  <!-- ════════════ OPTION 1 · THE ZURICH ════════════ -->
+  <div class="dirlabel">
+    <p class="n">Option 1 · Zürich HB</p>
+    <h2>The Zurich</h2>
+    <p>Classic Solari grammar: white flap cells on charcoal, a thin red rule under the
+       header, and yellow platform chips as the buttons — each chip opens that journey,
+       the newest chip runs pink with a pulse. Column heads like a real departure hall.</p>
+  </div>
+
+  <div class="cardframe">
+    <div class="stamps">
+      <div class="tint"></div>
+      <span class="stamp oval" style="color:#14532D;left:6%;top:26px;transform:rotate(-8deg)">Passage<small>Zanzibar · 2019</small></span>
+      <span class="stamp rect" style="color:#8C1E24;left:28%;top:96px;transform:rotate(4deg)">ACTion<small>Tanzania · 2022</small></span>
+      <span class="stamp oval" style="color:#005B7A;left:50%;top:26px;transform:rotate(-3deg)">ACTion<small>The Andes · 2024</small></span>
+      <span class="stamp rect" style="color:#6C00AF;left:72%;top:100px;transform:rotate(7deg)">Passage<small>Slovakia · 2026</small></span>
+      <span class="stamp oval" style="color:#8B531F;left:87%;top:28px;transform:rotate(-6deg)">Travelogue<small>2021</small></span>
+    </div>
+
+    <a class="zurich" href="#" aria-label="Journey Cards — the field record">
+      <div class="zhead">
+        <p class="zt">Field Record · Departures</p>
+        <span class="zc">4 stories · 9 journeys</span>
+      </div>
+      <div class="cols"><span>Year</span><span>Destination</span><span style="text-align:right">Story</span></div>
+      <div id="zrows"></div>
+      <div class="zfoot"><span>Open the passport →</span></div>
+    </a>
+
+    <section class="storycard">
+      <h2 class="masthead">Stories from the Field</h2>
+      <a class="storyrow" href="#">
+        <img src="public/images/rehearsing-nitra.jpg" alt="" />
+        <div>
+          <h3><span class="hl">Rehearsing in Nitra</span></h3>
+          <p>The theatre in Nitra had no working lights the week we arrived, so we rehearsed by the windows…</p>
+          <span class="readlink">Read full story →</span>
+        </div>
+      </a>
+    </section>
+  </div>
+
+  <!-- ════════════ OPTION 2 · THE LONDON ════════════ -->
+  <div class="dirlabel">
+    <p class="n">Option 2 · King's Cross</p>
+    <h2>The London</h2>
+    <p>The National Rail dot-matrix: amber LED lines on a black screen in a plastic bezel,
+       scanlines and glow, platform reading in green, and the whole record scrolling past
+       on the calling-at line. The blinking cursor keeps it alive even with one journey.</p>
+  </div>
+
+  <div class="cardframe">
+    <div class="stamps" style="min-height:195px">
+      <div class="tint"></div>
+      <span class="stamp oval" style="color:#14532D;left:8%;top:26px;transform:rotate(-8deg)">Passage<small>Zanzibar · 2019</small></span>
+      <span class="stamp rect" style="color:#8C1E24;left:34%;top:88px;transform:rotate(4deg)">ACTion<small>Tanzania · 2022</small></span>
+      <span class="stamp oval" style="color:#005B7A;left:58%;top:26px;transform:rotate(-3deg)">ACTion<small>The Andes · 2024</small></span>
+      <span class="stamp rect" style="color:#6C00AF;left:78%;top:92px;transform:rotate(7deg)">Passage<small>Slovakia · 2026</small></span>
+    </div>
+
+    <a class="london" href="#" aria-label="Journey Cards — the field record">
+      <div class="screen">
+        <div class="l1">
+          <span class="led dest">1st &nbsp;SLOVAKIA 2026<span class="cursor"></span></span>
+          <span class="led plat">Story · On record</span>
+        </div>
+        <div class="l2">
+          <span class="scrolltrack">
+            <span class="led">Calling at: Zanzibar ’19 · Tanzania ’22 · The Andes ’24 · Slovakia ’26 — the field record of Isabel Martínez —&nbsp;</span>
+            <span class="led">Calling at: Zanzibar ’19 · Tanzania ’22 · The Andes ’24 · Slovakia ’26 — the field record of Isabel Martínez —&nbsp;</span>
+          </span>
+        </div>
+        <div class="l3">
+          <span class="led">4 stories told · 9 journeys taken</span>
+          <span class="led open">Open the passport →</span>
+        </div>
+      </div>
+    </a>
+
+    <section class="storycard">
+      <h2 class="masthead">Stories from the Field</h2>
+      <a class="storyrow" href="#">
+        <img src="public/images/rehearsing-nitra.jpg" alt="" />
+        <div>
+          <h3><span class="hl">Rehearsing in Nitra</span></h3>
+          <p>The theatre in Nitra had no working lights the week we arrived, so we rehearsed by the windows…</p>
+          <span class="readlink">Read full story →</span>
+        </div>
+      </a>
+    </section>
+  </div>
+
+  <!-- ════════════ OPTION 3 · THE ENAMEL ════════════ -->
+  <div class="dirlabel">
+    <p class="n">Option 3 · the yellow enamel plate</p>
+    <h2>The Enamel</h2>
+    <p>Dutch-station yellow — the brand's own yellow — as an enamel plate with corner
+       screws. One giant Anton destination flaps through the record; the journeys ride
+       below as ink tab buttons, the current one pink. Loudest and most graphic of the
+       three.</p>
+  </div>
+
+  <div class="cardframe">
+    <div class="stamps" style="min-height:195px">
+      <div class="tint"></div>
+      <span class="stamp oval" style="color:#14532D;left:10%;top:28px;transform:rotate(-8deg)">Passage<small>Zanzibar · 2019</small></span>
+      <span class="stamp rect" style="color:#8C1E24;left:36%;top:86px;transform:rotate(4deg)">ACTion<small>Tanzania · 2022</small></span>
+      <span class="stamp oval" style="color:#005B7A;left:60%;top:28px;transform:rotate(-3deg)">ACTion<small>The Andes · 2024</small></span>
+      <span class="stamp rect" style="color:#6C00AF;left:80%;top:90px;transform:rotate(7deg)">Passage<small>Slovakia · 2026</small></span>
+    </div>
+
+    <a class="enamel" href="#" aria-label="Journey Cards — the field record">
+      <span class="screw3"></span><span class="screw4"></span>
+      <div class="ehead">
+        <p class="et">The Field Record</p>
+        <span class="ec">Isabel Martínez · 4 stories · 9 journeys</span>
+      </div>
+      <div class="big" id="ebig"></div>
+      <div class="tabs">
+        <span class="tab">Zanzibar <b>’19</b></span>
+        <span class="tab">Tanzania <b>’22</b></span>
+        <span class="tab">The Andes <b>’24</b></span>
+        <span class="tab cur">Slovakia <b>’26</b></span>
+        <span class="open">Open the passport →</span>
+      </div>
+    </a>
+
+    <section class="storycard">
+      <h2 class="masthead">Stories from the Field</h2>
+      <a class="storyrow" href="#">
+        <img src="public/images/rehearsing-nitra.jpg" alt="" />
+        <div>
+          <h3><span class="hl">Rehearsing in Nitra</span></h3>
+          <p>The theatre in Nitra had no working lights the week we arrived, so we rehearsed by the windows…</p>
+          <span class="readlink">Read full story →</span>
+        </div>
+      </a>
+    </section>
+  </div>
+
+<script>
+const JOURNEYS = [
+  { yr:"2019", dest:"ZANZIBAR",  role:"Performer" },
+  { yr:"2022", dest:"TANZANIA",  role:"Ensemble · Workshop Co-Lead" },
+  { yr:"2024", dest:"THE ANDES", role:"Devising Artist" },
+  { yr:"2026", dest:"SLOVAKIA",  role:"Teaching Artist · Cohort Lead" },
+];
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function makeCells(text, cellClass, extra, delay, animate){
+  const grp = document.createElement("span");
+  grp.className = "zgroup";
+  [...text].forEach((ch,i)=>{
+    const c = document.createElement("span");
+    c.className = cellClass + (ch===" " ? " blank" : (extra?(" "+extra):""));
+    c.textContent = ch===" " ? "" : ch;
+    if (animate && ch!==" "){ c.classList.add("flip"); c.style.animationDelay=(delay+i*.04)+"s"; }
+    grp.appendChild(c);
+  });
+  return grp;
+}
+
+/* Option 1 · Zurich rows */
+const zrows = document.getElementById("zrows");
+JOURNEYS.forEach((j,ri)=>{
+  const row = document.createElement("span");
+  row.className = "zrow" + (ri===JOURNEYS.length-1?" latest":"");
+  row.style.display="grid";
+  const c1 = document.createElement("span");
+  c1.appendChild(makeCells(j.yr,"zcell","",ri*.18,!reduced));
+  const c2 = document.createElement("span");
+  c2.style.display="flex"; c2.style.alignItems="center"; c2.style.minWidth="0"; c2.style.overflow="hidden";
+  c2.appendChild(makeCells(j.dest,"zcell","",ri*.18+.08,!reduced));
+  const role = document.createElement("span"); role.className="zrole"; role.textContent=j.role;
+  c2.appendChild(role);
+  const chip = document.createElement("span"); chip.className="chip";
+  chip.textContent = ri===JOURNEYS.length-1 ? "Read story" : "Story";
+  row.append(c1,c2,chip);
+  zrows.appendChild(row);
+});
+
+/* Option 3 · Enamel giant word cycles */
+const ebig = document.getElementById("ebig");
+let ei = JOURNEYS.length-1;
+function showEnamel(animate){
+  ebig.innerHTML = "";
+  const j = JOURNEYS[ei];
+  const word = document.createElement("span");
+  word.style.display="inline-flex"; word.style.gap="5px";
+  [...j.dest].forEach((ch,i)=>{
+    const c=document.createElement("span");
+    c.className="ecell"+(ch===" "?" blank":"");
+    c.textContent=ch===" "?"":ch;
+    if(animate&&ch!==" "){c.classList.add("flip");c.style.animationDelay=(i*.05)+"s";}
+    word.appendChild(c);
+  });
+  const yr=document.createElement("span");
+  yr.style.display="inline-flex"; yr.style.gap="4px"; yr.style.marginLeft="16px";
+  [...j.yr].forEach((ch,i)=>{
+    const c=document.createElement("span"); c.className="ecell yrcell"; c.textContent=ch;
+    if(animate){c.classList.add("flip");c.style.animationDelay=(.3+i*.05)+"s";}
+    yr.appendChild(c);
+  });
+  ebig.append(word,yr);
+  /* highlight current tab */
+  document.querySelectorAll(".enamel .tab").forEach((t,i)=>t.classList.toggle("cur",i===ei));
+}
+showEnamel(false);
+if (JOURNEYS.length>1 && !reduced) setInterval(()=>{ ei=(ei+1)%JOURNEYS.length; showEnamel(true); }, 3800);
+</script>
+</body>
+</html>
