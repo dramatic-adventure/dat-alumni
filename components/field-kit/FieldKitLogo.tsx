@@ -1,10 +1,11 @@
 // components/field-kit/FieldKitLogo.tsx
 //
 // Field Kit top-bar DAT badge. Always a plain <a href="/"> — a real navigation to
-// "/", which is OUTSIDE the manifest scope ("/field-kit"), so in the installed
-// standalone app iOS opens it in the in-app Safari overlay (with a Done button)
-// rather than taking over the app window. The logo image + #ffcc00 glow are
-// unchanged from the layout's original markup.
+// "/", which is OUTSIDE the manifest scope ("/field-kit"). target="_blank" forces
+// this out to the system browser (a real new window/tab) instead of the installed
+// standalone app's in-app overlay, which otherwise still reads as "inside the app"
+// even with its Done button. The logo image + #ffcc00 glow are unchanged from the
+// layout's original markup.
 
 import Image from "next/image";
 
@@ -12,6 +13,8 @@ export default function FieldKitLogo() {
   return (
     <a
       href="/"
+      target="_blank"
+      rel="noopener noreferrer"
       aria-label="Dramatic Adventure Theatre — home"
       style={{
         flexShrink: 0,

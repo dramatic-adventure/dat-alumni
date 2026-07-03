@@ -59,7 +59,11 @@ export default async function FieldKitLayout({ children }: { children: React.Rea
       <style>{`.fk-root :focus-visible { outline: 2px solid ${T.yellow}; outline-offset: 2px; border-radius: 4px; }`}</style>
       <ServiceWorkerRegistrar />
       <FieldKitTopBar programId={FIELD_KIT_PROGRAM_ID} isAdmin={access.allowed ? access.isAdmin : false} />
-      <div style={{ flex: 1 }}>
+      {/* Clearance below the top bar: the DAT logo overhangs the bar by 36px
+          (see FieldKitLogo's negative marginBottom), so page content butted
+          right up against it without this gap — headlines like "Field Kit" /
+          "Passage: Slovakia 2026" sat almost under the logo's glow. */}
+      <div style={{ flex: 1, paddingTop: 20 }}>
         {access.allowed ? children : <NotInProgram email={(access as { email: string }).email} />}
       </div>
       {access.allowed && <CompanionTabBar />}
