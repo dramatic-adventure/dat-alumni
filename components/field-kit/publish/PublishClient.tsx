@@ -419,6 +419,7 @@ export default function PublishClient({
                 <button
                   key={line}
                   type="button"
+                  aria-pressed={on}
                   onClick={() => updateDraft((d) => ({ ...d, pullQuote: on ? "" : line }))}
                   style={{
                     textAlign: "left", cursor: "pointer", padding: "10px 13px", borderRadius: 10,
@@ -447,6 +448,7 @@ export default function PublishClient({
                 <button
                   key={id}
                   type="button"
+                  aria-pressed={on}
                   onClick={() => updateDraft((d) => ({ ...d, heroCaptureId: on ? undefined : id }))}
                   style={{
                     position: "relative", width: 72, height: 72, borderRadius: 10, overflow: "hidden",

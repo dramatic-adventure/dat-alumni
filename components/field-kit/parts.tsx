@@ -54,6 +54,7 @@ export function CompanionTabBar() {
           <Link
             key={n.id}
             href={n.href}
+            aria-current={on ? "page" : undefined}
             style={{
               flex: 1,
               display: "flex",

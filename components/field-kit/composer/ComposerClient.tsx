@@ -580,6 +580,7 @@ function ChapterEditor({
                   <button
                     key={t.captureId}
                     type="button"
+                    aria-pressed={attached}
                     onClick={() => {
                       togglePhoto(t.captureId);
                       onBlur();
