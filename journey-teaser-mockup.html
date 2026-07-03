@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Journey Teaser — “Special Story” Explorations</title>
+<!--
+  MOCKUP ONLY — journey teaser as a "special story" inside the profile's
+  Stories from the Field section. Open from the repo root (file:// works —
+  image paths are relative to this file) or move under /public and serve.
+
+  Direction 1 · THE INSERT    — quiet kraft typographic object in the sidebar
+  Direction 2 · THE FEATURE   — full-width kraft band, cover + editorial text
+  Direction 3 · THE DISPATCH  — journey wearing story grammar (photo + yellow
+                                headline) on kraft backing
+  Plus the common edge case: ONE journey, NO stories (standalone state).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;700&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Rock+Salt&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#241123; --teal:#2493A9; --pink:#F23359; --yellow:#f5c842;
+    --grape:#7b4fa6; --newsprint:#f2f2f2; --hlyellow:#FFCC00;
+    --anton:'Anton',system-ui,sans-serif;
+    --grotesk:'Space Grotesk',system-ui,sans-serif;
+    --dm:'DM Sans',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);font-family:var(--dm);color:var(--ink)}
+  .page{max-width:1160px;margin:0 auto;padding:48px 20px 120px}
+
+  /* ── mockup chrome (labels between demos, on the dark bg) ─────────────── */
+  .mockhead{color:#fff;text-align:center;margin:24px 0 56px}
+  .mockhead .kicker{font-family:var(--grotesk);font-weight:700;font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;color:var(--pink);margin:0 0 10px}
+  .mockhead h1{font-family:var(--anton);font-size:2.6rem;line-height:1;margin:0 0 12px;letter-spacing:.01em}
+  .mockhead p{font-size:1rem;opacity:.75;max-width:640px;margin:0 auto;line-height:1.5}
+  .dirlabel{margin:84px 0 22px}
+  .dirlabel .n{font-family:var(--grotesk);font-weight:700;font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;color:var(--teal);margin:0 0 6px}
+  .dirlabel h2{font-family:var(--anton);color:#fff;font-size:1.9rem;margin:0 0 8px;letter-spacing:.01em}
+  .dirlabel p{color:rgba(255,255,255,.72);font-size:.95rem;max-width:720px;margin:0;line-height:1.5}
+
+  /* ── the profile-card stories section replica ─────────────────────────── */
+  .storycard{background:var(--newsprint);border-radius:12px;padding:30px}
+  .masthead{background:var(--pink);color:#000;font-family:var(--grotesk);font-size:clamp(1.9rem,4.4vw,3.2rem);letter-spacing:.2rem;font-weight:400;text-transform:uppercase;display:inline-block;padding:0 .4rem;margin:0 0 1rem}
+  .storygrid{display:flex;flex-wrap:wrap;gap:3rem;align-items:flex-start}
+  .coverstory{flex:1 1 45%;min-width:300px;text-decoration:none;color:inherit;display:block}
+  .coverstory .photo{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#ddd}
+  .hl{font-family:var(--anton);background:var(--hlyellow);color:var(--ink);text-transform:uppercase;font-weight:400;display:inline;padding:0 .4rem;-webkit-box-decoration-break:clone;box-decoration-break:clone;line-height:1.35}
+  .coverstory h3{font-size:2.2rem;margin:.5rem 0 0;line-height:1.3}
+  .excerpt{font-size:1rem;color:#333;line-height:1.45;margin:.5rem 0 0}
+  .readlink{font-family:var(--dm);font-weight:700;color:var(--pink);letter-spacing:.02em;display:block;margin-top:.4rem;text-decoration:none}
+  .sidebar{flex:.5 1 35%;min-width:250px;display:flex;flex-direction:column;gap:2.2rem}
+  .siderow{display:flex;gap:1rem;text-decoration:none;color:inherit}
+  .siderow img{width:104px;height:104px;object-fit:cover;flex:0 0 auto;background:#ddd}
+  .siderow h4{font-size:1.25rem;margin:0;line-height:1.35}
+  .siderow p{font-size:.88rem;color:#444;line-height:1.4;margin:.25rem 0 0}
+  .mapline{text-align:right;font-family:'Rock Salt',cursive;font-size:.95rem;color:var(--pink);margin-top:2rem}
+
+  /* ── shared kraft + journey bits ──────────────────────────────────────── */
+  .kraft{background-image:url('public/texture/kraft-paper.png');background-size:cover;background-position:center;background-color:#e7ddc9}
+  .eyebrow{font-family:var(--grotesk);font-weight:700;text-transform:uppercase;letter-spacing:.28em;color:var(--pink);margin:0}
+  .routeline{font-family:var(--grotesk);font-weight:700;text-transform:uppercase;letter-spacing:.2em;color:var(--teal);margin:0}
+  .pullquote{font-family:var(--dm);font-style:italic;color:var(--ink);line-height:1.5;margin:0}
+  .openlink{font-family:var(--dm);font-weight:700;color:var(--pink);text-decoration:none;letter-spacing:.02em}
+
+  /* journey passport cover (CSS replica of JourneyCover, size sm 200×316) */
+  .jcover{position:relative;width:200px;aspect-ratio:200/316;border-radius:6px;overflow:hidden;background:#f2f2f2;display:block;text-decoration:none;box-shadow:0 10px 30px rgba(36,17,35,.18),0 3px 10px rgba(36,17,35,.10);transform-origin:center 65%;transition:transform .32s ease,box-shadow .32s ease}
+  .jcover:hover{transform:translateY(-4px) scale(1.045) rotate(var(--rot,0deg)) !important;box-shadow:0 26px 60px rgba(36,17,35,.32),0 8px 20px rgba(36,17,35,.16);z-index:6}
+  .jcover .hero{width:100%;height:55%;overflow:hidden;background:#e8e2da}
+  .jcover .hero img{width:100%;height:100%;object-fit:cover;display:block}
+  .jcover .stamp{position:absolute;left:50%;top:55%;transform:translate(-50%,-50%);width:76px;height:76px;z-index:5;filter:drop-shadow(0 2px 4px rgba(36,17,35,.35)) drop-shadow(0 6px 18px rgba(36,17,35,.28))}
+  .jcover .panel{position:absolute;left:0;right:0;top:55%;bottom:0;padding:46px 14px 12px;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .jcover .dat{font-family:var(--grotesk);font-weight:700;font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--pink);margin:0 0 5px}
+  .jcover .prog{font-family:var(--anton);font-size:28px;line-height:.92;color:var(--ink);margin:0 0 4px;white-space:nowrap}
+  .jcover .country{font-family:var(--grotesk);font-weight:700;font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--pink);margin:0 0 2px}
+  .jcover .year{font-family:var(--grotesk);font-weight:700;font-size:9px;letter-spacing:.28em;text-transform:uppercase;color:var(--teal);margin:0}
+  .jcover .rule{display:block;width:28px;height:2px;border-radius:1px;margin:auto auto 6px}
+  .jcover .role{font-family:var(--dm);font-style:italic;font-size:10px;color:var(--ink);opacity:.74;margin:0;line-height:1.3}
+
+  /* ── DIRECTION 1 · THE INSERT ─────────────────────────────────────────── */
+  .insert{border-radius:6px;padding:26px 24px 22px;text-align:center;transform:rotate(-.75deg);box-shadow:0 12px 32px rgba(36,17,35,.22),0 3px 10px rgba(36,17,35,.12);display:block;text-decoration:none;color:inherit;transition:transform .3s ease,box-shadow .3s ease}
+  .insert:hover{transform:rotate(-.75deg) translateY(-3px);box-shadow:0 20px 44px rgba(36,17,35,.3),0 6px 16px rgba(36,17,35,.14)}
+  .insert .stampimg{width:54px;height:54px;margin:0 auto 10px;display:block;filter:drop-shadow(0 2px 4px rgba(36,17,35,.35)) drop-shadow(0 6px 18px rgba(36,17,35,.28))}
+  .insert .eyebrow{font-size:.66rem;margin-bottom:8px}
+  .insert h4{font-family:var(--anton);font-size:2rem;color:var(--ink);margin:0 0 6px;line-height:.95;text-transform:uppercase}
+  .insert .routeline{font-size:.62rem;line-height:1.8}
+  .insert .sep{width:34px;height:1px;background:rgba(36,17,35,.25);margin:14px auto}
+  .insert .pullquote{font-size:.95rem}
+  .insert .openlink{display:inline-block;margin-top:14px;font-size:.92rem}
+
+  /* ── DIRECTION 2 · THE FEATURE ────────────────────────────────────────── */
+  .feature{border-radius:6px;margin-top:3rem;padding:38px 40px;display:flex;gap:44px;align-items:center;flex-wrap:wrap;box-shadow:0 14px 36px rgba(36,17,35,.20),0 4px 12px rgba(36,17,35,.10)}
+  .feature .text{flex:1 1 380px;min-width:300px}
+  .feature .eyebrow{font-size:.72rem;margin-bottom:14px}
+  .feature h4{font-family:var(--anton);font-size:clamp(1.8rem,3.6vw,2.7rem);line-height:1.04;color:var(--ink);margin:0 0 14px;text-transform:uppercase}
+  .feature .routeline{font-size:.7rem;margin-bottom:18px;line-height:2}
+  .feature .pullquote{font-size:1.12rem;max-width:520px}
+  .feature .quotewho{font-family:var(--grotesk);font-weight:700;font-size:.62rem;letter-spacing:.24em;text-transform:uppercase;color:rgba(36,17,35,.5);margin:10px 0 0}
+  .feature .openlink{display:inline-block;margin-top:20px;font-size:1rem}
+  .feature .coverside{flex:0 0 auto;margin:0 auto;position:relative}
+  .feature .deck{position:absolute;border-radius:6px;background:#efe9e2;box-shadow:0 8px 22px rgba(36,17,35,.16);width:200px;aspect-ratio:200/316}
+  .feature .deck.d1{transform:rotate(6deg) translate(10px,6px)}
+  .feature .deck.d2{transform:rotate(-4.5deg) translate(-8px,4px)}
+  .feature .countchip{position:absolute;right:-14px;top:-12px;z-index:7;background:var(--ink);color:#fff;font-family:var(--grotesk);font-weight:700;font-size:.66rem;letter-spacing:.14em;border-radius:999px;padding:7px 13px;box-shadow:0 6px 16px rgba(36,17,35,.35)}
+
+  /* ── DIRECTION 3 · THE DISPATCH ───────────────────────────────────────── */
+  .dispatch{border-radius:6px;margin-top:3rem;padding:18px;display:flex;gap:26px;flex-wrap:wrap;align-items:stretch;box-shadow:0 14px 36px rgba(36,17,35,.20),0 4px 12px rgba(36,17,35,.10);text-decoration:none;color:inherit}
+  .dispatch .photo{flex:1 1 46%;min-width:280px;position:relative}
+  .dispatch .photo img{width:100%;height:100%;min-height:250px;object-fit:cover;display:block}
+  .dispatch .photo .stampimg{position:absolute;right:-20px;bottom:-20px;width:84px;height:84px;filter:drop-shadow(0 2px 4px rgba(36,17,35,.35)) drop-shadow(0 6px 18px rgba(36,17,35,.28));transform:rotate(-8deg)}
+  .dispatch .body{flex:1 1 40%;min-width:280px;padding:16px 10px 12px;display:flex;flex-direction:column}
+  .dispatch .eyebrow{font-size:.66rem;margin-bottom:12px}
+  .dispatch h4{font-size:2.05rem;margin:0 0 10px;line-height:1.32}
+  .dispatch .meta{font-family:var(--grotesk);font-weight:700;font-size:.64rem;letter-spacing:.22em;text-transform:uppercase;color:var(--teal);margin:2px 0 14px;line-height:1.9}
+  .dispatch .pullquote{font-size:1.02rem}
+  .dispatch .more{font-family:var(--dm);font-size:.92rem;color:rgba(36,17,35,.62);margin:14px 0 0}
+  .dispatch .openlink{display:inline-block;margin-top:8px;font-size:.95rem}
+
+  /* ── standalone (one journey, no stories) ─────────────────────────────── */
+  .standalone-label{background:var(--pink);color:#000;font-family:var(--grotesk);font-size:1.5rem;letter-spacing:.2rem;font-weight:400;text-transform:uppercase;display:inline-block;padding:0 .4rem;margin:0 0 1.4rem}
+
+  @media (max-width:700px){
+    .feature{padding:28px 22px}
+    .dispatch .photo .stampimg{right:8px;bottom:-16px}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="mockhead">
+    <p class="kicker">Mockup · Journey teaser explorations</p>
+    <h1>A Special Story in the Paper</h1>
+    <p>Three treatments of the journey teaser living inside “Stories from the Field.”
+       Same newspaper, different paper stock — the kraft world of /journeys tipped into the newsprint.
+       Sample record: Isabel Martínez, four journeys, 2019–2026.</p>
+  </header>
+
+  <!-- ════════════════ DIRECTION 1 · THE INSERT ════════════════ -->
+  <div class="dirlabel">
+    <p class="n">Direction 1</p>
+    <h2>The Insert</h2>
+    <p>A quiet typographic kraft object in the sidebar, first slot — no photo, no props.
+       Stamp, count, route, one pull quote. It reads as something slipped between the pages;
+       the material shift does all the talking.</p>
+  </div>
+
+  <section class="storycard">
+    <h2 class="masthead">Stories from the Field</h2>
+    <div class="storygrid">
+      <a class="coverstory" href="#">
+        <img class="photo" src="public/images/rehearsing-nitra.jpg" alt="" />
+        <h3><span class="hl">Rehearsing in Nitra</span></h3>
+        <p class="excerpt">The theatre in Nitra had no working lights the week we arrived, so we rehearsed by the windows and let the afternoon decide our blocking. By Friday the sun was in the script…</p>
+        <span class="readlink">Read full story →</span>
+      </a>
+      <div class="sidebar">
+
+        <!-- THE INSERT -->
+        <a class="insert kraft" href="#">
+          <img class="stampimg" src="public/images/dat-logo7.svg" alt="" />
+          <p class="eyebrow">Field Record</p>
+          <h4>Four Journeys</h4>
+          <p class="routeline">Zanzibar · Tanzania · Andes · Slovakia<br/>2019 — 2026</p>
+          <div class="sep"></div>
+          <p class="pullquote">“I arrived thinking I was here to teach. I left knowing how much I had been taught.”</p>
+          <span class="openlink">Open the passport →</span>
+        </a>
+
+        <a class="siderow" href="#">
+          <img src="public/images/teaching-amazon.jpg" alt="" />
+          <div>
+            <h4><span class="hl">What the Amazon Taught Me</span></h4>
+            <p>Rain on a tin roof is a percussion section. We stopped fighting it and wrote it into the show…</p>
+            <span class="readlink">Read full story →</span>
+          </div>
+        </a>
+        <a class="siderow" href="#">
+          <img src="public/images/Andean_Mask_Work.jpg" alt="" />
+          <div>
+            <h4><span class="hl">Mask Work in the Andes</span></h4>
+            <p>The masks were older than the school we taught in. The kids knew their names before we did…</p>
+            <span class="readlink">Read full story →</span>
+          </div>
+        </a>
+      </div>
+    </div>
+    <p class="mapline">← Explore the Story Map</p>
+  </section>
+
+  <!-- ════════════════ DIRECTION 2 · THE FEATURE ════════════════ -->
+  <div class="dirlabel">
+    <p class="n">Direction 2</p>
+    <h2>The Feature</h2>
+    <p>A full-width kraft band after the story grid — the passport cover laid on it like the
+       object itself, editorial text alongside. The one place the pull quote gets to breathe
+       at reading size. Card deck hints at the rest without showing it.</p>
+  </div>
+
+  <section class="storycard">
+    <h2 class="masthead">Stories from the Field</h2>
+    <div class="storygrid">
+      <a class="coverstory" href="#">
+        <img class="photo" src="public/images/rehearsing-nitra.jpg" alt="" />
+        <h3><span class="hl">Rehearsing in Nitra</span></h3>
+        <p class="excerpt">The theatre in Nitra had no working lights the week we arrived, so we rehearsed by the windows and let the afternoon decide our blocking. By Friday the sun was in the script…</p>
+        <span class="readlink">Read full story →</span>
+      </a>
+      <div class="sidebar">
+        <a class="siderow" href="#">
+          <img src="public/images/teaching-amazon.jpg" alt="" />
+          <div>
+            <h4><span class="hl">What the Amazon Taught Me</span></h4>
+            <p>Rain on a tin roof is a percussion section. We stopped fighting it and wrote it into the show…</p>
+            <span class="readlink">Read full story →</span>
+          </div>
+        </a>
+        <a class="siderow" href="#">
+          <img src="public/images/Andean_Mask_Work.jpg" alt="" />
+          <div>
+            <h4><span class="hl">Mask Work in the Andes</span></h4>
+            <p>The masks were older than the school we taught in. The kids knew their names before we did…</p>
+            <span class="readlink">Read full story →</span>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- THE FEATURE -->
+    <div class="feature kraft">
+      <div class="text">
+        <p class="eyebrow">Field Record · Dramatic Adventure Theatre</p>
+        <h4>Zanzibar. Tanzania.<br/>The Andes. Slovakia.</h4>
+        <p class="routeline">Four journeys · 2019 — 2026</p>
+        <p class="pullquote">“I arrived thinking I was here to teach. I left knowing how much I had been taught.”</p>
+        <p class="quotewho">Passage · Slovakia 2026</p>
+        <a class="openlink" href="#">Open the passport →</a>
+      </div>
+      <div class="coverside">
+        <div class="deck d1"></div>
+        <div class="deck d2"></div>
+        <span class="countchip">4 JOURNEYS</span>
+        <a class="jcover" href="#" style="--rot:1.5deg;transform:rotate(1.5deg)">
+          <div class="hero"><img src="public/images/projects/archive/teaching-artist-residency-slovakia-camp.webp" alt="" /></div>
+          <img class="stamp" src="public/images/dat-logo7.svg" alt="" />
+          <div class="panel">
+            <p class="dat">Dramatic Adventure Theatre</p>
+            <p class="prog">PASSAGE</p>
+            <p class="country">Slovakia</p>
+            <p class="year">2026</p>
+            <span class="rule" style="background:var(--teal)"></span>
+            <p class="role">Teaching Artist · Cohort Lead</p>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <p class="mapline">← Explore the Story Map</p>
+  </section>
+
+  <!-- ════════════════ DIRECTION 3 · THE DISPATCH ════════════════ -->
+  <div class="dirlabel">
+    <p class="n">Direction 3</p>
+    <h2>The Dispatch</h2>
+    <p>The journey wears the newspaper’s own grammar — photo, yellow-highlight headline,
+       excerpt — but printed on kraft with the boundary stamp. It sells the latest journey
+       as a piece of content, with the rest of the record riding along underneath.</p>
+  </div>
+
+  <section class="storycard">
+    <h2 class="masthead">Stories from the Field</h2>
+    <div class="storygrid">
+      <a class="coverstory" href="#">
+        <img class="photo" src="public/images/rehearsing-nitra.jpg" alt="" />
+        <h3><span class="hl">Rehearsing in Nitra</span></h3>
+        <p class="excerpt">The theatre in Nitra had no working lights the week we arrived, so we rehearsed by the windows and let the afternoon decide our blocking. By Friday the sun was in the script…</p>
+        <span class="readlink">Read full story →</span>
+      </a>
+      <div class="sidebar">
+        <a class="siderow" href="#">
+          <img src="public/images/teaching-amazon.jpg" alt="" />
+          <div>
+            <h4><span class="hl">What the Amazon Taught Me</span></h4>
+            <p>Rain on a tin roof is a percussion section. We stopped fighting it and wrote it into the show…</p>
+            <span class="readlink">Read full story →</span>
+          </div>
+        </a>
+        <a class="siderow" href="#">
+          <img src="public/images/Andean_Mask_Work.jpg" alt="" />
+          <div>
+            <h4><span class="hl">Mask Work in the Andes</span></h4>
+            <p>The masks were older than the school we taught in. The kids knew their names before we did…</p>
+            <span class="readlink">Read full story →</span>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- THE DISPATCH -->
+    <a class="dispatch kraft" href="#">
+      <div class="photo">
+        <img src="public/images/projects/archive/teaching-artist-residency-slovakia-camp.webp" alt="" />
+        <img class="stampimg" src="public/images/dat-logo7.svg" alt="" />
+      </div>
+      <div class="body">
+        <p class="eyebrow">From the Field Record</p>
+        <h4><span class="hl">Voices of the Village</span></h4>
+        <p class="meta">Passage · Slovakia 2026 · Teaching Artist</p>
+        <p class="pullquote">“I arrived thinking I was here to teach. I left knowing how much I had been taught.”</p>
+        <p class="more">…and three earlier journeys: Zanzibar 2019, Tanzania 2022, the Andes 2024.</p>
+        <span class="openlink">Open the passport →</span>
+      </div>
+    </a>
+
+    <p class="mapline">← Explore the Story Map</p>
+  </section>
+
+  <!-- ════════════════ EDGE STATE · ONE JOURNEY, NO STORIES ════════════════ -->
+  <div class="dirlabel">
+    <p class="n">Edge state — applies to whichever direction wins</p>
+    <h2>One Journey, No Stories</h2>
+    <p>The common early case: the alum has a single journey card and no published stories,
+       so “Stories from the Field” wouldn’t render at all. The teaser stands alone as a slim
+       section of its own — same grammar, singular voice. (Shown here in the Feature treatment.)</p>
+  </div>
+
+  <section class="storycard">
+    <h2 class="standalone-label">Field Record</h2>
+    <div class="feature kraft" style="margin-top:0">
+      <div class="text">
+        <p class="eyebrow">Dramatic Adventure Theatre</p>
+        <h4>One Journey.<br/>Slovakia, 2026.</h4>
+        <p class="routeline">Passage · July 12 — August 2, 2026</p>
+        <p class="pullquote">“I arrived thinking I was here to teach. I left knowing how much I had been taught.”</p>
+        <a class="openlink" href="#">Open the journey →</a>
+      </div>
+      <div class="coverside">
+        <a class="jcover" href="#" style="--rot:-1.5deg;transform:rotate(-1.5deg)">
+          <div class="hero"><img src="public/images/projects/archive/teaching-artist-residency-slovakia-camp.webp" alt="" /></div>
+          <img class="stamp" src="public/images/dat-logo7.svg" alt="" />
+          <div class="panel">
+            <p class="dat">Dramatic Adventure Theatre</p>
+            <p class="prog">PASSAGE</p>
+            <p class="country">Slovakia</p>
+            <p class="year">2026</p>
+            <span class="rule" style="background:var(--teal)"></span>
+            <p class="role">Teaching Artist · Cohort Lead</p>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
