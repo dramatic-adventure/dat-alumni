@@ -7,6 +7,7 @@
  * to silence the `sync-dynamic-apis` error spam.
  */
 
+import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import {
@@ -21,6 +22,7 @@ import { loadCsv } from "@/lib/loadCsv";
 import { normalizeEmbeddedRefs } from "@/lib/normalizeEmbeddedRefs";
 import { rateLog, logOnce } from "@/lib/logHelpers";
 import { CanonicalSlugGate } from "@/components/alumni/CanonicalSlugGate";
+import ProfileJourneyTeaser from "@/components/journeys/ProfileJourneyTeaser";
 
 import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
 import { getOrderedProfileRoles, deriveBoardStatus, getBoardRoleLabelForProfile } from "@/lib/profileRoleAssignments";
@@ -632,6 +634,14 @@ export default async function AlumniPage({ params, searchParams }: PageProps) {
             : undefined
         }
       />
+
+      {/* Journey Card teaser — renders nothing when the alum has no live cards */}
+      <Suspense fallback={null}>
+        <ProfileJourneyTeaser
+          slug={canonicalOrIncoming || (normalizedAlumni as any).slug || incoming}
+          slugAliases={Array.from(aliases)}
+        />
+      </Suspense>
 
       <section className="bg-[#241123] pt-0 pb-10" />
     </>
