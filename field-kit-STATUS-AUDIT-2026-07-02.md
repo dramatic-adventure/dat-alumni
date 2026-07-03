@@ -1,20 +1,20 @@
-# Field Kit — Status Audit vs. Vision (2026-07-02)
+# Field Kit — Status Audit vs. Vision (2026-07-02, updated 2026-07-03)
 
 **Mode:** read-only audit, no code changed. `npm run typecheck` and `npm run lint` both pass clean on current `main` as of this writing.
-**Supersedes:** `field-kit-AUDIT.md` (2026-06-28), which assessed the V17 mockup at "~75% design / ~2% build." That was true nine days ago. It is no longer true — Slices 1 through 4a have shipped (16 feature commits, `cea3928` → `ffac953`) and the build is now meaningfully ahead of what that audit describes. This doc re-baselines against the actual working tree.
+**Supersedes:** `field-kit-AUDIT.md` (2026-06-28), which assessed the V17 mockup at "~75% design / ~2% build."
+**2026-07-03 update:** the section below ("What's left") was written the morning of 07-02 and was stale within hours. Slice 5 (`c3c482c`, 07-02 17:10) and Slice 6 (`6e523a8`, 07-03 01:02, plus two follow-up fixes through 02:00) shipped everything this doc originally listed as "never started." All 14 surfaces from the original vision now have production routes and components. This revision re-baselines against the working tree as of `2ca373f`.
 
 ---
 
 ## Bottom line
 
-The mockup's design contract (`app/journey-card-mockup/v17/traveling-artist/`, still intact and untouched, as required) has been ported with real fidelity for the surfaces that were in scope. Today/Home, Itinerary, Quick Capture (text + photo + voice, with an offline write queue), The Company roster, offline PWA install, live-refresh, and a real web-push notification backbone with an admin console are all live, reading real data, typecheck-clean, and lint-clean. That's a lot more than "Slice 1."
+All 14 surfaces from the original Field Kit vision are now built: Today/Home, Itinerary, Quick Capture, Traces, The Company, Rally Point, Roll Call, Company Choice, Field Library, Composer, Review & Publish, and Retroactive, plus the offline PWA shell and the notification backbone underneath all of it. The mockup's design contract (`app/journey-card-mockup/v17/traveling-artist/`, still intact and untouched) has been ported with real fidelity throughout — same tokens, same type system, same kraft-wash values, diffed directly against the mockup source.
 
-What's left splits into two different kinds of gaps:
+What's left is genuinely polish and verification, not missing features:
 
-1. **Features never started:** Composer, Review & Publish (the private→public handoff), Roll Call, Company Choice, Field Library, Retroactive, and itinerary ingestion/OCR. These are the rest of the original 14-surface vision — roughly half of it, by surface count, though the built half is the highest-leverage half (it's the part artists touch daily in the field).
-2. **Polish gaps on what's already built:** a few missing empty states, thin accessibility coverage, some stale code comments, and a couple of "no-metrics ethos" judgment calls that were flagged in the original audit and still haven't been explicitly decided.
-
-Neither list is large. This is closer to a finishing pass than a fresh build.
+1. **Polish gaps on what's built:** accessibility coverage improved since 06-28 (23/29 field-kit component files now use `aria-*`, up from 18/27; 5 files use `alt=`, up from 3) but is still thin for a product meant to work one-handed in bright sun. *(Correction 2026-07-03: the previously listed empty-state gap was already closed — `TracesEmpty` shipped in Capture Slice A (`242f049`) and `CrewEmpty` in Slice 5 (`c3c482c`); this doc's grep predated Slice 5 landing.)*
+2. **One still-open decision from Slice 6's own spec:** `field-kit-BUILD-SPEC-slice6.md` §4 Q1 (multi-chapter Companion draft → flat `JourneyCardRow`) was flagged as the single most load-bearing open question before Composer/Publish shipped. `mergeProgramIntoCard()` is still defined but never invoked anywhere in routes or components — confirmed by direct grep — so it's either a deliberate "ship on snapshots" call or an unresolved carry-over. Worth an explicit one-line confirmation rather than assuming.
+3. **No manual end-to-end QA pass yet** on the full Capture → Composer → Publish → `/journeys` path with a real trip's data.
 
 ---
 
@@ -22,73 +22,69 @@ Neither list is large. This is closer to a finishing pass than a fresh build.
 
 | Surface | Route / component | Status |
 |---|---|---|
-| Today / Home | `app/field-kit/page.tsx` → `TodayCompanion.tsx` | Live. Real before/during/after-trip states, countdown, time anchors, Rally Point banner. Ops modules (Roll Call, Company Choice) and "with you today" avatar stack are honestly omitted rather than faked — see code comment at top of `TodayCompanion.tsx`. |
-| Itinerary | `app/field-kit/itinerary/page.tsx` → `ItineraryCompanion.tsx` | Live, ported faithfully from the mockup. Chapter spine, GOAL/TIPS, spirit lines, drama-club/partner-org chips, today-highlighting, offline snapshot + print/copy/share (`itinerarySnapshot.ts`). |
-| Quick Capture | `app/field-kit/capture/page.tsx` → `CaptureForm.tsx` (557 lines) | Live and further than the original Slice 1 scope: text notes, photo (Drive-backed upload), voice recorder, and an IndexedDB offline queue with drainer (`captureQueue.ts`, `captureSync.ts`, `fieldKitDb.ts`) with exponential backoff. This is Phase 2 territory from the old audit, already done. |
-| My Traces | `app/field-kit/traces/page.tsx` → `TracesList.tsx` | Live, read-only view of an artist's own captures. No per-trace visibility editor yet (still binary/implicit, not the 4-level ladder the mockup implies). |
-| The Company (Crew) | `app/field-kit/cohort/page.tsx` → `CrewCompany.tsx` | Live roster, restyled as `MiniProfileCard`s, admin impersonation support. |
-| PWA / offline | `app/manifest.ts`, `public/sw.js`, `ServiceWorkerRegistrar.tsx`, `field-kit-shell.html`, `field-kit-offline.html` | Real hand-rolled service worker (no Workbox dependency), installable, scoped to `/field-kit`, safe-area insets handled, network-first nav caching with offline fallback (Slice 4a, `field-kit-NAV-CACHE-DESIGN.md`). |
-| Notifications | `lib/webPush.ts`, `lib/pushSubscriptions.ts`, `lib/rallyPoint.ts`, `AdminConsole.tsx`, `netlify/functions/send-notifications.ts` | Real web-push backbone (Slice 3), secrets stored in Netlify Blobs per CLAUDE.md's documented workaround for the Lambda 4KB limit. Admin can push Field Updates and manage Rally Point. |
-| Auth / gating | `lib/fieldKitAccess.ts` | Single gating module, in-program check, admin impersonation, verified by `scripts/field-kit-roster.check.ts` (`npm run verify:field-kit`). |
-| Design system fidelity | `components/field-kit/tokens.ts` | Ported **verbatim** from `sampleProgram.ts` — same hex values, same font variable names, same kraft-wash formula. I diffed this directly against the mockup source; it's not just "close," it's the same token object. |
-
-This is a materially bigger build than the original Slice 1 spec asked for — Capture's offline queue, voice recording, live-refresh, and the entire notification system were all originally scoped as "later slices" and have since been pulled forward and shipped.
+| Today / Home | `app/field-kit/page.tsx` → `TodayCompanion.tsx` | Live. Real before/during/after-trip states, countdown, time anchors, Rally Point banner, Roll Call + Company Choice mission-board modules. |
+| Itinerary | `app/field-kit/itinerary/page.tsx` → `ItineraryCompanion.tsx` | Live. Chapter spine, GOAL/TIPS, spirit lines, offline snapshot + print/copy/share. |
+| Quick Capture | `app/field-kit/capture/page.tsx` → `CaptureForm.tsx` | Live. Text, photo (Drive-backed), voice, IndexedDB offline queue with backoff. |
+| My Traces | `app/field-kit/traces/page.tsx` → `TracesList.tsx` | Live, read-only view of an artist's own captures. |
+| The Company (Crew) | `app/field-kit/cohort/page.tsx` → `CrewCompany.tsx` | Live roster, `MiniProfileCard`s, admin impersonation. |
+| Roll Call | `app/api/field-kit/roll-call/*`, `RollCallCard.tsx`, `lib/rollCall.ts` | Live (Slice 5). |
+| Company Choice | `app/api/field-kit/company-choice/*`, `CompanyChoiceCard.tsx`, `lib/companyChoice.ts` | Live (Slice 5). |
+| Field Library | `app/field-kit/library/page.tsx` → `FieldLibrary.tsx` (292 lines) | Live (Slice 5). |
+| Composer | `app/field-kit/composer/page.tsx` | Live (Slice 6). Artist shapes Traces into a structured multi-chapter draft. |
+| Review & Publish | `app/field-kit/publish/page.tsx` | Live (Slice 6). Writes through the existing `app/api/alumni/journey/` self-publish path per the slice's locked decision (extended, not forked). |
+| Retroactive | `app/alumni/journey-card/create/page.tsx` → `RetroactiveClient.tsx` (826 lines) | Live (Slice 6). Own auth gate distinct from `fieldKitAccess.ts`'s in-program check; scoped to past field programs (`21a3268`). |
+| PWA / offline | `app/manifest.ts`, `public/sw.js`, `ServiceWorkerRegistrar.tsx` | Real hand-rolled service worker, installable, network-first nav caching with offline fallback. |
+| Notifications | `lib/webPush.ts`, `lib/pushSubscriptions.ts`, `lib/rallyPoint.ts`, `AdminConsole.tsx`, `netlify/functions/send-notifications.ts` | Real web-push backbone, secrets in Netlify Blobs per CLAUDE.md's documented Lambda-4KB workaround. |
+| Admin surface | `AdminConsole.tsx` (410 lines) + `AdminOps.tsx` (497 lines) | Combined ~900 lines, up from the single 458-line file this doc previously compared against the mockup's 1,358-line `AdminFieldOps.tsx`. Now administers Roll Call, Company Choice, and Field Update pushes. |
+| Auth / gating | `lib/fieldKitAccess.ts` | Single gating module, in-program check, admin impersonation, verified by `npm run verify:field-kit`. |
+| Design system fidelity | `components/field-kit/tokens.ts` | Ported verbatim from `sampleProgram.ts`. |
 
 ---
 
 ## 2. What's aesthetically real vs. what's still a mockup-only idea
 
-The V17 "dark theatrical" look — near-black plum background, kraft-paper wash, Anton display type over Space Grotesk/DM Sans, the yellow/teal/pink/grape accent system — is carried through correctly in every shipped surface. The kraft texture asset, the app icons (`icon-192`, `icon-512`, maskable), and the wordmark all exist in `public/`. I don't see aesthetic drift from the approved design in what's built.
+The V17 "dark theatrical" look carries through correctly in every shipped surface — no aesthetic drift found.
 
-Two smaller polish items worth fixing rather than a redesign:
+One polish item still open (carried forward from the 07-02 pass):
 
-- **No empty states** on `CrewCompany.tsx` (zero-member roster) or `TracesList.tsx` (no captures yet). Both will render awkwardly, not brokenly, the first time an artist opens them before anyone has posted anything — worth a one-line "nothing here yet" treatment consistent with the "no shame" ethos copy elsewhere.
-- **Accessibility is thin.** Across 27 Field Kit components, only 18 files use any `aria-*` attribute and only 3 use `alt` text on images. For a product meant to work for artists in low-connectivity, sometimes low-visibility field conditions (bright sun on a phone screen, one-handed use), this is worth a dedicated pass — focus states, alt text on headshots/media, and aria labeling on icon-only buttons (the tab bar, the account menu).
+- ~~**No empty states** on `CrewCompany.tsx` (zero-member roster) or `TracesList.tsx` (no captures yet)~~ **Corrected 2026-07-03: both exist.** `TracesEmpty` ("Nothing caught yet.") landed in Capture Slice A (`242f049`); `CrewEmpty` ("The company is assembling.") landed in Slice 5 (`c3c482c`), hours after this doc's original grep.
+- **Accessibility is thin**, though improved since 06-28: 23 of 29 Field Kit component files now use some `aria-*` attribute (was 18/27), and 5 use `alt=` on images (was 3). Still worth a dedicated pass — focus states, alt text on headshots/media, aria labeling on icon-only buttons.
 
 ---
 
-## 3. What isn't built at all (the honest remainder of the vision)
+## 3. What isn't built at all
 
-Pulled directly from `field-kit-BUILD-SPEC.md` §1 and the mockup's surface list — these have designed mockups under `app/journey-card-mockup/v17/traveling-artist/` but no production code:
+Nothing from the original 14-surface vision remains unbuilt. The only structural open item is the Slice 6 §4 Q1 decision on chapter-array vs. flattened-row serialization for Composer→Publish — `mergeProgramIntoCard()` exists but is never called, which may be the intended "ship on snapshots" outcome or an unresolved carry-over worth confirming explicitly.
 
-- **Composer** (`composer/ComposerStudio.tsx` in the mockup) — turning raw captures into a structured multi-chapter draft. Nothing built.
-- **Review & Publish** (`publish/PublishReview.tsx`) — the actual private→public handoff that turns a Companion record into a live Journey Card. This is the one gap that blocks the whole "two products" promise: right now Field Kit captures things but there's no path from a capture to a published Journey Card. Also structurally unresolved: `JourneyCardRow` is a flat single-chapter row; the Companion model is multi-chapter. That serialization question (flagged in the old audit §5) is still open.
-- **Roll Call** and **Company Choice** — the other two mission-board modules alongside Rally Point. Rally Point shipped (read-only banner + admin push); these two haven't started.
-- **Field Library / Resources** — a designed surface with no production code or data store.
-- **Retroactive** (letting alumni from past, pre-Field-Kit trips build a journey card after the fact) — designed, most interactive of any mockup surface, not started. Probably the cheapest surface to build next since it reuses the eventual Publish write path and needs no live itinerary data.
-- **Itinerary ingestion pipeline** (PDF/paste → structured chapters) — explicitly deferred even in the mockup itself; a human still has to type the itinerary into the Sheet. Fine for one program at a time; will become a bottleneck if DAT runs itineraries for multiple concurrent programs.
-- **Offline maps / ETA for Rally Point** — the mockup's map is a decorative SVG; no real map data. Low priority per the mockup's own "human landmark beats GPS" framing.
+Itinerary ingestion/OCR (PDF/paste → structured chapters) and offline maps/ETA for Rally Point remain explicitly out of scope per the original spec — low priority, unchanged.
 
 ---
 
 ## 4. Practical gaps for artists on the ground
 
-The offline story is the strongest part of this build and it shows: real IndexedDB queue, real service worker, real "saved on this device" language, real background drain-and-retry. Two things I'd still tighten before artists rely on it in poor-connectivity conditions:
+Unchanged from 07-02:
 
-- **Push notifications on iOS PWAs are a known platform constraint** (Apple's web-push support for installed PWAs has real limitations around when the app is backgrounded/killed). The admin console can push Field Updates, but there's no fallback path documented in code for when a push silently fails to reach an iOS artist — worth confirming what happens today and whether a WhatsApp/SMS copy-paste fallback (which the original mockup explicitly designed for exactly this reason) is worth keeping in reserve.
-- **Capture upload failure UX** — I found retry/offline/error handling in `CaptureForm.tsx` (8 occurrences), which is good, but I did not verify the actual failure-path UI (a stuck "uploading" spinner vs. a clear "will retry when reconnected" message) end to end. Worth a manual test: start a photo/voice capture, kill the network mid-upload, confirm the message an artist sees.
+- **Push notifications on iOS PWAs** are a known platform constraint. No documented fallback (WhatsApp/SMS copy-paste, which the mockup designed for this) confirmed in code for when a push silently fails to reach an iOS artist.
+- **Capture upload failure UX** — retry/offline/error handling exists in `CaptureForm.tsx`, but the actual failure-path UI (stuck spinner vs. clear "will retry when reconnected" message) hasn't been manually verified end to end.
 
 ---
 
 ## 5. Practical gaps for you as admin
 
-`AdminConsole.tsx` is 458 lines — solid, but noticeably thinner than the mockup's `AdminFieldOps.tsx` (1,358 lines, the richest surface in the entire mockup). The gap is mostly the unbuilt features (no Roll Call or Company Choice to administer yet), but two things worth deciding regardless:
-
-- **Partial-delivery / push-failure visibility.** When you push a Field Update, do you currently see which artists received it vs. which didn't? The mockup treats this as important admin information; worth confirming it's surfaced, not just logged.
-- **The "no metrics" line.** The original audit flagged that count badges (roll-call totals, vote tallies) sit right on the edge of the platform's stated "no shame, no metrics" ethos for artist-facing views, while being legitimately useful for you as admin. That's a real product decision, not a bug — worth explicitly deciding staff-only vs. artist-visible for any future Roll Call/Company Choice build, rather than defaulting one way by accident.
+- **Partial-delivery / push-failure visibility** on Field Update pushes — worth confirming it's surfaced, not just logged.
+- **The "no metrics" line** for Roll Call/Company Choice tallies — now that both are live, this is no longer a hypothetical future decision; it's live in production and worth confirming staff-only vs. artist-visible was decided deliberately during the Slice 5 build rather than defaulted.
 
 ---
 
 ## 6. Recommended order of work
 
-1. **Empty states for Crew and Traces** — small, fast, removes the only "looks unfinished" moment in what's shipped.
-2. **Accessibility pass** — alt text, aria labels on icon buttons, focus states. Matters more here than on the marketing site given the field-use context.
-3. **Decide the Composer→Publish serialization question** (multi-chapter Companion record → flat `JourneyCardRow`) — this is a data-model decision, not a coding task, and it blocks Publish, Composer, and Retroactive alike. Resolving it once unblocks three surfaces.
-4. **Retroactive** — cheapest of the unbuilt surfaces once #3 is resolved; reuses the Publish write path and needs no live itinerary.
-5. **Composer + Review & Publish** — the actual "private workspace becomes a public Journey Card" moment. This is the single feature that completes the "two products" vision.
-6. **Roll Call / Company Choice** — only after 3–5, since they're the least differentiated from what Rally Point already proved out (a store-and-forward, not-really-live pattern), and the least urgent for artists day to day.
-7. **Field Library / itinerary ingestion** — lowest priority; both are quality-of-life for you rather than blockers for artists.
+1. **Confirm the Slice 6 §4 Q1 serialization decision was made deliberately** (chapter array vs. flattened row) — five-minute conversation, not a coding task, but worth closing the loop since two audits flagged it as load-bearing.
+2. **Manual end-to-end QA pass**: Capture → Composer → Publish → appears on `/journeys` → Retroactive path with a real trip's data.
+3. ~~**Empty states for Crew and Traces**~~ Already done — see the correction in §2.
+4. **Accessibility pass** — alt text, aria labels on icon buttons, focus states.
+5. **iOS push fallback + capture-failure UX** — manual verification, possibly a small build if gaps are found.
+6. **Journey Card discoverability** (see `journey-card-AUDIT.md`) — `/journeys` still has zero entry points in `Header.tsx`, `Footer.tsx`, or the public alumni profile page; confirmed via grep on 07-03. This is the one item that makes the now-complete Field Kit → Journey Card pipeline invisible to a visitor.
 
 ---
 
-*Files reviewed directly for this audit: `field-kit-BUILD-SPEC.md`, `field-kit-AUDIT.md`, `field-kit-NAV-CACHE-DESIGN.md`, `field-kit-NOTIFICATIONS-SCHEMA.md`, `components/field-kit/tokens.ts`, `TodayCompanion.tsx`, `ComingSoon.tsx`, `RallyPointBanner.tsx`, `CrewCompany.tsx`, `CaptureForm.tsx`, `TracesList.tsx`, `AdminConsole.tsx`, `app/field-kit/layout.tsx`, `app/manifest.ts`, full `app/field-kit` and `components/field-kit` trees, `app/journey-card-mockup/v17/traveling-artist/` (confirmed present and untouched), git log for all field-kit commits, `npm run typecheck` and `npm run lint` (both clean).*
+*Files reviewed directly for this revision: full `app/field-kit` and `components/field-kit` trees, `app/alumni/journey-card/create/`, `components/journey-card/RetroactiveClient.tsx`, `field-kit-BUILD-SPEC-slice6.md`, `git log` for all field-kit commits through `2ca373f`, direct grep for `mergeProgramIntoCard(` call sites and `aria-`/`alt=` usage, `Header.tsx`/`Footer.tsx`/alumni profile page for `/journeys` links.*
