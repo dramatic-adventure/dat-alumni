@@ -1,10 +1,15 @@
 // components/field-kit/FieldKitLogo.tsx
 //
-// Field Kit top-bar DAT badge. Always a plain <a href="/"> — a real navigation to
-// "/", which is OUTSIDE the manifest scope ("/field-kit"). target="_blank" forces
-// this out to the system browser (a real new window/tab) instead of the installed
-// standalone app's in-app overlay, which otherwise still reads as "inside the app"
-// even with its Done button. The logo image + #ffcc00 glow are unchanged from the
+// Field Kit top-bar DAT badge. MUST be a plain <a href="/"> with no target
+// attribute. "/" is OUTSIDE the manifest scope ("/field-kit"); per Apple's own
+// WWDC23 PWA guidance, a plain top-level navigation to an out-of-scope URL is
+// what triggers iOS to hand it off to a Safari View Controller (a real browser
+// view with a Done/back control), breaking out of the installed standalone app.
+// target="_blank" (and window.open) are explicitly documented to do the
+// OPPOSITE — they always stay inside the standalone app regardless of scope —
+// which is why adding it here previously made the logo link feel "stuck in the
+// app". Same pattern as the same-origin "View full profile →" link in
+// ArtistView.tsx. The logo image + #ffcc00 glow are unchanged from the
 // layout's original markup.
 
 import Image from "next/image";
@@ -13,8 +18,6 @@ export default function FieldKitLogo() {
   return (
     <a
       href="/"
-      target="_blank"
-      rel="noopener noreferrer"
       aria-label="Dramatic Adventure Theatre — home"
       style={{
         flexShrink: 0,
