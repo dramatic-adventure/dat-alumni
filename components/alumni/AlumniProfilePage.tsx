@@ -6,6 +6,7 @@ import Head from "next/head";
 import { useMemo, useState, useEffect } from "react";
 import type { AlumniRow, StoryRow } from "@/lib/types";
 import ProfileCard from "@/components/profile/ProfileCard";
+import type { JourneyCard } from "@/lib/journeyCard";
 import AlumniProfileBackdrop from "@/components/alumni/AlumniProfileBackdrop";
 import { clientDebug } from "@/lib/clientDebug";
 
@@ -65,6 +66,8 @@ interface AlumniProfileProps {
   sheetHighlights?: SheetSpotlightRow[];
   /** oEmbed metadata fetched server-side for each reel video URL */
   videoMeta?: ReadonlyArray<{ title?: string; aspectRatio?: string }>;
+  /** Journey Cards loaded server-side; ProfileCard renders the Journey Board when non-empty */
+  journeyCards?: JourneyCard[];
 }
 
 const HEADER_HEIGHT = "84px"; // ✅ Adjust if your header height changes
@@ -129,6 +132,7 @@ export default function AlumniProfilePage({
   sheetSpotlights = [],
   sheetHighlights = [],
   videoMeta = [],
+  journeyCards = [],
 }: AlumniProfileProps) {
   const d = (data || {}) as any;
 
@@ -403,6 +407,7 @@ alumniId={alumniId || undefined}
                 currentUpdateLink={currentUpdateLink || undefined}
                 sheetSpotlights={derivedSpotlights}
                 sheetHighlights={derivedHighlights}
+                journeyCards={journeyCards}
                 currentTitle={currentTitle || undefined}
                 secondLocation={secondLocation || undefined}
                 isBiCoastal={isBiCoastal}

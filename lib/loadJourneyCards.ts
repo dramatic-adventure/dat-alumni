@@ -22,8 +22,9 @@ const SHEET_ID = process.env.ALUMNI_SHEET_ID || "";
 const TAB = "Journey Cards";
 
 // Canonical column order for the "Journey Cards" tab. Mirrors JourneyCardRow.
-// 23 columns → A:W ("chaptersJson" appended in Slice 6; rows written before it
-// simply have a blank cell and parse to no chapters).
+// 24 columns → A:X ("chaptersJson" appended in Slice 6, "city" appended for the
+// Journey Board; rows written before an appended column simply have a blank
+// cell there and parse to the field's empty value).
 const HEADERS = [
   "id",
   "profileSlug",
@@ -48,9 +49,10 @@ const HEADERS = [
   "removalReason",
   "createdAt",
   "chaptersJson",
+  "city",
 ] as const;
 
-const RANGE = `${TAB}!A:W`;
+const RANGE = `${TAB}!A:X`;
 
 function coerceBool(v: unknown): boolean {
   return ["1", "true", "yes", "y"].includes(String(v ?? "").trim().toLowerCase());
@@ -116,6 +118,8 @@ function toRow(r: Record<string, string>): JourneyCardRow {
     removalReason: r.removalReason ?? "",
     createdAt: dateCellToIso(r.createdAt ?? ""),
     chaptersJson: r.chaptersJson ?? "",
+    // Tolerate a sheet header cell titled "City" as well as canonical "city".
+    city: r.city ?? r.City ?? "",
   };
 }
 

@@ -9,11 +9,13 @@ import Link from "next/link";
 import BioIdentitySection from "./BioIdentitySection";
 import CommunitySection from "./CommunitySection";
 import ProgramStamps from "@/components/alumni/ProgramStamps";
+import JourneyBoard from "@/components/journeys/JourneyBoard";
 import Lightbox from "@/components/shared/Lightbox";
 
 // (ContactOverlay now lives inside MobileProfileHeader/DesktopProfileHeader)
 
 import type { StoryRow, Production, SpotlightUpdate } from "@/lib/types";
+import type { JourneyCard } from "@/lib/journeyCard";
 import { productionMap as productionMapCanon, getSortYear } from "@/lib/productionMap.canon";
 
 import MobileProfileHeader from "@/components/alumni/MobileProfileHeader";
@@ -313,6 +315,9 @@ interface ProfileCardProps {
   featuredSupportedClub?: string;
   featuredImpactCause?: string;
   languages?: string;
+  /** Journey Cards loaded server-side (page → AlumniProfilePage → here);
+   *  renders the Journey Board between stamps and stories when non-empty. */
+  journeyCards?: JourneyCard[];
   /** Sheet-loaded spotlights — override updates-derived when provided */
   sheetSpotlights?: SpotlightUpdate[];
   /** Sheet-loaded highlights — override updates-derived when provided */
@@ -942,6 +947,12 @@ const hasStories = storiesForFeatured.length > 0;
             <ProgramStamps artistSlug={slug} slugAliases={slugAliases} />
           </div>
         </div>
+      )}
+
+      {/* Journey Board — full-bleed yellow band linking to /journeys/[slug];
+          renders nothing (no band, no gap) when the alum has no live cards. */}
+      {!!slug?.trim() && (props.journeyCards?.length ?? 0) > 0 && (
+        <JourneyBoard cards={props.journeyCards!} slug={slug} />
       )}
 
       {/* ✅ Featured Stories: DO NOT re-filter by authorSlug here.

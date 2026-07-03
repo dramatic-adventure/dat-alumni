@@ -244,6 +244,10 @@ export type JourneyCardRow = {
   // ── Structured chapters (Slice 6; appended column W so A:V rows read fine) ──
   /** JSON array of JourneyCardChapter blocks; "" for flat/manual/legacy cards. */
   chaptersJson: string;
+  // ── City (appended column X so pre-existing A:W rows read fine) ──
+  /** The journey's city (e.g. "Stone Town") — the Journey Board's big word.
+   *  Optional so existing write paths need no change; reads coerce blank → "". */
+  city?: string;
 };
 
 /**
@@ -285,6 +289,8 @@ export type JourneyCard = {
   program: string;
   location: string;
   country: string;
+  /** The journey's city — the Journey Board's big word; board falls back to country when absent. */
+  city?: string;
   year: string;
   // Authored content
   title: string;
@@ -333,6 +339,7 @@ export function journeyCardRowToCard(row: JourneyCardRow): JourneyCard {
     program: row.program,
     location: row.location,
     country,
+    city: String(row.city ?? "").trim() || undefined,
     year: String(row.year ?? "").trim(),
     title: row.title,
     primaryRole: row.primaryRole,

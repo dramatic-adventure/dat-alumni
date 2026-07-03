@@ -1,0 +1,187 @@
+/* components/journeys/journeyBoard.css
+   The Journey Board — the DAT-yellow "enamel sign" band inside the profile card
+   (approved design: journey-teaser-mockup-v10.html, seam lines dropped).
+   Color tokens arrive as CSS vars set by JourneyBoard.tsx from journeyTheme.A. */
+
+.jb-board {
+  display: block;
+  background: var(--jb-yellow);
+  padding: 18px clamp(16px, 4vw, 36px) 16px;
+  text-decoration: none;
+}
+
+/* ── Row 1: program eyebrow + CTA label ── */
+.jb-row1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.jb-program {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.7rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--jb-ink);
+  transition: opacity 0.25s ease;
+}
+.jb-open {
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--jb-ink);
+  white-space: nowrap;
+  transition: letter-spacing 0.2s ease;
+}
+.jb-board:hover .jb-open {
+  letter-spacing: 0.05em;
+}
+
+/* ── Row 2: city letter tiles + country/year stack ── */
+/* wrap lets the country/year stack drop under the big line on narrow screens */
+.jb-row2 {
+  display: flex;
+  align-items: center;
+  gap: 10px 18px;
+  flex-wrap: wrap;
+}
+.jb-big {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+.jb-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.14em;
+  height: 1.42em;
+  font-family: var(--font-anton), system-ui, sans-serif;
+  font-weight: 400;
+  font-size: clamp(1.5rem, 4.4vw, 2.5rem);
+  color: var(--jb-yellow);
+  background: linear-gradient(180deg, #2e1830, #170a17);
+  border-radius: 3px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 4px rgba(74, 60, 16, 0.45);
+}
+/* long cities ("STONE TOWN") shrink so they never overflow */
+.jb-big--long .jb-cell {
+  font-size: clamp(1.15rem, 3.2vw, 1.9rem);
+}
+.jb-cell--blank {
+  background: none;
+  box-shadow: none;
+  width: 0.38em;
+}
+.jb-cell--in {
+  animation: jb-tile-in 0.32s ease both;
+}
+@keyframes jb-tile-in {
+  from {
+    opacity: 0;
+    transform: rotateX(-80deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotateX(0deg);
+  }
+}
+.jb-where {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.jb-country {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--jb-ink);
+  white-space: nowrap;
+  transition: opacity 0.25s ease;
+}
+.jb-year {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  color: var(--jb-teal);
+  white-space: nowrap;
+  transition: opacity 0.25s ease;
+}
+
+/* cross-fade phase while the board advances to the next journey */
+.jb-swap.jb-program,
+.jb-swap .jb-country,
+.jb-swap .jb-year {
+  opacity: 0;
+}
+
+/* ── Row 3: one mini plate per journey (hidden by TSX when only one card) ── */
+.jb-row3 {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.jb-plate {
+  font-family: var(--font-space-grotesk), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--jb-yellow);
+  background: linear-gradient(180deg, #2e1830, #170a17);
+  padding: 5px 10px;
+  border-radius: 3px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 1px 3px rgba(74, 60, 16, 0.4);
+  transition: transform 0.2s ease;
+}
+.jb-plate:hover {
+  transform: translateY(-1px);
+}
+.jb-plate b {
+  color: #fff;
+  font-weight: 700;
+  margin-left: 5px;
+}
+.jb-plate--cur {
+  background: linear-gradient(180deg, #ff4a6e, #d92448);
+  color: #fff;
+}
+.jb-plate--cur b {
+  color: var(--jb-ink);
+}
+
+@media (max-width: 640px) {
+  .jb-row2 {
+    gap: 8px 12px;
+  }
+  .jb-country {
+    font-size: 0.66rem;
+    letter-spacing: 0.2em;
+  }
+  .jb-cell {
+    font-size: clamp(1.3rem, 6vw, 1.9rem);
+  }
+  .jb-big--long .jb-cell {
+    font-size: clamp(1rem, 4.4vw, 1.45rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jb-cell--in {
+    animation: none;
+  }
+  .jb-program,
+  .jb-country,
+  .jb-year,
+  .jb-open,
+  .jb-plate {
+    transition: none;
+  }
+}
