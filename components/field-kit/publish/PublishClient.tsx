@@ -28,6 +28,7 @@ import {
   chapterReadiness,
   draftToChapterBlocks,
   flattenDraftForPublish,
+  type CardTouchedField,
   type JourneyDraft,
 } from "@/lib/journeyDraft";
 import { draftKey, loadDraft, pushDraft, saveDraftLocal } from "@/lib/journeyDraftStore";
@@ -118,6 +119,12 @@ export default function PublishClient({
     },
     []
   );
+
+  // Slice 7: an artist edit to a card-level pick locks it against re-assembly.
+  const touchCard = (d: JourneyDraft, f: CardTouchedField): CardTouchedField[] =>
+    Array.from(new Set([...(d.touchedFields ?? []), f]));
+  const isCardAuto = (f: CardTouchedField, hasValue: boolean) =>
+    hasValue && !(draft?.touchedFields ?? []).includes(f);
 
   const traceById = useMemo(
     () => new Map(photoTraces.map((t) => [t.captureId, t])),
@@ -389,11 +396,16 @@ export default function PublishClient({
       {/* 6 · Final picks */}
       <SectionLabel>Final touches</SectionLabel>
       <div style={{ marginBottom: 8 }}>
-        <FieldLabel>Card title <Hint>— optional; the program name carries it if blank</Hint></FieldLabel>
+        <FieldLabel>
+          Card title <Hint>— optional; the program name carries it if blank</Hint>
+          {isCardAuto("title", !!draft.title) && <AutoChip />}
+        </FieldLabel>
         <input
           type="text"
           value={draft.title}
-          onChange={(e) => updateDraft((d) => ({ ...d, title: e.target.value }))}
+          onChange={(e) =>
+            updateDraft((d) => ({ ...d, title: e.target.value, touchedFields: touchCard(d, "title") }))
+          }
           placeholder={program.label}
           style={inputStyle}
         />
@@ -409,18 +421,32 @@ export default function PublishClient({
         />
       </div>
 
-      {responseLines.length > 0 && (
+      {(responseLines.length > 0 || draft.pullQuote) && (
         <div style={{ marginBottom: 14 }}>
-          <FieldLabel>Pull-quote <Hint>— the one line that fronts your card</Hint></FieldLabel>
+          <FieldLabel>
+            Pull-quote <Hint>— the one line that fronts your card</Hint>
+            {isCardAuto("pullQuote", !!draft.pullQuote) && <AutoChip />}
+          </FieldLabel>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {responseLines.map((line) => {
+            {/* The auto-picked quote may be a quote capture rather than a
+                response line — keep it visible/deselectable at the top. */}
+            {(draft.pullQuote && !responseLines.includes(draft.pullQuote)
+              ? [draft.pullQuote, ...responseLines]
+              : responseLines
+            ).map((line) => {
               const on = draft.pullQuote === line;
               return (
                 <button
                   key={line}
                   type="button"
                   aria-pressed={on}
-                  onClick={() => updateDraft((d) => ({ ...d, pullQuote: on ? "" : line }))}
+                  onClick={() =>
+                    updateDraft((d) => ({
+                      ...d,
+                      pullQuote: on ? "" : line,
+                      touchedFields: touchCard(d, "pullQuote"),
+                    }))
+                  }
                   style={{
                     textAlign: "left", cursor: "pointer", padding: "10px 13px", borderRadius: 10,
                     background: on ? `${T.yellow}18` : T.card,
@@ -438,7 +464,10 @@ export default function PublishClient({
 
       {attachedCaptureIds.length > 0 && (
         <div style={{ marginBottom: 14 }}>
-          <FieldLabel>Cover photo <Hint>— fronts the published card</Hint></FieldLabel>
+          <FieldLabel>
+            Cover photo <Hint>— fronts the published card</Hint>
+            {isCardAuto("hero", !!draft.heroCaptureId) && <AutoChip />}
+          </FieldLabel>
           <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
             {attachedCaptureIds.map((id) => {
               const t = traceById.get(id);
@@ -449,7 +478,13 @@ export default function PublishClient({
                   key={id}
                   type="button"
                   aria-pressed={on}
-                  onClick={() => updateDraft((d) => ({ ...d, heroCaptureId: on ? undefined : id }))}
+                  onClick={() =>
+                    updateDraft((d) => ({
+                      ...d,
+                      heroCaptureId: on ? undefined : id,
+                      touchedFields: touchCard(d, "hero"),
+                    }))
+                  }
                   style={{
                     position: "relative", width: 72, height: 72, borderRadius: 10, overflow: "hidden",
                     flexShrink: 0, padding: 0, cursor: "pointer",
@@ -566,6 +601,21 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 function Hint({ children }: { children: React.ReactNode }) {
   return <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: "none", color: T.dim }}>{children}</span>;
+}
+
+/** Slice 7 — marks a pick the auto-assembler made (and will keep updating until edited). */
+function AutoChip() {
+  return (
+    <span
+      style={{
+        fontFamily: FONT.grotesk, fontSize: 8, fontWeight: 700, letterSpacing: "0.12em",
+        textTransform: "uppercase", color: T.black, background: T.yellow,
+        borderRadius: 4, padding: "0.2em 0.55em", marginLeft: 7, verticalAlign: "middle",
+      }}
+    >
+      ✦ Built from your captures
+    </span>
+  );
 }
 
 function Stat({ n, label, color }: { n: number; label: string; color: string }) {

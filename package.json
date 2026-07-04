@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run lint",
     "verify:field-kit": "tsx scripts/field-kit-roster.check.ts",
+    "verify:auto-composer": "tsx scripts/journey-auto-composer.check.ts",
     "migrate:profiles": "tsx scripts/migrateProfileDataToLive.ts",
     "migrate:profiles:dry": "DRY_RUN=1 tsx scripts/migrateProfileDataToLive.ts",
     "setup:notification-secrets": "tsx scripts/setup-notification-secrets.ts",

@@ -20,69 +20,30 @@
 // Drafts are text + capture refs only (media bytes live in the capture queue /
 // Drive), so a per-draft JSON size cap is plenty.
 //
-// Storage: site-wide persistent Blobs store (no deployID — survives deploys),
-// like dat-notification-secrets. Falls back to a per-instance memory map when
-// Blobs isn't configured (plain local `next dev`), which is fine there: the
-// IndexedDB copy still carries the draft; the server copy is best-effort.
+// Storage: lib/journeyDraftServer.ts (Slice 7 extraction) — the same Blobs
+// store + keying the scheduled auto-assembler writes, with a per-instance
+// memory fallback for plain local `next dev`.
 
 import { NextResponse } from "next/server";
-import { getStore } from "@netlify/blobs";
 import { rateLimit, rateKey } from "@/lib/rateLimit";
 import { getFieldKitAccess, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 import { getRetroJourneyAccess, isOnRetroProgram } from "@/lib/retroJourneyAccess";
 import {
+  draftStorageKey,
+  readStoredDraft,
+  writeStoredDraft,
+} from "@/lib/journeyDraftServer";
+import {
   coerceJourneyDraft,
   MAX_DRAFT_JSON_CHARS,
   type JourneyDraft,
-  type StoredJourneyDraft,
 } from "@/lib/journeyDraft";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const STORE_NAME = "dat-journey-drafts";
-
 function norm(s: unknown): string {
   return String(s ?? "").trim().toLowerCase();
-}
-
-// ── Storage backend (Blobs on Netlify / with local creds; memory otherwise) ──
-
-const memStore = new Map<string, StoredJourneyDraft>();
-
-function blobsConfigured(): boolean {
-  const isNetlifyRuntime = process.env.NETLIFY === "true" || !!process.env.NETLIFY_SITE_ID;
-  const hasLocalCreds =
-    !!process.env.NETLIFY_SITE_ID?.trim() && !!process.env.NETLIFY_AUTH_TOKEN?.trim();
-  return isNetlifyRuntime || hasLocalCreds;
-}
-
-function blobStore() {
-  const siteID = (process.env.NETLIFY_SITE_ID || process.env.SITE_ID || "").trim();
-  const token = (process.env.NETLIFY_AUTH_TOKEN || "").trim();
-  if (siteID && token) return getStore({ name: STORE_NAME, siteID, token });
-  return getStore(STORE_NAME);
-}
-
-async function readStored(key: string): Promise<StoredJourneyDraft | null> {
-  if (blobsConfigured()) {
-    try {
-      const v = await blobStore().get(key, { type: "json" });
-      return (v as StoredJourneyDraft | null) ?? null;
-    } catch (err) {
-      console.error("[field-kit draft] blob get failed:", err);
-      return null;
-    }
-  }
-  return memStore.get(key) ?? null;
-}
-
-async function writeStored(key: string, value: StoredJourneyDraft): Promise<void> {
-  if (blobsConfigured()) {
-    await blobStore().setJSON(key, value);
-    return;
-  }
-  memStore.set(key, value);
 }
 
 // ── Auth: resolve the server-side slug for (kind, programId) ─────────────────
@@ -136,10 +97,6 @@ async function authorizeDraft(
   return { ok: true, slug: access.slug };
 }
 
-function storageKey(slug: string, kind: JourneyDraft["kind"], programId: string): string {
-  return `${slug}/${kind}/${norm(programId)}`;
-}
-
 // ── GET ───────────────────────────────────────────────────────────────────────
 
 export async function GET(req: Request) {
@@ -158,7 +115,7 @@ export async function GET(req: Request) {
     const auth = await authorizeDraft(kind, programId, asId);
     if (!auth.ok) return auth.response;
 
-    const stored = await readStored(storageKey(auth.slug, kind, programId));
+    const stored = await readStoredDraft(draftStorageKey(auth.slug, kind, programId));
     return NextResponse.json(
       { draft: stored?.draft ?? null },
       { headers: { "Cache-Control": "no-store, max-age=0" } }
@@ -204,8 +161,8 @@ export async function PUT(req: Request) {
     // Last-write-wins by the draft's own updatedAt: never let a stale device
     // (e.g. a phone that was offline for a day, syncing on reconnect) clobber
     // newer edits made from another device.
-    const key = storageKey(auth.slug, draft.kind, draft.programId);
-    const stored = await readStored(key);
+    const key = draftStorageKey(auth.slug, draft.kind, draft.programId);
+    const stored = await readStoredDraft(key);
     if (stored && stored.draft.updatedAt > draft.updatedAt) {
       return NextResponse.json(
         { ok: true, stale: true, draft: stored.draft },
@@ -213,7 +170,7 @@ export async function PUT(req: Request) {
       );
     }
 
-    await writeStored(key, { draft, serverUpdatedAt: new Date().toISOString() });
+    await writeStoredDraft(key, { draft, serverUpdatedAt: new Date().toISOString() });
     return NextResponse.json(
       { ok: true },
       { headers: { "Cache-Control": "no-store, max-age=0" } }

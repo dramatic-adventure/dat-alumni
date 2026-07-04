@@ -25,6 +25,8 @@ import Link from "next/link";
 import { T, FONT, accent as accentHex } from "@/components/field-kit/tokens";
 import {
   chapterReadiness,
+  CHAPTER_TOUCHABLE_FIELDS,
+  type ChapterTouchedField,
   type JourneyDraft,
   type JourneyDraftChapter,
 } from "@/lib/journeyDraft";
@@ -215,11 +217,30 @@ export default function ComposerClient({
   // Flush on unmount so navigating away never drops a keystroke.
   useEffect(() => flush, [flush]);
 
+  // Every patch through here is an ARTIST edit, so the touched fields it names
+  // are marked — the auto-assembler (Slice 7) never overwrites them again.
   const updateChapter = useCallback(
     (chapterId: string, patch: Partial<JourneyDraftChapter>) => {
+      const touched = Object.keys(patch).filter((k): k is ChapterTouchedField =>
+        (CHAPTER_TOUCHABLE_FIELDS as readonly string[]).includes(k)
+      );
       updateDraft((d) => ({
         ...d,
-        chapters: d.chapters.map((c) => (c.chapterId === chapterId ? { ...c, ...patch } : c)),
+        chapters: d.chapters.map((c) =>
+          c.chapterId === chapterId
+            ? {
+                ...c,
+                ...patch,
+                ...(touched.length
+                  ? {
+                      touchedFields: Array.from(
+                        new Set([...(c.touchedFields ?? []), ...touched])
+                      ),
+                    }
+                  : {}),
+              }
+            : c
+        ),
       }));
     },
     [updateDraft]
@@ -294,6 +315,8 @@ export default function ComposerClient({
 
       {face === "editor" ? (
         <>
+          <UnsortedNote chapters={chapters} traces={traces} />
+
           {/* ── Chapter chips ── */}
           <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 6, marginBottom: 16 }}>
             {chapters.map((ch) => {
@@ -458,6 +481,11 @@ function ChapterEditor({
   const acc = accentHex(spine.accent);
   const [showAllPhotos, setShowAllPhotos] = useState(false);
 
+  // Slice 7 affordance: a filled field the artist hasn't edited was built from
+  // their captures by the auto-assembler — say so, so nothing feels sprung.
+  const isAuto = (field: ChapterTouchedField, hasValue: boolean) =>
+    hasValue && !(entry.touchedFields ?? []).includes(field);
+
   const photoTraces = useMemo(() => traces.filter((t) => t.kind === "photo" && t.driveFileId), [traces]);
   const voiceTraces = useMemo(() => traces.filter((t) => t.kind === "voice" && t.driveFileId), [traces]);
 
@@ -526,7 +554,11 @@ function ChapterEditor({
       )}
 
       {/* Response line */}
-      <Field label="Response line" hint="— one sentence; it headlines this chapter">
+      <Field
+        label="Response line"
+        hint="— one sentence; it headlines this chapter"
+        auto={isAuto("response", !!entry.response)}
+      >
         <input
           type="text"
           value={entry.response}
@@ -538,7 +570,7 @@ function ChapterEditor({
       </Field>
 
       {/* Longer response */}
-      <Field label="Your response">
+      <Field label="Your response" auto={isAuto("body", !!entry.body)}>
         <textarea
           value={entry.body}
           onChange={(e) => onPatch({ body: e.target.value })}
@@ -565,6 +597,7 @@ function ChapterEditor({
       <Field
         label={`Photos (${entry.photoCaptureIds.length}/${MAX_PHOTOS_PER_CHAPTER})`}
         hint="— tap to attach from your traces"
+        auto={isAuto("photoCaptureIds", entry.photoCaptureIds.length > 0)}
       >
         {photoTraces.length === 0 ? (
           <p style={{ fontFamily: FONT.dm, fontSize: 12.5, fontStyle: "italic", color: T.muted, margin: 0 }}>
@@ -635,7 +668,11 @@ function ChapterEditor({
       </Field>
 
       {/* Voice/ambient from real traces */}
-      <Field label="Audio note" hint="— one voice or ambient trace">
+      <Field
+        label="Audio note"
+        hint="— one voice or ambient trace"
+        auto={isAuto("audioCaptureId", !!entry.audioCaptureId)}
+      >
         {voiceTraces.length === 0 ? (
           <p style={{ fontFamily: FONT.dm, fontSize: 12.5, fontStyle: "italic", color: T.muted, margin: 0 }}>
             No voice traces yet.
@@ -860,15 +897,61 @@ function PreviewFace({
 
 // ── Shared micro-components ───────────────────────────────────────────────────
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+function Field({
+  label,
+  hint,
+  auto,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  /** Slice 7: field is filled but machine-built (auto-assembled, not yet edited). */
+  auto?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div style={{ marginBottom: 18 }}>
       <p style={{ fontFamily: FONT.grotesk, fontSize: 9, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: T.muted, margin: "0 0 7px" }}>
         {label}
+        {auto && (
+          <span
+            style={{
+              fontSize: 8, fontWeight: 700, letterSpacing: "0.12em",
+              color: T.black, background: T.yellow, borderRadius: 4,
+              padding: "0.2em 0.55em", marginLeft: 7, verticalAlign: "middle",
+            }}
+          >
+            ✦ Built from your captures
+          </span>
+        )}
         {hint && <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: "none", color: T.dim }}> {hint}</span>}
       </p>
       {children}
     </div>
+  );
+}
+
+/**
+ * Slice 7 — captures with a blank/unknown chapterId are held aside by the
+ * auto-assembler, never silently dropped; this line keeps that visible.
+ */
+function UnsortedNote({
+  chapters,
+  traces,
+}: {
+  chapters: ComposerChapter[];
+  traces: ComposerTrace[];
+}) {
+  const count = useMemo(() => {
+    const spineIds = new Set(chapters.map((c) => c.id));
+    return traces.filter((t) => !spineIds.has(t.chapterId.trim())).length;
+  }, [chapters, traces]);
+  if (!count) return null;
+  return (
+    <p style={{ fontFamily: FONT.dm, fontStyle: "italic", fontSize: 12, color: T.muted, margin: "0 0 12px" }}>
+      {count === 1 ? "1 capture isn't" : `${count} captures aren't`} placed in a chapter — nothing is
+      lost; find {count === 1 ? "it" : "them"} under “Show all trip photos” or in your Traces.
+    </p>
   );
 }
 

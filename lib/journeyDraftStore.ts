@@ -162,6 +162,16 @@ export async function loadDraft(
     await putRecord({ key, draft: remote, dirty: false });
     return remote;
   }
+  // Slice 7: equal updatedAt = same artist lineage (nothing unsynced here) — adopt
+  // the server copy when the auto-assembler enriched it since we last looked.
+  // The assembler never bumps updatedAt, so this is the only way its work shows up.
+  if (
+    remote.updatedAt === local.updatedAt &&
+    (remote.assembledAt ?? "") > (local.assembledAt ?? "")
+  ) {
+    await putRecord({ key, draft: remote, dirty: false });
+    return remote;
+  }
   return local;
 }
 

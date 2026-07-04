@@ -36,10 +36,41 @@ const FIELD_CAPTURES_RANGE = "Field-Captures!A:N"; // A:N since Slice 6
 /** A member's own captures for one program, newest first. Never throws. */
 export const loadCapturesForAuthor = cache(
   async (programId: string, authorSlug: string): Promise<FieldCapture[]> => {
+    return loadCapturesFiltered(programId, authorSlug);
+  }
+);
+
+/**
+ * Slice 7 — EVERY author's captures for one program in a single tab read, for
+ * the scheduled auto-assembler (which builds a draft per roster member and must
+ * not re-read the tab N times). SERVER-INTERNAL ONLY: the caller is the
+ * CRON-authorized assembler, never a user-facing route — per-author privacy is
+ * preserved because each author's captures only ever land in that author's own
+ * private draft blob.
+ */
+export async function loadCapturesForProgram(
+  programId: string
+): Promise<Map<string, FieldCapture[]>> {
+  const all = await loadCapturesFiltered(programId, null);
+  const byAuthor = new Map<string, FieldCapture[]>();
+  for (const c of all) {
+    const slug = normId(c.authorSlug);
+    if (!slug) continue;
+    const list = byAuthor.get(slug);
+    if (list) list.push(c);
+    else byAuthor.set(slug, [c]);
+  }
+  return byAuthor;
+}
+
+async function loadCapturesFiltered(
+  programId: string,
+  authorSlug: string | null
+): Promise<FieldCapture[]> {
     const spreadsheetId = process.env.ALUMNI_SHEET_ID || "";
     const wantProgram = normId(programId);
-    const wantAuthor = normId(authorSlug);
-    if (!spreadsheetId || !wantProgram || !wantAuthor) return [];
+    const wantAuthor = authorSlug === null ? null : normId(authorSlug);
+    if (!spreadsheetId || !wantProgram || wantAuthor === "") return [];
 
     const sheets = sheetsClient();
     const res = await withRetry(
@@ -68,7 +99,7 @@ export const loadCapturesForAuthor = cache(
     for (let r = 1; r < rows.length; r++) {
       const row = rows[r];
       if (normId(row[iProg]) !== wantProgram) continue;
-      if (normId(row[iAuthor]) !== wantAuthor) continue;
+      if (wantAuthor !== null && normId(row[iAuthor]) !== wantAuthor) continue;
       out.push({
         captureId: String(row[iId] ?? ""),
         programId: String(row[iProg] ?? ""),
@@ -90,5 +121,4 @@ export const loadCapturesForAuthor = cache(
 
     out.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     return out;
-  }
-);
+}

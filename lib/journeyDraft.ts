@@ -24,6 +24,21 @@ import {
 
 // ── Draft shape ───────────────────────────────────────────────────────────────
 
+/** Chapter fields the auto-assembler may fill — and stops filling once touched. */
+export const CHAPTER_TOUCHABLE_FIELDS = [
+  "response",
+  "body",
+  "reflection",
+  "title",
+  "photoCaptureIds",
+  "audioCaptureId",
+] as const;
+export type ChapterTouchedField = (typeof CHAPTER_TOUCHABLE_FIELDS)[number];
+
+/** Card-level fields the auto-assembler may fill (hero covers heroCaptureId/heroUrl). */
+export const CARD_TOUCHABLE_FIELDS = ["title", "pullQuote", "hero"] as const;
+export type CardTouchedField = (typeof CARD_TOUCHABLE_FIELDS)[number];
+
 export type JourneyDraftChapter = {
   /** Itinerary chapter id (live) or "custom-…" (retro/added). Stable join key. */
   chapterId: string;
@@ -48,6 +63,12 @@ export type JourneyDraftChapter = {
   /** Already-public photo URLs (retro flow uploads via /api/upload). */
   photoUrls?: string[];
   accent?: string;
+  /**
+   * Fields the ARTIST has edited (Slice 7). The auto-assembler only ever writes
+   * fields absent from this set; once touched, a field is theirs forever.
+   * Absent/empty = fully auto-fillable (pre-slice-7 drafts read as untouched).
+   */
+  touchedFields?: ChapterTouchedField[];
 };
 
 export type JourneyDraft = {
@@ -76,6 +97,14 @@ export type JourneyDraft = {
   chapters: JourneyDraftChapter[];
   /** Set after the first successful publish so edits reuse the same card id. */
   publishedCardId?: string;
+  /** Card-level fields the ARTIST has edited (Slice 7) — see chapter touchedFields. */
+  touchedFields?: CardTouchedField[];
+  /**
+   * When the auto-assembler last wrote this draft (Slice 7). Deliberately
+   * separate from updatedAt: the assembler NEVER bumps updatedAt, so an
+   * artist's copy always wins last-write-wins against machine output.
+   */
+  assembledAt?: string;
   /** Last-write-wins key across device ↔ server copies. ISO timestamp. */
   updatedAt: string;
 };
@@ -91,6 +120,17 @@ export const MAX_DRAFT_CHAPTERS = 60;
 // ── Coercion (route + store both funnel untrusted JSON through this) ──────────
 
 const str = (v: unknown) => String(v ?? "").trim();
+
+/** Keep only known touchable field names, deduped (drops junk from old/foreign JSON). */
+function coerceTouched<T extends string>(v: unknown, allowed: readonly T[]): T[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const set = new Set<T>();
+  for (const item of v) {
+    const s = str(item) as T;
+    if ((allowed as readonly string[]).includes(s)) set.add(s);
+  }
+  return set.size ? Array.from(set) : undefined;
+}
 
 function coerceChapter(raw: unknown): JourneyDraftChapter | null {
   if (!raw || typeof raw !== "object") return null;
@@ -114,6 +154,7 @@ function coerceChapter(raw: unknown): JourneyDraftChapter | null {
     audioCaptureId: str(o.audioCaptureId) || undefined,
     photoUrls: ids(o.photoUrls, 12),
     accent: str(o.accent) || undefined,
+    touchedFields: coerceTouched(o.touchedFields, CHAPTER_TOUCHABLE_FIELDS),
   };
 }
 
@@ -149,6 +190,8 @@ export function coerceJourneyDraft(raw: unknown): JourneyDraft | null {
     heroUrl: str(o.heroUrl) || undefined,
     chapters,
     publishedCardId: str(o.publishedCardId) || undefined,
+    touchedFields: coerceTouched(o.touchedFields, CARD_TOUCHABLE_FIELDS),
+    assembledAt: str(o.assembledAt) || undefined,
     updatedAt: str(o.updatedAt) || new Date(0).toISOString(),
   };
 }

@@ -19,6 +19,7 @@ import ComposerClient from "@/components/field-kit/composer/ComposerClient";
 import { requireFieldKitPage, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 import { loadProgramItinerary } from "@/lib/loadProgram";
 import { loadCapturesForAuthor } from "@/lib/loadFieldKitCaptures";
+import { spineFromItinerary } from "@/lib/composerSpine";
 import type { ComposerChapter, ComposerTrace } from "@/components/field-kit/composer/ComposerClient";
 
 export const revalidate = 0;
@@ -58,24 +59,9 @@ export default async function ComposerPage({
     }));
 
   // Serializable itinerary spine subset — what the editor needs per chapter.
-  const chapters: ComposerChapter[] = (itinerary?.chapters ?? []).map((ch) => ({
-    id: ch.id,
-    num: ch.num,
-    verb: ch.verb,
-    place: ch.place,
-    title: ch.title,
-    goal: ch.goal,
-    prompt: ch.prompt,
-    accent: ch.accent,
-    dayIds: ch.days.map((d) => d.id),
-    dateLabel:
-      ch.days.length > 0
-        ? [ch.days[0]?.dateLabel, ch.days[ch.days.length - 1]?.dateLabel]
-            .filter(Boolean)
-            .filter((v, i, a) => a.indexOf(v) === i)
-            .join(" – ")
-        : "",
-  }));
+  // Shared with the auto-assembler (Slice 7) so Composer and the scheduled
+  // assembly can never disagree about the spine.
+  const chapters: ComposerChapter[] = spineFromItinerary(itinerary);
 
   return (
     <>
