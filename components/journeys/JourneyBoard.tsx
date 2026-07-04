@@ -19,7 +19,7 @@ import "./journeyBoard.css";
 const CYCLE_MS = 6000;
 // Matches the CSS opacity transition — text swaps once the old face has faded.
 const SWAP_MS = 250;
-const TILE_STAGGER_MS = 40;
+const TILE_STAGGER_MS = 70;
 
 type Face = {
   program: string;
