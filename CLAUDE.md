@@ -114,6 +114,19 @@ read at runtime via `lib/notificationSecrets.ts`, which caches the values on
 - `lib/googleClients.ts` and the `GCP_SA_*` vars were deliberately left
   untouched — only the three notification secrets moved.
 
+### Email sends via Gmail API; its secrets follow the same Blobs pattern
+
+All site email goes through `lib/sendEmail.ts` (Gmail API as a dedicated
+mailbox, OAuth refresh token scoped to `gmail.send` only — see
+`site-BUILD-SPEC-gmail-email.md` for why app passwords and domain-wide
+delegation were rejected). `GMAIL_OAUTH_CLIENT_ID` / `GMAIL_OAUTH_CLIENT_SECRET` /
+`GMAIL_OAUTH_REFRESH_TOKEN` live in the `dat-email-secrets` Blobs store, read
+via `lib/emailSecrets.ts` (same env-var fallback for local dev). Write them
+with `npm run setup:email-secrets`; mint the refresh token once with
+`npm run mint:gmail-refresh-token`. `CONTACT_FROM_EMAIL` stays a plain env var.
+Caveat: Google revokes Gmail-scoped refresh tokens if the sending mailbox's
+password changes — if all email breaks at once, re-mint and re-store the token.
+
 ## Other Instructions
 
 - Do not make any changes until you have 95% confidence in what you need to build.  Ask me follow-up questions until you reach that confidence.

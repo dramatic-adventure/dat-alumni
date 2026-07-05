@@ -1,19 +1,18 @@
 // lib/journeyNudgeEmail.ts
 //
 // Slice 7 — the end-of-trip email half of the nudge (§5c). Sent a few days
-// after the itinerary end date to cover the iOS-push gap. Same Resend HTTP
-// pattern as lib/notifyJourneyTakedown.ts. Non-fatal: if Resend isn't
-// configured or the send fails, we log and return false — the caller decides
-// whether to record the attempt.
+// after the itinerary end date to cover the iOS-push gap. Sends via the shared
+// lib/sendEmail helper (Gmail API — see site-BUILD-SPEC-gmail-email.md), same
+// as lib/notifyJourneyTakedown.ts. Non-fatal: if email isn't configured or the
+// send fails, we log and return false — the caller decides whether to record
+// the attempt.
 //
 // Copy contract (§5c): a card already exists and is theirs to review — never
 // "you forgot to do something," and it reads the same whether they've lived in
 // Composer all trip or never opened it once.
 
 import "server-only";
-
-const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
-const CONTACT_FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "";
+import { sendEmail } from "@/lib/sendEmail";
 
 function escapeHtml(s: string): string {
   return String(s ?? "")
@@ -59,33 +58,14 @@ export async function sendJourneyNudgeEmail(opts: {
   const to = String(opts.toEmail ?? "").trim();
   if (!to) return false;
 
-  if (!RESEND_API_KEY || !CONTACT_FROM_EMAIL) {
-    console.warn("[journey-nudge] RESEND_API_KEY / CONTACT_FROM_EMAIL not set — email skipped");
+  const sent = await sendEmail({
+    to,
+    subject: "Your Journey Card is ready to review",
+    html: nudgeEmailHtml({ location: opts.location, composerUrl: opts.composerUrl }),
+  });
+  if (!sent.ok) {
+    console.warn("[journey-nudge] email send failed — email skipped:", sent.error);
     return false;
   }
-
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: CONTACT_FROM_EMAIL,
-        to: [to],
-        subject: "Your Journey Card is ready to review",
-        html: nudgeEmailHtml({ location: opts.location, composerUrl: opts.composerUrl }),
-      }),
-    });
-    if (!res.ok) {
-      const errText = await res.text().catch(() => "");
-      console.error("[journey-nudge] Resend error:", res.status, errText);
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.error("[journey-nudge] Resend request failed:", err);
-    return false;
-  }
+  return true;
 }

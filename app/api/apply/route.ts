@@ -2,19 +2,18 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { findOpportunity } from "@/lib/loadOpportunities";
+import { sendEmail, emailConfigured } from "@/lib/sendEmail";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
-const CONTACT_FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "";
 const APPLY_INBOX_EMAIL =
   process.env.APPLY_INBOX_EMAIL ||
   process.env.CONTACT_INBOX_EMAIL ||
   "hello@dramaticadventure.com";
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024; // 8 MB per file
-const MAX_TOTAL_BYTES = 18 * 1024 * 1024; // 18 MB combined (Resend caps around 40MB total)
+const MAX_TOTAL_BYTES = 18 * 1024 * 1024; // 18 MB combined (Gmail caps messages at 35MB; base64 adds ~33%)
 const ALLOWED_MIME_PREFIXES = ["image/", "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument"];
 
 function escapeHtml(s: string) {
@@ -213,8 +212,8 @@ export async function POST(req: Request) {
   `;
 
   // Graceful fallback for local dev
-  if (!RESEND_API_KEY || !CONTACT_FROM_EMAIL) {
-    console.log("[apply] Resend not configured — submission logged locally:", {
+  if (!(await emailConfigured())) {
+    console.log("[apply] email not configured — submission logged locally:", {
       title,
       name,
       email,
@@ -224,30 +223,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: CONTACT_FROM_EMAIL,
-        to: [APPLY_INBOX_EMAIL],
-        reply_to: email,
-        subject,
-        html: htmlBody,
-        ...(attachments.length ? { attachments } : {}),
-      }),
-    });
-    if (!res.ok) {
-      const err = await res.text();
-      console.error("[apply] Resend error:", err);
-      return NextResponse.json({ error: "Email failed to send." }, { status: 500 });
-    }
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error("[apply] Unexpected error:", err);
-    return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
+  const sent = await sendEmail({
+    to: APPLY_INBOX_EMAIL,
+    replyTo: email,
+    subject,
+    html: htmlBody,
+    ...(attachments.length ? { attachments } : {}),
+  });
+  if (!sent.ok) {
+    console.error("[apply] send error:", sent.error);
+    return NextResponse.json({ error: "Email failed to send." }, { status: 500 });
   }
+  return NextResponse.json({ ok: true });
 }

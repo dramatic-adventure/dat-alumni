@@ -1,6 +1,7 @@
 // app/api/ambassador/route.ts
 import "server-only";
 import { NextResponse } from "next/server";
+import { sendEmail, emailConfigured } from "@/lib/sendEmail";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,8 +17,6 @@ type Body = {
   website?: string;
 };
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
-const CONTACT_FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "";
 const FRIENDS_EMAIL =
   process.env.FRIENDS_INBOX_EMAIL ||
   process.env.CONTACT_INBOX_EMAIL ||
@@ -102,36 +101,22 @@ export async function POST(req: Request) {
     </div>
   `;
 
-  if (!RESEND_API_KEY || !CONTACT_FROM_EMAIL) {
-    console.error("[ambassador] Missing Resend config — email not sent");
+  if (!(await emailConfigured())) {
+    console.error("[ambassador] Missing email config — email not sent");
     return NextResponse.json({ ok: true });
   }
 
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: CONTACT_FROM_EMAIL,
-        to: [FRIENDS_EMAIL],
-        reply_to: email,
-        subject: `✨ New Ambassador Application: ${name}${city ? ` (${city})` : ""}`,
-        html: htmlBody,
-      }),
-    });
+  const sent = await sendEmail({
+    to: FRIENDS_EMAIL,
+    replyTo: email,
+    subject: `✨ New Ambassador Application: ${name}${city ? ` (${city})` : ""}`,
+    html: htmlBody,
+  });
 
-    if (!res.ok) {
-      const err = await res.text();
-      console.error("[ambassador] Resend error:", err);
-      return NextResponse.json({ error: "Email failed to send." }, { status: 500 });
-    }
-
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error("[ambassador] Unexpected error:", err);
-    return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
+  if (!sent.ok) {
+    console.error("[ambassador] send error:", sent.error);
+    return NextResponse.json({ error: "Email failed to send." }, { status: 500 });
   }
+
+  return NextResponse.json({ ok: true });
 }

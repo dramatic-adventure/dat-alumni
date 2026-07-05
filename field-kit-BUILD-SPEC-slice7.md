@@ -112,6 +112,8 @@ last day `fullDate`; sends fire at the first 15-min tick past 15:00 UTC on the t
 each channel fires at most once, ever — no repeats. The `publishedCardId` skip is
 re-checked at each channel's send time, so publishing after the push suppresses the email.
 Email goes to the artist's Profile-Owners `ownerEmail` via the existing Resend pattern.
+*(Update 2026-07-04: Resend was replaced site-wide by Gmail API send via `lib/sendEmail.ts` —
+see `site-BUILD-SPEC-gmail-email.md`.)*
 
 **Q6 — Confirmed: the Q2 touched flags are the only re-assembly boundary.** Every run
 rewrites only fields still in their auto state; new captures keep flowing into untouched
@@ -214,7 +216,8 @@ This is the same "raw ingredients are fine" bar Jesse set — the deliverable *i
   assembler and `/api/field-kit/draft` share one backend (`dat-journey-drafts`).
 - `lib/composerSpine.ts` — itinerary→spine mapping extracted from the Composer page so the
   page and the assembler can never disagree about chapters.
-- `lib/journeyNudgeEmail.ts` — Resend email (same pattern as `notifyJourneyTakedown`).
+- `lib/journeyNudgeEmail.ts` — nudge email (same pattern as `notifyJourneyTakedown`; originally
+  Resend, now Gmail API via `lib/sendEmail.ts` — see `site-BUILD-SPEC-gmail-email.md`).
 - `app/api/field-kit/journey/auto-assemble/route.ts` — CRON_SECRET-gated entry point.
 - `netlify/functions/journey-auto-composer.ts` — thin scheduled trigger, every 15 min.
 
@@ -235,6 +238,8 @@ This is the same "raw ingredients are fine" bar Jesse set — the deliverable *i
 **Deploy notes**
 - No new env vars. CRON_SECRET/VAPID stay in `dat-notification-secrets` Blobs;
   `RESEND_API_KEY`/`CONTACT_FROM_EMAIL` already exist for other routes.
+  *(Update 2026-07-04: `RESEND_API_KEY` is retired — email now authenticates via the
+  `dat-email-secrets` Blobs store; see `site-BUILD-SPEC-gmail-email.md`.)*
 - The nudge can be re-armed for testing by deleting the program's key from
   `dat-journey-nudges`.
 - Untouched: `app/api/alumni/journey/` (publish write path), `app/journeys/`, Retroactive,

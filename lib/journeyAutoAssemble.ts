@@ -30,6 +30,7 @@ import { draftStorageKey, readStoredDraft, writeStoredDraft } from "@/lib/journe
 import { sendToSlugs, isPushConfigured } from "@/lib/webPush";
 import { getOwnerEmailForAlumniId } from "@/lib/ownership";
 import { sendJourneyNudgeEmail } from "@/lib/journeyNudgeEmail";
+import { emailConfigured } from "@/lib/sendEmail";
 
 // ── Timing (§4-R Q5) ──────────────────────────────────────────────────────────
 
@@ -236,7 +237,7 @@ export async function runTripEndNudge(
   if (log.emailSentAt) {
     summary.email = "already sent";
   } else if (now.getTime() >= nudgeThreshold(end, NUDGE_EMAIL_AFTER_DAYS)) {
-    if (!process.env.RESEND_API_KEY || !process.env.CONTACT_FROM_EMAIL) {
+    if (!(await emailConfigured())) {
       summary.email = "email not configured — left unclaimed";
     } else {
       log.emailSentAt = now.toISOString();

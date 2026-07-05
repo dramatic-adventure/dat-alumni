@@ -3,6 +3,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { sheetsClient } from "@/lib/googleClients";
 import { normalizeGmail, withRetry, idxOf, getOwnerEmailForAlumniId as getOwnerEmailForAlumniIdFromOwners } from "@/lib/ownership";
+import { sendEmail } from "@/lib/sendEmail";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,8 +25,6 @@ const spreadsheetId = process.env.ALUMNI_SHEET_ID || "";
 const LIVE_TAB = process.env.ALUMNI_LIVE_TAB || process.env.ALUMNI_TAB || "Profile-Live";
 const OWNERS_TAB = process.env.ALUMNI_OWNERS_TAB || "Profile-Owners";
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
-const CONTACT_FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "";
 const CONTACT_INBOX_EMAIL = process.env.CONTACT_INBOX_EMAIL || "";
 
 // Comma-separated list of allowed origins, e.g.
@@ -129,32 +128,6 @@ async function getLivePublicEmailForAlumniId(alumniId: string): Promise<string> 
   return String(row?.[publicEmailIdx] ?? "").trim();
 }
 
-async function sendViaResend(args: { to: string; subject: string; text: string; replyTo: string }) {
-  if (!RESEND_API_KEY) throw new Error("Missing RESEND_API_KEY");
-  if (!CONTACT_FROM_EMAIL) throw new Error("Missing CONTACT_FROM_EMAIL");
-
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from: CONTACT_FROM_EMAIL,
-      to: [args.to],
-      subject: args.subject,
-      text: args.text,
-      reply_to: args.replyTo,
-      ...(CONTACT_INBOX_EMAIL ? { bcc: [CONTACT_INBOX_EMAIL] } : {}),
-    }),
-  });
-
-  if (!res.ok) {
-    const t = await res.text().catch(() => "");
-    throw new Error(`Resend send failed (${res.status}): ${t}`);
-  }
-}
-
 export async function POST(req: Request) {
   if (!spreadsheetId) {
     return NextResponse.json({ ok: false, error: "Missing ALUMNI_SHEET_ID" }, { status: 500 });
@@ -247,12 +220,17 @@ export async function POST(req: Request) {
     `This relay does not reveal your email publicly.`,
   ].join("\n");
 
-  await sendViaResend({
+  const sent = await sendEmail({
     to,
     subject,
     text,
     replyTo: fromEmail,
+    ...(CONTACT_INBOX_EMAIL ? { bcc: [CONTACT_INBOX_EMAIL] } : {}),
   });
+  if (!sent.ok) {
+    console.error("[contact] send failed:", sent.error);
+    return NextResponse.json({ ok: false, error: "Failed to send" }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true }, { status: 200 });
 }

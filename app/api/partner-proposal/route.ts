@@ -1,6 +1,7 @@
 // app/api/partner-proposal/route.ts
 import "server-only";
 import { NextResponse } from "next/server";
+import { sendEmail, emailConfigured } from "@/lib/sendEmail";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,8 +19,6 @@ type Body = {
   website?: string;
 };
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
-const CONTACT_FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "";
 const PARTNERSHIPS_EMAIL =
   process.env.PARTNERSHIPS_INBOX_EMAIL ||
   process.env.CONTACT_INBOX_EMAIL ||
@@ -115,38 +114,23 @@ export async function POST(req: Request) {
     </div>
   `;
 
-  // Send via Resend
-  if (!RESEND_API_KEY || !CONTACT_FROM_EMAIL) {
-    console.error("[partner-proposal] Missing Resend config — email not sent");
+  if (!(await emailConfigured())) {
+    console.error("[partner-proposal] Missing email config — email not sent");
     // Don't fail the user; log and succeed silently
     return NextResponse.json({ ok: true });
   }
 
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: CONTACT_FROM_EMAIL,
-        to: [PARTNERSHIPS_EMAIL],
-        reply_to: email,
-        subject: `🤝 New Partnership Proposal: ${org || name} (${partnerTypeLabel})`,
-        html: htmlBody,
-      }),
-    });
+  const sent = await sendEmail({
+    to: PARTNERSHIPS_EMAIL,
+    replyTo: email,
+    subject: `🤝 New Partnership Proposal: ${org || name} (${partnerTypeLabel})`,
+    html: htmlBody,
+  });
 
-    if (!res.ok) {
-      const err = await res.text();
-      console.error("[partner-proposal] Resend error:", err);
-      return NextResponse.json({ error: "Email failed to send." }, { status: 500 });
-    }
-
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error("[partner-proposal] Unexpected error:", err);
-    return NextResponse.json({ error: "Unexpected error." }, { status: 500 });
+  if (!sent.ok) {
+    console.error("[partner-proposal] send error:", sent.error);
+    return NextResponse.json({ error: "Email failed to send." }, { status: 500 });
   }
+
+  return NextResponse.json({ ok: true });
 }

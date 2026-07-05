@@ -3,7 +3,7 @@ import { getCronSecret } from "../../lib/notificationSecrets";
 
 // Slice 7 (Auto-Composer) — scheduled trigger for the journey auto-assembler +
 // end-of-trip nudge. Mirrors send-notifications.ts: the real work (Sheets reads,
-// draft-store writes, web-push, Resend email) lives behind the Next route
+// draft-store writes, web-push, Gmail email) lives behind the Next route
 // /api/field-kit/journey/auto-assemble, because that logic imports "server-only"
 // modules that don't load cleanly in the esbuild-bundled function. This stays a
 // thin trigger: every 15 min it POSTs the route with the shared CRON_SECRET.

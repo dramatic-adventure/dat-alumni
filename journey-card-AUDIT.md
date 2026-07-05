@@ -54,7 +54,7 @@ The remaining 15% is **operations, one integration gap, one deferred locked-deci
 - `app/api/alumni/journey/route.ts` POST: `requireAuth` + `assertCanEditProfile(alumniId)` (owner-OR-admin, **not** bare `isAdmin`), with cross-profile id-spoof guard. Studio "Journey" tab (`JourneyStudioPanel`) wired in `ProfileStudio.tsx` + `update-form.tsx`.
 
 **5. Takedown + notify** — ✅ **Done.**
-- PATCH sets `status` + `removalReason` (append-only, history preserved). Emails the artist via Resend **only when an admin removes a card they don't own**. Falls back gracefully (reason stored, warning logged) if Resend env is absent.
+- PATCH sets `status` + `removalReason` (append-only, history preserved). Emails the artist via Resend **only when an admin removes a card they don't own**. Falls back gracefully (reason stored, warning logged) if Resend env is absent. *(Update 2026-07-04: Resend was replaced site-wide by Gmail API send via `lib/sendEmail.ts` — see `site-BUILD-SPEC-gmail-email.md`.)*
 
 **6. Verification** — ⚠️ **Partial.** `npm run check` passes. The **manual** pass (publish → display → takedown → archive, retina/legibility) has not been done and can't be until the sheet tab + env are confirmed.
 
@@ -112,7 +112,7 @@ Sequenced; each item has effort (S/M/L) and blocking dependency.
 
 ### P0 — Launch blockers (mostly ops, do first)
 1. **Create the `"Journey Cards"` tab in the alumni spreadsheet** with the exact 22-column header from `HEADERS` in `lib/loadJourneyCards.ts` (`id, profileSlug, programId, program, location, country, year, title, primaryRole, pullQuote, heroUrl, accent, dates, body, mediaUrls, ctaText, ctaUrl, featured, sortDate, status, removalReason, createdAt`). **— S. Blocks: everything.** This is almost certainly why the feature looks "unfinished" — without it, every page renders empty and publishing throws. *(Your action, not code.)*
-2. **Confirm Netlify env vars:** `ALUMNI_SHEET_ID` (already used app-wide — should be set), `RESEND_API_KEY`, `CONTACT_FROM_EMAIL` (the last two only affect takedown emails; absence degrades gracefully). **— S. Blocks: publish (1st var), notify (others).**
+2. **Confirm Netlify env vars:** `ALUMNI_SHEET_ID` (already used app-wide — should be set), `RESEND_API_KEY`, `CONTACT_FROM_EMAIL` (the last two only affect takedown emails; absence degrades gracefully). **— S. Blocks: publish (1st var), notify (others).** *(Update 2026-07-04: `RESEND_API_KEY` is retired — email config now lives in the `dat-email-secrets` Blobs store + `CONTACT_FROM_EMAIL`; see `site-BUILD-SPEC-gmail-email.md`.)*
 
 ### P1 — Discoverability (the feature is invisible without this)
 3. **Add entry points into `/journeys`.** There is currently **no link anywhere** — not in nav, footer, or the alumni profile page. At minimum: a "Journeys" nav/footer link to `/journeys`, and a "View journeys" link from `/alumni/[slug]` → `/journeys/[slug]`. **— S–M. Blocks: nothing; but without it nobody finds the feature.**

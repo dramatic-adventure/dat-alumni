@@ -1,15 +1,13 @@
 // lib/notifyJourneyTakedown.ts
 //
 // Sends the artist an email when DAT takes down their Journey Card, including
-// the recorded reason. Reuses the same Resend HTTP pattern as the email-code
-// route. Non-fatal: if Resend isn't configured or the send fails, we log and
-// return false — the takedown itself still succeeds and the reason is stored on
-// the card row regardless.
+// the recorded reason. Sends via the shared lib/sendEmail helper (Gmail API —
+// see site-BUILD-SPEC-gmail-email.md). Non-fatal: if email isn't configured or
+// the send fails, we log and return false — the takedown itself still succeeds
+// and the reason is stored on the card row regardless.
 
 import "server-only";
-
-const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
-const CONTACT_FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "";
+import { sendEmail } from "@/lib/sendEmail";
 
 function takedownEmailHtml(opts: {
   artistName: string;
@@ -58,39 +56,21 @@ export async function notifyJourneyTakedown(opts: {
   const to = String(opts.toEmail ?? "").trim();
   if (!to) return false;
 
-  if (!RESEND_API_KEY || !CONTACT_FROM_EMAIL) {
+  const sent = await sendEmail({
+    to,
+    subject: "Your DAT Journey Card was taken down",
+    html: takedownEmailHtml({
+      artistName: opts.artistName,
+      cardLabel: opts.cardLabel,
+      reason: opts.reason,
+    }),
+  });
+  if (!sent.ok) {
     console.warn(
-      "[journey-takedown] RESEND_API_KEY / CONTACT_FROM_EMAIL not set — reason stored, but artist not emailed"
+      "[journey-takedown] email send failed — reason stored, but artist not emailed:",
+      sent.error
     );
     return false;
   }
-
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: CONTACT_FROM_EMAIL,
-        to: [to],
-        subject: "Your DAT Journey Card was taken down",
-        html: takedownEmailHtml({
-          artistName: opts.artistName,
-          cardLabel: opts.cardLabel,
-          reason: opts.reason,
-        }),
-      }),
-    });
-    if (!res.ok) {
-      const errText = await res.text().catch(() => "");
-      console.error("[journey-takedown] Resend error:", res.status, errText);
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.error("[journey-takedown] Resend request failed:", err);
-    return false;
-  }
+  return true;
 }

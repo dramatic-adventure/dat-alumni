@@ -4,8 +4,8 @@
 //
 // ON SUBMIT:
 //   1. Appends a row to the "Mailing List" sheet in GOOGLE_SHEET_ID
-//   2. Sends a welcome confirmation email to the subscriber (via Resend)
-//   3. Sends a notification email to the DAT inbox (via Resend)
+//   2. Sends a welcome confirmation email to the subscriber (via lib/sendEmail)
+//   3. Sends a notification email to the DAT inbox (via lib/sendEmail)
 //
 // GOOGLE SHEET SETUP (one-time):
 //   - Open the DAT Google Sheet (GOOGLE_SHEET_ID)
@@ -16,6 +16,7 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { sheetsClient } from "@/lib/googleClients";
+import { sendEmail, emailConfigured } from "@/lib/sendEmail";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,8 +29,6 @@ type Body = {
   website?: string;
 };
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
-const CONTACT_FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "";
 const INBOX_EMAIL =
   process.env.CONTACT_INBOX_EMAIL ||
   "hello@dramaticadventure.com";
@@ -83,9 +82,9 @@ export async function POST(req: Request) {
     console.warn("[mailing-list] GOOGLE_SHEET_ID not set — skipping sheet append");
   }
 
-  // ── 2. Send emails via Resend ──────────────────────────────────────────────
-  if (!RESEND_API_KEY || !CONTACT_FROM_EMAIL) {
-    console.warn("[mailing-list] Resend not configured — skipping emails");
+  // ── 2. Send emails ─────────────────────────────────────────────────────────
+  if (!(await emailConfigured())) {
+    console.warn("[mailing-list] email not configured — skipping emails");
     return NextResponse.json({ ok: true });
   }
 
@@ -153,44 +152,27 @@ export async function POST(req: Request) {
     </div>
   `;
 
-  // Fire both emails in parallel — don't block the response on either
-  const emailPromises = [
+  // Fire both emails in parallel — a failed send never fails the request
+  const results = await Promise.all([
     // Welcome to subscriber
-    fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: CONTACT_FROM_EMAIL,
-        to: [emailTrim],
-        subject: "You're on the DAT list. 🎭",
-        html: welcomeHtml,
-      }),
+    sendEmail({
+      to: emailTrim,
+      subject: "You're on the DAT list. 🎭",
+      html: welcomeHtml,
     }),
     // Notify DAT
-    fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: CONTACT_FROM_EMAIL,
-        to: [INBOX_EMAIL],
-        reply_to: emailTrim,
-        subject: `📬 New mailing list signup: ${nameTrim || emailTrim}`,
-        html: notifyHtml,
-      }),
+    sendEmail({
+      to: INBOX_EMAIL,
+      replyTo: emailTrim,
+      subject: `📬 New mailing list signup: ${nameTrim || emailTrim}`,
+      html: notifyHtml,
     }),
-  ];
-
-  try {
-    await Promise.all(emailPromises);
-  } catch (err) {
-    console.error("[mailing-list] Resend error:", err);
-    // Still return ok — the sheet write already happened
+  ]);
+  for (const r of results) {
+    if (!r.ok) {
+      // Still return ok — the sheet write already happened
+      console.error("[mailing-list] send error:", r.error);
+    }
   }
 
   return NextResponse.json({ ok: true });

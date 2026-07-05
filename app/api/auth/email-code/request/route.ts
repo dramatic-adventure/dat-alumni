@@ -1,16 +1,15 @@
 // app/api/auth/email-code/request/route.ts
 //
-// Sends a 6-digit sign-in code to the given email (Resend), for the
-// email-code NextAuth credentials provider (see /auth.ts).
+// Sends a 6-digit sign-in code to the given email (Gmail API via
+// lib/sendEmail), for the email-code NextAuth credentials provider
+// (see /auth.ts).
 import "server-only";
 import { NextResponse } from "next/server";
 import { requestEmailCode } from "@/lib/emailLoginCodes";
+import { sendEmail, emailConfigured } from "@/lib/sendEmail";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
-const CONTACT_FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "";
 
 type Body = {
   email?: string;
@@ -67,38 +66,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  if (!RESEND_API_KEY || !CONTACT_FROM_EMAIL) {
-    console.error("[email-code] RESEND_API_KEY / CONTACT_FROM_EMAIL not set — cannot send code");
+  if (!(await emailConfigured())) {
+    console.error("[email-code] email not configured (GMAIL_OAUTH_* / CONTACT_FROM_EMAIL) — cannot send code");
     return NextResponse.json(
       { error: "Email sign-in isn't available right now. Try Google, or email us." },
       { status: 500 }
     );
   }
 
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: CONTACT_FROM_EMAIL,
-        to: [result.email],
-        subject: `${result.code} is your DAT sign-in code`,
-        html: codeEmailHtml(result.code),
-      }),
-    });
-    if (!res.ok) {
-      const errText = await res.text().catch(() => "");
-      console.error("[email-code] Resend error:", res.status, errText);
-      return NextResponse.json(
-        { error: "Couldn't send the code. Try again." },
-        { status: 502 }
-      );
-    }
-  } catch (err) {
-    console.error("[email-code] Resend request failed:", err);
+  const sent = await sendEmail({
+    to: result.email,
+    subject: `${result.code} is your DAT sign-in code`,
+    html: codeEmailHtml(result.code),
+  });
+  if (!sent.ok) {
+    console.error("[email-code] send error:", sent.error);
     return NextResponse.json(
       { error: "Couldn't send the code. Try again." },
       { status: 502 }
