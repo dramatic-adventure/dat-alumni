@@ -153,6 +153,7 @@ export default function ApplyClient({
             </div>
           </div>
         </section>
+        <style>{AP_CSS}</style>
       </main>
     );
   }
@@ -417,7 +418,12 @@ export default function ApplyClient({
         </div>
       </section>
 
-      <style>{`
+      <style>{AP_CSS}</style>
+    </main>
+  );
+}
+
+const AP_CSS = `
         .ap-root { background: transparent; color: #241123; }
 
         /* HERO */
@@ -647,9 +653,12 @@ export default function ApplyClient({
 
         /* SUCCESS */
         .ap-success {
-          padding: clamp(5rem, 10vw, 9rem) clamp(1.5rem, 5vw, 3rem);
+          /* extra top padding clears the fixed site header (~100px tall) */
+          padding: clamp(9rem, 14vw, 12rem) clamp(1.5rem, 5vw, 3rem) clamp(5rem, 10vw, 9rem);
           background: linear-gradient(135deg, #2FA873 0%, #1f8c5d 100%);
           color: #fff; text-align: center;
+          min-height: 60vh;
+          display: flex; align-items: center; justify-content: center;
         }
         .ap-success-inner { max-width: 720px; margin: 0 auto; }
         .ap-success-eyebrow {
@@ -761,10 +770,7 @@ export default function ApplyClient({
           border-left: 1px solid rgba(36,17,35,0.08);
         }
         .ap-file-clear:hover { color: #F23359; }
-      `}</style>
-    </main>
-  );
-}
+`;
 
 function FileField({
   id,
