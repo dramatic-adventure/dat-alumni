@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { TRAVELING_ARTIST_COUNT_DISPLAY, SEASON_COUNT, PRODUCTION_COUNT, CLUB_COUNT } from "@/lib/datStats";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -12,16 +13,19 @@ import { TRAVELING_ARTIST_COUNT_DISPLAY, SEASON_COUNT, PRODUCTION_COUNT, CLUB_CO
 const STORAGE_KEY = "dat-cs-seen";
 
 export default function ComingSoonModal() {
+  const pathname = usePathname();
+  const isFieldKit = pathname?.startsWith("/field-kit") ?? false;
   const [phase, setPhase] = useState<"hidden" | "entering" | "visible" | "exiting">("hidden");
 
   useEffect(() => {
+    if (isFieldKit) return;
     const today = new Date().toISOString().split("T")[0];
     const seen = localStorage.getItem(STORAGE_KEY);
     if (seen !== today) {
       const t = setTimeout(() => setPhase("entering"), 280);
       return () => clearTimeout(t);
     }
-  }, []);
+  }, [isFieldKit]);
 
   // entering → visible after animation completes
   useEffect(() => {
