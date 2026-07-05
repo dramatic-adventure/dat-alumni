@@ -80,7 +80,15 @@ const ERROR_STYLE: React.CSSProperties = {
 type Mode = "signin" | "reset";
 type ResetStep = "request" | "confirm";
 
-export default function EmailCodeForm({ callbackUrl }: { callbackUrl: string }) {
+export default function EmailCodeForm({
+  callbackUrl,
+  invite,
+}: {
+  callbackUrl: string;
+  /** Invite token, if this sign-in was reached via an invite link — carried
+   *  through to the eligibility check on the request/set-password endpoints. */
+  invite?: string;
+}) {
   const [mode, setMode] = useState<Mode>("signin");
   const [resetStep, setResetStep] = useState<ResetStep>("request");
 
@@ -147,7 +155,7 @@ export default function EmailCodeForm({ callbackUrl }: { callbackUrl: string }) 
       const res = await fetch("/api/auth/email-code/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: trimmedEmail }),
+        body: JSON.stringify({ email: trimmedEmail, inviteToken: invite }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -171,7 +179,7 @@ export default function EmailCodeForm({ callbackUrl }: { callbackUrl: string }) 
       const res = await fetch("/api/auth/email-code/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: trimmedEmail }),
+        body: JSON.stringify({ email: trimmedEmail, inviteToken: invite }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -199,6 +207,7 @@ export default function EmailCodeForm({ callbackUrl }: { callbackUrl: string }) 
           email: trimmedEmail,
           code: code.trim(),
           password: newPassword,
+          inviteToken: invite,
         }),
       });
       const data = await res.json().catch(() => ({}));

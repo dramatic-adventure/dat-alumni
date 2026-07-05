@@ -1,18 +1,23 @@
 // app/api/auth/email-code/request/route.ts
 //
-// Sends a 6-digit sign-in code to the given email (Gmail API via
-// lib/sendEmail), for the email-code NextAuth credentials provider
-// (see /auth.ts).
+// Sends a 6-digit code to the given email (Gmail API via lib/sendEmail) that
+// proves ownership of that email before a password can be set/reset on the
+// "password" NextAuth credentials provider (see /auth.ts and
+// app/api/auth/account/set-password).
 import "server-only";
 import { NextResponse } from "next/server";
 import { requestEmailCode } from "@/lib/emailLoginCodes";
 import { sendEmail, emailConfigured } from "@/lib/sendEmail";
+import { isEligibleForPasswordAccount, INELIGIBLE_EMAIL_ERROR } from "@/lib/accountEligibility";
+import { rateLimit, rateKey } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type Body = {
   email?: string;
+  /** Invite token from /alumni/update?invite=... , carried through /login */
+  inviteToken?: string;
   /** Honeypot — bots fill this, humans leave it blank */
   website?: string;
 };
@@ -50,6 +55,21 @@ export async function POST(req: Request) {
   // Honeypot — silently succeed for bots
   if (body.website) {
     return NextResponse.json({ ok: true });
+  }
+
+  // Per-IP throttle — independent of the per-email cooldown below. Without
+  // this, the endpoint is an open relay: anyone can make DAT's sender
+  // reputation fire codes at arbitrary third-party addresses by cycling
+  // through different emails, only slowed by the 60s-per-email cooldown.
+  if (!rateLimit(rateKey(req), 5, 10 * 60 * 1000)) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a few minutes and try again." },
+      { status: 429 }
+    );
+  }
+
+  if (!(await isEligibleForPasswordAccount(body.email || "", body.inviteToken))) {
+    return NextResponse.json({ error: INELIGIBLE_EMAIL_ERROR }, { status: 403 });
   }
 
   const result = await requestEmailCode(body.email || "");

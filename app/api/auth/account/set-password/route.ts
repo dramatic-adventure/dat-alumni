@@ -10,6 +10,7 @@ import { verifyEmailCode } from "@/lib/emailLoginCodes";
 import { hashPassword, isPasswordStrongEnough } from "@/lib/passwordHash";
 import { upsertCredential } from "@/lib/accountCredentials";
 import { EMAIL_RE } from "@/lib/emailIdentity";
+import { isEligibleForPasswordAccount, INELIGIBLE_EMAIL_ERROR } from "@/lib/accountEligibility";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +19,8 @@ type Body = {
   email?: string;
   code?: string;
   password?: string;
+  /** Invite token from /alumni/update?invite=... , carried through /login */
+  inviteToken?: string;
 };
 
 export async function POST(req: Request) {
@@ -40,6 +43,13 @@ export async function POST(req: Request) {
       { error: "Password must be at least 8 characters." },
       { status: 422 }
     );
+  }
+
+  // Re-check eligibility here too (defense in depth) — codes are valid for 2
+  // weeks, long enough for an invite to expire or other state to change
+  // between /email-code/request and this call.
+  if (!(await isEligibleForPasswordAccount(email, body.inviteToken))) {
+    return NextResponse.json({ error: INELIGIBLE_EMAIL_ERROR }, { status: 403 });
   }
 
   const validCode = await verifyEmailCode(email, code);

@@ -403,7 +403,7 @@ export default async function LoginPage({
             >
               Sign in with email & password
             </p>
-            <EmailCodeForm callbackUrl={callbackUrl} />
+            <EmailCodeForm callbackUrl={callbackUrl} invite={invite} />
 
             {/* Trust line — covers both sign-in methods */}
             <p

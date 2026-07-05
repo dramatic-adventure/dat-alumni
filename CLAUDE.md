@@ -18,7 +18,9 @@ npm run typecheck    # TypeScript check only (tsc --noEmit)
 npm run prisma:generate  # Regenerate Prisma client after schema changes
 ```
 
-**Netlify build command:** `DATABASE_URL=file:./dev.db npm run prisma:generate && npm run build`
+**Netlify build command (see `netlify.toml`):** `npm run prisma:generate && npm run build`. `prisma:generate` only generates the client — it does not touch the database. Netlify's `DATABASE_URL` (Neon Postgres) is set in the site's env vars, not in this command.
+
+**Schema changes are applied via `prisma db push`, not `prisma migrate`.** The `prisma/migrations/` directory predates the move to Neon and is still SQLite-formatted (see its `migration_lock.toml`) — it does not match the current `postgresql` datasource and nothing in the build pipeline runs `prisma migrate deploy`. To apply a schema change, run `npx prisma db push --schema=prisma/schema.prisma` locally against the real `DATABASE_URL` (e.g. from `.env.local`). Do not add new files to `prisma/migrations/`; they won't be applied by anything.
 
 There are no test commands — this project has no automated test suite.
 
@@ -86,7 +88,7 @@ Alumni and content pages use a slug forwarding system (`loadSlugForwardMap`) to 
 | `NEXTAUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Auth |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Payments |
 | `NETLIFY_BLOBS_*` or auto-injected | Netlify Blobs access |
-| `DATABASE_URL` | SQLite path (e.g., `file:./dev.db`) |
+| `DATABASE_URL` | Postgres connection string (Neon) — donation/credential storage. `.env`'s `file:./dev.db` is a stale placeholder, unused in practice |
 | `MAPBOX_TOKEN` | Mapbox for story map |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Field Kit web push public key (Slice 3); non-secret, stays in Builds env. See `field-kit-NOTIFICATIONS-SCHEMA.md` |
 
