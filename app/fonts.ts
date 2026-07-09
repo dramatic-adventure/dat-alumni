@@ -12,12 +12,6 @@ export const anton = localFont({
       weight: "400",
       style: "normal",
     },
-    // (optional) keep as fallback; safe to remove if you want
-    {
-      path: "../public/fonts/anton-v26-latin-regular.woff2",
-      weight: "400",
-      style: "normal",
-    },
   ],
   variable: "--font-anton",
   display: "swap",
@@ -128,7 +122,7 @@ export const gloucester = localFont({
 =============================== */
 
 export const vt323 = localFont({
-  src: "../public/fonts/vt323-v17-latin-regular.woff2",
+  src: "../public/fonts/vt323-latin_latin-ext_vietnamese-regular.woff2",
   variable: "--font-vt323",
   preload: false,
   weight: "400",
@@ -146,7 +140,7 @@ export const vt323 = localFont({
 });
 
 export const specialElite = localFont({
-  src: "../public/fonts/special-elite-v19-latin-regular.woff2",
+  src: "../public/fonts/special-elite-latin_latin-ext-regular.woff2",
   variable: "--font-special-elite",
   preload: false,
   weight: "400",
@@ -181,7 +175,7 @@ export const shareTechMono = localFont({
 });
 
 export const cutiveMono = localFont({
-  src: "../public/fonts/cutive-mono-v22-latin-regular.woff2",
+  src: "../public/fonts/cutive-mono-latin_latin-ext-regular.woff2",
   variable: "--font-cutive-mono",
   preload: false,
   weight: "400",
@@ -201,12 +195,12 @@ export const cutiveMono = localFont({
 export const anonymousPro = localFont({
   src: [
     {
-      path: "../public/fonts/anonymous-pro-v21-latin/anonymous-pro-v21-latin-regular.woff2",
+      path: "../public/fonts/anonymous-pro-latin_latin-ext/anonymous-pro-latin_latin-ext-regular.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../public/fonts/anonymous-pro-v21-latin/anonymous-pro-v21-latin-700.woff2",
+      path: "../public/fonts/anonymous-pro-latin_latin-ext/anonymous-pro-latin_latin-ext-700.woff2",
       weight: "700",
       style: "normal",
     },
@@ -227,7 +221,7 @@ export const anonymousPro = localFont({
 });
 
 export const syneMono = localFont({
-  src: "../public/fonts/syne-mono-v15-latin-regular.woff2",
+  src: "../public/fonts/syne-mono-latin_latin-ext-regular.woff2",
   variable: "--font-syne-mono",
   preload: false,
   weight: "400",
@@ -247,27 +241,27 @@ export const syneMono = localFont({
 export const zillaSlab = localFont({
   src: [
     {
-      path: "../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-300.woff2",
+      path: "../public/fonts/zilla-slab-latin_latin-ext/zilla-slab-latin_latin-ext-300.woff2",
       weight: "300",
       style: "normal",
     },
     {
-      path: "../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-regular.woff2",
+      path: "../public/fonts/zilla-slab-latin_latin-ext/zilla-slab-latin_latin-ext-regular.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-500.woff2",
+      path: "../public/fonts/zilla-slab-latin_latin-ext/zilla-slab-latin_latin-ext-500.woff2",
       weight: "500",
       style: "normal",
     },
     {
-      path: "../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-600.woff2",
+      path: "../public/fonts/zilla-slab-latin_latin-ext/zilla-slab-latin_latin-ext-600.woff2",
       weight: "600",
       style: "normal",
     },
     {
-      path: "../public/fonts/zilla-slab-v11-latin/zilla-slab-v11-latin-700.woff2",
+      path: "../public/fonts/zilla-slab-latin_latin-ext/zilla-slab-latin_latin-ext-700.woff2",
       weight: "700",
       style: "normal",
     },

@@ -941,8 +941,11 @@ const hasStories = storiesForFeatured.length > 0;
       {/* ✅ IMPORTANT FIX:
           Don't gate stamps on programBadges. ProgramStamps should be driven by
           programMap + slug (and it can no-op internally if none found). */}
+      {/* zIndex must stay BELOW the desktop header headshot (z-40) so the
+          headshot overlaps this section when it renders directly beneath
+          the header (i.e. when the sections above it fall away). */}
       {!!slug?.trim() && (
-        <div className="relative py-6 m-0 animate-fadeIn" style={{ zIndex: 50 }}>
+        <div className="relative py-6 m-0 animate-fadeIn" style={{ zIndex: 30 }}>
           <div className="max-w-6xl mx-auto px-4">
             <ProgramStamps artistSlug={slug} slugAliases={slugAliases} />
           </div>
