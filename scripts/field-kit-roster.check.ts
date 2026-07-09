@@ -61,8 +61,8 @@ const EXPECTED_SLOVAKIA_MEMBERS = [
   "jesse-baxter",
   "christen-madrazo",
   "jason-williamson",
-  "asa-williamson",
-  "vida-williamson",
+  "asa-madrazo-williamson",
+  "vida-madrazo-williamson",
   "christina-greene",
   "adrian-pica-borjas",
 ];
