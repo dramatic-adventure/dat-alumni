@@ -184,10 +184,12 @@ export const programMap: Record<string, ProgramData> = {
     "christen-madrazo": ["Director of Creative Learning"],
     "jason-williamson": ["Resident Playwright"],
     "barbara-herucova": ["Road Manager"],
+    "tatiana-kukova": ["Road Manager"],
     "asa-madrazo-williamson": ["Junior Field Artist"],
     "vida-madrazo-williamson": ["Junior Field Artist"],
     "christina-greene": ["Writer"],
     "adrian-pica-borjas": ["Writer"],
+    "barbora-curejova": ["Actor"],
   },
 },
 
@@ -212,6 +214,7 @@ export const programMap: Record<string, ProgramData> = {
     "barbara-herucova": ["Road Manager"],
     "christina-greene": ["Writer"],
     "adrian-pica-borjas": ["Writer"],
+    "barbora-curejova": ["Actor"],
   },
 },
 
@@ -239,10 +242,12 @@ export const programMap: Record<string, ProgramData> = {
     "jesse-baxter": ["Artistic Director", "Teaching Artist"],
     "christen-madrazo": ["Director of Creative Learning", "Teaching Artist"],
     "jason-williamson": ["Resident Playwright", "Teaching Artist"],
+    "tatiana-kukova": ["Road Manager"],
     "asa-madrazo-williamson": ["Junior Field Artist"],
     "vida-madrazo-williamson": ["Junior Field Artist"],
     "christina-greene": ["Writer"],
     "adrian-pica-borjas": ["Writer"],
+    "barbora-curejova": ["Actor"],
   },
 },
 
