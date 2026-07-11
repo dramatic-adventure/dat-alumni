@@ -65,6 +65,8 @@ const EXPECTED_SLOVAKIA_MEMBERS = [
   "vida-madrazo-williamson",
   "christina-greene",
   "adrian-pica-borjas",
+  "tatiana-kukova",
+  "barbora-curejova",
 ];
 
 // Artists who belong only to the Amazon program — must NOT leak into Slovakia.
