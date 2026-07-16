@@ -32,7 +32,7 @@ const copy = {
     aboutP2:
       "Together, we will devise and develop new material through creative writing, movement and dance explorations, improvisation, and composition work. This is a place to test material, follow creative impulses, shape fragments of ideas, listen deeply, discover what is resonating, and develop all-new scenes and moments together.",
     aboutP3:
-      "We are essentially bringing our version of the NYC black box theatre development process to Košice — intimate, actor-centered, collaborative, immediate, and full of life. And we'd love to marry that with the ways you like to develop new work.",
+      "We are essentially bringing our version of the NYC black box theatre development process to Košice — intimate, artist-centered, collaborative, immediate, and full of life. And we'd love to marry that with the ways you like to develop new work.",
     videoCaption:
       "An example of the DAT Lab process — inspired by our work in Ecuador.",
 
@@ -125,7 +125,7 @@ const copy = {
     aboutP2:
       "Spoločne budeme vytvárať a rozvíjať nový materiál prostredníctvom tvorivého písania, pohybových a tanečných explorácií, improvizácie a kompozičnej práce. Je to priestor na testovanie materiálu, nasledovanie tvorivých impulzov, formovanie fragmentov nápadov, hlboké počúvanie, objavovanie toho, čo rezonuje, a spoločné vytváranie úplne nových scén a momentov.",
     aboutP3:
-      "V podstate prinášame do Košíc našu verziu newyorského „black box“ procesu vývoja novej divadelnej tvorby — intímneho, sústredeného na herca, kolaboratívneho, bezprostredného a plného života. A radi by sme ho prepojili so spôsobmi, akými novú tvorbu rozvíjate vy.",
+      "V podstate prinášame do Košíc našu verziu newyorského „black box“ procesu vývoja novej divadelnej tvorby — intímneho, sústredeného na umelca, kolaboratívneho, bezprostredného a plného života. A radi by sme ho prepojili so spôsobmi, akými novú tvorbu rozvíjate vy.",
     videoCaption:
       "Ukážka procesu DAT Lab — inšpirovaná našou prácou v Ekvádore.",
 
@@ -406,7 +406,7 @@ export default function DatLabKosicePage() {
               transparent 60%
             ),
             #0d0812;
-          padding: 4.5rem 0 3.5rem;
+          padding: 7.5rem 0 3.5rem;
           text-align: center;
         }
         .datlab-langbar {
