@@ -180,7 +180,7 @@ function DuringToday({
       <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
         {chapter && (
           <Pill color={acc} solid>
-            Ch {chapter.num} · {chapter.verb}
+            Act {chapter.num} · {chapter.verb}
           </Pill>
         )}
         {day.dramaClub && <ClubChip slug={day.dramaClub} color={acc} />}
@@ -200,6 +200,9 @@ function DuringToday({
       {itinerary.resources && itinerary.resources.length > 0 && (
         <LibraryLink resources={itinerary.resources} dayId={day.id} />
       )}
+
+      {/* Emergency & Contacts (Slice 7) — shown once the program has contact rows. */}
+      {itinerary.contacts && itinerary.contacts.length > 0 && <ContactsLink />}
 
       {/* pack for today — skip when empty */}
       {day.prep.length > 0 && (
@@ -280,6 +283,39 @@ function LibraryLink({
         </span>
       </span>
       <span aria-hidden style={{ fontFamily: FONT.grotesk, fontSize: 14, color: T.teal, flexShrink: 0 }}>→</span>
+    </Link>
+  );
+}
+
+// Emergency & Contacts link — same quiet row treatment as LibraryLink. The
+// destination page + its data are offline-capable after one visit, so this row
+// is worth a tap before wheels-up.
+function ContactsLink() {
+  return (
+    <Link
+      href="/field-kit/contacts"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        textDecoration: "none",
+        marginTop: 10,
+        padding: "11px 14px",
+        borderRadius: 12,
+        border: `1px solid ${T.border}`,
+        backgroundColor: T.card,
+      }}
+    >
+      <span>
+        <span style={{ display: "block", fontFamily: FONT.grotesk, fontSize: 9.5, fontWeight: 800, letterSpacing: "0.16em", textTransform: "uppercase", color: T.pink, marginBottom: 2 }}>
+          Emergency &amp; Contacts
+        </span>
+        <span style={{ fontFamily: FONT.dm, fontSize: 12, color: T.muted }}>
+          Numbers, staff, and the WhatsApp group — works offline
+        </span>
+      </span>
+      <span aria-hidden style={{ fontFamily: FONT.grotesk, fontSize: 14, color: T.pink, flexShrink: 0 }}>→</span>
     </Link>
   );
 }

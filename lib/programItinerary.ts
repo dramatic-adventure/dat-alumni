@@ -45,6 +45,14 @@ export type ChapterRow = {
   partnerOrg: string; // slug (net-new partner store; slug only for now)
   dayIds: string; // optional ordered list "d01|d02"; else derived from days
   status: string; // "complete"|"draft"|"empty" (default empty in Slice 1)
+  // Lodging (Slice 7) — where the company sleeps this chapter. First-class
+  // columns on the Chapters tab (1:1 with chapter); all optional.
+  lodgingName: string;
+  lodgingAddress: string;
+  lodgingPhone: string;
+  lodgingEmail: string;
+  lodgingWebsite: string;
+  lodgingExpect: string; // the "Expect:" blurb from the trip document
 };
 
 export type ItineraryDayRow = {
@@ -106,6 +114,16 @@ export type ItineraryDay = {
   times: TimeAnchor[];
 };
 
+/** A chapter's lodging block — present only when the sheet names a place. */
+export type Lodging = {
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  website: string;
+  expect: string;
+};
+
 export type Chapter = {
   id: string;
   num: number;
@@ -120,6 +138,7 @@ export type Chapter = {
   dramaClub?: string;
   partnerOrg?: string;
   status: ChapterStatus;
+  lodging?: Lodging; // present only when lodgingName is set
   days: ItineraryDay[];
 };
 
@@ -166,6 +185,30 @@ export type CompanyChoiceState = {
   results?: { choice: string; votes: number }[];
 };
 
+// ── Slice 7 (Contacts) — payload-carried emergency & contact card ─────────────
+// Rides the itinerary payload (like resources) so it precaches offline — the
+// moment you need the emergency card is exactly when you may have no signal.
+// Roster-gated payload only; never enters any public surface.
+
+export type FieldContactSection =
+  | "emergency"
+  | "ground-control"
+  | "staff"
+  | "artists"
+  | "whatsapp"
+  | "other";
+
+export type FieldContact = {
+  id: string;
+  section: FieldContactSection;
+  label: string; // person or entry name ("Jesse Baxter", "General Emergency")
+  role: string; // "Artistic Director", "All-company group"
+  phone: string; // rendered tap-to-call (tel:)
+  email: string; // rendered mailto:
+  link: string; // external URL (e.g. chat.whatsapp.com invite)
+  note: string; // small print under the row
+};
+
 export type FieldResourceType = "text" | "audio" | "image" | "link";
 
 export type FieldResource = {
@@ -193,6 +236,7 @@ export type ProgramItinerary = {
   rollCall?: RollCallState; // present only when a roll call exists (Slice 5)
   companyChoice?: CompanyChoiceState; // present only when a question exists (Slice 5)
   resources?: FieldResource[]; // present only when the program has library rows (Slice 5)
+  contacts?: FieldContact[]; // present only when the program has contact rows (Slice 7)
 };
 
 // ── normalization helpers ──────────────────────────────────────────────────────
@@ -377,6 +421,7 @@ export function rowsToProgramItinerary(input: {
       dramaClub: c.dramaClub?.trim() || undefined,
       partnerOrg: c.partnerOrg?.trim() || undefined,
       status: normalizeStatus(c.status),
+      lodging: lodgingFromRow(c),
       days: orderedDaysForChapter(c, daysByChapter),
     }));
 
@@ -398,6 +443,25 @@ export function rowsToProgramItinerary(input: {
     todayDayId: program.todayDayId?.trim() || undefined,
     link: program.link?.trim() || undefined,
     chapters: builtChapters,
+  };
+}
+
+/**
+ * A chapter's lodging block, or undefined when the row names no place. Keyed on
+ * lodgingName so a stray phone/address cell alone never renders an empty shell.
+ * (An undefined key is dropped by JSON.stringify, so pre-lodging itineraries
+ * hash identically — no spurious LiveRefresh.)
+ */
+function lodgingFromRow(c: ChapterRow): Lodging | undefined {
+  const name = String(c.lodgingName ?? "").trim();
+  if (!name) return undefined;
+  return {
+    name,
+    address: String(c.lodgingAddress ?? "").trim(),
+    phone: String(c.lodgingPhone ?? "").trim(),
+    email: String(c.lodgingEmail ?? "").trim(),
+    website: String(c.lodgingWebsite ?? "").trim(),
+    expect: String(c.lodgingExpect ?? "").trim(),
   };
 }
 

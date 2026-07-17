@@ -99,6 +99,36 @@
 
 ---
 
+## Addendum (2026-07-14) — Lodging columns + Contacts tab (Slice 7)
+
+### Tab 2 gains six lodging columns (append after `status`)
+
+| Column | Meaning | Example |
+|---|---|---|
+| `lodgingName` | where the company sleeps this chapter — **rendering keys on this**; blank = no lodging block | `Medická Dormitory` |
+| `lodgingAddress` | street address | `Medická 4/6, 040 11 Košice, Slovakia` |
+| `lodgingPhone` | phone — **multi-value** (newline, `\|`, or `/`); each renders tap-to-call | `+421 55 234 1684 / +421 55 643 1689` |
+| `lodgingEmail` | email (mailto:) | `ubyt@upjs.sk` |
+| `lodgingWebsite` | website — **multi-value** (newline or `\|`); each renders as a link, https:// added if missing | `www.upjs.sk \| maps.app.goo.gl/…` |
+| `lodgingExpect` | the "Expect:" blurb | `Simple university dormitory lodging…` |
+
+### Tab 5 — `Field Kit Contacts`  (one row per contact entry)
+
+Read by `lib/contacts.ts`; rides the itinerary payload (offline-precached, roster-gated). Renders at `/field-kit/contacts`.
+
+| Column | Meaning | Example |
+|---|---|---|
+| `id` | stable row id | `c05` |
+| `programId` | must match the Program row | `passage-slovakia-2026` |
+| `section` | `emergency` / `ground-control` / `staff` / `artists` / `whatsapp` (unknown → "other") | `staff` |
+| `order` | sort within the section | `1` |
+| `label` | person or entry name | `Jesse Baxter` |
+| `role` | small-caps role line | `Artistic Director` |
+| `phone` | tap-to-call | `+1 917 952 4714` |
+| `email` | mailto: | `jesse@dramaticadventure.com` |
+| `link` | external URL — WhatsApp rows carry the `chat.whatsapp.com` invite here | *(blank until the group exists)* |
+| `note` | small print under the row | `Text preferred.` |
+
 ## Checklist for you
 
 1. Create the four tabs with the exact header names above.

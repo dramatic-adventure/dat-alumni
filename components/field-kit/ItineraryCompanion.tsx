@@ -27,9 +27,11 @@ import type {
 } from "@/lib/programItinerary";
 
 const STATUS_COPY: Record<ChapterStatus, { label: string; color: string }> = {
-  complete: { label: "Chapter published", color: "#1f9d57" },
-  draft: { label: "Chapter in progress", color: T.pink },
-  empty: { label: "Chapter not started", color: T.muted },
+  // Display language is "Act" (theatre framing, Jesse's call 2026-07-14); the
+  // data layer keeps "chapter" naming (sheet tabs, types) — display-only rename.
+  complete: { label: "Act published", color: "#1f9d57" },
+  draft: { label: "Act in progress", color: T.pink },
+  empty: { label: "Act not started", color: T.muted },
 };
 
 type DayState = "past" | "today" | "future";
@@ -88,7 +90,7 @@ export default function ItineraryCompanion({
 
         {/* mini stats — derived */}
         <div style={{ display: "flex", gap: 22, flexWrap: "wrap", marginBottom: 30, paddingBottom: 22, borderBottom: `1px solid ${T.sep}` }}>
-          <Stat n={String(nChapters)} label={nChapters === 1 ? "Chapter" : "Chapters"} color={T.pink} />
+          <Stat n={String(nChapters)} label={nChapters === 1 ? "Act" : "Acts"} color={T.pink} />
           <Stat n={String(nDays)} label="Field days" color={T.teal} />
           {clubSlugs.size > 0 && <Stat n={String(clubSlugs.size)} label={clubSlugs.size === 1 ? "Drama club" : "Drama clubs"} color={T.purple} />}
           {partnerSlugs.size > 0 && <Stat n={String(partnerSlugs.size)} label={partnerSlugs.size === 1 ? "Partner org" : "Partner orgs"} color={T.grape} />}
@@ -97,6 +99,16 @@ export default function ItineraryCompanion({
         {/* Print / Copy / Share — each gated by the privacy warning. Lives here so
             it appears in both the live and offline (snapshot) renders. */}
         <ItineraryActions itinerary={itinerary} />
+
+        {/* Emergency & Contacts (Slice 7) — quiet link above the spine, shown
+            once the program has contact rows. */}
+        {itinerary.contacts && itinerary.contacts.length > 0 && (
+          <p style={{ fontFamily: FONT.dm, fontSize: 12.5, margin: "0 0 24px" }}>
+            <Link href="/field-kit/contacts" style={{ color: T.pink, textDecoration: "none", borderBottom: `1px solid ${T.pink}44` }}>
+              ☎ Emergency &amp; Contacts — numbers, staff, WhatsApp
+            </Link>
+          </p>
+        )}
 
         {/* The spine */}
         <div style={{ position: "relative" }}>
@@ -112,7 +124,7 @@ export default function ItineraryCompanion({
 
 function statLede(nCh: number, nDays: number, nClubs: number): string {
   const parts = [
-    `${nCh} ${nCh === 1 ? "chapter" : "chapters"}`,
+    `${nCh} ${nCh === 1 ? "act" : "acts"}`,
     `${nDays} ${nDays === 1 ? "day" : "days"} in the field`,
   ];
   if (nClubs > 0) parts.push(`${nClubs} ${nClubs === 1 ? "drama club" : "drama clubs"}`);
@@ -179,6 +191,7 @@ function ChapterBlock({ chapter, today, todayNum }: { chapter: Chapter; today: R
         </div>
 
         {chapter.goal && <GoalBlock goal={chapter.goal} />}
+        {chapter.lodging && <LodgingBlock lodging={chapter.lodging} acc={acc} />}
         {chapter.tips && <TipsBlock tips={chapter.tips} acc={acc} />}
       </div>
 
@@ -321,6 +334,70 @@ function GoalBlock({ goal }: { goal: string }) {
     </div>
   );
 }
+
+// Lodging (Slice 7) — where the company sleeps this chapter. Renders only when
+// the sheet names a place (lodgingFromRow keys on the name); phone/email are
+// tap-to-act, websites are real external links. The phone and website cells are
+// MULTI-VALUE, following the sheet convention (newline or "|"; phone also
+// accepts "/" since the trip doc writes pairs that way) — each value renders as
+// its own link. Missing cells skip cleanly.
+function LodgingBlock({ lodging, acc }: { lodging: NonNullable<Chapter["lodging"]>; acc: string }) {
+  const split = (raw: string, extra?: RegExp) =>
+    raw
+      .split(extra ?? /[\n|]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+  const contactBits: React.ReactNode[] = [];
+  for (const phone of split(lodging.phone, /[\n|/]/)) {
+    contactBits.push(
+      <a key={`phone-${phone}`} href={`tel:${phone.replace(/[^+\d]/g, "")}`} style={lodgingLink}>
+        {phone}
+      </a>
+    );
+  }
+  if (lodging.email) {
+    contactBits.push(
+      <a key="email" href={`mailto:${lodging.email}`} style={lodgingLink}>
+        {lodging.email}
+      </a>
+    );
+  }
+  for (const site of split(lodging.website)) {
+    const href = /^https?:\/\//i.test(site) ? site : `https://${site}`;
+    contactBits.push(
+      <a key={`site-${site}`} href={href} target="_blank" rel="noopener noreferrer" style={lodgingLink}>
+        {site}
+      </a>
+    );
+  }
+  return (
+    <div style={{ margin: "0 0 12px", padding: "10px 14px", borderRadius: 8, backgroundColor: "rgba(246,239,227,0.05)", border: `1px solid ${T.border}` }}>
+      <p style={{ fontFamily: FONT.grotesk, fontSize: 8.5, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: acc, margin: "0 0 5px" }}>Lodging</p>
+      <p style={{ fontFamily: FONT.dm, fontWeight: 700, fontSize: 13.5, color: T.ink, margin: "0 0 2px" }}>{lodging.name}</p>
+      {lodging.address && (
+        <p style={{ fontFamily: FONT.dm, fontSize: 12.5, lineHeight: 1.5, color: T.ink, opacity: 0.78, margin: "0 0 4px" }}>{lodging.address}</p>
+      )}
+      {contactBits.length > 0 && (
+        <p style={{ fontFamily: FONT.dm, fontSize: 12, lineHeight: 1.6, margin: "0 0 4px", display: "flex", flexWrap: "wrap", gap: "2px 14px" }}>
+          {contactBits}
+        </p>
+      )}
+      {lodging.expect && (
+        <p style={{ fontFamily: FONT.dm, fontSize: 12.5, lineHeight: 1.55, color: T.ink, opacity: 0.72, margin: 0 }}>
+          <span style={{ fontWeight: 700, opacity: 0.9 }}>Expect:</span> {lodging.expect}
+        </p>
+      )}
+    </div>
+  );
+}
+
+const lodgingLink: React.CSSProperties = {
+  fontFamily: FONT.dm,
+  color: T.teal,
+  textDecoration: "none",
+  borderBottom: `1px solid ${T.teal}44`,
+};
 
 function TipsBlock({ tips, acc }: { tips: string; acc: string }) {
   return (

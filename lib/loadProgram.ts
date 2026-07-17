@@ -36,6 +36,7 @@ import {
   toPublicCompanyChoice,
 } from "@/lib/companyChoice";
 import { getResources } from "@/lib/resources";
+import { getContacts } from "@/lib/contacts";
 
 const SHEET_ID = process.env.ALUMNI_SHEET_ID || "";
 
@@ -56,6 +57,7 @@ const PROGRAM_HEADERS: (keyof ProgramRow)[] = [
 const CHAPTER_HEADERS: (keyof ChapterRow)[] = [
   "id", "programId", "num", "verb", "place", "title", "description",
   "goal", "tips", "accent", "prompt", "dramaClub", "partnerOrg", "dayIds", "status",
+  "lodgingName", "lodgingAddress", "lodgingPhone", "lodgingEmail", "lodgingWebsite", "lodgingExpect",
 ];
 const DAY_HEADERS: (keyof ItineraryDayRow)[] = [
   "id", "programId", "chapterId", "dayNum", "dateLabel", "fullDate", "location",
@@ -163,6 +165,12 @@ const toChapterRow = (r: Record<string, string>): ChapterRow => ({
   partnerOrg: r.partnerOrg ?? "",
   dayIds: r.dayIds ?? "",
   status: r.status ?? "",
+  lodgingName: r.lodgingName ?? "",
+  lodgingAddress: r.lodgingAddress ?? "",
+  lodgingPhone: r.lodgingPhone ?? "",
+  lodgingEmail: r.lodgingEmail ?? "",
+  lodgingWebsite: r.lodgingWebsite ?? "",
+  lodgingExpect: r.lodgingExpect ?? "",
 });
 
 const toDayRow = (r: Record<string, string>): ItineraryDayRow => ({
@@ -207,7 +215,7 @@ const _itineraryCache = new Map<string, { at: number; value: ProgramItinerary | 
 
 const loadProgramItineraryUncached = cache(
   async (pid: string): Promise<ProgramItinerary | null> => {
-    const [programRows, chapterRows, dayRows, timeRows, rallyPoint, rollCall, choiceRow, resources] =
+    const [programRows, chapterRows, dayRows, timeRows, rallyPoint, rollCall, choiceRow, resources, contacts] =
       await Promise.all([
         readProgramRows(),
         readChapterRows(),
@@ -217,6 +225,7 @@ const loadProgramItineraryUncached = cache(
         getCurrentRollCall(pid), // resilient: null on any failure (Slice 5)
         getCurrentCompanyChoice(pid), // resilient: null on any failure (Slice 5)
         getResources(pid), // resilient: [] on any failure (Slice 5)
+        getContacts(pid), // resilient: [] on any failure (Slice 7)
       ]);
 
     const program = programRows.map(toProgramRow).find((p) => norm(p.programId) === pid);
@@ -261,6 +270,10 @@ const loadProgramItineraryUncached = cache(
         r.type === "link" ? r : { ...r, url: "" }
       );
     }
+    // Contacts (Slice 7) — attached only when present (same hash-stability rule
+    // as above). This payload is roster-gated; the emergency/contact card must
+    // precache offline with the itinerary.
+    if (contacts.length) itinerary.contacts = contacts;
     return itinerary;
   }
 );

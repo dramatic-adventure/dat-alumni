@@ -162,15 +162,15 @@
 
     function statLede(it, clubs) {
       var nCh = (it.chapters || []).length, nDays = allDays(it).length;
-      var parts = [nCh + " " + (nCh === 1 ? "chapter" : "chapters"), nDays + " " + (nDays === 1 ? "day" : "days") + " in the field"];
+      var parts = [nCh + " " + (nCh === 1 ? "act" : "acts"), nDays + " " + (nDays === 1 ? "day" : "days") + " in the field"];
       if (clubs > 0) parts.push(clubs + " " + (clubs === 1 ? "drama club" : "drama clubs"));
       return parts.join(", ") + ".";
     }
 
     var STATUS = {
-      complete: { label: "Chapter published", color: "#1f9d57" },
-      draft: { label: "Chapter in progress", color: "var(--pink)" },
-      empty: { label: "Chapter not started", color: "var(--muted)" }
+      complete: { label: "Act published", color: "#1f9d57" },
+      draft: { label: "Act in progress", color: "var(--pink)" },
+      empty: { label: "Act not started", color: "var(--muted)" }
     };
 
     function renderTimes(times) {
@@ -244,7 +244,7 @@
       html += '<h1 class="title">The Journey,<br>day by day.</h1>';
       html += '<p class="lede">' + esc(lede) + "</p>";
       html += '<div class="stats">' +
-        '<div class="stat"><p class="n" style="color:var(--pink)">' + (it.chapters || []).length + '</p><p class="l">Chapters</p></div>' +
+        '<div class="stat"><p class="n" style="color:var(--pink)">' + (it.chapters || []).length + '</p><p class="l">Acts</p></div>' +
         '<div class="stat"><p class="n" style="color:var(--teal)">' + allDays(it).length + '</p><p class="l">Field days</p></div>' +
         (nClubs ? '<div class="stat"><p class="n" style="color:var(--purple)">' + nClubs + '</p><p class="l">Drama clubs</p></div>' : "") +
         "</div>";
