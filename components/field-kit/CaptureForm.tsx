@@ -65,6 +65,7 @@ export type CaptureDayOption = {
   dayNum: number;
   dateLabel: string;
   fullDate: string; // ISO yyyy-mm-dd; "" when the day carries no date
+  title: string; // the day's name ("Travel Day", "Performance Day")
 };
 
 /** Local yyyy-mm-dd for an epoch-ms timestamp (device-local, like resolveToday). */
@@ -75,7 +76,7 @@ function localIsoDate(ms: number): string {
 }
 
 function dayLabel(d: CaptureDayOption): string {
-  return `Day ${d.dayNum}${d.dateLabel ? ` · ${d.dateLabel}` : ""}`;
+  return `Day ${d.dayNum}${d.dateLabel ? ` · ${d.dateLabel}` : ""}${d.title ? ` — ${d.title}` : ""}`;
 }
 
 export default function CaptureForm({

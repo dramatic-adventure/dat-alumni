@@ -323,6 +323,28 @@ export function toIsoDate(raw: string | undefined | null): string {
   return "";
 }
 
+/**
+ * Normalize an itinerary day's `dateLabel` cell to a human label ("Thu 7/16").
+ *
+ * Like `fullDate` and `time`, a dateLabel cell that Google Sheets has parsed as
+ * a DATE arrives here (via UNFORMATTED_VALUE) as a raw serial number — which
+ * then renders as "Day 5 · 46219". Convert serials to "Ddd M/D"; any real text
+ * ("Thu 7/16", "Travel Day") passes through untouched.
+ */
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+export function formatDateLabelCell(raw: string | undefined | null): string {
+  const s = String(raw ?? "").trim();
+  if (!s) return "";
+  if (/^\d+(\.\d+)?$/.test(s)) {
+    const serial = Math.floor(Number(s));
+    if (Number.isFinite(serial) && serial > 0) {
+      const d = new Date(Date.UTC(1899, 11, 30) + serial * 86_400_000);
+      return `${WEEKDAYS[d.getUTCDay()]} ${d.getUTCMonth() + 1}/${d.getUTCDate()}`;
+    }
+  }
+  return s;
+}
+
 export function formatTimeCell(raw: string | undefined | null): string {
   const s = String(raw ?? "").trim();
   if (!s) return "";
@@ -386,7 +408,7 @@ export function rowsToProgramItinerary(input: {
       id: d.id,
       chapterId: d.chapterId,
       dayNum: toNum(d.dayNum),
-      dateLabel: d.dateLabel ?? "",
+      dateLabel: formatDateLabelCell(d.dateLabel),
       fullDate: toIsoDate(d.fullDate),
       location: d.location ?? "",
       title: d.title ?? "",

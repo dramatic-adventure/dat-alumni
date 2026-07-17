@@ -52,6 +52,7 @@ export default async function CapturePage({
           dayNum: d.dayNum,
           dateLabel: d.dateLabel,
           fullDate: d.fullDate,
+          title: d.title,
         }))
       )
     : [];
