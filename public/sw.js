@@ -8,15 +8,29 @@
 // are NEVER cached here.
 //
 // SLICE 4a generalizes offline nav caching to every gated /field-kit/* page
-// (see field-kit-NAV-CACHE-DESIGN.md): network-FIRST, and only a successful,
-// non-redirected, non-gate, non-admin, non-impersonated 200 gets written to the
-// cache. On a network failure the last cached copy of that exact URL is served;
-// if there's no cached copy yet, the itinerary route falls back to its SLICE 2
-// bespoke non-gated shell (SHELL_URL, ships no user data, renders from the
-// IndexedDB snapshot) and every other kit route falls back to the generic
-// OFFLINE_URL notice. Never cache: /api/*, login redirects, the "not in
-// program" gate screen (detected via GATE_MARKER), /field-kit/admin (staff
-// console — online-only, cohort-wide data), or any ?asId= impersonation view.
+// (see field-kit-NAV-CACHE-DESIGN.md): only a successful, non-redirected,
+// non-gate, non-admin, non-impersonated 200 gets written to the cache. If
+// there's no cached copy yet and the network fails, the itinerary route falls
+// back to its SLICE 2 bespoke non-gated shell (SHELL_URL, ships no user data,
+// renders from the IndexedDB snapshot) and every other kit route falls back to
+// the generic OFFLINE_URL notice. Never cache: /api/*, login redirects, the
+// "not in program" gate screen (detected via GATE_MARKER), /field-kit/admin
+// (staff console — online-only, cohort-wide data), or any ?asId= view.
+//
+// SLICE 4b (instant open): kit navigations are now CACHE-FIRST. A cached copy
+// is served immediately (~0ms, with or without signal) and revalidated in the
+// background; when the fresh copy differs, controlled clients on that URL get
+// a "fk-nav-fresh" message and NavCacheReconciler runs a silent
+// router.refresh() (home + itinerary additionally self-correct via
+// LiveRefresh). If the revalidate comes back as a login redirect or the
+// roster-gate screen, the cached entry is DELETED and the client gets
+// "fk-nav-auth" → hard reload → the real redirect/gate shows (never masked by
+// a stale page while online). Transient server errors leave the cached copy
+// standing. The home ("/field-kit") + itinerary routes are also background-
+// precached after any successful kit visit, so the day page cold-opens
+// offline even if never directly visited. Cache-first only ever serves the
+// device owner's own pages: admin/asId/gate responses are never written, and
+// sign-out sweeps every fk-* cache (lib/fieldKitCache#clearFieldKitCaches).
 //
 // IMPORTANT: do NOT bump CACHE on routine deploys — see design §5. Cached HTML
 // and the exact hashed _next/static chunks it references stay paired only
@@ -91,6 +105,107 @@ async function isCacheableFieldKitResponse(res, url) {
   if (url.searchParams.has("asId")) return false;
   const text = await res.clone().text();
   return !text.includes(GATE_MARKER);
+}
+
+// SLICE 4b — the two daily-use routes, guaranteed cached after ANY successful
+// kit visit (not just after being directly visited), so a cold offline open of
+// the day page works from day one. Fetched with same-origin credentials and
+// subject to the exact same isCacheableFieldKitResponse rules as a real visit.
+const CORE_NAV_PRECACHE = ["/field-kit", "/field-kit/itinerary"];
+
+// Once per SW lifetime is enough — the SW is torn down when idle, so misses
+// (e.g. attempted while offline) retry naturally on the next cold start.
+let corePrecacheAttempted = false;
+
+async function ensureCoreNavPrecache(cache) {
+  if (corePrecacheAttempted) return;
+  corePrecacheAttempted = true;
+  await Promise.all(
+    CORE_NAV_PRECACHE.map(async (path) => {
+      try {
+        if (await cache.match(path)) return; // already have a (fresher) real visit
+        const res = await fetch(path, { credentials: "same-origin" });
+        const url = new URL(path, self.location.origin);
+        if (await isCacheableFieldKitResponse(res, url)) await cache.put(path, res.clone());
+      } catch {
+        // offline / transient — next SW start retries
+      }
+    })
+  );
+}
+
+// Tell every controlled kit window about a nav-cache event for `targetUrl`.
+// The client (NavCacheReconciler) compares the URL against its own location
+// and acts only if it's the page being viewed.
+async function notifyClients(targetUrl, type) {
+  const clients = await self.clients.matchAll({ type: "window" });
+  for (const c of clients) c.postMessage({ type, url: targetUrl });
+}
+
+// Background revalidate for a navigation that was just answered from cache.
+async function revalidateFieldKitNavigation(req, url, cache, cached) {
+  let res;
+  try {
+    res = await fetch(req);
+  } catch {
+    return; // offline — the cached copy stands, nothing to reconcile
+  }
+
+  // Network reachable and says "signed out" (server-side redirect to /login):
+  // never mask that with the stale copy — drop it and make the page show the
+  // real redirect on reload.
+  if (res.redirected) {
+    await cache.delete(req);
+    await notifyClients(req.url, "fk-nav-auth");
+    return;
+  }
+
+  // Transient server trouble (5xx etc.) — keep the saved copy standing.
+  if (!res.ok || res.status !== 200) return;
+
+  const text = await res.clone().text();
+
+  // Roster-gate screen at the same URL: access was revoked — same treatment
+  // as the login redirect.
+  if (text.includes(GATE_MARKER)) {
+    await cache.delete(req);
+    await notifyClients(req.url, "fk-nav-auth");
+    return;
+  }
+
+  // Belt & braces: admin/asId can't be cache hits (never written), but never
+  // let them be written here either.
+  if (isAdminRoute(url) || url.searchParams.has("asId")) return;
+
+  const oldText = await cached.clone().text();
+  await cache.put(req, res);
+  await ensureCoreNavPrecache(cache);
+  if (text !== oldText) await notifyClients(req.url, "fk-nav-fresh");
+}
+
+// Serve a kit navigation: cache-first (instant) with background revalidate;
+// network-first with offline fallbacks when there's no cached copy yet.
+async function serveFieldKitNavigation(event, req, url) {
+  const cache = await caches.open(CACHE);
+  const cached = await cache.match(req);
+
+  if (cached) {
+    event.waitUntil(revalidateFieldKitNavigation(req, url, cache, cached));
+    return cached;
+  }
+
+  try {
+    const res = await fetch(req);
+    if (await isCacheableFieldKitResponse(res, url)) {
+      await cache.put(req, res.clone());
+      event.waitUntil(ensureCoreNavPrecache(cache));
+    }
+    return res;
+  } catch {
+    const fallbackUrl = isItineraryNavigation(req, url) ? SHELL_URL : OFFLINE_URL;
+    const fallback = await cache.match(fallbackUrl);
+    return fallback || Response.error();
+  }
 }
 
 self.addEventListener("install", (event) => {
@@ -198,32 +313,15 @@ self.addEventListener("fetch", (event) => {
   // Same-origin only.
   if (url.origin !== self.location.origin) return;
 
-  // Field Kit navigation: network-FIRST. A cacheable response (see
-  // isCacheableFieldKitResponse) is written to the cache and returned as-is; an
-  // uncacheable one (login redirect, gate screen, admin, impersonation) is
-  // returned as-is WITHOUT touching the cache — never served stale. On a
-  // network failure, serve the last cached copy of this exact URL if present;
-  // otherwise the itinerary route falls back to its SLICE 2 shell and every
-  // other kit route falls back to the generic offline notice.
+  // Field Kit navigation: CACHE-FIRST for instant opens (SLICE 4b) — a cached
+  // copy is served immediately and revalidated in the background (fresh →
+  // silent client refresh; login-redirect/gate → entry deleted + client
+  // reload). With no cached copy yet: network-first, writing only cacheable
+  // responses (see isCacheableFieldKitResponse); on network failure the
+  // itinerary route falls back to its SLICE 2 shell and every other kit route
+  // falls back to the generic offline notice.
   if (isFieldKitNavigation(req, url)) {
-    event.respondWith(
-      fetch(req)
-        .then(async (res) => {
-          if (await isCacheableFieldKitResponse(res, url)) {
-            const cache = await caches.open(CACHE);
-            await cache.put(req, res.clone());
-          }
-          return res;
-        })
-        .catch(async () => {
-          const cache = await caches.open(CACHE);
-          const cached = await cache.match(req);
-          if (cached) return cached;
-          const fallbackUrl = isItineraryNavigation(req, url) ? SHELL_URL : OFFLINE_URL;
-          const fallback = await cache.match(fallbackUrl);
-          return fallback || Response.error();
-        })
-    );
+    event.respondWith(serveFieldKitNavigation(event, req, url));
     return;
   }
 

@@ -14,6 +14,7 @@ import AccountMenu from "@/components/field-kit/AccountMenu";
 import SyncStatus from "@/components/field-kit/SyncStatus";
 import FieldKitLogo from "@/components/field-kit/FieldKitLogo";
 import ServiceWorkerRegistrar from "@/components/field-kit/ServiceWorkerRegistrar";
+import NavCacheReconciler from "@/components/field-kit/NavCacheReconciler";
 import { KRAFT_PAGE, T, FONT } from "@/components/field-kit/tokens";
 import { getFieldKitAccess, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 
@@ -58,6 +59,7 @@ export default async function FieldKitLayout({ children }: { children: React.Rea
           taps and on keyboard/switch navigation, where it matters. */}
       <style>{`.fk-root :focus-visible { outline: 2px solid ${T.yellow}; outline-offset: 2px; border-radius: 4px; }`}</style>
       <ServiceWorkerRegistrar />
+      <NavCacheReconciler />
       <FieldKitTopBar programId={FIELD_KIT_PROGRAM_ID} isAdmin={access.allowed ? access.isAdmin : false} />
       {/* Clearance below the top bar: the DAT logo overhangs the bar by 36px
           (see FieldKitLogo's negative marginBottom), so page content butted
