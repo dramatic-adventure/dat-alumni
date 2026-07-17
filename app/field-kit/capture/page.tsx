@@ -41,10 +41,25 @@ export default async function CapturePage({
       itinerary?.chapters.find((ch) => ch.days.some((d) => d.id === currentDayId))?.id) ||
     "";
 
+  // All trip days (compact) → the form's "Capture day" picker. Lets an uploaded
+  // photo/voice file auto-file under the day it was taken (matched by the file's
+  // timestamp against fullDate), with a manual override for any capture.
+  const days = itinerary
+    ? itinerary.chapters.flatMap((ch) =>
+        ch.days.map((d) => ({
+          id: d.id,
+          chapterId: ch.id,
+          dayNum: d.dayNum,
+          dateLabel: d.dateLabel,
+          fullDate: d.fullDate,
+        }))
+      )
+    : [];
+
   return (
     <>
       {access.impersonating && <ImpersonationBanner slug={access.slug} />}
-      <CaptureForm currentDayId={currentDayId} currentChapterId={currentChapterId} />
+      <CaptureForm currentDayId={currentDayId} currentChapterId={currentChapterId} days={days} />
     </>
   );
 }

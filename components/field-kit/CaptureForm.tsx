@@ -7,6 +7,13 @@
 // createdAt is stamped client-side; dayIndex carries the current itinerary day
 // when the page could resolve one.
 //
+// Day binding (Slice 7): a "Capture day" picker lets any capture file under a
+// different trip day. Choosing a photo/audio FILE auto-selects the day matching
+// the file's timestamp (file.lastModified vs the itinerary's fullDate) so an
+// uploaded older photo lands on the day it was taken; the picker is always
+// there to override. When the file's timestamp falls on the selected day,
+// createdAt is stamped from the file (true capture moment) instead of "now".
+//
 // The photo file input uses accept="image/*" with NO capture attribute, so the OS
 // picker offers Photo Library, Take Photo, and Files. Voice prefers an in-app
 // MediaRecorder; if the browser lacks getUserMedia/MediaRecorder (or mic permission
@@ -51,12 +58,34 @@ const KINDS: { value: Kind; label: string }[] = [
   { value: "voice", label: "Voice" },
 ];
 
+/** Compact trip-day option for the "Capture day" picker (built by the page). */
+export type CaptureDayOption = {
+  id: string;
+  chapterId: string;
+  dayNum: number;
+  dateLabel: string;
+  fullDate: string; // ISO yyyy-mm-dd; "" when the day carries no date
+};
+
+/** Local yyyy-mm-dd for an epoch-ms timestamp (device-local, like resolveToday). */
+function localIsoDate(ms: number): string {
+  const d = new Date(ms);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function dayLabel(d: CaptureDayOption): string {
+  return `Day ${d.dayNum}${d.dateLabel ? ` · ${d.dateLabel}` : ""}`;
+}
+
 export default function CaptureForm({
   currentDayId,
   currentChapterId = "",
+  days = [],
 }: {
   currentDayId: string;
   currentChapterId?: string;
+  days?: CaptureDayOption[];
 }) {
   // Admin impersonation — forwarded to the route so the capture attributes to the
   // impersonated member. Honored ONLY for admins server-side (getFieldKitAccess).
@@ -71,6 +100,24 @@ export default function CaptureForm({
   // Slice 6 visibility: "card" (default — composable into your Journey Card,
   // still private until you stamp) vs "sealed" (never leaves your journal).
   const [sealed, setSealed] = useState(false);
+  // Slice 7 day binding — which trip day this capture files under. Defaults to
+  // today; auto-switches when a chosen file's date matches another trip day.
+  const [dayId, setDayId] = useState(currentDayId);
+  const [dayHint, setDayHint] = useState<string | null>(null);
+
+  // Auto-file an uploaded photo/audio under the day it was taken, when the
+  // file's timestamp maps to a trip day. The picker below always allows override.
+  function autoDetectDay(f: File | null) {
+    if (!f || !f.lastModified || !days.length) return;
+    const iso = localIsoDate(f.lastModified);
+    const match = days.find((d) => d.fullDate && d.fullDate === iso);
+    if (match && match.id !== dayId) {
+      setDayId(match.id);
+      setDayHint(`Dated from the file — filed under ${dayLabel(match)}. Change below if that's wrong.`);
+    } else {
+      setDayHint(null);
+    }
+  }
 
   // Voice state. recorderSupported defaults false so SSR/first paint shows the
   // fallback file input; the effect flips it on once the client confirms
@@ -189,6 +236,7 @@ export default function CaptureForm({
     discardAudio();
     setAudioBlob(f);
     setAudioUrl(URL.createObjectURL(f));
+    autoDetectDay(f);
   }
 
   function clearForm() {
@@ -197,6 +245,8 @@ export default function CaptureForm({
     setFile(null);
     if (fileRef.current) fileRef.current.value = "";
     discardAudio();
+    setDayId(currentDayId);
+    setDayHint(null);
   }
 
   // Offline-first: write the capture to the local IndexedDB queue (instant), kick
@@ -222,15 +272,29 @@ export default function CaptureForm({
         blobType = file.type;
       }
 
+      // Day binding: the selected day wins (defaults to today). Its chapter
+      // rides along so the Composer groups the trace under the right act.
+      const selectedDay = days.find((d) => d.id === dayId);
+      // createdAt: the file's own timestamp when it falls on the selected day
+      // (the true capture moment for an uploaded older photo); otherwise now.
+      const stampFile: File | null =
+        isPhoto && file ? file : isVoice && audioBlob instanceof File ? audioBlob : null;
+      const createdAt =
+        stampFile?.lastModified &&
+        selectedDay?.fullDate &&
+        localIsoDate(stampFile.lastModified) === selectedDay.fullDate
+          ? new Date(stampFile.lastModified).toISOString()
+          : new Date().toISOString();
+
       const visibility: CaptureVisibility = sealed ? "sealed" : "card";
       const item: QueuedCapture = {
         captureId: ulid(),
         kind,
         bodyText: bodyText.trim(),
         quoteSpeaker: kind === "quote" ? quoteSpeaker.trim() || undefined : undefined,
-        createdAt: new Date().toISOString(),
-        dayIndex: currentDayId || undefined,
-        chapterId: currentChapterId || undefined,
+        createdAt,
+        dayIndex: dayId || undefined,
+        chapterId: (selectedDay ? selectedDay.chapterId : currentChapterId) || undefined,
         visibility,
         asId: asId || undefined,
         blob,
@@ -301,7 +365,11 @@ export default function CaptureForm({
             ref={fileRef}
             type="file"
             accept="image/*"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null;
+              setFile(f);
+              autoDetectDay(f);
+            }}
             aria-label="Choose a photo"
             style={{
               width: "100%",
@@ -520,6 +588,52 @@ export default function CaptureForm({
             />
           )}
         </>
+      )}
+
+      {/* Slice 7 — Capture day. Defaults to today; auto-switches when a chosen
+          file's date matches another trip day. Manual override for any kind
+          (write up yesterday's note, upload Monday's photo on Wednesday). */}
+      {days.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <label
+            htmlFor="capture-day"
+            style={{ display: "block", fontFamily: FONT.grotesk, fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: T.ink, marginBottom: 6 }}
+          >
+            Capture day
+          </label>
+          <select
+            id="capture-day"
+            value={dayId}
+            onChange={(e) => {
+              setDayId(e.target.value);
+              setDayHint(null);
+            }}
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              fontFamily: FONT.dm,
+              fontSize: 15,
+              color: T.ink,
+              background: T.card,
+              border: `1px solid ${T.border}`,
+              borderRadius: 12,
+              padding: "12px 16px",
+            }}
+          >
+            {!currentDayId && <option value="">No day (unassigned)</option>}
+            {days.map((d) => (
+              <option key={d.id} value={d.id}>
+                {dayLabel(d)}
+                {d.id === currentDayId ? " (today)" : ""}
+              </option>
+            ))}
+          </select>
+          {dayHint && (
+            <p style={{ fontFamily: FONT.dm, fontSize: 12.5, lineHeight: 1.45, color: T.teal, margin: "6px 0 0" }}>
+              {dayHint}
+            </p>
+          )}
+        </div>
       )}
 
       {/* Slice 6 — sealed vs card. Sealed = Private Reflection: never reviewed,
