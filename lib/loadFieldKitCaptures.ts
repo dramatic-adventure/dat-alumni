@@ -31,7 +31,11 @@ export type FieldCapture = {
   mimeType: string; // photo only; empty for note/quote
 };
 
-const FIELD_CAPTURES_RANGE = "Field-Captures!A:N"; // A:N since Slice 6
+// A:P — A:N (Slice 6) + deletedAt/editedAt (edit & soft-delete). Soft-deleted
+// rows stay in the tab forever (preserving captureId dedup for offline replays)
+// and are filtered out HERE, so every consumer of this loader — Traces,
+// Composer, Publish, auto-assembler — forgets them at once.
+const FIELD_CAPTURES_RANGE = "Field-Captures!A:P";
 
 /** A member's own captures for one program, newest first. Never throws. */
 export const loadCapturesForAuthor = cache(
@@ -93,6 +97,7 @@ async function loadCapturesFiltered(
     const iSpeaker = idxOf(header, ["quotespeaker"]);
     const iDriveFile = idxOf(header, ["drivefileid"]);
     const iMime = idxOf(header, ["mimetype"]);
+    const iDeleted = idxOf(header, ["deletedat"]);
     if ([iId, iProg, iAuthor, iKind, iBody, iCreated].some((i) => i === -1)) return [];
 
     const out: FieldCapture[] = [];
@@ -100,6 +105,8 @@ async function loadCapturesFiltered(
       const row = rows[r];
       if (normId(row[iProg]) !== wantProgram) continue;
       if (wantAuthor !== null && normId(row[iAuthor]) !== wantAuthor) continue;
+      // Soft-deleted captures are gone from every read path.
+      if (iDeleted !== -1 && String(row[iDeleted] ?? "").trim()) continue;
       out.push({
         captureId: String(row[iId] ?? ""),
         programId: String(row[iProg] ?? ""),

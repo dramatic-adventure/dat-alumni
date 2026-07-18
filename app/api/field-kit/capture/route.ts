@@ -34,10 +34,11 @@ export const runtime = "nodejs";
 
 type DriveCreateResp = { data: { id?: string } };
 
-// A:N since Slice 6 (chapterId + visibility appended); columns resolve by header
-// NAME, so a sheet still on the old 12-column header keeps working — the new
-// fields just don't land until the header gains the columns.
-const FIELD_CAPTURES_RANGE = "Field-Captures!A:N";
+// A:P since edit/soft-delete (deletedAt + editedAt appended after Slice 6's
+// chapterId + visibility); columns resolve by header NAME, so a sheet still on
+// an older, narrower header keeps working — the new fields just don't land
+// until the header gains the columns.
+const FIELD_CAPTURES_RANGE = "Field-Captures!A:P";
 const VALID_KINDS = new Set(["note", "quote", "photo", "voice"]);
 
 // File uploads (photo + voice) are bounded server-side regardless of what the
