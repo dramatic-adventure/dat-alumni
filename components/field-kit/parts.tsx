@@ -47,6 +47,11 @@ export function CompanionTabBar() {
         gap: 2,
       }}
     >
+      {/* Pressed-state feedback: the tab pages are force-dynamic (slow renders
+          on field wifi), so a tap must be visually acknowledged the instant the
+          finger lands — otherwise users read the tab as dead and tap again.
+          :active is inline-style-unreachable, hence this scoped rule. */}
+      <style>{`.fk-tab { transition: transform 100ms ease, opacity 100ms ease; } .fk-tab:active { transform: scale(0.9); opacity: 0.6; }`}</style>
       {NAV.map((n) => {
         const on = n.match(pathname);
         const isCapture = n.id === "capture";
@@ -54,6 +59,7 @@ export function CompanionTabBar() {
           <Link
             key={n.id}
             href={n.href}
+            className="fk-tab"
             aria-current={on ? "page" : undefined}
             style={{
               flex: 1,
@@ -64,6 +70,10 @@ export function CompanionTabBar() {
               textDecoration: "none",
               padding: "4px 2px",
               color: on ? T.yellow : "rgba(246,239,227,0.55)",
+              // Kill the mobile gray tap flash + any double-tap-to-zoom delay;
+              // the .fk-tab :active rule above provides the press feedback.
+              WebkitTapHighlightColor: "transparent",
+              touchAction: "manipulation",
             }}
           >
             <span
