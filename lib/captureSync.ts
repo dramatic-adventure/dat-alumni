@@ -2,9 +2,17 @@
 //
 // Slice C — client-only drainer for the Field Kit capture queue. Module-level
 // singleton: it processes due items serially against /api/field-kit/capture,
-// classifies each response, and reschedules with exponential backoff. It always
-// posts multipart/form-data (the route's parser accepts note/quote too, file
-// optional), so there's a single network code path.
+// classifies each response, and reschedules with exponential backoff.
+//
+// Two network paths: blobs ≤ DIRECT_MAX_BYTES post as one multipart/form-data
+// request (the route's parser accepts note/quote too, file optional); larger
+// blobs (big voice notes and photos) go chunked via
+// /api/field-kit/capture/chunk + a JSON finalize, because Netlify's
+// Lambda-backed routes cap request bodies at ~6 MB. Chunking is byte-exact —
+// no client-side recompression, so media quality is never degraded in transit.
+// Every request runs through fetchWithTimeout so a stalled connection can
+// NEVER wedge the serial drain loop (the bug that used to leave items at
+// "waiting to sync" forever).
 //
 // Delivery contract: at-least-once on the wire (retries) → exactly-once in the
 // sheet, because the route dedups on captureId and returns {ok:true, deduped:true}
@@ -12,8 +20,11 @@
 // window/document before wiring triggers.
 
 import { getAll, update, remove, type QueuedCapture } from "@/lib/captureQueue";
+import { fetchWithTimeout, TEXT_TIMEOUT_MS, BLOB_TIMEOUT_MS } from "@/lib/syncFetch";
+import { DIRECT_MAX_BYTES, CHUNK_BYTES } from "@/lib/captureChunkContract";
 
 const ENDPOINT = "/api/field-kit/capture";
+const CHUNK_ENDPOINT = "/api/field-kit/capture/chunk";
 const MAX_ATTEMPTS = 8;
 const BASE_BACKOFF_MS = 5_000; // first retry ~5s, doubling
 const MAX_BACKOFF_MS = 5 * 60_000; // cap ~5 min
@@ -96,35 +107,140 @@ async function retry(item: QueuedCapture, lastError: string): Promise<void> {
   });
 }
 
+async function markFailed(item: QueuedCapture, res: Response): Promise<void> {
+  const data = (await res.json().catch(() => null)) as { error?: string } | null;
+  await update({
+    ...item,
+    status: "failed",
+    lastError: data?.error || `Failed (${res.status})`,
+    nextAttemptAt: undefined,
+  });
+}
+
 async function send(item: QueuedCapture): Promise<void> {
   await update({ ...item, status: "syncing", lastError: undefined });
   await refreshCounts();
 
+  // DELIBERATELY NO client-side compression/re-encoding: originals upload
+  // byte-exact (the server already normalizes photos via sharp — see
+  // lib/normalizeUploadImage — and a client re-encode would double-compress).
+  // Blobs above the direct-body ceiling take the lossless chunked path.
+  const current = item;
+  if (current.blob && current.blob.size > DIRECT_MAX_BYTES) {
+    await sendChunked(current);
+    return;
+  }
+
   let res: Response;
   try {
-    res = await fetch(ENDPOINT, { method: "POST", body: buildFormData(item) });
+    res = await fetchWithTimeout(
+      ENDPOINT,
+      { method: "POST", body: buildFormData(current) },
+      current.blob ? BLOB_TIMEOUT_MS : TEXT_TIMEOUT_MS
+    );
   } catch (e) {
-    await retry(item, e instanceof Error ? e.message : "Network error");
+    await retry(current, e instanceof Error ? e.message : "Network error");
     return;
   }
 
   if (res.ok) {
     // {ok:true}, including {deduped:true} for a replay.
-    await remove(item.captureId);
+    await remove(current.captureId);
     return;
   }
   if (PERMANENT.has(res.status)) {
-    const data = (await res.json().catch(() => null)) as { error?: string } | null;
-    await update({
-      ...item,
-      status: "failed",
-      lastError: data?.error || `Failed (${res.status})`,
-      nextAttemptAt: undefined,
-    });
+    await markFailed(current, res);
     return;
   }
   // Retryable: network already handled above; here 5xx / 408 / 429 / anything else.
-  await retry(item, `Server error (${res.status})`);
+  await retry(current, `Server error (${res.status})`);
+}
+
+// Chunked path for blobs the Lambda body ceiling can't take in one request
+// (large voice recordings and full-resolution photos): stage ~3 MB chunks
+// via /capture/chunk, then finalize with a small JSON POST that the route
+// reassembles server-side. uploadedChunks is the resume pointer — a retry
+// after a dropped connection re-uploads only what's missing.
+async function sendChunked(item: QueuedCapture): Promise<void> {
+  const blob = item.blob;
+  if (!blob) {
+    await retry(item, "Missing blob for chunked upload");
+    return;
+  }
+  const total = Math.ceil(blob.size / CHUNK_BYTES);
+
+  for (let seq = Math.min(item.uploadedChunks ?? 0, total); seq < total; seq++) {
+    const fd = new FormData();
+    fd.set("captureId", item.captureId);
+    fd.set("seq", String(seq));
+    fd.set("total", String(total));
+    if (item.asId) fd.set("asId", item.asId);
+    const start = seq * CHUNK_BYTES;
+    fd.set(
+      "chunk",
+      new File([blob.slice(start, start + CHUNK_BYTES)], `${item.captureId}.${seq}`, {
+        type: "application/octet-stream",
+      })
+    );
+
+    let res: Response;
+    try {
+      res = await fetchWithTimeout(CHUNK_ENDPOINT, { method: "POST", body: fd }, BLOB_TIMEOUT_MS);
+    } catch (e) {
+      await retry({ ...item, uploadedChunks: seq }, e instanceof Error ? e.message : "Network error");
+      return;
+    }
+    if (!res.ok) {
+      if (PERMANENT.has(res.status)) await markFailed({ ...item, uploadedChunks: seq }, res);
+      else await retry({ ...item, uploadedChunks: seq }, `Server error (${res.status})`);
+      return;
+    }
+    // Persist progress so a later retry resumes here instead of restarting.
+    await update({ ...item, status: "syncing", uploadedChunks: seq + 1 });
+  }
+
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(
+      ENDPOINT,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          captureId: item.captureId,
+          kind: item.kind,
+          bodyText: item.bodyText,
+          createdAt: item.createdAt,
+          dayIndex: item.dayIndex ?? "",
+          chapterId: item.chapterId ?? "",
+          visibility: item.visibility ?? "",
+          quoteSpeaker: item.quoteSpeaker ?? "",
+          ...(item.asId ? { asId: item.asId } : {}),
+          stagedChunkCount: total,
+          blobType: item.blobType || blob.type || "application/octet-stream",
+        }),
+      },
+      TEXT_TIMEOUT_MS
+    );
+  } catch (e) {
+    await retry({ ...item, uploadedChunks: total }, e instanceof Error ? e.message : "Network error");
+    return;
+  }
+
+  if (res.ok) {
+    await remove(item.captureId);
+    return;
+  }
+  if (res.status === 409) {
+    // CHUNKS_INCOMPLETE — staging lost bytes; restart the chunk uploads.
+    await retry({ ...item, uploadedChunks: 0 }, "Upload incomplete — retrying from the start");
+    return;
+  }
+  if (PERMANENT.has(res.status)) {
+    await markFailed({ ...item, uploadedChunks: total }, res);
+    return;
+  }
+  await retry({ ...item, uploadedChunks: total }, `Server error (${res.status})`);
 }
 
 function isDue(item: QueuedCapture, now: number): boolean {

@@ -11,6 +11,7 @@
 // window/document before wiring triggers.
 
 import { getAll, update, remove, type QueuedOp } from "@/lib/opsQueue";
+import { fetchWithTimeout, TEXT_TIMEOUT_MS } from "@/lib/syncFetch";
 
 const ENDPOINTS: Record<QueuedOp["kind"], string> = {
   "roll-call": "/api/field-kit/roll-call/respond",
@@ -120,11 +121,12 @@ async function send(item: QueuedOp): Promise<void> {
 
   let res: Response;
   try {
-    res = await fetch(ENDPOINTS[item.kind], {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: buildBody(item),
-    });
+    // Timeout so a stalled request can't wedge the serial drain loop.
+    res = await fetchWithTimeout(
+      ENDPOINTS[item.kind],
+      { method: "POST", headers: { "content-type": "application/json" }, body: buildBody(item) },
+      TEXT_TIMEOUT_MS
+    );
   } catch (e) {
     await retry(item, e instanceof Error ? e.message : "Network error");
     return;

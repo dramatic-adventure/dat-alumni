@@ -29,6 +29,7 @@ import { normalizeUploadImage } from "@/lib/normalizeUploadImage";
 import { rateLimit, rateKey } from "@/lib/rateLimit";
 import { getFieldKitAccess, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 import { withRetry, idxOf, normId } from "@/lib/sheetsResilience";
+import { captureStagingStore, chunkKey, deleteStagedChunks, MAX_CHUNKS } from "@/lib/captureStaging";
 
 export const runtime = "nodejs";
 
@@ -93,6 +94,9 @@ type CapturePayload = {
   asId?: string;
   // Photo (multipart) only:
   file?: { buffer: Buffer; mimeType: string; name: string };
+  // Chunked finalize (JSON) only: bytes were staged via /capture/chunk.
+  stagedChunkCount?: number;
+  blobType?: string;
 };
 
 // Mirror /api/upload's dual-mode parsing: multipart/form-data (photo + fields)
@@ -136,7 +140,29 @@ async function readPayload(req: Request): Promise<CapturePayload> {
     visibility: String(body.visibility ?? "").trim().toLowerCase(),
     quoteSpeaker: String(body.quoteSpeaker ?? "").trim(),
     asId: String(body.asId ?? "").trim() || undefined,
+    stagedChunkCount: Number(body.stagedChunkCount) || undefined,
+    blobType: String(body.blobType ?? "").trim() || undefined,
   };
+}
+
+// Reassemble a chunked upload from the dat-capture-staging Blobs store (written
+// by /api/field-kit/capture/chunk — see lib/captureStaging.ts for why big blobs
+// can't arrive in one request). A missing chunk means the client's staged bytes
+// are gone/incomplete: respond 409 CHUNKS_INCOMPLETE so captureSync re-uploads
+// the chunks and finalizes again (never parked as a permanent failure).
+async function assembleStagedFile(
+  captureId: string,
+  chunkCount: number,
+  blobType: string
+): Promise<{ buffer: Buffer; mimeType: string; name: string } | null> {
+  const store = captureStagingStore();
+  const parts: Buffer[] = [];
+  for (let i = 0; i < chunkCount; i++) {
+    const ab = await store.get(chunkKey(captureId, i), { type: "arrayBuffer" });
+    if (!ab || ab.byteLength === 0) return null;
+    parts.push(Buffer.from(ab));
+  }
+  return { buffer: Buffer.concat(parts), mimeType: blobType, name: captureId };
 }
 
 export async function POST(req: Request) {
@@ -194,8 +220,22 @@ export async function POST(req: Request) {
 
     // Validate the uploaded file up front (before any Drive work). MIME allow-set
     // is per-kind: images for photo, audio for voice.
+    const stagedChunkCount = payload.stagedChunkCount ?? 0;
     let upload: { buffer: Buffer; mimeType: string; name: string } | null = null;
     if (hasFile) {
+      // Chunked finalize: bytes were staged via /capture/chunk instead of
+      // arriving inline (Lambda ~6 MB body ceiling). Reassemble them here.
+      if (!payload.file && stagedChunkCount > 0) {
+        if (stagedChunkCount > MAX_CHUNKS || !payload.blobType) {
+          return NextResponse.json({ error: "Invalid staged upload" }, { status: 400 });
+        }
+        const staged = await assembleStagedFile(captureId, stagedChunkCount, payload.blobType);
+        if (!staged) {
+          // 409 → retryable client-side; captureSync re-uploads the chunks.
+          return NextResponse.json({ error: "CHUNKS_INCOMPLETE" }, { status: 409 });
+        }
+        payload.file = staged;
+      }
       if (!payload.file) {
         return NextResponse.json(
           { error: isVoice ? "An audio file is required" : "A photo file is required" },
@@ -256,7 +296,10 @@ export async function POST(req: Request) {
     // Dedup FIRST — before any Drive upload — so a retried photo never re-uploads.
     const want = normId(captureId);
     const deduped = rows.slice(1).some((r) => normId(r[col.captureId]) === want);
-    if (deduped) return NextResponse.json({ ok: true, captureId, deduped: true });
+    if (deduped) {
+      if (stagedChunkCount > 0) await deleteStagedChunks(captureId, stagedChunkCount);
+      return NextResponse.json({ ok: true, captureId, deduped: true });
+    }
 
     // Upload the file to Drive: <root>/<programId>/<authorSlug>/<captureId>.<ext>.
     let driveFileId = "";
@@ -327,6 +370,9 @@ export async function POST(req: Request) {
         }),
       "Sheets append Field-Captures"
     );
+
+    // The row is appended and the bytes live in Drive — staging is now garbage.
+    if (stagedChunkCount > 0) await deleteStagedChunks(captureId, stagedChunkCount);
 
     return NextResponse.json({ ok: true, captureId, ...(driveFileId ? { driveFileId } : {}) });
   } catch (e: unknown) {

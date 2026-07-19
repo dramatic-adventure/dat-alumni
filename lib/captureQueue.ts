@@ -42,6 +42,10 @@ export type QueuedCapture = {
   attempts: number;
   nextAttemptAt?: number;
   lastError?: string;
+  /** Chunked-upload resume pointer: chunks [0, uploadedChunks) are already
+   *  staged server-side, so a retry after a dropped connection re-uploads only
+   *  the remainder (see lib/captureSync sendChunked). */
+  uploadedChunks?: number;
 };
 
 function store(db: IDBDatabase, mode: IDBTransactionMode): IDBObjectStore {

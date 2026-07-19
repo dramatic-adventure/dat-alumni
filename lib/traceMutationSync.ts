@@ -11,6 +11,7 @@
 // window/document before wiring triggers.
 
 import { getAll, update, remove, type QueuedTraceMutation } from "@/lib/traceMutationQueue";
+import { fetchWithTimeout, TEXT_TIMEOUT_MS } from "@/lib/syncFetch";
 
 const MAX_ATTEMPTS = 8;
 const BASE_BACKOFF_MS = 5_000;
@@ -102,14 +103,19 @@ async function send(item: QueuedTraceMutation): Promise<void> {
 
   let res: Response;
   try {
+    // Timeout so a stalled request can't wedge the serial drain loop.
     res =
       item.action === "delete"
-        ? await fetch(urlFor(item), { method: "DELETE" })
-        : await fetch(urlFor(item), {
-            method: "PATCH",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify(item.payload ?? {}),
-          });
+        ? await fetchWithTimeout(urlFor(item), { method: "DELETE" }, TEXT_TIMEOUT_MS)
+        : await fetchWithTimeout(
+            urlFor(item),
+            {
+              method: "PATCH",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(item.payload ?? {}),
+            },
+            TEXT_TIMEOUT_MS
+          );
   } catch (e) {
     await retry(item, e instanceof Error ? e.message : "Network error");
     return;

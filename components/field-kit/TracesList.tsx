@@ -100,6 +100,11 @@ export default function TracesList({ captures, asId }: { captures: FieldCapture[
   const [items, setItems] = useState<FieldCapture[]>(captures);
   // Captures still in the offline outbox — rendered read-only, marked pending.
   const [pendingCaptures, setPendingCaptures] = useState<FieldCapture[]>([]);
+  // captureId → outbox queue state, so a permanently FAILED capture is labeled
+  // honestly ("Sync failed") instead of hiding behind "Waiting to sync".
+  const [outboxState, setOutboxState] = useState<Map<string, { failed: boolean; lastError?: string }>>(
+    new Map()
+  );
   // captureId → queued mutation, for the per-row "waiting to sync" chip.
   const [queuedFor, setQueuedFor] = useState<Map<string, QueuedTraceMutation>>(new Map());
 
@@ -175,6 +180,14 @@ export default function TracesList({ captures, asId }: { captures: FieldCapture[
             driveFileId: "",
             mimeType: "",
           }))
+      );
+      setOutboxState(
+        new Map(
+          queuedCaps.map((q) => [
+            q.captureId,
+            { failed: q.status === "failed", ...(q.lastError ? { lastError: q.lastError } : {}) },
+          ])
+        )
       );
     } catch {
       // IndexedDB unavailable — fall back to the server rows as-is.
@@ -300,6 +313,9 @@ export default function TracesList({ captures, asId }: { captures: FieldCapture[
           const isVoice = c.kind === "voice";
           const label = isVoice ? "Voice" : isPhoto ? "Photo" : isQuote ? "Quote" : "Note";
           const labelColor = isVoice ? T.green : isPhoto ? T.yellow : isQuote ? T.pink : T.teal;
+          const state = outboxState.get(c.captureId);
+          const failed = state?.failed === true;
+          const chipColor = failed ? T.pink : T.yellow;
           return (
             <li
               key={c.captureId}
@@ -311,20 +327,23 @@ export default function TracesList({ captures, asId }: { captures: FieldCapture[
                     {label}
                   </span>
                   <span
+                    title={failed ? state?.lastError || "Sync failed — tap the sync chip in the top bar to retry" : undefined}
                     style={{
                       fontFamily: FONT.grotesk, fontSize: 9, fontWeight: 700, letterSpacing: "0.14em",
-                      textTransform: "uppercase", color: T.yellow, border: `1px dashed ${T.yellow}`,
+                      textTransform: "uppercase", color: chipColor, border: `1px dashed ${chipColor}`,
                       borderRadius: 4, padding: "2px 7px",
                     }}
                   >
-                    Waiting to sync
+                    {failed ? "Sync failed" : "Waiting to sync"}
                   </span>
                 </span>
                 <span style={{ fontFamily: FONT.dm, fontSize: 12, color: T.muted }}>{formatWhen(c.createdAt)}</span>
               </div>
               {(isPhoto || isVoice) && (
                 <p style={{ fontFamily: FONT.dm, fontSize: 12.5, color: T.muted, margin: "0 0 6px" }}>
-                  {isPhoto ? "Photo" : "Recording"} saved on this device — it uploads when you&apos;re online.
+                  {failed
+                    ? `${isPhoto ? "Photo" : "Recording"} is safe on this device but couldn't upload — tap the sync chip in the top bar to retry.`
+                    : `${isPhoto ? "Photo" : "Recording"} saved on this device — it uploads when you're online.`}
                 </p>
               )}
               {c.bodyText && (

@@ -186,6 +186,9 @@ export default function CaptureForm({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       chunksRef.current = [];
+      // Default (full-quality) bitrate on purpose — large recordings upload
+      // fine via captureSync's chunked path, so audio quality is never traded
+      // for deliverability.
       const mr = new MediaRecorder(stream);
       recorderRef.current = mr;
       mr.ondataavailable = (e) => {
