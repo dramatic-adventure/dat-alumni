@@ -20,6 +20,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { T, FONT, accent } from "@/components/field-kit/tokens";
 import {
   cacheLibraryFile,
@@ -264,15 +265,17 @@ function ResourceCard({
         ) : (
           <>
             {resource.type !== "audio" && (
-              <a
-                href={url}
-                target="_blank"
-                rel="noreferrer"
+              // In-app reader, NOT target="_blank": a new-tab open replaced the
+              // whole app in standalone Safari (Mac web app / iOS home screen),
+              // which has no back chrome — no way back to the kit. The viewer
+              // route keeps the kit's chrome + its own back-to-shelf bar.
+              <Link
+                href={`/field-kit/library/view/${encodeURIComponent(resource.id)}`}
                 onClick={onOpen}
                 style={{ fontFamily: FONT.grotesk, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: T.teal, textDecoration: "none" }}
               >
                 Open →
-              </a>
+              </Link>
             )}
             {offline === "not-cached" && (
               <button

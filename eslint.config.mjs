@@ -58,6 +58,7 @@ export default [
       "scripts/setup-field-kit-slice6-columns.ts",
       "scripts/setup-email-secrets.ts",
       "scripts/mint-gmail-refresh-token.ts",
+      "scripts/shelve-field-kit-resource.ts",
     ],
   },
 ];
