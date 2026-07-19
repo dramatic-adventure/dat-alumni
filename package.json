@@ -19,6 +19,7 @@
     "setup:email-secrets": "tsx scripts/setup-email-secrets.ts",
     "mint:gmail-refresh-token": "tsx scripts/mint-gmail-refresh-token.ts",
     "setup:field-kit-slice5-tabs": "tsx scripts/setup-field-kit-slice5-tabs.ts",
+    "shelve:resource": "tsx scripts/shelve-field-kit-resource.ts",
     "setup:field-kit-slice6-columns": "tsx scripts/setup-field-kit-slice6-columns.ts",
     "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
     "postinstall": "echo \"skip prisma generate in postinstall\""
