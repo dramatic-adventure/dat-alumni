@@ -14,33 +14,78 @@
 // fk-lib cache when the network is gone.
 //
 // "Open in browser ↗" is a deliberate escape hatch (target="_blank"): from a
-// standalone app it opens the system browser / in-app overlay — useful where
-// framed PDF rendering is weak (iOS shows only the first page of framed PDFs).
+// standalone app it opens the system browser / in-app overlay.
+//
+// PDFs are NOT framed: standalone Safari's framed viewer shows only page 1 on
+// iOS and "swims" (nested scrolling) on macOS. "text" resources are loaded as
+// a blob (loadLibraryFile — one download that is also the offline cache
+// write), sniffed for %PDF, and rendered in-page with pdf.js (PdfPages).
+// Non-PDF text falls back to the iframe as before.
 
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { T, FONT } from "@/components/field-kit/tokens";
+import PdfPages from "@/components/field-kit/PdfPages";
 import {
   cacheLibraryFile,
   isLibraryFileCached,
+  loadLibraryFile,
   type LibraryCacheResult,
 } from "@/lib/fieldKitCache";
 import type { FieldResource } from "@/lib/programItinerary";
 
 type OfflineState = "checking" | "cached" | "not-cached" | "online-only" | "too-large";
 
+/** PDF sniff: trust the Content-Type, else check the %PDF- magic bytes. */
+async function isPdfFile(blob: Blob, contentType: string): Promise<boolean> {
+  if (/\bpdf\b/i.test(contentType)) return true;
+  try {
+    const head = new Uint8Array(await blob.slice(0, 5).arrayBuffer());
+    // "%PDF-"
+    return (
+      head.length === 5 &&
+      head[0] === 0x25 &&
+      head[1] === 0x50 &&
+      head[2] === 0x44 &&
+      head[3] === 0x46 &&
+      head[4] === 0x2d
+    );
+  } catch {
+    return false;
+  }
+}
+
 export default function ResourceViewer({ resource }: { resource: FieldResource }) {
   const external = resource.type === "link";
   const url = `/api/field-kit/library/file/${encodeURIComponent(resource.id)}`;
   const [offline, setOffline] = useState<OfflineState>(external ? "online-only" : "checking");
+  // "text" resources only: the loaded file, or true when loading failed
+  // (failure renders the old iframe so the SW still gets a shot at serving it).
+  const [textDoc, setTextDoc] = useState<{ blob: Blob; isPdf: boolean } | null>(null);
+  const [textFailed, setTextFailed] = useState(false);
 
   // Cache-on-open: arriving here counts as opening the file.
   useEffect(() => {
     if (external) return;
     let alive = true;
     (async () => {
+      if (resource.type === "text") {
+        // One download serves both the offline copy and in-page rendering.
+        const loaded = await loadLibraryFile(url);
+        if (!alive) return;
+        if (!loaded) {
+          setOffline("not-cached");
+          setTextFailed(true);
+          return;
+        }
+        setOffline(
+          loaded.cache === "cached" ? "cached" : loaded.cache === "too-large" ? "too-large" : "not-cached"
+        );
+        setTextDoc({ blob: loaded.blob, isPdf: await isPdfFile(loaded.blob, loaded.contentType) });
+        return;
+      }
       if (await isLibraryFileCached(url)) {
         if (alive) setOffline("cached");
         return;
@@ -54,7 +99,7 @@ export default function ResourceViewer({ resource }: { resource: FieldResource }
     return () => {
       alive = false;
     };
-  }, [external, url]);
+  }, [external, url, resource.type]);
 
   const chip =
     offline === "cached"
@@ -112,7 +157,10 @@ export default function ResourceViewer({ resource }: { resource: FieldResource }
         />
       ) : resource.type === "audio" ? (
         <audio controls preload="none" src={url} style={{ width: "100%", display: "block" }} aria-label={`Play ${resource.title}`} />
-      ) : (
+      ) : textDoc?.isPdf ? (
+        <PdfPages blob={textDoc.blob} url={url} title={resource.title} />
+      ) : textDoc || textFailed ? (
+        // Non-PDF text (or the blob load failed): frame it, as before.
         <iframe
           src={url}
           title={resource.title}
@@ -128,6 +176,10 @@ export default function ResourceViewer({ resource }: { resource: FieldResource }
             display: "block",
           }}
         />
+      ) : (
+        <p style={{ fontFamily: FONT.dm, fontSize: 13.5, color: T.muted, margin: "8px 0" }}>
+          Loading document…
+        </p>
       )}
     </main>
   );

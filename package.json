@@ -51,6 +51,7 @@
     "node-fetch": "^3.3.2",
     "nodemailer": "^7.0.13",
     "papaparse": "^5.5.3",
+    "pdfjs-dist": "^6.1.200",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-icons": "5",
