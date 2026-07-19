@@ -11,7 +11,7 @@
 
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ClipboardCheck, Vote, Loader2 } from "lucide-react";
 import { T, FONT } from "@/components/field-kit/tokens";
 import { label, field, primaryBtn, smallBtn, card, sectionTitle, sectionHint } from "@/components/field-kit/adminStyles";
@@ -61,6 +61,47 @@ const boardLine: React.CSSProperties = {
 
 function firstNames(list: { name: string }[]): string {
   return list.map((m) => m.name.split(" ")[0]).join(", ");
+}
+
+// Auto-refresh an active board every 15s (visible tab + online only) so artist
+// responses land on the console without tapping Refresh. The manual button
+// stays as an immediate override.
+const BOARD_POLL_MS = 15_000;
+
+function useBoardPoll(activeId: string | null, refresh: (id: string) => Promise<void>) {
+  useEffect(() => {
+    if (!activeId) return;
+    let pollId: ReturnType<typeof setInterval> | undefined;
+    const tick = () => {
+      if (typeof navigator !== "undefined" && !navigator.onLine) return;
+      refresh(activeId);
+    };
+    const startPoll = () => {
+      if (pollId == null) pollId = setInterval(tick, BOARD_POLL_MS);
+    };
+    const stopPoll = () => {
+      if (pollId != null) {
+        clearInterval(pollId);
+        pollId = undefined;
+      }
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        tick();
+        startPoll();
+      } else {
+        stopPoll();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("online", tick);
+    if (document.visibilityState === "visible") startPoll();
+    return () => {
+      stopPoll();
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("online", tick);
+    };
+  }, [activeId, refresh]);
 }
 
 async function postJson(url: string, body: Record<string, unknown>) {
@@ -155,6 +196,9 @@ export function AdminRollCallSection({
 
   const active = board && !board.rollCall.closedAt;
   const needsHelp = board?.responded.filter((r) => r.status === "needs-help") ?? [];
+
+  // Live board: check-ins stream in every 15s while the roll call is open.
+  useBoardPoll(active ? board.rollCall.id : null, refresh);
 
   return (
     <section style={card}>
@@ -319,6 +363,10 @@ export function AdminCompanyChoiceSection({
   }, [board, busy, outcome, programId, flash, refresh]);
 
   const activeBoard = board && !board.choice.closedAt;
+
+  // Live board: votes stream in every 15s while voting is open.
+  useBoardPoll(activeBoard ? board.choice.id : null, refresh);
+
   const max = board ? Math.max(...board.tallies.map((t) => t.votes), 1) : 1;
   const leading = board ? [...board.tallies].sort((a, b) => b.votes - a.votes)[0] : undefined;
 

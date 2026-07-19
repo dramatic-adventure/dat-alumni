@@ -12,6 +12,7 @@ import { guardFieldKitAdminApi, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAcces
 import { openRollCall, closeRollCall } from "@/lib/rollCall";
 import { appendNotification, newNotificationId } from "@/lib/notifications";
 import { sendToProgram } from "@/lib/webPush";
+import { bumpLiveVersion } from "@/lib/fieldKitLiveVersion";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,6 +39,9 @@ export async function POST(req: Request) {
       if (!label) return NextResponse.json({ error: "label is required" }, { status: 400 });
 
       const rollCall = await openRollCall(access.programId, { dayId, label });
+      // Cross-instance cache-bust: artists' next poll refetches the itinerary
+      // (which carries the roll call) instead of waiting out server TTLs.
+      await bumpLiveVersion(access.programId);
       const message = {
         title: "Roll call — check in",
         body: label,
@@ -74,6 +78,7 @@ export async function POST(req: Request) {
       if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
       const rollCall = await closeRollCall(access.programId, id);
       if (!rollCall) return NextResponse.json({ error: "Unknown roll call" }, { status: 404 });
+      await bumpLiveVersion(access.programId);
       return NextResponse.json({ ok: true, rollCall });
     }
 

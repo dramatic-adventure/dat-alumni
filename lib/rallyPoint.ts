@@ -2,8 +2,10 @@
 //
 // Slice 3 (Notifications) — the CURRENT rally point store. Backed by the
 // "Field Kit Rally Point" tab in ALUMNI_SHEET_ID (columns: programId, location,
-// lookFor, meetTime, departure, updatedAt). One row PER PROGRAM (latest wins):
-// setRallyPoint upserts by programId, getRallyPoint returns it.
+// lookFor, meetTime, departure, updatedAt, expiresAt). One row PER PROGRAM
+// (latest wins): setRallyPoint upserts by programId, getRallyPoint returns it.
+// A rally point with a past expiresAt reads as null (the banner auto-hides);
+// clearRallyPoint blanks the row on demand.
 //
 // The current rally point is attached to the itinerary payload by
 // lib/loadProgram.ts so it precaches offline with the itinerary and rides the
@@ -16,9 +18,9 @@ import { withRetry, idxOf, normId } from "@/lib/sheetsResilience";
 import type { RallyPoint } from "@/lib/programItinerary";
 
 const TAB = "Field Kit Rally Point";
-const RANGE = `'${TAB}'!A:F`;
+const RANGE = `'${TAB}'!A:G`;
 
-const HEADERS = ["programId", "location", "lookFor", "meetTime", "departure", "updatedAt"] as const;
+const HEADERS = ["programId", "location", "lookFor", "meetTime", "departure", "updatedAt", "expiresAt"] as const;
 
 function spreadsheetId(): string {
   const id = process.env.ALUMNI_SHEET_ID;
@@ -51,18 +53,29 @@ function columns(header: string[]) {
     meetTime: idxOf(header, ["meettime", "meet time"]),
     departure: idxOf(header, ["departure"]),
     updatedAt: idxOf(header, ["updatedat", "updated at"]),
+    expiresAt: idxOf(header, ["expiresat", "expires at"]),
   };
 }
 
 function rowToRally(header: string[], row: string[]): RallyPoint {
   const c = columns(header);
+  const expiresAt = c.expiresAt === -1 ? "" : String(row[c.expiresAt] ?? "").trim();
   return {
     location: String(row[c.location] ?? "").trim(),
     lookFor: String(row[c.lookFor] ?? "").trim(),
     meetTime: String(row[c.meetTime] ?? "").trim(),
     departure: String(row[c.departure] ?? "").trim(),
     updatedAt: String(row[c.updatedAt] ?? "").trim(),
+    // Only set when present — keeps pre-expiry itineraries hashing identically.
+    ...(expiresAt ? { expiresAt } : {}),
   };
+}
+
+/** True when a rally point carries a parseable expiresAt that has passed. */
+function isExpired(rally: RallyPoint, now = Date.now()): boolean {
+  if (!rally.expiresAt) return false;
+  const t = Date.parse(rally.expiresAt);
+  return Number.isFinite(t) && t <= now;
 }
 
 /**
@@ -82,6 +95,9 @@ export async function getRallyPoint(programId: string): Promise<RallyPoint | nul
         const rally = rowToRally(header, rows[i]);
         // Treat an all-blank content row as "no rally point".
         if (!rally.location && !rally.lookFor && !rally.meetTime && !rally.departure) return null;
+        // Auto-expiry: a past expiresAt reads as "no rally point" — the banner
+        // disappears (and the itinerary hash changes, propagating via LiveRefresh).
+        if (isExpired(rally)) return null;
         return rally;
       }
     }
@@ -95,7 +111,7 @@ export async function getRallyPoint(programId: string): Promise<RallyPoint | nul
 /** Upsert the current rally point for a program (one row per programId). */
 export async function setRallyPoint(
   programId: string,
-  input: { location: string; lookFor: string; meetTime: string; departure: string }
+  input: { location: string; lookFor: string; meetTime: string; departure: string; expiresAt?: string }
 ): Promise<RallyPoint> {
   const { sheets, header, rows } = await readGrid();
   if (!rows.length) throw new Error("Field Kit Rally Point has no header row");
@@ -112,12 +128,14 @@ export async function setRallyPoint(
   }
 
   const updatedAt = new Date().toISOString();
+  const expiresAt = String(input.expiresAt ?? "").trim();
   const rally: RallyPoint = {
     location: input.location.trim(),
     lookFor: input.lookFor.trim(),
     meetTime: input.meetTime.trim(),
     departure: input.departure.trim(),
     updatedAt,
+    ...(expiresAt ? { expiresAt } : {}),
   };
 
   const out: string[] = Array(header.length).fill("");
@@ -130,13 +148,14 @@ export async function setRallyPoint(
   put(c.meetTime, rally.meetTime);
   put(c.departure, rally.departure);
   put(c.updatedAt, updatedAt);
+  put(c.expiresAt, expiresAt);
 
   if (foundIndex !== -1) {
     await withRetry(
       () =>
         sheets.spreadsheets.values.update({
           spreadsheetId: spreadsheetId(),
-          range: `'${TAB}'!A${foundIndex + 1}:F${foundIndex + 1}`,
+          range: `'${TAB}'!A${foundIndex + 1}:${colLetter(header.length - 1)}${foundIndex + 1}`,
           valueInputOption: "RAW",
           requestBody: { values: [out] },
         }),
@@ -156,4 +175,40 @@ export async function setRallyPoint(
   }
 
   return rally;
+}
+
+/** Column letter for a 0-based index (A..Z is all this tab needs). */
+function colLetter(idx: number): string {
+  return String.fromCharCode(65 + Math.min(Math.max(idx, 0), 25));
+}
+
+/**
+ * Clear the current rally point for a program — blanks the row's content cells
+ * (getRallyPoint treats an all-blank content row as "no rally point"). No-op if
+ * the program has no row.
+ */
+export async function clearRallyPoint(programId: string): Promise<void> {
+  const { sheets, header, rows } = await readGrid();
+  if (!rows.length) return;
+  const c = columns(header);
+  if (c.programId === -1) return;
+
+  const pid = normId(programId);
+  for (let i = 1; i < rows.length; i++) {
+    if (normId(rows[i]?.[c.programId]) === pid) {
+      const out: string[] = Array(header.length).fill("");
+      out[c.programId] = String(rows[i]?.[c.programId] ?? programId);
+      await withRetry(
+        () =>
+          sheets.spreadsheets.values.update({
+            spreadsheetId: spreadsheetId(),
+            range: `'${TAB}'!A${i + 1}:${colLetter(header.length - 1)}${i + 1}`,
+            valueInputOption: "RAW",
+            requestBody: { values: [out] },
+          }),
+        "Sheets clear Field Kit Rally Point"
+      );
+      return;
+    }
+  }
 }

@@ -142,8 +142,15 @@
       (it.chapters || []).forEach(function (c) { (c.days || []).forEach(function (d) { out.push(d); }); });
       return out;
     }
-    function isoToday() {
-      var d = new Date(), p = function (n) { return String(n).padStart(2, "0"); };
+    function isoToday(tz) {
+      var d = new Date();
+      if (tz) {
+        try {
+          // en-CA formats as yyyy-mm-dd — mirrors lib/programItinerary#isoDateInTz.
+          return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+        } catch (e) { /* unknown tz — fall through to device-local */ }
+      }
+      var p = function (n) { return String(n).padStart(2, "0"); };
       return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
     }
     // Compact port of resolveToday() — only needs the highlighted day id here.
@@ -151,7 +158,7 @@
       var days = allDays(it).filter(function (d) { return d.fullDate; });
       if (!days.length) return it.todayDayId || null;
       var sorted = days.slice().sort(function (a, b) { return a.fullDate < b.fullDate ? -1 : a.fullDate > b.fullDate ? 1 : 0; });
-      var today = isoToday();
+      var today = isoToday(it.timezone);
       var exact = sorted.filter(function (d) { return d.fullDate === today; })[0];
       if (exact) return exact.id;
       if (today < sorted[0].fullDate) return null;

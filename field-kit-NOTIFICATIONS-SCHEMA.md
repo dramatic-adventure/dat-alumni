@@ -26,20 +26,27 @@ The notifications log + Sheet-toggle trigger source. `sentAt` is the exactly-onc
 guard. To fire one from the Sheet: add a row, set `notify` to `TRUE`, leave
 `sentAt` empty — the cron sends it within ~1 min and stamps `sentAt`.
 
-| id | programId | type | title | body | link | notify | sentAt |
-|---|---|---|---|---|---|---|---|
-| n_abc123 | passage-slovakia-2026 | update | Change of plans | Meet at the theater at 6 | /field-kit/itinerary | TRUE | _(empty → will send)_ |
+| id | programId | type | title | body | link | notify | sentAt | expiresAt |
+|---|---|---|---|---|---|---|---|---|
+| n_abc123 | passage-slovakia-2026 | update | Change of plans | Meet at the theater at 6 | /field-kit/itinerary | TRUE | _(empty → will send)_ | _(optional ISO)_ |
 
 - `type`: `update` or `rally`.
 - `notify`: `TRUE`/`FALSE` (also accepts 1/yes/y).
 - Admin-console sends append a row with `sentAt` already set (so the cron skips it).
+- `expiresAt` (optional ISO): staff-chosen expiration from the console's "Expires"
+  select. Bounds the push delivery TTL (an offline phone reconnecting later never
+  gets the stale alert); the cron skips rows already expired at send time.
 
 ### `Field Kit Rally Point`
-One row **per program** (latest wins). Upserted by the admin "Set rally point" action.
+One row **per program** (latest wins). Upserted by the admin "Set rally point" action;
+blanked by "Clear rally point" (DELETE /api/field-kit/admin/rally).
 
-| programId | location | lookFor | meetTime | departure | updatedAt |
-|---|---|---|---|---|---|
-| passage-slovakia-2026 | Main square fountain | Yellow DAT flag | 3:30pm | 3:45pm sharp | 2026-06-30T12:00:00.000Z |
+| programId | location | lookFor | meetTime | departure | updatedAt | expiresAt |
+|---|---|---|---|---|---|---|
+| passage-slovakia-2026 | Main square fountain | Yellow DAT flag | 3:30pm | 3:45pm sharp | 2026-06-30T12:00:00.000Z | _(optional ISO)_ |
+
+- `expiresAt` (optional ISO): once passed, `getRallyPoint` reads the row as "no
+  rally point" — the Today banner auto-hides (propagates via LiveRefresh).
 
 ---
 

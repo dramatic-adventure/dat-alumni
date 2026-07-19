@@ -117,7 +117,15 @@ async function blobSetTextBestEffort(storeName: string, key: string, value: stri
   }
 }
 
-async function blobGetTextBestEffort(storeName: string, key: string): Promise<string | null> {
+/**
+ * Read the last-known-good blob WITH its age (from the cachedAt metadata
+ * written by blobSetTextBestEffort). Age is null for legacy blobs written
+ * before metadata existed.
+ */
+async function blobGetWithAgeBestEffort(
+  storeName: string,
+  key: string
+): Promise<{ text: string; ageMs: number | null } | null> {
   if (!isNetlifyRuntime() && !(process.env.NETLIFY_SITE_ID && process.env.NETLIFY_AUTH_TOKEN)) {
     if (DEBUG) serverDebug("🫙 [loadCsv] Blobs skip get (not netlify runtime + no local creds)", { storeName, key });
     return null;
@@ -125,11 +133,15 @@ async function blobGetTextBestEffort(storeName: string, key: string): Promise<st
 
   try {
     const store = getBlobStore(storeName);
-    const v = await store.get(key, { type: "text" });
-    const txt = typeof v === "string" ? v : null;
+    const res = await store.getWithMetadata(key, { type: "text" });
+    const txt = typeof res?.data === "string" ? res.data : null;
+    if (!txt || !txt.trim()) return null;
 
-    if (DEBUG) serverDebug("🫙 [loadCsv] Blobs get", { storeName, key, hit: !!txt, bytes: txt?.length || 0 });
-    return txt && txt.trim() ? txt : null;
+    const cachedAt = Date.parse(String(res?.metadata?.cachedAt ?? ""));
+    const ageMs = Number.isFinite(cachedAt) ? Math.max(Date.now() - cachedAt, 0) : null;
+
+    if (DEBUG) serverDebug("🫙 [loadCsv] Blobs get", { storeName, key, bytes: txt.length, ageMs });
+    return { text: txt, ageMs };
   } catch (e) {
     if (DEBUG) serverWarn("🫙 [loadCsv] Blobs get FAILED", { storeName, key, err: String(e) });
     return null;
@@ -449,16 +461,33 @@ export async function loadCsv(
     if (DEBUG) serverWarn("⚠️ [loadCsv] No sourceUrl provided; going straight to fallbacks", { fallbackFileName });
   }
 
-  // 3) Blobs fallback (last known good)
-  const blobCsv = await blobGetTextBestEffort(blobStoreName, blobKey);
-  if (blobCsv) {
-    if (DEBUG) serverInfo("🫙 [loadCsv] Using Blobs fallback", { blobStoreName, blobKey, bytes: blobCsv.length });
-    return stripBOM(blobCsv);
+  // 3) Blobs fallback (last known good) — AGE-BOUNDED and LOUD. Serving this
+  // silently is how deleted rows "resurrect" and old schedules linger: a
+  // transient fetch failure quietly pins the site to whatever was last cached.
+  // So: every fallback serve is logged (not just in DEBUG), with the blob's
+  // age; blobs older than CSV_FALLBACK_MAX_AGE_HOURS (default 24h) are refused
+  // so a persistently-failing source surfaces as an error in the logs instead
+  // of as stale data that looks healthy.
+  const maxAgeMs =
+    Math.max(Number(process.env.CSV_FALLBACK_MAX_AGE_HOURS) || 24, 0.25) * 3_600_000;
+  const blob = await blobGetWithAgeBestEffort(blobStoreName, blobKey);
+  if (blob) {
+    const ageH = blob.ageMs == null ? null : +(blob.ageMs / 3_600_000).toFixed(2);
+    if (blob.ageMs != null && blob.ageMs > maxAgeMs) {
+      serverWarn("🛑 [loadCsv] STALE Blobs fallback REFUSED (over max age) — live source has been failing", {
+        blobStoreName, blobKey, ageHours: ageH, maxAgeHours: maxAgeMs / 3_600_000,
+      });
+    } else {
+      serverWarn("🫙 [loadCsv] Serving STALE Blobs fallback (live fetch failed)", {
+        blobStoreName, blobKey, bytes: blob.text.length, ageHours: ageH,
+      });
+      return stripBOM(blob.text);
+    }
   }
 
   // 4) Local fallback last resort
   try {
-    if (DEBUG) serverInfo("📂 [loadCsv] Using local fallback file", { fallbackFileName, fallbackPath });
+    serverWarn("📂 [loadCsv] Serving LOCAL fallback file (live fetch + Blobs both unavailable)", { fallbackFileName });
     const csvText = await fs.readFile(fallbackPath, "utf-8");
     return stripBOM(csvText);
   } catch (e) {

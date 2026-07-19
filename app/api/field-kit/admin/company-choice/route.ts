@@ -12,6 +12,7 @@ import { guardFieldKitAdminApi, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAcces
 import { postCompanyChoice, closeCompanyChoice, coerceVisibility } from "@/lib/companyChoice";
 import { appendNotification, newNotificationId } from "@/lib/notifications";
 import { sendToProgram } from "@/lib/webPush";
+import { bumpLiveVersion } from "@/lib/fieldKitLiveVersion";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,6 +51,8 @@ export async function POST(req: Request) {
         deadline,
         resultsVisibility,
       });
+      // Cross-instance cache-bust: the question rides the itinerary payload.
+      await bumpLiveVersion(access.programId);
 
       const message = {
         title: "Company Choice — cast your vote",
@@ -88,6 +91,7 @@ export async function POST(req: Request) {
       const outcome = typeof body?.outcome === "string" ? body.outcome : undefined;
       const choice = await closeCompanyChoice(access.programId, id, outcome);
       if (!choice) return NextResponse.json({ error: "Unknown question" }, { status: 404 });
+      await bumpLiveVersion(access.programId);
       return NextResponse.json({ ok: true, choice });
     }
 

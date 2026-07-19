@@ -13,7 +13,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { T, FONT } from "@/components/field-kit/tokens";
 
-const POLL_MS = 30_000;
+// 15s (was 30s): matches the staff console's board poll so road-team leaders
+// see check-ins land at the same cadence.
+const POLL_MS = 15_000;
 
 function useLeaderBoard<TData>(url: string): TData | null {
   const asId = useSearchParams().get("asId")?.trim() || "";

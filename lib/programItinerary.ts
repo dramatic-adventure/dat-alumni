@@ -27,6 +27,7 @@ export type ProgramRow = {
   essence: string; // one-line program spirit
   todayDayId: string; // manual override fallback for "today"
   link: string; // optional public link
+  timezone: string; // IANA tz for the program ("Europe/Bratislava") — drives "today"
 };
 
 export type ChapterRow = {
@@ -53,6 +54,7 @@ export type ChapterRow = {
   lodgingEmail: string;
   lodgingWebsite: string;
   lodgingExpect: string; // the "Expect:" blurb from the trip document
+  timezone: string; // optional IANA tz override when this chapter is in a different zone
 };
 
 export type ItineraryDayRow = {
@@ -139,6 +141,7 @@ export type Chapter = {
   partnerOrg?: string;
   status: ChapterStatus;
   lodging?: Lodging; // present only when lodgingName is set
+  timezone?: string; // IANA tz override for this chapter's days (else program tz)
   days: ItineraryDay[];
 };
 
@@ -151,6 +154,9 @@ export type RallyPoint = {
   meetTime: string;
   departure: string;
   updatedAt: string; // ISO — when staff last set it
+  /** ISO — when the rally point auto-expires (banner hides). Absent = sticky.
+   * Only ever set when present, so pre-expiry payloads hash identically. */
+  expiresAt?: string;
 };
 
 // ── Slice 5 (Field Ops & Library) — payload-carried ops state ─────────────────
@@ -231,6 +237,7 @@ export type ProgramItinerary = {
   essence: string;
   todayDayId?: string;
   link?: string;
+  timezone?: string; // program default IANA tz — "today" flips at midnight in this zone
   chapters: Chapter[];
   rallyPoint?: RallyPoint; // present only when staff have set one
   rollCall?: RollCallState; // present only when a roll call exists (Slice 5)
@@ -444,6 +451,7 @@ export function rowsToProgramItinerary(input: {
       partnerOrg: c.partnerOrg?.trim() || undefined,
       status: normalizeStatus(c.status),
       lodging: lodgingFromRow(c),
+      timezone: c.timezone?.trim() || undefined,
       days: orderedDaysForChapter(c, daysByChapter),
     }));
 
@@ -464,6 +472,7 @@ export function rowsToProgramItinerary(input: {
     essence: program.essence ?? "",
     todayDayId: program.todayDayId?.trim() || undefined,
     link: program.link?.trim() || undefined,
+    timezone: program.timezone?.trim() || undefined,
     chapters: builtChapters,
   };
 }
@@ -538,32 +547,63 @@ export type ResolvedToday = {
   todayDayId?: string;
 };
 
-/** Local yyyy-mm-dd for a Date (simple; program-timezone refinement is later). */
-function isoDate(d: Date): string {
+/**
+ * yyyy-mm-dd for a Date in a given IANA timezone. This is what makes "today"
+ * flip at midnight WHERE THE PROGRAM IS, not wherever the server happens to run
+ * (Netlify Lambdas are UTC — computing "today" server-locally is exactly the
+ * "app shows yesterday's schedule" bug). With no/invalid tz, falls back to the
+ * runtime's local date (the old behavior).
+ */
+export function isoDateInTz(d: Date, timeZone?: string): string {
+  const tz = String(timeZone ?? "").trim();
+  if (tz) {
+    try {
+      // en-CA formats as yyyy-mm-dd.
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: tz,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(d);
+    } catch {
+      // Unknown tz string in the sheet — fall through to local rather than crash.
+    }
+  }
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
     d.getDate()
   ).padStart(2, "0")}`;
 }
 
 /**
- * Resolve "today" against the itinerary's day dates. An exact `fullDate` match
- * wins; otherwise before the first day / after the last day. PROGRAM.todayDayId
- * is a manual override used when no day carries a parseable fullDate yet.
+ * Resolve "today" against the itinerary's day dates, in the PROGRAM's timezone
+ * (per-chapter override → program default → runtime local). Each day is matched
+ * against "now" expressed in that day's own effective timezone, so a program
+ * that moves between zones mid-trip flips days at the right local midnight.
+ * An exact `fullDate` match wins; otherwise before the first day / after the
+ * last day. PROGRAM.todayDayId is a manual override used when no day carries a
+ * parseable fullDate yet.
  */
 export function resolveToday(it: ProgramItinerary, now: Date = new Date()): ResolvedToday {
+  // Effective tz per day: the owning chapter's override, else the program's.
+  const tzByDay = new Map<string, string | undefined>();
+  for (const c of it.chapters) {
+    for (const d of c.days) tzByDay.set(d.id, c.timezone || it.timezone);
+  }
+  const todayFor = (dayId: string) => isoDateInTz(now, tzByDay.get(dayId) ?? it.timezone);
+
   const days = allDays(it).filter((d) => d.fullDate);
   if (!days.length) {
     return it.todayDayId ? { state: "during", todayDayId: it.todayDayId } : { state: "unknown" };
   }
   const sorted = [...days].sort((a, b) => a.fullDate.localeCompare(b.fullDate));
-  const today = isoDate(now);
-  const exact = sorted.find((d) => d.fullDate === today);
+  const exact = sorted.find((d) => d.fullDate === todayFor(d.id));
   if (exact) return { state: "during", todayDayId: exact.id };
+  const today = isoDateInTz(now, it.timezone);
   if (today < sorted[0].fullDate) return { state: "before", todayDayId: it.todayDayId };
   if (today > sorted[sorted.length - 1].fullDate)
     return { state: "after", todayDayId: it.todayDayId };
   // mid-trip gap day: treat as during, anchor to the most recent past day
-  const past = [...sorted].reverse().find((d) => d.fullDate <= today);
+  const past = [...sorted].reverse().find((d) => d.fullDate <= todayFor(d.id));
   return { state: "during", todayDayId: past?.id ?? it.todayDayId };
 }
 

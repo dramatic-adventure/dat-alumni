@@ -14,12 +14,13 @@
 
 import TodayCompanion from "@/components/field-kit/TodayCompanion";
 import ImpersonationBanner from "@/components/field-kit/ImpersonationBanner";
+import EnableAlertsBanner from "@/components/field-kit/EnableAlertsBanner";
 import RallyPointBanner from "@/components/field-kit/RallyPointBanner";
 import RollCallCard from "@/components/field-kit/RollCallCard";
 import CompanyChoiceCard from "@/components/field-kit/CompanyChoiceCard";
 import LiveRefresh from "@/components/field-kit/LiveRefresh";
 import { getItinerarySnapshot } from "@/lib/itineraryServerSnapshot";
-import { resolveToday, type RollCallStatus } from "@/lib/programItinerary";
+import type { RollCallStatus } from "@/lib/programItinerary";
 import { requireFieldKitPage, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 import { isFieldKitLeader } from "@/lib/fieldKitLeaders";
 import { getRollCallResponses } from "@/lib/rollCall";
@@ -40,7 +41,7 @@ export default async function FieldKitHome({
 
   // Gate + snapshot read are independent (the gate always resolves to this same
   // FIELD_KIT_PROGRAM_ID), so they run concurrently — same shape as before.
-  const [access, { itinerary, hash }] = await Promise.all([
+  const [access, { itinerary, hash, today: snapshotToday }] = await Promise.all([
     requireFieldKitPage(FIELD_KIT_PROGRAM_ID, asId),
     getItinerarySnapshot(FIELD_KIT_PROGRAM_ID),
   ]);
@@ -59,10 +60,14 @@ export default async function FieldKitHome({
     rollCallResponses.find((r) => normId(r.alumniSlug) === slug)?.status ?? "";
   const mySelection = choiceVotes.find((v) => normId(v.alumniSlug) === slug)?.selection ?? "";
 
-  const today = resolveToday(itinerary);
+  // "Today" comes from the snapshot (resolved in the program's timezone) so the
+  // render always matches the hash LiveRefresh polls — including day rollovers.
+  const today = snapshotToday ?? { state: "unknown" as const };
   return (
     <>
       {access.impersonating && <ImpersonationBanner slug={access.slug} />}
+      {/* Push opt-in nudge — shows until this device has trip alerts on. */}
+      <EnableAlertsBanner programId={access.programId} />
       {itinerary.rallyPoint && <RallyPointBanner rally={itinerary.rallyPoint} />}
       {itinerary.rollCall && (
         <RollCallCard rollCall={itinerary.rollCall} serverMyStatus={myStatus} isLeader={leader} />

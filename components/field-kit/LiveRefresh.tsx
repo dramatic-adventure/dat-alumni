@@ -21,7 +21,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { fetchItinerary } from "@/lib/fetchItinerary";
 import { T, FONT } from "@/components/field-kit/tokens";
 
-const POLL_MS = 30_000;
+// 20s (was 30s): with the server's live-version cache-bust, this poll is the
+// dominant term in how fast a console action reaches an open device.
+const POLL_MS = 20_000;
 
 export default function LiveRefresh({
   programId,

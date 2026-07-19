@@ -13,18 +13,21 @@
 //   v1 → v2: added "itinerarySnapshot" (Slice 2)
 //   v2 → v3: added "opsQueue" + "opsState" (Slice 5 — Roll Call / Company Choice)
 //   v3 → v4: added "journeyDrafts" (Slice 6 — Composer / Retroactive drafts)
+//   v4 → v5: added "traceMutationQueue" + "traceMirror" (offline trace edit/delete)
 //
 // SSR-safe: hasIDB() guards the browser-only API so every importer no-ops cleanly
 // on the server (no "server-only" — this is imported by client code).
 
 export const DB_NAME = "dat-field-kit";
-export const DB_VERSION = 4;
+export const DB_VERSION = 5;
 
 export const CAPTURE_STORE = "captureQueue"; // keyPath: "captureId" (Slice C)
 export const SNAPSHOT_STORE = "itinerarySnapshot"; // keyPath: "programId" (Slice 2)
 export const OPS_QUEUE_STORE = "opsQueue"; // keyPath: "opId" (Slice 5 — queued check-ins/votes)
 export const OPS_STATE_STORE = "opsState"; // keyPath: "key" (Slice 5 — this device's own response/vote)
 export const DRAFT_STORE = "journeyDrafts"; // keyPath: "key" (Slice 6 — Composer/Retro drafts)
+export const TRACE_MUTATION_STORE = "traceMutationQueue"; // keyPath: "mutationId" (queued edits/deletes)
+export const TRACE_MIRROR_STORE = "traceMirror"; // keyPath: "captureId" (device copy of own traces)
 
 export function hasIDB(): boolean {
   return typeof indexedDB !== "undefined";
@@ -54,6 +57,12 @@ export function openDb(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(DRAFT_STORE)) {
         db.createObjectStore(DRAFT_STORE, { keyPath: "key" });
+      }
+      if (!db.objectStoreNames.contains(TRACE_MUTATION_STORE)) {
+        db.createObjectStore(TRACE_MUTATION_STORE, { keyPath: "mutationId" });
+      }
+      if (!db.objectStoreNames.contains(TRACE_MIRROR_STORE)) {
+        db.createObjectStore(TRACE_MIRROR_STORE, { keyPath: "captureId" });
       }
     };
     req.onsuccess = () => {

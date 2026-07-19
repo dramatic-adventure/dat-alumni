@@ -54,10 +54,21 @@ export async function POST(req: Request) {
         continue;
       }
       try {
+        // A row with a staff-set expiresAt bounds the push delivery window —
+        // an already-expired row is claimed (stamped) but not sent.
+        const expiresMs = n.expiresAt ? Date.parse(n.expiresAt) : NaN;
+        if (Number.isFinite(expiresMs) && expiresMs <= Date.now()) {
+          results.push({ id: n.id, programId: n.programId, sent: 0, error: "expired before send" });
+          continue;
+        }
+        const ttlSeconds = Number.isFinite(expiresMs)
+          ? Math.ceil((expiresMs - Date.now()) / 1000)
+          : undefined;
         const r = await sendToProgram(n.programId, {
           title: n.title || "DAT Field Kit",
           body: n.body,
           link: n.link,
+          ttlSeconds,
         });
         results.push({ id: n.id, programId: n.programId, sent: r.sent });
       } catch (e) {

@@ -22,6 +22,13 @@ import {
   subscribe as subscribeOps,
   type OpsSyncCounts,
 } from "@/lib/opsSync";
+import {
+  start as startTraceMutations,
+  kick as kickTraceMutations,
+  retryFailed as retryFailedTraceMutations,
+  subscribe as subscribeTraceMutations,
+  type TraceMutationSyncCounts,
+} from "@/lib/traceMutationSync";
 import { getSnapshot, onSnapshotChange } from "@/lib/itinerarySnapshot";
 import { formatRelativeTime } from "@/lib/relativeTime";
 
@@ -38,6 +45,8 @@ export default function SyncStatus({ programId }: { programId: string }) {
   const [counts, setCounts] = useState<SyncCounts>({ pending: 0, failed: 0 });
   // Slice 5 — the ops queue (check-ins/votes) counts alongside captures.
   const [opsCounts, setOpsCounts] = useState<OpsSyncCounts>({ pending: 0, failed: 0 });
+  // Trace mutations (edits/deletes) queue offline too.
+  const [traceCounts, setTraceCounts] = useState<TraceMutationSyncCounts>({ pending: 0, failed: 0 });
   // Last itinerary sync time (epoch ms); null until a real sync has occurred.
   const [syncedAt, setSyncedAt] = useState<number | null>(null);
   // Bumped on a timer to re-tick the relative "Xm ago" label.
@@ -59,11 +68,14 @@ export default function SyncStatus({ programId }: { programId: string }) {
   useEffect(() => {
     start();
     startOps();
+    startTraceMutations();
     const unsubCaptures = subscribe(setCounts);
     const unsubOps = subscribeOps(setOpsCounts);
+    const unsubTrace = subscribeTraceMutations(setTraceCounts);
     return () => {
       unsubCaptures();
       unsubOps();
+      unsubTrace();
     };
   }, []);
 
@@ -87,8 +99,8 @@ export default function SyncStatus({ programId }: { programId: string }) {
     };
   }, [programId]);
 
-  const pending = counts.pending + opsCounts.pending;
-  const failed = counts.failed + opsCounts.failed;
+  const pending = counts.pending + opsCounts.pending + traceCounts.pending;
+  const failed = counts.failed + opsCounts.failed + traceCounts.failed;
 
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 12 }}>
@@ -122,9 +134,11 @@ export default function SyncStatus({ programId }: { programId: string }) {
             if (failed > 0) {
               retryFailed();
               retryFailedOps();
+              retryFailedTraceMutations();
             } else {
               kick();
               kickOps();
+              kickTraceMutations();
             }
           }}
           title={failed > 0 ? "Retry failed items" : "Sync now"}

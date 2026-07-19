@@ -385,15 +385,22 @@ export default function CaptureForm({
 
             }}
           />
-          <input
-            type="text"
+          {/* Auto-growing caption: height tracks content so longer captions wrap
+              instead of scrolling horizontally; still manually resizable. */}
+          <textarea
             value={bodyText}
-            onChange={(e) => setBodyText(e.target.value)}
+            onChange={(e) => {
+              setBodyText(e.target.value);
+              e.currentTarget.style.height = "auto";
+              e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
+            }}
             placeholder="Add a caption (optional)"
             aria-label="Caption"
+            rows={2}
             style={{
               width: "100%",
               boxSizing: "border-box",
+              resize: "vertical",
               fontFamily: FONT.dm,
               fontSize: 16,
               lineHeight: 1.5,
@@ -520,15 +527,22 @@ export default function CaptureForm({
             </p>
           )}
 
-          <input
-            type="text"
+          {/* Auto-growing caption: height tracks content so longer captions wrap
+              instead of scrolling horizontally; still manually resizable. */}
+          <textarea
             value={bodyText}
-            onChange={(e) => setBodyText(e.target.value)}
+            onChange={(e) => {
+              setBodyText(e.target.value);
+              e.currentTarget.style.height = "auto";
+              e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
+            }}
             placeholder="Add a caption (optional)"
             aria-label="Caption"
+            rows={2}
             style={{
               width: "100%",
               boxSizing: "border-box",
+              resize: "vertical",
               fontFamily: FONT.dm,
               fontSize: 16,
               lineHeight: 1.5,

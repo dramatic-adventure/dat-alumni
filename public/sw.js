@@ -17,20 +17,20 @@
 // "not in program" gate screen (detected via GATE_MARKER), /field-kit/admin
 // (staff console — online-only, cohort-wide data), or any ?asId= view.
 //
-// SLICE 4b (instant open): kit navigations are now CACHE-FIRST. A cached copy
-// is served immediately (~0ms, with or without signal) and revalidated in the
-// background; when the fresh copy differs, controlled clients on that URL get
-// a "fk-nav-fresh" message and NavCacheReconciler runs a silent
-// router.refresh() (home + itinerary additionally self-correct via
-// LiveRefresh). If the revalidate comes back as a login redirect or the
-// roster-gate screen, the cached entry is DELETED and the client gets
-// "fk-nav-auth" → hard reload → the real redirect/gate shows (never masked by
-// a stale page while online). Transient server errors leave the cached copy
-// standing. The home ("/field-kit") + itinerary routes are also background-
-// precached after any successful kit visit, so the day page cold-opens
-// offline even if never directly visited. Cache-first only ever serves the
-// device owner's own pages: admin/asId/gate responses are never written, and
-// sign-out sweeps every fk-* cache (lib/fieldKitCache#clearFieldKitCaches).
+// SLICE 4b → NETWORK-FIRST REVISION: kit navigations now try the NETWORK first
+// (bounded by NAV_NETWORK_TIMEOUT_MS) so reopening the app always shows the
+// live render — the cache-first approach was serving yesterday's schedule and
+// deleted content on open, with the background reconcile too unreliable to
+// correct it. The cached copy is the fallback for offline / too-slow networks
+// (still instant in those cases), and a background revalidate + "fk-nav-fresh"
+// → NavCacheReconciler silent router.refresh() self-corrects a stale serve
+// when the network comes back mid-visit. Login-redirect / roster-gate
+// responses still delete the cached entry (never masked by a stale page). The
+// home ("/field-kit") + itinerary routes are also background-precached after
+// any successful kit visit, so the day page cold-opens offline even if never
+// directly visited. The cache only ever serves the device owner's own pages:
+// admin/asId/gate responses are never written, and sign-out sweeps every fk-*
+// cache (lib/fieldKitCache#clearFieldKitCaches).
 //
 // IMPORTANT: do NOT bump CACHE on routine deploys — see design §5. Cached HTML
 // and the exact hashed _next/static chunks it references stay paired only
@@ -183,29 +183,63 @@ async function revalidateFieldKitNavigation(req, url, cache, cached) {
   if (text !== oldText) await notifyClients(req.url, "fk-nav-fresh");
 }
 
-// Serve a kit navigation: cache-first (instant) with background revalidate;
-// network-first with offline fallbacks when there's no cached copy yet.
+// How long a kit navigation waits for the live network before falling back to
+// the cached copy. Long enough for a normal mobile round-trip; short enough
+// that a dead-zone open still feels instant-ish from cache.
+const NAV_NETWORK_TIMEOUT_MS = 3500;
+
+// fetch() bounded by a timeout — rejects (like a network failure) when the
+// deadline passes, so the caller falls back to cache.
+function fetchWithTimeout(req, ms) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  return fetch(req, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
+}
+
+// Serve a kit navigation: NETWORK-FIRST (fresh data whenever reachable), with
+// the cached copy as the offline / slow-network fallback, then the offline
+// shells as the last resort.
 async function serveFieldKitNavigation(event, req, url) {
   const cache = await caches.open(CACHE);
   const cached = await cache.match(req);
 
+  let res = null;
+  try {
+    res = await fetchWithTimeout(req, NAV_NETWORK_TIMEOUT_MS);
+  } catch {
+    res = null; // offline or too slow — fall back to cache below
+  }
+
+  if (res) {
+    // Signed out (server-side redirect to /login): show it, and drop the stale
+    // copy so it can't mask the redirect later.
+    if (res.redirected) {
+      await cache.delete(req);
+      return res;
+    }
+    if (res.ok && res.status === 200) {
+      if (await isCacheableFieldKitResponse(res, url)) {
+        await cache.put(req, res.clone());
+        event.waitUntil(ensureCoreNavPrecache(cache));
+      }
+      return res; // fresh page — the normal online path
+    }
+    // Transient server trouble (5xx etc.) — prefer the saved copy if we have one.
+    if (cached) return cached;
+    return res;
+  }
+
+  // Network unreachable or too slow: serve the cached copy and revalidate in
+  // the background — if the slow fetch eventually lands and differs, the
+  // client gets "fk-nav-fresh" and silently refreshes.
   if (cached) {
     event.waitUntil(revalidateFieldKitNavigation(req, url, cache, cached));
     return cached;
   }
 
-  try {
-    const res = await fetch(req);
-    if (await isCacheableFieldKitResponse(res, url)) {
-      await cache.put(req, res.clone());
-      event.waitUntil(ensureCoreNavPrecache(cache));
-    }
-    return res;
-  } catch {
-    const fallbackUrl = isItineraryNavigation(req, url) ? SHELL_URL : OFFLINE_URL;
-    const fallback = await cache.match(fallbackUrl);
-    return fallback || Response.error();
-  }
+  const fallbackUrl = isItineraryNavigation(req, url) ? SHELL_URL : OFFLINE_URL;
+  const fallback = await cache.match(fallbackUrl);
+  return fallback || Response.error();
 }
 
 self.addEventListener("install", (event) => {
@@ -313,13 +347,11 @@ self.addEventListener("fetch", (event) => {
   // Same-origin only.
   if (url.origin !== self.location.origin) return;
 
-  // Field Kit navigation: CACHE-FIRST for instant opens (SLICE 4b) — a cached
-  // copy is served immediately and revalidated in the background (fresh →
-  // silent client refresh; login-redirect/gate → entry deleted + client
-  // reload). With no cached copy yet: network-first, writing only cacheable
-  // responses (see isCacheableFieldKitResponse); on network failure the
-  // itinerary route falls back to its SLICE 2 shell and every other kit route
-  // falls back to the generic offline notice.
+  // Field Kit navigation: NETWORK-FIRST (bounded) so opening the app shows the
+  // live render; the cached copy serves offline / too-slow networks, writing
+  // only cacheable responses (see isCacheableFieldKitResponse); with no cached
+  // copy the itinerary route falls back to its SLICE 2 shell and every other
+  // kit route falls back to the generic offline notice.
   if (isFieldKitNavigation(req, url)) {
     event.respondWith(serveFieldKitNavigation(event, req, url));
     return;

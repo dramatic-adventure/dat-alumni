@@ -4,13 +4,18 @@
 // CURRENT rally point (lib/rallyPoint — stored so it rides the itinerary payload
 // and precaches offline), records a Notifications row (type "rally", sentAt SET),
 // and pushes a "rally" notification to the program roster. The push links to the
-// Today home, where the rally card renders.
+// Today home, where the rally card renders. Accepts an optional expiresInMinutes
+// — the banner auto-hides after that window and the push delivery TTL matches.
+//
+// DELETE /api/field-kit/admin/rally — "Clear Rally Point" (admin-only). Blanks
+// the program's rally row so the Today banner disappears (no push).
 
 import { NextResponse } from "next/server";
 import { guardFieldKitAdminApi, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
-import { appendNotification, newNotificationId } from "@/lib/notifications";
-import { setRallyPoint } from "@/lib/rallyPoint";
+import { appendNotification, newNotificationId, expiryFromMinutes } from "@/lib/notifications";
+import { setRallyPoint, clearRallyPoint } from "@/lib/rallyPoint";
 import { sendToProgram } from "@/lib/webPush";
+import { bumpLiveVersion } from "@/lib/fieldKitLiveVersion";
 import type { RallyPoint } from "@/lib/programItinerary";
 
 export const runtime = "nodejs";
@@ -54,7 +59,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "location is required" }, { status: 400 });
     }
 
-    const rally = await setRallyPoint(access.programId, { location, lookFor, meetTime, departure });
+    // Staff-chosen expiration: the banner hides itself after this window
+    // (getRallyPoint reads an expired row as null) and the push TTL matches.
+    const { expiresAt, ttlSeconds } = expiryFromMinutes(body?.expiresInMinutes);
+
+    const rally = await setRallyPoint(access.programId, {
+      location, lookFor, meetTime, departure, expiresAt,
+    });
+    // Cross-instance cache-bust: the banner rides the itinerary payload.
+    await bumpLiveVersion(access.programId);
     const message = composeRallyMessage(rally);
 
     await appendNotification({
@@ -66,13 +79,14 @@ export async function POST(req: Request) {
       link: message.link,
       notify: true,
       sentAt: new Date().toISOString(),
+      expiresAt,
     });
 
     let sent = 0;
     let total = 0;
     let sendError: string | undefined;
     try {
-      const r = await sendToProgram(access.programId, message);
+      const r = await sendToProgram(access.programId, { ...message, ttlSeconds });
       sent = r.sent;
       total = r.total;
     } catch (e) {
@@ -90,6 +104,29 @@ export async function POST(req: Request) {
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("FIELD-KIT ADMIN RALLY ERROR:", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
+    const asId =
+      typeof body?.asId === "string" && body.asId.trim() ? body.asId.trim() : undefined;
+    const program =
+      typeof body?.program === "string" && body.program.trim()
+        ? body.program.trim()
+        : FIELD_KIT_PROGRAM_ID;
+
+    const access = await guardFieldKitAdminApi(program, asId);
+    if (access instanceof NextResponse) return access;
+
+    await clearRallyPoint(access.programId);
+    await bumpLiveVersion(access.programId);
+    return NextResponse.json({ ok: true });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("FIELD-KIT ADMIN RALLY CLEAR ERROR:", msg);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

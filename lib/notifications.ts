@@ -2,7 +2,7 @@
 //
 // Slice 3 (Notifications) — the Notifications log + trigger source. Backed by the
 // "Field Kit Notifications" tab in ALUMNI_SHEET_ID (columns: id, programId, type,
-// title, body, link, notify, sentAt).
+// title, body, link, notify, sentAt, expiresAt).
 //
 // Two trigger paths write here:
 //   1. The admin console (Send Field Update / Set Rally Point) appends a row with
@@ -18,9 +18,9 @@ import { sheetsClient } from "@/lib/googleClients";
 import { withRetry, idxOf, normId } from "@/lib/sheetsResilience";
 
 const TAB = "Field Kit Notifications";
-const RANGE = `'${TAB}'!A:H`;
+const RANGE = `'${TAB}'!A:I`;
 
-const HEADERS = ["id", "programId", "type", "title", "body", "link", "notify", "sentAt"] as const;
+const HEADERS = ["id", "programId", "type", "title", "body", "link", "notify", "sentAt", "expiresAt"] as const;
 
 export type NotificationType = "update" | "rally" | "roll-call" | "choice";
 
@@ -33,6 +33,9 @@ export type NotificationRow = {
   link: string;
   notify: boolean;
   sentAt: string;
+  /** ISO — staff-chosen expiration; ""/absent = never. Bounds push delivery
+   * TTL and any on-screen display of the notification. */
+  expiresAt?: string;
 };
 
 export type UnsentNotification = NotificationRow & { rowNumber: number };
@@ -87,6 +90,7 @@ function columns(header: string[]) {
     link: idxOf(header, ["link"]),
     notify: idxOf(header, ["notify"]),
     sentAt: idxOf(header, ["sentat"]),
+    expiresAt: idxOf(header, ["expiresat", "expires at"]),
   };
 }
 
@@ -101,6 +105,7 @@ function rowToNotification(header: string[], row: string[]): NotificationRow {
     link: String(row[c.link] ?? "").trim(),
     notify: coerceBool(row[c.notify]),
     sentAt: String(row[c.sentAt] ?? "").trim(),
+    expiresAt: c.expiresAt === -1 ? "" : String(row[c.expiresAt] ?? "").trim(),
   };
 }
 
@@ -173,6 +178,7 @@ export async function appendNotification(n: NotificationRow): Promise<void> {
   put(c.link, n.link);
   put(c.notify, n.notify ? "TRUE" : "FALSE");
   put(c.sentAt, n.sentAt);
+  put(c.expiresAt, n.expiresAt ?? "");
   await withRetry(
     () =>
       sheets.spreadsheets.values.append({
@@ -188,4 +194,19 @@ export async function appendNotification(n: NotificationRow): Promise<void> {
 /** Compact unique-ish id for an admin-created notification row. */
 export function newNotificationId(): string {
   return `n_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/**
+ * Staff-chosen expiration → { expiresAt ISO, push delivery ttlSeconds }.
+ * Non-positive / non-numeric input means "never expires" (empty expiresAt, no
+ * TTL — the web-push default applies). Capped at 7 days as a sanity bound.
+ */
+export function expiryFromMinutes(minutes: unknown): { expiresAt: string; ttlSeconds?: number } {
+  const m = Number(minutes);
+  if (!Number.isFinite(m) || m <= 0) return { expiresAt: "" };
+  const capped = Math.min(m, 7 * 24 * 60);
+  return {
+    expiresAt: new Date(Date.now() + capped * 60_000).toISOString(),
+    ttlSeconds: Math.ceil(capped * 60),
+  };
 }

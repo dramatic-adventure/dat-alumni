@@ -18,6 +18,8 @@ import "server-only";
 import { cache } from "react";
 import { parse } from "csv-parse/sync";
 import { sheetsClient } from "@/lib/googleClients";
+import { getLiveVersion } from "@/lib/fieldKitLiveVersion";
+import { registerAlumniCacheInvalidationHook } from "@/lib/loadAlumni";
 import { loadCsv } from "@/lib/loadCsv";
 import { csvUrls } from "@/lib/csvUrls";
 import {
@@ -52,12 +54,13 @@ const TABS = {
 // header row is blank/short. Header-keyed parsing otherwise tolerates reordering.
 const PROGRAM_HEADERS: (keyof ProgramRow)[] = [
   "programId", "program", "location", "country", "year",
-  "label", "dates", "essence", "todayDayId", "link",
+  "label", "dates", "essence", "todayDayId", "link", "timezone",
 ];
 const CHAPTER_HEADERS: (keyof ChapterRow)[] = [
   "id", "programId", "num", "verb", "place", "title", "description",
   "goal", "tips", "accent", "prompt", "dramaClub", "partnerOrg", "dayIds", "status",
   "lodgingName", "lodgingAddress", "lodgingPhone", "lodgingEmail", "lodgingWebsite", "lodgingExpect",
+  "timezone",
 ];
 const DAY_HEADERS: (keyof ItineraryDayRow)[] = [
   "id", "programId", "chapterId", "dayNum", "dateLabel", "fullDate", "location",
@@ -147,6 +150,10 @@ const toProgramRow = (r: Record<string, string>): ProgramRow => ({
   essence: r.essence ?? "",
   todayDayId: r.todayDayId ?? "",
   link: r.link ?? "",
+  // Program timezone drives "today" resolution. Sheet column wins; the env var
+  // is the safety net so a program without the column still resolves "today"
+  // in a sensible zone instead of the server's (UTC on Netlify).
+  timezone: (r.timezone ?? "").trim() || (process.env.FIELD_KIT_DEFAULT_TIMEZONE ?? "").trim(),
 });
 
 const toChapterRow = (r: Record<string, string>): ChapterRow => ({
@@ -171,6 +178,7 @@ const toChapterRow = (r: Record<string, string>): ChapterRow => ({
   lodgingEmail: r.lodgingEmail ?? "",
   lodgingWebsite: r.lodgingWebsite ?? "",
   lodgingExpect: r.lodgingExpect ?? "",
+  timezone: r.timezone ?? "",
 });
 
 const toDayRow = (r: Record<string, string>): ItineraryDayRow => ({
@@ -210,8 +218,16 @@ const toTimeRow = (r: Record<string, string>): TimeAnchorRow => ({
 // those pages re-read all 4 Sheets tabs + the rally point live. Shared program
 // data can tolerate ~60s staleness (see field-kit-NOTIFICATIONS-SCHEMA.md /
 // perf task); overridable via FIELD_KIT_ITINERARY_TTL_MS.
-const PROGRAM_ITINERARY_TTL_MS = Number(process.env.FIELD_KIT_ITINERARY_TTL_MS || 60_000);
-const _itineraryCache = new Map<string, { at: number; value: ProgramItinerary | null }>();
+// 30s (was 60s): with no push-from-Sheets trigger, this TTL is the dominant
+// term in how fast a Google Sheets edit reaches devices (TTL + 8s snapshot +
+// 20s poll). 30s keeps Sheets API usage at ~20 reads/min/instance worst-case.
+const PROGRAM_ITINERARY_TTL_MS = Number(process.env.FIELD_KIT_ITINERARY_TTL_MS || 30_000);
+const _itineraryCache = new Map<string, { at: number; version: string | null; value: ProgramItinerary | null }>();
+
+// Participate in the global invalidation sweep (admin invalidate route /
+// profile saves) so "flush the caches" actually flushes the itinerary too,
+// instead of leaving it stale for the remainder of its TTL window.
+registerAlumniCacheInvalidationHook(() => _itineraryCache.clear());
 
 const loadProgramItineraryUncached = cache(
   async (pid: string): Promise<ProgramItinerary | null> => {
@@ -289,11 +305,16 @@ export async function loadProgramItinerary(programId: string): Promise<ProgramIt
   if (!pid) return null;
 
   const now = Date.now();
+  // Cross-instance freshness signal: staff-console writes bump the live
+  // version (lib/fieldKitLiveVersion), and a cached value built under an older
+  // version is discarded immediately — no waiting out the TTL on instances
+  // that didn't handle the write.
+  const version = await getLiveVersion(pid);
   const hit = _itineraryCache.get(pid);
-  if (hit && now - hit.at < PROGRAM_ITINERARY_TTL_MS) return hit.value;
+  if (hit && now - hit.at < PROGRAM_ITINERARY_TTL_MS && hit.version === version) return hit.value;
 
   const value = await loadProgramItineraryUncached(pid);
-  _itineraryCache.set(pid, { at: now, value });
+  _itineraryCache.set(pid, { at: now, version, value });
   return value;
 }
 

@@ -227,7 +227,9 @@ export async function closeRollCall(programId: string, rollCallId: string): Prom
 
 // Short cross-request TTL cache (per warm instance) so Today renders + leader
 // polls share one Responses read. Invalidated on every write.
-const RESPONSES_TTL_MS = Number(process.env.FIELD_KIT_OPS_TTL_MS || 15_000);
+// 5s (was 15s): the staff console auto-polls every 15s — a longer TTL here
+// would make that poll routinely serve stale check-ins from other instances.
+const RESPONSES_TTL_MS = Number(process.env.FIELD_KIT_OPS_TTL_MS || 5_000);
 let _respCache: { at: number; rows: RollCallResponse[] } | null = null;
 
 async function readAllResponses(): Promise<RollCallResponse[]> {

@@ -22,7 +22,15 @@ import {
 } from "@/lib/pushSubscriptions";
 import { getVapidPrivateKey, getVapidSubject } from "@/lib/notificationSecrets";
 
-export type PushMessage = { title: string; body: string; link?: string };
+export type PushMessage = {
+  title: string;
+  body: string;
+  link?: string;
+  /** Push-service delivery TTL in seconds — an offline device that reconnects
+   * after this window never receives the (by-then irrelevant) alert. Omit for
+   * the web-push default (long-lived). */
+  ttlSeconds?: number;
+};
 
 export type SendResult = { sent: number; pruned: number; failed: number; total: number };
 
@@ -98,10 +106,14 @@ async function sendToProgramFiltered(
   let sent = 0;
   let failed = 0;
 
+  const ttl = Number(message.ttlSeconds);
+  const sendOptions =
+    Number.isFinite(ttl) && ttl > 0 ? { TTL: Math.ceil(ttl) } : undefined;
+
   await Promise.all(
     subs.map(async (s) => {
       try {
-        await webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, payload);
+        await webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, payload, sendOptions);
         sent += 1;
       } catch (e: unknown) {
         const code = (e as { statusCode?: number })?.statusCode;

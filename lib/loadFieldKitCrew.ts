@@ -17,7 +17,7 @@ import "server-only";
 import { cache } from "react";
 import { clusterRoster } from "@/lib/fieldKitAccess";
 import { programMap } from "@/lib/programMap";
-import { loadAlumniBySlug } from "@/lib/loadAlumni";
+import { loadAlumniBySlug, registerAlumniCacheInvalidationHook } from "@/lib/loadAlumni";
 import { loadRoleAssignments } from "@/lib/loadRoleAssignments";
 import { getOrderedProfileRoles } from "@/lib/profileRoleAssignments";
 
@@ -118,6 +118,11 @@ function renderableHeadshot(
 // itinerary, since both tolerate the same staleness window).
 const FIELD_KIT_CREW_TTL_MS = Number(process.env.FIELD_KIT_ITINERARY_TTL_MS || 60_000);
 const _crewCache = new Map<string, { at: number; value: CrewMember[] }>();
+
+// The crew is derived from alumni data (names, headshots) — when a profile save
+// or the admin invalidate route clears the alumni caches, the roster must not
+// keep serving the pre-save snapshot for another TTL window.
+registerAlumniCacheInvalidationHook(() => _crewCache.clear());
 
 /**
  * Ordered crew for a program's cluster roster. Staff first, then alphabetical.

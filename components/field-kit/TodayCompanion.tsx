@@ -20,7 +20,7 @@ import { Pill, ClubChip } from "@/components/field-kit/parts";
 import { partnerOrgName } from "@/components/field-kit/partnerOrgName";
 import TimeAnchorList from "@/components/field-kit/TimeAnchorList";
 import { T, FONT, accent } from "@/components/field-kit/tokens";
-import { dayById, chapterForDay, allDays } from "@/lib/programItinerary";
+import { dayById, chapterForDay, allDays, isoDateInTz } from "@/lib/programItinerary";
 import type {
   ProgramItinerary,
   ResolvedToday,
@@ -123,7 +123,7 @@ function DuringToday({
 }) {
   const acc = chapter ? accent(chapter.accent) : T.teal;
   const partner = day.partnerOrg ? partnerOrgName(day.partnerOrg) : "";
-  const times = day.times.slice(0, 5);
+  const times = day.times; // full day's schedule — the itinerary page shows the same list
 
   return (
     <>
@@ -328,7 +328,7 @@ function ContactsLink() {
 function BeforeTrip({ itinerary }: { itinerary: ProgramItinerary }) {
   const day0 = firstDay(itinerary);
   const departureIso = day0?.fullDate || firstDatedDay(itinerary)?.fullDate || "";
-  const countdown = departureIso ? daysUntil(departureIso) : null;
+  const countdown = departureIso ? daysUntil(departureIso, itinerary.timezone) : null;
 
   if (day0) {
     return (
@@ -413,12 +413,14 @@ function firstDatedDay(it: ProgramItinerary): ItineraryDay | undefined {
     .sort((a, b) => a.fullDate.localeCompare(b.fullDate))[0];
 }
 
-/** Whole days from local "today" to an ISO yyyy-mm-dd date; null if unparseable. */
-function daysUntil(iso: string): number | null {
-  const [y, m, d] = String(iso).split("-").map(Number);
-  if (!y || !m || !d) return null;
-  const target = new Date(y, m - 1, d);
-  const now = new Date();
-  const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  return Math.round((target.getTime() - todayMid.getTime()) / 86_400_000);
+/** Whole days from "today" (in the program tz) to an ISO yyyy-mm-dd date; null if unparseable. */
+function daysUntil(iso: string, timeZone?: string): number | null {
+  const parse = (s: string): number | null => {
+    const [y, m, d] = String(s).split("-").map(Number);
+    return y && m && d ? Date.UTC(y, m - 1, d) : null;
+  };
+  const target = parse(iso);
+  const today = parse(isoDateInTz(new Date(), timeZone));
+  if (target == null || today == null) return null;
+  return Math.round((target - today) / 86_400_000);
 }

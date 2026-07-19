@@ -287,7 +287,8 @@ export async function closeCompanyChoice(
 /* ── Votes ──────────────────────────────────────────────────────────────────── */
 
 // Short cross-request TTL cache — same rationale as rollCall's responses cache.
-const VOTES_TTL_MS = Number(process.env.FIELD_KIT_OPS_TTL_MS || 15_000);
+// 5s (was 15s): matches the staff console's 15s auto-poll (see lib/rollCall.ts).
+const VOTES_TTL_MS = Number(process.env.FIELD_KIT_OPS_TTL_MS || 5_000);
 let _voteCache: { at: number; rows: CompanyChoiceVote[] } | null = null;
 
 async function readAllVotes(): Promise<CompanyChoiceVote[]> {

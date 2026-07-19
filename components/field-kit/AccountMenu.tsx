@@ -20,6 +20,8 @@ import SignOutWarningModal from "@/components/field-kit/SignOutWarningModal";
 import TripAlerts from "@/components/field-kit/TripAlerts";
 import { getAll as getQueuedCaptures } from "@/lib/captureQueue";
 import { getAll as getQueuedOps, clearAllOps } from "@/lib/opsQueue";
+import { getAll as getQueuedTraceMutations, clearAllTraceMutations } from "@/lib/traceMutationQueue";
+import { clearTraceMirror } from "@/lib/traceMirror";
 import { clearAllSnapshots } from "@/lib/itinerarySnapshot";
 import { clearFieldKitCaches } from "@/lib/fieldKitCache";
 
@@ -95,18 +97,30 @@ export default function AccountMenu({
   const [signOutWarningCount, setSignOutWarningCount] = useState<number | null>(null);
 
   async function clearOnDeviceCaches() {
-    // clearAllOps wipes the ops queue + this device's own answers (Slice 5) —
-    // per-user data on a shared device. Reached only when the queue is empty or
-    // the artist chose "sign out anyway", same contract as the capture queue.
-    await Promise.all([clearFieldKitCaches(), clearAllSnapshots(), clearAllOps()]);
+    // clearAllOps wipes the ops queue + this device's own answers (Slice 5),
+    // clearAllTraceMutations + clearTraceMirror wipe queued edits/deletes and
+    // the on-device traces copy — per-user data on a shared device. Reached
+    // only when the queues are empty or the artist chose "sign out anyway".
+    await Promise.all([
+      clearFieldKitCaches(),
+      clearAllSnapshots(),
+      clearAllOps(),
+      clearAllTraceMutations(),
+      clearTraceMirror(),
+    ]);
   }
 
   async function handleSignOutClick() {
     setOpen(false);
-    // Unsynced work = queued captures + queued check-ins/votes. Either would
-    // sync under the NEXT signed-in user, so both gate the warning.
-    const [queuedCaptures, queuedOps] = await Promise.all([getQueuedCaptures(), getQueuedOps()]);
-    const queued = queuedCaptures.length + queuedOps.length;
+    // Unsynced work = queued captures + queued check-ins/votes + queued trace
+    // edits/deletes. Any of these would sync under the NEXT signed-in user, so
+    // they all gate the warning.
+    const [queuedCaptures, queuedOps, queuedTraceMutations] = await Promise.all([
+      getQueuedCaptures(),
+      getQueuedOps(),
+      getQueuedTraceMutations(),
+    ]);
+    const queued = queuedCaptures.length + queuedOps.length + queuedTraceMutations.length;
     if (queued > 0) {
       setSignOutWarningCount(queued);
       return;

@@ -7,7 +7,7 @@
 
 import { NextResponse } from "next/server";
 import { guardFieldKitAdminApi, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
-import { appendNotification, newNotificationId } from "@/lib/notifications";
+import { appendNotification, newNotificationId, expiryFromMinutes } from "@/lib/notifications";
 import { sendToProgram } from "@/lib/webPush";
 
 export const runtime = "nodejs";
@@ -33,7 +33,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "title and body are required" }, { status: 400 });
     }
 
-    const message = { title, body: text, link };
+    // Staff-chosen expiration (minutes from now; absent/0 = never). Bounds the
+    // push delivery window so a phone that reconnects hours later doesn't get
+    // a stale alert, and is recorded on the row for any on-screen display.
+    const { expiresAt, ttlSeconds } = expiryFromMinutes(body?.expiresInMinutes);
+
+    const message = { title, body: text, link, ttlSeconds };
 
     // Record first (sentAt set) so the cron treats it as already handled.
     await appendNotification({
@@ -45,6 +50,7 @@ export async function POST(req: Request) {
       link,
       notify: true,
       sentAt: new Date().toISOString(),
+      expiresAt,
     });
 
     let sent = 0;

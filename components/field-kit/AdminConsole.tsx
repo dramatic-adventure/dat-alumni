@@ -40,6 +40,52 @@ function absolute(link: string): string {
   }
 }
 
+// Staff-chosen expiration choices (minutes; 0 = never). Applied to the push
+// delivery TTL, the sheet row, and — for rally points — the Today banner,
+// which auto-hides once the expiration passes.
+const EXPIRY_OPTIONS: { label: string; value: number }[] = [
+  { label: "No expiration", value: 0 },
+  { label: "30 minutes", value: 30 },
+  { label: "1 hour", value: 60 },
+  { label: "2 hours", value: 120 },
+  { label: "4 hours", value: 240 },
+  { label: "8 hours", value: 480 },
+  { label: "24 hours", value: 1440 },
+];
+
+function ExpirySelect({
+  id,
+  value,
+  onChange,
+  hint,
+}: {
+  id: string;
+  value: number;
+  onChange: (v: number) => void;
+  hint: string;
+}) {
+  return (
+    <>
+      <label style={label} htmlFor={id}>
+        Expires
+      </label>
+      <select
+        id={id}
+        style={{ ...field, appearance: "auto" as const }}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        title={hint}
+      >
+        {EXPIRY_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </>
+  );
+}
+
 function whatsappText(n: { title: string; body: string; link: string }): string {
   return [`*${n.title}*`, n.body, absolute(n.link)].filter(Boolean).join("\n");
 }
@@ -68,6 +114,7 @@ export default function AdminConsole({
   // Send Field Update form
   const [uTitle, setUTitle] = useState("");
   const [uBody, setUBody] = useState("");
+  const [uExpiry, setUExpiry] = useState(0);
   const [uBusy, setUBusy] = useState(false);
 
   // Set Rally Point form
@@ -75,7 +122,9 @@ export default function AdminConsole({
   const [rLookFor, setRLookFor] = useState(initialRally?.lookFor ?? "");
   const [rMeet, setRMeet] = useState(initialRally?.meetTime ?? "");
   const [rDepart, setRDepart] = useState(initialRally?.departure ?? "");
+  const [rExpiry, setRExpiry] = useState(0);
   const [rBusy, setRBusy] = useState(false);
+  const [hasRally, setHasRally] = useState(!!initialRally);
 
   const flash = useCallback((msg: string) => {
     setNotice(msg);
@@ -104,7 +153,12 @@ export default function AdminConsole({
       const res = await fetch("/api/field-kit/admin/notify", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ program: programId, title: uTitle.trim(), body: uBody.trim() }),
+        body: JSON.stringify({
+          program: programId,
+          title: uTitle.trim(),
+          body: uBody.trim(),
+          ...(uExpiry > 0 ? { expiresInMinutes: uExpiry } : {}),
+        }),
       });
       const data = (await res.json().catch(() => null)) as
         | { ok?: boolean; sent?: number; total?: number; sendError?: string; error?: string }
@@ -124,7 +178,7 @@ export default function AdminConsole({
     } finally {
       setUBusy(false);
     }
-  }, [uTitle, uBody, uBusy, programId, flash, refreshHistory]);
+  }, [uTitle, uBody, uExpiry, uBusy, programId, flash, refreshHistory]);
 
   const setRally = useCallback(async () => {
     if (!rLocation.trim() || rBusy) return;
@@ -139,6 +193,7 @@ export default function AdminConsole({
           lookFor: rLookFor.trim(),
           meetTime: rMeet.trim(),
           departure: rDepart.trim(),
+          ...(rExpiry > 0 ? { expiresInMinutes: rExpiry } : {}),
         }),
       });
       const data = (await res.json().catch(() => null)) as
@@ -148,6 +203,7 @@ export default function AdminConsole({
         flash(data?.error || "Could not set rally point");
         return;
       }
+      setHasRally(true);
       flash(
         data.sendError
           ? `Rally point set, but push failed: ${data.sendError}`
@@ -157,7 +213,32 @@ export default function AdminConsole({
     } finally {
       setRBusy(false);
     }
-  }, [rLocation, rLookFor, rMeet, rDepart, rBusy, programId, flash, refreshHistory]);
+  }, [rLocation, rLookFor, rMeet, rDepart, rExpiry, rBusy, programId, flash, refreshHistory]);
+
+  const clearRally = useCallback(async () => {
+    if (rBusy) return;
+    setRBusy(true);
+    try {
+      const res = await fetch("/api/field-kit/admin/rally", {
+        method: "DELETE",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ program: programId }),
+      });
+      const data = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+      if (!res.ok || !data?.ok) {
+        flash(data?.error || "Could not clear rally point");
+        return;
+      }
+      setHasRally(false);
+      setRLocation("");
+      setRLookFor("");
+      setRMeet("");
+      setRDepart("");
+      flash("Rally point cleared — the Today banner is gone");
+    } finally {
+      setRBusy(false);
+    }
+  }, [rBusy, programId, flash]);
 
   const copy = useCallback(
     async (text: string, kind: string) => {
@@ -237,6 +318,12 @@ export default function AdminConsole({
           placeholder="What the cohort needs to know…"
           maxLength={400}
         />
+        <ExpirySelect
+          id="u-expiry"
+          value={uExpiry}
+          onChange={setUExpiry}
+          hint="Phones offline past this window won't receive the (stale) alert"
+        />
         <button
           type="button"
           style={{ ...primaryBtn, opacity: uTitle.trim() && uBody.trim() && !uBusy ? 1 : 0.5 }}
@@ -306,15 +393,33 @@ export default function AdminConsole({
             />
           </div>
         </div>
-        <button
-          type="button"
-          style={{ ...primaryBtn, opacity: rLocation.trim() && !rBusy ? 1 : 0.5 }}
-          onClick={setRally}
-          disabled={!rLocation.trim() || rBusy}
-        >
-          {rBusy ? <Loader2 size={15} className="spin" aria-hidden /> : <MapPin size={15} aria-hidden />}
-          {rBusy ? "Setting…" : "Set rally point & notify"}
-        </button>
+        <ExpirySelect
+          id="r-expiry"
+          value={rExpiry}
+          onChange={setRExpiry}
+          hint="The Today banner hides itself once this passes"
+        />
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            style={{ ...primaryBtn, opacity: rLocation.trim() && !rBusy ? 1 : 0.5 }}
+            onClick={setRally}
+            disabled={!rLocation.trim() || rBusy}
+          >
+            {rBusy ? <Loader2 size={15} className="spin" aria-hidden /> : <MapPin size={15} aria-hidden />}
+            {rBusy ? "Setting…" : "Set rally point & notify"}
+          </button>
+          {hasRally && (
+            <button
+              type="button"
+              style={{ ...smallBtn, alignSelf: "center", opacity: rBusy ? 0.5 : 1 }}
+              onClick={clearRally}
+              disabled={rBusy}
+            >
+              Clear rally point
+            </button>
+          )}
+        </div>
       </section>
 
       {/* Sent history */}

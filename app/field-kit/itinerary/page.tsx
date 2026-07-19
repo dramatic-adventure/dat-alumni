@@ -10,7 +10,6 @@ import ItineraryView from "@/components/field-kit/ItineraryView";
 import ItineraryPrivacyNotice from "@/components/field-kit/ItineraryPrivacyNotice";
 import LiveRefresh from "@/components/field-kit/LiveRefresh";
 import { getItinerarySnapshot } from "@/lib/itineraryServerSnapshot";
-import { resolveToday } from "@/lib/programItinerary";
 import { requireFieldKitPage, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 import { T, FONT } from "@/components/field-kit/tokens";
 
@@ -31,14 +30,16 @@ export default async function ItineraryPage({
   // Render through the SHARED server snapshot so this page's hash equals the
   // /api endpoint's (no spurious live-refresh); the page trails live edits by
   // ≤ the snapshot TTL, which is the accepted trade.
-  const [access, { itinerary, hash }] = await Promise.all([
+  const [access, { itinerary, hash, today: snapshotToday }] = await Promise.all([
     requireFieldKitPage(FIELD_KIT_PROGRAM_ID, asId),
     getItinerarySnapshot(FIELD_KIT_PROGRAM_ID),
   ]);
   if (!access) return null; // not on the roster — the layout renders the gate.
   if (!itinerary) return <ItineraryEmpty />;
 
-  const today = resolveToday(itinerary);
+  // "Today" comes from the snapshot (resolved in the program's timezone) so the
+  // render always matches the hash LiveRefresh polls — including day rollovers.
+  const today = snapshotToday ?? { state: "unknown" as const };
   return (
     <>
       {access.impersonating && <ImpersonationBanner slug={access.slug} />}
