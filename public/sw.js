@@ -189,11 +189,37 @@ async function revalidateFieldKitNavigation(req, url, cache, cached) {
 const NAV_NETWORK_TIMEOUT_MS = 3500;
 
 // fetch() bounded by a timeout — rejects (like a network failure) when the
-// deadline passes, so the caller falls back to cache.
+// deadline passes, so the caller falls back to cache. NOTE: this only bounds
+// the response HEADERS — the body streams (and can stall or die) afterwards.
 function fetchWithTimeout(req, ms) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), ms);
   return fetch(req, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
+}
+
+// How long to wait for the response BODY (the cache-sniff buffers it in full)
+// before giving up and serving the already-cached copy instead. Only applied
+// when a cached copy exists — with nothing to fall back to, waiting longer
+// beats an offline notice.
+const NAV_BODY_TIMEOUT_MS = 8000;
+
+// Reject after `ms` if `promise` hasn't settled — the promise itself keeps
+// running (callers hand it to event.waitUntil to finish in the background).
+function withDeadline(promise, ms) {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("fk-body-deadline")), ms);
+    promise.then(
+      (v) => { clearTimeout(t); resolve(v); },
+      (e) => { clearTimeout(t); reject(e); }
+    );
+  });
+}
+
+// Last-resort offline response for a kit navigation with no cached copy.
+async function offlineFallback(req, url, cache) {
+  const fallbackUrl = isItineraryNavigation(req, url) ? SHELL_URL : OFFLINE_URL;
+  const fallback = await cache.match(fallbackUrl);
+  return fallback || Response.error();
 }
 
 // Serve a kit navigation: NETWORK-FIRST (fresh data whenever reachable), with
@@ -218,11 +244,32 @@ async function serveFieldKitNavigation(event, req, url) {
       return res;
     }
     if (res.ok && res.status === 200) {
-      if (await isCacheableFieldKitResponse(res, url)) {
-        await cache.put(req, res.clone());
-        event.waitUntil(ensureCoreNavPrecache(cache));
+      // WEAK-NETWORK GUARD: fetchWithTimeout only bounded the headers. The
+      // sniff below buffers the FULL body, which on flaky wifi can stall or
+      // die mid-stream. That failure used to reject respondWith and surface
+      // the browser's raw network-error page even when a valid cached copy
+      // existed — so any failure (or, with a cached copy standing by, a
+      // too-slow body) now falls back to cache / the offline shells instead.
+      const sniffAndCache = (async () => {
+        if (await isCacheableFieldKitResponse(res, url)) {
+          await cache.put(req, res.clone());
+          await ensureCoreNavPrecache(cache);
+        }
+      })();
+      try {
+        if (cached) {
+          await withDeadline(sniffAndCache, NAV_BODY_TIMEOUT_MS);
+        } else {
+          await sniffAndCache;
+        }
+        return res; // fresh page — the normal online path
+      } catch {
+        // Let the sniff finish (or fail quietly) in the background; if the
+        // body does land, the cache still picks it up for next time.
+        event.waitUntil(sniffAndCache.catch(() => undefined));
+        if (cached) return cached;
+        return offlineFallback(req, url, cache);
       }
-      return res; // fresh page — the normal online path
     }
     // Transient server trouble (5xx etc.) — prefer the saved copy if we have one.
     if (cached) return cached;
@@ -237,9 +284,7 @@ async function serveFieldKitNavigation(event, req, url) {
     return cached;
   }
 
-  const fallbackUrl = isItineraryNavigation(req, url) ? SHELL_URL : OFFLINE_URL;
-  const fallback = await cache.match(fallbackUrl);
-  return fallback || Response.error();
+  return offlineFallback(req, url, cache);
 }
 
 self.addEventListener("install", (event) => {
