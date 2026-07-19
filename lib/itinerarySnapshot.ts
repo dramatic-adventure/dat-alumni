@@ -38,6 +38,23 @@ export async function putSnapshot(record: ItinerarySnapshotRecord): Promise<void
   notifySnapshotChange();
 }
 
+/**
+ * Refresh only `syncedAt` on the existing snapshot — used when a hash-only
+ * poll confirms the itinerary is UNCHANGED (no payload to store, but the
+ * "synced Xs ago" readout should reflect that a live check just succeeded).
+ * No-op when there's no snapshot yet.
+ */
+export async function touchSnapshot(programId: string, syncedAt: number): Promise<void> {
+  if (!hasIDB() || !programId) return;
+  const existing = await getSnapshot(programId);
+  if (!existing) return;
+  const db = await openDb();
+  await reqToPromise(
+    objectStore(db, SNAPSHOT_STORE, "readwrite").put({ ...existing, syncedAt })
+  );
+  notifySnapshotChange();
+}
+
 /** Wipe every on-device itinerary snapshot. Used on sign-out — see AccountMenu. */
 export async function clearAllSnapshots(): Promise<void> {
   if (!hasIDB()) return;

@@ -17,20 +17,23 @@
 // "not in program" gate screen (detected via GATE_MARKER), /field-kit/admin
 // (staff console — online-only, cohort-wide data), or any ?asId= view.
 //
-// SLICE 4b → NETWORK-FIRST REVISION: kit navigations now try the NETWORK first
-// (bounded by NAV_NETWORK_TIMEOUT_MS) so reopening the app always shows the
-// live render — the cache-first approach was serving yesterday's schedule and
-// deleted content on open, with the background reconcile too unreliable to
-// correct it. The cached copy is the fallback for offline / too-slow networks
-// (still instant in those cases), and a background revalidate + "fk-nav-fresh"
-// → NavCacheReconciler silent router.refresh() self-corrects a stale serve
-// when the network comes back mid-visit. Login-redirect / roster-gate
-// responses still delete the cached entry (never masked by a stale page). The
-// home ("/field-kit") + itinerary routes are also background-precached after
-// any successful kit visit, so the day page cold-opens offline even if never
-// directly visited. The cache only ever serves the device owner's own pages:
-// admin/asId/gate responses are never written, and sign-out sweeps every fk-*
-// cache (lib/fieldKitCache#clearFieldKitCaches).
+// SLICE 4b → NETWORK-RACE REVISION: kit navigations RACE the network against a
+// short freshness window (NAV_FRESH_WINDOW_MS). On a good connection the live
+// render wins and the user sees fresh data with zero stale flash; on a weak
+// signal the cached copy paints INSTANTLY and the SAME in-flight fetch keeps
+// running in the background — when it lands, the cache is updated and
+// controlled clients on that URL get "fk-nav-fresh" → NavCacheReconciler
+// (mounted in the kit layout, so EVERY kit page) runs a silent
+// router.refresh(). This is safe against the old staleness bugs because the
+// reconcile is driven by the same response (not a second fetch that might
+// never happen), and the server side no longer serves stale renders (live-
+// version cache-bust + tz-aware "today" folded into the hash). Login-redirect
+// / roster-gate responses still delete the cached entry and force a reload
+// (never masked by a stale page). The home ("/field-kit") + itinerary routes
+// are also background-precached after any successful kit visit. The cache only
+// ever serves the device owner's own pages: admin/asId/gate responses are
+// never written, and sign-out sweeps every fk-* cache
+// (lib/fieldKitCache#clearFieldKitCaches).
 //
 // IMPORTANT: do NOT bump CACHE on routine deploys — see design §5. Cached HTML
 // and the exact hashed _next/static chunks it references stay paired only
@@ -142,15 +145,13 @@ async function notifyClients(targetUrl, type) {
   for (const c of clients) c.postMessage({ type, url: targetUrl });
 }
 
-// Background revalidate for a navigation that was just answered from cache.
-async function revalidateFieldKitNavigation(req, url, cache, cached) {
-  let res;
-  try {
-    res = await fetch(req);
-  } catch {
-    return; // offline — the cached copy stands, nothing to reconcile
-  }
-
+// Reconcile a fresh network response that arrived AFTER the cached copy was
+// already served: auth changes drop the entry + force a reload; a newer page
+// body is cached and announced ("fk-nav-fresh" → silent router.refresh via
+// NavCacheReconciler, mounted on every kit page). Driven by the SAME in-flight
+// fetch that lost the freshness race — never a second fetch that might not
+// happen.
+async function reconcileFreshNavResponse(req, url, cache, cached, res) {
   // Network reachable and says "signed out" (server-side redirect to /login):
   // never mask that with the stale copy — drop it and make the page show the
   // real redirect on reload.
@@ -183,19 +184,11 @@ async function revalidateFieldKitNavigation(req, url, cache, cached) {
   if (text !== oldText) await notifyClients(req.url, "fk-nav-fresh");
 }
 
-// How long a kit navigation waits for the live network before falling back to
-// the cached copy. Long enough for a normal mobile round-trip; short enough
-// that a dead-zone open still feels instant-ish from cache.
-const NAV_NETWORK_TIMEOUT_MS = 3500;
-
-// fetch() bounded by a timeout — rejects (like a network failure) when the
-// deadline passes, so the caller falls back to cache. NOTE: this only bounds
-// the response HEADERS — the body streams (and can stall or die) afterwards.
-function fetchWithTimeout(req, ms) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), ms);
-  return fetch(req, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
-}
+// How long a kit navigation gives the network to WIN the freshness race before
+// the cached copy paints. Short: on a healthy connection the edge round-trip
+// beats this and the user sees the live render (zero stale flash); on a weak
+// signal the cached copy paints instantly instead of a multi-second blank.
+const NAV_FRESH_WINDOW_MS = 800;
 
 // How long to wait for the response BODY (the cache-sniff buffers it in full)
 // before giving up and serving the already-cached copy instead. Only applied
@@ -222,34 +215,61 @@ async function offlineFallback(req, url, cache) {
   return fallback || Response.error();
 }
 
-// Serve a kit navigation: NETWORK-FIRST (fresh data whenever reachable), with
-// the cached copy as the offline / slow-network fallback, then the offline
-// shells as the last resort.
+// Serve a kit navigation: RACE the network against a short freshness window.
+// Fast network → the live render wins (no stale flash). Slow/absent network →
+// the cached copy paints INSTANTLY and the same in-flight fetch reconciles in
+// the background when it lands (cache update + "fk-nav-fresh" → silent
+// router.refresh). No cached copy → wait for the network however long it takes
+// (a slow first load beats a needless offline shell), then the shells.
 async function serveFieldKitNavigation(event, req, url) {
   const cache = await caches.open(CACHE);
   const cached = await cache.match(req);
 
-  let res = null;
-  try {
-    res = await fetchWithTimeout(req, NAV_NETWORK_TIMEOUT_MS);
-  } catch {
-    res = null; // offline or too slow — fall back to cache below
+  // ONE fetch serves both roles: race candidate now, reconciliation source
+  // later. Never rejects — resolves null on network failure.
+  const netPromise = fetch(req).catch(() => null);
+
+  if (!cached) {
+    // First visit to this route on this device: network is the only source.
+    const res = await netPromise;
+    if (!res) return offlineFallback(req, url, cache);
+    if (res.redirected) return res; // signed out — show the real redirect
+    if (res.ok && res.status === 200) {
+      try {
+        // Full-body sniff (GATE_MARKER) before caching; no deadline here —
+        // with nothing to fall back to, waiting beats an offline notice.
+        if (await isCacheableFieldKitResponse(res, url)) {
+          await cache.put(req, res.clone());
+          event.waitUntil(ensureCoreNavPrecache(cache));
+        }
+        return res;
+      } catch {
+        // Body died mid-stream — the offline shell beats a raw error page.
+        return offlineFallback(req, url, cache);
+      }
+    }
+    return res;
   }
 
-  if (res) {
-    // Signed out (server-side redirect to /login): show it, and drop the stale
-    // copy so it can't mask the redirect later.
+  // Cached copy exists: give the network NAV_FRESH_WINDOW_MS to win.
+  const winner = await Promise.race([
+    netPromise,
+    new Promise((resolve) => setTimeout(() => resolve("slow"), NAV_FRESH_WINDOW_MS)),
+  ]);
+
+  if (winner && winner !== "slow") {
+    const res = winner;
+    // Signed out: show the real redirect and drop the stale copy so it can't
+    // mask the redirect later.
     if (res.redirected) {
       await cache.delete(req);
       return res;
     }
     if (res.ok && res.status === 200) {
-      // WEAK-NETWORK GUARD: fetchWithTimeout only bounded the headers. The
-      // sniff below buffers the FULL body, which on flaky wifi can stall or
-      // die mid-stream. That failure used to reject respondWith and surface
-      // the browser's raw network-error page even when a valid cached copy
-      // existed — so any failure (or, with a cached copy standing by, a
-      // too-slow body) now falls back to cache / the offline shells instead.
+      // WEAK-NETWORK GUARD: the headers won the race but the body may still
+      // stall on flaky wifi — the sniff buffers it in full, so bound it and
+      // fall back to the cached copy on deadline (the sniff keeps running in
+      // the background and the cache still picks the body up for next time).
       const sniffAndCache = (async () => {
         if (await isCacheableFieldKitResponse(res, url)) {
           await cache.put(req, res.clone());
@@ -257,34 +277,27 @@ async function serveFieldKitNavigation(event, req, url) {
         }
       })();
       try {
-        if (cached) {
-          await withDeadline(sniffAndCache, NAV_BODY_TIMEOUT_MS);
-        } else {
-          await sniffAndCache;
-        }
-        return res; // fresh page — the normal online path
+        await withDeadline(sniffAndCache, NAV_BODY_TIMEOUT_MS);
+        return res; // fresh page — the fast-network path
       } catch {
-        // Let the sniff finish (or fail quietly) in the background; if the
-        // body does land, the cache still picks it up for next time.
         event.waitUntil(sniffAndCache.catch(() => undefined));
-        if (cached) return cached;
-        return offlineFallback(req, url, cache);
+        return cached;
       }
     }
-    // Transient server trouble (5xx etc.) — prefer the saved copy if we have one.
-    if (cached) return cached;
-    return res;
-  }
-
-  // Network unreachable or too slow: serve the cached copy and revalidate in
-  // the background — if the slow fetch eventually lands and differs, the
-  // client gets "fk-nav-fresh" and silently refreshes.
-  if (cached) {
-    event.waitUntil(revalidateFieldKitNavigation(req, url, cache, cached));
+    // Transient server trouble (5xx etc.) — the saved copy stands.
     return cached;
   }
 
-  return offlineFallback(req, url, cache);
+  // Network slow or down: paint the cached copy NOW; when the in-flight fetch
+  // eventually lands, reconcile (cache update + silent refresh on that page).
+  event.waitUntil(
+    (async () => {
+      const res = await netPromise;
+      if (!res) return; // offline — the cached copy stands
+      await reconcileFreshNavResponse(req, url, cache, cached, res);
+    })()
+  );
+  return cached;
 }
 
 self.addEventListener("install", (event) => {
@@ -392,11 +405,13 @@ self.addEventListener("fetch", (event) => {
   // Same-origin only.
   if (url.origin !== self.location.origin) return;
 
-  // Field Kit navigation: NETWORK-FIRST (bounded) so opening the app shows the
-  // live render; the cached copy serves offline / too-slow networks, writing
-  // only cacheable responses (see isCacheableFieldKitResponse); with no cached
-  // copy the itinerary route falls back to its SLICE 2 shell and every other
-  // kit route falls back to the generic offline notice.
+  // Field Kit navigation: NETWORK-RACE — the live render wins on a fast
+  // connection; on a weak signal the cached copy paints instantly and the
+  // same in-flight fetch reconciles it in the background (fk-nav-fresh →
+  // silent refresh). Only cacheable responses are written (see
+  // isCacheableFieldKitResponse); with no cached copy the itinerary route
+  // falls back to its SLICE 2 shell and every other kit route falls back to
+  // the generic offline notice.
   if (isFieldKitNavigation(req, url)) {
     event.respondWith(serveFieldKitNavigation(event, req, url));
     return;

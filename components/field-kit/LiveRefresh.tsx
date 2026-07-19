@@ -60,8 +60,13 @@ export default function LiveRefresh({
       // successful live fetch. Act ONLY on the live path: a "cache" result means
       // the fetch was denied / hiccuped, so behave like the old `!res.ok` no-op
       // (the snapshot is never used to drive an online refresh).
-      const result = await fetchItinerary(programId, asId);
+      // knownHash makes the steady-state poll a few-byte "unchanged" exchange —
+      // the full payload only downloads when something actually changed.
+      const result = await fetchItinerary(programId, asId, {
+        knownHash: currentHash.current,
+      });
       if (result.source !== "live") return; // gate/network hiccup — a later trigger retries
+      if (result.unchanged) return; // server confirmed we're current
       const next = result.hash ?? "";
       if (next && next !== currentHash.current) {
         currentHash.current = next; // adopt now so the refresh doesn't re-trigger

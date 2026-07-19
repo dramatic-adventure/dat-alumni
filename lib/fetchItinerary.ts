@@ -9,7 +9,7 @@
 //
 // SSR-safe: no "server-only"; guards navigator before reading it.
 
-import { getSnapshot, putSnapshot } from "@/lib/itinerarySnapshot";
+import { getSnapshot, putSnapshot, touchSnapshot } from "@/lib/itinerarySnapshot";
 import type { ProgramItinerary } from "@/lib/programItinerary";
 
 export type FetchItineraryResult = {
@@ -17,11 +17,21 @@ export type FetchItineraryResult = {
   hash: string;
   syncedAt: number | null; // when the returned data was synced live (null if never)
   source: "live" | "cache";
+  /** True when a hash-only poll confirmed no change (itinerary is null but the
+   * server's data matches what the caller already renders). */
+  unchanged?: boolean;
 };
 
 export async function fetchItinerary(
   programId: string,
-  asId?: string
+  asId?: string,
+  opts?: {
+    /** Hash the caller ALREADY renders. When set, the endpoint answers a
+     * matching state with a few-byte `{ hash, unchanged }` instead of the full
+     * payload — pollers on weak signal stay cheap. Callers that need the
+     * payload itself (offline snapshot view, share flow) omit this. */
+    knownHash?: string;
+  }
 ): Promise<FetchItineraryResult> {
   const online = typeof navigator === "undefined" || navigator.onLine !== false;
 
@@ -29,6 +39,7 @@ export async function fetchItinerary(
     try {
       const params = new URLSearchParams({ program: programId });
       if (asId) params.set("asId", asId);
+      if (opts?.knownHash) params.set("since", opts.knownHash);
       const res = await fetch(`/api/field-kit/itinerary?${params.toString()}`, {
         cache: "no-store",
       });
@@ -36,10 +47,17 @@ export async function fetchItinerary(
         const data = (await res.json()) as {
           itinerary?: ProgramItinerary | null;
           hash?: string;
+          unchanged?: boolean;
         };
-        const itinerary = data?.itinerary ?? null;
         const hash = data?.hash ?? "";
         const syncedAt = Date.now();
+        if (data?.unchanged) {
+          // Nothing changed server-side — keep the stored payload, but stamp
+          // the snapshot so "synced Xs ago" reflects this successful check.
+          await touchSnapshot(programId, syncedAt);
+          return { itinerary: null, hash, syncedAt, source: "live", unchanged: true };
+        }
+        const itinerary = data?.itinerary ?? null;
         // Persist only a real, published itinerary — never overwrite a good
         // snapshot with an empty one.
         if (itinerary) {
