@@ -26,9 +26,9 @@ The notifications log + Sheet-toggle trigger source. `sentAt` is the exactly-onc
 guard. To fire one from the Sheet: add a row, set `notify` to `TRUE`, leave
 `sentAt` empty — the cron sends it within ~1 min and stamps `sentAt`.
 
-| id | programId | type | title | body | link | notify | sentAt | expiresAt |
-|---|---|---|---|---|---|---|---|---|
-| n_abc123 | passage-slovakia-2026 | update | Change of plans | Meet at the theater at 6 | /field-kit/itinerary | TRUE | _(empty → will send)_ | _(optional ISO)_ |
+| id | programId | type | title | body | link | notify | sentAt | expiresAt | cancelledAt |
+|---|---|---|---|---|---|---|---|---|---|
+| n_abc123 | passage-slovakia-2026 | update | Change of plans | Meet at the theater at 6 | /field-kit/itinerary | TRUE | _(empty → will send)_ | _(optional ISO)_ | _(empty = live)_ |
 
 - `type`: `update` or `rally`.
 - `notify`: `TRUE`/`FALSE` (also accepts 1/yes/y).
@@ -36,6 +36,13 @@ guard. To fire one from the Sheet: add a row, set `notify` to `TRUE`, leave
 - `expiresAt` (optional ISO): staff-chosen expiration from the console's "Expires"
   select. Bounds the push delivery TTL (an offline phone reconnecting later never
   gets the stale alert); the cron skips rows already expired at send time.
+- `cancelledAt` (optional ISO): set by the console's per-entry **Clear** button
+  (DELETE `/api/field-kit/admin/history`). A cancelled row is hidden from Sent
+  history, skipped by the cron, and gets `expiresAt` stamped to the same moment
+  (unless it already expired earlier) so a reconnecting offline phone never
+  receives it. The row stays in the Sheet as an audit trail — don't delete rows.
+  Clearing can't recall a push already delivered to a phone. The column is
+  auto-added to the tab on first Clear if missing.
 
 ### `Field Kit Rally Point`
 One row **per program** (latest wins). Upserted by the admin "Set rally point" action;

@@ -110,6 +110,7 @@ export default function AdminConsole({
 }) {
   const [history, setHistory] = useState<NotificationRow[]>(initialHistory);
   const [notice, setNotice] = useState<string | null>(null);
+  const [clearingId, setClearingId] = useState<string | null>(null);
 
   // Send Field Update form
   const [uTitle, setUTitle] = useState("");
@@ -239,6 +240,38 @@ export default function AdminConsole({
       setRBusy(false);
     }
   }, [rBusy, programId, flash]);
+
+  // "Clear" a history entry — marks the Sheet row cancelled (kept as an audit
+  // trail) and hides it here. A push already on phones can't be recalled.
+  const clearNotification = useCallback(
+    async (n: NotificationRow) => {
+      if (clearingId) return;
+      if (!window.confirm(`Clear "${n.title}" from the history? Alerts already on phones aren't recalled.`)) {
+        return;
+      }
+      setClearingId(n.id);
+      try {
+        const res = await fetch("/api/field-kit/admin/history", {
+          method: "DELETE",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ program: programId, id: n.id }),
+        });
+        const data = (await res.json().catch(() => null)) as
+          | { ok?: boolean; error?: string }
+          | null;
+        if (!res.ok || !data?.ok) {
+          flash(data?.error || "Could not clear notification");
+          return;
+        }
+        setHistory((cur) => cur.filter((h) => h.id !== n.id));
+        flash("Notification cleared");
+        await refreshHistory();
+      } finally {
+        setClearingId(null);
+      }
+    },
+    [clearingId, programId, flash, refreshHistory]
+  );
 
   const copy = useCallback(
     async (text: string, kind: string) => {
@@ -467,12 +500,27 @@ export default function AdminConsole({
                     {n.body}
                   </div>
                 )}
-                <div style={{ display: "flex", gap: 8, marginTop: 9 }}>
+                <div style={{ display: "flex", gap: 8, marginTop: 9, flexWrap: "wrap" }}>
                   <button type="button" style={smallBtn} onClick={() => copy(whatsappText(n), "WhatsApp")}>
                     Copy for WhatsApp
                   </button>
                   <button type="button" style={smallBtn} onClick={() => copy(smsText(n), "SMS")}>
                     Copy for SMS
+                  </button>
+                  <button
+                    type="button"
+                    style={{
+                      ...smallBtn,
+                      marginLeft: "auto",
+                      color: T.pink,
+                      borderColor: T.pink,
+                      opacity: clearingId && clearingId !== n.id ? 0.5 : 1,
+                    }}
+                    onClick={() => clearNotification(n)}
+                    disabled={!!clearingId}
+                    title="Removes this from the history and stops any future delivery. Alerts already on phones aren't recalled."
+                  >
+                    {clearingId === n.id ? "Clearing…" : "Clear"}
                   </button>
                 </div>
               </li>

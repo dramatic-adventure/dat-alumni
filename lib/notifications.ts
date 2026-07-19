@@ -18,9 +18,9 @@ import { sheetsClient } from "@/lib/googleClients";
 import { withRetry, idxOf, normId } from "@/lib/sheetsResilience";
 
 const TAB = "Field Kit Notifications";
-const RANGE = `'${TAB}'!A:I`;
+const RANGE = `'${TAB}'!A:J`;
 
-const HEADERS = ["id", "programId", "type", "title", "body", "link", "notify", "sentAt", "expiresAt"] as const;
+const HEADERS = ["id", "programId", "type", "title", "body", "link", "notify", "sentAt", "expiresAt", "cancelledAt"] as const;
 
 export type NotificationType = "update" | "rally" | "roll-call" | "choice";
 
@@ -36,6 +36,10 @@ export type NotificationRow = {
   /** ISO — staff-chosen expiration; ""/absent = never. Bounds push delivery
    * TTL and any on-screen display of the notification. */
   expiresAt?: string;
+  /** ISO — staff cleared this from the console; ""/absent = live. A cancelled
+   * row is hidden from Sent history and can never be sent by the cron. The row
+   * itself stays in the Sheet as an audit trail. */
+  cancelledAt?: string;
 };
 
 export type UnsentNotification = NotificationRow & { rowNumber: number };
@@ -58,7 +62,7 @@ function coerceType(v: unknown): NotificationType {
   return "update";
 }
 
-/** Column letter for a 0-based index (A..H is all we need). */
+/** Column letter for a 0-based index (single letters A..Z is all we need). */
 function colLetter(idx: number): string {
   return String.fromCharCode(65 + idx);
 }
@@ -91,6 +95,7 @@ function columns(header: string[]) {
     notify: idxOf(header, ["notify"]),
     sentAt: idxOf(header, ["sentat"]),
     expiresAt: idxOf(header, ["expiresat", "expires at"]),
+    cancelledAt: idxOf(header, ["cancelledat", "cancelled at", "canceledat"]),
   };
 }
 
@@ -106,6 +111,7 @@ function rowToNotification(header: string[], row: string[]): NotificationRow {
     notify: coerceBool(row[c.notify]),
     sentAt: String(row[c.sentAt] ?? "").trim(),
     expiresAt: c.expiresAt === -1 ? "" : String(row[c.expiresAt] ?? "").trim(),
+    cancelledAt: c.cancelledAt === -1 ? "" : String(row[c.cancelledAt] ?? "").trim(),
   };
 }
 
@@ -122,19 +128,19 @@ export async function listNotifications(
   const list = rows
     .slice(1)
     .map((r) => rowToNotification(header, r))
-    .filter((n) => n.id && normId(n.programId) === pid);
+    .filter((n) => n.id && normId(n.programId) === pid && !n.cancelledAt);
   // Newest first by sentAt; unsent (empty sentAt) float to the top.
   list.sort((a, b) => (b.sentAt || "9999").localeCompare(a.sentAt || "9999"));
   return list.slice(0, limit);
 }
 
-/** Rows the cron should send: notify=TRUE && sentAt empty, across all programs. */
+/** Rows the cron should send: notify=TRUE && sentAt empty && not cancelled, across all programs. */
 export async function findUnsent(): Promise<UnsentNotification[]> {
   const { header, rows } = await readGrid();
   const out: UnsentNotification[] = [];
   for (let i = 1; i < rows.length; i++) {
     const n = rowToNotification(header, rows[i]);
-    if (n.id && n.programId && n.notify && !n.sentAt) {
+    if (n.id && n.programId && n.notify && !n.sentAt && !n.cancelledAt) {
       out.push({ ...n, rowNumber: i + 1 }); // sheet row number (1-based)
     }
   }
@@ -159,6 +165,76 @@ export async function stampSentAt(rowNumber: number, iso: string): Promise<void>
 }
 
 /**
+ * Cancel ("clear") a notification: stamps cancelledAt=now, and expiresAt=now
+ * unless the row already expired earlier. The row stays in the Sheet as an
+ * audit trail but is hidden from Sent history and skipped by the cron. An
+ * already-delivered push cannot be recalled — this only stops future delivery
+ * (via the expiry) and removes the entry from the console.
+ *
+ * Auto-adds the `cancelledAt` header to the tab on first use if it's missing.
+ * Returns false if no row matches the id within the program.
+ */
+export async function cancelNotification(programId: string, id: string): Promise<boolean> {
+  const pid = normId(programId);
+  const target = String(id ?? "").trim();
+  if (!target) return false;
+
+  const { sheets, header, rows } = await readGrid();
+  const c = columns(header);
+
+  let rowNumber = -1;
+  let existing: NotificationRow | null = null;
+  for (let i = 1; i < rows.length; i++) {
+    const n = rowToNotification(header, rows[i]);
+    if (n.id === target && normId(n.programId) === pid) {
+      rowNumber = i + 1; // sheet row number (1-based)
+      existing = n;
+      break;
+    }
+  }
+  if (rowNumber === -1 || !existing) return false;
+
+  // Ensure the cancelledAt column exists (older tabs predate it).
+  let cancelIdx = c.cancelledAt;
+  if (cancelIdx === -1) {
+    cancelIdx = header.length;
+    await withRetry(
+      () =>
+        sheets.spreadsheets.values.update({
+          spreadsheetId: spreadsheetId(),
+          range: `'${TAB}'!${colLetter(cancelIdx)}1`,
+          valueInputOption: "RAW",
+          requestBody: { values: [["cancelledAt"]] },
+        }),
+      "Sheets add Field Kit Notifications cancelledAt header"
+    );
+  }
+
+  const nowIso = new Date().toISOString();
+  const data: Array<{ range: string; values: string[][] }> = [
+    { range: `'${TAB}'!${colLetter(cancelIdx)}${rowNumber}`, values: [[nowIso]] },
+  ];
+  // Stamp expiresAt=now too (bounds any residual delivery / on-screen use),
+  // unless the row already carries an earlier expiry.
+  if (c.expiresAt !== -1) {
+    const existingMs = existing.expiresAt ? Date.parse(existing.expiresAt) : NaN;
+    if (!Number.isFinite(existingMs) || existingMs > Date.now()) {
+      data.push({ range: `'${TAB}'!${colLetter(c.expiresAt)}${rowNumber}`, values: [[nowIso]] });
+    }
+  }
+
+  await withRetry(
+    () =>
+      sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: spreadsheetId(),
+        requestBody: { valueInputOption: "RAW", data },
+      }),
+    "Sheets cancel Field Kit Notifications row"
+  );
+  return true;
+}
+
+/**
  * Append a notification row. The admin console uses this with sentAt already set
  * (it sends immediately), so the cron never re-sends it.
  */
@@ -179,6 +255,7 @@ export async function appendNotification(n: NotificationRow): Promise<void> {
   put(c.notify, n.notify ? "TRUE" : "FALSE");
   put(c.sentAt, n.sentAt);
   put(c.expiresAt, n.expiresAt ?? "");
+  put(c.cancelledAt, n.cancelledAt ?? "");
   await withRetry(
     () =>
       sheets.spreadsheets.values.append({
