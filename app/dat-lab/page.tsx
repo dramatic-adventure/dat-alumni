@@ -111,93 +111,96 @@ const copy = {
   },
 
   sk: {
-    eyebrow: "PASSAGE: Slovensko 2026",
+    eyebrow: "PASSAGE: Slovakia 2026",
     title: "DAT Lab: Košice",
     tagline:
-      "Tvorivé laboratórium s DAT umelcami z New Yorku a miestnymi divadelnými umelcami v Košiciach.",
-    dates: "17. júl – 1. august 2026 · Košice, Slovensko",
+      "Tvorivé laboratórium, v ktorom sa stretnú umelci a umelkyne DAT pôsobiaci v New Yorku s miestnymi divadelnými tvorcami v Košiciach.",
+    dates: "17. júla – 1. augusta 2026 · Košice, Slovensko",
     invite:
-      "Radi by sme sa spojili so skúsenými miestnymi divadelnými umelcami — najmä rómskymi umelcami — ktorí by mali záujem pridať sa k nám ako Collaborating Artist alebo Guest Artist.",
+      "Radi by sme sa spojili so skúsenými miestnymi divadelnými umelcami a umelkyňami, najmä s rómskymi tvorcami, ktorí by mali záujem zapojiť sa ako spolupracujúci alebo hosťujúci umelci.",
 
-    aboutHeading: "Laboratórium",
+    aboutHeading: "O laboratóriu",
     aboutP1:
-      "DAT Lab je platforma na tvorbu a formovanie pôvodného divadelného materiálu, ktorý reaguje na konkrétne miesto. Práca bude skúmať geografickú a kultúrnu krajinu východného Slovenska a bude vychádzať z medzikultúrnych stretnutí, žitých skúseností, miestnych mytológií, otázok a tvorivej predstavivosti umelcov v miestnosti.",
+      "DAT Lab je platforma na tvorbu a rozvíjanie pôvodného performatívneho materiálu, ktorý vyrastá z konkrétneho miesta a reaguje naň. Budeme skúmať geografickú a kultúrnu krajinu východného Slovenska. Východiskom budú medzikultúrne stretnutia, osobné skúsenosti, miestne príbehy a mytológie, otázky a tvorivá predstavivosť zúčastnených umelcov.",
     aboutP2:
-      "Spoločne budeme vytvárať a rozvíjať nový materiál prostredníctvom tvorivého písania, pohybových a tanečných explorácií, improvizácie a kompozičnej práce. Je to priestor na testovanie materiálu, nasledovanie tvorivých impulzov, formovanie fragmentov nápadov, hlboké počúvanie, objavovanie toho, čo rezonuje, a spoločné vytváranie úplne nových scén a momentov.",
+      "Spoločne budeme vytvárať a rozvíjať nový materiál prostredníctvom tvorivého písania, pohybového a tanečného skúmania, improvizácie a kompozičnej práce. Je to priestor, kde môžeme skúšať nový materiál, nasledovať tvorivé impulzy, rozvíjať úlomky nápadov, pozorne si načúvať, objavovať, čo rezonuje, a spoločne vytvárať úplne nové scény a momenty.",
     aboutP3:
-      "V podstate prinášame do Košíc našu verziu newyorského „black box“ procesu vývoja novej divadelnej tvorby — intímneho, sústredeného na umelca, kolaboratívneho, bezprostredného a plného života. A radi by sme ho prepojili so spôsobmi, akými novú tvorbu rozvíjate vy.",
+      "Do Košíc prinášame našu vlastnú podobu newyorského procesu rozvíjania novej tvorby v komornom black-box divadle. Je intímny, sústredený na umelcov, kolektívny, bezprostredný a živý. Radi by sme ho prepojili s vašimi vlastnými spôsobmi tvorby a rozvíjania nových diel.",
     videoCaption:
-      "Ukážka procesu DAT Lab — inšpirovaná našou prácou v Ekvádore.",
+      "Ukážka tvorivého procesu DAT Lab, inšpirovaná našou prácou v Ekvádore.",
 
-    waterEyebrow: "Záverečné verejné zdieľanie · sobota 1. augusta",
+    waterEyebrow: "Záverečná verejná prezentácia · sobota 1. augusta",
     waterIntro:
-      "DAT Lab vyvrcholí eklektickým večerom zdieľania rozpracovanej tvorby, inšpirovaným poéziou Papuszy — tvorivé výpovede, ktoré predstavujú nové nápady, surové dojmy a čerstvé spomienky.",
+      "Inšpiráciou pre DAT Lab je poézia rómskej poetky známej ako Papusza. Laboratórium vyvrcholí pestrým večerom rozpracovaných diel: tvorivých výpovedí zachytávajúcich nové myšlienky, bezprostredné dojmy a čerstvo vynorené spomienky.",
     waterQuote:
-      "Americkí, slovenskí a rómski umelci sa spájajú, aby zdieľali tento eklektický večer rozpracovanej tvorby. Divadlo, rozprávanie príbehov a poézia sa prelínajú, keď skúmame sútok žitých skúseností, ktorý vzniká, keď sa ľudia z rôznych svetov chytia za ruky a spoločne vkročia do menej známych vôd.",
-    waterCta: "Detaily podujatia",
+      "Americkí, slovenskí a rómski umelci a umelkyne spoločne predstavia pestrý večer rozpracovanej tvorby. Divadlo, rozprávanie príbehov a poézia sa prepoja, keď budeme skúmať sútok osobných skúseností, ktorý vzniká, keď sa ľudia z rôznych svetov chytia za ruky a spoločne vstúpia do menej známych vôd.",
+    waterCta: "Podrobnosti o podujatí",
 
-    hopeHeading: "Naše želanie",
+    hopeHeading: "Čo by sme radi dosiahli",
     hopeBody:
-      "Naším želaním je nielen vytvoriť zmysluplné záverečné zdieľanie toto leto, ale aj začať budovať umelecké vzťahy v Košiciach, ktoré by mohli prerásť do budúcich spoluprác — vrátane možného zárodku budúcej celovečernej inscenácie.",
+      "Nejde nám len o to, aby sme toto leto vytvorili zmysluplnú záverečnú prezentáciu. Chceme tiež začať budovať umelecké vzťahy v Košiciach, z ktorých môžu vyrásť ďalšie spolupráce, možno aj zárodok budúcej celovečernej inscenácie.",
 
-    waysHeading: "Ako sa zapojiť",
+    waysHeading: "Možnosti zapojenia",
     ways: [
       {
-        name: "Collaborating Artist",
-        body: "Zapája sa do košického tvorivého procesu najplnšie: účasť na workshopoch DAT Lab, vývoj materiálu so súborom, umelecký prínos do miestnosti a účinkovanie v predstavení Water That Wanders v sobotu 1. augusta alebo príspevok k nemu.",
+        name: "Spolupracujúci umelec / spolupracujúca umelkyňa",
+        sub: "Collaborating Artist",
+        body: "Do košického tvorivého procesu sa zapája v najväčšom rozsahu. Zúčastňuje sa workshopov DAT Lab, rozvíja materiál spolu s celým tímom, prináša do procesu vlastný umelecký vklad a vystúpi v programe Water That Wanders v sobotu 1. augusta alebo sa na ňom inak umelecky podieľa.",
       },
       {
-        name: "Guest Artist",
-        body: "Pripája sa na kratšiu výmenu — vedenie workshopu, zdieľanie časti svojej umeleckej praxe, účasť na skúške, dramaturgický pohľad alebo príspevok k jednej časti záverečného zdieľania.",
+        name: "Hosťujúci umelec / hosťujúca umelkyňa",
+        sub: "Guest Artist",
+        body: "Zapojí sa do kratšej umeleckej výmeny. Môže viesť workshop, predstaviť časť svojej umeleckej praxe, pripojiť sa ku skúške, ponúknuť dramaturgický pohľad alebo prispieť k jednej časti záverečnej prezentácie.",
       },
       {
-        name: "Emerging Artist",
-        body: "Pokročilý študentský umelec z miestneho konzervatória, univerzity alebo divadelného vzdelávacieho programu, ktorý sa zúčastní vybraných workshopov, učí sa z procesu a môže prispieť k záverečnému zdieľaniu. Emerging Artists získajú verejný kredit za svoje zapojenie.",
+        name: "Umelec alebo umelkyňa na začiatku profesionálnej dráhy",
+        sub: "Emerging Artist",
+        body: "Pokročilý študent alebo študentka miestneho konzervatória, univerzity či iného programu divadelného vzdelávania. Zúčastní sa vybraných workshopov, spozná tvorivý proces DAT Lab a môže prispieť aj k záverečnej prezentácii. Všetci zapojení umelci a umelkyne budú verejne uvedení menom.",
       },
     ],
 
     scheduleHeading: "Program",
     scheduleNote:
-      "Všetky workshopy sa uskutočnia v Košiciach. Termíny sa nezmenia; presné časy workshopov však môžeme upraviť podľa potrieb miestnych umelcov.",
+      "Všetky workshopy sa uskutočnia v Košiciach. Dátumy sú pevné. Presné časy workshopov ešte môžeme upraviť tak, aby čo najlepšie vyhovovali potrebám miestnych umelcov.",
     schedule: [
       {
-        date: "piatok 17. júla",
-        name: "DAT Lab Workshop: Otvorenie",
-        body: "Zoznámenie, umelecká orientácia, prvé tvorivé stretnutie a úvodná výmena.",
+        date: "Piatok 17. júla",
+        name: "DAT Lab Workshop: Úvod",
+        body: "Predstavenie účastníkov, uvedenie do umeleckého procesu, prvé tvorivé stretnutie a úvodná výmena.",
       },
       {
-        date: "sobota 18. júla",
+        date: "Sobota 18. júla",
         name: "DAT Lab Workshop: Umelecká výmena",
-        body: "Workshop, devising, spoločná prax a vývoj prvého materiálu. Zadá sa domáca úloha.",
+        body: "Workshop, kolektívna autorská tvorba, zdieľanie umeleckých postupov a prvé rozvíjanie materiálu. Na záver zadáme tvorivú úlohu na obdobie medzi stretnutiami.",
       },
       {
-        date: "štvrtok 30. júla",
-        name: "DAT Lab Workshop: Rast a formovanie",
-        body: "Zdieľanie domácich úloh. Rozvíjanie a formovanie toho, čo vzniklo.",
+        date: "Štvrtok 30. júla",
+        name: "DAT Lab Workshop: Rozvíjanie a tvarovanie",
+        body: "Prezentácia práce pripravenej medzi stretnutiami. Ďalšie rozvíjanie a tvarovanie vzniknutého materiálu.",
       },
       {
-        date: "piatok 31. júla",
+        date: "Piatok 31. júla",
         name: "Skúška a dolaďovanie",
-        body: "Finalizácia štruktúry predstavenia. Spresnenie a vybrúsenie príspevkov — úpravy, dolaďovanie, inscenovanie. Skúšanie jednotlivých častí.",
+        body: "Dotvorenie štruktúry predstavenia. Spresnenie a vybrúsenie jednotlivých príspevkov, úpravy, inscenovanie a skúšanie jednotlivých častí programu.",
       },
       {
-        date: "sobota 1. augusta",
+        date: "Sobota 1. augusta",
         name: "Water That Wanders",
-        body: "Posledné prípravy vrátane generálky. Zdieľanie rozpracovanej tvorby na predstavení Water That Wanders.",
+        body: "Záverečné prípravy vrátane prechodu celého programu pred vystúpením. Verejná prezentácia rozpracovaných diel v rámci predstavenia Water That Wanders.",
       },
     ],
 
-    notesHeading: "Dobré vedieť",
+    notesHeading: "Čo je dobré vedieť",
     notes: [
-      "Môže existovať aj samostatná, dobrovoľná príležitosť navštíviť divadelné workshopy a predstavenia s miestnou mládežou v Zemplínskej Teplici alebo na Luníku IX.",
-      "Zaujímajú nás individuálni divadelní umelci s vlastnou praxou, hlasom, otázkami, metódami a tvorivou predstavivosťou. Od žiadneho umelca nežiadame, aby „reprezentoval“ celú komunitu alebo kultúru.",
+      "Možno sa naskytne aj samostatná, nepovinná príležitosť navštíviť divadelné workshopy a predstavenia s miestnymi mladými ľuďmi v Zemplínskej Teplici alebo na Luníku IX, prípadne sa do nich zapojiť ako dobrovoľník.",
+      "Hľadáme jednotlivých divadelných umelcov a umelkyne s vlastnou praxou, hlasom, otázkami, metódami a tvorivou predstavivosťou. Od nikoho nežiadame, aby „zastupoval“ celú komunitu alebo kultúru.",
     ],
 
     connectHeading: "Kontakt",
     connectBody:
-      "Umelci so záujmom nám môžu napísať krátke predstavenie: kde pôsobíte, vaše divadelné alebo performatívne skúsenosti, vašu dostupnosť v košických termínoch vyššie, ako by ste sa chceli zapojiť, a odkazy na vašu tvorbu — web, video, CV alebo sociálne siete. Napíšte nám v slovenčine alebo angličtine.",
+      "Máte záujem? Pošlite nám e-mail s krátkym predstavením seba a svojej práce. Napíšte nám, kde pôsobíte, aké máte skúsenosti s divadlom alebo performanciou, či ste k dispozícii v uvedených košických termínoch a ako by ste sa chceli zapojiť. Pripojiť môžete aj odkazy na svoju tvorbu, napríklad webovú stránku, video, životopis alebo sociálne siete.",
     connectForward:
-      "Poznáte niekoho, kto by sa hodil? Budeme vďační, ak túto stránku pošlete ďalej alebo nás prepojíte priamo.",
+      "Poznáte niekoho, komu by táto príležitosť mohla sadnúť? Budeme vďační, ak mu alebo jej pošlete túto stránku alebo nás priamo prepojíte.",
     connectCta: "Napísať Jessemu",
     connectName: "Jesse Baxter",
     connectRole: "umelecký riaditeľ, Dramatic Adventure Theatre",
@@ -316,6 +319,9 @@ export default function DatLabKosicePage() {
             {t.ways.map((w) => (
               <div key={w.name} className="datlab-card">
                 <h3 className="datlab-card-title">{w.name}</h3>
+                {"sub" in w && (
+                  <p className="datlab-card-sub">{w.sub}</p>
+                )}
                 <p className="datlab-card-body">{w.body}</p>
               </div>
             ))}
@@ -600,6 +606,15 @@ export default function DatLabKosicePage() {
           font-weight: 700;
           color: #ffcc00;
           margin: 0 0 0.5rem;
+        }
+        .datlab-card-sub {
+          font-family: "Space Grotesk", var(--font-space-grotesk), sans-serif;
+          font-size: 0.78rem;
+          font-weight: 600;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: rgba(255, 255, 255, 0.5);
+          margin: -0.25rem 0 0.6rem !important;
         }
         .datlab-card-body {
           margin: 0;
