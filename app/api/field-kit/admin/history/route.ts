@@ -11,17 +11,17 @@
 //
 // CASCADE (Jesse, 2026-07-20): clearing a rally / roll-call / choice entry also
 // clears the matching Today-page surface — the rally banner, roll-call card, or
-// company-choice card disappear for everyone via LiveRefresh. Roll call and
-// choice cascade to the program's CURRENT op, guarded so a notification older
-// than the current op never clears a newer one (openedAt/postedAt must not
-// postdate the entry's sentAt, with 60s clock skew allowed).
+// company-choice card disappear for everyone via LiveRefresh. Every cascade
+// targets the program's CURRENT op, guarded so a notification older than the
+// current op never clears a newer one (its updatedAt/openedAt/postedAt must
+// not postdate the entry's sentAt, with 60s clock skew allowed).
 
 import { NextResponse } from "next/server";
 import { guardFieldKitAdminApi, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 import { listNotifications, cancelNotification, type NotificationRow } from "@/lib/notifications";
 import { getCurrentRollCall, clearRollCall } from "@/lib/rollCall";
 import { getCurrentCompanyChoice, clearCompanyChoice } from "@/lib/companyChoice";
-import { clearRallyPoint } from "@/lib/rallyPoint";
+import { getRallyPoint, clearRallyPoint } from "@/lib/rallyPoint";
 import { bumpLiveVersion } from "@/lib/fieldKitLiveVersion";
 
 const SKEW_MS = 60_000;
@@ -37,8 +37,15 @@ function opMatchesNotification(opStartedAt: string, n: NotificationRow): boolean
 /** Clear the Today-page surface the cancelled notification announced, if any. */
 async function cascadeClear(programId: string, n: NotificationRow): Promise<string | null> {
   if (n.type === "rally") {
-    await clearRallyPoint(programId);
-    return "rally";
+    // Same guard as roll-call/choice: the rally row is one-per-program and
+    // overwritten in place, so a newer rally than this notification means the
+    // banner belongs to a different op — leave it standing.
+    const current = await getRallyPoint(programId);
+    if (current && opMatchesNotification(current.updatedAt, n)) {
+      await clearRallyPoint(programId);
+      return "rally";
+    }
+    return null;
   }
   if (n.type === "roll-call") {
     const current = await getCurrentRollCall(programId);
