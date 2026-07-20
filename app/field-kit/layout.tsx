@@ -7,9 +7,11 @@
 // CompanionTabBar. Signed-out → /login; signed-in but not on the program → a
 // friendly gate message.
 
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { CompanionTabBar } from "@/components/field-kit/parts";
+import NavProgress from "@/components/field-kit/NavProgress";
 import AccountMenu from "@/components/field-kit/AccountMenu";
 import SyncStatus from "@/components/field-kit/SyncStatus";
 import FieldKitLogo from "@/components/field-kit/FieldKitLogo";
@@ -57,9 +59,37 @@ export default async function FieldKitLayout({ children }: { children: React.Rea
       {/* Slice 5 accessibility pass: a VISIBLE, on-brand focus indicator for
           every interactive element in the kit. :focus-visible keeps it off
           taps and on keyboard/switch navigation, where it matters. */}
-      <style>{`.fk-root :focus-visible { outline: 2px solid ${T.yellow}; outline-offset: 2px; border-radius: 4px; }`}</style>
+      {/* Touch pass: every link/button in the kit gets (1) a hit area extended
+          ~10px past its painted bounds via an absolutely positioned ::after —
+          no layout or visual change, just a bigger tap target (small glyph
+          buttons like the 18px toast ✕ were well under the 44px guideline);
+          (2) touch-action:manipulation + a transparent tap highlight so taps
+          register without double-tap-zoom delay or the gray iOS flash; and
+          (3) an instant :active press state (fade + slight shrink) so a touch
+          is visually acknowledged the moment the finger lands — pages are
+          force-dynamic and slow on venue wifi, and unacknowledged taps read
+          as dead buttons. Inline styles win over these rules, so elements
+          that set their own position/transition (fixed overlays, .fk-tab)
+          keep it; ::after is clipped by inline overflow:hidden (e.g. the
+          composer's 64px photo tiles), which is fine — those are already big. */}
+      <style>{`
+        .fk-root :focus-visible { outline: 2px solid ${T.yellow}; outline-offset: 2px; border-radius: 4px; }
+        .fk-root a, .fk-root button {
+          position: relative;
+          touch-action: manipulation;
+          -webkit-tap-highlight-color: transparent;
+          transition: opacity 90ms ease, transform 90ms ease;
+        }
+        .fk-root a::after, .fk-root button::after { content: ""; position: absolute; inset: -10px; }
+        .fk-root a:active, .fk-root button:active:not(:disabled) { opacity: 0.65; transform: scale(0.97); }
+      `}</style>
       <ServiceWorkerRegistrar />
       <NavCacheReconciler />
+      {/* Suspense: NavProgress reads useSearchParams (to detect commits), which
+          requires a boundary when mounted from a server layout. */}
+      <Suspense fallback={null}>
+        <NavProgress />
+      </Suspense>
       <FieldKitTopBar programId={FIELD_KIT_PROGRAM_ID} isAdmin={access.allowed ? access.isAdmin : false} />
       {/* Clearance below the top bar: the DAT logo overhangs the bar by 36px
           (see FieldKitLogo's negative marginBottom), so page content butted
