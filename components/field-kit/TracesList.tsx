@@ -33,6 +33,7 @@ import {
   subscribe as subscribeTraceMutationSync,
 } from "@/lib/traceMutationSync";
 import { getMirror, putMirror, ownerKey } from "@/lib/traceMirror";
+import { DIRECT_MAX_BYTES, CHUNK_BYTES } from "@/lib/captureChunkContract";
 import { T, FONT } from "@/components/field-kit/tokens";
 
 function formatWhen(iso: string): string {
@@ -100,11 +101,17 @@ export default function TracesList({ captures, asId }: { captures: FieldCapture[
   const [items, setItems] = useState<FieldCapture[]>(captures);
   // Captures still in the offline outbox — rendered read-only, marked pending.
   const [pendingCaptures, setPendingCaptures] = useState<FieldCapture[]>([]);
-  // captureId → outbox queue state, so a permanently FAILED capture is labeled
-  // honestly ("Sync failed") instead of hiding behind "Waiting to sync".
-  const [outboxState, setOutboxState] = useState<Map<string, { failed: boolean; lastError?: string }>>(
-    new Map()
-  );
+  // captureId → live outbox queue state, so the chip tells the truth:
+  // actively uploading ("Syncing…" / "Uploading x/y"), waiting for a retry
+  // (with the last attempt's error), or permanently failed ("Sync failed").
+  type OutboxInfo = {
+    status: "pending" | "syncing" | "failed";
+    lastError?: string;
+    attempts: number;
+    /** Chunked uploads only: [uploaded, total]. */
+    progress?: [number, number];
+  };
+  const [outboxState, setOutboxState] = useState<Map<string, OutboxInfo>>(new Map());
   // captureId → queued mutation, for the per-row "waiting to sync" chip.
   const [queuedFor, setQueuedFor] = useState<Map<string, QueuedTraceMutation>>(new Map());
 
@@ -183,10 +190,19 @@ export default function TracesList({ captures, asId }: { captures: FieldCapture[
       );
       setOutboxState(
         new Map(
-          queuedCaps.map((q) => [
-            q.captureId,
-            { failed: q.status === "failed", ...(q.lastError ? { lastError: q.lastError } : {}) },
-          ])
+          queuedCaps.map((q) => {
+            const total =
+              q.blob && q.blob.size > DIRECT_MAX_BYTES ? Math.ceil(q.blob.size / CHUNK_BYTES) : 0;
+            return [
+              q.captureId,
+              {
+                status: q.status,
+                attempts: q.attempts,
+                ...(q.lastError ? { lastError: q.lastError } : {}),
+                ...(total > 0 ? { progress: [Math.min(q.uploadedChunks ?? 0, total), total] as [number, number] } : {}),
+              },
+            ];
+          })
         )
       );
     } catch {
@@ -314,8 +330,21 @@ export default function TracesList({ captures, asId }: { captures: FieldCapture[
           const label = isVoice ? "Voice" : isPhoto ? "Photo" : isQuote ? "Quote" : "Note";
           const labelColor = isVoice ? T.green : isPhoto ? T.yellow : isQuote ? T.pink : T.teal;
           const state = outboxState.get(c.captureId);
-          const failed = state?.failed === true;
-          const chipColor = failed ? T.pink : T.yellow;
+          const failed = state?.status === "failed";
+          const syncing = state?.status === "syncing";
+          const chipColor = failed ? T.pink : syncing ? T.green : T.yellow;
+          const chipText = failed
+            ? "Sync failed"
+            : syncing
+              ? state?.progress
+                ? `Uploading ${state.progress[0]}/${state.progress[1]}`
+                : "Syncing…"
+              : (state?.attempts ?? 0) > 0
+                ? "Will retry"
+                : "Waiting to sync";
+          // The last attempt's error, shown for anything not actively syncing —
+          // this is the "WHY isn't this landing" diagnostic.
+          const errorNote = !syncing && state?.lastError ? state.lastError : null;
           return (
             <li
               key={c.captureId}
@@ -327,14 +356,13 @@ export default function TracesList({ captures, asId }: { captures: FieldCapture[
                     {label}
                   </span>
                   <span
-                    title={failed ? state?.lastError || "Sync failed — tap the sync chip in the top bar to retry" : undefined}
                     style={{
                       fontFamily: FONT.grotesk, fontSize: 9, fontWeight: 700, letterSpacing: "0.14em",
                       textTransform: "uppercase", color: chipColor, border: `1px dashed ${chipColor}`,
                       borderRadius: 4, padding: "2px 7px",
                     }}
                   >
-                    {failed ? "Sync failed" : "Waiting to sync"}
+                    {chipText}
                   </span>
                 </span>
                 <span style={{ fontFamily: FONT.dm, fontSize: 12, color: T.muted }}>{formatWhen(c.createdAt)}</span>
@@ -343,7 +371,14 @@ export default function TracesList({ captures, asId }: { captures: FieldCapture[
                 <p style={{ fontFamily: FONT.dm, fontSize: 12.5, color: T.muted, margin: "0 0 6px" }}>
                   {failed
                     ? `${isPhoto ? "Photo" : "Recording"} is safe on this device but couldn't upload — tap the sync chip in the top bar to retry.`
-                    : `${isPhoto ? "Photo" : "Recording"} saved on this device — it uploads when you're online.`}
+                    : syncing
+                      ? `${isPhoto ? "Photo" : "Recording"} is uploading now…`
+                      : `${isPhoto ? "Photo" : "Recording"} saved on this device — it uploads when you're online.`}
+                </p>
+              )}
+              {errorNote && (
+                <p style={{ fontFamily: FONT.dm, fontSize: 12, color: failed ? T.pink : T.muted, margin: "0 0 6px" }}>
+                  Last attempt: {errorNote}
                 </p>
               )}
               {c.bodyText && (

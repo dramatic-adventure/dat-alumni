@@ -195,8 +195,10 @@ async function sendChunked(item: QueuedCapture): Promise<void> {
       else await retry({ ...item, uploadedChunks: seq }, `Server error (${res.status})`);
       return;
     }
-    // Persist progress so a later retry resumes here instead of restarting.
+    // Persist progress so a later retry resumes here instead of restarting,
+    // and emit so the UI ("Uploading x/y") tracks the upload live.
     await update({ ...item, status: "syncing", uploadedChunks: seq + 1 });
+    await refreshCounts();
   }
 
   let res: Response;
