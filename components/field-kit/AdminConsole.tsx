@@ -242,13 +242,17 @@ export default function AdminConsole({
   }, [rBusy, programId, flash]);
 
   // "Clear" a history entry — marks the Sheet row cancelled (kept as an audit
-  // trail) and hides it here. A push already on phones can't be recalled.
+  // trail) and hides it here. Rally / roll-call / choice entries CASCADE: the
+  // matching Today-page surface (banner/card) disappears for everyone too. A
+  // push already on phones can't be recalled.
   const clearNotification = useCallback(
     async (n: NotificationRow) => {
       if (clearingId) return;
-      if (!window.confirm(`Clear "${n.title}" from the history? Alerts already on phones aren't recalled.`)) {
-        return;
-      }
+      const cascades = n.type === "rally" || n.type === "roll-call" || n.type === "choice";
+      const warning = cascades
+        ? `Clear "${n.title}"? This also removes it from everyone's Today page. Alerts already on phones aren't recalled.`
+        : `Clear "${n.title}" from the history? Alerts already on phones aren't recalled.`;
+      if (!window.confirm(warning)) return;
       setClearingId(n.id);
       try {
         const res = await fetch("/api/field-kit/admin/history", {
@@ -257,14 +261,21 @@ export default function AdminConsole({
           body: JSON.stringify({ program: programId, id: n.id }),
         });
         const data = (await res.json().catch(() => null)) as
-          | { ok?: boolean; error?: string }
+          | { ok?: boolean; cleared?: string; cascadeError?: string; error?: string }
           | null;
         if (!res.ok || !data?.ok) {
           flash(data?.error || "Could not clear notification");
           return;
         }
         setHistory((cur) => cur.filter((h) => h.id !== n.id));
-        flash("Notification cleared");
+        if (data.cleared === "rally") setHasRally(false);
+        flash(
+          data.cascadeError
+            ? `Cleared from history, but the Today page didn't update: ${data.cascadeError}`
+            : data.cleared
+              ? "Cleared — gone from history and everyone's Today page"
+              : "Notification cleared"
+        );
         await refreshHistory();
       } finally {
         setClearingId(null);

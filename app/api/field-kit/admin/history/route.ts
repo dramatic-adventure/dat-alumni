@@ -8,10 +8,56 @@
 // it; the row stays in the Sheet as an audit trail but disappears from the
 // console and can never be sent by the cron. Note: a push already delivered to
 // phones can't be recalled — this stops future delivery and hides the entry.
+//
+// CASCADE (Jesse, 2026-07-20): clearing a rally / roll-call / choice entry also
+// clears the matching Today-page surface — the rally banner, roll-call card, or
+// company-choice card disappear for everyone via LiveRefresh. Roll call and
+// choice cascade to the program's CURRENT op, guarded so a notification older
+// than the current op never clears a newer one (openedAt/postedAt must not
+// postdate the entry's sentAt, with 60s clock skew allowed).
 
 import { NextResponse } from "next/server";
 import { guardFieldKitAdminApi, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
-import { listNotifications, cancelNotification } from "@/lib/notifications";
+import { listNotifications, cancelNotification, type NotificationRow } from "@/lib/notifications";
+import { getCurrentRollCall, clearRollCall } from "@/lib/rollCall";
+import { getCurrentCompanyChoice, clearCompanyChoice } from "@/lib/companyChoice";
+import { clearRallyPoint } from "@/lib/rallyPoint";
+import { bumpLiveVersion } from "@/lib/fieldKitLiveVersion";
+
+const SKEW_MS = 60_000;
+
+/** The current op predates (or matches) this notification → safe to cascade. */
+function opMatchesNotification(opStartedAt: string, n: NotificationRow): boolean {
+  const op = Date.parse(opStartedAt);
+  const sent = Date.parse(n.sentAt);
+  if (!Number.isFinite(op) || !Number.isFinite(sent)) return true; // unparseable — assume the single-current-op case
+  return op <= sent + SKEW_MS;
+}
+
+/** Clear the Today-page surface the cancelled notification announced, if any. */
+async function cascadeClear(programId: string, n: NotificationRow): Promise<string | null> {
+  if (n.type === "rally") {
+    await clearRallyPoint(programId);
+    return "rally";
+  }
+  if (n.type === "roll-call") {
+    const current = await getCurrentRollCall(programId);
+    if (current && opMatchesNotification(current.openedAt, n)) {
+      await clearRollCall(programId, current.id);
+      return "roll-call";
+    }
+    return null;
+  }
+  if (n.type === "choice") {
+    const current = await getCurrentCompanyChoice(programId);
+    if (current && opMatchesNotification(current.postedAt, n)) {
+      await clearCompanyChoice(programId, current.id);
+      return "choice";
+    }
+    return null;
+  }
+  return null; // "update" — push-only, nothing on Today to clear
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -59,7 +105,26 @@ export async function DELETE(req: Request) {
     if (!cancelled) {
       return NextResponse.json({ error: "Notification not found" }, { status: 404 });
     }
-    return NextResponse.json({ ok: true });
+
+    // Cascade to the Today-page surface (rally banner / roll-call card /
+    // choice card), then cache-bust so artists' next poll picks it up. A
+    // cascade failure doesn't undo the cancel — report it so staff can fall
+    // back to the section's own Clear/Close control.
+    let cleared: string | null = null;
+    let cascadeError: string | undefined;
+    try {
+      cleared = await cascadeClear(access.programId, cancelled);
+      if (cleared) await bumpLiveVersion(access.programId);
+    } catch (e) {
+      cascadeError = e instanceof Error ? e.message : String(e);
+      console.error("FIELD-KIT ADMIN HISTORY CASCADE ERROR:", cascadeError);
+    }
+
+    return NextResponse.json({
+      ok: true,
+      ...(cleared ? { cleared } : {}),
+      ...(cascadeError ? { cascadeError } : {}),
+    });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("FIELD-KIT ADMIN HISTORY CLEAR ERROR:", msg);

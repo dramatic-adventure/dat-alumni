@@ -24,8 +24,8 @@ import { withRetry, idxOf, normId } from "@/lib/sheetsResilience";
 import type { RollCallState, RollCallStatus } from "@/lib/programItinerary";
 
 const TAB = "Field Kit Roll Call";
-const RANGE = `'${TAB}'!A:F`;
-export const ROLL_CALL_HEADERS = ["id", "programId", "dayId", "label", "openedAt", "closedAt"] as const;
+const RANGE = `'${TAB}'!A:G`;
+export const ROLL_CALL_HEADERS = ["id", "programId", "dayId", "label", "openedAt", "closedAt", "clearedAt"] as const;
 
 const RESP_TAB = "Field Kit Roll Call Responses";
 const RESP_RANGE = `'${RESP_TAB}'!A:D`;
@@ -69,6 +69,7 @@ function columns(header: string[]) {
     label: idxOf(header, ["label"]),
     openedAt: idxOf(header, ["openedat", "opened at"]),
     closedAt: idxOf(header, ["closedat", "closed at"]),
+    clearedAt: idxOf(header, ["clearedat", "cleared at"]),
   };
 }
 
@@ -106,8 +107,11 @@ export function newRollCallId(): string {
 
 /**
  * The CURRENT roll call for a program — the latest row by openedAt (open or
- * closed; the UI decides what to render from closedAt). Never throws: a Sheets
- * hiccup or missing tab yields null so the itinerary load is unaffected.
+ * closed; the UI decides what to render from closedAt). Rows with a clearedAt
+ * stamp (staff cleared the notification from the console) are skipped entirely
+ * — the card disappears for everyone, including artists who already answered.
+ * Never throws: a Sheets hiccup or missing tab yields null so the itinerary
+ * load is unaffected.
  */
 export async function getCurrentRollCall(programId: string): Promise<RollCallState | null> {
   try {
@@ -119,6 +123,7 @@ export async function getCurrentRollCall(programId: string): Promise<RollCallSta
     let latest: RollCallState | null = null;
     for (let i = 1; i < rows.length; i++) {
       if (normId(rows[i]?.[c.programId]) !== pid) continue;
+      if (c.clearedAt !== -1 && String(rows[i]?.[c.clearedAt] ?? "").trim()) continue;
       const rc = rowToRollCall(header, rows[i]);
       if (!rc.id) continue;
       if (!latest || rc.openedAt.localeCompare(latest.openedAt) > 0) latest = rc;
@@ -221,6 +226,62 @@ export async function closeRollCall(programId: string, rollCallId: string): Prom
     return { ...rowToRollCall(header, rows[i]), closedAt };
   }
   return null;
+}
+
+/**
+ * Clear ("dismiss") a roll call: stamps clearedAt, and closedAt too if it was
+ * still open. A cleared roll call vanishes from getCurrentRollCall — the Today
+ * card disappears for everyone. The row and its responses stay in the Sheet as
+ * an audit trail. Auto-adds the `clearedAt` header on first use (older tabs
+ * predate it). Returns false if the id isn't found for the program.
+ */
+export async function clearRollCall(programId: string, rollCallId: string): Promise<boolean> {
+  const { sheets, header, rows } = await readGrid(RANGE, ROLL_CALL_HEADERS, "Sheets get Field Kit Roll Call");
+  const c = columns(header);
+  if (c.id === -1) throw new Error(`${TAB} missing "id" header`);
+  const pid = normId(programId);
+  const want = normId(rollCallId);
+  for (let i = 1; i < rows.length; i++) {
+    if (normId(rows[i]?.[c.id]) !== want) continue;
+    if (c.programId !== -1 && normId(rows[i]?.[c.programId]) !== pid) continue;
+
+    let clearedIdx = c.clearedAt;
+    if (clearedIdx === -1) {
+      clearedIdx = header.length;
+      await withRetry(
+        () =>
+          sheets.spreadsheets.values.update({
+            spreadsheetId: spreadsheetId(),
+            range: `'${TAB}'!${String.fromCharCode(65 + clearedIdx)}1`,
+            valueInputOption: "RAW",
+            requestBody: { values: [["clearedAt"]] },
+          }),
+        "Sheets add Field Kit Roll Call clearedAt header"
+      );
+    }
+
+    const nowIso = new Date().toISOString();
+    const data: Array<{ range: string; values: string[][] }> = [
+      { range: `'${TAB}'!${String.fromCharCode(65 + clearedIdx)}${i + 1}`, values: [[nowIso]] },
+    ];
+    const alreadyClosed = c.closedAt !== -1 && String(rows[i]?.[c.closedAt] ?? "").trim();
+    if (c.closedAt !== -1 && !alreadyClosed) {
+      data.push({
+        range: `'${TAB}'!${String.fromCharCode(65 + c.closedAt)}${i + 1}`,
+        values: [[nowIso]],
+      });
+    }
+    await withRetry(
+      () =>
+        sheets.spreadsheets.values.batchUpdate({
+          spreadsheetId: spreadsheetId(),
+          requestBody: { valueInputOption: "RAW", data },
+        }),
+      "Sheets clear Field Kit Roll Call"
+    );
+    return true;
+  }
+  return false;
 }
 
 /* ── Responses ──────────────────────────────────────────────────────────────── */

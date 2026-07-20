@@ -27,11 +27,16 @@ import { withRetry, idxOf, normId } from "@/lib/sheetsResilience";
 import type { CompanyChoiceState, CompanyChoiceVisibility } from "@/lib/programItinerary";
 
 const TAB = "Field Kit Company Choice";
-const RANGE = `'${TAB}'!A:I`;
+const RANGE = `'${TAB}'!A:J`;
 export const COMPANY_CHOICE_HEADERS = [
   "id", "programId", "question", "choices", "deadline",
-  "resultsVisibility", "outcome", "postedAt", "closedAt",
+  "resultsVisibility", "outcome", "postedAt", "closedAt", "clearedAt",
 ] as const;
+
+/** Column letter for a 0-based index (single letters A..Z is all we need). */
+function colLetter(idx: number): string {
+  return String.fromCharCode(65 + idx);
+}
 
 const VOTE_TAB = "Field Kit Company Choice Votes";
 const VOTE_RANGE = `'${VOTE_TAB}'!A:D`;
@@ -91,6 +96,7 @@ function columns(header: string[]) {
     outcome: idxOf(header, ["outcome"]),
     postedAt: idxOf(header, ["postedat", "posted at"]),
     closedAt: idxOf(header, ["closedat", "closed at"]),
+    clearedAt: idxOf(header, ["clearedat", "cleared at"]),
   };
 }
 
@@ -139,8 +145,9 @@ export function newChoiceSetId(): string {
 
 /**
  * The CURRENT company choice for a program — latest row by postedAt (open or
- * closed). Never throws; null on any read failure so the itinerary load is
- * unaffected.
+ * closed). Rows with a clearedAt stamp (staff cleared the notification from
+ * the console) are skipped entirely — the card disappears for everyone. Never
+ * throws; null on any read failure so the itinerary load is unaffected.
  */
 export async function getCurrentCompanyChoice(programId: string): Promise<CompanyChoiceRow | null> {
   try {
@@ -152,6 +159,7 @@ export async function getCurrentCompanyChoice(programId: string): Promise<Compan
     let latest: CompanyChoiceRow | null = null;
     for (let i = 1; i < rows.length; i++) {
       if (normId(rows[i]?.[c.programId]) !== pid) continue;
+      if (c.clearedAt !== -1 && String(rows[i]?.[c.clearedAt] ?? "").trim()) continue;
       const row = rowToChoice(header, rows[i]);
       if (!row.id || !row.question) continue;
       if (!latest || row.postedAt.localeCompare(latest.postedAt) > 0) latest = row;
@@ -273,7 +281,9 @@ export async function closeCompanyChoice(
       () =>
         sheets.spreadsheets.values.update({
           spreadsheetId: spreadsheetId(),
-          range: `'${TAB}'!A${i + 1}:I${i + 1}`,
+          // End column tracks the actual header width (clearedAt may or may
+          // not exist on older tabs), so the write always matches `updated`.
+          range: `'${TAB}'!A${i + 1}:${colLetter(header.length - 1)}${i + 1}`,
           valueInputOption: "RAW",
           requestBody: { values: [updated] },
         }),
@@ -282,6 +292,59 @@ export async function closeCompanyChoice(
     return rowToChoice(header, updated);
   }
   return null;
+}
+
+/**
+ * Clear ("dismiss") a question: stamps clearedAt, and closedAt too if it was
+ * still open. A cleared question vanishes from getCurrentCompanyChoice — the
+ * Today card disappears for everyone. The row and its votes stay in the Sheet
+ * as an audit trail. Auto-adds the `clearedAt` header on first use (older tabs
+ * predate it). Returns false if the id isn't found for the program.
+ */
+export async function clearCompanyChoice(programId: string, choiceSetId: string): Promise<boolean> {
+  const { sheets, header, rows } = await readGrid(RANGE, COMPANY_CHOICE_HEADERS, "Sheets get Field Kit Company Choice");
+  const c = columns(header);
+  if (c.id === -1) throw new Error(`${TAB} missing "id" header`);
+  const pid = normId(programId);
+  const want = normId(choiceSetId);
+  for (let i = 1; i < rows.length; i++) {
+    if (normId(rows[i]?.[c.id]) !== want) continue;
+    if (c.programId !== -1 && normId(rows[i]?.[c.programId]) !== pid) continue;
+
+    let clearedIdx = c.clearedAt;
+    if (clearedIdx === -1) {
+      clearedIdx = header.length;
+      await withRetry(
+        () =>
+          sheets.spreadsheets.values.update({
+            spreadsheetId: spreadsheetId(),
+            range: `'${TAB}'!${colLetter(clearedIdx)}1`,
+            valueInputOption: "RAW",
+            requestBody: { values: [["clearedAt"]] },
+          }),
+        "Sheets add Field Kit Company Choice clearedAt header"
+      );
+    }
+
+    const nowIso = new Date().toISOString();
+    const data: Array<{ range: string; values: string[][] }> = [
+      { range: `'${TAB}'!${colLetter(clearedIdx)}${i + 1}`, values: [[nowIso]] },
+    ];
+    const alreadyClosed = c.closedAt !== -1 && String(rows[i]?.[c.closedAt] ?? "").trim();
+    if (c.closedAt !== -1 && !alreadyClosed) {
+      data.push({ range: `'${TAB}'!${colLetter(c.closedAt)}${i + 1}`, values: [[nowIso]] });
+    }
+    await withRetry(
+      () =>
+        sheets.spreadsheets.values.batchUpdate({
+          spreadsheetId: spreadsheetId(),
+          requestBody: { valueInputOption: "RAW", data },
+        }),
+      "Sheets clear Field Kit Company Choice"
+    );
+    return true;
+  }
+  return false;
 }
 
 /* ── Votes ──────────────────────────────────────────────────────────────────── */

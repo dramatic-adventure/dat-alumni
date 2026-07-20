@@ -172,12 +172,16 @@ export async function stampSentAt(rowNumber: number, iso: string): Promise<void>
  * (via the expiry) and removes the entry from the console.
  *
  * Auto-adds the `cancelledAt` header to the tab on first use if it's missing.
- * Returns false if no row matches the id within the program.
+ * Returns the cancelled row (so callers can cascade by type — e.g. clear the
+ * matching roll call), or null if no row matches the id within the program.
  */
-export async function cancelNotification(programId: string, id: string): Promise<boolean> {
+export async function cancelNotification(
+  programId: string,
+  id: string
+): Promise<NotificationRow | null> {
   const pid = normId(programId);
   const target = String(id ?? "").trim();
-  if (!target) return false;
+  if (!target) return null;
 
   const { sheets, header, rows } = await readGrid();
   const c = columns(header);
@@ -192,7 +196,7 @@ export async function cancelNotification(programId: string, id: string): Promise
       break;
     }
   }
-  if (rowNumber === -1 || !existing) return false;
+  if (rowNumber === -1 || !existing) return null;
 
   // Ensure the cancelledAt column exists (older tabs predate it).
   let cancelIdx = c.cancelledAt;
@@ -231,7 +235,7 @@ export async function cancelNotification(programId: string, id: string): Promise
       }),
     "Sheets cancel Field Kit Notifications row"
   );
-  return true;
+  return existing;
 }
 
 /**
