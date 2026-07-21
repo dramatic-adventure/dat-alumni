@@ -31,6 +31,7 @@ import {
 } from "@/lib/traceMutationSync";
 import { getSnapshot, onSnapshotChange } from "@/lib/itinerarySnapshot";
 import { formatRelativeTime } from "@/lib/relativeTime";
+import { useSyncWakeLock } from "@/lib/useSyncWakeLock";
 
 const LABEL: CSSProperties = {
   fontFamily: FONT.grotesk,
@@ -101,6 +102,11 @@ export default function SyncStatus({ programId }: { programId: string }) {
 
   const pending = counts.pending + opsCounts.pending + traceCounts.pending;
   const failed = counts.failed + opsCounts.failed + traceCounts.failed;
+
+  // Hold the screen awake while anything is actively uploading/queued, so an
+  // auto screen-lock can't suspend the page mid-upload (the main cause of
+  // stranded captures on iOS). Releases automatically once the queue drains.
+  useSyncWakeLock(pending > 0);
 
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 12 }}>

@@ -39,6 +39,9 @@ export type QueuedTraceMutation = {
   attempts: number;
   nextAttemptAt?: number;
   lastError?: string;
+  /** True only when a 4xx parked this item; transient exhaustion stays false so
+   *  it auto-resumes on reconnect/return — see traceMutationSync.resume(). */
+  permanent?: boolean;
 };
 
 export function newTraceMutationId(): string {

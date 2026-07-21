@@ -95,7 +95,9 @@ function buildFormData(item: QueuedCapture): FormData {
 async function retry(item: QueuedCapture, lastError: string): Promise<void> {
   const attempts = item.attempts + 1;
   if (attempts >= MAX_ATTEMPTS) {
-    await update({ ...item, status: "failed", attempts, lastError, nextAttemptAt: undefined });
+    // Transient exhaustion (network/5xx/timeout) — permanent:false so a later
+    // reconnect/return auto-revives it (see resume()).
+    await update({ ...item, status: "failed", attempts, lastError, nextAttemptAt: undefined, permanent: false });
     return;
   }
   await update({
@@ -114,6 +116,7 @@ async function markFailed(item: QueuedCapture, res: Response): Promise<void> {
     status: "failed",
     lastError: data?.error || `Failed (${res.status})`,
     nextAttemptAt: undefined,
+    permanent: true, // a 4xx needs a human — never auto-resumed.
   });
 }
 
@@ -299,10 +302,27 @@ export function kick(): void {
 }
 
 // Reset failed rows to pending so the user can retry them by hand, then drain.
+// Manual override: revives EVERY failed item, including permanent 4xx ones.
 export async function retryFailed(): Promise<void> {
   const items = await getAll();
   for (const i of items) {
     if (i.status === "failed") {
+      await update({ ...i, status: "pending", attempts: 0, nextAttemptAt: undefined, lastError: undefined, permanent: false });
+    }
+  }
+  await refreshCounts();
+  void drain();
+}
+
+// Auto-recovery on reconnect/return: revive ONLY items parked by transient
+// exhaustion (network/5xx/timeout), never permanent 4xx failures (those need a
+// human or the manual retry chip). Wired to online + visibilitychange in
+// start(), so backgrounding the app and coming back finishes the queue from
+// where it left off — no manual tap.
+export async function resume(): Promise<void> {
+  const items = await getAll();
+  for (const i of items) {
+    if (i.status === "failed" && !i.permanent) {
       await update({ ...i, status: "pending", attempts: 0, nextAttemptAt: undefined, lastError: undefined });
     }
   }
@@ -314,10 +334,12 @@ export async function retryFailed(): Promise<void> {
 export function start(): void {
   if (started || typeof window === "undefined") return;
   started = true;
-  window.addEventListener("online", () => void drain());
+  // resume() (not drain()) so returning to the app or regaining connectivity
+  // also revives transiently-failed items, not just the still-pending ones.
+  window.addEventListener("online", () => void resume());
   if (typeof document !== "undefined") {
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") void drain();
+      if (document.visibilityState === "visible") void resume();
     });
   }
   void refreshCounts();

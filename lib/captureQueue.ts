@@ -42,6 +42,10 @@ export type QueuedCapture = {
   attempts: number;
   nextAttemptAt?: number;
   lastError?: string;
+  /** True only when a 4xx parked this item (needs a human). Distinguishes it
+   *  from transient exhaustion, which auto-resumes on reconnect/return — see
+   *  captureSync.resume(). */
+  permanent?: boolean;
   /** Chunked-upload resume pointer: chunks [0, uploadedChunks) are already
    *  staged server-side, so a retry after a dropped connection re-uploads only
    *  the remainder (see lib/captureSync sendChunked). */

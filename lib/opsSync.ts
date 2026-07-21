@@ -103,7 +103,8 @@ function buildBody(item: QueuedOp): string {
 async function retry(item: QueuedOp, lastError: string): Promise<void> {
   const attempts = item.attempts + 1;
   if (attempts >= MAX_ATTEMPTS) {
-    await update({ ...item, status: "failed", attempts, lastError, nextAttemptAt: undefined });
+    // Transient exhaustion — permanent:false so reconnect/return auto-revives it.
+    await update({ ...item, status: "failed", attempts, lastError, nextAttemptAt: undefined, permanent: false });
     return;
   }
   await update({
@@ -147,6 +148,7 @@ async function send(item: QueuedOp): Promise<void> {
       status: "failed",
       lastError: data?.error || `Failed (${res.status})`,
       nextAttemptAt: undefined,
+      permanent: true, // a 4xx (incl. 409 closed) needs a human — never auto-resumed.
     });
     return;
   }
@@ -205,10 +207,24 @@ export function kick(): void {
   void drain();
 }
 
+// Manual override: revives EVERY failed item, including permanent 4xx ones.
 export async function retryFailed(): Promise<void> {
   const items = await getAll();
   for (const i of items) {
     if (i.status === "failed") {
+      await update({ ...i, status: "pending", attempts: 0, nextAttemptAt: undefined, lastError: undefined, permanent: false });
+    }
+  }
+  await refreshCounts();
+  void drain();
+}
+
+// Auto-recovery on reconnect/return: revive ONLY transiently-failed items,
+// never permanent 4xx failures. Wired to online + visibilitychange in start().
+export async function resume(): Promise<void> {
+  const items = await getAll();
+  for (const i of items) {
+    if (i.status === "failed" && !i.permanent) {
       await update({ ...i, status: "pending", attempts: 0, nextAttemptAt: undefined, lastError: undefined });
     }
   }
@@ -220,10 +236,10 @@ export async function retryFailed(): Promise<void> {
 export function start(): void {
   if (started || typeof window === "undefined") return;
   started = true;
-  window.addEventListener("online", () => void drain());
+  window.addEventListener("online", () => void resume());
   if (typeof document !== "undefined") {
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") void drain();
+      if (document.visibilityState === "visible") void resume();
     });
   }
   void refreshCounts();
