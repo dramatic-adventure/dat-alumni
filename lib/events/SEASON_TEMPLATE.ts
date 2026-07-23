@@ -65,7 +65,7 @@
 //   and "sk". For a new language they fall back to English until you add a
 //   block to CHROME in components/events/EventDetailPageTemplate.tsx (and
 //   GALLERY_CHROME in EventProdrowGallery.tsx) — copy the sk block.
-//   Live examples: "the-consequence-of-meeting-kosice-2026" (season-20, SK)
+//   Live examples: "water-that-wanders" (season-20, SK)
 //   and "agwow-malayerba-quito-2026" (season-21, ES).
 // ─────────────────────────────────────────────────────────────────────────────
 

@@ -167,40 +167,48 @@ export const season20Events: DatEvent[] = [
   },
 
   {
-    id: "the-consequence-of-meeting-kosice-2026",
-    title: "The Consequence of Meeting",
-    subtitle: "A bilingual performance event with all proceeds benefiting ETP Slovensko",
+    id: "water-that-wanders",
+    previousIds: [
+      "the-consequence-of-meeting-kosice-2026",
+      "water-that-wanders-kosice-2026",
+    ],
+    title: "Water that Wanders",
+    subtitle: "US, Slovak, and Romani artists join hands to step into waters less known",
     category: "performance",
     subcategory: "benefit",
     status: "upcoming",
     date: "2026-08-01",
     time: "Evening",
-    venue: "TBA",
+    runtime: "Approx. 2 hours",
+    venue: "Divadlo na Peróne",
+    venueUrl: "https://www.facebook.com/divadlonaperone",
     city: "Košice",
     country: "Slovakia",
     language: "Performed in English & Slovak",
-    accessibility: "In person + online stream",
+    accessibility: "In-person performance",
     dramaClubs: ["zemplinska-teplica-ensemble", "lunik-ix-collective"],
     description:
-      "Theatre, spoken word, song, movement, story, and what happens when a chance encounter becomes the passage you didn’t know you needed.",
+      "US, Slovak, and Romani artists unite to share this eclectic evening of work in progress. Theatre, storytelling, and poetry fuse as we explore the confluence of lived experience that happens when people from different worlds join hands and step together into waters less known.",
     longDescription:
-      "Dramatic Adventure Theatre presents The Consequence of Meeting / Po stretnutí, a one-night bilingual performance event bringing together international artists, local collaborators, and community voices, with all proceeds benefiting ETP Slovensko.\n\n" +
-      "Created at the close of DAT’s 2026 Slovakia artist journey, the evening features original performance, new writing, spoken word, song, movement, and story shaped by collaboration, exchange, and the charged act of coming face to face.\n\n" +
-      "This is not a showcase of finished answers. It is a live encounter with the questions that remain after people share space: What changes when we meet honestly? What do we carry afterward? What becomes possible — and what becomes complicated — because we were in the room together?\n\n" +
-      "The evening will feature original work from DAT artists, creative offerings developed with local Slovak collaborators, and possible guest performances from young people connected to DAT’s community-based teaching residencies.\n\n" +
-      "The work is intimate, immediate, and alive — shaped not only by what artists made, but by who they met, what they witnessed, and what those encounters asked of them.\n\n" +
-      "The Consequence of Meeting / Po stretnutí is a night of performance, witness, language, friction, humor, tenderness, discomfort, and transformation — a public gathering for anyone interested in what happens when meeting becomes more than a moment, and begins to change the way through.",
+      "US, Slovak, and Romani artists unite to share this eclectic evening of work in progress. Theatre, storytelling, and poetry fuse as we explore the confluence of lived experience that happens when people from different worlds join hands and step together into waters less known.\n\n" +
+      "Inspired by the Polish-Romani poet Papusza and her poem “Pani, so tradeł” (“Water that Wanders”) — and no less by three weeks of discovering Slovakia — the company created a devised theatrical travelogue for this community evening. Water that Wanders / Voda, ktorá vandruje is the closing performance of Passage, DAT’s 12-year collaboration with ETP Slovensko, co-presented in Košice with Divadlo na Peróne.\n\n" +
+      "For over a decade, DAT and ETP Slovensko have made devised theatre in Roma communities across Eastern Slovakia. This summer, American and Slovak DAT facilitators led creative theatre workshops for children and young people in Košice and Zemplínska Teplica, and explored Slovakia in Bratislava, Košice, Martin, and Ždiar. Built through devised theatre over the past three weeks, the piece carries the experiences, personal perspectives, and vision of local and visiting eyes and hearts.\n\n" +
+      "More than a performance, this is a community evening — a chance to meet, spark new friendships and lasting ties, and open conversations, questions, and future collaborations. It’s open to everyone: educators, youth workers, people from the cultural world, and the wider public. Admission is free. We look forward to seeing you on August 1 at Divadlo na Peróne in Košice.",
     impactBlurb:
       "This event supports ETP Slovensko, DAT’s community partner in Eastern Slovakia. Through education, mentorship, community development, and long-term local engagement, ETP Slovensko works with children, families, and communities to expand opportunity and strengthen pathways forward. Your attendance, donation, or sponsorship helps support this vital work while also making space for artists and communities to gather through story, performance, and creative exchange. All donations and event proceeds benefit ETP Slovensko.",
+    donateLink: "https://etp.darujme.sk/3601/",
     ticketPrice: "Free admission · donations welcome",
     ticketType: "free",
     featured: true,
     tags: [
       "bilingual",
       "benefit",
+      "co-production",
       "ETP Slovensko",
+      "Divadlo na Peróne",
       "PASSAGE",
       "DAT Lab",
+      "Papusza",
       "Slovakia",
       "Košice",
     ],
@@ -208,22 +216,23 @@ export const season20Events: DatEvent[] = [
     defaultLang: "en",
     translations: {
       sk: {
-        title: "Po stretnutí",
-        subtitle: "Bilingválne performatívne podujatie, ktorého výťažok podporí ETP Slovensko",
+        title: "Voda, ktorá vandruje",
+        subtitle: "Komunitný večer s divadlom",
         description:
-          "Divadlo, hovorené slovo, pieseň, pohyb, príbeh a to, čo sa stane, keď sa náhodné stretnutie zmení na cestu, o ktorej ste netušili, že ju potrebujete.",
+          "Inšpirovaní poľsko-rómskou poetkou Papuszou a jej básňou Pani, so tradeł (Voda, ktorá vandruje) a nemenej inšpirovaní zážitkami z poznávania Slovenska sme vytvorili divadelný cestopisný zážitok, ktorý vám zahráme v rámci tohto komunitného večera.",
         longDescription:
-          "Dramatic Adventure Theatre uvádza The Consequence of Meeting / Po stretnutí, jednorazové bilingválne performatívne podujatie, ktoré spája medzinárodných umelcov, miestnych spolupracovníkov a hlasy komunity. Výťažok z podujatia podporí ETP Slovensko.\n\n" +
-          "Večer vzniká na záver umeleckej cesty DAT na Slovensku v roku 2026. Prinesie pôvodnú performanciu, nové texty, hovorené slovo, pieseň, pohyb a príbehy formované spoluprácou, výmenou a silou osobného stretnutia.\n\n" +
-          "Nie je to prehliadka hotových odpovedí. Je to živé stretnutie s otázkami, ktoré zostávajú po tom, čo ľudia zdieľajú jeden priestor: Čo sa zmení, keď sa stretneme úprimne? Čo si odnášame? Čo sa stane možným — a čo sa skomplikuje — pretože sme boli spolu v jednej miestnosti?\n\n" +
-          "Večer predstaví pôvodnú tvorbu umelcov DAT, kreatívne výstupy vytvorené v spolupráci s miestnymi slovenskými umelcami a podľa možností aj hosťovské vystúpenia mladých ľudí zapojených do komunitných tvorivých dielní DAT.\n\n" +
-          "Tvorba je intímna, bezprostredná a živá — formovaná nielen tým, čo umelci vytvorili, ale aj tým, koho stretli, čoho boli svedkami a čo od nich tieto stretnutia žiadali.\n\n" +
-          "The Consequence of Meeting / Po stretnutí je večer performancie, svedectva, jazyka, napätia, humoru, nežnosti, nepohodlia a premeny — verejné stretnutie pre všetkých, ktorých zaujíma, čo sa stane, keď stretnutie prestane byť iba okamihom a začne meniť cestu ďalej.",
+          "Inšpirovaní poľsko-rómskou poetkou Papuszou a jej básňou Pani, so tradeł (Voda, ktorá vandruje) a nemenej inšpirovaní zážitkami z poznávania Slovenska sme vytvorili divadelný cestopisný zážitok, ktorý vám zahráme v rámci tohto komunitného večera.\n\n" +
+          "Pozývame vás na priateľské stretnutie a záverečné predstavenie projektu Passage, ktorý prepája ETP Slovensko s organizáciou Dramatic Adventure Theatre z New Yorku, s ktorou dlhodobo spolupracujeme. Podujatie v Košiciach uvádzame spoločne s Divadlom na Peróne.\n\n" +
+          "Aj toto leto viedli americké i slovenské lektorky a lektori DAT tvorivé divadelné workshopy pre deti a mladých ľudí v Košiciach aj v Zemplínskej Teplici a poznávali Slovensko v Bratislave, Košiciach, Martine a Ždiari.\n\n" +
+          "Predstavenie Voda, ktorá vandruje / Water that Wanders vznikalo metódou autorského divadla v priebehu uplynulých troch týždňov. Nesie v sebe zážitky, osobné perspektívy a pohľad lokálnych i hosťujúcich očí a sŕdc.\n\n" +
+          "Komunitný večer nie je len o divadle, ale i o možnosti stretnúť sa, vytvoriť nové priateľstvá a dlhodobé väzby. Bude priestor na rozhovory, otázky a hľadanie nových príležitostí spolupráce.\n\n" +
+          "Podujatie je otvorené pre všetkých — pedagógov, pracovníkov a pracovníčky s mládežou, ľudí z kultúrneho prostredia aj širokú verejnosť. Budeme radi, ak sa pridáte. Vstup je voľný.\n\n" +
+          "Tešíme sa na stretnutie 1. augusta v Divadle na Peróne v Košiciach.",
         impactBlurb:
           "Toto podujatie podporuje ETP Slovensko, komunitného partnera DAT na východnom Slovensku. Prostredníctvom vzdelávania, mentoringu, komunitného rozvoja a dlhodobej lokálnej práce ETP Slovensko podporuje deti, rodiny a komunity pri rozširovaní príležitostí a posilňovaní ciest vpred. Vaša účasť, dobrovoľný príspevok alebo sponzorská podpora pomáha tejto dôležitej práci a zároveň vytvára priestor, kde sa umelci a komunity môžu stretnúť prostredníctvom príbehu, performance a tvorivej výmeny. Všetky dobrovoľné príspevky a výťažok z podujatia podporia ETP Slovensko.",
         ticketPrice: "Vstup voľný · dobrovoľné príspevky vítané",
         language: "V angličtine a slovenčine",
-        accessibility: "Naživo aj online",
+        accessibility: "Predstavenie naživo",
       },
     },
   },
