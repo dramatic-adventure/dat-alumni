@@ -1,5 +1,5 @@
 // app/theatre/[slug]/page.tsx
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { productionMap, type Production } from "@/lib/productionMap";
 import {
   productionDetailsMap,
@@ -12,7 +12,7 @@ import ProductionPageTemplate, {
 } from "@/components/productions/ProductionPageTemplate";
 import { buildRelated } from "@/lib/buildRelated";
 import { loadAlumniNameBySlug } from "@/lib/loadAlumni";
-import { eventsByProduction, eventById } from "@/lib/events";
+import { eventsByProduction, eventById, canonicalEventPath } from "@/lib/events";
 
 import EventDetailPageTemplate from "@/components/events/EventDetailPageTemplate";
 import { resolvePerformanceEvent } from "@/lib/events/resolvePerformanceEvent";
@@ -157,6 +157,11 @@ export default async function TheatreProductionPage({ params }: PageProps) {
   const { slug } = await params;
 
   const performanceEvent = eventById(slug);
+
+  // Old/retired slug (matched via previousIds) → redirect to the canonical path.
+  if (performanceEvent && performanceEvent.id !== slug) {
+    redirect(canonicalEventPath(performanceEvent));
+  }
 
   if (performanceEvent?.category === "performance") {
     const resolved = resolvePerformanceEvent(performanceEvent);

@@ -24,6 +24,12 @@ export type EventStatus = "upcoming" | "past" | "cancelled";
 
 export interface DatEvent {
   id: string;
+  /**
+   * Retired slugs that should still resolve to this event.
+   * A visit to an old slug is matched by `eventById` and redirected to the
+   * current canonical path — so renaming an event's `id` doesn't 404 old links.
+   */
+  previousIds?: string[];
   title: string;
   subtitle?: string;
   category: EventCategory;
@@ -480,8 +486,10 @@ export const nextEvent: DatEvent | undefined = upcomingEvents[0];
 
 export function eventById(id: string): DatEvent | undefined {
   return (
-    events.find((e) => e.id === id) ??
-    derivedArchivedPerformances.find((e) => e.id === id)
+    events.find((e) => e.id === id || e.previousIds?.includes(id)) ??
+    derivedArchivedPerformances.find(
+      (e) => e.id === id || e.previousIds?.includes(id),
+    )
   );
 }
 
