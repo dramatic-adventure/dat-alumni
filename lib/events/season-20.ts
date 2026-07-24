@@ -178,7 +178,8 @@ export const season20Events: DatEvent[] = [
     subcategory: "benefit",
     status: "upcoming",
     date: "2026-08-01",
-    time: "Evening",
+    time: "7:00 PM",
+    doors: "6:30 PM",
     runtime: "Approx. 2 hours",
     venue: "Divadlo na Peróne",
     venueUrl: "https://www.facebook.com/divadlonaperone",
@@ -193,7 +194,10 @@ export const season20Events: DatEvent[] = [
       "US, Slovak, and Romani artists unite to share this eclectic evening of work in progress. Theatre, storytelling, and poetry fuse as we explore the confluence of lived experience that happens when people from different worlds join hands and step together into waters less known.\n\n" +
       "Inspired by the Polish-Romani poet Papusza and her poem “Pani, so tradeł” (“Water that Wanders”) — and no less by three weeks of discovering Slovakia — the company created a devised theatrical travelogue for this community evening. Water that Wanders / Voda, ktorá vandruje is the closing performance of Passage, DAT’s 12-year collaboration with ETP Slovensko, co-presented in Košice with Divadlo na Peróne.\n\n" +
       "For over a decade, DAT and ETP Slovensko have made devised theatre in Roma communities across Eastern Slovakia. This summer, American and Slovak DAT facilitators led creative theatre workshops for children and young people in Košice and Zemplínska Teplica, and explored Slovakia in Bratislava, Košice, Martin, and Ždiar. Built through devised theatre over the past three weeks, the piece carries the experiences, personal perspectives, and vision of local and visiting eyes and hearts.\n\n" +
-      "More than a performance, this is a community evening — a chance to meet, spark new friendships and lasting ties, and open conversations, questions, and future collaborations. It’s open to everyone: educators, youth workers, people from the cultural world, and the wider public. Admission is free. We look forward to seeing you on August 1 at Divadlo na Peróne in Košice.",
+      "More than a performance, this is a friend-raiser for ETP Slovensko — a community evening to meet, spark new friendships and lasting ties, and open conversations, questions, and future collaborations. It’s open to everyone: educators, youth workers, people from the cultural world, and the wider public. Admission is free. We look forward to seeing you on August 1 at Divadlo na Peróne in Košice.",
+    artistNote:
+      "Poor water has no speech / With which she could talk or sing, / Only sometimes she whispers / A silver splash like a heartbeat. / A heartbeat of speaking water. / But the water does not look behind. / It flees, runs farther away, / Where eyes will not see her — / The water that wanders.",
+    artistNoteBy: "Papusza, “Water That Wanders”",
     impactBlurb:
       "This event supports ETP Slovensko, DAT’s community partner in Eastern Slovakia. Through education, mentorship, community development, and long-term local engagement, ETP Slovensko works with children, families, and communities to expand opportunity and strengthen pathways forward. Your attendance, donation, or sponsorship helps support this vital work while also making space for artists and communities to gather through story, performance, and creative exchange. All donations and event proceeds benefit ETP Slovensko.",
     donateLink: "https://etp.darujme.sk/3601/",
