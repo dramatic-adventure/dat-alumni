@@ -70,6 +70,22 @@ export default function OutboxDiagnostics() {
   const [readError, setReadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  // null until measured on the client — see the standalone note below.
+  const [standalone, setStandalone] = useState<boolean | null>(null);
+
+  // WHICH CONTAINER AM I READING? On iOS an installed home-screen web app gets
+  // its own IndexedDB, isolated from Safari's, even for an identical origin.
+  // (Service Worker registration and CacheStorage ARE shared, which is what
+  // makes the two contexts look identical while their outboxes are not.)
+  // Without this check the page happily reports "Nothing queued" for a Safari
+  // tab while the installed app holds a stranded backlog — a false negative
+  // that reads as good news. navigator.standalone is the iOS signal; the
+  // display-mode query covers installed PWAs elsewhere.
+  useEffect(() => {
+    const iosStandalone = (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    const displayMode = window.matchMedia?.("(display-mode: standalone)")?.matches === true;
+    setStandalone(iosStandalone || displayMode);
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -196,6 +212,29 @@ export default function OutboxDiagnostics() {
         <strong style={{ color: T.ink }}>Copy diagnostics</strong> and send it to Jesse.
       </p>
 
+      {standalone === false && (
+        <div style={WARN}>
+          <p style={{ ...EYEBROW, color: T.pink, margin: "0 0 6px" }}>Wrong outbox</p>
+          <p style={{ ...BODY, margin: 0 }}>
+            You&apos;re in a <strong style={{ color: T.ink }}>browser tab</strong>. On iPhone the
+            Field&nbsp;Kit you open from your <strong style={{ color: T.ink }}>home-screen icon</strong>{" "}
+            keeps a completely separate outbox from this one — so what you see below is{" "}
+            <strong style={{ color: T.ink }}>not</strong> the queue holding your captures.
+            {rows.length === 0 ? " “Nothing queued” here does not mean nothing is stuck." : ""}
+          </p>
+          <p style={{ ...BODY, margin: "10px 0 0" }}>
+            Close this tab, open the Field&nbsp;Kit from your home-screen icon, and reach this page
+            from the account menu there.
+          </p>
+        </div>
+      )}
+
+      {standalone === true && (
+        <p style={{ ...META, color: T.green, margin: "0 0 16px" }}>
+          Reading the installed app&apos;s outbox — this is the right one.
+        </p>
+      )}
+
       {readError && (
         <p style={{ ...BODY, color: T.pink }}>
           Could not read the local database: {readError}. That itself is the problem — report it.
@@ -295,6 +334,14 @@ const BODY: CSSProperties = {
   color: T.ink,
   opacity: 0.86,
   margin: "0 0 16px",
+};
+
+const WARN: CSSProperties = {
+  background: T.card,
+  border: `1px solid ${T.pink}`,
+  borderRadius: 12,
+  padding: "14px 16px",
+  margin: "0 0 18px",
 };
 
 const CARD: CSSProperties = {

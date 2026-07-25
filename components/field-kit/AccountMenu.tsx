@@ -269,6 +269,14 @@ export default function AccountMenu({
             </div>
 
             {/* account actions */}
+            {/* Outbox — ALWAYS shown, never gated on a non-zero queue. On iOS the
+                installed app and a Safari tab keep separate IndexedDB, so an
+                artist has to be able to reach this from inside whichever context
+                actually holds their stranded captures. A link they can only see
+                when the banner is up is exactly the link they can't find. */}
+            <Link href="/field-kit/outbox" role="menuitem" onClick={() => setOpen(false)} style={menuItem}>
+              Outbox &amp; sync status
+            </Link>
             <Link href="/alumni/update" role="menuitem" onClick={() => setOpen(false)} style={menuItem}>
               Your profile
             </Link>
