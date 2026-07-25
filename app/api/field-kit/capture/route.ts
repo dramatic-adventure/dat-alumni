@@ -183,8 +183,16 @@ async function assembleStagedFile(
 }
 
 export async function POST(req: Request) {
+  // Arrival marker. `netlify logs:function` reports only Duration/Memory per
+  // invocation — no path, no status — so an upload that never reaches the server
+  // is indistinguishable from one that arrives and fails. This line is the
+  // difference: if it doesn't appear, the request never got here.
+  const t0 = Date.now();
+  const contentLength = req.headers.get("content-length") || "?";
+  console.log(`[capture] POST in — ${contentLength}B ct=${req.headers.get("content-type")?.slice(0, 40)}`);
   try {
     if (!rateLimit(rateKey(req), 60, 60_000)) {
+      console.log("[capture] rejected — rate limited");
       return NextResponse.json({ error: "Too many requests" }, { status: 429 });
     }
 
@@ -391,9 +399,11 @@ export async function POST(req: Request) {
     // The row is appended and the bytes live in Drive — staging is now garbage.
     if (stagedChunkCount > 0) await deleteStagedChunks(captureId, stagedChunkCount);
 
+    console.log(`[capture] OK ${captureId} in ${Date.now() - t0}ms`);
     return NextResponse.json({ ok: true, captureId, ...(driveFileId ? { driveFileId } : {}) });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
+    console.error(`[capture] FAILED after ${Date.now() - t0}ms:`, msg);
     console.error("FIELD-KIT CAPTURE ERROR:", msg);
     return NextResponse.json({ error: msg }, { status: 500 });
   }

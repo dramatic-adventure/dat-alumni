@@ -72,7 +72,10 @@ function backoffFor(attempts: number): number {
   return Math.min(BASE_BACKOFF_MS * 2 ** (attempts - 1), MAX_BACKOFF_MS);
 }
 
-function buildFormData(item: QueuedCapture): FormData {
+/** `bytes` is the already-materialized media, when the caller has read it (the
+ *  direct path does, so a read failure is reported separately from a network
+ *  failure and no IndexedDB write can invalidate the handle mid-upload). */
+function buildFormData(item: QueuedCapture, bytes?: ArrayBuffer): FormData {
   const fd = new FormData();
   fd.set("captureId", item.captureId);
   fd.set("kind", item.kind);
@@ -87,7 +90,7 @@ function buildFormData(item: QueuedCapture): FormData {
     // The route names the Drive file from the MIME and strips any ;codecs= param,
     // so the File name here is immaterial.
     const type = item.blobType || item.blob.type || "application/octet-stream";
-    fd.set("file", new File([item.blob], item.captureId, { type }));
+    fd.set("file", new File([bytes ?? item.blob], item.captureId, { type }));
   }
   return fd;
 }
@@ -161,15 +164,50 @@ async function send(item: QueuedCapture): Promise<void> {
     return;
   }
 
+  // READ THE MEDIA FIRST, as its own step.
+  //
+  // buildFormData() used to be passed straight into fetchWithTimeout as an
+  // argument, so reading the recording and reaching the network happened inside
+  // one try/catch — and `new File([blob])` doesn't read anything, the bytes are
+  // only pulled while fetch streams the body. A dead Blob handle and a dead
+  // network therefore produced a byte-identical "Load failed" in lastError.
+  // That ambiguity is why this took days to pin down.
+  //
+  // Materializing the bytes here separates the two failures for good, and hands
+  // fetch a buffer that no later IndexedDB write can invalidate mid-flight.
+  let bytes: ArrayBuffer | undefined;
+  if (current.blob) {
+    try {
+      bytes = await current.blob.arrayBuffer();
+    } catch (e) {
+      await retry(
+        current,
+        `MEDIA READ FAILED: ${e instanceof Error ? `${e.name}: ${e.message}` : "unknown"} (${current.blob.size}B)`
+      );
+      return;
+    }
+  }
+
+  const startedAt = Date.now();
   let res: Response;
   try {
     res = await fetchWithTimeout(
       ENDPOINT,
-      { method: "POST", body: buildFormData(current) },
+      { method: "POST", body: buildFormData(current, bytes) },
       current.blob ? BLOB_TIMEOUT_MS : TEXT_TIMEOUT_MS
     );
   } catch (e) {
-    await retry(current, e instanceof Error ? e.message : "Network error");
+    // Rich context straight into lastError, which the outbox page already dumps.
+    // ELAPSED TIME IS THE TELL: a failure after tens of milliseconds never left
+    // the device; one after many seconds is a genuine network or server problem.
+    const ms = Date.now() - startedAt;
+    const name = e instanceof Error ? e.name : "Unknown";
+    const msg = e instanceof Error ? e.message : "Network error";
+    const online = typeof navigator !== "undefined" ? navigator.onLine : "?";
+    await retry(
+      current,
+      `NETWORK: ${msg} [${name} after ${ms}ms, online=${online}, ${current.blob?.size ?? 0}B]`
+    );
     return;
   }
 
