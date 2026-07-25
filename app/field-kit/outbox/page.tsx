@@ -28,5 +28,13 @@ export default async function OutboxPage({
   const access = await requireFieldKitPage(FIELD_KIT_PROGRAM_ID, asId);
   if (!access) return null; // not on the roster — the layout renders the gate.
 
-  return <OutboxDiagnostics />;
+  // Build stamp. An installed iOS web app can keep running an old JS bundle for
+  // a long time after a deploy, and without this there is NO way to tell from
+  // the device whether a fix is actually live — we burned a debugging round on
+  // exactly that ambiguity. COMMIT_REF is injected by Netlify at build time;
+  // "local" means a dev server. Rendered on the page and included in the copied
+  // diagnostics so any report says which code produced it.
+  const build = (process.env.COMMIT_REF || "local").slice(0, 7);
+
+  return <OutboxDiagnostics build={build} />;
 }

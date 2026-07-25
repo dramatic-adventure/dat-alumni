@@ -65,7 +65,7 @@ function fmtAge(iso: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-export default function OutboxDiagnostics() {
+export default function OutboxDiagnostics({ build }: { build: string }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [readError, setReadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -186,12 +186,13 @@ export default function OutboxDiagnostics() {
 
   const copyDiagnostics = useCallback(async () => {
     const payload = {
+      build,
       capturedAt: new Date().toISOString(),
       online: typeof navigator !== "undefined" ? navigator.onLine : null,
       userAgent: typeof navigator !== "undefined" ? navigator.userAgent : null,
       readError,
       rows,
-    };
+    } as const;
     const text = JSON.stringify(payload, null, 2);
     try {
       await navigator.clipboard.writeText(text);
@@ -202,7 +203,7 @@ export default function OutboxDiagnostics() {
       // is always rendered so the text can still be selected by hand.
       setCopied(false);
     }
-  }, [rows, readError]);
+  }, [rows, readError, build]);
 
   // DECISIVE TEST for a "Load failed" upload error. A Blob in IndexedDB reports
   // `size` from metadata, but its bytes live in a separate file-backed store —
@@ -325,7 +326,7 @@ export default function OutboxDiagnostics() {
 
   return (
     <div style={{ padding: "0 16px 32px" }}>
-      <p style={EYEBROW}>Outbox diagnostics</p>
+      <p style={EYEBROW}>Outbox diagnostics · build {build}</p>
       <h1 style={TITLE}>{rows.length === 0 ? "Nothing queued" : `${rows.length} queued ${rows.length === 1 ? "item" : "items"}`}</h1>
 
       <p style={BODY}>
