@@ -14,6 +14,7 @@ import { CompanionTabBar } from "@/components/field-kit/parts";
 import NavProgress from "@/components/field-kit/NavProgress";
 import AccountMenu from "@/components/field-kit/AccountMenu";
 import SyncStatus from "@/components/field-kit/SyncStatus";
+import OutboxBanner from "@/components/field-kit/OutboxBanner";
 import FieldKitLogo from "@/components/field-kit/FieldKitLogo";
 import ServiceWorkerRegistrar from "@/components/field-kit/ServiceWorkerRegistrar";
 import NavCacheReconciler from "@/components/field-kit/NavCacheReconciler";
@@ -91,6 +92,10 @@ export default async function FieldKitLayout({ children }: { children: React.Rea
         <NavProgress />
       </Suspense>
       <FieldKitTopBar programId={FIELD_KIT_PROGRAM_ID} isAdmin={access.allowed ? access.isAdmin : false} />
+      {/* iOS has no background upload path (no Background Sync in Safari), so the
+          queue only drains while this page is open and awake. The banner makes
+          that state impossible to miss; it renders null when the outbox is empty. */}
+      {access.allowed && <OutboxBanner />}
       {/* Clearance below the top bar: the DAT logo overhangs the bar by 36px
           (see FieldKitLogo's negative marginBottom), so page content butted
           right up against it without this gap — headlines like "Field Kit" /
