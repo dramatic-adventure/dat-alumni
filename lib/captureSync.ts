@@ -131,11 +131,26 @@ async function send(item: QueuedCapture): Promise<void> {
   await update({ ...item, status: "syncing" });
   await refreshCounts();
 
-  // DELIBERATELY NO client-side compression/re-encoding: originals upload
-  // byte-exact (the server already normalizes photos via sharp — see
-  // lib/normalizeUploadImage — and a client re-encode would double-compress).
-  // Blobs above the direct-body ceiling take the lossless chunked path.
-  const current = item;
+  // RE-READ THE ROW AFTER THE STATUS WRITE — do not reuse `item`.
+  //
+  // `item` came from an earlier getAll(). The update() above rewrites that
+  // record, and on WebKit an IndexedDB put() re-stores the Blob and can
+  // invalidate the in-memory handle the caller is still holding. The bytes stay
+  // safely on disk, but that particular handle stops resolving: reading it
+  // throws "object can not be found", and fetch() reading it to build a request
+  // body surfaces the same failure as the opaque "Load failed".
+  //
+  // That is what stranded three voice notes in July 2026 — every attempt died
+  // building the request body, never reaching the network, while the recordings
+  // themselves were perfectly intact (they exported and played back fine). It
+  // also explains why a fourth capture in the same queue uploaded normally:
+  // whether the stale handle still resolved came down to timing.
+  //
+  // Reading the row back gives us a handle minted after the write. If the row
+  // has vanished (removed by a concurrent drain) there is nothing to send.
+  const fresh = (await getAll()).find((i) => i.captureId === item.captureId);
+  if (!fresh) return;
+  const current = fresh;
   if (current.blob && current.blob.size > DIRECT_MAX_BYTES) {
     await sendChunked(current);
     return;
@@ -177,7 +192,23 @@ async function sendChunked(item: QueuedCapture): Promise<void> {
     await retry(item, "Missing blob for chunked upload");
     return;
   }
-  const total = Math.ceil(blob.size / CHUNK_BYTES);
+
+  // Read the whole recording into memory ONCE, up front, while this Blob handle
+  // is known good. The loop below calls update() after every chunk to persist
+  // the resume pointer, and each of those writes can invalidate the Blob handle
+  // on WebKit (see the note in send()) — slicing a stale handle mid-upload would
+  // fail with "Load failed" partway through, which is precisely the worst case
+  // for the long recordings that take this path. An ArrayBuffer has no separate
+  // backing file to lose. Capped by the server's 25 MB limit, so this is bounded.
+  let bytes: ArrayBuffer;
+  try {
+    bytes = await blob.arrayBuffer();
+  } catch (e) {
+    await retry(item, e instanceof Error ? `Could not read media: ${e.message}` : "Could not read media");
+    return;
+  }
+  const blobType = item.blobType || blob.type || "application/octet-stream";
+  const total = Math.ceil(bytes.byteLength / CHUNK_BYTES);
 
   for (let seq = Math.min(item.uploadedChunks ?? 0, total); seq < total; seq++) {
     const fd = new FormData();
@@ -188,7 +219,8 @@ async function sendChunked(item: QueuedCapture): Promise<void> {
     const start = seq * CHUNK_BYTES;
     fd.set(
       "chunk",
-      new File([blob.slice(start, start + CHUNK_BYTES)], `${item.captureId}.${seq}`, {
+      // Sliced from the in-memory buffer, never from the Blob handle — see above.
+      new File([bytes.slice(start, start + CHUNK_BYTES)], `${item.captureId}.${seq}`, {
         type: "application/octet-stream",
       })
     );
@@ -229,7 +261,9 @@ async function sendChunked(item: QueuedCapture): Promise<void> {
           quoteSpeaker: item.quoteSpeaker ?? "",
           ...(item.asId ? { asId: item.asId } : {}),
           stagedChunkCount: total,
-          blobType: item.blobType || blob.type || "application/octet-stream",
+          // Captured before the loop — reading blob.type off a handle that may
+          // have been invalidated by the loop's update() calls is the same trap.
+          blobType,
         }),
       },
       TEXT_TIMEOUT_MS

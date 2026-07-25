@@ -213,8 +213,18 @@ export default function OutboxDiagnostics() {
   // here tells the two apart:
   //   readable → bytes are intact; the upload is failing on the network/server
   //   throws   → the media is gone from this device and no retry can ever work
+  // Always re-read the row before touching its Blob. A handle cached from an
+  // earlier getAll() goes stale as soon as the drainer rewrites that record,
+  // and reading it then throws "object can not be found" even though the bytes
+  // are perfectly intact on disk. Probing a stale handle reports healthy media
+  // as lost — which is exactly the false alarm this page raised in July 2026.
+  const freshBlob = useCallback(async (id: string): Promise<Blob | undefined> => {
+    const caps = await getCaptures();
+    return caps.find((c) => c.captureId === id)?.blob;
+  }, []);
+
   const verifyMedia = useCallback(async (id: string) => {
-    const blob = blobsRef.current.get(id);
+    const blob = await freshBlob(id);
     if (!blob) {
       setProbe((p) => ({ ...p, [id]: "No media attached to this row." }));
       return;
@@ -232,16 +242,16 @@ export default function OutboxDiagnostics() {
     } catch (e) {
       setProbe((p) => ({
         ...p,
-        [id]: `UNREADABLE — ${e instanceof Error ? e.message : "read failed"}`,
+        [id]: `UNREADABLE — ${e instanceof Error ? e.message : "read failed"}. Try Refresh, then check again before treating this as lost.`,
       }));
     }
-  }, []);
+  }, [freshBlob]);
 
   // Get the recording OFF the phone regardless of whether sync ever works.
   // Web Share with a File is the iOS-native path (AirDrop, Files, Messages);
   // the object-URL download is the fallback everywhere else.
   const saveMedia = useCallback(async (id: string, kind: string) => {
-    const blob = blobsRef.current.get(id);
+    const blob = await freshBlob(id);
     if (!blob) return;
     const ext = (blob.type.split("/")[1] || "bin").split(";")[0];
     const name = `${kind}-${id}.${ext}`;
@@ -264,7 +274,7 @@ export default function OutboxDiagnostics() {
     a.download = name;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
-  }, []);
+  }, [freshBlob]);
 
   // Bulk rescue. The queue is the ONLY copy of these recordings — there is no
   // server-side backup of anything that hasn't synced, and IndexedDB is not
@@ -272,10 +282,17 @@ export default function OutboxDiagnostics() {
   // reinstalling the home-screen app destroys the whole container. So getting
   // the bytes off the device is strictly more urgent than fixing the upload.
   const saveAllMedia = useCallback(async () => {
+    // Re-read every row here too — cached handles may already be stale.
+    const caps = await getCaptures();
     const files: File[] = [];
-    for (const [id, blob] of blobsRef.current) {
-      const ext = (blob.type.split("/")[1] || "bin").split(";")[0];
-      files.push(new File([blob], `capture-${id}.${ext}`, { type: blob.type || "application/octet-stream" }));
+    for (const c of caps) {
+      if (!c.blob) continue;
+      const ext = (c.blob.type.split("/")[1] || "bin").split(";")[0];
+      files.push(
+        new File([c.blob], `capture-${c.captureId}.${ext}`, {
+          type: c.blob.type || "application/octet-stream",
+        })
+      );
     }
     if (!files.length) return;
     const nav = navigator as Navigator & {
