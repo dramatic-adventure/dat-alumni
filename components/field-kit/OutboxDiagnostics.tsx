@@ -266,6 +266,42 @@ export default function OutboxDiagnostics() {
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
   }, []);
 
+  // Bulk rescue. The queue is the ONLY copy of these recordings — there is no
+  // server-side backup of anything that hasn't synced, and IndexedDB is not
+  // durable storage: iOS can evict it under space pressure, and deleting or
+  // reinstalling the home-screen app destroys the whole container. So getting
+  // the bytes off the device is strictly more urgent than fixing the upload.
+  const saveAllMedia = useCallback(async () => {
+    const files: File[] = [];
+    for (const [id, blob] of blobsRef.current) {
+      const ext = (blob.type.split("/")[1] || "bin").split(";")[0];
+      files.push(new File([blob], `capture-${id}.${ext}`, { type: blob.type || "application/octet-stream" }));
+    }
+    if (!files.length) return;
+    const nav = navigator as Navigator & {
+      canShare?: (d: { files: File[] }) => boolean;
+      share?: (d: { files: File[]; title?: string }) => Promise<void>;
+    };
+    if (nav.canShare?.({ files }) && nav.share) {
+      try {
+        await nav.share({ files, title: "Field Kit captures" });
+        return;
+      } catch {
+        // Cancelled, or too many files for one share — fall through.
+      }
+    }
+    // Fallback: one download at a time, spaced so the browser doesn't drop them.
+    for (const f of files) {
+      const url = URL.createObjectURL(f);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = f.name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      await new Promise((r) => setTimeout(r, 800));
+    }
+  }, []);
+
   if (rows === null) {
     return <p style={{ ...BODY, padding: "0 16px" }}>Reading the outbox…</p>;
   }
@@ -307,6 +343,24 @@ export default function OutboxDiagnostics() {
         <p style={{ ...BODY, color: T.pink }}>
           Could not read the local database: {readError}. That itself is the problem — report it.
         </p>
+      )}
+
+      {/* Rescue is the FIRST action offered, ahead of any retry: an unsynced
+          capture exists in exactly one place on earth, and that place is a
+          phone. Retrying can wait; losing the recording cannot be undone. */}
+      {blobsRef.current.size > 0 && (
+        <div style={RESCUE}>
+          <p style={{ ...EYEBROW, color: T.green, margin: "0 0 6px" }}>Protect this work first</p>
+          <p style={{ ...BODY, margin: "0 0 12px" }}>
+            {blobsRef.current.size} recording{blobsRef.current.size === 1 ? "" : "s"} here{" "}
+            {blobsRef.current.size === 1 ? "exists" : "exist"} <strong style={{ color: T.ink }}>only
+            on this phone</strong>. Save {blobsRef.current.size === 1 ? "it" : "them"} somewhere else
+            now — AirDrop to a laptop, or Save to Files. Do this before troubleshooting anything.
+          </p>
+          <button type="button" onClick={() => void saveAllMedia()} style={{ ...CTA, background: T.green, color: T.black }}>
+            Save all recordings off this phone
+          </button>
+        </div>
       )}
 
       {rows.length > 0 && (
@@ -427,6 +481,14 @@ const BODY: CSSProperties = {
   color: T.ink,
   opacity: 0.86,
   margin: "0 0 16px",
+};
+
+const RESCUE: CSSProperties = {
+  background: T.card,
+  border: `1px solid ${T.green}`,
+  borderRadius: 12,
+  padding: "14px 16px",
+  margin: "0 0 18px",
 };
 
 const TINY: CSSProperties = {
