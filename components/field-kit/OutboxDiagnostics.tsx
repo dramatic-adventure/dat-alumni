@@ -30,6 +30,7 @@ import { getAll as getCaptures, update as updateCapture } from "@/lib/captureQue
 import { getAll as getOps, update as updateOp } from "@/lib/opsQueue";
 import { getAll as getTraceMutations, update as updateTraceMutation } from "@/lib/traceMutationQueue";
 import { DIRECT_MAX_BYTES, CHUNK_BYTES } from "@/lib/captureChunkContract";
+import { clearFieldKitCaches } from "@/lib/fieldKitCache";
 import { kick } from "@/lib/captureSync";
 import { kick as kickOps } from "@/lib/opsSync";
 import { kick as kickTraceMutations } from "@/lib/traceMutationSync";
@@ -320,6 +321,34 @@ export default function OutboxDiagnostics({ build }: { build: string }) {
     }
   }, []);
 
+  // FORCE THE APP ONTO THE LATEST CODE.
+  //
+  // sw.js caches hashed chunks and deliberately does not purge them on routine
+  // deploys, so an installed iOS app can keep running an old bundle long after a
+  // fix ships. That bit hard in July 2026: a NEW route (this page) was fetched
+  // fresh while the layout's chunks — which is where the capture drainer
+  // actually lives — kept being served stale. Every "deploy and retest" cycle
+  // was testing code the phone had never downloaded.
+  //
+  // SAFETY: this clears Cache Storage (the fk-* caches) and unregisters the
+  // service worker. It NEVER touches IndexedDB, so queued captures and their
+  // media are untouched. That distinction matters — "clear website data" in
+  // Safari settings WOULD destroy the recordings, and nobody should be reaching
+  // for that as a workaround.
+  const forceUpdate = useCallback(async () => {
+    setBusy(true);
+    try {
+      await clearFieldKitCaches();
+      if (typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister().catch(() => false)));
+      }
+    } finally {
+      // Full reload, bypassing any in-memory module state.
+      window.location.href = `/field-kit/outbox?fresh=${Date.now()}`;
+    }
+  }, []);
+
   if (rows === null) {
     return <p style={{ ...BODY, padding: "0 16px" }}>Reading the outbox…</p>;
   }
@@ -327,6 +356,14 @@ export default function OutboxDiagnostics({ build }: { build: string }) {
   return (
     <div style={{ padding: "0 16px 32px" }}>
       <p style={EYEBROW}>Outbox diagnostics · build {build}</p>
+
+      {/* Always available, never gated on the queue: if the app is running stale
+          code, that is precisely when nothing else on this page can be trusted. */}
+      <div style={{ margin: "0 0 14px" }}>
+        <button type="button" onClick={() => void forceUpdate()} disabled={busy} style={TINY}>
+          {busy ? "Updating…" : "Force app update (safe — keeps your recordings)"}
+        </button>
+      </div>
       <h1 style={TITLE}>{rows.length === 0 ? "Nothing queued" : `${rows.length} queued ${rows.length === 1 ? "item" : "items"}`}</h1>
 
       <p style={BODY}>
