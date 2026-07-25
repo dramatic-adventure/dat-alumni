@@ -27,6 +27,7 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties } from "react";
+import Link from "next/link";
 import { T, FONT } from "@/components/field-kit/tokens";
 import { start, kick, retryFailed, subscribe, type SyncCounts } from "@/lib/captureSync";
 import {
@@ -153,6 +154,10 @@ export default function OutboxBanner() {
         {pending > 0 ? `${pending} waiting` : null}
         {pending > 0 && failed > 0 ? " · " : null}
         {failed > 0 ? `${failed} failed` : null}
+        {" · "}
+        <Link href="/field-kit/outbox" style={{ color: T.yellow, textDecoration: "underline" }}>
+          What&apos;s stuck?
+        </Link>
       </p>
     </div>
   );
