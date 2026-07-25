@@ -85,6 +85,25 @@ export async function getAll(): Promise<QueuedCapture[]> {
   });
 }
 
+/**
+ * Read ONE row by id.
+ *
+ * Prefer this over getAll() whenever a single capture is what's needed:
+ * getAll() deserializes EVERY queued Blob — megabytes of audio and photos — to
+ * hand back one record. Doing that repeatedly during an upload is real memory
+ * pressure on a phone, and WebKit reclaiming the page under it looks exactly
+ * like an upload that was abandoned mid-flight.
+ */
+export async function get(captureId: string): Promise<QueuedCapture | undefined> {
+  if (!hasIDB()) return undefined;
+  const db = await openDb();
+  return new Promise((resolve, reject) => {
+    const r = store(db, "readonly").get(captureId);
+    r.onsuccess = () => resolve((r.result as QueuedCapture | undefined) ?? undefined);
+    r.onerror = () => reject(r.error);
+  });
+}
+
 export async function remove(captureId: string): Promise<void> {
   if (!hasIDB()) return;
   const db = await openDb();

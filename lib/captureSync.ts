@@ -19,7 +19,7 @@
 // for a replay. SSR-safe: no browser API touched at module load; start() guards
 // window/document before wiring triggers.
 
-import { getAll, update, remove, type QueuedCapture } from "@/lib/captureQueue";
+import { getAll, get as getOne, update, remove, type QueuedCapture } from "@/lib/captureQueue";
 import { fetchWithTimeout, TEXT_TIMEOUT_MS, BLOB_TIMEOUT_MS } from "@/lib/syncFetch";
 import { DIRECT_MAX_BYTES, CHUNK_BYTES } from "@/lib/captureChunkContract";
 
@@ -148,7 +148,12 @@ async function send(item: QueuedCapture): Promise<void> {
   //
   // Reading the row back gives us a handle minted after the write. If the row
   // has vanished (removed by a concurrent drain) there is nothing to send.
-  const fresh = (await getAll()).find((i) => i.captureId === item.captureId);
+  //
+  // getOne(), NOT getAll(): this runs on every single send, and getAll()
+  // deserializes every queued Blob in the store just to return one row. With a
+  // few voice notes queued that is megabytes materialized per attempt, on a
+  // phone, while an upload is in flight.
+  const fresh = await getOne(item.captureId);
   if (!fresh) return;
   const current = fresh;
   if (current.blob && current.blob.size > DIRECT_MAX_BYTES) {
