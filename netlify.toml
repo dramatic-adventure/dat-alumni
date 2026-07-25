@@ -5,19 +5,11 @@
   
 [functions]
   directory = "netlify/functions"
-  # Netlify's default synchronous timeout is 10s; 26 is the paid-plan maximum.
-  #
-  # WHY THIS MATTERS: a single Field Kit voice capture makes five sequential
-  # Google round trips inside one request — Sheets dedup read, two Drive folder
-  # lookups, the media upload itself, then the Sheets append — on top of Lambda
-  # cold start and service-account auth. A ~1.5 MB recording routinely exceeded
-  # 10s, and a function killed at the timeout returns NO response at all: the
-  # connection is severed, so the client sees an opaque transport failure
-  # ("Load failed" in Safari) rather than a status code it could retry
-  # intelligently. That stranded artists' voice notes for days in July 2026
-  # while every client-side theory came up empty. Text notes were unaffected —
-  # they skip Drive entirely, which is why the failure looked media-specific.
-  timeout = 26
+  # NOTE: do NOT add `timeout` here — it is not a valid property in this block
+  # and breaks config parsing before the build even starts ("Failed during stage
+  # 'Reading and parsing configuration files'"). Per-route execution limits are
+  # set with Next's `export const maxDuration` in the route file instead; see
+  # app/api/field-kit/capture/route.ts.
   # Force sharp's native binary into the function bundle. Next's file tracing can
   # miss sharp's platform-specific @img/* native module (loaded via a runtime
   # dynamic require), which left the SSR handler without sharp and broke the image

@@ -18,6 +18,11 @@ import { captureStagingStore, chunkKey, CHUNK_BYTES, MAX_CHUNKS } from "@/lib/ca
 
 export const runtime = "nodejs";
 
+// Each request stages one ~3 MB chunk into Netlify Blobs. Same reasoning as the
+// finalize route: a write that overruns the 10s default is killed without a
+// response, which the drainer can only report as an opaque "Load failed".
+export const maxDuration = 26;
+
 export async function POST(req: Request) {
   try {
     // Higher ceiling than the capture route: one recording can be several

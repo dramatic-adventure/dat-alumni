@@ -33,6 +33,23 @@ import { captureStagingStore, chunkKey, deleteStagedChunks, MAX_CHUNKS } from "@
 
 export const runtime = "nodejs";
 
+// Raise this route's execution limit above the 10s serverless default.
+//
+// One voice capture makes five sequential Google round trips inside a single
+// request — Sheets dedup read, two Drive folder lookups (now memoized per warm
+// instance, see lib/driveFolders), the media upload itself, then the Sheets
+// append — on top of cold start and service-account auth. A ~1.5 MB recording
+// routinely blew past 10s, and a function killed at its timeout returns NO
+// response at all: the connection is severed, so the client sees an opaque
+// transport error ("Load failed" in Safari) instead of a status code it could
+// classify and retry sensibly. That stranded artists' voice notes for days in
+// July 2026. Text notes were never affected — they skip Drive entirely, which
+// is exactly why the failure looked media-specific.
+//
+// Set HERE rather than as `timeout` under [functions] in netlify.toml: that key
+// is not valid in that block and fails config parsing before the build starts.
+export const maxDuration = 26;
+
 type DriveCreateResp = { data: { id?: string } };
 
 // A:P since edit/soft-delete (deletedAt + editedAt appended after Slice 6's
