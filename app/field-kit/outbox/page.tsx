@@ -34,7 +34,11 @@ export default async function OutboxPage({
   // exactly that ambiguity. COMMIT_REF is injected by Netlify at build time;
   // "local" means a dev server. Rendered on the page and included in the copied
   // diagnostics so any report says which code produced it.
-  const build = (process.env.COMMIT_REF || "local").slice(0, 7);
+  // NEXT_PUBLIC_COMMIT_REF, not COMMIT_REF: Netlify exposes COMMIT_REF to the
+  // BUILD only, never to the function runtime, so reading it in this dynamic
+  // route reported "local" on production. netlify.toml's build command exports
+  // it under the NEXT_PUBLIC_ name so Next inlines the real sha at build time.
+  const build = (process.env.NEXT_PUBLIC_COMMIT_REF || "local").slice(0, 7);
 
   return <OutboxDiagnostics build={build} />;
 }

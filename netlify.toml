@@ -1,6 +1,12 @@
 # netlify.toml
 [build]
-  command = "export NODE_OPTIONS=--max-old-space-size=4096 && npm run prisma:generate && npm run build"
+  # NEXT_PUBLIC_COMMIT_REF is exported HERE, in the build shell, because Netlify
+  # provides COMMIT_REF at build time only — it is absent from the function
+  # runtime, so reading process.env.COMMIT_REF inside a dynamic route always
+  # yielded "local" even in production. Exporting it under a NEXT_PUBLIC_ name
+  # lets Next inline the real sha at build time. The outbox diagnostics print it,
+  # so a bug report can never again be ambiguous about which code produced it.
+  command = "export NODE_OPTIONS=--max-old-space-size=4096 && export NEXT_PUBLIC_COMMIT_REF=$COMMIT_REF && npm run prisma:generate && npm run build"
   publish  = ".next"
   
 [functions]
