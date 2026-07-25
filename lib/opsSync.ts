@@ -117,7 +117,9 @@ async function retry(item: QueuedOp, lastError: string): Promise<void> {
 }
 
 async function send(item: QueuedOp): Promise<void> {
-  await update({ ...item, status: "syncing", lastError: undefined });
+  // lastError preserved on purpose — clearing it here erased the reason a row
+  // had been failing every time a new attempt began. See lib/captureSync#send.
+  await update({ ...item, status: "syncing" });
   await refreshCounts();
 
   let res: Response;
@@ -156,9 +158,29 @@ async function send(item: QueuedOp): Promise<void> {
 }
 
 function isDue(item: QueuedOp, now: number): boolean {
-  if (item.status === "syncing") return true; // orphaned by a closed tab → due
+  // NOT due — orphans are folded back into the schedule by reclaimOrphans()
+  // before the drain loop starts. See the same change in lib/captureSync: this
+  // used to return true unconditionally, which let one un-completable row at the
+  // head of the queue starve everything behind it indefinitely.
+  if (item.status === "syncing") return false;
   if (item.status === "failed") return false;
   return !item.nextAttemptAt || item.nextAttemptAt <= now;
+}
+
+// Count an abandoned send as an attempt and apply backoff, so a row stranded by
+// a closed tab retries in turn rather than being re-picked on every drain.
+async function reclaimOrphans(): Promise<void> {
+  const items = await getAll();
+  for (const i of items) {
+    if (i.status !== "syncing") continue;
+    const attempts = i.attempts + 1;
+    const lastError = i.lastError || "Interrupted — the app closed mid-sync";
+    if (attempts >= MAX_ATTEMPTS) {
+      await update({ ...i, status: "failed", attempts, lastError, nextAttemptAt: undefined, permanent: false });
+    } else {
+      await update({ ...i, status: "pending", attempts, lastError, nextAttemptAt: Date.now() + backoffFor(attempts) });
+    }
+  }
 }
 
 async function scheduleBackoffTimer(): Promise<void> {
@@ -185,6 +207,7 @@ export async function drain(): Promise<void> {
   }
   draining = true;
   try {
+    await reclaimOrphans();
     do {
       drainRequested = false;
       if (typeof navigator !== "undefined" && navigator.onLine === false) break;

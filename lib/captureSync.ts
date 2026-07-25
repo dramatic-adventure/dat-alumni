@@ -121,7 +121,14 @@ async function markFailed(item: QueuedCapture, res: Response): Promise<void> {
 }
 
 async function send(item: QueuedCapture): Promise<void> {
-  await update({ ...item, status: "syncing", lastError: undefined });
+  // NOTE: lastError is deliberately PRESERVED here. It used to be cleared at the
+  // top of every send, which meant a row abandoned mid-attempt (page closed, iOS
+  // suspended the app) lost the only record of why its previous attempts had
+  // failed. Three voice notes sat unsent for six days and the queue could not
+  // say why, because each new attempt erased the evidence before dying itself.
+  // A successful send removes the row entirely, and retry()/markFailed() both
+  // overwrite lastError, so keeping it here can never surface a stale message.
+  await update({ ...item, status: "syncing" });
   await refreshCounts();
 
   // DELIBERATELY NO client-side compression/re-encoding: originals upload
@@ -249,10 +256,38 @@ async function sendChunked(item: QueuedCapture): Promise<void> {
 }
 
 function isDue(item: QueuedCapture, now: number): boolean {
-  // A "syncing" row left by a crashed/closed tab is orphaned — treat as due.
-  if (item.status === "syncing") return true;
+  // "syncing" is NOT due. Orphans are reclaimed by reclaimOrphans() before the
+  // drain loop starts, so anything still marked syncing at this point is the
+  // item this very drain has in flight — re-picking it would double-send.
+  //
+  // This used to `return true` unconditionally, which turned any row that could
+  // not complete into a poison pill: getAll() yields rows in captureId (ULID,
+  // so chronological) order, the oldest orphan was therefore re-picked on EVERY
+  // drain, and everything behind it starved. Observed in the field 2026-07:
+  // one stuck voice note held two others at attempts:0 — never tried even once
+  // — for six days.
+  if (item.status === "syncing") return false;
   if (item.status === "failed") return false;
   return !item.nextAttemptAt || item.nextAttemptAt <= now;
+}
+
+// Fold rows abandoned mid-send by a previous session back into the normal
+// retry schedule: count the abandonment as an attempt and apply backoff, so the
+// row still retries but takes its turn instead of monopolising the head of the
+// queue. Runs once per drain(), before the loop — never while a send is live.
+async function reclaimOrphans(): Promise<void> {
+  const items = await getAll();
+  for (const i of items) {
+    if (i.status !== "syncing") continue;
+    const attempts = i.attempts + 1;
+    const lastError = i.lastError || "Upload interrupted — the app closed mid-upload";
+    if (attempts >= MAX_ATTEMPTS) {
+      // permanent:false — a reconnect/return can still revive it via resume().
+      await update({ ...i, status: "failed", attempts, lastError, nextAttemptAt: undefined, permanent: false });
+    } else {
+      await update({ ...i, status: "pending", attempts, lastError, nextAttemptAt: Date.now() + backoffFor(attempts) });
+    }
+  }
 }
 
 async function scheduleBackoffTimer(): Promise<void> {
@@ -279,6 +314,9 @@ export async function drain(): Promise<void> {
   }
   draining = true;
   try {
+    // Before anything is picked: hand rows stranded by a previous session back
+    // to the normal schedule, so one un-completable item can't starve the rest.
+    await reclaimOrphans();
     do {
       drainRequested = false;
       if (typeof navigator !== "undefined" && navigator.onLine === false) break;
