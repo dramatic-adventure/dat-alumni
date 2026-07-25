@@ -24,7 +24,7 @@
 
 "use client";
 
-import { useCallback, useEffect, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { T, FONT } from "@/components/field-kit/tokens";
 import { getAll as getCaptures, update as updateCapture } from "@/lib/captureQueue";
 import { getAll as getOps, update as updateOp } from "@/lib/opsQueue";
@@ -72,6 +72,10 @@ export default function OutboxDiagnostics() {
   const [copied, setCopied] = useState(false);
   // null until measured on the client — see the standalone note below.
   const [standalone, setStandalone] = useState<boolean | null>(null);
+  // captureId → the live Blob, kept out of `rows` so the JSON dump stays small.
+  const blobsRef = useRef<Map<string, Blob>>(new Map());
+  // captureId → result of the readability probe.
+  const [probe, setProbe] = useState<Record<string, string>>({});
 
   // WHICH CONTAINER AM I READING? On iOS an installed home-screen web app gets
   // its own IndexedDB, isolated from Safari's, even for an identical origin.
@@ -90,6 +94,8 @@ export default function OutboxDiagnostics() {
   const load = useCallback(async () => {
     try {
       const [caps, ops, muts] = await Promise.all([getCaptures(), getOps(), getTraceMutations()]);
+
+      blobsRef.current = new Map(caps.filter((c) => c.blob).map((c) => [c.captureId, c.blob as Blob]));
 
       const capRows: Row[] = caps.map((c) => {
         // A media capture whose blob has been evicted is unrecoverable — surface
@@ -198,6 +204,68 @@ export default function OutboxDiagnostics() {
     }
   }, [rows, readError]);
 
+  // DECISIVE TEST for a "Load failed" upload error. A Blob in IndexedDB reports
+  // `size` from metadata, but its bytes live in a separate file-backed store —
+  // so a Blob whose backing bytes are gone still reports the right size and only
+  // throws when something actually READS it. fetch() reading that Blob to build
+  // a request body is exactly such a read, and WebKit reports the failure as the
+  // generic "Load failed" — indistinguishable from a network error. Reading it
+  // here tells the two apart:
+  //   readable → bytes are intact; the upload is failing on the network/server
+  //   throws   → the media is gone from this device and no retry can ever work
+  const verifyMedia = useCallback(async (id: string) => {
+    const blob = blobsRef.current.get(id);
+    if (!blob) {
+      setProbe((p) => ({ ...p, [id]: "No media attached to this row." }));
+      return;
+    }
+    setProbe((p) => ({ ...p, [id]: "Reading…" }));
+    try {
+      const buf = await blob.arrayBuffer();
+      setProbe((p) => ({
+        ...p,
+        [id]:
+          buf.byteLength === blob.size
+            ? `Readable — all ${buf.byteLength} bytes intact. The recording is fine; the upload is failing on the network.`
+            : `Readable but SHORT — ${buf.byteLength} of ${blob.size} bytes.`,
+      }));
+    } catch (e) {
+      setProbe((p) => ({
+        ...p,
+        [id]: `UNREADABLE — ${e instanceof Error ? e.message : "read failed"}`,
+      }));
+    }
+  }, []);
+
+  // Get the recording OFF the phone regardless of whether sync ever works.
+  // Web Share with a File is the iOS-native path (AirDrop, Files, Messages);
+  // the object-URL download is the fallback everywhere else.
+  const saveMedia = useCallback(async (id: string, kind: string) => {
+    const blob = blobsRef.current.get(id);
+    if (!blob) return;
+    const ext = (blob.type.split("/")[1] || "bin").split(";")[0];
+    const name = `${kind}-${id}.${ext}`;
+    const file = new File([blob], name, { type: blob.type || "application/octet-stream" });
+    const nav = navigator as Navigator & {
+      canShare?: (d: { files: File[] }) => boolean;
+      share?: (d: { files: File[]; title?: string }) => Promise<void>;
+    };
+    if (nav.canShare?.({ files: [file] }) && nav.share) {
+      try {
+        await nav.share({ files: [file], title: name });
+        return;
+      } catch {
+        // Cancelled or unsupported for this payload — fall through to download.
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  }, []);
+
   if (rows === null) {
     return <p style={{ ...BODY, padding: "0 16px" }}>Reading the outbox…</p>;
   }
@@ -290,6 +358,31 @@ export default function OutboxDiagnostics() {
 
               {r.lastError && <p style={{ ...META, color: T.pink }}>{r.lastError}</p>}
 
+              {/* "Load failed" is WebKit's generic fetch rejection — it cannot
+                  distinguish a dead network from an unreadable Blob. These two
+                  buttons settle it, and rescue the audio either way. */}
+              {r.queue === "capture" && r.bytes != null && (
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "8px 0 4px" }}>
+                  <button type="button" onClick={() => void verifyMedia(r.id)} style={TINY}>
+                    Check media
+                  </button>
+                  <button type="button" onClick={() => void saveMedia(r.id, r.label)} style={TINY}>
+                    Save off phone
+                  </button>
+                </div>
+              )}
+
+              {probe[r.id] && (
+                <p
+                  style={{
+                    ...META,
+                    color: probe[r.id].startsWith("UNREADABLE") ? T.pink : T.green,
+                  }}
+                >
+                  {probe[r.id]}
+                </p>
+              )}
+
               <p style={{ ...META, opacity: 0.5, wordBreak: "break-all" }}>{r.id}</p>
             </li>
           );
@@ -334,6 +427,20 @@ const BODY: CSSProperties = {
   color: T.ink,
   opacity: 0.86,
   margin: "0 0 16px",
+};
+
+const TINY: CSSProperties = {
+  fontFamily: FONT.grotesk,
+  fontSize: 9.5,
+  fontWeight: 700,
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  padding: "7px 11px",
+  borderRadius: 7,
+  background: "transparent",
+  color: T.ink,
+  border: `1px solid ${T.border}`,
+  cursor: "pointer",
 };
 
 const WARN: CSSProperties = {
