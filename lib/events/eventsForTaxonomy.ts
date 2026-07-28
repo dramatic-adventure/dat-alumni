@@ -71,10 +71,13 @@ function toCard(event: DatEvent): TaxonomyEventCard {
   return {
     slug: event.id,
     title: event.title,
-    // Same priority the productions grid uses: tagline, then location.
+    // Location, matching what production cards actually show. (The grid's
+    // first choice is `tagline`, but no production defines one, so every
+    // production card falls back to productionMap `location` — "NYC",
+    // "Gualaquiza, Ecuador". The event tagline would read nothing like it.)
     subtitle:
-      event.subtitle ||
       [event.city, event.country].filter(Boolean).join(", ") ||
+      event.venue ||
       undefined,
     href: canonicalEventPath(event),
     imageSrc: posterSrcFor(event),
