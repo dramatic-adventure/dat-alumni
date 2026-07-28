@@ -185,15 +185,15 @@ export const season20Events: DatEvent[] = [
     venueUrl: "https://www.facebook.com/divadlonaperone",
     city: "Košice",
     country: "Slovakia",
-    language: "Performed in English & Slovak",
+    language: "Performed in English, Slovak, and Romani",
     accessibility: "In-person performance",
     dramaClubs: ["zemplinska-teplica-ensemble", "lunik-ix-collective"],
     description:
       "US, Slovak, and Romani artists unite to share this eclectic evening of work in progress. Theatre, storytelling, and poetry fuse as we explore the confluence of lived experience that happens when people from different worlds join hands and step together into waters less known.",
     longDescription:
       "US, Slovak, and Romani artists unite to share this eclectic evening of work in progress. Theatre, storytelling, and poetry fuse as we explore the confluence of lived experience that happens when people from different worlds join hands and step together into waters less known.\n\n" +
-      "Dramatic Adventure Theatre (DAT) is excited to continue its 12-year collaboration with ETP Slovensko, with whom we’ve worked on many devised theatre projects in Roma settlements throughout Eastern Slovakia. Water that Wanders represents a new step in our relationship as we co-produce this theatrical collage that gives Košice audiences a window into DAT’s creative process. The creative articulations we’ll share represent new ideas, raw impressions, and fresh remembrances, inspired by our recent three-week project in Slovakia that included work with Roma youth in Zemplínska Teplica and Luník IX, as well as artistic jam sessions with local Slovak theatre artists.\n\n" +
-      "This is the closing night of Passage, and a friend-raiser for ETP Slovensko. Come see what three weeks made, then stay and talk with us — teachers, youth workers, artists, neighbors, and the plain curious are all welcome. Admission is free, and anything you give goes straight to ETP’s work with kids and families in Eastern Slovakia. August 1 at Divadlo na Peróne in Košice.",
+      "Dramatic Adventure Theatre (DAT) is excited to continue its 14-year collaboration with ETP Slovensko, which began in 2012 and has since spanned many devised theatre projects in Roma settlements throughout Eastern Slovakia. Water that Wanders represents a new step in our relationship as we co-produce this theatrical collage that gives Košice audiences a window into DAT’s creative process. The creative articulations we’ll share represent new ideas, raw impressions, and fresh remembrances, inspired by our recent three-week project in Slovakia that included work with Roma youth in Zemplínska Teplica and Luník IX, as well as artistic jam sessions with local Slovak theatre artists.\n\n" +
+      "This is the closing night of [PASSAGE: Slovakia](https://www.dramaticadventure.com/passage), and a friend-raiser for ETP Slovensko. Come see what three weeks made, then stay and talk with the company afterward. Teachers, youth workers, artists, neighbors, and the plain curious are all welcome. Admission is free, and anything you give goes straight to ETP’s work with kids and families in Eastern Slovakia.",
     artistNote:
       "Poor water has no speech / With which she could talk or sing, / Only sometimes she whispers / A silver splash like a heartbeat. / A heartbeat of speaking water. / But the water does not look behind. / It flees, runs farther away, / Where eyes will not see her — / The water that wanders.",
     artistNoteBy: "Papusza, “Water That Wanders”",
@@ -225,16 +225,16 @@ export const season20Events: DatEvent[] = [
           "Inšpirovaní poľsko-rómskou poetkou Papuszou a jej básňou Pani, so tradeł (Voda, ktorá vandruje) a nemenej inšpirovaní zážitkami z poznávania Slovenska sme vytvorili divadelný cestopisný zážitok, ktorý vám zahráme v rámci tohto komunitného večera.",
         longDescription:
           "Inšpirovaní poľsko-rómskou poetkou Papuszou a jej básňou Pani, so tradeł (Voda, ktorá vandruje) a nemenej inšpirovaní zážitkami z poznávania Slovenska sme vytvorili divadelný cestopisný zážitok, ktorý vám zahráme v rámci tohto komunitného večera.\n\n" +
-          "Pozývame vás na priateľské stretnutie a záverečné predstavenie projektu Passage, ktorý prepája ETP Slovensko s organizáciou Dramatic Adventure Theatre z New Yorku, s ktorou dlhodobo spolupracujeme.\n\n" +
+          "Pozývame vás na priateľské stretnutie a záverečné predstavenie projektu [PASSAGE: Slovakia](https://www.dramaticadventure.com/passage), ktorý prepája ETP Slovensko s organizáciou Dramatic Adventure Theatre z New Yorku, s ktorou spolupracujeme už 14 rokov, od roku 2012.\n\n" +
           "Aj toto leto viedli americké i slovenské lektorky a lektori DAT tvorivé divadelné workshopy pre deti a mladých ľudí v Košiciach aj v Zemplínskej Teplici a poznávali Slovensko v Bratislave, Košiciach, Martine a Ždiari.\n\n" +
           "Predstavenie Voda, ktorá vandruje / Water that Wanders vznikalo metódou autorského divadla v priebehu uplynulých troch týždňov. Nesie v sebe zážitky, osobné perspektívy a pohľad lokálnych i hosťujúcich očí a sŕdc.\n\n" +
           "Komunitný večer nie je len o divadle, ale i o možnosti stretnúť sa, vytvoriť nové priateľstvá a dlhodobé väzby. Bude priestor na rozhovory, otázky a hľadanie nových príležitostí spolupráce.\n\n" +
           "Podujatie je otvorené pre všetkých — pedagógov, pracovníkov a pracovníčky s mládežou, ľudí z kultúrneho prostredia aj širokú verejnosť. Budeme radi, ak sa pridáte. Vstup je voľný.\n\n" +
-          "Tešíme sa na stretnutie 1. augusta v Divadle na Peróne v Košiciach.",
+          "Tešíme sa na stretnutie.",
         impactBlurb:
           "Toto podujatie podporuje ETP Slovensko, komunitného partnera DAT na východnom Slovensku. Prostredníctvom vzdelávania, mentoringu, komunitného rozvoja a dlhodobej lokálnej práce ETP Slovensko podporuje deti, rodiny a komunity pri rozširovaní príležitostí a posilňovaní ciest vpred. Vaša účasť, dobrovoľný príspevok alebo sponzorská podpora pomáha tejto dôležitej práci a zároveň vytvára priestor, kde sa umelci a komunity môžu stretnúť prostredníctvom príbehu, performance a tvorivej výmeny. Všetky dobrovoľné príspevky a výťažok z podujatia podporia ETP Slovensko.",
         ticketPrice: "Vstup voľný · dobrovoľné príspevky vítané",
-        language: "V angličtine a slovenčine",
+        language: "V angličtine, slovenčine a rómčine",
         accessibility: "Predstavenie naživo",
       },
     },

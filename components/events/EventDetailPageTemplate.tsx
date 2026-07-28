@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 
 import DramaClubBadge from "@/components/ui/DramaClubBadge";
@@ -118,6 +118,56 @@ function splitParagraphs(text?: string): string[] {
     .split(/\n\s*\n/g)
     .map((p) => p.trim())
     .filter(Boolean);
+}
+
+// ── Inline links in body copy ────────────────────────────────────────
+// Event `description` / `longDescription` copy is authored as plain text, but
+// may contain markdown-style links: [label](https://example.com) or [label](/path).
+// Nothing else in the markdown grammar is supported — this is deliberately a
+// single narrow affordance so editorial copy can point at a program page.
+const INLINE_LINK_RE = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]*)\)/g;
+
+/** Strips markdown link syntax down to its label. Used for SEO/meta strings. */
+function stripInlineLinks(text?: string): string | undefined {
+  if (!text) return text;
+  return text.replace(INLINE_LINK_RE, "$1");
+}
+
+/** Renders a paragraph, converting markdown-style links into anchors. */
+function renderInlineLinks(text: string): ReactNode {
+  if (!text.includes("](")) return text;
+
+  const nodes: ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  INLINE_LINK_RE.lastIndex = 0;
+  while ((match = INLINE_LINK_RE.exec(text)) !== null) {
+    const [full, label, href] = match;
+    if (match.index > lastIndex) nodes.push(text.slice(lastIndex, match.index));
+    const isExternal = /^https?:\/\//i.test(href);
+    nodes.push(
+      isExternal ? (
+        <a
+          key={`${match.index}-${href}`}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="evd-inline-link"
+        >
+          {label}
+        </a>
+      ) : (
+        <Link key={`${match.index}-${href}`} href={href} className="evd-inline-link">
+          {label}
+        </Link>
+      )
+    );
+    lastIndex = match.index + full.length;
+  }
+
+  if (lastIndex < text.length) nodes.push(text.slice(lastIndex));
+  return nodes;
 }
 
 // ── Multilingual chrome ──────────────────────────────────────────────
@@ -313,7 +363,7 @@ function buildEventJsonLd(event: DatEvent): Record<string, unknown> {
     "@context": "https://schema.org",
     "@type": "Event",
     name: event.title,
-    description: event.longDescription ?? event.description,
+    description: stripInlineLinks(event.longDescription ?? event.description),
     startDate: event.date,
     ...(event.endDate ? { endDate: event.endDate } : {}),
     eventStatus:
@@ -1301,7 +1351,7 @@ export default async function EventDetailPageTemplate({
                                   enTaglineInBody && event.subtitle && p === event.subtitle.trim() ? (
                                     <p key={i} className="evd-tagline-inline">{p}</p>
                                   ) : (
-                                    <p key={i} className="evd-body-text evd-about-body">{p}</p>
+                                    <p key={i} className="evd-body-text evd-about-body">{renderInlineLinks(p)}</p>
                                   )
                                 )}
                               </div>
@@ -1331,7 +1381,7 @@ export default async function EventDetailPageTemplate({
                                   esTaglineInBody && esTagline && p === esTagline.trim() ? (
                                     <p key={i} className="evd-tagline-inline">{p}</p>
                                   ) : (
-                                    <p key={i} className="evd-body-text evd-about-body">{p}</p>
+                                    <p key={i} className="evd-body-text evd-about-body">{renderInlineLinks(p)}</p>
                                   )
                                 )}
                               </div>
@@ -1354,7 +1404,7 @@ export default async function EventDetailPageTemplate({
                                 taglineInBody && event.subtitle && p === event.subtitle.trim() ? (
                                   <p key={i} className="evd-tagline-inline">{p}</p>
                                 ) : (
-                                  <p key={i} className="evd-body-text evd-about-body">{p}</p>
+                                  <p key={i} className="evd-body-text evd-about-body">{renderInlineLinks(p)}</p>
                                 )
                               )}
                             </>
@@ -3577,6 +3627,21 @@ export default async function EventDetailPageTemplate({
           letter-spacing: 0.005em;
         }
         .evd-body-text:last-child { margin-bottom: 0; }
+
+        /* Inline markdown-style links inside body copy */
+        .evd-inline-link {
+          color: inherit;
+          text-decoration: underline;
+          text-decoration-thickness: 1px;
+          text-underline-offset: 0.18em;
+          text-decoration-color: rgba(242,51,89,0.55);
+          transition: color 140ms ease, text-decoration-color 140ms ease;
+        }
+        .evd-inline-link:hover,
+        .evd-inline-link:focus-visible {
+          color: #F23359;
+          text-decoration-color: #F23359;
+        }
 
         /* ── 3d. Gallery inside card (PhotoRowGallery style) ───────────── */
         .evd-card-gallery-inner {
