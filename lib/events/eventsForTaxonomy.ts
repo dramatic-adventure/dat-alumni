@@ -1,14 +1,19 @@
 // lib/events/eventsForTaxonomy.ts
 // ─────────────────────────────────────────────────────────────────────────────
-// Reverse lookup for the cause and theme archive pages.
+// Fail-safe reverse lookup for the cause and theme archive pages.
 //
-// /theatre/[slug] serves both productions (productionMap) and performance
-// events (lib/events), but /cause/[slug] and /theme/[slug] historically only
-// scanned productionMap — so an event that declared `causes` or `themes` linked
-// out to those pages without ever being listed on them. This closes that loop.
+// Those pages build their poster grids from productionMap. A theatre event that
+// declares `causes` or `themes` but has no productionMap entry yet would link
+// out to the cause/theme page without ever being listed on it. This fills that
+// gap so nothing goes missing while the production record is still pending.
 //
-// Events carrying a `production` are skipped: the production itself already
-// appears in the productions grid, so listing the event too would double it up.
+// It is deliberately a backstop, not a parallel system. An event is skipped when
+// the production record exists — either because the event points at one via
+// `production`, or because a production shares its slug — so a card never
+// appears twice and productionMap always wins once it's updated.
+//
+// Theatre only: festivals and gatherings are not productions and don't belong
+// in a productions grid.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import {
@@ -17,15 +22,15 @@ import {
   canonicalEventPath,
   type DatEvent,
 } from "@/lib/events";
+import { productionMap } from "@/lib/productionMap";
 
+/** Shaped to drop straight into the same PosterCard grid productions use. */
 export type TaxonomyEventCard = {
   slug: string;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   href: string;
   imageSrc: string;
-  /** True for events that have not happened yet — lets callers label them. */
-  upcoming: boolean;
   date: string;
 };
 
@@ -40,9 +45,19 @@ function slugifyLabel(value: string): string {
 }
 
 /**
- * Prefer a portrait poster when the event image follows the
- * `-landscape` / `-portrait` naming convention, since these render in the
- * same poster grid as productions. Non-conforming paths are used as-is.
+ * True when this event should stand in for a missing production.
+ * Theatre only, and only while productionMap has nothing for it.
+ */
+function isStandIn(event: DatEvent): boolean {
+  if (event.category !== "performance") return false;
+  if (event.production) return false;
+  if (productionMap[event.id]) return false;
+  return true;
+}
+
+/**
+ * Portrait-first, matching how the productions grid picks its poster:
+ * `-landscape` paths swap to `-portrait`, anything else is used as-is.
  */
 function posterSrcFor(event: DatEvent): string {
   const raw = getEventImage(event);
@@ -53,56 +68,55 @@ function posterSrcFor(event: DatEvent): string {
 }
 
 function toCard(event: DatEvent): TaxonomyEventCard {
-  const when = new Date(event.date);
-  const upcoming = !Number.isNaN(when.getTime()) && when.getTime() >= Date.now();
   return {
     slug: event.id,
     title: event.title,
+    // Same priority the productions grid uses: tagline, then location.
     subtitle:
-      event.subtitle ??
-      [event.city, event.country].filter(Boolean).join(", ") ??
-      "",
+      event.subtitle ||
+      [event.city, event.country].filter(Boolean).join(", ") ||
+      undefined,
     href: canonicalEventPath(event),
     imageSrc: posterSrcFor(event),
-    upcoming,
     date: event.date,
   };
 }
 
-/** Events whose `causes` include the given cause slug (subcategory, category, or label). */
+function standIns(): DatEvent[] {
+  return events.filter(isStandIn);
+}
+
+/** Theatre events whose `causes` include the given slug (subcategory, category, or label). */
 export function eventsForCause(causeSlug: string): TaxonomyEventCard[] {
   const target = slugifyLabel(causeSlug);
-  return events
-    .filter((event) => {
-      if (event.production) return false;
-      return (event.causes ?? []).some(
+  return standIns()
+    .filter((event) =>
+      (event.causes ?? []).some(
         (cause) =>
           cause?.subcategory === target ||
           cause?.category === target ||
           (!!cause?.label && slugifyLabel(cause.label) === target),
-      );
-    })
+      ),
+    )
     .map(toCard)
     .sort((a, b) => b.date.localeCompare(a.date));
 }
 
-/** Events whose `themes` include the given theme slug. */
+/** Theatre events whose `themes` include the given slug. */
 export function eventsForTheme(themeSlug: string): TaxonomyEventCard[] {
   const target = slugifyLabel(themeSlug);
-  return events
-    .filter((event) => {
-      if (event.production) return false;
-      return (event.themes ?? []).some((theme) => slugifyLabel(theme) === target);
-    })
+  return standIns()
+    .filter((event) =>
+      (event.themes ?? []).some((theme) => slugifyLabel(theme) === target),
+    )
     .map(toCard)
     .sort((a, b) => b.date.localeCompare(a.date));
 }
 
-/** Every theme string declared by an event — for "explore more" chip lists. */
+/** Every theme declared by a stand-in event — for "explore more" chip lists. */
 export function allEventThemes(): string[] {
   const seen = new Set<string>();
-  for (const event of events) {
-    if (event.production) continue;
+  for (const event of standIns()) {
     for (const theme of event.themes ?? []) seen.add(theme);
   }
   return [...seen];

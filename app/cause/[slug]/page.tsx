@@ -588,7 +588,7 @@ export default async function CausePage({
       >
         <div style={{ width: "90%", maxWidth: 1200, margin: "0 auto" }}>
           {/* SECTION: Plays */}
-          {productionsForCause.length > 0 && (
+          {(productionsForCause.length > 0 || eventsMatchingCause.length > 0) && (
             <section style={{ marginBottom: "4rem" }}>
               <SectionLabel>Productions Born from This Cause</SectionLabel>
 
@@ -636,24 +636,14 @@ export default async function CausePage({
                       />
                     );
                   })}
-                </div>
-              </div>
-            </section>
-          )}
 
-          {/* SECTION: Events carrying this cause */}
-          {eventsMatchingCause.length > 0 && (
-            <section style={{ marginBottom: "4rem" }}>
-              <SectionLabel>Live Events for This Cause</SectionLabel>
-
-              <div className="cause-shell">
-                <div className="poster-grid">
+                  {/* Theatre events standing in for a not-yet-created
+                      productionMap entry — same card, same grid. */}
                   {eventsMatchingCause.map((ev) => (
                     <PosterCard
                       key={ev.slug}
                       href={ev.href}
                       title={ev.title}
-                      eyebrow={ev.upcoming ? "Upcoming Event" : "Event"}
                       subtitle={ev.subtitle}
                       imageSrc={ev.imageSrc}
                     />

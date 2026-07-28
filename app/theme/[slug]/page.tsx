@@ -313,7 +313,7 @@ export default async function ThemePage({
       >
         <div style={{ width: "90%", maxWidth: 1200, margin: "0 auto" }}>
           {/* SECTION: Plays */}
-          {productionsForTheme.length > 0 && (
+          {(productionsForTheme.length > 0 || eventsMatchingTheme.length > 0) && (
           <section style={{ marginBottom: "4rem" }} aria-label={`Productions tagged with ${displayLabel}`}>
             <SectionLabel>Stories That Move Through This Terrain</SectionLabel>
 
@@ -364,34 +364,21 @@ export default async function ThemePage({
                     />
                   );
                 })}
+
+                {/* Theatre events standing in for a not-yet-created
+                    productionMap entry — same card, same grid. */}
+                {eventsMatchingTheme.map((ev) => (
+                  <PosterCard
+                    key={ev.slug}
+                    href={ev.href}
+                    title={ev.title}
+                    subtitle={ev.subtitle}
+                    imageSrc={ev.imageSrc}
+                  />
+                ))}
               </div>
             </div>
           </section>
-          )}
-
-          {/* SECTION: Events carrying this theme */}
-          {eventsMatchingTheme.length > 0 && (
-            <section
-              style={{ marginBottom: "4rem" }}
-              aria-label={`Events tagged with ${displayLabel}`}
-            >
-              <SectionLabel>Live Events on This Terrain</SectionLabel>
-
-              <div className="theme-shell">
-                <div className="poster-grid">
-                  {eventsMatchingTheme.map((ev) => (
-                    <PosterCard
-                      key={ev.slug}
-                      href={ev.href}
-                      title={ev.title}
-                      eyebrow={ev.upcoming ? "Upcoming Event" : "Event"}
-                      subtitle={ev.subtitle}
-                      imageSrc={ev.imageSrc}
-                    />
-                  ))}
-                </div>
-              </div>
-            </section>
           )}
 
           {/* SECTION: Explore more themes */}
