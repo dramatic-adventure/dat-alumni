@@ -194,6 +194,24 @@ export const season20Events: DatEvent[] = [
       "US, Slovak, and Romani artists unite to share this eclectic evening of work in progress. Theatre, storytelling, and poetry fuse as we explore the confluence of lived experience that happens when people from different worlds join hands and step together into waters less known.\n\n" +
       "Dramatic Adventure Theatre (DAT) is excited to continue its 14-year collaboration with ETP Slovensko, which began in 2012 and has since spanned many devised theatre projects in Roma settlements throughout Eastern Slovakia. Water that Wanders represents a new step in our relationship as we co-produce this theatrical collage that gives Košice audiences a window into DAT’s creative process. The creative articulations we’ll share represent new ideas, raw impressions, and fresh remembrances, inspired by our recent three-week project in Slovakia that included work with Roma youth in Zemplínska Teplica and Luník IX, as well as artistic jam sessions with local Slovak theatre artists.\n\n" +
       "This is the closing night of [PASSAGE: Slovakia](https://www.dramaticadventure.com/passage), and a friend-raiser for ETP Slovensko. Come see what three weeks made, then stay and talk with the company afterward. Teachers, youth workers, artists, neighbors, and the plain curious are all welcome. Admission is free, and anything you give goes straight to ETP’s work with kids and families in Eastern Slovakia.",
+    // Company roster is built live from programMap — add an artist to either
+    // program and they appear here (with headshot + profile link) automatically.
+    companyPrograms: ["passage-slovakia-2026", "dat-lab-kosice-2026"],
+    companyLabel: "The Company",
+    partners: [
+      {
+        name: "ETP Slovensko",
+        href: "https://etp.sk",
+        type: "community",
+        logoSrc: "/images/partners/etp-slovensko.jpg",
+        logoAlt: "ETP Slovensko",
+      },
+      {
+        name: "Divadlo na Peróne",
+        href: "https://www.facebook.com/divadlonaperone",
+        type: "artistic",
+      },
+    ],
     artistNote:
       "Poor water has no speech / With which she could talk or sing, / Only sometimes she whispers / A silver splash like a heartbeat. / A heartbeat of speaking water. / But the water does not look behind. / It flees, runs farther away, / Where eyes will not see her — / The water that wanders.",
     artistNoteBy: "Papusza, “Water That Wanders”",
@@ -233,6 +251,7 @@ export const season20Events: DatEvent[] = [
           "Tešíme sa na stretnutie.",
         impactBlurb:
           "Toto podujatie podporuje ETP Slovensko, komunitného partnera DAT na východnom Slovensku. Prostredníctvom vzdelávania, mentoringu, komunitného rozvoja a dlhodobej lokálnej práce ETP Slovensko podporuje deti, rodiny a komunity pri rozširovaní príležitostí a posilňovaní ciest vpred. Vaša účasť, dobrovoľný príspevok alebo sponzorská podpora pomáha tejto dôležitej práci a zároveň vytvára priestor, kde sa umelci a komunity môžu stretnúť prostredníctvom príbehu, performance a tvorivej výmeny. Všetky dobrovoľné príspevky a výťažok z podujatia podporia ETP Slovensko.",
+        companyLabel: "Súbor",
         ticketPrice: "Vstup voľný · dobrovoľné príspevky vítané",
         language: "V angličtine, slovenčine a rómčine",
         accessibility: "Predstavenie naživo",

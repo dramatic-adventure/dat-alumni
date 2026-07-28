@@ -16,6 +16,7 @@ import { eventsByProduction, eventById, canonicalEventPath } from "@/lib/events"
 
 import EventDetailPageTemplate from "@/components/events/EventDetailPageTemplate";
 import { resolvePerformanceEvent } from "@/lib/events/resolvePerformanceEvent";
+import { buildCompanyFromPrograms } from "@/lib/events/companyFromPrograms";
 import { loadAlumni } from "@/lib/loadAlumni";
 
 // NOTE: params is now a Promise in Next 15 for some routes
@@ -165,6 +166,18 @@ export default async function TheatreProductionPage({ params }: PageProps) {
 
   if (performanceEvent?.category === "performance") {
     const resolved = resolvePerformanceEvent(performanceEvent);
+
+    // Company roster from programMap (live) when the event declares
+    // `companyPrograms` and carries no hand-written credits. Runs before the
+    // headshot pass below so program-built credits get photos too.
+    // loadAlumni is request-memoized via cache().
+    if (!resolved.credits?.length && resolved.companyPrograms?.length) {
+      const company = buildCompanyFromPrograms(
+        resolved.companyPrograms,
+        await loadAlumni(),
+      );
+      if (company.length) resolved.credits = company;
+    }
 
     // Enrich credits with real alumni headshots.
     // Tries slug-based lookup (from href) first, then name-based fallback.

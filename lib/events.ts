@@ -16,6 +16,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { productionMap, type Production, getSortYear } from "@/lib/productionMap";
+import type { PartnerLink } from "@/lib/productionDetailsMap";
 import { season20Events, season20Hidden } from "@/lib/events/season-20";
 import { season21Events, season21Hidden } from "@/lib/events/season-21";
 
@@ -250,6 +251,37 @@ export interface DatEvent {
   credits?: { role: string; name: string; href?: string; group?: "creative" | "cast"; photo?: string }[];
 
   /**
+   * programMap slugs whose artist rosters make up this event's company.
+   * Used when `credits` is not set: names, roles, and profile links are built
+   * from lib/programMap.ts at render time and headshots are filled in from
+   * alumni data, so adding an artist to the program adds them to this page.
+   *
+   * Example:
+   *   companyPrograms: ["passage-slovakia-2026", "dat-lab-kosice-2026"],
+   */
+  companyPrograms?: string[];
+
+  /**
+   * Heading for the photo-card roster block. Defaults to "Cast".
+   * Use for devised or ensemble work where "Cast" reads wrong
+   * (e.g. "The Company", "The Ensemble").
+   */
+  companyLabel?: string;
+
+  /**
+   * Partner organizations shown with logo + link in the Community Impact panel.
+   * Falls back to the linked production's `partners` when not set here — set it
+   * on the event for co-productions that have no productionDetailsMap entry.
+   *
+   * Example:
+   *   partners: [
+   *     { name: "ETP Slovensko", href: "https://etp.sk", type: "community",
+   *       logoSrc: "/images/partners/etp-slovensko.jpg" },
+   *   ]
+   */
+  partners?: PartnerLink[];
+
+  /**
    * Press or audience quotes shown in the Quotes section.
    *
    * Example:
@@ -317,6 +349,8 @@ export interface DatEvent {
        * Order should match the base credits array.
        */
       credits?: { role: string; name: string; href?: string; group?: "creative" | "cast"; photo?: string }[];
+      /** Translated heading for the roster block (mirrors `companyLabel`) */
+      companyLabel?: string;
       /** Translated accessibility note */
       accessibility?: string;
       /** Translated runtime string (e.g. "Approx. 80 min · No interval") */

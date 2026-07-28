@@ -181,7 +181,9 @@ export function resolvePerformanceEvent(event: DatEvent): ResolvedPerformanceEve
   // (no corresponding field exists on DatEvent for these).
   const themes = extra?.themes;
   const causes = extra?.causes;
-  const partners = extra?.partners;
+  // Partners are usually production-owned, but co-productions with no
+  // productionDetailsMap entry can declare them on the event itself.
+  const partners = array(event.partners, extra?.partners);
   const resources = extra?.resources;
 
   // ── Production photographer + album href ─────────────────────────────────

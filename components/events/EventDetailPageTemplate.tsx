@@ -1150,6 +1150,11 @@ export default async function EventDetailPageTemplate({
 
   // Pre-filtered credit groups for cast/creative sections
   const castCredits = (credits ?? []).filter((c) => c.group === "cast");
+  // Heading for the photo-card roster. Devised/ensemble events override "Cast"
+  // via `companyLabel`; the alternate language reads it from translations.
+  const castLabel = event.companyLabel ?? "Cast";
+  const altCastLabel =
+    event.translations?.[altLang]?.companyLabel ?? (event.companyLabel ? castLabel : (C.cast ?? "Cast"));
   const creativeCredits = (credits ?? []).filter((c) => !c.group || c.group === "creative");
 
   // Images for editorial overlays — prefer the first true landscape image (width > height).
@@ -1799,10 +1804,10 @@ export default async function EventDetailPageTemplate({
                   <p className="evd-cast-head-label">
                     {isBilingual ? (
                       <>
-                        <span className="evd-bilingual-wrap-default">Cast</span>
-                        <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{C.cast ?? "Cast"}</span>
+                        <span className="evd-bilingual-wrap-default">{castLabel}</span>
+                        <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>{altCastLabel}</span>
                       </>
-                    ) : "Cast"}
+                    ) : castLabel}
                   </p>
                   <span className="evd-cast-head-rule" aria-hidden="true" />
                 </div>
