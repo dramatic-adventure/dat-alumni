@@ -178,7 +178,7 @@ export const programMap: Record<string, ProgramData> = {
   endDate: "2026-08-02",
   url: "/passage",
   externalUrl: "https://www.dramaticadventure.com/passage",
-  dramaClubSlugs: ["lunik-ix-collective", "zemplinska-teplica-ensemble"],
+  dramaClubSlugs: ["lunik-ix-collective", "zt-youth-ensemble"],
   artists: {
     "jesse-baxter": ["Artistic Director"],
     "christen-madrazo": ["Director of Creative Learning"],
@@ -237,7 +237,7 @@ export const programMap: Record<string, ProgramData> = {
   season: 20,
   url: "/teaching-artist-residency",
   externalUrl: "https://www.dramaticadventure.com/teaching-artist-residency",
-  dramaClubSlugs: ["lunik-ix-collective", "zemplinska-teplica-ensemble"],
+  dramaClubSlugs: ["lunik-ix-collective", "zt-youth-ensemble"],
   artists: {
     "jesse-baxter": ["Artistic Director", "Teaching Artist"],
     "christen-madrazo": ["Director of Creative Learning", "Teaching Artist"],

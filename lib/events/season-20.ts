@@ -114,7 +114,7 @@ export const season20Events: DatEvent[] = [
     venue: "TBD",
     city: "Zemplínska Teplica",
     country: "Slovakia",
-    dramaClubs: ["zemplinska-teplica-ensemble"],
+    dramaClubs: ["zt-youth-ensemble"],
     description:
       "A community showcase featuring the young artists of DAT’s Zemplínska Teplica Ensemble in an evening of performance, storytelling, and celebration.",
     longDescription:
@@ -187,7 +187,7 @@ export const season20Events: DatEvent[] = [
     country: "Slovakia",
     language: "Performed in English, Slovak, and Romani",
     accessibility: "In-person performance",
-    dramaClubs: ["zemplinska-teplica-ensemble", "lunik-ix-collective"],
+    dramaClubs: ["zt-youth-ensemble", "lunik-ix-collective"],
     // TODO: swap for a field photo from the three weeks in Zemplínska Teplica /
     // Luník IX. Convention for a designed poster is
     // /posters/water-that-wanders-landscape.jpg + -portrait.jpg.

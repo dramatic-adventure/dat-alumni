@@ -59,6 +59,18 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.redirect(loc, 301);
   }
 
+  // 🔀 Drama club rename: "Zemplínska Teplica Youth Ensemble" → "ZT Youth Ensemble".
+  // Drama clubs have no slug-forwarding table like alumni do, so old links are
+  // redirected here rather than 404ing.
+  if (
+    pathname === "/drama-club/zemplinska-teplica-ensemble" ||
+    pathname === "/drama-club/zemplinska-teplica-ensemble/"
+  ) {
+    const loc = new URL("/drama-club/zt-youth-ensemble", origin);
+    if (search) loc.search = search;
+    return NextResponse.redirect(loc, 301);
+  }
+
   // ✅ Only canonicalize exact alumni profile paths:
   // /alumni/{slug} or /alumni/{slug}/
   const m = pathname.match(/^\/alumni\/([^\/?#]+)\/?$/i);
