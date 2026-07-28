@@ -15,6 +15,10 @@ import { slugifyTag as slugify, getCanonicalTag } from "@/lib/tags";
 import PosterCard from "@/components/shared/PosterCard";
 import SeasonsCarouselAlt from "@/components/alumni/SeasonsCarouselAlt";
 
+// Performance events that declare this theme (events linked to a production
+// are skipped — the production already appears in the grid above).
+import { eventsForTheme, allEventThemes } from "@/lib/events/eventsForTaxonomy";
+
 export const revalidate = 3600;
 
 /** Optional per-theme hero / copy overrides (keys = canonical theme slugs). */
@@ -182,7 +186,11 @@ export default async function ThemePage({
     return themes.some((t: string) => matchTag(t));
   });
 
-  if (!productionsForTheme.length) {
+  // Performance events can carry themes too — a theme held only by an event
+  // is still a real theme page.
+  const eventsMatchingTheme = eventsForTheme(slugLower);
+
+  if (!productionsForTheme.length && !eventsMatchingTheme.length) {
     return notFound();
   }
 
@@ -217,6 +225,9 @@ export default async function ThemePage({
     const themes: string[] = ((extra as any)?.themes ?? []) as string[];
     for (const t of themes) addThemeLabel(t);
   }
+  // Event-declared themes are chip-worthy too, otherwise a theme carried only
+  // by an event would be unreachable from any other theme page.
+  for (const t of allEventThemes()) addThemeLabel(t);
 
   const moreThemeLinks: Array<[string, string]> = Array.from(themeSlugToLabel.entries())
     .filter(([s]) => s !== slugLower)
@@ -302,6 +313,7 @@ export default async function ThemePage({
       >
         <div style={{ width: "90%", maxWidth: 1200, margin: "0 auto" }}>
           {/* SECTION: Plays */}
+          {productionsForTheme.length > 0 && (
           <section style={{ marginBottom: "4rem" }} aria-label={`Productions tagged with ${displayLabel}`}>
             <SectionLabel>Stories That Move Through This Terrain</SectionLabel>
 
@@ -355,6 +367,32 @@ export default async function ThemePage({
               </div>
             </div>
           </section>
+          )}
+
+          {/* SECTION: Events carrying this theme */}
+          {eventsMatchingTheme.length > 0 && (
+            <section
+              style={{ marginBottom: "4rem" }}
+              aria-label={`Events tagged with ${displayLabel}`}
+            >
+              <SectionLabel>Live Events on This Terrain</SectionLabel>
+
+              <div className="theme-shell">
+                <div className="poster-grid">
+                  {eventsMatchingTheme.map((ev) => (
+                    <PosterCard
+                      key={ev.slug}
+                      href={ev.href}
+                      title={ev.title}
+                      eyebrow={ev.upcoming ? "Upcoming Event" : "Event"}
+                      subtitle={ev.subtitle}
+                      imageSrc={ev.imageSrc}
+                    />
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* SECTION: Explore more themes */}
           {moreThemeLinks.length > 0 && (

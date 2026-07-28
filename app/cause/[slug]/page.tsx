@@ -24,6 +24,10 @@ import { dramaClubs, type DramaClub } from "@/lib/dramaClubMap";
 // 🔹 NEW: micro-cards import
 import DramaClubIndexMicroGrid from "@/components/drama/DramaClubIndexMicroGrid";
 
+// Performance events that declare this cause (productions are handled above;
+// events with a `production` are skipped there to avoid duplicate cards).
+import { eventsForCause } from "@/lib/events/eventsForTaxonomy";
+
 import { slugifyTag as slugify, getCanonicalTag } from "@/lib/tags";
 
 // 🔹 NEW: taxonomy import
@@ -311,6 +315,8 @@ export default async function CausePage({
     return causes.some((cause) => cause?.label && matchTag(cause.label));
   });
 
+  const eventsMatchingCause = eventsForCause(slugLower);
+
   // 🔹 UPDATED: clubs match either old causeTags OR new taxonomy causes
   const clubsForCause = allDramaClubs.filter((club) => {
     // 1) Direct slug match (causeSlugs array)
@@ -386,6 +392,7 @@ export default async function CausePage({
 
   const hasAnyContent =
     productionsForCause.length ||
+    eventsMatchingCause.length ||
     clubsForCause.length ||
     storiesForCause.length ||
     both.length ||
@@ -629,6 +636,28 @@ export default async function CausePage({
                       />
                     );
                   })}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* SECTION: Events carrying this cause */}
+          {eventsMatchingCause.length > 0 && (
+            <section style={{ marginBottom: "4rem" }}>
+              <SectionLabel>Live Events for This Cause</SectionLabel>
+
+              <div className="cause-shell">
+                <div className="poster-grid">
+                  {eventsMatchingCause.map((ev) => (
+                    <PosterCard
+                      key={ev.slug}
+                      href={ev.href}
+                      title={ev.title}
+                      eyebrow={ev.upcoming ? "Upcoming Event" : "Event"}
+                      subtitle={ev.subtitle}
+                      imageSrc={ev.imageSrc}
+                    />
+                  ))}
                 </div>
               </div>
             </section>
