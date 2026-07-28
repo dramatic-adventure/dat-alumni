@@ -179,12 +179,12 @@ export function resolvePerformanceEvent(event: DatEvent): ResolvedPerformanceEve
   // ── Production-owned fields ────────────────────────────────────────────────
   // These come exclusively from production data; events do not override them
   // (no corresponding field exists on DatEvent for these).
-  const themes = extra?.themes;
-  const causes = extra?.causes;
-  // Partners are usually production-owned, but co-productions with no
+  // Usually production-owned, but co-productions and one-off events with no
   // productionDetailsMap entry can declare them on the event itself.
+  const themes = array(event.themes, extra?.themes);
+  const causes = array(event.causes, extra?.causes);
   const partners = array(event.partners, extra?.partners);
-  const resources = extra?.resources;
+  const resources = array(event.resources, extra?.resources);
 
   // ── Production photographer + album href ─────────────────────────────────
   // Event-level fields win; production data fills gaps.

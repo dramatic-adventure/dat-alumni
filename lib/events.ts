@@ -16,7 +16,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { productionMap, type Production, getSortYear } from "@/lib/productionMap";
-import type { PartnerLink } from "@/lib/productionDetailsMap";
+import type { PartnerLink, CauseItem } from "@/lib/productionDetailsMap";
 import { season20Events, season20Hidden } from "@/lib/events/season-20";
 import { season21Events, season21Hidden } from "@/lib/events/season-21";
 
@@ -262,6 +262,16 @@ export interface DatEvent {
   companyPrograms?: string[];
 
   /**
+   * Alumni slugs to leave off this event's roster even though they appear in
+   * one of the `companyPrograms`. Their program credit is unaffected — this
+   * only hides them on this page.
+   *
+   * Example:
+   *   companyExclude: ["asa-madrazo-williamson"],
+   */
+  companyExclude?: string[];
+
+  /**
    * Heading for the photo-card roster block. Defaults to "Cast".
    * Use for devised or ensemble work where "Cast" reads wrong
    * (e.g. "The Company", "The Ensemble").
@@ -280,6 +290,36 @@ export interface DatEvent {
    *   ]
    */
   partners?: PartnerLink[];
+
+  /**
+   * Theme pills shown in the About section, linking to /theme/[slug].
+   * Falls back to the linked production's `themes` when not set here.
+   *
+   * IMPORTANT: /theme/[slug] is built from productionDetailsMap only and 404s
+   * when no production carries the theme — so only use themes that already
+   * appear on a production (e.g. "Belonging", "Memory", "Cultural Identity").
+   */
+  themes?: string[];
+
+  /**
+   * Cause pills shown in the Community Impact panel, linking to /cause/[slug].
+   * Falls back to the linked production's `causes` when not set here.
+   * Use ids from lib/causes.ts — any valid taxonomy slug resolves to a page.
+   *
+   * Example:
+   *   causes: [{ label: "Anti-racism", category: "social-justice-human-rights-equity",
+   *              subcategory: "anti-racism" }]
+   */
+  causes?: CauseItem[];
+
+  /**
+   * Links-only list shown in the Resources section (press, event listings, PDFs).
+   * Falls back to the linked production's `resources` when not set here.
+   *
+   * Example:
+   *   resources: [{ label: "Facebook event", href: "https://facebook.com/events/…" }]
+   */
+  resources?: { label: string; href?: string }[];
 
   /**
    * Press or audience quotes shown in the Quotes section.

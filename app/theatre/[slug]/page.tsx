@@ -175,6 +175,8 @@ export default async function TheatreProductionPage({ params }: PageProps) {
       const company = buildCompanyFromPrograms(
         resolved.companyPrograms,
         await loadAlumni(),
+        "cast",
+        resolved.companyExclude,
       );
       if (company.length) resolved.credits = company;
     }

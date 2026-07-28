@@ -44,21 +44,28 @@ function nameFromSlug(slug: string): string {
  *
  * Artists missing from the alumni sheet are still listed (de-slugified name,
  * no link) rather than silently dropped.
+ *
+ * `excludeSlugs` drops specific artists from this event's roster only — their
+ * programMap credit (and everything derived from it: passport stamps, project
+ * rosters, artist counts) is untouched.
  */
 export function buildCompanyFromPrograms(
   programSlugs: string[] | undefined,
   alumni: AlumniRow[],
   group: "creative" | "cast" = "cast",
+  excludeSlugs?: string[],
 ): CompanyCredit[] {
   if (!programSlugs?.length) return [];
 
   const alumniBySlug = new Map(alumni.map((a) => [a.slug, a]));
+  const excluded = new Set(excludeSlugs ?? []);
   const rolesBySlug = new Map<string, string[]>();
 
   for (const programSlug of programSlugs) {
     const program = programMap[programSlug];
     if (!program?.artists) continue;
     for (const [artistSlug, roles] of Object.entries(program.artists)) {
+      if (excluded.has(artistSlug)) continue;
       const existing = rolesBySlug.get(artistSlug) ?? [];
       for (const role of roles) {
         if (role && !existing.includes(role)) existing.push(role);

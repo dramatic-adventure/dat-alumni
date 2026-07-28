@@ -188,6 +188,11 @@ export const season20Events: DatEvent[] = [
     language: "Performed in English, Slovak, and Romani",
     accessibility: "In-person performance",
     dramaClubs: ["zemplinska-teplica-ensemble", "lunik-ix-collective"],
+    // TODO: swap for a field photo from the three weeks in Zemplínska Teplica /
+    // Luník IX. Convention for a designed poster is
+    // /posters/water-that-wanders-landscape.jpg + -portrait.jpg.
+    // Until then this is a real Slovakia residency photo, not the generic fallback.
+    image: "/images/projects/archive/teaching-artist-residency-slovakia-camp.webp",
     description:
       "US, Slovak, and Romani artists unite to share this eclectic evening of work in progress. Theatre, storytelling, and poetry fuse as we explore the confluence of lived experience that happens when people from different worlds join hands and step together into waters less known.",
     longDescription:
@@ -197,6 +202,9 @@ export const season20Events: DatEvent[] = [
     // Company roster is built live from programMap — add an artist to either
     // program and they appear here (with headshot + profile link) automatically.
     companyPrograms: ["passage-slovakia-2026", "dat-lab-kosice-2026"],
+    // Junior Field Artists are kept off the public roster; their PASSAGE credit
+    // in programMap is unchanged.
+    companyExclude: ["asa-madrazo-williamson", "vida-madrazo-williamson"],
     companyLabel: "The Company",
     partners: [
       {
@@ -210,6 +218,52 @@ export const season20Events: DatEvent[] = [
         name: "Divadlo na Peróne",
         href: "https://www.facebook.com/divadlonaperone",
         type: "artistic",
+      },
+    ],
+    // Themes must already exist on a production — /theme/[slug] is built from
+    // productionDetailsMap and 404s otherwise.
+    themes: ["Belonging", "Memory", "Cultural Identity"],
+    // Taxonomy ids from lib/causes.ts; the two linked drama clubs carry the
+    // same causes, so each pill lands on a populated /cause page.
+    causes: [
+      {
+        label: "Anti-racism",
+        category: "social-justice-human-rights-equity",
+        subcategory: "anti-racism",
+      },
+      {
+        label: "Poverty reduction & social inclusion",
+        category: "social-justice-human-rights-equity",
+        subcategory: "poverty-reduction-social-inclusion",
+      },
+      {
+        label: "Narrative justice",
+        category: "arts-culture-storytelling-representation",
+        subcategory: "narrative-justice",
+      },
+      {
+        label: "Cross-cultural solidarity",
+        category: "arts-culture-storytelling-representation",
+        subcategory: "cross-cultural-exchange-solidarity",
+      },
+      {
+        label: "Arts education access",
+        category: "education-access-equity-opportunity",
+        subcategory: "arts-education-access",
+      },
+    ],
+    resources: [
+      {
+        label: "Facebook event — Water that Wanders",
+        href: "https://www.facebook.com/events/1458829016003103",
+      },
+      {
+        label: "PASSAGE: Slovakia",
+        href: "https://www.dramaticadventure.com/passage",
+      },
+      {
+        label: "ETP Slovensko",
+        href: "https://etp.sk",
       },
     ],
     artistNote:
