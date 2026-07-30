@@ -175,7 +175,8 @@ export const season20Events: DatEvent[] = [
     title: "Water that Wanders",
     subtitle: "US, Slovak, and Romani artists join hands to step into waters less known",
     category: "performance",
-    subcategory: "benefit",
+    // No `subcategory: "benefit"` — that only exists to swap the eyebrow to
+    // "Benefit Event"; without it the page uses the standard "Live Theatre".
     status: "upcoming",
     date: "2026-08-01",
     time: "7:00 PM",
@@ -188,11 +189,7 @@ export const season20Events: DatEvent[] = [
     language: "Performed in English, Slovak, and Romani",
     accessibility: "In-person performance",
     dramaClubs: ["zt-youth-ensemble", "lunik-ix-collective"],
-    // TODO: swap for a field photo from the three weeks in Zemplínska Teplica /
-    // Luník IX. Convention for a designed poster is
-    // /posters/water-that-wanders-landscape.jpg + -portrait.jpg.
-    // Until then this is a real Slovakia residency photo, not the generic fallback.
-    image: "/images/projects/archive/teaching-artist-residency-slovakia-camp.webp",
+    image: "/posters/water-that-wanders.jpeg",
     description:
       "US, Slovak, and Romani artists unite to share this eclectic evening of work in progress. Theatre, storytelling, and poetry fuse as we explore the confluence of lived experience that happens when people from different worlds join hands and step together into waters less known.",
     longDescription:
