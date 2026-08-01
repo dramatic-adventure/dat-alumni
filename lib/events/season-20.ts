@@ -327,7 +327,7 @@ export const season20Events: DatEvent[] = [
       {
         title: "The Farm",
         titleAlt: "Farma",
-        by: [{ name: "Adrián Pica Borjas", href: "/alumni/adrian-pica-borjas" }],
+        by: [{ name: "Adrian Pica-Borjas", href: "/alumni/adrian-pica-borjas" }],
         contributors: [
           {
             role: "Movement",

@@ -58,7 +58,7 @@ function creditRank(role: string): number {
 
 /**
  * Sort key for alphabetical cast billing: everything after the first name, so
- * compound surnames stay intact ("Adrián Pica Borjas" → "Pica Borjas").
+ * multi-word surnames stay intact ("Elle Kunnos de Voss" → "Kunnos de Voss").
  */
 function surnameKey(name: string): string {
   const parts = name.trim().split(/\s+/);
