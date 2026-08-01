@@ -860,7 +860,12 @@ const hasStories = storiesForFeatured.length > 0;
               const yearText = p?.year ? String((p as any).year) : "";
               const cityText = (p as any)?.location ? String((p as any).location) : "";
               const metaLine = [yearText, cityText].filter(Boolean).join(" • ");
-              const posterGuess = `/posters/${(p as any).slug}-landscape.jpg`;
+              // Use the production's declared posterUrl when it has one; only
+              // fall back to the slug-and-suffix convention when it doesn't.
+              // Guessing first breaks any poster that isn't `-landscape.jpg`.
+              const posterGuess =
+                (typeof (p as any).posterUrl === "string" && (p as any).posterUrl.trim()) ||
+                `/posters/${(p as any).slug}-landscape.jpg`;
 
               const span = spanMetaForIndex(i, visibleFeaturedProductions.length);
 

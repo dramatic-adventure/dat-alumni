@@ -131,18 +131,14 @@ function getHeroImageUrl(
   base: Production,
   extra?: ProductionExtra,
 ): string {
-  const normalizedPosterUrl =
-    base.posterUrl &&
-    (base.posterUrl.includes("-landscape") ||
-      base.posterUrl.includes("-portrait"))
-      ? base.posterUrl
-      : undefined;
-
+  // An explicit posterUrl is data, not a guess — it wins over the filename
+  // convention. It used to be discarded unless it contained "-landscape" or
+  // "-portrait", which silently dropped any poster named anything else.
   const candidates: Array<string | undefined> = [
     extra?.heroImageUrl,
+    base.posterUrl?.trim() || undefined,
     `/posters/${slug}-landscape.jpg`,
     `/posters/${slug}-portrait.jpg`,
-    normalizedPosterUrl,
     "/posters/fallback-16x9.jpg",
   ];
 
