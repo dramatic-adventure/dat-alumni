@@ -1829,6 +1829,9 @@ export default async function EventDetailPageTemplate({
                         {piece.titleAlt ? (
                           <p className="evd-runorder-title-alt">{piece.titleAlt}</p>
                         ) : null}
+                        {/* Provenance sits with the title — it qualifies what the
+                            piece is before any credit is attached to it. */}
+                        {piece.note ? <p className="evd-runorder-note">{piece.note}</p> : null}
                         {piece.by?.length ? (
                           <p className="evd-runorder-by">
                             <span className="evd-runorder-by-label">by</span>{" "}
@@ -1873,7 +1876,6 @@ export default async function EventDetailPageTemplate({
                             ))}
                           </p>
                         ) : null}
-                        {piece.note ? <p className="evd-runorder-meta">{piece.note}</p> : null}
                       </div>
                     </li>
                   ))}
@@ -3656,6 +3658,15 @@ export default async function EventDetailPageTemplate({
           line-height: 1.4;
           color: rgba(36,17,35,0.62);
           margin: 0.15rem 0 0;
+        }
+        .evd-runorder-note {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.78rem;
+          font-weight: 300;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: rgba(36,17,35,0.5);
+          margin: 0.35rem 0 0;
         }
         .evd-runorder-by {
           font-family: "Space Grotesk", sans-serif;

@@ -272,9 +272,16 @@ export const season20Events: DatEvent[] = [
     // deliberately does not repeat "Writer" on everyone.
     runningOrder: [
       {
-        title: "Teme mamo adarik Džav",
+        // Quoted: existing songs, not pieces written for this evening.
+        title: "“Te me mamo adarik džav”",
         titleAlt: "Keď ja mamko tadiaľ idem · Look mom, I’m going this way",
-        by: [{ name: "Lukáš Hudák", href: "/alumni/lukas-hudak" }],
+        note: "Traditional Romani song",
+        contributors: [
+          {
+            role: "Sung by",
+            people: [{ name: "Lukáš Hudák", href: "/alumni/lukas-hudak" }],
+          },
+        ],
       },
       {
         title: "Všímaj si",
@@ -308,9 +315,15 @@ export const season20Events: DatEvent[] = [
         by: [{ name: "Christina Greene", href: "/alumni/christina-greene" }],
       },
       {
-        title: "Paňi panori čhajori romaňi",
+        title: "“Paš o paňori čhajori romaňi”",
         titleAlt: "Pri vodičke rómske dievčatko · Sweet little Romani girl near lovely waters",
-        by: [{ name: "Lukáš Hudák", href: "/alumni/lukas-hudak" }],
+        note: "Traditional Romani song",
+        contributors: [
+          {
+            role: "Sung by",
+            people: [{ name: "Lukáš Hudák", href: "/alumni/lukas-hudak" }],
+          },
+        ],
       },
       {
         title: "Vnímaj",
@@ -342,9 +355,15 @@ export const season20Events: DatEvent[] = [
         ],
       },
       {
-        title: "Nane cocha nane gad",
+        title: "“Nane cocha nane gad”",
         titleAlt: "Nie je sukňa nie sú šaty · No skirt, no dress",
-        by: [{ name: "Lukáš Hudák", href: "/alumni/lukas-hudak" }],
+        note: "Traditional Romani song",
+        contributors: [
+          {
+            role: "Sung by",
+            people: [{ name: "Lukáš Hudák", href: "/alumni/lukas-hudak" }],
+          },
+        ],
       },
       {
         title: "The Water that Wanders",
