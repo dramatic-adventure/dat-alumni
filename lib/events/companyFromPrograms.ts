@@ -35,6 +35,28 @@ export type CompanyCredit = {
 const CAST_ROLE = /actor|actress|performer|puppeteer|musician|dancer|singer|ensemble|narrator/i;
 
 /**
+ * Creative Team billing order, by position rather than by person.
+ * Earlier patterns rank higher; anything unmatched sits in the middle, between
+ * the show's own team and the organizational titles.
+ */
+const CREDIT_ORDER: RegExp[] = [
+  /^stage director$/i,
+  /^assistant stage director$/i,
+  /director$/i,          // remaining show-side directors (technical, etc.)
+  /consultant$/i,
+  /dramaturg|playwright/i,
+  /designer|design$/i,
+  /stage manager|road manager|manager/i,
+  /^writer$/i,           // writers last — the running order carries the detail
+];
+const UNRANKED = CREDIT_ORDER.findIndex((r) => /manager/.test(r.source));
+
+function creditRank(role: string): number {
+  const i = CREDIT_ORDER.findIndex((re) => re.test(role.trim()));
+  return i === -1 ? UNRANKED - 0.5 : i;
+}
+
+/**
  * Sort key for alphabetical cast billing: everything after the first name, so
  * compound surnames stay intact ("Adrián Pica Borjas" → "Pica Borjas").
  */
@@ -185,6 +207,19 @@ export function buildCompanyFromProduction(
   cast.sort((a, b) =>
     surnameKey(a.name).localeCompare(surnameKey(b.name), "sk", { sensitivity: "base" }),
   );
+
+  // Creative Team reads by position, the way a printed programme does: all the
+  // stage directors together, then the rest of the show's team, then the
+  // organizational titles, then the writers. Within a title, alphabetical by
+  // surname so no one is ranked. Unlisted titles fall between the show's team
+  // and the org titles, in the order the data supplies them.
+  creative.sort((a, b) => {
+    const rank = creditRank(a.role) - creditRank(b.role);
+    if (rank !== 0) return rank;
+    const byTitle = a.role.localeCompare(b.role, "sk", { sensitivity: "base" });
+    if (byTitle !== 0) return byTitle;
+    return surnameKey(a.name).localeCompare(surnameKey(b.name), "sk", { sensitivity: "base" });
+  });
 
   // Creative team keeps its authored order, which encodes the hierarchy that
   // matters there (stage directors, then assistant, then technical).
