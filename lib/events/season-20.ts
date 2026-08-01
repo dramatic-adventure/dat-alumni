@@ -338,7 +338,7 @@ export const season20Events: DatEvent[] = [
       {
         title: "Kúpalisko",
         titleAlt: "The Pool",
-        by: [{ name: "Tatiana Kuková", href: "/alumni/tatiana-kukova" }],
+        by: [{ name: "Táňa Kuková", href: "/alumni/tatiana-kukova" }],
       },
       {
         title: "Spojenie",
