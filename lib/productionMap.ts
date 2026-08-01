@@ -38,6 +38,31 @@ export function getSortYear(prod: Production): number {
 
 // ✅ Add explicit typing here 👇
 export const productionMap: Record<string, Production> = {
+  "water-that-wanders": {
+    title: "Water that Wanders",
+    slug: "water-that-wanders",
+    year: 2026,
+    season: 20,
+    location: "Košice, Slovakia",
+    venue: "Divadlo Na Peróne",
+    festival: "",
+    url: "",
+    posterUrl: "/posters/water-that-wanders.jpeg",
+    artists: {
+      "jesse-baxter": ["Director", "Actor"],
+      "jason-williamson": ["Director"],
+      "christen-madrazo": ["Director"],
+      "barbara-herucova": ["Assistant Director", "Actor"],
+      "tatiana-kukova": ["Actor"],
+      "christina-greene": ["Actor"],
+      "adrian-pica-borjas": ["Actor"],
+      "barbora-curejova": ["Actor"],
+      "jakub-muransky": ["Actor"],
+      "janka-starova": ["Actor"],
+      "alica-hingisova": ["Actor"],
+    }
+  },
+
   "the-rainbow-of-san-luis": {
     title: "The Rainbow of San Luis",
     slug: "the-rainbow-of-san-luis",

@@ -212,9 +212,12 @@ export const programMap: Record<string, ProgramData> = {
     "christen-madrazo": ["Director of Creative Learning"],
     "jason-williamson": ["Resident Playwright"],
     "barbara-herucova": ["Road Manager"],
+    "tatiana-kukova": ["Road Manager"],
     "christina-greene": ["Writer"],
     "adrian-pica-borjas": ["Writer"],
     "barbora-curejova": ["Actor"],
+    "jakub-muransky": ["Actor"],
+    "janka-starova": ["Actor"],
   },
 },
 

@@ -23,6 +23,7 @@ import {
   type DatEvent,
 } from "@/lib/events";
 import { productionMap } from "@/lib/productionMap";
+import { productionDetailsMap } from "@/lib/productionDetailsMap";
 
 /** Shaped to drop straight into the same PosterCard grid productions use. */
 export type TaxonomyEventCard = {
@@ -45,13 +46,26 @@ function slugifyLabel(value: string): string {
 }
 
 /**
- * True when this event should stand in for a missing production.
- * Theatre only, and only while productionMap has nothing for it.
+ * True when this event should stand in for a production that cannot yet
+ * represent itself on a taxonomy page.
+ *
+ * Theatre only. The hand-off is per-field on purpose: these grids read causes
+ * and themes out of productionDetailsMap, so a productionMap entry alone is not
+ * enough — a production with no productionDetailsMap causes would drop off the
+ * cause page entirely if the event stepped aside for it. The event keeps
+ * standing in until the production actually declares the field in question.
  */
-function isStandIn(event: DatEvent): boolean {
+function isStandIn(event: DatEvent, field: "causes" | "themes"): boolean {
   if (event.category !== "performance") return false;
-  if (event.production) return false;
-  if (productionMap[event.id]) return false;
+
+  // Explicitly linked to a production: that production speaks for it, but only
+  // once the production carries this field.
+  const productionSlug = event.production ?? (productionMap[event.id] ? event.id : undefined);
+  if (productionSlug) {
+    const extra = productionDetailsMap[productionSlug];
+    if (extra?.[field]?.length) return false;
+  }
+
   return true;
 }
 
@@ -85,14 +99,11 @@ function toCard(event: DatEvent): TaxonomyEventCard {
   };
 }
 
-function standIns(): DatEvent[] {
-  return events.filter(isStandIn);
-}
-
 /** Theatre events whose `causes` include the given slug (subcategory, category, or label). */
 export function eventsForCause(causeSlug: string): TaxonomyEventCard[] {
   const target = slugifyLabel(causeSlug);
-  return standIns()
+  return events
+    .filter((event) => isStandIn(event, "causes"))
     .filter((event) =>
       (event.causes ?? []).some(
         (cause) =>
@@ -108,7 +119,8 @@ export function eventsForCause(causeSlug: string): TaxonomyEventCard[] {
 /** Theatre events whose `themes` include the given slug. */
 export function eventsForTheme(themeSlug: string): TaxonomyEventCard[] {
   const target = slugifyLabel(themeSlug);
-  return standIns()
+  return events
+    .filter((event) => isStandIn(event, "themes"))
     .filter((event) =>
       (event.themes ?? []).some((theme) => slugifyLabel(theme) === target),
     )
@@ -119,7 +131,8 @@ export function eventsForTheme(themeSlug: string): TaxonomyEventCard[] {
 /** Every theme declared by a stand-in event — for "explore more" chip lists. */
 export function allEventThemes(): string[] {
   const seen = new Set<string>();
-  for (const event of standIns()) {
+  for (const event of events) {
+    if (!isStandIn(event, "themes")) continue;
     for (const theme of event.themes ?? []) seen.add(theme);
   }
   return [...seen];
