@@ -272,6 +272,31 @@ export interface DatEvent {
   companyExclude?: string[];
 
   /**
+   * Creative Team rows for people with no alumni record — partner-organization
+   * staff, guest collaborators, local crew. Name and link are given explicitly
+   * rather than resolved from a slug, so diacritics survive and the link can
+   * point anywhere (a partner's site, not a DAT profile).
+   *
+   * Set `company: true` to place a row in the trailing institutional block
+   * alongside the org titles; otherwise it sits with the show's own credits.
+   * Someone may have one of each — a show role and the title they hold at
+   * their organization.
+   *
+   * Example:
+   *   extraCredits: [
+   *     { role: "Producer", name: "Veronika Poklembová", href: "https://etp.sk" },
+   *     { role: "Director, ETP Slovensko", name: "Veronika Poklembová",
+   *       href: "https://etp.sk", company: true },
+   *   ]
+   */
+  extraCredits?: {
+    role: string;
+    name: string;
+    href?: string;
+    company?: boolean;
+  }[];
+
+  /**
    * Heading for the photo-card roster block. Defaults to "Cast".
    * Use for devised or ensemble work where "Cast" reads wrong
    * (e.g. "The Company", "The Ensemble").

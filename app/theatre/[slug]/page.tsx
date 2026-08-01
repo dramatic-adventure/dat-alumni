@@ -182,6 +182,7 @@ export default async function TheatreProductionPage({ params }: PageProps) {
             await loadAlumni(),
             resolved.companyExclude,
             resolved.companyPrograms,
+            resolved.extraCredits,
           )
         : [];
 

@@ -202,6 +202,22 @@ export const season20Events: DatEvent[] = [
     // Junior Field Artists are kept off the public roster; their PASSAGE credit
     // in programMap is unchanged.
     companyExclude: ["asa-madrazo-williamson", "vida-madrazo-williamson"],
+    // Veronika has no alumni record — she's ETP's director, not a DAT artist —
+    // so both rows are explicit. Two credits, because she did the producing
+    // work on this show AND leads the partner organization that made it possible.
+    extraCredits: [
+      {
+        role: "Producer",
+        name: "Veronika Poklembová",
+        href: "https://etp.sk",
+      },
+      {
+        role: "Director, ETP Slovensko",
+        name: "Veronika Poklembová",
+        href: "https://etp.sk",
+        company: true,
+      },
+    ],
     partners: [
       {
         name: "ETP Slovensko",

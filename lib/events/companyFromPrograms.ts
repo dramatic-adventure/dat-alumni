@@ -146,6 +146,7 @@ export function buildCompanyFromProduction(
   alumni: AlumniRow[],
   excludeSlugs?: string[],
   programSlugs?: string[],
+  extraCredits?: { role: string; name: string; href?: string; company?: boolean }[],
 ): CompanyCredit[] {
   if (!productionSlug) return [];
   const artists = productionMap[productionSlug]?.artists;
@@ -211,6 +212,18 @@ export function buildCompanyFromProduction(
   cast.sort((a, b) =>
     surnameKey(a.name).localeCompare(surnameKey(b.name), "sk", { sensitivity: "base" }),
   );
+
+  // Collaborators with no alumni row — partner staff, guest crew. Explicit
+  // name and link, so they sort by position like everyone else.
+  for (const extra of extraCredits ?? []) {
+    const row: CompanyCredit = {
+      role: extra.role,
+      name: extra.name,
+      ...(extra.href ? { href: extra.href } : {}),
+      group: "creative",
+    };
+    (extra.company ? companyCredits : showCredits).push(row);
+  }
 
   // Each block reads by position, the way a printed programme does — all the
   // stage directors together, and so on. Within a title, alphabetical by
