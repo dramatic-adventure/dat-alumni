@@ -35,25 +35,25 @@ export type CompanyCredit = {
 const CAST_ROLE = /actor|actress|performer|puppeteer|musician|dancer|singer|ensemble|narrator/i;
 
 /**
- * Creative Team billing order, by position rather than by person.
- * Earlier patterns rank higher; anything unmatched sits in the middle, between
- * the show's own team and the organizational titles.
+ * Billing order within a block. Earlier patterns rank higher; anything
+ * unmatched sorts after the named positions but before writers.
  */
 const CREDIT_ORDER: RegExp[] = [
   /^stage director$/i,
   /^assistant stage director$/i,
-  /director$/i,          // remaining show-side directors (technical, etc.)
+  /^(artistic|managing|executive) director$/i,
+  /director/i,
   /consultant$/i,
   /dramaturg|playwright/i,
   /designer|design$/i,
-  /stage manager|road manager|manager/i,
-  /^writer$/i,           // writers last — the running order carries the detail
+  /manager/i,
+  /^writer$/i, // writers last — the running order carries who wrote what
 ];
-const UNRANKED = CREDIT_ORDER.findIndex((r) => /manager/.test(r.source));
+const WRITER_RANK = CREDIT_ORDER.length - 1;
 
 function creditRank(role: string): number {
   const i = CREDIT_ORDER.findIndex((re) => re.test(role.trim()));
-  return i === -1 ? UNRANKED - 0.5 : i;
+  return i === -1 ? WRITER_RANK - 0.5 : i;
 }
 
 /**
@@ -170,7 +170,12 @@ export function buildCompanyFromProduction(
   const alumniBySlug = new Map(alumni.map((a) => [a.slug, a]));
   const excluded = new Set(excludeSlugs ?? []);
   const cast: CompanyCredit[] = [];
-  const creative: CompanyCredit[] = [];
+  // Two Creative Team blocks, split by where the credit comes from rather than
+  // by how the title is worded: productionMap is what someone did on this show,
+  // programMap is the title they carry for the company and the trip. The show
+  // block reads first — a reader is here for the production, not the masthead.
+  const showCredits: CompanyCredit[] = [];
+  const companyCredits: CompanyCredit[] = [];
 
   for (const [artistSlug, roles] of Object.entries(artists)) {
     if (excluded.has(artistSlug)) continue;
@@ -183,11 +188,6 @@ export function buildCompanyFromProduction(
     const castRoles = roles.filter((r) => CAST_ROLE.test(r));
     const creativeRoles = roles.filter((r) => !CAST_ROLE.test(r));
 
-    // Show role first, then the trip title, skipping exact duplicates.
-    for (const title of programTitles.get(artistSlug) ?? []) {
-      if (!creativeRoles.includes(title)) creativeRoles.push(title);
-    }
-
     // Cast is one card per person — a photo card per role would duplicate the
     // headshot — so combined roles stay on a single line ("Actor, Puppeteer").
     if (castRoles.length) {
@@ -197,7 +197,11 @@ export function buildCompanyFromProduction(
     // Creative Team is one row per title, so each job is credited on its own
     // terms. Someone who directs and also holds an org title appears twice.
     for (const role of creativeRoles) {
-      creative.push({ ...identity, role, group: "creative" });
+      showCredits.push({ ...identity, role, group: "creative" });
+    }
+    for (const title of programTitles.get(artistSlug) ?? []) {
+      if (creativeRoles.includes(title)) continue;
+      companyCredits.push({ ...identity, role: title, group: "creative" });
     }
   }
 
@@ -208,18 +212,19 @@ export function buildCompanyFromProduction(
     surnameKey(a.name).localeCompare(surnameKey(b.name), "sk", { sensitivity: "base" }),
   );
 
-  // Creative Team reads by position, the way a printed programme does: all the
-  // stage directors together, then the rest of the show's team, then the
-  // organizational titles, then the writers. Within a title, alphabetical by
-  // surname so no one is ranked. Unlisted titles fall between the show's team
-  // and the org titles, in the order the data supplies them.
-  creative.sort((a, b) => {
+  // Each block reads by position, the way a printed programme does — all the
+  // stage directors together, and so on. Within a title, alphabetical by
+  // surname so no one is ranked above anyone else.
+  const byPosition = (a: CompanyCredit, b: CompanyCredit) => {
     const rank = creditRank(a.role) - creditRank(b.role);
     if (rank !== 0) return rank;
     const byTitle = a.role.localeCompare(b.role, "sk", { sensitivity: "base" });
     if (byTitle !== 0) return byTitle;
     return surnameKey(a.name).localeCompare(surnameKey(b.name), "sk", { sensitivity: "base" });
-  });
+  };
+  showCredits.sort(byPosition);
+  companyCredits.sort(byPosition);
+  const creative = [...showCredits, ...companyCredits];
 
   // Creative team keeps its authored order, which encodes the hierarchy that
   // matters there (stage directors, then assistant, then technical).
