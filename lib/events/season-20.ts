@@ -208,6 +208,17 @@ export const season20Events: DatEvent[] = [
     // Junior Field Artists are kept off the public roster; their PASSAGE credit
     // in programMap is unchanged.
     companyExclude: ["asa-madrazo-williamson", "vida-madrazo-williamson"],
+    // Host-company billing: the Slovak and Romani artists lead, visiting
+    // artists follow. Alphabetical within each group.
+    castBillingFirst: [
+      "barbora-curejova",
+      "barbara-herucova",
+      "alica-hingisova",
+      "lukas-hudak",
+      "tatiana-kukova",
+      "jakub-muransky",
+      "jana-stafurova",
+    ],
     // Veronika has no alumni record — she's ETP's director, not a DAT artist —
     // so the row is explicit. One credit carrying both facts: what she did on
     // this show, and the organization she leads.

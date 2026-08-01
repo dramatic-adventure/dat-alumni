@@ -289,6 +289,17 @@ export interface DatEvent {
   companyExclude?: string[];
 
   /**
+   * Cast members billed ahead of the rest, alphabetical within each group.
+   * For a co-production this is the host company's artists: the people whose
+   * home the work was made in lead the billing, visiting artists follow.
+   * Everyone not listed keeps the default alphabetical order.
+   *
+   * Example:
+   *   castBillingFirst: ["barbora-curejova", "jakub-muransky"],
+   */
+  castBillingFirst?: string[];
+
+  /**
    * Creative Team rows for people with no alumni record — partner-organization
    * staff, guest collaborators, local crew. Name and link are given explicitly
    * rather than resolved from a slug, so diacritics survive and the link can

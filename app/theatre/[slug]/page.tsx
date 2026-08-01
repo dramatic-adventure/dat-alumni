@@ -240,13 +240,12 @@ export default async function TheatreProductionPage({ params }: PageProps) {
         resolved.production ?? (productionMap[resolved.id] ? resolved.id : undefined);
 
       const company = productionSlug
-        ? buildCompanyFromProduction(
-            productionSlug,
-            await loadAlumni(),
-            resolved.companyExclude,
-            resolved.companyPrograms,
-            resolved.extraCredits,
-          )
+        ? buildCompanyFromProduction(productionSlug, await loadAlumni(), {
+            excludeSlugs: resolved.companyExclude,
+            programSlugs: resolved.companyPrograms,
+            extraCredits: resolved.extraCredits,
+            billFirst: resolved.castBillingFirst,
+          })
         : [];
 
       const fallback = company.length

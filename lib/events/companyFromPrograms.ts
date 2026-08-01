@@ -141,13 +141,24 @@ export function buildCompanyFromPrograms(
  * authority on who is on stage. Only people in the production are listed;
  * programme data enriches them, it does not add anyone.
  */
+export type BuildCompanyOptions = {
+  excludeSlugs?: string[];
+  programSlugs?: string[];
+  extraCredits?: { role: string; name: string; href?: string; company?: boolean }[];
+  /**
+   * Slugs billed ahead of the rest of the cast, alphabetical within each group.
+   * For a co-production this is the host company's artists — the people whose
+   * home the work was made in lead the billing, and visiting artists follow.
+   */
+  billFirst?: string[];
+};
+
 export function buildCompanyFromProduction(
   productionSlug: string | undefined,
   alumni: AlumniRow[],
-  excludeSlugs?: string[],
-  programSlugs?: string[],
-  extraCredits?: { role: string; name: string; href?: string; company?: boolean }[],
+  options: BuildCompanyOptions = {},
 ): CompanyCredit[] {
+  const { excludeSlugs, programSlugs, extraCredits, billFirst } = options;
   if (!productionSlug) return [];
   const artists = productionMap[productionSlug]?.artists;
   if (!artists) return [];
@@ -170,6 +181,9 @@ export function buildCompanyFromProduction(
 
   const alumniBySlug = new Map(alumni.map((a) => [a.slug, a]));
   const excluded = new Set(excludeSlugs ?? []);
+  const billed = new Set(billFirst ?? []);
+  // Two cast groups so the host company's artists lead the billing.
+  const castBilled: CompanyCredit[] = [];
   const cast: CompanyCredit[] = [];
   // Two Creative Team blocks, split by where the credit comes from rather than
   // by how the title is worded: productionMap is what someone did on this show,
@@ -192,7 +206,8 @@ export function buildCompanyFromProduction(
     // Cast is one card per person — a photo card per role would duplicate the
     // headshot — so combined roles stay on a single line ("Actor, Puppeteer").
     if (castRoles.length) {
-      cast.push({ ...identity, role: castRoles.join(", "), group: "cast" });
+      const row = { ...identity, role: castRoles.join(", "), group: "cast" as const };
+      (billed.has(artistSlug) ? castBilled : cast).push(row);
     }
 
     // Creative Team is one row per title, so each job is credited on its own
@@ -206,12 +221,13 @@ export function buildCompanyFromProduction(
     }
   }
 
-  // Cast is billed alphabetically by surname — the standard ensemble
+  // Alphabetical by surname within each billing group — the standard ensemble
   // convention, and the honest one for devised work where no one is the lead.
   // Slovak collation so Č/Š/Ť sort where a Slovak reader expects them.
-  cast.sort((a, b) =>
-    surnameKey(a.name).localeCompare(surnameKey(b.name), "sk", { sensitivity: "base" }),
-  );
+  const bySurname = (a: CompanyCredit, b: CompanyCredit) =>
+    surnameKey(a.name).localeCompare(surnameKey(b.name), "sk", { sensitivity: "base" });
+  castBilled.sort(bySurname);
+  cast.sort(bySurname);
 
   // Collaborators with no alumni row — partner staff, guest crew. Explicit
   // name and link, so they sort by position like everyone else.
@@ -239,9 +255,7 @@ export function buildCompanyFromProduction(
   companyCredits.sort(byPosition);
   const creative = [...showCredits, ...companyCredits];
 
-  // Creative team keeps its authored order, which encodes the hierarchy that
-  // matters there (stage directors, then assistant, then technical).
-  // Creative first so the template's "Creative Team" heading logic
-  // (which switches to "The Company" when there is no cast) stays correct.
-  return [...creative, ...cast];
+  // Creative first so the template's heading logic (which switches to
+  // "The Company" when there is no cast) stays correct.
+  return [...creative, ...castBilled, ...cast];
 }
