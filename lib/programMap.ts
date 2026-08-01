@@ -183,7 +183,7 @@ export const programMap: Record<string, ProgramData> = {
     "jesse-baxter": ["Artistic Director"],
     "christen-madrazo": ["Director of Creative Learning"],
     "jason-williamson": ["Resident Playwright"],
-    "barbara-herucova": ["Road Manager"],
+    "barbara-herucova": ["Manager of Community Partnerships in Czechia & Slovakia"],
     "tatiana-kukova": ["Road Manager"],
     "asa-madrazo-williamson": ["Junior Field Artist"],
     "vida-madrazo-williamson": ["Junior Field Artist"],
