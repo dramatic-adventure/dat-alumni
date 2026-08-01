@@ -12,20 +12,32 @@ import { TRAVELING_ARTIST_COUNT_DISPLAY, SEASON_COUNT, PRODUCTION_COUNT, CLUB_CO
 
 const STORAGE_KEY = "dat-cs-seen";
 
+/**
+ * Paths where the modal never appears. Use for pages being shared as a direct
+ * link to a specific audience — a modal in front of the content is friction
+ * when someone arrived deliberately rather than browsing.
+ */
+const SUPPRESSED_PATHS = [
+  "/field-kit",
+  "/theatre/water-that-wanders",
+];
+
 export default function ComingSoonModal() {
   const pathname = usePathname();
-  const isFieldKit = pathname?.startsWith("/field-kit") ?? false;
+  const isSuppressed = SUPPRESSED_PATHS.some(
+    (p) => pathname === p || pathname?.startsWith(`${p}/`),
+  );
   const [phase, setPhase] = useState<"hidden" | "entering" | "visible" | "exiting">("hidden");
 
   useEffect(() => {
-    if (isFieldKit) return;
+    if (isSuppressed) return;
     const today = new Date().toISOString().split("T")[0];
     const seen = localStorage.getItem(STORAGE_KEY);
     if (seen !== today) {
       const t = setTimeout(() => setPhase("entering"), 280);
       return () => clearTimeout(t);
     }
-  }, [isFieldKit]);
+  }, [isSuppressed]);
 
   // entering → visible after animation completes
   useEffect(() => {

@@ -322,6 +322,34 @@ export interface DatEvent {
   resources?: { label: string; href?: string }[];
 
   /**
+   * Programme for an anthology or collage evening: the pieces, in order, each
+   * with its own author. Renders between the About block and the company
+   * roster. Use when individual authorship can't be carried by `credits` —
+   * a collage where every piece has a different writer.
+   *
+   * `by` is the author line; `contributors` are per-piece credits like
+   * movement or puppetry. `performers` is optional and best left empty when
+   * it's the whole company, rather than repeating "The Company" every row.
+   *
+   * Example:
+   *   runningOrder: [
+   *     { title: "Som Voda", titleAlt: "I am water",
+   *       by: [{ name: "Janka Šťárová", href: "/alumni/janka-starova" }] },
+   *   ]
+   */
+  runningOrder?: {
+    /** Piece title as performed (may be Romani or Slovak). */
+    title: string;
+    /** Secondary title line — translation or alternate-language title. */
+    titleAlt?: string;
+    by?: { name: string; href?: string }[];
+    /** e.g. { role: "Movement", people: [...] } */
+    contributors?: { role: string; people: { name: string; href?: string }[] }[];
+    performers?: { name: string; href?: string }[];
+    note?: string;
+  }[];
+
+  /**
    * Press or audience quotes shown in the Quotes section.
    *
    * Example:

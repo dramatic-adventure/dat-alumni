@@ -17,6 +17,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { programMap } from "@/lib/programMap";
+import { productionMap } from "@/lib/productionMap";
 import type { AlumniRow } from "@/lib/types";
 
 export type CompanyCredit = {
@@ -26,6 +27,12 @@ export type CompanyCredit = {
   group?: "creative" | "cast";
   photo?: string;
 };
+
+/**
+ * Roles that put someone on stage. Everything else is creative team.
+ * Matched loosely so "Lead Actor" or "Live Musician" still land as cast.
+ */
+const CAST_ROLE = /actor|actress|performer|puppeteer|musician|dancer|singer|ensemble|narrator/i;
 
 /** "barbora-curejova" → "Barbora Curejova" (last-resort display name). */
 function nameFromSlug(slug: string): string {
@@ -83,4 +90,53 @@ export function buildCompanyFromPrograms(
       group,
     } satisfies CompanyCredit;
   });
+}
+
+/**
+ * Builds the roster from a productionMap entry, split into Cast and Creative
+ * Team the way the production page does it (see /theatre/a-girl-without-wings).
+ *
+ * Production roles are the show's own roles — "Director", "Actor", "Puppeteer" —
+ * rather than the programme roles someone carries for the whole trip
+ * ("Artistic Director", "Road Manager"), so this is the better source once the
+ * production record exists. Someone credited both ways appears in both
+ * sections, carrying only the roles that belong to each: Jesse Baxter reads
+ * "Director" under Creative Team and "Actor" under Cast.
+ */
+export function buildCompanyFromProduction(
+  productionSlug: string | undefined,
+  alumni: AlumniRow[],
+  excludeSlugs?: string[],
+): CompanyCredit[] {
+  if (!productionSlug) return [];
+  const artists = productionMap[productionSlug]?.artists;
+  if (!artists) return [];
+
+  const alumniBySlug = new Map(alumni.map((a) => [a.slug, a]));
+  const excluded = new Set(excludeSlugs ?? []);
+  const cast: CompanyCredit[] = [];
+  const creative: CompanyCredit[] = [];
+
+  for (const [artistSlug, roles] of Object.entries(artists)) {
+    if (excluded.has(artistSlug)) continue;
+    const alum = alumniBySlug.get(artistSlug);
+    const identity = {
+      name: alum?.name ?? nameFromSlug(artistSlug),
+      ...(alum ? { href: `/alumni/${alum.slug}` } : {}),
+    };
+
+    const castRoles = roles.filter((r) => CAST_ROLE.test(r));
+    const creativeRoles = roles.filter((r) => !CAST_ROLE.test(r));
+
+    if (castRoles.length) {
+      cast.push({ ...identity, role: castRoles.join(", "), group: "cast" });
+    }
+    if (creativeRoles.length) {
+      creative.push({ ...identity, role: creativeRoles.join(", "), group: "creative" });
+    }
+  }
+
+  // Creative team first so the template's "Creative Team" heading logic
+  // (which switches to "The Company" when there is no cast) stays correct.
+  return [...creative, ...cast];
 }

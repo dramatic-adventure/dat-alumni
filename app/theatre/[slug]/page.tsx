@@ -16,7 +16,10 @@ import { eventsByProduction, eventById, canonicalEventPath } from "@/lib/events"
 
 import EventDetailPageTemplate from "@/components/events/EventDetailPageTemplate";
 import { resolvePerformanceEvent } from "@/lib/events/resolvePerformanceEvent";
-import { buildCompanyFromPrograms } from "@/lib/events/companyFromPrograms";
+import {
+  buildCompanyFromPrograms,
+  buildCompanyFromProduction,
+} from "@/lib/events/companyFromPrograms";
 import { loadAlumni } from "@/lib/loadAlumni";
 
 // NOTE: params is now a Promise in Next 15 for some routes
@@ -167,18 +170,34 @@ export default async function TheatreProductionPage({ params }: PageProps) {
   if (performanceEvent?.category === "performance") {
     const resolved = resolvePerformanceEvent(performanceEvent);
 
-    // Company roster from programMap (live) when the event declares
-    // `companyPrograms` and carries no hand-written credits. Runs before the
-    // headshot pass below so program-built credits get photos too.
+    // Company roster, when the event carries no hand-written credits.
+    // Preferred source is the production's own artist list — those are the
+    // show's roles (Director, Actor, Puppeteer), split into Creative Team and
+    // Cast. Falls back to programMap trip roles while no production exists.
+    // Runs before the headshot pass below so built credits get photos too.
     // loadAlumni is request-memoized via cache().
-    if (!resolved.credits?.length && resolved.companyPrograms?.length) {
-      const company = buildCompanyFromPrograms(
-        resolved.companyPrograms,
-        await loadAlumni(),
-        "cast",
-        resolved.companyExclude,
-      );
-      if (company.length) resolved.credits = company;
+    if (!resolved.credits?.length) {
+      const productionSlug =
+        resolved.production ?? (productionMap[resolved.id] ? resolved.id : undefined);
+
+      const company = productionSlug
+        ? buildCompanyFromProduction(
+            productionSlug,
+            await loadAlumni(),
+            resolved.companyExclude,
+          )
+        : [];
+
+      const fallback = company.length
+        ? company
+        : buildCompanyFromPrograms(
+            resolved.companyPrograms,
+            await loadAlumni(),
+            "cast",
+            resolved.companyExclude,
+          );
+
+      if (fallback.length) resolved.credits = fallback;
     }
 
     // Enrich credits with real alumni headshots.

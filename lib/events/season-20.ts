@@ -263,6 +263,91 @@ export const season20Events: DatEvent[] = [
         href: "https://etp.sk",
       },
     ],
+    // Programme for the evening. Each piece carries its own author, which is
+    // how individual authorship stays visible in a collage — the roster below
+    // deliberately does not repeat "Writer" on everyone.
+    runningOrder: [
+      {
+        title: "Teme mamo adarik Džav",
+        titleAlt: "Keď ja mamko tadiaľ idem · Look mom, I’m going this way",
+        by: [{ name: "Lukáš Hudák", href: "/alumni/lukas-hudak" }],
+      },
+      {
+        title: "Všímaj si",
+        titleAlt: "Observe",
+        by: [
+          { name: "Jana", href: undefined },
+          { name: "Alica Hingisová", href: "/alumni/alica-hingisova" },
+          { name: "Jakub Muranský", href: "/alumni/jakub-muransky" },
+          { name: "Jesse Baxter", href: "/alumni/jesse-baxter" },
+        ],
+      },
+      {
+        title: "Som Voda",
+        titleAlt: "I am water",
+        by: [{ name: "Janka Šťárová", href: "/alumni/janka-starova" }],
+      },
+      {
+        title: "The Farm",
+        titleAlt: "Farma",
+        by: [{ name: "Adrián Pica Borjas", href: "/alumni/adrian-pica-borjas" }],
+        contributors: [
+          {
+            role: "Movement",
+            people: [{ name: "Jakub Muranský", href: "/alumni/jakub-muransky" }],
+          },
+        ],
+      },
+      {
+        title: "Church Crawl",
+        titleAlt: "Putovanie po kostoloch",
+        by: [{ name: "Christina Greene", href: "/alumni/christina-greene" }],
+      },
+      {
+        title: "Paňi panori čhajori romaňi",
+        titleAlt: "Pri vodičke rómske dievčatko · Sweet little Romani girl near lovely waters",
+        by: [{ name: "Lukáš Hudák", href: "/alumni/lukas-hudak" }],
+      },
+      {
+        title: "Vnímaj",
+        titleAlt: "Notice",
+        by: [
+          { name: "Jana", href: undefined },
+          { name: "Alica Hingisová", href: "/alumni/alica-hingisova" },
+          { name: "Jakub Muranský", href: "/alumni/jakub-muransky" },
+          { name: "Jesse Baxter", href: "/alumni/jesse-baxter" },
+        ],
+      },
+      {
+        title: "Kúpalisko",
+        titleAlt: "The Pool",
+        by: [{ name: "Tatiana Kuková", href: "/alumni/tatiana-kukova" }],
+      },
+      {
+        title: "Spojenie",
+        titleAlt: "Connection",
+        by: [{ name: "Barbora Ćurejová", href: "/alumni/barbora-curejova" }],
+        contributors: [
+          {
+            role: "Puppetry",
+            people: [
+              { name: "Anna", href: undefined },
+              { name: "Alica Hingisová", href: "/alumni/alica-hingisova" },
+            ],
+          },
+        ],
+      },
+      {
+        title: "Nane cocha nane gad",
+        titleAlt: "Nie je sukňa nie sú šaty · No skirt, no dress",
+        by: [{ name: "Lukáš Hudák", href: "/alumni/lukas-hudak" }],
+      },
+      {
+        title: "The Water that Wanders",
+        titleAlt: "Voda, ktorá vandruje",
+        by: [{ name: "The Company" }],
+      },
+    ],
     artistNote:
       "Poor water has no speech / With which she could talk or sing, / Only sometimes she whispers / A silver splash like a heartbeat. / A heartbeat of speaking water. / But the water does not look behind. / It flees, runs farther away, / Where eyes will not see her — / The water that wanders.",
     artistNoteBy: "Papusza, “Water That Wanders”",

@@ -204,6 +204,7 @@ const CHROME: Record<string, Record<string, string>> = {
     partners: "Partneri", sponsorClub: "Podporte tento divadeln\u00fd klub",
     response: "Ohlasy", seeMore: "Zobrazi\u0165 viac", seeLess: "Zobrazi\u0165 menej",
     cast: "Obsadenie", productionHistory: "Hist\u00f3ria inscen\u00e1cie",
+    runningOrder: "Program ve\u010dera",
     fullCycle: "Cel\u00fd cyklus", workContinues: "PR\u00cdBEH POKRA\u010cUJE",
     reserveSeat: "REZERVOVA\u0164 MIESTO", nextUp: "Najbli\u017e\u0161ie",
     meetUsThere: "Stretnime sa tam", upcomingPerformances: "Nadch\u00e1dzaj\u00face predstavenia",
@@ -1793,6 +1794,89 @@ export default async function EventDetailPageTemplate({
                     ) : "See less"}
                   </span>
                 </button>
+              </div>
+            ) : null}
+
+            {/* Running order — programme for anthology / collage evenings.
+                Sits between the About block and the roster so the page reads
+                like a programme: what it is → what you'll see → who made it. */}
+            {event.runningOrder?.length ? (
+              <div className="evd-card-runorder">
+                <div className="evd-cast-head">
+                  <span className="evd-cast-head-rule" aria-hidden="true" />
+                  <p className="evd-cast-head-label">
+                    {isBilingual ? (
+                      <>
+                        <span className="evd-bilingual-wrap-default">Running Order</span>
+                        <span className={`evd-bilingual-wrap-alt evd-bilingual-${altLang}`}>
+                          {C.runningOrder ?? "Running Order"}
+                        </span>
+                      </>
+                    ) : "Running Order"}
+                  </p>
+                  <span className="evd-cast-head-rule" aria-hidden="true" />
+                </div>
+
+                <ol className="evd-runorder-list">
+                  {event.runningOrder.map((piece, i) => (
+                    <li key={i} className="evd-runorder-item">
+                      <span className="evd-runorder-num" aria-hidden="true">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <div className="evd-runorder-body">
+                        <p className="evd-runorder-title">{piece.title}</p>
+                        {piece.titleAlt ? (
+                          <p className="evd-runorder-title-alt">{piece.titleAlt}</p>
+                        ) : null}
+                        {piece.by?.length ? (
+                          <p className="evd-runorder-by">
+                            <span className="evd-runorder-by-label">by</span>{" "}
+                            {piece.by.map((p, j, arr) => (
+                              <span key={j}>
+                                {j > 0 && j === arr.length - 1 ? " & " : j > 0 ? ", " : ""}
+                                {p.href ? (
+                                  <Link href={p.href} className="evd-runorder-link">{p.name}</Link>
+                                ) : (
+                                  <span>{p.name}</span>
+                                )}
+                              </span>
+                            ))}
+                          </p>
+                        ) : null}
+                        {piece.contributors?.map((c, k) => (
+                          <p key={k} className="evd-runorder-meta">
+                            {c.role} —{" "}
+                            {c.people.map((p, j, arr) => (
+                              <span key={j}>
+                                {j > 0 && j === arr.length - 1 ? " & " : j > 0 ? ", " : ""}
+                                {p.href ? (
+                                  <Link href={p.href} className="evd-runorder-link">{p.name}</Link>
+                                ) : (
+                                  <span>{p.name}</span>
+                                )}
+                              </span>
+                            ))}
+                          </p>
+                        ))}
+                        {piece.performers?.length ? (
+                          <p className="evd-runorder-meta">
+                            {piece.performers.map((p, j, arr) => (
+                              <span key={j}>
+                                {j > 0 && j === arr.length - 1 ? " & " : j > 0 ? ", " : ""}
+                                {p.href ? (
+                                  <Link href={p.href} className="evd-runorder-link">{p.name}</Link>
+                                ) : (
+                                  <span>{p.name}</span>
+                                )}
+                              </span>
+                            ))}
+                          </p>
+                        ) : null}
+                        {piece.note ? <p className="evd-runorder-meta">{piece.note}</p> : null}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
               </div>
             ) : null}
 
@@ -3519,6 +3603,88 @@ export default async function EventDetailPageTemplate({
           letter-spacing: 0.22em;
           text-transform: uppercase;
           color: rgba(36,17,35,0.55);
+        }
+
+        /* ── Running order (programme for collage / anthology evenings) ──── */
+        .evd-card-runorder {
+          margin-top: clamp(2rem, 4vw, 3rem);
+          padding-top: clamp(2rem, 4vw, 3rem);
+          border-top: 1px solid rgba(36,17,35,0.08);
+        }
+        .evd-runorder-list {
+          list-style: none;
+          margin: clamp(1.5rem, 3vw, 2.25rem) 0 0;
+          padding: 0;
+          max-width: 46rem;
+          margin-inline: auto;
+        }
+        .evd-runorder-item {
+          display: grid;
+          grid-template-columns: 2.25rem minmax(0, 1fr);
+          gap: 0 1rem;
+          padding-bottom: 1.15rem;
+          margin-bottom: 1.15rem;
+          border-bottom: 1px solid rgba(36,17,35,0.08);
+        }
+        .evd-runorder-item:last-child {
+          padding-bottom: 0;
+          margin-bottom: 0;
+          border-bottom: 0;
+        }
+        .evd-runorder-num {
+          font-family: "DM Sans", sans-serif;
+          font-size: 0.8rem;
+          font-weight: 300;
+          letter-spacing: 0.08em;
+          color: rgba(36,17,35,0.38);
+          padding-top: 0.35rem;
+        }
+        .evd-runorder-title {
+          font-family: "Anton", sans-serif;
+          font-size: clamp(1.05rem, 2vw, 1.3rem);
+          line-height: 1.25;
+          letter-spacing: 0.01em;
+          text-transform: uppercase;
+          color: #241123;
+          margin: 0;
+        }
+        .evd-runorder-title-alt {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.95rem;
+          font-style: italic;
+          line-height: 1.4;
+          color: rgba(36,17,35,0.62);
+          margin: 0.15rem 0 0;
+        }
+        .evd-runorder-by {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.98rem;
+          line-height: 1.5;
+          color: rgba(36,17,35,0.88);
+          margin: 0.4rem 0 0;
+        }
+        .evd-runorder-by-label {
+          color: rgba(36,17,35,0.5);
+        }
+        .evd-runorder-meta {
+          font-family: "Space Grotesk", sans-serif;
+          font-size: 0.88rem;
+          line-height: 1.5;
+          color: rgba(36,17,35,0.58);
+          margin: 0.2rem 0 0;
+        }
+        .evd-runorder-link {
+          color: inherit;
+          text-decoration: underline;
+          text-decoration-thickness: 1px;
+          text-underline-offset: 0.18em;
+          text-decoration-color: rgba(242,51,89,0.55);
+          transition: color 140ms ease, text-decoration-color 140ms ease;
+        }
+        .evd-runorder-link:hover,
+        .evd-runorder-link:focus-visible {
+          color: #F23359;
+          text-decoration-color: #F23359;
         }
 
         /* Creative team inside card */
