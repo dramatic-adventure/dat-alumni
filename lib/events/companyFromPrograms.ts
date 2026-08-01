@@ -102,15 +102,39 @@ export function buildCompanyFromPrograms(
  * production record exists. Someone credited both ways appears in both
  * sections, carrying only the roles that belong to each: Jesse Baxter reads
  * "Director" under Creative Team and "Actor" under Cast.
+ *
+ * `programSlugs` additionally folds each person's off-stage programme titles
+ * ("Artistic Director", "Road Manager") into their Creative Team line, so the
+ * page shows both what they did on the show and what they carry for the trip.
+ * Performing roles from the programmes are ignored — the production is the
+ * authority on who is on stage. Only people in the production are listed;
+ * programme data enriches them, it does not add anyone.
  */
 export function buildCompanyFromProduction(
   productionSlug: string | undefined,
   alumni: AlumniRow[],
   excludeSlugs?: string[],
+  programSlugs?: string[],
 ): CompanyCredit[] {
   if (!productionSlug) return [];
   const artists = productionMap[productionSlug]?.artists;
   if (!artists) return [];
+
+  // Off-stage programme titles, keyed by artist slug.
+  const programTitles = new Map<string, string[]>();
+  for (const programSlug of programSlugs ?? []) {
+    const program = programMap[programSlug];
+    if (!program?.artists) continue;
+    for (const [artistSlug, roles] of Object.entries(program.artists)) {
+      const existing = programTitles.get(artistSlug) ?? [];
+      for (const role of roles) {
+        if (role && !CAST_ROLE.test(role) && !existing.includes(role)) {
+          existing.push(role);
+        }
+      }
+      programTitles.set(artistSlug, existing);
+    }
+  }
 
   const alumniBySlug = new Map(alumni.map((a) => [a.slug, a]));
   const excluded = new Set(excludeSlugs ?? []);
@@ -127,6 +151,11 @@ export function buildCompanyFromProduction(
 
     const castRoles = roles.filter((r) => CAST_ROLE.test(r));
     const creativeRoles = roles.filter((r) => !CAST_ROLE.test(r));
+
+    // Show role first, then the trip title, skipping exact duplicates.
+    for (const title of programTitles.get(artistSlug) ?? []) {
+      if (!creativeRoles.includes(title)) creativeRoles.push(title);
+    }
 
     if (castRoles.length) {
       cast.push({ ...identity, role: castRoles.join(", "), group: "cast" });

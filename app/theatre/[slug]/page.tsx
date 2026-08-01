@@ -185,6 +185,7 @@ export default async function TheatreProductionPage({ params }: PageProps) {
             productionSlug,
             await loadAlumni(),
             resolved.companyExclude,
+            resolved.companyPrograms,
           )
         : [];
 
