@@ -29,8 +29,16 @@ export default function ComingSoonModal() {
   );
   const [phase, setPhase] = useState<"hidden" | "entering" | "visible" | "exiting">("hidden");
 
+  // Re-evaluated whenever the visitor crosses into or out of a suppressed
+  // path. Leaving one shows the modal (if they haven't dismissed it today);
+  // entering one closes it, rather than leaving it open over a page that
+  // opted out. Dismissal is NOT recorded here — they never really saw it, so
+  // it should still greet them on the next ordinary page.
   useEffect(() => {
-    if (isSuppressed) return;
+    if (isSuppressed) {
+      setPhase("hidden");
+      return;
+    }
     const today = new Date().toISOString().split("T")[0];
     const seen = localStorage.getItem(STORAGE_KEY);
     if (seen !== today) {

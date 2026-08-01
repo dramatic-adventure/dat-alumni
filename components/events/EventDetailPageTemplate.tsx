@@ -1541,17 +1541,26 @@ export default async function EventDetailPageTemplate({
                           const clubBadgeSize = 110;
                           return (
                         <div className="evd-impact-clubs">
-                          {linkedDramaClubs.map((club) => (
-                            <Link
+                          {linkedDramaClubs.map((club) => {
+                            // `dramaClubsLinked: false` keeps the badge and the
+                            // credit but drops the link, for clubs whose pages
+                            // aren't ready to be sent traffic yet.
+                            const clubLinked = event.dramaClubsLinked !== false;
+                            const RowTag = clubLinked ? Link : "div";
+                            const rowProps = clubLinked
+                              ? { href: `/drama-club/${club.slug}` }
+                              : {};
+                            return (
+                            <RowTag
                               key={club.slug}
-                              href={`/drama-club/${club.slug}`}
+                              {...(rowProps as { href: string })}
                               className="evd-impact-club-row"
                             >
                               <DramaClubBadge
                                 name={club.name}
                                 location={club.location}
                                 size={clubBadgeSize}
-                                wrappedByParentLink
+                                wrappedByParentLink={clubLinked}
                               />
                               <div className="evd-impact-club-copy">
                                 <p className="evd-impact-support-eyebrow">
@@ -1565,8 +1574,9 @@ export default async function EventDetailPageTemplate({
                                 <p className="evd-impact-club-name">{club.name}</p>
                                 <p className="evd-impact-club-loc">DAT Drama Club</p>
                               </div>
-                            </Link>
-                          ))}
+                            </RowTag>
+                            );
+                          })}
                         </div>
                           );
                         })() : null}

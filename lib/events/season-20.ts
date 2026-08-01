@@ -189,6 +189,8 @@ export const season20Events: DatEvent[] = [
     language: "Performed in English, Slovak, and Romani",
     accessibility: "In-person performance",
     dramaClubs: ["zt-youth-ensemble", "lunik-ix-collective"],
+    // Clubs are credited but not linked — their pages aren't built out yet.
+    dramaClubsLinked: false,
     image: "/posters/water-that-wanders.jpeg",
     description:
       "US, Slovak, and Romani artists unite to share this eclectic evening of work in progress. Theatre, storytelling, and poetry fuse as we explore the confluence of lived experience that happens when people from different worlds join hands and step together into waters less known.",

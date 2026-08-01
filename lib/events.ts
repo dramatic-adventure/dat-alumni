@@ -300,6 +300,13 @@ export interface DatEvent {
   castBillingFirst?: string[];
 
   /**
+   * Set to `false` to show the drama club badge and credit without linking to
+   * the club page — for clubs whose pages aren't built out enough to send
+   * traffic to yet. Defaults to linked.
+   */
+  dramaClubsLinked?: boolean;
+
+  /**
    * Creative Team rows for people with no alumni record — partner-organization
    * staff, guest collaborators, local crew. Name and link are given explicitly
    * rather than resolved from a slug, so diacritics survive and the link can
