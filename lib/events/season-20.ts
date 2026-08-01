@@ -202,7 +202,6 @@ export const season20Events: DatEvent[] = [
     // Junior Field Artists are kept off the public roster; their PASSAGE credit
     // in programMap is unchanged.
     companyExclude: ["asa-madrazo-williamson", "vida-madrazo-williamson"],
-    companyLabel: "The Company",
     partners: [
       {
         name: "ETP Slovensko",
@@ -410,7 +409,6 @@ export const season20Events: DatEvent[] = [
           "Tešíme sa na stretnutie.",
         impactBlurb:
           "Toto podujatie podporuje ETP Slovensko, komunitného partnera DAT na východnom Slovensku. Prostredníctvom vzdelávania, mentoringu, komunitného rozvoja a dlhodobej lokálnej práce ETP Slovensko podporuje deti, rodiny a komunity pri rozširovaní príležitostí a posilňovaní ciest vpred. Vaša účasť, dobrovoľný príspevok alebo sponzorská podpora pomáha tejto dôležitej práci a zároveň vytvára priestor, kde sa umelci a komunity môžu stretnúť prostredníctvom príbehu, performance a tvorivej výmeny. Všetky dobrovoľné príspevky a výťažok z podujatia podporia ETP Slovensko.",
-        companyLabel: "Súbor",
         ticketPrice: "Vstup voľný · dobrovoľné príspevky vítané",
         language: "V angličtine, slovenčine a rómčine",
         accessibility: "Predstavenie naživo",
