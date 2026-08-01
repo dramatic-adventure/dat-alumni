@@ -166,11 +166,16 @@ export function buildCompanyFromProduction(
       if (!creativeRoles.includes(title)) creativeRoles.push(title);
     }
 
+    // Cast is one card per person — a photo card per role would duplicate the
+    // headshot — so combined roles stay on a single line ("Actor, Puppeteer").
     if (castRoles.length) {
       cast.push({ ...identity, role: castRoles.join(", "), group: "cast" });
     }
-    if (creativeRoles.length) {
-      creative.push({ ...identity, role: creativeRoles.join(", "), group: "creative" });
+
+    // Creative Team is one row per title, so each job is credited on its own
+    // terms. Someone who directs and also holds an org title appears twice.
+    for (const role of creativeRoles) {
+      creative.push({ ...identity, role, group: "creative" });
     }
   }
 

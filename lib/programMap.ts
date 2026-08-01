@@ -211,7 +211,7 @@ export const programMap: Record<string, ProgramData> = {
     "jesse-baxter": ["Artistic Director"],
     "christen-madrazo": ["Director of Creative Learning"],
     "jason-williamson": ["Resident Playwright"],
-    "barbara-herucova": ["Manager of Community Partnerships in Czechia and Slovakia"],
+    "barbara-herucova": ["Manager of Community Partnerships in Czechia & Slovakia"],
     "tatiana-kukova": ["Road Manager"],
     "christina-greene": ["Writer"],
     "adrian-pica-borjas": ["Writer"],
@@ -557,7 +557,7 @@ export const programMap: Record<string, ProgramData> = {
   externalUrl: "https://www.dramaticadventure.com/action",
   dramaClubSlugs: ["slum-dog-theatre", "stara-lubovna-story-circle", "Ronkovce Players"],
   artists: {
-    "tom-costello": ["Interim Manager of Community Partnerships in Czechia and Slovakia", "Director"],
+    "tom-costello": ["Interim Manager of Community Partnerships in Czechia & Slovakia", "Director"],
     "nicholas-linnehan": ["Actor"],
     "michael-axelrod": ["Actor"],
     "lacy-allen": ["Actor"],
