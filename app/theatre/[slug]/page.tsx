@@ -1,4 +1,5 @@
 // app/theatre/[slug]/page.tsx
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { productionMap, type Production } from "@/lib/productionMap";
 import {
@@ -12,7 +13,7 @@ import ProductionPageTemplate, {
 } from "@/components/productions/ProductionPageTemplate";
 import { buildRelated } from "@/lib/buildRelated";
 import { loadAlumniNameBySlug } from "@/lib/loadAlumni";
-import { eventsByProduction, eventById, canonicalEventPath } from "@/lib/events";
+import { eventsByProduction, eventById, canonicalEventPath, getEventImage } from "@/lib/events";
 
 import EventDetailPageTemplate from "@/components/events/EventDetailPageTemplate";
 import { resolvePerformanceEvent } from "@/lib/events/resolvePerformanceEvent";
@@ -24,6 +25,68 @@ import { loadAlumni } from "@/lib/loadAlumni";
 
 // NOTE: params is now a Promise in Next 15 for some routes
 type PageProps = { params: Promise<{ slug: string }> };
+
+const SITE_URL = "https://stories.dramaticadventure.com";
+
+/**
+ * Link-preview metadata for /theatre/[slug].
+ *
+ * Without this the route inherited the root layout's generic title and
+ * description, so every show pasted into WhatsApp, Facebook, or iMessage
+ * previewed as "Dramatic Adventure Theatre – Alumni Stories" with no image.
+ * Covers both shapes this route serves: performance events and productions.
+ */
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+
+  const event = eventById(slug);
+  const base = productionMap[slug];
+  const extra = productionDetailsMap[slug];
+
+  const title = event?.title ?? base?.title;
+  if (!title) return {};
+
+  // `shareDescription` is written for social; `description` is the page's own
+  // opening line and reads as a fragment out of context.
+  const description =
+    event?.shareDescription ??
+    event?.description ??
+    (Array.isArray(extra?.synopsis) ? extra?.synopsis[0] : extra?.synopsis) ??
+    "";
+
+  const rawImage = event
+    ? getEventImage(event)
+    : base
+      ? getHeroImageUrl(slug, base, extra)
+      : undefined;
+  const image = rawImage
+    ? rawImage.startsWith("http")
+      ? rawImage
+      : `${SITE_URL}${normalizeImagePath(rawImage) ?? rawImage}`
+    : undefined;
+
+  const url = `${SITE_URL}${event ? canonicalEventPath(event) : `/theatre/${slug}`}`;
+
+  return {
+    title: `${title} — Dramatic Adventure Theatre`,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      title,
+      description,
+      url,
+      siteName: "Dramatic Adventure Theatre",
+      ...(image ? { images: [{ url: image, alt: title }] } : {}),
+    },
+    twitter: {
+      card: image ? "summary_large_image" : "summary",
+      title,
+      description,
+      ...(image ? { images: [image] } : {}),
+    },
+  };
+}
 
 // Match the partners shape expected by ProductionPageTemplate
 type PartnerForTemplate = {

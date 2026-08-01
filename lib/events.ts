@@ -125,6 +125,23 @@ export interface DatEvent {
   /** Loose tags for filtering or display */
   tags?: string[];
 
+  /**
+   * Copy written for sharing rather than for the page: the link-preview
+   * description in WhatsApp / Facebook / iMessage, and the body of the share
+   * button's email and native share. Falls back to `description`, which is the
+   * page's opening line and tends to read as a fragment out of context.
+   *
+   * Keep it under ~200 characters — most platforms truncate past that.
+   */
+  shareDescription?: string;
+
+  /**
+   * One-line hook for the share button itself (Twitter, WhatsApp, native
+   * share sheet), where the URL is shown right next to it and long copy is
+   * dead weight. Falls back to the event title.
+   */
+  shareTitle?: string;
+
   /** Slug of a related production in productionMap */
   production?: string;
 

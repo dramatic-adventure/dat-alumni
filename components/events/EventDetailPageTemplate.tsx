@@ -772,8 +772,8 @@ function ArchivedEventInfoBand({
             <span className="evd-arc-divider" aria-hidden="true">|</span>
             <EventShareButton
               url={eventUrl}
-              title={`${event.title} — Dramatic Adventure Theatre`}
-              description={event.description}
+              title={event.shareTitle ?? `${event.title} — Dramatic Adventure Theatre`}
+              description={event.shareDescription ?? event.description}
               shareLabel={isBilingual ? (
                 <>
                   <span className="evd-bilingual-wrap-default">Share</span>

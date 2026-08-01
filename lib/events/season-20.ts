@@ -196,6 +196,12 @@ export const season20Events: DatEvent[] = [
       "US, Slovak, and Romani artists unite to share this eclectic evening of work in progress. Theatre, storytelling, and poetry fuse as we explore the confluence of lived experience that happens when people from different worlds join hands and step together into waters less known.\n\n" +
       "Dramatic Adventure Theatre (DAT) is excited to continue its 14-year collaboration with ETP Slovensko, which began in 2012 and has since spanned many devised theatre projects in Roma settlements throughout Eastern Slovakia. Water that Wanders represents a new step in our relationship as we co-produce this theatrical collage that gives Košice audiences a window into DAT’s creative process. The creative articulations we’ll share represent new ideas, raw impressions, and fresh remembrances, inspired by our recent three-week project in Slovakia that included work with Roma youth in Zemplínska Teplica and Luník IX, as well as artistic jam sessions with local Slovak theatre artists.\n\n" +
       "This is the closing night of [PASSAGE: Slovakia](https://www.dramaticadventure.com/passage), and a friend-raiser for ETP Slovensko. Come see what three weeks made, then stay and talk with the company afterward. Teachers, youth workers, artists, neighbors, and the plain curious are all welcome. Admission is free, and anything you give goes straight to ETP’s work with kids and families in Eastern Slovakia.",
+    // Written for sharing, not for the page. Leads on what the work is,
+    // since most people seeing this link won't be in Košice on Saturday.
+    shareTitle:
+      "Water that Wanders — US, Slovak, and Romani artists, three weeks, one night",
+    shareDescription:
+      "Eleven short pieces made from scratch in three weeks by US, Slovak, and Romani artists in Eastern Slovakia. Theatre, storytelling, puppetry, and Romani song — one night only in Košice, free to all.",
     // Company roster is built live from programMap — add an artist to either
     // program and they appear here (with headshot + profile link) automatically.
     companyPrograms: ["passage-slovakia-2026", "dat-lab-kosice-2026"],
