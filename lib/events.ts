@@ -334,7 +334,7 @@ export interface DatEvent {
    * Example:
    *   runningOrder: [
    *     { title: "Som Voda", titleAlt: "I am water",
-   *       by: [{ name: "Janka Šťárová", href: "/alumni/janka-starova" }] },
+   *       by: [{ name: "Jana Štafurová", href: "/alumni/jana-stafurova" }] },
    *   ]
    */
   runningOrder?: {

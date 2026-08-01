@@ -58,7 +58,7 @@ export const productionMap: Record<string, Production> = {
       "adrian-pica-borjas": ["Actor"],
       "barbora-curejova": ["Actor"],
       "jakub-muransky": ["Actor"],
-      "janka-starova": ["Actor", "Puppeteer"],
+      "jana-stafurova": ["Actor", "Puppeteer"],
       "alica-hingisova": ["Actor", "Puppeteer"],
       "lukas-hudak": ["Musician"],
     }

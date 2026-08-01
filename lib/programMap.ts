@@ -217,7 +217,7 @@ export const programMap: Record<string, ProgramData> = {
     "adrian-pica-borjas": ["Writer"],
     "barbora-curejova": ["Actor"],
     "jakub-muransky": ["Actor"],
-    "janka-starova": ["Actor"],
+    "jana-stafurova": ["Actor"],
     "alica-hingisova": ["Actor"],
     "lukas-hudak": ["Musician"],
   },

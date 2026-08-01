@@ -276,7 +276,7 @@ export const season20Events: DatEvent[] = [
         title: "Všímaj si",
         titleAlt: "Observe",
         by: [
-          { name: "Jana Šťárová", href: "/alumni/janka-starova" },
+          { name: "Jana Štafurová", href: "/alumni/jana-stafurova" },
           { name: "Alica Hingisová", href: "/alumni/alica-hingisova" },
           { name: "Jakub Muranský", href: "/alumni/jakub-muransky" },
           { name: "Jesse Baxter", href: "/alumni/jesse-baxter" },
@@ -285,7 +285,7 @@ export const season20Events: DatEvent[] = [
       {
         title: "Som Voda",
         titleAlt: "I am water",
-        by: [{ name: "Jana Šťárová", href: "/alumni/janka-starova" }],
+        by: [{ name: "Jana Štafurová", href: "/alumni/jana-stafurova" }],
       },
       {
         title: "The Farm",
@@ -312,7 +312,7 @@ export const season20Events: DatEvent[] = [
         title: "Vnímaj",
         titleAlt: "Notice",
         by: [
-          { name: "Jana Šťárová", href: "/alumni/janka-starova" },
+          { name: "Jana Štafurová", href: "/alumni/jana-stafurova" },
           { name: "Alica Hingisová", href: "/alumni/alica-hingisova" },
           { name: "Jakub Muranský", href: "/alumni/jakub-muransky" },
           { name: "Jesse Baxter", href: "/alumni/jesse-baxter" },
@@ -331,7 +331,7 @@ export const season20Events: DatEvent[] = [
           {
             role: "Puppetry",
             people: [
-              { name: "Jana Šťárová", href: "/alumni/janka-starova" },
+              { name: "Jana Štafurová", href: "/alumni/jana-stafurova" },
               { name: "Alica Hingisová", href: "/alumni/alica-hingisova" },
             ],
           },
