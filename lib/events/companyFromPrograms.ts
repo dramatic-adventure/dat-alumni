@@ -34,6 +34,15 @@ export type CompanyCredit = {
  */
 const CAST_ROLE = /actor|actress|performer|puppeteer|musician|dancer|singer|ensemble|narrator/i;
 
+/**
+ * Sort key for alphabetical cast billing: everything after the first name, so
+ * compound surnames stay intact ("Adrián Pica Borjas" → "Pica Borjas").
+ */
+function surnameKey(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return parts.length > 1 ? parts.slice(1).join(" ") : name;
+}
+
 /** "barbora-curejova" → "Barbora Curejova" (last-resort display name). */
 function nameFromSlug(slug: string): string {
   return slug
@@ -165,7 +174,16 @@ export function buildCompanyFromProduction(
     }
   }
 
-  // Creative team first so the template's "Creative Team" heading logic
+  // Cast is billed alphabetically by surname — the standard ensemble
+  // convention, and the honest one for devised work where no one is the lead.
+  // Slovak collation so Č/Š/Ť sort where a Slovak reader expects them.
+  cast.sort((a, b) =>
+    surnameKey(a.name).localeCompare(surnameKey(b.name), "sk", { sensitivity: "base" }),
+  );
+
+  // Creative team keeps its authored order, which encodes the hierarchy that
+  // matters there (stage directors, then assistant, then technical).
+  // Creative first so the template's "Creative Team" heading logic
   // (which switches to "The Company" when there is no cast) stays correct.
   return [...creative, ...cast];
 }
