@@ -203,19 +203,13 @@ export const season20Events: DatEvent[] = [
     // in programMap is unchanged.
     companyExclude: ["asa-madrazo-williamson", "vida-madrazo-williamson"],
     // Veronika has no alumni record — she's ETP's director, not a DAT artist —
-    // so both rows are explicit. Two credits, because she did the producing
-    // work on this show AND leads the partner organization that made it possible.
+    // so the row is explicit. One credit carrying both facts: what she did on
+    // this show, and the organization she leads.
     extraCredits: [
       {
-        role: "Producer",
+        role: "Producer, Director of ETP Slovensko",
         name: "Veronika Poklembová",
         href: "https://etp.sk",
-      },
-      {
-        role: "Director, ETP Slovensko",
-        name: "Veronika Poklembová",
-        href: "https://etp.sk",
-        company: true,
       },
     ],
     partners: [
