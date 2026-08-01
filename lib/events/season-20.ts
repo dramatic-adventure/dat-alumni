@@ -215,6 +215,10 @@ export const season20Events: DatEvent[] = [
         name: "Divadlo na Peróne",
         href: "https://www.facebook.com/divadlonaperone",
         type: "artistic",
+        // White-on-transparent mark — needs the black plate to be visible.
+        logoSrc: "/images/partners/na-perone-white.png",
+        logoAlt: "Divadlo na Peróne",
+        logoBg: "#000",
       },
     ],
     // Themes must already exist on a production — /theme/[slug] is built from

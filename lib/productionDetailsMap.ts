@@ -17,6 +17,12 @@ export type PartnerLink = {
   type: "community" | "artistic" | "impact" | "primary";
   logoSrc?: string;
   logoAlt?: string;
+  /**
+   * Background behind the logo — for marks supplied as white-on-transparent,
+   * which are invisible on the page's light card. Any CSS color.
+   * e.g. logoBg: "#000"
+   */
+  logoBg?: string;
 };
 
 /** Generic causes the production supports (with optional icon + link) */

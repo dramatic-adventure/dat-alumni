@@ -1637,7 +1637,8 @@ export default async function EventDetailPageTemplate({
                                     <img
                                       src={p.logoSrc}
                                       alt={p.logoAlt ?? p.name}
-                                      className="evd-partner-logo"
+                                      className={`evd-partner-logo${p.logoBg ? " evd-partner-logo--boxed" : ""}`}
+                                      style={p.logoBg ? { background: p.logoBg } : undefined}
                                       loading="lazy"
                                       decoding="async"
                                     />
@@ -5244,6 +5245,12 @@ export default async function EventDetailPageTemplate({
           border-radius: 5px;
           opacity: 0.92;
           flex-shrink: 0;
+        }
+        /* White-on-transparent marks need a backing plate + breathing room,
+           and full opacity so the knockout stays crisp. */
+        .evd-partner-logo--boxed {
+          padding: 5px;
+          opacity: 1;
         }
         .evd-partner-name {
           flex: 1;
