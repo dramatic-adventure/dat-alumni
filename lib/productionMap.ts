@@ -47,7 +47,7 @@ export const productionMap: Record<string, Production> = {
     venue: "Divadlo Na Peróne",
     festival: "",
     url: "",
-    posterUrl: "/posters/water-that-wanders.jpeg",
+    posterUrl: "/posters/water-that-wanders.jpg",
     artists: {
       "jesse-baxter": ["Stage Director", "Actor"],
       "jason-williamson": ["Stage Director"],
