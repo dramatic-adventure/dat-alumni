@@ -4,6 +4,7 @@
 //
 //     npm run optimize:images          rewrite anything over the limits
 //     npm run optimize:images:check    report only, exit 1 if work is needed
+//     npm run optimize:images:dry      show exactly what each file would become
 //
 // WHY THIS EXISTS
 // Posters arrive straight from a camera or a designer at 3000-4000px and 1MB+.
@@ -31,6 +32,7 @@ const JPEG = { quality: 82, mozjpeg: true, progressive: true };
 const PNG = { compressionLevel: 9, palette: true };
 
 const checkOnly = process.argv.includes("--check");
+const dryRun = process.argv.includes("--dry-run");
 const kb = (bytes) => Math.round(bytes / 1024);
 
 async function walk(dir) {
@@ -104,10 +106,16 @@ for (const item of oversized) {
     continue;
   }
 
-  await writeFile(item.file, buf);
-  savedTotal += item.size - buf.length;
+  const newMeta = await sharp(buf).metadata();
   const pct = Math.round((1 - buf.length / item.size) * 100);
-  console.log(`  ✓ ${item.file}  ${kb(item.size)}KB → ${kb(buf.length)}KB  (${pct}% smaller)`);
+  const dims =
+    newMeta.width !== item.width ? `  ${item.width}px → ${newMeta.width}px` : "";
+
+  if (!dryRun) await writeFile(item.file, buf);
+  savedTotal += item.size - buf.length;
+  console.log(
+    `  ${dryRun ? "·" : "✓"} ${item.file}  ${kb(item.size)}KB → ${kb(buf.length)}KB  (${pct}% smaller)${dims}`
+  );
 }
 
 if (checkOnly) {
@@ -115,4 +123,8 @@ if (checkOnly) {
   process.exit(1);
 }
 
-console.log(`\nSaved ${kb(savedTotal)}KB total.\n`);
+console.log(
+  dryRun
+    ? `\nWould save ${(savedTotal / 1024 / 1024).toFixed(1)}MB. Nothing was written.\n`
+    : `\nSaved ${(savedTotal / 1024 / 1024).toFixed(1)}MB.\n`
+);

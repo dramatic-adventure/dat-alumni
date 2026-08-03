@@ -15,6 +15,7 @@
     "verify:roster": "tsx scripts/roster-slugs.check.ts",
     "optimize:images": "node scripts/optimize-images.mjs",
     "optimize:images:check": "node scripts/optimize-images.mjs --check",
+    "optimize:images:dry": "node scripts/optimize-images.mjs --dry-run",
     "verify:auto-composer": "tsx scripts/journey-auto-composer.check.ts",
     "migrate:profiles": "tsx scripts/migrateProfileDataToLive.ts",
     "migrate:profiles:dry": "DRY_RUN=1 tsx scripts/migrateProfileDataToLive.ts",
