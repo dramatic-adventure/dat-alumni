@@ -28,8 +28,20 @@ import sharp from "sharp";
 const DIRS = ["public/posters", "public/images"];
 const MAX_WIDTH = 2400;
 const MAX_KB = 400;
-const JPEG = { quality: 82, mozjpeg: true, progressive: true };
-const PNG = { compressionLevel: 9, palette: true };
+// Quality 92 is chosen to preserve the image, not to hit a size target. These
+// files are bloated because they were exported near quality 100, which stores
+// sensor noise no display resolves — not because they carry more real detail.
+// At 92 the savings are 70-85% with no perceptible change on photographic
+// content. Lower values (76-82) save more but soften edges, which is a bad
+// trade for poster art.
+const JPEG = { quality: 92, mozjpeg: true, progressive: true };
+
+// PNG is losslessly re-deflated only. `palette: true` would quantize to 256
+// colours — that is where the big PNG "savings" came from, and it bands
+// gradients visibly. With palette off, an already well-compressed PNG comes
+// out no smaller and is skipped by the guard below, which is the correct
+// outcome: nothing to win without giving something up.
+const PNG = { compressionLevel: 9, effort: 10, palette: false };
 
 const checkOnly = process.argv.includes("--check");
 const dryRun = process.argv.includes("--dry-run");
