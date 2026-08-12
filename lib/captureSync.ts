@@ -19,7 +19,15 @@
 // for a replay. SSR-safe: no browser API touched at module load; start() guards
 // window/document before wiring triggers.
 
-import { getAll, get as getOne, update, remove, type QueuedCapture } from "@/lib/captureQueue";
+import {
+  getAll,
+  get as getOne,
+  getMedia,
+  update,
+  remove,
+  type QueuedCapture,
+  type CaptureMedia,
+} from "@/lib/captureQueue";
 import { fetchWithTimeout, TEXT_TIMEOUT_MS, BLOB_TIMEOUT_MS } from "@/lib/syncFetch";
 import { DIRECT_MAX_BYTES, CHUNK_BYTES } from "@/lib/captureChunkContract";
 
@@ -49,9 +57,12 @@ function emit() {
 
 async function refreshCounts() {
   const items = await getAll();
+  // A row whose media can't be read is counted as failed even if its status
+  // still reads "pending". It is never going to upload, and showing it as
+  // pending forever is exactly the false reassurance this queue kept giving.
   counts = {
-    pending: items.filter((i) => i.status !== "failed").length,
-    failed: items.filter((i) => i.status === "failed").length,
+    pending: items.filter((i) => i.status !== "failed" && !i.mediaLost).length,
+    failed: items.filter((i) => i.status === "failed" || i.mediaLost).length,
   };
   emit();
 }
@@ -72,10 +83,10 @@ function backoffFor(attempts: number): number {
   return Math.min(BASE_BACKOFF_MS * 2 ** (attempts - 1), MAX_BACKOFF_MS);
 }
 
-/** `bytes` is the already-materialized media, when the caller has read it (the
- *  direct path does, so a read failure is reported separately from a network
- *  failure and no IndexedDB write can invalidate the handle mid-upload). */
-function buildFormData(item: QueuedCapture, bytes?: ArrayBuffer): FormData {
+/** `media` is the already-materialized payload from captureQueue.getMedia().
+ *  Bytes are read as their own step, before any of this, so a media failure is
+ *  reported separately from a network failure. */
+function buildFormData(item: QueuedCapture, media?: CaptureMedia): FormData {
   const fd = new FormData();
   fd.set("captureId", item.captureId);
   fd.set("kind", item.kind);
@@ -86,11 +97,10 @@ function buildFormData(item: QueuedCapture, bytes?: ArrayBuffer): FormData {
   if (item.visibility) fd.set("visibility", item.visibility);
   if (item.quoteSpeaker) fd.set("quoteSpeaker", item.quoteSpeaker);
   if (item.asId) fd.set("asId", item.asId);
-  if (item.blob) {
+  if (media) {
     // The route names the Drive file from the MIME and strips any ;codecs= param,
     // so the File name here is immaterial.
-    const type = item.blobType || item.blob.type || "application/octet-stream";
-    fd.set("file", new File([bytes ?? item.blob], item.captureId, { type }));
+    fd.set("file", new File([media.bytes], item.captureId, { type: media.type }));
   }
   return fd;
 }
@@ -109,6 +119,27 @@ async function retry(item: QueuedCapture, lastError: string): Promise<void> {
     attempts,
     lastError,
     nextAttemptAt: Date.now() + backoffFor(attempts),
+  });
+}
+
+/**
+ * Park a capture whose media cannot be read. No number of retries can conjure
+ * bytes back, so this is permanent — it stops the drainer hammering the most
+ * fragile row in the database, which is how the damage compounded in the first
+ * place. For an old-shape row this write is a deliberate no-op (captureQueue
+ * refuses to rewrite a row it just failed to read); the mediaLost flag it
+ * derives on read is what actually keeps isDue() away from it.
+ */
+async function markMediaLost(item: QueuedCapture): Promise<void> {
+  await update({
+    ...item,
+    status: "failed",
+    lastError:
+      item.mediaLostReason
+        ? `MEDIA UNREADABLE: ${item.mediaLostReason} — the recording can no longer be read off this device.`
+        : "MEDIA UNREADABLE — the recording can no longer be read off this device.",
+    nextAttemptAt: undefined,
+    permanent: true,
   });
 }
 
@@ -136,56 +167,58 @@ async function send(item: QueuedCapture): Promise<void> {
 
   // RE-READ THE ROW AFTER THE STATUS WRITE — do not reuse `item`.
   //
-  // `item` came from an earlier getAll(). The update() above rewrites that
-  // record, and on WebKit an IndexedDB put() re-stores the Blob and can
-  // invalidate the in-memory handle the caller is still holding. The bytes stay
-  // safely on disk, but that particular handle stops resolving: reading it
-  // throws "object can not be found", and fetch() reading it to build a request
-  // body surfaces the same failure as the opaque "Load failed".
+  // Since v6 the status write above cannot touch this capture's bytes at all
+  // (media lives in its own store — see lib/captureQueue), which is what makes
+  // the whole retry path safe. The re-read stays for two reasons that still
+  // hold: `item` came from an earlier getAll() and may be stale, and for an
+  // old-shape row the write above is the moment its media was migrated out —
+  // or found unreadable. This is where we learn which.
   //
-  // That is what stranded three voice notes in July 2026 — every attempt died
-  // building the request body, never reaching the network, while the recordings
-  // themselves were perfectly intact (they exported and played back fine). It
-  // also explains why a fourth capture in the same queue uploaded normally:
-  // whether the stale handle still resolved came down to timing.
+  // For the record, because it cost days: `item`'s Blob handle used to be the
+  // problem. put() re-stored the Blob, WebKit invalidated the handle the caller
+  // still held, and reading it threw "object can not be found" — which fetch
+  // surfaced as the same opaque "Load failed" a dead network gives you. Three
+  // voice notes died building the request body, never reaching the network,
+  // while the recordings themselves were perfectly intact (they exported and
+  // played back fine). A fourth in the same queue uploaded normally; whether
+  // the stale handle still resolved came down to timing.
   //
-  // Reading the row back gives us a handle minted after the write. If the row
-  // has vanished (removed by a concurrent drain) there is nothing to send.
-  //
-  // getOne(), NOT getAll(): this runs on every single send, and getAll()
-  // deserializes every queued Blob in the store just to return one row. With a
-  // few voice notes queued that is megabytes materialized per attempt, on a
-  // phone, while an upload is in flight.
+  // If the row has vanished (removed by a concurrent drain) there is nothing
+  // to send.
   const fresh = await getOne(item.captureId);
   if (!fresh) return;
   const current = fresh;
-  if (current.blob && current.blob.size > DIRECT_MAX_BYTES) {
-    await sendChunked(current);
+
+  if (current.mediaLost) {
+    await markMediaLost(current);
     return;
   }
 
-  // READ THE MEDIA FIRST, as its own step.
+  // READ THE MEDIA AS ITS OWN STEP, BEFORE THE NETWORK.
   //
   // buildFormData() used to be passed straight into fetchWithTimeout as an
   // argument, so reading the recording and reaching the network happened inside
   // one try/catch — and `new File([blob])` doesn't read anything, the bytes are
   // only pulled while fetch streams the body. A dead Blob handle and a dead
   // network therefore produced a byte-identical "Load failed" in lastError.
-  // That ambiguity is why this took days to pin down.
+  // That ambiguity is why this took days to pin down. Keeping the read separate
+  // keeps the two failures distinguishable for good.
   //
-  // Materializing the bytes here separates the two failures for good, and hands
-  // fetch a buffer that no later IndexedDB write can invalidate mid-flight.
-  let bytes: ArrayBuffer | undefined;
-  if (current.blob) {
-    try {
-      bytes = await current.blob.arrayBuffer();
-    } catch (e) {
-      await retry(
-        current,
-        `MEDIA READ FAILED: ${e instanceof Error ? `${e.name}: ${e.message}` : "unknown"} (${current.blob.size}B)`
-      );
+  // mediaSize is metadata, so this asks for bytes only when there are bytes.
+  let media: CaptureMedia | undefined;
+  if (current.mediaSize) {
+    media = await getMedia(current.captureId);
+    if (!media) {
+      // getMedia() has already recorded why; re-read to pick up the reason.
+      await markMediaLost((await getOne(current.captureId)) ?? current);
       return;
     }
+  }
+
+  // Route on the real byte length, now that we're holding it.
+  if (media && media.bytes.byteLength > DIRECT_MAX_BYTES) {
+    await sendChunked(current, media);
+    return;
   }
 
   const startedAt = Date.now();
@@ -193,8 +226,8 @@ async function send(item: QueuedCapture): Promise<void> {
   try {
     res = await fetchWithTimeout(
       ENDPOINT,
-      { method: "POST", body: buildFormData(current, bytes) },
-      current.blob ? BLOB_TIMEOUT_MS : TEXT_TIMEOUT_MS
+      { method: "POST", body: buildFormData(current, media) },
+      media ? BLOB_TIMEOUT_MS : TEXT_TIMEOUT_MS
     );
   } catch (e) {
     // Rich context straight into lastError, which the outbox page already dumps.
@@ -206,7 +239,7 @@ async function send(item: QueuedCapture): Promise<void> {
     const online = typeof navigator !== "undefined" ? navigator.onLine : "?";
     await retry(
       current,
-      `NETWORK: ${msg} [${name} after ${ms}ms, online=${online}, ${current.blob?.size ?? 0}B]`
+      `NETWORK: ${msg} [${name} after ${ms}ms, online=${online}, ${media?.bytes.byteLength ?? 0}B]`
     );
     return;
   }
@@ -229,28 +262,15 @@ async function send(item: QueuedCapture): Promise<void> {
 // via /capture/chunk, then finalize with a small JSON POST that the route
 // reassembles server-side. uploadedChunks is the resume pointer — a retry
 // after a dropped connection re-uploads only what's missing.
-async function sendChunked(item: QueuedCapture): Promise<void> {
-  const blob = item.blob;
-  if (!blob) {
-    await retry(item, "Missing blob for chunked upload");
-    return;
-  }
-
-  // Read the whole recording into memory ONCE, up front, while this Blob handle
-  // is known good. The loop below calls update() after every chunk to persist
-  // the resume pointer, and each of those writes can invalidate the Blob handle
-  // on WebKit (see the note in send()) — slicing a stale handle mid-upload would
-  // fail with "Load failed" partway through, which is precisely the worst case
-  // for the long recordings that take this path. An ArrayBuffer has no separate
-  // backing file to lose. Capped by the server's 25 MB limit, so this is bounded.
-  let bytes: ArrayBuffer;
-  try {
-    bytes = await blob.arrayBuffer();
-  } catch (e) {
-    await retry(item, e instanceof Error ? `Could not read media: ${e.message}` : "Could not read media");
-    return;
-  }
-  const blobType = item.blobType || blob.type || "application/octet-stream";
+async function sendChunked(item: QueuedCapture, media: CaptureMedia): Promise<void> {
+  // The bytes were read once by send() and are held in memory for the whole
+  // upload. The loop below calls update() after every chunk to persist the
+  // resume pointer; those writes are metadata-only now, but slicing from a
+  // buffer rather than re-reading storage per chunk is still the right shape —
+  // it is one read for a recording that may take a dozen requests to deliver.
+  // Capped by the server's 25 MB limit, so this is bounded.
+  const bytes = media.bytes;
+  const blobType = media.type;
   const total = Math.ceil(bytes.byteLength / CHUNK_BYTES);
 
   for (let seq = Math.min(item.uploadedChunks ?? 0, total); seq < total; seq++) {
@@ -262,7 +282,7 @@ async function sendChunked(item: QueuedCapture): Promise<void> {
     const start = seq * CHUNK_BYTES;
     fd.set(
       "chunk",
-      // Sliced from the in-memory buffer, never from the Blob handle — see above.
+      // Sliced from the in-memory buffer — see above.
       new File([bytes.slice(start, start + CHUNK_BYTES)], `${item.captureId}.${seq}`, {
         type: "application/octet-stream",
       })
@@ -304,8 +324,6 @@ async function sendChunked(item: QueuedCapture): Promise<void> {
           quoteSpeaker: item.quoteSpeaker ?? "",
           ...(item.asId ? { asId: item.asId } : {}),
           stagedChunkCount: total,
-          // Captured before the loop — reading blob.type off a handle that may
-          // have been invalidated by the loop's update() calls is the same trap.
           blobType,
         }),
       },
@@ -345,6 +363,10 @@ function isDue(item: QueuedCapture, now: number): boolean {
   // — for six days.
   if (item.status === "syncing") return false;
   if (item.status === "failed") return false;
+  // No retry can conjure bytes back, and retrying is what compounded the damage
+  // in the first place — every attempt used to rewrite the record it was trying
+  // to read. Park it and let the outbox explain itself to the artist.
+  if (item.mediaLost) return false;
   return !item.nextAttemptAt || item.nextAttemptAt <= now;
 }
 
@@ -356,6 +378,10 @@ async function reclaimOrphans(): Promise<void> {
   const items = await getAll();
   for (const i of items) {
     if (i.status !== "syncing") continue;
+    if (i.mediaLost) {
+      await markMediaLost(i);
+      continue;
+    }
     const attempts = i.attempts + 1;
     const lastError = i.lastError || "Upload interrupted — the app closed mid-upload";
     if (attempts >= MAX_ATTEMPTS) {
@@ -421,7 +447,11 @@ export function kick(): void {
 export async function retryFailed(): Promise<void> {
   const items = await getAll();
   for (const i of items) {
-    if (i.status === "failed") {
+    // mediaLost is the one thing this override does NOT clear. Every other
+    // parked state is a judgement call a human can overrule; missing bytes are
+    // not, and re-queueing them only puts the drainer back on the row it must
+    // leave alone.
+    if (i.status === "failed" && !i.mediaLost) {
       await update({ ...i, status: "pending", attempts: 0, nextAttemptAt: undefined, lastError: undefined, permanent: false });
     }
   }
@@ -437,7 +467,7 @@ export async function retryFailed(): Promise<void> {
 export async function resume(): Promise<void> {
   const items = await getAll();
   for (const i of items) {
-    if (i.status === "failed" && !i.permanent) {
+    if (i.status === "failed" && !i.permanent && !i.mediaLost) {
       await update({ ...i, status: "pending", attempts: 0, nextAttemptAt: undefined, lastError: undefined });
     }
   }

@@ -14,14 +14,28 @@
 //   v2 → v3: added "opsQueue" + "opsState" (Slice 5 — Roll Call / Company Choice)
 //   v3 → v4: added "journeyDrafts" (Slice 6 — Composer / Retroactive drafts)
 //   v4 → v5: added "traceMutationQueue" + "traceMirror" (offline trace edit/delete)
+//   v5 → v6: added "captureMedia" — capture bytes moved OUT of the queue record.
+//            Media used to ride inline on the queue row, so every metadata write
+//            (status, attempts, backoff) re-stored the Blob; on WebKit that
+//            round-trip breaks the Blob's backing-file reference and the bytes
+//            stop resolving. Bytes now live here, written once and never
+//            rewritten. Old rows keep their inline blob and are copied forward
+//            lazily on first successful read — see lib/captureQueue getMedia().
 //
 // SSR-safe: hasIDB() guards the browser-only API so every importer no-ops cleanly
 // on the server (no "server-only" — this is imported by client code).
 
 export const DB_NAME = "dat-field-kit";
-export const DB_VERSION = 5;
+export const DB_VERSION = 6;
 
-export const CAPTURE_STORE = "captureQueue"; // keyPath: "captureId" (Slice C)
+export const CAPTURE_STORE = "captureQueue"; // keyPath: "captureId" (Slice C — metadata only, as of v6)
+export const CAPTURE_MEDIA_STORE = "captureMedia"; // keyPath: "captureId" (v6 — write-once capture bytes)
+// v6. Tiny sidecar: which old-shape rows have media that could NOT be read back.
+// It lives in its own store rather than as a field on the queue row because
+// writing that field would mean re-storing the very Blob we just failed to read
+// — see lib/captureQueue markMediaLost(). Records here never hold bytes, so
+// reading the whole store is cheap.
+export const CAPTURE_MEDIA_LOST_STORE = "captureMediaLost"; // keyPath: "captureId" (v6)
 export const SNAPSHOT_STORE = "itinerarySnapshot"; // keyPath: "programId" (Slice 2)
 export const OPS_QUEUE_STORE = "opsQueue"; // keyPath: "opId" (Slice 5 — queued check-ins/votes)
 export const OPS_STATE_STORE = "opsState"; // keyPath: "key" (Slice 5 — this device's own response/vote)
@@ -45,6 +59,18 @@ export function openDb(): Promise<IDBDatabase> {
       const db = req.result;
       if (!db.objectStoreNames.contains(CAPTURE_STORE)) {
         db.createObjectStore(CAPTURE_STORE, { keyPath: "captureId" });
+      }
+      // v6. Deliberately NOT backfilled here: an upgrade handler that read and
+      // rewrote every queued recording would be one big write pass across the
+      // exact data this split exists to protect, at the least recoverable
+      // moment (blocking, before any UI is up, with no way to report failure).
+      // Old rows are migrated one at a time, on demand, only after their bytes
+      // have been read back intact.
+      if (!db.objectStoreNames.contains(CAPTURE_MEDIA_STORE)) {
+        db.createObjectStore(CAPTURE_MEDIA_STORE, { keyPath: "captureId" });
+      }
+      if (!db.objectStoreNames.contains(CAPTURE_MEDIA_LOST_STORE)) {
+        db.createObjectStore(CAPTURE_MEDIA_LOST_STORE, { keyPath: "captureId" });
       }
       if (!db.objectStoreNames.contains(SNAPSHOT_STORE)) {
         db.createObjectStore(SNAPSHOT_STORE, { keyPath: "programId" });
@@ -102,10 +128,36 @@ export function objectStore(
   return db.transaction(name, mode).objectStore(name);
 }
 
+/**
+ * Open ONE transaction spanning several stores.
+ *
+ * Needed wherever a capture's metadata and its media must move together — an
+ * enqueue that wrote one but not the other would leave either a queue row with
+ * no recording behind it or orphaned bytes no drain will ever clear. Both
+ * writes share a transaction, so they commit together or not at all.
+ */
+export function objectStores(
+  db: IDBDatabase,
+  names: string[],
+  mode: IDBTransactionMode
+): { tx: IDBTransaction; stores: IDBObjectStore[] } {
+  const tx = db.transaction(names, mode);
+  return { tx, stores: names.map((n) => tx.objectStore(n)) };
+}
+
 /** Promisify a simple IDBRequest. */
 export function reqToPromise<T>(req: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
+  });
+}
+
+/** Resolve when a transaction commits; reject if it aborts or errors. */
+export function txToPromise(tx: IDBTransaction): Promise<void> {
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onabort = () => reject(tx.error ?? new Error("Transaction aborted"));
+    tx.onerror = () => reject(tx.error);
   });
 }

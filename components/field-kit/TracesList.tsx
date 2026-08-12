@@ -191,8 +191,12 @@ export default function TracesList({ captures, asId }: { captures: FieldCapture[
       setOutboxState(
         new Map(
           queuedCaps.map((q) => {
+            // mediaSize is metadata on the queue row (v6 moved the bytes into
+            // their own store), so the progress display costs no media read.
             const total =
-              q.blob && q.blob.size > DIRECT_MAX_BYTES ? Math.ceil(q.blob.size / CHUNK_BYTES) : 0;
+              q.mediaSize && q.mediaSize > DIRECT_MAX_BYTES
+                ? Math.ceil(q.mediaSize / CHUNK_BYTES)
+                : 0;
             return [
               q.captureId,
               {

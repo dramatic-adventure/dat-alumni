@@ -24,9 +24,9 @@
 
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import { T, FONT } from "@/components/field-kit/tokens";
-import { getAll as getCaptures, update as updateCapture } from "@/lib/captureQueue";
+import { getAll as getCaptures, getMedia, update as updateCapture } from "@/lib/captureQueue";
 import { getAll as getOps, update as updateOp } from "@/lib/opsQueue";
 import { getAll as getTraceMutations, update as updateTraceMutation } from "@/lib/traceMutationQueue";
 import { DIRECT_MAX_BYTES, CHUNK_BYTES } from "@/lib/captureChunkContract";
@@ -42,8 +42,12 @@ type Row = {
   status: string;
   attempts: number;
   createdAt: string;
-  /** undefined for non-media rows; null means the row claims media but the blob is GONE. */
+  /** undefined for non-media rows; null means the row claims media but has no
+   *  recorded size — i.e. the bytes are unaccounted for. */
   bytes?: number | null;
+  /** The media could not be read back off this device. No retry can fix it. */
+  mediaLost?: boolean;
+  mediaLostReason?: string;
   chunks?: string;
   nextAttemptAt?: number;
   lastError?: string;
@@ -73,8 +77,11 @@ export default function OutboxDiagnostics({ build }: { build: string }) {
   const [copied, setCopied] = useState(false);
   // null until measured on the client — see the standalone note below.
   const [standalone, setStandalone] = useState<boolean | null>(null);
-  // captureId → the live Blob, kept out of `rows` so the JSON dump stays small.
-  const blobsRef = useRef<Map<string, Blob>>(new Map());
+  // How many queued captures still have media on this phone. Deliberately a
+  // COUNT and not a Map of Blob handles: a handle cached here goes stale the
+  // moment the drainer touches its row, and every read path re-fetches from
+  // IndexedDB at click time anyway.
+  const [mediaCount, setMediaCount] = useState(0);
   // captureId → result of the readability probe.
   const [probe, setProbe] = useState<Record<string, string>>({});
 
@@ -96,14 +103,16 @@ export default function OutboxDiagnostics({ build }: { build: string }) {
     try {
       const [caps, ops, muts] = await Promise.all([getCaptures(), getOps(), getTraceMutations()]);
 
-      blobsRef.current = new Map(caps.filter((c) => c.blob).map((c) => [c.captureId, c.blob as Blob]));
+      setMediaCount(caps.filter((c) => c.mediaSize && !c.mediaLost).length);
 
       const capRows: Row[] = caps.map((c) => {
-        // A media capture whose blob has been evicted is unrecoverable — surface
-        // it loudly rather than letting it look like a normal pending row.
+        // A media capture with no bytes behind it is unrecoverable — surface it
+        // loudly rather than letting it look like a normal pending row.
+        // mediaSize/mediaLost are metadata: building this table reads no media.
         const isMedia = c.kind === "photo" || c.kind === "voice";
-        const bytes = c.blob ? c.blob.size : isMedia ? null : undefined;
-        const chunked = c.blob && c.blob.size > DIRECT_MAX_BYTES;
+        const size = c.mediaSize;
+        const bytes = size != null ? size : isMedia ? null : undefined;
+        const chunked = size != null && size > DIRECT_MAX_BYTES;
         return {
           queue: "capture",
           id: c.captureId,
@@ -112,10 +121,13 @@ export default function OutboxDiagnostics({ build }: { build: string }) {
           attempts: c.attempts,
           createdAt: c.createdAt,
           bytes,
-          ...(chunked && c.blob
+          ...(c.mediaLost
+            ? { mediaLost: true, ...(c.mediaLostReason ? { mediaLostReason: c.mediaLostReason } : {}) }
+            : {}),
+          ...(chunked && size != null
             ? {
-                chunks: `${Math.min(c.uploadedChunks ?? 0, Math.ceil(c.blob.size / CHUNK_BYTES))}/${Math.ceil(
-                  c.blob.size / CHUNK_BYTES
+                chunks: `${Math.min(c.uploadedChunks ?? 0, Math.ceil(size / CHUNK_BYTES))}/${Math.ceil(
+                  size / CHUNK_BYTES
                 )}`,
               }
             : {}),
@@ -172,7 +184,11 @@ export default function OutboxDiagnostics({ build }: { build: string }) {
       const [caps, ops, muts] = await Promise.all([getCaptures(), getOps(), getTraceMutations()]);
       const reset = { status: "pending" as const, attempts: 0, nextAttemptAt: undefined, lastError: undefined, permanent: false };
       await Promise.all([
-        ...caps.filter((c) => c.status !== "pending").map((c) => updateCapture({ ...c, ...reset })),
+        // mediaLost rows are the one exclusion. The artist tapping this is the
+        // human the `permanent` flag was waiting for — but no human decision
+        // brings bytes back, and re-queueing only points the drainer at the row
+        // it must leave alone.
+        ...caps.filter((c) => c.status !== "pending" && !c.mediaLost).map((c) => updateCapture({ ...c, ...reset })),
         ...ops.filter((o) => o.status !== "pending").map((o) => updateOp({ ...o, ...reset })),
         ...muts.filter((m) => m.status !== "pending").map((m) => updateTraceMutation({ ...m, ...reset })),
       ]);
@@ -206,58 +222,53 @@ export default function OutboxDiagnostics({ build }: { build: string }) {
     }
   }, [rows, readError, build]);
 
-  // DECISIVE TEST for a "Load failed" upload error. A Blob in IndexedDB reports
-  // `size` from metadata, but its bytes live in a separate file-backed store —
-  // so a Blob whose backing bytes are gone still reports the right size and only
-  // throws when something actually READS it. fetch() reading that Blob to build
-  // a request body is exactly such a read, and WebKit reports the failure as the
-  // generic "Load failed" — indistinguishable from a network error. Reading it
-  // here tells the two apart:
-  //   readable → bytes are intact; the upload is failing on the network/server
-  //   throws   → the media is gone from this device and no retry can ever work
-  // Always re-read the row before touching its Blob. A handle cached from an
-  // earlier getAll() goes stale as soon as the drainer rewrites that record,
-  // and reading it then throws "object can not be found" even though the bytes
-  // are perfectly intact on disk. Probing a stale handle reports healthy media
-  // as lost — which is exactly the false alarm this page raised in July 2026.
-  const freshBlob = useCallback(async (id: string): Promise<Blob | undefined> => {
-    const caps = await getCaptures();
-    return caps.find((c) => c.captureId === id)?.blob;
-  }, []);
+  // DECISIVE TEST for a "Load failed" upload error, and still worth having.
+  //
+  // getMedia() returns the bytes or nothing: it reads the media store, or (for
+  // a capture queued before the v6 store split) reads that row's inline Blob
+  // and copies it across. A Blob's `size` comes from metadata while its bytes
+  // live in a separate file-backed store, so a Blob whose backing file is gone
+  // still reports the right size and only throws when something actually READS
+  // it. fetch() building a request body is exactly such a read, and WebKit
+  // reports the failure as the generic "Load failed" — indistinguishable from a
+  // network error. Asking for the bytes here tells the two apart:
+  //   returns  → bytes are intact; the upload is failing on the network/server
+  //   nothing  → the media is gone from this device and no retry can ever work
+  //
+  // Always fetch at click time, never from anything cached in this component.
+  const fetchMedia = useCallback(async (id: string) => getMedia(id), []);
 
-  const verifyMedia = useCallback(async (id: string) => {
-    const blob = await freshBlob(id);
-    if (!blob) {
-      setProbe((p) => ({ ...p, [id]: "No media attached to this row." }));
-      return;
-    }
+  const verifyMedia = useCallback(async (id: string, expected?: number | null) => {
     setProbe((p) => ({ ...p, [id]: "Reading…" }));
-    try {
-      const buf = await blob.arrayBuffer();
+    const media = await fetchMedia(id);
+    if (!media) {
       setProbe((p) => ({
         ...p,
         [id]:
-          buf.byteLength === blob.size
-            ? `Readable — all ${buf.byteLength} bytes intact. The recording is fine; the upload is failing on the network.`
-            : `Readable but SHORT — ${buf.byteLength} of ${blob.size} bytes.`,
+          "UNREADABLE — the bytes could not be read off this device. Try Refresh, then check again before treating this as lost.",
       }));
-    } catch (e) {
-      setProbe((p) => ({
-        ...p,
-        [id]: `UNREADABLE — ${e instanceof Error ? e.message : "read failed"}. Try Refresh, then check again before treating this as lost.`,
-      }));
+      return;
     }
-  }, [freshBlob]);
+    const got = media.bytes.byteLength;
+    setProbe((p) => ({
+      ...p,
+      [id]:
+        expected == null || got === expected
+          ? `Readable — all ${got} bytes intact. The recording is fine; the upload is failing on the network.`
+          : `Readable but SHORT — ${got} of ${expected} bytes.`,
+    }));
+  }, [fetchMedia]);
 
   // Get the recording OFF the phone regardless of whether sync ever works.
   // Web Share with a File is the iOS-native path (AirDrop, Files, Messages);
   // the object-URL download is the fallback everywhere else.
   const saveMedia = useCallback(async (id: string, kind: string) => {
-    const blob = await freshBlob(id);
-    if (!blob) return;
-    const ext = (blob.type.split("/")[1] || "bin").split(";")[0];
+    const media = await fetchMedia(id);
+    if (!media) return;
+    const type = media.type || "application/octet-stream";
+    const ext = (type.split("/")[1] || "bin").split(";")[0];
     const name = `${kind}-${id}.${ext}`;
-    const file = new File([blob], name, { type: blob.type || "application/octet-stream" });
+    const file = new File([media.bytes], name, { type });
     const nav = navigator as Navigator & {
       canShare?: (d: { files: File[] }) => boolean;
       share?: (d: { files: File[]; title?: string }) => Promise<void>;
@@ -270,13 +281,13 @@ export default function OutboxDiagnostics({ build }: { build: string }) {
         // Cancelled or unsupported for this payload — fall through to download.
       }
     }
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(file);
     const a = document.createElement("a");
     a.href = url;
     a.download = name;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
-  }, [freshBlob]);
+  }, [fetchMedia]);
 
   // Bulk rescue. The queue is the ONLY copy of these recordings — there is no
   // server-side backup of anything that hasn't synced, and IndexedDB is not
@@ -284,17 +295,17 @@ export default function OutboxDiagnostics({ build }: { build: string }) {
   // reinstalling the home-screen app destroys the whole container. So getting
   // the bytes off the device is strictly more urgent than fixing the upload.
   const saveAllMedia = useCallback(async () => {
-    // Re-read every row here too — cached handles may already be stale.
+    // Fetch every recording fresh at click time — never from anything this
+    // component cached earlier.
     const caps = await getCaptures();
     const files: File[] = [];
     for (const c of caps) {
-      if (!c.blob) continue;
-      const ext = (c.blob.type.split("/")[1] || "bin").split(";")[0];
-      files.push(
-        new File([c.blob], `capture-${c.captureId}.${ext}`, {
-          type: c.blob.type || "application/octet-stream",
-        })
-      );
+      if (!c.mediaSize || c.mediaLost) continue;
+      const media = await getMedia(c.captureId);
+      if (!media) continue; // gone; the per-row Check media button explains it
+      const type = media.type || "application/octet-stream";
+      const ext = (type.split("/")[1] || "bin").split(";")[0];
+      files.push(new File([media.bytes], `capture-${c.captureId}.${ext}`, { type }));
     }
     if (!files.length) return;
     const nav = navigator as Navigator & {
@@ -403,13 +414,13 @@ export default function OutboxDiagnostics({ build }: { build: string }) {
       {/* Rescue is the FIRST action offered, ahead of any retry: an unsynced
           capture exists in exactly one place on earth, and that place is a
           phone. Retrying can wait; losing the recording cannot be undone. */}
-      {blobsRef.current.size > 0 && (
+      {mediaCount > 0 && (
         <div style={RESCUE}>
           <p style={{ ...EYEBROW, color: T.green, margin: "0 0 6px" }}>Protect this work first</p>
           <p style={{ ...BODY, margin: "0 0 12px" }}>
-            {blobsRef.current.size} recording{blobsRef.current.size === 1 ? "" : "s"} here{" "}
-            {blobsRef.current.size === 1 ? "exists" : "exist"} <strong style={{ color: T.ink }}>only
-            on this phone</strong>. Save {blobsRef.current.size === 1 ? "it" : "them"} somewhere else
+            {mediaCount} recording{mediaCount === 1 ? "" : "s"} here{" "}
+            {mediaCount === 1 ? "exists" : "exist"} <strong style={{ color: T.ink }}>only
+            on this phone</strong>. Save {mediaCount === 1 ? "it" : "them"} somewhere else
             now — AirDrop to a laptop, or Save to Files. Do this before troubleshooting anything.
           </p>
           <button type="button" onClick={() => void saveAllMedia()} style={{ ...CTA, background: T.green, color: T.black }}>
@@ -435,7 +446,7 @@ export default function OutboxDiagnostics({ build }: { build: string }) {
       <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 10 }}>
         {rows.map((r) => {
           const stale = r.status === "syncing";
-          const accent = r.status === "failed" ? T.pink : stale ? T.yellow : T.muted;
+          const accent = r.status === "failed" || r.mediaLost ? T.pink : stale ? T.yellow : T.muted;
           return (
             <li key={`${r.queue}:${r.id}`} style={CARD}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
@@ -451,11 +462,15 @@ export default function OutboxDiagnostics({ build }: { build: string }) {
                 {r.chunks ? ` · chunks ${r.chunks}` : ""}
                 {r.nextAttemptAt ? ` · retry in ${Math.max(0, Math.round((r.nextAttemptAt - Date.now()) / 1000))}s` : ""}
                 {r.permanent ? " · needs a human" : ""}
+                {r.mediaLost ? " · media unreadable" : ""}
               </p>
 
-              {r.bytes === null && (
+              {(r.bytes === null || r.mediaLost) && (
                 <p style={{ ...META, color: T.pink }}>
-                  Media bytes are missing from this device — this capture cannot be recovered.
+                  The recording could not be read off this device, so this capture cannot be
+                  uploaded or rescued. It has been parked — retrying it is what damaged captures
+                  like this one, so nothing will keep trying.
+                  {r.mediaLostReason ? ` (${r.mediaLostReason})` : ""}
                 </p>
               )}
 
@@ -472,7 +487,7 @@ export default function OutboxDiagnostics({ build }: { build: string }) {
                   buttons settle it, and rescue the audio either way. */}
               {r.queue === "capture" && r.bytes != null && (
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "8px 0 4px" }}>
-                  <button type="button" onClick={() => void verifyMedia(r.id)} style={TINY}>
+                  <button type="button" onClick={() => void verifyMedia(r.id, r.bytes)} style={TINY}>
                     Check media
                   </button>
                   <button type="button" onClick={() => void saveMedia(r.id, r.label)} style={TINY}>
