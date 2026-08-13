@@ -53,6 +53,9 @@ export type ComposerChapter = {
   goal: string;
   prompt: string;
   accent: ItineraryAccent;
+  /** "in" for a chapter that names a real place; "for" for a pre-departure
+   *  chapter that doesn't. Authored in the itinerary — see lib/composerSpine. */
+  preposition: string;
   dayIds: string[];
   dateLabel: string;
 };
@@ -532,7 +535,10 @@ function ChapterEditor({
           Ch {String(spine.num).padStart(2, "0")} · {spine.place}{spine.dateLabel ? ` · ${spine.dateLabel}` : ""}
         </p>
         <p style={{ fontFamily: FONT.anton, fontSize: 24, textTransform: "uppercase", color: T.ink, margin: "0 0 6px", lineHeight: 1 }}>
-          {spine.verb} <span style={{ color: acc }}>in {spine.place}</span>
+          {spine.verb}{" "}
+          <span style={{ color: acc }}>
+            {spine.preposition || "in"} {spine.place}
+          </span>
         </p>
         {spine.goal && (
           <p style={{ fontFamily: FONT.dm, fontStyle: "italic", fontSize: 12, color: T.muted, margin: 0, lineHeight: 1.45 }}>

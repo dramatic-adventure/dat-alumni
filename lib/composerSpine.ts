@@ -18,6 +18,11 @@ export type SpineChapter = {
   goal: string;
   prompt: string;
   accent: ItineraryAccent;
+  /** Joins verb to place in a chapter header ("Acclimate IN Bratislava",
+   *  "Prepare FOR Departure"). Authored per chapter in the itinerary; "in" when
+   *  blank. Carried here so the Composer and the Itinerary Companion render the
+   *  same chapter the same way. */
+  preposition: string;
   dayIds: string[];
   /**
    * This chapter's days as (id, ISO yyyy-mm-dd) pairs, in itinerary order.
@@ -49,6 +54,7 @@ export function spineFromItinerary(itinerary: ProgramItinerary | null): SpineCha
     goal: ch.goal,
     prompt: ch.prompt,
     accent: ch.accent,
+    preposition: ch.preposition || "in",
     dayIds: ch.days.map((d) => d.id),
     dayDates: ch.days
       .filter((d) => d.fullDate)
