@@ -174,7 +174,10 @@ function ChapterBlock({ chapter, today, todayNum }: { chapter: Chapter; today: R
       {/* chapter header */}
       <div style={{ marginBottom: 12 }}>
         <h2 style={{ fontFamily: FONT.grotesk, fontWeight: 700, fontSize: "clamp(17px, 2.4vw, 22px)", color: T.ink, margin: "4px 0 4px" }}>
-          {chapter.verb} <span style={{ color: acc }}>in {chapter.place}</span>
+          {chapter.verb}{" "}
+          <span style={{ color: acc }}>
+            {chapter.preposition || "in"} {chapter.place}
+          </span>
         </h2>
         {chapter.description && (
           <p style={{ fontFamily: FONT.dm, fontSize: 14, lineHeight: 1.55, color: T.ink, opacity: 0.8, margin: "0 0 8px", maxWidth: "60ch" }}>

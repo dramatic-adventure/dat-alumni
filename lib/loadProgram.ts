@@ -168,6 +168,9 @@ const toChapterRow = (r: Record<string, string>): ChapterRow => ({
   tips: r.tips ?? "",
   accent: r.accent ?? "",
   prompt: r.prompt ?? "",
+  // Blank normalizes to "in" downstream (rowsToProgramItinerary), so a sheet
+  // without this column behaves exactly as before.
+  preposition: r.preposition ?? "",
   dramaClub: r.dramaClub ?? "",
   partnerOrg: r.partnerOrg ?? "",
   dayIds: r.dayIds ?? "",

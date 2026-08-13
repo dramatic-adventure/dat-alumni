@@ -55,6 +55,12 @@ export type ChapterRow = {
   lodgingWebsite: string;
   lodgingExpect: string; // the "Expect:" blurb from the trip document
   timezone: string; // optional IANA tz override when this chapter is in a different zone
+  // Joins verb to place in the chapter header ("Acclimate IN Bratislava").
+  // Blank means "in". Exists because not every chapter has geography to sit in:
+  // a pre-departure chapter reads "Prepare FOR Departure", and hardcoding that
+  // exception in the component would put program copy in the code instead of in
+  // the itinerary, which is the source of truth for it.
+  preposition: string;
 };
 
 export type ItineraryDayRow = {
@@ -142,6 +148,8 @@ export type Chapter = {
   status: ChapterStatus;
   lodging?: Lodging; // present only when lodgingName is set
   timezone?: string; // IANA tz override for this chapter's days (else program tz)
+  /** Joins verb to place in the chapter header; defaults to "in". */
+  preposition: string;
   days: ItineraryDay[];
 };
 
@@ -452,6 +460,9 @@ export function rowsToProgramItinerary(input: {
       status: normalizeStatus(c.status),
       lodging: lodgingFromRow(c),
       timezone: c.timezone?.trim() || undefined,
+      // Default "in" — every chapter authored before this column existed, and
+      // every one that names a real place, wants it.
+      preposition: c.preposition?.trim() || "in",
       days: orderedDaysForChapter(c, daysByChapter),
     }));
 

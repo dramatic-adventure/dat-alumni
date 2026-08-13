@@ -48,6 +48,7 @@
 | `num` | chapter number (drives order) | `1` |
 | `verb` | the chapter's verb | `Arrive` |
 | `place` | where | `Košice` |
+| `preposition` | joins verb to place in the chapter header — blank means `in` | *(blank)* → `Arrive in Košice` |
 | `title` | chapter title | `Landing in the East` |
 | `description` | short description | `Settle in, meet the cohort…` |
 | `goal` | the GOAL block text | `Find your footing.` |
@@ -60,6 +61,10 @@
 | `status` | `complete` / `draft` / `empty` (leave blank → `empty` for Slice 1) | *(blank)* |
 
 > Tip: you can leave `dayIds` blank entirely. As long as each Day row has the right `chapterId`, the chapter's days order themselves by `dayNum`.
+
+> **`preposition`** exists for chapters with no geography to sit *in*. A pre-departure chapter set to `for` reads **Prepare for Departure** instead of the nonsense "Prepare in Departure". Leave it blank everywhere else.
+
+> **A chapter with no days is scaffolding.** Give a pre-departure chapter (`ch0`) an empty `dayIds` and no Day rows, and it appears on an artist's Journey Card *only* if captures actually land in it — so someone with no packing or orientation photos never sees an empty chapter. Captures dated before the first itinerary day are placed there automatically (see `lib/journeyAutoComposer.ts`). Chapters that do have days are always scaffolded, empty or not.
 
 ---
 
