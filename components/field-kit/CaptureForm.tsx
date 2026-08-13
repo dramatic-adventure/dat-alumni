@@ -15,9 +15,12 @@
 // createdAt is stamped from the file (true capture moment) instead of "now".
 //
 // The photo file input uses accept="image/*" with NO capture attribute, so the OS
-// picker offers Photo Library, Take Photo, and Files. Voice prefers an in-app
-// MediaRecorder; if the browser lacks getUserMedia/MediaRecorder (or mic permission
-// is denied) it falls back to an accept="audio/*" file input.
+// picker offers Photo Library, Take Photo, and Files. Voice offers BOTH an in-app
+// MediaRecorder and an accept="audio/*" file input, side by side — the recorder is
+// capped at 5:00 and an existing recording (an Apple Voice Memo shared to Files,
+// say) is usually longer than that and already exists, so making the picker a
+// mere fallback for browsers without getUserMedia left no way to upload one at
+// all. When the browser lacks getUserMedia/MediaRecorder the picker stands alone.
 //
 // Slice C: Save is offline-first. It no longer POSTs directly — it writes the
 // capture to a local IndexedDB queue (lib/captureQueue) and kicks the drainer
@@ -234,7 +237,11 @@ export default function CaptureForm({
   function onAudioFile(f: File | null) {
     if (!f) return;
     if (f.size > MAX_AUDIO_BYTES) {
-      setRecError("Recording too large (max 25 MB).");
+      // Name the likely cause: a Lossless Voice Memo runs several times the size
+      // of a Compressed one and is the usual way to trip this.
+      setRecError(
+        `That file is too large (${Math.round(f.size / (1024 * 1024))} MB; the limit is 25 MB). If it's a Voice Memo recorded in Lossless, re-export it as Compressed.`
+      );
       return;
     }
     discardAudio();
@@ -421,54 +428,67 @@ export default function CaptureForm({
         <>
           {/* In-app recorder when supported; otherwise an audio file input.
               getUserMedia needs a secure context (HTTPS / localhost) + mic grant. */}
-          {recorderSupported && !audioBlob ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <button
-                type="button"
-                onClick={recording ? stopRecording : startRecording}
-                style={{
-                  fontFamily: FONT.grotesk,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  cursor: "pointer",
-                  padding: "12px 26px",
-                  borderRadius: 9,
-                  border: "none",
-                  background: recording ? T.pink : T.yellow,
-                  color: T.black,
-                }}
-              >
-                {recording ? "Stop" : "Record"}
-              </button>
-              <span
-                aria-live="polite"
-                style={{ fontFamily: FONT.dm, fontSize: 15, color: recording ? T.ink : T.muted, fontVariantNumeric: "tabular-nums" }}
-              >
-                {recording ? `${fmtElapsed(elapsed)} / 5:00` : "Tap Record to start"}
-              </span>
+          {!audioBlob ? (
+            <div style={{ display: "grid", gap: 12 }}>
+              {recorderSupported && (
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <button
+                    type="button"
+                    onClick={recording ? stopRecording : startRecording}
+                    style={{
+                      fontFamily: FONT.grotesk,
+                      fontSize: 13,
+                      fontWeight: 700,
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      cursor: "pointer",
+                      padding: "12px 26px",
+                      borderRadius: 9,
+                      border: "none",
+                      background: recording ? T.pink : T.yellow,
+                      color: T.black,
+                    }}
+                  >
+                    {recording ? "Stop" : "Record"}
+                  </button>
+                  <span
+                    aria-live="polite"
+                    style={{ fontFamily: FONT.dm, fontSize: 15, color: recording ? T.ink : T.muted, fontVariantNumeric: "tabular-nums" }}
+                  >
+                    {recording ? `${fmtElapsed(elapsed)} / 5:00` : "Tap Record to start"}
+                  </span>
+                </div>
+              )}
+
+              {/* Hidden while recording so there is only ever one thing to do. */}
+              {!recording && (
+                <div>
+                  {recorderSupported && (
+                    <p style={{ fontFamily: FONT.dm, fontSize: 13, color: T.muted, margin: "0 0 6px" }}>
+                      Or choose an audio file — a Voice Memo you saved to Files, for instance.
+                    </p>
+                  )}
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => onAudioFile(e.target.files?.[0] ?? null)}
+                    aria-label="Choose an audio file"
+                    style={{
+                      width: "100%",
+                      boxSizing: "border-box",
+                      fontFamily: FONT.dm,
+                      fontSize: 15,
+                      color: T.ink,
+                      background: T.card,
+                      border: `1px solid ${T.border}`,
+                      borderRadius: 12,
+                      padding: "14px 16px",
+                    }}
+                  />
+                </div>
+              )}
             </div>
-          ) : !recorderSupported && !audioBlob ? (
-            <input
-              ref={fileRef}
-              type="file"
-              accept="audio/*"
-              onChange={(e) => onAudioFile(e.target.files?.[0] ?? null)}
-              aria-label="Choose an audio file"
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                fontFamily: FONT.dm,
-                fontSize: 15,
-                color: T.ink,
-                background: T.card,
-                border: `1px solid ${T.border}`,
-                borderRadius: 12,
-                padding: "14px 16px",
-  
-              }}
-            />
           ) : null}
 
           {audioBlob && audioUrl && (
@@ -479,8 +499,12 @@ export default function CaptureForm({
                 <button
                   type="button"
                   onClick={() => {
+                    // audioBlob is a File when it came from the picker and a bare
+                    // Blob when it came from the recorder — so only jump straight
+                    // back into recording for the latter.
+                    const wasRecorded = !(audioBlob instanceof File);
                     discardAudio();
-                    if (recorderSupported) startRecording();
+                    if (recorderSupported && wasRecorded) startRecording();
                   }}
                   style={{
                     fontFamily: FONT.grotesk,
@@ -496,7 +520,7 @@ export default function CaptureForm({
                     color: T.ink,
                   }}
                 >
-                  {recorderSupported ? "Re-record" : "Choose another"}
+                  {recorderSupported && !(audioBlob instanceof File) ? "Re-record" : "Choose another"}
                 </button>
                 <button
                   type="button"

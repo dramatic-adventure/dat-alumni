@@ -85,6 +85,23 @@ const ALLOWED_AUDIO_MIME = new Set([
   "audio/wav",
 ]);
 
+// Spellings for what is already an allowed type. An Apple Voice Memo shared to
+// Files is a .m4a — AAC in an MP4 container, i.e. exactly audio/mp4 — but Safari
+// reports it as audio/x-m4a and some Android pickers as audio/m4a. Mapping them
+// onto the canonical type here (rather than widening the allow-set) means
+// nothing downstream has to learn a second name for the same thing: extFromMime
+// keeps returning "m4a" and Drive stores a sensible file. Without this the
+// upload 415s — and 415 is in PERMANENT, so it parks as "needs a human" instead
+// of retrying.
+const AUDIO_MIME_ALIASES: Record<string, string> = {
+  "audio/x-m4a": "audio/mp4",
+  "audio/m4a": "audio/mp4",
+  "audio/x-mp4": "audio/mp4",
+  "audio/mp3": "audio/mpeg",
+  "audio/x-wav": "audio/wav",
+  "audio/wave": "audio/wav",
+};
+
 function extFromMime(mime: string): string {
   const m = mime.toLowerCase();
   if (m.includes("jpeg") || m.includes("jpg")) return "jpg";
@@ -280,7 +297,8 @@ export async function POST(req: Request) {
       // matching, and store the bare type — so the route stays self-sufficient
       // regardless of whether the client normalized it (e.g. Slice C offline replay
       // re-sends a Blob whose .type still carries the codecs param).
-      const baseMime = payload.file.mimeType.toLowerCase().split(";")[0].trim();
+      const rawMime = payload.file.mimeType.toLowerCase().split(";")[0].trim();
+      const baseMime = isVoice ? AUDIO_MIME_ALIASES[rawMime] ?? rawMime : rawMime;
       const allowed = isVoice ? ALLOWED_AUDIO_MIME : ALLOWED_IMAGE_MIME;
       if (!allowed.has(baseMime)) {
         return NextResponse.json(
