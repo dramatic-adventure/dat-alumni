@@ -26,6 +26,7 @@ import { driveClient, sheetsClient } from "@/lib/googleClients";
 import { findOrCreateFolder, bufferToStream } from "@/lib/driveFolders";
 import { envOrThrow } from "@/lib/profileFolders";
 import { normalizeUploadImage } from "@/lib/normalizeUploadImage";
+import { readExifCaptureDate } from "@/lib/exifCaptureDate";
 import { rateLimit, rateKey } from "@/lib/rateLimit";
 import { getFieldKitAccess, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 import { withRetry, idxOf, normId } from "@/lib/sheetsResilience";
@@ -56,7 +57,9 @@ type DriveCreateResp = { data: { id?: string } };
 // chapterId + visibility); columns resolve by header NAME, so a sheet still on
 // an older, narrower header keeps working — the new fields just don't land
 // until the header gains the columns.
-const FIELD_CAPTURES_RANGE = "Field-Captures!A:P";
+// A:Z, not A:P — columns are resolved by header NAME below, so this range only
+// has to be wide enough to return them. mediaCapturedAt landed past P.
+const FIELD_CAPTURES_RANGE = "Field-Captures!A:Z";
 const VALID_KINDS = new Set(["note", "quote", "photo", "voice"]);
 
 // File uploads (photo + voice) are bounded server-side regardless of what the
@@ -315,6 +318,7 @@ export async function POST(req: Request) {
       quoteSpeaker: idxOf(header, ["quotespeaker"]),
       driveFileId: idxOf(header, ["drivefileid"]),
       mimeType: idxOf(header, ["mimetype"]),
+      mediaCapturedAt: idxOf(header, ["mediacapturedat"]),
     };
     if (col.captureId === -1) throw new Error('Field-Captures missing "captureId" header');
 
@@ -329,9 +333,18 @@ export async function POST(req: Request) {
     // Upload the file to Drive: <root>/<programId>/<authorSlug>/<captureId>.<ext>.
     let driveFileId = "";
     let storedMime = "";
+    let mediaCapturedAt = "";
     if (hasFile && upload) {
       let buffer = upload.buffer;
       let mimeType = upload.mimeType;
+      // WHEN WAS THIS ACTUALLY TAKEN? Read EXIF here, on the ORIGINAL bytes and
+      // BEFORE normalizeUploadImage below — that call bakes in orientation and
+      // strips the metadata, after which the date is unrecoverable and nothing
+      // already in Drive has it. Returns "" for non-photos, photos with no EXIF
+      // date, and any failure; a missing date is a valid answer, never an error.
+      if (isPhoto) {
+        mediaCapturedAt = await readExifCaptureDate(buffer);
+      }
       // Normalize images ONLY: HEIC/HEIF → JPEG (browsers can't render HEIC),
       // bake+strip EXIF orientation, cap dimensions. Failure falls back to the
       // original bytes. Audio uploads raw, bypassing normalization.
@@ -384,6 +397,10 @@ export async function POST(req: Request) {
     put(col.quoteSpeaker, quoteSpeaker); // only sent for quotes; empty otherwise
     put(col.driveFileId, driveFileId); // photo/voice only; empty for note/quote
     put(col.mimeType, storedMime); // photo/voice only; empty for note/quote
+    // Naive local wall-clock ("2026-07-25T14:32:10"), NOT an instant — EXIF
+    // carries no offset, and an itinerary day's fullDate is a local date too, so
+    // they compare directly. Empty unless this was a photo carrying an EXIF date.
+    put(col.mediaCapturedAt, mediaCapturedAt);
 
     await withRetry(
       () =>

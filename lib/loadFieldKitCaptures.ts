@@ -29,13 +29,27 @@ export type FieldCapture = {
   quoteSpeaker: string;
   driveFileId: string; // photo only; empty for note/quote
   mimeType: string; // photo only; empty for note/quote
+  /**
+   * The photo's OWN capture moment, read from EXIF DateTimeOriginal at upload
+   * (see app/api/field-kit/capture/route.ts). Empty for non-photos, for photos
+   * carrying no EXIF date, and for every row written before this column existed.
+   *
+   * Why it matters: `createdAt` is when the artist tapped Save. For a photo
+   * pulled out of the camera roll weeks later that is the upload moment, not the
+   * moment the shutter fired — so a whole trip backfilled after coming home
+   * would otherwise timestamp as "after the trip". This is the real date.
+   */
+  mediaCapturedAt: string;
 };
 
 // A:P — A:N (Slice 6) + deletedAt/editedAt (edit & soft-delete). Soft-deleted
 // rows stay in the tab forever (preserving captureId dedup for offline replays)
 // and are filtered out HERE, so every consumer of this loader — Traces,
 // Composer, Publish, auto-assembler — forgets them at once.
-const FIELD_CAPTURES_RANGE = "Field-Captures!A:P";
+// A:Z, not A:P — columns are resolved by header NAME, so the range only has to
+// be wide enough to return them. mediaCapturedAt landed past P; the headroom
+// means the next added column needs no code change here.
+const FIELD_CAPTURES_RANGE = "Field-Captures!A:Z";
 
 /** A member's own captures for one program, newest first. Never throws. */
 export const loadCapturesForAuthor = cache(
@@ -98,6 +112,7 @@ async function loadCapturesFiltered(
     const iDriveFile = idxOf(header, ["drivefileid"]);
     const iMime = idxOf(header, ["mimetype"]);
     const iDeleted = idxOf(header, ["deletedat"]);
+    const iMediaCaptured = idxOf(header, ["mediacapturedat"]);
     if ([iId, iProg, iAuthor, iKind, iBody, iCreated].some((i) => i === -1)) return [];
 
     const out: FieldCapture[] = [];
@@ -123,6 +138,8 @@ async function loadCapturesFiltered(
         quoteSpeaker: iSpeaker !== -1 ? String(row[iSpeaker] ?? "") : "",
         driveFileId: iDriveFile !== -1 ? String(row[iDriveFile] ?? "") : "",
         mimeType: iMime !== -1 ? String(row[iMime] ?? "") : "",
+        mediaCapturedAt:
+          iMediaCaptured !== -1 ? String(row[iMediaCaptured] ?? "").trim() : "",
       });
     }
 

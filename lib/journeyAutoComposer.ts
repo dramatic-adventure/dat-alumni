@@ -26,6 +26,7 @@ import {
   type JourneyDraftChapter,
 } from "@/lib/journeyDraft";
 import type { SpineChapter } from "@/lib/composerSpine";
+import { isoDateInTz } from "@/lib/programItinerary";
 import { ulid } from "@/lib/ulid";
 
 // ── Inputs ────────────────────────────────────────────────────────────────────
@@ -35,8 +36,20 @@ export type AssemblerCapture = {
   captureId: string;
   kind: string; // "note" | "quote" | "photo" | "voice"
   bodyText: string;
+  /** When the artist tapped Save. For a photo backfilled from the camera roll
+   *  after the trip this is the UPLOAD moment — see mediaCapturedAt. */
   createdAt: string;
   chapterId: string;
+  /** Itinerary day the artist selected at capture. Outside the program dates the
+   *  picker offers "No day (unassigned)" and this is blank. */
+  dayIndex: string;
+  /**
+   * EXIF DateTimeOriginal — when the shutter actually fired. A NAIVE local
+   * wall-clock ("2026-07-25T14:32:10"), never an instant, because EXIF carries
+   * no offset and an itinerary day's fullDate is a local date too. Empty for
+   * non-photos, photos with no EXIF, and rows written before the column existed.
+   */
+  mediaCapturedAt: string;
   visibility: "card" | "sealed";
   quoteSpeaker: string;
   driveFileId: string;
@@ -119,6 +132,96 @@ type ChapterBucket = {
   total: number;
 };
 
+/** One dated day of the itinerary, flattened with the chapter that owns it. */
+type DaySlot = { chapterId: string; fullDate: string; tz?: string };
+
+/** Every dated day across the spine, earliest first. */
+function daySlots(spine: SpineChapter[]): DaySlot[] {
+  const out: DaySlot[] = [];
+  for (const ch of spine) {
+    // ?? [] — scripts/ fixtures are untyped by design and predate this field.
+    for (const d of ch.dayDates ?? []) {
+      if (d?.fullDate) out.push({ chapterId: ch.id, fullDate: d.fullDate, tz: ch.timezone });
+    }
+  }
+  return out.sort((a, b) => a.fullDate.localeCompare(b.fullDate));
+}
+
+/**
+ * The timestamp a capture should be ORDERED by: EXIF when we have it, else
+ * createdAt.
+ *
+ * Both start "YYYY-MM-DDT" so they sort together, but they are not the same
+ * kind of value — EXIF is naive local, createdAt is a UTC instant — so two
+ * captures from the same hour can interleave imprecisely. That never shows:
+ * buckets are split by kind before any ordering is used, so photos only ever
+ * sort against photos and text against text.
+ */
+function sortKey(c: AssemblerCapture): string {
+  // ?? "" throughout: scripts/ fixtures are untyped by design and older callers
+  // predate these fields, so a missing one must read as absent, not throw.
+  return (c.mediaCapturedAt ?? "").trim() || c.createdAt || "";
+}
+
+/**
+ * Which chapter does this capture's DATE put it in?
+ *
+ * Returns a chapterId, or null for "no opinion" (caller holds it aside).
+ *
+ * Dates are compared as local calendar dates in the zone the day is lived in —
+ * mirroring resolveToday(), and for the same reason: a 10pm capture in
+ * Bratislava is already tomorrow in UTC, so comparing instants would file every
+ * evening capture a day late. An EXIF date needs no conversion at all; it is
+ * already local wall-clock from the camera.
+ *
+ * The two ends are deliberately ASYMMETRIC:
+ *  - BEFORE the trip → the first chapter by `num`. Packing and orientation
+ *    captures have a home there (a day-less "ch0 — Prepare for departure"), and
+ *    that is genuinely where they belong. Note this is the first chapter by
+ *    number, NOT the chapter owning the earliest day — with a day-less ch0
+ *    those are different chapters, and using the latter would quietly dump
+ *    packing photos into the arrival chapter.
+ *  - AFTER the trip → null. A capture dated past the last day is almost always
+ *    a photo whose real date we could not read; filing it into the closing
+ *    chapter would be a confident lie. Held aside instead.
+ */
+function placeByDate(
+  c: AssemblerCapture,
+  slots: DaySlot[],
+  firstChapterId: string | undefined
+): string | null {
+  if (!slots.length) return null;
+
+  const exif = (c.mediaCapturedAt ?? "").trim();
+  const naiveDate = exif.length >= 10 ? exif.slice(0, 10) : "";
+  let instant: Date | null = null;
+  if (!naiveDate) {
+    const t = (c.createdAt ?? "").trim();
+    if (!t) return null;
+    const d = new Date(t);
+    if (Number.isNaN(d.getTime())) return null;
+    instant = d;
+  }
+  // The capture's local calendar date, as lived in that day's own zone.
+  const dateAt = (slot: DaySlot): string =>
+    naiveDate || isoDateInTz(instant as Date, slot.tz);
+
+  for (const slot of slots) {
+    if (dateAt(slot) === slot.fullDate) return slot.chapterId;
+  }
+
+  const first = slots[0];
+  const last = slots[slots.length - 1];
+  if (dateAt(first) < first.fullDate) return firstChapterId ?? null;
+  if (dateAt(last) > last.fullDate) return null; // after the trip — held aside
+
+  // In range but on a day the itinerary doesn't list. resolveToday() calls this
+  // a gap day and anchors to the most recent past day; do the same, so the Field
+  // Kit never disagrees with itself about which chapter a date belongs to.
+  const prior = [...slots].reverse().find((slot) => slot.fullDate <= dateAt(slot));
+  return prior ? prior.chapterId : null;
+}
+
 function bucketCaptures(
   spine: SpineChapter[],
   captures: AssemblerCapture[]
@@ -127,15 +230,37 @@ function bucketCaptures(
   const buckets = new Map<string, ChapterBucket>();
   for (const id of spineIds) buckets.set(id, { textPool: [], photos: [], voices: [], total: 0 });
 
+  // dayIds, not dayDates: a day with no parseable date can still anchor a
+  // capture the artist explicitly filed under it.
+  const dayToChapter = new Map<string, string>();
+  for (const ch of spine) for (const dayId of ch.dayIds ?? []) dayToChapter.set(dayId, ch.id);
+
+  const slots = daySlots(spine);
+  const firstChapterId = [...spine].sort((a, b) => a.num - b.num)[0]?.id;
+
   const unsorted: AssemblerCapture[] = [];
   const sorted = [...captures]
     .filter((c) => c.visibility !== "sealed")
-    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    .sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
 
   for (const c of sorted) {
-    const bucket = buckets.get(c.chapterId.trim());
+    // PLACEMENT LADDER, most trusted signal first. The artist's own choices win
+    // outright: if they tagged a chapter or picked a day, that is the story they
+    // meant it for, and no inferred date overrules it.
+    //   1. chapterId  — explicitly tagged
+    //   2. dayIndex   — the day they picked at capture
+    //   3. date       — EXIF if we have it, else createdAt (see placeByDate)
+    let bucket = buckets.get(c.chapterId.trim());
     if (!bucket) {
-      unsorted.push(c); // blank/unmatched chapterId — held aside, surfaced, never dropped
+      const viaDay = dayToChapter.get((c.dayIndex ?? "").trim());
+      if (viaDay) bucket = buckets.get(viaDay);
+    }
+    if (!bucket) {
+      const viaDate = placeByDate(c, slots, firstChapterId);
+      if (viaDate) bucket = buckets.get(viaDate);
+    }
+    if (!bucket) {
+      unsorted.push(c); // nothing to go on — held aside, surfaced, never dropped
       continue;
     }
     if (c.kind === "photo") {
@@ -265,14 +390,25 @@ export function assembleDraft(input: {
   const { programId, authorSlug, program, spine, captures, existing, now } = input;
   const { buckets, unsorted } = bucketCaptures(spine, captures);
 
-  const base = existing ?? freshDraft(programId, authorSlug, program, spine);
+  // A chapter with NO day rows is scaffolding — a pre-departure "ch0" that
+  // exists to catch packing and orientation captures. It earns a slot on a card
+  // only once something actually lands in it, so an artist with no pre-trip
+  // photos never sees an empty chapter they can't account for. Dated chapters
+  // are always scaffolded, empty or not: they are real days of the trip and the
+  // artist may well want to write into one. Once added, a chapter is never
+  // removed — anything they wrote there stays.
+  const scaffold = spine.filter(
+    (s) => (s.dayDates ?? []).length > 0 || (buckets.get(s.id)?.total ?? 0) > 0
+  );
+
+  const base = existing ?? freshDraft(programId, authorSlug, program, scaffold);
 
   // Additive spine reconcile (same rule as Composer): new itinerary chapters
   // gain a slot; existing entries and dailies keep their order and content.
   const have = new Set(base.chapters.map((c) => c.chapterId));
   const chapters = [
     ...base.chapters,
-    ...spine.filter((s) => !have.has(s.id)).map(chapterFromSpine),
+    ...scaffold.filter((s) => !have.has(s.id)).map(chapterFromSpine),
   ].map((ch) => {
     if (ch.kind !== "chapter") return ch; // dailies are artist-owned, never assembled
     const bucket = buckets.get(ch.chapterId);

@@ -186,6 +186,10 @@ export default function TracesList({ captures, asId }: { captures: FieldCapture[
             quoteSpeaker: q.quoteSpeaker ?? "",
             driveFileId: "",
             mimeType: "",
+            // Still queued on this device. EXIF is read server-side at upload
+            // (app/api/field-kit/capture/route.ts), so there is nothing to show
+            // until this capture syncs.
+            mediaCapturedAt: "",
           }))
       );
       setOutboxState(

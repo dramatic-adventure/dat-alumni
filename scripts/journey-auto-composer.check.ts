@@ -39,10 +39,14 @@ function check(name, cond, detail) {
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
+// Real itinerary chapters always carry dated days — dayDates drives both the
+// date→chapter placement ladder and the "a day-less chapter is scaffolding"
+// rule, so fixtures that omit it would not model anything that exists.
+const TZ = "Europe/Bratislava";
 const spine = [
-  { id: "ch-1", num: 1, verb: "Arrive", place: "Bratislava", title: "Arrival", goal: "", prompt: "", accent: "teal", dayIds: ["d1"], dateLabel: "Jul 12" },
-  { id: "ch-2", num: 2, verb: "Workshop", place: "Zvolen", title: "The Work", goal: "", prompt: "", accent: "pink", dayIds: ["d2"], dateLabel: "Jul 14" },
-  { id: "ch-3", num: 3, verb: "Perform", place: "Košice", title: "The Show", goal: "", prompt: "", accent: "yellow", dayIds: ["d3"], dateLabel: "Jul 18" },
+  { id: "ch-1", num: 1, verb: "Arrive", place: "Bratislava", title: "Arrival", goal: "", prompt: "", accent: "teal", dayIds: ["d1"], dayDates: [{ id: "d1", fullDate: "2026-07-12" }], timezone: TZ, dateLabel: "Jul 12" },
+  { id: "ch-2", num: 2, verb: "Workshop", place: "Zvolen", title: "The Work", goal: "", prompt: "", accent: "pink", dayIds: ["d2"], dayDates: [{ id: "d2", fullDate: "2026-07-14" }], timezone: TZ, dateLabel: "Jul 14" },
+  { id: "ch-3", num: 3, verb: "Perform", place: "Košice", title: "The Show", goal: "", prompt: "", accent: "yellow", dayIds: ["d3"], dayDates: [{ id: "d3", fullDate: "2026-07-18" }], timezone: TZ, dateLabel: "Jul 18" },
 ];
 
 const program = { program: "PASSAGE", location: "Slovakia", country: "Slovakia", year: "2026", dates: "Jul 12 – Aug 2, 2026" };
@@ -56,6 +60,8 @@ function cap(over) {
     bodyText: "",
     createdAt: `2026-07-${String(12 + (n % 15)).padStart(2, "0")}T10:${String(n % 60).padStart(2, "0")}:00.000Z`,
     chapterId: "ch-1",
+    dayIndex: "",
+    mediaCapturedAt: "",
     visibility: "card",
     quoteSpeaker: "",
     driveFileId: "",
@@ -205,8 +211,12 @@ console.log("\n[6] pull-quote fallback (no quotes)");
 
 console.log("\n[7] unsorted captures");
 {
-  const stray = cap({ bodyText: "Stray with no chapter.", chapterId: "" });
-  const unknown = cap({ bodyText: "Unknown chapter id.", chapterId: "ch-99" });
+  // Dated AFTER the last itinerary day on purpose. Since the placement ladder
+  // landed, a chapter-less capture dated DURING the trip is placed by date — so
+  // to exercise the unsorted bucket the date has to be one the ladder declines,
+  // and relying on cap()'s rolling counter for that would be luck, not a test.
+  const stray = cap({ bodyText: "Stray with no chapter.", chapterId: "", createdAt: "2026-08-20T10:00:00.000Z" });
+  const unknown = cap({ bodyText: "Unknown chapter id.", chapterId: "ch-99", createdAt: "2026-08-21T10:00:00.000Z" });
   const placed = cap({ bodyText: "Properly placed.", chapterId: "ch-1" });
   const { draft, unsortedCaptureIds } = run([stray, unknown, placed]);
   check("both strays reported as unsorted", unsortedCaptureIds.length === 2 && unsortedCaptureIds.includes(stray.captureId) && unsortedCaptureIds.includes(unknown.captureId));
@@ -266,6 +276,95 @@ console.log("\n[9] trim + quote formatting helpers");
   const longQuote = run([cap({ kind: "quote", bodyText: longQuoteText, quoteSpeaker: "Anna", chapterId: "ch-2" })]);
   check("long quote response = fully verbatim + attribution",
     longQuote.draft.chapters[1].response === `“${longQuoteText}” — Anna`);
+}
+
+// ── 10. Placement ladder: chapterId → dayIndex → date (EXIF, else createdAt) ──
+//
+// The rules under test, in the order they resolve:
+//   1. an explicit chapterId always wins — no inferred date overrules the artist
+//   2. else the dayIndex they picked at capture
+//   3. else the date: EXIF DateTimeOriginal for photos, else createdAt
+//   4. before the trip → the first chapter BY NUM (a day-less "ch0")
+//   5. after the trip → held aside; no confident guess
+//   6. in range but on an unlisted day → the most recent prior day's chapter,
+//      matching what resolveToday() does with gap days
+
+console.log("\n[10] placement ladder");
+{
+  // A day-less pre-departure chapter — scaffolding for packing and orientation.
+  const ch0 = { id: "ch-0", num: 0, verb: "Prepare", place: "Departure", title: "Prepare for departure", goal: "", prompt: "", accent: "yellow", dayIds: [], dayDates: [], timezone: TZ, dateLabel: "" };
+  const spine0 = [ch0, ...spine];
+  const runOn = (sp, captures) => assembleDraft({
+    programId: "passage-slovakia-2026",
+    authorSlug: "test-artist",
+    program,
+    spine: sp,
+    captures,
+    existing: null,
+    now: "2026-08-03T15:00:00.000Z",
+  });
+  const at = (d, id) => d.chapters.find((c) => c.chapterId === id);
+
+  // 1 — explicit chapterId beats a flatly contradictory EXIF date.
+  {
+    const c = cap({ bodyText: "Filed by hand.", chapterId: "ch-3", mediaCapturedAt: "2026-07-12T09:00:00" });
+    const { draft } = runOn(spine, [c]);
+    check("explicit chapterId wins over EXIF", at(draft, "ch-3").response === "Filed by hand." && !at(draft, "ch-1").response);
+  }
+
+  // 2 — dayIndex places it when no chapter was tagged.
+  {
+    const c = cap({ bodyText: "Picked the day.", chapterId: "", dayIndex: "d2", createdAt: "2026-08-30T10:00:00.000Z" });
+    const { draft, unsortedCaptureIds } = runOn(spine, [c]);
+    check("dayIndex places when chapterId is blank", at(draft, "ch-2").response === "Picked the day." && unsortedCaptureIds.length === 0);
+  }
+
+  // 3 — THE post-trip backfill case: uploaded weeks late, EXIF says mid-trip.
+  {
+    const c = cap({ kind: "photo", driveFileId: "df-exif", chapterId: "", dayIndex: "", createdAt: "2026-08-25T18:00:00.000Z", mediaCapturedAt: "2026-07-14T11:00:00" });
+    const { draft, unsortedCaptureIds } = runOn(spine, [c]);
+    check("EXIF places a photo uploaded after the trip", at(draft, "ch-2").photoCaptureIds.includes(c.captureId) && unsortedCaptureIds.length === 0);
+  }
+
+  // 4 — same upload, no EXIF: nothing to go on, so nothing is guessed.
+  {
+    const c = cap({ kind: "photo", driveFileId: "df-blind", chapterId: "", dayIndex: "", createdAt: "2026-08-25T18:00:00.000Z" });
+    const { draft, unsortedCaptureIds } = runOn(spine, [c]);
+    check("post-trip photo with no EXIF is held aside", unsortedCaptureIds.includes(c.captureId) && !JSON.stringify(draft.chapters).includes("df-blind"));
+  }
+
+  // 5 — before the trip → ch-0, the first chapter BY NUM. Note ch-0 owns no
+  //     days, so "chapter of the earliest day" would wrongly answer ch-1 here.
+  {
+    const c = cap({ bodyText: "Packing the soft shoes.", chapterId: "", dayIndex: "", createdAt: "2026-07-02T10:00:00.000Z" });
+    const { draft, unsortedCaptureIds } = runOn(spine0, [c]);
+    check("pre-trip capture clamps to the day-less ch-0", at(draft, "ch-0") && at(draft, "ch-0").response === "Packing the soft shoes." && unsortedCaptureIds.length === 0);
+    check("it does NOT land in the first dated chapter", !at(draft, "ch-1").response);
+  }
+
+  // 6 — the "only if necessary" rule: no pre-trip captures, no ch-0 on the card.
+  {
+    const c = cap({ bodyText: "Arrived.", chapterId: "ch-1" });
+    const { draft } = runOn(spine0, [c]);
+    check("day-less ch-0 is absent when nothing lands in it", at(draft, "ch-0") === undefined);
+    check("dated chapters are still scaffolded when empty", at(draft, "ch-2") !== undefined && at(draft, "ch-3") !== undefined);
+  }
+
+  // 7 — in-range gap day (Jul 16 sits between d2/Jul 14 and d3/Jul 18).
+  {
+    const c = cap({ bodyText: "A day the itinerary skips.", chapterId: "", dayIndex: "", createdAt: "2026-07-16T10:00:00.000Z" });
+    const { draft } = runOn(spine, [c]);
+    check("gap day anchors to the most recent prior day", at(draft, "ch-2").response === "A day the itinerary skips.");
+  }
+
+  // 8 — timezone: 22:30 UTC on Jul 13 is already 00:30 on Jul 14 in Bratislava,
+  //     so this belongs to d2/ch-2. Comparing raw UTC would read "2026-07-13",
+  //     fall through as a gap day, and file it a day early under ch-1.
+  {
+    const c = cap({ bodyText: "Late night, next day really.", chapterId: "", dayIndex: "", createdAt: "2026-07-13T22:30:00.000Z" });
+    const { draft } = runOn(spine, [c]);
+    check("late-evening capture resolves in the program timezone", at(draft, "ch-2").response === "Late night, next day really.", { ch1: at(draft, "ch-1").response, ch2: at(draft, "ch-2").response });
+  }
 }
 
 // ── Result ────────────────────────────────────────────────────────────────────
