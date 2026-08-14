@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, FormEvent, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import TurnstileWidget from "@/components/shared/TurnstileWidget";
 
 /* ─── Partnership type options ─── */
 const PARTNER_TYPES = [
@@ -62,6 +63,8 @@ function ProposeForm() {
     community: "",
     hear: "",
   });
+  // Cloudflare Turnstile token — null until the (invisible) widget verifies.
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   function handleChange(
     e: React.ChangeEvent<
@@ -90,6 +93,7 @@ function ProposeForm() {
           timeline: form.timeline,
           community: form.community,
           hear: form.hear,
+          turnstileToken,
         }),
       });
 
@@ -337,6 +341,12 @@ function ProposeForm() {
         </p>
       )}
 
+      <TurnstileWidget
+        onToken={setTurnstileToken}
+        theme="light"
+        gap="1.4rem"
+        run={form.email.trim().length > 0 || form.name.trim().length > 0}
+      />
       <div className="pp-form__footer">
         <button
           type="submit"

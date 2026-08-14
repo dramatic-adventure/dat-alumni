@@ -3,6 +3,8 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { findOpportunity } from "@/lib/loadOpportunities";
 import { sendEmail, emailConfigured } from "@/lib/sendEmail";
+import { verifyTurnstileToken } from "@/lib/turnstile";
+import { getClientIp } from "@/lib/mailingListGuard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -100,6 +102,15 @@ export async function POST(req: Request) {
   const website = get("website"); // honeypot
 
   if (website) {
+    return NextResponse.json({ ok: true });
+  }
+
+  // Cloudflare Turnstile — the primary bot wall (skipped until keys are
+  // configured; see lib/turnstile.ts). Failed tokens get the same silent
+  // success as the honeypot so bots don't learn what caught them.
+  const turnstile = await verifyTurnstileToken(get("turnstileToken") || undefined, getClientIp(req));
+  if (turnstile.outcome === "fail") {
+    console.warn("[apply] turnstile rejected:", turnstile.reason);
     return NextResponse.json({ ok: true });
   }
 

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import TurnstileWidget from "@/components/shared/TurnstileWidget";
 import {
   HUB_META,
   OPPORTUNITY_HUBS,
@@ -57,6 +58,8 @@ export default function ApplyClient({
 
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  // Cloudflare Turnstile token — null until the (invisible) widget verifies.
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const MAX_FILE_MB = 8;
   const checkFile = (file: File | null, label: string): string | null => {
@@ -109,6 +112,7 @@ export default function ApplyClient({
       fd.append("whyDAT", whyDAT);
       fd.append("anythingElse", anythingElse);
       fd.append("website", website);
+      fd.append("turnstileToken", turnstileToken ?? "");
       if (headshot) fd.append("headshot", headshot);
       if (resume) fd.append("resume", resume);
       if (coverLetter) fd.append("coverLetter", coverLetter);
@@ -399,6 +403,12 @@ export default function ApplyClient({
             </fieldset>
 
             {/* Submit */}
+            <TurnstileWidget
+              onToken={setTurnstileToken}
+              theme="light"
+              gap="2rem"
+              run={email.trim().length > 0 || name.trim().length > 0}
+            />
             <div className="ap-submit-row">
               <button type="submit" className="ap-submit" disabled={status === "loading"}>
                 {status === "loading" ? "Sending…" : "Send Application"}

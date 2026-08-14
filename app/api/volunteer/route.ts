@@ -2,6 +2,8 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { sendEmail, emailConfigured } from "@/lib/sendEmail";
+import { verifyTurnstileToken } from "@/lib/turnstile";
+import { getClientIp } from "@/lib/mailingListGuard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +18,8 @@ type Body = {
   message?: string;
   // Honeypot
   website?: string;
+  /** Cloudflare Turnstile response token */
+  turnstileToken?: string | null;
 };
 
 const FRIENDS_EMAIL =
@@ -32,10 +36,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { name, email, city, areas, background, availability, message, website } = body;
+  const { name, email, city, areas, background, availability, message, website, turnstileToken } = body;
 
   // Honeypot check — bots fill this, humans leave it blank
   if (website) {
+    return NextResponse.json({ ok: true });
+  }
+
+  // Cloudflare Turnstile — the primary bot wall (skipped until keys are
+  // configured; see lib/turnstile.ts). Failed tokens get the same silent
+  // success as the honeypot so bots don't learn what caught them.
+  const turnstile = await verifyTurnstileToken(turnstileToken ?? undefined, getClientIp(req));
+  if (turnstile.outcome === "fail") {
+    console.warn("[volunteer] turnstile rejected:", turnstile.reason);
     return NextResponse.json({ ok: true });
   }
 

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import TurnstileWidget from "@/components/shared/TurnstileWidget";
 
 // ── Volunteer areas ───────────────────────────────────────────────────────────
 
@@ -106,6 +107,8 @@ export default function VolunteerPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  // Cloudflare Turnstile token — null until the (invisible) widget verifies.
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const toggleArea = (id: string) => {
     setSelectedAreas((prev) =>
@@ -136,6 +139,7 @@ export default function VolunteerPage() {
           areas: selectedAreas.map(
             (id) => VOLUNTEER_AREAS.find((a) => a.id === id)?.label ?? id
           ),
+          turnstileToken,
         }),
       });
       const data = await res.json();
@@ -409,6 +413,12 @@ export default function VolunteerPage() {
 
               {error && <p className="vl-error">{error}</p>}
 
+              <TurnstileWidget
+                onToken={setTurnstileToken}
+                theme="light"
+                gap="1.5rem"
+                run={fields.email.trim().length > 0 || fields.name.trim().length > 0}
+              />
               <button type="submit" className="vl-submit-btn" disabled={submitting}>
                 {submitting ? "Sending…" : "Send My Application →"}
               </button>

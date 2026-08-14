@@ -27,6 +27,7 @@ import {
   type DramaClubCause,
 } from "@/lib/causes";
 import Lightbox from "@/components/shared/Lightbox";
+import TurnstileWidget from "@/components/shared/TurnstileWidget";
 
 import {
   DRAMA_CLUB_STATUS_META,
@@ -659,6 +660,8 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [updatesMessage, setUpdatesMessage] = useState<string>("");
+  // Cloudflare Turnstile token — null until the (invisible) widget verifies.
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const handleUpdatesSubmit = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
@@ -682,6 +685,7 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
           pagePath: typeof window !== "undefined" ? window.location.pathname : "",
           source: "drama_club_updates_form",
           userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+          turnstileToken,
         };
 
         const res = await fetch("/api/drama-club-updates", {
@@ -704,7 +708,7 @@ export default function DramaClubPageTemplate(props: DramaClubPageTemplateProps)
         setUpdatesMessage("Something went wrong. Please try again.");
       }
     },
-    [updatesEmail, club]
+    [updatesEmail, club, turnstileToken]
   );
 
   const ageRange =
@@ -2504,6 +2508,13 @@ const voicesHeading = `Voices from ${voicesFrom}`;
                               SIGN UP
                             </button>
                           </div>
+
+                          <TurnstileWidget
+                            onToken={setTurnstileToken}
+                            theme="light"
+                            gap="0rem"
+                            run={updatesEmail.trim().length > 0}
+                          />
 
                           {/* Subtle status line (renders only when needed) */}
                           {updatesMessage ? (

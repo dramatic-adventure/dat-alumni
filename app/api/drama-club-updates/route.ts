@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { verifyTurnstileToken } from "@/lib/turnstile";
+import { getClientIp } from "@/lib/mailingListGuard";
 
 export const runtime = "nodejs";
 
@@ -70,6 +72,18 @@ export async function POST(req: Request) {
         { ok: false, error: "Invalid email" },
         { status: 400 }
       );
+    }
+
+    // Cloudflare Turnstile — the primary bot wall (skipped until keys are
+    // configured; see lib/turnstile.ts). Failed tokens get a silent success
+    // so bots don't learn what caught them; the address is never forwarded.
+    const turnstile = await verifyTurnstileToken(
+      typeof body?.turnstileToken === "string" ? body.turnstileToken : undefined,
+      getClientIp(req)
+    );
+    if (turnstile.outcome === "fail") {
+      console.warn("[drama-club-updates] turnstile rejected:", turnstile.reason);
+      return NextResponse.json({ ok: true });
     }
 
     const payload = {
