@@ -81,7 +81,11 @@ export default function MailingListForm({ source = "event-detail" }: { source?: 
           autoComplete="email"
         />
       </div>
-      <TurnstileWidget onToken={setTurnstileToken} />
+      <TurnstileWidget
+        onToken={setTurnstileToken}
+        theme="light"
+        run={email.trim().length > 0 || name.trim().length > 0}
+      />
       <button
         type="submit"
         className="evhub-ml-btn"

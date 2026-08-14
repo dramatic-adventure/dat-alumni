@@ -174,7 +174,11 @@ function HomeMailingListForm() {
         <input type="email" required placeholder="your@email.com" value={email}
           onChange={(e) => setEmail(e.target.value)} className="eh-ml-input eh-ml-input--email" autoComplete="email" />
       </div>
-      <TurnstileWidget onToken={setTurnstileToken} />
+      <TurnstileWidget
+        onToken={setTurnstileToken}
+        theme="light"
+        run={email.trim().length > 0 || name.trim().length > 0}
+      />
       <button type="submit" className="eh-ml-btn" disabled={status === "loading"}>
         {status === "loading" ? "Signing up…" : "Join the List"}
       </button>
