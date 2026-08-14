@@ -26,6 +26,8 @@
     "setup:field-kit-slice5-tabs": "tsx scripts/setup-field-kit-slice5-tabs.ts",
     "shelve:resource": "tsx scripts/shelve-field-kit-resource.ts",
     "setup:field-kit-slice6-columns": "tsx scripts/setup-field-kit-slice6-columns.ts",
+    "flag:mailing-list": "tsx scripts/flag-mailing-list-spam.ts",
+    "setup:turnstile-secret": "tsx scripts/setup-turnstile-secret.ts",
     "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
     "postinstall": "echo \"skip prisma generate in postinstall\""
   },

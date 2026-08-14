@@ -38,6 +38,7 @@ import {
   type EventCategory,
 } from "@/lib/events";
 import EventPoster, { FeaturedModule, DateChip, DateChipStyles, CAT, PLUM, CREAM, isOnlineEvent, cityLabel } from "./EventPoster";
+import TurnstileWidget from "@/components/shared/TurnstileWidget";
 
 // Two independent facets the visitor can combine: a Format (where) and a Type
 // (what). Each has its own "All", so e.g. "In Person" + "All" = every in-person
@@ -272,6 +273,11 @@ function MailingListForm() {
   const [name, setName] = useState("");
   const [honey, setHoney] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  // When this form first rendered. A submit under ~1.5s later is a script,
+  // not a person — the API treats it as a spam signal. See lib/mailingListGuard.ts
+  const [startedAt] = useState(() => Date.now());
+  // Cloudflare Turnstile token — null until the (invisible) widget verifies.
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -281,7 +287,14 @@ function MailingListForm() {
       const res = await fetch("/api/mailing-list", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name, source: "events-prototype", website: honey }),
+        body: JSON.stringify({
+          email,
+          name,
+          source: "events-prototype",
+          website: honey,
+          dwellMs: Date.now() - startedAt,
+          turnstileToken,
+        }),
       });
       if (!res.ok) throw new Error("submit-failed");
       setStatus("success");
@@ -312,6 +325,7 @@ function MailingListForm() {
         <input type="email" required placeholder="your@email.com" value={email}
           onChange={(e) => setEmail(e.target.value)} className="eh-ml-input eh-ml-input--email" autoComplete="email" />
       </div>
+      <TurnstileWidget onToken={setTurnstileToken} />
       <button type="submit" className="eh-ml-btn" disabled={status === "loading"}>
         {status === "loading" ? "Signing up…" : "Join the List →"}
       </button>

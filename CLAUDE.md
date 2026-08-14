@@ -129,6 +129,31 @@ with `npm run setup:email-secrets`; mint the refresh token once with
 Caveat: Google revokes Gmail-scoped refresh tokens if the sending mailbox's
 password changes — if all email breaks at once, re-mint and re-store the token.
 
+### Mailing-list spam defenses (2026-08)
+
+The public mailing-list signup was subscription-bombed in Jul–Aug 2026 (bots
+submitting real third-party addresses so the welcome email floods victims'
+inboxes). Defenses live in `lib/mailingListGuard.ts` (pure logic, shared with
+`scripts/flag-mailing-list-spam.ts`) and `app/api/mailing-list/route.ts`; the
+primary control is **Cloudflare Turnstile**, verified server-side in
+`lib/turnstile.ts`.
+
+- `TURNSTILE_SECRET_KEY` follows the Blobs pattern (`dat-turnstile-secrets`
+  store, env-var fallback for local dev). Write it with
+  `npm run setup:turnstile-secret`. **Never add it to Netlify function env.**
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is public; set it in Netlify env scoped to
+  **Builds** (like `NEXT_PUBLIC_VAPID_PUBLIC_KEY`). Until both keys exist, the
+  widget doesn't render and the server skips verification — safe to deploy.
+- Do NOT reintroduce shape heuristics (consonant runs, keyboard-mash, digit
+  ratios) to the signup scorer: executed against the real 256-row dataset they
+  caught 0 spam rows and quarantined real international names. Only
+  near-certain signals (dot-obfuscated Gmail, disposable domains, links in the
+  name field) belong there.
+- Rejected submissions are recorded in the "Mailing List" tab with a Status
+  (`quarantined` / `rate-limited` / `no-origin`) instead of being dropped,
+  capped per IP and site-wide so a bot can't flood the sheet. The dedupe set
+  counts only `subscribed` rows, so a rejected address is never locked out.
+
 ## Other Instructions
 
 - Do not make any changes until you have 95% confidence in what you need to build.  Ask me follow-up questions until you reach that confidence.

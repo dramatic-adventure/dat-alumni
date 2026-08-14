@@ -58,6 +58,8 @@ export default [
       "scripts/setup-field-kit-slice6-columns.ts",
       "scripts/setup-email-secrets.ts",
       "scripts/mint-gmail-refresh-token.ts",
+      "scripts/flag-mailing-list-spam.ts",
+      "scripts/setup-turnstile-secret.ts",
       "scripts/shelve-field-kit-resource.ts",
     ],
   },

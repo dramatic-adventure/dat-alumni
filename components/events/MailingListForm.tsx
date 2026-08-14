@@ -1,12 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import TurnstileWidget from "@/components/shared/TurnstileWidget";
 
 export default function MailingListForm({ source = "event-detail" }: { source?: string }) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [honey, setHoney] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  // When this form first rendered. A submit under ~1.5s later is a script,
+  // not a person — the API treats it as a spam signal. See lib/mailingListGuard.ts
+  const [startedAt] = useState(() => Date.now());
+  // Cloudflare Turnstile token — null until the (invisible) widget verifies.
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,7 +22,14 @@ export default function MailingListForm({ source = "event-detail" }: { source?: 
       const res = await fetch("/api/mailing-list", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name, source, website: honey }),
+        body: JSON.stringify({
+          email,
+          name,
+          source,
+          website: honey,
+          dwellMs: Date.now() - startedAt,
+          turnstileToken,
+        }),
       });
       if (!res.ok) throw new Error("submit-failed");
       setStatus("success");
@@ -68,6 +81,7 @@ export default function MailingListForm({ source = "event-detail" }: { source?: 
           autoComplete="email"
         />
       </div>
+      <TurnstileWidget onToken={setTurnstileToken} />
       <button
         type="submit"
         className="evhub-ml-btn"

@@ -13,6 +13,7 @@ import {
   TRAVELING_ARTIST_COUNT,
 } from "@/lib/datStats";
 import PhotoStrip from "@/components/shared/PhotoStrip";
+import TurnstileWidget from "@/components/shared/TurnstileWidget";
 import { dramaClubs } from "@/lib/dramaClubMap";
 import { productionMap, getSortYear } from "@/lib/productionMap";
 import { productionDetailsMap } from "@/lib/productionDetailsMap";
@@ -121,6 +122,11 @@ function HomeMailingListForm() {
   const [name, setName] = useState("");
   const [honey, setHoney] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  // When this form first rendered. A submit under ~1.5s later is a script,
+  // not a person — the API treats it as a spam signal. See lib/mailingListGuard.ts
+  const [startedAt] = useState(() => Date.now());
+  // Cloudflare Turnstile token — null until the (invisible) widget verifies.
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,7 +136,14 @@ function HomeMailingListForm() {
       const res = await fetch("/api/mailing-list", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name, source: "home", website: honey }),
+        body: JSON.stringify({
+          email,
+          name,
+          source: "home",
+          website: honey,
+          dwellMs: Date.now() - startedAt,
+          turnstileToken,
+        }),
       });
       if (!res.ok) throw new Error("submit-failed");
       setStatus("success");
@@ -161,6 +174,7 @@ function HomeMailingListForm() {
         <input type="email" required placeholder="your@email.com" value={email}
           onChange={(e) => setEmail(e.target.value)} className="eh-ml-input eh-ml-input--email" autoComplete="email" />
       </div>
+      <TurnstileWidget onToken={setTurnstileToken} />
       <button type="submit" className="eh-ml-btn" disabled={status === "loading"}>
         {status === "loading" ? "Signing up…" : "Join the List"}
       </button>
