@@ -143,11 +143,22 @@ export default function PublishClient({
     () => (draft?.chapters ?? []).filter((c) => c.kind === "chapter"),
     [draft]
   );
+  // Only OPTED-IN dailies count here (§10-Q9): the stamp publishes exactly
+  // these, so the review's numbers and the content gate must agree with the
+  // flatten — a draft whose only content is private dailies has nothing to
+  // publish. Private dailies are surfaced separately below.
   const dailyEntries = useMemo(
     () =>
       (draft?.chapters ?? []).filter(
-        (c) => c.kind === "daily" && chapterReadiness(c) !== "empty"
+        (c) => c.kind === "daily" && c.dailyPublic && chapterReadiness(c) !== "empty"
       ),
+    [draft]
+  );
+  const privateDailyCount = useMemo(
+    () =>
+      (draft?.chapters ?? []).filter(
+        (c) => c.kind === "daily" && !c.dailyPublic && chapterReadiness(c) !== "empty"
+      ).length,
     [draft]
   );
   const written = chapterEntries.filter((c) => chapterReadiness(c) === "written");
@@ -397,15 +408,24 @@ export default function PublishClient({
         })}
       </div>
 
-      {/* 4 · Daily pages */}
-      {dailyEntries.length > 0 && (
+      {/* 4 · Daily pages — only opted-in dailies publish (§10-Q9); private
+             ones are named so the review never disagrees with the stamp. */}
+      {(dailyEntries.length > 0 || privateDailyCount > 0) && (
         <>
           <SectionLabel>Daily page inserts</SectionLabel>
           <Card>
-            <p style={{ fontFamily: FONT.dm, fontSize: 13, lineHeight: 1.5, color: T.ink, margin: 0 }}>
-              <span style={{ fontFamily: FONT.anton, fontSize: 26, color: T.teal, marginRight: 10, verticalAlign: "middle" }}>{dailyEntries.length}</span>
-              loose postcard {dailyEntries.length === 1 ? "insert" : "inserts"} — {dailyEntries.map((e) => e.title || "untitled").join(" · ")} — tucked between your chapters.
-            </p>
+            {dailyEntries.length > 0 && (
+              <p style={{ fontFamily: FONT.dm, fontSize: 13, lineHeight: 1.5, color: T.ink, margin: 0 }}>
+                <span style={{ fontFamily: FONT.anton, fontSize: 26, color: T.teal, marginRight: 10, verticalAlign: "middle" }}>{dailyEntries.length}</span>
+                loose postcard {dailyEntries.length === 1 ? "insert" : "inserts"} — {dailyEntries.map((e) => e.title || "untitled").join(" · ")} — tucked between your chapters.
+              </p>
+            )}
+            {privateDailyCount > 0 && (
+              <p style={{ fontFamily: FONT.dm, fontSize: 12, lineHeight: 1.5, color: T.muted, margin: dailyEntries.length ? "8px 0 0" : 0, fontStyle: "italic" }}>
+                {privateDailyCount} daily {privateDailyCount === 1 ? "page stays" : "pages stay"} in your private
+                journal — flip on “Include on my public card” in the Composer to publish {privateDailyCount === 1 ? "it" : "them"}.
+              </p>
+            )}
           </Card>
         </>
       )}
