@@ -18,12 +18,17 @@ import {
   serializeChaptersJson,
   flattenChaptersToMediaUrls,
   fitChaptersJson,
+  journeyCardRowToCard,
   MAX_CHAPTERS_JSON_CHARS,
   MAX_FEATURED_PHOTOS_PER_CHAPTER,
   MAX_MORE_PHOTOS_PER_CHAPTER,
   MAX_MORE_AUDIO_PER_CHAPTER,
 } from "../lib/journeyCard";
-import { draftToChapterBlocks } from "../lib/journeyDraft";
+import {
+  draftToChapterBlocks,
+  draftToPreviewCard,
+  flattenDraftForPublish,
+} from "../lib/journeyDraft";
 
 let failures = 0;
 function check(name, cond, detail) {
@@ -166,6 +171,82 @@ console.log("\n[4] fitChaptersJson cell guard");
   const small = parseChaptersJson(JSON.stringify([mk(0)]));
   const fit2 = fitChaptersJson(small);
   check("under-cap card is untouched with zero drops", fit2.dropped.length === 0 && JSON.stringify(fit2.chapters) === JSON.stringify(small));
+}
+
+// ── 5. Preview fidelity: draftToPreviewCard vs the published card ────────────
+// §8: for the same draft, the Composer preview and the post-publish public card
+// must show the same pages/content — the ONLY intended difference is which URLs
+// the resolvers minted (private capture-media pre-publish, promoted public
+// after). Both sides run the same draftToChapterBlocks; this asserts the
+// structural equality end-to-end through both card constructors.
+
+console.log("\n[5] preview fidelity (private vs promoted URLs aside)");
+{
+  const draft = {
+    draftId: "d-fid", kind: "live", programId: "passage-slovakia-2026", authorSlug: "test-artist",
+    program: "PASSAGE", location: "Slovakia", country: "Slovakia", year: "2026",
+    dates: "Jul 12 – Aug 2, 2026", title: "The Card Title", primaryRole: "Teaching Artist",
+    accent: "teal", pullQuote: "The pull quote line.", heroCaptureId: "p1",
+    updatedAt: new Date(0).toISOString(),
+    chapters: [
+      {
+        chapterId: "ch-1", kind: "chapter", num: "01", title: "Arrival", location: "Bratislava",
+        dateLabel: "Jul 12", response: "The response line.", body: "Body words.\n\nMore body words.",
+        reflection: "PRIVATE", photoCaptureIds: ["p1", "p2"], morePhotoCaptureIds: ["p3"],
+        audioCaptureId: "v1", moreAudioCaptureIds: ["v2"],
+      },
+      {
+        chapterId: "ch-2", kind: "daily", title: "A postcard", response: "Daily line.",
+        body: "", reflection: "", photoCaptureIds: [],
+      },
+      {
+        chapterId: "ch-3", kind: "chapter", num: "03", title: "Ghost", response: "",
+        body: "", reflection: "", photoCaptureIds: [],
+      },
+    ],
+  };
+  // Two resolver sets: private (preview) vs promoted (publish).
+  const priv = (id) => `/api/field-kit/capture/media/df-${id}`;
+  const pub = (id) => (id.startsWith("v") ? `/api/media/audio/pub-${id}` : `/api/media/thumb/pub-${id}`);
+  const mk = (url) => [
+    (ch) => ch.photoCaptureIds.map(url),
+    (ch) => (ch.audioCaptureId ? url(ch.audioCaptureId) : undefined),
+    (ch) => (ch.morePhotoCaptureIds ?? []).map(url),
+    (ch) => (ch.moreAudioCaptureIds ?? []).map(url),
+  ];
+  const [pp, pa, pmp, pma] = mk(priv);
+  const [qp, qa, qmp, qma] = mk(pub);
+
+  const previewBlocks = draftToChapterBlocks(draft, pp, pa, pmp, pma);
+  const publishBlocks = draftToChapterBlocks(draft, qp, qa, qmp, qma);
+  const previewCard = draftToPreviewCard(draft, previewBlocks, priv("p1"));
+
+  // The published card, reconstructed the way the stamp + loader would.
+  const flat = flattenDraftForPublish(draft, publishBlocks, pub("p1"));
+  const publishedCard = journeyCardRowToCard({
+    id: "card-1", profileSlug: draft.authorSlug, programId: draft.programId,
+    program: draft.program, location: draft.location, country: draft.country, year: draft.year,
+    title: draft.title, primaryRole: draft.primaryRole, pullQuote: flat.pullQuote,
+    heroUrl: flat.heroUrl, accent: draft.accent, dates: draft.dates ?? "", body: flat.body,
+    mediaUrls: flat.mediaUrls, ctaText: "", ctaUrl: "", featured: false, sortDate: "",
+    status: "live", removalReason: "", createdAt: "",
+    chaptersJson: serializeChaptersJson(publishBlocks),
+  });
+
+  // Erase the URL difference, then require structural equality.
+  const scrub = (s) => JSON.stringify(s).replace(/\/api\/[a-z-/]+\/(?:df-|pub-)/g, "/URL/");
+  const strip = (card) => ({
+    title: card.title, pullQuote: card.pullQuote, body: card.body,
+    programLabel: card.programLabel, dates: card.dates, accent: card.accent,
+    primaryRole: card.primaryRole,
+    mediaUrls: JSON.parse(scrub(card.mediaUrls)),
+    heroUrl: JSON.parse(scrub(card.heroUrl)),
+    chapters: JSON.parse(scrub(card.chapters)),
+  });
+  check("preview card ≡ published card (URLs scrubbed)",
+    JSON.stringify(strip(previewCard)) === JSON.stringify(strip(publishedCard)),
+    { preview: strip(previewCard), published: strip(publishedCard) });
+  check("private notes reach neither card", !JSON.stringify(previewCard).includes("PRIVATE") && !JSON.stringify(publishedCard).includes("PRIVATE"));
 }
 
 // ── Result ────────────────────────────────────────────────────────────────────

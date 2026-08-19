@@ -19,9 +19,12 @@
 import {
   flattenChaptersToBody,
   flattenChaptersToMediaUrls,
+  formatProgramLabel,
+  normalizeAccent,
   MAX_FEATURED_PHOTOS_PER_CHAPTER,
   MAX_MORE_AUDIO_PER_CHAPTER,
   MAX_MORE_PHOTOS_PER_CHAPTER,
+  type JourneyCard,
   type JourneyCardChapter,
 } from "@/lib/journeyCard";
 
@@ -277,6 +280,47 @@ export function draftToChapterBlocks(
       status: readiness === "empty" ? "empty" : "written",
     };
   });
+}
+
+/**
+ * Draft → a render-ready JourneyCard for the Composer's WYSIWYG preview.
+ * `blocks` MUST come from draftToChapterBlocks — the same mapping the publish
+ * stamp uses — so the preview and the published card cannot drift; the only
+ * intended difference is which URLs the resolvers minted (private capture-media
+ * URLs pre-publish, promoted public URLs after). The cell-guard trim is a
+ * stamp-time concern and is deliberately NOT applied here.
+ */
+export function draftToPreviewCard(
+  draft: JourneyDraft,
+  blocks: JourneyCardChapter[],
+  heroUrl: string
+): JourneyCard {
+  const flat = flattenDraftForPublish(draft, blocks, heroUrl);
+  const country = (draft.country || draft.location).trim();
+  const id = draft.publishedCardId || draft.draftId;
+  return {
+    id,
+    profileSlug: draft.authorSlug,
+    programId: draft.programId || undefined,
+    program: draft.program,
+    location: draft.location,
+    country,
+    year: String(draft.year ?? "").trim(),
+    title: draft.title,
+    primaryRole: draft.primaryRole,
+    pullQuote: flat.pullQuote,
+    heroUrl: flat.heroUrl,
+    accent: normalizeAccent(draft.accent),
+    dates: draft.dates ?? "",
+    body: flat.body,
+    mediaUrls: flattenChaptersToMediaUrls(blocks),
+    featured: false,
+    status: "live",
+    chapters: blocks,
+    programLabel: formatProgramLabel({ program: draft.program, location: country, year: draft.year }),
+    removed: false,
+    href: `/journeys/${draft.authorSlug}/${id}`,
+  };
 }
 
 /**

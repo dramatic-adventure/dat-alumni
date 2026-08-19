@@ -26,10 +26,13 @@ import { T, FONT, accent as accentHex } from "@/components/field-kit/tokens";
 import {
   chapterReadiness,
   CHAPTER_TOUCHABLE_FIELDS,
+  draftToChapterBlocks,
+  draftToPreviewCard,
   type ChapterTouchedField,
   type JourneyDraft,
   type JourneyDraftChapter,
 } from "@/lib/journeyDraft";
+import JourneyCardView, { type CardViewAlum } from "@/components/journeys/JourneyCardView";
 import {
   draftKey,
   loadDraft,
@@ -147,6 +150,7 @@ export default function ComposerClient({
   program,
   chapters,
   traces,
+  alum,
 }: {
   programId: string;
   authorSlug: string;
@@ -154,8 +158,12 @@ export default function ComposerClient({
   program: ProgramMeta;
   chapters: ComposerChapter[];
   traces: ComposerTrace[];
+  alum: CardViewAlum;
 }) {
-  const [face, setFace] = useState<"editor" | "preview">("editor");
+  // Preview-first for EVERY entry (locked with Jesse 2026-08-19, §10-Q1):
+  // "does this look like your trip?" only works when the first thing an artist
+  // sees IS the real card. The editor stays one tap away.
+  const [face, setFace] = useState<"editor" | "preview">("preview");
   const [draft, setDraft] = useState<JourneyDraft | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeChapterId, setActiveChapterId] = useState<string>(chapters[0]?.id ?? "");
@@ -399,9 +407,22 @@ export default function ComposerClient({
               }
             />
           )}
+
+          {/* The old strip-list preview lives on as the editor's structural
+              overview — good at showing the whole card's state at a glance;
+              tapping a chapter strip jumps the editor to it. */}
+          <CardOverview
+            draft={draft}
+            chapters={chapters}
+            traces={traces}
+            onSelect={(chapterId) => {
+              flush();
+              setActiveChapterId(chapterId);
+            }}
+          />
         </>
       ) : (
-        <PreviewFace draft={draft} chapters={chapters} traces={traces} asId={asId} />
+        <PreviewFace draft={draft} traces={traces} alum={alum} asId={asId} />
       )}
 
       {/* ── Save bar ── */}
@@ -434,7 +455,7 @@ export default function ComposerClient({
               padding: "9px 18px", borderRadius: 8,
             }}
           >
-            Review &amp; publish →
+            Publish this card →
           </Link>
         ) : (
           <button
@@ -773,18 +794,77 @@ function ChapterEditor({
   );
 }
 
-// ── Preview (Face 3 of the mockup) ────────────────────────────────────────────
+// ── Preview (Face 3) — the REAL card, fed by the draft ────────────────────────
+// The preview mounts the actual public renderer (JourneyCardView, embedded)
+// through the SAME draft→blocks mapping the publish stamp uses
+// (draftToChapterBlocks → draftToPreviewCard), with photo/audio refs resolved
+// to the PRIVATE capture-media URLs since nothing is promoted yet. One source
+// of truth: preview and published output cannot drift.
 
 function PreviewFace({
   draft,
+  traces,
+  alum,
+  asId,
+}: {
+  draft: JourneyDraft;
+  traces: ComposerTrace[];
+  alum: CardViewAlum;
+  asId?: string;
+}) {
+  const traceById = useMemo(() => new Map(traces.map((t) => [t.captureId, t])), [traces]);
+
+  const card = useMemo(() => {
+    const mediaUrl = (id?: string): string => {
+      const fileId = id ? traceById.get(id)?.driveFileId : "";
+      return fileId ? captureMediaUrl(fileId) : "";
+    };
+    const blocks = draftToChapterBlocks(
+      draft,
+      (ch) => ch.photoCaptureIds.map(mediaUrl).filter(Boolean),
+      (ch) => mediaUrl(ch.audioCaptureId) || undefined,
+      (ch) => (ch.morePhotoCaptureIds ?? []).map(mediaUrl).filter(Boolean),
+      (ch) => (ch.moreAudioCaptureIds ?? []).map(mediaUrl).filter(Boolean)
+    );
+    const heroUrl = mediaUrl(draft.heroCaptureId) || draft.heroUrl || "";
+    return draftToPreviewCard(draft, blocks, heroUrl);
+  }, [draft, traceById]);
+
+  return (
+    <div>
+      {/* Persistent Draft·Private ribbon */}
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "7px 14px", borderRadius: 8, background: T.black, border: `1px solid ${T.border}`, marginBottom: 14 }}>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: T.pink, display: "inline-block" }} />
+        <span style={{ fontFamily: FONT.grotesk, fontSize: 9, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: T.yellow }}>
+          Draft · Private · Not published
+        </span>
+      </div>
+
+      <JourneyCardView card={card} alum={alum} embedded />
+
+      <p style={{ fontFamily: FONT.dm, fontStyle: "italic", fontSize: 12.5, color: T.muted, margin: "14px 2px 0", lineHeight: 1.5 }}>
+        Only you can see this. Nothing is public until you stamp it in{" "}
+        <Link href={asId ? `/field-kit/publish?asId=${encodeURIComponent(asId)}` : "/field-kit/publish"} style={{ color: T.yellow }}>
+          Review &amp; publish
+        </Link>
+        .
+      </p>
+    </div>
+  );
+}
+
+// ── Structural overview (the former strip-list preview, now in the editor) ────
+
+function CardOverview({
+  draft,
   chapters,
   traces,
-  asId,
+  onSelect,
 }: {
   draft: JourneyDraft;
   chapters: ComposerChapter[];
   traces: ComposerTrace[];
-  asId?: string;
+  onSelect: (chapterId: string) => void;
 }) {
   const traceById = useMemo(() => new Map(traces.map((t) => [t.captureId, t])), [traces]);
 
@@ -797,14 +877,11 @@ function PreviewFace({
   }
 
   return (
-    <div>
-      {/* Private banner */}
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "7px 14px", borderRadius: 8, background: T.black, border: `1px solid ${T.border}`, marginBottom: 14 }}>
-        <span style={{ width: 6, height: 6, borderRadius: "50%", background: T.pink, display: "inline-block" }} />
-        <span style={{ fontFamily: FONT.grotesk, fontSize: 9, fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: T.yellow }}>
-          Draft · Private · Not published
-        </span>
-      </div>
+    <div style={{ marginTop: 26 }}>
+      <p style={{ fontFamily: FONT.grotesk, fontSize: 9, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: T.muted, margin: "0 0 8px" }}>
+        Card overview
+        <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: "none", color: T.dim }}> — the whole card at a glance; tap a chapter to edit it</span>
+      </p>
 
       <div style={{ background: T.paper, borderRadius: 16, border: `1px solid ${T.border}`, overflow: "hidden" }}>
         {draft.chapters.map((ch) => {
@@ -834,7 +911,8 @@ function PreviewFace({
           if (readiness === "empty") {
             // Ghost page — the passport holds the slot, the page is blank.
             return (
-              <div key={ch.chapterId} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", opacity: 0.32, borderTop: `1px solid ${T.sep}` }}>
+              <div key={ch.chapterId} onClick={() => onSelect(ch.chapterId)}
+                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", opacity: 0.32, borderTop: `1px solid ${T.sep}`, cursor: "pointer" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{ width: 28, height: 28, borderRadius: "50%", background: T.sep, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT.anton, fontSize: 13, color: T.muted }}>
                     {ch.num}
@@ -852,7 +930,7 @@ function PreviewFace({
 
           const photo = firstPhotoUrl(ch);
           return (
-            <div key={ch.chapterId} style={{ borderTop: `1px solid ${T.sep}` }}>
+            <div key={ch.chapterId} onClick={() => onSelect(ch.chapterId)} style={{ borderTop: `1px solid ${T.sep}`, cursor: "pointer" }}>
               <div style={{ position: "relative", height: 150, overflow: "hidden", background: `${acc}18` }}>
                 {photo && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -889,14 +967,6 @@ function PreviewFace({
           );
         })}
       </div>
-
-      <p style={{ fontFamily: FONT.dm, fontStyle: "italic", fontSize: 12.5, color: T.muted, margin: "14px 2px 0", lineHeight: 1.5 }}>
-        Only you can see this. Nothing is public until you stamp it in{" "}
-        <Link href={asId ? `/field-kit/publish?asId=${encodeURIComponent(asId)}` : "/field-kit/publish"} style={{ color: T.yellow }}>
-          Review &amp; publish
-        </Link>
-        .
-      </p>
     </div>
   );
 }

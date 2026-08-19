@@ -19,8 +19,11 @@ import ComposerClient from "@/components/field-kit/composer/ComposerClient";
 import { requireFieldKitPage, FIELD_KIT_PROGRAM_ID } from "@/lib/fieldKitAccess";
 import { loadProgramItinerary } from "@/lib/loadProgram";
 import { loadCapturesForAuthor } from "@/lib/loadFieldKitCaptures";
+import { loadAlumniByAliases } from "@/lib/loadAlumni";
+import { getSlugAliases } from "@/lib/slugAliases";
 import { spineFromItinerary } from "@/lib/composerSpine";
 import type { ComposerChapter, ComposerTrace } from "@/components/field-kit/composer/ComposerClient";
+import type { CardViewAlum } from "@/components/journeys/JourneyCardView";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
@@ -40,9 +43,24 @@ export default async function ComposerPage({
   if (!access) return null; // not on the roster — the layout renders the gate.
 
   const authorSlug = access.slug;
-  const capturesAll = authorSlug
-    ? await loadCapturesForAuthor(access.programId, authorSlug)
-    : [];
+  const [capturesAll, alumRow] = await Promise.all([
+    authorSlug ? loadCapturesForAuthor(access.programId, authorSlug) : Promise.resolve([]),
+    authorSlug
+      ? getSlugAliases(authorSlug)
+          .then((aliases) => loadAlumniByAliases(aliases))
+          .catch(() => null)
+      : Promise.resolve(null),
+  ]);
+
+  // The WYSIWYG preview renders the real JourneyCardView, which needs the
+  // artist's public identity (name / roles / headshot) exactly as the published
+  // card page would show it.
+  const alum: CardViewAlum = {
+    name: alumRow?.name || authorSlug,
+    slug: alumRow?.slug || authorSlug,
+    roles: Array.isArray(alumRow?.roles) ? alumRow.roles : [],
+    headshotUrl: alumRow?.headshotUrl || undefined,
+  };
 
   // Sealed reflections never leave the journal — never offered to the card.
   const traces: ComposerTrace[] = capturesAll
@@ -80,6 +98,7 @@ export default async function ComposerPage({
         }}
         chapters={chapters}
         traces={traces}
+        alum={alum}
       />
     </>
   );

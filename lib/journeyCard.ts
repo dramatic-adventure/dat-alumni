@@ -342,7 +342,7 @@ export type JourneyAccent = "pink" | "teal" | "yellow" | "grape";
 
 const ACCENTS: JourneyAccent[] = ["pink", "teal", "yellow", "grape"];
 
-function normalizeAccent(a: string | undefined | null): JourneyAccent {
+export function normalizeAccent(a: string | undefined | null): JourneyAccent {
   const n = String(a ?? "").trim().toLowerCase();
   return (ACCENTS as string[]).includes(n) ? (n as JourneyAccent) : "teal";
 }

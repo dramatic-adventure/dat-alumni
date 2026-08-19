@@ -34,7 +34,12 @@ export type CardViewAlum = {
 const GET_INVOLVED = "https://www.dramaticadventure.com/get-involved";
 const TRAVEL_URL = "https://dramaticadventure.com/travel-opportunities";
 
-type Ctx = { card: JourneyCard; alum: CardViewAlum };
+// `embedded` — the Composer's WYSIWYG preview mounts this same component inside
+// its own column: no kraft page wrapper, no back-link, size measured from the
+// CONTAINER instead of the viewport, and Share hidden (a draft has no public
+// URL to share yet). Absent (the default), rendering is byte-identical to the
+// standalone card page.
+type Ctx = { card: JourneyCard; alum: CardViewAlum; embedded?: boolean };
 
 // ── Program wordmark + COUNTRY · YEAR stack (the v17 PassageStack, live) ──────
 function ProgramStack({
@@ -232,7 +237,7 @@ function CoverPage({ ctx, isMobile, W, H, onCopied }: { ctx: Ctx; isMobile: bool
                 <p style={{ fontFamily: "var(--font-anton), system-ui, sans-serif", fontSize: 18, color: C.ink, margin: "0 0 2px", textTransform: "uppercase", lineHeight: 1 }}>{alum.name}</p>
               </a>
               {roles && <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: 10, color: C.teal, margin: "0 0 8px", fontWeight: 600 }}>{roles}</p>}
-              <ShareButton title={card.programLabel} text={card.pullQuote || card.title} onCopied={onCopied} />
+              {!ctx.embedded && <ShareButton title={card.programLabel} text={card.pullQuote || card.title} onCopied={onCopied} />}
             </div>
           </div>
         </div>
@@ -273,7 +278,7 @@ function CoverPage({ ctx, isMobile, W, H, onCopied }: { ctx: Ctx; isMobile: bool
               {roles && <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: 11, color: C.teal, margin: "0 0 6px", fontWeight: 600 }}>{roles}</p>}
             </div>
             <div style={{ display: "flex", gap: 6, marginBottom: 6, flexWrap: "wrap" }}>
-              <ShareButton title={card.programLabel} text={card.pullQuote || card.title} onCopied={onCopied} />
+              {!ctx.embedded && <ShareButton title={card.programLabel} text={card.pullQuote || card.title} onCopied={onCopied} />}
             </div>
             <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: 9.5, color: C.dim, margin: 0, fontStyle: "italic", letterSpacing: "0.02em" }}>
               Created by {alum.name}. {DAT_DISCLAIMER}
@@ -534,9 +539,11 @@ function ChapterPage({ ctx, chapter, isMobile, W, H, active, onCopied }: {
         <div className="jcb-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "8px 18px 10px", ...scrollFade }}>
           <Middle />
         </div>
-        <div style={{ padding: "8px 18px 12px", flexShrink: 0, borderTop: `1px solid ${C.sep}`, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-          <ShareButton title={shareTitle} text={chapter.response || chapter.title} onCopied={onCopied} />
-        </div>
+        {!ctx.embedded && (
+          <div style={{ padding: "8px 18px 12px", flexShrink: 0, borderTop: `1px solid ${C.sep}`, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+            <ShareButton title={shareTitle} text={chapter.response || chapter.title} onCopied={onCopied} />
+          </div>
+        )}
       </div>
     );
   }
@@ -555,9 +562,11 @@ function ChapterPage({ ctx, chapter, isMobile, W, H, active, onCopied }: {
         <div className="jcb-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: `8px ${journalPad}px 12px`, ...scrollFade }}>
           <Middle />
         </div>
-        <div style={{ padding: `8px ${journalPad}px 16px`, flexShrink: 0, borderTop: `1px solid ${C.sep}`, display: "flex", alignItems: "flex-end", justifyContent: "flex-end" }}>
-          <ShareButton title={shareTitle} text={chapter.response || chapter.title} onCopied={onCopied} />
-        </div>
+        {!ctx.embedded && (
+          <div style={{ padding: `8px ${journalPad}px 16px`, flexShrink: 0, borderTop: `1px solid ${C.sep}`, display: "flex", alignItems: "flex-end", justifyContent: "flex-end" }}>
+            <ShareButton title={shareTitle} text={chapter.response || chapter.title} onCopied={onCopied} />
+          </div>
+        )}
       </div>
       {hasPhotoRegion && (
         <div style={{ flex: 1, overflow: "hidden" }}>
@@ -616,8 +625,9 @@ function accentFor(a: JourneyCard["accent"]): string {
 }
 
 // ── Root ──────────────────────────────────────────────────────────────────────
-export default function JourneyCardView({ card, alum }: Ctx) {
-  const ctx: Ctx = { card, alum };
+export default function JourneyCardView({ card, alum, embedded }: Ctx) {
+  const ctx: Ctx = { card, alum, embedded };
+  const wrapRef = useRef<HTMLDivElement | null>(null);
   const heroPhotos = useMemo(() => card.mediaUrls.map(safeMediaUrl).filter(Boolean), [card.mediaUrls]);
   const storyPhotos = heroPhotos.length ? heroPhotos : [safeMediaUrl(card.heroUrl)].filter(Boolean);
   const mosaicPhotos = useMemo(() => {
@@ -654,15 +664,18 @@ export default function JourneyCardView({ card, alum }: Ctx) {
   const touchStartX = useRef<number | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Adaptive layout — identical strategy to the v17 mockup.
+  // Adaptive layout — identical strategy to the v17 mockup. Embedded previews
+  // measure their CONTAINER (the Composer column) instead of the viewport, so
+  // the book fits wherever it's mounted; everything else is the same math.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const MOBILE_BP = 760, TABLET_PORTRAIT_MAX = 1024, NATIVE_W = 1080, NATIVE_H = 580;
     const HORIZ_GUTTER = 32, SCALE_MIN = 0.7, SCALE_MAX = 1.28;
     const compute = () => {
-      const vw = window.innerWidth, vh = window.innerHeight;
+      const vw = embedded ? wrapRef.current?.clientWidth || 360 : window.innerWidth;
+      const vh = window.innerHeight;
       const isPortrait = vh >= vw;
-      const useBook = vw < MOBILE_BP || (isPortrait && vw <= TABLET_PORTRAIT_MAX);
+      const useBook = vw < MOBILE_BP || (!embedded && isPortrait && vw <= TABLET_PORTRAIT_MAX);
       if (useBook) {
         const W = Math.min(Math.max(vw - 24, 300), 520);
         const H = Math.round(W * 1.58);
@@ -674,10 +687,15 @@ export default function JourneyCardView({ card, alum }: Ctx) {
       setLayout({ isMobile: false, W: NATIVE_W, H: NATIVE_H, scale });
     };
     compute();
+    if (embedded && wrapRef.current && typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver(compute);
+      ro.observe(wrapRef.current);
+      return () => ro.disconnect();
+    }
     window.addEventListener("resize", compute);
     window.addEventListener("orientationchange", compute);
     return () => { window.removeEventListener("resize", compute); window.removeEventListener("orientationchange", compute); };
-  }, []);
+  }, [embedded]);
 
   const goTo = useCallback((idx: number) => { if (idx >= 0 && idx < TOTAL) setPage(idx); }, [TOTAL]);
   useEffect(() => { if (page >= TOTAL) setPage(TOTAL - 1); }, [page, TOTAL]);
@@ -690,6 +708,8 @@ export default function JourneyCardView({ card, alum }: Ctx) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       if (e.key === "ArrowRight" || e.key === "ArrowDown") goTo(page + 1);
       if (e.key === "ArrowLeft" || e.key === "ArrowUp") goTo(page - 1);
     };
@@ -710,12 +730,8 @@ export default function JourneyCardView({ card, alum }: Ctx) {
     return <BackCoverPage ctx={ctx} photos={mosaicPhotos} isMobile={isMobile} W={W} H={H} />;
   };
 
-  return (
-    <main style={{
-      ...KRAFT_PAGE, minHeight: "100vh",
-      padding: "clamp(84px, 12vh, 140px) 12px 56px",
-      display: "flex", flexDirection: "column", alignItems: "center",
-    }}>
+  const content = (
+    <>
       <style>{`
         .jcb-btn { transition: all 0.18s ease; }
         .jcb-btn:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(36,17,35,0.18); }
@@ -742,14 +758,16 @@ export default function JourneyCardView({ card, alum }: Ctx) {
         }
       `}</style>
 
-      {/* Back to this alum's journeys */}
-      <div style={{ width: "100%", maxWidth: Math.max(visibleW, 320), display: "flex", justifyContent: "flex-start", marginBottom: 12 }}>
-        <a href={`/journeys/${card.profileSlug}`} style={{
-          fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontWeight: 700, fontSize: 11,
-          letterSpacing: "0.18em", textTransform: "uppercase", color: C.ink, textDecoration: "none",
-          border: `1.5px solid ${C.border}`, background: "rgba(255,255,255,0.6)", borderRadius: 999, padding: "8px 14px",
-        }}>‹ {alum.name}’s journeys</a>
-      </div>
+      {/* Back to this alum's journeys (standalone page only) */}
+      {!embedded && (
+        <div style={{ width: "100%", maxWidth: Math.max(visibleW, 320), display: "flex", justifyContent: "flex-start", marginBottom: 12 }}>
+          <a href={`/journeys/${card.profileSlug}`} style={{
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontWeight: 700, fontSize: 11,
+            letterSpacing: "0.18em", textTransform: "uppercase", color: C.ink, textDecoration: "none",
+            border: `1.5px solid ${C.border}`, background: "rgba(255,255,255,0.6)", borderRadius: 999, padding: "8px 14px",
+          }}>‹ {alum.name}’s journeys</a>
+        </div>
+      )}
 
       {/* Status row */}
       <div style={{ width: "100%", maxWidth: visibleW, display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
@@ -808,6 +826,23 @@ export default function JourneyCardView({ card, alum }: Ctx) {
         fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: 13,
         opacity: toast ? 1 : 0, transition: "opacity 0.3s ease", boxShadow: "0 4px 16px rgba(36,17,35,0.25)",
       }}>Link copied!</div>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <div ref={wrapRef} style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        {content}
+      </div>
+    );
+  }
+  return (
+    <main style={{
+      ...KRAFT_PAGE, minHeight: "100vh",
+      padding: "clamp(84px, 12vh, 140px) 12px 56px",
+      display: "flex", flexDirection: "column", alignItems: "center",
+    }}>
+      {content}
     </main>
   );
 }
