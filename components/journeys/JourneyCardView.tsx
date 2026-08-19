@@ -6,12 +6,13 @@
 // fit any desktop/laptop via CSS transform, and a passport-book reflow on phones
 // and portrait tablets. Flip with arrows / dots / swipe / keyboard.
 //
-// V1 renders the pages our authored data supports:
-//   Cover → (Story, if the artist wrote a body / added photos) → Back cover.
-// The deep multi-chapter interior (per-chapter photos, responses, partner orgs,
-// ambient audio) is authored by the Companion/capture tools in a later phase and
-// slots in between cover and back cover when that data exists. Audio is omitted
-// in V1 (no audio data yet).
+// Renders the pages the authored data supports:
+//   Cover → chapter interior pages (one per written chapter with real content,
+//   from chaptersJson) → Back cover. Cards with no chapter-worthy data — flat
+//   manual/legacy cards, or chapters that are all ghosts — keep the V1 behavior
+//   exactly: Cover → (Story, if the artist wrote a body / added photos) → Back
+//   cover. When interior pages exist they REPLACE the flattened story page
+//   (same content, un-flattened), so nothing renders twice.
 //
 // All artist photos render via plain <img> (arbitrary hosts; no next/image
 // allow-list) and the DAT logo is a plain <img> too (a local SVG needs no
@@ -20,7 +21,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DAT_DISCLAIMER, type JourneyCard } from "@/lib/journeyCard";
+import { DAT_DISCLAIMER, type JourneyCard, type JourneyCardChapter } from "@/lib/journeyCard";
 import { A as C, STAMP_SHADOW, KRAFT_PAGE, safeMediaUrl } from "./journeyTheme";
 
 export type CardViewAlum = {
@@ -40,7 +41,7 @@ function ProgramStack({
   ctx, size, align = "left",
 }: {
   ctx: Ctx;
-  size: "lg" | "xl-mobile";
+  size: "lg" | "xl-mobile" | "md" | "lg-mobile";
   align?: "left" | "center";
 }) {
   const program = String(ctx.card.program ?? "").trim();
@@ -49,9 +50,22 @@ function ProgramStack({
   const lead = isMulti ? words.slice(0, -1).join(" ") : "";
   const main = isMulti ? words[words.length - 1] : program;
 
-  const big = size === "lg" ? 80 : "clamp(52px, 15vw, 64px)";
-  const small = size === "lg" ? 17 : "clamp(13px, 3.6vw, 15px)";
-  const leadSize = size === "lg" ? 30 : "clamp(20px, 6vw, 26px)";
+  // "md" / "lg-mobile" are the chapter-page mini-header sizes from the v17 mockup.
+  const big =
+    size === "lg" ? 80
+    : size === "md" ? 26
+    : size === "lg-mobile" ? "clamp(34px, 9.5vw, 42px)"
+    : "clamp(52px, 15vw, 64px)";
+  const small =
+    size === "lg" ? 17
+    : size === "md" ? 11
+    : size === "lg-mobile" ? "clamp(11px, 3vw, 13px)"
+    : "clamp(13px, 3.6vw, 15px)";
+  const leadSize =
+    size === "lg" ? 30
+    : size === "md" ? 13
+    : size === "lg-mobile" ? "clamp(13px, 3.6vw, 16px)"
+    : "clamp(20px, 6vw, 26px)";
 
   const tail = [ctx.card.country, ctx.card.year].filter(Boolean).join(" ");
 
@@ -328,6 +342,123 @@ function StoryPage({ ctx, photos, isMobile, W, H }: { ctx: Ctx; photos: string[]
   );
 }
 
+// ── Chapter interior page (v17 JourneyPage port, driven by chaptersJson) ──────
+// One page per written chapter: pinned header (program stack, num/title,
+// location · date), scrollable middle (response line + body paragraphs), pinned
+// footer (share), photos beside/above. A chapter with no photos gives the whole
+// page to the journal. Audio joins this page in the Slice-C build step.
+
+/** A chapter earns an interior page only when it carries real public content. */
+export function isInteriorChapter(ch: JourneyCardChapter): boolean {
+  return (
+    ch.status === "written" &&
+    Boolean(ch.response || ch.body || (ch.photoUrls?.length ?? 0) > 0 || ch.audioUrl)
+  );
+}
+
+function chapterAccent(ch: JourneyCardChapter, card: JourneyCard): string {
+  const a = String(ch.accent ?? "").trim().toLowerCase();
+  if (a === "pink" || a === "teal" || a === "yellow" || a === "grape") {
+    return accentFor(a as JourneyCard["accent"]);
+  }
+  return accentFor(card.accent);
+}
+
+function ChapterPage({ ctx, chapter, isMobile, W, H, onCopied }: {
+  ctx: Ctx; chapter: JourneyCardChapter; isMobile: boolean; W: number; H: number; onCopied: () => void;
+}) {
+  const { card, alum } = ctx;
+  const accent = chapterAccent(chapter, card);
+  const photos = (chapter.photoUrls ?? []).map(safeMediaUrl).filter(Boolean);
+  const paras = (chapter.body || "").split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+  const kicker = chapter.kind === "daily" ? "Daily page" : chapter.num;
+  const subline = [chapter.location, chapter.dateLabel].filter(Boolean).join(" · ");
+  const shareTitle = [chapter.title, card.programLabel].filter(Boolean).join(" — ");
+
+  const Header = () => (
+    <>
+      {kicker && (
+        <p style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontWeight: 700, fontSize: isMobile ? 9 : 10, letterSpacing: "0.22em", textTransform: "uppercase", color: C.teal, margin: "0 0 2px" }}>{kicker}</p>
+      )}
+      {chapter.title && (
+        <p style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontWeight: 700, fontSize: isMobile ? 13 : 14, letterSpacing: isMobile ? "0.08em" : "0.1em", textTransform: "uppercase", color: C.pink, margin: "0 0 2px", lineHeight: 1.2 }}>{chapter.title}</p>
+      )}
+      {subline && (
+        <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: isMobile ? 10 : 11, color: C.teal, margin: 0, lineHeight: 1.3 }}>{subline}</p>
+      )}
+    </>
+  );
+
+  const Middle = () => (
+    <>
+      {chapter.response && (
+        <>
+          <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontStyle: "italic", fontSize: isMobile ? 13 : 14.5, lineHeight: isMobile ? 1.6 : 1.65, color: C.ink, margin: "0 0 5px", borderLeft: `3px solid ${accent}`, paddingLeft: isMobile ? 10 : 13 }}>&ldquo;{chapter.response}&rdquo;</p>
+          <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: isMobile ? 9.5 : 10, color: C.dim, fontStyle: "italic", margin: "0 0 12px", paddingLeft: isMobile ? 13 : 16 }}>— {alum.name}</p>
+        </>
+      )}
+      {paras.map((p, i) => (
+        <p key={i} style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: isMobile ? 11 : 11.5, color: C.muted, lineHeight: 1.55, margin: "0 0 10px" }}>{p}</p>
+      ))}
+    </>
+  );
+
+  const scrollFade = {
+    WebkitMaskImage: "linear-gradient(180deg, black 0, black calc(100% - 16px), transparent 100%)",
+    maskImage: "linear-gradient(180deg, black 0, black calc(100% - 16px), transparent 100%)",
+  } as const;
+
+  if (isMobile) {
+    const PHOTO_H = photos.length ? Math.round(H * 0.32) : 0;
+    return (
+      <div style={{ width: W, height: H, display: "flex", flexDirection: "column", backgroundColor: C.bg }}>
+        {photos.length > 0 && (
+          <div style={{ width: W, height: PHOTO_H, overflow: "hidden", backgroundColor: "#e8e2da", flexShrink: 0, position: "relative" }}>
+            <PhotoGrid photos={photos} W={W} H={PHOTO_H} />
+          </div>
+        )}
+        <div style={{ padding: "12px 18px 6px", flexShrink: 0 }}>
+          <ProgramStack ctx={ctx} size="lg-mobile" align="left" />
+          <div style={{ width: 28, height: 1, backgroundColor: C.sep, margin: "10px 0 8px" }} />
+          <Header />
+        </div>
+        <div className="jcb-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "8px 18px 10px", ...scrollFade }}>
+          <Middle />
+        </div>
+        <div style={{ padding: "8px 18px 12px", flexShrink: 0, borderTop: `1px solid ${C.sep}`, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+          <ShareButton title={shareTitle} text={chapter.response || chapter.title} onCopied={onCopied} />
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop — journal left, photos right; text-only chapters give the journal the full page.
+  const journalW = photos.length ? 378 : W;
+  const journalPad = photos.length ? 24 : 120;
+  return (
+    <div style={{ display: "flex", width: W, height: H }}>
+      <div style={{ width: journalW, flexShrink: 0, backgroundColor: C.bg, display: "flex", flexDirection: "column", borderRight: photos.length ? `1px solid ${C.sep}` : "none", height: H, minHeight: 0 }}>
+        <div style={{ padding: `20px ${journalPad}px 12px`, flexShrink: 0 }}>
+          <ProgramStack ctx={ctx} size="md" align="left" />
+          <div style={{ width: "100%", height: 1, backgroundColor: C.sep, margin: "12px 0" }} />
+          <Header />
+        </div>
+        <div className="jcb-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: `8px ${journalPad}px 12px`, ...scrollFade }}>
+          <Middle />
+        </div>
+        <div style={{ padding: `8px ${journalPad}px 16px`, flexShrink: 0, borderTop: `1px solid ${C.sep}`, display: "flex", alignItems: "flex-end", justifyContent: "flex-end" }}>
+          <ShareButton title={shareTitle} text={chapter.response || chapter.title} onCopied={onCopied} />
+        </div>
+      </div>
+      {photos.length > 0 && (
+        <div style={{ flex: 1, overflow: "hidden", backgroundColor: "#e8e2da", position: "relative" }}>
+          <PhotoGrid photos={photos} W={W - journalW} H={H} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Back cover (v17 port: mosaic + stamp + credit + disclaimer + travel CTA) ──
 function BackCoverPage({ ctx, photos, isMobile, W, H }: { ctx: Ctx; photos: string[]; isMobile: boolean; W: number; H: number }) {
   const { card, alum } = ctx;
@@ -385,13 +516,27 @@ export default function JourneyCardView({ card, alum }: Ctx) {
     return Array.from(new Set(all));
   }, [card.heroUrl, heroPhotos]);
 
+  const interiorChapters = useMemo(() => card.chapters.filter(isInteriorChapter), [card.chapters]);
   const hasStory = Boolean((card.body || "").trim()) || heroPhotos.length > 0;
   const pages = useMemo(() => {
-    const ps: Array<{ key: string; label: string }> = [{ key: "cover", label: "Cover" }];
-    if (hasStory) ps.push({ key: "story", label: "Story" });
-    ps.push({ key: "back", label: "End" });
+    type PageEntry = { key: string; label: string; statusLabel: string; chapter?: JourneyCardChapter };
+    const ps: PageEntry[] = [{ key: "cover", label: "Cover", statusLabel: "Cover" }];
+    if (interiorChapters.length) {
+      interiorChapters.forEach((ch, i) => {
+        ps.push({
+          key: `ch-${i}-${ch.chapterId}`,
+          label: ch.kind === "daily" ? "Daily page" : ch.num || ch.title || `Chapter ${i + 1}`,
+          statusLabel:
+            [ch.kind === "daily" ? "Daily" : ch.num, ch.location || ch.title].filter(Boolean).join(" · ") || "Chapter",
+          chapter: ch,
+        });
+      });
+    } else if (hasStory) {
+      ps.push({ key: "story", label: "Story", statusLabel: "Story" });
+    }
+    ps.push({ key: "back", label: "End", statusLabel: "Back Cover" });
     return ps;
-  }, [hasStory]);
+  }, [interiorChapters, hasStory]);
   const TOTAL = pages.length;
 
   const [page, setPage] = useState(0);
@@ -449,9 +594,10 @@ export default function JourneyCardView({ card, alum }: Ctx) {
   const visibleW = Math.round(W * scale);
   const visibleH = Math.round(H * scale);
 
-  const renderPage = (key: string) => {
-    if (key === "cover") return <CoverPage ctx={ctx} isMobile={isMobile} W={W} H={H} onCopied={showToast} />;
-    if (key === "story") return <StoryPage ctx={ctx} photos={storyPhotos} isMobile={isMobile} W={W} H={H} />;
+  const renderPage = (p: (typeof pages)[number]) => {
+    if (p.key === "cover") return <CoverPage ctx={ctx} isMobile={isMobile} W={W} H={H} onCopied={showToast} />;
+    if (p.chapter) return <ChapterPage ctx={ctx} chapter={p.chapter} isMobile={isMobile} W={W} H={H} onCopied={showToast} />;
+    if (p.key === "story") return <StoryPage ctx={ctx} photos={storyPhotos} isMobile={isMobile} W={W} H={H} />;
     return <BackCoverPage ctx={ctx} photos={mosaicPhotos} isMobile={isMobile} W={W} H={H} />;
   };
 
@@ -489,7 +635,7 @@ export default function JourneyCardView({ card, alum }: Ctx) {
       {/* Status row */}
       <div style={{ width: "100%", maxWidth: visibleW, display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
         <span style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.2em", textTransform: "uppercase", color: C.muted }}>
-          {pages[Math.min(page, TOTAL - 1)].key === "cover" ? "Cover" : pages[Math.min(page, TOTAL - 1)].key === "back" ? "Back Cover" : "Story"}
+          {pages[Math.min(page, TOTAL - 1)].statusLabel}
         </span>
         {TOTAL > 1 && <span style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: "0.65rem", color: C.muted, fontStyle: "italic" }}>← → / swipe</span>}
       </div>
@@ -508,7 +654,7 @@ export default function JourneyCardView({ card, alum }: Ctx) {
           }}>
           <div style={{ display: "flex", width: `${TOTAL * W}px`, height: "100%", transform: `translateX(-${page * W}px)`, transition: "transform 360ms cubic-bezier(0.4,0,0.2,1)", willChange: "transform" }}>
             {pages.map((p) => (
-              <div key={p.key} style={{ width: W, height: "100%", flexShrink: 0 }}>{renderPage(p.key)}</div>
+              <div key={p.key} style={{ width: W, height: "100%", flexShrink: 0 }}>{renderPage(p)}</div>
             ))}
           </div>
           {page > 0 && (
