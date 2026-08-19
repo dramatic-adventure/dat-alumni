@@ -89,10 +89,16 @@ export type JourneyCardChapter = {
   response?: string;
   /** The longer prompt response — the chapter's body text. */
   body?: string;
-  /** PUBLIC photo URLs (already promoted out of the private capture store). */
+  /** PUBLIC photo URLs (already promoted out of the private capture store).
+   *  New publishes keep this featured-only (≤5); pre-existing cards may carry
+   *  up to 12 and render exactly as before. */
   photoUrls?: string[];
-  /** PUBLIC audio URL, if any. */
+  /** PUBLIC audio URL, if any — the featured voice. */
   audioUrl?: string;
+  /** PUBLIC "also on the card" photos (≤7) — behind the "+N more" toggle. */
+  morePhotoUrls?: string[];
+  /** PUBLIC "also on the card" voices (≤4) — behind "Hear more". */
+  moreAudioUrls?: string[];
   accent?: string;
   /** "empty" chapters are the ghost-placeholder slots; kept so the published
    *  card can one day show "the passport has the slot, the page is blank". */
@@ -111,6 +117,7 @@ export const MAX_SHEET_CELL_CHARS = 45_000;
 // featured stays ≤5 photos / 1 voice per chapter; the overflow that rides the
 // public card behind "+N more" is capped so a chapter never exceeds 12 photos
 // (5 featured + 7 more) or 5 voices (1 featured + 4 more).
+export const MAX_FEATURED_PHOTOS_PER_CHAPTER = 5;
 export const MAX_MORE_PHOTOS_PER_CHAPTER = 7;
 export const MAX_MORE_AUDIO_PER_CHAPTER = 4;
 
@@ -142,6 +149,10 @@ export function parseChaptersJson(raw: string | undefined | null): JourneyCardCh
     const photoUrls = Array.isArray(o.photoUrls)
       ? o.photoUrls.map(str).filter(Boolean).slice(0, 12)
       : [];
+    const urlList = (v: unknown, cap: number) =>
+      Array.isArray(v) ? v.map(str).filter(Boolean).slice(0, cap) : [];
+    const morePhotoUrls = urlList(o.morePhotoUrls, MAX_MORE_PHOTOS_PER_CHAPTER);
+    const moreAudioUrls = urlList(o.moreAudioUrls, MAX_MORE_AUDIO_PER_CHAPTER);
     out.push({
       chapterId: str(o.chapterId),
       kind,
@@ -153,6 +164,8 @@ export function parseChaptersJson(raw: string | undefined | null): JourneyCardCh
       body: str(o.body) || undefined,
       photoUrls: photoUrls.length ? photoUrls : undefined,
       audioUrl: str(o.audioUrl) || undefined,
+      morePhotoUrls: morePhotoUrls.length ? morePhotoUrls : undefined,
+      moreAudioUrls: moreAudioUrls.length ? moreAudioUrls : undefined,
       accent: str(o.accent) || undefined,
       status: str(o.status) === "empty" ? "empty" : "written",
     });
@@ -199,19 +212,70 @@ export function flattenChaptersToBody(chapters: JourneyCardChapter[]): string {
   return parts.join("\n\n");
 }
 
-/** Union of every written chapter's public photo URLs, in card order, deduped. */
+/** Union of every written chapter's public photo URLs — featured then "also on
+ *  the card" per chapter — in card order, deduped. Card-level mediaUrls stays
+ *  the FULL public photo set. */
 export function flattenChaptersToMediaUrls(chapters: JourneyCardChapter[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const ch of chapters) {
     if (ch.status === "empty") continue;
-    for (const url of ch.photoUrls ?? []) {
+    for (const url of [...(ch.photoUrls ?? []), ...(ch.morePhotoUrls ?? [])]) {
       if (seen.has(url)) continue;
       seen.add(url);
       out.push(url);
     }
   }
   return out;
+}
+
+/** One item the cell guard dropped from an "also on the card" tier. */
+export type DroppedExtra = { chapterId: string; kind: "photo" | "audio"; url: string };
+
+/**
+ * Cell guard for the chaptersJson column: when the serialized blocks would
+ * exceed MAX_CHAPTERS_JSON_CHARS, drop items from the END of the `more*`
+ * arrays (last chapter first, photos before voices) until the card fits.
+ * Featured content is never touched — if the card still doesn't fit with every
+ * `more*` array empty, the caller sees that via serializeChaptersJson returning
+ * "" exactly as before. Everything dropped is reported so the publish flow can
+ * say so plainly instead of failing (or trimming) silently.
+ */
+export function fitChaptersJson(chapters: JourneyCardChapter[]): {
+  chapters: JourneyCardChapter[];
+  dropped: DroppedExtra[];
+} {
+  const fits = (chs: JourneyCardChapter[]) =>
+    JSON.stringify(chs).length <= MAX_CHAPTERS_JSON_CHARS;
+  if (!chapters.length || fits(chapters)) return { chapters, dropped: [] };
+
+  const work = chapters.map((ch) => ({
+    ...ch,
+    morePhotoUrls: ch.morePhotoUrls ? [...ch.morePhotoUrls] : undefined,
+    moreAudioUrls: ch.moreAudioUrls ? [...ch.moreAudioUrls] : undefined,
+  }));
+  const dropped: DroppedExtra[] = [];
+
+  const popLast = (kind: "photo" | "audio"): boolean => {
+    for (let i = work.length - 1; i >= 0; i--) {
+      const ch = work[i];
+      const list = kind === "photo" ? ch.morePhotoUrls : ch.moreAudioUrls;
+      if (!list?.length) continue;
+      const url = list.pop() as string;
+      dropped.push({ chapterId: ch.chapterId, kind, url });
+      if (!list.length) {
+        if (kind === "photo") ch.morePhotoUrls = undefined;
+        else ch.moreAudioUrls = undefined;
+      }
+      return true;
+    }
+    return false;
+  };
+
+  while (!fits(work)) {
+    if (!popLast("photo") && !popLast("audio")) break; // more* exhausted
+  }
+  return { chapters: work, dropped };
 }
 
 // ── The dedicated "Journey Cards" sheet row ───────────────────────────────────

@@ -26,6 +26,7 @@ import {
   type JourneyDraftChapter,
 } from "@/lib/journeyDraft";
 import {
+  MAX_FEATURED_PHOTOS_PER_CHAPTER,
   MAX_MORE_AUDIO_PER_CHAPTER,
   MAX_MORE_PHOTOS_PER_CHAPTER,
 } from "@/lib/journeyCard";
@@ -76,8 +77,9 @@ export type AssembleResult = {
 };
 
 // Matches the Composer UI's photo cap so auto-fill never exceeds what the
-// editor lets the artist manage by hand.
-export const AUTO_MAX_PHOTOS_PER_CHAPTER = 5;
+// editor lets the artist manage by hand. Aliases the shared featured cap in
+// lib/journeyCard.ts so draft, publish flatten, and card schema agree.
+export const AUTO_MAX_PHOTOS_PER_CHAPTER = MAX_FEATURED_PHOTOS_PER_CHAPTER;
 /** "Runs long" boundary for a chapter's response line (§5b trim rule). */
 export const RESPONSE_MAX_CHARS = 200;
 /** Card title length — the anchor's response line, word-boundary trimmed. */

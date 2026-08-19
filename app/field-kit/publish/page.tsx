@@ -42,6 +42,9 @@ export default async function PublishPage({
   const photoTraces = capturesAll
     .filter((c) => c.kind === "photo" && c.driveFileId && c.visibility !== "sealed")
     .map((c) => ({ captureId: c.captureId, driveFileId: c.driveFileId, bodyText: c.bodyText }));
+  const voiceTraces = capturesAll
+    .filter((c) => c.kind === "voice" && c.driveFileId && c.visibility !== "sealed")
+    .map((c) => ({ captureId: c.captureId, driveFileId: c.driveFileId, bodyText: c.bodyText }));
 
   return (
     <>
@@ -59,6 +62,7 @@ export default async function PublishPage({
           label: itinerary?.label ?? "",
         }}
         photoTraces={photoTraces}
+        voiceTraces={voiceTraces}
       />
     </>
   );

@@ -31,6 +31,7 @@ import {
   type CardTouchedField,
   type JourneyDraft,
 } from "@/lib/journeyDraft";
+import { fitChaptersJson } from "@/lib/journeyCard";
 import { draftKey, loadDraft, pushDraft, saveDraftLocal } from "@/lib/journeyDraftStore";
 import { subscribe as subscribeCaptureSync, getCounts, type SyncCounts } from "@/lib/captureSync";
 import { captureMediaUrl } from "@/components/field-kit/composer/ComposerClient";
@@ -51,7 +52,7 @@ type PublishState =
   | { step: "review" }
   | { step: "publishing"; note: string }
   | { step: "failed"; error: string }
-  | { step: "published"; cardId: string };
+  | { step: "published"; cardId: string; trimmedExtras?: number };
 
 const STAMP_SRC = "/images/dat-logo7.svg";
 
@@ -69,12 +70,14 @@ export default function PublishClient({
   asId,
   program,
   photoTraces,
+  voiceTraces = [],
 }: {
   programId: string;
   profileSlug: string;
   asId?: string;
   program: ProgramMeta;
   photoTraces: PublishPhotoTrace[];
+  voiceTraces?: PublishPhotoTrace[];
 }) {
   const [draft, setDraft] = useState<JourneyDraft | null>(null);
   const [loading, setLoading] = useState(true);
@@ -130,6 +133,10 @@ export default function PublishClient({
     () => new Map(photoTraces.map((t) => [t.captureId, t])),
     [photoTraces]
   );
+  const voiceById = useMemo(
+    () => new Map(voiceTraces.map((t) => [t.captureId, t])),
+    [voiceTraces]
+  );
 
   // ── Readiness ──
   const chapterEntries = useMemo(
@@ -151,10 +158,13 @@ export default function PublishClient({
     const ids = new Set<string>();
     for (const ch of draft?.chapters ?? []) {
       for (const id of ch.photoCaptureIds) if (traceById.has(id)) ids.add(id);
+      for (const id of ch.morePhotoCaptureIds ?? []) if (traceById.has(id)) ids.add(id);
+      if (ch.audioCaptureId && voiceById.has(ch.audioCaptureId)) ids.add(ch.audioCaptureId);
+      for (const id of ch.moreAudioCaptureIds ?? []) if (voiceById.has(id)) ids.add(id);
     }
     if (draft?.heroCaptureId && traceById.has(draft.heroCaptureId)) ids.add(draft.heroCaptureId);
     return Array.from(ids);
-  }, [draft, traceById]);
+  }, [draft, traceById, voiceById]);
 
   const responseLines = useMemo(
     () =>
@@ -181,29 +191,43 @@ export default function PublishClient({
     }
 
     try {
-      // 2. Promote chosen private captures → public URLs (idempotent).
-      setState({ step: "publishing", note: "Preparing your photos…" });
-      let urls: Record<string, string> = {};
-      if (attachedCaptureIds.length) {
+      // 2. Promote chosen private captures → public URLs (idempotent). Sent in
+      //    chunks below the route's per-call cap — the "also on the card" tiers
+      //    can put well over 60 captures on one stamp.
+      setState({ step: "publishing", note: "Preparing your photos & voice notes…" });
+      const PROMOTE_CHUNK = 50;
+      const urls: Record<string, string> = {};
+      for (let i = 0; i < attachedCaptureIds.length; i += PROMOTE_CHUNK) {
         const res = await fetch("/api/field-kit/publish-media", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ captureIds: attachedCaptureIds, ...(asId ? { asId } : {}) }),
+          body: JSON.stringify({
+            captureIds: attachedCaptureIds.slice(i, i + PROMOTE_CHUNK),
+            ...(asId ? { asId } : {}),
+          }),
         });
         const data = (await res.json().catch(() => null)) as
           | { urls?: Record<string, string>; error?: string }
           | null;
         if (!res.ok || !data?.urls) {
-          throw new Error(data?.error || "Could not prepare photos for publishing");
+          throw new Error(data?.error || "Could not prepare your media for publishing");
         }
-        urls = data.urls;
+        Object.assign(urls, data.urls);
       }
 
       // 3. Flatten (Q1) + one idempotent append through the extended route.
+      //    fitChaptersJson is the cell guard: if the card would blow the sheet
+      //    cell, extras are dropped from the more* tails (never featured
+      //    content) and the count is surfaced — the stamp never fails silently.
       setState({ step: "publishing", note: "Stamping your card…" });
-      const blocks = draftToChapterBlocks(draft, (ch) =>
-        ch.photoCaptureIds.map((id) => urls[id]).filter(Boolean)
+      const rawBlocks = draftToChapterBlocks(
+        draft,
+        (ch) => ch.photoCaptureIds.map((id) => urls[id]).filter(Boolean),
+        (ch) => (ch.audioCaptureId ? urls[ch.audioCaptureId] : undefined),
+        (ch) => (ch.morePhotoCaptureIds ?? []).map((id) => urls[id]).filter(Boolean),
+        (ch) => (ch.moreAudioCaptureIds ?? []).map((id) => urls[id]).filter(Boolean)
       );
+      const { chapters: blocks, dropped } = fitChaptersJson(rawBlocks);
       const heroUrl =
         (draft.heroCaptureId && urls[draft.heroCaptureId]) || draft.heroUrl || "";
       const flat = flattenDraftForPublish(draft, blocks, heroUrl);
@@ -238,7 +262,11 @@ export default function PublishClient({
       }
 
       void pushDraft(key, asId);
-      setState({ step: "published", cardId: data.id || cardId });
+      setState({
+        step: "published",
+        cardId: data.id || cardId,
+        ...(dropped.length ? { trimmedExtras: dropped.length } : {}),
+      });
     } catch (e) {
       setState({
         step: "failed",
@@ -285,6 +313,11 @@ export default function PublishClient({
             "Your Journey Card is now live",
             "Your company can find it on your alumni profile",
             "You can return and add to your card at any time",
+            ...(state.trimmedExtras
+              ? [
+                  `${state.trimmedExtras} extra ${state.trimmedExtras === 1 ? "item" : "items"} didn't fit this card and stayed private — your featured picks all made it`,
+                ]
+              : []),
           ].map((line) => (
             <p key={line} style={{ fontFamily: FONT.grotesk, fontSize: 10.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: T.ink, margin: 0, display: "flex", gap: 8 }}>
               <span style={{ color: T.teal }}>»</span> {line}

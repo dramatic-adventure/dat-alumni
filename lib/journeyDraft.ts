@@ -19,6 +19,7 @@
 import {
   flattenChaptersToBody,
   flattenChaptersToMediaUrls,
+  MAX_FEATURED_PHOTOS_PER_CHAPTER,
   MAX_MORE_AUDIO_PER_CHAPTER,
   MAX_MORE_PHOTOS_PER_CHAPTER,
   type JourneyCardChapter,
@@ -231,15 +232,34 @@ export function chapterReadiness(ch: JourneyDraftChapter): ChapterReadiness {
  * media-promotion step minted (empty for unpromoted/sealed/missing captures);
  * retro chapters already carry public URLs. `reflection` is deliberately never
  * copied — personal notes stay private forever.
+ *
+ * New publishes normalize photoUrls to FEATURED-ONLY (≤5); anything past that —
+ * including a retro chapter's 6th..12th photoUrl — moves to morePhotoUrls
+ * behind the public "+N more" toggle (locked with Jesse 2026-08-19, §10-Q6).
+ * Already-published cards are untouched: this runs only at stamp time.
  */
 export function draftToChapterBlocks(
   draft: JourneyDraft,
   resolvePhotoUrls: (ch: JourneyDraftChapter) => string[],
-  resolveAudioUrl?: (ch: JourneyDraftChapter) => string | undefined
+  resolveAudioUrl?: (ch: JourneyDraftChapter) => string | undefined,
+  resolveMorePhotoUrls?: (ch: JourneyDraftChapter) => string[],
+  resolveMoreAudioUrls?: (ch: JourneyDraftChapter) => string[]
 ): JourneyCardChapter[] {
   return draft.chapters.map((ch) => {
     const readiness = chapterReadiness(ch);
-    const photoUrls = [...(ch.photoUrls ?? []), ...resolvePhotoUrls(ch)].filter(Boolean);
+    const combined = [...(ch.photoUrls ?? []), ...resolvePhotoUrls(ch)].filter(Boolean);
+    const photoUrls = combined.slice(0, MAX_FEATURED_PHOTOS_PER_CHAPTER);
+    const featuredSet = new Set(photoUrls);
+    const morePhotoUrls = [
+      ...combined.slice(MAX_FEATURED_PHOTOS_PER_CHAPTER),
+      ...(resolveMorePhotoUrls?.(ch) ?? []),
+    ]
+      .filter((u, i, a) => u && !featuredSet.has(u) && a.indexOf(u) === i)
+      .slice(0, MAX_MORE_PHOTOS_PER_CHAPTER);
+    const audioUrl = resolveAudioUrl?.(ch);
+    const moreAudioUrls = (resolveMoreAudioUrls?.(ch) ?? [])
+      .filter((u, i, a) => u && u !== audioUrl && a.indexOf(u) === i)
+      .slice(0, MAX_MORE_AUDIO_PER_CHAPTER);
     return {
       chapterId: ch.chapterId,
       kind: ch.kind,
@@ -250,7 +270,9 @@ export function draftToChapterBlocks(
       response: ch.response || undefined,
       body: ch.body || undefined,
       photoUrls: photoUrls.length ? photoUrls : undefined,
-      audioUrl: resolveAudioUrl?.(ch),
+      audioUrl,
+      morePhotoUrls: morePhotoUrls.length ? morePhotoUrls : undefined,
+      moreAudioUrls: moreAudioUrls.length ? moreAudioUrls : undefined,
       accent: ch.accent,
       status: readiness === "empty" ? "empty" : "written",
     };

@@ -13,9 +13,12 @@
 //     existing copy and reuses it instead of duplicating. A promoted-but-
 //     unpublished file (stamp failed after promotion) is unreferenced and
 //     harmless; the retry picks it right back up.
-//   • Ownership enforced: only the verified author's own, non-sealed photo
-//     captures can be promoted — captureIds are checked against the
+//   • Ownership enforced: only the verified author's own, non-sealed photo and
+//     voice captures can be promoted — captureIds are checked against the
 //     Field-Captures tab, never trusted from the body.
+//   • Voices promote with identical mechanics (review/audio build, 2026-08):
+//     the copy lands in the same published folder and is referenced through the
+//     public /api/media/audio/<fileId> route instead of the image thumb proxy.
 //
 // POST { captureIds: string[], asId? } → { ok, urls: { [captureId]: url } }
 
@@ -31,12 +34,19 @@ import { withRetry, normId } from "@/lib/sheetsResilience";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const MAX_PROMOTE_PER_CALL = 60; // generous: 5 photos × dozens of chapters
+// Per-card totals grew with the "also on the card" tiers (12 photos + 5 voices
+// per chapter), so a stamp can need well over the old 60 — PublishClient sends
+// captureIds in chunks of ≤MAX_PROMOTE_PER_CALL and merges the results (the
+// route is idempotent, so chunked retries are safe). The cap itself stays
+// modest so one invocation never risks the function timeout on Drive copies.
+const MAX_PROMOTE_PER_CALL = 60;
 
 const PUBLISHED_FOLDER = "published";
 
-function publicUrlFor(fileId: string): string {
-  return `/api/media/thumb/${encodeURIComponent(fileId)}`;
+function publicUrlFor(kind: string, fileId: string): string {
+  return kind === "voice"
+    ? `/api/media/audio/${encodeURIComponent(fileId)}`
+    : `/api/media/thumb/${encodeURIComponent(fileId)}`;
 }
 
 type DriveFilesList = {
@@ -78,11 +88,16 @@ export async function POST(req: Request) {
     }
 
     // Ownership check: every requested captureId must be one of the author's
-    // own, non-sealed photo captures with a stored Drive file.
+    // own, non-sealed photo or voice captures with a stored Drive file.
     const own = await loadCapturesForAuthor(access.programId, authorSlug);
     const eligible = new Map(
       own
-        .filter((c) => c.kind === "photo" && c.driveFileId && c.visibility !== "sealed")
+        .filter(
+          (c) =>
+            (c.kind === "photo" || c.kind === "voice") &&
+            c.driveFileId &&
+            c.visibility !== "sealed"
+        )
         .map((c) => [normId(c.captureId), c])
     );
     const captures = wanted.map((id) => eligible.get(normId(id)));
@@ -126,12 +141,16 @@ export async function POST(req: Request) {
     const urls: Record<string, string> = {};
     for (const capture of captures) {
       if (!capture) continue; // narrowed above; keeps TS happy
-      const ext = capture.mimeType.split("/")[1]?.replace("jpeg", "jpg") || "jpg";
+      // Voice mimeTypes can carry codec params ("audio/webm;codecs=opus") — the
+      // extension is the bare subtype, never the params.
+      const subtype = capture.mimeType.split("/")[1]?.split(";")[0]?.trim() || "";
+      const ext =
+        subtype.replace("jpeg", "jpg") || (capture.kind === "voice" ? "webm" : "jpg");
       const copyName = `${capture.captureId}.${ext}`;
 
       const already = existingByName.get(copyName);
       if (already) {
-        urls[capture.captureId] = publicUrlFor(already);
+        urls[capture.captureId] = publicUrlFor(capture.kind, already);
         continue;
       }
 
@@ -147,7 +166,7 @@ export async function POST(req: Request) {
       )) as DriveCopyResp;
       const newId = copied.data.id || "";
       if (!newId) throw new Error(`Drive copy returned no id for ${capture.captureId}`);
-      urls[capture.captureId] = publicUrlFor(newId);
+      urls[capture.captureId] = publicUrlFor(capture.kind, newId);
     }
 
     return NextResponse.json({ ok: true, urls });
