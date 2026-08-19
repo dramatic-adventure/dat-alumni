@@ -424,6 +424,25 @@ console.log("\n[11] more* overflow fields");
   const fewJson = JSON.stringify(few.draft.chapters[0]);
   check("no overflow → more* keys absent from the draft JSON", !fewJson.includes("morePhotoCaptureIds") && !fewJson.includes("moreAudioCaptureIds"), fewJson);
 
+  // Empty-chapter invitation (§10-Q7): the optimistic append put the uploaded
+  // photo's captureId into the draft WITHOUT marking the field touched. The
+  // next assembly run recomputes the untouched field from the captures — the
+  // photo appears exactly once, never duplicated, and auto-fill keeps flowing.
+  const uploaded = cap({ kind: "photo", driveFileId: "mf-upload", chapterId: "ch-2", createdAt: "2026-07-14T09:00:00.000Z" });
+  const optimistic = {
+    ...first.draft,
+    chapters: first.draft.chapters.map((c) =>
+      c.chapterId === "ch-2" ? { ...c, photoCaptureIds: [...c.photoCaptureIds, uploaded.captureId] } : c
+    ),
+    updatedAt: "2026-07-14T09:00:05.000Z",
+  };
+  const afterUpload = run([...photos, ...voices, uploaded], optimistic);
+  const upCh2 = afterUpload.draft.chapters.find((c) => c.chapterId === "ch-2");
+  check("optimistic insert survives assembly exactly once (no duplication)",
+    upCh2.photoCaptureIds.filter((id) => id === uploaded.captureId).length === 1, upCh2.photoCaptureIds);
+  check("untouched chapter keeps auto-assembling after the insert",
+    !(upCh2.touchedFields ?? []).includes("photoCaptureIds"));
+
   // Sealed media never reaches the overflow tier.
   const sealedPhoto = cap({ kind: "photo", driveFileId: "mf-sealed", chapterId: "ch-1", visibility: "sealed", createdAt: "2026-07-12T06:15:00.000Z" });
   const sealedVoice = cap({ kind: "voice", driveFileId: "mv-sealed", chapterId: "ch-1", visibility: "sealed", createdAt: "2026-07-12T06:45:00.000Z" });
