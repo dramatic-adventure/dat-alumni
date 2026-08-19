@@ -352,7 +352,14 @@ function StoryPage({ ctx, photos, isMobile, W, H }: { ctx: Ctx; photos: string[]
 export function isInteriorChapter(ch: JourneyCardChapter): boolean {
   return (
     ch.status === "written" &&
-    Boolean(ch.response || ch.body || (ch.photoUrls?.length ?? 0) > 0 || ch.audioUrl)
+    Boolean(
+      ch.response ||
+        ch.body ||
+        (ch.photoUrls?.length ?? 0) > 0 ||
+        (ch.morePhotoUrls?.length ?? 0) > 0 ||
+        ch.audioUrl ||
+        (ch.moreAudioUrls?.length ?? 0) > 0
+    )
   );
 }
 
@@ -364,12 +371,113 @@ function chapterAccent(ch: JourneyCardChapter, card: JourneyCard): string {
   return accentFor(card.accent);
 }
 
-function ChapterPage({ ctx, chapter, isMobile, W, H, onCopied }: {
-  ctx: Ctx; chapter: JourneyCardChapter; isMobile: boolean; W: number; H: number; onCopied: () => void;
+// One voice note. `autoOnActive` (featured player only): flipping to the page
+// starts playback — a flip is a user gesture, so browsers allow the sound; on a
+// cold deep-link the play() promise rejects and the player just waits for a tap
+// (locked with Jesse 2026-08-19). Flipping away always pauses. preload="none"
+// because every page stays mounted in the flip track — N chapters must not
+// fetch N audio files on load.
+function VoicePlayer({ src, active, autoOnActive }: { src: string; active: boolean; autoOnActive: boolean }) {
+  const ref = useRef<HTMLAudioElement | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (active && autoOnActive) {
+      if (el.ended) el.currentTime = 0; // returning to the page replays, not silence
+      el.play().catch(() => { /* autoplay blocked (cold load) — wait for a tap */ });
+    }
+    if (!active) el.pause();
+  }, [active, autoOnActive]);
+  return (
+    <audio ref={ref} controls preload="none" src={src}
+      style={{ width: "100%", height: 36, display: "block" }} />
+  );
+}
+
+function ChapterAudio({ chapter, active, isMobile }: {
+  chapter: JourneyCardChapter; active: boolean; isMobile: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const featured = safeMediaUrl(chapter.audioUrl);
+  const more = (chapter.moreAudioUrls ?? []).map(safeMediaUrl).filter(Boolean);
+  if (!featured && !more.length) return null;
+  const primary = featured || more[0];
+  const rest = featured ? more : more.slice(1);
+  return (
+    <div style={{ margin: "0 0 12px" }}>
+      <p style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontWeight: 700, fontSize: isMobile ? 8.5 : 9, letterSpacing: "0.22em", textTransform: "uppercase", color: C.muted, margin: "0 0 5px" }}>Voice note</p>
+      <VoicePlayer src={primary} active={active} autoOnActive />
+      {rest.length > 0 && (
+        <>
+          <button type="button" className="jcb-morebtn" aria-expanded={expanded}
+            onClick={() => setExpanded((v) => !v)}>
+            {expanded ? "Fewer voice notes" : `Hear more (+${rest.length})`}
+          </button>
+          {expanded && (
+            <div className="jcb-fade" style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 6 }}>
+              {rest.map((src) => (
+                <VoicePlayer key={src} src={src} active={active} autoOnActive={false} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// The photo region: featured layout, with a "+N more" chip when the chapter
+// carries "also on the card" extras. Expanded, the region becomes a scrollable
+// uniform grid of featured + more. Collapsed by default.
+function ChapterPhotos({ photos, morePhotos, W, H, isMobile }: {
+  photos: string[]; morePhotos: string[]; W: number; H: number; isMobile: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div style={{ width: W, height: H, position: "relative", overflow: "hidden", backgroundColor: "#e8e2da" }}>
+      {expanded ? (
+        <div className="jcb-scroll jcb-fade" style={{
+          position: "absolute", inset: 0, overflowY: "auto", padding: 2,
+          display: "grid", gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : "repeat(4, 1fr)",
+          gap: 2, alignContent: "start",
+        }}>
+          {[...photos, ...morePhotos].map((src, i) => (
+            <div key={`${i}-${src}`} style={{ position: "relative", aspectRatio: "1 / 1", overflow: "hidden" }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt="" loading="lazy" decoding="async"
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <PhotoGrid photos={photos} W={W} H={H} />
+      )}
+      {morePhotos.length > 0 && (
+        <button type="button" className="jcb-btn" aria-expanded={expanded}
+          onClick={() => setExpanded((v) => !v)}
+          style={{
+            position: "absolute", right: 8, bottom: 8, zIndex: 5,
+            fontFamily: "var(--font-space-grotesk), system-ui, sans-serif",
+            fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
+            color: C.ink, backgroundColor: "rgba(242,242,242,0.92)",
+            border: "none", borderRadius: 999, padding: "6px 12px", cursor: "pointer",
+            boxShadow: "0 1px 6px rgba(36,17,35,0.2)",
+          }}>
+          {expanded ? "Show less" : `+${morePhotos.length} more`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ChapterPage({ ctx, chapter, isMobile, W, H, active, onCopied }: {
+  ctx: Ctx; chapter: JourneyCardChapter; isMobile: boolean; W: number; H: number; active: boolean; onCopied: () => void;
 }) {
   const { card, alum } = ctx;
   const accent = chapterAccent(chapter, card);
   const photos = (chapter.photoUrls ?? []).map(safeMediaUrl).filter(Boolean);
+  const morePhotos = (chapter.morePhotoUrls ?? []).map(safeMediaUrl).filter(Boolean);
+  const hasPhotoRegion = photos.length > 0 || morePhotos.length > 0;
   const paras = (chapter.body || "").split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
   const kicker = chapter.kind === "daily" ? "Daily page" : chapter.num;
   const subline = [chapter.location, chapter.dateLabel].filter(Boolean).join(" · ");
@@ -397,6 +505,7 @@ function ChapterPage({ ctx, chapter, isMobile, W, H, onCopied }: {
           <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: isMobile ? 9.5 : 10, color: C.dim, fontStyle: "italic", margin: "0 0 12px", paddingLeft: isMobile ? 13 : 16 }}>— {alum.name}</p>
         </>
       )}
+      <ChapterAudio chapter={chapter} active={active} isMobile={isMobile} />
       {paras.map((p, i) => (
         <p key={i} style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: isMobile ? 11 : 11.5, color: C.muted, lineHeight: 1.55, margin: "0 0 10px" }}>{p}</p>
       ))}
@@ -409,12 +518,12 @@ function ChapterPage({ ctx, chapter, isMobile, W, H, onCopied }: {
   } as const;
 
   if (isMobile) {
-    const PHOTO_H = photos.length ? Math.round(H * 0.32) : 0;
+    const PHOTO_H = hasPhotoRegion ? Math.round(H * 0.32) : 0;
     return (
       <div style={{ width: W, height: H, display: "flex", flexDirection: "column", backgroundColor: C.bg }}>
-        {photos.length > 0 && (
-          <div style={{ width: W, height: PHOTO_H, overflow: "hidden", backgroundColor: "#e8e2da", flexShrink: 0, position: "relative" }}>
-            <PhotoGrid photos={photos} W={W} H={PHOTO_H} />
+        {hasPhotoRegion && (
+          <div style={{ flexShrink: 0 }}>
+            <ChapterPhotos photos={photos} morePhotos={morePhotos} W={W} H={PHOTO_H} isMobile />
           </div>
         )}
         <div style={{ padding: "12px 18px 6px", flexShrink: 0 }}>
@@ -433,11 +542,11 @@ function ChapterPage({ ctx, chapter, isMobile, W, H, onCopied }: {
   }
 
   // Desktop — journal left, photos right; text-only chapters give the journal the full page.
-  const journalW = photos.length ? 378 : W;
-  const journalPad = photos.length ? 24 : 120;
+  const journalW = hasPhotoRegion ? 378 : W;
+  const journalPad = hasPhotoRegion ? 24 : 120;
   return (
     <div style={{ display: "flex", width: W, height: H }}>
-      <div style={{ width: journalW, flexShrink: 0, backgroundColor: C.bg, display: "flex", flexDirection: "column", borderRight: photos.length ? `1px solid ${C.sep}` : "none", height: H, minHeight: 0 }}>
+      <div style={{ width: journalW, flexShrink: 0, backgroundColor: C.bg, display: "flex", flexDirection: "column", borderRight: hasPhotoRegion ? `1px solid ${C.sep}` : "none", height: H, minHeight: 0 }}>
         <div style={{ padding: `20px ${journalPad}px 12px`, flexShrink: 0 }}>
           <ProgramStack ctx={ctx} size="md" align="left" />
           <div style={{ width: "100%", height: 1, backgroundColor: C.sep, margin: "12px 0" }} />
@@ -450,9 +559,9 @@ function ChapterPage({ ctx, chapter, isMobile, W, H, onCopied }: {
           <ShareButton title={shareTitle} text={chapter.response || chapter.title} onCopied={onCopied} />
         </div>
       </div>
-      {photos.length > 0 && (
-        <div style={{ flex: 1, overflow: "hidden", backgroundColor: "#e8e2da", position: "relative" }}>
-          <PhotoGrid photos={photos} W={W - journalW} H={H} />
+      {hasPhotoRegion && (
+        <div style={{ flex: 1, overflow: "hidden" }}>
+          <ChapterPhotos photos={photos} morePhotos={morePhotos} W={W - journalW} H={H} isMobile={false} />
         </div>
       )}
     </div>
@@ -594,9 +703,9 @@ export default function JourneyCardView({ card, alum }: Ctx) {
   const visibleW = Math.round(W * scale);
   const visibleH = Math.round(H * scale);
 
-  const renderPage = (p: (typeof pages)[number]) => {
+  const renderPage = (p: (typeof pages)[number], idx: number) => {
     if (p.key === "cover") return <CoverPage ctx={ctx} isMobile={isMobile} W={W} H={H} onCopied={showToast} />;
-    if (p.chapter) return <ChapterPage ctx={ctx} chapter={p.chapter} isMobile={isMobile} W={W} H={H} onCopied={showToast} />;
+    if (p.chapter) return <ChapterPage ctx={ctx} chapter={p.chapter} isMobile={isMobile} W={W} H={H} active={page === idx} onCopied={showToast} />;
     if (p.key === "story") return <StoryPage ctx={ctx} photos={storyPhotos} isMobile={isMobile} W={W} H={H} />;
     return <BackCoverPage ctx={ctx} photos={mosaicPhotos} isMobile={isMobile} W={W} H={H} />;
   };
@@ -621,6 +730,16 @@ export default function JourneyCardView({ card, alum }: Ctx) {
         .jcb-scroll::-webkit-scrollbar-thumb { background: rgba(36,17,35,0.22); border-radius: 2px; }
         .jcb-outer { border-radius: 6px; overflow: hidden; position: relative; flex-shrink: 0;
           border: 1px solid ${C.border}; box-shadow: 0 10px 44px rgba(36,17,35,0.16), 0 2px 10px rgba(36,17,35,0.07); }
+        .jcb-morebtn { background: none; border: none; padding: 4px 0 0; cursor: pointer;
+          font-family: var(--font-space-grotesk), system-ui, sans-serif;
+          font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+          color: ${C.teal}; transition: opacity 0.15s ease; }
+        .jcb-morebtn:hover { opacity: 0.65; }
+        @keyframes jcb-fade-in { from { opacity: 0; } to { opacity: 1; } }
+        .jcb-fade { animation: jcb-fade-in 0.18s ease; }
+        @media (prefers-reduced-motion: reduce) {
+          .jcb-fade { animation: none; }
+        }
       `}</style>
 
       {/* Back to this alum's journeys */}
@@ -653,8 +772,8 @@ export default function JourneyCardView({ card, alum }: Ctx) {
             touchStartX.current = null;
           }}>
           <div style={{ display: "flex", width: `${TOTAL * W}px`, height: "100%", transform: `translateX(-${page * W}px)`, transition: "transform 360ms cubic-bezier(0.4,0,0.2,1)", willChange: "transform" }}>
-            {pages.map((p) => (
-              <div key={p.key} style={{ width: W, height: "100%", flexShrink: 0 }}>{renderPage(p)}</div>
+            {pages.map((p, i) => (
+              <div key={p.key} style={{ width: W, height: "100%", flexShrink: 0 }}>{renderPage(p, i)}</div>
             ))}
           </div>
           {page > 0 && (
