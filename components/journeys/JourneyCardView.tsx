@@ -41,6 +41,22 @@ const TRAVEL_URL = "https://dramaticadventure.com/travel-opportunities";
 // standalone card page.
 type Ctx = { card: JourneyCard; alum: CardViewAlum; embedded?: boolean };
 
+// Light edit affordances the Composer preview overlays on the book pages
+// (Slice A/B). Only ever passed by the embedded preview; the public card never
+// sees any of this. When present, EMPTY chapters also get a page — the
+// invitation to fill them ("no photos from these days yet").
+export type CardEditHooks = {
+  /** e.g. "9 photos here — these 5 are featured." null/undefined = no prompt. */
+  photoPrompt?: (ch: JourneyCardChapter) => string | null;
+  /** e.g. "2 voice notes — this one's on the card." */
+  voicePrompt?: (ch: JourneyCardChapter) => string | null;
+  onChoosePhotos?: (chapterId: string) => void;
+  onChooseVoice?: (chapterId: string) => void;
+  onEditText?: (chapterId: string, field: "response" | "body") => void;
+  /** The camera-roll invitation for chapters with no photos. */
+  onAddPhoto?: (chapterId: string) => void;
+};
+
 // ── Program wordmark + COUNTRY · YEAR stack (the v17 PassageStack, live) ──────
 function ProgramStack({
   ctx, size, align = "left",
@@ -475,8 +491,8 @@ function ChapterPhotos({ photos, morePhotos, W, H, isMobile }: {
   );
 }
 
-function ChapterPage({ ctx, chapter, isMobile, W, H, active, onCopied }: {
-  ctx: Ctx; chapter: JourneyCardChapter; isMobile: boolean; W: number; H: number; active: boolean; onCopied: () => void;
+function ChapterPage({ ctx, chapter, isMobile, W, H, active, onCopied, hooks }: {
+  ctx: Ctx; chapter: JourneyCardChapter; isMobile: boolean; W: number; H: number; active: boolean; onCopied: () => void; hooks?: CardEditHooks;
 }) {
   const { card, alum } = ctx;
   const accent = chapterAccent(chapter, card);
@@ -484,6 +500,8 @@ function ChapterPage({ ctx, chapter, isMobile, W, H, active, onCopied }: {
   const morePhotos = (chapter.morePhotoUrls ?? []).map(safeMediaUrl).filter(Boolean);
   const hasPhotoRegion = photos.length > 0 || morePhotos.length > 0;
   const paras = (chapter.body || "").split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+  const photoPrompt = hooks?.photoPrompt?.(chapter) ?? null;
+  const voicePrompt = hooks?.voicePrompt?.(chapter) ?? null;
   const kicker = chapter.kind === "daily" ? "Daily page" : chapter.num;
   const subline = [chapter.location, chapter.dateLabel].filter(Boolean).join(" · ");
   const shareTitle = [chapter.title, card.programLabel].filter(Boolean).join(" — ");
@@ -502,18 +520,59 @@ function ChapterPage({ ctx, chapter, isMobile, W, H, active, onCopied }: {
     </>
   );
 
+  // Preview-only affordance: any text block is tappable; a missing one invites.
+  const editText = (field: "response" | "body") =>
+    hooks?.onEditText ? () => hooks.onEditText?.(chapter.chapterId, field) : undefined;
+
   const Middle = () => (
     <>
-      {chapter.response && (
-        <>
+      {chapter.response ? (
+        <div onClick={editText("response")} style={editText("response") ? { cursor: "pointer" } : undefined} title={editText("response") ? "Tap to edit" : undefined}>
           <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontStyle: "italic", fontSize: isMobile ? 13 : 14.5, lineHeight: isMobile ? 1.6 : 1.65, color: C.ink, margin: "0 0 5px", borderLeft: `3px solid ${accent}`, paddingLeft: isMobile ? 10 : 13 }}>&ldquo;{chapter.response}&rdquo;</p>
           <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: isMobile ? 9.5 : 10, color: C.dim, fontStyle: "italic", margin: "0 0 12px", paddingLeft: isMobile ? 13 : 16 }}>— {alum.name}</p>
-        </>
+        </div>
+      ) : (
+        hooks?.onEditText && (
+          <button type="button" className="jcb-morebtn" style={{ display: "block", margin: "0 0 10px" }} onClick={editText("response")}>
+            + Write this chapter&rsquo;s line
+          </button>
+        )
       )}
       <ChapterAudio chapter={chapter} active={active} isMobile={isMobile} />
-      {paras.map((p, i) => (
-        <p key={i} style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: isMobile ? 11 : 11.5, color: C.muted, lineHeight: 1.55, margin: "0 0 10px" }}>{p}</p>
-      ))}
+      {voicePrompt && (
+        <button type="button" className="jcb-morebtn" style={{ display: "block", margin: "0 0 12px" }}
+          onClick={() => hooks?.onChooseVoice?.(chapter.chapterId)}>
+          {voicePrompt} — Choose
+        </button>
+      )}
+      {paras.length ? (
+        <div onClick={editText("body")} style={editText("body") ? { cursor: "pointer" } : undefined} title={editText("body") ? "Tap to edit" : undefined}>
+          {paras.map((p, i) => (
+            <p key={i} style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: isMobile ? 11 : 11.5, color: C.muted, lineHeight: 1.55, margin: "0 0 10px" }}>{p}</p>
+          ))}
+        </div>
+      ) : (
+        hooks?.onEditText && (
+          <button type="button" className="jcb-morebtn" style={{ display: "block", margin: "0 0 10px" }} onClick={editText("body")}>
+            + Add more words
+          </button>
+        )
+      )}
+      {!hasPhotoRegion &&
+        (photoPrompt && hooks?.onChoosePhotos ? (
+          // Captures exist but none are on the page yet — offer the chooser.
+          <button type="button" className="jcb-morebtn" style={{ display: "block", margin: "6px 0 0", textAlign: "left" }}
+            onClick={() => hooks.onChoosePhotos?.(chapter.chapterId)}>
+            {photoPrompt} — Choose
+          </button>
+        ) : (
+          hooks?.onAddPhoto && (
+            <button type="button" className="jcb-morebtn" style={{ display: "block", margin: "6px 0 0", textAlign: "left" }}
+              onClick={() => hooks.onAddPhoto?.(chapter.chapterId)}>
+              No photos from these days yet — add one from your camera roll
+            </button>
+          )
+        ))}
     </>
   );
 
@@ -527,8 +586,14 @@ function ChapterPage({ ctx, chapter, isMobile, W, H, active, onCopied }: {
     return (
       <div style={{ width: W, height: H, display: "flex", flexDirection: "column", backgroundColor: C.bg }}>
         {hasPhotoRegion && (
-          <div style={{ flexShrink: 0 }}>
+          <div style={{ flexShrink: 0, position: "relative" }}>
             <ChapterPhotos photos={photos} morePhotos={morePhotos} W={W} H={PHOTO_H} isMobile />
+            {photoPrompt && (
+              <button type="button" className="jcb-btn jcb-promptchip" aria-haspopup="dialog"
+                onClick={() => hooks?.onChoosePhotos?.(chapter.chapterId)}>
+                {photoPrompt} — Choose
+              </button>
+            )}
           </div>
         )}
         <div style={{ padding: "12px 18px 6px", flexShrink: 0 }}>
@@ -569,8 +634,14 @@ function ChapterPage({ ctx, chapter, isMobile, W, H, active, onCopied }: {
         )}
       </div>
       {hasPhotoRegion && (
-        <div style={{ flex: 1, overflow: "hidden" }}>
+        <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
           <ChapterPhotos photos={photos} morePhotos={morePhotos} W={W - journalW} H={H} isMobile={false} />
+          {photoPrompt && (
+            <button type="button" className="jcb-btn jcb-promptchip" aria-haspopup="dialog"
+              onClick={() => hooks?.onChoosePhotos?.(chapter.chapterId)}>
+              {photoPrompt} — Choose
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -625,7 +696,7 @@ function accentFor(a: JourneyCard["accent"]): string {
 }
 
 // ── Root ──────────────────────────────────────────────────────────────────────
-export default function JourneyCardView({ card, alum, embedded }: Ctx) {
+export default function JourneyCardView({ card, alum, embedded, editHooks }: Ctx & { editHooks?: CardEditHooks }) {
   const ctx: Ctx = { card, alum, embedded };
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const heroPhotos = useMemo(() => card.mediaUrls.map(safeMediaUrl).filter(Boolean), [card.mediaUrls]);
@@ -635,7 +706,15 @@ export default function JourneyCardView({ card, alum, embedded }: Ctx) {
     return Array.from(new Set(all));
   }, [card.heroUrl, heroPhotos]);
 
-  const interiorChapters = useMemo(() => card.chapters.filter(isInteriorChapter), [card.chapters]);
+  // The preview (editHooks present) also pages EMPTY chapters — they invite the
+  // artist to fill them. The public card never does.
+  const interiorChapters = useMemo(
+    () =>
+      card.chapters.filter(
+        (ch) => isInteriorChapter(ch) || (!!editHooks && ch.kind === "chapter" && ch.status === "empty")
+      ),
+    [card.chapters, editHooks]
+  );
   const hasStory = Boolean((card.body || "").trim()) || heroPhotos.length > 0;
   const pages = useMemo(() => {
     type PageEntry = { key: string; label: string; statusLabel: string; chapter?: JourneyCardChapter };
@@ -725,7 +804,7 @@ export default function JourneyCardView({ card, alum, embedded }: Ctx) {
 
   const renderPage = (p: (typeof pages)[number], idx: number) => {
     if (p.key === "cover") return <CoverPage ctx={ctx} isMobile={isMobile} W={W} H={H} onCopied={showToast} />;
-    if (p.chapter) return <ChapterPage ctx={ctx} chapter={p.chapter} isMobile={isMobile} W={W} H={H} active={page === idx} onCopied={showToast} />;
+    if (p.chapter) return <ChapterPage ctx={ctx} chapter={p.chapter} isMobile={isMobile} W={W} H={H} active={page === idx} onCopied={showToast} hooks={editHooks} />;
     if (p.key === "story") return <StoryPage ctx={ctx} photos={storyPhotos} isMobile={isMobile} W={W} H={H} />;
     return <BackCoverPage ctx={ctx} photos={mosaicPhotos} isMobile={isMobile} W={W} H={H} />;
   };
@@ -751,6 +830,12 @@ export default function JourneyCardView({ card, alum, embedded }: Ctx) {
           font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
           color: ${C.teal}; transition: opacity 0.15s ease; }
         .jcb-morebtn:hover { opacity: 0.65; }
+        .jcb-promptchip { position: absolute; left: 8px; top: 8px; z-index: 5;
+          font-family: var(--font-space-grotesk), system-ui, sans-serif;
+          font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+          color: ${C.ink}; background: rgba(242,242,242,0.92); border: none; border-radius: 999px;
+          padding: 6px 12px; cursor: pointer; box-shadow: 0 1px 6px rgba(36,17,35,0.2);
+          max-width: 80%; text-align: left; }
         @keyframes jcb-fade-in { from { opacity: 0; } to { opacity: 1; } }
         .jcb-fade { animation: jcb-fade-in 0.18s ease; }
         @media (prefers-reduced-motion: reduce) {

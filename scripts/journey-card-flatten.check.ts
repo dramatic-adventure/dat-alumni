@@ -197,6 +197,10 @@ console.log("\n[5] preview fidelity (private vs promoted URLs aside)");
       },
       {
         chapterId: "ch-2", kind: "daily", title: "A postcard", response: "Daily line.",
+        body: "", reflection: "", photoCaptureIds: [], dailyPublic: true,
+      },
+      {
+        chapterId: "ch-2b", kind: "daily", title: "PRIVATE-DAILY", response: "Never public.",
         body: "", reflection: "", photoCaptureIds: [],
       },
       {
@@ -246,7 +250,11 @@ console.log("\n[5] preview fidelity (private vs promoted URLs aside)");
   check("preview card ≡ published card (URLs scrubbed)",
     JSON.stringify(strip(previewCard)) === JSON.stringify(strip(publishedCard)),
     { preview: strip(previewCard), published: strip(publishedCard) });
-  check("private notes reach neither card", !JSON.stringify(previewCard).includes("PRIVATE") && !JSON.stringify(publishedCard).includes("PRIVATE"));
+  check("private notes reach neither card", !JSON.stringify(previewCard).includes('"PRIVATE"') && !JSON.stringify(publishedCard).includes('"PRIVATE"'));
+  check("opted-in daily rides both cards",
+    previewCard.chapters.some((c) => c.chapterId === "ch-2") && publishedCard.chapters.some((c) => c.chapterId === "ch-2"));
+  check("un-opted daily reaches neither card (§10-Q9 opt-in)",
+    !JSON.stringify(previewCard).includes("PRIVATE-DAILY") && !JSON.stringify(publishedCard).includes("PRIVATE-DAILY"));
 }
 
 // ── Result ────────────────────────────────────────────────────────────────────

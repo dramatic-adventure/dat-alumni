@@ -32,7 +32,11 @@ import {
   type JourneyDraft,
   type JourneyDraftChapter,
 } from "@/lib/journeyDraft";
-import JourneyCardView, { type CardViewAlum } from "@/components/journeys/JourneyCardView";
+import JourneyCardView, { type CardViewAlum, type CardEditHooks } from "@/components/journeys/JourneyCardView";
+import {
+  MAX_MORE_AUDIO_PER_CHAPTER,
+  MAX_MORE_PHOTOS_PER_CHAPTER,
+} from "@/lib/journeyCard";
 import {
   draftKey,
   loadDraft,
@@ -168,6 +172,13 @@ export default function ComposerClient({
   const [loading, setLoading] = useState(true);
   const [activeChapterId, setActiveChapterId] = useState<string>(chapters[0]?.id ?? "");
   const [syncState, setSyncState] = useState<DraftSyncState>("synced");
+  // Live copy of the server trace snapshot — the "place unplaced captures" flow
+  // re-files traces (PATCH chapterId) and this keeps every surface in step.
+  const [traceList, setTraceList] = useState<ComposerTrace[]>(traces);
+  // Overlay surfaces on the preview (Slice A/B).
+  const [chooser, setChooser] = useState<{ chapterId: string; mode: "photos" | "voice" } | null>(null);
+  const [textEdit, setTextEdit] = useState<{ chapterId: string; field: "response" | "body" } | null>(null);
+  const [placeOpen, setPlaceOpen] = useState(false);
   const key = draftKey("live", programId);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -257,6 +268,100 @@ export default function ComposerClient({
     [updateDraft]
   );
 
+  // ── Extras data (Slice B): what each chapter's captures offer ──
+  const spineById = useMemo(() => new Map(chapters.map((c) => [c.id, c])), [chapters]);
+  const chapterMatches = useCallback(
+    (t: ComposerTrace, chapterId: string) => {
+      if (t.chapterId === chapterId) return true;
+      const sp = spineById.get(chapterId);
+      return !!sp && sp.dayIds.includes(t.dayIndex);
+    },
+    [spineById]
+  );
+  const photoCandidates = useCallback(
+    (chapterId: string) =>
+      traceList.filter((t) => t.kind === "photo" && t.driveFileId && chapterMatches(t, chapterId)),
+    [traceList, chapterMatches]
+  );
+  const voiceCandidates = useCallback(
+    (chapterId: string) =>
+      traceList.filter((t) => t.kind === "voice" && t.driveFileId && chapterMatches(t, chapterId)),
+    [traceList, chapterMatches]
+  );
+
+  // Re-file an unplaced capture under the chapter the artist tapped — the
+  // existing trace-mutation path (PATCH), then keep every surface in step.
+  // Photos also land in the draft immediately (optimistic, NOT touched — same
+  // §10-Q7 rule as the camera-roll invitation).
+  const placeCapture = useCallback(
+    async (captureId: string, chapterId: string) => {
+      const res = await fetch(
+        `/api/field-kit/capture/${encodeURIComponent(captureId)}${asId ? `?asId=${encodeURIComponent(asId)}` : ""}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chapterId }),
+        }
+      );
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || "Couldn't place that capture — try again.");
+      }
+      const placed = traceList.find((t) => t.captureId === captureId);
+      setTraceList((prev) => prev.map((t) => (t.captureId === captureId ? { ...t, chapterId } : t)));
+      if (placed?.kind === "photo") {
+        updateDraft((d) => ({
+          ...d,
+          chapters: d.chapters.map((c) =>
+            c.kind === "chapter" && c.chapterId === chapterId && !c.photoCaptureIds.includes(captureId)
+              ? { ...c, photoCaptureIds: [...c.photoCaptureIds, captureId] }
+              : c
+          ),
+        }));
+      }
+    },
+    [asId, traceList, updateDraft]
+  );
+
+  // The preview's light edit affordances (Slice A/B) — prompts appear ONLY when
+  // extras exist; an artist who never over-captured sees zero prompts.
+  const editHooks: CardEditHooks = useMemo(
+    () => ({
+      photoPrompt: (ch) => {
+        if (ch.kind !== "chapter") return null;
+        const n = photoCandidates(ch.chapterId).length;
+        const entry = draft?.chapters.find((c) => c.kind === "chapter" && c.chapterId === ch.chapterId);
+        const featured = entry?.photoCaptureIds.length ?? 0;
+        // Extras exist (over the featured cap), or captures exist but none are
+        // on the page yet — both deserve the chooser. Otherwise: no prompt.
+        if (n > MAX_PHOTOS_PER_CHAPTER) {
+          return `${n} photos here — ${featured === 1 ? "1 is" : `${featured} are`} featured`;
+        }
+        if (n > 0 && featured === 0) {
+          return `${n === 1 ? "1 photo" : `${n} photos`} from these days — none on the card yet`;
+        }
+        return null;
+      },
+      voicePrompt: (ch) => {
+        if (ch.kind !== "chapter") return null;
+        const n = voiceCandidates(ch.chapterId).length;
+        if (n < 2) return null;
+        const entry = draft?.chapters.find((c) => c.kind === "chapter" && c.chapterId === ch.chapterId);
+        return `${n} voice notes — ${entry?.audioCaptureId ? "this one's on the card" : "none on the card yet"}`;
+      },
+      onChoosePhotos: (chapterId) => setChooser({ chapterId, mode: "photos" }),
+      onChooseVoice: (chapterId) => setChooser({ chapterId, mode: "voice" }),
+      onEditText: (chapterId, field) => setTextEdit({ chapterId, field }),
+      onAddPhoto: (chapterId) => {
+        flush();
+        const qs = new URLSearchParams({ kind: "photo", chapterId });
+        if (asId) qs.set("asId", asId);
+        window.location.href = `/field-kit/capture?${qs.toString()}`;
+      },
+    }),
+    [draft, photoCandidates, voiceCandidates, asId, flush]
+  );
+
   if (loading || !draft) {
     return (
       <main style={{ maxWidth: 620, margin: "0 auto", padding: "60px 20px", textAlign: "center" }}>
@@ -326,7 +431,7 @@ export default function ComposerClient({
 
       {face === "editor" ? (
         <>
-          <UnsortedNote chapters={chapters} traces={traces} />
+          <UnsortedNote chapters={chapters} traces={traceList} onPlace={() => setPlaceOpen(true)} />
 
           {/* ── Chapter chips ── */}
           <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 6, marginBottom: 16 }}>
@@ -367,7 +472,7 @@ export default function ComposerClient({
               spine={activeSpine}
               entry={activeEntry}
               draft={draft}
-              traces={traces}
+              traces={traceList}
               onPatch={(patch) => updateChapter(activeEntry.chapterId, patch)}
               onBlur={flush}
               onAddDaily={() => {
@@ -414,7 +519,7 @@ export default function ComposerClient({
           <CardOverview
             draft={draft}
             chapters={chapters}
-            traces={traces}
+            traces={traceList}
             onSelect={(chapterId) => {
               flush();
               setActiveChapterId(chapterId);
@@ -422,7 +527,10 @@ export default function ComposerClient({
           />
         </>
       ) : (
-        <PreviewFace draft={draft} traces={traces} alum={alum} asId={asId} />
+        <>
+          <UnsortedNote chapters={chapters} traces={traceList} onPlace={() => setPlaceOpen(true)} />
+          <PreviewFace draft={draft} traces={traceList} alum={alum} asId={asId} editHooks={editHooks} />
+        </>
       )}
 
       {/* ── Save bar ── */}
@@ -475,6 +583,42 @@ export default function ComposerClient({
           </button>
         )}
       </div>
+
+      {/* ── Overlay surfaces (Slice B) ── */}
+      {chooser && (
+        <ExtrasChooser
+          mode={chooser.mode}
+          entry={draft.chapters.find((c) => c.kind === "chapter" && c.chapterId === chooser.chapterId)}
+          spine={spineById.get(chooser.chapterId)}
+          candidates={chooser.mode === "photos" ? photoCandidates(chooser.chapterId) : voiceCandidates(chooser.chapterId)}
+          onSave={(patch) => {
+            updateChapter(chooser.chapterId, patch);
+            flush();
+            setChooser(null);
+          }}
+          onClose={() => setChooser(null)}
+        />
+      )}
+      {textEdit && (
+        <TextEditSheet
+          entry={draft.chapters.find((c) => c.chapterId === textEdit.chapterId)}
+          field={textEdit.field}
+          onSave={(value) => {
+            updateChapter(textEdit.chapterId, { [textEdit.field]: value });
+            flush();
+            setTextEdit(null);
+          }}
+          onClose={() => setTextEdit(null)}
+        />
+      )}
+      {placeOpen && (
+        <PlaceCapturesSheet
+          chapters={chapters}
+          traces={traceList}
+          onPlace={placeCapture}
+          onClose={() => setPlaceOpen(false)}
+        />
+      )}
     </main>
   );
 }
@@ -773,6 +917,26 @@ function ChapterEditor({
                 rows={2}
                 style={{ ...inputStyle, resize: "vertical" }}
               />
+              {/* §10-Q9 (locked 2026-08-19): dailies are PRIVATE unless the
+                  artist opts each one onto the card — and the label says
+                  plainly what that means. */}
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 10, cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={!!d.dailyPublic}
+                  onChange={(e) => {
+                    onPatchDaily(d.chapterId, { dailyPublic: e.target.checked || undefined });
+                    onBlur();
+                  }}
+                  style={{ marginTop: 2 }}
+                />
+                <span style={{ fontFamily: FONT.dm, fontSize: 12, color: T.ink, lineHeight: 1.4 }}>
+                  Include this daily page on my public card
+                  <span style={{ display: "block", fontSize: 10.5, color: T.muted, fontStyle: "italic" }}>
+                    Anyone can read it once you publish. Unchecked, it stays in your private journal.
+                  </span>
+                </span>
+              </label>
             </div>
           ))}
           <button
@@ -806,11 +970,13 @@ function PreviewFace({
   traces,
   alum,
   asId,
+  editHooks,
 }: {
   draft: JourneyDraft;
   traces: ComposerTrace[];
   alum: CardViewAlum;
   asId?: string;
+  editHooks?: CardEditHooks;
 }) {
   const traceById = useMemo(() => new Map(traces.map((t) => [t.captureId, t])), [traces]);
 
@@ -840,7 +1006,7 @@ function PreviewFace({
         </span>
       </div>
 
-      <JourneyCardView card={card} alum={alum} embedded />
+      <JourneyCardView card={card} alum={alum} embedded editHooks={editHooks} />
 
       <p style={{ fontFamily: FONT.dm, fontStyle: "italic", fontSize: 12.5, color: T.muted, margin: "14px 2px 0", lineHeight: 1.5 }}>
         Only you can see this. Nothing is public until you stamp it in{" "}
@@ -1009,14 +1175,17 @@ function Field({
 
 /**
  * Slice 7 — captures with a blank/unknown chapterId are held aside by the
- * auto-assembler, never silently dropped; this line keeps that visible.
+ * auto-assembler, never silently dropped. Slice B makes the note actionable:
+ * "Place them" opens the placement sheet (tap a chapter for each capture).
  */
 function UnsortedNote({
   chapters,
   traces,
+  onPlace,
 }: {
   chapters: ComposerChapter[];
   traces: ComposerTrace[];
+  onPlace?: () => void;
 }) {
   const count = useMemo(() => {
     const spineIds = new Set(chapters.map((c) => c.id));
@@ -1026,7 +1195,22 @@ function UnsortedNote({
   return (
     <p style={{ fontFamily: FONT.dm, fontStyle: "italic", fontSize: 12, color: T.muted, margin: "0 0 12px" }}>
       {count === 1 ? "1 capture isn't" : `${count} captures aren't`} placed in a chapter — nothing is
-      lost; find {count === 1 ? "it" : "them"} under “Show all trip photos” or in your Traces.
+      lost.{" "}
+      {onPlace ? (
+        <button
+          type="button"
+          onClick={onPlace}
+          style={{
+            fontFamily: FONT.grotesk, fontSize: 10.5, fontWeight: 700, letterSpacing: "0.08em",
+            textTransform: "uppercase", background: "none", border: "none", cursor: "pointer",
+            color: T.yellow, padding: 0,
+          }}
+        >
+          Place {count === 1 ? "it" : "them"} →
+        </button>
+      ) : (
+        <>find {count === 1 ? "it" : "them"} under “Show all trip photos” or in your Traces.</>
+      )}
     </p>
   );
 }
@@ -1043,3 +1227,336 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 10,
   padding: "11px 13px",
 };
+
+// ── Extras chooser (Slice B — "the system proposes, the artist disposes") ─────
+// Full-screen (locked 2026-08-19, §10-Q4). Three tiers per item:
+//   Featured (photos ≤5 / voice 1) → the chapter page's main layout;
+//   On the card (photos ≤7 / voices ≤4) → public, behind "+N more"/"Hear more";
+//   Private → never leaves the capture store.
+// Tapping an item cycles its tier (respecting caps). Saving writes the tiers
+// through updateChapter, which marks the fields touched — the artist's choice
+// is theirs forever; the auto-assembler never overrides it.
+
+const sheetOverlay: React.CSSProperties = {
+  position: "fixed", inset: 0, zIndex: 300, background: "rgba(10,7,12,0.96)",
+  display: "flex", flexDirection: "column", padding: "18px clamp(14px, 4vw, 32px) 20px",
+  overflowY: "auto",
+};
+
+function SheetHeader({ title, sub, onClose }: { title: string; sub?: string; onClose: () => void }) {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
+      <div>
+        <p style={{ fontFamily: FONT.anton, fontSize: 22, textTransform: "uppercase", color: "#f2f2f2", margin: "0 0 4px", lineHeight: 1 }}>{title}</p>
+        {sub && <p style={{ fontFamily: FONT.dm, fontSize: 12.5, color: "rgba(242,242,242,0.6)", margin: 0, lineHeight: 1.45 }}>{sub}</p>}
+      </div>
+      <button type="button" onClick={onClose} aria-label="Close"
+        style={{ background: "none", border: `1px solid ${T.border}`, borderRadius: 8, color: "#f2f2f2", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: "6px 12px", flexShrink: 0 }}>
+        ×
+      </button>
+    </div>
+  );
+}
+
+type ExtrasTier = "featured" | "also" | "private";
+
+function ExtrasChooser({
+  mode,
+  entry,
+  spine,
+  candidates,
+  onSave,
+  onClose,
+}: {
+  mode: "photos" | "voice";
+  entry?: JourneyDraftChapter;
+  spine?: ComposerChapter;
+  candidates: ComposerTrace[];
+  onSave: (patch: Partial<JourneyDraftChapter>) => void;
+  onClose: () => void;
+}) {
+  const FEAT_CAP = mode === "photos" ? MAX_PHOTOS_PER_CHAPTER : 1;
+  const ALSO_CAP = mode === "photos" ? MAX_MORE_PHOTOS_PER_CHAPTER : MAX_MORE_AUDIO_PER_CHAPTER;
+
+  // One state object + functional updates: caps hold even under rapid taps
+  // (separate list states would read stale closures and overfill a tier).
+  const [sel, setSel] = useState<{ featured: string[]; also: string[] }>(() => ({
+    featured:
+      mode === "photos"
+        ? [...(entry?.photoCaptureIds ?? [])]
+        : entry?.audioCaptureId ? [entry.audioCaptureId] : [],
+    also: mode === "photos" ? [...(entry?.morePhotoCaptureIds ?? [])] : [...(entry?.moreAudioCaptureIds ?? [])],
+  }));
+  const { featured, also } = sel;
+
+  // Every candidate plus anything already selected (even if it no longer
+  // matches the chapter's days), chronological, deduped.
+  const items = useMemo(() => {
+    const byId = new Map(candidates.map((t) => [t.captureId, t]));
+    const list = [...candidates].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    return list.filter((t, i, a) => a.findIndex((x) => x.captureId === t.captureId) === i && byId.has(t.captureId));
+  }, [candidates]);
+
+  if (!entry) return null;
+
+  const tierOf = (id: string): ExtrasTier =>
+    featured.includes(id) ? "featured" : also.includes(id) ? "also" : "private";
+
+  // featured → also → private → featured, respecting caps (a full tier is
+  // skipped; both full → stays private — the footer explains the caps plainly).
+  function cycle(id: string) {
+    setSel((s) => {
+      if (s.featured.includes(id)) {
+        const nextFeatured = s.featured.filter((x) => x !== id);
+        return s.also.length < ALSO_CAP
+          ? { featured: nextFeatured, also: [...s.also, id] }
+          : { featured: nextFeatured, also: s.also };
+      }
+      if (s.also.includes(id)) {
+        return { featured: s.featured, also: s.also.filter((x) => x !== id) };
+      }
+      if (s.featured.length < FEAT_CAP) return { featured: [...s.featured, id], also: s.also };
+      if (s.also.length < ALSO_CAP) return { featured: s.featured, also: [...s.also, id] };
+      return s;
+    });
+  }
+
+  const tierLabel = (t: ExtrasTier) =>
+    t === "featured" ? "★ Featured" : t === "also" ? "On the card" : "Private";
+  const tierColor = (t: ExtrasTier) =>
+    t === "featured" ? T.yellow : t === "also" ? T.teal : "rgba(242,242,242,0.35)";
+
+  function save() {
+    if (mode === "photos") {
+      onSave({
+        photoCaptureIds: featured,
+        morePhotoCaptureIds: also.length ? also : undefined,
+      });
+    } else {
+      onSave({
+        audioCaptureId: featured[0],
+        moreAudioCaptureIds: also.length ? also : undefined,
+      });
+    }
+  }
+
+  const chapterLabel = spine ? `${String(spine.num).padStart(2, "0")} · ${spine.verb} ${spine.preposition || "in"} ${spine.place}` : entry.title;
+
+  return (
+    <div role="dialog" aria-modal="true" style={sheetOverlay}>
+      <SheetHeader
+        title={mode === "photos" ? "Choose photos" : "Choose voice notes"}
+        sub={`${chapterLabel} — tap to move between Featured, On the card, and Private. Nothing is ever lost; Private just stays yours.`}
+        onClose={onClose}
+      />
+
+      {mode === "photos" ? (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(104px, 1fr))", gap: 8 }}>
+          {items.map((t) => {
+            const tier = tierOf(t.captureId);
+            return (
+              <button key={t.captureId} type="button" onClick={() => cycle(t.captureId)}
+                title={t.bodyText || undefined}
+                style={{
+                  position: "relative", aspectRatio: "1 / 1", borderRadius: 10, overflow: "hidden",
+                  padding: 0, cursor: "pointer", background: T.card,
+                  border: `2.5px solid ${tier === "private" ? T.border : tierColor(tier)}`,
+                  opacity: tier === "private" ? 0.55 : 1,
+                }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={captureMediaUrl(t.driveFileId)} alt={t.bodyText || "Photo"} loading="lazy"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                <span style={{
+                  position: "absolute", left: 4, bottom: 4, fontFamily: FONT.grotesk, fontSize: 8,
+                  fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
+                  color: tier === "featured" ? T.black : "#fff",
+                  background: tier === "featured" ? T.yellow : "rgba(10,7,12,0.72)",
+                  padding: "0.3em 0.6em", borderRadius: 4,
+                }}>
+                  {tier === "featured" ? `★ ${featured.indexOf(t.captureId) + 1}` : tierLabel(tier)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {items.map((t) => {
+            const tier = tierOf(t.captureId);
+            return (
+              <button key={t.captureId} type="button" onClick={() => cycle(t.captureId)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10, textAlign: "left",
+                  padding: "11px 13px", borderRadius: 10, cursor: "pointer", background: T.card,
+                  border: `1.5px solid ${tier === "private" ? T.border : tierColor(tier)}`,
+                  opacity: tier === "private" ? 0.6 : 1,
+                }}>
+                <span style={{ fontFamily: FONT.grotesk, fontSize: 8, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#fff", background: T.purple, padding: "0.25em 0.6em", borderRadius: 3, flexShrink: 0 }}>
+                  Audio
+                </span>
+                <span style={{ fontFamily: FONT.dm, fontSize: 12.5, color: T.ink, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {t.bodyText || new Date(t.createdAt).toLocaleString()}
+                </span>
+                <span style={{ fontFamily: FONT.grotesk, fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: tierColor(tier), flexShrink: 0 }}>
+                  {tierLabel(tier)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <p style={{ fontFamily: FONT.dm, fontSize: 11.5, fontStyle: "italic", color: "rgba(242,242,242,0.55)", margin: "14px 0 0", lineHeight: 1.5 }}>
+        {mode === "photos"
+          ? `Featured (up to ${FEAT_CAP}) lead the page; “On the card” (up to ${ALSO_CAP} more) show behind “+N more”. Anything past that stays private — nothing is lost.`
+          : `One featured voice plays on the page; “On the card” (up to ${ALSO_CAP} more) sit behind “Hear more”. The rest stay private.`}
+      </p>
+
+      <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+        <button type="button" onClick={save}
+          style={{ fontFamily: FONT.grotesk, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", background: T.yellow, color: T.black, border: "none", borderRadius: 8, padding: "11px 22px", cursor: "pointer" }}>
+          Use these
+        </button>
+        <button type="button" onClick={onClose}
+          style={{ fontFamily: FONT.grotesk, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", background: "transparent", color: "rgba(242,242,242,0.7)", border: `1px solid ${T.border}`, borderRadius: 8, padding: "11px 18px", cursor: "pointer" }}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── One-textarea edit sheet (Slice A: "tap a text block") ─────────────────────
+
+function TextEditSheet({
+  entry,
+  field,
+  onSave,
+  onClose,
+}: {
+  entry?: JourneyDraftChapter;
+  field: "response" | "body";
+  onSave: (value: string) => void;
+  onClose: () => void;
+}) {
+  const [value, setValue] = useState(entry?.[field] ?? "");
+  if (!entry) return null;
+  const isResponse = field === "response";
+  return (
+    <div role="dialog" aria-modal="true" style={sheetOverlay}>
+      <SheetHeader
+        title={isResponse ? "This chapter’s line" : "Your words"}
+        sub={
+          isResponse
+            ? "One sentence — it headlines the chapter. Yours forever once you save."
+            : "The chapter’s longer text. Yours forever once you save."
+        }
+        onClose={onClose}
+      />
+      <textarea
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        rows={isResponse ? 3 : 9}
+        autoFocus
+        placeholder={isResponse ? "One sentence. The line that makes the reader feel it." : "Write toward the prompt or past it…"}
+        style={{ ...inputStyle, resize: "vertical" }}
+      />
+      <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+        <button type="button" onClick={() => onSave(value.trim())}
+          style={{ fontFamily: FONT.grotesk, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", background: T.yellow, color: T.black, border: "none", borderRadius: 8, padding: "11px 22px", cursor: "pointer" }}>
+          Save
+        </button>
+        <button type="button" onClick={onClose}
+          style={{ fontFamily: FONT.grotesk, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", background: "transparent", color: "rgba(242,242,242,0.7)", border: `1px solid ${T.border}`, borderRadius: 8, padding: "11px 18px", cursor: "pointer" }}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Place unplaced captures (Slice B: the actionable UnsortedNote) ────────────
+// The artist taps a chapter for each unplaced capture; the choice writes
+// through the trace-mutation path (PATCH chapterId). Or they leave it off the
+// card — nothing is invented, nothing silently dropped.
+
+function PlaceCapturesSheet({
+  chapters,
+  traces,
+  onPlace,
+  onClose,
+}: {
+  chapters: ComposerChapter[];
+  traces: ComposerTrace[];
+  onPlace: (captureId: string, chapterId: string) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const spineIds = useMemo(() => new Set(chapters.map((c) => c.id)), [chapters]);
+  const unplaced = traces.filter((t) => !spineIds.has(t.chapterId.trim()));
+
+  async function place(captureId: string, chapterId: string) {
+    setBusy(captureId);
+    setError(null);
+    try {
+      await onPlace(captureId, chapterId);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't place that capture — try again.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div role="dialog" aria-modal="true" style={sheetOverlay}>
+      <SheetHeader
+        title="Place your captures"
+        sub="These aren't in a chapter yet. Tap the chapter each one belongs to — or leave it; nothing is lost either way."
+        onClose={onClose}
+      />
+      {error && (
+        <p style={{ fontFamily: FONT.dm, fontSize: 12.5, color: T.pink, margin: "0 0 10px" }}>{error}</p>
+      )}
+      {unplaced.length === 0 ? (
+        <p style={{ fontFamily: FONT.dm, fontSize: 13, fontStyle: "italic", color: "rgba(242,242,242,0.65)", margin: 0 }}>
+          Everything is placed. ✓
+        </p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {unplaced.map((t) => (
+            <div key={t.captureId} style={{ padding: "12px 13px", borderRadius: 12, background: T.card, border: `1px solid ${T.border}`, opacity: busy === t.captureId ? 0.55 : 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                {t.kind === "photo" && t.driveFileId ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={captureMediaUrl(t.driveFileId)} alt="" loading="lazy"
+                    style={{ width: 52, height: 52, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+                ) : (
+                  <span style={{ fontFamily: FONT.grotesk, fontSize: 8, fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#fff", background: t.kind === "voice" ? T.purple : T.teal, padding: "0.3em 0.7em", borderRadius: 3, flexShrink: 0 }}>
+                    {t.kind}
+                  </span>
+                )}
+                <span style={{ fontFamily: FONT.dm, fontSize: 12.5, color: T.ink, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {t.bodyText || new Date(t.createdAt).toLocaleString()}
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {chapters.map((ch) => (
+                  <button key={ch.id} type="button" disabled={busy === t.captureId}
+                    onClick={() => void place(t.captureId, ch.id)}
+                    style={{
+                      fontFamily: FONT.grotesk, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.08em",
+                      textTransform: "uppercase", cursor: "pointer", padding: "6px 10px", borderRadius: 7,
+                      border: `1px solid ${T.border}`, background: "transparent", color: T.muted,
+                    }}>
+                    {String(ch.num).padStart(2, "0")} · {ch.verb}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

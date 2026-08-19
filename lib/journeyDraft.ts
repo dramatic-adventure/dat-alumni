@@ -54,6 +54,13 @@ export type JourneyDraftChapter = {
   kind: "chapter" | "daily";
   /** Day anchor for daily pages (itinerary day id). */
   dayId?: string;
+  /**
+   * Daily pages are PRIVATE unless the artist explicitly opts them onto the
+   * public card (locked with Jesse 2026-08-19, §10-Q9) — the editor labels the
+   * toggle plainly ("anyone can read this once published"). Ignored for
+   * kind "chapter". Absent = private.
+   */
+  dailyPublic?: boolean;
   num?: string;
   title: string;
   location?: string;
@@ -161,6 +168,7 @@ function coerceChapter(raw: unknown): JourneyDraftChapter | null {
     chapterId,
     kind: str(o.kind) === "daily" ? "daily" : "chapter",
     dayId: str(o.dayId) || undefined,
+    dailyPublic: o.dailyPublic === true || str(o.dailyPublic) === "true" || undefined,
     num: str(o.num) || undefined,
     title: str(o.title).slice(0, 300),
     location: str(o.location).slice(0, 300) || undefined,
@@ -248,7 +256,10 @@ export function draftToChapterBlocks(
   resolveMorePhotoUrls?: (ch: JourneyDraftChapter) => string[],
   resolveMoreAudioUrls?: (ch: JourneyDraftChapter) => string[]
 ): JourneyCardChapter[] {
-  return draft.chapters.map((ch) => {
+  // Dailies are private journal inserts unless explicitly opted onto the card
+  // (§10-Q9) — an un-opted daily reaches neither the preview nor the publish.
+  const publishable = draft.chapters.filter((ch) => ch.kind !== "daily" || ch.dailyPublic);
+  return publishable.map((ch) => {
     const readiness = chapterReadiness(ch);
     const combined = [...(ch.photoUrls ?? []), ...resolvePhotoUrls(ch)].filter(Boolean);
     const photoUrls = combined.slice(0, MAX_FEATURED_PHOTOS_PER_CHAPTER);

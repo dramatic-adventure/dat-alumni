@@ -34,6 +34,7 @@ import { useSearchParams } from "next/navigation";
 import { T, FONT } from "@/components/field-kit/tokens";
 import { enqueue, type QueuedCapture, type CaptureVisibility } from "@/lib/captureQueue";
 import { kick } from "@/lib/captureSync";
+import { loadDraft, saveDraftLocal } from "@/lib/journeyDraftStore";
 import { ulid } from "@/lib/ulid";
 
 type Kind = "note" | "quote" | "photo" | "voice";
@@ -86,15 +87,24 @@ export default function CaptureForm({
   currentDayId,
   currentChapterId = "",
   days = [],
+  initialKind,
+  targetChapterId = "",
+  programId = "",
 }: {
   currentDayId: string;
   currentChapterId?: string;
   days?: CaptureDayOption[];
+  /** Prefill from the Composer's empty-chapter invitation. */
+  initialKind?: Kind;
+  /** File the capture under this chapter (invitation flow). */
+  targetChapterId?: string;
+  /** Program id for the optimistic local-draft append (invitation flow). */
+  programId?: string;
 }) {
   // Admin impersonation — forwarded to the route so the capture attributes to the
   // impersonated member. Honored ONLY for admins server-side (getFieldKitAccess).
   const asId = useSearchParams().get("asId")?.trim() || "";
-  const [kind, setKind] = useState<Kind>("note");
+  const [kind, setKind] = useState<Kind>(initialKind ?? "note");
   const [bodyText, setBodyText] = useState("");
   const [quoteSpeaker, setQuoteSpeaker] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -106,7 +116,17 @@ export default function CaptureForm({
   const [sealed, setSealed] = useState(false);
   // Slice 7 day binding — which trip day this capture files under. Defaults to
   // today; auto-switches when a chosen file's date matches another trip day.
-  const [dayId, setDayId] = useState(currentDayId);
+  // The invitation flow starts on the target chapter's first day instead (a
+  // day-less ch0 keeps today's day; the chapterId override below still files it
+  // under the target chapter).
+  const targetDayId = targetChapterId
+    ? days.find((d) => d.chapterId === targetChapterId)?.id ?? ""
+    : "";
+  const [dayId, setDayId] = useState(targetDayId || currentDayId);
+  // Set only when the artist explicitly changes the day picker — until then the
+  // invitation's target chapter keeps the capture even if a file's EXIF date
+  // auto-selects a different day.
+  const [dayTouched, setDayTouched] = useState(false);
   const [dayHint, setDayHint] = useState<string | null>(null);
 
   // Auto-file an uploaded photo/audio under the day it was taken, when the
@@ -298,6 +318,14 @@ export default function CaptureForm({
           : new Date().toISOString();
 
       const visibility: CaptureVisibility = sealed ? "sealed" : "card";
+      // Invitation flow: the target chapter holds the capture until the artist
+      // explicitly picks a different day; otherwise day binding decides as before.
+      const chapterId =
+        (targetChapterId && !dayTouched
+          ? targetChapterId
+          : selectedDay
+            ? selectedDay.chapterId
+            : targetChapterId || currentChapterId) || undefined;
       const item: QueuedCapture = {
         captureId: ulid(),
         kind,
@@ -305,7 +333,7 @@ export default function CaptureForm({
         quoteSpeaker: kind === "quote" ? quoteSpeaker.trim() || undefined : undefined,
         createdAt,
         dayIndex: dayId || undefined,
-        chapterId: (selectedDay ? selectedDay.chapterId : currentChapterId) || undefined,
+        chapterId,
         visibility,
         asId: asId || undefined,
         blob,
@@ -316,6 +344,28 @@ export default function CaptureForm({
 
       await enqueue(item);
       kick();
+
+      // Optimistic insert (invitation flow, §10-Q7): show the new photo in the
+      // chapter immediately — don't wait for the 15-min assembly run. The field
+      // is deliberately NOT marked touched, so auto-assembly keeps flowing; the
+      // assembler will include this same photo on its next pass anyway.
+      if (chapterId && programId && kind === "photo" && visibility === "card") {
+        try {
+          const draft = await loadDraft("live", programId, asId || undefined);
+          if (draft) {
+            const chapters = draft.chapters.map((c) =>
+              c.kind === "chapter" &&
+              c.chapterId === chapterId &&
+              !c.photoCaptureIds.includes(item.captureId)
+                ? { ...c, photoCaptureIds: [...c.photoCaptureIds, item.captureId] }
+                : c
+            );
+            await saveDraftLocal({ ...draft, chapters, updatedAt: new Date().toISOString() });
+          }
+        } catch {
+          // Cosmetic only — the assembler places the photo on its next run.
+        }
+      }
       clearForm();
       setStatus({
         kind: "ok",
@@ -648,6 +698,7 @@ export default function CaptureForm({
             value={dayId}
             onChange={(e) => {
               setDayId(e.target.value);
+              setDayTouched(true);
               setDayHint(null);
             }}
             style={{

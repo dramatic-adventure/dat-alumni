@@ -66,7 +66,7 @@ type SheetsApi = ReturnType<typeof sheetsClient>;
 type LocatedCapture = {
   header: string[];
   col: Record<
-    "captureId" | "programId" | "authorSlug" | "kind" | "bodyText" | "visibility" | "quoteSpeaker" | "deletedAt" | "editedAt",
+    "captureId" | "programId" | "authorSlug" | "kind" | "bodyText" | "visibility" | "quoteSpeaker" | "chapterId" | "deletedAt" | "editedAt",
     number
   >;
   /** 1-based sheet row number of the capture. */
@@ -102,6 +102,7 @@ async function locateOwnCapture(
     bodyText: idxOf(header, ["bodytext"]),
     visibility: idxOf(header, ["visibility"]),
     quoteSpeaker: idxOf(header, ["quotespeaker"]),
+    chapterId: idxOf(header, ["chapterid"]),
     deletedAt: idxOf(header, ["deletedat"]),
     editedAt: idxOf(header, ["editedat"]),
   };
@@ -223,7 +224,11 @@ export async function PATCH(
     const hasBodyText = typeof body.bodyText === "string";
     const hasSpeaker = typeof body.quoteSpeaker === "string";
     const hasVisibility = typeof body.visibility === "string";
-    if (!hasBodyText && !hasSpeaker && !hasVisibility) {
+    // Re-filing an unplaced trace under a chapter (review/audio build): the
+    // Composer's "captures aren't placed yet" flow writes the artist's own
+    // placement here — the same mutation path as every other trace edit.
+    const hasChapterId = typeof body.chapterId === "string";
+    if (!hasBodyText && !hasSpeaker && !hasVisibility && !hasChapterId) {
       return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
     }
 
@@ -269,6 +274,10 @@ export async function PATCH(
 
     if (hasVisibility && col.visibility !== -1) {
       cells.push({ colIndex: col.visibility, value: visibility });
+    }
+
+    if (hasChapterId && col.chapterId !== -1) {
+      cells.push({ colIndex: col.chapterId, value: String(body.chapterId).trim().slice(0, 200) });
     }
 
     if (cells.length) {

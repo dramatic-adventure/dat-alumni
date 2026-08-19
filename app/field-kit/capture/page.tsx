@@ -21,6 +21,15 @@ export default async function CapturePage({
 }) {
   const sp = searchParams ? await searchParams : undefined;
   const asId = Array.isArray(sp?.asId) ? sp?.asId[0] : sp?.asId;
+  // Prefill from the Composer's empty-chapter invitation ("add one from your
+  // camera roll"): open on the requested kind, filed under the requested
+  // chapter. The upload rides the normal capture → sync → assembler pipeline.
+  const rawKind = Array.isArray(sp?.kind) ? sp?.kind[0] : sp?.kind;
+  const initialKind = ["note", "quote", "photo", "voice"].includes(rawKind ?? "")
+    ? (rawKind as "note" | "quote" | "photo" | "voice")
+    : undefined;
+  const targetChapterId =
+    (Array.isArray(sp?.chapterId) ? sp?.chapterId[0] : sp?.chapterId)?.trim() || undefined;
 
   // Gate + itinerary read are independent (the gate always resolves to this
   // same FIELD_KIT_PROGRAM_ID), so run them concurrently rather than waiting
@@ -60,7 +69,14 @@ export default async function CapturePage({
   return (
     <>
       {access.impersonating && <ImpersonationBanner slug={access.slug} />}
-      <CaptureForm currentDayId={currentDayId} currentChapterId={currentChapterId} days={days} />
+      <CaptureForm
+        currentDayId={currentDayId}
+        currentChapterId={currentChapterId}
+        days={days}
+        initialKind={initialKind}
+        targetChapterId={targetChapterId}
+        programId={access.programId}
+      />
     </>
   );
 }
