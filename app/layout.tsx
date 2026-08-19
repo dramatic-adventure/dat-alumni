@@ -11,6 +11,8 @@ import ChunkErrorReload from "./ChunkErrorReload";
 
 import SiteChrome from "@/components/ui/SiteChrome";
 import ComingSoonModal from "@/components/ui/ComingSoonModal";
+// Thin DAT-yellow bar along the top of the viewport during route transitions.
+import RouteProgressBar from "@/components/ui/RouteProgressBar";
 
 import {
   anton,
@@ -98,6 +100,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
 
       <body className="min-h-screen flex flex-col text-black">
+        {/* Instant navigation feedback for every link, site-wide */}
+        <RouteProgressBar />
+
         <WarmNameStackHints />
 
         {/* ✅ Only run in prod so dev can never get stuck */}
