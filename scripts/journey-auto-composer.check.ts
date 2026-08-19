@@ -367,6 +367,71 @@ console.log("\n[10] placement ladder");
   }
 }
 
+// ── 11. "Also on the card" overflow (morePhotoCaptureIds / moreAudioCaptureIds) ──
+
+console.log("\n[11] more* overflow fields");
+{
+  const photos = Array.from({ length: 14 }, (_, i) =>
+    cap({ kind: "photo", driveFileId: `mf-${i}`, chapterId: "ch-1", createdAt: `2026-07-12T${String(i + 1).padStart(2, "0")}:00:00.000Z` })
+  );
+  const voices = Array.from({ length: 6 }, (_, i) =>
+    cap({ kind: "voice", driveFileId: `mv-${i}`, chapterId: "ch-1", createdAt: `2026-07-12T${String(i + 1).padStart(2, "0")}:30:00.000Z` })
+  );
+  const first = run([...photos, ...voices]);
+  const ch1 = first.draft.chapters[0];
+  check("featured photos stay the first 5 chronological", ch1.photoCaptureIds.join() === photos.slice(0, 5).map((c) => c.captureId).join());
+  check("morePhotos = photos 6..12 chronological (7 max)", (ch1.morePhotoCaptureIds ?? []).join() === photos.slice(5, 12).map((c) => c.captureId).join(), ch1.morePhotoCaptureIds);
+  check("photos beyond 12 stay off the draft entirely", !JSON.stringify(first.draft).includes(photos[12].captureId) && !JSON.stringify(first.draft).includes(photos[13].captureId));
+  check("featured audio stays the first voice", ch1.audioCaptureId === voices[0].captureId);
+  check("moreAudio = voices 2..5 (4 max)", (ch1.moreAudioCaptureIds ?? []).join() === voices.slice(1, 5).map((c) => c.captureId).join(), ch1.moreAudioCaptureIds);
+  check("voice 6 stays off the draft", !JSON.stringify(first.draft).includes(voices[5].captureId));
+
+  const rerun = run([...photos, ...voices], first.draft);
+  check("re-run with more* filled → changed=false (no write)", rerun.changed === false);
+
+  // Touched more* fields are the artist's forever.
+  const curated = {
+    ...first.draft,
+    chapters: first.draft.chapters.map((c) =>
+      c.chapterId === "ch-1"
+        ? { ...c, morePhotoCaptureIds: [photos[9].captureId], moreAudioCaptureIds: [], touchedFields: ["morePhotoCaptureIds", "moreAudioCaptureIds"] }
+        : c
+    ),
+  };
+  const afterCurate = run([...photos, ...voices], curated);
+  const curCh1 = afterCurate.draft.chapters[0];
+  check("touched morePhotos NOT overwritten", (curCh1.morePhotoCaptureIds ?? []).join() === photos[9].captureId);
+  check("touched (emptied) moreAudio NOT refilled", (curCh1.moreAudioCaptureIds ?? []).length === 0, curCh1.moreAudioCaptureIds);
+
+  // Hand-picked featured set: auto more* must exclude it — never a duplicate.
+  const handPicked = {
+    ...first.draft,
+    chapters: first.draft.chapters.map((c) =>
+      c.chapterId === "ch-1"
+        ? { ...c, photoCaptureIds: [photos[8].captureId, photos[2].captureId], touchedFields: ["photoCaptureIds"] }
+        : c
+    ),
+  };
+  const afterPick = run([...photos, ...voices], handPicked);
+  const pickCh1 = afterPick.draft.chapters[0];
+  check("auto morePhotos excludes hand-picked featured ids",
+    !(pickCh1.morePhotoCaptureIds ?? []).includes(photos[8].captureId) && !(pickCh1.morePhotoCaptureIds ?? []).includes(photos[2].captureId),
+    pickCh1.morePhotoCaptureIds);
+  check("morePhotos still capped at 7 after exclusion", (pickCh1.morePhotoCaptureIds ?? []).length === 7);
+
+  // No overflow → the keys stay absent, so pre-existing drafts stay byte-identical.
+  const few = run([photos[0], voices[0]]);
+  const fewJson = JSON.stringify(few.draft.chapters[0]);
+  check("no overflow → more* keys absent from the draft JSON", !fewJson.includes("morePhotoCaptureIds") && !fewJson.includes("moreAudioCaptureIds"), fewJson);
+
+  // Sealed media never reaches the overflow tier.
+  const sealedPhoto = cap({ kind: "photo", driveFileId: "mf-sealed", chapterId: "ch-1", visibility: "sealed", createdAt: "2026-07-12T06:15:00.000Z" });
+  const sealedVoice = cap({ kind: "voice", driveFileId: "mv-sealed", chapterId: "ch-1", visibility: "sealed", createdAt: "2026-07-12T06:45:00.000Z" });
+  const withSealed = run([...photos, ...voices, sealedPhoto, sealedVoice]);
+  const sealedJson = JSON.stringify(withSealed.draft);
+  check("sealed photo/voice never land in more*", !sealedJson.includes(sealedPhoto.captureId) && !sealedJson.includes(sealedVoice.captureId));
+}
+
 // ── Result ────────────────────────────────────────────────────────────────────
 
 console.log("");

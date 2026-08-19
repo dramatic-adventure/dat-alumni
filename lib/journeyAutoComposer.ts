@@ -25,6 +25,10 @@ import {
   type JourneyDraft,
   type JourneyDraftChapter,
 } from "@/lib/journeyDraft";
+import {
+  MAX_MORE_AUDIO_PER_CHAPTER,
+  MAX_MORE_PHOTOS_PER_CHAPTER,
+} from "@/lib/journeyCard";
 import type { SpineChapter } from "@/lib/composerSpine";
 import { isoDateInTz } from "@/lib/programItinerary";
 import { ulid } from "@/lib/ulid";
@@ -426,6 +430,24 @@ export function assembleDraft(input: {
     }
     if (!chapterTouched(ch, "audioCaptureId")) {
       next.audioCaptureId = bucket.voices[0]?.captureId;
+    }
+    // "Also on the card" overflow: everything featured is excluded, so when the
+    // featured set is untouched this is exactly photos 6..12 / voices 2..5
+    // chronological — and a hand-picked featured set never duplicates into it.
+    if (!chapterTouched(ch, "morePhotoCaptureIds")) {
+      const featured = new Set(next.photoCaptureIds);
+      const more = bucket.photos
+        .filter((c) => !featured.has(c.captureId))
+        .slice(0, MAX_MORE_PHOTOS_PER_CHAPTER)
+        .map((c) => c.captureId);
+      next.morePhotoCaptureIds = more.length ? more : undefined;
+    }
+    if (!chapterTouched(ch, "moreAudioCaptureIds")) {
+      const more = bucket.voices
+        .filter((c) => c.captureId !== next.audioCaptureId)
+        .slice(0, MAX_MORE_AUDIO_PER_CHAPTER)
+        .map((c) => c.captureId);
+      next.moreAudioCaptureIds = more.length ? more : undefined;
     }
     return next;
   });

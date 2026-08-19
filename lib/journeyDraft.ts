@@ -19,6 +19,8 @@
 import {
   flattenChaptersToBody,
   flattenChaptersToMediaUrls,
+  MAX_MORE_AUDIO_PER_CHAPTER,
+  MAX_MORE_PHOTOS_PER_CHAPTER,
   type JourneyCardChapter,
 } from "@/lib/journeyCard";
 
@@ -32,6 +34,8 @@ export const CHAPTER_TOUCHABLE_FIELDS = [
   "title",
   "photoCaptureIds",
   "audioCaptureId",
+  "morePhotoCaptureIds",
+  "moreAudioCaptureIds",
 ] as const;
 export type ChapterTouchedField = (typeof CHAPTER_TOUCHABLE_FIELDS)[number];
 
@@ -60,6 +64,10 @@ export type JourneyDraftChapter = {
   photoCaptureIds: string[];
   /** Trace ref (voice/ambient capture) attached to this chapter — live flow. */
   audioCaptureId?: string;
+  /** "Also on the card" photo overflow (≤7) — publishes behind "+N more". */
+  morePhotoCaptureIds?: string[];
+  /** "Also on the card" voice overflow (≤4) — publishes behind "Hear more". */
+  moreAudioCaptureIds?: string[];
   /** Already-public photo URLs (retro flow uploads via /api/upload). */
   photoUrls?: string[];
   accent?: string;
@@ -139,6 +147,12 @@ function coerceChapter(raw: unknown): JourneyDraftChapter | null {
   if (!chapterId) return null;
   const ids = (v: unknown, cap: number) =>
     Array.isArray(v) ? v.map(str).filter(Boolean).slice(0, cap) : [];
+  // Absent stays undefined (not []) so pre-existing drafts round-trip
+  // byte-identically and the assembler's no-op detection keeps skipping writes.
+  const optIds = (v: unknown, cap: number) => {
+    const list = ids(v, cap);
+    return list.length ? list : undefined;
+  };
   return {
     chapterId,
     kind: str(o.kind) === "daily" ? "daily" : "chapter",
@@ -152,6 +166,8 @@ function coerceChapter(raw: unknown): JourneyDraftChapter | null {
     reflection: str(o.reflection).slice(0, 20_000),
     photoCaptureIds: ids(o.photoCaptureIds, 12),
     audioCaptureId: str(o.audioCaptureId) || undefined,
+    morePhotoCaptureIds: optIds(o.morePhotoCaptureIds, MAX_MORE_PHOTOS_PER_CHAPTER),
+    moreAudioCaptureIds: optIds(o.moreAudioCaptureIds, MAX_MORE_AUDIO_PER_CHAPTER),
     photoUrls: ids(o.photoUrls, 12),
     accent: str(o.accent) || undefined,
     touchedFields: coerceTouched(o.touchedFields, CHAPTER_TOUCHABLE_FIELDS),

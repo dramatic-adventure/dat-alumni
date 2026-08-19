@@ -107,6 +107,13 @@ export const MAX_CHAPTERS_JSON_CHARS = 40_000;
 export const MAX_CHAPTER_BLOCKS = 40;
 export const MAX_SHEET_CELL_CHARS = 45_000;
 
+// "Also on the card" tiers (review/audio build, locked with Jesse 2026-08-19):
+// featured stays ≤5 photos / 1 voice per chapter; the overflow that rides the
+// public card behind "+N more" is capped so a chapter never exceeds 12 photos
+// (5 featured + 7 more) or 5 voices (1 featured + 4 more).
+export const MAX_MORE_PHOTOS_PER_CHAPTER = 7;
+export const MAX_MORE_AUDIO_PER_CHAPTER = 4;
+
 const CHAPTER_KINDS = new Set<JourneyCardChapterKind>(["chapter", "daily"]);
 
 /**
