@@ -5,9 +5,12 @@
 // (see /api/field-kit/publish-media) and the card references the COPY's fileId
 // through this route — the private original never gets a public URL.
 //
-// Only audio/* files are served: the fileId is an unguessable capability (same
-// model as /api/media/thumb), and the mime restriction keeps this route from
-// doubling as a generic Drive proxy.
+// Only audio/* files are served, and ONLY files sitting in a "published"
+// folder — the folder publish-media copies promoted captures into. Unlike the
+// image thumb proxy (which must serve headshots and other long-standing media
+// hosts), this route is new and can afford the stricter check: a private
+// original's fileId — sealed voice notes included — gets a 404 here even if it
+// leaks, because originals never live in a published folder.
 //
 // Honors HTTP Range the same way the gated capture-media route does: iOS Safari
 // only plays <audio> from a proper 206 with correct Content-Length and
@@ -45,19 +48,32 @@ export async function GET(
       () =>
         drive.files.get({
           fileId,
-          fields: "size,mimeType",
+          fields: "size,mimeType,parents",
           supportsAllDrives: true,
         } as any),
       "Drive audio meta"
-    )) as { data: { size?: string; mimeType?: string } };
+    )) as { data: { size?: string; mimeType?: string; parents?: string[] } };
 
-    const mimeType = String(meta.data.mimeType || "").trim();
-    if (!/^audio\//i.test(mimeType)) {
-      return NextResponse.json(
+    const notFound = () =>
+      NextResponse.json(
         { error: "Not found" },
         { status: 404, headers: { "Cache-Control": "no-store" } }
       );
-    }
+
+    const mimeType = String(meta.data.mimeType || "").trim();
+    if (!/^audio\//i.test(mimeType)) return notFound();
+
+    // Promotion boundary: the file must live in a "published" folder (the copy
+    // target in /api/field-kit/publish-media). Private originals never do.
+    const parentId = String(meta.data.parents?.[0] || "").trim();
+    if (!parentId) return notFound();
+    const parent = (await withRetry(
+      () =>
+        drive.files.get({ fileId: parentId, fields: "name", supportsAllDrives: true } as any),
+      "Drive audio parent meta"
+    )) as { data: { name?: string } };
+    if (String(parent.data.name || "").trim().toLowerCase() !== "published") return notFound();
+
     const total = Number(meta.data.size || 0);
 
     const rangeMatch = /^bytes=(\d*)-(\d*)$/.exec((req.headers.get("range") || "").trim());

@@ -357,12 +357,19 @@ export async function DELETE(
         const chapters = draft.chapters.map((ch) => {
           const photoCaptureIds = ch.photoCaptureIds.filter((id) => normId(id) !== want);
           const audioHit = !!ch.audioCaptureId && normId(ch.audioCaptureId) === want;
-          if (photoCaptureIds.length === ch.photoCaptureIds.length && !audioHit) return ch;
+          const morePhotos = (ch.morePhotoCaptureIds ?? []).filter((id) => normId(id) !== want);
+          const moreAudio = (ch.moreAudioCaptureIds ?? []).filter((id) => normId(id) !== want);
+          const moreHit =
+            morePhotos.length !== (ch.morePhotoCaptureIds?.length ?? 0) ||
+            moreAudio.length !== (ch.moreAudioCaptureIds?.length ?? 0);
+          if (photoCaptureIds.length === ch.photoCaptureIds.length && !audioHit && !moreHit) return ch;
           changed = true;
           return {
             ...ch,
             photoCaptureIds,
             audioCaptureId: audioHit ? undefined : ch.audioCaptureId,
+            morePhotoCaptureIds: morePhotos.length ? morePhotos : undefined,
+            moreAudioCaptureIds: moreAudio.length ? moreAudio : undefined,
           };
         });
 
