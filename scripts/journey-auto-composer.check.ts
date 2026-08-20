@@ -486,6 +486,26 @@ console.log("\n[12] retired-spine chapter cleanup");
   check("daily stays tucked behind its chapter",
     reordered.chapters[reordered.chapters.findIndex((c) => c.chapterId === "ch-3") + 1]?.chapterId === "daily-x",
     reordered.chapters.map((c) => c.chapterId));
+
+  // Itinerary metadata is authoritative: stale titles/places/dates from an
+  // older revision refresh on every run (title only while untouched).
+  const staleMeta = {
+    ...existing,
+    chapters: existing.chapters.map((c) =>
+      c.chapterId === "ch-1"
+        ? { ...c, title: "Stale Title", num: "09", location: "Wrongville", dateLabel: "Never" }
+        : c.chapterId === "ch-2"
+          ? { ...c, title: "My Own Title", touchedFields: ["title"], location: "Wrongville" }
+          : c
+    ),
+  };
+  const refreshed = run([], staleMeta).draft;
+  const r1 = refreshed.chapters.find((c) => c.chapterId === "ch-1");
+  const r2 = refreshed.chapters.find((c) => c.chapterId === "ch-2");
+  check("untouched title/metadata refresh from the spine",
+    r1.title === "Arrival" && r1.num === "01" && r1.location === "Bratislava" && r1.dateLabel === "Jul 12", r1);
+  check("touched title survives; metadata still refreshes",
+    r2.title === "My Own Title" && r2.location === "Zvolen", r2);
 }
 
 // ── Result ────────────────────────────────────────────────────────────────────

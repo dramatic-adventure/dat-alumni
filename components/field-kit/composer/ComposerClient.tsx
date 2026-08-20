@@ -34,6 +34,7 @@ import {
   type JourneyDraftChapter,
 } from "@/lib/journeyDraft";
 import JourneyCardView, { type CardViewAlum, type CardEditHooks } from "@/components/journeys/JourneyCardView";
+import { KRAFT_PAGE } from "@/components/journeys/journeyTheme";
 import {
   MAX_MORE_AUDIO_PER_CHAPTER,
   MAX_MORE_PHOTOS_PER_CHAPTER,
@@ -152,12 +153,28 @@ function initDraft(
  */
 function reconcileWithSpine(draft: JourneyDraft, chapters: ComposerChapter[]): JourneyDraft {
   const spineIds = new Set(chapters.map((c) => c.id));
-  const kept = draft.chapters.filter(
-    (c) => c.kind !== "chapter" || spineIds.has(c.chapterId) || chapterReadiness(c) !== "empty"
-  );
+  const bySpine = new Map(chapters.map((c) => [c.id, c]));
+  const kept = draft.chapters
+    .filter(
+      (c) => c.kind !== "chapter" || spineIds.has(c.chapterId) || chapterReadiness(c) !== "empty"
+    )
+    .map((c) => {
+      // The itinerary is authoritative for chapter metadata (title honors the
+      // touched contract; num/location/dateLabel/accent aren't artist-editable).
+      if (c.kind !== "chapter") return c;
+      const s = bySpine.get(c.chapterId);
+      if (!s) return c;
+      return {
+        ...c,
+        num: String(s.num).padStart(2, "0"),
+        location: s.place,
+        dateLabel: s.dateLabel,
+        accent: s.accent,
+        title: (c.touchedFields ?? []).includes("title") ? c.title : s.title,
+      };
+    });
   const have = new Set(kept.filter((c) => c.kind === "chapter").map((c) => c.chapterId));
   const missing = chapters.filter((ch) => !have.has(ch.id));
-  if (!missing.length && kept.length === draft.chapters.length) return draft;
   return { ...draft, chapters: [...kept, ...missing.map(chapterFromSpine)] };
 }
 
@@ -1022,7 +1039,22 @@ function PreviewFace({
         </span>
       </div>
 
-      <JourneyCardView card={card} alum={alum} embedded editHooks={editHooks} />
+      {/* Full-bleed breakout on the kraft work-table — WYSIWYG means the
+          PRESENTATION too: measured at viewport width, desktop shows the real
+          1080×580 landscape spread exactly like the published page, phones the
+          passport book. Inside the 620px column it could only ever be the book. */}
+      <div
+        style={{
+          ...KRAFT_PAGE,
+          backgroundAttachment: "scroll",
+          width: "100vw",
+          marginLeft: "calc(50% - 50vw)",
+          padding: "22px 12px 26px",
+          borderRadius: 4,
+        }}
+      >
+        <JourneyCardView card={card} alum={alum} embedded editHooks={editHooks} />
+      </div>
 
       <p style={{ fontFamily: FONT.dm, fontStyle: "italic", fontSize: 12.5, color: T.muted, margin: "14px 2px 0", lineHeight: 1.5 }}>
         Only you can see this. Nothing is public until you stamp it in{" "}

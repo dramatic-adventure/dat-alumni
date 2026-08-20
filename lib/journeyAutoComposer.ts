@@ -417,6 +417,7 @@ export function assembleDraft(input: {
   // itinerary generation), which would sit as blank duplicate pages beside
   // their replacements. Anything written is kept forever, spine or no spine.
   const spineIds = new Set(spine.map((s) => s.id));
+  const spineById = new Map(spine.map((s) => [s.id, s]));
   const keptBase = base.chapters.filter(
     (c) => c.kind !== "chapter" || spineIds.has(c.chapterId) || chapterReadiness(c) !== "empty"
   );
@@ -430,6 +431,18 @@ export function assembleDraft(input: {
     if (!bucket) return ch; // not on this spine (e.g. removed chapter) — leave alone
 
     const next = { ...ch };
+    // The itinerary is authoritative for chapter METADATA: a draft created
+    // against an earlier revision must not freeze old titles/places/dates
+    // forever (found 2026-08-19 on Jesse's card). Title honors the touched
+    // contract; num/location/dateLabel/accent aren't artist-editable anywhere.
+    const s = spineById.get(ch.chapterId);
+    if (s) {
+      next.num = String(s.num).padStart(2, "0");
+      next.location = s.place;
+      next.dateLabel = s.dateLabel;
+      next.accent = s.accent;
+      if (!chapterTouched(ch, "title")) next.title = s.title;
+    }
     const responseIsAuto = !chapterTouched(ch, "response");
     const { response, body } = assembleChapterText(bucket.textPool, responseIsAuto);
     if (responseIsAuto) next.response = response;
