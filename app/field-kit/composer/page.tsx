@@ -23,6 +23,7 @@ import { loadAlumniByAliases } from "@/lib/loadAlumni";
 import { getSlugAliases } from "@/lib/slugAliases";
 import { spineFromItinerary } from "@/lib/composerSpine";
 import { resolveToday } from "@/lib/programItinerary";
+import { buildChapterMeta } from "@/lib/journeyChapterMeta";
 import type { ComposerChapter, ComposerTrace } from "@/components/field-kit/composer/ComposerClient";
 import type { CardViewAlum } from "@/components/journeys/JourneyCardView";
 
@@ -101,6 +102,7 @@ export default async function ComposerPage({
         traces={traces}
         alum={alum}
         programOver={!!itinerary && resolveToday(itinerary).state === "after"}
+        chapterMeta={buildChapterMeta(itinerary ?? null)}
       />
     </>
   );

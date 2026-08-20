@@ -35,6 +35,7 @@ import {
 } from "@/lib/journeyDraft";
 import JourneyCardView, { type CardViewAlum, type CardEditHooks } from "@/components/journeys/JourneyCardView";
 import { KRAFT_PAGE } from "@/components/journeys/journeyTheme";
+import type { CardChapterMetaMap } from "@/lib/journeyChapterMeta";
 import {
   MAX_MORE_AUDIO_PER_CHAPTER,
   MAX_MORE_PHOTOS_PER_CHAPTER,
@@ -196,6 +197,7 @@ export default function ComposerClient({
   traces,
   alum,
   programOver = false,
+  chapterMeta,
 }: {
   programId: string;
   authorSlug: string;
@@ -207,6 +209,8 @@ export default function ComposerClient({
   /** True once the itinerary's last day has passed — copy shifts from
    *  "capture as you go" to "fill it in from what you brought home". */
   programOver?: boolean;
+  /** DAT layer (descriptions / clubs / partners) for the WYSIWYG preview. */
+  chapterMeta?: CardChapterMetaMap;
 }) {
   // Preview-first for EVERY entry (locked with Jesse 2026-08-19, §10-Q1):
   // "does this look like your trip?" only works when the first thing an artist
@@ -586,7 +590,7 @@ export default function ComposerClient({
       ) : (
         <>
           <UnsortedNote chapters={chapters} traces={traceList} onPlace={() => setPlaceOpen(true)} />
-          <PreviewFace draft={draft} traces={traceList} alum={alum} asId={asId} editHooks={editHooks} />
+          <PreviewFace draft={draft} traces={traceList} alum={alum} asId={asId} editHooks={editHooks} chapterMeta={chapterMeta} />
         </>
       )}
 
@@ -1101,12 +1105,14 @@ function PreviewFace({
   alum,
   asId,
   editHooks,
+  chapterMeta,
 }: {
   draft: JourneyDraft;
   traces: ComposerTrace[];
   alum: CardViewAlum;
   asId?: string;
   editHooks?: CardEditHooks;
+  chapterMeta?: CardChapterMetaMap;
 }) {
   const traceById = useMemo(() => new Map(traces.map((t) => [t.captureId, t])), [traces]);
 
@@ -1150,7 +1156,7 @@ function PreviewFace({
           borderRadius: 4,
         }}
       >
-        <JourneyCardView card={card} alum={alum} embedded editHooks={editHooks} />
+        <JourneyCardView card={card} alum={alum} embedded editHooks={editHooks} chapterMeta={chapterMeta} />
       </div>
 
       <p style={{ fontFamily: FONT.dm, fontStyle: "italic", fontSize: 12.5, color: T.muted, margin: "14px 2px 0", lineHeight: 1.5 }}>

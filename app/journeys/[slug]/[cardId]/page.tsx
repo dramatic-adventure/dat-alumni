@@ -7,6 +7,8 @@ import { loadAlumniByAliases } from "@/lib/loadAlumni";
 import { getSlugAliases, resolveCanonicalSlug } from "@/lib/slugAliases";
 import { loadJourneyCardsForSlug } from "@/lib/loadJourneyCards";
 import { withCanonicalSlug } from "@/lib/journeyCard";
+import { loadProgramItinerary } from "@/lib/loadProgram";
+import { buildChapterMeta, type CardChapterMetaMap } from "@/lib/journeyChapterMeta";
 import JourneyCardView, { type CardViewAlum } from "@/components/journeys/JourneyCardView";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +33,14 @@ async function load(incomingSlug: string, cardId: string) {
     roles: Array.isArray(row.roles) ? row.roles : [],
     headshotUrl: row.headshotUrl || undefined,
   };
-  return { card, alum };
+  // DAT-institutional layer (chapter descriptions, drama clubs, partners) —
+  // joined live from the program itinerary; cards without a programId (or
+  // whose itinerary is gone) simply render without it.
+  let chapterMeta: CardChapterMetaMap = {};
+  if (card.programId) {
+    chapterMeta = buildChapterMeta(await loadProgramItinerary(card.programId).catch(() => null));
+  }
+  return { card, alum, chapterMeta };
 }
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
@@ -50,5 +59,5 @@ export default async function JourneyCardPage({ params }: Params) {
   const { slug, cardId } = await params;
   const data = await load(slug, cardId);
   if (!data) notFound();
-  return <JourneyCardView card={data.card} alum={data.alum} />;
+  return <JourneyCardView card={data.card} alum={data.alum} chapterMeta={data.chapterMeta} />;
 }

@@ -22,6 +22,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DAT_DISCLAIMER, type JourneyCard, type JourneyCardChapter } from "@/lib/journeyCard";
+import type { CardChapterMeta, CardChapterMetaMap } from "@/lib/journeyChapterMeta";
+import DramaClubBadge from "@/components/ui/DramaClubBadge";
 import { A as C, STAMP_SHADOW, KRAFT_PAGE, safeMediaUrl } from "./journeyTheme";
 
 export type CardViewAlum = {
@@ -523,8 +525,41 @@ function ChapterPhotos({ photos, morePhotos, W, H, isMobile }: {
   );
 }
 
-function ChapterPage({ ctx, chapter, isMobile, W, H, active, onCopied, hooks }: {
-  ctx: Ctx; chapter: JourneyCardChapter; isMobile: boolean; W: number; H: number; active: boolean; onCopied: () => void; hooks?: CardEditHooks;
+// DAT-institutional layer on a chapter page (v17 parity): the drama club as
+// the canonical badge stamp, the partner as a compact credit. Both link only
+// when a real destination exists (club page); the partner store is net-new,
+// so partners are name-only — honest, never a fabricated link.
+function ChapterMetaBlock({ meta, isMobile }: { meta?: CardChapterMeta; isMobile: boolean }) {
+  if (!meta?.club && !meta?.partnerName) return null;
+  return (
+    <>
+      {meta.club && (
+        <a href={`/drama-club/${meta.club.slug}`} className="jcb-club"
+          style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", backgroundColor: "rgba(36,17,35,0.05)", borderRadius: 10, padding: "7px 11px 7px 7px", margin: "0 0 10px" }}>
+          <div style={{ width: 46, height: 46, flexShrink: 0, display: "inline-grid", placeItems: "center", filter: "drop-shadow(0 1px 2px rgba(36,17,35,0.18))" }} aria-hidden>
+            <DramaClubBadge name={meta.club.name} size={46} wrappedByParentLink />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontWeight: 700, fontSize: 8.5, letterSpacing: "0.18em", textTransform: "uppercase", color: C.muted, margin: "0 0 1px" }}>Drama club</p>
+            <p style={{ fontFamily: "var(--font-anton), system-ui, sans-serif", fontSize: isMobile ? 14 : 15, color: C.pink, margin: "0 0 1px", textTransform: "uppercase", letterSpacing: "0.02em", lineHeight: 1.1 }}>{meta.club.name} ›</p>
+            {meta.club.location && (
+              <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: 10.5, color: C.teal, margin: 0, lineHeight: 1.3 }}>{meta.club.location}</p>
+            )}
+          </div>
+        </a>
+      )}
+      {meta.partnerName && (
+        <div style={{ border: `1px solid ${C.border}`, borderLeft: `3px solid ${C.pink}`, borderRadius: 4, padding: "8px 11px", margin: "0 0 10px", backgroundColor: C.bg }}>
+          <p style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontWeight: 700, fontSize: 8.5, letterSpacing: "0.18em", textTransform: "uppercase", color: C.muted, margin: "0 0 1px" }}>Partner</p>
+          <p style={{ fontFamily: "var(--font-anton), system-ui, sans-serif", fontSize: isMobile ? 14 : 15, color: C.pink, margin: 0, textTransform: "uppercase", letterSpacing: "0.02em", lineHeight: 1.1 }}>{meta.partnerName}</p>
+        </div>
+      )}
+    </>
+  );
+}
+
+function ChapterPage({ ctx, chapter, isMobile, W, H, active, onCopied, hooks, meta }: {
+  ctx: Ctx; chapter: JourneyCardChapter; isMobile: boolean; W: number; H: number; active: boolean; onCopied: () => void; hooks?: CardEditHooks; meta?: CardChapterMeta;
 }) {
   const { card, alum } = ctx;
   const accent = chapterAccent(chapter, card);
@@ -583,6 +618,9 @@ function ChapterPage({ ctx, chapter, isMobile, W, H, active, onCopied, hooks }: 
           No voice notes here yet — record or upload one
         </button>
       )}
+      {meta?.description && (
+        <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: isMobile ? 11 : 11, color: C.muted, lineHeight: 1.5, margin: "0 0 10px" }}>{meta.description}</p>
+      )}
       {paras.length ? (
         <div onClick={editText("body")} style={editText("body") ? { cursor: "pointer" } : undefined} title={editText("body") ? "Tap to edit" : undefined}>
           {paras.map((p, i) => (
@@ -596,6 +634,7 @@ function ChapterPage({ ctx, chapter, isMobile, W, H, active, onCopied, hooks }: 
           </button>
         )
       )}
+      <ChapterMetaBlock meta={meta} isMobile={isMobile} />
       {!hasPhotoRegion &&
         (photoPrompt && hooks?.onChoosePhotos ? (
           // Captures exist but none are on the page yet — offer the chooser.
@@ -734,7 +773,7 @@ function accentFor(a: JourneyCard["accent"]): string {
 }
 
 // ── Root ──────────────────────────────────────────────────────────────────────
-export default function JourneyCardView({ card, alum, embedded, editHooks }: Ctx & { editHooks?: CardEditHooks }) {
+export default function JourneyCardView({ card, alum, embedded, editHooks, chapterMeta }: Ctx & { editHooks?: CardEditHooks; chapterMeta?: CardChapterMetaMap }) {
   const ctx: Ctx = { card, alum, embedded };
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const heroPhotos = useMemo(() => card.mediaUrls.map(safeMediaUrl).filter(Boolean), [card.mediaUrls]);
@@ -842,7 +881,7 @@ export default function JourneyCardView({ card, alum, embedded, editHooks }: Ctx
 
   const renderPage = (p: (typeof pages)[number], idx: number) => {
     if (p.key === "cover") return <CoverPage ctx={ctx} isMobile={isMobile} W={W} H={H} onCopied={showToast} hooks={editHooks} />;
-    if (p.chapter) return <ChapterPage ctx={ctx} chapter={p.chapter} isMobile={isMobile} W={W} H={H} active={page === idx} onCopied={showToast} hooks={editHooks} />;
+    if (p.chapter) return <ChapterPage ctx={ctx} chapter={p.chapter} isMobile={isMobile} W={W} H={H} active={page === idx} onCopied={showToast} hooks={editHooks} meta={chapterMeta?.[p.chapter.chapterId]} />;
     if (p.key === "story") return <StoryPage ctx={ctx} photos={storyPhotos} isMobile={isMobile} W={W} H={H} />;
     return <BackCoverPage ctx={ctx} photos={mosaicPhotos} isMobile={isMobile} W={W} H={H} />;
   };
@@ -868,6 +907,8 @@ export default function JourneyCardView({ card, alum, embedded, editHooks }: Ctx
           font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
           color: ${C.teal}; transition: opacity 0.15s ease; }
         .jcb-morebtn:hover { opacity: 0.65; }
+        .jcb-club { transition: background-color 0.15s ease, transform 0.18s ease; }
+        .jcb-club:hover { background-color: rgba(36,17,35,0.08); transform: translateX(2px); }
         .jcb-promptchip { position: absolute; left: 8px; top: 8px; z-index: 5;
           font-family: var(--font-space-grotesk), system-ui, sans-serif;
           font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
