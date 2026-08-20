@@ -530,30 +530,52 @@ function ChapterPhotos({ photos, morePhotos, W, H, isMobile }: {
 // when a real destination exists (club page); the partner store is net-new,
 // so partners are name-only — honest, never a fabricated link.
 function ChapterMetaBlock({ meta, isMobile }: { meta?: CardChapterMeta; isMobile: boolean }) {
-  if (!meta?.club && !meta?.partnerName) return null;
+  if (!meta?.clubs?.length && !meta?.partners?.length) return null;
   return (
     <>
-      {meta.club && (
-        <a href={`/drama-club/${meta.club.slug}`} className="jcb-club"
+      {(meta.clubs ?? []).map((club) => (
+        <a key={club.slug} href={`/drama-club/${club.slug}`} className="jcb-club"
           style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", backgroundColor: "rgba(36,17,35,0.05)", borderRadius: 10, padding: "7px 11px 7px 7px", margin: "0 0 10px" }}>
           <div style={{ width: 46, height: 46, flexShrink: 0, display: "inline-grid", placeItems: "center", filter: "drop-shadow(0 1px 2px rgba(36,17,35,0.18))" }} aria-hidden>
-            <DramaClubBadge name={meta.club.name} size={46} wrappedByParentLink />
+            <DramaClubBadge name={club.name} size={46} wrappedByParentLink />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontWeight: 700, fontSize: 8.5, letterSpacing: "0.18em", textTransform: "uppercase", color: C.muted, margin: "0 0 1px" }}>Drama club</p>
-            <p style={{ fontFamily: "var(--font-anton), system-ui, sans-serif", fontSize: isMobile ? 14 : 15, color: C.pink, margin: "0 0 1px", textTransform: "uppercase", letterSpacing: "0.02em", lineHeight: 1.1 }}>{meta.club.name} ›</p>
-            {meta.club.location && (
-              <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: 10.5, color: C.teal, margin: 0, lineHeight: 1.3 }}>{meta.club.location}</p>
+            <p style={{ fontFamily: "var(--font-anton), system-ui, sans-serif", fontSize: isMobile ? 14 : 15, color: C.pink, margin: "0 0 1px", textTransform: "uppercase", letterSpacing: "0.02em", lineHeight: 1.1 }}>{club.name} ›</p>
+            {club.location && (
+              <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: 10.5, color: C.teal, margin: 0, lineHeight: 1.3 }}>{club.location}</p>
             )}
           </div>
         </a>
-      )}
-      {meta.partnerName && (
-        <div style={{ border: `1px solid ${C.border}`, borderLeft: `3px solid ${C.pink}`, borderRadius: 4, padding: "8px 11px", margin: "0 0 10px", backgroundColor: C.bg }}>
-          <p style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontWeight: 700, fontSize: 8.5, letterSpacing: "0.18em", textTransform: "uppercase", color: C.muted, margin: "0 0 1px" }}>Partner</p>
-          <p style={{ fontFamily: "var(--font-anton), system-ui, sans-serif", fontSize: isMobile ? 14 : 15, color: C.pink, margin: 0, textTransform: "uppercase", letterSpacing: "0.02em", lineHeight: 1.1 }}>{meta.partnerName}</p>
-        </div>
-      )}
+      ))}
+      {(meta.partners ?? []).map((partner) => {
+        const inner = (
+          <>
+            {partner.logo && (
+              <div style={{ width: 34, height: 34, borderRadius: 4, overflow: "hidden", flexShrink: 0, border: `1px solid ${C.border}`, backgroundColor: partner.logoBg || C.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={partner.logo} alt={`${partner.name} logo`} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              </div>
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontWeight: 700, fontSize: 8.5, letterSpacing: "0.18em", textTransform: "uppercase", color: C.muted, margin: "0 0 1px" }}>Partner</p>
+              <p style={{ fontFamily: "var(--font-anton), system-ui, sans-serif", fontSize: isMobile ? 14 : 15, color: C.pink, margin: 0, textTransform: "uppercase", letterSpacing: "0.02em", lineHeight: 1.1 }}>
+                {partner.name}{partner.url ? " ↗" : ""}
+              </p>
+            </div>
+          </>
+        );
+        const style: React.CSSProperties = {
+          display: "flex", alignItems: "center", gap: 9, textDecoration: "none",
+          border: `1px solid ${C.border}`, borderLeft: `3px solid ${C.pink}`, borderRadius: 4,
+          padding: "8px 11px", margin: "0 0 10px", backgroundColor: C.bg,
+        };
+        return partner.url ? (
+          <a key={partner.slug} href={partner.url} target="_blank" rel="noopener noreferrer" className="jcb-club" style={style}>{inner}</a>
+        ) : (
+          <div key={partner.slug} style={style}>{inner}</div>
+        );
+      })}
     </>
   );
 }
@@ -619,7 +641,13 @@ function ChapterPage({ ctx, chapter, isMobile, W, H, active, onCopied, hooks, me
         </button>
       )}
       {meta?.description && (
-        <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: isMobile ? 11 : 11, color: C.muted, lineHeight: 1.5, margin: "0 0 10px" }}>{meta.description}</p>
+        <div style={{ margin: "0 0 12px" }}>
+          {/* The itinerary's description is written as the PLAN (present/future
+              tense). This kicker frames the verbatim text as history — we never
+              rewrite DAT's or an artist's words. */}
+          <p style={{ fontFamily: "var(--font-space-grotesk), system-ui, sans-serif", fontWeight: 700, fontSize: isMobile ? 8 : 8.5, letterSpacing: "0.2em", textTransform: "uppercase", color: C.muted, margin: "0 0 3px" }}>The plan for these days</p>
+          <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontStyle: "italic", fontSize: isMobile ? 11 : 11, color: C.muted, lineHeight: 1.5, margin: 0 }}>{meta.description}</p>
+        </div>
       )}
       {paras.length ? (
         <div onClick={editText("body")} style={editText("body") ? { cursor: "pointer" } : undefined} title={editText("body") ? "Tap to edit" : undefined}>
@@ -783,14 +811,18 @@ export default function JourneyCardView({ card, alum, embedded, editHooks, chapt
     return Array.from(new Set(all));
   }, [card.heroUrl, heroPhotos]);
 
-  // The preview (editHooks present) also pages EMPTY chapters — they invite the
-  // artist to fill them. The public card never does.
+  // Chapters page when they carry artist content, when the DAT layer has
+  // something to say about them (description/club/partner — Jesse 2026-08-19:
+  // "always"), or — preview only — when empty, as the invitation to fill them.
   const interiorChapters = useMemo(
     () =>
       card.chapters.filter(
-        (ch) => isInteriorChapter(ch) || (!!editHooks && ch.kind === "chapter" && ch.status === "empty")
+        (ch) =>
+          isInteriorChapter(ch) ||
+          (ch.kind === "chapter" && !!chapterMeta?.[ch.chapterId]) ||
+          (!!editHooks && ch.kind === "chapter" && ch.status === "empty")
       ),
-    [card.chapters, editHooks]
+    [card.chapters, editHooks, chapterMeta]
   );
   const hasStory = Boolean((card.body || "").trim()) || heroPhotos.length > 0;
   const pages = useMemo(() => {
