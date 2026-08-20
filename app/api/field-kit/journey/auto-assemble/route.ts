@@ -36,7 +36,14 @@ export async function POST(req: Request) {
   }
 
   try {
-    const assembly = await runAutoAssembly(FIELD_KIT_PROGRAM_ID);
+    // One-time recovery override (see runAutoAssembly): {"forceAssembly":true}
+    // runs assembly past the grace window. Same CRON_SECRET gate as everything
+    // else here; the scheduled cron sends no body, so normal runs are unchanged.
+    const body = (await req.json().catch(() => null)) as { forceAssembly?: unknown } | null;
+    const force = body?.forceAssembly === true;
+    const assembly = await runAutoAssembly(FIELD_KIT_PROGRAM_ID, new Date(), {
+      ignoreGraceWindow: force,
+    });
     const nudge = await runTripEndNudge(FIELD_KIT_PROGRAM_ID);
     return NextResponse.json({ ok: true, programId: FIELD_KIT_PROGRAM_ID, assembly, nudge });
   } catch (e: unknown) {

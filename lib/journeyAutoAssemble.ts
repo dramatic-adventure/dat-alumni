@@ -123,7 +123,17 @@ export type AssemblyRunSummary = {
 
 export async function runAutoAssembly(
   programId: string,
-  now: Date = new Date()
+  now: Date = new Date(),
+  opts?: {
+    /**
+     * One-time recovery override (2026-08-19): the scheduled cron never ran
+     * during the trip or the grace window, so no drafts were ever built. The
+     * secret-gated route accepts {"forceAssembly":true} to run assembly past
+     * the window once — everything else (touched contract, sealed exclusion,
+     * byte-identical skip) applies exactly as in a normal run.
+     */
+    ignoreGraceWindow?: boolean;
+  }
 ): Promise<AssemblyRunSummary> {
   const itinerary = await loadProgramItinerary(programId);
   if (!itinerary) return { ran: false, reason: "no itinerary" };
@@ -131,7 +141,12 @@ export async function runAutoAssembly(
   const today = resolveToday(itinerary, now);
   const end = endDateIso(itinerary);
   if (today.state === "before") return { ran: false, reason: "program not started" };
-  if (today.state === "after" && end && daysPastEnd(end, now) > ASSEMBLY_GRACE_DAYS) {
+  if (
+    today.state === "after" &&
+    end &&
+    daysPastEnd(end, now) > ASSEMBLY_GRACE_DAYS &&
+    !opts?.ignoreGraceWindow
+  ) {
     return { ran: false, reason: "past assembly grace window" };
   }
 
