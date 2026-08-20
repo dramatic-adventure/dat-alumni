@@ -55,6 +55,11 @@ export type CardEditHooks = {
   onEditText?: (chapterId: string, field: "response" | "body") => void;
   /** The camera-roll invitation for chapters with no photos. */
   onAddPhoto?: (chapterId: string) => void;
+  /** Record/upload invitation for chapters with no voice notes at all. */
+  onAddVoice?: (chapterId: string) => void;
+  /** Cover affordances: tap the title / pull-quote / hero to set or change it. */
+  onEditCard?: (field: "title" | "pullQuote") => void;
+  onChooseHero?: () => void;
 };
 
 // ── Program wordmark + COUNTRY · YEAR stack (the v17 PassageStack, live) ──────
@@ -204,11 +209,20 @@ function PhotoGrid({ photos, W, H }: { photos: string[]; W: number; H: number })
 }
 
 // ── Cover page (v17 port, desktop + mobile) ───────────────────────────────────
-function CoverPage({ ctx, isMobile, W, H, onCopied }: { ctx: Ctx; isMobile: boolean; W: number; H: number; onCopied: () => void }) {
+function CoverPage({ ctx, isMobile, W, H, onCopied, hooks }: { ctx: Ctx; isMobile: boolean; W: number; H: number; onCopied: () => void; hooks?: CardEditHooks }) {
   const { card, alum } = ctx;
   const hero = safeMediaUrl(card.heroUrl);
   const shot = safeMediaUrl(alum.headshotUrl) || "/images/default-headshot.png";
   const roles = card.primaryRole || alum.roles.join(" · ");
+  // Preview-only affordances: anything missing on the cover invites a tap.
+  const editCard = (f: "title" | "pullQuote") =>
+    hooks?.onEditCard ? () => hooks.onEditCard?.(f) : undefined;
+  const heroChip = hooks?.onChooseHero && (
+    <button type="button" className="jcb-btn jcb-promptchip" style={{ top: "auto", bottom: 8 }}
+      onClick={() => hooks.onChooseHero?.()}>
+      {hero ? "Change cover photo" : "+ Choose a cover photo"}
+    </button>
+  );
 
   if (isMobile) {
     const HERO_H = Math.round(H * 0.42);
@@ -220,6 +234,7 @@ function CoverPage({ ctx, isMobile, W, H, onCopied }: { ctx: Ctx; isMobile: bool
             // eslint-disable-next-line @next/next/no-img-element
             <img src={hero} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           )}
+          {heroChip}
         </div>
         <a href="/" title="Dramatic Adventure Theatre" className="jcb-imglink"
           style={{ position: "absolute", left: "50%", top: HERO_H, transform: "translate(-50%, -50%)", width: STAMP, height: STAMP, zIndex: 10, display: "block" }}>
@@ -235,11 +250,19 @@ function CoverPage({ ctx, isMobile, W, H, onCopied }: { ctx: Ctx; isMobile: bool
           </a>
           <ProgramStack ctx={ctx} size="xl-mobile" align="center" />
           {card.dates && <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: 10, color: C.muted, margin: "6px 0 12px" }}>{card.dates}</p>}
-          {card.title && (
-            <p style={{ fontFamily: "var(--font-anton), system-ui, sans-serif", fontSize: 20, color: C.ink, margin: "0 0 8px", lineHeight: 1.05 }}>{card.title}</p>
+          {card.title ? (
+            <p onClick={editCard("title")} style={{ fontFamily: "var(--font-anton), system-ui, sans-serif", fontSize: 20, color: C.ink, margin: "0 0 8px", lineHeight: 1.05, cursor: editCard("title") ? "pointer" : undefined }} title={editCard("title") ? "Tap to edit" : undefined}>{card.title}</p>
+          ) : (
+            hooks?.onEditCard && (
+              <button type="button" className="jcb-morebtn" style={{ display: "block", margin: "0 0 8px" }} onClick={editCard("title")}>+ Name this card</button>
+            )
           )}
-          {card.pullQuote && (
-            <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontStyle: "italic", fontSize: 12, lineHeight: 1.6, color: C.ink, opacity: 0.82, margin: "0 0 auto" }}>&ldquo;{card.pullQuote}&rdquo;</p>
+          {card.pullQuote ? (
+            <p onClick={editCard("pullQuote")} style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontStyle: "italic", fontSize: 12, lineHeight: 1.6, color: C.ink, opacity: 0.82, margin: "0 0 auto", cursor: editCard("pullQuote") ? "pointer" : undefined }} title={editCard("pullQuote") ? "Tap to edit" : undefined}>&ldquo;{card.pullQuote}&rdquo;</p>
+          ) : (
+            hooks?.onEditCard && (
+              <button type="button" className="jcb-morebtn" style={{ display: "block", margin: "0 0 auto" }} onClick={editCard("pullQuote")}>+ Pick a cover line</button>
+            )
           )}
           <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 14 }}>
             <a href={`/alumni/${alum.slug}`} className="jcb-imglink" style={{ display: "block", textDecoration: "none", flexShrink: 0 }}>
@@ -273,11 +296,19 @@ function CoverPage({ ctx, isMobile, W, H, onCopied }: { ctx: Ctx; isMobile: bool
         <div style={{ maxWidth: "78%" }}><ProgramStack ctx={ctx} size="lg" align="left" /></div>
         {card.dates && <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontSize: 12, color: C.muted, margin: "10px 0 14px", maxWidth: "70%" }}>{card.dates}</p>}
         <div style={{ width: 40, height: 1, backgroundColor: C.ink, opacity: 0.2, marginBottom: 16 }} />
-        {card.title && (
-          <p style={{ fontFamily: "var(--font-anton), system-ui, sans-serif", fontSize: 26, color: C.ink, margin: "0 0 10px", lineHeight: 1.04, maxWidth: "82%" }}>{card.title}</p>
+        {card.title ? (
+          <p onClick={editCard("title")} style={{ fontFamily: "var(--font-anton), system-ui, sans-serif", fontSize: 26, color: C.ink, margin: "0 0 10px", lineHeight: 1.04, maxWidth: "82%", cursor: editCard("title") ? "pointer" : undefined }} title={editCard("title") ? "Tap to edit" : undefined}>{card.title}</p>
+        ) : (
+          hooks?.onEditCard && (
+            <button type="button" className="jcb-morebtn" style={{ display: "block", margin: "0 0 10px", textAlign: "left" }} onClick={editCard("title")}>+ Name this card</button>
+          )
         )}
-        {card.pullQuote && (
-          <p style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontStyle: "italic", fontSize: 16, lineHeight: 1.6, color: C.ink, margin: "0 0 auto", opacity: 0.8, maxWidth: "82%" }}>&ldquo;{card.pullQuote}&rdquo;</p>
+        {card.pullQuote ? (
+          <p onClick={editCard("pullQuote")} style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif", fontStyle: "italic", fontSize: 16, lineHeight: 1.6, color: C.ink, margin: "0 0 auto", opacity: 0.8, maxWidth: "82%", cursor: editCard("pullQuote") ? "pointer" : undefined }} title={editCard("pullQuote") ? "Tap to edit" : undefined}>&ldquo;{card.pullQuote}&rdquo;</p>
+        ) : (
+          hooks?.onEditCard && (
+            <button type="button" className="jcb-morebtn" style={{ display: "block", margin: "0 0 auto", textAlign: "left" }} onClick={editCard("pullQuote")}>+ Pick a cover line</button>
+          )
         )}
         <div style={{ marginTop: 16, display: "flex", gap: 14, alignItems: "stretch" }}>
           <a href={`/alumni/${alum.slug}`} className="jcb-imglink" style={{ flexShrink: 0, display: "block", textDecoration: "none" }}>
@@ -307,6 +338,7 @@ function CoverPage({ ctx, isMobile, W, H, onCopied }: { ctx: Ctx; isMobile: bool
           // eslint-disable-next-line @next/next/no-img-element
           <img src={hero} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         )}
+        {heroChip}
       </div>
       <a href="/" title="Dramatic Adventure Theatre" className="jcb-imglink"
         style={{ position: "absolute", left: LEFT_W - STAMP_SIZE / 2, top: "50%", transform: "translateY(-50%)", width: STAMP_SIZE, height: STAMP_SIZE, zIndex: 10, display: "block" }}>
@@ -543,6 +575,12 @@ function ChapterPage({ ctx, chapter, isMobile, W, H, active, onCopied, hooks }: 
         <button type="button" className="jcb-morebtn" style={{ display: "block", margin: "0 0 12px" }}
           onClick={() => hooks?.onChooseVoice?.(chapter.chapterId)}>
           {voicePrompt} — Choose
+        </button>
+      )}
+      {!chapter.audioUrl && !voicePrompt && hooks?.onAddVoice && chapter.kind === "chapter" && (
+        <button type="button" className="jcb-morebtn" style={{ display: "block", margin: "0 0 12px", textAlign: "left" }}
+          onClick={() => hooks.onAddVoice?.(chapter.chapterId)}>
+          No voice notes here yet — record or upload one
         </button>
       )}
       {paras.length ? (
@@ -803,7 +841,7 @@ export default function JourneyCardView({ card, alum, embedded, editHooks }: Ctx
   const visibleH = Math.round(H * scale);
 
   const renderPage = (p: (typeof pages)[number], idx: number) => {
-    if (p.key === "cover") return <CoverPage ctx={ctx} isMobile={isMobile} W={W} H={H} onCopied={showToast} />;
+    if (p.key === "cover") return <CoverPage ctx={ctx} isMobile={isMobile} W={W} H={H} onCopied={showToast} hooks={editHooks} />;
     if (p.chapter) return <ChapterPage ctx={ctx} chapter={p.chapter} isMobile={isMobile} W={W} H={H} active={page === idx} onCopied={showToast} hooks={editHooks} />;
     if (p.key === "story") return <StoryPage ctx={ctx} photos={storyPhotos} isMobile={isMobile} W={W} H={H} />;
     return <BackCoverPage ctx={ctx} photos={mosaicPhotos} isMobile={isMobile} W={W} H={H} />;

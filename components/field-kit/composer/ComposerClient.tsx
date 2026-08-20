@@ -96,6 +96,13 @@ export function captureMediaUrl(driveFileId: string): string {
   return `/api/field-kit/capture/media/${encodeURIComponent(driveFileId)}`;
 }
 
+/** Quick Capture prefilled for a chapter — the "add content" path everywhere. */
+function captureHref(kind: "photo" | "voice", chapterId: string, asId?: string): string {
+  const qs = new URLSearchParams({ kind, chapterId });
+  if (asId) qs.set("asId", asId);
+  return `/field-kit/capture?${qs.toString()}`;
+}
+
 // ── Draft init / reconcile ────────────────────────────────────────────────────
 
 function chapterFromSpine(ch: ComposerChapter): JourneyDraftChapter {
@@ -188,6 +195,7 @@ export default function ComposerClient({
   chapters,
   traces,
   alum,
+  programOver = false,
 }: {
   programId: string;
   authorSlug: string;
@@ -196,6 +204,9 @@ export default function ComposerClient({
   chapters: ComposerChapter[];
   traces: ComposerTrace[];
   alum: CardViewAlum;
+  /** True once the itinerary's last day has passed — copy shifts from
+   *  "capture as you go" to "fill it in from what you brought home". */
+  programOver?: boolean;
 }) {
   // Preview-first for EVERY entry (locked with Jesse 2026-08-19, §10-Q1):
   // "does this look like your trip?" only works when the first thing an artist
@@ -210,8 +221,13 @@ export default function ComposerClient({
   const [traceList, setTraceList] = useState<ComposerTrace[]>(traces);
   // Overlay surfaces on the preview (Slice A/B).
   const [chooser, setChooser] = useState<{ chapterId: string; mode: "photos" | "voice" } | null>(null);
-  const [textEdit, setTextEdit] = useState<{ chapterId: string; field: "response" | "body" } | null>(null);
+  const [textEdit, setTextEdit] = useState<
+    | { chapterId: string; field: "response" | "body" }
+    | { card: "title" | "pullQuote" }
+    | null
+  >(null);
   const [placeOpen, setPlaceOpen] = useState(false);
+  const [heroOpen, setHeroOpen] = useState(false);
   const key = draftKey("live", programId);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -378,19 +394,25 @@ export default function ComposerClient({
       voicePrompt: (ch) => {
         if (ch.kind !== "chapter") return null;
         const n = voiceCandidates(ch.chapterId).length;
-        if (n < 2) return null;
         const entry = draft?.chapters.find((c) => c.kind === "chapter" && c.chapterId === ch.chapterId);
-        return `${n} voice notes — ${entry?.audioCaptureId ? "this one's on the card" : "none on the card yet"}`;
+        const featured = !!entry?.audioCaptureId;
+        if (n >= 2) return `${n} voice notes — ${featured ? "this one's on the card" : "none on the card yet"}`;
+        if (n === 1 && !featured) return "1 voice note — not on the card yet";
+        return null;
       },
       onChoosePhotos: (chapterId) => setChooser({ chapterId, mode: "photos" }),
       onChooseVoice: (chapterId) => setChooser({ chapterId, mode: "voice" }),
       onEditText: (chapterId, field) => setTextEdit({ chapterId, field }),
       onAddPhoto: (chapterId) => {
         flush();
-        const qs = new URLSearchParams({ kind: "photo", chapterId });
-        if (asId) qs.set("asId", asId);
-        window.location.href = `/field-kit/capture?${qs.toString()}`;
+        window.location.href = captureHref("photo", chapterId, asId);
       },
+      onAddVoice: (chapterId) => {
+        flush();
+        window.location.href = captureHref("voice", chapterId, asId);
+      },
+      onEditCard: (field) => setTextEdit({ card: field }),
+      onChooseHero: () => setHeroOpen(true),
     }),
     [draft, photoCandidates, voiceCandidates, asId, flush]
   );
@@ -506,6 +528,8 @@ export default function ComposerClient({
               entry={activeEntry}
               draft={draft}
               traces={traceList}
+              asId={asId}
+              programOver={programOver}
               onPatch={(patch) => updateChapter(activeEntry.chapterId, patch)}
               onBlur={flush}
               onAddDaily={() => {
@@ -632,16 +656,75 @@ export default function ComposerClient({
           onClose={() => setChooser(null)}
         />
       )}
-      {textEdit && (
+      {textEdit && "card" in textEdit && (
         <TextEditSheet
-          entry={draft.chapters.find((c) => c.chapterId === textEdit.chapterId)}
-          field={textEdit.field}
+          heading={textEdit.card === "title" ? "Name this card" : "The cover line"}
+          sub={
+            textEdit.card === "title"
+              ? "The card's name on the cover and in the archive. Yours forever once you save."
+              : "The line that fronts your card — usually one of your chapter lines. Yours forever once you save."
+          }
+          value={textEdit.card === "title" ? draft.title : draft.pullQuote}
+          rows={textEdit.card === "title" ? 2 : 3}
+          placeholder={
+            textEdit.card === "title" ? "A name for this journey…" : "The sentence that makes the reader feel it."
+          }
           onSave={(value) => {
-            updateChapter(textEdit.chapterId, { [textEdit.field]: value });
+            const field = textEdit.card;
+            updateDraft((d) => ({
+              ...d,
+              [field]: value,
+              touchedFields: Array.from(new Set([...(d.touchedFields ?? []), field])),
+            }));
             flush();
             setTextEdit(null);
           }}
           onClose={() => setTextEdit(null)}
+        />
+      )}
+      {textEdit && "chapterId" in textEdit && (() => {
+        const entry = draft.chapters.find((c) => c.chapterId === textEdit.chapterId);
+        if (!entry) return null;
+        const isResponse = textEdit.field === "response";
+        return (
+          <TextEditSheet
+            heading={isResponse ? "This chapter’s line" : "Your words"}
+            sub={
+              isResponse
+                ? "One sentence — it headlines the chapter. Yours forever once you save."
+                : "The chapter’s longer text. Yours forever once you save."
+            }
+            value={entry[textEdit.field]}
+            rows={isResponse ? 3 : 9}
+            placeholder={
+              isResponse
+                ? "One sentence. The line that makes the reader feel it."
+                : "Write toward the prompt or past it…"
+            }
+            onSave={(value) => {
+              updateChapter(textEdit.chapterId, { [textEdit.field]: value });
+              flush();
+              setTextEdit(null);
+            }}
+            onClose={() => setTextEdit(null)}
+          />
+        );
+      })()}
+      {heroOpen && (
+        <HeroChooser
+          traces={traceList}
+          currentId={draft.heroCaptureId}
+          onPick={(captureId) => {
+            updateDraft((d) => ({
+              ...d,
+              heroCaptureId: captureId,
+              heroUrl: undefined,
+              touchedFields: Array.from(new Set([...(d.touchedFields ?? []), "hero" as const])),
+            }));
+            flush();
+            setHeroOpen(false);
+          }}
+          onClose={() => setHeroOpen(false)}
         />
       )}
       {placeOpen && (
@@ -663,6 +746,8 @@ function ChapterEditor({
   entry,
   draft,
   traces,
+  asId,
+  programOver = false,
   onPatch,
   onBlur,
   onAddDaily,
@@ -673,6 +758,8 @@ function ChapterEditor({
   entry: JourneyDraftChapter;
   draft: JourneyDraft;
   traces: ComposerTrace[];
+  asId?: string;
+  programOver?: boolean;
   onPatch: (patch: Partial<JourneyDraftChapter>) => void;
   onBlur: () => void;
   onAddDaily: () => void;
@@ -805,7 +892,9 @@ function ChapterEditor({
       >
         {photoTraces.length === 0 ? (
           <p style={{ fontFamily: FONT.dm, fontSize: 12.5, fontStyle: "italic", color: T.muted, margin: 0 }}>
-            No photo traces yet — catch one with Quick Capture and it appears here.
+            {programOver
+              ? "No photos on the card yet — the trip may be over, but your camera roll isn't. Add one below and it files under this chapter."
+              : "No photo traces yet — catch one with Quick Capture and it appears here."}
           </p>
         ) : (
           <>
@@ -869,6 +958,9 @@ function ChapterEditor({
             ) : null}
           </>
         )}
+        <Link href={captureHref("photo", spine.id, asId)} onClick={onBlur} style={addContentBtn}>
+          + Add a photo from your camera roll
+        </Link>
       </Field>
 
       {/* Voice/ambient from real traces */}
@@ -879,7 +971,9 @@ function ChapterEditor({
       >
         {voiceTraces.length === 0 ? (
           <p style={{ fontFamily: FONT.dm, fontSize: 12.5, fontStyle: "italic", color: T.muted, margin: 0 }}>
-            No voice traces yet.
+            {programOver
+              ? "No voice notes yet — record one now, or upload a memo saved on your phone."
+              : "No voice traces yet."}
           </p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -914,6 +1008,9 @@ function ChapterEditor({
             })}
           </div>
         )}
+        <Link href={captureHref("voice", spine.id, asId)} onClick={onBlur} style={addContentBtn}>
+          + Record or upload a voice note
+        </Link>
       </Field>
 
       {/* Daily pages */}
@@ -1263,6 +1360,21 @@ function UnsortedNote({
   );
 }
 
+const addContentBtn: React.CSSProperties = {
+  display: "inline-block",
+  marginTop: 8,
+  fontFamily: FONT.grotesk,
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: T.yellow,
+  textDecoration: "none",
+  border: `1.5px dashed ${T.border}`,
+  borderRadius: 9,
+  padding: "9px 14px",
+};
+
 const inputStyle: React.CSSProperties = {
   width: "100%",
   boxSizing: "border-box",
@@ -1493,37 +1605,33 @@ function ExtrasChooser({
 // ── One-textarea edit sheet (Slice A: "tap a text block") ─────────────────────
 
 function TextEditSheet({
-  entry,
-  field,
+  heading,
+  sub,
+  value: initial,
+  rows,
+  placeholder,
   onSave,
   onClose,
 }: {
-  entry?: JourneyDraftChapter;
-  field: "response" | "body";
+  heading: string;
+  sub: string;
+  value: string;
+  rows: number;
+  placeholder: string;
   onSave: (value: string) => void;
   onClose: () => void;
 }) {
-  const [value, setValue] = useState(entry?.[field] ?? "");
-  if (!entry) return null;
-  const isResponse = field === "response";
+  const [value, setValue] = useState(initial);
   return (
     <SheetPortal>
     <div role="dialog" aria-modal="true" style={sheetOverlay}>
-      <SheetHeader
-        title={isResponse ? "This chapter’s line" : "Your words"}
-        sub={
-          isResponse
-            ? "One sentence — it headlines the chapter. Yours forever once you save."
-            : "The chapter’s longer text. Yours forever once you save."
-        }
-        onClose={onClose}
-      />
+      <SheetHeader title={heading} sub={sub} onClose={onClose} />
       <textarea
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        rows={isResponse ? 3 : 9}
+        rows={rows}
         autoFocus
-        placeholder={isResponse ? "One sentence. The line that makes the reader feel it." : "Write toward the prompt or past it…"}
+        placeholder={placeholder}
         style={{ ...inputStyle, resize: "vertical" }}
       />
       <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
@@ -1622,6 +1730,68 @@ function PlaceCapturesSheet({
               </div>
             </div>
           ))}
+        </div>
+      )}
+    </div>
+    </SheetPortal>
+  );
+}
+
+// ── Hero chooser (cover photo) — single pick across every trip photo ──────────
+
+function HeroChooser({
+  traces,
+  currentId,
+  onPick,
+  onClose,
+}: {
+  traces: ComposerTrace[];
+  currentId?: string;
+  onPick: (captureId: string) => void;
+  onClose: () => void;
+}) {
+  const photos = useMemo(
+    () =>
+      traces
+        .filter((t) => t.kind === "photo" && t.driveFileId)
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+    [traces]
+  );
+  return (
+    <SheetPortal>
+    <div role="dialog" aria-modal="true" style={sheetOverlay}>
+      <SheetHeader
+        title="Choose your cover photo"
+        sub="The hero image fronting the whole card. Tap one — yours forever once picked."
+        onClose={onClose}
+      />
+      {photos.length === 0 ? (
+        <p style={{ fontFamily: FONT.dm, fontSize: 13, fontStyle: "italic", color: "rgba(242,242,242,0.65)", margin: 0 }}>
+          No photos yet — add one from your camera roll in the editor and it appears here.
+        </p>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(104px, 1fr))", gap: 8 }}>
+          {photos.map((t) => {
+            const on = t.captureId === currentId;
+            return (
+              <button key={t.captureId} type="button" onClick={() => onPick(t.captureId)}
+                title={t.bodyText || undefined}
+                style={{
+                  position: "relative", aspectRatio: "1 / 1", borderRadius: 10, overflow: "hidden",
+                  padding: 0, cursor: "pointer", background: T.card,
+                  border: on ? `2.5px solid ${T.yellow}` : `1px solid ${T.border}`,
+                }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={captureMediaUrl(t.driveFileId)} alt={t.bodyText || "Photo"} loading="lazy"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                {on && (
+                  <span style={{ position: "absolute", left: 4, bottom: 4, fontFamily: FONT.grotesk, fontSize: 8, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: T.black, background: T.yellow, padding: "0.3em 0.6em", borderRadius: 4 }}>
+                    ★ Cover
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
