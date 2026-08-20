@@ -224,6 +224,42 @@ export function coerceJourneyDraft(raw: unknown): JourneyDraft | null {
   };
 }
 
+// ── Chapter ordering ──────────────────────────────────────────────────────────
+
+/**
+ * Order a draft's chapter-kind entries by the spine (the passport's binding —
+ * chapter order is not artist-arrangeable anywhere in the UI), keeping each
+ * chapter's trailing daily pages tucked behind it. Non-spine chapters (written
+ * retro/legacy) keep their relative order at the end. Fixes drafts whose array
+ * order was scrambled by itinerary-generation churn (found 2026-08-19: a
+ * pre-departure chapter rendering as the book's last page).
+ */
+export function orderDraftChapters(
+  chapters: JourneyDraftChapter[],
+  spineOrder: string[]
+): JourneyDraftChapter[] {
+  type Group = { head: JourneyDraftChapter; tail: JourneyDraftChapter[] };
+  const groups: Group[] = [];
+  const leading: JourneyDraftChapter[] = []; // dailies before any chapter
+  let current: Group | null = null;
+  for (const ch of chapters) {
+    if (ch.kind === "chapter") {
+      current = { head: ch, tail: [] };
+      groups.push(current);
+    } else if (current) {
+      current.tail.push(ch);
+    } else {
+      leading.push(ch);
+    }
+  }
+  const rank = new Map(spineOrder.map((id, i) => [id, i]));
+  // Array.prototype.sort is stable: non-spine groups (rank Infinity) keep order.
+  const sorted = [...groups].sort(
+    (a, b) => (rank.get(a.head.chapterId) ?? Infinity) - (rank.get(b.head.chapterId) ?? Infinity)
+  );
+  return [...leading, ...sorted.flatMap((g) => [g.head, ...g.tail])];
+}
+
 // ── Readiness (drives the Publish flow's honest, non-punitive summary) ────────
 
 export type ChapterReadiness = "written" | "in-progress" | "empty";

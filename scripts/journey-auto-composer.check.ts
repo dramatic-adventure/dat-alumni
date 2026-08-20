@@ -466,6 +466,26 @@ console.log("\n[12] retired-spine chapter cleanup");
   check("written retired-spine chapter is kept forever", draft.chapters.some((c) => c.chapterId === "old-2" && c.response === "Words the artist wrote."));
   check("current spine chapters unaffected", draft.chapters.filter((c) => c.kind === "chapter" && ["ch-1", "ch-2", "ch-3"].includes(c.chapterId)).length === 3);
   check("no duplicate chapter ids", new Set(draft.chapters.map((c) => c.chapterId)).size === draft.chapters.length);
+
+  // Order repair: a draft scrambled by generation churn (spine chapters out of
+  // order, e.g. the pre-departure chapter stranded last) comes back in spine
+  // order, with dailies still tucked behind their chapter.
+  const scrambled = {
+    ...existing,
+    chapters: [
+      existing.chapters.find((c) => c.chapterId === "ch-3"),
+      { chapterId: "daily-x", kind: "daily", title: "Postcard", response: "A line.", body: "", reflection: "", photoCaptureIds: [] },
+      existing.chapters.find((c) => c.chapterId === "ch-1"),
+      existing.chapters.find((c) => c.chapterId === "ch-2"),
+    ],
+  };
+  const reordered = run([], scrambled).draft;
+  check("chapters return to spine order",
+    reordered.chapters.filter((c) => c.kind === "chapter").map((c) => c.chapterId).join() === "ch-1,ch-2,ch-3",
+    reordered.chapters.map((c) => c.chapterId));
+  check("daily stays tucked behind its chapter",
+    reordered.chapters[reordered.chapters.findIndex((c) => c.chapterId === "ch-3") + 1]?.chapterId === "daily-x",
+    reordered.chapters.map((c) => c.chapterId));
 }
 
 // ── Result ────────────────────────────────────────────────────────────────────

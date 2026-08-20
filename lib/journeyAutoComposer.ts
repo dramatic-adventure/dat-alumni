@@ -21,6 +21,7 @@
 
 import {
   chapterReadiness,
+  orderDraftChapters,
   type CardTouchedField,
   type ChapterTouchedField,
   type JourneyDraft,
@@ -462,7 +463,12 @@ export function assembleDraft(input: {
     return next;
   });
 
-  const draft: JourneyDraft = { ...base, chapters };
+  // Chapter order = spine order (dailies stay tucked behind their chapter) —
+  // repairs drafts scrambled by itinerary-generation churn.
+  const spineOrder = [...spine].sort((a, b) => a.num - b.num).map((s) => s.id);
+  const ordered = orderDraftChapters(chapters, spineOrder);
+
+  const draft: JourneyDraft = { ...base, chapters: ordered };
 
   // ── Card-level picks (§4-R Q3/Q4: the anchor-chapter rule) ──
   // Anchor = the spine chapter with the most captures, earliest on ties.
@@ -476,7 +482,7 @@ export function assembleDraft(input: {
     }
   }
   const entryById = new Map(
-    chapters.filter((c) => c.kind === "chapter").map((c) => [c.chapterId, c])
+    ordered.filter((c) => c.kind === "chapter").map((c) => [c.chapterId, c])
   );
   const anchor = anchorId ? entryById.get(anchorId) : undefined;
 
@@ -486,7 +492,7 @@ export function assembleDraft(input: {
   // pull-quote exclusion below always excludes the line actually used.
   const autoTitleSource =
     (anchor?.response ? anchor : undefined) ??
-    chapters.find((c): c is JourneyDraftChapter => c.kind === "chapter" && !!c.response);
+    ordered.find((c): c is JourneyDraftChapter => c.kind === "chapter" && !!c.response);
   if (!cardTouched(draft, "title")) {
     draft.title = autoTitleSource
       ? trimAtBoundary(autoTitleSource.response, TITLE_MAX_CHARS)
@@ -511,7 +517,7 @@ export function assembleDraft(input: {
       const titleSourceId = !cardTouched(draft, "title") && autoTitleSource
         ? autoTitleSource.chapterId
         : "";
-      const lines = chapters.filter(
+      const lines = ordered.filter(
         (c) => c.kind === "chapter" && c.response && c.chapterId !== titleSourceId
       );
       const longest = lines.reduce<JourneyDraftChapter | null>(
