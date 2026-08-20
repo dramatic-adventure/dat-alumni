@@ -451,6 +451,23 @@ console.log("\n[11] more* overflow fields");
   check("sealed photo/voice never land in more*", !sealedJson.includes(sealedPhoto.captureId) && !sealedJson.includes(sealedVoice.captureId));
 }
 
+// ── 12. Retired-spine chapters: empty ones dropped, written ones kept ─────────
+
+console.log("\n[12] retired-spine chapter cleanup");
+{
+  // A draft born against an OLDER itinerary generation (2026-08-19 incident:
+  // day-1 devices held ch1..ch5 while the live spine is ch-1..ch-3 here).
+  const staleEmpty = { chapterId: "old-1", kind: "chapter", num: "01", title: "Old Arrival", response: "", body: "", reflection: "", photoCaptureIds: [] };
+  const staleWritten = { chapterId: "old-2", kind: "chapter", num: "02", title: "Old Lab", response: "Words the artist wrote.", body: "", reflection: "", photoCaptureIds: [] };
+  const existing = run([]).draft;
+  const withStale = { ...existing, chapters: [staleEmpty, staleWritten, ...existing.chapters] };
+  const { draft } = run([cap({ bodyText: "New words.", chapterId: "ch-1" })], withStale);
+  check("empty retired-spine chapter is dropped", !draft.chapters.some((c) => c.chapterId === "old-1"));
+  check("written retired-spine chapter is kept forever", draft.chapters.some((c) => c.chapterId === "old-2" && c.response === "Words the artist wrote."));
+  check("current spine chapters unaffected", draft.chapters.filter((c) => c.kind === "chapter" && ["ch-1", "ch-2", "ch-3"].includes(c.chapterId)).length === 3);
+  check("no duplicate chapter ids", new Set(draft.chapters.map((c) => c.chapterId)).size === draft.chapters.length);
+}
+
 // ── Result ────────────────────────────────────────────────────────────────────
 
 console.log("");

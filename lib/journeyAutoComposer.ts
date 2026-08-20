@@ -20,6 +20,7 @@
 // draft route, and fixture tests can all run it.
 
 import {
+  chapterReadiness,
   type CardTouchedField,
   type ChapterTouchedField,
   type JourneyDraft,
@@ -409,11 +410,18 @@ export function assembleDraft(input: {
 
   const base = existing ?? freshDraft(programId, authorSlug, program, scaffold);
 
-  // Additive spine reconcile (same rule as Composer): new itinerary chapters
-  // gain a slot; existing entries and dailies keep their order and content.
-  const have = new Set(base.chapters.map((c) => c.chapterId));
+  // Spine reconcile (same rule as Composer): new itinerary chapters gain a
+  // slot; existing entries and dailies keep their order and content — EXCEPT
+  // empty chapters from retired spine ids (a draft born against an older
+  // itinerary generation), which would sit as blank duplicate pages beside
+  // their replacements. Anything written is kept forever, spine or no spine.
+  const spineIds = new Set(spine.map((s) => s.id));
+  const keptBase = base.chapters.filter(
+    (c) => c.kind !== "chapter" || spineIds.has(c.chapterId) || chapterReadiness(c) !== "empty"
+  );
+  const have = new Set(keptBase.map((c) => c.chapterId));
   const chapters = [
-    ...base.chapters,
+    ...keptBase,
     ...scaffold.filter((s) => !have.has(s.id)).map(chapterFromSpine),
   ].map((ch) => {
     if (ch.kind !== "chapter") return ch; // dailies are artist-owned, never assembled

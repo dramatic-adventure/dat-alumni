@@ -21,6 +21,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { T, FONT, accent as accentHex } from "@/components/field-kit/tokens";
 import {
@@ -133,16 +134,31 @@ function initDraft(
     accent: "teal",
     pullQuote: "",
     chapters: chapters.map(chapterFromSpine),
-    updatedAt: new Date().toISOString(),
+    // Epoch, NOT now (same rule as the assembler's freshDraft): merely OPENING
+    // the Composer is not an artist edit, and a fresh-init stamped "now" would
+    // beat every assembled draft in last-write-wins forever. This is exactly
+    // how a day-1 device draft clobbered the assembled cards on 2026-08-19.
+    // updateDraft bumps updatedAt on the first real edit.
+    updatedAt: new Date(0).toISOString(),
   };
 }
 
-/** Additive reconcile: a chapter added to the itinerary mid-trip gains a slot. */
+/**
+ * Reconcile with the current spine: a chapter added to the itinerary mid-trip
+ * gains a slot (additive), and EMPTY chapters from retired spine ids — a draft
+ * created against an older itinerary generation — are dropped, because they
+ * render as blank duplicate pages next to their replacements. Anything the
+ * artist actually wrote is kept forever, spine or no spine; dailies untouched.
+ */
 function reconcileWithSpine(draft: JourneyDraft, chapters: ComposerChapter[]): JourneyDraft {
-  const have = new Set(draft.chapters.map((c) => c.chapterId));
+  const spineIds = new Set(chapters.map((c) => c.id));
+  const kept = draft.chapters.filter(
+    (c) => c.kind !== "chapter" || spineIds.has(c.chapterId) || chapterReadiness(c) !== "empty"
+  );
+  const have = new Set(kept.filter((c) => c.kind === "chapter").map((c) => c.chapterId));
   const missing = chapters.filter((ch) => !have.has(ch.id));
-  if (!missing.length) return draft;
-  return { ...draft, chapters: [...draft.chapters, ...missing.map(chapterFromSpine)] };
+  if (!missing.length && kept.length === draft.chapters.length) return draft;
+  return { ...draft, chapters: [...kept, ...missing.map(chapterFromSpine)] };
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -1239,9 +1255,23 @@ const inputStyle: React.CSSProperties = {
 
 const sheetOverlay: React.CSSProperties = {
   position: "fixed", inset: 0, zIndex: 300, background: "rgba(10,7,12,0.96)",
-  display: "flex", flexDirection: "column", padding: "18px clamp(14px, 4vw, 32px) 20px",
+  display: "flex", flexDirection: "column",
+  // Safe-area aware: content must clear the notch/status bar and the home bar.
+  padding:
+    "max(18px, env(safe-area-inset-top)) clamp(14px, 4vw, 32px) max(20px, env(safe-area-inset-bottom))",
   overflowY: "auto",
 };
+
+// Every sheet renders through a PORTAL to <body>: position:fixed is computed
+// against the nearest transformed/filtered ancestor, and inside the app shell
+// that produced sheets anchored to the wrong box ("too high", overlapping the
+// page). The body has no transforms, so the overlay always fills the viewport.
+function SheetPortal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  return createPortal(children, document.body);
+}
 
 function SheetHeader({ title, sub, onClose }: { title: string; sub?: string; onClose: () => void }) {
   return (
@@ -1343,6 +1373,7 @@ function ExtrasChooser({
   const chapterLabel = spine ? `${String(spine.num).padStart(2, "0")} · ${spine.verb} ${spine.preposition || "in"} ${spine.place}` : entry.title;
 
   return (
+    <SheetPortal>
     <div role="dialog" aria-modal="true" style={sheetOverlay}>
       <SheetHeader
         title={mode === "photos" ? "Choose photos" : "Choose voice notes"}
@@ -1423,6 +1454,7 @@ function ExtrasChooser({
         </button>
       </div>
     </div>
+    </SheetPortal>
   );
 }
 
@@ -1443,6 +1475,7 @@ function TextEditSheet({
   if (!entry) return null;
   const isResponse = field === "response";
   return (
+    <SheetPortal>
     <div role="dialog" aria-modal="true" style={sheetOverlay}>
       <SheetHeader
         title={isResponse ? "This chapter’s line" : "Your words"}
@@ -1472,6 +1505,7 @@ function TextEditSheet({
         </button>
       </div>
     </div>
+    </SheetPortal>
   );
 }
 
@@ -1509,6 +1543,7 @@ function PlaceCapturesSheet({
   }
 
   return (
+    <SheetPortal>
     <div role="dialog" aria-modal="true" style={sheetOverlay}>
       <SheetHeader
         title="Place your captures"
@@ -1558,5 +1593,6 @@ function PlaceCapturesSheet({
         </div>
       )}
     </div>
+    </SheetPortal>
   );
 }

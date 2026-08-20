@@ -169,6 +169,20 @@ export async function PUT(req: Request) {
         { headers: { "Cache-Control": "no-store, max-age=0" } }
       );
     }
+    // Equal updatedAt = same artist lineage. Keep whichever copy the assembler
+    // enriched more recently — a device push carrying LESS assembly must not
+    // replace it (this is how an empty day-1 device draft erased the assembled
+    // cards on 2026-08-19; the device adopts the richer copy on its next load).
+    if (
+      stored &&
+      stored.draft.updatedAt === draft.updatedAt &&
+      (stored.draft.assembledAt ?? "") > (draft.assembledAt ?? "")
+    ) {
+      return NextResponse.json(
+        { ok: true, stale: true, draft: stored.draft },
+        { headers: { "Cache-Control": "no-store, max-age=0" } }
+      );
+    }
 
     await writeStoredDraft(key, { draft, serverUpdatedAt: new Date().toISOString() });
     return NextResponse.json(
