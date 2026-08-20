@@ -12,6 +12,7 @@
 
 import "server-only";
 import { getStore } from "@netlify/blobs";
+import { isBlobsConfigError } from "@/lib/blobsConfigError";
 import type { JourneyDraft, StoredJourneyDraft } from "@/lib/journeyDraft";
 
 const STORE_NAME = "dat-journey-drafts";
@@ -21,13 +22,6 @@ function norm(s: unknown): string {
 }
 
 const memStore = new Map<string, StoredJourneyDraft>();
-
-function blobsConfigured(): boolean {
-  const isNetlifyRuntime = process.env.NETLIFY === "true" || !!process.env.NETLIFY_SITE_ID;
-  const hasLocalCreds =
-    !!process.env.NETLIFY_SITE_ID?.trim() && !!process.env.NETLIFY_AUTH_TOKEN?.trim();
-  return isNetlifyRuntime || hasLocalCreds;
-}
 
 function blobStore() {
   const siteID = (process.env.NETLIFY_SITE_ID || process.env.SITE_ID || "").trim();
@@ -44,23 +38,29 @@ export function draftStorageKey(
   return `${slug}/${kind}/${norm(programId)}`;
 }
 
+// Always TRY Blobs; the memory map is only for local `next dev` without creds
+// (isBlobsConfigError). Gating on build-time env vars here silently sent every
+// production draft write to per-instance memory — see lib/blobsConfigError.ts.
 export async function readStoredDraft(key: string): Promise<StoredJourneyDraft | null> {
-  if (blobsConfigured()) {
-    try {
-      const v = await blobStore().get(key, { type: "json" });
-      return (v as StoredJourneyDraft | null) ?? null;
-    } catch (err) {
-      console.error("[field-kit draft] blob get failed:", err);
-      return null;
-    }
+  try {
+    const v = await blobStore().get(key, { type: "json" });
+    return (v as StoredJourneyDraft | null) ?? null;
+  } catch (err) {
+    if (isBlobsConfigError(err)) return memStore.get(key) ?? null;
+    console.error("[field-kit draft] blob get failed:", err);
+    return null;
   }
-  return memStore.get(key) ?? null;
 }
 
 export async function writeStoredDraft(key: string, value: StoredJourneyDraft): Promise<void> {
-  if (blobsConfigured()) {
+  try {
     await blobStore().setJSON(key, value);
-    return;
+  } catch (err) {
+    if (isBlobsConfigError(err)) {
+      memStore.set(key, value);
+      return;
+    }
+    // A real Blobs failure must be loud — never silently lose an artist's draft.
+    throw err;
   }
-  memStore.set(key, value);
 }

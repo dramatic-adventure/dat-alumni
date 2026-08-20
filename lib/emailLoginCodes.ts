@@ -15,6 +15,7 @@
 import "server-only";
 import { getStore } from "@netlify/blobs";
 import { createHash, createHmac, randomInt } from "crypto";
+import { isBlobsConfigError } from "@/lib/blobsConfigError";
 
 const STORE_NAME = "email-login-codes";
 const CODE_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 2 weeks
@@ -35,15 +36,11 @@ type CodeRecord = {
 };
 
 // ── Storage backend selection ──────────────────────────────────
+// Always TRY Blobs; the memory map is only for local `next dev` without creds
+// (isBlobsConfigError). The old build-time-env gate silently kept production
+// login codes in per-instance memory — a code only verified if the request
+// happened to hit the same warm lambda. See lib/blobsConfigError.ts.
 const memStore = new Map<string, CodeRecord>();
-
-function blobsConfigured() {
-  const isNetlifyRuntime =
-    process.env.NETLIFY === "true" || !!process.env.NETLIFY_SITE_ID;
-  const hasLocalCreds =
-    !!process.env.NETLIFY_SITE_ID?.trim() && !!process.env.NETLIFY_AUTH_TOKEN?.trim();
-  return isNetlifyRuntime || hasLocalCreds;
-}
 
 function getBlobStore() {
   const siteID = (process.env.NETLIFY_SITE_ID || process.env.SITE_ID || "").trim();
@@ -53,43 +50,38 @@ function getBlobStore() {
 }
 
 async function getRecord(key: string): Promise<CodeRecord | null> {
-  if (blobsConfigured()) {
-    try {
-      const store = getBlobStore();
-      const v = await store.get(key, { type: "json" });
-      return (v as CodeRecord | null) ?? null;
-    } catch (err) {
-      console.error("[emailLoginCodes] blob get failed:", err);
-      return null;
-    }
+  try {
+    const v = await getBlobStore().get(key, { type: "json" });
+    return (v as CodeRecord | null) ?? null;
+  } catch (err) {
+    if (isBlobsConfigError(err)) return memStore.get(key) ?? null;
+    console.error("[emailLoginCodes] blob get failed:", err);
+    return null;
   }
-  return memStore.get(key) ?? null;
 }
 
 async function setRecord(key: string, record: CodeRecord): Promise<void> {
-  if (blobsConfigured()) {
-    try {
-      const store = getBlobStore();
-      await store.setJSON(key, record);
+  try {
+    await getBlobStore().setJSON(key, record);
+  } catch (err) {
+    if (isBlobsConfigError(err)) {
+      memStore.set(key, record);
       return;
-    } catch (err) {
-      console.error("[emailLoginCodes] blob set failed:", err);
     }
+    console.error("[emailLoginCodes] blob set failed:", err);
   }
-  memStore.set(key, record);
 }
 
 async function deleteRecord(key: string): Promise<void> {
-  if (blobsConfigured()) {
-    try {
-      const store = getBlobStore();
-      await store.delete(key);
+  try {
+    await getBlobStore().delete(key);
+  } catch (err) {
+    if (isBlobsConfigError(err)) {
+      memStore.delete(key);
       return;
-    } catch (err) {
-      console.error("[emailLoginCodes] blob delete failed:", err);
     }
+    console.error("[emailLoginCodes] blob delete failed:", err);
   }
-  memStore.delete(key);
 }
 
 // ── Helpers ──────────────────────────────────────────────────────

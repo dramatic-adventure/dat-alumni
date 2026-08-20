@@ -20,6 +20,7 @@
 
 import "server-only";
 import { getStore } from "@netlify/blobs";
+import { isBlobsConfigError } from "@/lib/blobsConfigError";
 import { clusterRoster } from "@/lib/fieldKitAccess";
 import { loadProgramItinerary } from "@/lib/loadProgram";
 import { allDays, resolveToday, type ProgramItinerary } from "@/lib/programItinerary";
@@ -77,13 +78,6 @@ type NudgeLog = {
 const NUDGE_STORE_NAME = "dat-journey-nudges";
 const memNudgeLogs = new Map<string, NudgeLog>();
 
-function blobsConfigured(): boolean {
-  const isNetlifyRuntime = process.env.NETLIFY === "true" || !!process.env.NETLIFY_SITE_ID;
-  const hasLocalCreds =
-    !!process.env.NETLIFY_SITE_ID?.trim() && !!process.env.NETLIFY_AUTH_TOKEN?.trim();
-  return isNetlifyRuntime || hasLocalCreds;
-}
-
 function nudgeStore() {
   const siteID = (process.env.NETLIFY_SITE_ID || process.env.SITE_ID || "").trim();
   const token = (process.env.NETLIFY_AUTH_TOKEN || "").trim();
@@ -91,12 +85,16 @@ function nudgeStore() {
   return getStore(NUDGE_STORE_NAME);
 }
 
+// Always TRY Blobs; memory only when Blobs is genuinely unconfigured (local
+// `next dev`). The old build-time-env gate sent every claim-first write to
+// per-instance memory in production — which is how a duplicate nudge blast
+// became possible on 2026-08-19. See lib/blobsConfigError.ts.
 async function readNudgeLog(programId: string): Promise<NudgeLog> {
-  if (!blobsConfigured()) return memNudgeLogs.get(programId) ?? {};
   try {
     const v = await nudgeStore().get(programId, { type: "json" });
     return (v as NudgeLog | null) ?? {};
   } catch (err) {
+    if (isBlobsConfigError(err)) return memNudgeLogs.get(programId) ?? {};
     // Fail CLOSED on read errors: treat as already-sent so a flaky read can
     // never cause a duplicate blast; the claim-first write is the source of truth.
     console.error("[journey-nudge] log read failed — skipping this run:", err);
@@ -105,11 +103,16 @@ async function readNudgeLog(programId: string): Promise<NudgeLog> {
 }
 
 async function writeNudgeLog(programId: string, log: NudgeLog): Promise<void> {
-  if (!blobsConfigured()) {
-    memNudgeLogs.set(programId, log);
-    return;
+  try {
+    await nudgeStore().setJSON(programId, log);
+  } catch (err) {
+    if (isBlobsConfigError(err)) {
+      memNudgeLogs.set(programId, log);
+      return;
+    }
+    // A claim that didn't persist is how duplicates happen — fail loudly.
+    throw err;
   }
-  await nudgeStore().setJSON(programId, log);
 }
 
 // ── 1. Auto-assembly ─────────────────────────────────────────────────────────
