@@ -205,7 +205,7 @@ export const programMap: Record<string, ProgramData> = {
   cluster: "passage-slovakia-2026",
   year: 2026,
   season: 20,
-  url: "/dat-lab/kosice",
+  url: "/dat-lab/kosice/2026",
   externalUrl: "https://www.dramaticadventure.com/dat-lab",
   artists: {
     "jesse-baxter": ["Artistic Director"],

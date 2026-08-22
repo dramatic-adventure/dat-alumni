@@ -1,7 +1,7 @@
 // app/dat-lab/kosice/page.tsx
-// DAT Lab: Košice 2026 — artist-facing recruitment page (EN + SK).
-// Part of PASSAGE: Slovakia 2026; culminates in Water That Wanders
-// (/theatre/water-that-wanders) on Saturday, August 1.
+// DAT Lab: Košice — evergreen city-edition page (EN + SK). The founding
+// edition of DAT Lab, in partnership with ETP Slovensko; returns June–July
+// 2027. The 2026 edition is archived verbatim at /dat-lab/kosice/2026.
 // Client Component for the language toggle; metadata lives in layout.tsx.
 "use client";
 
@@ -18,201 +18,70 @@ const STORAGE_KEY = "datlab-lang-pref";
 
 const copy = {
   en: {
-    eyebrow: "PASSAGE: Slovakia 2026",
+    eyebrow: "The Founding Edition",
     title: "DAT Lab: Košice",
     tagline:
-      "A creative laboratory with NYC-based DAT artists and local theatre artists in Košice.",
-    dates: "July 17 – August 1, 2026 · Košice, Slovakia",
+      "DAT's creative laboratory in Košice — original performance material devised with local theatre artists, in partnership with ETP Slovensko.",
+    dates: "Returns June – July 2027 · Košice, Slovakia",
     invite:
-      "We are hoping to connect with experienced local theatre artists — especially Roma artists — who may be interested in joining us as a Collaborating Artist or Guest Artist.",
+      "The artist call for the 2027 edition opens in early 2027. Interested artists are welcome to reach out now — we'll be in touch when details are set.",
 
     aboutHeading: "The Lab",
     aboutP1:
-      "DAT Lab is a platform for creating and shaping original, site-responsive performance material. The work will explore the geographic and cultural landscape of Eastern Slovakia, springing from cross-cultural encounters and the lived experiences, local mythologies, questions, and creative imaginations of the artists in the room.",
-    aboutP2:
-      "Together, we will devise and develop new material through creative writing, movement and dance explorations, improvisation, and composition work. This is a place to test material, follow creative impulses, shape fragments of ideas, listen deeply, discover what is resonating, and develop all-new scenes and moments together.",
-    aboutP3:
-      "We are essentially bringing our version of the NYC black box theatre development process to Košice — intimate, artist-centered, collaborative, immediate, and full of life. And we'd love to marry that with the ways you like to develop new work.",
+      "DAT Lab is Dramatic Adventure Theatre's platform for creating and shaping original performance material — intimate, artist-centered, collaborative, immediate. Košice is where it began as a program: the founding edition, created with ETP Slovensko, brought together US, Slovak, and Romani artists to devise new work rooted in Eastern Slovakia. DAT Lab now also runs in Baltimore and Quito.",
     videoCaption:
       "An example of the DAT Lab process — inspired by our work in Ecuador.",
 
-    waterEyebrow: "Final public sharing · Saturday, August 1",
-    waterIntro:
-      "Inspired by the poetry of Papusza, DAT Lab culminates in an eclectic evening of shared works-in-progress — creative articulations that represent new ideas, raw impressions, and fresh remembrances.",
-    waterQuote:
-      "US, Slovak, and Romani artists unite to share this eclectic evening of work in progress. Theatre, storytelling, and poetry fuse as we explore the confluence of lived experience that happens when people from different worlds join hands and step together into waters less known.",
-    waterCta: "Event details",
-
-    hopeHeading: "Our Hope",
-    hopeBody:
-      "Our hope is not only to create a meaningful final sharing this summer, but also to begin building artistic relationships in Košice that could grow into future collaborations — including the possible seed of a future full-length production.",
-
-    nextHeading: "The Lab Continues — Summer 2027",
+    nextEyebrow: "Next · Summer 2027",
+    nextHeading: "The Lab Continues",
     nextP1:
-      "DAT Lab: Košice returns in June–July 2027, building on the 2026 residency in partnership with ETP Slovensko. Košice is the founding edition of DAT Lab, which now also runs in Baltimore and Quito.",
+      "DAT Lab: Košice returns in June–July 2027, building on the 2026 residency in partnership with ETP Slovensko.",
     nextP2:
       "Beginning in summer 2027, the Košice Lab starts work on a new original piece — untitled for now — devised across the 2027 and 2028 cohorts with ETP as co-producer, and made to travel: its destination is the Edinburgh Festival Fringe in 2029. Details and the 2027 artist call arrive in early 2027.",
 
-    waysHeading: "Ways to Get Involved",
-    ways: [
-      {
-        name: "Collaborating Artist",
-        body: "Participates in the Košice creative process most fully: joining DAT Lab workshops, developing material with the ensemble, contributing artistically to the room, and appearing in or contributing to Water That Wanders on Saturday, August 1.",
-      },
-      {
-        name: "Guest Artist",
-        body: "Joins for a shorter exchange — leading a workshop, sharing part of an artistic practice, joining a rehearsal session, offering dramaturgical insight, or contributing to one part of the final sharing.",
-      },
-      {
-        name: "Emerging Artist",
-        body: "An advanced student artist from a local conservatory, university, or theatre training program who joins selected workshops, learns from the process, and may contribute to the final sharing. Emerging Artists receive public credit for their involvement.",
-      },
-    ],
-
-    scheduleHeading: "Schedule",
-    scheduleNote:
-      "All workshops will be held in Košice. Dates will not change; exact workshop times may be adjusted to better serve the needs of our local artists.",
-    schedule: [
-      {
-        date: "Friday, July 17",
-        name: "DAT Lab Workshop: Opening",
-        body: "Introductions, artistic orientation, first creative development session, and opening exchange.",
-      },
-      {
-        date: "Saturday, July 18",
-        name: "DAT Lab Workshop: Artistic Exchange",
-        body: "Workshop, devising, shared practice, and early material development. Homework to be assigned.",
-      },
-      {
-        date: "Thursday, July 30",
-        name: "DAT Lab Workshop: Growing & Shaping",
-        body: "Homework sharing. Grow and shape what has been created.",
-      },
-      {
-        date: "Friday, July 31",
-        name: "Rehearsal & Refinement",
-        body: "Finalize performance structure. Clarify and sharpen contributions — edits, refinements, staging. Rehearse pieces.",
-      },
-      {
-        date: "Saturday, August 1",
-        name: "Water That Wanders",
-        body: "Final preparations, including a pre-performance run-through. Sharing works in progress at the performance of Water That Wanders.",
-      },
-    ],
-
-    notesHeading: "Good to Know",
-    notes: [
-      "There may also be a separate, optional opportunity to visit or volunteer at theatre workshops and performances with local youth in Zemplínska Teplica or Luník IX.",
-      "We are interested in individual theatre artists with their own practice, voice, questions, methods, and creative imagination. We are not asking any artist to “represent” an entire community or culture.",
-    ],
+    archiveHeading: "The 2026 Edition",
+    archiveBody:
+      "The founding residency ran July 17 – August 1, 2026, uniting US, Slovak, and Romani artists in two weeks of devising, and culminated in the public sharing Water That Wanders. The original edition page is preserved in full.",
+    archiveCta: "Visit the 2026 archive",
 
     connectHeading: "Connect",
     connectBody:
-      "Interested artists should email a brief introduction: where you're based, your theatre or performance background, your availability for the Košice dates above, how you might want to be involved, and any links to your work — website, video, CV, or social media.",
-    connectForward:
-      "Know someone who might be a good fit? We'd be grateful if you shared this page or connected us directly.",
+      "Want to be part of the 2027 edition? Email a brief introduction: where you're based, your theatre or performance background, how you might want to be involved, and any links to your work — and we'll be in touch when the artist call opens.",
     connectCta: "Email Jesse",
     connectName: "Jesse Baxter",
     connectRole: "Artistic Director, Dramatic Adventure Theatre",
   },
 
   sk: {
-    eyebrow: "PASSAGE: Slovakia 2026",
+    eyebrow: "Zakladajúca edícia",
     title: "DAT Lab: Košice",
     tagline:
-      "Tvorivé laboratórium, v ktorom sa stretnú umelci a umelkyne DAT pôsobiaci v New Yorku s miestnymi divadelnými tvorcami v Košiciach.",
-    dates: "17. júla – 1. augusta 2026 · Košice, Slovensko",
+      "Tvorivé laboratórium DAT v Košiciach — pôvodný performatívny materiál vytváraný s miestnymi divadelnými umelcami, v partnerstve s ETP Slovensko.",
+    dates: "Vracia sa v júni – júli 2027 · Košice, Slovensko",
     invite:
-      "Radi by sme sa spojili so skúsenými miestnymi divadelnými umelcami a umelkyňami, najmä s rómskymi tvorcami, ktorí by mali záujem zapojiť sa ako spolupracujúci alebo hosťujúci umelci.",
+      "Výzvu pre umelcov na edíciu 2027 zverejníme začiatkom roka 2027. Ak máte záujem, môžete sa nám ozvať už teraz — ozveme sa vám, keď budú známe podrobnosti.",
 
     aboutHeading: "O laboratóriu",
     aboutP1:
-      "DAT Lab je platforma na tvorbu a rozvíjanie pôvodného performatívneho materiálu, ktorý vyrastá z konkrétneho miesta a reaguje naň. Budeme skúmať geografickú a kultúrnu krajinu východného Slovenska. Východiskom budú medzikultúrne stretnutia, osobné skúsenosti, miestne príbehy a mytológie, otázky a tvorivá predstavivosť zúčastnených umelcov.",
-    aboutP2:
-      "Spoločne budeme vytvárať a rozvíjať nový materiál prostredníctvom tvorivého písania, pohybového a tanečného skúmania, improvizácie a kompozičnej práce. Je to priestor, kde môžeme skúšať nový materiál, nasledovať tvorivé impulzy, rozvíjať úlomky nápadov, pozorne si načúvať, objavovať, čo rezonuje, a spoločne vytvárať úplne nové scény a momenty.",
-    aboutP3:
-      "Do Košíc prinášame našu vlastnú podobu newyorského procesu rozvíjania novej tvorby v komornom black-box divadle. Je intímny, sústredený na umelcov, kolektívny, bezprostredný a živý. Radi by sme ho prepojili s vašimi vlastnými spôsobmi tvorby a rozvíjania nových diel.",
+      "DAT Lab je platforma Dramatic Adventure Theatre na tvorbu a rozvíjanie pôvodného performatívneho materiálu — intímna, sústredená na umelcov, kolektívna a bezprostredná. V Košiciach vznikla ako program: zakladajúca edícia, vytvorená s ETP Slovensko, spojila amerických, slovenských a rómskych umelcov pri tvorbe nových diel zakorenených vo východnom Slovensku. DAT Lab dnes funguje aj v Baltimore a v Quite.",
     videoCaption:
       "Ukážka tvorivého procesu DAT Lab, inšpirovaná našou prácou v Ekvádore.",
 
-    waterEyebrow: "Záverečná verejná prezentácia · sobota 1. augusta",
-    waterIntro:
-      "Inšpiráciou pre DAT Lab je poézia rómskej poetky známej ako Papusza. Laboratórium vyvrcholí pestrým večerom rozpracovaných diel: tvorivých výpovedí zachytávajúcich nové myšlienky, bezprostredné dojmy a čerstvo vynorené spomienky.",
-    waterQuote:
-      "Americkí, slovenskí a rómski umelci a umelkyne spoločne predstavia pestrý večer rozpracovanej tvorby. Divadlo, rozprávanie príbehov a poézia sa prepoja, keď budeme skúmať sútok osobných skúseností, ktorý vzniká, keď sa ľudia z rôznych svetov chytia za ruky a spoločne vstúpia do menej známych vôd.",
-    waterCta: "Podrobnosti o podujatí",
-
-    hopeHeading: "Čo by sme radi dosiahli",
-    hopeBody:
-      "Nejde nám len o to, aby sme toto leto vytvorili zmysluplnú záverečnú prezentáciu. Chceme tiež začať budovať umelecké vzťahy v Košiciach, z ktorých môžu vyrásť ďalšie spolupráce, možno aj zárodok budúcej celovečernej inscenácie.",
-
-    nextHeading: "Laboratórium pokračuje — leto 2027",
+    nextEyebrow: "Ďalej · leto 2027",
+    nextHeading: "Laboratórium pokračuje",
     nextP1:
-      "DAT Lab: Košice sa vracia v júni a júli 2027 a nadväzuje na rezidenciu z roku 2026, ktorá vznikla v partnerstve s ETP Slovensko. Košice sú zakladajúcou edíciou programu DAT Lab, ktorý dnes funguje aj v Baltimore a v Quite.",
+      "DAT Lab: Košice sa vracia v júni a júli 2027 a nadväzuje na rezidenciu z roku 2026, ktorá vznikla v partnerstve s ETP Slovensko.",
     nextP2:
       "V lete 2027 začne košické laboratórium pracovať na novom pôvodnom diele — zatiaľ bez názvu — ktoré budú spoločne vytvárať ročníky 2027 a 2028 s ETP ako koproducentom. Dielo vzniká tak, aby cestovalo: jeho cieľom je Edinburgh Festival Fringe 2029. Podrobnosti a výzvu pre umelcov zverejníme začiatkom roka 2027.",
 
-    waysHeading: "Možnosti zapojenia",
-    ways: [
-      {
-        name: "Spolupracujúci umelec / spolupracujúca umelkyňa",
-        sub: "Collaborating Artist",
-        body: "Do košického tvorivého procesu sa zapája v najväčšom rozsahu. Zúčastňuje sa workshopov DAT Lab, rozvíja materiál spolu s celým tímom, prináša do procesu vlastný umelecký vklad a vystúpi v programe Water That Wanders v sobotu 1. augusta alebo sa na ňom inak umelecky podieľa.",
-      },
-      {
-        name: "Hosťujúci umelec / hosťujúca umelkyňa",
-        sub: "Guest Artist",
-        body: "Zapojí sa do kratšej umeleckej výmeny. Môže viesť workshop, predstaviť časť svojej umeleckej praxe, pripojiť sa ku skúške, ponúknuť dramaturgický pohľad alebo prispieť k jednej časti záverečnej prezentácie.",
-      },
-      {
-        name: "Umelec alebo umelkyňa na začiatku profesionálnej dráhy",
-        sub: "Emerging Artist",
-        body: "Pokročilý študent alebo študentka miestneho konzervatória, univerzity či iného programu divadelného vzdelávania. Zúčastní sa vybraných workshopov, spozná tvorivý proces DAT Lab a môže prispieť aj k záverečnej prezentácii. Všetci zapojení umelci a umelkyne budú verejne uvedení menom.",
-      },
-    ],
-
-    scheduleHeading: "Program",
-    scheduleNote:
-      "Všetky workshopy sa uskutočnia v Košiciach. Dátumy sú pevné. Presné časy workshopov ešte môžeme upraviť tak, aby čo najlepšie vyhovovali potrebám miestnych umelcov.",
-    schedule: [
-      {
-        date: "Piatok 17. júla",
-        name: "DAT Lab Workshop: Úvod",
-        body: "Predstavenie účastníkov, uvedenie do umeleckého procesu, prvé tvorivé stretnutie a úvodná výmena.",
-      },
-      {
-        date: "Sobota 18. júla",
-        name: "DAT Lab Workshop: Umelecká výmena",
-        body: "Workshop, kolektívna autorská tvorba, zdieľanie umeleckých postupov a prvé rozvíjanie materiálu. Na záver zadáme tvorivú úlohu na obdobie medzi stretnutiami.",
-      },
-      {
-        date: "Štvrtok 30. júla",
-        name: "DAT Lab Workshop: Rozvíjanie a tvarovanie",
-        body: "Prezentácia práce pripravenej medzi stretnutiami. Ďalšie rozvíjanie a tvarovanie vzniknutého materiálu.",
-      },
-      {
-        date: "Piatok 31. júla",
-        name: "Skúška a dolaďovanie",
-        body: "Dotvorenie štruktúry predstavenia. Spresnenie a vybrúsenie jednotlivých príspevkov, úpravy, inscenovanie a skúšanie jednotlivých častí programu.",
-      },
-      {
-        date: "Sobota 1. augusta",
-        name: "Water That Wanders",
-        body: "Záverečné prípravy vrátane prechodu celého programu pred vystúpením. Verejná prezentácia rozpracovaných diel v rámci predstavenia Water That Wanders.",
-      },
-    ],
-
-    notesHeading: "Čo je dobré vedieť",
-    notes: [
-      "Možno sa naskytne aj samostatná, nepovinná príležitosť navštíviť divadelné workshopy a predstavenia s miestnymi mladými ľuďmi v Zemplínskej Teplici alebo na Luníku IX, prípadne sa do nich zapojiť ako dobrovoľník.",
-      "Hľadáme jednotlivých divadelných umelcov a umelkyne s vlastnou praxou, hlasom, otázkami, metódami a tvorivou predstavivosťou. Od nikoho nežiadame, aby „zastupoval“ celú komunitu alebo kultúru.",
-    ],
+    archiveHeading: "Edícia 2026",
+    archiveBody:
+      "Zakladajúca rezidencia sa uskutočnila od 17. júla do 1. augusta 2026. Spojila amerických, slovenských a rómskych umelcov v dvoch týždňoch kolektívnej tvorby a vyvrcholila verejnou prezentáciou Water That Wanders. Pôvodnú stránku edície uchovávame v plnom znení.",
+    archiveCta: "Navštíviť archív 2026",
 
     connectHeading: "Kontakt",
     connectBody:
-      "Máte záujem? Pošlite nám e-mail s krátkym predstavením seba a svojej práce. Napíšte nám, kde pôsobíte, aké máte skúsenosti s divadlom alebo performanciou, či ste k dispozícii v uvedených košických termínoch a ako by ste sa chceli zapojiť. Pripojiť môžete aj odkazy na svoju tvorbu, napríklad webovú stránku, video, životopis alebo sociálne siete.",
-    connectForward:
-      "Poznáte niekoho, komu by táto príležitosť mohla sadnúť? Budeme vďační, ak mu alebo jej pošlete túto stránku alebo nás priamo prepojíte.",
+      "Chcete byť súčasťou edície 2027? Pošlite nám e-mail s krátkym predstavením: kde pôsobíte, aké máte skúsenosti s divadlom alebo performanciou, ako by ste sa chceli zapojiť, a pripojte odkazy na svoju tvorbu. Ozveme sa vám, keď zverejníme výzvu pre umelcov.",
     connectCta: "Napísať Jessemu",
     connectName: "Jesse Baxter",
     connectRole: "umelecký riaditeľ, Dramatic Adventure Theatre",
@@ -284,8 +153,6 @@ export default function DatLabKosicePage() {
         <div className="datlab-inner">
           <h2 className="datlab-h2">{t.aboutHeading}</h2>
           <p>{t.aboutP1}</p>
-          <p>{t.aboutP2}</p>
-          <p>{t.aboutP3}</p>
           <figure className="datlab-video">
             <div className="datlab-video-frame">
               <iframe
@@ -302,82 +169,26 @@ export default function DatLabKosicePage() {
         </div>
       </section>
 
-      {/* ---------- Water That Wanders ---------- */}
-      <section className="datlab-section datlab-water">
-        <div className="datlab-inner">
-          <p className="datlab-eyebrow datlab-eyebrow-accent">{t.waterEyebrow}</p>
-          <h2 className="datlab-water-title">Water That Wanders</h2>
-          <p>{t.waterIntro}</p>
-          <blockquote className="datlab-quote">{t.waterQuote}</blockquote>
-          <Link href="/theatre/water-that-wanders" className="datlab-btn">
-            {t.waterCta}
-          </Link>
-        </div>
-      </section>
-
-      {/* ---------- Our Hope ---------- */}
-      <section className="datlab-section">
-        <div className="datlab-inner">
-          <h2 className="datlab-h2">{t.hopeHeading}</h2>
-          <p>{t.hopeBody}</p>
-        </div>
-      </section>
-
       {/* ---------- The Lab Continues — Summer 2027 ---------- */}
-      <section className="datlab-section">
+      <section className="datlab-section datlab-next">
         <div className="datlab-inner">
-          <h2 className="datlab-h2">{t.nextHeading}</h2>
-          <p>{t.nextP1}</p>
-          <p>{t.nextP2}</p>
+          <p className="datlab-eyebrow datlab-eyebrow-accent">
+            {t.nextEyebrow}
+          </p>
+          <h2 className="datlab-next-title">{t.nextHeading}</h2>
+          <p className="datlab-next-body">{t.nextP1}</p>
+          <p className="datlab-next-body">{t.nextP2}</p>
         </div>
       </section>
 
-      {/* ---------- Ways to Get Involved ---------- */}
+      {/* ---------- The 2026 Edition ---------- */}
       <section className="datlab-section">
         <div className="datlab-inner">
-          <h2 className="datlab-h2">{t.waysHeading}</h2>
-          <div className="datlab-cards">
-            {t.ways.map((w) => (
-              <div key={w.name} className="datlab-card">
-                <h3 className="datlab-card-title">{w.name}</h3>
-                {"sub" in w && (
-                  <p className="datlab-card-sub">{w.sub}</p>
-                )}
-                <p className="datlab-card-body">{w.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---------- Schedule ---------- */}
-      <section className="datlab-section">
-        <div className="datlab-inner">
-          <h2 className="datlab-h2">{t.scheduleHeading}</h2>
-          <p className="datlab-schedule-note">{t.scheduleNote}</p>
-          <ol className="datlab-schedule">
-            {t.schedule.map((s) => (
-              <li key={s.date} className="datlab-schedule-row">
-                <div className="datlab-schedule-date">{s.date}</div>
-                <div>
-                  <h3 className="datlab-schedule-name">{s.name}</h3>
-                  <p className="datlab-schedule-body">{s.body}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* ---------- Notes ---------- */}
-      <section className="datlab-section">
-        <div className="datlab-inner">
-          <h2 className="datlab-h2">{t.notesHeading}</h2>
-          {t.notes.map((n) => (
-            <p key={n.slice(0, 24)} className="datlab-note">
-              {n}
-            </p>
-          ))}
+          <h2 className="datlab-h2">{t.archiveHeading}</h2>
+          <p>{t.archiveBody}</p>
+          <Link href="/dat-lab/kosice/2026" className="datlab-btn">
+            {t.archiveCta}
+          </Link>
         </div>
       </section>
 
@@ -386,7 +197,6 @@ export default function DatLabKosicePage() {
         <div className="datlab-inner">
           <h2 className="datlab-h2">{t.connectHeading}</h2>
           <p>{t.connectBody}</p>
-          <p>{t.connectForward}</p>
           <a
             className="datlab-btn datlab-btn-solid"
             href="mailto:jesse@dramaticadventure.com?subject=DAT%20Lab%3A%20Ko%C5%A1ice"
@@ -398,7 +208,9 @@ export default function DatLabKosicePage() {
             <br />
             <span>{t.connectRole}</span>
             <br />
-            <a href="mailto:jesse@dramaticadventure.com">jesse@dramaticadventure.com</a>
+            <a href="mailto:jesse@dramaticadventure.com">
+              jesse@dramaticadventure.com
+            </a>
             {" · "}
             <a
               href="https://www.dramaticadventure.com"
@@ -552,14 +364,14 @@ export default function DatLabKosicePage() {
           margin-top: 0.9rem;
         }
 
-        /* ---------- Water ---------- */
-        .datlab-water {
+        /* ---------- Summer 2027 ---------- */
+        .datlab-next {
           background: #1a0510;
           border-top: 1px solid rgba(242, 51, 89, 0.35);
           border-bottom: 1px solid rgba(242, 51, 89, 0.35);
           text-align: center;
         }
-        .datlab-water-title {
+        .datlab-next-title {
           font-family: "Anton", var(--font-anton), sans-serif;
           font-size: clamp(1.9rem, 5vw, 2.8rem);
           text-transform: uppercase;
@@ -567,16 +379,8 @@ export default function DatLabKosicePage() {
           letter-spacing: 0.03em;
           margin: 0 0 1.25rem;
         }
-        .datlab-quote {
-          font-family: "Space Grotesk", var(--font-space-grotesk), sans-serif;
-          font-size: 1.08rem;
-          font-style: italic;
-          color: rgba(255, 255, 255, 0.9);
-          border-left: 3px solid #f23359;
+        .datlab-next-body {
           text-align: left;
-          margin: 1.75rem auto;
-          padding: 0.25rem 0 0.25rem 1.25rem;
-          max-width: 36em;
         }
 
         /* ---------- Buttons ---------- */
@@ -607,93 +411,6 @@ export default function DatLabKosicePage() {
           background: #f23359;
           border-color: #f23359;
           color: #fff;
-        }
-
-        /* ---------- Cards ---------- */
-        .datlab-cards {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 1.1rem;
-        }
-        .datlab-card {
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 12px;
-          padding: 1.4rem 1.5rem;
-        }
-        .datlab-card-title {
-          font-family: "Space Grotesk", var(--font-space-grotesk), sans-serif;
-          font-size: 1.12rem;
-          font-weight: 700;
-          color: #ffcc00;
-          margin: 0 0 0.5rem;
-        }
-        .datlab-card-sub {
-          font-family: "Space Grotesk", var(--font-space-grotesk), sans-serif;
-          font-size: 0.78rem;
-          font-weight: 600;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: rgba(255, 255, 255, 0.5);
-          margin: -0.25rem 0 0.6rem !important;
-        }
-        .datlab-card-body {
-          margin: 0;
-          color: rgba(255, 255, 255, 0.8);
-          font-size: 0.98rem;
-        }
-
-        /* ---------- Schedule ---------- */
-        .datlab-schedule-note {
-          font-size: 0.95rem;
-          color: rgba(255, 255, 255, 0.65);
-        }
-        .datlab-schedule {
-          list-style: none;
-          margin: 1.75rem 0 0;
-          padding: 0;
-          display: grid;
-          gap: 1.4rem;
-        }
-        .datlab-schedule-row {
-          display: grid;
-          grid-template-columns: 10rem 1fr;
-          gap: 1rem;
-          align-items: start;
-          border-left: 3px solid rgba(242, 51, 89, 0.55);
-          padding-left: 1.1rem;
-        }
-        .datlab-schedule-date {
-          font-family: "Space Grotesk", var(--font-space-grotesk), sans-serif;
-          font-size: 0.88rem;
-          font-weight: 600;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: #ffcc00;
-          padding-top: 0.15rem;
-        }
-        .datlab-schedule-name {
-          font-family: "Space Grotesk", var(--font-space-grotesk), sans-serif;
-          font-size: 1.05rem;
-          font-weight: 700;
-          color: #fff;
-          margin: 0 0 0.3rem;
-        }
-        .datlab-schedule-body {
-          margin: 0;
-          font-size: 0.95rem;
-          color: rgba(255, 255, 255, 0.75);
-        }
-        @media (max-width: 560px) {
-          .datlab-schedule-row {
-            grid-template-columns: 1fr;
-            gap: 0.25rem;
-          }
-        }
-
-        /* ---------- Notes ---------- */
-        .datlab-note {
-          font-size: 0.98rem;
         }
 
         /* ---------- Connect ---------- */

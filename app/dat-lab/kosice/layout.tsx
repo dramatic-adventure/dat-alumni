@@ -1,21 +1,26 @@
 // app/dat-lab/kosice/layout.tsx
-// Holds metadata for the DAT Lab: Košice page (must be a Server Component,
-// since page.tsx is a Client Component for the EN/SK language toggle).
+// Metadata for the evergreen DAT Lab: Košice city-edition page (must be a
+// Server Component, since page.tsx is a Client Component for the EN/SK
+// toggle). The archived 2026 edition overrides this in 2026/layout.tsx.
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: "DAT Lab: Košice — Dramatic Adventure Theatre",
   description:
-    "A creative laboratory in Košice with NYC-based DAT artists and local theatre artists, culminating in Water That Wanders on August 1, 2026. Part of PASSAGE: Slovakia.",
+    "The founding edition of DAT Lab, created with ETP Slovensko in Košice, Slovakia. Returns June–July 2027 to begin a new original piece devised across the 2027 and 2028 cohorts.",
   openGraph: {
     title: "DAT Lab: Košice — Dramatic Adventure Theatre",
     description:
-      "US, Slovak, and Romani artists devising original, site-responsive performance material in Eastern Slovakia. July 17 – August 1, 2026.",
+      "The founding edition of DAT Lab, created with ETP Slovensko in Košice, Slovakia. Returns June–July 2027 to begin a new original piece devised across the 2027 and 2028 cohorts.",
   },
   robots: { index: true, follow: true },
 };
 
-export default function DatLabLayout({ children }: { children: ReactNode }) {
+export default function DatLabKosiceLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return <>{children}</>;
 }
