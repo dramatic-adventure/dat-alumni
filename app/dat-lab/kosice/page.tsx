@@ -47,6 +47,12 @@ const copy = {
     hopeBody:
       "Our hope is not only to create a meaningful final sharing this summer, but also to begin building artistic relationships in Košice that could grow into future collaborations — including the possible seed of a future full-length production.",
 
+    nextHeading: "The Lab Continues — Summer 2027",
+    nextP1:
+      "DAT Lab: Košice returns in June–July 2027, building on the 2026 residency in partnership with ETP Slovensko. Košice is the founding edition of DAT Lab, which now also runs in Baltimore and Quito.",
+    nextP2:
+      "Beginning in summer 2027, the Košice Lab starts work on a new original piece — untitled for now — devised across the 2027 and 2028 cohorts with ETP as co-producer, and made to travel: its destination is the Edinburgh Festival Fringe in 2029. Details and the 2027 artist call arrive in early 2027.",
+
     waysHeading: "Ways to Get Involved",
     ways: [
       {
@@ -139,6 +145,12 @@ const copy = {
     hopeHeading: "Čo by sme radi dosiahli",
     hopeBody:
       "Nejde nám len o to, aby sme toto leto vytvorili zmysluplnú záverečnú prezentáciu. Chceme tiež začať budovať umelecké vzťahy v Košiciach, z ktorých môžu vyrásť ďalšie spolupráce, možno aj zárodok budúcej celovečernej inscenácie.",
+
+    nextHeading: "Laboratórium pokračuje — leto 2027",
+    nextP1:
+      "DAT Lab: Košice sa vracia v júni a júli 2027 a nadväzuje na rezidenciu z roku 2026, ktorá vznikla v partnerstve s ETP Slovensko. Košice sú zakladajúcou edíciou programu DAT Lab, ktorý dnes funguje aj v Baltimore a v Quite.",
+    nextP2:
+      "V lete 2027 začne košické laboratórium pracovať na novom pôvodnom diele — zatiaľ bez názvu — ktoré budú spoločne vytvárať ročníky 2027 a 2028 s ETP ako koproducentom. Dielo vzniká tak, aby cestovalo: jeho cieľom je Edinburgh Festival Fringe 2029. Podrobnosti a výzvu pre umelcov zverejníme začiatkom roka 2027.",
 
     waysHeading: "Možnosti zapojenia",
     ways: [
@@ -308,6 +320,15 @@ export default function DatLabKosicePage() {
         <div className="datlab-inner">
           <h2 className="datlab-h2">{t.hopeHeading}</h2>
           <p>{t.hopeBody}</p>
+        </div>
+      </section>
+
+      {/* ---------- The Lab Continues — Summer 2027 ---------- */}
+      <section className="datlab-section">
+        <div className="datlab-inner">
+          <h2 className="datlab-h2">{t.nextHeading}</h2>
+          <p>{t.nextP1}</p>
+          <p>{t.nextP2}</p>
         </div>
       </section>
 

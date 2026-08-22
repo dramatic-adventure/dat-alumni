@@ -12,8 +12,13 @@ const editions = [
     href: "/dat-lab/baltimore",
   },
   {
+    title: "DAT Lab: Quito",
+    status: "January 2027",
+    href: "/dat-lab/quito",
+  },
+  {
     title: "DAT Lab: Košice",
-    status: "summer 2026",
+    status: "founding edition · returns summer 2027",
     href: "/dat-lab/kosice",
   },
 ] as const;

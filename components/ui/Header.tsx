@@ -64,11 +64,12 @@ const NAV_ITEMS = [
       { label: 'Creative Treks', href: 'https://www.dramaticadventure.com/creative-trek', external: true },
       { label: 'Teaching Artist Residencies', href: 'https://www.dramaticadventure.com/teaching-artist-residency', external: true },
       { label: 'Global Play Initiative', href: 'https://www.dramaticadventure.com/global-play-initiative', external: true },
+      // restored 2026-08: now live in-app as the /dat-lab hub (Baltimore + Košice editions)
+      { label: 'DAT Lab', href: '/dat-lab' },
       // hidden 2026-06: reachable elsewhere — NYC Weekend via Travel Opportunities; Drama Clubs is a dup of the STORIES entry
       { label: 'NYC Weekend', href: 'https://www.dramaticadventure.com/nyc-hub', external: true, hidden: true },
       { label: 'Drama Clubs', href: '/drama-club', hidden: true },
       // hidden 2026-06: no live page yet — keep in config to restore once published (see docs/post-interview-website-backlog.md)
-      { label: 'DAT LAB', href: 'https://www.dramaticadventure.com/dat-lab', external: true, hidden: true },
       { label: 'RAW', href: 'https://www.dramaticadventure.com/raw', external: true, hidden: true },
       { label: 'CASTAWAY', href: 'https://www.dramaticadventure.com/castaway', external: true, hidden: true },
       { label: 'SceneShift', href: 'https://www.dramaticadventure.com/sceneshift', external: true, hidden: true },
